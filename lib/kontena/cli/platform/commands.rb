@@ -5,26 +5,18 @@ require_relative 'api'
 require_relative 'grids'
 
 command 'connect' do |c|
-  c.syntax = 'kontena connect'
+  c.syntax = 'kontena connect [URL]'
   c.description = 'Connect to Kontena server'
   c.action do |args, options|
-    Kontena::Cli::Platform::Api.new.connect
+    Kontena::Cli::Platform::Api.new.connect(args[0])
   end
 end
 
-command 'login' do |c|
-  c.syntax = 'kontena login'
-  c.description = 'Login to Kontena.io'
+command 'disconnect' do |c|
+  c.syntax = 'kontena disconnect'
+  c.description = 'Disconnect from Kontena server'
   c.action do |args, options|
-    Kontena::Cli::Platform::User.new.login
-  end
-end
-
-command 'logout' do |c|
-  c.syntax = 'kontena logout'
-  c.description = 'Logout from Kontena.io'
-  c.action do |args, options|
-    Kontena::Cli::Platform::User.new.logout
+    Kontena::Cli::Platform::Api.new.disconnect
   end
 end
 

@@ -50,7 +50,7 @@ module Kontena
       def api_url
         url = inifile['platform']['url']
         unless url
-          raise ArgumentError.new("Please init service first using: kontena init")
+          raise ArgumentError.new("Please init service first using: kontena connect")
         end
         url
       end
