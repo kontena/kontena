@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+# resolve bin path, ignoring symlinks
+require 'pathname'
+bin_file = Pathname.new(__FILE__).realpath
+
+# add self to libpath
+$:.unshift File.expand_path('../../lib', bin_file)
+
+STDOUT.sync = true
+
+require 'commander/import'
+require 'kontena/cli/commands'
