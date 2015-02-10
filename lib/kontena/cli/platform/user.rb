@@ -7,8 +7,8 @@ module Kontena::Cli::Platform
 
     def login
       require_api_url
-      username = ask("Username:")
-      password = password("Password:")
+      username = ask("Username: ")
+      password = password("Password: ")
       params = {
           username: username,
           password: password,
@@ -21,8 +21,10 @@ module Kontena::Cli::Platform
       if response
         inifile['platform']['token'] = response['access_token']
         inifile.save(filename: ini_filename)
+        true
       else
         print color('Invalid Personal Access Token', :red)
+        false
       end
     end
 

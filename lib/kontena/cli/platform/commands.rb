@@ -6,26 +6,18 @@ require_relative 'grids'
 require_relative 'services'
 
 command 'connect' do |c|
-  c.syntax = 'kontena connect'
+  c.syntax = 'kontena connect [URL]'
   c.description = 'Connect to Kontena server'
   c.action do |args, options|
-    Kontena::Cli::Platform::Api.new.connect
+    Kontena::Cli::Platform::Api.new.connect(args[0])
   end
 end
 
-command 'login' do |c|
-  c.syntax = 'kontena login'
-  c.description = 'Login to Kontena.io'
+command 'disconnect' do |c|
+  c.syntax = 'kontena disconnect'
+  c.description = 'Disconnect from Kontena server'
   c.action do |args, options|
-    Kontena::Cli::Platform::User.new.login
-  end
-end
-
-command 'logout' do |c|
-  c.syntax = 'kontena logout'
-  c.description = 'Logout from Kontena.io'
-  c.action do |args, options|
-    Kontena::Cli::Platform::User.new.logout
+    Kontena::Cli::Platform::Api.new.disconnect
   end
 end
 
@@ -42,7 +34,7 @@ command 'use' do |c|
   c.description = 'Switch to use specific grid'
   c.action do |args, options|
     raise ArgumentError.new('GRID_NAME is required. For a list of existing grids please run: kontena grids') if args[0].nil?
-    Kontena::Cli::Platform::Grids.new.switch_to_grid(args[0])
+    Kontena::Cli::Platform::Grids.new.use(args[0])
   end
 end
 
@@ -51,6 +43,14 @@ command 'grids create' do |c|
   c.description = 'Create a new grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.create(args[0])
+  end
+end
+
+command 'grids remove' do |c|
+  c.syntax = 'kontena grids remove GRID_NAME'
+  c.description = 'Removes grid'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Grids.new.destroy(args[0])
   end
 end
 
