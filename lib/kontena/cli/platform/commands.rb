@@ -4,11 +4,11 @@ require_relative 'user'
 require_relative 'api'
 require_relative 'grids'
 
-command 'init' do |c|
-  c.syntax = 'kontena init'
+command 'connect' do |c|
+  c.syntax = 'kontena connect'
   c.description = 'Connect to Kontena server'
   c.action do |args, options|
-    Kontena::Cli::Platform::Api.new.init
+    Kontena::Cli::Platform::Api.new.connect
   end
 end
 
