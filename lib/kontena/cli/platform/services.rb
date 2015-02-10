@@ -47,7 +47,7 @@ module Kontena::Cli::Platform
       require_api_url
       token = require_token
 
-      result = client(token).post("services/#{service_id}/deploy")
+      result = client(token).post("services/#{service_id}/deploy", {})
     end
 
     def create(name, image, options)
@@ -76,6 +76,13 @@ module Kontena::Cli::Platform
       data[:container_count] = options.containers if options.containers
       data[:cmd] = options.cmd.split(" ") if options.cmd
       client(token).post("grids/#{current_grid}/services", data)
+    end
+
+    def destroy(service_id)
+      require_api_url
+      token = require_token
+
+      result = client(token).delete("services/#{service_id}")
     end
 
     private

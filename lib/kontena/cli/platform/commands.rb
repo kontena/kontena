@@ -106,3 +106,11 @@ command 'service create' do |c|
     Kontena::Cli::Platform::Services.new.create(args[0], args[1], options)
   end
 end
+
+command 'service delete' do |c|
+  c.syntax = 'kontena service delete <service_id>'
+  c.description = 'Delete service'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.destroy(args[0])
+  end
+end
