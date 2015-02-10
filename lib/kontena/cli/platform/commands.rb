@@ -86,9 +86,17 @@ command 'service logs' do |c|
   end
 end
 
+command 'service deploy' do |c|
+  c.syntax = 'kontena service deploy <service_id>'
+  c.description = 'Deploy service to nodes'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.deploy(args[0])
+  end
+end
+
 command 'service create' do |c|
   c.syntax = 'kontena service create <name> <image>'
-  c.description = 'Show service details'
+  c.description = 'Create new service'
   c.option '-p', '--ports Array', Array, 'Exposed ports'
   c.option '-e', '--env Array', Array, 'Environment variables'
   c.option '-c', '--containers INTEGER', Integer, 'Containers count'

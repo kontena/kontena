@@ -43,6 +43,13 @@ module Kontena::Cli::Platform
       end
     end
 
+    def deploy(service_id)
+      require_api_url
+      token = require_token
+
+      result = client(token).post("services/#{service_id}/deploy")
+    end
+
     def create(name, image, options)
       require_api_url
       token = require_token
