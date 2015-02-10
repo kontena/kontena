@@ -33,7 +33,7 @@ command 'use' do |c|
   c.description = 'Switch to use specific grid'
   c.action do |args, options|
     raise ArgumentError.new('GRID_NAME is required. For a list of existing grids please run: kontena grids') if args[0].nil?
-    Kontena::Cli::Platform::Grids.new.switch_to_grid(args[0])
+    Kontena::Cli::Platform::Grids.new.use(args[0])
   end
 end
 
@@ -42,5 +42,13 @@ command 'grids create' do |c|
   c.description = 'Create a new grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.create(args[0])
+  end
+end
+
+command 'grids remove' do |c|
+  c.syntax = 'kontena grids remove GRID_NAME'
+  c.description = 'Removes grid'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Grids.new.destroy(args[0])
   end
 end

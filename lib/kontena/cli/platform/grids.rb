@@ -8,11 +8,8 @@ module Kontena::Cli::Platform
     def list
       require_api_url
 
-      token = require_token
-
-      grids = client(token).get('grids')
       grids['grids'].each do |grid|
-        if grid['id'] == current_grid
+        if grid['id'] == current_grid_id
           print color("* #{grid['name']} [#{grid['id']}]", :green, :bold)
         else
           puts "  #{grid['name']} [#{grid['id']}]"
@@ -23,20 +20,17 @@ module Kontena::Cli::Platform
       puts '# * - current grid'
     end
 
-    def switch_to_grid(name)
+    def use(name)
       require_api_url
-      token = require_token
 
-      grids = client(token).get('grids')
-      grids['grids'].each do |grid|
-        if grid['name'] == name
-          inifile['platform']['grid'] = grid['id']
-          inifile.save(filename: ini_filename)
-          print color("Using #{grid['name']} [#{grid['id']}]", :green)
-          return true
-        end
+      grid = find_grid_by_name(name)
+      if !grid.nil?
+        self.current_grid = grid
+        print color("Using #{grid['name']} [#{grid['id']}]", :green)
+      else
+        print color('Could not resolve grid by name. For a list of existing grids please run: kontena grids', :red)
       end
-      print color('Could not resolve grid by name. For a list of existing grids please run: kontena grids', :red)
+
     end
 
     def create(name=nil)
@@ -47,12 +41,51 @@ module Kontena::Cli::Platform
         name: name
       }
       grid = client(token).post('grids', payload)
-      puts "created #{grid['name']} (#{grid['id']})"
+      puts "created #{grid['name']} (#{grid['id']})" if grid
+    end
+
+    def destroy(name)
+      require_api_url
+
+      grid = find_grid_by_name(name)
+
+      if !grid.nil?
+        response = client(token).delete("grids/#{grid['id']}")
+        if response
+          clear_current_grid if grid['id'] == current_grid_id
+          puts "removed #{grid['name']} (#{grid['id']})"
+        end
+      else
+        print color('Could not resolve grid by name. For a list of existing grids please run: kontena grids', :red)
+      end
     end
 
     private
-    def current_grid
+
+    def token
+      @token ||= require_token
+    end
+
+    def grids
+      @grids ||= client(token).get('grids')
+    end
+
+    def current_grid=(grid)
+      inifile['platform']['grid'] = grid['id']
+      inifile.save(filename: ini_filename)
+    end
+
+    def clear_current_grid
+      inifile['platform'].delete('grid')
+      inifile.save(filename: ini_filename)
+    end
+
+    def current_grid_id
       inifile['platform']['grid']
+    end
+
+    def find_grid_by_name(name)
+      grids['grids'].find {|grid| grid['name'] == name }
     end
   end
 end
