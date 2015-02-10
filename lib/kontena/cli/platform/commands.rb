@@ -3,6 +3,7 @@ module Kontena::Cli::Platform; end;
 require_relative 'user'
 require_relative 'api'
 require_relative 'grids'
+require_relative 'services'
 
 command 'connect' do |c|
   c.syntax = 'kontena connect'
@@ -50,5 +51,50 @@ command 'grids create' do |c|
   c.description = 'Create a new grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.create(args[0])
+  end
+end
+
+command 'services' do |c|
+  c.syntax = 'kontena services'
+  c.description = 'List all services'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.list
+  end
+end
+
+command 'service show' do |c|
+  c.syntax = 'kontena service show <service_id>'
+  c.description = 'Show service details'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.show(args[0])
+  end
+end
+
+command 'service containers' do |c|
+  c.syntax = 'kontena service containers <service_id>'
+  c.description = 'Show service containers'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.containers(args[0])
+  end
+end
+
+command 'service logs' do |c|
+  c.syntax = 'kontena service logs <service_id>'
+  c.description = 'Show service logs'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.logs(args[0])
+  end
+end
+
+command 'service create' do |c|
+  c.syntax = 'kontena service create <name> <image>'
+  c.description = 'Show service details'
+  c.option '-p', '--ports Array', Array, 'Exposed ports'
+  c.option '-e', '--env Array', Array, 'Environment variables'
+  c.option '-c', '--containers INTEGER', Integer, 'Containers count'
+  c.option '--stateful', 'Set service as stateful'
+
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.create(args[0], args[1], options)
   end
 end
