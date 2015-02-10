@@ -12,7 +12,7 @@ Install it yourself as:
 
 First you need to connect to a Kontena server:
 
-    $ kontena init
+    $ kontena connect
 
 To register a new user:
 
