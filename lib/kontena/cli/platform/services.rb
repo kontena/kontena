@@ -11,7 +11,7 @@ module Kontena::Cli::Platform
 
       grids = client(token).get("grids/#{current_grid}/services")
       grids['services'].each do |service|
-        puts "#{service['id']} #{service['name']} #{service['image']}"
+        puts "#{service['id']} #{service['image']}"
       end
     end
 
@@ -29,7 +29,11 @@ module Kontena::Cli::Platform
 
       result = client(token).get("services/#{service_id}/containers")
       result['containers'].each do |container|
-        puts "#{container['name']} #{container['network_settings']['ip_address']} #{container['status']}"
+        puts "#{container['id']}:"
+        puts "  node: #{container['node']['name']}"
+        puts "  ip (internal): #{container['network_settings']['ip_address']}"
+        puts "  status: #{container['status']}"
+        puts ""
       end
     end
 
@@ -55,16 +59,7 @@ module Kontena::Cli::Platform
       token = require_token
 
       if options.ports
-        ports = options.ports.map{|p|
-          node_port, container_port = p.split(':')
-          if node_port.nil? || container_port.nil?
-            raise ArgumentError.new("Invalid port value #{p}")
-          end
-          {
-            container_port: container_port,
-            node_port: node_port
-          }
-        }
+        ports = parse_ports(options.ports)
       end
       data = {
         name: name,
@@ -78,6 +73,19 @@ module Kontena::Cli::Platform
       client(token).post("grids/#{current_grid}/services", data)
     end
 
+    def update(service_id, options)
+      require_api_url
+      token = require_token
+
+      data = {}
+      data[:env] = options.env if options.env
+      data[:container_count] = options.containers if options.containers
+      data[:cmd] = options.cmd.split(" ") if options.cmd
+      data[:ports] = parse_ports(options.ports) if options.ports
+
+      client(token).put("services/#{service_id}", data)
+    end
+
     def destroy(service_id)
       require_api_url
       token = require_token
@@ -86,8 +94,22 @@ module Kontena::Cli::Platform
     end
 
     private
+
     def current_grid
       inifile['platform']['grid']
+    end
+
+    def parse_ports(port_options)
+      port_options.map{|p|
+        node_port, container_port = p.split(':')
+        if node_port.nil? || container_port.nil?
+          raise ArgumentError.new("Invalid port value #{p}")
+        end
+        {
+          container_port: container_port,
+          node_port: node_port
+        }
+      }
     end
   end
 end
