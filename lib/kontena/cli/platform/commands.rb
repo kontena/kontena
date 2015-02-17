@@ -3,6 +3,7 @@ module Kontena::Cli::Platform; end;
 require_relative 'user'
 require_relative 'api'
 require_relative 'grids'
+require_relative 'nodes'
 require_relative 'services'
 
 command 'connect' do |c|
@@ -54,7 +55,16 @@ command 'grids remove' do |c|
   end
 end
 
-command 'services' do |c|
+command 'nodes' do |c|
+  c.syntax = 'kontena nodes'
+  c.description = 'List all nodes'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Nodes.new.list
+  end
+end
+
+
+command 'service' do |c|
   c.syntax = 'kontena services'
   c.description = 'List all services'
   c.action do |args, options|
@@ -67,6 +77,17 @@ command 'service show' do |c|
   c.description = 'Show service details'
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.show(args[0])
+  end
+end
+
+command 'service update' do |c|
+  c.syntax = 'kontena service update <service_id>'
+  c.description = 'Update service'
+  c.option '-p', '--ports Array', Array, 'Exposed ports'
+  c.option '-e', '--env Array', Array, 'Environment variables'
+  c.option '-c', '--containers INTEGER', Integer, 'Containers count'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.update(args[0], options)
   end
 end
 
