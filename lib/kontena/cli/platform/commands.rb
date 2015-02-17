@@ -7,7 +7,7 @@ require_relative 'nodes'
 require_relative 'services'
 
 command 'connect' do |c|
-  c.syntax = 'kontena connect [URL]'
+  c.syntax = 'kontena connect <url>'
   c.description = 'Connect to Kontena server'
   c.action do |args, options|
     Kontena::Cli::Platform::Api.new.connect(args[0])
@@ -31,16 +31,16 @@ command 'grids' do |c|
 end
 
 command 'use' do |c|
-  c.syntax = 'kontena grids GRID_NAME'
+  c.syntax = 'kontena grids <name>'
   c.description = 'Switch to use specific grid'
   c.action do |args, options|
-    raise ArgumentError.new('GRID_NAME is required. For a list of existing grids please run: kontena grids') if args[0].nil?
+    raise ArgumentError.new('grid name is required. For a list of existing grids please run: kontena grids') if args[0].nil?
     Kontena::Cli::Platform::Grids.new.use(args[0])
   end
 end
 
 command 'grids create' do |c|
-  c.syntax = 'kontena grids create GRID_NAME'
+  c.syntax = 'kontena grids create <name>'
   c.description = 'Create a new grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.create(args[0])
@@ -48,7 +48,7 @@ command 'grids create' do |c|
 end
 
 command 'grids remove' do |c|
-  c.syntax = 'kontena grids remove GRID_NAME'
+  c.syntax = 'kontena grids remove <name>'
   c.description = 'Removes grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.destroy(args[0])
