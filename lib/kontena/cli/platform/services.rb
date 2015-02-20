@@ -66,11 +66,17 @@ module Kontena::Cli::Platform
         image: image,
         stateful: !!options.stateful
       }
+      if options.link
+        links = parse_links(options.link)
+
+      end
       data[:ports] = ports if options.ports
+      data[:links] = links if options.link
       data[:env] = options.env if options.env
       data[:container_count] = options.containers if options.containers
       data[:cmd] = options.cmd.split(" ") if options.cmd
-      client(token).post("grids/#{current_grid}/services", data)
+      service = client(token).post("grids/#{current_grid}/services", data)
+      pp service
     end
 
     def update(service_id, options)
@@ -108,6 +114,19 @@ module Kontena::Cli::Platform
         {
           container_port: container_port,
           node_port: node_port
+        }
+      }
+    end
+
+    def parse_links(link_options)
+      link_options.map{|l|
+        service_name, alias_name = l.split(':')
+        if service_name.nil? || alias_name.nil?
+          raise ArgumentError.new("Invalid link value #{l}")
+        end
+        {
+            name: service_name,
+            alias: alias_name
         }
       }
     end

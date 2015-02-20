@@ -30,12 +30,38 @@ command 'grids' do |c|
   end
 end
 
-command 'use' do |c|
-  c.syntax = 'kontena grids <name>'
+command 'grids use' do |c|
+  c.syntax = 'kontena grids use <name>'
   c.description = 'Switch to use specific grid'
   c.action do |args, options|
     raise ArgumentError.new('grid name is required. For a list of existing grids please run: kontena grids') if args[0].nil?
     Kontena::Cli::Platform::Grids.new.use(args[0])
+  end
+end
+
+command 'grids show' do |c|
+  c.syntax = 'kontena grid show <name>'
+  c.description = 'Show grid details'
+  c.action do |args, options|
+    raise ArgumentError.new('grid name is required. For a list of existing grids please run: kontena grids') if args[0].nil?
+    Kontena::Cli::Platform::Grids.new.show(args[0])
+  end
+end
+
+command 'grids current' do |c|
+  c.syntax = 'kontena grids show <name>'
+  c.description = 'Show current grid details'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Grids.new.current
+  end
+end
+
+command 'grids audit_log' do |c|
+  c.syntax = 'kontena grids audit_log'
+  c.description = 'Show audit log of the current grid'
+  c.option '-l', '--limit INTEGER', Integer, 'Number of lines'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Grids.new.audit_log(options)
   end
 end
 
@@ -118,9 +144,10 @@ end
 command 'service create' do |c|
   c.syntax = 'kontena service create <name> <image>'
   c.description = 'Create new service'
-  c.option '-p', '--ports Array', Array, 'Exposed ports'
-  c.option '-e', '--env Array', Array, 'Environment variables'
-  c.option '-c', '--containers INTEGER', Integer, 'Containers count'
+  c.option '-p', '--ports Array', Array, 'Publish a service\'s port to the host'
+  c.option '-e', '--env Array', Array, 'Set environment variables'
+  c.option '-l', '--link Array', Array, 'Add link to another service in the form of name:alias'
+  c.option '-c', '--containers INTEGER', Integer, 'Set containers count'
   c.option '--stateful', 'Set service as stateful'
 
   c.action do |args, options|

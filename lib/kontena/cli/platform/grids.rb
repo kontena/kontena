@@ -33,6 +33,35 @@ module Kontena::Cli::Platform
 
     end
 
+    def show(name)
+      require_api_url
+
+      grid = find_grid_by_name(name)
+      pp grid
+    end
+
+    def current
+      require_api_url
+
+      grid = client(token).get("grids/#{current_grid_id}")
+      pp grid
+    end
+
+    def audit_log(options)
+      require_api_url
+
+      audit_logs = client(token).get("grids/#{current_grid_id}/audit_log", {limit: options.limit})
+      headings = ['time', 'grid', 'resource type', 'resource name', 'event name', 'user', 'source ip', 'user agent']
+      rows = []
+      audit_logs['logs'].each do |log|
+
+        rows << [ log['time'], log['grid'], log['resource_type'], log['resource_name'], log['event_name'], log['user_identity']['email'], log['source_ip'], log['user_agent']]
+      end
+      table = Terminal::Table.new :headings => headings, :rows => rows
+      puts table
+    end
+
+
     def create(name=nil)
       require_api_url
 

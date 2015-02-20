@@ -1,4 +1,6 @@
 require 'inifile'
+require 'terminal-table'
+
 module Kontena
   module Cli
     module Common
