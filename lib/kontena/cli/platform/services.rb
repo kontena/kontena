@@ -1,7 +1,6 @@
 require 'kontena/client'
 require_relative '../common'
 require 'pp'
-require 'filesize'
 
 module Kontena::Cli::Platform
   class Services
