@@ -147,7 +147,10 @@ command 'service create' do |c|
   c.option '-p', '--ports Array', Array, 'Publish a service\'s port to the host'
   c.option '-e', '--env Array', Array, 'Set environment variables'
   c.option '-l', '--link Array', Array, 'Add link to another service in the form of name:alias'
-  c.option '-c', '--containers INTEGER', Integer, 'Set containers count'
+  c.option '-c', '--cpu-shares INTEGER', Integer, 'CPU shares (relative weight)'
+  c.option '-m', '--memory INTEGER', String, 'Memory limit (format: <number><optional unit>, where unit = b, k, m or g)'
+  c.option '--memory-swap INTEGER', String, 'Total memory usage (memory + swap), set \'-1\' to disable swap (format: <number><optional unit>, where unit = b, k, m or g)'
+  c.option '-C', '--containers INTEGER', Integer, 'Set containers count'
   c.option '--stateful', 'Set service as stateful'
 
   c.action do |args, options|
@@ -160,5 +163,13 @@ command 'service delete' do |c|
   c.description = 'Delete service'
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.destroy(args[0])
+  end
+end
+
+command 'service stats' do |c|
+  c.syntax = 'kontena service stats <name>'
+  c.description = 'Show service stats'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.stats(args[0])
   end
 end
