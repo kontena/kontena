@@ -5,6 +5,7 @@ require_relative 'api'
 require_relative 'grids'
 require_relative 'nodes'
 require_relative 'services'
+require_relative 'users'
 
 command 'connect' do |c|
   c.syntax = 'kontena connect <url>'
@@ -49,7 +50,7 @@ command 'grids show' do |c|
 end
 
 command 'grids current' do |c|
-  c.syntax = 'kontena grids show <name>'
+  c.syntax = 'kontena grids current'
   c.description = 'Show current grid details'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.current
@@ -65,19 +66,43 @@ command 'grids audit_log' do |c|
   end
 end
 
-command 'grids create' do |c|
-  c.syntax = 'kontena grids create <name>'
+command 'grid create' do |c|
+  c.syntax = 'kontena grid create <name>'
   c.description = 'Create a new grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.create(args[0])
   end
 end
 
-command 'grids remove' do |c|
-  c.syntax = 'kontena grids remove <name>'
+command 'grid remove' do |c|
+  c.syntax = 'kontena grid remove <name>'
   c.description = 'Removes grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.destroy(args[0])
+  end
+end
+
+command 'grid users' do |c|
+  c.syntax = 'kontena grids users'
+  c.description = 'Show grid users'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Users.new.list
+  end
+end
+
+command 'grid users add' do |c|
+  c.syntax = 'kontena grid users add <email>'
+  c.description = 'Assign user to grid'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Users.new.add(args[0])
+  end
+end
+
+command 'grid users remove' do |c|
+  c.syntax = 'kontena grid users remove <email>'
+  c.description = 'Unassign user from grid'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Users.new.remove(args[0])
   end
 end
 
