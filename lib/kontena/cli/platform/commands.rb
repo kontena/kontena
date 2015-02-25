@@ -41,7 +41,7 @@ command 'grids use' do |c|
 end
 
 command 'grids show' do |c|
-  c.syntax = 'kontena grid show <name>'
+  c.syntax = 'kontena grids show <name>'
   c.description = 'Show grid details'
   c.action do |args, options|
     raise ArgumentError.new('grid name is required. For a list of existing grids please run: kontena grids') if args[0].nil?
@@ -57,8 +57,8 @@ command 'grids current' do |c|
   end
 end
 
-command 'grids audit_log' do |c|
-  c.syntax = 'kontena grids audit_log'
+command 'grid audit_log' do |c|
+  c.syntax = 'kontena grid audit_log'
   c.description = 'Show audit log of the current grid'
   c.option '-l', '--limit INTEGER', Integer, 'Number of lines'
   c.action do |args, options|
