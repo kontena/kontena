@@ -6,12 +6,14 @@ require_relative 'grids'
 require_relative 'nodes'
 require_relative 'services'
 require_relative 'users'
+require_relative 'containers'
 
 command 'connect' do |c|
   c.syntax = 'kontena connect <url>'
   c.description = 'Connect to Kontena server'
+  c.option '--register', 'Register a new user account'
   c.action do |args, options|
-    Kontena::Cli::Platform::Api.new.connect(args[0])
+    Kontena::Cli::Platform::Api.new.connect(args[0], options)
   end
 end
 
@@ -23,16 +25,16 @@ command 'disconnect' do |c|
   end
 end
 
-command 'grids' do |c|
-  c.syntax = 'kontena grids'
+command 'grid list' do |c|
+  c.syntax = 'kontena grid list'
   c.description = 'List all grids'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.list
   end
 end
 
-command 'grids use' do |c|
-  c.syntax = 'kontena grids use <name>'
+command 'grid use' do |c|
+  c.syntax = 'kontena grid use <name>'
   c.description = 'Switch to use specific grid'
   c.action do |args, options|
     raise ArgumentError.new('grid name is required. For a list of existing grids please run: kontena grids') if args[0].nil?
@@ -40,8 +42,8 @@ command 'grids use' do |c|
   end
 end
 
-command 'grids show' do |c|
-  c.syntax = 'kontena grids show <name>'
+command 'grid show' do |c|
+  c.syntax = 'kontena grid show <name>'
   c.description = 'Show grid details'
   c.action do |args, options|
     raise ArgumentError.new('grid name is required. For a list of existing grids please run: kontena grids') if args[0].nil?
@@ -49,8 +51,8 @@ command 'grids show' do |c|
   end
 end
 
-command 'grids current' do |c|
-  c.syntax = 'kontena grids current'
+command 'grid current' do |c|
+  c.syntax = 'kontena grid current'
   c.description = 'Show current grid details'
   c.action do |args, options|
     Kontena::Cli::Platform::Grids.new.current
@@ -82,41 +84,56 @@ command 'grid remove' do |c|
   end
 end
 
-command 'grid users' do |c|
-  c.syntax = 'kontena grids users'
+command 'grid list-users' do |c|
+  c.syntax = 'kontena grid list-users'
   c.description = 'Show grid users'
   c.action do |args, options|
     Kontena::Cli::Platform::Users.new.list
   end
 end
 
-command 'grid users add' do |c|
-  c.syntax = 'kontena grid users add <email>'
+command 'grid add-user' do |c|
+  c.syntax = 'kontena grid add-user <email>'
   c.description = 'Assign user to grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Users.new.add(args[0])
   end
 end
 
-command 'grid users remove' do |c|
-  c.syntax = 'kontena grid users remove <email>'
+command 'grid remove-user' do |c|
+  c.syntax = 'kontena grid remove-user <email>'
   c.description = 'Unassign user from grid'
   c.action do |args, options|
     Kontena::Cli::Platform::Users.new.remove(args[0])
   end
 end
 
-command 'nodes' do |c|
-  c.syntax = 'kontena nodes'
+command 'node list' do |c|
+  c.syntax = 'kontena node list'
   c.description = 'List all nodes'
   c.action do |args, options|
     Kontena::Cli::Platform::Nodes.new.list
   end
 end
 
+command 'node show' do |c|
+  c.syntax = 'kontena node show'
+  c.description = 'Show node details'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Nodes.new.show(args[0])
+  end
+end
 
-command 'service' do |c|
-  c.syntax = 'kontena services'
+command 'node remove' do |c|
+  c.syntax = 'kontena node remove'
+  c.description = 'Remove node'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Nodes.new.destroy(args[0])
+  end
+end
+
+command 'service list' do |c|
+  c.syntax = 'kontena service list'
   c.description = 'List all services'
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.list
@@ -128,17 +145,6 @@ command 'service show' do |c|
   c.description = 'Show service details'
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.show(args[0])
-  end
-end
-
-command 'service update' do |c|
-  c.syntax = 'kontena service update <service_id>'
-  c.description = 'Update service'
-  c.option '-p', '--ports Array', Array, 'Exposed ports'
-  c.option '-e', '--env Array', Array, 'Environment variables'
-  c.option '-c', '--containers INTEGER', Integer, 'Containers count'
-  c.action do |args, options|
-    Kontena::Cli::Platform::Services.new.update(args[0], options)
   end
 end
 
@@ -166,20 +172,59 @@ command 'service deploy' do |c|
   end
 end
 
+command 'service restart' do |c|
+  c.syntax = 'kontena service restart <service_id>'
+  c.description = 'Restart service containers'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.restart(args[0])
+  end
+end
+
+command 'service stop' do |c|
+  c.syntax = 'kontena service stop <service_id>'
+  c.description = 'Stop service containers'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.stop(args[0])
+  end
+end
+
+command 'service start' do |c|
+  c.syntax = 'kontena service start <service_id>'
+  c.description = 'Start service containers'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.start(args[0])
+  end
+end
+
 command 'service create' do |c|
   c.syntax = 'kontena service create <name> <image>'
   c.description = 'Create new service'
   c.option '-p', '--ports Array', Array, 'Publish a service\'s port to the host'
   c.option '-e', '--env Array', Array, 'Set environment variables'
   c.option '-l', '--link Array', Array, 'Add link to another service in the form of name:alias'
+  c.option '-a', '--affinity Array', Array, 'Set service affinity'
   c.option '-c', '--cpu-shares INTEGER', Integer, 'CPU shares (relative weight)'
   c.option '-m', '--memory INTEGER', String, 'Memory limit (format: <number><optional unit>, where unit = b, k, m or g)'
   c.option '--memory-swap INTEGER', String, 'Total memory usage (memory + swap), set \'-1\' to disable swap (format: <number><optional unit>, where unit = b, k, m or g)'
-  c.option '-C', '--containers INTEGER', Integer, 'Set containers count'
+  c.option '--cmd STRING', String, 'Command to execute'
+  c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
+  c.option '-u', '--user String', String, 'Username who executes first process inside container'
   c.option '--stateful', 'Set service as stateful'
 
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.create(args[0], args[1], options)
+  end
+end
+
+command 'service update' do |c|
+  c.syntax = 'kontena service update <service_id>'
+  c.description = 'Update service'
+  c.option '-p', '--ports Array', Array, 'Exposed ports'
+  c.option '-e', '--env Array', Array, 'Environment variables'
+  c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
+  c.option '--cmd STRING', String, 'Command to execute'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Services.new.update(args[0], options)
   end
 end
 
@@ -196,5 +241,13 @@ command 'service stats' do |c|
   c.description = 'Show service stats'
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.stats(args[0])
+  end
+end
+
+command 'container exec' do |c|
+  c.syntax = 'kontena container exec <container_id> <cmd>'
+  c.description = 'Execute command inside container'
+  c.action do |args, options|
+    Kontena::Cli::Platform::Containers.new.exec(args[0], args[1])
   end
 end

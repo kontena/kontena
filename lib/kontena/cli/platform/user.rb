@@ -7,7 +7,7 @@ module Kontena::Cli::Platform
 
     def login
       require_api_url
-      username = ask("Username: ")
+      username = ask("Email: ")
       password = password("Password: ")
       params = {
           username: username,
@@ -31,6 +31,18 @@ module Kontena::Cli::Platform
     def logout
       inifile['platform'].delete('token')
       inifile.save(filename: ini_filename)
+    end
+
+    def register
+      require_api_url
+      email = ask("Email: ")
+      password = password("Password: ")
+      password2 = password("Password again: ")
+      if password != password2
+        raise ArgumentError.new("Passwords don't match")
+      end
+      params = {email: email, password: password}
+      response = client.post('users', params)
     end
   end
 end

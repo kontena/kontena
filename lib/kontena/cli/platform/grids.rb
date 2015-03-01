@@ -8,16 +8,19 @@ module Kontena::Cli::Platform
     def list
       require_api_url
 
-      grids['grids'].each do |grid|
-        if grid['id'] == current_grid_id
-          print color("* #{grid['name']} [#{grid['id']}]", :green, :bold)
-        else
-          puts "  #{grid['name']} [#{grid['id']}]"
-        end
+      if grids['grids'].size == 0
+        print color("You don't have any grids yet. Create first one with 'kontena grids create' command", :yellow)
       end
 
-      puts ''
-      puts '# * - current grid'
+      puts '%-30.30s %-10s %-10s %-10s' % ['Name', 'Nodes', 'Containers', 'Users']
+      grids['grids'].each do |grid|
+        if grid['id'] == current_grid_id
+          name = "#{grid['name']} *"
+        else
+          name = grid['name']
+        end
+        puts '%-30.30s %-10s %-10s %-10s' % [name, grid['nodeCount'], grid['containerCount'], grid['userCount']]
+      end
     end
 
     def use(name)
@@ -37,7 +40,11 @@ module Kontena::Cli::Platform
       require_api_url
 
       grid = find_grid_by_name(name)
-      pp grid
+      puts "#{grid['name']}:"
+      puts "  token: #{grid['token']}"
+      puts "  users: #{grid['userCount']}"
+      puts "  nodes: #{grid['nodeCount']}"
+      puts "  containers: #{grid['containerCount']}"
     end
 
     def current

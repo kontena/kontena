@@ -6,8 +6,7 @@ module Kontena::Cli::Platform
   class Api
     include Kontena::Cli::Common
 
-    def connect(api_url = nil)
-
+    def connect(api_url = nil, options)
       api_url = ask('Kontena server url: [https://api.kontena.io] ') if api_url.nil?
       api_url = 'https://api.kontena.io' if api_url == ''
       inifile['platform']['url'] = api_url
@@ -15,6 +14,10 @@ module Kontena::Cli::Platform
 
       sleep 0.1
       if client.get('ping') # test server connection
+        if options.register
+          Kontena::Cli::Platform::User.new.register
+          puts color('Registration succeeded, now please login:', :green)
+        end
         if Kontena::Cli::Platform::User.new.login
           display_logo
         end

@@ -9,20 +9,21 @@ module Kontena::Cli::Platform
     def add(email)
       require_api_url
       data = { email: email }
-      result = client(token).post("grids/#{current_grid}/users", data)
-      result['users'].each { |user| puts user['email'] }
+      client(token).post("grids/#{current_grid}/users", data)
     end
 
     def remove(email)
       require_api_url
 
       result = client(token).delete("grids/#{current_grid}/users/#{email}")
-      result['users'].each { |user| puts user['email'] }
     end
 
     def list
       result = client(token).get("grids/#{current_grid}/users")
-      result['users'].each { |user| puts user['email'] }
+      puts "%-40s %-40s" % ['Email', 'Name']
+      result['users'].each { |user|
+        puts "%-40.40s %-40.40s" % [user['email'], user['name']]
+      }
     end
 
     private
