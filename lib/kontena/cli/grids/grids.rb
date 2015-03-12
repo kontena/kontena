@@ -14,7 +14,7 @@ module Kontena::Cli::Grids
 
       puts '%-30.30s %-10s %-10s %-10s' % ['Name', 'Nodes', 'Containers', 'Users']
       grids['grids'].each do |grid|
-        if grid['id'] == current_grid_id
+        if grid['id'] == current_grid
           name = "#{grid['name']} *"
         else
           name = grid['name']
@@ -46,7 +46,7 @@ module Kontena::Cli::Grids
 
     def current
       require_api_url
-      if current_grid_id.nil?
+      if current_grid.nil?
         puts 'No grid selected. To select grid, please run: kontena use <grid name>'
 
       else
@@ -74,7 +74,7 @@ module Kontena::Cli::Grids
       if !grid.nil?
         response = client(token).delete("grids/#{grid['id']}")
         if response
-          clear_current_grid if grid['id'] == current_grid_id
+          clear_current_grid if grid['id'] == current_grid
           puts "removed #{grid['name']} (#{grid['id']})"
         end
       else
@@ -94,26 +94,8 @@ module Kontena::Cli::Grids
       puts "  containers: #{grid['containerCount']}"
     end
 
-    def token
-      @token ||= require_token
-    end
-
     def grids
       @grids ||= client(token).get('grids')
-    end
-
-    def current_grid=(grid)
-      inifile['server']['grid'] = grid['id']
-      inifile.save(filename: ini_filename)
-    end
-
-    def clear_current_grid
-      inifile['server'].delete('grid')
-      inifile.save(filename: ini_filename)
-    end
-
-    def current_grid_id
-      inifile['server']['grid']
     end
 
     def find_grid_by_name(name)

@@ -35,6 +35,7 @@ module Kontena::Cli::Server
 
     def invite(email)
       require_api_url
+      token = require_token
       data = { email: email }
       response = client(token).post('users', data)
       puts 'Invitation sent' if response
@@ -49,13 +50,7 @@ module Kontena::Cli::Server
         raise ArgumentError.new("Passwords don't match")
       end
       params = {email: email, password: password}
-      client(token).post('users/register', params)
-    end
-
-    private
-
-    def token
-      @token ||= require_token
+      client.post('users/register', params)
     end
 
   end

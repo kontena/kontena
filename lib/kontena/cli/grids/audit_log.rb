@@ -7,8 +7,8 @@ module Kontena::Cli::Grids
 
     def show(options)
       require_api_url
-
-      audit_logs = client(token).get("grids/#{current_grid_id}/audit_log", {limit: options.limit})
+      token = require_token
+      audit_logs = client(token).get("grids/#{current_grid}/audit_log", {limit: options.limit})
       headings = ['time', 'grid', 'resource type', 'resource name', 'event name', 'user', 'source ip', 'user agent']
       rows = []
       audit_logs['logs'].each do |log|

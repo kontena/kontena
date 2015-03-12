@@ -54,10 +54,5 @@ module Kontena::Cli::Nodes
       node = client(token).delete("grids/#{current_grid}/nodes/#{id}")
     end
 
-    private
-
-    def current_grid
-      inifile['server']['grid']
-    end
   end
 end

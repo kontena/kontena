@@ -56,6 +56,21 @@ module Kontena
         end
         url
       end
+
+      def current_grid=(grid)
+        inifile['server']['grid'] = grid['id']
+        inifile.save(filename: ini_filename)
+      end
+
+      def clear_current_grid
+        inifile['server'].delete('grid')
+        inifile.save(filename: ini_filename)
+      end
+
+      def current_grid
+        inifile['server']['grid']
+      end
+
     end
   end
 end
