@@ -1,24 +1,26 @@
 require 'kontena/client'
 require_relative '../common'
-require 'pp'
 
-module Kontena::Cli::Platform
+module Kontena::Cli::Grids
   class Users
     include Kontena::Cli::Common
 
     def add(email)
       require_api_url
+      token = require_token
       data = { email: email }
       client(token).post("grids/#{current_grid}/users", data)
     end
 
     def remove(email)
       require_api_url
-
+      token = require_token
       result = client(token).delete("grids/#{current_grid}/users/#{email}")
     end
 
     def list
+      require_api_url
+      token = require_token
       result = client(token).get("grids/#{current_grid}/users")
       puts "%-40s %-40s" % ['Email', 'Name']
       result['users'].each { |user|
@@ -26,14 +28,5 @@ module Kontena::Cli::Platform
       }
     end
 
-    private
-
-    def token
-      @token ||= require_token
-    end
-
-    def current_grid
-      inifile['platform']['grid']
-    end
   end
 end

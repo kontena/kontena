@@ -12,4 +12,8 @@ end
 default_command :help
 never_trace!
 
-require_relative 'platform/commands'
+require_relative 'server/commands'
+require_relative 'containers/commands'
+require_relative 'grids/commands'
+require_relative 'nodes/commands'
+require_relative 'services/commands'
