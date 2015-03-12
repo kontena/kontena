@@ -1,7 +1,7 @@
 require 'kontena/client'
 require_relative '../common'
 
-module Kontena::Cli::Platform
+module Kontena::Cli::Server
   class User
     include Kontena::Cli::Common
 
@@ -19,7 +19,7 @@ module Kontena::Cli::Platform
       response = client.post('auth', {}, params)
 
       if response
-        inifile['platform']['token'] = response['access_token']
+        inifile['server']['token'] = response['access_token']
         inifile.save(filename: ini_filename)
         true
       else
@@ -29,8 +29,15 @@ module Kontena::Cli::Platform
     end
 
     def logout
-      inifile['platform'].delete('token')
+      inifile['server'].delete('token')
       inifile.save(filename: ini_filename)
+    end
+
+    def invite(email)
+      require_api_url
+      data = { email: email }
+      response = client(token).post('users', data)
+      puts 'Invitation sent' if response
     end
 
     def register
@@ -42,7 +49,14 @@ module Kontena::Cli::Platform
         raise ArgumentError.new("Passwords don't match")
       end
       params = {email: email, password: password}
-      response = client.post('users', params)
+      client(token).post('users/register', params)
     end
+
+    private
+
+    def token
+      @token ||= require_token
+    end
+
   end
 end

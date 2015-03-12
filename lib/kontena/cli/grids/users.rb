@@ -1,8 +1,7 @@
 require 'kontena/client'
 require_relative '../common'
-require 'pp'
 
-module Kontena::Cli::Platform
+module Kontena::Cli::Grids
   class Users
     include Kontena::Cli::Common
 
@@ -33,7 +32,7 @@ module Kontena::Cli::Platform
     end
 
     def current_grid
-      inifile['platform']['grid']
+      inifile['server']['grid']
     end
   end
 end

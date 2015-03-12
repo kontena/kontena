@@ -1,7 +1,7 @@
 require 'kontena/client'
 require_relative '../common'
 
-module Kontena::Cli::Platform
+module Kontena::Cli::Grids
   class Grids
     include Kontena::Cli::Common
 
@@ -29,9 +29,9 @@ module Kontena::Cli::Platform
       grid = find_grid_by_name(name)
       if !grid.nil?
         self.current_grid = grid
-        print color("Using #{grid['name']} [#{grid['id']}]", :green)
+        print color("Using #{grid['name']}", :green)
       else
-        print color('Could not resolve grid by name. For a list of existing grids please run: kontena grids', :red)
+        print color('Could not resolve grid by name. For a list of existing grids please run: kontena grid list', :red)
       end
 
     end
@@ -40,34 +40,20 @@ module Kontena::Cli::Platform
       require_api_url
 
       grid = find_grid_by_name(name)
-      puts "#{grid['name']}:"
-      puts "  token: #{grid['token']}"
-      puts "  users: #{grid['userCount']}"
-      puts "  nodes: #{grid['nodeCount']}"
-      puts "  containers: #{grid['containerCount']}"
+      print_grid(grid)
+
     end
 
     def current
       require_api_url
+      if current_grid_id.nil?
+        puts 'No grid selected. To select grid, please run: kontena use <grid name>'
 
-      grid = client(token).get("grids/#{current_grid_id}")
-      pp grid
-    end
-
-    def audit_log(options)
-      require_api_url
-
-      audit_logs = client(token).get("grids/#{current_grid_id}/audit_log", {limit: options.limit})
-      headings = ['time', 'grid', 'resource type', 'resource name', 'event name', 'user', 'source ip', 'user agent']
-      rows = []
-      audit_logs['logs'].each do |log|
-
-        rows << [ log['time'], log['grid'], log['resource_type'], log['resource_name'], log['event_name'], log['user_identity']['email'], log['source_ip'], log['user_agent']]
+      else
+        grid = client(token).get("grids/#{current_grid_id}")
+        print_grid(grid)
       end
-      table = Terminal::Table.new :headings => headings, :rows => rows
-      puts table
     end
-
 
     def create(name=nil)
       require_api_url
@@ -92,11 +78,21 @@ module Kontena::Cli::Platform
           puts "removed #{grid['name']} (#{grid['id']})"
         end
       else
-        print color('Could not resolve grid by name. For a list of existing grids please run: kontena grids', :red)
+        print color('Could not resolve grid by name. For a list of existing grids please run: kontena grid list', :red)
       end
     end
 
     private
+
+    ##
+    # @param [Hash] grid
+    def print_grid(grid)
+      puts "#{grid['name']}:"
+      puts "  token: #{grid['token']}"
+      puts "  users: #{grid['userCount']}"
+      puts "  nodes: #{grid['nodeCount']}"
+      puts "  containers: #{grid['containerCount']}"
+    end
 
     def token
       @token ||= require_token
@@ -107,17 +103,17 @@ module Kontena::Cli::Platform
     end
 
     def current_grid=(grid)
-      inifile['platform']['grid'] = grid['id']
+      inifile['server']['grid'] = grid['id']
       inifile.save(filename: ini_filename)
     end
 
     def clear_current_grid
-      inifile['platform'].delete('grid')
+      inifile['server'].delete('grid')
       inifile.save(filename: ini_filename)
     end
 
     def current_grid_id
-      inifile['platform']['grid']
+      inifile['server']['grid']
     end
 
     def find_grid_by_name(name)

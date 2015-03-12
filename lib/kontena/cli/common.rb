@@ -9,7 +9,7 @@ module Kontena
       end
 
       def require_token
-        token = inifile['platform']['token']
+        token = inifile['server']['token']
         unless token
           raise ArgumentError.new("Please login first using: kontena login")
         end
@@ -50,7 +50,7 @@ module Kontena
       end
 
       def api_url
-        url = inifile['platform']['url']
+        url = inifile['server']['url']
         unless url
           raise ArgumentError.new("Please init service first using: kontena connect")
         end

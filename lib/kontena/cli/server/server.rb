@@ -1,26 +1,19 @@
 require 'kontena/client'
 require_relative '../common'
-require_relative '../platform/user'
 
-module Kontena::Cli::Platform
-  class Api
+module Kontena::Cli::Server
+  class Server
     include Kontena::Cli::Common
 
     def connect(api_url = nil, options)
       api_url = ask('Kontena server url: [https://api.kontena.io] ') if api_url.nil?
       api_url = 'https://api.kontena.io' if api_url == ''
-      inifile['platform']['url'] = api_url
+      inifile['server']['url'] = api_url
       inifile.save(filename: ini_filename)
 
       sleep 0.1
       if client.get('ping') # test server connection
-        if options.register
-          Kontena::Cli::Platform::User.new.register
-          puts color('Registration succeeded, now please login:', :green)
-        end
-        if Kontena::Cli::Platform::User.new.login
           display_logo
-        end
       else
         print color('Could not connect to server', :red)
       end
@@ -28,7 +21,7 @@ module Kontena::Cli::Platform
     end
 
     def disconnect
-      inifile['platform'].delete('url')
+      inifile['server'].delete('url')
       inifile.save(filename: ini_filename)
     end
 
