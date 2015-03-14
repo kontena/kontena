@@ -15,6 +15,7 @@ module Kontena
     # @param [Hash] default_headers
     def initialize(api_url, default_headers = {})
       @http_client = HTTPClient.new
+      @http_client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE if ignore_ssl_errors?
       @default_headers = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"}.merge(default_headers)
       @api_url = api_url
     end
@@ -163,6 +164,10 @@ module Kontena
     # @return [String]
     def dump_json(obj)
       JSON.dump(obj)
+    end
+
+    def ignore_ssl_errors?
+      ENV['SSL_IGNORE_ERRORS'] == 'true'
     end
 
     def handle_error_response(response)
