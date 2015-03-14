@@ -44,5 +44,24 @@ module Kontena::Cli::Platform
       params = {email: email, password: password}
       response = client.post('users', params)
     end
+
+
+    def add_registry
+      default_url = 'https://index.docker.io/v1/'
+      require_api_url
+      username = ask("Username: ")
+      password = password("Password: ")
+      email = ask("Email: ")
+      url = ask("URL [#{default_url}]: ")
+      url = default_url if url.strip == ''
+      data = { username: username, password: password, email: email, url: url }
+      client(token).post("user/registries", data)
+    end
+
+    private
+
+    def token
+      @token ||= require_token
+    end
   end
 end

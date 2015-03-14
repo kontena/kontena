@@ -25,6 +25,14 @@ command 'disconnect' do |c|
   end
 end
 
+command 'registry add' do |c|
+  c.syntax = 'kontena registry add'
+  c.description = 'Add registry information'
+  c.action do |args, options|
+    Kontena::Cli::Platform::User.new.add_registry
+  end
+end
+
 command 'grid list' do |c|
   c.syntax = 'kontena grid list'
   c.description = 'List all grids'
@@ -223,6 +231,7 @@ command 'service update' do |c|
   c.option '-e', '--env Array', Array, 'Environment variables'
   c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
   c.option '--cmd STRING', String, 'Command to execute'
+  c.option '--image STRING', String, 'Change image'
   c.action do |args, options|
     Kontena::Cli::Platform::Services.new.update(args[0], options)
   end

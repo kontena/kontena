@@ -11,10 +11,10 @@ module Kontena::Cli::Platform
       token = require_token
 
       grids = client(token).get("grids/#{current_grid}/services")
-      puts "%-30.30s %-20.20s %-15s %-8s" % ['NAME', 'IMAGE', 'INSTANCES', 'STATE?']
+      puts "%-30.30s %-40.40s %-15s %-8s" % ['NAME', 'IMAGE', 'INSTANCES', 'STATE?']
       grids['services'].each do |service|
         state = service['stateful'] ? 'yes' : 'no'
-        puts "%-30.30s %-20.20s %-15.15s %-8s" % [service['id'], service['image'], service['container_count'], state]
+        puts "%-30.30s %-40.40s %-15.15s %-8s" % [service['id'], service['image'], service['container_count'], state]
       end
     end
 
@@ -42,6 +42,12 @@ module Kontena::Cli::Platform
       service['ports'].each do |p|
         puts "    - #{p['node_port']}:#{p['container_port']}/#{p['protocol']}"
       end
+      puts "  links: "
+      if service['links']
+        service['links'].each do |p|
+          puts "    - #{p['alias']}"
+        end
+      end
       puts "  containers:"
       result = client(token).get("services/#{service_id}/containers")
       result['containers'].each do |container|
@@ -50,7 +56,11 @@ module Kontena::Cli::Platform
         puts "      node: #{container['node']['name']}"
         puts "      dns: #{container['id']}.kontena.local"
         puts "      ip: #{container['network_settings']['ip_address']}"
-        puts "      status: #{container['status']}"
+        if container['status'] == 'unknown'
+          puts "      status: #{container['status'].colorize(:yellow)}"
+        else
+          puts "      status: #{container['status']}"
+        end
       end
     end
 
@@ -119,7 +129,6 @@ module Kontena::Cli::Platform
       }
       if options.link
         links = parse_links(options.link)
-
       end
       data[:ports] = ports if options.ports
       data[:links] = links if options.link
@@ -150,6 +159,7 @@ module Kontena::Cli::Platform
       data[:container_count] = options.instances if options.instances
       data[:cmd] = options.cmd.split(" ") if options.cmd
       data[:ports] = parse_ports(options.ports) if options.ports
+      data[:image] = options.image if options.image
 
       client(token).put("services/#{service_id}", data)
     end

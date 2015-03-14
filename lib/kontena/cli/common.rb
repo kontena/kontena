@@ -1,5 +1,6 @@
 require 'inifile'
 require 'terminal-table'
+require 'colorize'
 
 module Kontena
   module Cli
