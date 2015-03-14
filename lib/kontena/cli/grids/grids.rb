@@ -95,7 +95,7 @@ module Kontena::Cli::Grids
     end
 
     def grids
-      @grids ||= client(token).get('grids')
+      @grids ||= client(require_token).get('grids')
     end
 
     def find_grid_by_name(name)
