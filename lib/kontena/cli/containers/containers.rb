@@ -1,6 +1,7 @@
 require 'kontena/client'
 require_relative '../common'
-module Kontena::Cli::Platform
+
+module Kontena::Cli::Containers
   class Containers
     include Kontena::Cli::Common
 

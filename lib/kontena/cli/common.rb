@@ -10,7 +10,7 @@ module Kontena
       end
 
       def require_token
-        token = inifile['platform']['token']
+        token = inifile['server']['token']
         unless token
           raise ArgumentError.new("Please login first using: kontena login")
         end
@@ -51,12 +51,27 @@ module Kontena
       end
 
       def api_url
-        url = inifile['platform']['url']
+        url = inifile['server']['url']
         unless url
           raise ArgumentError.new("Please init service first using: kontena connect")
         end
         url
       end
+
+      def current_grid=(grid)
+        inifile['server']['grid'] = grid['id']
+        inifile.save(filename: ini_filename)
+      end
+
+      def clear_current_grid
+        inifile['server'].delete('grid')
+        inifile.save(filename: ini_filename)
+      end
+
+      def current_grid
+        inifile['server']['grid']
+      end
+
     end
   end
 end

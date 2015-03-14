@@ -1,6 +1,7 @@
 require 'kontena/client'
 require_relative '../common'
-module Kontena::Cli::Platform
+
+module Kontena::Cli::Nodes
   class Nodes
     include Kontena::Cli::Common
 
@@ -10,7 +11,6 @@ module Kontena::Cli::Platform
 
       grids = client(token).get("grids/#{current_grid}/nodes")
       puts "%-20s %-20s %-10s %-20s %-10s" % ['Name', 'OS', 'Driver', 'Labels', 'Status']
-      rows = []
       grids['nodes'].each do |node|
         if node['connected']
           status = 'online'
@@ -54,10 +54,5 @@ module Kontena::Cli::Platform
       node = client(token).delete("grids/#{current_grid}/nodes/#{id}")
     end
 
-    private
-
-    def current_grid
-      inifile['platform']['grid']
-    end
   end
 end
