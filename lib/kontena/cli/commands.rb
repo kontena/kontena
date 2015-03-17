@@ -4,7 +4,7 @@ module Kontena::Cli; end;
 
 program :name, 'kontena'
 program :version, Kontena::Cli::VERSION
-program :description, 'Command line interface for Kontena.io'
+program :description, 'Command line interface for Kontena.'
 program :int_block do
   exit 1
 end
