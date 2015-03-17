@@ -38,7 +38,7 @@ module Kontena::Cli::Server
       token = require_token
       data = { email: email }
       response = client(token).post('users', data)
-      puts 'Invitation sent' if response
+      puts 'User invited' if response
     end
 
     def register
