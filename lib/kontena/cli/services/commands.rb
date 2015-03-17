@@ -120,7 +120,8 @@ end
 command 'service stats' do |c|
   c.syntax = 'kontena service stats <name>'
   c.description = 'Show service stats'
+  c.option '-f', '--follow', 'Follow stats in real time'
   c.action do |args, options|
-    Kontena::Cli::Services::Stats.new.show(args[0])
+    Kontena::Cli::Services::Stats.new.show(args[0], options)
   end
 end
