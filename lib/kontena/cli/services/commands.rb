@@ -85,6 +85,14 @@ command 'service update' do |c|
   end
 end
 
+command 'service scale' do |c|
+  c.syntax = 'kontena service scale <service_id> <instances>'
+  c.description = 'Scale service horizontally'
+  c.action do |args, options|
+    Kontena::Cli::Services::Services.new.scale(args[0], args[1])
+  end
+end
+
 command 'service delete' do |c|
   c.syntax = 'kontena service delete <service_id>'
   c.description = 'Delete service'
