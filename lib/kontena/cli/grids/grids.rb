@@ -50,7 +50,7 @@ module Kontena::Cli::Grids
         puts 'No grid selected. To select grid, please run: kontena use <grid name>'
 
       else
-        grid = client(token).get("grids/#{current_grid_id}")
+        grid = client(require_token).get("grids/#{current_grid}")
         print_grid(grid)
       end
     end
