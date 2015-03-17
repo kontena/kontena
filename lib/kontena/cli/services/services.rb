@@ -63,11 +63,25 @@ module Kontena::Cli::Services
       end
     end
 
+    def scale(service_id, count)
+      client(require_token).put("services/#{service_id}", {container_count: count})
+      self.deploy(service_id)
+    end
+
     def deploy(service_id)
       require_api_url
       token = require_token
 
       result = client(token).post("services/#{service_id}/deploy", {})
+
+      print 'deploying '
+      until client(token).get("services/#{service_id}")['state'] != 'deploying' do
+        print '.'
+        sleep 1
+      end
+      puts ' done'
+      puts ''
+      self.show(service_id)
     end
 
     def restart(service_id)
@@ -136,7 +150,7 @@ module Kontena::Cli::Services
       data[:ports] = parse_ports(options.ports) if options.ports
       data[:image] = options.image if options.image
 
-      client(token).put("services/#{service_id}", data)
+      client(require_token).put("services/#{service_id}", data)
     end
 
     def destroy(service_id)
