@@ -28,7 +28,7 @@ module Kontena
       base = self
       RubyDNS::run_server(asynchronous: true, listen: INTERFACES, logger: self.logger) do
         match(/(.*)\.kontena\.local/, IN::A) do |transaction, match_data|
-          result = base.ask_from_server(match_data[1])
+          result = base.resolve_address(match_data[1])
           if result && result[0]
             result.shuffle.each do |r|
               transaction.respond!(r, ttl: 10)
@@ -48,7 +48,7 @@ module Kontena
     ##
     # @param [String] name
     # @return [Array<String>,NilClass]
-    def ask_from_server(name)
+    def resolve_address(name)
       self.rpc_client.request('/dns/record', name)
     rescue
       nil
