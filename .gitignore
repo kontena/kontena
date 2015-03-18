@@ -1,0 +1,8 @@
+packaging/ubuntu/*.deb
+packaging/coreos/
+virtualbox/*
+log/*
+.idea
+.vagrant
+.env
+.bundle

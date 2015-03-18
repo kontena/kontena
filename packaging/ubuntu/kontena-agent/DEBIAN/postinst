@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+/usr/bin/docker pull kontena/agent:latest
+/usr/bin/docker pull google/cadvisor:0.7.1
