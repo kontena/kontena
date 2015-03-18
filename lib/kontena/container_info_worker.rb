@@ -8,11 +8,16 @@ module Kontena
     LOG_NAME = 'ContainerInfoWorker'
     attr_reader :queue, :node_info
 
+    ##
+    # @param [Queue] queue
     def initialize(queue)
       @queue = queue
       @node_info = {}
     end
 
+    ##
+    # Start work
+    #
     def start!
       Thread.new {
         self.publish_node_info
@@ -26,6 +31,9 @@ module Kontena
       }
     end
 
+    ##
+    # Publish node info to queue
+    #
     def publish_node_info
       logger.info(LOG_NAME) { 'publishing node information' }
       @node_info = Docker.info

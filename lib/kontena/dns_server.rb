@@ -24,6 +24,9 @@ module Kontena
       @rpc_client = Kontena::RpcClient.new(client, 1)
     end
 
+    ##
+    # Start DNS server
+    #
     def start!
       base = self
       RubyDNS::run_server(asynchronous: true, listen: INTERFACES, logger: self.logger) do

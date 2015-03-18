@@ -30,6 +30,9 @@ module Kontena
       end
     end
 
+    ##
+    # Start to process queue
+    #
     def start_queue_processing
       return unless @queue_thread.nil?
 
@@ -46,6 +49,9 @@ module Kontena
       }
     end
 
+    ##
+    # Stop queue processing
+    #
     def stop_queue_processing
       if @queue_thread
         logger.info(LOG_NAME) { 'stopped processing' }
@@ -55,6 +61,8 @@ module Kontena
       end
     end
 
+    ##
+    # @param [Hash] event
     def on_queue_push(event)
       logger.debug(LOG_NAME) { "queue push: #{event}" }
       if @queue.length > 1000

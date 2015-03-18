@@ -17,6 +17,9 @@ module Kontena
       @queue = queue
     end
 
+    ##
+    # Start to stream events from Docker
+    #
     def start!
       Thread.new {
         self.stream_events

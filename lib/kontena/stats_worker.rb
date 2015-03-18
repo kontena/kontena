@@ -37,6 +37,8 @@ module Kontena
       }
     end
 
+    ##
+    # @param [Hash] container
     def send_container_stats(container)
       prev_stat = container['stats'][-2]
       return if prev_stat.nil?
@@ -69,6 +71,9 @@ module Kontena
       self.queue << event
     end
 
+    ##
+    # Fetch stats from cAdvisor
+    #
     def fetch_stats
       resp = Excon.get(self.url)
       if resp.status == 200

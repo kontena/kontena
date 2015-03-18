@@ -16,6 +16,9 @@ module Kontena
       @streaming_threads = {}
     end
 
+    ##
+    # Start to stream logs from Docker
+    #
     def start!
       Thread.new {
         Docker::Container.all.each do |container|
@@ -47,6 +50,10 @@ module Kontena
       }
     end
 
+    ##
+    # @param [String] id
+    # @param [String] stream
+    # @param [String] chunk
     def on_message(id, stream, chunk)
       self.queue << {
           event: 'container:log',
