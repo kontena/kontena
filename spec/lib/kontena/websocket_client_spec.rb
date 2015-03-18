@@ -4,8 +4,14 @@ describe Kontena::WebsocketClient do
 
   let(:subject) { described_class.new('', '')}
 
-  describe '#on_message' do
+  around(:each) do |example|
+    EM.run {
+      example.run
+      EM.stop
+    }
+  end
 
+  describe '#on_message' do
     it 'calls subscribers when response message' do
       subscriber = spy
       expect(subscriber).to receive(:on_message).once
@@ -14,6 +20,7 @@ describe Kontena::WebsocketClient do
       }
       event = double(:event, data: MessagePack.dump([1, 'test', nil, 'daa']).bytes)
       subject.on_message(double.as_null_object, event)
+      EM.run_deferred_callbacks
     end
   end
 end

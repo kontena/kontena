@@ -9,18 +9,15 @@ module Kontena
 
     attr_reader :queue, :client
 
-    ##
-    # @param [WebsocketClient] client
-    def initialize(client = nil)
+    def initialize
       @queue = Queue.new
-      self.client = client unless client.nil?
       logger.info(LOG_NAME) { 'initialized' }
     end
 
     ##
     # @param [WebsocketClient] client
     def client=(client)
-      @client = client.ws
+      @client = client
       self.register_client_events
     end
 
@@ -41,9 +38,7 @@ module Kontena
         loop do
           begin
             item = @queue.pop
-            EM.next_tick {
-              client.send(MessagePack.dump(item).bytes)
-            }
+            client.send_message(MessagePack.dump(item).bytes)
           rescue => exc
             logger.error exc.message
           end

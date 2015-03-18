@@ -13,6 +13,7 @@ module Kontena
     KEEPALIVE_TIME = 30
 
     attr_reader :api_uri, :api_token, :ws
+    delegate :on, to: :ws
 
     ##
     # @param [String] api_uri
@@ -54,8 +55,12 @@ module Kontena
       end
     end
 
+    ##
+    # @param [String, Array] msg
     def send_message(msg)
-      @ws.send(msg)
+      EM.next_tick {
+        @ws.send(msg)
+      }
     end
 
     def on_message(ws, event)
