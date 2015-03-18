@@ -62,11 +62,13 @@ describe Kontena::LogWorker do
     it 'stops streaming on stop' do
       expect(subject).to receive(:stop_streaming_container_logs).once.with('foo')
       subject.on_container_event(double(:event, id: 'foo', status: 'stop'))
+      sleep 0.01
     end
 
     it 'stops streaming on die' do
       expect(subject).to receive(:stop_streaming_container_logs).once.with('foo')
       subject.on_container_event(double(:event, id: 'foo', status: 'die'))
+      sleep 0.01
     end
 
     it 'starts streaming on start' do

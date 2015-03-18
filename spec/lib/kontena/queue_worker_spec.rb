@@ -2,7 +2,7 @@ require_relative '../../spec_helper'
 
 describe Kontena::QueueWorker do
 
-  class TestClient
+  class TestWsClient
 
     attr_accessor :events
 
@@ -24,22 +24,27 @@ describe Kontena::QueueWorker do
     end
   end
 
+  class TestClient
+    attr_accessor :ws
+    delegate :on, to: :ws
+
+    def initialize(ws)
+      self.ws = ws
+    end
+  end
+
   def wait_empty_queue(queue)
     sleep 0.00001 while queue.length > 0
   end
 
-  let(:ws) { TestClient.new }
-  let(:client) { double(:client, ws: ws) }
-  let(:subject) { described_class.new(client) }
+  let(:ws) { TestWsClient.new }
+  let(:client) { TestClient.new(ws) }
+  let(:subject) {
+    subject = described_class.new
+    subject.client = client
+    subject
+  }
   let(:msg) { {hello: 'world'} }
-
-  describe '.new' do
-    it 'registers events to ws' do
-      described_class.new(client)
-      expect(ws.events[:open]).not_to be_nil
-      expect(ws.events[:close]).not_to be_nil
-    end
-  end
 
   describe '#start_queue_processing' do
     it 'returns new thread if it is not already running' do
@@ -54,28 +59,28 @@ describe Kontena::QueueWorker do
     it 'calls client.send when queue gets data' do
       subject.start_queue_processing
       item = {foo: 'bar'}
-      expect(ws).to receive(:send).once
+      expect(client).to receive(:send_message).once
       subject.queue << item
       sleep 0.001
     end
 
     it 'resumes queue processing' do
-      allow(ws).to receive(:send)
+      allow(client).to receive(:send_message)
       subject.stop_queue_processing
       2.times do
         subject.queue << msg
       end
-      expect(ws).not_to have_received(:send)
+      expect(client).not_to have_received(:send_message)
       expect(subject.queue.length).to eq(2)
       subject.start_queue_processing
       wait_empty_queue(subject.queue)
-      expect(ws).to have_received(:send).twice.with(MessagePack.dump(msg).bytes)
+      expect(client).to have_received(:send_message).twice.with(MessagePack.dump(msg).bytes)
     end
   end
 
   describe '#stop_queue_processing' do
     it 'stops queue work' do
-      expect(ws).to receive(:send).twice.with(MessagePack.dump(msg).bytes)
+      expect(client).to receive(:send_message).twice.with(MessagePack.dump(msg).bytes)
       subject.start_queue_processing
       2.times do
         subject.queue << msg
