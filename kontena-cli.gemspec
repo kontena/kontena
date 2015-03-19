@@ -6,12 +6,12 @@ require 'kontena/cli/version'
 Gem::Specification.new do |spec|
   spec.name          = "kontena-cli"
   spec.version       = Kontena::Cli::VERSION
-  spec.authors       = ["Lauri Nevala"]
-  spec.email         = ["lauri.nevala@gmail.com"]
-  spec.summary       = %q{Kontena.io command line tool}
-  spec.description   = %q{Kontena.io command line tool}
-  spec.homepage      = ""
-  spec.license       = "MIT"
+  spec.authors       = ["Kontena, Inc"]
+  spec.email         = ["info@kontena.io"]
+  spec.summary       = %q{Kontena command line tool}
+  spec.description   = %q{Kontena command line tool}
+  spec.homepage      = "http://kontena.io"
+  spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
