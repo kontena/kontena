@@ -1,6 +1,6 @@
 # Kontena::Cli
 
-This is a command line tool for [Kontena.io](http://www.kontena.io).
+This is a command line tool for [Kontena](http://www.kontena.io).
 
 ## Installation
 
