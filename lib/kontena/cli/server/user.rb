@@ -16,7 +16,7 @@ module Kontena::Cli::Server
           scope: 'user'
       }
 
-      response = client.post('auth', {}, params)
+      response = client.post('auth', params)
 
       if response
         inifile['server']['token'] = response['access_token']
