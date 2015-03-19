@@ -53,6 +53,34 @@ module Kontena::Cli::Server
       client.post('users/register', params)
     end
 
+    def verify_account(token)
+      require_api_url
+
+      params = {token: token}
+      client.post('user/email_confirm', params)
+      print color('Account verified', :green)
+    end
+
+    def request_password_reset(email)
+      require_api_url
+
+      params = {email: email}
+      client.post('user/password_reset', params)
+      puts 'Email with password reset instructions is sent to your email address. Please follow the instructions to change your password.'
+    end
+
+    def reset_password(token)
+      require_api_url
+      password = password("Password: ")
+      password2 = password("Password again: ")
+      if password != password2
+        raise ArgumentError.new("Passwords don't match")
+      end
+      params = {token: token, password: password}
+      client.put('user/password_reset', params)
+      puts 'Password is now changed. To login with the new password, please run: kontena login'
+    end
+
     def add_registry
       default_url = 'https://index.docker.io/v1/'
       require_api_url

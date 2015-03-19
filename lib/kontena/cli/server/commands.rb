@@ -43,11 +43,35 @@ command 'register' do |c|
   end
 end
 
+command 'verify account' do |c|
+  c.syntax = 'kontena verify account <token>'
+  c.description = 'Verify Kontena.io account'
+  c.action do |args, options|
+    Kontena::Cli::Server::User.new.verify_account(args[0])
+  end
+end
+
 command 'invite' do |c|
   c.syntax = 'kontena invite <email>'
   c.description = 'Invite user to Kontena server'
   c.action do |args, options|
     Kontena::Cli::Server::User.new.invite(args[0])
+  end
+end
+
+command 'forgot password' do |c|
+  c.syntax = 'kontena forgot password <email>'
+  c.description = 'Request password reset for Kontena account'
+  c.action do |args, options|
+    Kontena::Cli::Server::User.new.request_password_reset(args[0])
+  end
+end
+
+command 'reset password' do |c|
+  c.syntax = 'kontena reset password <token>'
+  c.description = 'Reset Kontena password'
+  c.action do |args, options|
+    Kontena::Cli::Server::User.new.reset_password(args[0])
   end
 end
 
