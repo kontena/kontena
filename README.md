@@ -3,6 +3,7 @@
 This is a command line tool for [Kontena](http://www.kontena.io).
 
 ## Installation
+> Prerequisities: [Ruby](https://www.ruby-lang.org/en/)
 
 Install it yourself as:
 
