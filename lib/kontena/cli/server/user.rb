@@ -21,6 +21,7 @@ module Kontena::Cli::Server
       if response
         inifile['server']['token'] = response['access_token']
         inifile.save(filename: ini_filename)
+        puts 'Login Successful'
         true
       else
         print color('Invalid Personal Access Token', :red)
@@ -41,6 +42,13 @@ module Kontena::Cli::Server
       puts 'User invited' if response
     end
 
+    def whoami
+      require_api_url
+      token = require_token
+      user = client(token).get('user')
+      puts user['email'] if user
+    end
+
     def register
       require_api_url
       email = ask("Email: ")
@@ -55,7 +63,7 @@ module Kontena::Cli::Server
 
     def verify_account(token)
       require_api_url
-
+      token = ask("Token: ") if token.nil?
       params = {token: token}
       client.post('user/email_confirm', params)
       print color('Account verified', :green)
@@ -71,6 +79,7 @@ module Kontena::Cli::Server
 
     def reset_password(token)
       require_api_url
+      token = ask("Token: ") if token.nil?
       password = password("Password: ")
       password2 = password("Password again: ")
       if password != password2
