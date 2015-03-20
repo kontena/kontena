@@ -6,16 +6,19 @@ module Kontena::Cli::Server
     include Kontena::Cli::Common
 
     def connect(api_url = nil, options)
-      api_url = ask('Kontena server url: [https://api.kontena.io] ') if api_url.nil?
-      api_url = 'https://api.kontena.io' if api_url == ''
-      inifile['server']['url'] = api_url
-      inifile.save(filename: ini_filename)
+      api_url = ask('Kontena server url: ') if api_url.nil?
+      if !api_url.empty?
+        inifile['server']['url'] = api_url
+        inifile.save(filename: ini_filename)
 
-      sleep 0.1
-      if client.get('ping') # test server connection
-          display_logo
+        sleep 0.1
+        if client.get('ping') # test server connection
+            display_logo
+        else
+          print color('Could not connect to server.', :red)
+        end
       else
-        print color('Could not connect to server', :red)
+        print color('Server url cannot be empty.', :red)
       end
 
     end
