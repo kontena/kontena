@@ -78,6 +78,7 @@ command 'service update' do |c|
   c.description = 'Update service'
   c.option '-p', '--ports Array', Array, 'Exposed ports'
   c.option '-e', '--env Array', Array, 'Environment variables'
+  c.option '--image STRING', String, 'Service image'
   c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
   c.option '--cmd STRING', String, 'Command to execute'
   c.action do |args, options|
