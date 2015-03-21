@@ -121,6 +121,7 @@ module Kontena::Cli::Services
       end
       data[:ports] = ports if options.ports
       data[:links] = links if options.link
+      data[:volumes] = options.volume if options.volume
       data[:memory] = parse_memory(options.memory) if options.memory
       data[:memory_swap] = parse_memory(options.memory_swap) if options.memory_swap
       data[:cpu_shares] = options.cpu_shares if options.cpu_shares
