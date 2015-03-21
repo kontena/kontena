@@ -60,6 +60,7 @@ command 'service create' do |c|
   c.option '-e', '--env Array', Array, 'Set environment variables'
   c.option '-l', '--link Array', Array, 'Add link to another service in the form of name:alias'
   c.option '-v', '--volume Array', Array, 'Mount a volume'
+  c.option '--volumes_from Array', Array, 'Mount volumes from another container'
   c.option '-a', '--affinity Array', Array, 'Set service affinity'
   c.option '-c', '--cpu-shares INTEGER', Integer, 'CPU shares (relative weight)'
   c.option '-m', '--memory INTEGER', String, 'Memory limit (format: <number><optional unit>, where unit = b, k, m or g)'
