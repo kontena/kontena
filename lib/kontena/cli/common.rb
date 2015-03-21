@@ -63,6 +63,12 @@ module Kontena
         inifile.save(filename: ini_filename)
       end
 
+      def require_current_grid
+        if current_grid.nil?
+          raise ArgumentError.new("Please select grid first using: kontena grid use <grid name>")
+        end
+      end
+
       def clear_current_grid
         inifile['server'].delete('grid')
         inifile.save(filename: ini_filename)

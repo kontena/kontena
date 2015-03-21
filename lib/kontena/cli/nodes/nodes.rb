@@ -7,6 +7,7 @@ module Kontena::Cli::Nodes
 
     def list
       require_api_url
+      require_current_grid
       token = require_token
 
       grids = client(token).get("grids/#{current_grid}/nodes")
@@ -29,6 +30,7 @@ module Kontena::Cli::Nodes
 
     def show(id)
       require_api_url
+      require_current_grid
       token = require_token
 
       node = client(token).get("grids/#{current_grid}/nodes/#{id}")
@@ -49,6 +51,7 @@ module Kontena::Cli::Nodes
 
     def destroy(id)
       require_api_url
+      require_current_grid
       token = require_token
 
       node = client(token).delete("grids/#{current_grid}/nodes/#{id}")
