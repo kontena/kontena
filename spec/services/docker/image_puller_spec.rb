@@ -36,7 +36,7 @@ describe Docker::ImagePuller do
     end
 
     it 'creates a new image if it does not exist' do
-      allow(client).to receive(:request).with('/images/create', {fromImage: 'redis:2.8'})
+      allow(client).to receive(:request).with('/images/create', {fromImage: 'redis:2.8'}, nil)
       allow(client).to receive(:request).with('/images/show', 'redis:2.8').and_return(image_json)
       expect {
         subject.pull_image('redis:2.8')
@@ -44,7 +44,7 @@ describe Docker::ImagePuller do
     end
 
     it 'parses exposed ports from agent response' do
-      allow(client).to receive(:request).with('/images/create', {fromImage: 'redis:2.8'})
+      allow(client).to receive(:request).with('/images/create', {fromImage: 'redis:2.8'}, nil)
       allow(client).to receive(:request).with('/images/show', 'redis:2.8').and_return(image_json)
       subject.pull_image('redis:2.8')
 
@@ -54,7 +54,7 @@ describe Docker::ImagePuller do
 
     it 'does not create new image if it exists' do
       Image.create(name: 'redis:2.8')
-      allow(client).to receive(:request).with('/images/create', {fromImage: 'redis:2.8'})
+      allow(client).to receive(:request).with('/images/create', {fromImage: 'redis:2.8'}, nil)
       allow(client).to receive(:request).with('/images/show', 'redis:2.8').and_return(image_json)
       expect {
         subject.pull_image('redis:2.8')
