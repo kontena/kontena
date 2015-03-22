@@ -1,0 +1,1 @@
+json.partial! 'app/views/v1/users/user', user: @user

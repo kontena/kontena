@@ -1,0 +1,6 @@
+Package: kontena-server
+Version: 0.4.0-1
+Maintainer: jari@kontena.io
+Architecture: all
+Depends: lxc-docker (>= 1.4.0)
+Description: Kontena Server

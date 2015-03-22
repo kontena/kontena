@@ -1,0 +1,5 @@
+#!/bin/sh
+
+stop kontena-server-api
+stop kontena-server-mongo
+stop kontena-server-redis

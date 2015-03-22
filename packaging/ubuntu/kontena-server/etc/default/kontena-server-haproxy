@@ -1,0 +1,2 @@
+# HAProxy SSL certificate
+#SSL_CERT=/path/to/certificate.pem

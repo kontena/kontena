@@ -1,0 +1,27 @@
+development:
+  sessions:
+    default:
+      database: grid_development
+      hosts:
+        - localhost:27017
+  options:
+    use_utc: true
+    raise_not_found_error: false
+test:
+  sessions:
+    default:
+      database: grid_test
+      hosts:
+        - localhost:27017
+  options:
+    use_utc: true
+    raise_not_found_error: false
+production:
+  sessions:
+    default:
+      options:
+        pool_size: 25
+      uri: <%= ENV['MONGODB_URI'] %>
+  options:
+    use_utc: true
+    raise_not_found_error: false

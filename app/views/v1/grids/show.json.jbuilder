@@ -1,0 +1,1 @@
+json.partial! 'app/views/v1/grids/grid', grid: @grid

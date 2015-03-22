@@ -1,0 +1,17 @@
+*.gem
+*.rbc
+*.pem
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/test/tmp/
+/test/version_tmp/
+/tmp/
+/.env
+/.env.test
+/.idea
+/virtualbox/
+/packaging/ubuntu/*.deb
+/.vagrant/
