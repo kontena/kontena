@@ -13,7 +13,7 @@
 
 ## Installation
 
-> Prerequisities: Docker 1.4 or later
+> Prerequisities: [Docker](https://www.docker.com) 1.4 or later
 
 ### Ubuntu 14.04
 
@@ -40,7 +40,7 @@ SSL_CERT=/path/to/certificate.pem
 $ sudo start kontena-server-api
 ```
 
-Server should now listen on port 8443.
+Server should now listen on port 8443 or 8080 depending on have you configured SSL or not.
 
 ## Development
 
