@@ -1,4 +1,6 @@
 language: ruby
 rvm:
     - 2.2.0
+services:
+  - mongodb
 script: bundle exec rspec spec/
