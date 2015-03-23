@@ -6,8 +6,9 @@ module Kontena::Cli::Server
     include Kontena::Cli::Common
 
     def connect(api_url = nil, options)
-      api_url = ask('Kontena server url: [https://api.kontena.io] ') if api_url.nil?
-      api_url = 'https://api.kontena.io' if api_url == ''
+      until !api_url.nil? && !api_url.empty?
+        api_url = ask('Kontena server url: ')
+      end
       inifile['server']['url'] = api_url
       inifile.save(filename: ini_filename)
 
