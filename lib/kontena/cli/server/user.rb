@@ -33,6 +33,14 @@ module Kontena::Cli::Server
       inifile.save(filename: ini_filename)
     end
 
+    def whoami
+      require_api_url
+      puts "Server: #{inifile['server']['url']}"
+      token = require_token
+      response = client(token).get('user')
+      puts "User: #{response['email']}"
+    end
+
     def invite(email)
       require_api_url
       token = require_token

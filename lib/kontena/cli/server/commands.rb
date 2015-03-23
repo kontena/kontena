@@ -35,6 +35,14 @@ command 'logout' do |c|
   end
 end
 
+command 'whoami' do |c|
+  c.syntax = 'kontena whoami'
+  c.description = 'Display your Kontena email address and server url'
+  c.action do |args, options|
+    Kontena::Cli::Server::User.new.whoami
+  end
+end
+
 command 'register' do |c|
   c.syntax = 'kontena register'
   c.description = 'Register to Kontena.io'
