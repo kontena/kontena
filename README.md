@@ -3,6 +3,7 @@
 This is a command line tool for [Kontena](http://www.kontena.io).
 
 ## Installation
+> Prerequisities: [Ruby](https://www.ruby-lang.org/en/
 
 Install it yourself as:
 
@@ -33,3 +34,7 @@ To get list of all commands:
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+## License
+
+Kontena is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE.txt) for full license text.
