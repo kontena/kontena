@@ -1,5 +1,7 @@
 # Kontena Agent
 
+[![Build Status](https://travis-ci.org/kontena/kontena-agent.svg?branch=master)](https://travis-ci.org/kontena/kontena-agent)
+
 Kontena is a tool for monitoring and managing containerized services and applications. Kontena Agent runs inside a Docker container and communicates to Kontena Server using WebSockets. Agent handles containers inside a single host node and accepts commands from Kontena Server.
 
 ## Features
