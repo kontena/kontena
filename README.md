@@ -1,1 +1,3 @@
-# docs
+# Kontena Documentation
+
+Coming soon.
