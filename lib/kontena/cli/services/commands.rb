@@ -115,8 +115,9 @@ end
 command 'service logs' do |c|
   c.syntax = 'kontena service logs <service_id>'
   c.description = 'Show service logs'
+  c.option '-f', '--follow', 'Follow logs in real time'
   c.action do |args, options|
-    Kontena::Cli::Services::Logs.new.show(args[0])
+    Kontena::Cli::Services::Logs.new.show(args[0], options)
   end
 end
 

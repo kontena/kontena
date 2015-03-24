@@ -7,13 +7,19 @@ module Kontena::Cli::Services
 
     ##
     # @param [String] service_id
-    def show(service_id)
+    def show(service_id, options)
       require_api_url
       token = require_token
-
-      result = client(token).get("services/#{service_id}/container_logs")
-      result['logs'].each do |log|
-        puts log['data']
+      last_id = nil
+      loop do
+        query_params = last_id.nil? ? '' : "from=#{last_id}"
+        result = client(token).get("services/#{service_id}/container_logs?#{query_params}")
+        result['logs'].each do |log|
+          puts log['data']
+          last_id = log['id']
+        end
+        break unless options.follow
+        sleep(2)
       end
     end
   end
