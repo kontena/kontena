@@ -78,7 +78,7 @@ describe '/v1/services' do
       expect(json_response['logs'].first['data']).to eq('foo')
     end
 
-    context 'when after parameter is passed' do
+    context 'when from parameter is passed' do
       it 'returns service container logs created after passed id' do
         container = redis_service.containers.create!(name: 'redis-1')
         log1 = container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
