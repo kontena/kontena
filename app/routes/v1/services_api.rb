@@ -57,7 +57,10 @@ module V1
           r.on 'container_logs' do
             scope = grid_service.container_logs
             limit = (r['limit'] || 500).to_i
-            @logs = grid_service.container_logs.order(:$natural => -1).limit(limit).to_a.reverse
+            unless r['from'].nil?
+              scope = scope.where(:id.gt => r['from'] )
+            end
+            @logs = scope.order(:$natural => -1).limit(limit).to_a.reverse
             render('container_logs/index')
           end
         end
