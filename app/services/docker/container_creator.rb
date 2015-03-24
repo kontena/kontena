@@ -87,9 +87,10 @@ module Docker
         linked_service = link.linked_grid_service
         image = Image.find_by(name: linked_service.image_name)
         next unless image
+        containers_count = linked_service.containers.size
         linked_service.containers.each_with_index do |container, index|
-          i = index + 1
-          link_alias = "#{link.alias.upcase.sub("-", "_")}_#{i}"
+          container_index = containers_count > 1 ? "_#{index + 1}" : ''
+          link_alias = "#{link.alias.upcase.sub("-", "_")}#{container_index}"
           ip_address = container.network_settings['ip_address']
           image.exposed_ports.each do |port|
             result << "#{link_alias}_PORT_#{port['port']}_#{port['protocol'].upcase}=#{port['protocol']}://#{ip_address}:#{port['port']}"

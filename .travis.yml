@@ -1,0 +1,7 @@
+language: ruby
+rvm:
+  - 2.2.0
+services:
+  - mongodb
+  - redis-server
+script: bundle exec rspec spec/

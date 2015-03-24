@@ -13,7 +13,6 @@ describe Docker::ContainerCreator do
   let(:linked_grid_service) do
     grid_service = GridService.create!(name: 'linked-service-test', image_name: 'ubuntu-trusty', image: ubunty_trusty)
     Container.create(grid_service: grid_service, name: 'linked-service-test-1', network_settings: {'ip_address' => '0.0.0.0'}, image: 'ubuntu_trusty', env: ['SOME_KEY=value'])
-    Container.create(grid_service: grid_service, name: 'linked-service-test-2', network_settings: {'ip_address' => '0.0.0.1'}, image: 'ubuntu_trusty', env: ['SOME_KEY=value'])
     grid_service
   end
 
@@ -38,21 +37,40 @@ describe Docker::ContainerCreator do
   end
 
   describe '#build_linked_services_env_vars' do
-    it 'generates env variables from exposed ports of image' do
-      env_vars = subject.build_linked_services_env_vars
-      expect(env_vars).to include('TEST_1_PORT_3306_TCP=tcp://0.0.0.0:3306')
-      expect(env_vars).to include('TEST_1_PORT_3306_TCP_PORT=3306')
-      expect(env_vars).to include('TEST_1_PORT_3306_TCP_ADDR=0.0.0.0')
-      expect(env_vars).to include('TEST_1_PORT_3306_TCP_PROTO=tcp')
-      expect(env_vars).to include('TEST_2_PORT_3306_TCP=tcp://0.0.0.1:3306')
-      expect(env_vars).to include('TEST_2_PORT_3306_TCP_PORT=3306')
-      expect(env_vars).to include('TEST_2_PORT_3306_TCP_ADDR=0.0.0.1')
-      expect(env_vars).to include('TEST_2_PORT_3306_TCP_PROTO=tcp')
+    context 'when linked service has one container' do
+      it 'generates env variables from exposed ports of image without container index' do
+        env_vars = subject.build_linked_services_env_vars
+        expect(env_vars).to include('TEST_PORT_3306_TCP=tcp://0.0.0.0:3306')
+        expect(env_vars).to include('TEST_PORT_3306_TCP_PORT=3306')
+        expect(env_vars).to include('TEST_PORT_3306_TCP_ADDR=0.0.0.0')
+        expect(env_vars).to include('TEST_PORT_3306_TCP_PROTO=tcp')
+      end
+
+      it 'generates env variables from linked grid service containers' do
+        expect(subject.build_linked_services_env_vars).to include('TEST_ENV_SOME_KEY=value')
+      end
     end
 
-    it 'generates env variables from linked grid service container' do
-      expect(subject.build_linked_services_env_vars).to include('TEST_1_ENV_SOME_KEY=value')
-      expect(subject.build_linked_services_env_vars).to include('TEST_2_ENV_SOME_KEY=value')
+    context 'when linked service has multiple containers' do
+      before :each do
+        Container.create(grid_service: linked_grid_service, name: 'linked-service-test-2', network_settings: {'ip_address' => '0.0.0.1'}, image: 'ubuntu_trusty', env: ['SOME_KEY=value'])
+      end
+      it 'generates env variables from exposed ports of image with container index' do
+        env_vars = subject.build_linked_services_env_vars
+        expect(env_vars).to include('TEST_1_PORT_3306_TCP=tcp://0.0.0.0:3306')
+        expect(env_vars).to include('TEST_1_PORT_3306_TCP_PORT=3306')
+        expect(env_vars).to include('TEST_1_PORT_3306_TCP_ADDR=0.0.0.0')
+        expect(env_vars).to include('TEST_1_PORT_3306_TCP_PROTO=tcp')
+        expect(env_vars).to include('TEST_2_PORT_3306_TCP=tcp://0.0.0.1:3306')
+        expect(env_vars).to include('TEST_2_PORT_3306_TCP_PORT=3306')
+        expect(env_vars).to include('TEST_2_PORT_3306_TCP_ADDR=0.0.0.1')
+        expect(env_vars).to include('TEST_2_PORT_3306_TCP_PROTO=tcp')
+      end
+
+      it 'generates env variables from linked grid service containers' do
+        expect(subject.build_linked_services_env_vars).to include('TEST_1_ENV_SOME_KEY=value')
+        expect(subject.build_linked_services_env_vars).to include('TEST_2_ENV_SOME_KEY=value')
+      end
     end
   end
 
