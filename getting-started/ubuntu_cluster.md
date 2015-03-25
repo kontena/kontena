@@ -115,6 +115,12 @@ post-up ip addr add dev weave 10.81.0.1/16
 ```
 > Note: each agent node must have different 10.81.0.x/16 cidr
 
+### Start Docker
+
+```sh
+$ sudo start docker
+```
+
 
 ### Start Agent
 
