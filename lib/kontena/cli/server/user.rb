@@ -21,9 +21,10 @@ module Kontena::Cli::Server
       if response
         inifile['server']['token'] = response['access_token']
         inifile.save(filename: ini_filename)
+        print color('Login Successful', :green)
         true
       else
-        print color('Invalid Personal Access Token', :red)
+        print color('Login Failed', :red)
         false
       end
     end
