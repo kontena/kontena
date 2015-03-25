@@ -50,7 +50,7 @@ $ kontena help
 
 ```sh
 $ kontena service create ghost-blog ghost:0.5 --stateful -p 8181:2368
-$ kontena service deploy
+$ kontena service deploy ghost-blog
 ```
 
 Now open browser at http://192.168.66.2:8181
