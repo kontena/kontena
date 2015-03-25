@@ -1,4 +1,5 @@
 # Kontena::Cli
+[![Gem Version](https://badge.fury.io/rb/kontena-cli.svg)](http://badge.fury.io/rb/kontena-cli)
 
 This is a command line tool for [Kontena](http://www.kontena.io).
 
