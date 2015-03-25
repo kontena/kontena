@@ -30,7 +30,7 @@ $ kontena connect http://192.168.66.100:8080
 ```sh
 $ kontena register
 ```
-Use the same email address as `vagrant up`
+Use the same email address as in `vagrant up` command
 
 ###Login to Kontena server
 ```sh
