@@ -93,12 +93,15 @@ KONTENA_TOKEN=<grid_token_from_server>
 
 ### Configure networking overlay
 
+
+#### Modify Docker config
 ```sh
 $ sudo vim /etc/default/docker
 DOCKER_OPTS="--bridge=weave --fixed-cidr=10.81.1.0/24 --dns 8.8.8.8 --dns 8.8.4.4"
 ```
 > Note: each agent node must have different 10.81.x.0/24 subnet
 
+#### Configure Weave overlay network
 
 ```sh
 $ sudo vim /etc/default/kontena-weave
