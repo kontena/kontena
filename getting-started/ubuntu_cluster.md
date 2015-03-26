@@ -47,7 +47,8 @@ $ gem install kontena-cli
 ### Connect & configure first grid
 
 ```
-$ kontena connect http://10.2.2.99:8443 # use https if you configured ssl certificate
+$ kontena connect http://10.2.2.99:8080 # use https and 8443 port if you configured ssl certificate
+$ kontena register # if you do not have Kontena account
 $ kontena login
 $ kontena grid create first-grid
 $ kontena grid use first-grid
@@ -84,8 +85,8 @@ $ sudo stop docker
 ```sh
 $ sudo vim /etc/default/kontena-agent
 
-# Set to your kontena server (use wss if you have ssl setup)
-KONTENA_URI=ws://10.2.2.99:8443
+# Set to your kontena server (use wss and 8443 port if you have ssl setup)
+KONTENA_URI=ws://10.2.2.99:8080
 
 # Set kontena grid token
 KONTENA_TOKEN=<grid_token_from_server>
