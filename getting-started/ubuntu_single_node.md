@@ -28,6 +28,7 @@ $ sudo start kontena-server-api
 
 ```
 $ kontena connect http://localhost:8080
+$ kontena register # if you don't have Kontena account
 $ kontena login
 $ kontena grid create first-grid
 $ kontena grid show first-grid
