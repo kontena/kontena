@@ -27,7 +27,7 @@ $ sudo start kontena-server-api
 ### Connect & Configure First Grid
 
 ```
-$ kontena connect http://localhost:8443
+$ kontena connect http://localhost:8080
 $ kontena login
 $ kontena grid create first-grid
 $ kontena grid show first-grid
@@ -45,7 +45,7 @@ first-grid:
 $ sudo vim /etc/default/kontena-agent
 
 # Set to your kontena server
-KONTENA_URI=ws://localhost:8443
+KONTENA_URI=ws://localhost:8080
 
 # Set kontena grid token
 KONTENA_TOKEN=<grid_token_from_server>
