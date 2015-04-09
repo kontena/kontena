@@ -1,0 +1,40 @@
+require_relative '../../spec_helper'
+
+describe GridServices::Deploy do
+  let(:user) { User.create!(email: 'joe@domain.com')}
+  let(:grid) {
+    grid = Grid.create!(name: 'test-grid')
+    grid.users << user
+    grid
+  }
+  let(:deploy_actor) { spy(:deploy_actor) }
+  let(:deployer) { spy(:deployer, async: deploy_actor, can_deploy?: true) }
+  let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
+  let(:subject) { described_class.new(current_user: user, grid_service: redis_service, strategy: 'ha')}
+
+  describe '#run' do
+    it 'sends deploy call to deployer' do
+      expect(subject).to receive(:deployer).and_return(deployer)
+      expect(deploy_actor).to receive(:deploy).once
+      outcome = subject.run
+      puts outcome.errors.message
+    end
+  end
+
+  describe '#registry_name' do
+    it 'returns DEFAULT_REGISTRY by default' do
+      expect(subject.registry_name).to eq(GridServices::Deploy::DEFAULT_REGISTRY)
+    end
+
+    it 'returns registry from image' do
+      subject.grid_service.image_name = 'kontena.io/admin/redis:2.8'
+      expect(subject.registry_name).to eq('kontena.io')
+    end
+  end
+
+  describe '#creds_for_registry' do
+    it 'return nil by default' do
+      expect(subject.creds_for_registry).to be_nil
+    end
+  end
+end
