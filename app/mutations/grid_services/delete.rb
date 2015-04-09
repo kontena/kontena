@@ -9,17 +9,24 @@ module GridServices
       prev_state = self.grid_service.state
       begin
         self.grid_service.set_state('deleting')
-        self.grid_service.containers.each do |container|
-          Docker::ContainerRemover.new(container).remove_container
+        self.grid_service.containers.scoped.each do |container|
+          remover_for(container).remove_container
         end
         self.grid_service.containers.volumes.each do |container|
-          Docker::ContainerRemover.new(container).remove_container
+          remover_for(container).remove_container
         end
       rescue => exc
         self.grid_service.set_state(prev_state)
         raise exc
       end
       self.grid_service.destroy
+    end
+
+    ##
+    # @param [Container] container
+    # @return [Docker::ContainerRemover]
+    def remover_for(container)
+      Docker::ContainerRemover.new(container)
     end
   end
 end
