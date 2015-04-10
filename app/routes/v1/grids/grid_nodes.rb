@@ -19,9 +19,7 @@ V1::GridsApi.route('grid_nodes') do |r|
 
   r.delete do
     r.on ':id' do |id|
-      puts id
       node = @grid.host_nodes.find_by(name: id)
-      puts node
       if node
         node.destroy
         response.status = 200
