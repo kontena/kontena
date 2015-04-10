@@ -14,10 +14,10 @@ describe GridServices::Deploy do
 
   describe '#run' do
     it 'sends deploy call to deployer' do
-      expect(subject).to receive(:deployer).and_return(deployer)
+      # since validate method is called in constructor we need to stub deployer method globally before initialization
+      allow_any_instance_of(described_class).to receive(:deployer).and_return(deployer)
       expect(deploy_actor).to receive(:deploy).once
-      outcome = subject.run
-      puts outcome.errors.message
+      subject.run
     end
   end
 
