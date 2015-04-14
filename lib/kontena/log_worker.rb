@@ -44,6 +44,12 @@ module Kontena
             self.logger.debug(LOG_NAME) { chunk }
             self.on_message(container.id, stream, chunk)
           }
+        rescue Excon::Errors::SocketError
+          logger.info(LOG_NAME) { "log socket error: #{container.id}" }
+          retry
+        rescue Docker::Error::TimeoutError
+          logger.info(LOG_NAME) { "log stream timeout: #{container.id}" }
+          retry
         rescue => exc
           logger.error(LOG_NAME) { "error while streaming logs: #{exc.message}"}
         end
