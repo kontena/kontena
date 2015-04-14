@@ -11,14 +11,14 @@ module Kontena::Cli::Nodes
       token = require_token
 
       grids = client(token).get("grids/#{current_grid}/nodes")
-      puts "%-20s %-20s %-10s %-20s %-10s" % ['Name', 'OS', 'Driver', 'Labels', 'Status']
+      puts "%-30s %-20s %-15s %-30s %-10s" % ['Name', 'OS', 'Driver', 'Labels', 'Status']
       grids['nodes'].each do |node|
         if node['connected']
           status = 'online'
         else
           status = 'offline'
         end
-        puts "%-20.20s %-20.20s %-10s %-20.20s %-10s" % [
+        puts "%-30.30s %-20.20s %-15s %-30.30s %-10s" % [
           node['name'],
           node['os'],
           node['driver'],
