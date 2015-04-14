@@ -10,10 +10,10 @@ module Kontena::Cli::Services
       token = require_token
 
       grids = client(token).get("grids/#{current_grid}/services")
-      puts "%-30.30s %-40.40s %-15s %-8s" % ['NAME', 'IMAGE', 'INSTANCES', 'STATE?']
+      puts "%-30.30s %-40.40s %-10s %-8s" % ['NAME', 'IMAGE', 'INSTANCES', 'STATEFUL']
       grids['services'].each do |service|
         state = service['stateful'] ? 'yes' : 'no'
-        puts "%-30.30s %-40.40s %-15.15s %-8s" % [service['id'], service['image'], service['container_count'], state]
+        puts "%-30.30s %-40.40s %-10.10s %-8s" % [service['id'], service['image'], service['container_count'], state]
       end
     end
 
