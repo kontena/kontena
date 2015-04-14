@@ -5,9 +5,10 @@ module Kontena
       ##
       # @param [String] ip
       # @param [String] port
+      # @param [Float] timeout
       # @return [Hash]
-      def port_open?(ip, port)
-        Timeout::timeout(2) do
+      def port_open?(ip, port, timeout = 2.0)
+        Timeout::timeout(timeout) do
           begin
             TCPSocket.new(ip, port).close
             {open: true}
