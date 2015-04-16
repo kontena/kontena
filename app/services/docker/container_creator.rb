@@ -18,21 +18,20 @@ module Docker
     def create_container(name, deploy_rev)
       client = self.host_node.rpc_client
 
-      docker_opts = self.build_docker_opts
-      docker_opts['name'] = name
-      docker_opts['Hostname'] = "#{name}.kontena.local"
+      docker_opts = self.build_docker_opts(name)
       container = self.request_create_container(client, self.grid_service.image, docker_opts, deploy_rev)
 
       container
     rescue RpcClient::TimeoutError => exc
-      puts exc.message
       add_error(:node, :timeout, "Connection timeout: node #{self.host_node.node_id}")
     end
 
     ##
     # @return [Hash]
-    def build_docker_opts
+    def build_docker_opts(container_name)
       docker_opts = { 'Image' => self.grid_service.image_name }
+      docker_opts['name'] = container_name
+      docker_opts['Hostname'] = "#{container_name}.kontena.local"
       docker_opts['User'] = self.grid_service.user if self.grid_service.user
       docker_opts['CpuShares'] = self.grid_service.cpu_shares if self.grid_service.cpu_shares
       docker_opts['Memory'] = self.grid_service.memory if self.grid_service.memory
@@ -43,6 +42,8 @@ module Docker
       docker_opts['Env'] += self.grid_service.env if self.grid_service.env
       docker_opts['ExposedPorts'] = self.exposed_ports(self.grid_service.ports) if self.grid_service.ports
       docker_opts['Volumes'] = self.build_volumes if self.grid_service.stateless? && self.grid_service.volumes
+      docker_opts['CapAdd'] = self.grid_service.cap_add if self.grid_service.cap_add && self.grid_service.cap_add.size > 0
+      docker_opts['CapDrop'] = self.grid_service.cap_drop if self.grid_service.cap_drop && self.grid_service.cap_drop.size > 0
 
       docker_opts
     end

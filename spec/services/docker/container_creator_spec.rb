@@ -85,4 +85,43 @@ describe Docker::ContainerCreator do
       }.to change{ grid_service.containers.count }.by(1)
     end
   end
+
+  describe '#build_docker_opts' do
+    it 'sets name' do
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['name']).to eq('redis-1')
+    end
+
+    it 'sets Image' do
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['Image']).to eq(subject.grid_service.image_name)
+    end
+
+    it 'sets Hostname' do
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['Hostname']).to eq('redis-1.kontena.local')
+    end
+
+    it 'sets CapAdd' do
+      grid_service.cap_add = ['NET_ADMIN']
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['CapAdd']).to eq(['NET_ADMIN'])
+    end
+
+    it 'does not set CapAdd if it\'s not set' do
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['CapAdd']).to be_nil
+    end
+
+    it 'sets CapDrop' do
+      grid_service.cap_drop = ['SETUID']
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['CapDrop']).to eq(['SETUID'])
+    end
+
+    it 'does not set CapDrop if it\'s not set' do
+      opts = subject.build_docker_opts('redis-1')
+      expect(opts['CapDrop']).to be_nil
+    end
+  end
 end
