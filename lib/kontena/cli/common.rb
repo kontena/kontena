@@ -1,4 +1,3 @@
-require 'inifile'
 require 'colorize'
 
 module Kontena
@@ -9,7 +8,7 @@ module Kontena
       end
 
       def require_token
-        token = inifile['server']['token']
+        token = settings['server']['token']
         unless token
           raise ArgumentError.new("Please login first using: kontena login")
         end
@@ -29,28 +28,23 @@ module Kontena
         @client
       end
 
-      def ini_filename
-        File.join(Dir.home, '/.kontena_client')
+      def settings_filename
+        File.join(Dir.home, '/.kontena_client.json')
       end
 
-      def inifile
-        if @inifile.nil?
-          if File.exists?(ini_filename)
-            @inifile = IniFile.load(ini_filename)
+      def settings
+        if @settings.nil?
+          if File.exists?(settings_filename)
+            @settings = JSON.parse(File.read(settings_filename))
           else
-            @inifile = IniFile.new
+            @settings = {'server' => {}}
           end
         end
-
-        unless @inifile['kontena']
-          @inifile['kontena'] = {}
-        end
-
-        @inifile
+        @settings
       end
 
       def api_url
-        url = inifile['server']['url']
+        url = settings['server']['url']
         unless url
           raise ArgumentError.new("Please init service first using: kontena connect")
         end
@@ -58,8 +52,8 @@ module Kontena
       end
 
       def current_grid=(grid)
-        inifile['server']['grid'] = grid['id']
-        inifile.save(filename: ini_filename)
+        settings['server']['grid'] = grid['id']
+        save_settings
       end
 
       def require_current_grid
@@ -69,14 +63,17 @@ module Kontena
       end
 
       def clear_current_grid
-        inifile['server'].delete('grid')
-        inifile.save(filename: ini_filename)
+        settings['server'].delete('grid')
+        save_settings
       end
 
       def current_grid
-        inifile['server']['grid']
+        settings['server']['grid']
       end
 
+      def save_settings
+        File.write(settings_filename, JSON.pretty_generate(settings))
+      end
     end
   end
 end
