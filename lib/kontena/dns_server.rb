@@ -29,7 +29,7 @@ module Kontena
     #
     def start!
       base = self
-      RubyDNS::run_server(asynchronous: true, listen: INTERFACES, logger: self.logger) do
+      RubyDNS::run_server(asynchronous: true, listen: INTERFACES) do
         match(/(.*)\.kontena\.local/, IN::A) do |transaction, match_data|
           result = base.resolve_address(match_data[1])
           if result && result[0]
