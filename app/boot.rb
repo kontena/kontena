@@ -30,4 +30,3 @@ Dir[__dir__ + '/services/**/*.rb'].each {|file| require file }
 
 
 require_relative 'workers/container_cleanup_worker'
-require_relative 'workers/grid_stat_worker'
