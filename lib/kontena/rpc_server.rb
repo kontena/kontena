@@ -1,5 +1,6 @@
 require_relative 'rpc/docker_container_api'
 require_relative 'rpc/docker_image_api'
+require_relative 'rpc/agent_api'
 require_relative 'logging'
 
 module Kontena
@@ -8,7 +9,8 @@ module Kontena
 
     HANDLERS = {
         'containers' => Kontena::Rpc::DockerContainerApi,
-        'images' => Kontena::Rpc::DockerImageApi
+        'images' => Kontena::Rpc::DockerImageApi,
+        'agent' => Kontena::Rpc::AgentApi
     }
 
     class Error < StandardError
