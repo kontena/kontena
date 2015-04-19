@@ -48,23 +48,24 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [Rack::Request] req
   def on_open(ws, req)
-    grid = Grid.find_by(token: req.params['token'].to_s)
+    grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
     if !grid.nil?
-      logger.debug "got new connection: #{req.params['id']}"
-      node = grid.host_nodes.find_by(node_id: req.params['id'].to_s)
+      node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+      node = grid.host_nodes.find_by(node_id: node_id)
       unless node
-        node = grid.host_nodes.create!(node_id: req.params['id'].to_s)
+        node = grid.host_nodes.create!(node_id: node_id)
       end
+      logger.info "node opened connection: #{node.name || node_id}"
       node.update_attribute(:connected, true)
       client = {
           ws: ws,
-          id: req.params['id'].to_s,
+          id: node_id.to_s,
           grid_id: grid.id,
           created_at: Time.now
       }
       @clients << client
     else
-      logger.debug 'grid not found.. closing connection'
+      logger.error 'invalid grid token, closing connection'
       ws.close
     end
   end
@@ -143,11 +144,13 @@ class WebsocketBackend
   #
   # @param [Faye::WebSocket] ws
   def on_close(ws)
-    logger.debug 'client closed connection'
     client = @clients.find{|c| c[:ws] == ws}
     if client
       node = HostNode.find_by(node_id: client[:id])
-      node.update_attribute(:connected, false) if node
+      if node
+        node.update_attribute(:connected, false)
+        logger.info "node closed connection: #{node.name || node.node_id}"
+      end
       @clients.delete(client)
     end
     ws.close

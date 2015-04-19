@@ -2,6 +2,9 @@ require_relative '../spec_helper'
 
 describe GridService do
   it { should be_timestamped_document }
+  it { should have_fields(:image_name, :name, :user, :entrypoint, :state).of_type(String) }
+  it { should have_fields(:container_count, :memory, :memory_swap, :cpu_shares).of_type(Fixnum) }
+  it { should have_fields(:labels, :affinity, :cmd, :ports, :env, :volumes, :volumes_from, :cap_add, :cap_drop).of_type(Array) }
 
   it { should belong_to(:grid) }
   it { should embed_many(:grid_service_links) }

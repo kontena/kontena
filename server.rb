@@ -1,10 +1,13 @@
+require 'logger'
 require_relative 'app/boot'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
+Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
-
-  use Rack::Logger
+  logger = Logger.new(STDOUT)
+  logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
+  use Rack::CommonLogger, logger
 
   route do |r|
     r.on 'v1' do
