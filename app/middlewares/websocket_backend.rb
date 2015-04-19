@@ -11,6 +11,7 @@ class WebsocketBackend
     @app     = app
     @clients = []
     @logger = Logger.new(STDOUT)
+    @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
     @incoming_queue = Queue.new
     Agent::MessageHandler.new(@incoming_queue).run
