@@ -185,5 +185,29 @@ describe GridServices::Create do
       ).run
       expect(outcome.success?).to be_falsey
     end
+
+    it 'saves cap_add' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          cap_add: ['NET_ADMIN']
+      ).run
+      expect(outcome.result.cap_add).to eq(['NET_ADMIN'])
+    end
+
+    it 'saves cap_drop' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          cap_drop: ['SETUID']
+      ).run
+      expect(outcome.result.cap_drop).to eq(['SETUID'])
+    end
   end
 end
