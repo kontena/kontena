@@ -1,7 +1,6 @@
 packaging/ubuntu/*.deb
-packaging/coreos/
 virtualbox/*
-log/*
+log/*.log
 .idea
 .vagrant
 .env
