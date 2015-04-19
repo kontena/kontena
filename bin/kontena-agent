@@ -4,6 +4,7 @@ require_relative '../lib/kontena-agent'
 
 Docker.validate_version!
 Docker.options[:read_timeout] = (60*60)
+Docker.options[:write_timeout] = (60*60)
 
 $stdout.sync = true
 
