@@ -26,4 +26,5 @@ group :development, :test do
   gem 'rack-test', require: false
   gem 'database_cleaner', require: false
   gem 'rerun', require: false
+  gem 'simplecov', require: false
 end

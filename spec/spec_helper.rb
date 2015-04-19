@@ -4,6 +4,21 @@ require 'dotenv'
 require 'database_cleaner'
 Dotenv.load
 
+if ENV['COVERAGE']
+  require 'simplecov'
+  SimpleCov.start do
+    add_filter '/spec/'
+    add_filter '/config/'
+    add_filter '/app/initializers/'
+    add_group 'Models', 'app/models'
+    add_group 'Mutations', 'app/mutations'
+    add_group 'Api', 'app/routes'
+    add_group 'Helpers', 'app/helpers'
+    add_group 'Services', 'app/services'
+    add_group 'Workers', 'app/workers'
+  end
+end
+
 require_relative '../app/boot'
 require_relative '../server'
 require 'rack/test'
