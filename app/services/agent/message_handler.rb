@@ -97,6 +97,7 @@ module Agent
             grid_service: container.grid_service,
             container: container,
             created_at: created_at,
+            name: container.name,
             type: data['type'],
             data: data['data']
         )
