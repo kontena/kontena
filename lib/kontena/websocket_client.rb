@@ -28,8 +28,11 @@ module Kontena
 
     def connect
       logger.debug(LOG_NAME) { 'connecting' }
-      url = "#{self.api_uri}?token=#{CGI::escape(self.api_token)}&id=#{CGI::escape(host_id)}"
-      @ws = Faye::WebSocket::Client.new(url, nil, {ping: KEEPALIVE_TIME})
+      headers = {
+          'Kontena-Grid-Token' => self.api_token.to_s,
+          'Kontena-Node-Id' => host_id.to_s
+      }
+      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {ping: KEEPALIVE_TIME, headers: headers})
 
       changed(true)
       notify_observers(self)
