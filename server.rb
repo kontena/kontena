@@ -5,8 +5,11 @@ Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
 Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
-  logger = Logger.new(STDOUT)
-  logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
+  if ENV['RACK_ENV'] == 'test'
+    logger = nil
+  else
+    logger = Logger.new(STDOUT)
+  end
   use Rack::CommonLogger, logger
 
   route do |r|
