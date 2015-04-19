@@ -4,16 +4,17 @@ require_relative 'grid_scheduler'
 class GridServiceDeployer
   include Celluloid
 
-  attr_reader :grid_service, :nodes, :scheduler
+  attr_reader :grid_service, :nodes, :scheduler, :config
 
   ##
   # @param [#find_node] strategy
   # @param [GridService] grid_service
   # @param [Array<HostNode>] nodes
-  def initialize(strategy, grid_service, nodes)
+  def initialize(strategy, grid_service, nodes, config = {})
     @scheduler = GridScheduler.new(strategy)
     @grid_service = grid_service
     @nodes = nodes
+    @config = config
   end
 
 
@@ -96,6 +97,9 @@ class GridServiceDeployer
     self.start_service_container(container)
     Timeout.timeout(20) do
       sleep 0.5 until container_running?(container)
+      if self.config[:wait_for_port]
+        sleep 0.5 until port_responding?(container, self.config[:wait_for_port])
+      end
     end
   end
 
@@ -126,5 +130,19 @@ class GridServiceDeployer
   # @return [Boolean]
   def container_running?(container)
     container.reload.running?
+  end
+
+  ##
+  # @param [Container] container
+  # @param [String] port
+  def port_responding?(container, port)
+    node = container.host_node
+    return false unless node
+
+    rpc_client = node.rpc_client(2)
+    response = rpc_client.request('/agent/port_open?', container.network_settings[:ip_address], port)
+    response['open']
+  rescue RpcClient::Error
+    return false
   end
 end

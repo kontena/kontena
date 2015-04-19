@@ -18,6 +18,10 @@ module GridServices
       string :strategy, nils: true, default: 'ha'
     end
 
+    optional do
+      integer :wait_for_port
+    end
+
     def validate
       if self.grid_service.deploying?
         add_error(:service, :invalid_state, 'Service is currently deploying')
@@ -67,10 +71,18 @@ module GridServices
       if @deployer.nil?
         nodes = self.grid_service.grid.host_nodes.connected.to_a
         strategy = STRATEGIES[self.strategy].new
-        @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes)
+        @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes, deploy_options)
       end
 
       @deployer
+    end
+
+    ##
+    # @return [Hash]
+    def deploy_options
+      deploy_options = {}
+      deploy_options[:wait_for_port] = self.wait_for_port if self.wait_for_port
+      deploy_options
     end
   end
 end
