@@ -18,6 +18,8 @@ class GridService
   field :cpu_shares, type: Fixnum
   field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
+  field :cap_add, type: Array, default: []
+  field :cap_drop, type: Array, default: []
   field :state, type: String, default: 'initialized'
 
   belongs_to :grid

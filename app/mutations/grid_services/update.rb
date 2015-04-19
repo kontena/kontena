@@ -12,6 +12,12 @@ module GridServices
       integer :cpu_shares, min: 0, max: 1024
       integer :memory
       integer :memory_swap
+      array :cap_add do
+        string
+      end
+      array :cap_drop do
+        string
+      end
       array :cmd do
         string
       end
@@ -39,6 +45,8 @@ module GridServices
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory
       attributes[:memory_swap] = self.memory_swap if self.memory_swap
+      attributes[:cap_add] = self.cap_add if self.cap_add
+      attributes[:cap_drop] = self.cap_drop if self.cap_drop
       attributes[:cmd] = self.cmd if self.cmd
       attributes[:env] = self.env if self.env
       attributes[:ports] = self.ports if self.ports
