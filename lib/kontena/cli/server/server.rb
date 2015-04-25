@@ -9,8 +9,8 @@ module Kontena::Cli::Server
       until !api_url.nil? && !api_url.empty?
         api_url = ask('Kontena server url: ')
       end
-      inifile['server']['url'] = api_url
-      inifile.save(filename: ini_filename)
+      settings['server']['url'] = api_url
+      save_settings
 
       sleep 0.1
       if client.get('ping') # test server connection
@@ -22,8 +22,8 @@ module Kontena::Cli::Server
     end
 
     def disconnect
-      inifile['server'].delete('url')
-      inifile.save(filename: ini_filename)
+      settings['server'].delete('url')
+      save_settings
     end
 
     private
