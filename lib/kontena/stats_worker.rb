@@ -75,13 +75,17 @@ module Kontena
     # Fetch stats from cAdvisor
     #
     def fetch_stats
-      resp = Excon.get(self.url)
+      resp = client.get
       if resp.status == 200
         JSON.parse(resp.body) rescue nil
       end
     rescue => exc
       logger.error(LOG_NAME) { "failed to fetch cadvisor stats: #{exc.message}" }
       nil
+    end
+
+    def client
+      @client ||= Excon.new(self.url)
     end
 
     def get_interval(current, previous)
