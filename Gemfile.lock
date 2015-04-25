@@ -19,7 +19,7 @@ GEM
       excon (>= 0.38.0)
       json
     eventmachine (1.0.7)
-    excon (0.44.3)
+    excon (0.45.3)
     fast_cache (1.0.1)
     faye-websocket (0.9.2)
       eventmachine (>= 0.12.0)
