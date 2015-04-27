@@ -48,12 +48,22 @@ module GridServices
       attributes[:cap_add] = self.cap_add if self.cap_add
       attributes[:cap_drop] = self.cap_drop if self.cap_drop
       attributes[:cmd] = self.cmd if self.cmd
-      attributes[:env] = self.env if self.env
+      attributes[:env] = merge_env(grid_service.env, self.env) if self.env
       attributes[:ports] = self.ports if self.ports
       grid_service.attributes = attributes
       grid_service.save
 
       grid_service
+    end
+
+    ##
+    # @param [Array<String>] env1
+    # @param [Array<String>] env2
+    # @return [Array<String>]
+    def merge_env(env1, env2)
+      env1_hash = env1.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      env2_hash = env2.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      env1_hash.merge(env2_hash).map{|k, v| "#{k}=#{v}"}
     end
   end
 end
