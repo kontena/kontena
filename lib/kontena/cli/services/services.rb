@@ -68,11 +68,14 @@ module Kontena::Cli::Services
       self.deploy(service_id)
     end
 
-    def deploy(service_id)
+    def deploy(service_id, options)
       require_api_url
       token = require_token
 
-      result = client(token).post("services/#{service_id}/deploy", {})
+      data = {}
+      data[:strategy] = options.strategy if options.strategy
+      data[:wait_for_port] = options.wait_for_port if options.wait_for_port
+      result = client(token).post("services/#{service_id}/deploy", data)
 
       print 'deploying '
       until client(token).get("services/#{service_id}")['state'] != 'deploying' do

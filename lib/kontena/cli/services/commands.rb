@@ -24,8 +24,10 @@ end
 command 'service deploy' do |c|
   c.syntax = 'kontena service deploy <service_id>'
   c.description = 'Deploy service to nodes'
+  c.option '--strategy String', String, 'Define deploy strategy (ha / random)'
+  c.option '--wait-for-port String', String, 'Wait for given container port before deploying next container'
   c.action do |args, options|
-    Kontena::Cli::Services::Services.new.deploy(args[0])
+    Kontena::Cli::Services::Services.new.deploy(args[0], options)
   end
 end
 
