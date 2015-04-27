@@ -19,8 +19,8 @@ module Kontena::Cli::Server
       response = client.post('auth', params)
 
       if response
-        inifile['server']['token'] = response['access_token']
-        inifile.save(filename: ini_filename)
+        settings['server']['token'] = response['access_token']
+        save_settings
         print color('Login Successful', :green)
         true
       else
@@ -30,13 +30,13 @@ module Kontena::Cli::Server
     end
 
     def logout
-      inifile['server'].delete('token')
-      inifile.save(filename: ini_filename)
+      settings['server'].delete('token')
+      save_settings
     end
 
     def whoami
       require_api_url
-      puts "Server: #{inifile['server']['url']}"
+      puts "Server: #{settings['server']['url']}"
       token = require_token
       response = client(token).get('user')
       puts "User: #{response['email']}"

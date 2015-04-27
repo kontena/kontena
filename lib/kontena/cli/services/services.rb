@@ -170,9 +170,6 @@ module Kontena::Cli::Services
     end
 
     private
-    def current_grid
-      inifile['server']['grid']
-    end
 
     def parse_ports(port_options)
       port_options.map{|p|
