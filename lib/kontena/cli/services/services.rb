@@ -132,6 +132,8 @@ module Kontena::Cli::Services
       data[:cmd] = options.cmd.split(" ") if options.cmd
       data[:user] = options.user if options.user
       data[:cpu] = options.cpu if options.cpu
+      data[:cap_add] = options.cap_add if options.cap_add
+      data[:cap_drop] = options.cap_drop if options.cap_drop
       if options.memory
         memory = human_size_to_number(options.memory)
         raise ArgumentError.new('Invalid --memory')
@@ -151,6 +153,8 @@ module Kontena::Cli::Services
       data[:cmd] = options.cmd.split(" ") if options.cmd
       data[:ports] = parse_ports(options.ports) if options.ports
       data[:image] = options.image if options.image
+      data[:cap_add] = options.cap_add if options.cap_add
+      data[:cap_drop] = options.cap_drop if options.cap_drop
 
       client(require_token).put("services/#{service_id}", data)
     end

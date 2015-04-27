@@ -69,6 +69,8 @@ command 'service create' do |c|
   c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
   c.option '-u', '--user String', String, 'Username who executes first process inside container'
   c.option '--stateful', 'Set service as stateful'
+  c.option '--cap-add Array', Array, 'Add capabilities'
+  c.option '--cap-drop Array', Array, 'Drop capabilities'
 
   c.action do |args, options|
     Kontena::Cli::Services::Services.new.create(args[0], args[1], options)
@@ -83,6 +85,8 @@ command 'service update' do |c|
   c.option '--image STRING', String, 'Service image'
   c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
   c.option '--cmd STRING', String, 'Command to execute'
+  c.option '--cap-add Array', Array, 'Add capabilities'
+  c.option '--cap-drop Array', Array, 'Drop capabilities'
   c.action do |args, options|
     Kontena::Cli::Services::Services.new.update(args[0], options)
   end
