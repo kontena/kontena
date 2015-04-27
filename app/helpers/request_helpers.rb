@@ -24,7 +24,12 @@ module RequestHelpers
   end
 
   def parse_json_body
-    JSON.parse(request.body.read)
+    body = request.body.read
+    if body == ''
+      {}
+    else
+      JSON.parse(body)
+    end
   rescue => exc
     response.status = 400
     response.write({error: 'Invalid json'}.to_json)

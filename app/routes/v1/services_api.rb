@@ -68,10 +68,10 @@ module V1
         # POST /v1/services/:id
         r.post do
           r.on('deploy') do
-            outcome = GridServices::Deploy.run(
-              current_user: current_user,
-              grid_service: grid_service
-            )
+            data = parse_json_body rescue {}
+            data[:current_user] = current_user
+            data[:grid_service] = grid_service
+            outcome = GridServices::Deploy.run(data)
             if outcome.success?
               audit_event(r, grid_service.grid, grid_service, 'deploy', grid_service)
               {}
