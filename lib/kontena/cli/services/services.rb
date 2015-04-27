@@ -176,13 +176,14 @@ module Kontena::Cli::Services
 
     def parse_ports(port_options)
       port_options.map{|p|
-        node_port, container_port = p.split(':')
+        node_port, container_port, protocol = p.split(':')
         if node_port.nil? || container_port.nil?
           raise ArgumentError.new("Invalid port value #{p}")
         end
         {
           container_port: container_port,
-          node_port: node_port
+          node_port: node_port,
+          protocol: protocol || 'tcp'
         }
       }
     end
