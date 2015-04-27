@@ -9,16 +9,6 @@ api:
   links:
    - redis
    - mongodb
-sidekiq:
-  build: .
-  command: sidekiq -r ./app/boot.rb
-  environment:
-    - RACK_ENV=production
-    - REDIS_URL=redis://redis:6379/1
-    - MONGODB_URI=mongodb://mongodb:27017/kontena_development
-  links:
-   - redis
-   - mongodb
 redis:
   image: redis:2.8
   command: redis-server --appendonly yes

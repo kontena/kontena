@@ -19,11 +19,12 @@ if ENV['COVERAGE']
   end
 end
 
+ENV['FIST_OF_FURY_DISABLED'] = 'true'
+
 require_relative '../app/boot'
 require_relative '../server'
 require 'rack/test'
 require 'mongoid-rspec'
-require 'sidekiq/testing'
 
 ActionMailer::Base.delivery_method = :test
 
@@ -56,8 +57,6 @@ RSpec.configure do |config|
 
   config.before(:each) do
     DatabaseCleaner.start
-    Sidekiq::Worker.clear_all
-    Sidekiq::Testing.fake!
   end
 
   config.after(:each) do
