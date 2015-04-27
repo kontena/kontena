@@ -1,5 +1,4 @@
 source 'https://rubygems.org'
-ruby '2.2.0'
 
 gem 'rack', '~> 1.5.2'
 gem 'roda', '~> 1.3.0'
