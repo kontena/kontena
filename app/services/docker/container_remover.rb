@@ -9,7 +9,7 @@ module Docker
       @container = container
     end
 
-    def remove_container(remove_opts = {v: true})
+    def remove_container(remove_opts = {v: true, force: true})
       begin
         if host_node
           if container.running?

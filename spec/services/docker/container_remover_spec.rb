@@ -13,7 +13,7 @@ describe Docker::ContainerRemover do
 
   describe '#remove_container' do
     it 'sends remove request to agent' do
-      expect(client).to receive(:request).with('/containers/delete', container.container_id, {v: true})
+      expect(client).to receive(:request).with('/containers/delete', container.container_id, {v: true, force: true})
       expect(container).to receive(:destroy)
       subject.remove_container
     end
@@ -21,7 +21,7 @@ describe Docker::ContainerRemover do
     it 'stops container if it is running' do
       allow(container).to receive(:running?).and_return(true)
       expect(client).to receive(:request).with('/containers/stop', container.container_id, {})
-      expect(client).to receive(:request).with('/containers/delete', container.container_id, {v: true})
+      expect(client).to receive(:request).with('/containers/delete', container.container_id, {v: true, force: true})
       expect(container).to receive(:destroy)
       subject.remove_container
     end
