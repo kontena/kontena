@@ -27,7 +27,11 @@ module Docker
       end
       @node.images << image
       json = client.request('/images/show', image_name)
-      image.exposed_ports = json['Config']['ExposedPorts'].map{|key, _| port, protocol = key.split('/'); {'port' => port, 'protocol' => protocol} }
+      if json['Config']['ExposedPorts']
+        image.exposed_ports = json['Config']['ExposedPorts'].map{|key, _|
+          port, protocol = key.split('/'); {'port' => port, 'protocol' => protocol}
+        }
+      end
       image.image_id = json['Id']
       image.size = json['Size']
       image.save
