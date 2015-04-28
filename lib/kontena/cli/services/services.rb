@@ -63,9 +63,9 @@ module Kontena::Cli::Services
       end
     end
 
-    def scale(service_id, count)
+    def scale(service_id, count, options)
       client(require_token).put("services/#{service_id}", {container_count: count})
-      self.deploy(service_id)
+      self.deploy(service_id, options)
     end
 
     def deploy(service_id, options)
