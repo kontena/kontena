@@ -97,8 +97,9 @@ end
 command 'service scale' do |c|
   c.syntax = 'kontena service scale <service_id> <instances>'
   c.description = 'Scale service horizontally'
+  c.option '--strategy String', String, 'Define deploy strategy (ha / random)'
   c.action do |args, options|
-    Kontena::Cli::Services::Services.new.scale(args[0], args[1])
+    Kontena::Cli::Services::Services.new.scale(args[0], args[1], options)
   end
 end
 
