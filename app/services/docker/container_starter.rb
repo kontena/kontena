@@ -21,6 +21,14 @@ module Docker
         i = container.name.match(/^.+-(\d+)$/)[1]
         docker_opts['VolumesFrom'] = grid_service.volumes_from.map{|v| v % [i] }
       end
+      bind_volumes = build_bind_volumes
+      if bind_volumes.size > 0
+        docker_opts['Binds'] = bind_volumes
+      end
+
+      docker_opts['CapAdd'] = grid_service.cap_add if grid_service.cap_add.size > 0
+      docker_opts['CapDrop'] = grid_service.cap_drop if grid_service.cap_drop.size > 0
+
       docker_opts['RestartPolicy'] = {
           'Name' => 'always',
           'MaximumRetryCount' => 10
@@ -61,8 +69,6 @@ module Docker
       container
     end
 
-    private
-
     ##
     # @param [Array<Hash>] ports
     # @return [Hash]
@@ -79,7 +85,15 @@ module Docker
     def build_volumes
       volumes = {}
       grid_service.volumes.each do |vol|
-        volumes[vol] = {}
+        volumes[vol] = {} unless vol.include?(':')
+      end
+      volumes
+    end
+
+    def build_bind_volumes
+      volumes = []
+      grid_service.volumes.each do |vol|
+        volumes << vol if vol.include?(':')
       end
       volumes
     end

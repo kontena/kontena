@@ -124,4 +124,11 @@ describe Docker::ContainerCreator do
       expect(opts['CapDrop']).to be_nil
     end
   end
+
+  describe '#build_volumes' do
+    it 'returns correct volumes hash' do
+      grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock:ro']
+      expect(subject.build_volumes).to eq({'/foo/bar' => {}, '/var/run/docker.sock' => {}})
+    end
+  end
 end

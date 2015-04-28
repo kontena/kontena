@@ -119,6 +119,7 @@ module Docker
     def build_volumes
       volumes = {}
       self.grid_service.volumes.each do |vol|
+        vol, _ = vol.split(':')
         volumes[vol] = {}
       end
       volumes

@@ -27,4 +27,18 @@ describe Docker::ContainerStarter do
       subject.start_container
     end
   end
+
+  describe '#build_volumes' do
+    it 'returns correct volumes hash' do
+      grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock']
+      expect(subject.build_volumes).to eq({'/foo/bar' => {}})
+    end
+  end
+
+  describe '#build_bind_volumes' do
+    it 'returns correct volume bind array' do
+      grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock']
+      expect(subject.build_bind_volumes).to eq(['/var/run/docker.sock:/var/run/docker.sock'])
+    end
+  end
 end
