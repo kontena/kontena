@@ -15,3 +15,4 @@
 /virtualbox/
 /packaging/ubuntu/*.deb
 /.vagrant/
+/build/
