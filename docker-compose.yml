@@ -9,7 +9,7 @@ agent:
   links:
    - cadvisor
 cadvisor:
-  image: google/cadvisor:0.7.1
+  image: google/cadvisor:0.12.0
   volumes:
     - /:/rootfs:ro
     - /var/run:/var/run:rw
