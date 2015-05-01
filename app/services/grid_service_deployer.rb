@@ -3,6 +3,7 @@ require_relative 'grid_scheduler'
 
 class GridServiceDeployer
   include Celluloid
+  include Celluloid::Logger
 
   attr_reader :grid_service, :nodes, :scheduler, :config
 
@@ -61,11 +62,12 @@ class GridServiceDeployer
     true
   rescue RpcClient::Error => exc
     self.grid_service.update_attribute(:state, prev_state)
-
-    raise exc
+    error "RPC error: #{exc.class.name} #{exc.message}"
+    false
   rescue => exc
     self.grid_service.update_attribute(:state, prev_state)
-    raise exc
+    error "Unknown error: #{exc.class.name} #{exc.message}"
+    false
   end
 
   ##
