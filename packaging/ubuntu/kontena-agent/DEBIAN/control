@@ -1,5 +1,5 @@
 Package: kontena-agent
-Version: 0.4.0-3
+Version: 0.5.0-0
 Maintainer: jari@kontena.io
 Architecture: all
 Depends: lxc-docker (>= 1.4.0)
