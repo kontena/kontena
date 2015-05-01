@@ -14,7 +14,6 @@ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869
 sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 sudo apt-get update
 sudo apt-get install -y -q lxc-docker python-pip
-sudo dpkg -i /vagrant/packaging/ubuntu/kontena-weave_0.1.0-1_all.deb
 sudo echo 'DOCKER_OPTS="-s btrfs"' >> /etc/default/docker
 sudo restart docker
 sudo pip install docker-compose
