@@ -1,5 +1,5 @@
 Package: kontena-server
-Version: 0.4.0-1
+Version: VERSION
 Maintainer: jari@kontena.io
 Architecture: all
 Depends: lxc-docker (>= 1.4.0)

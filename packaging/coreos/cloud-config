@@ -1,0 +1,118 @@
+#cloud-config
+coreos:
+  etcd:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new
+    # WARNING: replace each time you 'vagrant destroy'
+    discovery: https://discovery.etcd.io/<token>
+    addr: $private_ipv4:4001
+    peer-addr: $private_ipv4:7001
+  units:
+    - name: etcd.service
+      command: start
+
+    - name: kontena-server-redis-data.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-redis-data
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        Type=oneshot
+        ExecStartPre=-/usr/bin/docker pull redis:2.8
+        ExecStart=/usr/bin/docker create --name=kontena-server-redis-data
+    - name: kontena-server-mongo-data.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-mongo-data
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        Type=oneshot
+        ExecStartPre=-/usr/bin/docker pull mongo:2.8
+        ExecStart=/usr/bin/docker create --name=kontena-server-mongo-data
+    - name: kontena-server-redis.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-redis
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStartPre=-/usr/bin/docker kill kontena-server-redis
+        ExecStartPre=-/usr/bin/docker rm kontena-server-redis
+        ExecStartPre=-/usr/bin/docker pull redis:2.8
+        ExecStart=/usr/bin/docker run --name=kontena-server-redis \
+            --volumes-from=kontena-server-redis-data \
+            redis:2.8 redis-server --appendonly yes
+    - name: kontena-server-mongo.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-mongo
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStartPre=-/usr/bin/docker kill kontena-server-mongo
+        ExecStartPre=-/usr/bin/docker rm kontena-server-mongo
+        ExecStartPre=-/usr/bin/docker pull mongo:2.8
+        ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
+            --volumes-from=kontena-server-mongo-data \
+            mongo:2.8 mongod --smallfiles
+    - name: kontena-server.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server
+        After=docker.service
+        After=kontena-server-mongo.service
+        After=kontena-server-redis.service
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStartPre=-/usr/bin/docker kill kontena-server
+        ExecStartPre=-/usr/bin/docker rm kontena-server
+        ExecStartPre=/usr/bin/docker pull kontena/server:0.5
+        ExecStart=/usr/bin/docker run --name kontena-server \
+            --link kontena-server-mongo:mongodb \
+            --link kontena-server-redis:redis \
+            -e REDIS_URL=redis://redis:6379/1 \
+            -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+            kontena/server:0.5
+
+    - name: kontena-server-haproxy.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-haproxy
+        After=docker.service
+        After=kontena-server.service
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStartPre=-/usr/bin/docker kill kontena-server-haproxy
+        ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
+        ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
+        ExecStart=/usr/bin/docker run --name kontena-server-haproxy \
+            --link kontena-server:kontena-server \
+            -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
+            -p 8080:80 -p 8443:443 kontena/haproxy:latest

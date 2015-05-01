@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-/usr/bin/docker pull kontena/server:0.4
+/usr/bin/docker pull kontena/server:0.5
 /usr/bin/docker pull kontena/haproxy:latest
 /usr/bin/docker pull mongo:2.8
 /usr/bin/docker pull redis:2.8

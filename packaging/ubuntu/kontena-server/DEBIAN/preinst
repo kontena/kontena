@@ -2,6 +2,5 @@
 set -e
 
 stop kontena-server-api || true
-stop kontena-server-sidekiq || true
 stop kontena-server-mongo || true
 stop kontena-server-redis || true
