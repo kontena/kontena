@@ -1,0 +1,128 @@
+require 'kontena/client'
+require 'yaml'
+require_relative '../common'
+require_relative '../services/services_helper'
+
+module Kontena::Cli::Stacks
+  class Stacks
+    include Kontena::Cli::Common
+    include Kontena::Cli::Services::ServicesHelper
+
+    def initialize
+      @deploy_queue = []
+    end
+
+    def deploy(options)
+      require_api_url
+      require_token
+
+      filename = options.file || './kontena.yml'
+      @services = YAML.load(File.read(filename))
+      @service_prefix = options.prefix || current_dir
+
+      init_services(@services)
+      deploy_services(@deploy_queue)
+    end
+
+    private
+
+    def init_services(services)
+      services.each do |name, config|
+        create_or_update_service(prefixed_name(name), config)
+      end
+    end
+
+    def deploy_services(queue)
+      queue.each do |service|
+        puts "deploying #{service['id']}"
+        data = {}
+        if service['deploy']
+          data[:strategy] = service['deploy']['strategy'] if service['deploy']['strategy']
+          data[:wait_for_port] = service['deploy']['wait_for_port'] if service['deploy']['wait_for_port']
+        end
+        deploy_service(token, service['id'], data)
+      end
+    end
+
+    def create_or_update_service(name, options)
+      # skip if service is already created or updated
+      return nil if in_deploy_queue?(name)
+
+      # create/update linked services recursively before continuing
+      unless options['links'].nil?
+        parse_links(options['links']).each_with_index do |linked_service, index|
+          # change prefixed service name also to links options
+          options['links'][index] = "#{prefixed_name(linked_service[:name])}:#{linked_service[:alias]}"
+
+          create_or_update_service(prefixed_name(linked_service[:name]), @services[linked_service[:name]]) unless in_deploy_queue?(prefixed_name(linked_service[:name]))
+        end
+      end
+
+      if find_service_by_name(name)
+        service = update(name, options)
+      else
+        service = create(name, options)
+      end
+
+      # add deploy options to service
+      service['deploy'] = options['deploy']
+
+      @deploy_queue.push service
+    end
+
+    def find_service_by_name(name)
+      current_services = client(token).get("grids/#{current_grid}/services")
+      current_services['services'].find {|service| service['id'] == name}
+    end
+
+    def create(name, options)
+      puts "creating #{name}"
+      data = {name: name}
+      data.merge!(parse_data(options))
+      create_service(token, current_grid, data)
+    end
+
+    def update(id, options)
+      data = parse_data(options)
+      puts "updating #{id}"
+      update_service(token, id, data)
+    end
+
+    def in_deploy_queue?(name)
+      @deploy_queue.find {|service| service['id'] == name} != nil
+    end
+
+    def prefixed_name(name)
+      "#{@service_prefix}-#{name}"
+    end
+
+    def current_dir
+      File.basename(Dir.getwd)
+    end
+
+    def parse_data(options)
+      data = {}
+      data[:image] = options['image']
+      data[:env] = options['environment']
+      data[:container_count] = options['instances']
+      data[:links] = parse_links(options['links']) if options['links']
+      data[:ports] = parse_ports(options['ports']) if options['ports']
+      data[:memory] = parse_memory(options['mem_limit']) if options['mem_limit']
+      data[:memory_swap] = parse_memory(options['memswap_limit']) if options['memswap_limit']
+      data[:cpu_shares] = options['cpu_shares'] if options['cpu_shares']
+      data[:volumes] = options['volume'] if options['volume']
+      data[:volumes_from] = options['volumes_from'] if options['volumes_from']
+      data[:cmd] = options['command'].split(" ") if options['command']
+      data[:affinity] = options['affinity'] if options['affinity']
+      data[:user] = options['user'] if options['user']
+      data[:stateful] = options['stateful'] == true
+      data[:cap_add] = options['cap_add'] if options['cap_add']
+      data[:cap_drop] = options['cap_drop'] if options['cap_drop']
+      data
+    end
+
+    def token
+      @token ||= require_token
+    end
+  end
+end

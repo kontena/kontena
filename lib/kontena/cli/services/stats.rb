@@ -51,20 +51,6 @@ module Kontena::Cli::Services
       network_out = stat['network'].nil? ? 'N/A' : filesize_to_human(stat['network']['tx_bytes'])
       puts '%-30.30s %-15s %-20s %-15s %-15s' % [ stat['container_id'], "#{cpu}%", "#{memory} / #{memory_limit}", "#{memory_pct}", "#{network_in}/#{network_out}"]
     end
-    ##
-    # @param [String] memory
-    # @return [Integer]
-    def parse_memory(memory)
-      if memory.end_with?('k')
-        memory.to_i * 1000
-      elsif memory.end_with?('m')
-        memory.to_i * 1000000
-      elsif memory.end_with?('g')
-        memory.to_i * 1000000000
-      else
-        memory.to_i
-      end
-    end
 
     ##
     # @param [Integer] size
