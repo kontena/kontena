@@ -31,5 +31,6 @@ namespace :release do
       sh("docker push #{DOCKER_NAME}:#{v}")
     end
     sh("curl -T ./release/#{NAME}_#{VERSION}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/kontena/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}_all.deb")
+    sh("curl -T ./release/kontena-weave_#{VERSION}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/kontena/kontena-agent/#{VERSION}/kontena-weave-#{VERSION}_all.deb")
   end
 end
