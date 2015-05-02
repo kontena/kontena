@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+/sbin/stop kontena-agent || true
+/sbin/stop kontena-cadvisor || true
