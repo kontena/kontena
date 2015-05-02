@@ -8,17 +8,23 @@ namespace :release do
   BINTRAY_USER = ENV['BINTRAY_USER']
   BINTRAY_KEY = ENV['BINTRAY_KEY']
 
-  task :build => :environment do
+  task :build_ubuntu => :environment do
     sh('mkdir -p build')
     sh('rm -rf build/ubuntu/')
+    sh('cp -ar packaging/ubuntu build/')
+    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/DEBIAN/control")
+    sh("cd build/ubuntu && dpkg-deb -b #{NAME} .")
+  end
+
+  task :build_docker => :environment do
     sh('docker pull ubuntu:trusty')
     sh("docker build -t #{DOCKER_NAME}:#{VERSION} .")
     DOCKER_VERSIONS.each do |v|
       sh("docker tag -f #{DOCKER_NAME}:#{VERSION} #{DOCKER_NAME}:#{v}")
     end
-    sh('cp -ar packaging/ubuntu build/')
-    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/DEBIAN/control")
-    sh("cd build/ubuntu && dpkg-deb -b #{NAME} .")
+  end
+
+  task :build => [:build_ubuntu, :build_docker] do
   end
 
   task :upload => :environment do
