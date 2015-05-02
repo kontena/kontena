@@ -7,6 +7,8 @@ gem 'activesupport', '~> 4.2.0'
 gem 'rubydns'
 gem 'fast_cache'
 
-group :development do
-  gem 'rspec'
+group :development, :test do
+  gem 'rake', require: false
+  gem 'rspec', require: false
+  gem 'dotenv', require: false
 end

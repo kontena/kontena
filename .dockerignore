@@ -2,3 +2,5 @@
 .vagrant
 virtualbox
 packaging
+build
+release

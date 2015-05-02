@@ -5,3 +5,5 @@ log/*.log
 .vagrant
 .env
 .bundle
+/build/
+/release/
