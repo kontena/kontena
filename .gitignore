@@ -16,3 +16,4 @@
 /packaging/ubuntu/*.deb
 /.vagrant/
 /build/
+/release/
