@@ -26,9 +26,9 @@ namespace :release do
     bintray_key = ENV['BINTRAY_KEY']
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
-    #sh("docker push #{DOCKER_NAME}:#{VERSION}")
+    sh("docker push #{DOCKER_NAME}:#{VERSION}")
     DOCKER_VERSIONS.each do |v|
-      #sh("docker push #{DOCKER_NAME}:#{v}")
+      sh("docker push #{DOCKER_NAME}:#{v}")
     end
     sh("curl -T ./release/#{NAME}_#{VERSION}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/kontena/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}_all.deb")
   end
