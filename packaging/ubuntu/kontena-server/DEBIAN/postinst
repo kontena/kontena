@@ -11,6 +11,6 @@ set -e
 /usr/bin/docker inspect kontena-server-redis-data  > /dev/null || \
   /usr/bin/docker create --name kontena-server-redis-data redis:2.8
 
-start kontena-server-mongo
-start kontena-server-redis
-start kontena-server-api
+start kontena-server-mongo || true
+start kontena-server-redis || true
+start kontena-server-api || true
