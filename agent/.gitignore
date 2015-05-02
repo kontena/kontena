@@ -1,0 +1,9 @@
+packaging/ubuntu/*.deb
+virtualbox/*
+log/*.log
+.idea
+.vagrant
+.env
+.bundle
+/build/
+/release/

@@ -1,0 +1,5 @@
+# Set URL of your kontena server
+#KONTENA_URI=wss://localhost:8443
+
+# Set kontena token
+#KONTENA_TOKEN=

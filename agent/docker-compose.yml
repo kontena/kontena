@@ -1,0 +1,17 @@
+agent:
+  build: .
+  env_file: .env
+  ports:
+    - 53:53/tcp
+    - 53:53/udp
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  links:
+   - cadvisor
+cadvisor:
+  image: google/cadvisor:0.12.0
+  volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro

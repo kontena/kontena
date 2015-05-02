@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/kontena-agent'
+
+Docker.options[:read_timeout] = (60*60)
+Docker.options[:write_timeout] = (60*60)
+Docker.validate_version!
+
+$stdout.sync = true
+
+api_token = ENV['KONTENA_TOKEN']
+api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
+cadvisor_url = ENV['CADVISOR_URL'] || 'http://cadvisor:8080/api/v1.2/docker'
+
+if !api_token
+  exit('KONTENA_TOKEN is required')
+end
+if !api_uri
+  exit('KONTENA_URI is required')
+end
+
+Kontena::Logging.initialize_logger(STDOUT)
+
+EM.run {
+  queue_worker = Kontena::QueueWorker.new
+  dns_server = Kontena::DnsServer.new
+  client = Kontena::WebsocketClient.new(api_uri, api_token)
+  client.add_observer(queue_worker, :client=)
+  client.add_observer(dns_server, :client=)
+  client.connect
+
+  dns_server.start!
+
+  container_info_worker = Kontena::ContainerInfoWorker.new(queue_worker.queue)
+  container_info_worker.start!
+
+  log_worker = Kontena::LogWorker.new(queue_worker.queue)
+  log_worker.start!
+
+  event_worker = Kontena::EventWorker.new(queue_worker.queue)
+  event_worker.add_observer(container_info_worker, :on_container_event)
+  event_worker.add_observer(log_worker, :on_container_event)
+  event_worker.start!
+
+  Kontena::StatsWorker.new(cadvisor_url, queue_worker.queue).start!
+}

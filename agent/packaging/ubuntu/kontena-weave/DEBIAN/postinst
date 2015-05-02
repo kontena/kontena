@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+/usr/local/bin/weave setup
+/sbin/start kontena-weave

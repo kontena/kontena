@@ -1,0 +1,6 @@
+Package: kontena-weave
+Version: VERSION
+Maintainer: jari@kontena.io
+Architecture: all
+Depends: lxc-docker (>= 1.4.0)
+Description: Kontena Weave Network
