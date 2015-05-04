@@ -2,6 +2,8 @@
 
 > Application Containers for Masses
 
+[![Build Status](https://travis-ci.org/kontena/kontena-server.svg?branch=master)](https://travis-ci.org/kontena/kontena-server)
+
 Kontena is an open source container orchestration tool that makes it easy to deploy and manage containerized applications on your own servers.
 
 The design and architecture of Kontena software is built to provide support for various application container technologies. At the moment, only [Docker](https://github.com/docker/docker) is supported but expect to see support for technologies like [CoreOS Rocket](https://github.com/coreos/rocket) and more in the future.
