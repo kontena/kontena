@@ -2,7 +2,7 @@
 
 > Application Containers for Masses
 
-[![Build Status](https://travis-ci.org/kontena/kontena-server.svg?branch=master)](https://travis-ci.org/kontena/kontena-server)
+[![Build Status](https://travis-ci.org/kontena/kontena.svg?branch=master)](https://travis-ci.org/kontena/kontena)
 
 Kontena is an open source container orchestration tool that makes it easy to deploy and manage containerized applications on your own servers.
 
