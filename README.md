@@ -27,7 +27,7 @@ Kontena consists of following components:
 
 - [Server](server/)
 - [Agent](agent)
-- [CLI](/kontena/kontena-cli/)
+- [CLI](https://github.com/kontena/kontena-cli/)
 
 
 ## License
