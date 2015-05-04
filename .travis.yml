@@ -7,4 +7,4 @@ services:
 env:
   - TEST_DIR=server
   - TEST_DIR=agent
-script: cd $TEST_DIR && bundle exec rspec spec/
+script: cd $TEST_DIR && bundle install && bundle exec rspec spec/
