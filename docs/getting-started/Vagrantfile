@@ -1,0 +1,95 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+server_provision_script = <<SCRIPT
+sudo mkdir /var/lib/docker
+sudo apt-get install -y btrfs-tools
+sudo mkfs.btrfs /dev/sdb
+sudo echo '/dev/sdb	/var/lib/docker	 btrfs	defaults	0 0' >> /etc/fstab
+sudo mount -a
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
+sudo echo deb http://dl.bintray.com/kontena/kontena / > /etc/apt/sources.list.d/kontena.list
+sudo apt-get update
+
+# install docker
+sudo apt-get install -y -q lxc-docker
+
+# install kontena-server
+sudo apt-get install -y -q --force-yes kontena-server
+
+sudo restart docker
+sudo sleep 3
+sudo docker exec -d kontena-server-api bundle exec ruby -r "./app/boot.rb" -e "grid = Grid.find_or_create_by(name: 'demo'); grid.update_attribute(:token, '02GFS87STKVPyyziaQT6rUaTdCKlxY8HX+9D0ds929kI1SAbwq1kHzu6MMitMKWjZmND5tNKmeOM/FoLg7nEYQ=='); user = User.find_or_create_by(email: '%s'); user.grids << grid unless user.grids.include?(grid)"
+sudo gpasswd -a vagrant docker
+SCRIPT
+
+agent_provision_script = <<SCRIPT
+sudo mkdir /var/lib/docker
+sudo apt-get install -y btrfs-tools
+sudo mkfs.btrfs /dev/sdb
+sudo echo '/dev/sdb	/var/lib/docker	 btrfs	defaults	0 0' >> /etc/fstab
+sudo mount -a
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
+sudo echo deb http://dl.bintray.com/kontena/kontena / > /etc/apt/sources.list.d/kontena.list
+sudo apt-get update
+sudo apt-get install -y -q lxc-docker
+sudo apt-get install -y -q --force-yes kontena-agent
+sudo stop docker
+sudo echo 'DOCKER_OPTS="-s btrfs --bridge=weave --fixed-cidr='$1' --dns 8.8.8.8 --dns 8.8.4.4"' > /etc/default/docker
+sudo echo "WEAVE_PEERS=$2" > /etc/default/kontena-weave
+sudo echo "WEAVE_BRIDGE=$3" >> /etc/default/kontena-weave
+sudo echo 'KONTENA_URI=ws://192.168.66.100:8080' > /etc/default/kontena-agent
+sudo echo 'KONTENA_TOKEN=02GFS87STKVPyyziaQT6rUaTdCKlxY8HX+9D0ds929kI1SAbwq1kHzu6MMitMKWjZmND5tNKmeOM/FoLg7nEYQ==' >> /etc/default/kontena-agent
+sudo start docker
+sudo gpasswd -a vagrant docker
+SCRIPT
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.define "kontena_server" do |docker|
+    docker.vm.box = "ubuntu/trusty64"
+    docker.vm.network "private_network", ip: "192.168.66.100"
+    docker.vm.hostname = "kontena-server"
+    docker.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.customize ["modifyvm", :id, "--memory", "512"]
+      vb.auto_nat_dns_proxy = false
+      vb.customize ["modifyvm", :id, "--natdnsproxy1", "off" ]
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
+      lfs_disk = "virtualbox/kontena_server" + ".vdi"
+      unless File.exist?(lfs_disk)
+          vb.customize ['createhd', '--filename', lfs_disk, '--size', 20 * 1024]
+      end
+       vb.customize ['storageattach', :id, '--storagectl', 'SATAController', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lfs_disk]
+    end
+    docker.vm.provision "shell", inline: (server_provision_script % [ENV['EMAIL']])
+  end
+
+  2.times do |i|
+    node_number = i + 1
+    config.vm.define "node_#{node_number}" do |docker|
+      docker.vm.box = "ubuntu/trusty64"
+      docker.vm.network "private_network", ip: "192.168.66.#{node_number + 1}"
+      docker.vm.hostname = "node-#{node_number}"
+      docker.vm.provider "virtualbox" do |vb|
+        vb.gui = false
+        vb.customize ["modifyvm", :id, "--memory", "768"]
+        vb.auto_nat_dns_proxy = false
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "off" ]
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
+        lfs_disk = "virtualbox/agent_docker#{node_number}" + ".vdi"
+        unless File.exist?(lfs_disk)
+          vb.customize ['createhd', '--filename', lfs_disk, '--size', 20 * 1024]
+        end
+        vb.customize ['storageattach', :id, '--storagectl', 'SATAController', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lfs_disk]
+      end
+      peer = (node_number == 1 ? '192.168.66.3' : '192.168.66.2')
+      docker.vm.provision "shell", inline: agent_provision_script, args: ["10.81.#{node_number}.0/24", peer, "10.81.0.#{node_number}/16"]
+    end
+  end
+end
