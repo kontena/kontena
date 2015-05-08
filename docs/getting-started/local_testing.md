@@ -6,7 +6,7 @@ The easiest way to give [Kontena](http://www.kontena.io) a test run is to run it
 ## Install Kontena Environment
 
 ###Download Vagrantfile
-[Vagrantfile](https://gist.github.com/nevalla/3c5d962c99b23f1f2fb2)
+[Vagrantfile](https://github.com/kontena/kontena/blob/master/docs/getting-started/Vagrantfile)
 
 ### Deploy Kontena Server and Agents
 Run the following command in the same directory where you have saved the Vagrantfile
