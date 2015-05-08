@@ -1,3 +1,2 @@
 /etc/default/kontena-weave
 /etc/init/kontena-weave.conf
-/etc/network/interfaces.d/kontena-weave.cfg
