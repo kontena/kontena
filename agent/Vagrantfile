@@ -11,13 +11,13 @@ sudo mkfs.btrfs /dev/sdb
 sudo echo '/dev/sdb	/var/lib/docker	 btrfs	defaults	0 0' >> /etc/fstab
 sudo mount -a
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x80f70e11f0f0d5f10cb20e62f5da5f09c3173aa6
 sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
+sudo echo deb http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu trusty main > /etc/apt/sources.list.d/ruby-ng.list
 sudo apt-get update
-sudo apt-get install -y -q lxc-docker python-pip
-sudo dpkg -i /vagrant/packaging/ubuntu/kontena-weave_0.1.0-1_all.deb
-sudo echo 'DOCKER_OPTS="-s btrfs --bridge=weave --fixed-cidr=%s --dns 8.8.8.8 --dns 8.8.4.4"' >> /etc/default/docker
-sudo restart docker
+sudo apt-get install -y -q lxc-docker python-pip ruby2.2 ruby2.2-dev build-essential libssl-dev ca-certificates
 sudo pip install docker-compose
+sudo gem install bundler
 sudo gpasswd -a vagrant docker
 SCRIPT
 
