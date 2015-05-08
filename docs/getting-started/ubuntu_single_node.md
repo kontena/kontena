@@ -7,6 +7,7 @@ This guide will install Kontena Server & Agent to a single Ubuntu host. It does 
 ### Install Kontena Ubuntu Packages
 
 ```sh
+$ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
 $ echo "deb http://dl.bintray.com/kontena/kontena /" | sudo tee -a /etc/apt/sources.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-server kontena-agent
