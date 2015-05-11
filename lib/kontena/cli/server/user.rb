@@ -21,7 +21,17 @@ module Kontena::Cli::Server
       if response
         settings['server']['token'] = response['access_token']
         save_settings
-        print color('Login Successful', :green)
+        puts ''
+        puts "Welcome #{response['user']['name'].green}"
+        puts ''
+        reset_client
+        grid = client(require_token).get('grids')['grids'][0]
+        if grid
+          self.current_grid = grid
+          puts "Using grid: #{grid['name'].cyan}"
+        else
+          clear_current_grid
+        end
         true
       else
         print color('Login Failed', :red)

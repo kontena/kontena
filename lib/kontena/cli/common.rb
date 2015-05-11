@@ -28,6 +28,10 @@ module Kontena
         @client
       end
 
+      def reset_client
+        @client = nil
+      end
+
       def settings_filename
         File.join(Dir.home, '/.kontena_client.json')
       end
