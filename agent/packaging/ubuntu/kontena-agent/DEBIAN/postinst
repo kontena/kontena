@@ -1,7 +1,21 @@
 #!/bin/sh
 set -e
 
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Fetching configuration from debconf
+db_get kontena-agent/server_uri
+URI="KONTENA_URI=${RET}"
+sed -i -r "s#\#KONTENA_URI=.*#${URI}#" /etc/default/kontena-agent
+
+db_get kontena-agent/grid_token
+TOKEN="KONTENA_TOKEN=${RET}"
+sed -i -r "s#\#KONTENA_TOKEN=.*#${TOKEN}#" /etc/default/kontena-agent
+
+
 /usr/bin/docker pull kontena/agent:0.5
 /usr/bin/docker pull google/cadvisor:0.12.0
 
 /sbin/start kontena-cadvisor || true
+/sbin/start kontena-agent || true

@@ -1,5 +1,18 @@
 #!/bin/sh
 set -e
 
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Fetching configuration from debconf
+db_get kontena-weave/node_number
+NUMBER=${RET:-1}
+sed -i -r "s#WEAVE_BRIDGE=.*#WEAVE_BRIDGE=\"10.81.0.${NUMBER}/16\"#" /etc/default/kontena-weave
+sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --fixed-cidr='10.81.${NUMBER}.0/24'\"#" /etc/default/docker
+
+db_get kontena-weave/peers
+sed -i -r "s#WEAVE_PEERS=.*#WEAVE_PEERS=${RET}#" /etc/default/kontena-weave
+
 /usr/local/bin/weave setup
 /sbin/start kontena-weave

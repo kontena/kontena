@@ -3,4 +3,4 @@
 WEAVE_BRIDGE=10.81.0.1/16
 
 # Weave peer nodes
-#WEAVE_PEERS=
+WEAVE_PEERS=
