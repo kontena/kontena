@@ -4,15 +4,15 @@ write_files:
     permissions: 0600
     owner: root
     content: |
-      KONTENA_URI="ws://172.17.8.1:9292"
-      KONTENA_TOKEN="LvggFvQcmhR9r+namUrdZQJlcaEodPpEneK+ido9iMXEXeX3BeAL6Q0HYAxwslP8ueOMk6jGfKsANUhd/X+QMA=="
+      KONTENA_URI="ws://127.0.0.1:9292"
+      KONTENA_TOKEN=""
   - path: /etc/weave.env
     permissions: 0600
     owner: root
     content: |
       WEAVE_PEERS=""
-      BRIDGE_ADDRESS_CIDR="10.81.0.1/16"
-      BRIDGE_CIDR="10.81.1.0/24"
+      BRIDGE_CIDR="10.81.0.1/16"
+      DOCKER_OPTS='--bridge=weave --fixed-cidr="10.81.1.0/24"'
 coreos:
   etcd:
     # generate a new token for each unique cluster from https://discovery.etcd.io/new
@@ -48,11 +48,11 @@ coreos:
         ExecStartPre=/usr/bin/curl \
           --silent \
           --location \
-          https://github.com/weaveworks/weave/releases/download/v0.9.0/weave \
+          https://github.com/weaveworks/weave/releases/download/v0.10.0/weave \
           --output /opt/bin/weave
         ExecStartPre=/usr/bin/chmod +x /opt/bin/weave
-        ExecStart=/opt/bin/weave create-bridge
-        ExecStart=/usr/bin/ip addr add dev weave ${BRIDGE_ADDRESS_CIDR}
+        ExecStart=/opt/bin/weave --local create-bridge
+        ExecStart=/usr/bin/ip addr add dev weave ${BRIDGE_DEV_CIDR}
     - name: weave.service
       enable: true
       content: |
@@ -76,7 +76,6 @@ coreos:
           content: |
             [Service]
             EnvironmentFile=/etc/weave.env
-            Environment=DOCKER_OPTS='--bridge=weave'
     - name: kontena-cadvisor.service
       command: start
       enable: true
@@ -91,13 +90,13 @@ coreos:
         RestartSec=5
         ExecStartPre=-/usr/bin/docker kill kontena-cadvisor
         ExecStartPre=-/usr/bin/docker rm kontena-cadvisor
-        ExecStartPre=/usr/bin/docker pull google/cadvisor:0.7.1
+        ExecStartPre=/usr/bin/docker pull google/cadvisor:0.12.0
         ExecStart=/usr/bin/docker run --name kontena-cadvisor \
             --volume=/:/rootfs:ro \
             --volume=/var/run:/var/run:rw \
             --volume=/sys:/sys:ro \
             --volume=/var/lib/docker/:/var/lib/docker:ro \
-            google/cadvisor:0.7.1
+            google/cadvisor:0.12.0
     - name: kontena-agent.service
       command: start
       enable: true
@@ -114,9 +113,9 @@ coreos:
         EnvironmentFile=/etc/kontena-agent.env
         ExecStartPre=-/usr/bin/docker kill kontena-agent
         ExecStartPre=-/usr/bin/docker rm kontena-agent
-        ExecStartPre=/usr/bin/docker pull kontena/agent:0.4
+        ExecStartPre=/usr/bin/docker pull kontena/agent:0.5
         ExecStart=/usr/bin/docker run --name kontena-agent \
             --link kontena-cadvisor:cadvisor \
             -e KONTENA_URI=${KONTENA_URI} -e KONTENA_TOKEN=${KONTENA_TOKEN} \
             -p 53:53 -p 53:53/udp \
-            -v=/var/run/docker.sock:/var/run/docker.sock kontena/agent
+            -v=/var/run/docker.sock:/var/run/docker.sock kontena/agent:0.5
