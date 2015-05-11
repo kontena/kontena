@@ -1,13 +1,14 @@
 FROM gliderlabs/alpine:edge
+MAINTAINER jari@kontena.io
 
 RUN apk update && apk --update add ruby ruby-dev ca-certificates libssl1.0 openssl libstdc++
 
 ADD Gemfile /app/
 ADD Gemfile.lock /app/
 
-RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-dev && \
+RUN apk --update add --virtual build-dependencies build-base openssl-dev && \
     gem install bundler && \
-    cd /app ; bundle install && \
+    cd /app ; bundle install --without development test && \
     apk del build-dependencies
 
 ENV CADVISOR_URL http://cadvisor:8080/api/v1.2/docker/
