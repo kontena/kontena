@@ -171,7 +171,11 @@ module Kontena
     end
 
     def handle_error_response(response)
-      raise Kontena::Errors::StandardError.new(response.status, response.body)
+      message = response.body
+      if response.status == 404 && message == ''
+        message = 'Not found'
+      end
+      raise Kontena::Errors::StandardError.new(response.status, message)
     end
   end
 end
