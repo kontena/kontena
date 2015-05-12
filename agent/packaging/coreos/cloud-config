@@ -4,8 +4,8 @@ write_files:
     permissions: 0600
     owner: root
     content: |
-      KONTENA_URI="ws://127.0.0.1:9292"
-      KONTENA_TOKEN=""
+      KONTENA_URI="ws://<ip_of_kontena_server>:8080"
+      KONTENA_TOKEN="<grid_token_from_server>"
   - path: /etc/weave.env
     permissions: 0600
     owner: root
@@ -52,7 +52,7 @@ coreos:
           --output /opt/bin/weave
         ExecStartPre=/usr/bin/chmod +x /opt/bin/weave
         ExecStart=/opt/bin/weave --local create-bridge
-        ExecStart=/usr/bin/ip addr add dev weave ${BRIDGE_DEV_CIDR}
+        ExecStart=/usr/bin/ip addr add dev weave ${BRIDGE_CIDR}
     - name: weave.service
       enable: true
       content: |
