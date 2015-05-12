@@ -23,7 +23,7 @@ module Kontena::Cli::Services
       require_api_url
       token = require_token
 
-      service = client(token).get("services/#{service_id}")
+      service = get_service(token, service_id)
       puts "#{service['id']}:"
       puts "  status: #{service['state'] }"
       puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"

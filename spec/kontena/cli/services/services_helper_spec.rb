@@ -33,6 +33,13 @@ module Kontena::Cli::Services
       end
     end
 
+    describe '#get_service' do
+      it 'creates GET services/:id request to Kontena Server' do
+        expect(client).to receive(:get).with('services/test-service')
+        subject.get_service(token, 'test-service')
+      end
+    end
+
     describe '#deploy_service' do
       it 'creates POST services/:id/deploy request to Kontena Server' do
         allow(client).to receive(:get).with('services/1').and_return({'state' => 'running'})

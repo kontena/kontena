@@ -15,6 +15,10 @@ module Kontena
           client(token).put("services/#{service_id}", data)
         end
 
+        def get_service(token, service_id)
+          client(token).get("services/#{service_id}")
+        end
+
         def deploy_service(token, service_id, data)
           client(token).post("services/#{service_id}/deploy", data)
           print 'deploying '

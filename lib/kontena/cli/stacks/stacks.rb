@@ -71,8 +71,7 @@ module Kontena::Cli::Stacks
     end
 
     def find_service_by_name(name)
-      current_services = client(token).get("grids/#{current_grid}/services")
-      current_services['services'].find {|service| service['id'] == name}
+      get_service(token, name) rescue nil
     end
 
     def create(name, options)
