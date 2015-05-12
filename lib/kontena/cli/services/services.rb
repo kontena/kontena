@@ -45,8 +45,8 @@ module Kontena::Cli::Services
       end
       puts "  links: "
       if service['links']
-        service['links'].each do |p|
-          puts "    - #{p['alias']}"
+        service['links'].each do |l|
+          puts "    - #{l['alias']}"
         end
       end
       puts "  containers:"
@@ -147,7 +147,6 @@ module Kontena::Cli::Services
       data[:container_count] = options.instances if options.instances
       data[:cmd] = options.cmd.split(" ") if options.cmd
       data[:user] = options.user if options.user
-      data[:cpu] = options.cpu if options.cpu
       data[:image] = options.image if options.image
       data[:cap_add] = options.cap_add if options.cap_add
       data[:cap_drop] = options.cap_drop if options.cap_drop
