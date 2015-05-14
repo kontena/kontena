@@ -1,4 +1,4 @@
-# Kontena Documentation
+# Introduction
 
 Using container technologies, such as Docker, can be tricky at large scale deployments. Kontena makes it very easy to deploy, manage, scale and monitor containerized applications on any cloud infrastructure. 
 
