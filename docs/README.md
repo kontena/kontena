@@ -10,6 +10,6 @@ This documentation is a work in progress, so any feedback or requests are welcom
 
 ## Getting Started
 
-* [Testing Kontena Locally](https://github.com/kontena/docs/blob/master/getting-started/local_testing.md)
-* [Installing Kontena to a Single Ubuntu Server](https://github.com/kontena/docs/blob/master/getting-started/ubuntu_single_node.md)
-* [Kontena installation to multiple Ubuntu nodes](https://github.com/kontena/docs/blob/master/getting-started/ubuntu_cluster.md)
+* [Testing Kontena Locally](getting-started/local_testing.md)
+* [Installing Kontena to a Single Ubuntu Server](getting-started/ubuntu_single_node.md)
+* [Kontena installation to multiple Ubuntu nodes](getting-started/ubuntu_cluster.md)
