@@ -8,6 +8,7 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::Common
     include Kontena::Cli::Services::ServicesHelper
 
+    attr_reader :services, :service_prefix, :deploy_queue
     def initialize
       @deploy_queue = []
     end
@@ -20,8 +21,9 @@ module Kontena::Cli::Stacks
       @services = YAML.load(File.read(filename))
       @service_prefix = options.prefix || current_dir
 
-      init_services(@services)
-      deploy_services(@deploy_queue)
+      Dir.chdir(File.dirname(filename))
+      init_services(services)
+      deploy_services(deploy_queue)
     end
 
     private
@@ -54,9 +56,11 @@ module Kontena::Cli::Stacks
           # change prefixed service name also to links options
           options['links'][index] = "#{prefixed_name(linked_service[:name])}:#{linked_service[:alias]}"
 
-          create_or_update_service(prefixed_name(linked_service[:name]), @services[linked_service[:name]]) unless in_deploy_queue?(prefixed_name(linked_service[:name]))
+          create_or_update_service(prefixed_name(linked_service[:name]), services[linked_service[:name]]) unless in_deploy_queue?(prefixed_name(linked_service[:name]))
         end
       end
+
+      merge_env_vars(options)
 
       if find_service_by_name(name)
         service = update(name, options)
@@ -67,7 +71,7 @@ module Kontena::Cli::Stacks
       # add deploy options to service
       service['deploy'] = options['deploy']
 
-      @deploy_queue.push service
+      deploy_queue.push service
     end
 
     def find_service_by_name(name)
@@ -88,15 +92,33 @@ module Kontena::Cli::Stacks
     end
 
     def in_deploy_queue?(name)
-      @deploy_queue.find {|service| service['id'] == name} != nil
+      deploy_queue.find {|service| service['id'] == name} != nil
     end
 
     def prefixed_name(name)
-      "#{@service_prefix}-#{name}"
+      "#{service_prefix}-#{name}"
     end
 
     def current_dir
       File.basename(Dir.getwd)
+    end
+
+    def merge_env_vars(options)
+      return unless options['env_file']
+
+      options['env_file'] = [options['env_file']] if options['env_file'].is_a?(String)
+      options['environment'] = [] unless options['environment']
+
+      options['env_file'].each do |env_file|
+        options['environment'].concat(read_env_file(env_file))
+      end
+
+      options['environment'].uniq! {|s| s.split('=').first}
+    end
+
+    def read_env_file(path)
+      puts Dir.getwd
+      File.readlines(path).delete_if { |line| line.start_with?('#') }
     end
 
     def parse_data(options)

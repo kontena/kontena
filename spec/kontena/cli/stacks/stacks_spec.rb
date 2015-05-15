@@ -38,6 +38,14 @@ module Kontena::Cli::Stacks
       options = double({prefix: false, file: false})
     end
 
+    let(:env_vars) do
+      ["#comment line", "TEST_ENV_VAR=test", "MYSQL_ADMIN_PASSWORD=abcdef"]
+    end
+
+    let(:dot_env) do
+      ["TEST_ENV_VAR=test2", "TEST_ENV_VAR2=test3"]
+    end
+
     describe '#deploy' do
       context 'when api_url is nil' do
         it 'raises error' do
@@ -83,6 +91,53 @@ module Kontena::Cli::Stacks
           allow(Dir).to receive(:getwd).and_return(current_dir)
           expect(File).to receive(:basename).with(current_dir)
           subject.deploy(options)
+        end
+
+        context 'when yml file has multiple env files' do
+          it 'merges environment variables correctly' do
+            allow(subject).to receive(:current_dir).and_return("kontena-test")
+            services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
+            services['wordpress']['env_file'] = %w(/path/to/env_file .env)
+
+            expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
+            expect(File).to receive(:readlines).with('.env').and_return(dot_env)
+
+            data = {
+                :name =>"kontena-test-wordpress",
+                :image=>"wordpress:latest",
+                :env=>["MYSQL_ADMIN_PASSWORD=password", "TEST_ENV_VAR=test", "TEST_ENV_VAR2=test3"],
+                :container_count=>2,
+                :stateful=>false,
+                :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
+                :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
+            }
+
+            expect(subject).to receive(:create_service).with('1234567', '1', data)
+            subject.deploy(options)
+          end
+        end
+
+        context 'when yml file has one env file' do
+          it 'merges environment variables correctly' do
+            allow(subject).to receive(:current_dir).and_return("kontena-test")
+            services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
+            services['wordpress']['env_file'] = '/path/to/env_file'
+
+            expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
+
+            data = {
+                :name =>"kontena-test-wordpress",
+                :image=>"wordpress:latest",
+                :env=>["MYSQL_ADMIN_PASSWORD=password", "TEST_ENV_VAR=test"],
+                :container_count=>2,
+                :stateful=>false,
+                :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
+                :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
+            }
+
+            expect(subject).to receive(:create_service).with('1234567', '1', data)
+            subject.deploy(options)
+          end
         end
 
         it 'creates mysql service before wordpress' do
