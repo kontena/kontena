@@ -28,6 +28,8 @@ namespace :release do
     sh('mkdir -p build')
     sh('rm -rf build/ubuntu/')
     sh('cp -ar packaging/ubuntu build/')
+    sh("docker run --rm -v #{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin:/target jpetazzo/nsenter")
+    %w( docker-enter importenv ).each{|f| File.unlink("#{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin/#{f}") }
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/#{NAME}/DEBIAN/control")
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/kontena-weave/DEBIAN/control")
 
