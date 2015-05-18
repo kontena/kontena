@@ -117,7 +117,6 @@ module Kontena::Cli::Stacks
     end
 
     def read_env_file(path)
-      puts Dir.getwd
       File.readlines(path).delete_if { |line| line.start_with?('#') }
     end
 
