@@ -43,7 +43,7 @@ module Kontena::Cli::Stacks
     end
 
     let(:dot_env) do
-      ["TEST_ENV_VAR=test2", "TEST_ENV_VAR2=test3"]
+      ["TEST_ENV_VAR=test2","", "TEST_ENV_VAR2=test3"]
     end
 
     describe '#deploy' do

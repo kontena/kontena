@@ -117,7 +117,7 @@ module Kontena::Cli::Stacks
     end
 
     def read_env_file(path)
-      File.readlines(path).delete_if { |line| line.start_with?('#') }
+      File.readlines(path).delete_if { |line| line.start_with?('#') || line.empty? }
     end
 
     def parse_data(options)
