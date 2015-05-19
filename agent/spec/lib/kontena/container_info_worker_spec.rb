@@ -22,11 +22,31 @@ describe Kontena::ContainerInfoWorker do
   end
 
   describe '#publish_node_info' do
+    before(:each) do
+      allow(Net::HTTP).to receive(:get).and_return('127.0.0.1')
+      allow(Docker).to receive(:info).and_return({
+        'Name' => 'node-1',
+        'Labels' => nil,
+        'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
+      })
+    end
+
     it 'adds node info to queue' do
-      allow(Docker).to receive(:info).and_return({})
       expect {
         subject.publish_node_info
       }.to change{ subject.queue.length }.by(1)
+    end
+
+    it 'contains docker id' do
+      subject.publish_node_info
+      info = subject.queue.pop
+      expect(info[:data]['ID']).to eq('U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')
+    end
+
+    it 'contains public ip' do
+      subject.publish_node_info
+      info = subject.queue.pop
+      expect(info[:data]['PublicIp']).to eq('127.0.0.1')
     end
   end
 
