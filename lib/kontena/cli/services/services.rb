@@ -55,6 +55,7 @@ module Kontena::Cli::Services
         puts "      node: #{container['node']['name']}"
         puts "      dns: #{container['id']}.kontena.local"
         puts "      ip: #{container['network_settings']['ip_address']}"
+        puts "      public ip: #{container['node']['public_ip']}"
         if container['status'] == 'unknown'
           puts "      status: #{container['status'].colorize(:yellow)}"
         else
