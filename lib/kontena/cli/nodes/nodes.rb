@@ -38,6 +38,7 @@ module Kontena::Cli::Nodes
       puts "  id: #{node['id']}"
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"
       puts "  last connect: #{node['updated_at']}"
+      puts "  public ip: #{node['public_ip']}"
       puts "  os: #{node['os']}"
       puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"
