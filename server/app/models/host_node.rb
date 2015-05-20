@@ -16,6 +16,7 @@ class HostNode
   field :cpus, type: Integer
   field :swap_limit, type: Integer
   field :connected, type: Boolean, default: false
+  field :public_ip, type: String
 
   belongs_to :grid
   has_many :containers, dependent: :destroy
@@ -43,7 +44,8 @@ class HostNode
       mem_total: attrs['MemTotal'],
       mem_limit: attrs['MemoryLimit'],
       cpus: attrs['NCPU'],
-      swap_limit: attrs['SwapLimit']
+      swap_limit: attrs['SwapLimit'],
+      public_ip: attrs['PublicIp']
     }
   end
 
