@@ -50,6 +50,7 @@ namespace :release do
 
   desc 'Push ubuntu packages'
   task :push_ubuntu => :build_ubuntu do
+    repository = ENV['REPOSITORY'] || 'kontena'
     bintray_user = ENV['BINTRAY_USER']
     bintray_key = ENV['BINTRAY_KEY']
     rev = ENV['REV']
@@ -58,7 +59,7 @@ namespace :release do
     raise ArgumentError.new('You must define REV') if rev.blank?
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/kontena/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb")
-    sh("curl -T ./release/kontena-weave_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/kontena/kontena-agent/#{VERSION}/kontena-weave-#{VERSION}-#{rev}_all.deb")
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/#{repository}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb")
+    sh("curl -T ./release/kontena-weave_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/#{repository}/kontena-agent/#{VERSION}/kontena-weave-#{VERSION}-#{rev}_all.deb")
   end
 end
