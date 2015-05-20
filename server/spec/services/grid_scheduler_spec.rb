@@ -19,7 +19,8 @@ describe GridScheduler do
     end
 
     it 'returns a node' do
-      expect(subject.select_node(grid_service, 'foo-1', nodes)).to eq(nodes[0])
+      node = subject.select_node(grid_service, 'foo-1', nodes)
+      expect(nodes.include?(node)).to eq(true)
     end
   end
 
