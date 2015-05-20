@@ -23,7 +23,7 @@ module Scheduler
       end
 
       def sort_candidates(nodes, grid_service)
-        nodes.sort_by{|node|
+        nodes.shuffle.sort_by{|node|
           node.containers.where(grid_service_id: grid_service.id).count
         }
       end
