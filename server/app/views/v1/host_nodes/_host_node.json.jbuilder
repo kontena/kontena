@@ -10,3 +10,4 @@ json.labels node.labels
 json.mem_total node.mem_total
 json.mem_limit node.mem_limit
 json.cpus node.cpus
+json.public_ip node.public_ip

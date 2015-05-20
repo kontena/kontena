@@ -1,4 +1,5 @@
 require 'docker'
+require 'net/http'
 require_relative 'logging'
 
 module Kontena
@@ -37,11 +38,25 @@ module Kontena
     def publish_node_info
       logger.info(LOG_NAME) { 'publishing node information' }
       @node_info = Docker.info
+      @node_info['PublicIp'] = self.public_ip
       event = {
           event: 'node:info',
           data: @node_info
       }
       self.queue << event
+    end
+
+    ##
+    # @return [String, NilClass]
+    def public_ip
+      if ENV['COREOS_PUBLIC_IPV4']
+        ENV['COREOS_PUBLIC_IPV4']
+      else
+        Net::HTTP.get('whatismyip.akamai.com', '/')
+      end
+    rescue => exc
+      logger.error(LOG_NAME) { "Cannot resolve public ip: #{exc.message}"}
+      nil
     end
 
     ##
