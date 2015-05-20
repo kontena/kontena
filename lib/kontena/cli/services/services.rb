@@ -1,9 +1,11 @@
 require 'kontena/client'
 require_relative '../common'
+require_relative 'services_helper'
 
 module Kontena::Cli::Services
   class Services
     include Kontena::Cli::Common
+    include Kontena::Cli::Services::ServicesHelper
 
     def list
       require_api_url
@@ -21,7 +23,7 @@ module Kontena::Cli::Services
       require_api_url
       token = require_token
 
-      service = client(token).get("services/#{service_id}")
+      service = get_service(token, service_id)
       puts "#{service['id']}:"
       puts "  status: #{service['state'] }"
       puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
@@ -43,8 +45,8 @@ module Kontena::Cli::Services
       end
       puts "  links: "
       if service['links']
-        service['links'].each do |p|
-          puts "    - #{p['alias']}"
+        service['links'].each do |l|
+          puts "    - #{l['alias']}"
         end
       end
       puts "  containers:"
@@ -71,33 +73,23 @@ module Kontena::Cli::Services
     def deploy(service_id, options)
       require_api_url
       token = require_token
-
       data = {}
       data[:strategy] = options.strategy if options.strategy
       data[:wait_for_port] = options.wait_for_port if options.wait_for_port
-      result = client(token).post("services/#{service_id}/deploy", data)
-
-      print 'deploying '
-      until client(token).get("services/#{service_id}")['state'] != 'deploying' do
-        print '.'
-        sleep 1
-      end
-      puts ' done'
-      puts ''
+      deploy_service(token, service_id, data)
       self.show(service_id)
     end
+
 
     def restart(service_id)
       require_api_url
       token = require_token
-
       result = client(token).post("services/#{service_id}/restart", {})
     end
 
     def stop(service_id)
       require_api_url
       token = require_token
-
       result = client(token).post("services/#{service_id}/stop", {})
     end
 
@@ -111,55 +103,22 @@ module Kontena::Cli::Services
     def create(name, image, options)
       require_api_url
       token = require_token
-      if options.ports
-        ports = parse_ports(options.ports)
-      end
       data = {
         name: name,
         image: image,
         stateful: !!options.stateful
       }
-      if options.link
-        links = parse_links(options.link)
-      end
-      data[:ports] = ports if options.ports
-      data[:links] = links if options.link
-      data[:volumes] = options.volume if options.volume
-      data[:volumes_from] = options.volumes_from if options.volumes_from
-      data[:memory] = parse_memory(options.memory) if options.memory
-      data[:memory_swap] = parse_memory(options.memory_swap) if options.memory_swap
-      data[:cpu_shares] = options.cpu_shares if options.cpu_shares
-      data[:affinity] = options.affinity if options.affinity
-      data[:env] = options.env if options.env
-      data[:container_count] = options.instances if options.instances
-      data[:cmd] = options.cmd.split(" ") if options.cmd
-      data[:user] = options.user if options.user
-      data[:cpu] = options.cpu if options.cpu
-      data[:cap_add] = options.cap_add if options.cap_add
-      data[:cap_drop] = options.cap_drop if options.cap_drop
-      if options.memory
-        memory = human_size_to_number(options.memory)
-        raise ArgumentError.new('Invalid --memory')
-        data[:memory] = memory
-      end
-      data[:memory] = options.memory if options.memory
-      client(token).post("grids/#{current_grid}/services", data)
+      data.merge!(parse_data_from_options(options))
+      create_service(token, current_grid, data)
     end
+
 
     def update(service_id, options)
       require_api_url
       token = require_token
 
-      data = {}
-      data[:env] = options.env if options.env
-      data[:container_count] = options.instances if options.instances
-      data[:cmd] = options.cmd.split(" ") if options.cmd
-      data[:ports] = parse_ports(options.ports) if options.ports
-      data[:image] = options.image if options.image
-      data[:cap_add] = options.cap_add if options.cap_add
-      data[:cap_drop] = options.cap_drop if options.cap_drop
-
-      client(require_token).put("services/#{service_id}", data)
+      data = parse_data_from_options(options)
+      update_service(token, service_id, data)
     end
 
     def destroy(service_id)
@@ -171,31 +130,27 @@ module Kontena::Cli::Services
 
     private
 
-    def parse_ports(port_options)
-      port_options.map{|p|
-        node_port, container_port, protocol = p.split(':')
-        if node_port.nil? || container_port.nil?
-          raise ArgumentError.new("Invalid port value #{p}")
-        end
-        {
-          container_port: container_port,
-          node_port: node_port,
-          protocol: protocol || 'tcp'
-        }
-      }
-    end
-
-    def parse_links(link_options)
-      link_options.map{|l|
-        service_name, alias_name = l.split(':')
-        if service_name.nil? || alias_name.nil?
-          raise ArgumentError.new("Invalid link value #{l}")
-        end
-        {
-            name: service_name,
-            alias: alias_name
-        }
-      }
+    ##
+    # parse given options to hash
+    # @return [Hash]
+    def parse_data_from_options(options)
+      data = {}
+      data[:ports] = parse_ports(options.ports) if options.ports
+      data[:links] = parse_links(options.link) if options.link
+      data[:volumes] = options.volume if options.volume
+      data[:volumes_from] = options.volumes_from if options.volumes_from
+      data[:memory] = parse_memory(options.memory) if options.memory
+      data[:memory_swap] = parse_memory(options.memory_swap) if options.memory_swap
+      data[:cpu_shares] = options.cpu_shares if options.cpu_shares
+      data[:affinity] = options.affinity if options.affinity
+      data[:env] = options.env if options.env
+      data[:container_count] = options.instances if options.instances
+      data[:cmd] = options.cmd.split(" ") if options.cmd
+      data[:user] = options.user if options.user
+      data[:image] = options.image if options.image
+      data[:cap_add] = options.cap_add if options.cap_add
+      data[:cap_drop] = options.cap_drop if options.cap_drop
+      data
     end
   end
 end
