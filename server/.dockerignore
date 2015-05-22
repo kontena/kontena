@@ -1,4 +1,6 @@
 .env
 virtualbox
 packaging
+build
+release
 *.pem
