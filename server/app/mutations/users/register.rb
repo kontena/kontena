@@ -8,25 +8,30 @@ module Users
     end
 
     def execute
+      kontena_user = register_user(email, password)
+      if kontena_user.nil?
+        add_error(:external_id, :invalid, 'Kontena account registration failed')
+        return
+      end
       if User.count == 0
         user = create_admin_user(email)
       else
         user = User.find_by(email: email)
         if user.nil?
-          add_error(:email, :invalid, 'User not allowed to use this server.')
+          add_error(:email, :invalid, 'Kontena account registered successfully, but user is not allowed to use this server.')
           return
         end
       end
-      kontena_user = AuthService::Client.new.register({'email' => email, 'password' => password})
-      if kontena_user.nil?
-        add_error(:external_id, :invalid, 'User registering failed')
-        return
-      end
-
       user.update_attribute(:external_id, kontena_user['id'])
-
       user
+    end
 
+    ##
+    #
+    # @param [String] email
+    # @param [String] password
+    def register_user(email, password)
+      AuthService::Client.new.register({'email' => email, 'password' => password})
     end
 
     ##

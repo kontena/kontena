@@ -53,8 +53,8 @@ describe '/v1/users' do
 
       it 'updates user information' do
         data = {
-          email: 'john@domain.com',
-          password: 'secret1234'
+            email: 'john@domain.com',
+            password: 'secret1234'
         }
         expect_any_instance_of(AuthService::Client).to receive(:register).once.with(data.stringify_keys).and_return(kontena_user.stringify_keys)
 
@@ -83,7 +83,7 @@ describe '/v1/users' do
             email: 'john@domain.com'
         }
 
-        expect_any_instance_of(AuthService).not_to receive(:register).once.with(data.stringify_keys).and_return(kontena_user.stringify_keys)
+        expect_any_instance_of(AuthService::Client).not_to receive(:register).once.with(data.stringify_keys).and_return(kontena_user.stringify_keys)
         post '/v1/users/register', data.to_json
         expect(response.status).to eq(422)
         expect(json_response['error']['password']).not_to be_nil
@@ -92,16 +92,27 @@ describe '/v1/users' do
     end
 
     context 'when user is not invited' do
+      it 'registers Kontena account' do
+        data = {
+            email: 'david@domain.com',
+            password: 'secret1234'
+        }
+        john
+        expect_any_instance_of(AuthService::Client).to receive(:register).once.with(data.stringify_keys).and_return(kontena_user.stringify_keys)
+        post '/v1/users/register', data.to_json
+      end
+
       it 'returns error' do
         data = {
             email: 'david@domain.com',
             password: 'secret1234'
         }
         john
+        expect_any_instance_of(AuthService::Client).to receive(:register).and_return(kontena_user.stringify_keys)
         post '/v1/users/register', data.to_json
-        expect_any_instance_of(AuthService).not_to receive(:register).once.with(data.stringify_keys).and_return(kontena_user.stringify_keys)
+
         expect(response.status).to eq(422)
-        expect(json_response['error']['email']).not_to be_nil
+        expect(json_response['error']['email']).to eq("Kontena account registered successfully, but user is not allowed to use this server.")
       end
     end
   end
