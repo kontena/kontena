@@ -1,6 +1,9 @@
 require_relative '../../spec_helper'
 
 describe GridServices::Deploy do
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
+  
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')

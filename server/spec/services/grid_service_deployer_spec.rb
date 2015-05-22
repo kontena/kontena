@@ -1,6 +1,8 @@
 require_relative '../spec_helper'
 
 describe GridServiceDeployer do
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
 
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
