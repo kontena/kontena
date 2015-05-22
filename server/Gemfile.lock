@@ -1,19 +1,6 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    actionmailer (4.1.8)
-      actionpack (= 4.1.8)
-      actionview (= 4.1.8)
-      mail (~> 2.5, >= 2.5.4)
-    actionpack (4.1.8)
-      actionview (= 4.1.8)
-      activesupport (= 4.1.8)
-      rack (~> 1.5.2)
-      rack-test (~> 0.6.2)
-    actionview (4.1.8)
-      activesupport (= 4.1.8)
-      builder (~> 3.1)
-      erubis (~> 2.7.0)
     activemodel (4.1.8)
       activesupport (= 4.1.8)
       builder (~> 3.1)
@@ -23,7 +10,7 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
-    bcrypt (3.1.9)
+    bcrypt (3.1.10)
     bson (2.3.0)
     builder (3.2.2)
     celluloid (0.16.0)
@@ -33,7 +20,6 @@ GEM
     diff-lcs (1.2.5)
     docile (1.1.5)
     dotenv (1.0.2)
-    erubis (2.7.0)
     eventmachine (1.0.7)
     faye-websocket (0.9.2)
       eventmachine (>= 0.12.0)
@@ -55,10 +41,7 @@ GEM
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
-    mail (2.6.3)
-      mime-types (>= 1.16, < 3)
-    mime-types (2.4.3)
-    minitest (5.5.1)
+    minitest (5.6.1)
     mongoid (4.0.2)
       activemodel (~> 4.0)
       moped (~> 2.0.0)
@@ -131,7 +114,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  actionmailer (~> 4.1.8)
   activesupport (~> 4.1.8)
   bcrypt (~> 3.1.2)
   database_cleaner

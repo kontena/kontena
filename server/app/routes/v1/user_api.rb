@@ -1,6 +1,3 @@
-require_relative '../../mutations/users/register'
-require_relative '../../mutations/users/email_password_reset'
-require_relative '../../mutations/users/password_reset'
 
 module V1
   class UserApi < Roda
