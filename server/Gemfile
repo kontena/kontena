@@ -6,7 +6,6 @@ gem 'tilt-jbuilder'
 gem 'mutations'
 gem 'mongoid', '~> 4.0.0'
 gem 'activesupport', '~> 4.1.8'
-gem 'actionmailer', '~> 4.1.8'
 # To use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.2'
 gem 'faye-websocket'

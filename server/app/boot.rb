@@ -23,11 +23,8 @@ Dir[__dir__ + '/helpers/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/models/*.rb'].each {|file| require file }
 
-Dir[__dir__ + '/mailers/*.rb'].each {|file| require file }
-
 Dir[__dir__ + '/mutations/**/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/services/**/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/jobs/**/*.rb'].each {|file| require file }
-
