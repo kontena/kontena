@@ -3,6 +3,7 @@ module Kontena::Cli::Grids; end;
 require_relative 'grids'
 require_relative 'users'
 require_relative 'audit_log'
+require_relative 'vpn'
 
 
 command 'grid list' do |c|
@@ -85,5 +86,32 @@ command 'grid remove-user' do |c|
   c.description = 'Unassign user from grid'
   c.action do |args, options|
     Kontena::Cli::Grids::Users.new.remove(args[0])
+  end
+end
+
+
+command 'vpn create' do |c|
+  c.syntax = 'kontena vpn create'
+  c.description = 'Create vpn service'
+  c.option '--node STRING', String, 'Node name'
+  c.option '--ip STRING', String, 'Node ip'
+  c.action do |args, options|
+    Kontena::Cli::Grids::Vpn.new.create(options)
+  end
+end
+
+command 'vpn delete' do |c|
+  c.syntax = 'kontena vpn delete'
+  c.description = 'Delete vpn service'
+  c.action do |args, options|
+    Kontena::Cli::Grids::Vpn.new.delete
+  end
+end
+
+command 'vpn config' do |c|
+  c.syntax = 'kontena vpn config'
+  c.description = 'Show vpn client config'
+  c.action do |args, options|
+    Kontena::Cli::Grids::Vpn.new.config
   end
 end
