@@ -15,12 +15,30 @@ module Kontena::Cli::Services
         query_params = last_id.nil? ? '' : "from=#{last_id}"
         result = client(token).get("services/#{service_id}/container_logs?#{query_params}")
         result['logs'].each do |log|
-          puts log['data']
+          color = color_for_container(log['container_id'])
+          puts "#{log['container_id'][0..12].colorize(color)} | #{log['data']}"
           last_id = log['id']
         end
         break unless options.follow
         sleep(2)
       end
+    end
+
+    def color_for_container(container_id)
+      color_maps[container_id] = colors.shift unless color_maps[container_id]
+      color_maps[container_id].to_sym
+    end
+
+    def color_maps
+      @color_maps ||= {}
+    end
+
+    def colors
+      if(@colors.nil? || @colors.size == 0)
+        @colors = [:green, :yellow, :magenta, :cyan, :red,
+          :light_green, :light_yellow, :ligh_magenta, :light_cyan, :light_red]
+      end
+      @colors
     end
   end
 end
