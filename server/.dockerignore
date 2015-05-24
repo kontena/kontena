@@ -1,4 +1,6 @@
 .env
+.dockercfg
+.idea
 virtualbox
 packaging
 build
