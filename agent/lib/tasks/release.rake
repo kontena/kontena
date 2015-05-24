@@ -13,8 +13,8 @@ namespace :release do
 
   desc 'Build docker images'
   task :build_docker => :environment do
-    sh('docker pull ubuntu:trusty')
-    sh("docker build -t #{DOCKER_NAME}:#{VERSION} .")
+    sh('docker pull gliderlabs/alpine:edge')
+    sh("docker build -f Dockerfile.alpine -t #{DOCKER_NAME}:#{VERSION} .")
     DOCKER_VERSIONS.each do |v|
       sh("docker tag -f #{DOCKER_NAME}:#{VERSION} #{DOCKER_NAME}:#{v}")
     end
@@ -31,6 +31,8 @@ namespace :release do
     sh("docker run --rm -v #{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin:/target jpetazzo/nsenter")
     %w( docker-enter importenv ).each{|f| File.unlink("#{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin/#{f}") }
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/#{NAME}/DEBIAN/control")
+    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/DEBIAN/postinst")
+    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/etc/init/kontena-agent.conf")
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/kontena-weave/DEBIAN/control")
 
     sh("cd build/ubuntu && dpkg-deb -b #{NAME} . && dpkg-deb -b kontena-weave .")
@@ -50,7 +52,7 @@ namespace :release do
 
   desc 'Push ubuntu packages'
   task :push_ubuntu => :build_ubuntu do
-    repository = ENV['REPOSITORY'] || 'kontena'
+    repo = ENV['REPO'] || 'kontena'
     bintray_user = ENV['BINTRAY_USER']
     bintray_key = ENV['BINTRAY_KEY']
     rev = ENV['REV']
@@ -59,7 +61,7 @@ namespace :release do
     raise ArgumentError.new('You must define REV') if rev.blank?
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/#{repository}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb")
-    sh("curl -T ./release/kontena-weave_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} https://api.bintray.com/content/kontena/#{repository}/kontena-agent/#{VERSION}/kontena-weave-#{VERSION}-#{rev}_all.deb")
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release/kontena-weave_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/kontena-agent/#{VERSION}/kontena-weave-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
   end
 end
