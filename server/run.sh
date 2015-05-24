@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 echo "Updating MongoDB indexes... "
 rake db:mongoid:create_indexes > /dev/null
