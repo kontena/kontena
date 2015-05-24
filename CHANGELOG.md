@@ -10,6 +10,7 @@
 - Resolve public ip of grid node
 - Improved high-availability scheduling strategy
 - Automatic lost node cleanup routine
+- Show container id (with color) in service logs
 
 ## 0.5.0 (2015-05-02)
 
