@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 (TBD)
+
+- New cli command: `kontena deploy`
+- New cli commands for managing OpenVPN server
+- Weave network configuration improvements
+- Server & Agent images are now based on Alpine Linux
+- Allow user to register even without access to server
+- Resolve public ip of grid node
+
 ## 0.5.0 (2015-05-02)
 
 - Fix memory leak problems with Docker streaming API's
