@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 (TBD)
+## 0.6.0 (2015-05-25)
 
 - New cli command: `kontena deploy`
 - New cli commands for managing OpenVPN server
