@@ -6,7 +6,7 @@
 
 Kontena is an open source container orchestration tool that makes it easy to deploy and manage containerized applications on your own servers.
 
-[![Kontena Introduction](https://asciinema.org/a/20545.png)](https://asciinema.org/a/20545)
+[![Kontena Introduction](https://asciinema.org/a/20584.png)](https://asciinema.org/a/20584)
 
 The design and architecture of Kontena software is built to provide support for various application container technologies. At the moment, only [Docker](https://github.com/docker/docker) is supported but expect to see support for technologies like [CoreOS Rocket](https://github.com/coreos/rocket) and more in the future.
 
