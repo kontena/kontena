@@ -6,7 +6,7 @@ The design and architecture of Kontena software is built to provide support for 
 
 Kontena software is open source, and you can use it for any purpose, personal or commercial.
 
-This documentation is a work in progress, so any feedback or requests are welcome at info@kontena.io. Please use the [GitHub Issues](https://github.com/kontena/docs/issues) to report any documentation mistakes. You may also contribute to documentation by doing a [pull request](https://help.github.com/articles/using-pull-requests/).
+This documentation is a work in progress, so any feedback or requests are welcome at info@kontena.io. Please use the [GitHub Issues](https://github.com/kontena/kontena/issues) to report any documentation mistakes. You may also contribute to documentation by doing a [pull request](https://help.github.com/articles/using-pull-requests/).
 
 ## Getting Started
 
