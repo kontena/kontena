@@ -34,8 +34,9 @@ namespace :release do
     sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/DEBIAN/postinst")
     sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/etc/init/kontena-agent.conf")
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/kontena-weave/DEBIAN/control")
+    sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/kontena-etcd/DEBIAN/control")
 
-    sh("cd build/ubuntu && dpkg-deb -b #{NAME} . && dpkg-deb -b kontena-weave .")
+    sh("cd build/ubuntu && dpkg-deb -b #{NAME} . && dpkg-deb -b kontena-weave . && dpkg-deb -b kontena-etcd .")
   end
 
   desc 'Push all'
