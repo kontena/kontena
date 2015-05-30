@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_input high kontena-etcd/discovery || true
+db_go || true

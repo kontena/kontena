@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Fetching configuration from debconf
+db_get kontena-etcd/discovery
+ETCD_DISCOVERY="ETCD_DISCOVERY=${RET}"
+sed -i -r "s#\#ETCD_DISCOVERY=.*#${ETCD_DISCOVERY}#" /etc/default/kontena-etcd
+
+/usr/bin/docker pull kontena/etcd:2.0.10
+/usr/bin/docker inspect kontena-etcd-data > /dev/null || \
+  /usr/bin/docker create --name kontena-etcd-data -v /data kontena/etcd:2.0.10
