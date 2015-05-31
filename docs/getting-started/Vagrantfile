@@ -46,12 +46,6 @@ echo kontena-weave kontena-weave/peers string $2 | debconf-set-selections
 echo kontena-agent kontena-agent/server_uri string ws://192.168.66.100:8080 | debconf-set-selections
 echo kontena-agent kontena-agent/grid_token string 02GFS87STKVPyyziaQT6rUaTdCKlxY8HX+9D0ds929kI1SAbwq1kHzu6MMitMKWjZmND5tNKmeOM/FoLg7nEYQ== | debconf-set-selections
 sudo apt-get install -q -y kontena-agent
-#sudo echo "DOCKER_OPTS='-s btrfs --bridge=weave --fixed-cidr=\"$1\"'" > /etc/default/docker
-#sudo echo "WEAVE_PEERS=$2" > /etc/default/kontena-weave
-#sudo echo "WEAVE_BRIDGE='$3'" >> /etc/default/kontena-weave
-# sudo sed -i 's@10.81.0.1/16@'"$3"'@' /etc/network/interfaces.d/kontena-weave.cfg
-#sudo echo 'KONTENA_URI=ws://192.168.66.100:8080' > /etc/default/kontena-agent
-#sudo echo 'KONTENA_TOKEN=02GFS87STKVPyyziaQT6rUaTdCKlxY8HX+9D0ds929kI1SAbwq1kHzu6MMitMKWjZmND5tNKmeOM/FoLg7nEYQ==' >> /etc/default/kontena-agent
 sudo restart docker
 sudo gpasswd -a vagrant docker
 SCRIPT
