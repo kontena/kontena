@@ -11,6 +11,7 @@ sudo mkfs.btrfs /dev/sdb
 sudo echo '/dev/sdb	/var/lib/docker	 btrfs	defaults	0 0' >> /etc/fstab
 sudo mount -a
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
 sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 sudo echo deb http://dl.bintray.com/kontena/kontena / > /etc/apt/sources.list.d/kontena.list
 sudo apt-get update
@@ -28,24 +29,24 @@ sudo gpasswd -a vagrant docker
 SCRIPT
 
 agent_provision_script = <<SCRIPT
+export DEBIAN_FRONTEND=noninteractive
 sudo mkdir /var/lib/docker
 sudo apt-get install -y btrfs-tools
 sudo mkfs.btrfs /dev/sdb
 sudo echo '/dev/sdb	/var/lib/docker	 btrfs	defaults	0 0' >> /etc/fstab
 sudo mount -a
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
 sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 sudo echo deb http://dl.bintray.com/kontena/kontena / > /etc/apt/sources.list.d/kontena.list
 sudo apt-get update
 sudo apt-get install -y -q lxc-docker
-sudo apt-get install -y -q --force-yes kontena-agent
-sudo stop docker
-sudo echo 'DOCKER_OPTS="-s btrfs --bridge=weave --fixed-cidr='$1' --dns 8.8.8.8 --dns 8.8.4.4"' > /etc/default/docker
-sudo echo "WEAVE_PEERS=$2" > /etc/default/kontena-weave
-sudo echo "WEAVE_BRIDGE=$3" >> /etc/default/kontena-weave
-sudo echo 'KONTENA_URI=ws://192.168.66.100:8080' > /etc/default/kontena-agent
-sudo echo 'KONTENA_TOKEN=02GFS87STKVPyyziaQT6rUaTdCKlxY8HX+9D0ds929kI1SAbwq1kHzu6MMitMKWjZmND5tNKmeOM/FoLg7nEYQ==' >> /etc/default/kontena-agent
-sudo start docker
+echo kontena-weave kontena-weave/node_number string $1 | debconf-set-selections
+echo kontena-weave kontena-weave/peers string $2 | debconf-set-selections
+echo kontena-agent kontena-agent/server_uri string ws://192.168.66.100:8080 | debconf-set-selections
+echo kontena-agent kontena-agent/grid_token string 02GFS87STKVPyyziaQT6rUaTdCKlxY8HX+9D0ds929kI1SAbwq1kHzu6MMitMKWjZmND5tNKmeOM/FoLg7nEYQ== | debconf-set-selections
+sudo apt-get install -q -y kontena-agent
+sudo restart docker
 sudo gpasswd -a vagrant docker
 SCRIPT
 
@@ -63,9 +64,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
       lfs_disk = "virtualbox/kontena_server" + ".vdi"
       unless File.exist?(lfs_disk)
-          vb.customize ['createhd', '--filename', lfs_disk, '--size', 20 * 1024]
+        vb.customize ['createhd', '--filename', lfs_disk, '--size', 20 * 1024]
       end
-       vb.customize ['storageattach', :id, '--storagectl', 'SATAController', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lfs_disk]
+      vb.customize ['storageattach', :id, '--storagectl', 'SATAController', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lfs_disk]
     end
     docker.vm.provision "shell", inline: (server_provision_script % [ENV['EMAIL']])
   end
@@ -89,7 +90,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.customize ['storageattach', :id, '--storagectl', 'SATAController', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lfs_disk]
       end
       peer = (node_number == 1 ? '192.168.66.3' : '192.168.66.2')
-      docker.vm.provision "shell", inline: agent_provision_script, args: ["10.81.#{node_number}.0/24", peer, "10.81.0.#{node_number}/16"]
+      docker.vm.provision "shell", inline: agent_provision_script, args: [node_number, peer]
     end
+
   end
+
 end
