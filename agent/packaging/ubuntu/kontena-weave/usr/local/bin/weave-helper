@@ -3,17 +3,26 @@ set +e
 
 container_interface="${1:-'eth0'}"
 
+tx_off() {
+  with_container_id=$1
+  only_if="test -n '{{ .NetworkSettings.IPAddress }}'"
+  in_namespace="nsenter -n -t {{ .State.Pid }} --"
+  ethtool_tx_off="ethtool -K ${container_interface} tx off >/dev/null"
+  command_template="${only_if} && { (${in_namespace} ${ethtool_tx_off}); }"
+  eval `docker inspect --format="${command_template}" ${with_container_id}`
+}
+
+sleep 1 # wait for docker to start
+docker ps -q | while read container_id
+do
+  with_container_id=$(docker inspect -f '{{ .Id }}' $container_id)
+  tx_off $with_container_id
+done
+
 docker events | while read event
 do
     echo $event | grep -q -v '\ start$' && continue
 
     with_container_id=`echo $event | sed 's/.*Z\ \(.*\):\ .*/\1/'`
-
-    only_if="test -n '{{ .NetworkSettings.IPAddress }}'"
-    in_namespace="nsenter -n -t {{ .State.Pid }} --"
-    ethtool_tx_off="ethtool -K ${container_interface} tx off >/dev/null"
-
-    command_template="${only_if} && { (${in_namespace} ${ethtool_tx_off}); }"
-
-    eval `docker inspect --format="${command_template}" ${with_container_id}`
+    tx_off $with_container_id
 done
