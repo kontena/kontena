@@ -11,7 +11,9 @@ module Kontena::Cli::Containers
 
       payload = {cmd: ['sh', '-c', cmd]}
       result = client(token).post("containers/#{container_id}/exec", payload)
-      puts result
+      puts result[0].join(" ") unless result[0].size == 0
+      STDERR.puts result[1].join(" ") unless result[1].size == 0
+      exit result[2]
     end
   end
 end
