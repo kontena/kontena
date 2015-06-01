@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 (2015-06-01)
+
+- Improve `kontena container exec`
+- Fix unexpected behaviour in agent container exec calls
+- Fix weave-helper to catch already running containers
+
 ## 0.6.0 (2015-05-25)
 
 - New cli command: `kontena deploy`
