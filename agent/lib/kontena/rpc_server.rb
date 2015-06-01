@@ -5,6 +5,8 @@ require_relative 'logging'
 
 module Kontena
   class RpcServer
+    include Kontena::Logging
+    
     LOG_NAME = 'RpcServer'
 
     HANDLERS = {
@@ -26,20 +28,20 @@ module Kontena
     ##
     # @param [Array] message msgpack-rpc request array
     # @return [Array]
-    def self.handle_request(message)
+    def handle_request(message)
       msg_id = message[1]
       handler = message[2].split('/')[1]
       method = message[2].split('/')[2]
       if klass = HANDLERS[handler]
         begin
-          Kontena::Logging.logger.info(LOG_NAME) { "rpc request: #{klass.name}##{method} #{message[3]}" }
+          logger.info(LOG_NAME) { "rpc request: #{klass.name}##{method} #{message[3]}" }
           result = klass.new.send(method, *message[3])
           return [1, msg_id, nil, result]
         rescue RpcServer::Error => exc
           return [1, msg_id, {code: exc.code, message: exc.message, backtrace: exc.backtrace}, nil]
         rescue => exc
-          Kontena::Logging.logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-          Kontena::Logging.logger.error(LOG_NAME) { exc.backtrace.join("\n") }
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+          logger.error(LOG_NAME) { exc.backtrace.join("\n") }
           return [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}", backtrace: exc.backtrace}, nil]
         end
       else

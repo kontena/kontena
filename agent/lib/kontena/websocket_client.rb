@@ -24,6 +24,7 @@ module Kontena
       logger.info(LOG_NAME) { "initialized with token #{@api_token}" }
       @connection_retries = 0
       @subscribers = {}
+      @rpc_server = Kontena::RpcServer.new
     end
 
     def connect
@@ -69,9 +70,9 @@ module Kontena
     def on_message(ws, event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        EM.next_tick {
-          response = Kontena::RpcServer.handle_request(data)
-          ws.send(MessagePack.dump(response).bytes)
+        Thread.new {
+          response = @rpc_server.handle_request(data)
+          self.send_message(MessagePack.dump(response).bytes)
         }
       elsif response_message?(data)
         EM.next_tick {
