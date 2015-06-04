@@ -63,7 +63,7 @@ namespace :release do
     sh("mkdir -p build/ubuntu/kontena-etcd/usr/local/bin")
     sh("mkdir -p build/ubuntu/kontena-etcd/var/lib/kontena-etcd")
     Dir.chdir('build/ubuntu/tmp') do
-      sh("curl -qOL https://github.com/coreos/etcd/releases/download/#{etcd_version}/etcd-#{etcd_version}-linux-amd64.tar.gz")
+      sh("curl -qsOL https://github.com/coreos/etcd/releases/download/#{etcd_version}/etcd-#{etcd_version}-linux-amd64.tar.gz")
       sh("tar zxvf etcd-#{etcd_version}-linux-amd64.tar.gz")
     end
     Dir.chdir('build/ubuntu') do
