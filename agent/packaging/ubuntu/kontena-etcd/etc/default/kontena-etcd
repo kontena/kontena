@@ -1,1 +1,5 @@
+# etcd discovery url
 #ETCD_DISCOVERY=
+
+# etcd bind interface
+ETCD_INTERFACE=eth1
