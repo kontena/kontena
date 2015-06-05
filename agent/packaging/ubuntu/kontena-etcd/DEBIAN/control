@@ -1,0 +1,7 @@
+Package: kontena-etcd
+Version: VERSION
+Maintainer: jari@kontena.io
+Architecture: all
+Depends: kontena-weave
+Recommends: kontena-agent
+Description: Kontena etcd
