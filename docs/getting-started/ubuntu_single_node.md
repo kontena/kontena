@@ -4,13 +4,13 @@ This guide will install Kontena Server & Agent to a single Ubuntu host. It does 
 
 > Prerequisities: Docker 1.4 or later
 
-### Install Kontena Ubuntu Packages
+### Install Kontena Server Ubuntu Packages
 
 ```sh
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
 $ echo "deb http://dl.bintray.com/kontena/kontena /" | sudo tee -a /etc/apt/sources.list
 $ sudo apt-get update
-$ sudo apt-get install kontena-server kontena-agent
+$ sudo apt-get install kontena-server
 ```
 
 ### Install Kontena cli
@@ -41,22 +41,19 @@ first-grid:
 
 ```
 
-### Configure Agent
+### Install and Configure Agent
+$ sudo apt-get install kontena-agent
 
-```sh
-$ sudo vim /etc/default/kontena-agent
+#### Configure agents during installation process
+* the address of the Kontena server: ws://localhost:8080
+* grid token: <grid_token_from_server>
+* node number: 1
+* addresses of other nodes: empty
 
-# Set to your kontena server
-KONTENA_URI=ws://localhost:8080
-
-# Set kontena grid token
-KONTENA_TOKEN=<grid_token_from_server>
-```
-
-### Start Agent
+### Restart Docker
 
 ```
-$ sudo start kontena-cadvisor kontena-agent
+$ sudo restart docker
 ```
 
 ### Deploy First Service

@@ -18,6 +18,7 @@ Example cluster setup:
 ### Install Kontena Ubuntu packages
 
 ```sh
+$ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
 $ echo "deb http://dl.bintray.com/kontena/kontena /" | sudo tee -a /etc/apt/sources.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-server
@@ -58,7 +59,6 @@ first-grid:
   users: 1
   nodes: 0
   containers: 0
-
 ```
 
 ## Install agents
@@ -74,59 +74,16 @@ $ sudo apt-get update
 $ sudo apt-get install kontena-agent
 ```
 
-### Stop Docker
+#### Configure agents during installation process
+* the address of the Kontena server. Note! You must use WebSocket protocol: ws or wss for secured connections
+* grid token: <grid_token_from_server>
+* node number: 1 for first agent, 2 for second etc.
+* addresses of other nodes: ip's of other agent nodes
+
+### Restart Docker
 
 ```sh
-$ sudo stop docker
-```
-
-
-### Configure Agent
-
-```sh
-$ sudo vim /etc/default/kontena-agent
-
-# Set to your kontena server (use wss and 8443 port if you have ssl setup)
-KONTENA_URI=ws://10.2.2.99:8080
-
-# Set kontena grid token
-KONTENA_TOKEN=<grid_token_from_server>
-```
-
-### Configure networking overlay
-
-
-#### Modify Docker config
-```sh
-$ sudo vim /etc/default/docker
-DOCKER_OPTS="--bridge=weave --fixed-cidr='10.81.1.0/24' --dns 8.8.8.8 --dns 8.8.4.4"
-```
-> Note: each agent node must have different 10.81.x.0/24 subnet
-
-#### Configure Weave overlay network
-
-```sh
-$ sudo vim /etc/default/kontena-weave
-
-# Weave bridge
-# Note: each node must have different 10.81.0.x/16 cidr
-WEAVE_BRIDGE=10.81.0.1/16
-
-# Set Weave peer nodes
-WEAVE_PEERS="10.2.2.102 10.2.2.103" # ip's of other agent nodes
-```
-
-### Start Docker
-
-```sh
-$ sudo start docker
-```
-
-
-### Start Agent
-
-```
-$ sudo start kontena-cadvisor kontena-agent
+$ sudo restart docker
 ```
 
 ### Verify that agents are connected to server
