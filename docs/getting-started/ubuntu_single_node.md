@@ -13,16 +13,16 @@ $ sudo apt-get update
 $ sudo apt-get install kontena-server
 ```
 
-### Install Kontena cli
-
-```sh
-$ gem install kontena-cli
-```
-
 ### Start Server
 
 ```
 $ sudo start kontena-server-api
+```
+
+### Install Kontena cli
+
+```sh
+$ gem install kontena-cli
 ```
 
 ### Connect & Configure First Grid
