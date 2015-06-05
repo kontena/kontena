@@ -2,8 +2,3 @@ Template: kontena-weave/node_number
 Type: string
 Default: 1
 Description: Node number (1-254, unique per node)
-
-Template: kontena-weave/peers
-Type: string
-Default:
-Description: Ip addresses of other nodes (separate with space)
