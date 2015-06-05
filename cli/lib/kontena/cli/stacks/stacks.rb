@@ -90,6 +90,7 @@ module Kontena::Cli::Stacks
     end
 
     def update(id, options)
+      id = prefixed_name(id)
       data = parse_data(options)
       puts "updating #{id}"
       update_service(token, id, data)
