@@ -57,7 +57,7 @@ content
     end
 
     let(:options) do
-      options = double({prefix: false, file: false})
+      options = double({prefix: false, file: false, service: nil})
     end
 
     let(:env_vars) do
@@ -194,8 +194,18 @@ content
           subject.deploy(options)
         end
 
+        context 'when giving service option' do
+          it 'deploys only given services' do
+            allow(subject).to receive(:current_dir).and_return("kontena-test")
+            allow(options).to receive(:service).and_return(['wordpress'])
+            expect(subject).to receive(:create).once.with('wordpress', services['wordpress']).and_return({})
+            expect(subject).not_to receive(:create).with('mysql', services['mysql'])
 
+            subject.deploy(options)
+          end
+        end
       end
+
     end
   end
 end
