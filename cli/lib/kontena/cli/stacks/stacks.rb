@@ -16,9 +16,9 @@ module Kontena::Cli::Stacks
     def deploy(options)
       require_api_url
       require_token
-
       filename = options.file || './kontena.yml'
       @services = YAML.load(File.read(filename))
+      @services = @services.delete_if { |name, service| !options.service.include?(name)} if options.service
       @service_prefix = options.prefix || current_dir
 
       Dir.chdir(File.dirname(filename))
@@ -30,7 +30,7 @@ module Kontena::Cli::Stacks
 
     def init_services(services)
       services.each do |name, config|
-        create_or_update_service(prefixed_name(name), config)
+        create_or_update_service(name, config)
       end
     end
 
@@ -47,8 +47,9 @@ module Kontena::Cli::Stacks
     end
 
     def create_or_update_service(name, options)
-      # skip if service is already created or updated
-      return nil if in_deploy_queue?(name)
+
+      # skip if service is already created or updated or it's not present
+      return nil if in_deploy_queue?(name) || !services.keys.include?(name)
 
       # create/update linked services recursively before continuing
       unless options['links'].nil?
@@ -56,7 +57,7 @@ module Kontena::Cli::Stacks
           # change prefixed service name also to links options
           options['links'][index] = "#{prefixed_name(linked_service[:name])}:#{linked_service[:alias]}"
 
-          create_or_update_service(prefixed_name(linked_service[:name]), services[linked_service[:name]]) unless in_deploy_queue?(prefixed_name(linked_service[:name]))
+          create_or_update_service(linked_service[:name], services[linked_service[:name]]) unless in_deploy_queue?(linked_service[:name])
         end
       end
 
@@ -75,10 +76,11 @@ module Kontena::Cli::Stacks
     end
 
     def find_service_by_name(name)
-      get_service(token, name) rescue nil
+      get_service(token, prefixed_name(name)) rescue nil
     end
 
     def create(name, options)
+      name = prefixed_name(name)
       puts "creating #{name}"
       data = {name: name}
       data.merge!(parse_data(options))
@@ -92,7 +94,7 @@ module Kontena::Cli::Stacks
     end
 
     def in_deploy_queue?(name)
-      deploy_queue.find {|service| service['id'] == name} != nil
+      deploy_queue.find {|service| service['id'] == prefixed_name(name)} != nil
     end
 
     def prefixed_name(name)
