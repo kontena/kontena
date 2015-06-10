@@ -18,8 +18,9 @@ module Kontena::Cli::Stacks
       require_token
 
       filename = options.file || './kontena.yml'
-      @services = YAML.load(File.read(filename))
       @service_prefix = options.prefix || current_dir
+
+      @services = YAML.load(File.read(filename) % {prefix: service_prefix})
 
       Dir.chdir(File.dirname(filename))
       init_services(services)
@@ -120,6 +121,8 @@ module Kontena::Cli::Stacks
       File.readlines(path).delete_if { |line| line.start_with?('#') || line.empty? }
     end
 
+    ##
+    # @param [Hash] options
     def parse_data(options)
       data = {}
       data[:image] = options['image']
