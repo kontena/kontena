@@ -22,14 +22,44 @@ module Kontena::Cli::Grids
         raise ArgumentError.new('Node not found') if node.nil?
       end
 
+      if opts.s3_access_key || opts.s3_secret_key
+        raise ArgumentError.new('--s3-access-key is missing') if opts.s3_access_key.blank?
+        raise ArgumentError.new('--s3-secret-key is missing') if opts.s3_secret_key.blank?
+        raise ArgumentError.new('--s3-bucket is missing') if opts.s3_bucket.blank?
+        s3_region = opts.s3_region || 'eu-west-1'
+        s3_encrypt = opts.s3_encrypt || false
+        s3_secure = opts.s3_secure || true
+        env = [
+          "REGISTRY_STORAGE_S3_ACCESSKEY=#{opts.s3_access_key}",
+          "REGISTRY_STORAGE_S3_SECRETKEY=#{opts.s3_secret_key}",
+          "REGISTRY_STORAGE_S3_REGION=#{s3_region}",
+          "REGISTRY_STORAGE_S3_BUCKET=#{s3_bucket}",
+          "REGISTRY_STORAGE_S3_ENCRYPT=#{s3_encrypt}",
+          "REGISTRY_STORAGE_S3_SECURE=#{s3_secure}",
+        ]
+      elsif opts.azure_account_name || opts.azure_account_key
+        raise ArgumentError.new('--azure-account-name is missing') if opts.azure_account_name.blank?
+        raise ArgumentError.new('--azure-account-key is missing') if opts.azure_account_key.blank?
+        raise ArgumentError.new('--azure-container-name is missing') if opts.azure_container_name.blank?
+        env = [
+          "REGISTRY_STORAGE_AZURE_ACCOUNTNAME=#{opts.azure_account_name}",
+          "REGISTRY_STORAGE_AZURE_ACCOUNTKEY=#{opts.azure_account_key}",
+          "REGISTRY_STORAGE_AZURE_CONTAINERNAME=#{opts.azure_container_name}"
+        ]
+      else
+        env = [
+          "REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/registry"
+        ]
+      end
+
+      env << "REGISTRY_HTTP_ADDR=0.0.0.0:80"
+
       data = {
         name: 'registry',
         stateful: true,
         image: 'registry:2.0',
-        volumes: ['/tmp/registry'],
-        env: [
-          "REGISTRY_HTTP_ADDR=0.0.0.0:80"
-        ],
+        volumes: ['/registry'],
+        env: env,
         affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)

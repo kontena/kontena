@@ -121,6 +121,15 @@ command 'registry create' do |c|
   c.syntax = 'kontena registry create'
   c.description = 'Create Docker Registry service'
   c.option '--node STRING', String, 'Node name'
+  c.option '--s3-access-key STRING', String, 'S3 access key'
+  c.option '--s3-secret-key STRING', String, 'S3 secret key'
+  c.option '--s3-bucket STRING', String, 'S3 bucket'
+  c.option '--s3-region STRING', String, 'S3 region'
+  c.option '--s3-encrypt', 'S3 encrypt data'
+  c.option '--s3-secure', 'S3 use secure connection'
+  c.option '--azure-account-name STRING', String, 'Azure account name'
+  c.option '--azure-account-key STRING', String, 'Azure account key'
+  c.option '--azure-container-name STRING', String, 'Azure container name'
   c.action do |args, options|
     Kontena::Cli::Grids::Registry.new.create(options)
   end
