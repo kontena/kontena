@@ -4,6 +4,7 @@ require_relative 'grids'
 require_relative 'users'
 require_relative 'audit_log'
 require_relative 'vpn'
+require_relative 'registry'
 
 
 command 'grid list' do |c|
@@ -61,7 +62,7 @@ command 'grid remove' do |c|
   c.syntax = 'kontena grid remove <name>'
   c.description = 'Removes grid'
   c.action do |args, options|
-    Kontena::Cli::Platform::Grids.new.destroy(args[0])
+    Kontena::Cli::Grids::Grids.new.destroy(args[0])
   end
 end
 
@@ -113,5 +114,22 @@ command 'vpn config' do |c|
   c.description = 'Show vpn client config'
   c.action do |args, options|
     Kontena::Cli::Grids::Vpn.new.config
+  end
+end
+
+command 'registry create' do |c|
+  c.syntax = 'kontena registry create'
+  c.description = 'Create Docker Registry service'
+  c.option '--node STRING', String, 'Node name'
+  c.action do |args, options|
+    Kontena::Cli::Grids::Registry.new.create(options)
+  end
+end
+
+command 'registry delete' do |c|
+  c.syntax = 'kontena registry delete'
+  c.description = 'Delete Docker Registry service'
+  c.action do |args, options|
+    Kontena::Cli::Grids::Registry.new.delete
   end
 end
