@@ -1,5 +1,15 @@
 # Kontena Overview
 
+Kontena is an open-source system for deploying, managing, scaling and monitoring containerized applications across multiple hosts on any cloud infrastructure. It is primarily targeted for running applications composed of multiple containers, such as elastic, distributed micro-services.
+
+With Kontena, user is asking system to run a Service that is composed of one or more containers. The system will then automatically choose the host or number of hosts to run those containers. Kontena's scheduler has been influenced by technologies such as [Docker Swarm](https://docs.docker.com/swarm/) and [Kubernetes](http://kubernetes.io/). While having many similarities and concepts, Kontena's scheduler is designed to:
+
+* Work with Services instead of plain containers
+* Support both stateless and stateful applications
+* Have sane defaults and prefer convention over configuration
+
+Once containers are ready to be started on the hosts, Kontena will apply virtual overlay network for containers to make it possible for containers to find and communicate with each other.
+
 ## The Grid
 
 Grid is the top level abstraction in Kontena. It is created by and managed by Master Node.
@@ -23,3 +33,7 @@ Host Nodes are responsible for delivering the computing power for the Grid. In e
 Each Host Node is assigned to a Grid. Additional Host Nodes may be added to Grid to increase the capacity available for Services. It is also possible to remove Host Nodes from a Grid to decrease the capacity available if needed.
 
 Host Nodes communicate to Master Node via secure WebSocket channel. It is used for Service orchestration, management, statistics and log streams. The channel is opened from Host Nodes to Master Node in order to enable *Nodes behind the firewall* operations.
+
+## Services
+
+Just like any container orchestration solution, Kontena supports creation of stateless Services like web servers, REST API servers and in-memory object caches. In addition, Kontena has support for stateful Services such as traditional and distributed databases, batch and streaming data processing. The support for stateful Services is is one of the key differentiators to other container orchestration solutions.
