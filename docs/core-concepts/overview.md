@@ -36,4 +36,6 @@ Host Nodes communicate to Master Node via secure WebSocket channel. It is used f
 
 ## Services
 
-Just like any container orchestration solution, Kontena supports creation of stateless Services like web servers, REST API servers and in-memory object caches. In addition, Kontena has support for stateful Services such as traditional and distributed databases, batch and streaming data processing. The support for stateful Services is is one of the key differentiators to other container orchestration solutions.
+One of the challenges with containerized application infrastructure is the fact that you can not rely on Containers. They come and go. This is happening all the time due to network hardware failures and functionality built-in to Container orchestration to support scaling, migrations, load balancing, rolling updates and restarts. While Containers get their own IP addresses, those IP addresses cannot be relied. Therefore, an abstraction which defines a logical set of Containers, configuration and desired state is needed. In Kontena, this is called a Service.
+
+Just like with any container orchestration technology, Kontena supports creation of stateless Services: web servers, REST API servers and in-memory object caches. In addition, Kontena has support for stateful Services such as traditional and distributed databases, batch and streaming data processing. The support for stateful Services is is one of the key differentiators to other container orchestration technologies.
