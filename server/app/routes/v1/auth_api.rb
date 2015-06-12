@@ -11,7 +11,22 @@ module V1
       r.post do
         data = parse_json_body
         begin
-          user = AuthService::Client.new.authenticate(data)
+          result = AuthService::Client.new.authenticate(data)
+          if result.nil?
+            return nil
+          end
+          email = result['email']
+          if User.count == 0
+            user = User.create(email: email)
+          else
+            user = User.find_by(email: email)
+          end
+          if user.nil?
+            halt_request(403, 'Forbidden') and return
+          end
+          user.update_attribute(:external_id, result['id'])
+
+
         rescue AuthService::Client::Error => e
           halt_request(e.code, JSON.dump(e.message)) and return
         end
@@ -20,7 +35,7 @@ module V1
             scopes: data['scope'].to_s.split(',')
         ).result
         if @access_token.nil?
-          response.status = 400
+          response.status = 401
           { error: 'Invalid username or password' }
         else
           response.status = 201

@@ -32,21 +32,10 @@ module AuthService
     def authenticate(obj)
       response = post("#{api_url}/v1/auth", obj)
 
-      if response.nil? || response['user'].nil?
+      if response.nil?
         return nil
       end
-      email = response['user']['email']
-      if User.count == 0
-        user = User.create(email: email)
-      else
-        user = User.find_by(email: email)
-      end
-      if user.nil?
-        return nil
-      end
-      user.update_attribute(:external_id, response['user']['id'])
-
-      user
+      response['user']
     end
 
     ##
