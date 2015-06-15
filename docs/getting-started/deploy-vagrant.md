@@ -21,12 +21,7 @@ $ gem install kontena-cli
 ```
 
 ##Usage
-### Connect CLI to Kontena Server
-
-```sh
-$ kontena connect http://192.168.66.100:8080
-```
-###Register Kontena account
+###Register Kontena account, if you don't have account yet
 ```sh
 $ kontena register
 ```
@@ -34,7 +29,7 @@ Use the same email address as in `vagrant up` command
 
 ###Login to Kontena server
 ```sh
-kontena login
+$ kontena login http://192.168.66.100:8080
 ```
 ###Use Kontena
 ```sh
