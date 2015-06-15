@@ -1,9 +1,6 @@
-require_relative 'rpc/dns_api'
-
 class RpcServer
 
   HANDLERS = {
-      'dns' => Rpc::DnsApi
   }
 
   class Error < StandardError
