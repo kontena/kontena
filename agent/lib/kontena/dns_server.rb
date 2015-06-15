@@ -23,6 +23,7 @@ module Kontena
     #
     def start!
       base = self
+      upstream = RubyDNS::Resolver.new(parse_upstream('/etc/resolv.host.conf'))
       RubyDNS::run_server(asynchronous: true, listen: self.interfaces) do
         match(/etcd\.kontena\.local/, IN::A) do |transaction, match_data|
           transaction.respond!(base.gateway, ttl: 10)
@@ -40,7 +41,7 @@ module Kontena
 
         # Default DNS handler
         otherwise do |transaction|
-            transaction.passthrough!(UPSTREAM)
+          transaction.passthrough!(upstream)
         end
       end
     end

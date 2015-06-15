@@ -6,6 +6,7 @@ agent:
     - 53:53/udp
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+    - /etc/resolv.conf:/etc/resolv.host.conf:ro
   links:
    - cadvisor
 cadvisor:
