@@ -22,7 +22,7 @@ V1::GridsApi.route('grid_services') do |r|
   # GET /v1/grids/:id/services
   r.get do
     r.is do
-      @grid_services = @grid.grid_services
+      @grid_services = @grid.grid_services.visible
       render('grid_services/index')
     end
   end
