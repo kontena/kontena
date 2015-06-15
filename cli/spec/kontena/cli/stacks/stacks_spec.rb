@@ -198,7 +198,7 @@ content
           it 'deploys only given services' do
             allow(subject).to receive(:current_dir).and_return("kontena-test")
             allow(options).to receive(:service).and_return(['wordpress'])
-            expect(subject).to receive(:create).once.with('wordpress', services['wordpress']).and_return({})
+            expect(subject).to receive(:create).once.with('wordpress', anything).and_return({})
             expect(subject).not_to receive(:create).with('mysql', services['mysql'])
 
             subject.deploy(options)
