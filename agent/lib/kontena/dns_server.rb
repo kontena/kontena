@@ -13,9 +13,6 @@ module Kontena
     Name = Resolv::DNS::Name
     IN = Resolv::DNS::Resource::IN
 
-    # Use upstream DNS for name resolution.
-    UPSTREAM = RubyDNS::Resolver.new(RubyDNS::System.nameservers)
-
     attr_reader :rpc_client
 
     ##
@@ -29,6 +26,7 @@ module Kontena
     #
     def start!
       base = self
+      upstream = RubyDNS::Resolver.new(parse_upstream('/etc/resolv.host.conf'))
       RubyDNS::run_server(asynchronous: true, listen: INTERFACES) do
         match(/(.*)\.kontena\.local/, IN::A) do |transaction, match_data|
           result = base.resolve_address(match_data[1])
@@ -43,7 +41,7 @@ module Kontena
 
         # Default DNS handler
         otherwise do |transaction|
-            transaction.passthrough!(UPSTREAM)
+          transaction.passthrough!(upstream)
         end
       end
     end
@@ -55,6 +53,28 @@ module Kontena
       self.rpc_client.request('/dns/record', name)
     rescue
       nil
+    end
+
+    ##
+    # @param [String] resolv_conf
+    # @return [Array<Hash>]
+    def parse_upstream(resolv_conf)
+      nameservers = []
+      if File.exists?(resolv_conf)
+        nameservers = RubyDNS::System.parse_resolv_configuration(resolv_conf)
+      end
+      nameservers.delete(gateway)
+
+      return RubyDNS::System.standard_connections(nameservers)
+    end
+
+    ##
+    # @return [String, NilClass]
+    def gateway
+      agent = Docker::Container.get(ENV['AGENT_NAME'] || 'kontena-agent') rescue nil
+      if agent
+        agent.json['NetworkSettings']['Gateway']
+      end
     end
   end
 end
