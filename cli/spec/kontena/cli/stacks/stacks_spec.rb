@@ -11,6 +11,28 @@ module Kontena::Cli::Stacks
       '1234567'
     end
 
+    let(:yml) do
+      content = <<content
+wordpress:
+  image: wordpress:4.1
+  stateful: true
+  ports:
+    - 80:80
+  links:
+    - mysql:mysql
+  environment:
+    - WORDPRESS_DB_PASSWORD=%{prefix}_secret
+  instances: 2
+  deploy:
+    strategy: ha
+mysql:
+  image: mysql:5.6
+  stateful: true
+  environment:
+    - MYSQL_ROOT_PASSWORD=%{prefix}_secret
+content
+      content
+    end
 
     let(:services) do
       {
@@ -64,8 +86,7 @@ module Kontena::Cli::Stacks
       context 'when api url and token are valid' do
         before(:each) do
           allow(subject).to receive(:settings).and_return(settings)
-          allow(YAML).to receive(:load).and_return(services)
-          allow(File).to receive(:read)
+          allow(File).to receive(:read).and_return(yml)
           allow(subject).to receive(:get_service).and_raise(Kontena::Errors::StandardError.new(404, 'Not Found'))
           allow(subject).to receive(:create_service).and_return({'id' => 'kontena-test-mysql'},{'id' => 'kontena-test-wordpress'})
           allow(subject).to receive(:current_grid).and_return('1')
@@ -74,28 +95,28 @@ module Kontena::Cli::Stacks
 
         it 'reads ./kontena.yml file by default' do
           allow(subject).to receive(:settings).and_return(settings)
-
-          expect(File).to receive(:read).with('./kontena.yml')
+          expect(File).to receive(:read).with('./kontena.yml').and_return(yml)
           expect(options).to receive(:file).once.and_return(false)
           subject.deploy(options)
         end
 
         it 'reads given yml file' do
           expect(options).to receive(:file).once.and_return('custom.yml')
-          expect(File).to receive(:read).with('custom.yml')
+          expect(File).to receive(:read).with('custom.yml').and_return(yml)
           subject.deploy(options)
         end
 
         it 'uses current directory as service name prefix by default' do
           current_dir = '/kontena/tests/stacks'
           allow(Dir).to receive(:getwd).and_return(current_dir)
-          expect(File).to receive(:basename).with(current_dir)
+          expect(File).to receive(:basename).with(current_dir).and_return('stacks')
           subject.deploy(options)
         end
 
         context 'when yml file has multiple env files' do
           it 'merges environment variables correctly' do
             allow(subject).to receive(:current_dir).and_return("kontena-test")
+            allow(YAML).to receive(:load).and_return(services)
             services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
             services['wordpress']['env_file'] = %w(/path/to/env_file .env)
 
@@ -120,6 +141,7 @@ module Kontena::Cli::Stacks
         context 'when yml file has one env file' do
           it 'merges environment variables correctly' do
             allow(subject).to receive(:current_dir).and_return("kontena-test")
+            allow(YAML).to receive(:load).and_return(services)
             services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
             services['wordpress']['env_file'] = '/path/to/env_file'
 
@@ -142,7 +164,7 @@ module Kontena::Cli::Stacks
 
         it 'creates mysql service before wordpress' do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
-          data = {:name =>"kontena-test-mysql", :image=>'mysql:5.6', :env=>nil, :container_count=>nil, :stateful=>true}
+          data = {:name =>"kontena-test-mysql", :image=>'mysql:5.6', :env=>["MYSQL_ROOT_PASSWORD=kontena-test_secret"], :container_count=>nil, :stateful=>true}
           expect(subject).to receive(:create_service).with('1234567', '1', data)
 
           subject.deploy(options)
@@ -153,11 +175,11 @@ module Kontena::Cli::Stacks
 
           data = {
               :name =>"kontena-test-wordpress",
-              :image=>"wordpress:latest",
-              :env=>nil,
+              :image=>"wordpress:4.1",
+              :env=>["WORDPRESS_DB_PASSWORD=kontena-test_secret"],
               :container_count=>2,
-              :stateful=>false,
-              :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
+              :stateful=>true,
+              :links=>[{:name=>"kontena-test-mysql", :alias=>"mysql"}],
               :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
           }
           expect(subject).to receive(:create_service).with('1234567', '1', data)
