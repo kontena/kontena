@@ -19,6 +19,8 @@ GEM
       excon (>= 0.38.0)
       json
     dotenv (1.0.2)
+    etcd (0.3.0)
+      mixlib-log
     eventmachine (1.0.7)
     excon (0.45.3)
     fast_cache (1.0.1)
@@ -29,6 +31,7 @@ GEM
     i18n (0.7.0)
     json (1.8.2)
     minitest (5.5.0)
+    mixlib-log (1.6.0)
     msgpack (0.5.9)
     nio4r (1.1.0)
     rake (10.4.2)
@@ -64,6 +67,7 @@ DEPENDENCIES
   activesupport (~> 4.2.0)
   docker-api
   dotenv
+  etcd
   fast_cache
   faye-websocket
   msgpack

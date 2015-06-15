@@ -6,6 +6,7 @@ gem 'msgpack'
 gem 'activesupport', '~> 4.2.0'
 gem 'rubydns'
 gem 'fast_cache'
+gem 'etcd'
 
 group :development, :test do
   gem 'rake', require: false
