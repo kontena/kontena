@@ -14,9 +14,19 @@ $ gem install kontena-cli
 
 After the installation is complete, you can test the installation by checking the Kontena CLI version `kontena -v`.
 
-## Provision Kontena Cloud
+## Register Personal User Account
 
-If you don't have existing Kontena Cloud infrastructure in place, you'll need to provision your own. Choose one of the following providers to provision **Kontena Cloud** infrastructure:
+With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs form user actions. Create your own personal user account (if not created already).
+
+```sh
+$ kontena register
+```
+
+**NOTE!** By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service. In this case, the registration is optional.
+
+## Provision Kontena Infrastructure
+
+If you don't have existing Kontena infrastructure in place, you'll need to provision your own. Choose one of the following providers to provision your infrastructure:
 
 * Amazon AWS
 * [Bare Metal (Ubuntu)](deploy-baremetal-ubuntu.md)
@@ -24,15 +34,9 @@ If you don't have existing Kontena Cloud infrastructure in place, you'll need to
 * [Digital Ocean](deploy-do.md)
 * [Vagrant](deploy-vagrant.md)
 
-## Connect, Register and Login
+## Login
 
-Once you have Kontena Cloud infrastructure available, you are ready to use Kontena. First, you may create your personal user account (if not created already). The registration is required for all users to enforce access control and to generate audit trail logs.
-
-```sh
-$ kontena register
-```
-
-Then you can login to Kontena Cloud with your personal account. You'll need the Kontena Master address and port number to log in.
+Once you have Kontena infrastructure set-up, you can login to **Kontena Master** with your personal user account.
 
 For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the login is done like this:
 
@@ -40,11 +44,15 @@ For example, if the Kontena Master is running at address `192.168.66.100` and li
 $ kontena login http://192.168.66.100:8080
 ```
 
-## Using Kontena
+## Enjoy
+
+After successful login, you are ready to start using Kontena. Here's some commands to get started:
 
 ```sh
-$ kontena grid list        # list all available Kontena Grids
-$ kontena grid use demo    # the name of Kontena Grid you want to use, in this case "demo"
+$ kontena grid list                                                       # list all available Kontena Grids
+$ kontena grid use demo                                                   # the name of Kontena Grid you want to use, in this case "demo"
+$ kontena service create ghost-blog ghost:0.5 --stateful -p 8181:2368     # create stateful "ghost-blog" service, expose port 8181
+$ kontena service deploy ghost-blog                                       # deploy "ghost-blog" service
 ```
 
 To see all commands:
@@ -52,15 +60,6 @@ To see all commands:
 ```sh
 $ kontena help
 ```
-
-Deploy your first service:
-
-```sh
-$ kontena service create ghost-blog ghost:0.5 --stateful -p 8181:2368
-$ kontena service deploy ghost-blog
-```
-
-Now open browser at http://192.168.66.2:8181
 
 ## Next Steps
 
