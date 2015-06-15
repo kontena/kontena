@@ -6,6 +6,7 @@ command 'deploy' do |c|
   c.description = 'Create and deploy multiple services from YAML file'
   c.option '-f', '--file String', 'path to kontena.yml file, default: current directory'
   c.option '-p', '--prefix String', 'prefix of service names, default: name of the current directory'
+  c.option '-s', '--service Array', Array, 'Services to deploy'
   c.action do |args, options|
     Kontena::Cli::Stacks::Stacks.new.deploy(options)
   end

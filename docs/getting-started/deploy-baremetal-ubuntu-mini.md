@@ -15,7 +15,7 @@ $ sudo apt-get install kontena-server
 
 ### Start Server
 
-```
+```sh
 $ sudo start kontena-server-api
 ```
 
@@ -27,10 +27,9 @@ $ gem install kontena-cli
 
 ### Connect & Configure First Grid
 
-```
-$ kontena connect http://localhost:8080
+```sh
 $ kontena register # if you don't have Kontena account
-$ kontena login
+$ kontena login http://localhost:8080
 $ kontena grid create first-grid
 $ kontena grid show first-grid
 first-grid:
@@ -38,7 +37,6 @@ first-grid:
   users: 1
   nodes: 0
   containers: 0
-
 ```
 
 ### Install and Configure Agent
@@ -52,7 +50,7 @@ $ sudo apt-get install kontena-agent
 
 ### Restart Docker
 
-```
+```sh
 $ sudo restart docker
 ```
 

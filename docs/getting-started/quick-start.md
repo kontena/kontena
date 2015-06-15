@@ -26,24 +26,18 @@ If you don't have existing Kontena Cloud infrastructure in place, you'll need to
 
 ## Connect, Register and Login
 
-Once you have Kontena Cloud infrastructure available, you are ready to use Kontena. First, connect to **Kontena Master** (if not already connected). You'll need the Kontena Master address and port number to establish connection.
-
-For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the connection is established like this:
-
-```sh
-$ kontena connect http://192.168.66.100:8080
-```
-
-Next, you may create your personal user account (if not created already). The registration is required for all users to enforce access control and to generate audit trail logs.
+Once you have Kontena Cloud infrastructure available, you are ready to use Kontena. First, you may create your personal user account (if not created already). The registration is required for all users to enforce access control and to generate audit trail logs.
 
 ```sh
 $ kontena register
 ```
 
-With your personal user account, you can now login to Kontena Cloud.
+Then you can login to Kontena Cloud with your personal account. You'll need the Kontena Master address and port number to log in.
+
+For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the login is done like this:
 
 ```sh
-$ kontena login
+$ kontena login http://192.168.66.100:8080
 ```
 
 ## Using Kontena
