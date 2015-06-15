@@ -53,9 +53,9 @@ module Kontena
     # @param [String] service
     # @param [String] name
     def unregister_container_dns(service, name)
-      self.etcd.delete("/kontena/dns/#{service_name}/#{name}")
+      self.etcd.delete("/kontena/dns/#{service}/#{name}")
     rescue
-      logger.error(LOG_NAME) { "cannot remove dns entry: #{service_name} / #{name}" }
+      logger.error(LOG_NAME) { "cannot remove dns entry: #{service} / #{name}" }
     end
 
     ##
