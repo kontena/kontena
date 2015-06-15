@@ -1,4 +1,5 @@
 require_relative '../lib/kontena-agent'
+require 'webmock/rspec'
 
 Kontena::Logging.initialize_logger('./log/test.log')
 
