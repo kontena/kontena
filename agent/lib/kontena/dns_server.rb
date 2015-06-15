@@ -12,8 +12,8 @@ module Kontena
 
     def initialize
       @interfaces = [
-          [:udp, gateway, 53],
-          [:tcp, gateway, 53]
+          [:udp, '0.0.0.0', 53],
+          [:tcp, '0.0.0.0', 53]
       ]
       @etcd = Etcd.client(host: gateway, port: 2379)
     end
