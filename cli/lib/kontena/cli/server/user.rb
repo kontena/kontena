@@ -5,23 +5,24 @@ module Kontena::Cli::Server
   class User
     include Kontena::Cli::Common
 
-    def login
-      require_api_url
-      username = ask("Email: ")
-      password = password("Password: ")
-      params = {
-          username: username,
-          password: password,
-          grant_type: 'password',
-          scope: 'user'
-      }
+    def login(api_url = nil)
+      until !api_url.nil? && !api_url.empty?
+        api_url = ask('Kontena Master Node URL: ')
+      end
+      update_api_url(api_url)
 
-      response = client.post('auth', params)
+      unless request_server_info
+        print color('Could not connect to server', :red)
+        return false
+      end
+
+      email = ask("Email: ")
+      password = password("Password: ")
+      response = do_login(email, password)
 
       if response
-        settings['server']['token'] = response['access_token']
-        save_settings
-        puts ''
+        update_access_token(response['access_token'])
+        display_logo
         puts "Welcome #{response['user']['name'].green}"
         puts ''
         reset_client
@@ -60,8 +61,11 @@ module Kontena::Cli::Server
       puts 'User invited' if response
     end
 
-    def register
-      require_api_url
+    def register(api_url = nil, options)
+      auth_api_url = api_url || 'https://auth.kontena.io'
+      if !auth_api_url.start_with?('http://') && !auth_api_url.start_with?('https://')
+        auth_api_url = "https://#{auth_api_url}"
+      end
       email = ask("Email: ")
       password = password("Password: ")
       password2 = password("Password again: ")
@@ -69,7 +73,8 @@ module Kontena::Cli::Server
         raise ArgumentError.new("Passwords don't match")
       end
       params = {email: email, password: password}
-      client.post('users/register', params)
+      auth_client = Kontena::Client.new(auth_api_url)
+      auth_client.post('users', params)
     end
 
     def verify_account(token)
@@ -117,5 +122,58 @@ module Kontena::Cli::Server
     def token
       @token ||= require_token
     end
+
+    def do_login(email, password)
+      params = {
+          username: email,
+          password: password,
+          grant_type: 'password',
+          scope: 'user'
+      }
+      client.post('auth', params)
+    end
+
+    def request_server_info
+      valid = true
+      begin
+        client.get('ping') # test server connection
+      rescue
+        valid = false
+      end
+      valid
+    end
+
+    ##
+    # Store access token to config file
+    #
+    # @param [String] access_token
+    def update_access_token(access_token)
+      settings['server']['token'] = access_token
+      save_settings
+    end
+
+    ##
+    # Store api_url to config file
+    #
+    # @param [String] api_url
+    def update_api_url(api_url)
+      settings['server']['url'] = api_url
+      save_settings
+    end
+
+    def display_logo
+      logo = <<LOGO
+ _               _
+| | _____  _ __ | |_ ___ _ __   __ _
+| |/ / _ \\| '_ \\| __/ _ \\ '_ \\ / _` |
+|   < (_) | | | | ||  __/ | | | (_| |
+|_|\\_\\___/|_| |_|\\__\\___|_| |_|\\__,_|
+-------------------------------------
+   Copyright (c)2015 Kontena, Inc.
+
+LOGO
+      puts logo
+    end
+
   end
 end

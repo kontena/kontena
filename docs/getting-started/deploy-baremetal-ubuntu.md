@@ -48,9 +48,8 @@ $ gem install kontena-cli
 ### Connect & configure first grid
 
 ```
-$ kontena connect http://10.2.2.99:8080 # use https and 8443 port if you configured ssl certificate
 $ kontena register # if you do not have Kontena account
-$ kontena login
+$ kontena login http://10.2.2.99:8080 # use https and 8443 port if you configured ssl certificate
 $ kontena grid create first-grid
 $ kontena grid use first-grid
 $ kontena grid current
