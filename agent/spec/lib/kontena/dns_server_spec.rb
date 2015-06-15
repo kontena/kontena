@@ -2,16 +2,58 @@ require_relative '../../spec_helper'
 
 describe Kontena::DnsServer do
 
-  describe '#ask_from_server' do
+  let(:etcd_url) { 'http://127.0.0.1:2379/v2/keys' }
 
-    it 'returns rpc_client response' do
-      client = spy
-      allow(subject).to receive(:rpc_client).and_return(client)
-      allow(client).to receive(:request).and_return(['10.1.1.1'])
-      expect(client).to receive(:request).once
-      subject.client=(client)
-      response = subject.resolve_address('foo')
+  before(:each) do
+    allow(described_class).to receive(:gateway).and_return('127.0.0.1')
+  end
+
+  describe '#resolve_address' do
+    it 'returns single ip for a container' do
+      stub_request(:get, "#{etcd_url}/kontena/dns/foo/foo-1").to_return(
+        body: JSON.dump({
+          action: 'get',
+          node: {
+            createdIndex: '1',
+            modifiedIndex: '1',
+            key: '/kontena/dns/foo/foo-1',
+            value: '10.1.1.1'
+          }
+        })
+      )
+      response = subject.resolve_address('foo-1')
       expect(response).to eq(['10.1.1.1'])
+    end
+
+    it 'returns multiple ips for service' do
+      stub_request(:get, "#{etcd_url}/kontena/dns/foo").to_return(
+        body: JSON.dump({
+          action: 'get',
+          node: {
+            createdIndex: '1',
+            modifiedIndex: '1',
+            dir: true,
+            key: '/kontena/dns/foo',
+            nodes: [
+              {
+                createdIndex: '1',
+                modifiedIndex: '1',
+                key: '/kontena/dns/foo/foo-1',
+                value: '10.1.1.1'
+              },
+              {
+                createdIndex: '1',
+                modifiedIndex: '1',
+                key: '/kontena/dns/foo/foo-2',
+                value: '10.1.2.1'
+              }
+            ]
+          }
+        })
+      )
+      response = subject.resolve_address('foo')
+      expect(response).to include('10.1.1.1')
+      expect(response).to include('10.1.2.1')
     end
   end
 end

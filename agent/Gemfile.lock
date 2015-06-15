@@ -7,21 +7,25 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
+    addressable (2.3.8)
     archive-tar-minitar (0.5.2)
     celluloid (0.16.0)
       timers (~> 4.0.0)
     celluloid-io (0.16.2)
       celluloid (>= 0.16.0)
       nio4r (>= 1.1.0)
+    crack (0.4.2)
+      safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
     docker-api (1.19.0)
       archive-tar-minitar
       excon (>= 0.38.0)
       json
     dotenv (1.0.2)
+    etcd (0.3.0)
+      mixlib-log
     eventmachine (1.0.7)
     excon (0.45.3)
-    fast_cache (1.0.1)
     faye-websocket (0.9.2)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
@@ -29,6 +33,7 @@ GEM
     i18n (0.7.0)
     json (1.8.2)
     minitest (5.5.0)
+    mixlib-log (1.6.0)
     msgpack (0.5.9)
     nio4r (1.1.0)
     rake (10.4.2)
@@ -48,11 +53,15 @@ GEM
       celluloid (~> 0.16.0)
       celluloid-io (~> 0.16.2)
       timers (~> 4.0.1)
+    safe_yaml (1.0.4)
     thread_safe (0.3.4)
     timers (4.0.1)
       hitimes
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
+    webmock (1.21.0)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
     websocket-driver (0.5.3)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.2)
@@ -64,9 +73,10 @@ DEPENDENCIES
   activesupport (~> 4.2.0)
   docker-api
   dotenv
-  fast_cache
+  etcd
   faye-websocket
   msgpack
   rake
   rspec
   rubydns
+  webmock

@@ -15,4 +15,4 @@ require_relative 'kontena/queue_worker'
 require_relative 'kontena/stats_worker'
 require_relative 'kontena/websocket_client'
 require_relative 'kontena/dns_server'
-
+require_relative 'kontena/dns_registrator'

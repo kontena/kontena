@@ -25,12 +25,13 @@ sleep 0.01 until EventMachine.reactor_running?
 
 queue_worker = Kontena::QueueWorker.new
 dns_server = Kontena::DnsServer.new
+dns_server.start!
+dns_registrator = Kontena::DnsRegistrator.new
+dns_registrator.start!
 client = Kontena::WebsocketClient.new(api_uri, api_token)
 client.add_observer(queue_worker, :client=)
-client.add_observer(dns_server, :client=)
 client.connect
 
-dns_server.start!
 
 container_info_worker = Kontena::ContainerInfoWorker.new(queue_worker.queue)
 container_info_worker.start!
@@ -41,6 +42,7 @@ log_worker.start!
 event_worker = Kontena::EventWorker.new(queue_worker.queue)
 event_worker.add_observer(container_info_worker, :on_container_event)
 event_worker.add_observer(log_worker, :on_container_event)
+event_worker.add_observer(dns_registrator, :on_container_event)
 event_worker.start!
 
 Kontena::StatsWorker.new(cadvisor_url, queue_worker.queue).start!
