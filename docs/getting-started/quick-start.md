@@ -22,7 +22,7 @@ With Kontena, all users are required to have personal user account. Kontena is u
 $ kontena register
 ```
 
-**NOTE!** By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service. In this case, the registration is optional.
+By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service. In this case, the registration is optional.
 
 ## Provision Kontena Infrastructure
 
