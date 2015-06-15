@@ -29,13 +29,15 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   embeds_many :grid_service_links
-  
+
   index({ grid_id: 1 })
   index({ name: 1 })
   index({ grid_service_ids: 1 })
 
   validates_presence_of :name, :image_name
   validates_uniqueness_of :name, scope: [:grid_id]
+
+  scope :visible, -> { where(name: {'$nin' => ['vpn', 'registry']}) }
 
   def set_state(state)
     self.update_attribute(:state, state)
