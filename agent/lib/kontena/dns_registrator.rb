@@ -34,7 +34,13 @@ module Kontena
     ##
     # @param [Docker::Container] container
     def register_container_dns(container)
-      name = container.info['Names'][0]
+      if container.info['Name']
+        name = container.info['Name']
+      elsif container.info['Names'] && container.info['Names'][0]
+        name = container.info['Names'][0]
+      else
+        return false
+      end
       match = name.match(/^\/(.+)-(\d+)$/)
       if match && container.json['NetworkSettings']
         ip = container.json['NetworkSettings']['IPAddress']
@@ -46,7 +52,7 @@ module Kontena
       end
     rescue => exc
       logger.error(LOG_NAME) { "cannot set dns entry: #{exc.message}" }
-      logger.error(LOG_NAME) { "cannot set dns entry: #{name}" }
+      logger.error(LOG_NAME) { "cannot set dns entry: #{container.json}" }
     end
 
     ##
