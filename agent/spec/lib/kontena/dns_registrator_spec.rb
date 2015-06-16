@@ -34,6 +34,17 @@ describe Kontena::DnsRegistrator do
     )
   end
 
+  let(:created_container) do
+    double(:container,
+      id: '12345',
+      info: {
+        'Names' => ['/fresh_one-1']
+      },
+      json: {
+      }
+    )
+  end
+
   describe '#register_container_dns' do
     it 'saves dns entry to etcd when service can be resolved' do
       client = spy
@@ -47,6 +58,13 @@ describe Kontena::DnsRegistrator do
       allow(subject).to receive(:etcd).and_return(client)
       subject.register_container_dns(wp_container)
       expect(subject.cache[wp_container.id]).not_to be_nil
+    end
+
+    it 'does not save dns entry when network settings does not exist' do
+      client = spy
+      allow(subject).to receive(:etcd).and_return(client)
+      expect(client).not_to receive(:set)
+      subject.register_container_dns(created_container)
     end
 
     it 'does not save dns entry when service cannot be resolved' do

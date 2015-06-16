@@ -36,7 +36,7 @@ module Kontena
     def register_container_dns(container)
       name = container.info['Names'][0]
       match = name.match(/^\/(.+)-(\d+)$/)
-      if match
+      if match && container.json['NetworkSettings']
         ip = container.json['NetworkSettings']['IPAddress']
         self.cache[container.id] ={
           service: match[1],
@@ -61,10 +61,10 @@ module Kontena
     ##
     # @param [Docker::Event] event
     def on_container_event(event)
-      if %w(create start).include?(event.status)
+      if %w(start).include?(event.status)
         container = Docker::Container.get(event.id)
         self.register_container_dns(container) if container
-      elsif %w(die destroy).include?(event.status)
+      elsif %w(destroy).include?(event.status)
         cached = self.cache.delete(event.id)
         self.unregister_container_dns(cached[:service], cached[:name]) if cached
       end
