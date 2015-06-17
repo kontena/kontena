@@ -62,7 +62,8 @@ module V1
           data = parse_json_body
           outcome = Grids::Create.run(
               user: current_user,
-              name: data['name']
+              name: data['name'],
+              initial_size: data['initial_size'] || 1
           )
 
           if outcome.success?

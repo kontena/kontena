@@ -4,6 +4,8 @@ class Grid
 
   field :name, type: String
   field :token, type: String
+  field :discovery_url, type: String
+  field :initial_size, type: Integer
   has_many :host_nodes
   has_many :grid_services
   has_many :containers

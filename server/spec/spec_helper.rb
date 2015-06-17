@@ -21,6 +21,7 @@ end
 
 ENV['FIST_OF_FURY_DISABLED'] = 'true'
 
+require 'webmock/rspec'
 require_relative '../app/boot'
 require_relative '../server'
 require 'rack/test'
@@ -57,6 +58,9 @@ RSpec.configure do |config|
 
   config.before(:each) do
     DatabaseCleaner.start
+    stub_request(:get, /https:\/\/discovery.etcd.io\/new.*/).to_return(
+      body: 'https://discovery.etcd.io/fake'
+    )
   end
 
   config.after(:each) do

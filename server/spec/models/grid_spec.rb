@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Grid do
   it { should be_timestamped_document }
-  it { should have_fields(:name, :token)}
+  it { should have_fields(:name, :token, :discovery_url, :initial_size)}
 
   it { should have_and_belong_to_many(:users) }
   it { should have_many(:host_nodes) }
