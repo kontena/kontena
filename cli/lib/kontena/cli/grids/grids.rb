@@ -55,13 +55,14 @@ module Kontena::Cli::Grids
       end
     end
 
-    def create(name=nil)
+    def create(name = nil, opts)
       require_api_url
 
       token = require_token
       payload = {
         name: name
       }
+      payload[:initial_size] = opts.initial_size if opts.initial_size
       grid = client(token).post('grids', payload)
       puts "created #{grid['name']} (#{grid['id']})" if grid
     end
