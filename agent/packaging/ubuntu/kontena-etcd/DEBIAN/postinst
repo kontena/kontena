@@ -4,9 +4,18 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
-# Fetching configuration from debconf
-db_get kontena-etcd/discovery
-ETCD_DISCOVERY="ETCD_DISCOVERY=${RET}"
+# Fetch etcd discovery url from Kontena Master
+db_get kontena-agent/server_uri
+URI="${RET}"
+URI=$(echo ${URI} | sed s/ws/http/)
+
+db_get kontena-agent/grid_token
+TOKEN="${RET}"
+
+GRID_URI="${URI}/v1/grid"
+ETCD_DISCOVERY=$(curl -H "KONTENA_GRID_TOKEN: ${TOKEN}" -Ls ${GRID_URI} | jq -r '.discoveryUrl')
+ETCD_DISCOVERY="ETCD_DISCOVERY=${ETCD_DISCOVERY}"
+
 sed -i -r "s#\#ETCD_DISCOVERY=.*#${ETCD_DISCOVERY}#" /etc/default/kontena-etcd
 
 start kontena-etcd || exit 0

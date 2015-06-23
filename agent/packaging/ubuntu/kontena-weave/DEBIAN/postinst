@@ -4,10 +4,17 @@ set -e
 
 # Source debconf library.
 . /usr/share/debconf/confmodule
+db_get kontena-agent/server_uri
+URI="${RET}"
+URI=$(echo ${URI} | sed s/ws/http/)
+db_get kontena-agent/grid_token
+TOKEN="${RET}"
 
-# Fetching configuration from debconf
-db_get kontena-weave/node_number
-NUMBER=${RET:-1}
+# Fetching node number from master node
+GRID_URI="${URI}/v1/grid"
+NUMBER=$(curl -H "KONTENA_GRID_TOKEN: ${TOKEN}" -Ls ${GRID_URI} | jq -r '.nodeCount + 1')
+
+NUMBER=${NUMBER:-1}
 sed -i -r "s#WEAVE_BRIDGE=.*#WEAVE_BRIDGE=\"10.81.0.${NUMBER}/16\"#" /etc/default/kontena-weave
 sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --mtu=65535 --fixed-cidr='10.81.${NUMBER}.0/24'\"#" /etc/default/docker
 

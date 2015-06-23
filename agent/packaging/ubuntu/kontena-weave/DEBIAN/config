@@ -4,6 +4,5 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
-db_input high kontena-weave/node_number || true
 db_input high kontena-weave/peers || true
 db_go || true
