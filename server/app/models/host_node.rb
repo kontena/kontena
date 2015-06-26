@@ -71,6 +71,7 @@ class HostNode
 
   def reserve_node_number
     return unless self.node_number.nil?
+    return if self.grid.nil?
 
     free_numbers = self.grid.free_node_numbers
     begin
