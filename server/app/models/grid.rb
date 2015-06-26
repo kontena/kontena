@@ -22,6 +22,13 @@ class Grid
     super(args.merge({:except => [:_id] }))
   end
 
+  ##
+  # @return [Array<Integer>]
+  def free_node_numbers
+    reserved_numbers = self.host_nodes.map{|node| node.node_number }.flatten
+    (1..254).to_a - reserved_numbers
+  end
+
   private
 
   def set_token
