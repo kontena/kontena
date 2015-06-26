@@ -2,7 +2,11 @@ class HostNode
   include Mongoid::Document
   include Mongoid::Timestamps
 
+  class Error < StandardError
+  end
+
   field :node_id, type: String
+  field :node_number, type: Integer
   field :name, type: String
   field :os, type: String
   field :docker_root_dir, type: String
@@ -22,9 +26,12 @@ class HostNode
   has_many :containers, dependent: :destroy
   has_and_belongs_to_many :images
 
+  after_save :reserve_node_number
+
   index({ grid_id: 1 })
-  index({ node_id:  1 })
-  index({ labels:  1 })
+  index({ node_id: 1 })
+  index({ labels: 1 })
+  index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
 
@@ -58,5 +65,20 @@ class HostNode
   # @return [RpcClient]
   def rpc_client(timeout = 300)
     RpcClient.new(self.node_id, timeout)
+  end
+
+  private
+
+  def reserve_node_number
+    return unless self.node_number.nil?
+
+    free_numbers = self.grid.free_node_numbers
+    begin
+      node_number = free_numbers.shift
+      raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
+      self.update_attribute(:node_number, node_number)
+    rescue Moped::Errors::OperationFailure => exc
+      retry
+    end
   end
 end
