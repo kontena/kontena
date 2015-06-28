@@ -12,8 +12,9 @@ URI=$(echo ${URI} | sed s/ws/http/)
 db_get kontena-agent/grid_token
 TOKEN="${RET}"
 
-GRID_URI="${URI}/v1/grid"
-ETCD_DISCOVERY=$(curl -H "KONTENA_GRID_TOKEN: ${TOKEN}" -Ls ${GRID_URI} | jq -r '.discoveryUrl')
+GRID_URI="${URI}/v1/nodes"
+NODE_ID=$(cat /etc/docker/key.json | jq -r '.kid')
+ETCD_DISCOVERY=$(curl -XPOST -H "Kontena-Grid-Token: ${TOKEN}" -d "{\"id\": \"${NODE_ID}\"}" -Ls ${GRID_URI} | jq -r '.grid.discovery_url')
 ETCD_DISCOVERY="ETCD_DISCOVERY=${ETCD_DISCOVERY}"
 
 sed -i -r "s#\#ETCD_DISCOVERY=.*#${ETCD_DISCOVERY}#" /etc/default/kontena-etcd
