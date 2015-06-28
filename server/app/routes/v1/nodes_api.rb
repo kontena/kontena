@@ -1,5 +1,5 @@
 module V1
-  class GridApi < Roda
+  class NodesApi < Roda
     include RequestHelpers
 
     plugin :json
@@ -13,14 +13,24 @@ module V1
     end
 
     route do |r|
-      r.is do
+      r.post do
+        r.is do
           token = r.env['HTTP_KONTENA_GRID_TOKEN']
+          data = parse_json_body
 
-          @grid = Grid.find_by(token: token.to_s)
-          if !@grid
+          grid = Grid.find_by(token: token.to_s)
+          if !grid
             halt_request(404, {error: 'Not found'})
           end
-          render('grids/show')
+          @node = grid.host_nodes.find_by(node_id: data['node_id'])
+          response.status = 200
+          unless @node
+            response.status = 201
+            @node = grid.host_nodes.create!(node_id: data['node_id'])
+          end
+
+          render('host_nodes/show')
+        end
       end
     end
   end

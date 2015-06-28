@@ -35,8 +35,8 @@ class Server < Roda
         r.run V1::GridsApi
       end
 
-      r.on('grid') do
-        r.run V1::GridApi
+      r.on('nodes') do
+        r.run V1::NodesApi
       end
 
       r.on('services') do

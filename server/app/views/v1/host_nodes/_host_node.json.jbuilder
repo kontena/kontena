@@ -11,3 +11,4 @@ json.mem_total node.mem_total
 json.mem_limit node.mem_limit
 json.cpus node.cpus
 json.public_ip node.public_ip
+json.node_number node.node_number
