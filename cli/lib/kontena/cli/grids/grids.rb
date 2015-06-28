@@ -19,7 +19,7 @@ module Kontena::Cli::Grids
         else
           name = grid['name']
         end
-        puts '%-30.30s %-10s %-10s %-10s' % [name, grid['nodeCount'], grid['containerCount'], grid['userCount']]
+        puts '%-30.30s %-10s %-10s %-10s' % [name, grid['node_count'], grid['container_count'], grid['user_count']]
       end
     end
 
@@ -90,9 +90,9 @@ module Kontena::Cli::Grids
     def print_grid(grid)
       puts "#{grid['name']}:"
       puts "  token: #{grid['token']}"
-      puts "  users: #{grid['userCount']}"
-      puts "  nodes: #{grid['nodeCount']}"
-      puts "  containers: #{grid['containerCount']}"
+      puts "  users: #{grid['user_count']}"
+      puts "  nodes: #{grid['node_count']}"
+      puts "  containers: #{grid['container_count']}"
     end
 
     def grids
