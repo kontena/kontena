@@ -1,3 +1,5 @@
+require_relative '../../mutations/host_nodes/register'
+
 module V1
   class NodesApi < Roda
     include RequestHelpers
@@ -22,11 +24,15 @@ module V1
           if !grid
             halt_request(404, {error: 'Not found'})
           end
-          @node = grid.host_nodes.find_by(node_id: data['node_id'])
+          @node = grid.host_nodes.find_by(node_id: data['id'])
           response.status = 200
           unless @node
             response.status = 201
-            @node = grid.host_nodes.create!(node_id: data['node_id'])
+            outcome = HostNodes::Register.run(grid: grid, id: data['id'])
+            unless outcome.success?
+              halt_request(422, {error: outcome.errors.message})
+            end
+            @node = outcome.result
           end
 
           render('host_nodes/show')
