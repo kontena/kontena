@@ -32,6 +32,7 @@ describe '/v1/grids' do
       post '/v1/nodes', {node_id: 'abc'}.to_json, request_headers
       expect(json_response['id']).to eq('abc')
       expect(json_response['node_number']).to eq(1)
+      expect(json_response['grid']['id']).to eq(grid.id.to_s)
     end
   end
 end
