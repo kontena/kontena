@@ -33,6 +33,8 @@ module V1
               halt_request(422, {error: outcome.errors.message})
             end
             @node = outcome.result
+          else
+            @node.update_attribute(:private_ip, data['private_ip']) if data['private_ip']
           end
 
           render('host_nodes/show')

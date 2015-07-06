@@ -1,22 +1,14 @@
 #!/bin/sh
-set -e
+set -ex
 
-# Source debconf library.
-. /usr/share/debconf/confmodule
+. /etc/default/kontena-agent
 
-# Fetch etcd discovery url from Kontena Master
-db_get kontena-agent/server_uri
-URI="${RET}"
-URI=$(echo ${URI} | sed s/ws/http/)
-
-db_get kontena-agent/grid_token
-TOKEN="${RET}"
-
+URI=$(echo ${KONTENA_URI} | sed s/ws/http/)
 GRID_URI="${URI}/v1/nodes"
 NODE_ID=$(cat /etc/docker/key.json | jq -r '.kid')
-ETCD_DISCOVERY=$(curl -XPOST -H "Kontena-Grid-Token: ${TOKEN}" -d "{\"id\": \"${NODE_ID}\"}" -Ls ${GRID_URI} | jq -r '.grid.discovery_url')
-ETCD_DISCOVERY="ETCD_DISCOVERY=${ETCD_DISCOVERY}"
+NODE_INFO=$(curl -XPOST -H "Kontena-Grid-Token: ${KONTENA_TOKEN}" -d "{\"id\": \"${NODE_ID}\"}" -Ls ${GRID_URI})
+ETCD_DISCOVERY=$(echo ${NODE_INFO} | jq -r '.grid.discovery_url')
 
-sed -i -r "s#\#ETCD_DISCOVERY=.*#${ETCD_DISCOVERY}#" /etc/default/kontena-etcd
+sed -i -r "s#ETCD_DISCOVERY=.*#ETCD_DISCOVERY=${ETCD_DISCOVERY}#" /etc/default/kontena-etcd
 
 start kontena-etcd || exit 0

@@ -1,22 +1,19 @@
 #!/bin/sh
-set -e
+set -ex
 
+. /etc/default/kontena-agent
+. /etc/default/kontena-weave
 
-# Source debconf library.
-. /usr/share/debconf/confmodule
-db_get kontena-agent/server_uri
-URI="${RET}"
-URI=$(echo ${URI} | sed s/ws/http/)
-db_get kontena-agent/grid_token
-TOKEN="${RET}"
+PEER_IP=$(ifconfig ${WEAVE_PEER_INTERFACE} 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+URI=$(echo ${KONTENA_URI} | sed s/ws/http/)
+GRID_URI="${URI}/v1/nodes"
+NODE_ID=$(cat /etc/docker/key.json | jq -r '.kid')
+PAYLOAD="{\"id\": \"${NODE_ID}\",\"private_ip\": \"${PEER_IP}\"}"
+NODE_INFO=$(curl -XPOST -H "Kontena-Grid-Token: ${KONTENA_TOKEN}" -d "${PAYLOAD}" -Ls ${GRID_URI})
+NODE_NUMBER=$(echo ${NODE_INFO} | jq -r '.node_number')
 
-# Fetching node number from master node
-GRID_URI="${URI}/v1/grid"
-NUMBER=$(curl -H "KONTENA_GRID_TOKEN: ${TOKEN}" -Ls ${GRID_URI} | jq -r '.nodeCount + 1')
-
-NUMBER=${NUMBER:-1}
-sed -i -r "s#WEAVE_BRIDGE=.*#WEAVE_BRIDGE=\"10.81.0.${NUMBER}/16\"#" /etc/default/kontena-weave
-sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --mtu=65535 --fixed-cidr='10.81.${NUMBER}.0/24'\"#" /etc/default/docker
+sed -i -r "s#WEAVE_BRIDGE=.*#WEAVE_BRIDGE=\"10.81.0.${NODE_NUMBER}/16\"#" /etc/default/kontena-weave
+sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --mtu=65535 --fixed-cidr='10.81.${NODE_NUMBER}.0/24'\" --insecure-registry=\"10.81.0.0/16\"#" /etc/default/docker
 
 /usr/local/bin/weave setup
 /sbin/start kontena-weave

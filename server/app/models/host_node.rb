@@ -21,6 +21,7 @@ class HostNode
   field :swap_limit, type: Integer
   field :connected, type: Boolean, default: false
   field :public_ip, type: String
+  field :private_ip, type: String
 
   belongs_to :grid
   has_many :containers, dependent: :destroy
