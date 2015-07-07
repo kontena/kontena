@@ -15,27 +15,34 @@ module V1
     end
 
     route do |r|
+
+      token = r.env['HTTP_KONTENA_GRID_TOKEN']
+      grid = Grid.find_by(token: token.to_s)
+      halt_request(404, {error: 'Not found'}) unless grid
+
       r.post do
         r.is do
-          token = r.env['HTTP_KONTENA_GRID_TOKEN']
           data = parse_json_body
-
-          grid = Grid.find_by(token: token.to_s)
-          if !grid
-            halt_request(404, {error: 'Not found'})
-          end
-          @node = grid.host_nodes.find_by(node_id: data['id'])
-          response.status = 200
-          unless @node
-            response.status = 201
-            outcome = HostNodes::Register.run(grid: grid, id: data['id'])
-            unless outcome.success?
-              halt_request(422, {error: outcome.errors.message})
-            end
-            @node = outcome.result
+          outcome = HostNodes::Register.run(
+            grid: grid,
+            id: data['id'],
+            private_ip: data['private_ip']
+          )
+          if outcome.success?
+            @node, is_new = outcome.result
+            response.status = 201 if is_new
           else
-            @node.update_attribute(:private_ip, data['private_ip']) if data['private_ip']
+            halt_request(422, {error: outcome.errors.message})
           end
+
+          render('host_nodes/show')
+        end
+      end
+
+      r.get do
+        r.on :id do |id|
+          @node = grid.host_nodes.find_by(node_id: id)
+          halt_request(404, {error: 'Node not found'}) if !@node
 
           render('host_nodes/show')
         end

@@ -12,7 +12,7 @@ describe '/v1/grids' do
   describe 'POST' do
     it 'creates a new node to grid' do
       expect {
-        post '/v1/nodes', {id: 'abc'}.to_json, request_headers
+        post '/v1/nodes', {id: 'abc', private_ip: '192.168.100.2'}.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ grid.host_nodes.count }.by(1)
       node = HostNode.find_by(node_id: 'abc')
@@ -23,25 +23,45 @@ describe '/v1/grids' do
     it 'does not create a node if it already exists' do
       grid.host_nodes.create!(node_id: 'abc')
       expect {
-        post '/v1/nodes', {id: 'abc'}.to_json, request_headers
+        post '/v1/nodes', {id: 'abc', private_ip: '192.168.100.2'}.to_json, request_headers
         expect(response.status).to eq(200)
       }.to change{ grid.host_nodes.count }.by(0)
     end
 
     it 'returns node json' do
-      post '/v1/nodes', {id: 'abc'}.to_json, request_headers
+      post '/v1/nodes', {id: 'abc', private_ip: '192.168.100.2'}.to_json, request_headers
       expect(json_response['id']).to eq('abc')
       expect(json_response['node_number']).to eq(1)
       expect(json_response['grid']['id']).to eq(grid.id.to_s)
     end
 
     it 'returns error if id is null' do
-      post '/v1/nodes', {id: nil}.to_json, request_headers
+      post '/v1/nodes', {id: nil, private_ip: '192.168.100.2'}.to_json, request_headers
       expect(response.status).to eq(422)
     end
 
     it 'returns error if grid does not exist' do
-      post '/v1/nodes', {id: 'abc'}.to_json, {}
+      post '/v1/nodes', {id: 'abc', private_ip: '192.168.100.2'}.to_json, {}
+      expect(response.status).to eq(404)
+    end
+  end
+
+  describe 'GET' do
+    it 'returns node with valid id and token' do
+      grid.host_nodes.create!(node_id: 'abc')
+      get '/v1/nodes/abc', nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['id']).to eq('abc')
+    end
+
+    it 'returns error with invalid id' do
+      get '/v1/nodes/foo', nil, request_headers
+      expect(response.status).to eq(404)
+    end
+
+    it 'returns error with invalid token' do
+      grid.host_nodes.create!(node_id: 'abc')
+      get '/v1/nodes/abc', nil, {}
       expect(response.status).to eq(404)
     end
   end

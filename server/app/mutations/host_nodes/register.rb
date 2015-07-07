@@ -11,11 +11,20 @@ module HostNodes
     end
 
     def execute
-      self.grid.host_nodes.create!(
-        node_id: self.id,
-        private_ip: self.private_ip,
-        name: generate_name
-      )
+      is_new = true
+      node = self.grid.host_nodes.find_by(node_id: self.id)
+      unless node
+        node = self.grid.host_nodes.create!(
+          node_id: self.id,
+          private_ip: self.private_ip,
+          name: generate_name
+        )
+      else
+        is_new = false
+        node.update_attribute(:private_ip, self.private_ip)
+      end
+
+      [node, is_new]
     end
   end
 end
