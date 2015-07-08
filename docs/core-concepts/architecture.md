@@ -1,4 +1,9 @@
-# Kontena Overview
+---
+title: Architecture
+toc_order: 1
+---
+
+# Architecture
 
 Kontena is an open-source system for deploying, managing, scaling and monitoring containerized applications across multiple hosts on any cloud infrastructure. It is primarily targeted for running applications composed of multiple containers, such as elastic, distributed micro-services.
 

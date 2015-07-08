@@ -1,3 +1,8 @@
+---
+title: Vagrant
+toc_order: 5
+---
+
 # Testing Kontena Locally
 The easiest way to give [Kontena](http://www.kontena.io) a test run is to run it on your local machine
 
@@ -6,7 +11,7 @@ The easiest way to give [Kontena](http://www.kontena.io) a test run is to run it
 ## Install Kontena Environment
 
 ###Download Vagrantfile
-[Vagrantfile](https://github.com/kontena/kontena/blob/master/docs/getting-started/Vagrantfile)
+[Vagrantfile](https://github.com/kontena/kontena/blob/master/docs/getting-started/manual-install/Vagrantfile)
 
 ### Deploy Kontena Server and Agents
 Run the following command in the same directory where you have saved the Vagrantfile

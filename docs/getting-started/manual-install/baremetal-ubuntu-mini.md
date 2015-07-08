@@ -1,3 +1,8 @@
+---
+title: Bare Metal (Ubuntu Mini)
+toc_order: 4
+---
+
 # Installing Kontena to a Single Ubuntu Server
 
 This guide will install Kontena Server & Agent to a single Ubuntu host. It does not setup overlay networking so it's only recommended for testing purposes.

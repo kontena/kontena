@@ -1,3 +1,8 @@
+---
+title: Bare Metal (Ubuntu)
+toc_order: 3
+---
+
 # Kontena installation to multiple Ubuntu nodes
 
 This guide describes how to install Kontena on multiple Ubuntu nodes, including 1 server node and 3 agent nodes. This approach can scale to **any number of agent nodes** with ease.

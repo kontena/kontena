@@ -1,3 +1,8 @@
+---
+title: Quick Start
+toc_order: 1
+---
+
 # Quick Start
 
 Follow these steps to get started with Kontena quickly.
@@ -8,7 +13,7 @@ Follow these steps to get started with Kontena quickly.
 
 You can install the Kontena CLI with Rubygems package manager (included in Ruby).
 
-```sh
+```
 $ gem install kontena-cli
 ```
 
@@ -18,7 +23,7 @@ After the installation is complete, you can test the installation by checking th
 
 With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs form user actions. Create your own personal user account (if not created already).
 
-```sh
+```
 $ kontena register
 ```
 
@@ -29,10 +34,10 @@ By default, user authentication is made against Kontena's public authentication 
 If you don't have existing Kontena infrastructure in place, you'll need to provision your own. Choose one of the following providers to provision your infrastructure:
 
 * Amazon AWS
-* [Bare Metal (Ubuntu)](deploy-baremetal-ubuntu.md)
-* [Bare Metal (Ubuntu Single Server)](deploy-baremetal-ubuntu-mini.md)
-* [Digital Ocean](deploy-do.md)
-* [Vagrant](deploy-vagrant.md)
+* [Bare Metal (Ubuntu)](manual-install/deploy-baremetal-ubuntu.md)
+* [Bare Metal (Ubuntu Single Server)](manual-install/deploy-baremetal-ubuntu-mini.md)
+* [Digital Ocean](manual-install/deploy-do.md)
+* [Vagrant](manual-install/deploy-vagrant.md)
 
 ## Login
 
@@ -40,7 +45,7 @@ Once you have Kontena infrastructure set-up, you can login to **Kontena Master**
 
 For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the login is done like this:
 
-```sh
+```
 $ kontena login http://192.168.66.100:8080
 ```
 
@@ -48,7 +53,7 @@ $ kontena login http://192.168.66.100:8080
 
 After successful login, you are ready to start using Kontena. Here's some commands to get started:
 
-```sh
+```
 $ kontena grid list                                                       # list all available Kontena Grids
 $ kontena grid use demo                                                   # the name of Kontena Grid you want to use, in this case "demo"
 $ kontena service create ghost-blog ghost:0.5 --stateful -p 8181:2368     # create stateful "ghost-blog" service, expose port 8181
@@ -57,7 +62,7 @@ $ kontena service deploy ghost-blog                                       # depl
 
 To see all commands:
 
-```sh
+```
 $ kontena help
 ```
 
