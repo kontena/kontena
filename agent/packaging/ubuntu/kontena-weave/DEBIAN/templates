@@ -1,4 +1,0 @@
-Template: kontena-weave/node_number
-Type: string
-Default: 1
-Description: Node number (1-254, unique per node)

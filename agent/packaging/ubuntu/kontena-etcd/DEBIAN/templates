@@ -1,4 +1,0 @@
-Template: kontena-etcd/discovery
-Type: string
-Default:
-Description: Etcd discovery URL (must be same for all host in this grid)
