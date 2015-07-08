@@ -34,10 +34,10 @@ By default, user authentication is made against Kontena's public authentication 
 If you don't have existing Kontena infrastructure in place, you'll need to provision your own. Choose one of the following providers to provision your infrastructure:
 
 * Amazon AWS
-* [Bare Metal (Ubuntu)](manual-install/deploy-baremetal-ubuntu.md)
-* [Bare Metal (Ubuntu Single Server)](manual-install/deploy-baremetal-ubuntu-mini.md)
-* [Digital Ocean](manual-install/deploy-do.md)
-* [Vagrant](manual-install/deploy-vagrant.md)
+* [Bare Metal (Ubuntu)](manual-install/baremetal-ubuntu.md)
+* [Bare Metal (Ubuntu Single Server)](manual-install/baremetal-ubuntu-mini.md)
+* [Digital Ocean](manual-install/digital-ocean.md)
+* [Vagrant](manual-install/vagrant.md)
 
 ## Login
 
@@ -68,4 +68,4 @@ $ kontena help
 
 ## Next Steps
 
-You are now ready to learn more about the [core concepts](../core-concepts) and [usage](../using-kontena) of Kontena. We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
+You are now ready to learn more about the [architecture](../architecture.md) and usage of Kontena. We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
