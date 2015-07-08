@@ -53,4 +53,27 @@ describe Grids::Create do
       expect(outcome.result.name).to eq('test-grid')
     end
   end
+
+  context 'when initial size is provided' do
+    it 'assigns discovery_url based on initial_size' do
+      subject = described_class.new(
+          user: user,
+          name: nil,
+          initial_size: 5
+      )
+      expect(subject).to receive(:discovery_url).with(5)
+      subject.run
+    end
+  end
+
+  context 'when initial size is not provided' do
+    it 'assigns discovery_url' do
+      subject = described_class.new(
+          user: user,
+          name: nil
+      )
+      outcome = subject.run
+      expect(outcome.result.discovery_url).to eq('https://discovery.etcd.io/fake')
+    end
+  end
 end

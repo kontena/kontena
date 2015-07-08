@@ -11,6 +11,7 @@ class Server < Roda
     logger = Logger.new(STDOUT)
   end
   use Rack::CommonLogger, logger
+  plugin :render, engine: 'jbuilder', ext: 'json.jbuilder', views: 'app/views/v1'
 
   route do |r|
     r.on 'v1' do
@@ -32,6 +33,10 @@ class Server < Roda
 
       r.on('grids') do
         r.run V1::GridsApi
+      end
+
+      r.on('nodes') do
+        r.run V1::NodesApi
       end
 
       r.on('services') do

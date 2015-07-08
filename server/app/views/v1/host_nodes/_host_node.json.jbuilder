@@ -11,3 +11,9 @@ json.mem_total node.mem_total
 json.mem_limit node.mem_limit
 json.cpus node.cpus
 json.public_ip node.public_ip
+json.private_ip node.private_ip
+json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|node| node.private_ip}.compact
+json.node_number node.node_number
+json.grid do
+  json.partial!("app/views/v1/grids/grid", grid: node.grid) if node.grid
+end

@@ -53,8 +53,9 @@ end
 command 'grid create' do |c|
   c.syntax = 'kontena grid create <name>'
   c.description = 'Create a new grid'
+  c.option '--initial-size INTEGER', Integer, 'Initial number of nodes'
   c.action do |args, options|
-    Kontena::Cli::Grids::Grids.new.create(args[0])
+    Kontena::Cli::Grids::Grids.new.create(args[0], options)
   end
 end
 

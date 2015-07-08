@@ -2,5 +2,5 @@ Package: kontena-weave
 Version: VERSION
 Maintainer: jari@kontena.io
 Architecture: all
-Depends: lxc-docker (>= 1.6.0), jq
+Depends: lxc-docker (>= 1.6.0), kontena-agent, jq
 Description: Kontena Weave Network

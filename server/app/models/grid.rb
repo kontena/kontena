@@ -4,6 +4,8 @@ class Grid
 
   field :name, type: String
   field :token, type: String
+  field :discovery_url, type: String
+  field :initial_size, type: Integer
   has_many :host_nodes
   has_many :grid_services
   has_many :containers
@@ -18,6 +20,13 @@ class Grid
 
   def to_json(args = {})
     super(args.merge({:except => [:_id] }))
+  end
+
+  ##
+  # @return [Array<Integer>]
+  def free_node_numbers
+    reserved_numbers = self.host_nodes.map{|node| node.node_number }.flatten
+    (1..254).to_a - reserved_numbers
   end
 
   private
