@@ -15,7 +15,7 @@ sed -i -r "s#\#KONTENA_TOKEN=.*#${TOKEN}#" /etc/default/kontena-agent
 
 
 /usr/bin/docker pull kontena/agent:VERSION
-/usr/bin/docker pull google/cadvisor:0.12.0
+/usr/bin/docker pull google/cadvisor:0.16.0
 
 /sbin/start kontena-cadvisor || true
 /sbin/start kontena-agent || true
