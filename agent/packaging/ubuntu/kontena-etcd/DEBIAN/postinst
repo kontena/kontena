@@ -3,9 +3,9 @@ set -ex
 
 . /etc/default/kontena-agent
 
+NODE_ID=$(cat /etc/docker/key.json | jq -r '.kid')
 URI=$(echo ${KONTENA_URI} | sed s/ws/http/)
 GRID_URI="${URI}/v1/nodes/${NODE_ID}"
-NODE_ID=$(cat /etc/docker/key.json | jq -r '.kid')
 NODE_INFO=$(curl -H "Kontena-Grid-Token: ${KONTENA_TOKEN}" -Ls ${GRID_URI})
 ETCD_DISCOVERY=$(echo ${NODE_INFO} | jq -r '.grid.discovery_url')
 
