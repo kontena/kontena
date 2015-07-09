@@ -3,5 +3,5 @@ Version: VERSION
 Maintainer: jari@kontena.io
 Architecture: all
 Depends: lxc-docker (>= 1.6.0)
-Recommends: kontena-weave
+Recommends: kontena-weave, kontena-etcd
 Description: Kontena Agent
