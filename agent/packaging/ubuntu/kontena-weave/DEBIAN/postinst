@@ -13,7 +13,7 @@ NODE_INFO=$(curl -XPOST -H "Kontena-Grid-Token: ${KONTENA_TOKEN}" -d "${PAYLOAD}
 NODE_NUMBER=$(echo ${NODE_INFO} | jq -r '.node_number')
 
 sed -i -r "s#WEAVE_BRIDGE=.*#WEAVE_BRIDGE=\"10.81.0.${NODE_NUMBER}/16\"#" /etc/default/kontena-weave
-sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --mtu=65535 --fixed-cidr='10.81.${NODE_NUMBER}.0/24'\" --insecure-registry=\"10.81.0.0/16\"#" /etc/default/docker
+sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --fixed-cidr='10.81.${NODE_NUMBER}.0/24' --insecure-registry='10.81.0.0/16'\"#" /etc/default/docker
 
 /usr/local/bin/weave setup
 /sbin/start kontena-weave
