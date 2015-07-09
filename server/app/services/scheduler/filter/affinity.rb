@@ -23,6 +23,10 @@ module Scheduler
               unless container_match?(node, comparator, value)
                 candidates.delete(node)
               end
+            elsif key == 'label'
+              unless label_match?(node, comparator, value)
+                candidates.delete(node)
+              end
             end
           end
         end
@@ -52,6 +56,16 @@ module Scheduler
           container_names.any?{|n| n == value}
         elsif compare == '!='
           !container_names.any?{|n| n == value}
+        end
+      end
+
+      def label_match?(node, compare, value)
+        if compare == '=='
+          node.labels.include?(value)
+        elsif compare == '!='
+          !node.labels.include?(value)
+        else
+          false
         end
       end
     end

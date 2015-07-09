@@ -4,9 +4,9 @@ describe Scheduler::Filter::Affinity do
 
   let(:nodes) do
     nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1')
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2')
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3')
+    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', labels: ['az-1', 'ssd'])
+    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', labels: ['az-1', 'hdd'])
+    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', labels: ['az-2', 'ssd'])
     nodes
   end
 
@@ -37,6 +37,23 @@ describe Scheduler::Filter::Affinity do
         filtered = subject.for_service(service, 'redis-1', nodes)
         expect(filtered.size).to eq(2)
         expect(filtered).to eq(nodes - [nodes[2]])
+      end
+    end
+
+    context 'label' do
+      it 'returns node-1 & node-3 if affinity: label==ssd' do
+        service = double(:service, affinity: ['label==ssd'])
+        filtered = subject.for_service(service, 'redis-1', nodes)
+        expect(filtered.size).to eq(2)
+        expect(filtered).to include(nodes[0])
+        expect(filtered).to include(nodes[2])
+      end
+
+      it 'returns node-2 if affinity: label!=ssd' do
+        service = double(:service, affinity: ['label!=ssd'])
+        filtered = subject.for_service(service, 'redis-1', nodes)
+        expect(filtered.size).to eq(1)
+        expect(filtered).to include(nodes[1])
       end
     end
 
