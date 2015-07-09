@@ -29,7 +29,7 @@ module Kontena::Cli::Grids
       grid = find_grid_by_name(name)
       if !grid.nil?
         self.current_grid = grid
-        print color("Using #{grid['name']}", :green)
+        puts "Using grid: #{grid['name'].cyan}"
       else
         print color('Could not resolve grid by name. For a list of existing grids please run: kontena grid list', :red)
       end
@@ -47,7 +47,7 @@ module Kontena::Cli::Grids
     def current
       require_api_url
       if current_grid.nil?
-        puts 'No grid selected. To select grid, please run: kontena use <grid name>'
+        puts 'No grid selected. To select grid, please run: kontena grid use <grid name>'
 
       else
         grid = client(require_token).get("grids/#{current_grid}")
@@ -64,19 +64,22 @@ module Kontena::Cli::Grids
       }
       payload[:initial_size] = opts.initial_size if opts.initial_size
       grid = client(token).post('grids', payload)
-      puts "created #{grid['name']} (#{grid['id']})" if grid
+      if grid
+        self.current_grid = grid
+        puts "Using grid: #{grid['name'].cyan}"
+      end
     end
 
     def destroy(name)
       require_api_url
-
+      token = require_token
       grid = find_grid_by_name(name)
 
       if !grid.nil?
         response = client(token).delete("grids/#{grid['id']}")
         if response
           clear_current_grid if grid['id'] == current_grid
-          puts "removed #{grid['name']} (#{grid['id']})"
+          puts "removed #{grid['name'].cyan}"
         end
       else
         print color('Could not resolve grid by name. For a list of existing grids please run: kontena grid list', :red)
