@@ -158,21 +158,18 @@ module Kontena::Cli::Services
     # @param [Array<String>] values
     # @return [Array<String>]
     def parse_env_options(values)
-      env = {}
-      prev_key = nil
-      values.each do |v|
-        key, value = v.split("=", 2)
+      copy = values.dup
+      copy.each_index do |i|
+        key, value = copy[i].split("=", 2)
         if value.nil?
-          env[prev_key] = "#{env[prev_key]},#{key}"
+          copy[i] = "#{values[i - 1]},#{values[i]}"
         elsif key != key.upcase
-          env[prev_key] = "#{env[prev_key]},#{key}"
-          prev_key = key
-        else
-          env[key] = value
-          prev_key = key
+          copy[i - 1] = "#{values[i - 1]},#{values[i]}"
+          copy.delete_at(i)
         end
       end
-      env.map{|k,v| "#{k}=#{v}"}
+
+      copy
     end
   end
 end
