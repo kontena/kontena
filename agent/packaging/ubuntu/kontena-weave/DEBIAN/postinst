@@ -16,5 +16,5 @@ sed -i -r "s#WEAVE_BRIDGE=.*#WEAVE_BRIDGE=\"10.81.0.${NODE_NUMBER}/16\"#" /etc/d
 sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--bridge=weave --fixed-cidr='10.81.${NODE_NUMBER}.0/24' --insecure-registry='10.81.0.0/16'\"#" /etc/default/docker
 
 /usr/local/bin/weave setup
-/sbin/start kontena-weave
-/sbin/start kontena-weave-helper
+/sbin/start kontena-weave || true
+/sbin/start kontena-weave-helper || true
