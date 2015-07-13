@@ -83,7 +83,7 @@ command 'service update' do |c|
   c.syntax = 'kontena service update <service_id>'
   c.description = 'Update service'
   c.option '-p', '--ports Array', Array, 'Exposed ports'
-  c.option '-e', '--env Array', Array, 'Environment variables'
+  c.option '-e', '--env Array', Array, 'Environment variables separated with commas'
   c.option '--image STRING', String, 'Service image'
   c.option '--instances INTEGER', Integer, 'How many instances should be deployed'
   c.option '--cmd STRING', String, 'Command to execute'

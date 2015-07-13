@@ -144,7 +144,7 @@ module Kontena::Cli::Services
       data[:memory_swap] = parse_memory(options.memory_swap) if options.memory_swap
       data[:cpu_shares] = options.cpu_shares if options.cpu_shares
       data[:affinity] = options.affinity if options.affinity
-      data[:env] = options.env if options.env
+      data[:env] = parse_env_options(options.env) if options.env
       data[:container_count] = options.instances if options.instances
       data[:cmd] = options.cmd.split(" ") if options.cmd
       data[:user] = options.user if options.user
@@ -152,6 +152,24 @@ module Kontena::Cli::Services
       data[:cap_add] = options.cap_add if options.cap_add
       data[:cap_drop] = options.cap_drop if options.cap_drop
       data
+    end
+
+    ##
+    # @param [Array<String>] values
+    # @return [Array<String>]
+    def parse_env_options(values)
+      copy = values.dup
+      copy.each_index do |i|
+        key, value = copy[i].split("=", 2)
+        if value.nil?
+          copy[i] = "#{values[i - 1]},#{values[i]}"
+        elsif key != key.upcase
+          copy[i - 1] = "#{values[i - 1]},#{values[i]}"
+          copy.delete_at(i)
+        end
+      end
+
+      copy
     end
   end
 end

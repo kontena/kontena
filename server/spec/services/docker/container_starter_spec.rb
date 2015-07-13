@@ -20,7 +20,7 @@ describe Docker::ContainerStarter do
     end
 
     it 'sends volume request to agent if service is stateful' do
-      opts = {'Image' => container.image, 'PortBindings' => {}, 'VolumesFrom' => 'volume-1', 'RestartPolicy' => {'Name' => 'always', 'MaximumRetryCount' => 10}}
+      opts = {'Image' => container.image, 'PortBindings' => {}, 'VolumesFrom' => ['volume-1'], 'RestartPolicy' => {'Name' => 'always', 'MaximumRetryCount' => 10}}
       allow(grid_service).to receive(:stateful?).and_return(true)
       expect(subject).to receive(:ensure_volume_container).and_return(double(:container, container_id: 'volume-1'))
       expect(client).to receive(:request).with('/containers/start', container.container_id, opts)
