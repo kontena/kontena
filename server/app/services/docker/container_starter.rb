@@ -15,7 +15,7 @@ module Docker
       }
       if grid_service.stateful?
         volume_container = self.ensure_volume_container(docker_opts)
-        docker_opts['VolumesFrom'] = volume_container.container_id
+        docker_opts['VolumesFrom'] = [volume_container.container_id]
       end
       if grid_service.volumes_from.size > 0
         i = container.name.match(/^.+-(\d+)$/)[1]
