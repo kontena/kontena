@@ -57,9 +57,11 @@ module Kontena::Cli::Services
     # @return [String]
     def filesize_to_human(size)
       units = %w{B K M G T}
-      e = (Math.log(size)/Math.log(1000)).floor
+      e = (Math.log(size) / Math.log(1000)).floor
       s = '%.2f' % (size.to_f / 1000**e)
       s.sub(/\.?0*$/, units[e])
+    rescue FloatDomainError
+      'N/A'
     end
   end
 end
