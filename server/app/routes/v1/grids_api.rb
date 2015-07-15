@@ -8,17 +8,7 @@ module V1
     include RequestHelpers
     include Auditor
 
-    plugin :all_verbs
-    plugin :json
-    plugin :render, engine: 'jbuilder', ext: 'json.jbuilder', views: 'app/views/v1'
     plugin :multi_route
-    plugin :error_handler do |e|
-      response.status = 500
-      log_message = "\n#{e.class} (#{e.message}):\n"
-      log_message << "  " << e.backtrace.join("\n  ") << "\n\n"
-      request.logger.error log_message
-      { message: 'Internal server error' }
-    end
 
     Dir[File.join(__dir__, '/grids/*.rb')].each{|f| require f}
 

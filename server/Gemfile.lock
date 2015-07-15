@@ -66,7 +66,7 @@ GEM
     origin (2.1.1)
     puma (2.11.1)
       rack (>= 1.1, < 2.0)
-    rack (1.5.2)
+    rack (1.5.5)
     rack-test (0.6.2)
       rack (>= 1.0)
     rake (10.4.2)
@@ -79,7 +79,7 @@ GEM
       redis
     rerun (0.10.0)
       listen (~> 2.7, >= 2.7.3)
-    roda (1.3.0)
+    roda (2.5.0)
       rack
     rspec (3.1.0)
       rspec-core (~> 3.1.0)
@@ -139,7 +139,7 @@ DEPENDENCIES
   redis
   redis-semaphore
   rerun
-  roda (~> 1.3.0)
+  roda (~> 2.5.0)
   rspec (~> 3.1.0)
   simplecov
   sucker_punch

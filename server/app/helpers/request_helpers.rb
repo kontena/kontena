@@ -4,7 +4,7 @@ module RequestHelpers
     base.plugin :json
     base.plugin :all_verbs
     base.plugin :default_headers, 'Content-Type'=>'application/json'
-    base.plugin :render, engine: 'jbuilder', ext: 'json.jbuilder', views: 'app/views/v1'
+    base.plugin :render, engine: 'json.jbuilder', views: 'app/views/v1'
     base.plugin :error_handler do |e|
       if e.is_a?(RpcClient::Error)
         { code: e.code, message: e.message, backtrace: e.backtrace }
@@ -12,7 +12,7 @@ module RequestHelpers
         response.status = 500
         log_message = "\n#{e.class} (#{e.message}):\n"
         log_message << "  " << e.backtrace.join("\n  ") << "\n\n" if e.backtrace
-        request.logger.error log_message
+        request.logger.error log_message unless request.logger.nil?
         json = { message: 'Internal server error' }
         if test_env?
           puts log_message
