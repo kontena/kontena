@@ -24,7 +24,7 @@ namespace :release do
 
   desc 'Build docker image'
   task :build_docker => :environment do
-    sh('docker pull gliderlabs/alpine:edge')
+    sh('docker pull gliderlabs/alpine:3.2')
     sh("docker build -f Dockerfile.alpine -t #{DOCKER_NAME}:#{VERSION} .")
     DOCKER_VERSIONS.each do |v|
       sh("docker tag -f #{DOCKER_NAME}:#{VERSION} #{DOCKER_NAME}:#{v}")
