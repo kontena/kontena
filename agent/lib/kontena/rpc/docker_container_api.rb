@@ -38,8 +38,8 @@ module Kontena
         container = Docker::Container.get(id)
         dns = resolve_dns
         if dns
-          opts['Dns'] = dns
-          opts['DnsSearch'] = 'kontena.local'
+          opts['Dns'] = [dns]
+          opts['DnsSearch'] = ['kontena.local']
         end
         container.start(opts)
         container.json
