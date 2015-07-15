@@ -1,4 +1,4 @@
-FROM gliderlabs/alpine:edge
+FROM gliderlabs/alpine:3.2
 MAINTAINER jari@kontena.io
 
 RUN apk update && apk --update add ruby ruby-dev ca-certificates \
