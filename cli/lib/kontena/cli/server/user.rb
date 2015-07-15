@@ -137,7 +137,9 @@ module Kontena::Cli::Server
       valid = true
       begin
         client.get('ping') # test server connection
-      rescue
+      rescue OpenSSL::SSL::SSLError => _
+        raise 'Could not connect to server because of SSL problem. If you want to ignore SSL errors, set SSL_IGNORE_ERRORS=true environment variable'
+      rescue => exc
         valid = false
       end
       valid
