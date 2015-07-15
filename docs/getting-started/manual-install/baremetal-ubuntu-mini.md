@@ -7,7 +7,7 @@ toc_order: 4
 
 This guide will install Kontena Server & Agent to a single Ubuntu host. It does not setup overlay networking so it's only recommended for testing purposes.
 
-> Prerequisities: Docker 1.4 or later
+> Prerequisities: Docker 1.6 or later
 
 ### Install Kontena Server Ubuntu Packages
 
@@ -50,8 +50,6 @@ $ sudo apt-get install kontena-agent
 #### Configure agents during installation process
 * the address of the Kontena server: ws://localhost:8080
 * grid token: <grid_token_from_server>
-* node number: 1
-* addresses of other nodes: empty
 
 ### Restart Docker
 

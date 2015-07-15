@@ -7,7 +7,7 @@ toc_order: 3
 
 This guide describes how to install Kontena on multiple Ubuntu nodes, including 1 server node and 3 agent nodes. This approach can scale to **any number of agent nodes** with ease.
 
-> Prerequisities: Docker 1.4 or later
+> Prerequisities: Docker 1.6 or later
 
 Example cluster setup:
 
@@ -80,9 +80,7 @@ $ sudo apt-get install kontena-agent
 
 #### Configure agents during installation process
 * the address of the Kontena server. Note! You must use WebSocket protocol: ws or wss for secured connections
-* grid token: <grid_token_from_server>
-* node number: 1 for first agent, 2 for second etc.
-* addresses of other nodes: ip's of other agent nodes
+* grid token from the Kontena server
 
 ### Restart Docker
 

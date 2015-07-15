@@ -54,8 +54,6 @@ $ kontena login http://192.168.66.100:8080
 After successful login, you are ready to start using Kontena. Here's some commands to get started:
 
 ```
-$ kontena grid list                                                       # list all available Kontena Grids
-$ kontena grid use demo                                                   # the name of Kontena Grid you want to use, in this case "demo"
 $ kontena service create ghost-blog ghost:0.5 --stateful -p 8181:2368     # create stateful "ghost-blog" service, expose port 8181
 $ kontena service deploy ghost-blog                                       # deploy "ghost-blog" service
 ```
