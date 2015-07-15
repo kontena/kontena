@@ -58,7 +58,7 @@ namespace :release do
 
   desc 'Build ubuntu etcd package'
   task :build_ubuntu_etcd => :environment do
-    etcd_version = "v2.0.11"
+    etcd_version = "v2.0.13"
     sh("mkdir -p build/ubuntu/tmp")
     sh("mkdir -p build/ubuntu/kontena-etcd/usr/local/bin")
     sh("mkdir -p build/ubuntu/kontena-etcd/var/lib/kontena-etcd")
