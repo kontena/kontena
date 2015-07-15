@@ -4,9 +4,6 @@ module V1
   class AuthApi < Roda
     include RequestHelpers
 
-    plugin :json
-    plugin :render, engine: 'jbuilder', ext: 'json.jbuilder', views: 'app/views/v1'
-
     route do |r|
       r.post do
         data = parse_json_body
