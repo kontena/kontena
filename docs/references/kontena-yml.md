@@ -1,5 +1,5 @@
 ---
-title: Kontena.yml reference
+title: kontena.yml
 toc_order: 1
 ---
 
@@ -15,7 +15,13 @@ The image used to deploy this service in docker format.
 
 ```
 image: ubuntu:latest
+```
+
+```
 image: kontena/haproxy:latest
+```
+
+```
 image: registry.kontena.local/ghost:latest
 ```
 
@@ -100,12 +106,12 @@ Link to another service. Either specify both the service name and the link alias
 
 ```
 links:
-  - myslq:wordpress-mysql
+  - mysql:wordpress-mysql
 ```
 
 **ports**
 
-Expose ports. Either specify both ports (HOST:CONTAINER), or just the container port (a random host port will be chosen).
+Expose ports. Specify both ports (HOST:CONTAINER).
 
 ```
 ports:
@@ -147,9 +153,16 @@ volumes_from:
  - wordpress
 ```
 
+```
+volumes_from:
+ - wordpress-%s
+```
+(`-%s` will be replaced with container number, eg first service container will get volumes from wordpress-1, second from wordpress-2 etc)
+
 **deploy**
 
 **strategy**
+
 How to deploy service's containers to different host nodes.
 
 ```
