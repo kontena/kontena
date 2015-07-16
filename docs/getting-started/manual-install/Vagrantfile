@@ -41,7 +41,7 @@ sudo apt-get install -y -q --force-yes kontena-server
 
 sudo restart docker
 sudo sleep 3
-sudo docker exec -d kontena-server-api bundle exec ruby -r "./app/boot.rb" -e "grid = Grid.find_or_create_by(name: 'demo'); grid.update_attributes(token: '%s', initial_size: 2); user = User.find_or_create_by(email: '%s'); user.grids << grid unless user.grids.include?(grid)"
+sudo docker exec -d kontena-server-api rake install:bootstrap_grid NAME='demo' TOKEN='%s' SIZE=2 EMAIL='%s'
 sudo gpasswd -a vagrant docker
 SCRIPT
 
