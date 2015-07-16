@@ -40,7 +40,14 @@ module Kontena
         end
         begin
           logger.info(LOG_NAME) { "starting to stream logs for container: #{container.id}" }
-          container.streaming_logs(stdout: true, stderr: true, follow: true, tail: tail) {|stream, chunk|
+          stream_opts = {
+            'stdout' => true,
+            'stderr' => true,
+            'follow' => true,
+            'tail' => tail,
+            'stack_size'=> 0
+          }
+          container.streaming_logs(stream_opts) {|stream, chunk|
             self.logger.debug(LOG_NAME) { chunk }
             self.on_message(container.id, stream, chunk)
           }
