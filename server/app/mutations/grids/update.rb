@@ -3,7 +3,7 @@ module Grids
 
     required do
       model :grid
-      string :name, min_length: 3
+      string :name, min_length: 3, matches: /^(\w|-)+$/
     end
 
     def execute

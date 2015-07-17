@@ -10,7 +10,7 @@ describe '/v1/services' do
 
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid = Grid.create!(name: 'Terminal A')
+    grid = Grid.create!(name: 'terminal-a')
     grid.users << user
 
     user
@@ -45,15 +45,15 @@ describe '/v1/services' do
 
   describe 'GET /:id' do
     it 'returns service json' do
-      get "/v1/services/#{redis_service.name}", nil, request_headers
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['id']).to eq(redis_service.name.to_s)
+      expect(json_response['id']).to eq("services/#{redis_service.to_path}")
       expect(json_response['image']).to eq(redis_service.image_name)
     end
 
     it 'returns error without authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
-      get "/v1/services/#{redis_service.name}", nil, request_headers
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(403)
     end
   end
@@ -61,10 +61,10 @@ describe '/v1/services' do
   describe 'GET /:id/containers' do
     it 'returns service containers' do
       container = redis_service.containers.create!(name: 'redis-1')
-      get "/v1/services/#{redis_service.name}/containers", nil, request_headers
+      get "/v1/services/#{redis_service.to_path}/containers", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['containers'].size).to eq(1)
-      expect(json_response['containers'].first['id']).to eq(container.name.to_s)
+      expect(json_response['containers'].first['id']).to eq("containers/#{container.to_path}")
     end
   end
 
@@ -72,7 +72,7 @@ describe '/v1/services' do
     it 'returns service container logs' do
       container = redis_service.containers.create!(name: 'redis-1')
       container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
-      get "/v1/services/#{redis_service.name}/container_logs", nil, request_headers
+      get "/v1/services/#{redis_service.to_path}/container_logs", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['logs'].size).to eq(1)
       expect(json_response['logs'].first['data']).to eq('foo')
@@ -83,7 +83,7 @@ describe '/v1/services' do
         container = redis_service.containers.create!(name: 'redis-1')
         log1 = container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
         log2 = container.container_logs.create!(data: 'foo2', type: 'stdout', grid_service: redis_service)
-        get "/v1/services/#{redis_service.name}/container_logs?from=#{log1.id}", nil, request_headers
+        get "/v1/services/#{redis_service.to_path}/container_logs?from=#{log1.id}", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(1)
         expect(json_response['logs'].first['data']).to eq('foo2')
@@ -97,7 +97,7 @@ describe '/v1/services' do
       it 'returns service stats' do
         container = redis_service.containers.create!(name: 'redis-1')
         container.container_stats.create!(container_stat_data)
-        get "/v1/services/#{redis_service.name}/stats", nil, request_headers
+        get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
@@ -108,7 +108,7 @@ describe '/v1/services' do
     context 'when container has not stats data' do
       it 'returns empty result' do
         redis_service.containers.create!(name: 'redis-1')
-        get "/v1/services/#{redis_service.name}/stats", nil, request_headers
+        get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
@@ -122,7 +122,7 @@ describe '/v1/services' do
       expect(GridServices::Deploy).to receive(:run)
         .with(current_user: david, grid_service: redis_service)
         .and_return(double.as_null_object)
-      post "/v1/services/#{redis_service.name}/deploy", nil, request_headers
+      post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
       expect(response.status).to eq(200)
     end
   end
@@ -132,7 +132,7 @@ describe '/v1/services' do
       expect(GridServices::Stop).to receive(:run)
         .with(current_user: david, grid_service: redis_service)
         .and_return(double.as_null_object)
-      post "/v1/services/#{redis_service.name}/stop", nil, request_headers
+      post "/v1/services/#{redis_service.to_path}/stop", nil, request_headers
       expect(response.status).to eq(200)
     end
   end
@@ -142,7 +142,7 @@ describe '/v1/services' do
       expect(GridServices::Start).to receive(:run)
         .with(current_user: david, grid_service: redis_service)
         .and_return(double.as_null_object)
-      post "/v1/services/#{redis_service.name}/start", nil, request_headers
+      post "/v1/services/#{redis_service.to_path}/start", nil, request_headers
       expect(response.status).to eq(200)
     end
   end
@@ -152,7 +152,7 @@ describe '/v1/services' do
       expect(GridServices::Restart).to receive(:run)
        .with(current_user: david, grid_service: redis_service)
        .and_return(double.as_null_object)
-      post "/v1/services/#{redis_service.name}/restart", nil, request_headers
+      post "/v1/services/#{redis_service.to_path}/restart", nil, request_headers
       expect(response.status).to eq(200)
     end
   end
@@ -162,7 +162,7 @@ describe '/v1/services' do
       expect(GridServices::Delete).to receive(:run)
         .with(current_user: david, grid_service: redis_service)
         .and_return(double.as_null_object)
-      delete "/v1/services/#{redis_service.name}", nil, request_headers
+      delete "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
     end
   end

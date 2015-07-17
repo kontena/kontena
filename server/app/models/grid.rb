@@ -6,6 +6,7 @@ class Grid
   field :token, type: String
   field :discovery_url, type: String
   field :initial_size, type: Integer
+
   has_many :host_nodes
   has_many :grid_services
   has_many :containers
@@ -14,9 +15,14 @@ class Grid
   has_many :audit_logs
   has_and_belongs_to_many :users
 
+  index({ name: 1 }, { unique: true })
   index({ token: 1 }, { unique: true })
 
   before_create :set_token
+
+  def to_path
+    self.name
+  end
 
   def to_json(args = {})
     super(args.merge({:except => [:_id] }))

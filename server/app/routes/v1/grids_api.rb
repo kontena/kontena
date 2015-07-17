@@ -28,32 +28,32 @@ module V1
       require_current_user
 
       ##
-      # @param [String] id
+      # @param [String] name
       # @return [Grid]
-      def load_grid(id)
-        @grid = current_user.grids.find_by(id: id)
+      def load_grid(name)
+        @grid = current_user.grids.find_by(name: name)
         if !@grid
           halt_request(404, {error: 'Not found'})
         end
       end
 
-      r.on ':id/services' do |id|
-        load_grid(id)
+      r.on ':name/services' do |name|
+        load_grid(name)
         r.route 'grid_services'
       end
 
-      r.on ':id/nodes' do |id|
-        load_grid(id)
+      r.on ':name/nodes' do |name|
+        load_grid(name)
         r.route 'grid_nodes'
       end
 
-      r.on ':id/stats' do |id|
-        load_grid(id)
+      r.on ':name/stats' do |name|
+        load_grid(name)
         r.route 'grid_stats'
       end
 
-      r.on ':id/users' do |id|
-        load_grid(id)
+      r.on ':name/users' do |name|
+        load_grid(name)
         r.route 'grid_users'
       end
 
@@ -86,9 +86,9 @@ module V1
           render('grids/index')
         end
 
-        # GET /v1/grids/:id
-        r.on ':id' do |id|
-          load_grid(id)
+        # GET /v1/grids/:name
+        r.on ':name' do |name|
+          load_grid(name)
           r.is do
             render('grids/show')
           end
@@ -107,8 +107,8 @@ module V1
       end
 
       r.put do
-        r.on ':id' do |id|
-          load_grid(id)
+        r.on ':name' do |name|
+          load_grid(name)
 
           # PUT /v1/grids/:id
           r.is do
@@ -131,10 +131,10 @@ module V1
       end
 
       r.delete do
-        r.on ':id' do |id|
-          load_grid(id)
+        r.on ':name' do |name|
+          load_grid(name)
 
-          # DELETE /v1/grids/:id
+          # DELETE /v1/grids/:name
           r.is do
             outcome = Grids::Delete.run({grid: @grid})
             if outcome.success?

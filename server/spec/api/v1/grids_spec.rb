@@ -10,7 +10,7 @@ describe '/v1/grids' do
 
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid = Grid.create!(name: 'Terminal A')
+    grid = Grid.create!(name: 'terminal-a')
     grid.users << user
 
     user
@@ -18,7 +18,7 @@ describe '/v1/grids' do
 
   let(:emily) do
     user = User.create!(email: 'emily@domain.com', external_id: '123457')
-    grid = Grid.create!(name: 'Terminal B')
+    grid = Grid.create!(name: 'terminal-b')
     grid.users << user
 
     user
@@ -26,7 +26,7 @@ describe '/v1/grids' do
 
   let(:thomas) do
     user = User.create!(email: 'thomas@domain.com', external_id: '123458')
-    grid = Grid.create!(name: 'Terminal C')
+    grid = Grid.create!(name: 'terminal-c')
     grid.users << user
 
     user
@@ -81,7 +81,7 @@ describe '/v1/grids' do
             name: 'foo-service'
         }
         expect {
-          post "/v1/grids/#{grid.id}/services", payload.to_json, request_headers
+          post "/v1/grids/#{grid.to_path}/services", payload.to_json, request_headers
           expect(response.status).to eq(201)
         }.to change{ grid.grid_services.count }.by(1)
       end
@@ -95,7 +95,7 @@ describe '/v1/grids' do
             links: [{'name' => "#{db_service.name}", 'alias' => 'mysql'}]
         }
 
-        post "/v1/grids/#{grid.id}/services", payload.to_json, request_headers
+        post "/v1/grids/#{grid.to_path}/services", payload.to_json, request_headers
 
         expect(json_response['links'].size).to eq(1)
         expect(json_response['links'].first['grid_service_id']).to eq(db_service.id.to_s)
@@ -105,10 +105,10 @@ describe '/v1/grids' do
 
   end
 
-  describe 'GET /:id' do
+  describe 'GET /:name' do
     it 'returns grid' do
       grid = david.grids.first
-      get "/v1/grids/#{grid.id}", nil, request_headers
+      get "/v1/grids/#{grid.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['id']).to eq(grid.id.to_s)
     end
@@ -117,7 +117,7 @@ describe '/v1/grids' do
       it 'returns grid services' do
         grid = david.grids.first
         grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
-        get "/v1/grids/#{grid.id}/services", nil, request_headers
+        get "/v1/grids/#{grid.to_path}/services", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['services'].size).to eq(1)
       end
@@ -127,7 +127,7 @@ describe '/v1/grids' do
         grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
         grid.grid_services.create!(name: 'vpn', image_name: 'kontena/openvpn:latest')
         grid.grid_services.create!(name: 'registry', image_name: 'registry:2.0')
-        get "/v1/grids/#{grid.id}/services", nil, request_headers
+        get "/v1/grids/#{grid.to_path}/services", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['services'].size).to eq(1)
       end
@@ -138,7 +138,7 @@ describe '/v1/grids' do
         grid = david.grids.first
 
         grid.host_nodes.create!(node_id: SecureRandom.uuid)
-        get "/v1/grids/#{grid.id}/nodes", nil, request_headers
+        get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)
       end
@@ -147,28 +147,28 @@ describe '/v1/grids' do
     describe '/users' do
       it 'returns grid users' do
         grid = david.grids.first
-        get "/v1/grids/#{grid.id}/users", nil, request_headers
+        get "/v1/grids/#{grid.to_path}/users", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['users'].size).to eq(1)
       end
     end
   end
 
-  describe 'POST /:id/users' do
+  describe 'POST /:name/users' do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first
-      post "/v1/grids/#{grid.id}/users", {email: david.email }.to_json, request_headers
+      post "/v1/grids/#{grid.to_path}/users", {email: david.email }.to_json, request_headers
       expect(response.status).to eq(404)
     end
 
     it 'requires existing email' do
       grid = david.grids.first
-      post "/v1/grids/#{grid.id}/users", {email: 'invalid@domain.com'}.to_json, request_headers
+      post "/v1/grids/#{grid.to_path}/users", {email: 'invalid@domain.com'}.to_json, request_headers
       expect(response.status).to eq(422)
     end
     it 'assigns user to grid' do
       grid = david.grids.first
-      post "/v1/grids/#{grid.id}/users", {email: emily.email}.to_json, request_headers
+      post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
       expect(grid.reload.users.size).to eq(2)
       expect(emily.reload.grids.include?(grid)).to be_truthy
     end
@@ -176,7 +176,7 @@ describe '/v1/grids' do
     it 'creates audit log entry' do
       grid = david.grids.first
       expect {
-        post "/v1/grids/#{grid.id}/users", {email: emily.email}.to_json, request_headers
+        post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
       }.to change{ AuditLog.count }.by(1)
       audit_log = AuditLog.last
       expect(audit_log.event_name).to eq('assign user')
@@ -186,44 +186,44 @@ describe '/v1/grids' do
 
     it 'returns array of grid users' do
       grid = david.grids.first
-      post "/v1/grids/#{grid.id}/users", {email: emily.email}.to_json, request_headers
+      post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
       expect(response.status).to eq(201)
       expect(json_response['users'].size).to eq(2)
     end
 
   end
 
-  describe 'DELETE /:id/users/:email' do
+  describe 'DELETE /:name/users/:email' do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first
-      delete "/v1/grids/#{grid.id}/users/#{emily.email}", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
       expect(response.status).to eq(404)
     end
 
     it 'validates that unassigned user belongs to grid' do
       grid = david.grids.first
       grid.users << thomas
-      delete "/v1/grids/#{grid.id}/users/#{emily.email}", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
       expect(response.status).to eq(422)
     end
 
     it 'validates that user cannot remove last user from grid' do
       grid = david.grids.first
 
-      delete "/v1/grids/#{grid.id}/users/#{david.email}", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}/users/#{david.email}", nil, request_headers
       expect(response.status).to eq(422)
     end
 
     it 'requires existing email' do
       grid = david.grids.first
-      delete "/v1/grids/#{grid.id}/users/invalid@domain.com", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}/users/invalid@domain.com", nil, request_headers
       expect(response.status).to eq(422)
     end
 
     it 'unassigns user from grid' do
       grid = david.grids.first
       grid.users << emily
-      delete "/v1/grids/#{grid.id}/users/#{emily.email}", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
       expect(grid.reload.users.size).to eq(1)
       expect(emily.reload.grids.include?(grid)).to be_falsey
     end
@@ -232,7 +232,7 @@ describe '/v1/grids' do
       grid = david.grids.first
       grid.users << emily
       expect {
-        delete "/v1/grids/#{grid.id}/users/#{emily.email}", nil, request_headers
+        delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
       }.to change{ AuditLog.count }.by(1)
       audit_log = AuditLog.last
       expect(audit_log.event_name).to eq('unassign user')
@@ -243,7 +243,7 @@ describe '/v1/grids' do
     it 'returns array of grid users' do
       grid = david.grids.first
       grid.users << emily
-      delete "/v1/grids/#{grid.id}/users/#{emily.email}", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['users'].size).to eq(1)
     end
@@ -251,36 +251,41 @@ describe '/v1/grids' do
   end
 
 
-  describe 'PUT /:id' do
+  describe 'PUT /:name' do
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       grid = david.grids.first
-      put "/v1/grids/#{grid.id}", {name: 'new name'}.to_json, request_headers
+      put "/v1/grids/#{grid.to_path}", {name: 'new name'}.to_json, request_headers
       expect(response.status).to eq(403)
     end
 
     it 'requires valid grid' do
-      grid = double('random grid', id: '123456')
-      put "/v1/grids/#{grid.id}", {name: 'ne'}.to_json, request_headers
+      put "/v1/grids/foobar", {name: 'ne'}.to_json, request_headers
       expect(response.status).to eq(404)
     end
 
     it 'requires valid name' do
       grid = david.grids.first
-      put "/v1/grids/#{grid.id}", {name: 'ne'}.to_json, request_headers
+      put "/v1/grids/#{grid.to_path}", {name: 'ne'}.to_json, request_headers
       expect(response.status).to eq(422)
     end
 
     it 'updates grid with given name' do
       grid = david.grids.first
-      put "/v1/grids/#{grid.id}", {name: 'new name'}.to_json, request_headers
+      put "/v1/grids/#{grid.to_path}", {name: 'new-name'}.to_json, request_headers
       grid.reload
-      expect(grid.name).to eq('new name')
+      expect(grid.name).to eq('new-name')
+    end
+
+    it 'returns error on invalid name' do
+      grid = david.grids.first
+      put "/v1/grids/#{grid.to_path}", {name: 'new name'}.to_json, request_headers
+      expect(response.status).to eq(422)
     end
 
     it 'returns grid' do
       grid = david.grids.first
-      put "/v1/grids/#{grid.id}", {name: 'new name'}.to_json, request_headers
+      put "/v1/grids/#{grid.to_path}", {name: 'new-name'}.to_json, request_headers
 
       expect(response.status).to eq(200)
       expect(json_response['id']).to eq(grid.id.to_s)
@@ -289,7 +294,7 @@ describe '/v1/grids' do
     it 'creates audit log entry' do
       grid = david.grids.first
       expect {
-        put "/v1/grids/#{grid.id}", {name: 'new name'}.to_json, request_headers
+        put "/v1/grids/#{grid.to_path}", {name: 'new-name'}.to_json, request_headers
       }.to change{ AuditLog.count }.by(1)
       audit_log = AuditLog.last
       expect(audit_log.event_name).to eq('update')
@@ -298,24 +303,23 @@ describe '/v1/grids' do
     end
   end
 
-  describe 'DELETE /:id' do
+  describe 'DELETE /:name' do
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       grid = david.grids.first
-      delete "/v1/grids/#{grid.id}", nil, request_headers
+      delete "/v1/grids/#{grid.to_path}", nil, request_headers
       expect(response.status).to eq(403)
     end
 
     it 'requires valid grid' do
-      grid = double('random grid', id: '123456')
-      delete "/v1/grids/#{grid.id}", nil, request_headers
+      delete "/v1/grids/foobar", nil, request_headers
       expect(response.status).to eq(404)
     end
 
     it 'destroys given grid' do
       grid = david.grids.first
       expect {
-        delete "/v1/grids/#{grid.id}", nil, request_headers
+        delete "/v1/grids/#{grid.to_path}", nil, request_headers
       }.to change{Grid.count}.by(-1)
       expect(response.status).to eq(200)
 
@@ -325,7 +329,7 @@ describe '/v1/grids' do
     it 'creates audit log entry' do
       grid = david.grids.first
       expect {
-        delete "/v1/grids/#{grid.id}", nil, request_headers
+        delete "/v1/grids/#{grid.to_path}", nil, request_headers
       }.to change{ AuditLog.count }.by(1)
       audit_log = AuditLog.last
       expect(audit_log.event_name).to eq('delete')
@@ -337,7 +341,7 @@ describe '/v1/grids' do
         grid = david.grids.first
         db_service
         expect {
-          delete "/v1/grids/#{grid.id}", nil, request_headers
+          delete "/v1/grids/#{grid.to_path}", nil, request_headers
         }.to change{ Grid.count }.by(0)
         expect(response.status).to eq(422)
       end

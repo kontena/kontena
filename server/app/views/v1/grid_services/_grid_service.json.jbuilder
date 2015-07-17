@@ -1,4 +1,4 @@
-json.id grid_service.name
+json.id "services/#{grid_service.to_path}"
 json.grid_id grid_service.grid_id.to_s
 json.user grid_service.user
 json.created_at grid_service.created_at
