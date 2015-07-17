@@ -10,7 +10,7 @@ module Kontena::Cli::Grids
       token = require_token
       preferred_node = opts.node
 
-      registry = client(token).get("services/registry") rescue nil
+      registry = client(token).get("services/#{current_grid}/registry") rescue nil
       raise ArgumentError.new('Registry already exists') if registry
 
       nodes = client(token).get("grids/#{current_grid}/nodes")
@@ -65,9 +65,9 @@ module Kontena::Cli::Grids
         affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)
-      result = client(token).post("services/registry/deploy", {})
+      result = client(token).post("services/#{current_grid}/registry/deploy", {})
       print 'deploying registry service '
-      until client(token).get("services/registry")['state'] != 'deploying' do
+      until client(token).get("services/#{current_grid}/registry")['state'] != 'deploying' do
         print '.'
         sleep 1
       end
@@ -81,10 +81,10 @@ module Kontena::Cli::Grids
       require_api_url
       token = require_token
 
-      registry = client(token).get("services/registry") rescue nil
+      registry = client(token).get("services/#{current_grid}/registry") rescue nil
       raise ArgumentError.new("Docker Registry service does not exist") if registry.nil?
 
-      client(token).delete("services/registry")
+      client(token).delete("services/#{current_grid}/registry")
     end
   end
 end

@@ -12,17 +12,17 @@ module Kontena
         end
 
         def update_service(token, service_id, data)
-          client(token).put("services/#{service_id}", data)
+          client(token).put("services/#{current_grid}/#{service_id}", data)
         end
 
         def get_service(token, service_id)
-          client(token).get("services/#{service_id}")
+          client(token).get("services/#{current_grid}/#{service_id}")
         end
 
         def deploy_service(token, service_id, data)
-          client(token).post("services/#{service_id}/deploy", data)
+          client(token).post("services/#{current_grid}/#{service_id}/deploy", data)
           print 'deploying '
-          until client(token).get("services/#{service_id}")['state'] != 'deploying' do
+          until client(token).get("services/#{current_grid}/#{service_id}")['state'] != 'deploying' do
             print '.'
             sleep 1
           end
@@ -69,8 +69,6 @@ module Kontena
             memory.to_i
           end
         end
-
-
       end
     end
   end

@@ -41,14 +41,12 @@ module Kontena::Cli::Grids
 
       grid = find_grid_by_name(name)
       print_grid(grid)
-
     end
 
     def current
       require_api_url
       if current_grid.nil?
         puts 'No grid selected. To select grid, please run: kontena grid use <grid name>'
-
       else
         grid = client(require_token).get("grids/#{current_grid}")
         print_grid(grid)

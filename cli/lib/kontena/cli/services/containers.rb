@@ -11,7 +11,7 @@ module Kontena::Cli::Services
       require_api_url
       token = require_token
 
-      result = client(token).get("services/#{service_id}/containers")
+      result = client(token).get("services/#{current_grid}/#{service_id}/containers")
       result['containers'].each do |container|
         puts "#{container['id']}:"
         puts "  node: #{container['node']['name']}"
