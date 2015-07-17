@@ -17,39 +17,40 @@ module Kontena::Cli::Services
 
     before(:each) do
       allow(subject).to receive(:client).with(token).and_return(client)
+      allow(subject).to receive(:current_grid).and_return('test-grid')
     end
 
     describe '#create_service' do
-      it 'creates POST grids/:id/services request to Kontena Server' do
-        expect(client).to receive(:post).with('grids/1/services', {'name' => 'test-service'})
-        subject.create_service(token, '1', {'name' => 'test-service'})
+      it 'creates POST grids/:grid/:name/services request to Kontena Server' do
+        expect(client).to receive(:post).with('grids/test-grid/services', {'name' => 'test-service'})
+        subject.create_service(token, 'test-grid', {'name' => 'test-service'})
       end
     end
 
     describe '#update_service' do
       it 'creates PUT services/:id request to Kontena Server' do
-        expect(client).to receive(:put).with('services/1', {'name' => 'test-service'})
+        expect(client).to receive(:put).with('services/test-grid/1', {'name' => 'test-service'})
         subject.update_service(token, '1', {'name' => 'test-service'})
       end
     end
 
     describe '#get_service' do
       it 'creates GET services/:id request to Kontena Server' do
-        expect(client).to receive(:get).with('services/test-service')
+        expect(client).to receive(:get).with('services/test-grid/test-service')
         subject.get_service(token, 'test-service')
       end
     end
 
     describe '#deploy_service' do
       it 'creates POST services/:id/deploy request to Kontena Server' do
-        allow(client).to receive(:get).with('services/1').and_return({'state' => 'running'})
-        expect(client).to receive(:post).with('services/1/deploy', {'strategy' => 'ha'})
+        allow(client).to receive(:get).with('services/test-grid/1').and_return({'state' => 'running'})
+        expect(client).to receive(:post).with('services/test-grid/1/deploy', {'strategy' => 'ha'})
         subject.deploy_service(token, '1', {'strategy' => 'ha'})
       end
 
       it 'polls Kontena Server until service is running' do
-        allow(client).to receive(:post).with('services/1/deploy', anything)
-        expect(client).to receive(:get).with('services/1').twice.and_return({'state' => 'deploying'}, {'state' => 'running'})
+        allow(client).to receive(:post).with('services/test-grid/1/deploy', anything)
+        expect(client).to receive(:get).with('services/test-grid/1').twice.and_return({'state' => 'deploying'}, {'state' => 'running'})
 
         subject.deploy_service(token, '1', {'strategy' => 'ha'})
       end
