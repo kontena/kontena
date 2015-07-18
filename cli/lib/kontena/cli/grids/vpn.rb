@@ -64,7 +64,7 @@ module Kontena::Cli::Grids
     def config
       require_api_url
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
-      stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn-1/exec", payload)
+      stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
       puts stdout
     end
   end

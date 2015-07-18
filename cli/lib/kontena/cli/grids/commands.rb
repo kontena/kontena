@@ -5,7 +5,7 @@ require_relative 'users'
 require_relative 'audit_log'
 require_relative 'vpn'
 require_relative 'registry'
-
+require_relative 'external_registries'
 
 command 'grid list' do |c|
   c.syntax = 'kontena grid list'
@@ -141,5 +141,29 @@ command 'registry delete' do |c|
   c.description = 'Delete Docker Registry service'
   c.action do |args, options|
     Kontena::Cli::Grids::Registry.new.delete
+  end
+end
+
+command 'external-registry add' do |c|
+  c.syntax = 'kontena external-registry add'
+  c.description = 'Add external private registry credentials'
+  c.action do |args, options|
+    Kontena::Cli::Grids::ExternalRegistries.new.add
+  end
+end
+
+command 'external-registry list' do |c|
+  c.syntax = 'kontena external-registry list'
+  c.description = 'List external private registries'
+  c.action do |args, options|
+    Kontena::Cli::Grids::ExternalRegistries.new.list
+  end
+end
+
+command 'external-registry delete' do |c|
+  c.syntax = 'kontena external-registry delete'
+  c.description = 'Delete external private registry'
+  c.action do |args, options|
+    Kontena::Cli::Grids::ExternalRegistries.new.destroy(args[0])
   end
 end

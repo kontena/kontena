@@ -11,16 +11,16 @@ module Kontena::Cli::Nodes
       token = require_token
 
       grids = client(token).get("grids/#{current_grid}/nodes")
-      puts "%-30s %-20s %-15s %-30s %-10s" % ['Name', 'OS', 'Driver', 'Labels', 'Status']
+      puts "%-30s %-40s %-15s %-30s %-10s" % ['Name', 'OS', 'Driver', 'Labels', 'Status']
       grids['nodes'].each do |node|
         if node['connected']
           status = 'online'
         else
           status = 'offline'
         end
-        puts "%-30.30s %-20.20s %-15s %-30.30s %-10s" % [
+        puts "%-30.30s %-40.40s %-15s %-30.30s %-10s" % [
           node['name'],
-          node['os'],
+          "#{node['os']} (#{node['kernel_version']})",
           node['driver'],
           (node['labels'] || ['-']).join(","),
           status
@@ -39,6 +39,8 @@ module Kontena::Cli::Nodes
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"
       puts "  last connect: #{node['updated_at']}"
       puts "  public ip: #{node['public_ip']}"
+      puts "  private ip: #{node['private_ip']}"
+      puts "  overlay network: 10.81.#{node['node_number']}.0/24"
       puts "  os: #{node['os']}"
       puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"

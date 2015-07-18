@@ -13,10 +13,10 @@ module Kontena::Cli::Services
       last_id = nil
       loop do
         query_params = last_id.nil? ? '' : "from=#{last_id}"
-        result = client(token).get("services/#{service_id}/container_logs?#{query_params}")
+        result = client(token).get("services/#{current_grid}/#{service_id}/container_logs?#{query_params}")
         result['logs'].each do |log|
-          color = color_for_container(log['container_id'])
-          puts "#{log['container_id'][0..12].colorize(color)} | #{log['data']}"
+          color = color_for_container(log['name'])
+          puts "#{log['name'][0..12].colorize(color)} | #{log['data']}"
           last_id = log['id']
         end
         break unless options.follow

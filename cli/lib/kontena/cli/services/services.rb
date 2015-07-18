@@ -52,10 +52,10 @@ module Kontena::Cli::Services
       puts "  containers:"
       result = client(token).get("services/#{current_grid}/#{service_id}/containers")
       result['containers'].each do |container|
-        puts "    #{container['id']}:"
+        puts "    #{container['name']}:"
         puts "      rev: #{container['deploy_rev']}"
         puts "      node: #{container['node']['name']}"
-        puts "      dns: #{container['id']}.kontena.local"
+        puts "      dns: #{container['name']}.kontena.local"
         puts "      ip: #{container['network_settings']['ip_address']}"
         puts "      public ip: #{container['node']['public_ip']}"
         if container['status'] == 'unknown'

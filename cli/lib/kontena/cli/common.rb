@@ -50,7 +50,7 @@ module Kontena
       def api_url
         url = settings['server']['url']
         unless url
-          raise ArgumentError.new("Please init service first using: kontena connect")
+          raise ArgumentError.new("It seem's that you are not logged into Kontena master, please login with: kontena login")
         end
         url
       end
