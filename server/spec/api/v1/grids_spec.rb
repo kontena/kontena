@@ -110,7 +110,7 @@ describe '/v1/grids' do
       grid = david.grids.first
       get "/v1/grids/#{grid.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['id']).to eq(grid.id.to_s)
+      expect(json_response['id']).to eq(grid.to_path)
     end
 
     describe '/services' do
@@ -288,7 +288,7 @@ describe '/v1/grids' do
       put "/v1/grids/#{grid.to_path}", {name: 'new-name'}.to_json, request_headers
 
       expect(response.status).to eq(200)
-      expect(json_response['id']).to eq(grid.id.to_s)
+      expect(json_response['id']).to eq(grid.reload.to_path)
     end
 
     it 'creates audit log entry' do

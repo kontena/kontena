@@ -13,12 +13,14 @@ module V1
       validate_access_token
       require_current_user
 
-      def load_grid_container(grid_name, container_name)
+      def load_grid_container(grid_name, service_name, container_name)
         grid = Grid.find_by(name: grid_name)
+        halt_request(404, {error: 'Not found'}) if !grid
+        service = grid.grid_services.find_by(name: service_name)
+        halt_request(404, {error: 'Not found'}) if !service
         container = grid.containers.find_by(name: container_name)
-        if !container
-          halt_request(404, {error: 'Not found'})
-        end
+        halt_request(404, {error: 'Not found'}) if !container
+
         unless current_user.grid_ids.include?(@grid_service.grid_id)
           halt_request(403, {error: 'Access denied'})
         end
@@ -27,14 +29,8 @@ module V1
       end
 
       # /v1/containers/:grid_name/:name
-      r.on ':grid_name/:name' do |grid_name, name|
-        container = load_grid_container(grid_name, name)
-        if !container
-          halt_request(404, {error: 'Not found'}) and return
-        end
-        unless current_user.grid_ids.include?(container.grid_id)
-          halt_request(403, {error: 'Access denied'}) and return
-        end
+      r.on ':grid_name/:service_name/:name' do |grid_name, service_name, name|
+        container = load_grid_container(grid_name, service_name, name)
 
         # GET /v1/containers/:grid_name/:name
         r.get do

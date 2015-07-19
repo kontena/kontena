@@ -47,7 +47,7 @@ describe '/v1/services' do
     it 'returns service json' do
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['id']).to eq("services/#{redis_service.to_path}")
+      expect(json_response['id']).to eq(redis_service.to_path)
       expect(json_response['image']).to eq(redis_service.image_name)
     end
 
@@ -64,7 +64,7 @@ describe '/v1/services' do
       get "/v1/services/#{redis_service.to_path}/containers", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['containers'].size).to eq(1)
-      expect(json_response['containers'].first['id']).to eq("containers/#{container.to_path}")
+      expect(json_response['containers'].first['id']).to eq(container.to_path)
     end
   end
 

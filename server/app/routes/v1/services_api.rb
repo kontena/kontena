@@ -16,10 +16,10 @@ module V1
 
       def load_grid_service(grid_name, service_name)
         grid = Grid.find_by(name: grid_name)
+        halt_request(404, {error: 'Not found'}) if !grid
         grid_service = grid.grid_services.find_by(name: service_name)
-        if !grid_service
-          halt_request(404, {error: 'Not found'})
-        end
+        halt_request(404, {error: 'Not found'}) if !grid_service
+
         unless current_user.grid_ids.include?(grid_service.grid_id)
           halt_request(403, {error: 'Access denied'})
         end
