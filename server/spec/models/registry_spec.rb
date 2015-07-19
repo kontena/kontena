@@ -3,9 +3,9 @@ require_relative '../spec_helper'
 describe Registry do
   it { should be_timestamped_document }
   it { should have_fields(:name, :url, :username, :password, :email)}
-  it { should belong_to(:user) }
-  it { should have_index_for(user_id: 1) }
-  it { should validate_uniqueness_of(:name).scoped_to(:user_id) }
+  it { should belong_to(:grid) }
+  it { should have_index_for(grid_id: 1) }
+  it { should validate_uniqueness_of(:name).scoped_to(:grid_id) }
 
   describe '#to_creds' do
     it 'returns correct json' do

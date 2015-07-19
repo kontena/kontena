@@ -7,7 +7,6 @@ class User
   has_and_belongs_to_many :grids
   has_many :access_tokens, dependent: :delete
   has_many :audit_logs
-  has_many :registries, dependent: :delete
 
   field :email, type: String
   field :external_id, type: String

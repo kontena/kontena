@@ -46,7 +46,7 @@ module GridServices
     ##
     # @return [Hash,NilClass]
     def creds_for_registry
-      registry = self.current_user.registries.find_by(name: self.registry_name)
+      registry = self.grid_service.grid.registries.find_by(name: self.registry_name)
       if registry
         registry.to_creds
       end

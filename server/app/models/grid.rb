@@ -13,6 +13,7 @@ class Grid
   has_many :container_logs
   has_many :container_stats
   has_many :audit_logs
+  has_many :registries, dependent: :delete
   has_and_belongs_to_many :users
 
   index({ name: 1 }, { unique: true })

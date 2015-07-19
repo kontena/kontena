@@ -50,6 +50,12 @@ module V1
         r.route 'grid_users'
       end
 
+      # /v1/grids/:name/external_registries
+      r.on ':name/external_registries' do |name|
+        load_grid(name)
+        r.route 'external_registries'
+      end
+
       r.post do
         r.is do
           data = parse_json_body

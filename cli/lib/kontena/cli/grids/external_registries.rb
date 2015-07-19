@@ -23,7 +23,7 @@ module Kontena::Cli::Grids
     def destroy(name)
       require_api_url
       token = require_token
-      client(token).delete("grids/#{current_grid}/external_registries/#{name}")
+      client(token).delete("external_registries/#{current_grid}/#{name}")
     end
 
     def list
@@ -32,7 +32,7 @@ module Kontena::Cli::Grids
       token = require_token
       result = client(token).get("grids/#{current_grid}/external_registries")
       puts "%-30s %-20s %-30s" % ['Name', 'Username', 'Email']
-      result['registries'].each { |r|
+      result['external_registries'].each { |r|
         puts "%-30.30s %-20.20s %-30.30s" % [r['name'], r['username'], r['email']]
       }
     end
