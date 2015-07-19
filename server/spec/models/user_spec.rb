@@ -7,7 +7,6 @@ describe User do
   it { should have_and_belong_to_many(:grids) }
   it { should have_many(:access_tokens) }
   it { should have_many(:audit_logs) }
-  it { should have_many(:registries) }
 
   it { should validate_presence_of(:email) }
   it { should validate_uniqueness_of(:email) }
