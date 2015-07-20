@@ -10,19 +10,21 @@ Install it yourself as:
 
     $ gem install kontena-cli
 
+To enable tab-completion for bash, add this to your `.bashrc` scripts:
+
+```
+which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
+```
+
 ## Usage
 
-First you need to connect to a Kontena server:
-
-    $ kontena connect
-
-To register a new user:
+First you need to register as a user:
 
     $ kontena register
 
-Then you can login with:
+Then you can login to master server:
 
-    $ kontena login
+    $ kontena login https://<master>:8080
 
 To get list of all commands:
 
