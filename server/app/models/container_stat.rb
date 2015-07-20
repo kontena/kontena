@@ -16,5 +16,5 @@ class ContainerStat
   index({ grid_id: 1 })
   index({ grid_service_id: 1 })
   index({ container_id: 1 })
-  index({ created_at: 1 })
+  index({ created_at: -1 }, { expire_after_seconds: 1.month })
 end
