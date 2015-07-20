@@ -22,8 +22,9 @@ end
 command 'whoami' do |c|
   c.syntax = 'kontena whoami'
   c.description = 'Display your Kontena email address and server url'
+  c.option '--bash-completion-path'
   c.action do |args, options|
-    Kontena::Cli::Server::User.new.whoami
+    Kontena::Cli::Server::User.new.whoami(options)
   end
 end
 
@@ -64,13 +65,5 @@ command 'reset password' do |c|
   c.description = 'Reset Kontena password'
   c.action do |args, options|
     Kontena::Cli::Server::User.new.reset_password(args[0])
-  end
-end
-
-command 'registry add' do |c|
-  c.syntax = 'kontena registry add'
-  c.description = 'Add registry information'
-  c.action do |args, options|
-    Kontena::Cli::Server::User.new.add_registry
   end
 end

@@ -8,11 +8,15 @@ class Registry
   field :password, type: String
   field :email, type: String
 
-  belongs_to :user
+  belongs_to :grid
 
-  index({ user_id: 1 })
+  index({ grid_id: 1 })
 
-  validates_uniqueness_of :name, scope: [:user_id]
+  validates_uniqueness_of :name, scope: [:grid_id]
+
+  def to_path
+    "#{self.grid.try(:name)}/#{self.name}"
+  end
 
   ##
   # @return [Hash]

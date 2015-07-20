@@ -1,21 +1,21 @@
 
+# Route: /v1/grids/:id/external_registries
+V1::GridsApi.route('external_registries') do |r|
 
-V1::UserApi.route('registries') do |r|
-
-  # GET /v1/user/:id/registries
+  # GET
   r.get do
     r.is do
-      @registries = current_user.registries
-      render('registries/index')
+      @registries = @grid.registries
+      render('external_registries/index')
     end
   end
 
-  # POST /v1/user/:id/registries
+  # POST
   r.post do
     r.is do
       data = parse_json_body
       outcome = Registries::Create.run(
-          user: current_user,
+          grid: @grid,
           url: data['url'],
           username: data['username'],
           password: data['password'],
@@ -24,7 +24,7 @@ V1::UserApi.route('registries') do |r|
       if outcome.success?
         @registry = outcome.result
         response.status = 201
-        render('registries/show')
+        render('external_registries/show')
       else
         response.status = 422
         outcome.errors.message

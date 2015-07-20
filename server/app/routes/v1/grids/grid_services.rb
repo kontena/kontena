@@ -2,7 +2,7 @@ require_relative '../../../mutations/grid_services/create'
 
 V1::GridsApi.route('grid_services') do |r|
 
-  # POST /v1/grids/:id/services
+  # POST /v1/grids/:name/services
   r.post do
     data = parse_json_body
     data[:current_user] = current_user
@@ -19,7 +19,7 @@ V1::GridsApi.route('grid_services') do |r|
     end
   end
 
-  # GET /v1/grids/:id/services
+  # GET /v1/grids/:name/services
   r.get do
     r.is do
       @grid_services = @grid.grid_services.visible

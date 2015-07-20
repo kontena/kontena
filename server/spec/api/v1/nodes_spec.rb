@@ -32,7 +32,7 @@ describe '/v1/grids' do
       post '/v1/nodes', {id: 'abc', private_ip: '192.168.100.2'}.to_json, request_headers
       expect(json_response['id']).to eq('abc')
       expect(json_response['node_number']).to eq(1)
-      expect(json_response['grid']['id']).to eq(grid.id.to_s)
+      expect(json_response['grid']['id']).to eq(grid.to_path)
     end
 
     it 'returns error if id is null' do

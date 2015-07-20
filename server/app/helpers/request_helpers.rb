@@ -12,11 +12,8 @@ module RequestHelpers
         response.status = 500
         log_message = "\n#{e.class} (#{e.message}):\n"
         log_message << "  " << e.backtrace.join("\n  ") << "\n\n" if e.backtrace
-        request.logger.error log_message
+        puts log_message
         json = { message: 'Internal server error' }
-        if test_env?
-          puts log_message
-        end
 
         json
       end

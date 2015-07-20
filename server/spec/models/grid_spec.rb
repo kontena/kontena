@@ -11,6 +11,7 @@ describe Grid do
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
+  it { should have_many(:registries) }
 
   it { should have_index_for(token: 1).with_options(unique: true) }
 

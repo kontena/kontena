@@ -46,6 +46,10 @@ class Server < Roda
       r.on('containers') do
         r.run V1::ContainersApi
       end
+
+      r.on('external_registries') do
+        r.run V1::ExternalRegistriesApi
+      end
     end
   end
 end

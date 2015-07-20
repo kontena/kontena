@@ -4,7 +4,7 @@ module Registries
   class Create < Mutations::Command
 
     required do
-      model :user
+      model :grid
       string :url, match: /^https?:\/\/[\S]+$/
       string :username
       string :password
@@ -19,7 +19,7 @@ module Registries
         name = uri.host
       end
 
-      self.user.registries.create(
+      self.grid.registries.create(
           name: name,
           url: self.url,
           username: self.username,

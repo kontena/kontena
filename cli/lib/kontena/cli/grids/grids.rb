@@ -12,14 +12,14 @@ module Kontena::Cli::Grids
         print color("You don't have any grids yet. Create first one with 'kontena grids create' command", :yellow)
       end
 
-      puts '%-30.30s %-10s %-10s %-10s' % ['Name', 'Nodes', 'Containers', 'Users']
+      puts '%-30.30s %-8s %-12s %-10s' % ['Name', 'Nodes', 'Services', 'Users']
       grids['grids'].each do |grid|
         if grid['id'] == current_grid
           name = "#{grid['name']} *"
         else
           name = grid['name']
         end
-        puts '%-30.30s %-10s %-10s %-10s' % [name, grid['node_count'], grid['container_count'], grid['user_count']]
+        puts '%-30.30s %-8s %-12s %-10s' % [name, grid['node_count'], grid['service_count'], grid['user_count']]
       end
     end
 
@@ -41,14 +41,12 @@ module Kontena::Cli::Grids
 
       grid = find_grid_by_name(name)
       print_grid(grid)
-
     end
 
     def current
       require_api_url
       if current_grid.nil?
         puts 'No grid selected. To select grid, please run: kontena grid use <grid name>'
-
       else
         grid = client(require_token).get("grids/#{current_grid}")
         print_grid(grid)
@@ -95,6 +93,7 @@ module Kontena::Cli::Grids
       puts "  token: #{grid['token']}"
       puts "  users: #{grid['user_count']}"
       puts "  nodes: #{grid['node_count']}"
+      puts "  services: #{grid['service_count']}"
       puts "  containers: #{grid['container_count']}"
     end
 

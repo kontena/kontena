@@ -1,4 +1,4 @@
-json.id registry.id.to_s
+json.id registry.to_path
 json.name registry.name
 json.url registry.url
 json.username registry.username

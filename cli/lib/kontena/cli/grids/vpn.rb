@@ -10,7 +10,7 @@ module Kontena::Cli::Grids
       token = require_token
       preferred_node = opts.node
 
-      vpn = client(token).get("services/vpn") rescue nil
+      vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
       raise ArgumentError.new('Vpn already exists') if vpn
 
       nodes = client(token).get("grids/#{current_grid}/nodes")
@@ -40,9 +40,9 @@ module Kontena::Cli::Grids
         affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)
-      result = client(token).post("services/vpn/deploy", {})
+      result = client(token).post("services/#{current_grid}/vpn/deploy", {})
       print 'deploying '
-      until client(token).get("services/vpn")['state'] != 'deploying' do
+      until client(token).get("services/#{current_grid}/vpn")['state'] != 'deploying' do
         print '.'
         sleep 1
       end
@@ -55,16 +55,16 @@ module Kontena::Cli::Grids
       require_api_url
       token = require_token
 
-      vpn = client(token).get("services/vpn") rescue nil
+      vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
       raise ArgumentError.new("VPN service does not exist") if vpn.nil?
 
-      client(token).delete("services/vpn")
+      client(token).delete("services/#{current_grid}/vpn")
     end
 
     def config
       require_api_url
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
-      stdout, stderr = client(require_token).post("containers/vpn-1/exec", payload)
+      stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
       puts stdout
     end
   end

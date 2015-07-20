@@ -13,19 +13,27 @@ module V1
       validate_access_token
       require_current_user
 
-      # /v1/containers/:id
-      r.on ':id' do |id|
-        container = Container.find_by(name: id)
-        if !container
-          halt_request(404, {error: 'Not found'}) and return
-        end
-        unless current_user.grid_ids.include?(container.grid_id)
-          halt_request(403, {error: 'Access denied'}) and return
+      def load_grid_container(grid_name, service_name, container_name)
+        grid = Grid.find_by(name: grid_name)
+        halt_request(404, {error: 'Not found'}) if !grid
+        service = grid.grid_services.find_by(name: service_name)
+        halt_request(404, {error: 'Not found'}) if !service
+        container = grid.containers.find_by(name: container_name)
+        halt_request(404, {error: 'Not found'}) if !container
+
+        unless current_user.grid_ids.include?(@grid_service.grid_id)
+          halt_request(403, {error: 'Access denied'})
         end
 
-        # GET /v1/containers/:id
+        container
+      end
+
+      # /v1/containers/:grid_name/:name
+      r.on ':grid_name/:service_name/:name' do |grid_name, service_name, name|
+        container = load_grid_container(grid_name, service_name, name)
+
+        # GET /v1/containers/:grid_name/:name
         r.get do
-
           r.is do
             @container = container
             render('containers/show')
@@ -42,7 +50,7 @@ module V1
           end
         end
 
-        # POST /v1/containers/:id
+        # POST /v1/containers/:grid_name/:name
         r.post do
           r.on 'exec' do
             json = parse_json_body
@@ -50,7 +58,7 @@ module V1
           end
         end
 
-        # DELETE /v1/containers/:id
+        # DELETE /v1/containers/:grid_name/:name
         r.delete do
           r.on('logs') do
             container.container_logs.delete_all

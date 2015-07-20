@@ -36,6 +36,10 @@ class HostNode
 
   scope :connected, -> { where(connected: true) }
 
+  def to_path
+    "#{self.grid.try(:name)}/#{self.name}"
+  end
+
   ##
   # @param [Hash] attrs
   def attributes_from_docker(attrs)

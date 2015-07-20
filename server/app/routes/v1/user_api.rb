@@ -9,8 +9,10 @@ module V1
 
     Dir[File.join(__dir__, '/user/*.rb')].each{|f| require f}
 
+    # Route: /v1/user
     route do |r|
 
+      # Route /v1/user/email_confirm
       r.on 'email_confirm' do
         r.post do
           data = parse_json_body
@@ -24,6 +26,7 @@ module V1
         end
       end
 
+      # Route /v1/user/password_reset
       r.on 'password_reset' do
         r.post do
           data = parse_json_body
@@ -51,11 +54,7 @@ module V1
       validate_access_token
       require_current_user
 
-      # /v1/user/registries
-      r.on 'registries' do
-        r.route 'registries'
-      end
-
+      # Route /v1/user
       r.get do
         r.is do
           @user = self.current_access_token.user

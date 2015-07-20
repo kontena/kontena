@@ -37,6 +37,14 @@ class Container
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
   scope :volumes, -> { where(deleted_at: nil, container_type: 'volume') }
 
+  def to_path
+    if self.grid
+      "#{self.grid.try(:name)}/#{self.name}"
+    else
+      self.name
+    end
+  end
+
   ##
   # @return [String]
   def status

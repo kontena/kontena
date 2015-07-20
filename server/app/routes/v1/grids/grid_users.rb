@@ -1,7 +1,7 @@
 require_relative '../../../mutations/grids/assign_user'
 V1::GridsApi.route('grid_users') do |r|
 
-  # POST /v1/grids/:id/users
+  # POST /v1/grids/:name/users
   r.post do
     data = parse_json_body
     user = User.find_by(email: data['email'])
@@ -17,7 +17,7 @@ V1::GridsApi.route('grid_users') do |r|
     end
   end
 
-  # DELETE /v1/grids/:id/users/:email
+  # DELETE /v1/grids/:name/users/:email
   r.delete do
     r.on :email do |email|
       user = User.find_by(email: email)

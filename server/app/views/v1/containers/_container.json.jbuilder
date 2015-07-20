@@ -1,4 +1,5 @@
-json.id container.name
+json.id container.to_path
+json.name container.name
 json.container_id container.container_id
 json.grid_id container.grid_id.to_s
 json.node do

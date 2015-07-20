@@ -39,6 +39,10 @@ class GridService
 
   scope :visible, -> { where(name: {'$nin' => ['vpn', 'registry']}) }
 
+  def to_path
+    "#{self.grid.try(:name)}/#{self.name}"
+  end
+
   def set_state(state)
     self.update_attribute(:state, state)
   end

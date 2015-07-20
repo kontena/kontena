@@ -1,6 +1,6 @@
 V1::ServicesApi.route('service_stats') do |r|
 
-  # GET /v1/services/:id/stats
+  # GET /v1/services/:grid_name/:service_name/stats
   r.get do
     r.is do
       containers = @grid_service.containers.asc(:name)

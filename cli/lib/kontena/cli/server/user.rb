@@ -45,9 +45,14 @@ module Kontena::Cli::Server
       save_settings
     end
 
-    def whoami
+    def whoami(options)
+      if options.bash_completion_path
+        puts File.realpath(File.join(__dir__, '../../scripts/init'))
+        exit 0
+      end
+
       require_api_url
-      puts "Server: #{settings['server']['url']}"
+      puts "Master: #{settings['server']['url']}"
       token = require_token
       response = client(token).get('user')
       puts "User: #{response['email']}"
@@ -103,18 +108,6 @@ module Kontena::Cli::Server
       params = {token: token, password: password}
       client.put('user/password_reset', params)
       puts 'Password is now changed. To login with the new password, please run: kontena login'
-    end
-
-    def add_registry
-      default_url = 'https://index.docker.io/v1/'
-      require_api_url
-      username = ask("Username: ")
-      password = password("Password: ")
-      email = ask("Email: ")
-      url = ask("URL [#{default_url}]: ")
-      url = default_url if url.strip == ''
-      data = { username: username, password: password, email: email, url: url }
-      client(token).post("user/registries", data)
     end
 
     private
