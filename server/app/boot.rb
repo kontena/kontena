@@ -8,7 +8,6 @@ ENV['RACK_ENV'] = 'development' unless ENV['RACK_ENV']
 
 require 'celluloid'
 require 'sucker_punch'
-require 'fist_of_fury'
 require 'roda'
 require 'mongoid'
 require 'json'

@@ -1,9 +1,6 @@
 
 class ContainerCleanupJob
   include SuckerPunch::Job
-  include FistOfFury::Recurrent
-
-  recurs { minutely }
 
   def perform
     Container.where(:updated_at.lt => 2.minutes.ago).each do |c|
