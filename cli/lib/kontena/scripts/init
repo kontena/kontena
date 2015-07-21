@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+_kontena_complete() {
+  COMPREPLY=()
+  DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+  local word="${COMP_WORDS[COMP_CWORD]}"
+  local completions="$(${DIR}/completer ${COMP_WORDS[*]})"
+  COMPREPLY=( $(compgen -W "$completions" -- "$word") )
+}
+
+complete -F _kontena_complete kontena
