@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0 (TBD)
+
+- Private Docker registry inside grid
+- Improved node join/discovery procedure
+- Improved grid availability; grid nodes can resist connection problems to master
+- Each grid now has own etcd cluster (only visible to internal network)
+- Refactor login/register flows in cli
+- Weave 1.0
+- Enable Weave encryption
+- cAdvisor 0.16
+- Docker 1.7 support
+- Cli bash autocompletion
+- Add possibility to target selected services in `kontena deploy`
+- Auto-expire container stats/logs in master
+
 ## 0.6.1 (2015-06-01)
 
 - Improve `kontena container exec`
