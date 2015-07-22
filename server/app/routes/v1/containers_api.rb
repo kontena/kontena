@@ -21,7 +21,7 @@ module V1
         container = grid.containers.find_by(name: container_name)
         halt_request(404, {error: 'Not found'}) if !container
 
-        unless current_user.grid_ids.include?(@grid_service.grid_id)
+        unless current_user.grid_ids.include?(service.grid_id)
           halt_request(403, {error: 'Access denied'})
         end
 
