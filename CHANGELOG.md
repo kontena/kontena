@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.0 (TBD)
+## 0.7.0 (2015-07-22)
 
 - Private Docker registry inside grid
 - Improved node join/discovery procedure
@@ -13,6 +13,8 @@
 - Docker 1.7 support
 - Cli bash autocompletion
 - Add possibility to target selected services in `kontena deploy`
+- Add prefix wildcard support to kontena.yml files
+- Hide internal kontena services from `kontena services list`
 - Auto-expire container stats/logs in master
 
 ## 0.6.1 (2015-06-01)
