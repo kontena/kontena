@@ -11,27 +11,14 @@
 
 The design and architecture of Kontena software is built to provide support for various application container technologies. At the moment, only [Docker](https://github.com/docker/docker) is supported but expect to see support for technologies like [CoreOS Rocket](https://github.com/coreos/rocket) and more in the future.
 
+**Learn more about Kontena:**
 - [Kontena Website](http://www.kontena.io)
 - [Kontena Blog](http://blog.kontena.io)
 - [Documentation](docs/)
 
-## Concepts
+## Getting Started
 
-Kontena works with the following concepts:
-
-- **User** is a devops person that interacts with Kontena. User can have access to multiple grids.
-- **Grid** is a cluster of host nodes.
-- **Node** is a single server that belongs to grid.
-- **Service** is a template used to deploy one or more containers.
-
-## Components
-
-Kontena consists of following components:
-
-- [Server](server/)
-- [Agent](agent)
-- [CLI](cli/)
-
+Please see our [Quick Start](https://github.com/kontena/kontena/blob/master/docs/getting-started/quick-start.md) guide.
 
 ## Contact Us
 
@@ -40,7 +27,6 @@ Found a bug, want to suggest a feature, or have a question? [File an issue](http
 Follow Kontena on Twitter: [@KontenaInc](https://twitter.com/KontenaInc).
 
 Gitter: [Join chat](https://gitter.im/kontena/kontena).
-
 
 ## License
 
