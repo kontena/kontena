@@ -28,11 +28,11 @@ module V1
         container
       end
 
-      # /v1/containers/:grid_name/:name
+      # /v1/containers/:grid_name/:service_name/:name
       r.on ':grid_name/:service_name/:name' do |grid_name, service_name, name|
         container = load_grid_container(grid_name, service_name, name)
 
-        # GET /v1/containers/:grid_name/:name
+        # GET /v1/containers/:grid_name/:service_name/:name
         r.get do
           r.is do
             @container = container
@@ -40,7 +40,7 @@ module V1
           end
 
           r.on 'top' do
-            client = RpcClient.new(container.host_node.host_id)
+            client = RpcClient.new(container.host_node.node_id)
             client.request('/containers/top', container.container_id, {})
           end
 
@@ -50,7 +50,7 @@ module V1
           end
         end
 
-        # POST /v1/containers/:grid_name/:name
+        # POST /v1/containers/:grid_name/:service_name/:name
         r.post do
           r.on 'exec' do
             json = parse_json_body
