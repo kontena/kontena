@@ -8,6 +8,8 @@ class SuckerPunchScheduler
   end
 
   def schedule!
+    CollectionIndexerJob.new.async.perform
+
     @timers << every(1.minute.to_i) do
       info 'starting ContainerCleanupJob'
       ContainerCleanupJob.new.async.perform
