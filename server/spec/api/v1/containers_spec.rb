@@ -59,7 +59,7 @@ describe '/v1/containers' do
   end
 
   describe 'GET /:name' do
-    it 'returns service containers' do
+    it 'returns service container' do
       get "/v1/containers/#{redis_container.to_path}", {}, request_headers
       expect(response.status).to eq(200)
 
