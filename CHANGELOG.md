@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 (2015-07-24)
+
+- Ubuntu packages docker dependency fix
+- Database indexing fix
+- Containers api fix
+
 ## 0.7.0 (2015-07-22)
 
 - Private Docker registry inside grid
