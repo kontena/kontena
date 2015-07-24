@@ -12,6 +12,6 @@ describe ContainerStat do
   it { should have_index_for(container_id: 1) }
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_service_id: 1) }
-  it { should have_index_for(created_at: -1) }
+  it { should have_index_for(created_at: 1) }
 
 end
