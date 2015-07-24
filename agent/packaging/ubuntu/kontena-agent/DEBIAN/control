@@ -2,6 +2,6 @@ Package: kontena-agent
 Version: VERSION
 Maintainer: jari@kontena.io
 Architecture: all
-Depends: lxc-docker (>= 1.6.0)
+Depends: lxc-docker (>= 1.6.0)  | docker-engine (>= 1.7.0)
 Recommends: kontena-weave, kontena-etcd
 Description: Kontena Agent
