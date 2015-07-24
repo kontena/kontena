@@ -55,7 +55,7 @@ module V1
             unless r['from'].nil?
               scope = scope.where(:id.gt => r['from'] )
             end
-            @logs = scope.order(:$natural => -1).limit(limit).to_a.reverse
+            @logs = scope.order(:_id => -1).limit(limit).to_a.reverse
             render('container_logs/index')
           end
         end
