@@ -38,8 +38,8 @@ class Container
   scope :volumes, -> { where(deleted_at: nil, container_type: 'volume') }
 
   def to_path
-    if self.grid
-      "#{self.grid.try(:name)}/#{self.name}"
+    if self.grid_service
+      "#{self.grid_service.to_path}/#{self.name}"
     else
       self.name
     end
