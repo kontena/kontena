@@ -8,7 +8,7 @@ module Grids
     required do
       model :user
       string :name, nils: true, min_length: 3, matches: /^(\w|-)+$/
-      integer :initial_size, default: 3, min: 1, max: 7
+      integer :initial_size, default: 1, min: 1, max: 7
     end
 
     def execute
