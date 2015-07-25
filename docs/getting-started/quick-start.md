@@ -66,4 +66,4 @@ $ kontena help
 
 ## Next Steps
 
-You are now ready to learn more about the [architecture](../architecture.md) and usage of Kontena. We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
+You are now ready to learn more about the [architecture](../core-concepts/architecture.md) and usage of Kontena. We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
