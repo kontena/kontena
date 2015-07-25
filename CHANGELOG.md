@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2 (2015-07-25)
+
+- Fix installation error when eth1 is not present on agent node
+- Change default initial grid size to 1
+
 ## 0.7.1 (2015-07-24)
 
 - Ubuntu packages docker dependency fix

@@ -1,5 +1,5 @@
 module Kontena
   module Cli
-    VERSION = "0.7.1"
+    VERSION = File.read(File.realpath(File.join(__dir__, '../../../VERSION'))).strip
   end
 end
