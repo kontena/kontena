@@ -5,6 +5,10 @@ set -e
 . /etc/default/kontena-weave
 
 PEER_IP=$(ifconfig ${WEAVE_PEER_INTERFACE} 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+if [ -z $PEER_IP ]; then
+  # fallback to eth0
+  PEER_IP=$(ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://')
+fi
 URI=$(echo ${KONTENA_URI} | sed s/ws/http/)
 GRID_URI="${URI}/v1/nodes"
 NODE_ID=$(cat /etc/docker/key.json | jq -r '.kid')
