@@ -44,7 +44,7 @@ module Kontena::Cli::Stacks
           data[:strategy] = service['deploy']['strategy'] if service['deploy']['strategy']
           data[:wait_for_port] = service['deploy']['wait_for_port'] if service['deploy']['wait_for_port']
         end
-        deploy_service(token, service['id'], data)
+        deploy_service(token, service['id'].split('/').last, data)
       end
     end
 
