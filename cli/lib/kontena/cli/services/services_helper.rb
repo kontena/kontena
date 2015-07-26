@@ -47,7 +47,7 @@ module Kontena
         # @param [String] service_id
         # @return [String]
         def parse_service_id(service_id)
-          if service_id.include?('/')
+          if service_id.to_s.include?('/')
             param = service_id
           else
             param = "#{current_grid}/#{service_id}"
