@@ -76,9 +76,7 @@ module Kontena::Cli::Services
             protocol: 'tcp'
         }]
         port_options = subject.parse_ports(['80:80'])
-
         expect(port_options).to eq(valid_result)
-
       end
     end
 
@@ -91,13 +89,21 @@ module Kontena::Cli::Services
 
       it 'returns hash of link options' do
         valid_result = [{
-                            name: 'db',
-                            alias: 'mysql',
-                        }]
+            name: 'db',
+            alias: 'mysql',
+        }]
         link_options = subject.parse_links(['db:mysql'])
-
         expect(link_options).to eq(valid_result)
+      end
+    end
 
+    describe '#parse_service_id' do
+      it 'adds current_grid if service_id is missing prefix' do
+        expect(subject.parse_service_id('mysql')).to eq('test-grid/mysql')
+      end
+
+      it 'does not add current_grid if service id includes prefix' do
+        expect(subject.parse_service_id('second-grid/mysql')).to eq('second-grid/mysql')
       end
     end
   end
