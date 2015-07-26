@@ -77,7 +77,7 @@ if words.size > 0
       end
     when 'node'
       completion.clear
-      sub_commands = %w(list show remove)
+      sub_commands = %w(list show remove create terminate)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.nodes
