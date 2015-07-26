@@ -17,7 +17,7 @@ module Kontena
         def run!(grid, name)
           droplet = client.droplets.all.find{|d| d.name == name}
           if droplet
-            print "Destroying DigitalOcean droplet #{name} ."
+            print "Destroying DigitalOcean droplet [#{name}] ."
             client.droplets.delete(id: droplet.id)
             until client.droplets.find(id: droplet.id).is_a?(String) do
               print '.'
@@ -25,11 +25,11 @@ module Kontena
             end
             puts ' done!'
           else
-            raise "Cannot find droplet with name #{name} in DigitalOcean"
+            raise "Cannot find droplet [#{name}] in DigitalOcean"
           end
           node = api_client.get("grids/#{grid['id']}/nodes")['nodes'].find{|n| n['name'] == name}
           if node
-            print "Removing node from Kontena master ..."
+            print "Removing node [#{name}] from grid [#{grid['name']}] ..."
             api_client.delete("grids/#{grid['id']}/nodes/#{name}")
             puts " done!"
           end

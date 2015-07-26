@@ -21,7 +21,7 @@ module Kontena
           raise ArgumentError.new('Ssh key does not exist in Digital Ocean') unless ssh_key
 
           droplet = DropletKit::Droplet.new(
-            name: generate_name,
+            name: opts[:name] || generate_name,
             region: opts[:region],
             image: 'docker',
             size: opts[:size],
@@ -30,13 +30,13 @@ module Kontena
             ssh_keys: [ssh_key.id]
           )
           created = client.droplets.create(droplet)
-          print "DigitalOcean droplet [#{droplet.name}] provision has started, please wait ."
+          print "DigitalOcean droplet [#{droplet.name}] provision is in progress, please wait ."
           until client.droplets.find(id: created.id).status == 'active' do
             print '.'
             sleep 2
           end
           puts ' done!'
-          print "Waiting for node [#{droplet.name}] to register itself to master ."
+          print "Waiting for node [#{droplet.name}] join to grid ."
           until droplet_exists_in_grid?(opts[:grid], droplet)
             print '.'
             sleep 2
@@ -55,7 +55,7 @@ write_files:
       #!/bin/sh
       export DEBIAN_FRONTEND=noninteractive
       wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-      echo deb http://dl.bintray.com/kontena/kontena-testing trusty main > /etc/apt/sources.list.d/kontena.list
+      echo deb http://dl.bintray.com/kontena/kontena / > /etc/apt/sources.list.d/kontena.list
       apt-get update
       echo kontena-agent kontena-agent/server_uri string %s | debconf-set-selections
       echo kontena-agent kontena-agent/grid_token string %s | debconf-set-selections
@@ -70,6 +70,10 @@ final_message: "The system is finally up, after $UPTIME seconds"
 USERDATA
 
           data % [master_uri, token]
+        end
+
+        def generate_name
+          "#{super}-#{rand(1..9)}"
         end
 
         def ssh_key(public_key)
