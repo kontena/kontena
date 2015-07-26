@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3 (2015-07-26)
+
+- Fix `kontena deploy` regression
+- Fix cli service id handling
+
 ## 0.7.2 (2015-07-25)
 
 - Fix installation error when eth1 is not present on agent node
