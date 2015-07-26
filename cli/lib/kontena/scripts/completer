@@ -35,7 +35,6 @@ class Helper
     services = client.get("grids/#{current_grid}/services")['services']
     results = []
     results.push services.map{|s| s['name']}
-    results.push services.map{|s| s['id']}
 
     results
   rescue

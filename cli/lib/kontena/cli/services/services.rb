@@ -15,7 +15,7 @@ module Kontena::Cli::Services
       puts "%-30.30s %-40.40s %-10s %-8s" % ['NAME', 'IMAGE', 'INSTANCES', 'STATEFUL']
       grids['services'].each do |service|
         state = service['stateful'] ? 'yes' : 'no'
-        puts "%-30.30s %-40.40s %-10.10s %-8s" % [service['id'], service['image'], service['container_count'], state]
+        puts "%-30.30s %-40.40s %-10.10s %-8s" % [service['name'], service['image'], service['container_count'], state]
       end
     end
 
@@ -50,7 +50,7 @@ module Kontena::Cli::Services
         end
       end
       puts "  containers:"
-      result = client(token).get("services/#{current_grid}/#{service_id}/containers")
+      result = client(token).get("services/#{parse_service_id(service_id)}/containers")
       result['containers'].each do |container|
         puts "    #{container['name']}:"
         puts "      rev: #{container['deploy_rev']}"
@@ -67,7 +67,7 @@ module Kontena::Cli::Services
     end
 
     def scale(service_id, count, options)
-      client(require_token).put("services/#{current_grid}/#{service_id}", {container_count: count})
+      client(require_token).put("services/#{parse_service_id(service_id)}", {container_count: count})
       self.deploy(service_id, options)
     end
 
@@ -85,20 +85,20 @@ module Kontena::Cli::Services
     def restart(service_id)
       require_api_url
       token = require_token
-      result = client(token).post("services/#{current_grid}/#{service_id}/restart", {})
+      result = client(token).post("services/#{parse_service_id(service_id)}/restart", {})
     end
 
     def stop(service_id)
       require_api_url
       token = require_token
-      result = client(token).post("services/#{current_grid}/#{service_id}/stop", {})
+      result = client(token).post("services/#{parse_service_id(service_id)}/stop", {})
     end
 
     def start(service_id)
       require_api_url
       token = require_token
 
-      result = client(token).post("services/#{current_grid}/#{service_id}/start", {})
+      result = client(token).post("services/#{parse_service_id(service_id)}/start", {})
     end
 
     def create(name, image, options)
@@ -126,7 +126,7 @@ module Kontena::Cli::Services
       require_api_url
       token = require_token
 
-      result = client(token).delete("services/#{current_grid}/#{service_id}")
+      result = client(token).delete("services/#{parse_service_id(service_id)}")
     end
 
     private
