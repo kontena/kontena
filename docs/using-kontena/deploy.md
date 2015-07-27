@@ -3,8 +3,8 @@ title: Deploy
 toc_order: 6
 ---
 
-# Deploy 
-After you have split your application into services, the final step to get them up and running is to deploy them to host nodes. 
+# Deploy
+After you have split your application into services, the final step to get them up and running is to deploy them to host nodes.
 
 Kontena has built-in `kontena deploy` command that takes care of everything for you: scheduling services across cluster, pulling required images, linking services and more.
 
@@ -14,27 +14,28 @@ The typical workflow for starting a new application is basically a three-step pr
 2.	Describe the services in `kontena.yml`
 3.	Finally, run `kontena deploy` command and Kontena will start and run your entire application
 
-Kontena applications can be described in YAML file ([kontena.yml]((../references/kontena-yml.md))). Kontena.yml extends docker-compose.yml format by introducing some new attributes only supported in Kontena, for example scale of a service and deploy specific attributes. 
+Kontena applications can be described in YAML file ([kontena.yml]((../references/kontena-yml.md))). Kontena.yml extends docker-compose.yml format by introducing some new attributes only supported in Kontena, for example scale of a service and deploy specific attributes.
 
 An example `kontena.yml` looks like this
 
 ```
 wordpress:  
   image: wordpress:4.1
+  instances: 2
   stateful: true
   ports:
     - 8080:80
   links:
     - mysql:wordpress-mysql
   env_file: wordpress.env
+  deploy:
+    strategy: ha
+    wait_for_port: 80
 mysql:  
   image: mariadb:5.5
   stateful: true
   environment:
    - MYSQL_ROOT_PASSWORD=secret
-  deploy:
-    strategy: ha
-    wait_for_port: true
 ```
 
 See the complete [Kontena.yml reference](../references/kontena-yml.md)
@@ -61,7 +62,7 @@ deploy:
 ```
 
 ## Scheduling Conditions
-When creating services, you can direct the host(s) of where the containers should be launched based on scheduling rules. 
+When creating services, you can direct the host(s) of where the containers should be launched based on scheduling rules.
 
 ### Affinity
 An affinity condition is when Kontena is trying to find a field that matches (`==`) given value. An anti-affinity condition is when Kontena is trying to find a field that does not match (`!=`) given value.
