@@ -20,3 +20,29 @@ You should use the Kontena's built-in VPN access if you want to:
 * Create your application with micro-service architecture; expose only front-end part of your application.
 * Use Kontena's built-in [Image Registry](image-registry.md) for storing your own application container images.
 * Focus on developing your application instead of tooling around it.
+
+
+## Using VPN
+
+#### Create VPN Service:
+
+```
+$ kontena vpn create
+```
+
+> VPN service uses port 1194 (udp), remember to open it to nodes if you are using firewall
+
+
+#### Export VPN Configuration:
+
+```
+$ kontena vpn config > /path/to/kontena.ovpn
+```
+
+`kontena.ovpn` configuration file can be then imported to your favorite OpenVPN client.
+
+#### Delete VPN Service:
+
+```
+$ kontena vpn delete
+```
