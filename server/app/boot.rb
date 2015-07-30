@@ -16,11 +16,11 @@ require 'logger'
 require 'msgpack'
 require 'tilt/jbuilder.rb'
 
+Dir[__dir__ + '/models/*.rb'].each {|file| require file }
+
 Dir[__dir__ + '/initializers/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/helpers/*.rb'].each {|file| require file }
-
-Dir[__dir__ + '/models/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/mutations/**/*.rb'].each {|file| require file }
 

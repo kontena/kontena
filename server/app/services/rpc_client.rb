@@ -13,14 +13,14 @@ class RpcClient
   class TimeoutError < Error
   end
 
-  REDIS_CHANNEL = 'wharfie_rpc'
+  RPC_CHANNEL = 'rpc_client'
 
-  attr_accessor :wharfie_id, :timeout
+  attr_accessor :node_id, :timeout
 
   ##
-  # @param [String] wharfie_id
-  def initialize(wharfie_id, timeout = 300)
-    @wharfie_id = wharfie_id
+  # @param [String] node_id
+  def initialize(node_id, timeout = 300)
+    @node_id = node_id
     @timeout = timeout
   end
 
@@ -31,12 +31,10 @@ class RpcClient
     id = request_id
     payload = {
       type: 'request',
-      id: self.wharfie_id,
+      id: self.node_id,
       message: [0, id, method, params]
     }
-    $redis.with do |pub|
-      pub.publish(REDIS_CHANNEL, MessagePack.dump(payload))
-    end
+    MongoPubsub.publish_async(RPC_CHANNEL, payload)
     result, error = wait_for_response(id)
 
     if block_given?
@@ -57,22 +55,17 @@ class RpcClient
   def wait_for_response(request_id)
     result = nil
     error = nil
-    begin
-      Timeout.timeout(self.timeout) do
-        $redis_sub.with do |sub|
-          sub.subscribe(REDIS_CHANNEL) do |on|
-            on.message do |_, message|
-              resp_message = MessagePack.unpack(message) rescue nil
-              if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
-                sub.unsubscribe(REDIS_CHANNEL)
-                error = resp_message[2]
-                result = resp_message[3]
-              end
-            end
-          end
+    MongoPubsub.subscribe(RPC_CHANNEL) do |subscription|
+      subscription.on_message(self.timeout) do |msg|
+        resp_message = msg['message']
+        if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
+          error = resp_message[2]
+          result = resp_message[3]
+          subscription.terminate
         end
       end
-    rescue Timeout::Error
+    end
+    if result.nil? && error.nil?
       raise RpcClient::TimeoutError.new(503, 'Connection time out')
     end
 
