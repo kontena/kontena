@@ -130,6 +130,7 @@ class MongoPubsub
         capped: true,
         size: 24.megabytes
       )
+      self.publish('test', {})
     end
   end
 end

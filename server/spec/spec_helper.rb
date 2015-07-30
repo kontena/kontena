@@ -61,7 +61,9 @@ RSpec.configure do |config|
 
   config.after(:each) do
     Mongoid.default_session.collections.each do |collection|
-      collection.find.remove_all unless collection.capped?
+      unless collection.name.include?('system.')
+        collection.find.remove_all unless collection.capped?
+      end
     end
   end
 

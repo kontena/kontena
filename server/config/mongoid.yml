@@ -1,7 +1,7 @@
 development:
   sessions:
     default:
-      database: grid_development
+      database: kontena_development
       hosts:
         - localhost:27017
   options:
@@ -10,7 +10,9 @@ development:
 test:
   sessions:
     default:
-      database: grid_test
+      database: kontena_test
+      options:
+        pool_size: 25
       hosts:
         - localhost:27017
   options:
