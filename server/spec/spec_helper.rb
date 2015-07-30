@@ -52,8 +52,9 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
+    MongoPubsub.start!(PubsubChannel.collection)
     DatabaseCleaner[:mongoid].strategy = :truncation
-    DatabaseCleaner[:mongoid].clean_with(:truncation)
+    DatabaseCleaner[:mongoid].clean_with(:truncation, {:except => %w[pubsub_channels]})
   end
 
   config.before(:each) do
@@ -64,7 +65,10 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do
-    DatabaseCleaner.clean
+    begin
+      DatabaseCleaner.clean
+    rescue Moped::Errors::OperationFailure
+    end
   end
 
   def response
