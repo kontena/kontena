@@ -1,7 +1,6 @@
 ENV['RACK_ENV'] = 'test'
 
 require 'dotenv'
-require 'database_cleaner'
 Dotenv.load
 
 if ENV['COVERAGE']
@@ -18,8 +17,6 @@ if ENV['COVERAGE']
     add_group 'Workers', 'app/workers'
   end
 end
-
-ENV['FIST_OF_FURY_DISABLED'] = 'true'
 
 require 'webmock/rspec'
 require_relative '../app/boot'
@@ -53,21 +50,18 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     MongoPubsub.start!(PubsubChannel.collection)
-    DatabaseCleaner[:mongoid].strategy = :truncation
-    DatabaseCleaner[:mongoid].clean_with(:truncation, {:except => %w[pubsub_channels]})
+    sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
   end
 
   config.before(:each) do
-    DatabaseCleaner.start
     stub_request(:get, /https:\/\/discovery.etcd.io\/new.*/).to_return(
       body: 'https://discovery.etcd.io/fake'
     )
   end
 
   config.after(:each) do
-    begin
-      DatabaseCleaner.clean
-    rescue Moped::Errors::OperationFailure
+    Mongoid.default_session.collections.each do |collection|
+      collection.find.remove_all unless collection.capped?
     end
   end
 
