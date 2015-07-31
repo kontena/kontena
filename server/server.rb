@@ -6,15 +6,26 @@ Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
 Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
+  VERSION = File.read('./VERSION').strip
+  
   if ENV['RACK_ENV'] == 'test'
     logger = nil
   else
     logger = Logger.new(STDOUT)
   end
   use Rack::CommonLogger, logger
-  plugin :render, engine: 'jbuilder', ext: 'json.jbuilder', views: 'app/views/v1'
+  plugin :json
 
   route do |r|
+
+    r.root do
+      {
+        name: 'Kontena Master',
+        tagline: 'Application Containers for Masses',
+        version: VERSION
+      }
+    end
+
     r.on 'v1' do
       r.on 'ping' do
         r.run V1::PingApi
