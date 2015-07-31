@@ -2,10 +2,15 @@ language: ruby
 rvm:
   - 2.2.0
 services:
-  - mongodb
   - redis-server
+addons:
+  apt:
+    sources:
+    - mongodb-upstart
+    packages:
+    - mongodb-org-server
 env:
   - TEST_DIR=server
   - TEST_DIR=agent
   - TEST_DIR=cli
-script: cd $TEST_DIR && bundle install && bundle exec rspec spec/
+script: CI=true cd $TEST_DIR && bundle install && bundle exec rspec spec/
