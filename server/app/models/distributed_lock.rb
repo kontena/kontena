@@ -3,6 +3,7 @@ class DistributedLock
 
   field :name, type: String
   field :lock_id, type: String
+  field :created_at, type: DateTime
 
   index({ name: 1 }, { unique: true })
 
@@ -27,10 +28,10 @@ class DistributedLock
   def self.obtain_lock(name)
     lock_id = SecureRandom.hex(16)
     query = {name: name, lock_id: {:$exists => false}}
-    modify = {'$set' => {:name => name, :lock_id => lock_id}}
+    modify = {'$set' => {name: name, lock_id: lock_id, created_at: Time.now.utc}}
     lock = nil
     begin
-      lock = where(query).find_and_modify(modify, {:upsert => true, :new => true})
+      lock = where(query).find_and_modify(modify, {upsert: true, new: true})
     rescue Moped::Errors::OperationFailure
     end
     if lock && lock.lock_id == lock_id
