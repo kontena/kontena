@@ -10,7 +10,8 @@ module Kontena::Cli::Containers
       token = require_token
 
       payload = {cmd: ['sh', '-c', cmd]}
-      result = client(token).post("containers/#{current_grid}/#{container_id}/exec", payload)
+      service_name = container_id.split("-")[0..-2].join("-")
+      result = client(token).post("containers/#{current_grid}/#{service_name}/#{container_id}/exec", payload)
       puts result[0].join(" ") unless result[0].size == 0
       STDERR.puts result[1].join(" ") unless result[1].size == 0
       exit result[2]
