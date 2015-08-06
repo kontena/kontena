@@ -55,6 +55,7 @@ class RpcClient
   def wait_for_response(request_id)
     result = nil
     error = nil
+    resp_message = nil
     MongoPubsub.subscribe(RPC_CHANNEL) do |subscription|
       subscription.on_message(self.timeout) do |msg|
         resp_message = msg['message']
@@ -65,7 +66,7 @@ class RpcClient
         end
       end
     end
-    if result.nil? && error.nil?
+    if !resp_message && result.nil? && error.nil?
       raise RpcClient::TimeoutError.new(503, 'Connection time out')
     end
 
