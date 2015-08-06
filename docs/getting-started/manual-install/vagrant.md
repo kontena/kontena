@@ -3,7 +3,8 @@ title: Vagrant
 toc_order: 5
 ---
 
-# Testing Kontena Locally
+# Vagrant
+
 The easiest way to give [Kontena](http://www.kontena.io) a test run is to run it on your local machine
 
 > Prerequisities: [Vagrant](https://www.vagrantup.com/)
