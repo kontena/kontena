@@ -25,7 +25,7 @@ describe RpcClient do
         end
       end
     }
-    sleep 0.1
+    sleep 0.01
   end
 
   describe '#request' do
