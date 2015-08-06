@@ -5,7 +5,7 @@ class MongoPubsub
   class Subscription
     include Celluloid
 
-    attr_reader :channel, :queue
+    attr_reader :channel
     execute_block_on_receiver :on_message
 
     # @param [String] channel
@@ -13,6 +13,10 @@ class MongoPubsub
       @channel = channel
       @wait_time = 0
       @queue = Queue.new
+    end
+
+    def push(data)
+      @queue << data
     end
 
     def process_queue
@@ -64,13 +68,11 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def publish(channel, data)
-    self.collection.session.with(safe: false) do |session|
-      session[self.collection.name].insert(
-        channel: channel,
-        data: data,
-        created_at: Time.now.utc
-      )
-    end
+    self.collection.insert(
+      channel: channel,
+      data: data,
+      created_at: Time.now.utc
+    )
   end
 
   # @param [String] channel
@@ -109,7 +111,7 @@ class MongoPubsub
           data = item['data'].freeze
           subscribers = self.subscriptions.select{|s| s.channel == channel}
           subscribers.each do |subscription|
-            subscription.queue << data if subscription.alive?
+            subscription.async.push(data) if subscription.alive?
           end
         end
       rescue => exc
