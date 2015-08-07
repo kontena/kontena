@@ -27,6 +27,7 @@ describe MongoPubsub do
       channel2_msg = {'hello' => 'universe'}
       expect(david).to receive(:receive).once.with(channel1_msg)
       expect(lisa).to receive(:receive).once.with(channel2_msg)
+      sleep 0.1
       described_class.publish('channel1', channel1_msg)
       described_class.publish('channel2', channel2_msg)
       threads.each(&:join)
