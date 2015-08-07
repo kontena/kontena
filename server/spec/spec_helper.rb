@@ -51,8 +51,6 @@ RSpec.configure do |config|
   config.before(:suite) do
     MongoPubsub.start!(PubsubChannel.collection)
     sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
-    DatabaseCleaner[:mongoid].strategy = :truncation
-    DatabaseCleaner[:mongoid].clean_with(:truncation)
     if ENV['CI'] # travis
       Mongoid::Tasks::Database.create_indexes
     end
