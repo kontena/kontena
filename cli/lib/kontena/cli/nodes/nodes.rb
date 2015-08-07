@@ -52,12 +52,22 @@ module Kontena::Cli::Nodes
       end
     end
 
+    def update(id, options)
+      require_api_url
+      require_current_grid
+      token = require_token
+
+      data = {}
+      data[:labels] = options.labels if options.labels
+      client(token).put("grids/#{current_grid}/nodes/#{id}", data)
+    end
+
     def destroy(id)
       require_api_url
       require_current_grid
       token = require_token
 
-      node = client(token).delete("grids/#{current_grid}/nodes/#{id}")
+      client(token).delete("grids/#{current_grid}/nodes/#{id}")
     end
 
   end

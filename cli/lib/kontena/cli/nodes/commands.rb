@@ -18,6 +18,15 @@ command 'node show' do |c|
   end
 end
 
+command 'node update' do |c|
+  c.syntax = 'kontena node update'
+  c.description = 'Update node'
+  c.option '--labels Array', Array, 'Node labels'
+  c.action do |args, options|
+    Kontena::Cli::Nodes::Nodes.new.update(args[0], options)
+  end
+end
+
 command 'node remove' do |c|
   c.syntax = 'kontena node remove'
   c.description = 'Remove node'

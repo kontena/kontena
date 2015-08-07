@@ -29,12 +29,29 @@ module V1
         end
       end
 
-      r.get do
-        r.on :id do |id|
-          @node = grid.host_nodes.find_by(node_id: id)
-          halt_request(404, {error: 'Node not found'}) if !@node
+      r.on :id do |id|
+        @node = grid.host_nodes.find_by(node_id: id)
+        halt_request(404, {error: 'Node not found'}) if !@node
 
-          render('host_nodes/show')
+        r.get do
+          r.is do
+            render('host_nodes/show')
+          end
+        end
+
+        r.put do
+          r.is do
+            data = parse_json_body
+            params = { host_node: @node }
+            params[:labels] = data['labels'] if data['labels']
+            outcome = HostNodes::Update.run(params)
+            if outcome.success?
+              @node = outcome.result
+              render('host_nodes/show')
+            else
+              halt_request(422, {error: outcome.errors.message})
+            end
+          end
         end
       end
     end
