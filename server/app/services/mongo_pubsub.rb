@@ -3,25 +3,37 @@ class MongoPubsub
   include Celluloid::Logger
 
   class Subscription
-    include Celluloid
 
     attr_reader :channel
-    execute_block_on_receiver :on_message
 
     # @param [String] channel
     def initialize(channel)
       @channel = channel
       @wait_time = 0
       @queue = Queue.new
-      async.process_queue
+      @terminated = false
     end
 
+    # @param [Hash] data
     def push(data)
       @queue << data
     end
 
+    def terminate
+      return if @terminated
+
+      @terminated = true
+      @processor.kill if @processor
+      @timer.kill if @timer
+    end
+
+    # @return [Boolean]
+    def alive?
+      !@terminated
+    end
+
     def process_queue
-      defer {
+      @processor = Thread.new {
         while data = @queue.pop
           self.send_message(data)
         end
@@ -31,7 +43,15 @@ class MongoPubsub
     # @param [Integer] wait
     def on_message(wait = 0, &block)
       @block = block
-      after(wait){ self.terminate } if wait > 0
+      if wait > 0
+        @timer = Thread.new {
+          begin
+            Timeout::timeout(wait) { sleep }
+          rescue
+            self.terminate
+          end
+        }
+      end
     end
 
     # @param [Hash] data
@@ -54,6 +74,7 @@ class MongoPubsub
     subscription = Subscription.new(channel)
     self.subscriptions << subscription
     block.call(subscription)
+    subscription.process_queue
     sleep 0.001 until !subscription.alive?
     self.unsubscribe(subscription)
     true
@@ -101,6 +122,7 @@ class MongoPubsub
     actor.subscriptions.each do |subscription|
       actor.unsubscribe(subscription)
     end
+    actor.subscriptions = []
   end
 
   private
@@ -108,24 +130,16 @@ class MongoPubsub
   def tail!
     ensure_collection!
     defer {
-      query = {created_at: {'$gte' => Time.now.utc}}
       begin
+        latest = self.collection.find.sort(:$natural => -1).limit(1).first
+        query = {_id: {:$gt => latest[:_id]}}
         info "#{self.class.name}: starting to tail collection"
-        self.collection.find(query).sort('$natural' => 1).tailable.each do |item|
+        self.collection.find(query).sort(:$natural => 1).tailable.each do |item|
           channel = item['channel']
           data = item['data'].freeze
-          subscribers = self.subscriptions.select{|s|
-            begin
-              s.alive? && s.channel == channel
-            rescue Celluloid::DeadActorError
-              false
-            end
-          }
+          subscribers = self.subscriptions.select{|s| s.alive? && s.channel == channel}
           subscribers.each do |subscription|
-            begin
-              subscription.async.push(data) if subscription && subscription.alive?
-            rescue Celluloid::DeadActorError
-            end
+            subscription.push(data) if subscription && subscription.alive?
           end
         end
       rescue => exc
@@ -133,7 +147,6 @@ class MongoPubsub
         puts exc.message
         puts exc.backtrace
         error "#{self.class.name}: error while tailing: #{exc.message}"
-        query = {created_at: {'$gte' => Time.now.utc}}
         sleep 0.1
         retry
       end

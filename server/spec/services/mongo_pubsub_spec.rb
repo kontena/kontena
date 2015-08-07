@@ -7,9 +7,11 @@ describe MongoPubsub do
       david = spy(:david)
       lisa = spy(:lisa)
       threads = []
+      subs = []
       threads << Thread.new{
         described_class.subscribe('channel1') {|sub|
-          sub.on_message(5){|msg|
+          subs << sub
+          sub.on_message(1){|msg|
             david.receive(msg)
             sub.terminate
           }
@@ -17,7 +19,8 @@ describe MongoPubsub do
       }
       threads << Thread.new{
         described_class.subscribe('channel2') {|sub|
-          sub.on_message(5){|msg|
+          subs << sub
+          sub.on_message(1){|msg|
             lisa.receive(msg)
             sub.terminate
           }
@@ -25,6 +28,7 @@ describe MongoPubsub do
       }
       channel1_msg = {'hello' => 'world'}
       channel2_msg = {'hello' => 'universe'}
+      sleep 0.001 until subs.size == 2
       expect(david).to receive(:receive).once.with(channel1_msg)
       expect(lisa).to receive(:receive).once.with(channel2_msg)
       described_class.publish('channel1', channel1_msg)
