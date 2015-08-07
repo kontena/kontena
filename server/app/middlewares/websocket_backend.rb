@@ -123,9 +123,7 @@ class WebsocketBackend
   ##
   # @param [Array] data
   def handle_rpc_response(data)
-    $redis.with do |redis|
-      redis.publish('wharfie_rpc', MessagePack.dump(data))
-    end
+    MongoPubsub.publish_async('rpc_client', {message: data})
   end
 
   ##
@@ -172,21 +170,16 @@ class WebsocketBackend
 
   def subscribe_to_rpc
     Thread.new {
-      $redis_sub.with do |redis|
-        redis.subscribe('wharfie_rpc') do |on|
-          on.unsubscribe do |channel|
-            logger.error "unsubscribe: #{channel}"
-          end
-          on.message do |_, message|
-            self.on_redis_message(message)
-          end
+      MongoPubsub.subscribe('rpc_client') do |sub|
+        sub.on_message do |message|
+          self.on_pubsub_message(message)
         end
       end
     }
   end
 
-  def on_redis_message(message)
-    msg = MessagePack.unpack(message) rescue nil
+  # @param [Hash] msg
+  def on_pubsub_message(msg)
     if msg && msg.is_a?(Hash) && msg['type'] == 'request'
       client = client_for_id(msg['id'])
       if client
