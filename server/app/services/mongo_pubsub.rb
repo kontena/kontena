@@ -13,6 +13,7 @@ class MongoPubsub
       @channel = channel
       @wait_time = 0
       @queue = Queue.new
+      async.process_queue
     end
 
     def push(data)
@@ -53,7 +54,6 @@ class MongoPubsub
     subscription = Subscription.new(channel)
     self.subscriptions << subscription
     block.call(subscription)
-    subscription.async.process_queue
     sleep 0.001 until !subscription.alive?
     self.unsubscribe(subscription)
     true
@@ -96,27 +96,45 @@ class MongoPubsub
     @supervisor = self.supervise(collection)
   end
 
+  def self.clear!
+    actor = @supervisor.actors.first
+    actor.subscriptions.each do |subscription|
+      actor.unsubscribe(subscription)
+    end
+  end
+
   private
 
   def tail!
     ensure_collection!
     defer {
+      query = {created_at: {'$gte' => Time.now.utc}}
       begin
-        query = {
-          created_at: {'$gte' => Time.now.utc}
-        }
         info "#{self.class.name}: starting to tail collection"
         self.collection.find(query).sort('$natural' => 1).tailable.each do |item|
           channel = item['channel']
           data = item['data'].freeze
-          subscribers = self.subscriptions.select{|s| s.channel == channel}
+          subscribers = self.subscriptions.select{|s|
+            begin
+              s.alive? && s.channel == channel
+            rescue Celluloid::DeadActorError
+              false
+            end
+          }
           subscribers.each do |subscription|
-            subscription.async.push(data) if subscription.alive?
+            begin
+              subscription.async.push(data) if subscription && subscription.alive?
+            rescue Celluloid::DeadActorError
+            end
           end
         end
       rescue => exc
+        puts exc.class
+        puts exc.message
+        puts exc.backtrace
         error "#{self.class.name}: error while tailing: #{exc.message}"
-        sleep 1
+        query = {created_at: {'$gte' => Time.now.utc}}
+        sleep 0.1
         retry
       end
     }

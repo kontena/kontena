@@ -2,33 +2,33 @@ require_relative '../spec_helper'
 
 describe MongoPubsub do
 
-  let(:channel) { 'test_channel' }
-
   describe '.publish' do
     it 'sends message to channel subscribers' do
-      spy = spy(:listener)
+      david = spy(:david)
+      lisa = spy(:lisa)
       threads = []
-      3.times do
-        threads << Thread.new{
-          described_class.subscribe(channel) {|sub|
-            sub.on_message{|msg|
-              spy.save(msg)
-              sub.terminate
-            }
-          }
-        }
-      end
       threads << Thread.new{
-        described_class.subscribe('other') {|sub|
-          sub.on_message(0.1){|msg|
-            spy.save(msg)
+        described_class.subscribe('channel1') {|sub|
+          sub.on_message(1){|msg|
+            david.receive(msg)
             sub.terminate
           }
         }
       }
-      msg = {'hello' => 'world'}
-      expect(spy).to receive(:save).exactly(3).times.with(msg)
-      described_class.publish(channel, msg)
+      threads << Thread.new{
+        described_class.subscribe('channel2') {|sub|
+          sub.on_message(1){|msg|
+            lisa.receive(msg)
+            sub.terminate
+          }
+        }
+      }
+      channel1_msg = {'hello' => 'world'}
+      channel2_msg = {'hello' => 'universe'}
+      expect(david).to receive(:receive).once.with(channel1_msg)
+      expect(lisa).to receive(:receive).once.with(channel2_msg)
+      described_class.publish('channel1', channel1_msg)
+      described_class.publish('channel2', channel2_msg)
       threads.each(&:join)
     end
   end

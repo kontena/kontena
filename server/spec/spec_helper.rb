@@ -57,6 +57,7 @@ RSpec.configure do |config|
     stub_request(:get, /https:\/\/discovery.etcd.io\/new.*/).to_return(
       body: 'https://discovery.etcd.io/fake'
     )
+    MongoPubsub.clear!
   end
 
   config.after(:each) do
