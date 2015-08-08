@@ -56,19 +56,22 @@ class RpcClient
     result = nil
     error = nil
     resp_received = false
-    MongoPubsub.subscribe(RPC_CHANNEL) do |subscription|
-      subscription.on_message(self.timeout) do |msg|
-        resp_message = msg['message']
-        if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
-          error = resp_message[2]
-          result = resp_message[3]
-          resp_received = true
-          subscription.terminate
-        end
+    subscription = MongoPubsub.subscribe(RPC_CHANNEL) do |msg|
+      resp_message = msg['message']
+      if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
+        error = resp_message[2]
+        result = resp_message[3]
+        resp_received = true
       end
     end
-    if !resp_received
+    begin
+      Timeout::timeout(self.timeout) do
+        sleep 0.001 until resp_received
+      end
+    rescue
       raise RpcClient::TimeoutError.new(503, 'Connection time out')
+    ensure
+      subscription.terminate if subscription.alive?
     end
 
     [result, error]

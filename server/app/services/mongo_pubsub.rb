@@ -3,56 +3,31 @@ class MongoPubsub
   include Celluloid::Logger
 
   class Subscription
+    include Celluloid
 
     attr_reader :channel
 
     # @param [String] channel
-    def initialize(channel)
+    def initialize(channel, block)
       @channel = channel
-      @wait_time = 0
+      @block = block
       @queue = Queue.new
-      @terminated = false
+      async.process
     end
 
-    # @param [Hash] data
-    def push(data)
-      @queue << data
-    end
-
-    def terminate
-      return if @terminated
-
-      @terminated = true
-      @processor.kill if @processor
-      @timer.kill if @timer
-    end
-
-    # @return [Boolean]
-    def alive?
-      !@terminated
-    end
-
-    def process_queue
-      @processor = Thread.new {
+    def process
+      defer {
         while data = @queue.pop
-          self.send_message(data)
+          send_message(data)
         end
       }
     end
 
-    # @param [Integer] wait
-    def on_message(wait = 0, &block)
-      @block = block
-      if wait > 0
-        @timer = Thread.new {
-          begin
-            Timeout::timeout(wait) { sleep }
-          rescue
-            self.terminate
-          end
-        }
-      end
+    def queue_message(data)
+      @queue << data
     end
+
+    private
 
     # @param [Hash] data
     def send_message(data)
@@ -60,6 +35,7 @@ class MongoPubsub
     end
   end
 
+  trap_exit :trap_subscription_exit
   attr_accessor :collection, :subscriptions
 
   # @param [Moped::Collection]
@@ -70,14 +46,13 @@ class MongoPubsub
   end
 
   # @param [String] channel
+  # @return [Subscription]
   def subscribe(channel, block)
-    subscription = Subscription.new(channel)
+    subscription = Subscription.new(channel, block)
+    self.link subscription
     self.subscriptions << subscription
-    block.call(subscription)
-    subscription.process_queue
-    sleep 0.001 until !subscription.alive?
-    self.unsubscribe(subscription)
-    true
+
+    subscription
   end
 
   # @param [Subscription] subscription
@@ -109,6 +84,7 @@ class MongoPubsub
   end
 
   # @param [String] channel
+  # @return [Subscription]
   def self.subscribe(channel, &block)
     @supervisor.actors.first.subscribe(channel, block)
   end
@@ -137,16 +113,23 @@ class MongoPubsub
         self.collection.find(query).sort(:$natural => 1).tailable.each do |item|
           channel = item['channel']
           data = item['data'].freeze
-          subscribers = self.subscriptions.select{|s| s.alive? && s.channel == channel}
+          subscribers = self.subscriptions.select{|s|
+            begin
+              s.alive? && s.channel == channel
+            rescue Celluloid::DeadActorError
+              false
+            end
+          }
           subscribers.each do |subscription|
-            subscription.push(data) if subscription && subscription.alive?
+            begin
+              subscription.async.queue_message(data) if subscription && subscription.alive?
+            rescue Celluloid::DeadActorError
+            end
           end
         end
       rescue => exc
-        puts exc.class
-        puts exc.message
-        puts exc.backtrace
         error "#{self.class.name}: error while tailing: #{exc.message}"
+        error exc.backtrace
         sleep 0.1
         retry
       end
@@ -165,5 +148,9 @@ class MongoPubsub
       )
       self.publish('test', {})
     end
+  end
+
+  def trap_subscription_exit(subscription, reason)
+    self.unsubscribe(subscription)
   end
 end

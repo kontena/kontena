@@ -15,32 +15,28 @@ describe RpcClient do
   end
 
   def fake_server(&block)
-    Thread.new {
-      MongoPubsub.subscribe(channel) do |sub|
-        sub.on_message do |resp|
-          if resp['type'] == 'request'
-            yield(resp)
-            sub.terminate
-          end
-        end
+    MongoPubsub.subscribe(channel) do |resp|
+      if resp['type'] == 'request'
+        yield(resp)
       end
-    }
-    sleep 0.01
+    end
   end
 
   describe '#request' do
     it 'returns a result from rpc server' do
-      fake_server {|resp|
+      server = fake_server {|resp|
         response = resp['message'][3]
         response.unshift(resp['message'][2])
         publish_response(resp['message'][1], response)
       }
       resp = subject.request('/hello/service', :foo, :bar)
       expect(resp).to eq(['/hello/service', :foo, :bar])
+
+      server.terminate
     end
 
     it 'raises error from rpc server' do
-      fake_server {|resp|
+      server = fake_server {|resp|
         response = resp['message'][3]
         response.unshift(resp['message'][2])
         publish_error(resp['message'][1], 'error!')
@@ -48,6 +44,8 @@ describe RpcClient do
       expect {
         subject.request('/hello/service', :foo, :bar)
       }.to raise_error(RpcClient::Error)
+
+      server.terminate
     end
   end
 end
