@@ -8,6 +8,8 @@ require 'active_support/core_ext/module/delegation'
 
 Celluloid.logger.level = Logger::ERROR
 
+require_relative 'kontena/pubsub'
+require_relative 'kontena/weave_attacher'
 require_relative 'kontena/container_info_worker'
 require_relative 'kontena/event_worker'
 require_relative 'kontena/log_worker'
@@ -16,3 +18,4 @@ require_relative 'kontena/stats_worker'
 require_relative 'kontena/websocket_client'
 require_relative 'kontena/dns_server'
 require_relative 'kontena/dns_registrator'
+require_relative 'kontena/agent'

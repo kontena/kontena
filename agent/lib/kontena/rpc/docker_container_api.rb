@@ -10,10 +10,17 @@ module Kontena
     #
     class DockerContainerApi
 
+      attr_reader :overlay_adapter
+
+      def initialize
+        @overlay_adapter = Kontena::WeaveAdapter.new
+      end
+
       ##
       # @param [Hash]
       # @return [Hash]
       def create(opts)
+        self.overlay_adapter.modify_create_opts(opts)
         container = Docker::Container.create(opts)
         container.json
       rescue Docker::Error::DockerError => exc
@@ -41,6 +48,7 @@ module Kontena
           opts['Dns'] = [dns]
           opts['DnsSearch'] = ['kontena.local']
         end
+        self.overlay_adapter.modify_start_opts(opts)
         container.start(opts)
         container.json
       rescue Docker::Error::NotFoundError => exc

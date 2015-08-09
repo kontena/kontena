@@ -13,8 +13,10 @@ describe Kontena::DnsRegistrator do
         'Names' => ['/wordpress-1']
       },
       json: {
-        'NetworkSettings' => {
-          'IPAddress' => '10.81.1.9'
+        'Config' => {
+          'Labels' => {
+            'io.kontena.container.overlay_cidr' => '10.81.1.9/19'
+          }
         }
       }
     )
@@ -27,8 +29,8 @@ describe Kontena::DnsRegistrator do
         'Names' => ['/foobar']
       },
       json: {
-        'NetworkSettings' => {
-          'IPAddress' => '10.81.1.88'
+        'Config' => {
+          'Labels' => {}
         }
       }
     )
@@ -58,6 +60,7 @@ describe Kontena::DnsRegistrator do
       allow(subject).to receive(:etcd).and_return(client)
       subject.register_container_dns(wp_container)
       expect(subject.cache[wp_container.id]).not_to be_nil
+      sleep 0.1
     end
 
     it 'does not save dns entry when network settings does not exist' do

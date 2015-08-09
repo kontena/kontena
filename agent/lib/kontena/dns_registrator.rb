@@ -46,13 +46,15 @@ module Kontena
         return false
       end
       match = name.match(/^\/(.+)-(\d+)$/)
-      if match && container.json['NetworkSettings']
-        ip = container.json['NetworkSettings']['IPAddress']
-        self.cache[container.id] ={
-          service: match[1],
-          name: "#{match[1]}-#{match[2]}"
-        }
-        self.etcd.set("/kontena/dns/#{match[1]}/#{match[1]}-#{match[2]}", value: ip, ttl: (REFRESH_TIME + 5))
+      if match && container.json['Config']['Labels']
+        cidr = container.json['Config']['Labels']['io.kontena.container.overlay_cidr']
+        if cidr
+          self.cache[container.id] = {
+            service: match[1],
+            name: "#{match[1]}-#{match[2]}"
+          }
+          self.etcd.set("/kontena/dns/#{match[1]}/#{match[1]}-#{match[2]}", value: cidr.split('/')[0], ttl: (REFRESH_TIME + 5))
+        end
       end
     rescue => exc
       logger.error(LOG_NAME) { "cannot set dns entry: #{exc.message}" }
