@@ -6,12 +6,15 @@ describe MongoPubsub do
     it 'sends message to channel subscribers' do
       david = spy(:david)
       lisa = spy(:lisa)
+      messages = []
       subs = []
       subs << described_class.subscribe('channel1') {|msg|
         david.receive(msg)
+        messages << msg
       }
       subs << described_class.subscribe('channel2') {|msg|
         lisa.receive(msg)
+        messages << msg
       }
       channel1_msg = {'hello' => 'world'}
       channel2_msg = {'hello' => 'universe'}
@@ -19,7 +22,10 @@ describe MongoPubsub do
       expect(lisa).to receive(:receive).once.with(channel2_msg)
       described_class.publish('channel1', channel1_msg)
       described_class.publish('channel2', channel2_msg)
-      sleep 0.01
+
+      Timeout::timeout(1) do
+        sleep 0.01 until messages.size == 2
+      end
       subs.each(&:terminate)
     end
 
