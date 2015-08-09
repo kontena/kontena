@@ -169,13 +169,9 @@ class WebsocketBackend
   end
 
   def subscribe_to_rpc
-    Thread.new {
-      MongoPubsub.subscribe('rpc_client') do |sub|
-        sub.on_message do |message|
-          self.on_pubsub_message(message)
-        end
-      end
-    }
+    MongoPubsub.subscribe('rpc_client') do |message|
+      self.on_pubsub_message(message)
+    end
   end
 
   # @param [Hash] msg
