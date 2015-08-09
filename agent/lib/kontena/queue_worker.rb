@@ -12,6 +12,9 @@ module Kontena
     def initialize
       @queue = Queue.new
       logger.info(LOG_NAME) { 'initialized' }
+      Pubsub.subscribe('websocket:connect') do |client|
+        self.client = client
+      end
     end
 
     ##

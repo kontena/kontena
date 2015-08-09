@@ -15,10 +15,15 @@ describe Kontena::EventWorker do
 
     it 'notifies observers' do
       observer = spy(:observer)
+      received = false
+      Kontena::Pubsub.subscribe('container:event') {|event|
+        received = true
+        observer.update(event)
+      }
       event = spy(:event)
-      subject.add_observer(observer)
       expect(observer).to receive(:update).once.with(event)
       subject.publish_event(event)
+      Timeout::timeout(1){ sleep 0.01 until received }
     end
   end
 end

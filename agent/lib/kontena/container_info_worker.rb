@@ -14,6 +14,10 @@ module Kontena
     def initialize(queue)
       @queue = queue
       @node_info = {}
+
+      Pubsub.subscribe('container:event') do |event|
+        self.on_container_event(event) rescue nil
+      end
     end
 
     ##

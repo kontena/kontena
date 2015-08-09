@@ -1,12 +1,10 @@
 require 'cgi'
-require 'observer'
 require 'socket'
 require_relative 'logging'
 require_relative 'rpc_server'
 
 module Kontena
   class WebsocketClient
-    include Observable
     include Kontena::Logging
 
     LOG_NAME = 'WebsocketClient'
@@ -35,8 +33,7 @@ module Kontena
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {ping: KEEPALIVE_TIME, headers: headers})
 
-      changed(true)
-      notify_observers(self)
+      Pubsub.publish('websocket:connect', self)
 
       @ws.on :open do |event|
         logger.info(LOG_NAME) { 'connection established' }
@@ -70,25 +67,15 @@ module Kontena
     def on_message(ws, event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        Thread.new {
+        EM.defer {
           response = @rpc_server.handle_request(data)
           self.send_message(MessagePack.dump(response).bytes)
         }
       elsif response_message?(data)
         EM.next_tick {
-          @subscribers.each{|_, value|
-            value.call(data)
-          }
+          Pubsub.publish("rpc_response:#{data[1]}", data)
         }
       end
-    end
-
-    def subscribe(id, &block)
-      @subscribers[id] = block
-    end
-
-    def unsubscribe(id)
-      @subscribers.delete(id)
     end
 
     def request_message?(msg)

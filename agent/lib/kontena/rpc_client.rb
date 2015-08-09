@@ -49,20 +49,22 @@ module Kontena
     def wait_for_response(request_id)
       result = nil
       error = nil
+      msg_received = false
+      subscription = Pubsub.subscribe("rpc_response:#{request_id}") do |msg|
+        if msg && msg[0] == 1 && msg[1] == request_id
+          msg_received = true
+          error = msg[2]
+          result = msg[3]
+        end
+      end
       begin
         Timeout.timeout(self.timeout) do
-          self.ws_client.subscribe(request_id) {|msg|
-            if msg && msg[0] == 1 && msg[1] == request_id
-              error = msg[2]
-              result = msg[3]
-            end
-          }
-          sleep 0.001 until result || error
+          sleep 0.001 until msg_received
         end
-      rescue Timeout::Error
+      rescue
         raise RpcClient::TimeoutError.new(503, 'Connection time out')
       ensure
-        self.ws_client.unsubscribe(request_id)
+        Pubsub.unsubscribe(subscription) if subscription
       end
 
       [result, error]

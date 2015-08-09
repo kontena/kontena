@@ -14,6 +14,10 @@ module Kontena
       @queue = queue
       logger.info(LOG_NAME) { 'initialized' }
       @streaming_threads = {}
+
+      Pubsub.subscribe('container:event') do |event|
+        self.on_container_event(event) rescue nil
+      end
     end
 
     ##

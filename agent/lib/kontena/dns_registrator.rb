@@ -14,6 +14,10 @@ module Kontena
     def initialize
       @etcd = Etcd.client(host: gateway, port: 2379)
       @cache = {}
+
+      Pubsub.subscribe('container:event') do |event|
+        self.on_container_event(event) rescue nil
+      end
     end
 
     ##
