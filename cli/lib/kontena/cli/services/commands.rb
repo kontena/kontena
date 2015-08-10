@@ -123,6 +123,8 @@ command 'service logs' do |c|
   c.syntax = 'kontena service logs <service_id>'
   c.description = 'Show service logs'
   c.option '-f', '--follow', 'Follow logs in real time'
+  c.option '-s STRING', '--search STRING', String, 'Search from logs'
+  c.option '-c STRING', '--container STRING', String, 'Show only specified container logs' 
   c.action do |args, options|
     Kontena::Cli::Services::Logs.new.show(args[0], options)
   end

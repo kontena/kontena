@@ -12,11 +12,15 @@ module Kontena::Cli::Services
       token = require_token
       last_id = nil
       loop do
-        query_params = last_id.nil? ? '' : "from=#{last_id}"
-        result = client(token).get("services/#{current_grid}/#{service_id}/container_logs?#{query_params}")
+        query_params = []
+        query_params << "from=#{last_id}" unless last_id.nil?
+        query_params << "search=#{options.search}" if options.search
+        query_params << "container=#{options.container}" if options.container
+
+        result = client(token).get("services/#{current_grid}/#{service_id}/container_logs?#{query_params.join('&')}")
         result['logs'].each do |log|
           color = color_for_container(log['name'])
-          puts "#{log['name'][0..12].colorize(color)} | #{log['data']}"
+          puts "#{log['name'].colorize(color)} | #{log['data']}"
           last_id = log['id']
         end
         break unless options.follow
