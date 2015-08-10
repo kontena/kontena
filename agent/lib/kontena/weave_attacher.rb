@@ -44,7 +44,6 @@ module Kontena
     def weave_exec(cmd)
       begin
         image = "weaveworks/weaveexec:#{self.weave_version}"
-        logger.info(self.class.name){ image }
         container = Docker::Container.create(
           'Image' => image,
           'Cmd' => cmd,
