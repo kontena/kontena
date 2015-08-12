@@ -30,7 +30,8 @@ end
 command 'node remove' do |c|
   c.syntax = 'kontena node remove'
   c.description = 'Remove node'
+  c.option '-f', '--force', 'Force remove (use with caution)'
   c.action do |args, options|
-    Kontena::Cli::Nodes::Nodes.new.destroy(args[0])
+    Kontena::Cli::Nodes::Nodes.new.destroy(args[0], options)
   end
 end
