@@ -51,10 +51,12 @@ module V1
 
           r.on 'container_logs' do
             scope = @grid_service.container_logs
-            limit = (r['limit'] || 500).to_i
-            unless r['from'].nil?
-              scope = scope.where(:id.gt => r['from'] )
-            end
+            limit = (r['limit'] || 100).to_i
+
+            scope = scope.where(name: r['container']) unless r['container'].nil?
+            scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
+            scope = scope.where(:id.gt => r['from'] ) unless r['from'].nil?
+
             @logs = scope.order(:_id => -1).limit(limit).to_a.reverse
             render('container_logs/index')
           end
