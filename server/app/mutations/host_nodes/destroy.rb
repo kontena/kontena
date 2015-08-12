@@ -1,3 +1,4 @@
+require 'httpclient'
 
 module HostNodes
   class Destroy < Mutations::Command
@@ -16,7 +17,20 @@ module HostNodes
     end
 
     def execute
+      grid = self.host_node.grid
       self.host_node.destroy
+
+      if grid.host_nodes.count == 0
+        grid.update_attribute(:discovery_url, discovery_url(grid.initial_size))
+      end
+
+      self.host_node
+    end
+
+    ##
+    # @return [String]
+    def discovery_url(initial_size)
+      HTTPClient.new.get_content("https://discovery.etcd.io/new?size=#{initial_size}")
     end
   end
 end

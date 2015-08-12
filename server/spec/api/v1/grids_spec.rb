@@ -152,6 +152,14 @@ describe '/v1/grids' do
           expect(grid.reload.host_nodes.count).to eq(0)
         end
 
+        it 'creates new etcd discovery token if last node is deleted' do
+          grid = david.grids.first
+          node = grid.host_nodes.create!(node_number: 1, name: 'node-1')
+          expect {
+            delete "/v1/grids/#{grid.to_path}/nodes/#{node.name}?force=1", nil, request_headers
+          }.to change{ grid.reload.discovery_url }
+        end
+
         it 'does not allow to delete initial node from the grid without force' do
           grid = david.grids.first
           node = grid.host_nodes.create!(node_number: 1, name: 'node-1')
