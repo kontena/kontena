@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.4 (2015-08-15)
+
+- Fix etcd boot errors on flaky networks
+
 ## 0.7.3 (2015-07-26)
 
 - Fix `kontena deploy` regression
