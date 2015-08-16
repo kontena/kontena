@@ -62,12 +62,15 @@ module Kontena::Cli::Nodes
       client(token).put("grids/#{current_grid}/nodes/#{id}", data)
     end
 
-    def destroy(id)
+    def destroy(id, options)
       require_api_url
       require_current_grid
       token = require_token
 
-      client(token).delete("grids/#{current_grid}/nodes/#{id}")
+      params = []
+      params << 'force=1' if options.force
+
+      client(token).delete("grids/#{current_grid}/nodes/#{id}?#{params.join('&')}")
     end
 
   end

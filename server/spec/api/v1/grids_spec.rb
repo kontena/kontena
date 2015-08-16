@@ -10,7 +10,7 @@ describe '/v1/grids' do
 
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid = Grid.create!(name: 'terminal-a')
+    grid = Grid.create!(name: 'terminal-a', initial_size: 1)
     grid.users << user
 
     user
@@ -18,7 +18,7 @@ describe '/v1/grids' do
 
   let(:emily) do
     user = User.create!(email: 'emily@domain.com', external_id: '123457')
-    grid = Grid.create!(name: 'terminal-b')
+    grid = Grid.create!(name: 'terminal-b', initial_size: 1)
     grid.users << user
 
     user
@@ -26,7 +26,7 @@ describe '/v1/grids' do
 
   let(:thomas) do
     user = User.create!(email: 'thomas@domain.com', external_id: '123458')
-    grid = Grid.create!(name: 'terminal-c')
+    grid = Grid.create!(name: 'terminal-c', initial_size: 1)
     grid.users << user
 
     user
@@ -141,6 +141,32 @@ describe '/v1/grids' do
         get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)
+      end
+
+      describe 'DELETE /:id' do
+        it 'deletes initial node from the grid with force' do
+          grid = david.grids.first
+          node = grid.host_nodes.create!(node_number: 1, name: 'node-1')
+          delete "/v1/grids/#{grid.to_path}/nodes/#{node.name}?force=1", nil, request_headers
+          expect(response.status).to eq(200)
+          expect(grid.reload.host_nodes.count).to eq(0)
+        end
+
+        it 'creates new etcd discovery token if last node is deleted' do
+          grid = david.grids.first
+          node = grid.host_nodes.create!(node_number: 1, name: 'node-1')
+          expect {
+            delete "/v1/grids/#{grid.to_path}/nodes/#{node.name}?force=1", nil, request_headers
+          }.to change{ grid.reload.discovery_url }
+        end
+
+        it 'does not allow to delete initial node from the grid without force' do
+          grid = david.grids.first
+          node = grid.host_nodes.create!(node_number: 1, name: 'node-1')
+          delete "/v1/grids/#{grid.to_path}/nodes/#{node.name}", nil, request_headers
+          expect(response.status).to eq(400)
+          expect(grid.reload.host_nodes.count).to eq(1)
+        end
       end
     end
 

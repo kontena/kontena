@@ -21,9 +21,13 @@ V1::GridsApi.route('grid_nodes') do |r|
     r.on ':id' do |id|
       node = @grid.host_nodes.find_by(name: id)
       if node
-        node.destroy
-        response.status = 200
-        {}
+        outcome = HostNodes::Destroy.run(host_node: node, force: r['force'])
+        if outcome.success?
+          {}
+        else
+          response.status = 400
+          {error: outcome.errors.message}
+        end
       else
         response.status = 404
       end
