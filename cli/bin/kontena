@@ -10,5 +10,61 @@ $:.unshift File.expand_path('../../lib', bin_file)
 
 STDOUT.sync = true
 
-require 'commander/import'
-require 'kontena/cli/commands'
+require 'clamp'
+require 'kontena/client'
+require 'kontena/cli/common'
+require 'kontena/cli/login_command'
+require 'kontena/cli/logout_command'
+require 'kontena/cli/whoami_command'
+require 'kontena/cli/verify_account_command'
+require 'kontena/cli/invite_command'
+require 'kontena/cli/forgot_password_command'
+require 'kontena/cli/container_command'
+require 'kontena/cli/grid_command'
+require 'kontena/cli/node_command'
+require 'kontena/cli/service_command'
+require 'kontena/cli/vpn_command'
+require 'kontena/cli/registry_command'
+require 'kontena/cli/external_registry_command'
+require 'kontena/cli/deploy_command'
+require 'kontena/cli/version_command'
+
+class MainCommand < Clamp::Command
+
+  subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
+  subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
+  subcommand "deploy", "Create and deploy multiple services from YAML file", Kontena::Cli::DeployCommand
+  subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand
+  subcommand "vpn", "VPN specific commands", Kontena::Cli::VpnCommand
+  subcommand "registry", "Registry specific commands", Kontena::Cli::RegistryCommand
+  subcommand "container", "Container specific commands", Kontena::Cli::ContainerCommand
+  subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
+  subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
+  subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
+  subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
+  subcommand "verify-account", "Verify registered account", Kontena::Cli::VerifyAccountCommand
+  subcommand "invite", "Invite user to Kontena Master", Kontena::Cli::InviteCommand
+  subcommand "forgot-password", "Request password reset for Kontena account", Kontena::Cli::ForgotPasswordCommand
+  subcommand "version", "Show version", Kontena::Cli::VersionCommand
+
+  def execute
+  end
+end
+
+begin
+  MainCommand.run
+rescue Excon::Errors::SocketError => exc
+  if exc.message.include?('Unable to verify certificate')
+    puts "The server uses a certificate signed by an unknown authority.".colorize(:red)
+    puts "Protip: you can bypass the certificate check by setting #{'SSL_IGNORE_ERRORS=true'.colorize(:yellow)} env variable, but any data you send to the server could be intercepted by others."
+    exit(1)
+  else
+    abort(exc.message)
+  end
+rescue => exc
+  if ENV['DEBUG']
+    raise exc
+  else
+    abort(exc.message)
+  end
+end
