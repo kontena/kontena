@@ -13,6 +13,7 @@ STDOUT.sync = true
 require 'clamp'
 require 'kontena/client'
 require 'kontena/cli/common'
+require 'kontena/cli/register_command'
 require 'kontena/cli/login_command'
 require 'kontena/cli/logout_command'
 require 'kontena/cli/whoami_command'
@@ -39,6 +40,7 @@ class MainCommand < Clamp::Command
   subcommand "registry", "Registry specific commands", Kontena::Cli::RegistryCommand
   subcommand "container", "Container specific commands", Kontena::Cli::ContainerCommand
   subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
+  subcommand "register", "Register Kontena Account", Kontena::Cli::RegisterCommand
   subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
   subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
