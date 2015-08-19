@@ -11,7 +11,7 @@ module Kontena::Cli::Services
     def execute
       require_api_url
       token = require_token
-      if options.follow
+      if follow?
         system('clear')
         render_header
       end

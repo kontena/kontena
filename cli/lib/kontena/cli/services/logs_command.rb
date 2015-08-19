@@ -20,13 +20,13 @@ module Kontena::Cli::Services
         query_params << "search=#{search}" if search
         query_params << "container=#{container}" if container
 
-        result = client(token).get("services/#{current_grid}/#{service_id}/container_logs?#{query_params.join('&')}")
+        result = client(token).get("services/#{current_grid}/#{name}/container_logs?#{query_params.join('&')}")
         result['logs'].each do |log|
           color = color_for_container(log['name'])
           puts "#{log['name'].colorize(color)} | #{log['data']}"
           last_id = log['id']
         end
-        break unless options.follow
+        break unless follow?
         sleep(2)
       end
     end
