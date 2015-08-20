@@ -137,7 +137,7 @@ class Kontena::Cli::DeployCommand < Clamp::Command
     data[:memory] = parse_memory(options['mem_limit']) if options['mem_limit']
     data[:memory_swap] = parse_memory(options['memswap_limit']) if options['memswap_limit']
     data[:cpu_shares] = options['cpu_shares'] if options['cpu_shares']
-    data[:volumes] = options['volume'] if options['volume']
+    data[:volumes] = options['volumes'] if options['volumes']
     data[:volumes_from] = options['volumes_from'] if options['volumes_from']
     data[:cmd] = options['command'].split(" ") if options['command']
     data[:affinity] = options['affinity'] if options['affinity']
