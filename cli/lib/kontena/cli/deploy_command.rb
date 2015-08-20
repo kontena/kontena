@@ -21,7 +21,7 @@ class Kontena::Cli::DeployCommand < Clamp::Command
     abort("File #{filename} does not exist") unless File.exists?(filename)
 
     @services = YAML.load(File.read(filename) % {prefix: service_prefix})
-    @services = @services.delete_if { |name, service| !service_list.include?(name)} if service_list
+    @services = @services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
 
     Dir.chdir(File.dirname(filename))
     init_services(services)

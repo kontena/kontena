@@ -16,26 +16,26 @@ describe Kontena::Cli::DeployCommand do
   end
 
   let(:yml) do
-    content = <<content
+    yml_content = <<yml
 wordpress:
-image: wordpress:4.1
-stateful: true
-ports:
-  - 80:80
-links:
-  - mysql:mysql
-environment:
-  - WORDPRESS_DB_PASSWORD=%{prefix}_secret
-instances: 2
-deploy:
-  strategy: ha
+  image: wordpress:4.1
+  stateful: true
+  ports:
+    - 80:80
+  links:
+    - mysql:mysql
+  environment:
+    - WORDPRESS_DB_PASSWORD=%{prefix}_secret
+  instances: 2
+  deploy:
+    strategy: ha
 mysql:
-image: mysql:5.6
-stateful: true
-environment:
-  - MYSQL_ROOT_PASSWORD=%{prefix}_secret
-content
-    content
+  image: mysql:5.6
+  stateful: true
+  environment:
+    - MYSQL_ROOT_PASSWORD=%{prefix}_secret
+yml
+    yml_content
   end
 
   let(:services) do
@@ -61,7 +61,7 @@ content
   end
 
   let(:options) do
-    options = double({prefix: false, file: false, service: nil})
+    double({prefix: false, file: false, service: nil})
   end
 
   let(:env_vars) do
@@ -201,12 +201,11 @@ content
       context 'when giving service option' do
         it 'deploys only given services' do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
-          allow(subject).to receive(:service).and_return(['wordpress'])
           allow(subject).to receive(:deploy_services).and_return({})
           expect(subject).to receive(:create).once.with('wordpress', anything).and_return({})
           expect(subject).not_to receive(:create).with('mysql', services['mysql'])
 
-          subject.run([])
+          subject.run(['--service', 'wordpress'])
         end
       end
     end
