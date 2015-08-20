@@ -4,7 +4,7 @@ describe Container do
   it { should be_timestamped_document }
   it { should have_fields(
         :container_id, :name, :driver,
-        :exec_driver, :image, :image_id).of_type(String) }
+        :exec_driver, :image, :image_version).of_type(String) }
   it { should have_fields(:env, :volumes).of_type(Array) }
   it { should have_fields(:network_settings, :state).of_type(Hash) }
   it { should have_fields(:finished_at, :started_at).of_type(Time) }
@@ -122,7 +122,7 @@ describe Container do
         subject.grid_service = grid_service
 
         grid_service.image.image_id = '12345'
-        subject.image_id = '1234567'
+        subject.image_version = '1234567'
         expect(subject.up_to_date?).to be_falsey
       end
     end
@@ -139,7 +139,7 @@ describe Container do
     context 'when image is not updated and container is created after last update of grid service' do
       it 'return false' do
         subject.grid_service = grid_service
-        subject.image_id = '12345'
+        subject.image_version = '12345'
         grid_service.timeless.updated_at = Time.now.utc - 3
         subject.created_at = Time.now.utc
         expect(subject.up_to_date?).to be_truthy

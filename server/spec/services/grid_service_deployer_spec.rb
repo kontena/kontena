@@ -38,7 +38,7 @@ describe GridServiceDeployer do
       it 'does not re-deploy it' do
         grid_service.image = ubuntu_trusty
         grid_service.save
-        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_id: ubuntu_trusty.image_id)
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id)
         allow(grid_service).to receive(:container_by_name).and_return(container)
         expect(subject).not_to receive(:remove_service_container).with(container)
         expect(subject).not_to receive(:create_service_container)
@@ -50,7 +50,7 @@ describe GridServiceDeployer do
       it 'deploys it' do
         grid_service.image = ubuntu_trusty
         grid_service.save
-        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_id: ubuntu_trusty.image_id)
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id)
         allow(container).to receive(:exists_on_node?).and_return(true)
         allow(grid_service).to receive(:container_by_name).and_return(container)
         grid_service.timeless.update_attribute(:updated_at, (Time.now.utc + 3 * 60))
