@@ -3,7 +3,7 @@ set -e
 
 [ -n "$WEAVE_DEBUG" ] && set -x
 
-SCRIPT_VERSION="1.0.1"
+SCRIPT_VERSION="(unreleased version)"
 if [ "$SCRIPT_VERSION" = "(unreleased version)" ] ; then
     IMAGE_VERSION=latest
 else
@@ -11,52 +11,84 @@ else
 fi
 IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
 
+# - Docker versions prior to 1.2.0 cannot parse `--dns-search=.`
+# - Docker versions prior to 1.3.0 fail to include the domain when
+#   setting the hostname, so lookups for non-fq names fail.
+# - Docker version 1.3.0 contains the severe bug
+#   https://github.com/docker/docker/issues/8632
+# - The weavexec image embeds a Docker 1.3.1 client. Misleading
+#   version mismatch errors are produced if the user is running with a
+#   client *and* server with a lower version.
+# - Docker will complain if you run a client against a server older
+#   than that client.
+#
+# We therefore check that the user's Docker *client* is >= 1.3.1
+MIN_DOCKER_VERSION=1.3.1
+
 # These are needed for remote execs, hence we introduce them here
 DOCKERHUB_USER=${DOCKERHUB_USER:-weaveworks}
 BASE_EXEC_IMAGE=$DOCKERHUB_USER/weaveexec
 EXEC_IMAGE=$BASE_EXEC_IMAGE:$IMAGE_VERSION
 PROXY_HOST=${PROXY_HOST:-$(echo "${DOCKER_HOST#tcp://}" | cut -s -d: -f1)}
 PROXY_HOST=${PROXY_HOST:-127.0.0.1}
+DOCKER_CLIENT_HOST=${DOCKER_CLIENT_HOST:-$DOCKER_HOST}
+DOCKER_CLIENT_TLS_VERIFY=${DOCKER_CLIENT_TLS_VERIFY:-$DOCKER_TLS_VERIFY}
 
 # Define some regular expressions for matching addresses.
 # The regexp here is far from precise, but good enough.
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 CIDR_REGEXP="$IP_REGEXP/[0-9]{1,2}"
 
+usage_no_exit() {
+    cat >&2 <<EOF
+Usage:
+
+weave --help | help
+weave setup
+weave version
+weave launch        [--password <password>] [--nickname <nickname>]
+                      [--ipalloc-range <cidr> [--ipalloc-default-subnet <cidr>]]
+                      [--no-discovery] [--init-peer-count <count>] <peer> ...
+weave launch-router [--password <password>] [--nickname <nickname>]
+                      [--ipalloc-range <cidr> [--ipalloc-default-subnet <cidr>]]
+                      [--no-discovery] [--init-peer-count <count>] <peer> ...
+weave launch-proxy  [-H <endpoint>] [--with-dns | --without-dns]
+                      [--no-default-ipalloc] [--no-rewrite-hosts]
+                      [--hostname-match <regexp>]
+                      [--hostname-replacement <replacement>]
+weave env           [--restore]
+weave config
+weave connect       [--replace] [<peer> ...]
+weave forget        <peer> ...
+weave status        [targets | connections | peers | dns]
+weave report        [-f <format>]
+weave run           [--with-dns | --without-dns] [<addr> ...]
+                      <docker run args> ...
+weave start         [<addr> ...] <container_id>
+weave attach        [<addr> ...] <container_id>
+weave detach        [<addr> ...] <container_id>
+weave dns-add       <ip_address> [<ip_address> ...] <container_id> [-h <fqdn>]
+weave dns-remove    <ip_address> [<ip_address> ...] <container_id> [-h <fqdn>]
+weave dns-lookup    <unqualified_name>
+weave expose        [<addr> ...] [-h <fqdn>]
+weave hide          [<addr> ...]
+weave ps            [<container_id> ...]
+weave stop
+weave stop-router
+weave stop-proxy
+weave reset
+weave rmpeer        <peer_id>
+
+where <peer>     = <ip_address_or_fqdn>[:<port>]
+      <cidr>     = <ip_address>/<routing_prefix_length>
+      <addr>     = [ip:]<cidr> | net:<cidr> | net:default
+      <endpoint> = [tcp://][<ip_address>]:<port> | [unix://]/path/to/socket
+      <peer_id>  = <nickname> or weave internal peer ID
+EOF
+}
+
 usage() {
-    echo "Usage:"
-    echo "weave setup"
-    echo "weave launch       [-password <password>] [-nickname <nickname>] [-nodiscovery]"
-    echo "                       [-iprange <cidr> [-ipsubnet <cidr>]] <peer> ..."
-    echo "weave launch-dns   [<addr>]"
-    echo "weave launch-proxy [-D <endpoint>] [-H <endpoint>]"
-    echo "                       [--with-dns | --without-dns] [--no-default-ipam]"
-    echo "weave connect      [--replace] [<peer> ...]"
-    echo "weave forget       <peer> ..."
-    echo "weave run          [--with-dns | --without-dns] [<addr> ...] <docker run args> ..."
-    echo "weave start        [<addr> ...] <container_id>"
-    echo "weave attach       [<addr> ...] <container_id>"
-    echo "weave detach       [<addr> ...] <container_id>"
-    echo "weave dns-add      <ip_address> [<ip_address> ...] <container_id> [-h <fqdn>]"
-    echo "weave dns-remove   <ip_address> [<ip_address> ...] <container_id> [-h <fqdn>]"
-    echo "weave expose       [<addr> ...] [-h <fqdn>]"
-    echo "weave hide         [<addr> ...]"
-    echo "weave ps           [<container_id> ...]"
-    echo "weave status"
-    echo "weave proxy-env"
-    echo "weave proxy-config"
-    echo "weave version"
-    echo "weave stop"
-    echo "weave stop-dns"
-    echo "weave stop-proxy"
-    echo "weave reset"
-    echo "weave rmpeer       <peer_id>"
-    echo
-    echo "where <peer>     = <ip_address_or_fqdn>[:<port>]"
-    echo "      <cidr>     = <ip_address>/<routing_prefix_length>"
-    echo "      <addr>     = [ip:]<cidr> | net:<cidr> | net:default"
-    echo "      <endpoint> = [tcp://][<ip_address>]:<port>"
-    echo "      <peer_id>  = <nickname> or weave internal peer ID"
+    usage_no_exit
     exit 1
 }
 
@@ -69,14 +101,17 @@ exec_remote() {
         -e VERSION \
         -e WEAVE_DEBUG \
         -e WEAVE_DOCKER_ARGS \
-        -e WEAVEDNS_DOCKER_ARGS \
         -e WEAVEPROXY_DOCKER_ARGS \
         -e WEAVE_PASSWORD \
         -e WEAVE_PORT \
         -e WEAVE_CONTAINER_NAME \
         -e DOCKER_BRIDGE \
+        -e DOCKER_CLIENT_HOST="$DOCKER_CLIENT_HOST" \
+        -e DOCKER_CLIENT_TLS_VERIFY="$DOCKER_CLIENT_TLS_VERIFY" \
+        -e DOCKER_CLIENT_ARGS \
         -e PROXY_HOST="$PROXY_HOST" \
         -e WEAVE_CIDR=none \
+        -e COVERAGE \
         $WEAVEEXEC_DOCKER_ARGS $EXEC_IMAGE --local "$@"
 }
 
@@ -86,10 +121,37 @@ check_docker_version() {
         exit 1
     fi
 
-    # guard against https://github.com/docker/docker/issues/8632
-    if [ "$DOCKER_VERSION" = "1.3.0" ] ; then
-        echo "You are running Docker version $DOCKER_VERSION, which contains a bug that prevents weave from working properly. Please upgrade." >&2
+    DOCKER_VERSION_MAJOR=$(echo "$DOCKER_VERSION" | cut -d. -f 1)
+    DOCKER_VERSION_MINOR=$(echo "$DOCKER_VERSION" | cut -d. -f 2)
+    DOCKER_VERSION_PATCH=$(echo "$DOCKER_VERSION" | cut -d. -f 3)
+
+    MIN_DOCKER_VERSION_MAJOR=$(echo "$MIN_DOCKER_VERSION" | cut -d. -f 1)
+    MIN_DOCKER_VERSION_MINOR=$(echo "$MIN_DOCKER_VERSION" | cut -d. -f 2)
+    MIN_DOCKER_VERSION_PATCH=$(echo "$MIN_DOCKER_VERSION" | cut -d. -f 3)
+
+    if [ \( "$DOCKER_VERSION_MAJOR" -lt "$MIN_DOCKER_VERSION_MAJOR" \) -o \
+        \( "$DOCKER_VERSION_MAJOR" -eq "$MIN_DOCKER_VERSION_MAJOR" -a \
+        \( "$DOCKER_VERSION_MINOR" -lt "$MIN_DOCKER_VERSION_MINOR" -o \
+        \( "$DOCKER_VERSION_MINOR" -eq "$MIN_DOCKER_VERSION_MINOR" -a \
+        \( "$DOCKER_VERSION_PATCH" -lt "$MIN_DOCKER_VERSION_PATCH" \) \) \) \) ] ; then
+        echo "ERROR: weave requires Docker version $MIN_DOCKER_VERSION or later; you are running $DOCKER_VERSION" >&2
         exit 1
+    fi
+}
+
+enforce_docker_bridge_addr_assign_type() {
+    if ! ADDR_ASSIGN_TYPE=$(cat /sys/class/net/$DOCKER_BRIDGE/addr_assign_type 2>/dev/null) ; then
+        echo "Could not determine address assignment type of $DOCKER_BRIDGE" >&2
+        return
+    fi
+    # From include/uapi/linux/netdevice.h
+    # #define NET_ADDR_PERM       0   /* address is permanent (default) */
+    # #define NET_ADDR_RANDOM     1   /* address is generated randomly */
+    # #define NET_ADDR_STOLEN     2   /* address is stolen from other device */
+    # #define NET_ADDR_SET        3   /* address is set using dev_set_mac_address() */
+    if [ $ADDR_ASSIGN_TYPE != 3 ] ; then
+        echo "Setting $DOCKER_BRIDGE MAC (mitigate https://github.com/docker/docker/issues/14908)" >&2
+        ip link set dev $DOCKER_BRIDGE address $(random_mac) || true
     fi
 }
 
@@ -122,56 +184,75 @@ collect_ip_args() {
 }
 
 dns_arg_count() {
-    if [ "$1" = "--with-dns" -o "$1" = "--without-dns" ]; then
+    if [ "$1" = "--with-dns" -o "$1" = "--without-dns" ] ; then
         echo 1
     else
         echo 0
     fi
 }
 
-# "run" is a special case because we want to use docker directly,
-# rather than the docker in $EXEC_IMAGE remotely. That's because we
-# are passing arbitrary arguments on to docker run, and we can't rely
-# on our baked-in docker to support those arguments.
-if [ "$1" = "run" ] ; then
+check_docker_version
+
+if [ "$1" = "--local" ] ; then
     shift 1
-    check_docker_version
+    IS_LOCAL=1
+fi
+
+if [ "$1" = "--help" -o "$1" = "help" ] ; then
+    # "--help|help" are special because we always want to process them
+    # at the client end.
+    usage_no_exit
+    exit 0
+elif [ "$1" = "env" -a "$2" = "--restore" ] ; then
+    # "env --restore" is special because we always want to process it
+    # at the client end.
+    if [ "${ORIG_DOCKER_HOST-unset}" = "unset" ] ; then
+        echo "Nothing to restore. This is most likely because there was no preceding invocation of 'eval \$(weave env)' in this shell." >&2
+        exit 1
+    else
+        echo "DOCKER_HOST=$ORIG_DOCKER_HOST"
+        exit 0
+    fi
+elif [ "$1" = "run" -a -z "$IS_LOCAL" ] ; then
+    # non-local "run" is a special case because we want to use docker
+    # directly, rather than the docker in $EXEC_IMAGE remotely. That's
+    # because we are passing arbitrary arguments on to docker run, and
+    # we can't rely on our baked-in docker to support those arguments.
+    shift 1
     if [ "$1" != "--without-dns" ] ; then
-      DNS_ARGS=$(exec_remote dns-args "$@" || true)
+        DNS_ARGS=$(exec_remote dns-args "$@" || true)
     fi
     shift $(dns_arg_count "$@")
     collect_cidr_args "$@"
     shift $CIDR_ARG_COUNT
-    CONTAINER=$(docker $DOCKER_CLIENT_ARGS run $DNS_ARGS -d "$@")
-    exec_remote attach $CIDR_ARGS --or-die $CONTAINER
+    CONTAINER=$(docker $DOCKER_CLIENT_ARGS run -e WEAVE_CIDR=none $DNS_ARGS -d "$@")
+    exec_remote attach $CIDR_ARGS --or-die $CONTAINER >/dev/null
     echo $CONTAINER
     exit 0
-elif [ "$1" != "--local" ] ; then
+fi
+
+if [ -z "$IS_LOCAL" ] ; then
     exec_remote "$@"
     exit $?
 fi
 
-shift 1
-
 BASE_IMAGE=$DOCKERHUB_USER/weave
-BASE_DNS_IMAGE=$DOCKERHUB_USER/weavedns
 IMAGE=$BASE_IMAGE:$IMAGE_VERSION
-DNS_IMAGE=$BASE_DNS_IMAGE:$IMAGE_VERSION
 
 PROCFS=${PROCFS:-/proc}
 DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
 CONTAINER_NAME=${WEAVE_CONTAINER_NAME:-weave}
-DNS_CONTAINER_NAME=weavedns
 BRIDGE=weave
 CONTAINER_IFNAME=ethwe
 MTU=65535
 PORT=${WEAVE_PORT:-6783}
 HTTP_PORT=6784
-DNS_HTTP_PORT=6785
-DNS_HTTP_IFNAME=eth0
 PROXY_PORT=12375
 PROXY_CONTAINER_NAME=weaveproxy
-
+COVERAGE_ARGS=""
+if [ -n "$COVERAGE" ] ; then
+    COVERAGE_ARGS="-test.coverprofile=/home/weave/cover.prof --"
+fi
 
 ######################################################################
 # general helpers; independent of docker and weave
@@ -181,6 +262,21 @@ PROXY_CONTAINER_NAME=weaveproxy
 # see http://stackoverflow.com/questions/592620/how-to-check-if-a-program-exists-from-a-bash-script
 command_exists() {
     command -v $1 >/dev/null 2>&1
+}
+
+fractional_sleep() {
+    case $1 in
+        *.*)
+            if [ -z "$NO_FRACTIONAL_SLEEP" ] ; then
+                sleep $1 >/dev/null 2>&1 && return 0
+                NO_FRACTIONAL_SLEEP=1
+            fi
+            sleep $((${1%.*} + 1))
+            ;;
+        *)
+            sleep $1
+            ;;
+    esac
 }
 
 run_iptables() {
@@ -223,7 +319,7 @@ configure_arp_cache() {
 }
 
 # Send out an unsolicated ARP response to update ARP cache entries
-# accross the weave network.  We do this in addition to
+# across the weave network.  We do this in addition to
 # configure_arp_cache because a) with those ARP cache settings it
 # still takes a few seconds to correct a stale ARP mapping, and b)
 # there is a kernel bug that means that the base_reachable_time
@@ -359,7 +455,7 @@ netnsenter() {
 }
 
 connect_container_to_bridge() {
-    if [ -h "$PROCFS/$CONTAINER_PID/ns/net" -a -h "$PROCFS/$$/ns/net" -a "$(readlink $PROCFS/$CONTAINER_PID/ns/net)" = "$(readlink $PROCFS/$$/ns/net)" ] ; then
+    if [ -h "$PROCFS/$CONTAINER_PID/ns/net" -a -h "/proc/$$/ns/net" -a "$(readlink $PROCFS/$CONTAINER_PID/ns/net)" = "$(readlink /proc/$$/ns/net)" ] ; then
         echo "Container is running in the host network namespace, and therefore cannot be" >&2
         echo "connected to weave. Perhaps the container was started with --net=host." >&2
         return 1
@@ -388,7 +484,11 @@ ask_version() {
                 echo "Unable to find $2 image." >&2
             fi
     fi
-    [ -n "$DOCKERIMAGE" ] && docker run --rm -e WEAVE_CIDR=none $DOCKERIMAGE --version
+    VERSION_COVERAGE_ARGS=""
+    if [ "$1" = "$CONTAINER_NAME" ] || [ "$1" == "$PROXY_CONTAINER_NAME"]  ; then
+        VERSION_COVERAGE_ARGS="$COVERAGE_ARGS"
+    fi
+    [ -n "$DOCKERIMAGE" ] && docker run --rm -e WEAVE_CIDR=none $DOCKERIMAGE $VERSION_COVERAGE_ARGS --version
 }
 
 ######################################################################
@@ -433,7 +533,9 @@ attach() {
         netnsenter ip route add 224.0.0.0/4 dev $CONTAINER_IFNAME
     fi
 
-    arp_update $CONTAINER_IFNAME $1 "netnsenter"
+    for ADDR in "$@" ; do
+        arp_update $CONTAINER_IFNAME $ADDR "netnsenter"
+    done
 }
 
 detach() {
@@ -566,10 +668,6 @@ call_weave() {
     http_call $CONTAINER_NAME $HTTP_PORT "$@"
 }
 
-call_dns() {
-    http_call $DNS_CONTAINER_NAME $DNS_HTTP_PORT "$@"
-}
-
 death_msg() {
     echo "The $1 container has died. Consult the logs with 'docker logs $1' for further details."
 }
@@ -585,7 +683,7 @@ wait_for_status() {
             echo "$err_msg" >&2
             return 1
         fi
-        sleep 1
+        fractional_sleep 0.1
     done
 }
 
@@ -593,7 +691,7 @@ wait_for_status() {
 wait_for_log() {
     fifo=/tmp/tmpfifo.$$
     mkfifo $fifo || exit 1
-    docker logs -f $1 2>/dev/null >$fifo &
+    docker logs -f $1 >$fifo 2>&1 &
     res=0
     grep -q "$2" $fifo || res=1
     kill $! 2>/dev/null || true
@@ -640,22 +738,12 @@ peer_args() {
 
 # Memoized function to query the weaveDNS server for our dns domain.
 dns_domain() {
-  DNS_DOMAIN=${DNS_DOMAIN:-$(call_dns GET /domain 2>/dev/null || true)}
+  DNS_DOMAIN=${DNS_DOMAIN:-$(call_weave GET /domain 2>/dev/null || true)}
   DNS_DOMAIN=${DNS_DOMAIN:-weave.local.}
   echo $DNS_DOMAIN
 }
 
 dns_args() {
-    if [ \( "$DOCKER_VERSION_MAJOR" -lt 1 \) -o \
-        \( "$DOCKER_VERSION_MAJOR" -eq 1 -a \
-        "$DOCKER_VERSION_MINOR" -lt 3 \) ] ; then
-        # Versions prior to 1.2.0 cannot parse `--dns-search=.`, and
-        # versions prior to 1.3.0 fail to include the domain when
-        # setting the hostname, so lookups for non-fully-qualified
-        # names fail.
-        echo "ERROR: Need Docker 1.3.0 or later to configure container DNS; you are running $DOCKER_VERSION" >&2
-        exit 1
-    fi
     docker_bridge_ip
     NAME_ARG=""
     HOSTNAME_SPECIFIED=
@@ -664,8 +752,11 @@ dns_args() {
     WITHOUT_DNS=
     while [ $# -gt 0 ] ; do
         case "$1" in
-            --dns-search=*)
-                DNS_SEARCH_SPECIFIED=1
+            --with-dns)
+                WITH_DNS=1
+                ;;
+            --without-dns)
+                WITHOUT_DNS=1
                 ;;
             --name)
                 NAME_ARG="$2"
@@ -677,24 +768,23 @@ dns_args() {
             -h|--hostname|--hostname=*)
                 HOSTNAME_SPECIFIED=1
                 ;;
-            --with-dns)
-                WITH_DNS=1
-                ;;
-            --without-dns)
-                WITHOUT_DNS=1
+            --dns-search|--dns-search=*)
+                DNS_SEARCH_SPECIFIED=1
                 ;;
         esac
         shift
     done
     [ -n "$WITHOUT_DNS" ] && return 0
-    if [ -z "$WITH_DNS" ] ; then
-        check_running $DNS_CONTAINER_NAME 2>/dev/null || return 0
-    fi
     DNS_ARGS="--dns $DOCKER_BRIDGE_IP"
     if [ -n "$NAME_ARG" -a -z "$HOSTNAME_SPECIFIED" ] ; then
         DOMAIN=$(dns_domain)
-        DNS_ARGS="$DNS_ARGS --hostname=$NAME_ARG.${DOMAIN%.}"
-        HOSTNAME_SPECIFIED=1
+        HOSTNAME="$NAME_ARG.${DOMAIN%.}"
+        if [ ${#HOSTNAME} -gt 64 ] ; then
+            echo "Container name too long to be used as hostname" >&2
+        else
+            DNS_ARGS="$DNS_ARGS --hostname=$HOSTNAME"
+            HOSTNAME_SPECIFIED=1
+        fi
     fi
     if [ -z "$DNS_SEARCH_SPECIFIED" ] ; then
       if [ -z "$HOSTNAME_SPECIFIED" ] ; then
@@ -708,7 +798,7 @@ dns_args() {
 # Print an error to stderr and return with an indicative exit status
 # if the container $1 does not exist or isn't running.
 check_running() {
-    if ! STATUS=$(docker inspect --format='{{.State.Running}}' $1 2>/dev/null); then
+    if ! STATUS=$(docker inspect --format='{{.State.Running}}' $1 2>/dev/null) ; then
         echo  "$1 container is not present. Have you launched it?" >&2
         return 1
     elif [ "$STATUS" != "true" ] ; then
@@ -717,9 +807,9 @@ check_running() {
     fi
 }
 
-# Execute $@ only if the weaveDNS container is running
-when_dns_running() {
-    if check_running $DNS_CONTAINER_NAME 2>/dev/null; then
+# Execute $@ only if the weave container is running
+when_weave_running() {
+    if check_running $CONTAINER_NAME 2>/dev/null ; then
         "$@"
     fi
 }
@@ -741,12 +831,17 @@ with_container_fqdn() {
 
 # Register FQDN in $2 as names for addresses $3.. under full container ID $1
 put_dns_fqdn() {
+    CHECK_ALIVE="-d check-alive=true"
+    if [ "$1" = "--no-check-alive" ] ; then
+        CHECK_ALIVE=
+        shift 1
+    fi
     CONTAINER_ID="$1"
     FQDN="$2"
     shift 2
 
     for ADDR in "$@" ; do
-        call_dns PUT /name/$CONTAINER_ID/${ADDR%/*} --data-urlencode fqdn=$FQDN || true
+        call_weave PUT /name/$CONTAINER_ID/${ADDR%/*} --data-urlencode fqdn=$FQDN $CHECK_ALIVE || true
     done
 }
 
@@ -756,7 +851,7 @@ delete_dns() {
     shift 1
 
     for ADDR in "$@" ; do
-        call_dns DELETE /name/$CONTAINER_ID/${ADDR%/*} || true
+        call_weave DELETE /name/$CONTAINER_ID/${ADDR%/*} || true
     done
 }
 
@@ -767,20 +862,7 @@ delete_dns_fqdn() {
     shift 2
 
     for ADDR in "$@" ; do
-        call_dns DELETE /name/$CONTAINER_ID/${ADDR%/*}?fqdn=$FQDN || true
-    done
-}
-
-# Tell the newly-started weaveDNS about existing weave IPs
-populate_dns() {
-    if ! wait_for_status $DNS_CONTAINER_NAME $DNS_HTTP_PORT ; then
-        echo "If running, it will not be pre-populated." >&2
-        return 0
-    fi
-    for CONTAINER in $(docker ps -q --no-trunc) ; do
-        if CONTAINER_IPS=$(with_container_netns $CONTAINER container_weave_addrs 2>&1 | sed -n -e 's/inet \([^/]*\)\/\(.*\)/\1/p') ; then
-            with_container_fqdn $CONTAINER put_dns_fqdn $CONTAINER_IPS
-        fi
+        call_weave DELETE /name/$CONTAINER_ID/${ADDR%/*}?fqdn=$FQDN || true
     done
 }
 
@@ -790,10 +872,10 @@ populate_dns() {
 
 # Claim addresses for a container in IPAM.  Expects to be called from
 # with_container_addresses.
-ipam_claim() {
+ipam_reclaim() {
     for CIDR in $3 ; do
         # NB: CONTAINER_IP is the IP of the weave container; it is set by wait_for_status.
-        http_call_ip $CONTAINER_IP $HTTP_PORT PUT /ip/$1/${CIDR%/*}
+        http_call_ip $CONTAINER_IP $HTTP_PORT PUT /ip/$1/${CIDR%/*}?noErrorOnUnknown=true
     done
 }
 
@@ -801,15 +883,18 @@ ipam_claim() {
 # $1 is the full container id and following args are previously parsed CIDR_ARGS.
 # Returns ALL_CIDRS and IPAM_CIDRS
 ipam_cidrs() {
+    CHECK_ALIVE="?check-alive=true"
+    if [ "$1" = "--no-check-alive" ] ; then
+        CHECK_ALIVE=
+        shift 1
+    fi
     CONTAINER_ID="$1"
     shift 1
     ALL_CIDRS=""
     IPAM_CIDRs=""
     if [ $# -eq 0 ] ; then
         # If no addresses passed in, get one in the default subnet
-        if ! IPAM_CIDRS=$(call_weave POST /ip/$CONTAINER_ID) ; then
-            return 1
-        fi
+        IPAM_CIDRS=$(call_weave POST /ip/$CONTAINER_ID$CHECK_ALIVE) || return 1
         if [ "$IPAM_CIDRS" = "404 page not found" ] ; then
             echo "No IP address supplied (use the -iprange option on 'weave launch' to enable IP address allocation)" >&2
             return 1
@@ -823,9 +908,7 @@ ipam_cidrs() {
             else
                 IPAM_URL=/ip/$CONTAINER_ID/"${1#net:}"
             fi
-            if ! CIDR=$(call_weave POST $IPAM_URL) ; then
-                return 1
-            fi
+            CIDR=$(call_weave POST $IPAM_URL$CHECK_ALIVE) || return 1
             if [ "$CIDR" = "404 page not found" ] ; then
                 echo "IP address allocation must be enabled to use 'net:'" >&2
                 return 1
@@ -837,6 +920,11 @@ ipam_cidrs() {
             IPAM_CIDRS="$IPAM_CIDRS $CIDR"
             ALL_CIDRS="$ALL_CIDRS $CIDR"
         else
+            # This is a plain IP address; warn if it clashes but carry on
+            command_exists netcheck && netcheck --ignore-iface=$BRIDGE $1 || true
+            if container_ip $CONTAINER_NAME 2>/dev/null ; then
+                http_call_ip $CONTAINER_IP $HTTP_PORT PUT /ip/$CONTAINER_ID/${1%/*} >&2
+            fi
             ALL_CIDRS="$ALL_CIDRS $1"
         fi
         shift 1
@@ -850,44 +938,85 @@ ipam_cidrs_or_die() {
     fi
 }
 
+show_addrs() {
+    addrs=
+    for cidr in "$@" ; do
+        addrs="$addrs ${cidr%/*}"
+    done
+    echo $addrs
+}
+
 ######################################################################
 # weave proxy helpers
 ######################################################################
 
+docker_client_args() {
+    CLIENT_TLS_ENABLED=""
+    [ -z "$DOCKER_CLIENT_TLS_VERIFY" ] || CLIENT_TLS_ENABLED=1
+    while [ $# -gt 0 ]; do
+        case "$1" in
+          -H|--host)
+            DOCKER_CLIENT_HOST="$2"
+            shift
+            ;;
+          -H=*|--host=*)
+            DOCKER_CLIENT_HOST="${1#*=}"
+            ;;
+          -tls|--tls|-tlsverify|--tlsverify)
+            CLIENT_TLS_ENABLED=1
+            ;;
+        esac
+        shift
+    done
+}
 
 # TODO: Handle relative paths for args
 # TODO: Handle args with spaces
 tls_arg() {
-    filename=${3:-$2}
-    PROXY_VOLUMES="$PROXY_VOLUMES -v $1:/home/weave/tls/$filename.pem"
-    PROXY_ARGS="$PROXY_ARGS --tls$2 /home/weave/tls/$filename.pem"
+    PROXY_VOLUMES="$PROXY_VOLUMES -v $2:/home/weave/tls/$3.pem:ro"
+    PROXY_ARGS="$PROXY_ARGS $1 /home/weave/tls/$3.pem"
 }
 
 proxy_args() {
     PROXY_VOLUMES=""
     PROXY_ARGS=""
+    PROXY_TLS_ENABLED=""
+    PROXY_HOST=""
     while [ $# -gt 0 ]; do
         case "$1" in
-          --tlscacert)
+          -H)
+            PROXY_HOST="$2"
+            PROXY_ARGS="$PROXY_ARGS $1 $2"
             shift
-            tls_arg "$1" cacert ca
+            ;;
+          -H=*)
+            PROXY_HOST="${1#*=}"
+            PROXY_ARGS="$PROXY_ARGS $1"
+            ;;
+          -tls|--tls|-tlsverify|--tlsverify)
+            PROXY_TLS_ENABLED=1
+            PROXY_ARGS="$PROXY_ARGS $1"
+            ;;
+          --tlscacert)
+            tls_arg "$1" "$2" ca
+            shift
             ;;
           --tlscacert=*)
-            tls_arg "${1#*=}" cacert ca
+            tls_arg "${1%%=*}" "${1#*=}" ca
             ;;
           --tlscert)
+            tls_arg "$1" "$2" cert
             shift
-            tls_arg "$1" cert
             ;;
           --tlscert=*)
-            tls_arg "${1#*=}" cert
+            tls_arg "${1%%=*}" "${1#*=}" cert
             ;;
           --tlskey)
+            tls_arg "$1" "$2" key
             shift
-            tls_arg "$1" key
             ;;
           --tlskey=*)
-            tls_arg "${1#*=}" key
+            tls_arg "${1%%=*}" "${1#*=}" key
             ;;
           *)
             PROXY_ARGS="$PROXY_ARGS $1"
@@ -895,19 +1024,183 @@ proxy_args() {
         esac
         shift
     done
+
+    if [ -z "$PROXY_HOST" -a -n "$CLIENT_TLS_ENABLED" -a -z "$PROXY_TLS_ENABLED" ] ; then
+      echo "When launching the proxy via TLS, -H and/or TLS options are required." >&2
+      exit 1
+    fi
+    if [ -z "$PROXY_HOST" ] ; then
+      case "$DOCKER_CLIENT_HOST" in
+        ""|unix://*)
+          PROXY_HOST="unix:///var/run/weave.sock"
+          ;;
+        *)
+          PROXY_HOST="tcp://0.0.0.0:12375"
+          ;;
+      esac
+      PROXY_ARGS="$PROXY_ARGS -H $PROXY_HOST"
+    fi
 }
 
 proxy_addr() {
-    if addr=$(docker logs $PROXY_CONTAINER_NAME 2>/dev/null | head -n3 | grep -oE "proxy listening on .*"); then
-      addr=${addr##* }
-      host=${addr%:*}
-      [ "$host" = "0.0.0.0" ] && host=$PROXY_HOST
-      port=${addr#*:}
-      echo "${1}tcp://${host:-$PROXY_HOST}:${port:-$PROXY_PORT}"
-      return 0
+    if addr=$(docker logs $PROXY_CONTAINER_NAME 2>&1 | head -n4 | grep -oE "proxy listening on .*") ; then
+      echo "${addr##* }" | sed "s/0.0.0.0/$PROXY_HOST/g"
+    else
+      echo "$PROXY_CONTAINER_NAME container is not present. Have you launched it?" >&2
+      return 1
     fi
-    echo  "$PROXY_CONTAINER_NAME container is not present. Have you launched it?" >&2
-    return 1
+}
+
+warn_if_stopping_proxy_in_env() {
+    if PROXY_ADDR=$(proxy_addr 2>/dev/null) ; then
+        [ "$PROXY_ADDR" != "$DOCKER_CLIENT_HOST" ] || echo "WARNING: It appears that your environment is configured to use the Weave Docker API proxy. Stopping it will break this and subsequent docker invocations. To restore your environment, run '\$(eval weave env --restore)'."
+    fi
+}
+
+######################################################################
+# launch helpers
+######################################################################
+
+common_launch_args() {
+    args=""
+    while [ $# -gt 0 ] ; do
+        case "$1" in
+            --log-level)
+                [ $# -gt 1 ] || usage
+                args="$args $1 $2"
+                shift
+                ;;
+            --log-level=*)
+                args="$args $1"
+                ;;
+        esac
+        shift
+    done
+    echo "$args"
+}
+
+launch_router() {
+    enforce_docker_bridge_addr_assign_type
+    create_bridge
+    docker_bridge_ip
+    # We set the router name to the bridge mac since that is
+    # stable across re-creations of the containers.
+    #
+    # TODO use the mac of one of the physical host interfaces
+    # (eth0, wlan0, etc) so the name becomes stable across host
+    # restarts.
+    PEERNAME=$(cat /sys/class/net/$BRIDGE/address)
+    # backward compatibility...
+    if is_cidr "$1" ; then
+        echo "WARNING: $1 parameter ignored; 'weave launch' no longer takes a CIDR as the first parameter" >&2
+        shift 1
+    fi
+    CONTAINER_PORT=$PORT
+    ARGS=""
+    IPRANGE=
+    IPRANGE_SPECIFIED=
+    DNS_PORT_MAPPING="-p $DOCKER_BRIDGE_IP:53:53/udp -p $DOCKER_BRIDGE_IP:53:53/tcp"
+    while [ $# -gt 0 ] ; do
+        case "$1" in
+            -password|--password)
+                [ $# -gt 1 ] || usage
+                WEAVE_PASSWORD="$2"
+                export WEAVE_PASSWORD
+                shift
+                ;;
+            --password=*)
+                WEAVE_PASSWORD="${1#*=}"
+                export WEAVE_PASSWORD
+                ;;
+            -port|--port)
+                [ $# -gt 1 ] || usage
+                CONTAINER_PORT="$2"
+                shift
+                ;;
+            --port=*)
+                CONTAINER_PORT="${1#*=}"
+                ;;
+            -iprange|--iprange|--ipalloc-range)
+                [ $# -gt 1 ] || usage
+                IPRANGE="$2"
+                IPRANGE_SPECIFIED=1
+                shift
+                ;;
+            --ipalloc-range=*)
+                IPRANGE="${1#*=}"
+                IPRANGE_SPECIFIED=1
+                ;;
+            --no-dns)
+                DNS_PORT_MAPPING=
+                ARGS="$ARGS $1"
+                ;;
+            *)
+                ARGS="$ARGS '$(echo "$1" | sed "s|'|'\"'\"'|g")'"
+                ;;
+        esac
+        shift
+    done
+    eval "set -- $ARGS"
+    if [ -z "$IPRANGE_SPECIFIED" ] ; then
+        IPRANGE="10.32.0.0/12"
+        if command_exists netcheck && ! netcheck --ignore-iface=$BRIDGE $IPRANGE ; then
+                echo "ERROR: Default --ipalloc-range $IPRANGE overlaps with existing route on host." >&2
+                echo "You must pick another range and set it on all hosts." >&2
+            exit 1
+            fi
+        else
+            if [ -n "$IPRANGE" ] && command_exists netcheck && ! netcheck --ignore-iface=$BRIDGE $IPRANGE ; then
+                echo "WARNING: Specified --ipalloc-range $IPRANGE overlaps with existing route on host." >&2
+                echo "Unless this is deliberate, you must pick another range and set it on all hosts." >&2
+        fi
+    fi
+    # Set WEAVE_DOCKER_ARGS in the environment in order to supply
+    # additional parameters, such as resource limits, to docker
+    # when launching the weave container.
+    ROUTER_CONTAINER=$(docker run --privileged -d --name=$CONTAINER_NAME \
+        -p $PORT:$CONTAINER_PORT/tcp -p $PORT:$CONTAINER_PORT/udp $DNS_PORT_MAPPING \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -e WEAVE_PASSWORD \
+        -e WEAVE_CIDR=none \
+        $WEAVE_DOCKER_ARGS $IMAGE $COVERAGE_ARGS --iface $CONTAINER_IFNAME --port $CONTAINER_PORT --name "$PEERNAME" --nickname "$(hostname)" --ipalloc-range "$IPRANGE" "$@")
+    with_container_netns_or_die $ROUTER_CONTAINER launch
+    wait_for_status $CONTAINER_NAME $HTTP_PORT
+    if [ -n "$IPRANGE" ] ; then
+        # Tell the newly-started weave IP allocator about existing weave IPs
+        with_container_addresses ipam_reclaim weave:expose $(docker ps -q --no-trunc)
+    fi
+    if [ -n "$DNS_PORT_MAPPING" ] ; then
+        # Tell the newly-started weaveDNS about existing weave IPs
+        for CONTAINER in $(docker ps -q --no-trunc) ; do
+            if CONTAINER_IPS=$(with_container_netns $CONTAINER container_weave_addrs 2>&1 | sed -n -e 's/inet \([^/]*\)\/\(.*\)/\1/p') ; then
+                with_container_fqdn $CONTAINER put_dns_fqdn $CONTAINER_IPS
+            fi
+        done
+    fi
+}
+
+launch_proxy() {
+    # Set WEAVEPROXY_DOCKER_ARGS in the environment in order to supply
+    # additional parameters, such as resource limits, to docker
+    # when launching the weaveproxy container.
+    docker_client_args $DOCKER_CLIENT_ARGS
+    proxy_args "$@"
+    HOSTS_PATH=$(docker run --rm \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      --entrypoint /bin/sh \
+      $EXEC_IMAGE -c 'docker inspect -f {{.HostsPath}} $(hostname)')
+    CONTAINERS_PATH="$(dirname $(dirname "$HOSTS_PATH"))"
+    PROXY_CONTAINER=$(docker run --privileged -d --name=$PROXY_CONTAINER_NAME --net=host \
+        $PROXY_VOLUMES \
+        -v "$CONTAINERS_PATH":"$CONTAINERS_PATH" \
+        -v /var/run:/var/run \
+        -v /proc:/hostproc \
+        -e PROCFS=/hostproc \
+        -e WEAVE_CIDR=none \
+        -e DOCKER_BRIDGE \
+        --entrypoint=/home/weave/weaveproxy \
+        $WEAVEPROXY_DOCKER_ARGS $EXEC_IMAGE $COVERAGE_ARGS $PROXY_ARGS)
+    wait_for_log $PROXY_CONTAINER_NAME "proxy listening"
 }
 
 ##########################################################################################
@@ -949,10 +1242,58 @@ if ! command_exists nsenter ; then
     exit 1
 fi
 
-check_docker_version
-DOCKER_VERSION_MAJOR=$(echo "$DOCKER_VERSION" | cut -d. -f 1)
-DOCKER_VERSION_MINOR=$(echo "$DOCKER_VERSION" | cut -d. -f 2)
-DOCKER_VERSION_PATCH=$(echo "$DOCKER_VERSION" | cut -d. -f 3)
+deprecation_warning() {
+    echo "Warning: ${1%=*} is deprecated; please use $2" >&2
+}
+
+deprecation_warnings() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -password|-password=*)
+                deprecation_warning $1 "--password"
+                [ "$1" == "-password" ] && shift
+                ;;
+            --password)
+                shift
+                ;;
+            -nickname|-nickname=*)
+                deprecation_warning $1 "--nickname"
+                [ "$1" == "-nickname" ] && shift
+                ;;
+            --nickname)
+                shift
+                ;;
+            -nodiscovery|--nodiscovery)
+                deprecation_warning $1 "--no-discovery"
+                ;;
+            -iprange|--iprange|-iprange=*|--iprange=*)
+                deprecation_warning $1 "--ipalloc-range"
+                [ ${1#--} == "iprange" ] && shift
+                ;;
+            --ipalloc-range)
+                shift
+                ;;
+            -ipsubnet|--ipsubnet|-ipsubnet=*|--ipsubnet=*)
+                deprecation_warning $1 "--ipalloc-default-subnet"
+                [ ${1#--} == "ipsubnet" ] && shift
+                ;;
+            --ipalloc-default-subnet)
+                shift
+                ;;
+            -initpeercount|--initpeercount|-initpeercount=*|--initpeercount=*)
+                deprecation_warning $1 "--init-peer-count"
+                [ ${1#--} == "initpeercount" ] && shift
+                ;;
+            --init-peer-count)
+                shift
+                ;;
+            -no-default-ipam|--no-default-ipam)
+                deprecation_warning $1 "--no-default-ipalloc"
+                ;;
+        esac
+        shift
+    done
+}
 
 [ $# -gt 0 ] || usage
 COMMAND=$1
@@ -960,160 +1301,14 @@ shift 1
 
 case "$COMMAND" in
     setup)
-        for img in $IMAGE $DNS_IMAGE $EXEC_IMAGE ; do
+        for img in $IMAGE $EXEC_IMAGE ; do
             docker pull $img
         done
-        ;;
-    # intentionally undocumented since it assumes knowledge of weave
-    # internals
-    create-bridge)
-        create_bridge --without-ethtool
-        ;;
-    launch)
-        check_not_running $CONTAINER_NAME $BASE_IMAGE
-        create_bridge
-        # We set the router name to the bridge mac since that is
-        # stable across re-creations of the containers.
-        #
-        # TODO use the mac of one of the physical host interfaces
-        # (eth0, wlan0, etc) so the name becomes stable across host
-        # restarts.
-        PEERNAME=$(cat /sys/class/net/$BRIDGE/address)
-        # backward compatibility...
-        if is_cidr "$1" ; then
-            echo "WARNING: $1 parameter ignored; 'weave launch' no longer takes a CIDR as the first parameter" >&2
-            shift 1
-        fi
-        CONTAINER_PORT=$PORT
-        ARGS=""
-        IPRANGE=
-        IPRANGE_SPECIFIED=
-        while [ $# -gt 0 ] ; do
-            case "$1" in
-                -password)
-                    [ $# -gt 1 ] || usage
-                    WEAVE_PASSWORD="$2"
-                    export WEAVE_PASSWORD
-                    shift 2
-                    ;;
-                -port)
-                    [ $# -gt 1 ] || usage
-                    CONTAINER_PORT="$2"
-                    shift 2
-                    ;;
-                -iprange)
-                    [ $# -gt 1 ] || usage
-                    IPRANGE="$2"
-                    IPRANGE_SPECIFIED=1
-                    shift 2
-                    ;;
-                *)
-                    ARGS="$ARGS '$(echo "$1" | sed "s|'|'\"'\"'|g")'"
-                    shift
-                    ;;
-            esac
-        done
-        eval "set -- $ARGS"
-        if [ -z "$IPRANGE_SPECIFIED" ] ; then
-            IPRANGE="10.128.0.0/10"
-            if command_exists netcheck && ! netcheck $IPRANGE ; then
-                echo "Default -iprange $IPRANGE overlaps with existing route." >&2
-                echo "Please pick another range and set it on all hosts." >&2
-                exit 1
-            fi
-        fi
-        # Set WEAVE_DOCKER_ARGS in the environment in order to supply
-        # additional parameters, such as resource limits, to docker
-        # when launching the weave container.
-        CONTAINER=$(docker run --privileged -d --name=$CONTAINER_NAME \
-            -p $PORT:$CONTAINER_PORT/tcp -p $PORT:$CONTAINER_PORT/udp \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -e WEAVE_PASSWORD \
-            -e WEAVE_CIDR=none \
-            $WEAVE_DOCKER_ARGS $IMAGE -iface $CONTAINER_IFNAME -port $CONTAINER_PORT -name "$PEERNAME" -nickname "$(hostname)" -iprange "$IPRANGE" "$@")
-        with_container_netns_or_die $CONTAINER launch
-        wait_for_status $CONTAINER_NAME $HTTP_PORT
-        if [ -n "$IPRANGE" ] ; then
-            # Tell the newly-started weave IP allocator about existing weave IPs
-            with_container_addresses ipam_claim weave:expose $(docker ps -q --no-trunc)
-        fi
-        echo $CONTAINER
-        ;;
-    launch-dns)
-        collect_cidr_args "$@"
-        [ $CIDR_ARG_COUNT -lt 2 ] || usage
-        shift $CIDR_ARG_COUNT
-        check_not_running $DNS_CONTAINER_NAME $BASE_DNS_IMAGE
-        create_bridge
-        docker_bridge_ip
-        # Set WEAVEDNS_DOCKER_ARGS in the environment in order to supply
-        # additional parameters, such as resource limits, to docker
-        # when launching the weave container.
-        DNS_CONTAINER=$(docker run --privileged -d --name=$DNS_CONTAINER_NAME \
-            -p $DOCKER_BRIDGE_IP:53:53/udp \
-            -e WEAVE_CIDR=none \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            $WEAVEDNS_DOCKER_ARGS $DNS_IMAGE -iface $CONTAINER_IFNAME -httpiface "$DNS_HTTP_IFNAME" "$@")
-        ipam_cidrs_or_die $DNS_CONTAINER $CIDR_ARGS
-        with_container_netns_or_die $DNS_CONTAINER attach $ALL_CIDRS
-        populate_dns
-        echo $DNS_CONTAINER
-        ;;
-    launch-proxy)
-        check_not_running $PROXY_CONTAINER_NAME $EXEC_IMAGE
-        # Set WEAVEPROXY_DOCKER_ARGS in the environment in order to supply
-        # additional parameters, such as resource limits, to docker
-        # when launching the weaveproxy container.
-        proxy_args "$@"
-        PROXY_CONTAINER=$(docker run --privileged -d --name=$PROXY_CONTAINER_NAME --net=host \
-            $PROXY_VOLUMES \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /proc:/hostproc \
-            -e PROCFS=/hostproc \
-            -e WEAVE_CIDR=none \
-            --entrypoint=/home/weave/weaveproxy \
-            $WEAVEPROXY_DOCKER_ARGS $EXEC_IMAGE $PROXY_ARGS)
-        wait_for_log $PROXY_CONTAINER_NAME "proxy listening"
-        echo $PROXY_CONTAINER
-        ;;
-    proxy-env)
-        proxy_addr "export DOCKER_HOST="
-        ;;
-    proxy-config)
-        proxy_addr "-H="
-        ;;
-    connect)
-        [ $# -gt 0 ] || usage
-        if [ "$1" == "--replace" ]; then
-          replace="-d replace=true"
-          shift
-        fi
-        call_weave POST /connect $replace -d $(peer_args "$@")
-        ;;
-    forget)
-        [ $# -gt 0 ] || usage
-        call_weave POST /forget -d $(peer_args "$@")
-        ;;
-    status)
-        res=0
-        call_weave GET /status || res=1
-        echo
-        call_dns GET /status 2>/dev/null || true
-        if check_running $PROXY_CONTAINER_NAME 2>/dev/null ; then
-            echo
-            echo "weave proxy is running"
-        fi
-        [ $res -eq 0 ]
-        ;;
-    ps)
-        [ $# -eq 0 ] && CONTAINERS="weave:expose $(docker ps -q)" || CONTAINERS="$@"
-        with_container_addresses echo_addresses $CONTAINERS
         ;;
     version)
         [ $# -eq 0 ] || usage
         echo weave script $SCRIPT_VERSION
         ask_version $CONTAINER_NAME $IMAGE || true
-        ask_version $DNS_CONTAINER_NAME $DNS_IMAGE || true
         if ! EXEC_IMAGE_ID=$(docker inspect --format='{{.Id}}' $EXEC_IMAGE 2>/dev/null) ; then
             echo "Unable to find $EXEC_IMAGE image." >&2
         else
@@ -1125,16 +1320,107 @@ case "$COMMAND" in
             fi
         fi
         ;;
+    # intentionally undocumented since it assumes knowledge of weave
+    # internals
+    create-bridge)
+        create_bridge --without-ethtool
+        ;;
+    launch)
+        deprecation_warnings "$@"
+        check_not_running $CONTAINER_NAME       $BASE_IMAGE
+        check_not_running $PROXY_CONTAINER_NAME $EXEC_IMAGE
+        COMMON_ARGS=$(common_launch_args "$@")
+        launch_router "$@"
+        launch_proxy  $COMMON_ARGS
+        ;;
+    launch-router)
+        deprecation_warnings "$@"
+        check_not_running $CONTAINER_NAME $BASE_IMAGE
+        launch_router "$@"
+        echo $ROUTER_CONTAINER
+        ;;
+    launch-proxy)
+        deprecation_warnings "$@"
+        check_not_running $PROXY_CONTAINER_NAME $EXEC_IMAGE
+        launch_proxy "$@"
+        echo $PROXY_CONTAINER
+        ;;
+    env|proxy-env)
+        [ "$COMMAND" = "env" ] || deprecation_warning "$COMMAND" "'weave env'"
+        if PROXY_ADDR=$(proxy_addr) ; then
+            echo "export DOCKER_HOST=$PROXY_ADDR ORIG_DOCKER_HOST=$DOCKER_CLIENT_HOST"
+        fi
+        ;;
+    config|proxy-config)
+        [ "$COMMAND" = "config" ] || deprecation_warning "$COMMAND" "'weave config'"
+        if PROXY_addr=$(proxy_addr) ; then
+            echo "-H=$PROXY_addr"
+        fi
+        ;;
+    connect)
+        [ $# -gt 0 ] || usage
+        if [ "$1" == "--replace" ] ; then
+          replace="-d replace=true"
+          shift
+        fi
+        call_weave POST /connect $replace -d $(peer_args "$@")
+        ;;
+    forget)
+        [ $# -gt 0 ] || usage
+        call_weave POST /forget -d $(peer_args "$@")
+        ;;
+    status)
+        res=0
+        SUB_STATUS=
+        STATUS_URL="/status"
+        SUB_COMMAND="$@"
+        while [ $# -gt 0 ] ; do
+            SUB_STATUS=1
+            STATUS_URL="$STATUS_URL/$1"
+            shift
+        done
+        [ -n "$SUB_STATUS" ] || echo
+        if status=$(call_weave GET $STATUS_URL) ; then
+            case "$status" in
+                "")
+                    ;;
+                "404 page not found")
+                    echo "Invalid 'weave status' sub-command: $SUB_COMMAND" >&2
+                    usage
+                    ;;
+                *)
+                    echo "$status"
+                    ;;
+            esac
+        else
+            res=1
+        fi
+        if [ -z "$SUB_STATUS" ] && check_running $PROXY_CONTAINER_NAME 2>/dev/null && PROXY_ADDR=$(proxy_addr) ; then
+            echo
+            echo "       Service: proxy"
+            echo "       Address: $PROXY_ADDR"
+        fi
+        [ -n "$SUB_STATUS" ] || echo
+        [ $res -eq 0 ]
+        ;;
+    report)
+        if [ $# -gt 0 ] ; then
+            [ $# -eq 2 -a "$1" = "-f" ] || usage
+            call_weave GET /report --get --data-urlencode "format=$2"
+        else
+            call_weave GET /report -H 'Accept: application/json'
+        fi
+        ;;
     run)
         dns_args "$@"
         shift $(dns_arg_count "$@")
         collect_cidr_args "$@"
         shift $CIDR_ARG_COUNT
-        CONTAINER=$(docker run $DNS_ARGS -d "$@")
+        CONTAINER=$(docker run -e WEAVE_CIDR=none $DNS_ARGS -d "$@")
         create_bridge
         ipam_cidrs_or_die $CONTAINER $CIDR_ARGS
         with_container_netns_or_die $CONTAINER attach $ALL_CIDRS
-        when_dns_running with_container_fqdn $CONTAINER put_dns_fqdn $ALL_CIDRS
+        when_weave_running with_container_fqdn $CONTAINER put_dns_fqdn $ALL_CIDRS
         echo $CONTAINER
         ;;
     dns-args)
@@ -1154,13 +1440,13 @@ case "$COMMAND" in
         create_bridge
         ipam_cidrs_or_die $CONTAINER $CIDR_ARGS
         with_container_netns_or_die $CONTAINER attach $ALL_CIDRS
-        when_dns_running with_container_fqdn $CONTAINER put_dns_fqdn $ALL_CIDRS
+        when_weave_running with_container_fqdn $CONTAINER put_dns_fqdn $ALL_CIDRS
         echo $RES
         ;;
     attach)
         collect_cidr_args "$@"
         shift $CIDR_ARG_COUNT
-        if [ "$1" = "--or-die" ]; then
+        if [ "$1" = "--or-die" ] ; then
           ATTACH_TYPE="_or_die"
           shift
         fi
@@ -1169,7 +1455,8 @@ case "$COMMAND" in
         create_bridge
         ipam_cidrs$ATTACH_TYPE $CONTAINER $CIDR_ARGS
         with_container_netns$ATTACH_TYPE $CONTAINER attach $ALL_CIDRS >/dev/null
-        when_dns_running with_container_fqdn $CONTAINER put_dns_fqdn $ALL_CIDRS
+        when_weave_running with_container_fqdn $CONTAINER put_dns_fqdn $ALL_CIDRS
+        show_addrs $ALL_CIDRS
         ;;
     detach)
         collect_cidr_args "$@"
@@ -1178,16 +1465,17 @@ case "$COMMAND" in
         CONTAINER=$(container_id $1)
         ipam_cidrs $CONTAINER $CIDR_ARGS
         with_container_netns $CONTAINER detach $ALL_CIDRS >/dev/null
-        when_dns_running with_container_fqdn $CONTAINER delete_dns_fqdn $ALL_CIDRS
+        when_weave_running with_container_fqdn $CONTAINER delete_dns_fqdn $ALL_CIDRS
         for CIDR in $IPAM_CIDRS ; do
             call_weave DELETE /ip/$CONTAINER/${CIDR%/*}
         done
+        show_addrs $ALL_CIDRS
         ;;
     dns-add)
         collect_ip_args "$@"
         shift $IP_COUNT
         [ $IP_COUNT -gt 0 -a \( $# -eq 1 -o \( $# -eq 3 -a "$2" = "-h" \) \) ] || usage
-        check_running $DNS_CONTAINER_NAME
+        check_running $CONTAINER_NAME
         CONTAINER=$(container_id $1)
         if [ $# -eq 1 ] ; then
             with_container_fqdn $CONTAINER put_dns_fqdn $IP_ARGS
@@ -1199,7 +1487,7 @@ case "$COMMAND" in
         collect_ip_args "$@"
         shift $IP_COUNT
         [ $IP_COUNT -gt 0 -a \( $# -eq 1 -o \( $# -eq 3 -a "$2" = "-h" \) \) ] || usage
-        check_running $DNS_CONTAINER_NAME
+        check_running $CONTAINER_NAME
         CONTAINER=$(container_id $1)
         if [ $# -eq 1 ] ; then
             delete_dns $CONTAINER $IP_ARGS
@@ -1207,10 +1495,15 @@ case "$COMMAND" in
             delete_dns_fqdn $CONTAINER "$3" $IP_ARGS
         fi
         ;;
+    dns-lookup)
+        [ $# -eq 1 ] || usage
+        docker_bridge_ip
+        dig @$DOCKER_BRIDGE_IP +short $1
+        ;;
     expose)
         collect_cidr_args "$@"
         shift $CIDR_ARG_COUNT
-        ipam_cidrs weave:expose $CIDR_ARGS
+        ipam_cidrs --no-check-alive weave:expose $CIDR_ARGS
         if [ $# -eq 0 ] ; then
             FQDN=""
         else
@@ -1225,45 +1518,55 @@ case "$COMMAND" in
                 add_iptables_rule nat WEAVE -d $CIDR ! -s $CIDR -j MASQUERADE
                 add_iptables_rule nat WEAVE -s $CIDR ! -d $CIDR -j MASQUERADE
                 if [ -n "$FQDN" ] ; then
-                    when_dns_running put_dns_fqdn 'weave:expose' $FQDN $CIDR
+                    when_weave_running put_dns_fqdn --no-check-alive weave:expose $FQDN $CIDR
                 fi
             fi
         done
+        show_addrs $ALL_CIDRS
         ;;
     hide)
         collect_cidr_args "$@"
         shift $CIDR_ARG_COUNT
-        ipam_cidrs weave:expose $CIDR_ARGS
+        ipam_cidrs --no-check-alive weave:expose $CIDR_ARGS
         create_bridge --without-ethtool
         for CIDR in $ALL_CIDRS ; do
             if ip addr show dev $BRIDGE | grep -qF $CIDR ; then
                 ip addr del dev $BRIDGE $CIDR
                 delete_iptables_rule nat WEAVE -d $CIDR ! -s $CIDR -j MASQUERADE
                 delete_iptables_rule nat WEAVE -s $CIDR ! -d $CIDR -j MASQUERADE
-                when_dns_running delete_dns 'weave:expose' $CIDR
+                when_weave_running delete_dns weave:expose $CIDR
             fi
         done
         for CIDR in $IPAM_CIDRS ; do
             call_weave DELETE /ip/weave:expose/${CIDR%/*}
         done
+        show_addrs $ALL_CIDRS
+        ;;
+    ps)
+        [ $# -eq 0 ] && CONTAINERS="weave:expose $(docker ps -q)" || CONTAINERS="$@"
+        with_container_addresses echo_addresses $CONTAINERS
         ;;
     stop)
+        [ $# -eq 0 ] || usage
+        warn_if_stopping_proxy_in_env
+        stop $PROXY_CONTAINER_NAME "Proxy"
+        stop $CONTAINER_NAME       "Weave"
+        conntrack -D -p udp --dport $PORT >/dev/null 2>&1 || true
+        ;;
+    stop-router)
         [ $# -eq 0 ] || usage
         stop $CONTAINER_NAME "Weave"
         conntrack -D -p udp --dport $PORT >/dev/null 2>&1 || true
         ;;
-    stop-dns)
-        [ $# -eq 0 ] || usage
-        stop $DNS_CONTAINER_NAME "WeaveDNS"
-        ;;
     stop-proxy)
         [ $# -eq 0 ] || usage
+        warn_if_stopping_proxy_in_env
         stop $PROXY_CONTAINER_NAME "Proxy"
         ;;
     reset)
         [ $# -eq 0 ] || usage
         call_weave DELETE /peer >/dev/null 2>&1 || true
-        for NAME in $CONTAINER_NAME $DNS_CONTAINER_NAME $PROXY_CONTAINER_NAME ; do
+        for NAME in $CONTAINER_NAME $PROXY_CONTAINER_NAME ; do
             docker stop  $NAME >/dev/null 2>&1 || true
             docker rm -f $NAME >/dev/null 2>&1 || true
         done
@@ -1277,6 +1580,14 @@ case "$COMMAND" in
         [ $# -eq 1 ] || usage
         PEER=$1
         call_weave DELETE /peer/$PEER
+        ;;
+    launch-dns)
+        echo "The 'launch-dns' command has been removed; DNS is launched as part of 'launch' and 'launch-router'." >&2
+        exit 0
+        ;;
+    stop-dns)
+        echo "The 'stop-dns command has been removed; DNS is stopped as part of 'stop' and 'stop-router'." >&2
+        exit 0
         ;;
     *)
         echo "Unknown weave command '$COMMAND'" >&2
