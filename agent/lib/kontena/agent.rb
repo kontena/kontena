@@ -5,8 +5,6 @@ module Kontena
       @opts = opts
 
       @queue_worker = Kontena::QueueWorker.new
-      @dns_server = Kontena::DnsServer.new
-      @dns_registrator = Kontena::DnsRegistrator.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
       @container_info_worker = Kontena::ContainerInfoWorker.new(@queue_worker.queue)
       @log_worker = Kontena::LogWorker.new(@queue_worker.queue)
@@ -18,8 +16,7 @@ module Kontena
     def start!
       start_em
 
-      @dns_server.start!
-      @dns_registrator.start!
+      @weave_attacher.start!
       @client.connect
       @container_info_worker.start!
       @log_worker.start!

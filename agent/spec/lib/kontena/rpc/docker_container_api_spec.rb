@@ -17,7 +17,7 @@ describe Kontena::Rpc::DockerContainerApi do
     it 'sets entrypoint to weavewait' do
       expect(Docker::Container).to receive(:create).with({
         'Image' => 'nginx:latest',
-        'Entrypoint' => ['/w/w'],
+        'Entrypoint' => ['/w/w', '-s'],
         'Cmd' => image.info['Config']['Cmd']
       }).and_return(spy(:container))
       opts = {

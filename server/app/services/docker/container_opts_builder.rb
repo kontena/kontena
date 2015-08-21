@@ -79,7 +79,10 @@ module Docker
     # @return [Hash]
     def self.build_labels(grid_service, container)
       labels = {
-        'io.kontena.service.id' => grid_service.id.to_s
+        'io.kontena.container.name' => container.name,
+        'io.kontena.service.id' => grid_service.id.to_s,
+        'io.kontena.service.name' => grid_service.name.to_s,
+        'io.kontena.grid.name' => grid_service.grid.name
       }
       labels
     end

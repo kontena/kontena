@@ -24,7 +24,8 @@ module Docker
         grid: self.grid_service.grid,
         name: name,
         image: self.grid_service.image,
-        deploy_rev: deploy_rev
+        deploy_rev: deploy_rev,
+        overlay_cidr: SecureRandom.hex(32)
       )
       ContainerOverlayConfig.reserve_overlay_cidr(self.grid_service, container)
       docker_opts = ContainerOptsBuilder.build_opts(self.grid_service, container)

@@ -21,4 +21,3 @@ sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--insecure-registry='10.81.0.0/19'\"
 
 /usr/local/bin/weave setup
 /sbin/start kontena-weave || true
-/sbin/start kontena-weave-helper || true

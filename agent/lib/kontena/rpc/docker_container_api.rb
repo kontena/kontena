@@ -24,7 +24,7 @@ module Kontena
         container = Docker::Container.create(opts)
         container.json
       rescue Docker::Error::DockerError => exc
-        raise RpcServer::Error.new(400, "Cannot create container #{opts['name']}", exc.backtrace)
+        raise RpcServer::Error.new(400, "Cannot create container #{opts}", exc.backtrace)
       end
 
       ##

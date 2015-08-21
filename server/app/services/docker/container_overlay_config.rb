@@ -8,7 +8,7 @@ module Docker
       return unless grid_service.grid
 
       grid_service.grid.available_overlay_ips.shuffle.each do |ip|
-        next if ip[-2..-1] == '.0'
+        next if ip[-2..-1] == '.0' || ip[-4..-1] == '.255'
         begin
           container.set(overlay_cidr: "#{ip}/#{grid_service.grid.overlay_network_size}")
           break
