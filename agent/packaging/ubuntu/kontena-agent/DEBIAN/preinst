@@ -2,4 +2,16 @@
 set -e
 
 /sbin/stop kontena-agent || true
-/sbin/stop kontena-cadvisor || true
+if [ -f /etc/init/kontena-cadvisor.conf ]; then
+  /sbin/stop kontena-cadvisor || true
+  /usr/bin/docker rm -f kontena-cadvisor
+fi
+if [ -f /etc/init/kontena-etcd.conf ]; then
+  /sbin/stop kontena-etcd || true
+fi
+if [ -f /etc/init/kontena-weave.conf ]; then
+  /sbin/stop kontena-weave || true
+fi
+if [ -f /etc/init/kontena-weave-helper.conf ]; then
+  /sbin/stop kontena-weave-helper || true
+fi

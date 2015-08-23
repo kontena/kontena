@@ -3,3 +3,6 @@
 
 # Set kontena token
 #KONTENA_TOKEN=
+
+# kontena peer interface (overlay network interface)
+KONTENA_PEER_INTERFACE=eth1
