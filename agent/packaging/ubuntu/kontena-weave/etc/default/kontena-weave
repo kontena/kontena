@@ -1,6 +1,0 @@
-# Weave bridge
-# Note: ip must be different on each node
-WEAVE_BRIDGE=10.81.0.1/16
-
-# Weave peer interface
-WEAVE_PEER_INTERFACE=eth1
