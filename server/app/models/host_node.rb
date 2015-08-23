@@ -57,7 +57,8 @@ class HostNode
       mem_limit: attrs['MemoryLimit'],
       cpus: attrs['NCPU'],
       swap_limit: attrs['SwapLimit'],
-      public_ip: attrs['PublicIp']
+      public_ip: attrs['PublicIp'],
+      private_ip: attrs['PrivateIp']
     }
   end
 
