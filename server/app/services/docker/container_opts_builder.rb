@@ -82,7 +82,7 @@ module Docker
         'io.kontena.container.name' => container.name,
         'io.kontena.service.id' => grid_service.id.to_s,
         'io.kontena.service.name' => grid_service.name.to_s,
-        'io.kontena.grid.name' => grid_service.grid.name
+        'io.kontena.grid.name' => grid_service.grid.try(:name)
       }
       labels
     end
