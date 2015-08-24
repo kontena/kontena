@@ -31,13 +31,11 @@ By default, user authentication is made against Kontena's public authentication 
 
 ## Provision Kontena Infrastructure
 
-If you don't have existing Kontena infrastructure in place, you'll need to provision your own. Choose one of the following providers to provision your infrastructure:
+If you don't have existing Kontena infrastructure in place, you'll need to provision your own. Kontena may be installed on any cloud platform. The easiest way to provision your infrastructure can be done through Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods. See the instructions below.
 
-* Amazon AWS
-* [Bare Metal (Ubuntu)](manual-install/baremetal-ubuntu.md)
-* [Bare Metal (Ubuntu Single Server)](manual-install/baremetal-ubuntu-mini.md)
-* [Digital Ocean](manual-install/digital-ocean.md)
-* [Vagrant](manual-install/vagrant.md)
+* [Installing with Kontena CLI]()
+* [Installing with Docker Machine]()
+* [Manual Install]()
 
 ## Login
 
