@@ -29,9 +29,17 @@ $ kontena register
 
 By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service. In this case, the registration is optional.
 
-## Provision Kontena Infrastructure
+## Install Kontena Master and Nodes
 
-If you don't have existing Kontena infrastructure in place, you'll need to provision your own. Kontena may be installed on any cloud platform. The easiest way to provision your infrastructure can be done through Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods. See the instructions below.
+If you don't have existing Kontena infrastructure in place, you'll need to install your own. Kontena may be installed on any cloud platform. You'll need Kontena Master and a number of Kontena Nodes to run the containerized workloads.
+
+### Install Kontena Master
+
+TODO: Kontena Master installation instructions
+
+### Install Kontena Nodes
+
+The easiest way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods. See the instructions below.
 
 * [Installing with Kontena CLI]()
 * [Installing with Docker Machine]()
