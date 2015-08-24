@@ -60,12 +60,9 @@ words = ARGV
 words.delete_at(0)
 
 completion = []
-completion.push %w(deploy forgot node grid invite service container vpn external-registry registry login logout whoami) if words.size < 2
+completion.push %w(deploy forgot-password node grid invite service container vpn external-registry registry login logout whoami) if words.size < 2
 if words.size > 0
   case words[0]
-    when 'forgot'
-      completion.clear
-      sub_commands = %w(password)
     when 'grid'
       completion.clear
       sub_commands = %w(add-user audit-log create current list list-users remove remove-user show use)

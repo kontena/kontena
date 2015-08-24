@@ -1,5 +1,5 @@
 require 'json'
-require 'httpclient'
+require 'excon'
 require_relative 'errors'
 require 'kontena/cli/version'
 
@@ -14,8 +14,8 @@ module Kontena
     # @param [String] api_url
     # @param [Hash] default_headers
     def initialize(api_url, default_headers = {})
-      @http_client = HTTPClient.new
-      @http_client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE if ignore_ssl_errors?
+      Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
+      @http_client = Excon.new(api_url)
       @default_headers = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"}.merge(default_headers)
       @api_url = api_url
     end
@@ -26,7 +26,7 @@ module Kontena
     # @param [Hash,NilClass] params
     # @return [Hash]
     def get(path, params = nil, headers = {})
-      response = http_client.get(request_uri(path), params, request_headers(headers))
+      response = http_client.get(path: request_uri(path), query: params, headers: request_headers(headers))
       if response.status == 200
         parse_response(response)
       else
@@ -44,12 +44,13 @@ module Kontena
     def post(path, obj, params = {}, headers = {})
       request_headers = request_headers(headers)
       request_options = {
-          header: request_headers,
+          path: request_uri(path),
+          headers: request_headers,
           body: encode_body(obj, request_headers['Content-Type']),
           query: params
       }
 
-      response = http_client.post(request_uri(path), request_options)
+      response = http_client.post(request_options)
       if [200, 201].include?(response.status)
         parse_response(response)
       else
@@ -67,12 +68,13 @@ module Kontena
     def put(path, obj, params = {}, headers = {})
       request_headers = request_headers(headers)
       request_options = {
-          header: request_headers,
+          path: request_uri(path),
+          headers: request_headers,
           body: encode_body(obj, request_headers['Content-Type']),
           query: params
       }
 
-      response = http_client.put(request_uri(path), request_options)
+      response = http_client.put(request_options)
       if [200, 201].include?(response.status)
         parse_response(response)
       else
@@ -90,11 +92,12 @@ module Kontena
     def delete(path, body = nil, params = {}, headers = {})
       request_headers = request_headers(headers)
       request_options = {
-          header: request_headers,
+          path: request_uri(path),
+          headers: request_headers,
           body: encode_body(body, request_headers['Content-Type']),
           query: params
       }
-      response = http_client.delete(request_uri(path), request_options)
+      response = http_client.delete(request_options)
       if response.status == 200
         parse_response(response)
       else
@@ -110,7 +113,7 @@ module Kontena
     # @param [String] path
     # @return [String]
     def request_uri(path)
-      "#{@api_url}/v1/#{path}"
+      "/v1/#{path}"
     end
 
     ##
