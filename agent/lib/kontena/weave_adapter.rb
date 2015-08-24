@@ -104,8 +104,9 @@ module Kontena
       info = node_info || {}
       peer_ips = info['peer_ips'] || []
       self.exec([
-        '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain="kontena.local"',
-        '-password', ENV['KONTENA_TOKEN'], peer_ips.join(" ")]
+        '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
+        '--password', ENV['KONTENA_TOKEN']
+        ] + peer_ips
       )
       if info['node_number']
         weave_bridge = "10.81.0.#{info['node_number']}/19"

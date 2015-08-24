@@ -1,10 +1,12 @@
 require 'docker'
 require 'net/http'
 require_relative 'logging'
+require_relative 'helpers/node_helper'
 
 module Kontena
   class NodeInfoWorker
     include Kontena::Logging
+    include Helpers::NodeHelper
 
     LOG_NAME = 'NodeInfoWorker'
     attr_reader :queue
@@ -29,14 +31,16 @@ module Kontena
     #
     def publish_node_info
       logger.info(LOG_NAME) { 'publishing node information' }
-      node_info = Docker.info
-      node_info['PublicIp'] = self.public_ip
-      node_info['PrivateIp'] = ENV['PEER_IP']
+      docker_info = Docker.info
+      docker_info['PublicIp'] = self.public_ip
+      docker_info['PrivateIp'] = self.private_ip
       event = {
           event: 'node:info',
-          data: node_info
+          data: docker_info
       }
       self.queue << event
+    rescue => exc
+      logger.error(LOG_NAME) { "publish_node_info: #{exc.message}" }
     end
 
     ##
@@ -58,6 +62,7 @@ module Kontena
       unless ip
         ip = interface_ip('eth0')
       end
+      ip
     end
 
     # @return [String]

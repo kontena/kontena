@@ -22,8 +22,7 @@ Kontena::Logging.initialize_logger(STDOUT)
 
 agent = Kontena::Agent.new(
   api_uri: api_uri,
-  api_token: api_token,
-  cadvisor_url: cadvisor_url
+  api_token: api_token
 )
 agent.start!
 

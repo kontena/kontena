@@ -86,7 +86,7 @@ module Kontena
 
     def client
       if @client.nil?
-        @client = Excon.new("http://#{cadvisor_ip}:8080/api/v1.2/docker/")
+        @client = Excon.new("http://127.0.0.1:8080/api/v1.2/docker/")
       end
       @client
     end
@@ -102,13 +102,6 @@ module Kontena
     def cadvisor_running?
       cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
       !cadvisor.nil?
-    end
-
-    def cadvisor_ip
-      cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
-      if cadvisor
-        cadvisor.json['NetworkSettings']['IPAddress']
-      end
     end
   end
 end
