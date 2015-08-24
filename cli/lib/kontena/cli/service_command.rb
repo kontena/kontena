@@ -1,5 +1,6 @@
 require_relative 'services/list_command'
 require_relative 'services/show_command'
+require_relative 'services/update_command'
 require_relative 'services/deploy_command'
 require_relative 'services/stop_command'
 require_relative 'services/start_command'
@@ -16,6 +17,7 @@ class Kontena::Cli::ServiceCommand < Clamp::Command
   subcommand "list", "List services", Kontena::Cli::Services::ListCommand
   subcommand "create", "Create a new service", Kontena::Cli::Services::CreateCommand
   subcommand "show", "Show service details", Kontena::Cli::Services::ShowCommand
+  subcommand "update", "Update service configuration", Kontena::Cli::Services::UpdateCommand
   subcommand "deploy", "Deploy service", Kontena::Cli::Services::DeployCommand
   subcommand "stop", "Stop service", Kontena::Cli::Services::StopCommand
   subcommand "start", "Start service", Kontena::Cli::Services::StartCommand
