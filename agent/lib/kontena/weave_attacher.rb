@@ -11,7 +11,7 @@ module Kontena
 
     def initialize
       logger.info(LOG_NAME) { 'initialized' }
-      @adapter = WeaveAdapter.new
+      @weave_adapter = WeaveAdapter.new
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event)
       end
@@ -23,6 +23,7 @@ module Kontena
     def start!
       Thread.new {
         logger.info(LOG_NAME) { 'fetching containers information' }
+        sleep 1 until weave_running?
         Docker::Container.all(all: false).each do |container|
           self.weave_attach(container)
         end
@@ -45,10 +46,10 @@ module Kontena
 
     # @param [Docker::Container] container
     def weave_attach(container)
-      labels = container.json['Config']['Labels']
+      labels = container.json['Config']['Labels'] || {}
       overlay_cidr = labels['io.kontena.container.overlay_cidr']
       if overlay_cidr
-        self.weave_exec(['--local', 'attach', overlay_cidr, container.id])
+        @weave_adapter.exec(['--local', 'attach', overlay_cidr, container.id])
         container_name = labels['io.kontena.container.name']
         service_name = labels['io.kontena.service.name']
         grid_name = labels['io.kontena.grid.name']
@@ -70,56 +71,10 @@ module Kontena
       end
     rescue => exc
       logger.error(LOG_NAME){ exc.message }
+      logger.error(LOG_NAME){ exc.backtrace.join("\n") }
     end
 
-    # @param [Array<String>] cmd
-    def weave_exec(cmd)
-      begin
-        image = "weaveworks/weaveexec:#{self.weave_version}"
-        container = Docker::Container.create(
-          'Image' => image,
-          'Cmd' => cmd,
-          'Volumes' => {
-            '/var/run/docker.sock' => {},
-            '/hostproc' => {}
-          },
-          'Labels' => {
-            'io.kontena.container.skip_logs' => '1'
-          },
-          'Env' => [
-            'PROCFS=/hostproc'
-          ],
-          'HostConfig' => {
-            'Privileged' => true,
-            'NetworkMode' => 'host',
-            'Binds' => [
-              '/var/run/docker.sock:/var/run/docker.sock',
-              '/proc:/hostproc'
-            ]
-          }
-        )
-        retries = 0
-        response = {}
-        begin
-          response = container.tap(&:start).wait
-        rescue Docker::Error::NotFoundError => exc
-          logger.error(LOG_NAME){ exc.message }
-          return false
-        rescue => exc
-          retries += 1
-          logger.error(LOG_NAME){ exc.message }
-          sleep 0.5
-          retry if retries < 10
-
-          logger.error(LOG_NAME){ exc.message }
-          return false
-        end
-        response
-      ensure
-        container.delete(force: true) if container
-      end
-    end
-
+    # @return [String]
     def weave_ip
       weave = Docker::Container.get('weave') rescue nil
       if weave
@@ -127,9 +82,11 @@ module Kontena
       end
     end
 
-    # @return [String] weave image version
-    def weave_version
-      @adapter.weave_version
+    # @return [Boolean]
+    def weave_running?
+      weave = Docker::Container.get('weave') rescue nil
+      return false if weave.nil?
+      weave.info['State']['Running'] == true
     end
   end
 end

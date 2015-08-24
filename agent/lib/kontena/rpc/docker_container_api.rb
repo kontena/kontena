@@ -148,7 +148,7 @@ module Kontena
       private
 
       def resolve_dns
-        agent = Docker::Container.get(ENV['AGENT_NAME'] || 'kontena-agent') rescue nil
+        agent = Docker::Container.get(ENV['KONTENA_AGENT_NAME'] || 'kontena-agent') rescue nil
         if agent
           agent.json['NetworkSettings']['Gateway']
         end

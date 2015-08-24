@@ -28,48 +28,12 @@ namespace :release do
     sh('mkdir -p build')
     sh('rm -rf build/ubuntu/')
     sh('cp -ar packaging/ubuntu build/')
-    sh("docker run --rm -v #{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin:/target jpetazzo/nsenter")
-    %w( docker-enter importenv ).each{|f| File.unlink("#{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin/#{f}") }
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/#{NAME}/DEBIAN/control")
     sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/DEBIAN/postinst")
     sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/etc/init/kontena-agent.conf")
 
-    sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/kontena-weave/DEBIAN/control")
-    sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/kontena-etcd/DEBIAN/control")
-
-
-    Rake::Task["release:build_ubuntu_weave"].invoke
-    Rake::Task["release:build_ubuntu_etcd"].invoke
-
     Dir.chdir("build/ubuntu") do
       sh("dpkg-deb -b #{NAME} .")
-      sh("dpkg-deb -b kontena-weave .")
-      sh("dpkg-deb -b kontena-etcd .")
-    end
-  end
-
-  desc 'Build ubuntu weave package'
-  task :build_ubuntu_weave => :environment do
-    sh("docker run --rm -v #{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin:/target jpetazzo/nsenter")
-    %w( docker-enter importenv ).each do |f|
-      File.unlink("#{Dir.pwd}/build/ubuntu/kontena-weave/usr/local/bin/#{f}")
-    end
-  end
-
-  desc 'Build ubuntu etcd package'
-  task :build_ubuntu_etcd => :environment do
-    etcd_version = "v2.1.1"
-    sh("mkdir -p build/ubuntu/tmp")
-    sh("mkdir -p build/ubuntu/kontena-etcd/usr/local/bin")
-    sh("mkdir -p build/ubuntu/kontena-etcd/var/lib/kontena-etcd")
-    Dir.chdir('build/ubuntu/tmp') do
-      sh("curl -qsOL https://github.com/coreos/etcd/releases/download/#{etcd_version}/etcd-#{etcd_version}-linux-amd64.tar.gz")
-      sh("tar zxvf etcd-#{etcd_version}-linux-amd64.tar.gz")
-    end
-    Dir.chdir('build/ubuntu') do
-      %w(etcd etcdctl).each do |f|
-        sh("cp tmp/etcd-#{etcd_version}-linux-amd64/#{f} kontena-etcd/usr/local/bin/")
-      end
     end
   end
 
@@ -97,7 +61,5 @@ namespace :release do
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
     sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
-    sh("curl -T ./release/kontena-weave_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/kontena-agent/#{VERSION}/kontena-weave-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
-    sh("curl -T ./release/kontena-etcd_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/kontena-agent/#{VERSION}/kontena-etcd-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
   end
 end

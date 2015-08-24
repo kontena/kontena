@@ -10,7 +10,6 @@ $stdout.sync = true
 
 api_token = ENV['KONTENA_TOKEN']
 api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
-cadvisor_url = ENV['CADVISOR_URL'] || 'http://cadvisor:8080/api/v1.2/docker'
 
 if !api_token
   exit('KONTENA_TOKEN is required')

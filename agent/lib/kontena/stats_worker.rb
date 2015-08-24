@@ -4,22 +4,22 @@ module Kontena
   class StatsWorker
     include Kontena::Logging
 
-    CADVISOR_URL = 'http://cadvisor:8080/api/v1.2/docker/'
     LOG_NAME = 'StatsWorker'
 
     attr_reader :url, :queue
 
     ##
-    # @param [String] url cadvisor stats url
     # @param [Queue] queue
-    def initialize(url, queue)
-      @url = url
+    def initialize(queue)
       @queue = queue
       logger.info(LOG_NAME) { 'initialized' }
     end
 
     def start!
       Thread.new {
+        logger.info(LOG_NAME) { 'waiting for cadvisor' }
+        sleep 1 until cadvisor_running?
+        logger.info(LOG_NAME) { 'cadvisor is running, starting stats loop' }
         loop do
           sleep 10
           logger.debug(LOG_NAME) { 'fetching stats' }
@@ -85,7 +85,10 @@ module Kontena
     end
 
     def client
-      @client ||= Excon.new(self.url)
+      if @client.nil?
+        @client = Excon.new("http://#{cadvisor_ip}:8080/api/v1.2/docker/")
+      end
+      @client
     end
 
     def get_interval(current, previous)
@@ -94,6 +97,18 @@ module Kontena
 
       # to nano seconds
       (cur - prev) * 1000000000
+    end
+
+    def cadvisor_running?
+      cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
+      !cadvisor.nil?
+    end
+
+    def cadvisor_ip
+      cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
+      if cadvisor
+        cadvisor.json['NetworkSettings']['IPAddress']
+      end
     end
   end
 end
