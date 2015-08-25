@@ -12,6 +12,7 @@ class Kontena::Cli::DeployCommand < Clamp::Command
   attr_reader :services, :service_prefix
 
   def execute
+    puts "DEPRECATION WARNING: Support for 'kontena deploy' will be dropped. Use 'kontena app deploy' instead.".colorize(:red)
     require_api_url
     require_token
 
