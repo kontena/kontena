@@ -1,100 +1,82 @@
 #cloud-config
+write_files:
+  - path: /etc/kontena-server.env
+    permissions: 0600
+    owner: root
+    content: |
+      KONTENA_VERSION="0.8.0.beta"
+      SSL_CERT="/etc/kontena-server.pem"
+
+  - path: /etc/kontena-server.pem
+    permissions: 0600
+    owner: root
+    content: |
+      -----BEGIN CERTIFICATE-----\nMIIDjjCCAnagAwIBAgIJAJ3upPENErbaMA0GCSqGSIb3DQEBBQUAMDgxCjAIBgNV\nBAMUASoxHTAbBgNVBAoTFE15IENvbXBhbnkgTmFtZSBMVEQuMQswCQYDVQQGEwJV\nUzAeFw0xNTA4MjMxMTMyMzZaFw0xODA4MDcxMTMyMzZaMDgxCjAIBgNVBAMUASox\nHTAbBgNVBAoTFE15IENvbXBhbnkgTmFtZSBMVEQuMQswCQYDVQQGEwJVUzCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANoxCvfvbye8GMbnvdKdnWTqIrOa\nJ0xaSOR/a319dmawTNhNQM83efnCo02+8lWC0sFp5kfELERuuc3bL8jNPjk7B+BB\nog74OSKlSlLXyAkXRj+RcoubOgsb0amFrI0PYiCVcBiX9enuCvLIq6M6SZulV47q\nlaBmmMrHHDc5z86YO5Gs4eJNRjjb8Mzlka6bgIkxX6CDSDdozggPWUmT0W7FvoPg\nBfokemsUShDy9PyR6Xrk+Eh/rUMJ9sU0Io1n9/Eqe4W7/OaxYTFYG3wMSzO9UPZy\nZ50sa/j/rANDC2a4wCl/GVTz8M+LLWoKpZpncbaw0KopPoGwH0Iu3z2/3LcCAwEA\nAaOBmjCBlzAdBgNVHQ4EFgQUaIE13kvwnYB4Q1X8C4Ze7QktBmowaAYDVR0jBGEw\nX4AUaIE13kvwnYB4Q1X8C4Ze7QktBmqhPKQ6MDgxCjAIBgNVBAMUASoxHTAbBgNV\nBAoTFE15IENvbXBhbnkgTmFtZSBMVEQuMQswCQYDVQQGEwJVU4IJAJ3upPENErba\nMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADggEBADdvvGpXBiZth7e4om6f\nLKlUgY5GjY7710u+kcYDSmSrrp7paUK0Vz3aU3bx6VgRV02hUIRs82RyW8YJK3mj\nqcx+qWE7gc01Qemji6LnlEjD/IlxiH+sHN3sJQtlO57aEKMyu8/9/sKQ/x7HqkYD\nuanxwcG0VKZmpjNrWFQotXnBWeJ3uA17EVmQB3y0mF8f+3ZP5dKASqfS9sX019zh\nnFr8CUhIQiKbyA+mubYcrVXoVe1PMs9XoweRCyoDcsiFKGHiAC8TeXui9y4/O6yw\nEpJCBE+v4KmhiBijzciqjSsFXV8pGv0VtVtNrzoF2F3WwyHk64IbzUQUD5jhfBhO\n+nw=\n-----END CERTIFICATE-----\n-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA2jEK9+9vJ7wYxue90p2dZOois5onTFpI5H9rfX12ZrBM2E1A\nzzd5+cKjTb7yVYLSwWnmR8QsRG65zdsvyM0+OTsH4EGiDvg5IqVKUtfICRdGP5Fy\ni5s6CxvRqYWsjQ9iIJVwGJf16e4K8sirozpJm6VXjuqVoGaYysccNznPzpg7kazh\n4k1GONvwzOWRrpuAiTFfoININ2jOCA9ZSZPRbsW+g+AF+iR6axRKEPL0/JHpeuT4\nSH+tQwn2xTQijWf38Sp7hbv85rFhMVgbfAxLM71Q9nJnnSxr+P+sA0MLZrjAKX8Z\nVPPwz4stagqlmmdxtrDQqik+gbAfQi7fPb/ctwIDAQABAoIBAF/X8y1966HUqj2V\nRnjh62WMw7mJGYIclrBomFsDZaMuBlNte+6KO/ZOXVWlbuXJFbMIRbN4pMlaqhuX\nEKJwJckV+Ru1OO7CcraZTNCfIKt9ocoCpgJVKWX/zlVc9rLv8vbFLfxfpBIiEoUb\nSOnmjLbmJlQND7Tp3GwWknpf1ry0qqj7ACmlHXnssLDkR3kPdEKc6MhW7x9Qj7DW\nhPgrQxgmr3NagxcjUaR6bd+zTwPBEgH5UJXu6mk66uwF+0Ow+Jxgiduy5y9yaOSs\n7GOtgKYknpd1DjHROz3epki9XtD1GtICbACPtQDCTauOH+HZBC8RjKMDJBweaaAr\nbWKn1yECgYEA8RcteqbVih/MLyIUgYQmXY9zER8t8b4CuoNtjcP4fBg25QLc2Kym\neAOEyF+DMwnGKVzstPIG/BXOepq/hv86PgDMHet9C3TgQcmUiSua13IaeOrCFZv5\nmff/iJOPnucFDMH5P4UyZcf1aKU+yoCldcOa+VjBVr5WQ4wUxmrD6OUCgYEA569X\nKbmyE/cbr1Wd8f2BkxMzjU+3FwhAju9S0A0OhEvV4yAZ65bscs8Ivr+eXcFH+2vf\n+zUumI+JfVBCPw66VVV8J1sH0ajLZI/xPAPg/3rgFu7zdmc4LpoB6mMKd+6KOkuN\nsalg0DW52dhu2CYFg6ZYN9C/8yb2EV0zw9P4IWsCgYByz+DeqhjDYIUyZP5y92X1\n5Fyd6MVOfHh8Lh68BnmNT1LFGOnnXcEhIjvX2HR4l80A4bnwKdpdrlzYUl2ngmBQ\nKr0J+p1gGVa6va647EUfGL22m8W12MOzKUFN30fkGoxzGOUD9QCdK+6Y2Sjf8wfY\n30AsQrJABwC5xjoWi72kaQKBgQDJbH56DzCL/Qz7rZLIvR420L3EAGbsRkdiPR0h\nNgjF6eyFLvZ6BNeCpQ40UAGN/yjmpA2xp7Xf+wKMiQdfLR3AbLaovJKaq4ZQ4nfX\nNoQZeSlzpsDR0sFcepZpwTtrs15HekIxEFHUErGGfI05rCylHSybMgh/jALoa8BC\nY3nZCwKBgQCEMQafejBX32fODX32hHAS7fQszLj/8xV4hBOHSvIMin2dBXbqAk05\niX1lkL0U9/6FTrLuh7gtj6l30+6csDJRVFlk4FXrxi/bfGsceGDxoTGvN2U8KzXM\nqylSG8NpVqE/9H2/y6RCaSt0RkoCorO92ClKcerErheBrzs1W1gNSQ==\n-----END RSA PRIVATE KEY-----\n
+
+  - path: /opt/bin/kontena-haproxy.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/bin/sh
+      if [ -n "$SSL_CERT" ]; then
+        SSL_CERT=$(awk 1 ORS='\\n' $SSL_CERT)
+      else
+        SSL_CERT="**None**"
+      fi
+      /usr/bin/docker run --name=kontena-server-haproxy \
+        --link kontena-server-api:kontena-server-api \
+        -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
+        -p 8080:80 -p 8443:443 kontena/haproxy:latest
 coreos:
-  etcd:
-    # generate a new token for each unique cluster from https://discovery.etcd.io/new
-    # WARNING: replace each time you 'vagrant destroy'
-    discovery: https://discovery.etcd.io/<token>
-    addr: $private_ipv4:4001
-    peer-addr: $private_ipv4:7001
   units:
-    - name: etcd.service
-      command: start
-
-    - name: kontena-server-redis-data.service
-      command: start
-      enable: true
-      content: |
-        [Unit]
-        Description=kontena-server-redis-data
-        After=docker.service
-        Requires=docker.service
-
-        [Service]
-        Type=oneshot
-        ExecStartPre=-/usr/bin/docker pull redis:2.8
-        ExecStart=/usr/bin/docker create --name=kontena-server-redis-data
-    - name: kontena-server-mongo-data.service
-      command: start
-      enable: true
-      content: |
-        [Unit]
-        Description=kontena-server-mongo-data
-        After=docker.service
-        Requires=docker.service
-
-        [Service]
-        Type=oneshot
-        ExecStartPre=-/usr/bin/docker pull mongo:2.8
-        ExecStart=/usr/bin/docker create --name=kontena-server-mongo-data
-    - name: kontena-server-redis.service
-      command: start
-      enable: true
-      content: |
-        [Unit]
-        Description=kontena-server-redis
-        After=docker.service
-        Requires=docker.service
-
-        [Service]
-        Restart=always
-        RestartSec=5
-        ExecStartPre=-/usr/bin/docker kill kontena-server-redis
-        ExecStartPre=-/usr/bin/docker rm kontena-server-redis
-        ExecStartPre=-/usr/bin/docker pull redis:2.8
-        ExecStart=/usr/bin/docker run --name=kontena-server-redis \
-            --volumes-from=kontena-server-redis-data \
-            redis:2.8 redis-server --appendonly yes
     - name: kontena-server-mongo.service
       command: start
       enable: true
       content: |
         [Unit]
         Description=kontena-server-mongo
+        After=network-online.target
         After=docker.service
+        Description=Kontena Server MongoDB
+        Documentation=http://www.mongodb.org/
+        Requires=network-online.target
         Requires=docker.service
 
         [Service]
         Restart=always
         RestartSec=5
-        ExecStartPre=-/usr/bin/docker kill kontena-server-mongo
+        ExecStartPre=/usr/bin/docker pull mongo:3.0
+        ExecStartPre=-/usr/bin/docker create --name=kontena-server-mongo-data mongo:3.0
+        ExecStartPre=-/usr/bin/docker stop kontena-server-mongo
         ExecStartPre=-/usr/bin/docker rm kontena-server-mongo
-        ExecStartPre=-/usr/bin/docker pull mongo:2.8
         ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
             --volumes-from=kontena-server-mongo-data \
-            mongo:2.8 mongod --smallfiles
-    - name: kontena-server.service
+            mongo:3.0 mongod --smallfiles
+
+    - name: kontena-server-api.service
       command: start
       enable: true
       content: |
         [Unit]
-        Description=kontena-server
+        Description=kontena-server-api
+        After=network-online.target
         After=docker.service
-        After=kontena-server-mongo.service
-        After=kontena-server-redis.service
+        Description=Kontena Agent
+        Documentation=http://www.kontena.io/
+        Requires=network-online.target
         Requires=docker.service
 
         [Service]
         Restart=always
         RestartSec=5
-        ExecStartPre=-/usr/bin/docker kill kontena-server
-        ExecStartPre=-/usr/bin/docker rm kontena-server
-        ExecStartPre=/usr/bin/docker pull kontena/server:0.5
-        ExecStart=/usr/bin/docker run --name kontena-server \
+        EnvironmentFile=/etc/kontena-server.env
+        ExecStartPre=-/usr/bin/docker stop kontena-server-api
+        ExecStartPre=-/usr/bin/docker rm kontena-server-api
+        ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
+        ExecStart=/usr/bin/docker run --name kontena-server-api \
             --link kontena-server-mongo:mongodb \
-            --link kontena-server-redis:redis \
-            -e REDIS_URL=redis://redis:6379/1 \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
-            kontena/server:0.5
+            kontena/server:${KONTENA_VERSION}
 
     - name: kontena-server-haproxy.service
       command: start
@@ -102,17 +84,18 @@ coreos:
       content: |
         [Unit]
         Description=kontena-server-haproxy
+        After=network-online.target
         After=docker.service
-        After=kontena-server.service
+        Description=Kontena Server HAProxy
+        Documentation=http://www.kontena.io/
+        Requires=network-online.target
         Requires=docker.service
 
         [Service]
         Restart=always
         RestartSec=5
-        ExecStartPre=-/usr/bin/docker kill kontena-server-haproxy
+        EnvironmentFile=/etc/kontena-server.env
+        ExecStartPre=-/usr/bin/docker stop kontena-server-haproxy
         ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
         ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
-        ExecStart=/usr/bin/docker run --name kontena-server-haproxy \
-            --link kontena-server:kontena-server \
-            -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
-            -p 8080:80 -p 8443:443 kontena/haproxy:latest
+        ExecStart=/opt/bin/kontena-haproxy.sh

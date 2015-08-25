@@ -5,117 +5,46 @@ write_files:
     owner: root
     content: |
       KONTENA_URI="ws://<ip_of_kontena_server>:8080"
-      KONTENA_TOKEN="<grid_token_from_server>"
-  - path: /etc/weave.env
-    permissions: 0600
-    owner: root
+      KONTENA_TOKEN="<grid_token>"
+      KONTENA_PEER_INTERFACE=eth1
+  - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
     content: |
-      WEAVE_PEERS=""
-      BRIDGE_CIDR="10.81.0.1/16"
-      DOCKER_OPTS='--bridge=weave --fixed-cidr="10.81.1.0/24"'
+        [Service]
+        Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19"'
 coreos:
-  etcd:
-    # generate a new token for each unique cluster from https://discovery.etcd.io/new
-    # WARNING: replace each time you 'vagrant destroy'
-    discovery: https://discovery.etcd.io/<token>
-    addr: $private_ipv4:4001
-    peer-addr: $private_ipv4:7001
   units:
-    - name: etcd.service
-      command: start
     - name: 10-weave.network
       runtime: false
       content: |
         [Match]
         Type=bridge
         Name=weave*
-        [Network]
-    - name: install-weave.service
-      enable: true
-      content: |
-        [Unit]
-        After=network-online.target
-        Before=weave.service
-        Before=docker.service
-        Description=Install Weave
-        Documentation=http://zettio.github.io/weave/
-        Requires=network-online.target
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        EnvironmentFile=/etc/weave.env
-        ExecStartPre=/bin/mkdir -p /opt/bin/
-        ExecStartPre=/usr/bin/curl \
-          --silent \
-          --location \
-          https://github.com/weaveworks/weave/releases/download/v0.10.0/weave \
-          --output /opt/bin/weave
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/weave
-        ExecStart=/opt/bin/weave --local create-bridge
-        ExecStart=/usr/bin/ip addr add dev weave ${BRIDGE_CIDR}
-    - name: weave.service
-      enable: true
-      content: |
-        [Unit]
-        After=install-weave.service
-        After=docker.service
-        Description=Weave Network Router
-        Documentation=http://zettio.github.io/weave/
-        Requires=docker.service
-        Requires=install-weave.service
-        [Service]
-        EnvironmentFile=/etc/weave.env
-        ExecStartPre=/opt/bin/weave setup
-        ExecStartPre=/opt/bin/weave launch $WEAVE_PEERS
-        ExecStart=/usr/bin/docker attach weave
-        Restart=on-failure
-        ExecStop=/opt/bin/weave stop
-    - name: docker.service
-      drop-ins:
-        - name: 50-kontena-weave.conf
-          content: |
-            [Service]
-            EnvironmentFile=/etc/weave.env
-    - name: kontena-cadvisor.service
-      command: start
-      enable: true
-      content: |
-        [Unit]
-        Description=kontena-cadvisor
-        After=weave.service
-        Requires=weave.service
 
-        [Service]
-        Restart=always
-        RestartSec=5
-        ExecStartPre=-/usr/bin/docker kill kontena-cadvisor
-        ExecStartPre=-/usr/bin/docker rm kontena-cadvisor
-        ExecStartPre=/usr/bin/docker pull google/cadvisor:0.12.0
-        ExecStart=/usr/bin/docker run --name kontena-cadvisor \
-            --volume=/:/rootfs:ro \
-            --volume=/var/run:/var/run:rw \
-            --volume=/sys:/sys:ro \
-            --volume=/var/lib/docker/:/var/lib/docker:ro \
-            google/cadvisor:0.12.0
+        [Network]
     - name: kontena-agent.service
       command: start
       enable: true
       content: |
         [Unit]
         Description=kontena-agent
-        After=weave.service
-        After=kontena-cadvisor.service
-        Requires=weave.service
+        After=network-online.target
+        After=docker.service
+        Description=Kontena Agent
+        Documentation=http://www.kontena.io/
+        Requires=network-online.target
+        Requires=docker.service
 
         [Service]
         Restart=always
         RestartSec=5
         EnvironmentFile=/etc/kontena-agent.env
-        ExecStartPre=-/usr/bin/docker kill kontena-agent
+        ExecStartPre=-/usr/bin/docker stop kontena-agent
         ExecStartPre=-/usr/bin/docker rm kontena-agent
-        ExecStartPre=/usr/bin/docker pull kontena/agent:0.5
+        ExecStartPre=/usr/bin/docker pull kontena/agent:${KONTENA_VERSION}
         ExecStart=/usr/bin/docker run --name kontena-agent \
-            --link kontena-cadvisor:cadvisor \
-            -e KONTENA_URI=${KONTENA_URI} -e KONTENA_TOKEN=${KONTENA_TOKEN} \
-            -p 53:53 -p 53:53/udp \
-            -v=/var/run/docker.sock:/var/run/docker.sock kontena/agent:0.5
+            -e KONTENA_URI=${KONTENA_URI} \
+            -e KONTENA_TOKEN=${KONTENA_TOKEN} \
+            -e KONTENA_PEER_INTERFACE=${KONTENA_PEER_INTERFACE} \
+            -v=/var/run/docker.sock:/var/run/docker.sock \
+            --net=host \
+            kontena/agent:${KONTENA_VERSION}
