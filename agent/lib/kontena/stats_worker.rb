@@ -99,9 +99,11 @@ module Kontena
       (cur - prev) * 1000000000
     end
 
+    # @return [Boolean]
     def cadvisor_running?
       cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
-      !cadvisor.nil?
+      return false if cadvisor.nil?
+      cadvisor.info['State']['Running'] == true
     end
   end
 end
