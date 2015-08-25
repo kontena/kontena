@@ -4,7 +4,7 @@ module Kontena
   class WeaveAdapter
     include Helpers::NodeHelper
 
-    WEAVE_VERSION = 'latest'
+    WEAVE_VERSION = 'git-bd19b8625908'
 
     # @param [Hash] opts
     def modify_create_opts(opts)
@@ -57,7 +57,8 @@ module Kontena
             'io.kontena.container.skip_logs' => '1'
           },
           'Env' => [
-            'PROCFS=/hostproc'
+            'PROCFS=/hostproc',
+            "VERSION=#{WEAVE_VERSION}"
           ],
           'HostConfig' => {
             'Privileged' => true,
