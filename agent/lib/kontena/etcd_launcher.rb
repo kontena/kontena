@@ -29,6 +29,7 @@ module Kontena
 
       pull_image(image)
       create_data_container(image)
+      sleep 1 until weave_running?
       create_container(image)
     end
 
@@ -54,7 +55,7 @@ module Kontena
     # @param [String] image
     def create_container(image)
       container = Docker::Container.get('kontena-etcd') rescue nil
-      return if container
+      container.remove(force: true) if container
 
       info = self.node_info
       name = "etcd-#{info['node_number']}"
@@ -86,10 +87,14 @@ module Kontena
     ##
     # @return [String, NilClass]
     def docker_gateway
-      agent = Docker::Container.get(ENV['KONTENA_AGENT_NAME'] || 'kontena-agent') rescue nil
-      if agent
-        @gateway = agent.json['NetworkSettings']['Gateway']
-      end
+      `ifconfig docker0 2> /dev/null | awk '/inet addr:/ {print $2}' | sed 's/addr://'`.strip
+    end
+
+    # @return [Boolean]
+    def weave_running?
+      weave = Docker::Container.get('weave') rescue nil
+      return false if weave.nil?
+      weave.info['State']['Running'] == true
     end
   end
 end
