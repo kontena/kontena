@@ -4,7 +4,7 @@ module Kontena
   class WeaveAdapter
     include Helpers::NodeHelper
 
-    WEAVE_VERSION = 'git-bd19b8625908'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || 'git-bd19b8625908'
 
     # @param [Hash] opts
     def modify_create_opts(opts)
