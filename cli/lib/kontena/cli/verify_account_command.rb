@@ -8,6 +8,6 @@ class Kontena::Cli::VerifyAccountCommand < Clamp::Command
 
     params = {token: token}
     client.post('user/email_confirm', params)
-    print color('Account verified', :green)
+    puts 'Account verified'.colorize(:green)
   end
 end
