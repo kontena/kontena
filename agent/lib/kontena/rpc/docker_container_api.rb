@@ -1,4 +1,5 @@
 require 'docker'
+require_relative '../helpers/iface_helper'
 
 module Kontena
   module Rpc
@@ -9,6 +10,7 @@ module Kontena
     # see https://github.com/swipely/docker-api#containers
     #
     class DockerContainerApi
+      include Kontena::Helpers::IfaceHelper
 
       attr_reader :overlay_adapter
 
@@ -148,7 +150,7 @@ module Kontena
       private
 
       def resolve_dns
-        `ifconfig docker0 2> /dev/null | awk '/inet addr:/ {print $2}' | sed 's/addr://'`.strip
+        interface_ip('docker0')
       end
     end
   end

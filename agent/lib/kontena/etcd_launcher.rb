@@ -1,9 +1,11 @@
 require_relative 'helpers/node_helper'
+require_relative 'helpers/iface_helper'
 
 module Kontena
   class EtcdLauncher
-    include Helpers::NodeHelper
     include Kontena::Logging
+    include Helpers::NodeHelper
+    include Helpers::IfaceHelper
 
     ETCD_VERSION = ENV['ETCD_VERSION'] || '2.1.2'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
@@ -87,7 +89,7 @@ module Kontena
     ##
     # @return [String, NilClass]
     def docker_gateway
-      `ifconfig docker0 2> /dev/null | awk '/inet addr:/ {print $2}' | sed 's/addr://'`.strip
+      interface_ip('docker0')
     end
 
     # @return [Boolean]

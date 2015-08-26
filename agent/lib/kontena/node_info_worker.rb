@@ -2,11 +2,13 @@ require 'docker'
 require 'net/http'
 require_relative 'logging'
 require_relative 'helpers/node_helper'
+require_relative 'helpers/iface_helper'
 
 module Kontena
   class NodeInfoWorker
     include Kontena::Logging
     include Helpers::NodeHelper
+    include Helpers::IfaceHelper
 
     LOG_NAME = 'NodeInfoWorker'
     attr_reader :queue
