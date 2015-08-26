@@ -23,7 +23,8 @@ describe Kontena::NodeInfoWorker do
 
   describe '#publish_node_info' do
     before(:each) do
-      allow(Net::HTTP).to receive(:get).and_return('127.0.0.1')
+      allow(subject).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
+      allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
       allow(Docker).to receive(:info).and_return({
         'Name' => 'node-1',
         'Labels' => nil,
@@ -46,7 +47,13 @@ describe Kontena::NodeInfoWorker do
     it 'contains public ip' do
       subject.publish_node_info
       info = subject.queue.pop
-      expect(info[:data]['PublicIp']).to eq('127.0.0.1')
+      expect(info[:data]['PublicIp']).to eq('8.8.8.8')
+    end
+
+    it 'contains private ip' do
+      subject.publish_node_info
+      info = subject.queue.pop
+      expect(info[:data]['PrivateIp']).to eq('192.168.66.2')
     end
   end
 end
