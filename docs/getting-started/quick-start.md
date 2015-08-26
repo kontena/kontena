@@ -7,7 +7,7 @@ toc_order: 1
 
 Follow these steps to get started with Kontena quickly.
 
-## Install Kontena CLI (command-line interface)
+## Step 1. Install Kontena CLI (command-line interface)
 
 > Prerequisities: You'll need Ruby version 2.0 or later installed on your system. For more details, see official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
 
@@ -19,7 +19,7 @@ $ gem install kontena-cli
 
 After the installation is complete, you can test the installation by checking the Kontena CLI version `kontena -v`.
 
-## Register Personal User Account
+## Step 2. Register Personal User Account
 
 With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs form user actions. Create your own personal user account (if not created already).
 
@@ -29,23 +29,25 @@ $ kontena register
 
 By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service. In this case, the registration is optional.
 
-## Install Kontena Master and Nodes
+## Step 3. Install Kontena Master and Nodes
 
-If you don't have existing Kontena infrastructure in place, you'll need to install your own. Kontena may be installed on any cloud platform. You'll need Kontena Master and a number of Kontena Nodes to run the containerized workloads.
+If you don't have existing Kontena infrastructure in place, you'll need to install your own. Kontena Master and Nodes may be provisioned to any cloud platform. It is also possible to run Kontena on your own local development environment for testing purposes.
 
 ### Install Kontena Master
 
-TODO: Kontena Master installation instructions
+In order to use Kontena, you'll need Kontena Master. See the installation instructions below.
+
+* [Installing Kontena Master](installing/master.md)
 
 ### Install Kontena Nodes
 
-The easiest way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods. See the instructions below.
+The easiest way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods. See the installation instructions below.
 
-* [Installing with Kontena CLI]()
-* [Installing with Docker Machine]()
-* [Manual Install]()
+* [Installing with Kontena CLI](installing/nodes-cli.md)
+* [Installing with Docker Machine](installing/nodes-docker-machine.md)
+* [Manual Install](installing/nodes-manual.md)
 
-## Login
+## Step 4. Login
 
 Once you have Kontena infrastructure set-up, you can login to **Kontena Master** with your personal user account.
 
@@ -55,7 +57,7 @@ For example, if the Kontena Master is running at address `192.168.66.100` and li
 $ kontena login http://192.168.66.100:8080
 ```
 
-## Enjoy
+## Step 5. Enjoy
 
 After successful login, you are ready to start using Kontena. Here's some commands to get started:
 
