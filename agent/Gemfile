@@ -4,7 +4,7 @@ gem 'docker-api'
 gem 'faye-websocket'
 gem 'msgpack'
 gem 'activesupport', '~> 4.2.0'
-gem 'rubydns'
+gem 'celluloid', '~> 0.16.0'
 gem 'etcd'
 
 group :development, :test do

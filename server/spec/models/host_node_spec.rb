@@ -35,6 +35,12 @@ describe HostNode do
         subject.attributes_from_docker({'PublicIp' => '127.0.0.1'})
       }.to change{ subject.public_ip }.to('127.0.0.1')
     end
+
+    it 'sets private_ip' do
+      expect {
+        subject.attributes_from_docker({'PrivateIp' => '192.168.66.2'})
+      }.to change{ subject.private_ip }.to('192.168.66.2')
+    end
   end
 
   describe '#save!' do

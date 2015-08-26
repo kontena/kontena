@@ -1,5 +1,4 @@
 require 'docker'
-require 'net/http'
 require_relative 'logging'
 
 module Kontena
@@ -13,7 +12,10 @@ module Kontena
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
-      @node_info = {}
+
+      Pubsub.subscribe('container:event') do |event|
+        self.on_container_event(event) rescue nil
+      end
     end
 
     ##
@@ -21,7 +23,6 @@ module Kontena
     #
     def start!
       Thread.new {
-        self.publish_node_info
         loop do
           logger.info(LOG_NAME) { 'fetching containers information' }
           Docker::Container.all(all: true).each do |container|
@@ -30,33 +31,6 @@ module Kontena
           sleep 60
         end
       }
-    end
-
-    ##
-    # Publish node info to queue
-    #
-    def publish_node_info
-      logger.info(LOG_NAME) { 'publishing node information' }
-      @node_info = Docker.info
-      @node_info['PublicIp'] = self.public_ip
-      event = {
-          event: 'node:info',
-          data: @node_info
-      }
-      self.queue << event
-    end
-
-    ##
-    # @return [String, NilClass]
-    def public_ip
-      if ENV['COREOS_PUBLIC_IPV4']
-        ENV['COREOS_PUBLIC_IPV4']
-      else
-        Net::HTTP.get('whatismyip.akamai.com', '/')
-      end
-    rescue => exc
-      logger.error(LOG_NAME) { "Cannot resolve public ip: #{exc.message}"}
-      nil
     end
 
     ##
@@ -85,6 +59,8 @@ module Kontena
       }
       logger.debug(LOG_NAME) { event }
       self.queue << event
+    rescue => exc
+      logger.error(LOG_NAME) { "publish_info: #{exc.message}" }
     end
 
     ##
@@ -100,6 +76,11 @@ module Kontena
           }
       }
       self.queue << data
+    end
+
+    # @return [Hash]
+    def node_info
+      @node_info ||= Docker.info
     end
   end
 end

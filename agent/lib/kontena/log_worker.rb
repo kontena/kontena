@@ -14,6 +14,10 @@ module Kontena
       @queue = queue
       logger.info(LOG_NAME) { 'initialized' }
       @streaming_threads = {}
+
+      Pubsub.subscribe('container:event') do |event|
+        self.on_container_event(event) rescue nil
+      end
     end
 
     ##
@@ -31,6 +35,9 @@ module Kontena
     # @param [Docker::Container] container
     # @param [String] status
     def stream_container_logs(container, status)
+      labels = container.info['Labels'] || container.info['Config']['Labels']
+      return if labels && labels['io.kontena.container.skip_logs']
+
       @streaming_threads[container.id] = Thread.new {
         if status == 'create'
           sleep 2

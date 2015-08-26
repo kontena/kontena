@@ -1,4 +1,5 @@
 require 'docker'
+require_relative '../helpers/iface_helper'
 
 module Kontena
   module Rpc
@@ -9,15 +10,23 @@ module Kontena
     # see https://github.com/swipely/docker-api#containers
     #
     class DockerContainerApi
+      include Kontena::Helpers::IfaceHelper
+
+      attr_reader :overlay_adapter
+
+      def initialize
+        @overlay_adapter = Kontena::WeaveAdapter.new
+      end
 
       ##
       # @param [Hash]
       # @return [Hash]
       def create(opts)
+        self.overlay_adapter.modify_create_opts(opts)
         container = Docker::Container.create(opts)
         container.json
       rescue Docker::Error::DockerError => exc
-        raise RpcServer::Error.new(400, "Cannot create container #{opts['name']}", exc.backtrace)
+        raise RpcServer::Error.new(400, "Cannot create container #{opts}", exc.backtrace)
       end
 
       ##
@@ -41,6 +50,7 @@ module Kontena
           opts['Dns'] = [dns]
           opts['DnsSearch'] = ['kontena.local']
         end
+        self.overlay_adapter.modify_start_opts(opts)
         container.start(opts)
         container.json
       rescue Docker::Error::NotFoundError => exc
@@ -140,10 +150,7 @@ module Kontena
       private
 
       def resolve_dns
-        agent = Docker::Container.get(ENV['AGENT_NAME'] || 'kontena-agent') rescue nil
-        if agent
-          agent.json['NetworkSettings']['Gateway']
-        end
+        interface_ip('docker0')
       end
     end
   end

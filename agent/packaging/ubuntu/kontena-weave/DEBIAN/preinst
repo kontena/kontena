@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-
-/sbin/stop kontena-weave || true
-/sbin/stop kontena-weave-helper || true
-/usr/bin/docker rm -f weave || true

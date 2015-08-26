@@ -1,11 +1,10 @@
 require 'docker'
-require 'observer'
+require 'celluloid'
 require_relative 'logging'
 
 module Kontena
   class EventWorker
     include Kontena::Logging
-    include Observable
 
     LOG_NAME = 'EventWorker'
 
@@ -30,7 +29,7 @@ module Kontena
       logger.info('EventWorker') { 'started to stream docker events' }
       begin
         Docker::Event.stream do |event|
-          Thread.new { publish_event(event) }
+          Celluloid::Future.new{ self.publish_event(event) }
         end
       rescue Docker::Error::TimeoutError
         logger.error(LOG_NAME){ 'Connection timeout.. retrying' }
@@ -59,8 +58,7 @@ module Kontena
         }
       }
       self.queue << data
-      changed(true)
-      notify_observers(event)
+      Pubsub.publish('container:event', event)
     rescue => exc
       logger.error(LOG_NAME) { "publish_event: #{exc.message}" }
     end

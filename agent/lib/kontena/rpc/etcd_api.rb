@@ -34,7 +34,7 @@ module Kontena
       ##
       # @return [String, NilClass]
       def gateway
-        agent = Docker::Container.get(ENV['AGENT_NAME'] || 'kontena-agent') rescue nil
+        agent = Docker::Container.get(ENV['KONTENA_AGENT_NAME'] || 'kontena-agent') rescue nil
         if agent
           agent.json['NetworkSettings']['Gateway']
         end
