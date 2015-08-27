@@ -15,7 +15,7 @@ module Kontena
         def run!(grid, name)
           vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
           Dir.chdir(vagrant_path) do
-            ShellSpinner "Terminating Vagrant machine [#{name}] " do
+            ShellSpinner "Terminating Vagrant machine #{name.colorize(:cyan)} " do
               Open3.popen2('vagrant destroy -f') do |stdin, output, wait|
                 while o = output.gets
                   puts o if ENV['DEBUG']
@@ -25,7 +25,7 @@ module Kontena
           end
           node = api_client.get("grids/#{grid}/nodes")['nodes'].find{|n| n['name'] == name}
           if node
-            ShellSpinner "Removing node [#{name}] from grid [#{grid}] " do
+            ShellSpinner "Removing node #{name.colorize(:cyan)} from grid #{grid.colorize(:cyan)} " do
               api_client.delete("grids/#{grid}/nodes/#{name}")
             end
           end

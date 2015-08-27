@@ -17,8 +17,9 @@ module Kontena
         end
 
         def run!(opts)
+          grid = opts[:grid]
           name = opts[:name] || generate_name
-          vagrant_path = "#{Dir.home}/.kontena/#{opts[:grid]}/#{name}"
+          vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
           FileUtils.mkdir_p(vagrant_path)
 
           template = File.join(__dir__ , '/Vagrantfile.coreos.rb.erb')
@@ -35,15 +36,15 @@ module Kontena
           File.write("#{vagrant_path}/Vagrantfile", vagrant_data)
           File.write("#{vagrant_path}/cloudinit.yml", cloudinit)
           Dir.chdir(vagrant_path) do
-            ShellSpinner "Creating Vagrant machine [#{name}] " do
+            ShellSpinner "Creating Vagrant machine #{name.colorize(:cyan)} " do
               Open3.popen2('vagrant box update && vagrant up') do |stdin, output, wait|
                 while o = output.gets
                   print o if ENV['DEBUG']
                 end
               end
             end
-            ShellSpinner "Waiting for node [#{name}] join to grid [#{opts[:grid]}] " do
-              sleep 1 until node_exists_in_grid?(opts[:grid], name)
+            ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{grid.colorize(:cyan)} " do
+              sleep 1 until node_exists_in_grid?(grid, name)
             end
           end
         end
