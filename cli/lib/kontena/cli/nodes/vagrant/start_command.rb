@@ -12,7 +12,13 @@ module Kontena::Cli::Nodes::Vagrant
       vagrant_path = "#{Dir.home}/.kontena/#{current_grid}/#{name}"
       abort("Cannot find Vagrant node [#{name}]".colorize(:red)) unless Dir.exist?(vagrant_path)
       Dir.chdir(vagrant_path) do
-        system('vagrant up')
+        ShellSpinner "Starting Vagrant machine [#{name}] " do
+          Open3.popen2('vagrant up') do |stdin, output, wait|
+            while o = output.gets
+              print o if ENV['DEBUG']
+            end
+          end
+        end
       end
     end
   end
