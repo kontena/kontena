@@ -27,7 +27,7 @@ module Kontena::Cli::Vpn
       data = {
         name: 'vpn',
         stateful: true,
-        image: 'kontena/openvpn:latest',
+        image: 'kontena/openvpn:ethwe',
         ports: [
           {
             container_port: '1194',
