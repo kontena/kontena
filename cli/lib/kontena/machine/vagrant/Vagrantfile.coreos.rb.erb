@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.define "<%= name %>" do |docker|
     docker.vm.box = "coreos-stable"
-    config.vm.box_url = "http://stable.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json"
+    docker.vm.box_url = "http://stable.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json"
     docker.vm.network "private_network", type: "dhcp"
     docker.vm.hostname = "<%= name %>"
     docker.vm.provider "virtualbox" do |vb|
@@ -26,7 +26,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--natdnsproxy1", "off" ]
       vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
     end
-    config.vm.provision :file, :source => "<%= cloudinit %>", :destination => "/tmp/vagrantfile-user-data"
-    config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
+    docker.vm.provision :file, :source => "<%= cloudinit %>", :destination => "/tmp/vagrantfile-user-data"
+    docker.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
   end
 end
