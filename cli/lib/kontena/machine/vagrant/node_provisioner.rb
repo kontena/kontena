@@ -19,6 +19,7 @@ module Kontena
         def run!(opts)
           grid = opts[:grid]
           name = opts[:name] || generate_name
+          version = opts[:version]
           vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
           FileUtils.mkdir_p(vagrant_path)
 
@@ -26,6 +27,7 @@ module Kontena
           cloudinit_template = File.join(__dir__ , '/cloudinit.yml')
           vars = {
             name: name,
+            version: version,
             memory: opts[:memory] || 1024,
             master_uri: opts[:master_uri],
             grid_token: opts[:grid_token],

@@ -7,7 +7,7 @@ write_files:
       KONTENA_URI="<%= master_uri %>"
       KONTENA_TOKEN="<%= grid_token %>"
       KONTENA_PEER_INTERFACE=eth1
-      KONTENA_VERSION=0.8.0.beta
+      KONTENA_VERSION=<%= version %>
   - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
     content: |
         [Service]
