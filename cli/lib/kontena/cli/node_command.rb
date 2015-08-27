@@ -4,6 +4,7 @@ require_relative 'nodes/show_command'
 require_relative 'nodes/update_command'
 
 require_relative 'nodes/vagrant_command'
+require_relative 'nodes/digital_ocean_command'
 
 class Kontena::Cli::NodeCommand < Clamp::Command
 
@@ -13,6 +14,7 @@ class Kontena::Cli::NodeCommand < Clamp::Command
   subcommand "remove", "Remove node", Kontena::Cli::Nodes::RemoveCommand
 
   subcommand "vagrant", "Vagrant specific commands", Kontena::Cli::Nodes::VagrantCommand
+  subcommand "digitalocean", "DigitalOcean specific commands", Kontena::Cli::Nodes::DigitalOceanCommand
 
   def execute
   end
