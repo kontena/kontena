@@ -1,0 +1,32 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.provider :virtualbox do |v|
+    v.check_guest_additions = false
+    v.functional_vboxsf     = false
+  end
+
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    config.vbguest.auto_update = false
+  end
+
+  config.vm.define "<%= name %>" do |docker|
+    docker.vm.box = "coreos-stable"
+    docker.vm.box_url = "http://stable.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json"
+    docker.vm.network "private_network", type: "dhcp"
+    docker.vm.hostname = "<%= name %>"
+    docker.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.customize ["modifyvm", :id, "--memory", "<%= memory %>"]
+      vb.auto_nat_dns_proxy = false
+      vb.customize ["modifyvm", :id, "--natdnsproxy1", "off" ]
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
+    end
+    docker.vm.provision :file, :source => "<%= cloudinit %>", :destination => "/tmp/vagrantfile-user-data"
+    docker.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
+  end
+end

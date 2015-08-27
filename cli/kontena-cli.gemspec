@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'colorize'
   spec.add_runtime_dependency 'clamp'
   spec.add_runtime_dependency 'highline'
+  spec.add_runtime_dependency 'shell-spinner'
 end
