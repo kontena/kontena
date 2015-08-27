@@ -33,11 +33,13 @@ module Kontena
         # @param [String] service_id
         def show_service(token, service_id)
           service = get_service(token, service_id)
+          grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
           puts "  status: #{service['state'] }"
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
           puts "  scaling: #{service['container_count'] }"
           puts "  image: #{service['image']}"
+          puts "  dns: #{service['name']}.#{grid}.kontena.local"
           if service['cmd']
             puts "  cmd: #{service['cmd'].join(' ')}"
           else
@@ -64,8 +66,8 @@ module Kontena
             puts "    #{container['name']}:"
             puts "      rev: #{container['deploy_rev']}"
             puts "      node: #{container['node']['name']}"
-            puts "      dns: #{container['name']}.kontena.local"
-            puts "      ip: #{container['network_settings']['ip_address']}"
+            puts "      dns: #{container['name']}.#{grid}.kontena.local"
+            puts "      ip: #{container['overlay_cidr'].split('/')[0]}"
             puts "      public ip: #{container['node']['public_ip']}"
             if container['status'] == 'unknown'
               puts "      status: #{container['status'].colorize(:yellow)}"
