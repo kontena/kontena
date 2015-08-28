@@ -60,23 +60,37 @@ module Kontena
       container.remove(force: true) if container
 
       info = self.node_info
-      name = "etcd-#{info['node_number']}"
-      discovery_url = info['grid']['discovery_url']
+      cluster_size = info['grid']['initial_size']
+      node_number = info['node_number']
+      name = "node-#{info['node_number']}"
+      grid_name = info['grid']['name']
       weave_ip = "10.81.0.#{info['node_number']}"
       docker_ip = docker_gateway
+
+      cmd = [
+        '--name', name, '--data-dir', '/var/lib/etcd',
+        '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
+        '--initial-cluster', initial_cluster(cluster_size).join(',')
+      ]
+      if node_number <= cluster_size
+        cmd = cmd + [
+          '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
+          '--listen-peer-urls', "http://#{weave_ip}:2380",
+          '--advertise-client-urls', "http://#{weave_ip}:2379",
+          '--initial-advertise-peer-urls', "http://#{weave_ip}:2380",
+          '--initial-cluster-token', grid_name,
+          '--initial-cluster', initial_cluster(cluster_size).join(','),
+          '--initial-cluster-state', 'new'
+        ]
+      else
+        cmd = cmd + ['--proxy', 'on']
+      end
 
       container = Docker::Container.create(
         'name' => 'kontena-etcd',
         'Image' => image,
         'HostName' => 'etcd',
-        'Cmd' => [
-          '--name', name, '--data-dir', '/var/lib/etcd',
-          '--discovery', discovery_url,
-          '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
-          '--listen-peer-urls', "http://#{weave_ip}:2380",
-          '--advertise-client-urls', "http://#{weave_ip}:2379",
-          '--initial-advertise-peer-urls', "http://#{weave_ip}:2380"
-        ],
+        'Cmd' => cmd,
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -84,6 +98,17 @@ module Kontena
         }
       )
       container.start
+    end
+
+    # @param [Integer] cluster_size
+    # @return [Array<String>]
+    def initial_cluster(cluster_size)
+      initial_cluster = []
+      cluster_size.times do |i|
+        node = i + 1
+        initial_cluster << "node-#{node}=http://10.81.0.#{node}:2380"
+      end
+      initial_cluster
     end
 
     ##

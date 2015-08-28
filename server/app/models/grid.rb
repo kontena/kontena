@@ -8,7 +8,6 @@ class Grid
 
   field :name, type: String
   field :token, type: String
-  field :discovery_url, type: String
   field :initial_size, type: Integer
   field :overlay_cidr, type: String, default: '10.81.0.0/19'
 
