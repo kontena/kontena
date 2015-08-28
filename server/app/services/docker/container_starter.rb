@@ -60,7 +60,8 @@ module Docker
           grid: grid_service.grid,
           name: name,
           image: docker_opts['Image'],
-          container_type: 'volume'
+          container_type: 'volume',
+          overlay_cidr: SecureRandom.hex(18)
         )
         container.attributes_from_docker(resp)
         container.save
