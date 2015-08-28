@@ -6,6 +6,26 @@ V1::ServicesApi.route('service_stats') do |r|
       containers = @grid_service.containers.asc(:name)
       @stats = containers.map do |container|
         stat = container.container_stats.last
+        if stat
+          sum = ContainerStat.collection.aggregate([
+          {
+            '$match' => {
+              'grid_service_id' => @grid_service.id
+            }
+          },
+          {
+            '$group' => {
+              '_id' => {name: '$name'},
+              'rx_bytes' => { '$sum' => '$network.rx_bytes'},
+              'tx_bytes' => { '$sum' => '$network.tx_bytes'}
+            }
+          }])
+          if stat.spec['memory']['limit'] == 1.8446744073709552e+19
+            stat.spec['memory']['limit'] = container.host_node.mem_total
+          end
+          stat.network['rx_bytes'] = sum[0]['rx_bytes']
+          stat.network['tx_bytes'] = sum[0]['tx_bytes']
+        end
         {
             container: container,
             stats: stat
