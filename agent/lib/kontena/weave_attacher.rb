@@ -41,15 +41,16 @@ module Kontena
             self.weave_attach(container)
           end
         end
+      elsif event.status == 'destroy'
+        self.weave_detach(event)
       end
     end
 
     # @param [Docker::Container] container
     def weave_attach(container)
-      labels = container.json['Config']['Labels'] || {}
+      labels = container.info['Config']['Labels'] || {}
       overlay_cidr = labels['io.kontena.container.overlay_cidr']
       if overlay_cidr
-        @weave_adapter.exec(['--local', 'attach', overlay_cidr, container.id])
         container_name = labels['io.kontena.container.name']
         service_name = labels['io.kontena.service.name']
         grid_name = labels['io.kontena.grid.name']
@@ -64,11 +65,22 @@ module Kontena
         dns_names.each do |name|
           dns_client.put(
             path: "/name/#{container.id}/#{ip}",
-            body: URI.encode_www_form(fqdn: name),
+            body: URI.encode_www_form('fqdn' => name, 'check-alive' => 'true'),
             headers: { "Content-Type" => "application/x-www-form-urlencoded" }
           )
         end
+
+        @weave_adapter.exec(['--local', 'attach', overlay_cidr, container.id])
       end
+    rescue => exc
+      logger.error(LOG_NAME){ exc.message }
+      logger.error(LOG_NAME){ exc.backtrace.join("\n") }
+    end
+
+    # @param [Docker::Event] event
+    def weave_detach(event)
+      dns_client = Excon.new("http://#{self.weave_ip}:6784")
+      dns_client.delete(path: "/name/#{event.id}")
     rescue => exc
       logger.error(LOG_NAME){ exc.message }
       logger.error(LOG_NAME){ exc.backtrace.join("\n") }
@@ -78,7 +90,7 @@ module Kontena
     def weave_ip
       weave = Docker::Container.get('weave') rescue nil
       if weave
-        weave.json['NetworkSettings']['IPAddress']
+        weave.info['NetworkSettings']['IPAddress']
       end
     end
 
