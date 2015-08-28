@@ -41,18 +41,19 @@ module Kontena
     # @param [String] image
     def create_container(image)
       container = Docker::Container.get('kontena-cadvisor') rescue nil
-      return if container
+      container.remove(force: true) if container
 
       container = Docker::Container.create(
         'name' => 'kontena-cadvisor',
         'Image' => image,
-        'Cmd' => ['--listen_ip=127.0.0.1'],
+        'Cmd' => ['--logtostderr=true'],
         'Volumes' => {
           '/rootfs' => {},
           '/var/run' => {},
           '/sys' => {},
           '/var/lib/docker' => {}
         },
+        'ExposedPorts' => {'8080/tcp' => {}},
         'HostConfig' => {
           'Binds' => [
             '/:/rootfs:ro',
@@ -60,7 +61,11 @@ module Kontena
             '/sys:/sys:ro',
             '/var/lib/docker:/var/lib/docker:ro'
           ],
-          'NetworkMode' => 'host',
+          'PortBindings' => {
+            '8080/tcp' => [
+              {'HostIp' => '127.0.0.1', 'HostPort' => '8080'}
+            ]
+          },
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
