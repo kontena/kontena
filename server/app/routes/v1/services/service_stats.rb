@@ -23,8 +23,10 @@ V1::ServicesApi.route('service_stats') do |r|
           if stat.spec['memory']['limit'] == 1.8446744073709552e+19
             stat.spec['memory']['limit'] = container.host_node.mem_total
           end
-          stat.network['rx_bytes'] = sum[0]['rx_bytes']
-          stat.network['tx_bytes'] = sum[0]['tx_bytes']
+          if sum[0]
+            stat.network['rx_bytes'] = sum[0]['rx_bytes']
+            stat.network['tx_bytes'] = sum[0]['tx_bytes']
+          end
         end
         {
             container: container,
