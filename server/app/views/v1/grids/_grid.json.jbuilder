@@ -1,7 +1,6 @@
 json.id grid.to_path
 json.name grid.name
 json.token grid.token
-json.discovery_url grid.discovery_url
 json.initial_size grid.initial_size
 json.node_count grid.host_nodes.count
 json.service_count grid.grid_services.visible.count

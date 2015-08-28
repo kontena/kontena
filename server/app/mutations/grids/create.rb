@@ -15,7 +15,6 @@ module Grids
       self.name = generate_name if self.name.blank?
       grid = Grid.create(
         name: self.name,
-        discovery_url: discovery_url(self.initial_size),
         initial_size: self.initial_size
       )
       if grid.errors.size > 0
@@ -27,12 +26,6 @@ module Grids
       user.grids << grid
 
       grid
-    end
-
-    ##
-    # @return [String]
-    def discovery_url(initial_size)
-      HTTPClient.new.get_content("https://discovery.etcd.io/new?size=#{initial_size}")
     end
   end
 end
