@@ -7,10 +7,11 @@
 - coreos support
 - vagrant coreos node provisioning
 - digitalocean coreos node provisioning
+- weave 1.1
 - revamp overlay networking (separate weave bridge)
 - kontena app commands (docker-compose/paas like helpers)
 - switch to use weavedns
-- refactored cli (2x performance)
+- refactored cli (better ux / performance)
 - static etcd bootstrap (discovery is not needed)
 - roda 2.5 upgrade
 - minor bug fixes
