@@ -8,9 +8,6 @@ require_relative 'apps/logs_command'
 
 class Kontena::Cli::AppCommand < Clamp::Command
 
-  option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
-  option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
-
   subcommand "init", "Init Kontena application", Kontena::Cli::Apps::InitCommand
   subcommand "deploy", "Deploy Kontena services", Kontena::Cli::Apps::DeployCommand
   subcommand "start", "Start services", Kontena::Cli::Apps::StartCommand
