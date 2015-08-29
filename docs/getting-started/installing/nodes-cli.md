@@ -21,7 +21,7 @@ Usage:
 Options:
     --name NAME                   Node name
     --memory MEMORY               How much memory node has (default: 1024)
-    --version VERSION             Define installed Kontena version (default: 0.8.0.beta)
+    --version VERSION             Define installed Kontena version (default: 0.8.0)
 ```
 
 ## Digital Ocean
@@ -36,5 +36,5 @@ Options:
     --ssh-key SSH_KEY             Path to ssh public key
     --size SIZE                   Droplet size (default: 1gb) (default: "1gb")
     --region REGION               Region (default: ams2) (default: "ams2")
-    --version VERSION             Define installed Kontena version (default: 0.8.0.beta) (default: "0.8.0.beta")
+    --version VERSION             Define installed Kontena version (default: 0.8.0.beta) (default: "0.8.0")
 ```
