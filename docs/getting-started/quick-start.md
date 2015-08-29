@@ -33,11 +33,12 @@ By default, user authentication is made against Kontena's public authentication 
 
 In order to use Kontena, you'll need Kontena Master. If you don't have existing Kontena infrastructure in place, you'll need to install your own. Kontena Master may be provisioned to any cloud platform. It is also possible to run Kontena Master on your own local development environment for testing purposes.
 
-* [Installing Kontena Master](installing/master.md)
+* [Installing Kontena Master for local testing](installing/master-testing.md) using Vagrant
+* [Installing Kontena Master for production](installing/master-production.md)
 
 ## Step 4. Login
 
-Before we can provision Kontena Nodes, we need to login to Kontena Master. Once the Kontena Master is set-up, login with your personal user account.
+Before we can provision Kontena Nodes, we need to login to Kontena Master. Login with your personal user account.
 
 For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the login is done like this:
 
@@ -49,7 +50,7 @@ $ kontena login http://192.168.66.100:8080
 
 You'll need some Kontena Nodes to run your containerized workloads. Just like with Kontena Master, if you don't have existing Kontena infrastructure in place, you'll need to install your own.
 
-The easiest way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods. See the installation instructions below.
+The easiest way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods.
 
 * [Installing with Kontena CLI](installing/nodes-cli.md)
 * [Installing with Docker Machine](installing/nodes-docker-machine.md)

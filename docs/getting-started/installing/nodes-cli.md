@@ -1,6 +1,6 @@
 ---
 title: Nodes (with Kontena CLI)
-toc_order: 2
+toc_order: 3
 ---
 
 # Installing Kontena Nodes with Kontena CLI
