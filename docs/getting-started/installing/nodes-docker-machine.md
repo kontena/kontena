@@ -26,7 +26,7 @@ $ docker run -d --name kontena-agent \
     kontena/agent:latest
 ```
 
-If you want to use [Kontena Image Registry](../../using-kontena/image-registry), you must tweak Docker Machine dns settings so that `docker0` ip is preferred nameserver.
+If you want to use [Kontena Image Registry](../../using-kontena/image-registry.md), you must tweak Docker Machine dns settings so that `docker0` ip is preferred nameserver.
 
 ## Verify installation
 
