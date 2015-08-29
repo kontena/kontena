@@ -1,0 +1,98 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+cloud_init = <<INIT
+#cloud-config
+write_files:
+  - path: /etc/kontena-server.env
+    permissions: 0600
+    owner: root
+    content: |
+      KONTENA_VERSION=0.8.0.beta
+coreos:
+  update:
+      reboot-strategy: off
+  units:
+    - name: kontena-server-mongo.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-mongo
+        After=network-online.target
+        After=docker.service
+        Description=Kontena Server MongoDB
+        Documentation=http://www.mongodb.org/
+        Requires=network-online.target
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStartPre=/usr/bin/docker pull mongo:3.0
+        ExecStartPre=-/usr/bin/docker create --name=kontena-server-mongo-data mongo:3.0
+        ExecStartPre=-/usr/bin/docker stop kontena-server-mongo
+        ExecStartPre=-/usr/bin/docker rm kontena-server-mongo
+        ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
+            --volumes-from=kontena-server-mongo-data \
+            mongo:3.0 mongod --smallfiles
+
+    - name: kontena-server-api.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-api
+        After=network-online.target
+        After=docker.service
+        Description=Kontena Agent
+        Documentation=http://www.kontena.io/
+        Requires=network-online.target
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        EnvironmentFile=/etc/kontena-server.env
+        ExecStartPre=-/usr/bin/docker stop kontena-server-api
+        ExecStartPre=-/usr/bin/docker rm kontena-server-api
+        ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
+        ExecStart=/usr/bin/docker run --name kontena-server-api \
+            --link kontena-server-mongo:mongodb \
+            -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+            -p 8080:9292 \
+            kontena/server:${KONTENA_VERSION}
+INIT
+
+cloud_init_file = Tempfile.new('kontena-master')
+File.write(cloud_init_file.path, cloud_init)
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.provider :virtualbox do |v|
+    v.check_guest_additions = false
+    v.functional_vboxsf     = false
+  end
+
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    config.vbguest.auto_update = false
+  end
+
+  config.vm.define "kontena-master" do |docker|
+    docker.vm.box = "coreos-stable"
+    docker.vm.box_url = "http://stable.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json"
+    docker.vm.network "private_network", ip: "192.168.66.100"
+    docker.vm.hostname = "kontena-master"
+    docker.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.customize ["modifyvm", :id, "--memory", "512"]
+      vb.auto_nat_dns_proxy = false
+      vb.customize ["modifyvm", :id, "--natdnsproxy1", "off" ]
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
+    end
+    docker.vm.provision :file, :source => cloud_init_file.path, :destination => "/tmp/vagrantfile-user-data"
+    docker.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
+  end
+end
