@@ -5,6 +5,8 @@ toc_order: 1
 
 # Installing Kontena Master for Local Testing
 
+> Prerequisities: You'll need [Vagrant](https://www.vagrantup.com/) installed on your system. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
+
 Download Kontena Master [Vagrantfile](Vagrantfile) and run the following command in the same directory where you have saved the Vagrantfile:
 
 ```
