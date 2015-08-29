@@ -7,10 +7,10 @@ toc_order: 3
 
 Kontena CLI may be used to provision new Kontena Nodes based on [CoreOS](https://coreos.com/using-coreos/), fully configured and ready for action! At the moment, you can provision Nodes to following platforms:
 
-* Vagrant (for local testing)
-* Digital Ocean
+* [Vagrant](#vagrant) (for local testing)
+* [Digital Ocean](#digital-ocean)
 
-We are adding support for other platforms gradually based on your requests. If you'd like to see support for the platform you are using, please [let us know](https://github.com/kontena/kontena/issues)!
+We are adding support for other platforms gradually based on your requests. If you'd like to see support for the platform you are using, please [post your request](https://github.com/kontena/kontena/issues) as an issue to our GitHub repository.
 
 ## Vagrant
 
