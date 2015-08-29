@@ -34,7 +34,7 @@ describe GridServiceDeployer do
       subject.deploy_service_container(node, 'redis-1', 'v1.0')
     end
 
-    context 'when container is up-to-date' do
+    context 'when container is running and up-to-date' do
       before(:each) do
         grid_service.image = ubuntu_trusty
         grid_service.state = 'running'
@@ -42,7 +42,7 @@ describe GridServiceDeployer do
       end
 
       it 'does not re-deploy it' do
-        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id)
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id, state: {'running' => 1})
         allow(grid_service).to receive(:container_by_name).and_return(container)
         expect(subject).not_to receive(:remove_service_container).with(container)
         expect(subject).not_to receive(:create_service_container)
@@ -50,7 +50,7 @@ describe GridServiceDeployer do
       end
 
       it "updates container's deploy revision" do
-        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id)
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id, state: {'running' => 1})
         allow(grid_service).to receive(:container_by_name).and_return(container)
         subject.deploy_service_container(node, 'redis-1', 'v1.0')
         container.reload
