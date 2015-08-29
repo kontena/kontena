@@ -60,7 +60,7 @@ words = ARGV
 words.delete_at(0)
 
 completion = []
-completion.push %w(deploy forgot-password node grid invite service container vpn external-registry registry login logout whoami) if words.size < 2
+completion.push %w(app deploy forgot-password node grid invite service container vpn external-registry registry login logout whoami) if words.size < 2
 if words.size > 0
   case words[0]
     when 'grid'
@@ -105,6 +105,9 @@ if words.size > 0
     when 'external-registry'
       completion.clear
       completion.push %w(add list delete)
+    when 'app'
+      completion.clear
+      completion.push %w(init deploy start stop remove rm ps list)
   end
 end
 

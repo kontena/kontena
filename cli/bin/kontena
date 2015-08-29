@@ -13,6 +13,7 @@ STDOUT.sync = true
 require 'clamp'
 require 'kontena/client'
 require 'kontena/cli/common'
+require 'kontena/cli/app_command'
 require 'kontena/cli/register_command'
 require 'kontena/cli/login_command'
 require 'kontena/cli/logout_command'
@@ -28,11 +29,14 @@ require 'kontena/cli/vpn_command'
 require 'kontena/cli/registry_command'
 require 'kontena/cli/external_registry_command'
 require 'kontena/cli/deploy_command'
+require 'kontena/cli/app_command'
 require 'kontena/cli/version_command'
 
 class MainCommand < Clamp::Command
 
+  subcommand "app", "Grid specific commands", Kontena::Cli::AppCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
+  subcommand "app", "App specific commands", Kontena::Cli::AppCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "deploy", "Create and deploy multiple services from YAML file", Kontena::Cli::DeployCommand
   subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand

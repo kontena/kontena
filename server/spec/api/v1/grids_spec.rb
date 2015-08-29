@@ -98,7 +98,7 @@ describe '/v1/grids' do
         post "/v1/grids/#{grid.to_path}/services", payload.to_json, request_headers
 
         expect(json_response['links'].size).to eq(1)
-        expect(json_response['links'].first['grid_service_id']).to eq(db_service.id.to_s)
+        expect(json_response['links'].first['grid_service_id']).to eq(db_service.to_path)
         expect(json_response['links'].first['alias']).to eq('mysql')
       end
     end
