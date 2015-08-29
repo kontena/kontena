@@ -36,14 +36,18 @@ In order to use Kontena, you'll need Kontena Master. If you don't have existing 
 * [Installing Kontena Master for local testing](installing/master-testing.md) using Vagrant
 * [Installing Kontena Master for production](installing/master-production.md)
 
-## Step 4. Login
+## Step 4. Login and Create a Grid
 
-Before we can provision Kontena Nodes, we need to login to Kontena Master. Login with your personal user account.
-
-For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the login is done like this:
+Before we can provision Kontena Nodes, we need to login to Kontena Master and create a Kontena Grid. Login with your personal user account. For example, if the Kontena Master is running at address `192.168.66.100` and listening to port `8080`, the login is done like this:
 
 ```
 $ kontena login http://192.168.66.100:8080
+```
+
+Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. The Grid can be created with command `kontena grid create`. For example, to create a grid named `mygrid`:
+
+```
+$ kontena grid create mygrid
 ```
 
 ## Step 5. Install Kontena Nodes
