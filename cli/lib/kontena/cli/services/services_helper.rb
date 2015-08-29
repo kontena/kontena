@@ -92,6 +92,27 @@ module Kontena
           puts ''
         end
 
+        # @param [String] token
+        # @param [String] service_id
+        def start_service(token, service_id)
+          param = parse_service_id(service_id)
+          client(token).post("services/#{param}/start", {})
+        end
+
+        # @param [String] token
+        # @param [String] service_id
+        def stop_service(token, service_id)
+          param = parse_service_id(service_id)
+          client(token).post("services/#{param}/stop", {})
+        end
+
+        # @param [String] token
+        # @param [String] service_id
+        def delete_service(token, service_id)
+          param = parse_service_id(service_id)
+          client(token).delete("services/#{param}")
+        end
+
         # @param [String] service_id
         # @return [String]
         def parse_service_id(service_id)

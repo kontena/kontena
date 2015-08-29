@@ -120,9 +120,8 @@ yml
       end
 
       it 'reads given yml file' do
-        expect(subject).to receive(:file).once.and_return('custom.yml')
         expect(File).to receive(:read).with('custom.yml').and_return(kontena_yml)
-        subject.run([])
+        subject.run(["--file", "custom.yml"])
       end
 
       it 'uses current directory as service name prefix by default' do
@@ -220,7 +219,7 @@ yml
           expect(subject).to receive(:create).once.with('wordpress', anything).and_return({})
           expect(subject).not_to receive(:create).with('mysql', services['mysql'])
 
-          subject.run(['--service', 'wordpress'])
+          subject.run(['wordpress'])
         end
       end
     end

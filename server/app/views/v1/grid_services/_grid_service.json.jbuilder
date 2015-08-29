@@ -12,4 +12,4 @@ json.env grid_service.env
 json.ports grid_service.ports
 json.container_count grid_service.container_count
 json.state grid_service.state
-json.links grid_service.grid_service_links.map{|s| {alias: s.alias, grid_service_id: s.linked_grid_service.id.to_s }}
+json.links grid_service.grid_service_links.map{|s| {alias: s.alias, grid_service_id: s.linked_grid_service.to_path }}

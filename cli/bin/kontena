@@ -29,10 +29,12 @@ require 'kontena/cli/vpn_command'
 require 'kontena/cli/registry_command'
 require 'kontena/cli/external_registry_command'
 require 'kontena/cli/deploy_command'
+require 'kontena/cli/app_command'
 require 'kontena/cli/version_command'
 
 class MainCommand < Clamp::Command
 
+  subcommand "app", "Grid specific commands", Kontena::Cli::AppCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand

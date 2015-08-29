@@ -1,31 +1,22 @@
 require 'yaml'
 require_relative 'common'
-require_relative '../services/services_helper'
 
 module Kontena::Cli::Apps
   class DeployCommand < Clamp::Command
     include Kontena::Cli::Common
     include Common
-    include Kontena::Cli::Services::ServicesHelper
 
-    option ['-f', '--file'], 'FILE', 'Path to kontena.yml file, default: current directory'
-    option ['-p', '--prefix'], 'PREFIX', 'Prefix of service names, default: name of the current directory'
-    option ['-s', '--service'], 'SERVICE', 'Services to deploy', multivalued: true
+    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
+
+    parameter "[SERVICE] ...", "Services to start"
 
     attr_reader :services, :service_prefix
 
     def execute
       require_api_url
       require_token
-
-      filename = file || 'kontena.yml'
-      @service_prefix = prefix || current_dir
-
-      abort("File #{filename} does not exist") unless File.exists?(filename)
-      @services = parse_yml_file(filename, nil, service_prefix)
-
-      @services = @services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
-
+      @services = load_services_from_yml
       Dir.chdir(File.dirname(filename))
       init_services(services)
       deploy_services(deploy_queue)
@@ -68,7 +59,7 @@ module Kontena::Cli::Apps
 
       merge_env_vars(options)
 
-      if find_service_by_name(name)
+      if service_exists?(name)
         service = update(name, options)
       else
         service = create(name, options)
@@ -101,14 +92,6 @@ module Kontena::Cli::Apps
 
     def in_deploy_queue?(name)
       deploy_queue.find {|service| service['id'] == prefixed_name(name)} != nil
-    end
-
-    def prefixed_name(name)
-      "#{service_prefix}-#{name}"
-    end
-
-    def current_dir
-      File.basename(Dir.getwd)
     end
 
     def merge_env_vars(options)
@@ -149,10 +132,6 @@ module Kontena::Cli::Apps
       data[:cap_add] = options['cap_add'] if options['cap_add']
       data[:cap_drop] = options['cap_drop'] if options['cap_drop']
       data
-    end
-
-    def token
-      @token ||= require_token
     end
 
     def deploy_queue
