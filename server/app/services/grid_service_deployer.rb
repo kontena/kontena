@@ -95,7 +95,10 @@ class GridServiceDeployer
   # @param [String] deploy_rev
   def deploy_service_container(node, container_name, deploy_rev)
     old_container = self.grid_service.container_by_name(container_name)
-    return if old_container && old_container.up_to_date?
+    if self.grid_service.state == 'running' && old_container && old_container.up_to_date?
+      old_container.update_attribute(:deploy_rev, deploy_rev)
+      return
+    end
     if old_container && old_container.exists_on_node?
       self.remove_service_container(old_container)
     end
