@@ -52,7 +52,7 @@ module Kontena
       event = {
         event: 'container:stats',
         data: {
-          id: container['name'].sub('/docker/', ''),
+          id: container['aliases'][1],
           spec: container['spec'],
           cpu: {
             usage: raw_cpu_usage,

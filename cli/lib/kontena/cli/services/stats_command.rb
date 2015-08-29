@@ -41,7 +41,7 @@ module Kontena::Cli::Services
       memory = stat['memory'].nil? ? 'N/A' : filesize_to_human(stat['memory']['usage'])
       if !stat['memory'].nil? && stat['memory']['limit'] != 1.8446744073709552e+19
         memory_limit = filesize_to_human(stat['memory']['limit'])
-        memory_pct = "#{(memory.to_f / memory_limit.to_f * 100).round(2)}%"
+        memory_pct = "#{(stat['memory']['usage'].to_f / stat['memory']['limit'].to_f * 100).round(2)}%"
       else
         memory_limit = 'N/A'
         memory_pct = 'N/A'
