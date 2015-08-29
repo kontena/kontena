@@ -38,7 +38,7 @@ Options:
 By default, Kontena will search for `kontena.yml` file in the current directory. If you want to specify the path to custom file, you can use the `-f` switch.
 
 ```
-$~ kontena app deploy -f myapp.yml      # application described in myapp.yml file
+$ kontena app deploy -f myapp.yml      # application described in myapp.yml file
 ```
 
 ### Project Name
@@ -46,8 +46,8 @@ $~ kontena app deploy -f myapp.yml      # application described in myapp.yml fil
 When application is deployed, Kontena will prefix all service names with the name of your application. By default, Kontena is using the name of the current directory. In case you want to use custom project name (prefix your application), you can use the `-p` switch.
 
 ```
-/foo/bar $~ kontena app deploy          # project name is bar, all services are prefixed "bar"
-/foo/bar $~ kontena app deploy -p app   # project name is app, all services are prefixed "app"
+/foo/bar $ kontena app deploy          # project name is bar, all services are prefixed "bar"
+/foo/bar $ kontena app deploy -p app   # project name is app, all services are prefixed "app"
 ```
 
 ### Deploying Partial Application
@@ -55,7 +55,7 @@ When application is deployed, Kontena will prefix all service names with the nam
 Sometimes you might want to deploy just some parts of your application. If that's the case, you can define the name of those services you want deployed.
 
 ```
-$~ kontena app deploy wordpress         # only deploy services named "wordpress" and "lb"
+$ kontena app deploy wordpress         # only deploy services named "wordpress" and "lb"
 ```
 
 ### Example `kontena.yml`
