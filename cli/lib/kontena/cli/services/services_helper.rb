@@ -40,26 +40,51 @@ module Kontena
           puts "  scaling: #{service['container_count'] }"
           puts "  image: #{service['image']}"
           puts "  dns: #{service['name']}.#{grid}.kontena.local"
+
+          puts "  affinity: "
+          service['affinity'].to_a.each do |a|
+            puts "    - #{a}"
+          end
+
           if service['cmd']
             puts "  cmd: #{service['cmd'].join(' ')}"
           else
-            puts "  cmd: -"
+            puts "  cmd: "
           end
 
           puts "  env: "
-          if service['env']
-            service['env'].each{|e| puts "    - #{e}"}
-          end
+          service['env'].to_a.each{|e| puts "    - #{e}"}
+
           puts "  ports:"
-          service['ports'].each do |p|
+          service['ports'].to_a.each do |p|
             puts "    - #{p['node_port']}:#{p['container_port']}/#{p['protocol']}"
           end
-          puts "  links: "
-          if service['links']
-            service['links'].each do |l|
-              puts "    - #{l['alias']}"
-            end
+
+          puts "  volumes:"
+          service['volumes'].to_a.each do |v|
+            puts "    - #{v}"
           end
+
+          puts "  volumes_from:"
+          service['volumes_from'].to_a.each do |v|
+            puts "    - #{v}"
+          end
+
+          puts "  links: "
+          service['links'].to_a.each do |l|
+            puts "    - #{l['alias']}"
+          end
+
+          puts "  cap_add:"
+          service['cap_add'].to_a.each do |c|
+            puts "    - #{c}"
+          end
+
+          puts "  cap_drop:"
+          service['cap_drop'].to_a.each do |c|
+            puts "    - #{c}"
+          end
+
           puts "  containers:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
