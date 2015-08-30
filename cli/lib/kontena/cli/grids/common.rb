@@ -5,6 +5,7 @@ module Kontena::Cli::Grids
     # @param [Hash] grid
     def print_grid(grid)
       puts "#{grid['name']}:"
+      puts "  uri: #{settings['server']['url'].sub('http', 'ws')}"
       puts "  token: #{grid['token']}"
       puts "  users: #{grid['user_count']}"
       puts "  nodes: #{grid['node_count']}"
