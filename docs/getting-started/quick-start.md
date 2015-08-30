@@ -54,7 +54,7 @@ $ kontena grid create mygrid
 
 You'll need some Kontena Nodes to run your containerized workloads. Just like with Kontena Master, if you don't have existing Kontena infrastructure in place, you'll need to install your own.
 
-The easiest way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods.
+The easiest and our preferred way to provision Kontena Nodes is to use built-in node provision feature of Kontena CLI. Alternatively, you can use [Docker Machine](https://docs.docker.com/machine/) or manual install methods.
 
 * [Installing with Kontena CLI](installing/nodes-cli.md)
 * [Installing with Docker Machine](installing/nodes-docker-machine.md)
@@ -62,19 +62,10 @@ The easiest way to provision Kontena Nodes is to use built-in node provision fea
 
 ## Congratulations, Enjoy!
 
-After successful install, you are ready to start using Kontena. Here's some commands to get started:
-
-```
-$ kontena service create --stateful -p 8181:2368 ghost-blog ghost:0.6     # create stateful "ghost-blog" service, expose port 8181
-$ kontena service deploy ghost-blog                                       # deploy "ghost-blog" service
-```
-
-To see all commands:
+After successful install, you are ready to start using Kontena. To see all commands:
 
 ```
 $ kontena help
 ```
-
-## Next Steps
 
 You are now ready to learn more about the [architecture](../core-concepts/architecture.md) and usage of Kontena. We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.

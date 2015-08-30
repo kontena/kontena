@@ -5,9 +5,22 @@ toc_order: 5
 
 # Installing Kontena Nodes Manually
 
+Kontena Nodes may be installed manually to any Linux machine capable of running Docker Engine. In order to connect nodes to your Kontena Master, you'll need `KONTENA_URI` and `KONTENA_TOKEN`. You can get this information with Kontena CLI.
+
+```
+$ kontena grid current
+mygrid:
+  uri: ws://192.168.66.100:8080
+  token: Fs+IYJyOgpP80LMCy0tuHpOOhiPYTkdzaFy1onOY1jZxJ3bvCFEevUUT3dzWwkRmUt/Vj1RA1HCgY3QpLQ24aA==
+  users: 1
+  nodes: 1
+  services: 2
+  containers: 0
+```
+
 ## CoreOS
 
-Example cloud-config that can be used as a basis for CoreOS installation:
+Example cloud-config that can be used as a basis for CoreOS installation. Replace `KONTENA_URI` and `KONTENA_TOKEN` to match your configuration.
 
 ```yaml
 #cloud-config
@@ -86,7 +99,7 @@ coreos:
             kontena/agent:${KONTENA_VERSION}
 ```
 
-You should replace docker `--bip` address with something that is not conflicting with your infrastructure and set that ip as the default nameserver.
+**NOTE**: You should replace docker `--bip` address with something that is not conflicting with your infrastructure and set that ip as the default nameserver.
 
 ## Ubuntu 14.04
 
@@ -102,8 +115,9 @@ $ sudo apt-get install kontena-agent
 ```
 
 #### Configure agents during installation process
-* the address of the Kontena server. Note! You must use WebSocket protocol: ws or wss for secured connections
-* grid token from the Kontena server
+
+* The address of the Kontena server. Note! You must use WebSocket protocol: ws or wss for secured connections
+* Grid token from the Kontena server
 
 ### Restart Docker
 
