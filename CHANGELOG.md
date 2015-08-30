@@ -14,6 +14,7 @@
 - refactored cli (better ux / performance)
 - static etcd bootstrap (discovery is not needed)
 - roda 2.5 upgrade
+- registry 2.1 with optional authentication
 - minor bug fixes
 
 ## 0.7.4 (2015-08-15)
