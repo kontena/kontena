@@ -37,8 +37,8 @@ Next, start the Kontena Agent using the `uri` and `token`.
 ```
 $ eval "$(docker-machine env kontena-node-1)"
 $ docker run -d --name kontena-agent \
-    -e KONTENA_URI=<kontena master websocket address> \
-    -e KONTENA_TOKEN=<kontena grid token> \
+    -e KONTENA_URI=<uri> \
+    -e KONTENA_TOKEN=<token> \
     -e KONTENA_PEER_INTERFACE=eth1 \
     -v=/var/run/docker.sock:/var/run/docker.sock \
     --net=host \

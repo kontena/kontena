@@ -48,10 +48,12 @@ coreos:
         Description=kontena-server-api
         After=network-online.target
         After=docker.service
+        After=kontena-server-mongo.service
         Description=Kontena Agent
         Documentation=http://www.kontena.io/
         Requires=network-online.target
         Requires=docker.service
+        Requires=kontena-server-mongo.service
 
         [Service]
         Restart=always
