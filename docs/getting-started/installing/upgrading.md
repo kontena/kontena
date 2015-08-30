@@ -12,10 +12,7 @@ toc_order: 6
 
 #### Master Server
 
-```
-$ sudo apt-get update
-$ sudo apt-get install kontena-server=0.8.0-1
-```
+- upgrade package: `sudo apt-get update && sudo apt-get install kontena-server=0.8.0-1`
 
 #### Agent (all nodes)
 
