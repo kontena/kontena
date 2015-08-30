@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.0 (TBD)
+
+- initial multi-master support
+- simpler setup: can be installed with plain docker commands
+- coreos support
+- vagrant coreos node provisioning
+- digitalocean coreos node provisioning
+- latest weave
+- revamp overlay networking (separate weave bridge)
+- kontena app commands (docker-compose/paas like helpers)
+- switch to use weavedns
+- refactored cli (better ux / performance)
+- static etcd bootstrap (discovery is not needed)
+- roda 2.5 upgrade
+- registry 2.1 with optional authentication
+- minor bug fixes
+
 ## 0.7.4 (2015-08-15)
 
 - Fix etcd boot errors on flaky networks
