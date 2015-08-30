@@ -35,5 +35,28 @@ module Kontena::Cli::Services
       data.merge!(parse_service_data_from_options)
       create_service(token, current_grid, data)
     end
+
+    ##
+    # parse given options to hash
+    # @return [Hash]
+    def parse_service_data_from_options
+      data = {}
+      data[:ports] = parse_ports(ports_list) if ports_list
+      data[:links] = parse_links(link_list) if link_list
+      data[:volumes] = volume_list if volume_list
+      data[:volumes_from] = volumes_from_list if volumes_from_list
+      data[:memory] = parse_memory(memory) if memory
+      data[:memory_swap] = parse_memory(memory_swap) if memory_swap
+      data[:cpu_shares] = cpu_shares if cpu_shares
+      data[:affinity] = affinity_list if affinity_list
+      data[:env] = env_list if env_list
+      data[:container_count] = instances if instances
+      data[:cmd] = cmd.split(" ") if cmd
+      data[:user] = user if user
+      data[:image] = image if image
+      data[:cap_add] = cap_add_list if cap_add_list
+      data[:cap_drop] = cap_drop_list if cap_drop_list
+      data
+    end
   end
 end
