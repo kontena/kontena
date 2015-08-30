@@ -3,8 +3,8 @@ module Kontena::Cli::Nodes::Vagrant
     include Kontena::Cli::Common
 
     option "--name", "NAME", "Node name"
-    option "--memory", "MEMORY", "How much memory node has (default: 1024)"
-    option "--version", "VERSION", "Define installed Kontena version (default: #{Kontena::Cli::VERSION})"
+    option "--memory", "MEMORY", "How much memory node has", default: '1024'
+    option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
     def execute
       require_api_url
@@ -18,8 +18,8 @@ module Kontena::Cli::Nodes::Vagrant
         grid_token: grid['token'],
         grid: current_grid,
         name: name,
-        memory: memory || '1024',
-        version: version || Kontena::Cli::VERSION
+        memory: memory,
+        version: version
       )
     end
   end
