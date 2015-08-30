@@ -11,7 +11,7 @@ write_files:
     permissions: 0600
     owner: root
     content: |
-      KONTENA_VERSION=0.8.0.beta
+      KONTENA_VERSION=latest
 coreos:
   update:
       reboot-strategy: off
