@@ -65,7 +65,7 @@ The easiest way to provision Kontena Nodes is to use built-in node provision fea
 After successful install, you are ready to start using Kontena. Here's some commands to get started:
 
 ```
-$ kontena service create ghost-blog ghost:0.5 --stateful -p 8181:2368     # create stateful "ghost-blog" service, expose port 8181
+$ kontena service create --stateful -p 8181:2368 ghost-blog ghost:0.6     # create stateful "ghost-blog" service, expose port 8181
 $ kontena service deploy ghost-blog                                       # deploy "ghost-blog" service
 ```
 
