@@ -5,9 +5,9 @@ module Kontena::Cli::Nodes::DigitalOcean
     option "--name", "NAME", "Node name"
     option "--token", "TOKEN", "DigitalOcean API token", required: true
     option "--ssh-key", "SSH_KEY", "Path to ssh public key", required: true
-    option "--size", "SIZE", "Droplet size (default: 1gb)", default: '1gb'
-    option "--region", "REGION", "Region (default: ams2)", default: 'ams2'
-    option "--version", "VERSION", "Define installed Kontena version (default: #{Kontena::Cli::VERSION})", default: Kontena::Cli::VERSION
+    option "--size", "SIZE", "Droplet size", default: '1gb'
+    option "--region", "REGION", "Region", default: 'ams2'
+    option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
     def execute
       require_api_url

@@ -36,7 +36,7 @@ namespace :release do
   end
 
   desc 'Upload ubuntu package'
-  task :upload_ubuntu => :environment do
+  task :push_ubuntu => :environment do
     rev = ENV['REV']
     raise ArgumentError.new('You must define REV') if rev.blank?
     repo = ENV['REPO'] || 'kontena'
@@ -46,7 +46,7 @@ namespace :release do
   end
 
   desc 'Upload docker image'
-  task :upload_docker do
+  task :push_docker do
     sh("docker push #{DOCKER_NAME}:#{VERSION}")
     DOCKER_VERSIONS.each do |v|
       sh("docker push #{DOCKER_NAME}:#{v}")
