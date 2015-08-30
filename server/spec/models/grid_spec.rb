@@ -60,4 +60,28 @@ describe Grid do
       expect(grid.available_overlay_ips).not_to include(container.overlay_cidr.split('/')[0])
     end
   end
+
+  describe '#has_initial_nodes?' do
+    let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
+
+    it 'returns true if initial nodes are created' do
+      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
+      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
+      HostNode.create(grid: grid, node_id: 'cc', node_number: 3)
+      expect(grid.has_initial_nodes?).to eq(true)
+    end
+
+    it 'returns false if nodes are missing' do
+      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
+      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
+      expect(grid.has_initial_nodes?).to eq(false)
+    end
+
+    it 'returns false if there are enough nodes but initial node is missing' do
+      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
+      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
+      HostNode.create(grid: grid, node_id: 'cc', node_number: 4)
+      expect(grid.has_initial_nodes?).to eq(false)
+    end
+  end
 end

@@ -8,7 +8,7 @@ class Grid
 
   field :name, type: String
   field :token, type: String
-  field :initial_size, type: Integer
+  field :initial_size, type: Integer, default: 1
   field :overlay_cidr, type: String, default: '10.81.0.0/19'
 
   has_many :host_nodes
@@ -25,6 +25,7 @@ class Grid
 
   before_create :set_token
 
+  # @return [String]
   def to_path
     self.name
   end
@@ -33,7 +34,6 @@ class Grid
     super(args.merge({:except => [:_id] }))
   end
 
-  ##
   # @return [Array<Integer>]
   def free_node_numbers
     reserved_numbers = self.host_nodes.map{|node| node.node_number }.flatten
@@ -58,6 +58,13 @@ class Grid
 
   def available_overlay_ips
     self.all_overlay_ips - self.reserved_overlay_ips
+  end
+
+  # Does grid have all the initial nodes created?
+  #
+  # @return [Boolean]
+  def has_initial_nodes?
+    self.host_nodes.where(node_number: {:$lte => self.initial_size}).count == self.initial_size
   end
 
   private

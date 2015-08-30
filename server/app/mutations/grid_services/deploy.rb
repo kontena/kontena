@@ -23,6 +23,10 @@ module GridServices
     end
 
     def validate
+      unless self.grid_service.grid.has_initial_nodes?
+        add_error(:grid, :invalid_state, 'Grid does not have initial nodes ready')
+        return
+      end
       if self.grid_service.deploying?
         add_error(:service, :invalid_state, 'Service is currently deploying')
         return

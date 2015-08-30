@@ -3,11 +3,13 @@ require_relative '../../spec_helper'
 describe GridServices::Deploy do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
-  
+
   let(:user) { User.create!(email: 'joe@domain.com')}
+  let(:host_node) { HostNode.create(node_id: 'aa')}
   let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
+    grid = Grid.create!(name: 'test-grid', initial_size: 1)
     grid.users << user
+    grid.host_nodes << host_node
     grid
   }
   let(:deploy_actor) { spy(:deploy_actor) }
@@ -16,6 +18,11 @@ describe GridServices::Deploy do
   let(:subject) { described_class.new(current_user: user, grid_service: redis_service, strategy: 'ha')}
 
   describe '#run' do
+    it 'checks grid initial node status' do
+      expect(grid).to receive(:has_initial_nodes?).once
+      subject.run
+    end
+
     it 'sends deploy call to deployer' do
       # since validate method is called in constructor we need to stub deployer method globally before initialization
       allow_any_instance_of(described_class).to receive(:deployer).and_return(deployer)
