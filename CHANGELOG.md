@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.0 (TBD)
+## 0.8.0 (2015-08-30)
 
 - initial multi-master support
 - simpler setup: can be installed with plain docker commands
