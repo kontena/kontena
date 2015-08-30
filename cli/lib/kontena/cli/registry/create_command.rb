@@ -3,6 +3,7 @@ module Kontena::Cli::Registry
     include Kontena::Cli::Common
 
     option '--node', 'NODE', 'Node name'
+    option '--auth-password', 'AUTH_PASSWORD', 'Password protect registry'
     option '--s3-access-key', 'S3_ACCESS_KEY', 'S3 access key'
     option '--s3-secret-key', 'S3_SECRET_KEY', 'S3 secret key'
     option '--s3-bucket', 'S3_BUCKET', 'S3 bucket'
@@ -60,11 +61,12 @@ module Kontena::Cli::Registry
       end
 
       env << "REGISTRY_HTTP_ADDR=0.0.0.0:80"
+      env << "AUTH_PASSWORD=#{auth_password}" if auth_password
 
       data = {
         name: 'registry',
         stateful: true,
-        image: 'registry:2.0',
+        image: 'kontena/registry:2.1',
         volumes: ['/registry'],
         env: env,
         affinity: ["node==#{node['name']}"]
@@ -77,9 +79,9 @@ module Kontena::Cli::Registry
         sleep 1
       end
       puts ' done'
-      puts "Docker Registry 2.0 is now running at registry.kontena.local."
+      puts "Docker Registry 2.1 is now running at registry.kontena.local."
       puts "Note: OpenVPN connection is needed to establish connection to this registry. See 'kontena vpn' for details."
-      puts 'Note 2: you must set "--insecure-registry 10.81.0.0/16" to your client docker daemon before you are able to push to this registry.'
+      puts 'Note 2: you must set "--insecure-registry 10.81.0.0/19" to your client docker daemon before you are able to push to this registry.'
     end
   end
 end
