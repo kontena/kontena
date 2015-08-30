@@ -40,26 +40,51 @@ module Kontena
           puts "  scaling: #{service['container_count'] }"
           puts "  image: #{service['image']}"
           puts "  dns: #{service['name']}.#{grid}.kontena.local"
+
+          puts "  affinity: "
+          service['affinity'].to_a.each do |a|
+            puts "    - #{a}"
+          end
+
           if service['cmd']
             puts "  cmd: #{service['cmd'].join(' ')}"
           else
-            puts "  cmd: -"
+            puts "  cmd: "
           end
 
           puts "  env: "
-          if service['env']
-            service['env'].each{|e| puts "    - #{e}"}
-          end
+          service['env'].to_a.each{|e| puts "    - #{e}"}
+
           puts "  ports:"
-          service['ports'].each do |p|
+          service['ports'].to_a.each do |p|
             puts "    - #{p['node_port']}:#{p['container_port']}/#{p['protocol']}"
           end
-          puts "  links: "
-          if service['links']
-            service['links'].each do |l|
-              puts "    - #{l['alias']}"
-            end
+
+          puts "  volumes:"
+          service['volumes'].to_a.each do |v|
+            puts "    - #{v}"
           end
+
+          puts "  volumes_from:"
+          service['volumes_from'].to_a.each do |v|
+            puts "    - #{v}"
+          end
+
+          puts "  links: "
+          service['links'].to_a.each do |l|
+            puts "    - #{l['alias']}"
+          end
+
+          puts "  cap_add:"
+          service['cap_add'].to_a.each do |c|
+            puts "    - #{c}"
+          end
+
+          puts "  cap_drop:"
+          service['cap_drop'].to_a.each do |c|
+            puts "    - #{c}"
+          end
+
           puts "  containers:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
@@ -167,29 +192,6 @@ module Kontena
           else
             memory.to_i
           end
-        end
-
-        ##
-        # parse given options to hash
-        # @return [Hash]
-        def parse_service_data_from_options
-          data = {}
-          data[:ports] = parse_ports(ports_list) if ports_list
-          data[:links] = parse_links(link_list) if link_list
-          data[:volumes] = volume_list if volume_list
-          data[:volumes_from] = volumes_from_list if volumes_from_list
-          data[:memory] = parse_memory(memory) if memory
-          data[:memory_swap] = parse_memory(memory_swap) if memory_swap
-          data[:cpu_shares] = cpu_shares if cpu_shares
-          data[:affinity] = affinity_list if affinity_list
-          data[:env] = env_list if env_list
-          data[:container_count] = instances if instances
-          data[:cmd] = cmd.split(" ") if cmd
-          data[:user] = user if user
-          data[:image] = image if image
-          data[:cap_add] = cap_add_list if cap_add_list
-          data[:cap_drop] = cap_drop_list if cap_drop_list
-          data
         end
       end
     end
