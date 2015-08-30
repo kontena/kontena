@@ -7,7 +7,7 @@
 - coreos support
 - vagrant coreos node provisioning
 - digitalocean coreos node provisioning
-- weave 1.1
+- latest weave
 - revamp overlay networking (separate weave bridge)
 - kontena app commands (docker-compose/paas like helpers)
 - switch to use weavedns
