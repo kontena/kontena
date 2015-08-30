@@ -1,3 +1,4 @@
+require 'mongoid'
 
 load 'lib/tasks/environment.rake'
 load 'lib/tasks/install.rake'
