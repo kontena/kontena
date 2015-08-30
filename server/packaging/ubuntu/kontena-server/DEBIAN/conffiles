@@ -2,4 +2,3 @@
 /etc/init/kontena-server-api.conf
 /etc/init/kontena-server-haproxy.conf
 /etc/init/kontena-server-mongo.conf
-/etc/init/kontena-server-redis.conf
