@@ -35,6 +35,9 @@ module GridServices
           end
         end
       end
+      array :affinity do
+        string
+      end
     end
 
     def execute
@@ -50,6 +53,7 @@ module GridServices
       attributes[:cmd] = self.cmd if self.cmd
       attributes[:env] = merge_env(grid_service.env, self.env) if self.env
       attributes[:ports] = self.ports if self.ports
+      attributes[:affinity] = self.affinity if self.affinity
       grid_service.attributes = attributes
       grid_service.save
 

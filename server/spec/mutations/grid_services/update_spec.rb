@@ -21,5 +21,17 @@ describe GridServices::Update do
         ).run
       }.to change{ redis_service.reload.env }.to(['FOO=bar', 'BAR=baz'])
     end
+
+    it 'updates affinity variables' do
+      redis_service.affinity = ['az==a1', 'disk==ssd']
+      redis_service.save
+      expect {
+        described_class.new(
+            current_user: user,
+            grid_service: redis_service,
+            affinity: ['az==b1']
+        ).run
+      }.to change{ redis_service.reload.affinity }.to(['az==b1'])
+    end
   end
 end
