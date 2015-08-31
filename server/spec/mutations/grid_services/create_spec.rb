@@ -22,6 +22,52 @@ describe GridServices::Create do
       }.to change{ GridService.count }.by(1)
     end
 
+    it 'allows - char in name' do
+      outcome = described_class.new(
+        current_user: user,
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'redis-db',
+        stateful: true
+      ).run
+      expect(outcome.success?).to be(true)
+    end
+
+    it 'allows numbers in name' do
+      outcome = described_class.new(
+        current_user: user,
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'redis-12',
+        stateful: true
+      ).run
+      expect(outcome.success?).to be(true)
+    end
+
+    it 'does not allow - as a first char in name' do
+      outcome = described_class.new(
+        current_user: user,
+        grid: grid,
+        image: 'redis:2.8',
+        name: '-redis',
+        stateful: true
+      ).run
+      expect(outcome.success?).to be(false)
+      expect(outcome.errors.message.keys).to include('name')
+    end
+
+    it 'does not allow special chars in name' do
+      outcome = described_class.new(
+        current_user: user,
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'red&is',
+        stateful: true
+      ).run
+      expect(outcome.success?).to be(false)
+      expect(outcome.errors.message.keys).to include('name')
+    end
+
     it 'saves container_count' do
       outcome = described_class.new(
           current_user: user,
