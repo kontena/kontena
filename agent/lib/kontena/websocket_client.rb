@@ -20,7 +20,6 @@ module Kontena
       @api_uri = api_uri
       @api_token = api_token.to_s
       logger.info(LOG_NAME) { "initialized with token #{@api_token}" }
-      @connection_retries = 0
       @subscribers = {}
       @rpc_server = Kontena::RpcServer.new
     end
@@ -37,22 +36,17 @@ module Kontena
 
       @ws.on :open do |event|
         logger.info(LOG_NAME) { 'connection established' }
-        @connection_retries = 0
       end
       @ws.on :message do |event|
         self.on_message(@ws, event)
       end
       @ws.on :close do |event|
         logger.info(LOG_NAME) { "connection closed with code: #{event.code}" }
-        @connection_retries += 1
-        sleep (2 ** @connection_retries)
+        sleep 1
         self.connect
       end
       @ws.on :error do |event|
         logger.info(LOG_NAME) { "connection closed with error: #{event.message}" }
-        @connection_retries += 1
-        sleep (2 ** @connection_retries)
-        self.connect
       end
     end
 
