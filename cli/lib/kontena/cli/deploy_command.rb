@@ -102,6 +102,8 @@ class Kontena::Cli::DeployCommand < Clamp::Command
   end
 
   def prefixed_name(name)
+    return name if service_prefix.strip == ""
+
     "#{service_prefix}-#{name}"
   end
 
