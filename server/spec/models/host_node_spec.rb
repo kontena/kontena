@@ -9,6 +9,7 @@ describe HostNode do
   it { should have_fields(:node_id, :name, :os, :driver, :public_ip).of_type(String) }
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
+  it { should have_fields(:last_seen_at).of_type(Time) }
 
   it { should belong_to(:grid) }
   it { should have_many(:containers) }

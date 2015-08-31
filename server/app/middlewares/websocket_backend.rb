@@ -3,7 +3,7 @@ require 'thread'
 require_relative '../services/agent/message_handler'
 
 class WebsocketBackend
-  KEEPALIVE_TIME = 45 # in seconds
+  KEEPALIVE_TIME = 30 # in seconds
 
   attr_reader :logger
 
@@ -16,12 +16,13 @@ class WebsocketBackend
     @incoming_queue = Queue.new
     Agent::MessageHandler.new(@incoming_queue).run
     subscribe_to_rpc
+    watch_connections
   end
 
   def call(env)
     if Faye::WebSocket.websocket?(env)
       req = Rack::Request.new(env)
-      ws = Faye::WebSocket.new(env, nil, {ping: KEEPALIVE_TIME})
+      ws = Faye::WebSocket.new(env)
 
       ws.on :open do |event|
         self.on_open(ws, req)
@@ -56,7 +57,7 @@ class WebsocketBackend
         node = grid.host_nodes.create!(node_id: node_id)
       end
       logger.info "node opened connection: #{node.name || node_id}"
-      node.update_attribute(:connected, true)
+      node.set(connected: true, last_seen_at: Time.now.utc)
       client = {
           ws: ws,
           id: node_id.to_s,
@@ -152,6 +153,9 @@ class WebsocketBackend
       @clients.delete(client)
     end
     ws.close
+  rescue => exc
+    logger.error "on_close: #{exc.message}"
+    logger.error exc.backtrace.join("\n") if exc.backtrace
   end
 
   ##
@@ -189,5 +193,25 @@ class WebsocketBackend
     end
   rescue => exc
     logger.error "on_redis_message: #{exc.message}"
+  end
+
+  def watch_connections
+    Thread.new {
+      sleep 1 until EM.reactor_running?
+      EM::PeriodicTimer.new(KEEPALIVE_TIME) do
+        @clients.each do |client|
+          timer = EM::Timer.new(5) do
+            self.on_close(client[:ws])
+          end
+          client[:ws].ping{
+            timer.cancel
+            node = HostNode.find_by(node_id: client[:id])
+            if node
+              node.set(connected: true, last_seen_at: Time.now.utc)
+            end
+          }
+        end
+      end
+    }
   end
 end
