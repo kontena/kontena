@@ -4,7 +4,7 @@ module GridServices
       model :current_user, class: User
       model :grid, class: Grid
       string :image
-      string :name, matches: /^(\w|-)+$/
+      string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
       boolean :stateful
     end
 
