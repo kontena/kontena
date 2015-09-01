@@ -8,27 +8,19 @@ write_files:
       KONTENA_TOKEN="<%= grid_token %>"
       KONTENA_PEER_INTERFACE=eth1
       KONTENA_VERSION=<%= version %>
-  - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
+  - path: /etc/systemd/system/docker.service.d/50-kontena.conf
     content: |
         [Service]
         Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19" --bip="172.17.42.1/16"'
+  - path: /etc/resolv.conf
+    permissions: 0644
+    owner: root
+    content: |
+      nameserver 172.17.42.1
+      nameserver 8.8.8.8
+      nameserver 8.8.4.4
 coreos:
   units:
-    - name: 00-eth.network
-      runtime: true
-      content: |
-        [Match]
-        Name=eth*
-        [Network]
-        DHCP=yes
-        DNS=172.17.42.1
-        DNS=173.245.58.51
-        DNS=173.245.59.41
-        DNS=8.8.8.8
-        DOMAINS=kontena.local
-        [DHCP]
-        UseDNS=false
-
     - name: 10-weave.network
       runtime: false
       content: |
