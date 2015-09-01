@@ -22,6 +22,7 @@ class HostNode
   field :connected, type: Boolean, default: false
   field :public_ip, type: String
   field :private_ip, type: String
+  field :last_seen_at, type: Time
 
   belongs_to :grid
   has_many :containers, dependent: :destroy
