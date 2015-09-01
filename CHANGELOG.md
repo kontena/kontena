@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.1 (2015-09-01)
+
+- fix digitalocean node provision dns issue
+- fix failed nodes not detected under some circumstances
+- fix deploy -p with empty string
+- fix error in container exec command
+- fix error in setting node labels
+- fix service name validation (do not allow dash as a first char)
+
 ## 0.8.0 (2015-08-30)
 
 - initial multi-master support
