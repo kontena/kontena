@@ -19,6 +19,8 @@ module Kontena::Cli::Apps
     end
 
     def prefixed_name(name)
+      return name if service_prefix.strip == ""
+
       "#{service_prefix}-#{name}"
     end
 
