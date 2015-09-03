@@ -5,11 +5,11 @@ toc_order: 1
 
 # Kontena.yml reference
 
-Kontena.yml is a file in YAML format that define one or more services. The default name for this file is kontena.yml, although other filenames are supported.
+Kontena.yml is a file in YAML format that defines a [Kontena application](../using-kontena/applications.md) with one or more services. It uses the same syntax and keys as Docker-compose, however not all keys are supported. The default name for this file is kontena.yml, although other filenames are supported.
 
 Each key defined in kontena.yml will create a service with that name. The image key is mandatory. Other keys are optional.
 
-**image**
+#### image
 
 The image used to deploy this service in docker format.
 
@@ -25,7 +25,7 @@ image: kontena/haproxy:latest
 image: registry.kontena.local/ghost:latest
 ```
 
-**affinity**
+#### affinity
 
 Affinity conditions of hosts where containers should be launched
 
@@ -44,7 +44,7 @@ affinity:
     - container!=wordpress
 ```
 
-**cap_add, cap_drop**
+#### cap_add, cap_drop
 
 Add or drop container capabilities.
 
@@ -57,15 +57,15 @@ cap_drop:
   - SYS_ADMIN
 ```
 
-**cmd**
+#### command
 
-Recall the optional COMMAND`
+Recall the optional COMMAND
 
 ```
 bundle exec thin -p 3000
 ```
 
-**cpu_shares, mem_limit, memswap_limit**
+#### cpu_shares, mem_limit, memswap_limit
 
 The relative CPU priority and the memory limit of the created containers. [Learn more](https://docs.docker.com/reference/run/#runtime-constraints-on-resources).
 ```
@@ -73,7 +73,7 @@ cpu_shares: 73
 mem_limit: 1000000000
 ```
 
-**environment**
+#### environment
 
 A list of environment variables to be added in the service containers on launch. You can use either an array or a dictionary.
 
@@ -84,7 +84,7 @@ environment:
   - MODE=tcp
 ``` 
 
-**env_file**
+#### env_file
 
 A reference to file that contains environment variables.
 
@@ -92,7 +92,37 @@ A reference to file that contains environment variables.
 env_file: production.env
 ```
 
-**instances**
+#### extends
+
+Extend another service, in the current file or another, optionally overriding configuration. You can for example extend `docker-compose.yml` services and introduce only Kontena specific fields in `kontena.yml`.
+
+**docker-compose.yml**
+
+```
+app: 
+  build: .
+  links:
+    - db:db
+db:
+  image: mysql:5.6
+```
+
+**kontena.yml**
+
+```
+app:
+  extends:
+    file: docker-compose.yml
+    service: app   
+  image: registry.kontena.local/app:latest
+db:
+  extends:
+    file: docker-compose.yml
+    service: app
+  image: mysql:5.6
+```
+
+#### instances
 
 Number of containers to run for this service (default: 1). 
 
@@ -100,7 +130,7 @@ Number of containers to run for this service (default: 1).
 instances: 3
 ```
 
-**links**
+#### links
 
 Link to another service. Either specify both the service name and the link alias (SERVICE:ALIAS), or just the service name (which will also be used for the alias).
 
@@ -109,7 +139,7 @@ links:
   - mysql:wordpress-mysql
 ```
 
-**ports**
+#### ports
 
 Expose ports. Specify both ports (HOST:CONTAINER).
 
@@ -119,7 +149,7 @@ ports:
   - "53160:53160/udp"
 ```
 
-**stateful**
+#### stateful
 
 Mark service as stateful (default: false). Kontena will create and mount automatically a data volume container for the service.
 
@@ -127,7 +157,7 @@ Mark service as stateful (default: false). Kontena will create and mount automat
 stateful: false
 ```
 
-**user**
+#### user
 
 The default user to run the first process
 
@@ -135,7 +165,7 @@ The default user to run the first process
 user: app_user
 ```
 
-**volumes**
+#### volumes
 
 Mount paths as volumes, optionally specifying a path on the host machine. (HOST:CONTAINER), or an access mode (HOST:CONTAINER:ro).
 
@@ -144,7 +174,7 @@ volumes:
  - /var/lib/mysql
 ```
 
-**volumes_from**
+#### volumes_from
 
 Mount all of the volumes from another service by specifying a service unique name.
 
@@ -159,9 +189,11 @@ volumes_from:
 ```
 (`-%s` will be replaced with container number, eg first service container will get volumes from wordpress-1, second from wordpress-2 etc)
 
-**deploy**
+#### deploy
 
-**strategy**
+These Kontena spefic keys define how Kontena will schedule and orchestrate containers across different nodes. Read more about deployments [here](../using-kontena/deploy.md).
+
+#### strategy
 
 How to deploy service's containers to different host nodes.
 
@@ -174,3 +206,18 @@ deploy:
 deploy:
     strategy: random
 ```
+
+```
+deploy:
+    strategy: random
+```
+
+#### wait_for_port
+Wait the port is responding before moving to deploy another instance.
+
+```
+instances: 3
+deploy:
+  strategy: ha
+  wait_for_port: true
+``

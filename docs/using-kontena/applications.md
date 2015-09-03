@@ -60,7 +60,7 @@ $ kontena app deploy wordpress         # only deploy services named "wordpress" 
 
 ### Example `kontena.yml`
 
-Here's and example of typical WordPress application described in `kontena.yml` file.
+Here's and example of typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md). 
 
 ```
 wordpress:
@@ -80,4 +80,91 @@ mysql:
   stateful: true
   environment:
    - MYSQL_ROOT_PASSWORD=secret
+```
+
+## Stop
+
+`kontena app stop` command stops running services without removing them.
+
+```
+Usage:
+    kontena app stop [OPTIONS] [SERVICE] ...
+
+Parameters:
+    [SERVICE] ...                 Services to stop
+
+Options:
+    -f, --file FILE               Specify an alternate Kontena compose file (default: "kontena.yml")
+    -p, --project-name NAME       Specify an alternate project name (default: directory name)
+    -h, --help                    print help
+```
+
+You can start services again with `kontena app start`
+
+## Start
+
+`kontena app start` command starts existing services.
+
+```
+Usage:
+    kontena app start [OPTIONS] [SERVICE] ...
+
+Parameters:
+    [SERVICE] ...                 Services to start
+
+Options:
+    -f, --file FILE               Specify an alternate Kontena compose file (default: "kontena.yml")
+    -p, --project-name NAME       Specify an alternate project name (default: directory name)
+    -h, --help                    print help
+```
+
+## Remove
+
+You can remove application's services with `kontena app rm`.
+
+```
+Usage:
+    kontena app rm [OPTIONS] [SERVICE] ...
+
+Parameters:
+    [SERVICE] ...                 Remove services
+
+Options:
+    -f, --file FILE               Specify an alternate Kontena compose file (default: "kontena.yml")
+    -p, --project-name NAME       Specify an alternate project name (default: directory name)
+    -h, --help                    print help
+```
+
+## List services
+
+`kontena app ps` lists and displays details about services
+
+```
+Usage:
+    kontena app ps [OPTIONS] [SERVICE] ...
+
+Parameters:
+    [SERVICE] ...                 Services to start
+
+Options:
+    -f, --file FILE               Specify an alternate Kontena compose file (default: "kontena.yml")
+    -p, --project-name NAME       Specify an alternate project name (default: directory name)
+    -h, --help                    print help
+```
+
+## Display logs
+
+`kontena app logs` displays combined log entries from services.
+
+```
+Usage:
+    kontena app logs [OPTIONS] [SERVICE] ...
+
+Parameters:
+    [SERVICE] ...                 Services to start
+
+Options:
+    -f, --file FILE               Specify an alternate Kontena compose file (default: "kontena.yml")
+    -p, --project-name NAME       Specify an alternate project name (default: directory name)
+    -h, --help                    print help
 ```
