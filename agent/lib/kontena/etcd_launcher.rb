@@ -1,11 +1,13 @@
 require_relative 'helpers/node_helper'
 require_relative 'helpers/iface_helper'
+require_relative 'helpers/weave_helper'
 
 module Kontena
   class EtcdLauncher
     include Kontena::Logging
     include Helpers::NodeHelper
     include Helpers::IfaceHelper
+    include Helpers::WeaveHelper
 
     ETCD_VERSION = ENV['ETCD_VERSION'] || '2.1.2'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
@@ -57,7 +59,7 @@ module Kontena
     # @param [String] image
     def create_container(image)
       container = Docker::Container.get('kontena-etcd') rescue nil
-      container.remove(force: true) if container
+      return if container
 
       info = self.node_info
       cluster_size = info['grid']['initial_size']
@@ -114,14 +116,7 @@ module Kontena
     ##
     # @return [String, NilClass]
     def docker_gateway
-      interface_ip('docker0')
-    end
-
-    # @return [Boolean]
-    def weave_running?
-      weave = Docker::Container.get('weave') rescue nil
-      return false if weave.nil?
-      weave.info['State']['Running'] == true
+      @docker_gateway ||= interface_ip('docker0')
     end
   end
 end

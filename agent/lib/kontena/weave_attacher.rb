@@ -2,10 +2,12 @@ require 'docker'
 require_relative 'pubsub'
 require_relative 'logging'
 require_relative 'weave_adapter'
+require_relative 'helpers/weave_helper'
 
 module Kontena
   class WeaveAttacher
-    include Kontena::Logging
+    include Logging
+    include Helpers::WeaveHelper
 
     LOG_NAME = 'WeaveAttacher'
 
@@ -48,7 +50,10 @@ module Kontena
 
     # @param [Docker::Container] container
     def weave_attach(container)
+      return unless container.info['Config']
+
       labels = container.info['Config']['Labels'] || {}
+
       overlay_cidr = labels['io.kontena.container.overlay_cidr']
       if overlay_cidr
         container_name = labels['io.kontena.container.name']
@@ -61,13 +66,8 @@ module Kontena
           "#{container_name}.#{grid_name}.kontena.local",
           "#{service_name}.#{grid_name}.kontena.local"
         ]
-        dns_client = Excon.new("http://#{self.weave_ip}:6784")
         dns_names.each do |name|
-          dns_client.put(
-            path: "/name/#{container.id}/#{ip}",
-            body: URI.encode_www_form('fqdn' => name, 'check-alive' => 'true'),
-            headers: { "Content-Type" => "application/x-www-form-urlencoded" }
-          )
+          add_dns(container.id, ip, name)
         end
 
         @weave_adapter.exec(['--local', 'attach', overlay_cidr, container.id])
@@ -79,26 +79,10 @@ module Kontena
 
     # @param [Docker::Event] event
     def weave_detach(event)
-      dns_client = Excon.new("http://#{self.weave_ip}:6784")
-      dns_client.delete(path: "/name/#{event.id}")
+      remove_dns(event.id)
     rescue => exc
       logger.error(LOG_NAME){ exc.message }
       logger.error(LOG_NAME){ exc.backtrace.join("\n") }
-    end
-
-    # @return [String]
-    def weave_ip
-      weave = Docker::Container.get('weave') rescue nil
-      if weave
-        weave.info['NetworkSettings']['IPAddress']
-      end
-    end
-
-    # @return [Boolean]
-    def weave_running?
-      weave = Docker::Container.get('weave') rescue nil
-      return false if weave.nil?
-      weave.info['State']['Running'] == true
     end
   end
 end

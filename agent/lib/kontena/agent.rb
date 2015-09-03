@@ -15,6 +15,7 @@ module Kontena
       @cadvisor_launcher = Kontena::CadvisorLauncher.new
       @stats_worker = Kontena::StatsWorker.new(@queue_worker.queue)
       @etcd_launcher = Kontena::EtcdLauncher.new
+      @haproxy_adapter = Kontena::HaproxyAdapter.new
     end
 
     def start!
@@ -30,6 +31,7 @@ module Kontena
       @stats_worker.start!
       @weave_adapter.start!
       @etcd_launcher.start!
+      @haproxy_adapter.start!
     end
 
     def start_em
