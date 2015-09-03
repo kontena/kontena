@@ -220,4 +220,4 @@ instances: 3
 deploy:
   strategy: ha
   wait_for_port: true
-``
+```
