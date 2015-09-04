@@ -24,6 +24,16 @@ deploy:
   strategy: random
 ```
 
+**Wait for port**
+
+When a service has multiple instances and `wait_for_port` definition, Kontena's scheduler will wait that container is responding to port before starting to deploy another instance. This way it is possible to achieve zero-downtime deploys. 
+
+```
+instances: 3
+deploy:
+  wait_for_port: true
+```
+
 ## Scheduling Conditions
 When creating services, you can direct the host(s) of where the containers should be launched based on scheduling rules.
 
