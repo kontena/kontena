@@ -3,6 +3,7 @@ agent:
   build: .
   dockerfile: Dockerfile.alpine
   env_file: .env
+  net: host
   environment:
     - KONTENA_PEER_INTERFACE=eth1
   volumes:
