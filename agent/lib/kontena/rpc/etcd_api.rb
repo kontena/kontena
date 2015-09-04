@@ -34,6 +34,8 @@ module Kontena
       def set(key, opts = {})
         response = etcd.set(key, opts.symbolize_keys)
         {value: response.value}
+      rescue Etcd::NotDir
+        {error: "Directory does not exist"}
       rescue Etcd::NotFile
         {error: "Cannot set value to directory"}
       end
