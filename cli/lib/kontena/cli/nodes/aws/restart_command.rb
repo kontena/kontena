@@ -3,9 +3,9 @@ module Kontena::Cli::Nodes::Aws
     include Kontena::Cli::Common
 
     parameter "NAME", "Node name"
-    option "--access-key", "ACCESS_KEY", "AWS access key", required: true
+    option "--access-key", "ACCESS_KEY", "AWS access key ID", required: true
     option "--secret-key", "SECRET_KEY", "AWS secret key", required: true
-    option "--region", "REGION", "Region", required: true
+    option "--region", "REGION", "EC2 Region", required: true
 
     def execute
       require_api_url
