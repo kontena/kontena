@@ -1,10 +1,12 @@
 require 'etcd'
 require 'docker'
 require 'active_support/core_ext/hash/keys'
+require_relative '../helpers/iface_helper'
 
 module Kontena
   module Rpc
     class EtcdApi
+      include Kontena::Helpers::IfaceHelper
 
       attr_reader :etcd
 
@@ -14,19 +16,39 @@ module Kontena
 
       # @param [String] key
       def get(key)
-        etcd.get(key)
+        response = etcd.get(key)
+        if response.directory?
+          {children: response.children.map{|c| c.key }}
+        else
+          {value: response.value}
+        end
+
+      rescue Etcd::KeyNotFound
+        {error: "Key not found"}
+      rescue Etcd::Error => exc
+        {error: exc.message}
       end
 
       # @param [String] key
       # @param [Hash] opts
       def set(key, opts = {})
-        etcd.set(key, opts.symbolize_keys).value
+        response = etcd.set(key, opts.symbolize_keys)
+        {value: response.value}
+      rescue Etcd::NotFile
+        {error: "Cannot set value to directory"}
       end
 
       # @param [String] key
       # @param [Hash] opts
       def delete(key, opts = {})
         etcd.delete(key, opts.symbolize_keys)
+        {}
+      rescue Etcd::KeyNotFound
+        {error: "Key not found"}
+      rescue Etcd::NotFile
+        {error: "Cannot delete a directory"}
+      rescue Etcd::Error => exc
+        {error: exc.message}
       end
 
       private
@@ -34,10 +56,7 @@ module Kontena
       ##
       # @return [String, NilClass]
       def gateway
-        agent = Docker::Container.get(ENV['KONTENA_AGENT_NAME'] || 'kontena-agent') rescue nil
-        if agent
-          agent.json['NetworkSettings']['Gateway']
-        end
+        interface_ip('docker0')
       end
     end
   end
