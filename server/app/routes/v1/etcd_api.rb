@@ -38,7 +38,13 @@ module V1
         r.post do
           r.is do
             data = parse_json_body
-            client.request("/etcd/set", path, {value: data['value']})
+            params = {}
+            if data['value']
+              params[:value] = data['value']
+            else
+              params[:dir] = true
+            end
+            client.request("/etcd/set", path, params)
           end
         end
 
