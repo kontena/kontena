@@ -21,6 +21,7 @@ module Kontena
 
         end
 
+        # @param [Hash] opts
         def run!(opts)
           ami = resolve_ami(client.region)
           abort('No valid AMI found for region') unless ami
@@ -63,18 +64,21 @@ module Kontena
           ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
             sleep 2 until instance_exists_in_grid?(opts[:grid], name)
           end
-
-
-
         end
 
+        ##
+        # @param [String] grid
+        # @return Fog::Compute::AWS::SecurityGroup
         def ensure_security_group(grid)
           group_name = "kontena_grid_#{grid}"
-          security_group = client.security_groups.get(group_name) || create_security_group(group_name)
-          security_group
-
+          client.security_groups.get(group_name) || create_security_group(group_name)
         end
 
+        ##
+        # creates security_group and authorizes default port ranges
+        #
+        # @param [String] name
+        # @return Fog::Compute::AWS::SecurityGroup
         def create_security_group(name)
           security_group = client.security_groups.new(:name => name, :description => "Kontena Node")
           security_group.save
@@ -87,6 +91,9 @@ module Kontena
           security_group
         end
 
+
+        # @param [String] region
+        # @return String
         def resolve_ami(region)
           images = {
               'eu-central-1' => 'ami-bececaa3',
@@ -119,8 +126,6 @@ module Kontena
         def erb(template, vars)
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
         end
-
-
       end
     end
   end
