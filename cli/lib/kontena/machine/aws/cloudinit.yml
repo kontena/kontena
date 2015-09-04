@@ -23,7 +23,6 @@ coreos:
         [Network]
         DHCP=yes
         DNS=172.17.42.1
-        DNS=172.28.128.1
         DNS=8.8.8.8
         DOMAINS=kontena.local
         [DHCP]
