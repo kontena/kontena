@@ -41,21 +41,21 @@ module Kontena::Cli::Services
     # @return [Hash]
     def parse_service_data_from_options
       data = {}
-      data[:ports] = parse_ports(ports_list) if ports_list
-      data[:links] = parse_links(link_list) if link_list
-      data[:volumes] = volume_list if volume_list
-      data[:volumes_from] = volumes_from_list if volumes_from_list
+      data[:ports] = parse_ports(ports_list) unless ports_list.empty?
+      data[:links] = parse_links(link_list) unless link_list.empty?
+      data[:volumes] = volume_list unless volume_list.empty?
+      data[:volumes_from] = volumes_from_list unless volumes_from_list.empty?
       data[:memory] = parse_memory(memory) if memory
       data[:memory_swap] = parse_memory(memory_swap) if memory_swap
       data[:cpu_shares] = cpu_shares if cpu_shares
-      data[:affinity] = affinity_list if affinity_list
-      data[:env] = env_list if env_list
+      data[:affinity] = affinity_list unless affinity_list.empty?
+      data[:env] = env_list unless env_list.empty?
       data[:container_count] = instances if instances
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
       data[:image] = image if image
-      data[:cap_add] = cap_add_list if cap_add_list
-      data[:cap_drop] = cap_drop_list if cap_drop_list
+      data[:cap_add] = cap_add_list unless cap_add_list.empty?
+      data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
       data
     end
   end
