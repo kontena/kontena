@@ -17,6 +17,10 @@ module Kontena
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event)
       end
+      Pubsub.subscribe('dns:add') do |event|
+        sleep 1 until weave_running?
+        add_dns(event[:id], event[:ip], event[:name])
+      end
     end
 
     ##
