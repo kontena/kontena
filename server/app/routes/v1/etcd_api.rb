@@ -30,8 +30,7 @@ module V1
 
         r.get do
           r.is do
-            response = client.request("/etcd/get", path)
-            p response
+            client.request("/etcd/get", path)
           end
         end
 
