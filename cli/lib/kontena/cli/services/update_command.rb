@@ -38,7 +38,7 @@ module Kontena::Cli::Services
       data[:memory_swap] = parse_memory(memory_swap) if memory_swap
       data[:cpu_shares] = cpu_shares if cpu_shares
       data[:affinity] = affinity_list unless affinity_list.empty?
-      data[:env] = env_list if env_list.empty?
+      data[:env] = env_list unless env_list.empty?
       data[:container_count] = instances if instances
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
