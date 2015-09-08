@@ -4,7 +4,7 @@ module Kontena
   class WeaveAdapter
     include Helpers::NodeHelper
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || 'git-bd19b8625908'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || 'v1.1.0'
 
     # @param [Hash] opts
     def modify_create_opts(opts)
@@ -32,7 +32,7 @@ module Kontena
       elsif image_config['Cmd'] && image_config['Cmd'].size > 0
         cmd = cmd + image_config['Cmd']
       end
-      opts['Entrypoint'] = ['/w/w', '-s']
+      opts['Entrypoint'] = ['/w/w']
       opts['Cmd'] = cmd
     end
 
@@ -102,6 +102,12 @@ module Kontena
           sleep 1 until Docker::Image.exist?(image)
         end
       end
+
+      weave = Docker::Container.get('weave') rescue nil
+      if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
+        weave.delete(force: true)
+      end
+
       info = node_info || {}
       peer_ips = info['peer_ips'] || []
       self.exec([
@@ -119,6 +125,10 @@ module Kontena
 
     def ensure_weave_wait
       weave_wait = Docker::Container.get('weavewait') rescue nil
+      if weave_wait && weave_wait.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
+        weave_wait.delete(force: true)
+        weave_wait = nil
+      end
       unless weave_wait
         Docker::Container.create(
           'name' => 'weavewait',
