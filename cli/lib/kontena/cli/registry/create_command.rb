@@ -36,27 +36,27 @@ module Kontena::Cli::Registry
         abort('--s3-secret-key is missing') if s3_secret_key.nil?
         abort('--s3-bucket is missing') if s3_bucket.nil?
         env = [
-          "REGISTRY_STORAGE=s3",
-          "REGISTRY_STORAGE_S3_ACCESSKEY=#{opts.s3_access_key}",
-          "REGISTRY_STORAGE_S3_SECRETKEY=#{opts.s3_secret_key}",
-          "REGISTRY_STORAGE_S3_REGION=#{s3_region}",
-          "REGISTRY_STORAGE_S3_BUCKET=#{opts.s3_bucket}",
-          "REGISTRY_STORAGE_S3_ENCRYPT=#{s3_encrypt}",
-          "REGISTRY_STORAGE_S3_SECURE=#{s3_secure}",
+            "REGISTRY_STORAGE=s3",
+            "REGISTRY_STORAGE_S3_ACCESSKEY=#{s3_access_key}",
+            "REGISTRY_STORAGE_S3_SECRETKEY=#{s3_secret_key}",
+            "REGISTRY_STORAGE_S3_REGION=#{s3_region}",
+            "REGISTRY_STORAGE_S3_BUCKET=#{s3_bucket}",
+            "REGISTRY_STORAGE_S3_ENCRYPT=#{s3_encrypt?}",
+            "REGISTRY_STORAGE_S3_SECURE=#{s3_secure?}",
         ]
       elsif azure_account_name || azure_account_key
         abort('--azure-account-name is missing') if azure_account_name.nil?
         abort('--azure-account-key is missing') if azure_account_key.nil?
         abort('--azure-container-name is missing') if azure_container_name.nil?
         env = [
-          "REGISTRY_STORAGE=azure",
-          "REGISTRY_STORAGE_AZURE_ACCOUNTNAME=#{opts.azure_account_name}",
-          "REGISTRY_STORAGE_AZURE_ACCOUNTKEY=#{opts.azure_account_key}",
-          "REGISTRY_STORAGE_AZURE_CONTAINERNAME=#{opts.azure_container_name}"
+            "REGISTRY_STORAGE=azure",
+            "REGISTRY_STORAGE_AZURE_ACCOUNTNAME=#{azure_account_name}",
+            "REGISTRY_STORAGE_AZURE_ACCOUNTKEY=#{azure_account_key}",
+            "REGISTRY_STORAGE_AZURE_CONTAINERNAME=#{azure_container_name}"
         ]
       else
         env = [
-          "REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/registry"
+            "REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/registry"
         ]
       end
 
@@ -64,12 +64,12 @@ module Kontena::Cli::Registry
       env << "AUTH_PASSWORD=#{auth_password}" if auth_password
 
       data = {
-        name: 'registry',
-        stateful: true,
-        image: 'kontena/registry:2.1',
-        volumes: ['/registry'],
-        env: env,
-        affinity: ["node==#{node['name']}"]
+          name: 'registry',
+          stateful: true,
+          image: 'kontena/registry:2.1',
+          volumes: ['/registry'],
+          env: env,
+          affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)
       result = client(token).post("services/#{current_grid}/registry/deploy", {})
