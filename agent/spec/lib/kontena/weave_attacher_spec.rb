@@ -6,6 +6,10 @@ describe Kontena::WeaveAttacher do
   let(:container) { spy(:container, id: '12345', info: {'Name' => 'test'}) }
 
   describe '#on_container_event' do
+    before(:each) do
+      allow(subject).to receive(:weave_running?).and_return(true)
+    end
+
     it 'calls #weave_attach on start event' do
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
       expect(subject).to receive(:weave_attach).once.with(container)
