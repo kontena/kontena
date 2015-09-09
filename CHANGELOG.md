@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.2 (2015-09-09)
+
+- update weave to 1.1.0
+- add dns entry for etcd
+- `kontena registry create` cloud provider fixes
+- use host networking in cadvisor
+- service network stats fix
+- fix multivalue handling in `kontena service deploy` command
+
 ## 0.8.1 (2015-09-01)
 
 - fix digitalocean node provision dns issue
