@@ -46,7 +46,10 @@ module Kontena
       container = Docker::Container.create(
         'name' => 'kontena-cadvisor',
         'Image' => image,
-        'Cmd' => ['--logtostderr=true'],
+        'Cmd' => [
+          '--logtostderr=true',
+          '--listen_ip=127.0.0.1'
+        ],
         'Volumes' => {
           '/rootfs' => {},
           '/var/run' => {},
@@ -61,11 +64,7 @@ module Kontena
             '/sys:/sys:ro',
             '/var/lib/docker:/var/lib/docker:ro'
           ],
-          'PortBindings' => {
-            '8080/tcp' => [
-              {'HostIp' => '127.0.0.1', 'HostPort' => '8080'}
-            ]
-          },
+          'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
