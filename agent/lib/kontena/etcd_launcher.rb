@@ -98,6 +98,7 @@ module Kontena
         }
       )
       container.start
+      Pubsub.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
     end
 
     # @param [Integer] cluster_size

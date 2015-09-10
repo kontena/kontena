@@ -16,8 +16,8 @@ V1::ServicesApi.route('service_stats') do |r|
           {
             '$group' => {
               '_id' => {name: '$name'},
-              'rx_bytes' => { '$sum' => '$network.rx_bytes'},
-              'tx_bytes' => { '$sum' => '$network.tx_bytes'}
+              'rx_bytes' => { '$max' => '$network.rx_bytes'},
+              'tx_bytes' => { '$max' => '$network.tx_bytes'}
             }
           }])
           if stat.spec['memory']['limit'] == 1.8446744073709552e+19
