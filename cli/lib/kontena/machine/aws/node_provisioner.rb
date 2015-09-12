@@ -26,8 +26,12 @@ module Kontena
           ami = resolve_ami(client.region)
           abort('No valid AMI found for region') unless ami
 
-          security_group = ensure_security_group(opts[:grid])
+          security_group = ensure_security_group(opts[:grid], opts[:vpc])
           name = opts[:name ] || generate_name
+
+          if opts[:vpc] && opts[:subnet].nil?
+            opts[:subnet] = default_subnet(opts[:vpc])
+          end
 
           userdata_vars = {
               name: name,
@@ -41,8 +45,9 @@ module Kontena
               1,
               1,
               'InstanceType'  => opts[:type],
-              'SecurityGroup' => security_group.name,
+              'SecurityGroupId' => security_group.id,
               'KeyName'       => opts[:key_pair],
+              'SubnetId'      => opts[:subnet],
               'UserData'      => user_data(userdata_vars),
               'BlockDeviceMapping' => [
                   {
@@ -69,9 +74,13 @@ module Kontena
         ##
         # @param [String] grid
         # @return Fog::Compute::AWS::SecurityGroup
-        def ensure_security_group(grid)
+        def ensure_security_group(grid, vpc_id)
           group_name = "kontena_grid_#{grid}"
-          client.security_groups.get(group_name) || create_security_group(group_name)
+          if vpc_id
+            client.security_groups.all({'group-name' => group_name, 'vpc-id' => vpc_id}).first || create_security_group(group_name, vpc_id)
+          else
+            client.security_groups.get(group_name) || create_security_group(group_name)
+          end
         end
 
         ##
@@ -79,8 +88,8 @@ module Kontena
         #
         # @param [String] name
         # @return Fog::Compute::AWS::SecurityGroup
-        def create_security_group(name)
-          security_group = client.security_groups.new(:name => name, :description => "Kontena Node")
+        def create_security_group(name, vpc_id = nil)
+          security_group = client.security_groups.new(:name => name, :description => "Kontena Node", :vpc_id => vpc_id)
           security_group.save
 
           security_group.authorize_port_range(80..80)
@@ -108,6 +117,10 @@ module Kontena
               'eu-west-1' => 'ami-0e104179'
           }
           images[region]
+        end
+
+        def default_subnet(vpc)
+          client.subnets.all('vpc-id' => vpc).first
         end
 
         def user_data(vars)
