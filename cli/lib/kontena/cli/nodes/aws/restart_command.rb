@@ -21,7 +21,7 @@ module Kontena::Cli::Nodes::Aws
           instance.wait_for { ready? }
         end
       else
-        abort "Cannot find droplet #{name.colorize(:cyan)} in DigitalOcean"
+        abort "Cannot find instance #{name.colorize(:cyan)} in AWS"
       end
     end
   end
