@@ -109,16 +109,18 @@ module Kontena::Cli::Apps
       if procfile.keys.size > 0
         docker_compose = {}
         procfile.keys.each do |service|
-
-          docker_compose[service] = {'build' => '.', 'command' => "/start #{service}"}
+          docker_compose[service] = {'build' => '.' }
+          docker_compose[service]['command'] = "/start #{service}" if service != 'web'
           docker_compose[service]['env_file'] = env_file if env_file
           addons.each do |addon|
-            if valid_addons.has_key?(addon.split(":")[0])
+            addon_service = addon.split(":")[0]
+            addon_service.slice!('heroku-')
+            if valid_addons.has_key?(addon_service)
               docker_compose[service]['links'] = [] unless docker_compose[service]['links']
-              docker_compose[service]['links'] << "#{camelize(addon)}:#{camelize(addon)}"
+              docker_compose[service]['links'] << "#{addon_service}:#{addon_service}"
               docker_compose[service]['environment'] = [] unless docker_compose[service]['environment']
-              docker_compose[service]['environment'] += valid_addons[addon]['environment']
-              docker_compose[camelize(addon)] = {'image' => valid_addons[addon]['image']}
+              docker_compose[service]['environment'] += valid_addons[addon_service]['environment']
+              docker_compose[addon_service] = {'image' => valid_addons[addon_service]['image']}
             end
           end
         end
@@ -155,17 +157,17 @@ module Kontena::Cli::Apps
 
     def valid_addons
       {
-        'heroku-redis' => {
+        'redis' => {
           'image' => 'redis:latest',
-          'environment' => ['REDIS_URL=redis://herokuRedis:6379']
+          'environment' => ['REDIS_URL=redis://redis:6379']
         },
         'rediscloud' => {
           'image' => 'redis:latest',
           'environment' => ['REDISCLOUD_URL=redis://rediscloud:6379']
         },
-        'heroku-postgresql' => {
+        'postgresql' => {
           'image' => 'postgres:latest',
-          'environment' => ['DATABASE_URL=postgres://postgres:@herokuPostgresql:5432/postgres' ]
+          'environment' => ['DATABASE_URL=postgres://postgres:@postgresql:5432/postgres' ]
         },
         'mongolab' => {
           'image' => 'mongo:latest',
@@ -177,10 +179,5 @@ module Kontena::Cli::Apps
         }
       }
     end
-
-    def camelize(str)
-      str.split('-').inject([]){ |buffer,e| buffer.push(buffer.empty? ? e : e.capitalize) }.join
-    end
-
   end
 end
