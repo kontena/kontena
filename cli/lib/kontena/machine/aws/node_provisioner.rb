@@ -9,7 +9,7 @@ module Kontena
       class NodeProvisioner
         include RandomName
 
-        attr_reader :client, :api_client
+        attr_reader :client, :api_client, :region
 
         # @param [Kontena::Client] api_client Kontena api client
         # @param [String] access_key_id aws_access_key_id
@@ -29,8 +29,12 @@ module Kontena
           security_group = ensure_security_group(opts[:grid], opts[:vpc])
           name = opts[:name ] || generate_name
 
-          if opts[:vpc] && opts[:subnet].nil?
-            opts[:subnet] = default_subnet(opts[:vpc]).subnet_id
+          opts[:vpc] = default_vpc.id unless opts[:vpc]
+          if opts[:subnet].nil?
+            subnet = default_subnet(opts[:vpc], client.region+opts[:zone])
+            opts[:subnet] = subnet.subnet_id
+          else
+            subnet = client.subnets.get(opts[:subnet])
           end
 
           userdata_vars = {
@@ -66,9 +70,11 @@ module Kontena
             instance.wait_for { ready? }
           end
           client.create_tags(instance.id, {'kontena_name' => name, 'kontena_grid' => opts[:grid]})
+          node = nil
           ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
-            sleep 2 until instance_exists_in_grid?(opts[:grid], name)
+            sleep 2 until node = instance_exists_in_grid?(opts[:grid], name)
           end
+          set_label(node, subnet.availability_zone)
         end
 
         ##
@@ -119,8 +125,12 @@ module Kontena
           images[region]
         end
 
-        def default_subnet(vpc)
-          client.subnets.all('vpc-id' => vpc).first
+        def default_subnet(vpc, zone)
+          client.subnets.all('vpc-id' => vpc, 'availabilityZone' => zone).first
+        end
+
+        def default_vpc
+          client.vpcs.all('isDefault' => true).first
         end
 
         def user_data(vars)
@@ -138,6 +148,12 @@ module Kontena
 
         def erb(template, vars)
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
+        end
+
+        def set_label(node, label)
+          data = {}
+          data[:labels] = [label]
+          api_client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
         end
       end
     end
