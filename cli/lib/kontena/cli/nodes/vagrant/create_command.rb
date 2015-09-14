@@ -2,7 +2,7 @@ module Kontena::Cli::Nodes::Vagrant
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
 
-    option "--name", "NAME", "Node name"
+    parameter "[NAME]", "Node name"
     option "--memory", "MEMORY", "How much memory node has", default: '1024'
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
