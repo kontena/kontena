@@ -111,16 +111,16 @@ module Kontena
         # @return String
         def resolve_ami(region)
           images = {
-              'eu-central-1' => 'ami-bececaa3',
-              'ap-northeast-1' => 'ami-f2338ff2',
-              'us-gov-west-1' => 'ami-c75033e4',
-              'sa-east-1' => 'ami-11e9600c',
-              'ap-southeast-2' => 'ami-8f88c8b5',
-              'ap-southeast-1' => 'ami-b6d8d4e4',
-              'us-east-1' => 'ami-3d73d356',
-              'us-west-2' => 'ami-85ada4b5',
-              'us-west-1' => 'ami-1db04f59',
-              'eu-west-1' => 'ami-0e104179'
+              'eu-central-1' => 'ami-74bbba69',
+              'ap-northeast-1' => 'ami-1e77ff1e',
+              'us-gov-west-1' => 'ami-f1d1b2d2',
+              'sa-east-1' => 'ami-632ba17e',
+              'ap-southeast-2' => 'ami-83f8b4b9',
+              'ap-southeast-1' => 'ami-12060c40',
+              'us-east-1' => 'ami-f396fa96',
+              'us-west-2' => 'ami-99bfada9',
+              'us-west-1' => 'ami-dbe71d9f',
+              'eu-west-1' => 'ami-83e9c8f4'
           }
           images[region]
         end
