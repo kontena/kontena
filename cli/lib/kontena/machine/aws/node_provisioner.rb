@@ -30,7 +30,7 @@ module Kontena
           name = opts[:name ] || generate_name
 
           if opts[:vpc] && opts[:subnet].nil?
-            opts[:subnet] = default_subnet(opts[:vpc])
+            opts[:subnet] = default_subnet(opts[:vpc]).subnet_id
           end
 
           userdata_vars = {
@@ -45,7 +45,7 @@ module Kontena
               1,
               1,
               'InstanceType'  => opts[:type],
-              'SecurityGroupId' => security_group.id,
+              'SecurityGroupId' => security_group.group_id,
               'KeyName'       => opts[:key_pair],
               'SubnetId'      => opts[:subnet],
               'UserData'      => user_data(userdata_vars),
