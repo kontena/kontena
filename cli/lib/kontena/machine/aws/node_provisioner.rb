@@ -74,7 +74,8 @@ module Kontena
           ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
             sleep 2 until node = instance_exists_in_grid?(opts[:grid], name)
           end
-          set_label(node, subnet.availability_zone)
+          labels = ["region=#{client.region}", "az=#{opts[:zone]}"]
+          set_labels(node, labels)
         end
 
         ##
@@ -150,9 +151,9 @@ module Kontena
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
         end
 
-        def set_label(node, label)
+        def set_labels(node, labels)
           data = {}
-          data[:labels] = [label]
+          data[:labels] = labels
           api_client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
         end
       end
