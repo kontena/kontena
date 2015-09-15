@@ -23,7 +23,7 @@ coreos:
         [Network]
         DHCP=yes
         DNS=172.17.42.1
-        DNS=8.8.8.8
+        DNS=<%= dns_server %>
         DOMAINS=kontena.local
         [DHCP]
         UseDNS=false

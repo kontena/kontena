@@ -36,12 +36,13 @@ module Kontena
           else
             subnet = client.subnets.get(opts[:subnet])
           end
-
+          dns_server = aws_dns_supported?(opts[:vpc]) ? '169.254.169.253' : '8.8.8.8'
           userdata_vars = {
               name: name,
               version: opts[:version],
               master_uri: opts[:master_uri],
               grid_token: opts[:grid_token],
+              dns_server: dns_server
           }
 
           response = client.run_instances(
@@ -155,6 +156,11 @@ module Kontena
           data = {}
           data[:labels] = labels
           api_client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
+        end
+
+        def aws_dns_supported?(vpc_id)
+          response = client.describe_vpc_attribute(vpc_id,'enableDnsSupport')
+          response.data[:body]['enableDnsSupport']
         end
       end
     end
