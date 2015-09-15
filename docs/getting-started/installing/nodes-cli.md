@@ -9,6 +9,7 @@ Kontena CLI may be used to provision new Kontena Nodes based on [CoreOS](https:/
 
 * Vagrant (for local testing)
 * DigitalOcean
+* AWS
 
 We are adding support for other platforms gradually based on your requests. If you'd like to see support for the platform you are using, please [post your request](https://github.com/kontena/kontena/issues) as an issue to our GitHub repository.
 
@@ -57,4 +58,4 @@ Options:
     --storage STORAGE             Storage size (GiB) (default: "30")
     --version VERSION             Define installed Kontena version (default: "latest")
     -h, --help                    print help
-```
+``
