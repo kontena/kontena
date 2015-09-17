@@ -5,11 +5,11 @@ class CollectionIndexerJob
 
   def perform
     info 'CollectionIndexerJob: removing undefined indexes'
-    system 'rake db:mongoid:remove_undefined_indexes > /dev/null'
+    Mongoid::Tasks::Database.remove_undefined_indexes
     info 'CollectionIndexerJob: removing undefined indexes finished'
 
     info 'CollectionIndexerJob: creating indexes'
-    system 'rake db:mongoid:create_indexes > /dev/null'
+    Mongoid::Tasks::Database.create_indexes
     info 'CollectionIndexerJob: creating indexes finished'
 
     unless ContainerLog.collection.capped?
