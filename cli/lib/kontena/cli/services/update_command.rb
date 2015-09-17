@@ -42,7 +42,7 @@ module Kontena::Cli::Services
       data[:container_count] = instances if instances
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
-      data[:image] = image if image
+      data[:image] = parse_image(image) if image
       data[:cap_add] = cap_add_list unless cap_add_list.empty?
       data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
       data

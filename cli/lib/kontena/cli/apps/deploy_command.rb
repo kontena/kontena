@@ -115,7 +115,7 @@ module Kontena::Cli::Apps
     # @param [Hash] options
     def parse_data(options)
       data = {}
-      data[:image] = options['image']
+      data[:image] = parse_image(options['image'])
       data[:env] = options['environment']
       data[:container_count] = options['instances']
       data[:links] = parse_links(options['links']) if options['links']
