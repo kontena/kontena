@@ -193,6 +193,15 @@ module Kontena
             memory.to_i
           end
         end
+
+        # @param [String] image
+        # @return [String]
+        def parse_image(image)
+          unless image.include?(":")
+            image = "#{image}:latest"
+          end
+          image
+        end
       end
     end
   end
