@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.3 (2015-09-18)
+
+- fix db automatic indexing
+- add "latest" image tag if it's not specified
+
 ## 0.8.2 (2015-09-09)
 
 - update weave to 1.1.0
