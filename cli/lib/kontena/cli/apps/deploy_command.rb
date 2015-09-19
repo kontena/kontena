@@ -91,7 +91,7 @@ module Kontena::Cli::Apps
     end
 
     def in_deploy_queue?(name)
-      deploy_queue.find {|service| service['id'] == prefixed_name(name)} != nil
+      deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
     end
 
     def merge_env_vars(options)
