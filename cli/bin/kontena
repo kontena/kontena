@@ -21,6 +21,7 @@ require 'kontena/cli/whoami_command'
 require 'kontena/cli/verify_account_command'
 require 'kontena/cli/invite_command'
 require 'kontena/cli/forgot_password_command'
+require 'kontena/cli/reset_password_command'
 require 'kontena/cli/container_command'
 require 'kontena/cli/grid_command'
 require 'kontena/cli/node_command'
@@ -51,6 +52,7 @@ class MainCommand < Clamp::Command
   subcommand "verify-account", "Verify registered account", Kontena::Cli::VerifyAccountCommand
   subcommand "invite", "Invite user to Kontena Master", Kontena::Cli::InviteCommand
   subcommand "forgot-password", "Request password reset for Kontena account", Kontena::Cli::ForgotPasswordCommand
+  subcommand "reset-password", "Reset Kontena account password", Kontena::Cli::ResetPasswordCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
 
   def execute
