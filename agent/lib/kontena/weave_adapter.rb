@@ -5,6 +5,8 @@ module Kontena
     include Helpers::NodeHelper
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || 'v1.1.0'
+    WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
+    WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
     # @param [Hash] opts
     def modify_create_opts(opts)
@@ -45,7 +47,7 @@ module Kontena
     # @param [Array<String>] cmd
     def exec(cmd)
       begin
-        image = "weaveworks/weaveexec:#{WEAVE_VERSION}"
+        image = "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
         container = Docker::Container.create(
           'Image' => image,
           'Cmd' => cmd,
@@ -93,8 +95,8 @@ module Kontena
 
     def start!
       images = [
-        "weaveworks/weave:#{WEAVE_VERSION}",
-        "weaveworks/weaveexec:#{WEAVE_VERSION}"
+        "#{WEAVE_IMAGE}:#{WEAVE_VERSION}",
+        "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
@@ -132,7 +134,7 @@ module Kontena
       unless weave_wait
         Docker::Container.create(
           'name' => 'weavewait',
-          'Image' => "weaveworks/weaveexec:#{WEAVE_VERSION}"
+          'Image' => "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
         )
       end
     end
