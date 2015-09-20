@@ -1,5 +1,6 @@
 require 'celluloid'
 require_relative 'grid_scheduler'
+require_relative 'load_balancer_configurer'
 
 class GridServiceDeployer
   include Celluloid
@@ -53,6 +54,8 @@ class GridServiceDeployer
       end
       self.deploy_service_container(node, container_name, deploy_rev)
     end
+
+    self.configure_load_balancer
 
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       self.remove_service_container(container)
@@ -146,5 +149,19 @@ class GridServiceDeployer
     response['open']
   rescue RpcClient::Error
     return false
+  end
+
+  def configure_load_balancer
+    load_balancers = self.grid_service.linked_to_load_balancers
+    return if load_balancers.size == 0
+
+    load_balancer = load_balancers[0]
+    node = self.grid_service.grid.host_nodes.connected.first
+    return unless node
+
+    lb_conf = LoadBalancerConfigurer.new(
+      node.rpc_client, load_balancer, self.grid_service
+    )
+    lb_conf.async.configure
   end
 end
