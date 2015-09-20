@@ -106,14 +106,17 @@ module Kontena
           end
 
           begin
-            info = node_info || {}
-          rescue Excon::Errors::SocketError => exc
-            logger.error(LOG_NAME) { exc.class.name }
-            logger.error(LOG_NAME) { exc.message }
+            info = self.node_info
+          rescue Excon::Errors::Error => exc
+            logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
             logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
             sleep 1
             retry
           end
+          if info.nil?
+            raise "failed to fetch node information from master"
+          end
+
           peer_ips = info['peer_ips'] || []
           self.exec([
             '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
@@ -132,8 +135,7 @@ module Kontena
             logger.info(LOG_NAME) { "bridge exposed: #{weave_bridge}" }
           end
         rescue => exc
-          logger.error(LOG_NAME) { exc.class.name }
-          logger.error(LOG_NAME) { exc.message }
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
           logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
         end
       }
