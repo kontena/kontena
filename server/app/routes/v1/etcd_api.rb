@@ -30,7 +30,9 @@ module V1
 
         r.get do
           r.is do
-            client.request("/etcd/get", path)
+            opts = {}
+            opts[:recursive] = true if r['recursive']
+            client.request("/etcd/get", path, opts)
           end
         end
 

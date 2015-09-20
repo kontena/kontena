@@ -15,10 +15,12 @@ module Kontena
       end
 
       # @param [String] key
-      def get(key)
-        response = etcd.get(key)
+      def get(key, opts = {})
+        response = etcd.get(key, opts)
         if response.directory?
-          {children: response.children.map{|c| c.key }}
+          children = []
+          map_children_recursive(children, response.node)
+          {children: children}
         else
           {value: response.value}
         end
@@ -59,6 +61,31 @@ module Kontena
       # @return [String, NilClass]
       def gateway
         interface_ip('docker0')
+      end
+
+      # @param [Array] children
+      # @param [Etcd::Node] node
+      def map_children_recursive(children, node)
+        if node.directory?
+          children << node_as_json(node) if node.key
+          node.children.map{|c| map_children_recursive(children, c) }
+        else
+          children << node_as_json(node)
+        end
+      end
+
+      # @param [Etcd::Node] node
+      # @return [Hash]
+      def node_as_json(node)
+        {
+          created_index: node.created_index,
+          modified_index: node.modified_index,
+          expiration: node.expiration,
+          ttl: node.ttl,
+          key: node.key,
+          value: node.value,
+          dir: node.dir
+        }
       end
     end
   end
