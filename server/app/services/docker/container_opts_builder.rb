@@ -13,7 +13,7 @@ module Docker
       docker_opts['Cmd'] = grid_service.cmd if grid_service.cmd
       docker_opts['Entrypoint'] = grid_service.entrypoint if grid_service.entrypoint
       docker_opts['Env'] = self.build_linked_services_env_vars(grid_service)
-      docker_opts['Env'] += grid_service.env if grid_service.env
+      docker_opts['Env'] += self.build_env(grid_service)
       docker_opts['ExposedPorts'] = self.exposed_ports(grid_service.ports) if grid_service.ports
       docker_opts['Volumes'] = self.build_volumes(grid_service) if grid_service.stateless? && grid_service.volumes
       docker_opts['Labels'] = self.build_labels(grid_service, container)
@@ -101,6 +101,8 @@ module Docker
     def self.build_env(grid_service)
       env = grid_service.env || []
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
+      env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
+      env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
       env
     end
 
@@ -115,6 +117,10 @@ module Docker
         'io.kontena.service.name' => grid_service.name.to_s,
         'io.kontena.grid.name' => grid_service.grid.try(:name)
       }
+      if grid_service.linked_to_load_balancer?
+        lb = grid_service.linked_load_balancers[0]
+        labels['io.kontena.load_balancer.name'] = lb.name
+      end
       labels
     end
 
