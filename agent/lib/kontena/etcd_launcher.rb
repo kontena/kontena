@@ -20,8 +20,8 @@ module Kontena
         begin
           start_etcd
         rescue => exc
-          logger.error(LOG_NAME) { exc.message }
-          logger.error(LOG_NAME) { exc.backtrace.join("\n") }
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+          logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
         end
       }
     end
@@ -59,7 +59,14 @@ module Kontena
       container = Docker::Container.get('kontena-etcd') rescue nil
       container.remove(force: true) if container
 
-      info = self.node_info
+      begin
+        info = self.node_info
+      rescue Excon::Errors::SocketError => exc
+        logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+        logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+        sleep 1
+        retry
+      end
       cluster_size = info['grid']['initial_size']
       node_number = info['node_number']
       name = "node-#{info['node_number']}"
