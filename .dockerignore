@@ -1,0 +1,11 @@
+.vagrant/
+.git/
+docs
+agent/.vagrant/
+agent/virtualbox/
+agent/build/
+agent/release/
+server/.vagrant/
+server/virtualbox/
+server/build/
+server/release/
