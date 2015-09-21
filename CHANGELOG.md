@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.4 (2015-09-21)
+
+- handle agent connection errors on boot
+- allow to define weave image names through env variables
+- fix reset-password subcommand
+- fix duplication on app deploy command
+
 ## 0.8.3 (2015-09-18)
 
 - fix db automatic indexing
