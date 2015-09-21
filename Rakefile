@@ -66,8 +66,7 @@ namespace :release do
     :build,
     :push_server,
     :push_agent,
-    :push_cli,
-    :push_ubuntu_packages
+    :push_cli
   ]
 
   task :push_server do
@@ -91,7 +90,7 @@ namespace :release do
     end
   end
 
-  task :push_ubuntu_packages do
+  task :push_ubuntu => [:build_ubuntu] do
     Dir.chdir('server') do
       sh("rake release:push_ubuntu REV=#{PKG_REV}")
     end
