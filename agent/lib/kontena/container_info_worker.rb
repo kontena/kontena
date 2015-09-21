@@ -59,8 +59,9 @@ module Kontena
       }
       logger.debug(LOG_NAME) { event }
       self.queue << event
+    rescue Docker::Error::NotFoundError
     rescue => exc
-      logger.error(LOG_NAME) { "publish_info: #{exc.message}" }
+      logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
     end
 
     ##

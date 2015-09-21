@@ -3,10 +3,12 @@ require_relative 'helpers/node_helper'
 module Kontena
   class WeaveAdapter
     include Helpers::NodeHelper
+    include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || 'v1.1.0'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
+    LOG_NAME = 'WeaveAdapter'
 
     # @param [Hash] opts
     def modify_create_opts(opts)
@@ -94,6 +96,54 @@ module Kontena
     end
 
     def start!
+      Thread.new {
+        begin
+          ensure_images
+
+          weave = Docker::Container.get('weave') rescue nil
+          if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
+            weave.delete(force: true)
+          end
+
+          begin
+            info = self.node_info
+          rescue Excon::Errors::Error => exc
+            logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+            logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+            sleep 1
+            retry
+          end
+          if info.nil?
+            raise "failed to fetch node information from master"
+          end
+
+          peer_ips = info['peer_ips'] || []
+          self.exec([
+            '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
+            '--password', ENV['KONTENA_TOKEN']
+            ] + peer_ips
+          )
+          if peer_ips.size > 0
+            logger.info(LOG_NAME) { "router started with peers #{peer_ips.join(', ')}" }
+          else
+            logger.info(LOG_NAME) { "router started without known peers" }
+          end
+
+          if info['node_number']
+            weave_bridge = "10.81.0.#{info['node_number']}/19"
+            self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
+            logger.info(LOG_NAME) { "bridge exposed: #{weave_bridge}" }
+          end
+        rescue => exc
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+          logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+        end
+      }
+    end
+
+    private
+
+    def ensure_images
       images = [
         "#{WEAVE_IMAGE}:#{WEAVE_VERSION}",
         "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
@@ -104,26 +154,7 @@ module Kontena
           sleep 1 until Docker::Image.exist?(image)
         end
       end
-
-      weave = Docker::Container.get('weave') rescue nil
-      if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
-        weave.delete(force: true)
-      end
-
-      info = node_info || {}
-      peer_ips = info['peer_ips'] || []
-      self.exec([
-        '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-        '--password', ENV['KONTENA_TOKEN']
-        ] + peer_ips
-      )
-      if info['node_number']
-        weave_bridge = "10.81.0.#{info['node_number']}/19"
-        self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
-      end
     end
-
-    private
 
     def ensure_weave_wait
       weave_wait = Docker::Container.get('weavewait') rescue nil

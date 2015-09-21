@@ -2,8 +2,7 @@ module Kontena
   module Helpers
     module NodeHelper
 
-      SIOCGIFADDR = 0x8915
-
+      # @return [Hash, NilClass]
       def node_info
         response = Excon.get("#{master_url}/v1/nodes/#{node_id}", headers: {
           'Content-Type' => 'application/json',
@@ -15,14 +14,15 @@ module Kontena
         nil
       end
 
+      # @return [String]
       def master_url
         ENV['KONTENA_URI'].sub('ws', 'http')
       end
 
+      # @return [String]
       def node_id
         Docker.info['ID']
       end
-
     end
   end
 end
