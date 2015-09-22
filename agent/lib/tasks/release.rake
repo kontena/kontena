@@ -50,7 +50,7 @@ namespace :release do
   end
 
   desc 'Push ubuntu packages'
-  task :push_ubuntu => :build_ubuntu do
+  task :push_ubuntu do
     repo = ENV['REPO'] || 'kontena'
     bintray_user = ENV['BINTRAY_USER']
     bintray_key = ENV['BINTRAY_KEY']

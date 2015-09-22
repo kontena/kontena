@@ -90,10 +90,19 @@ namespace :release do
     end
   end
 
-  task :push_ubuntu => [:build_ubuntu] do
+  task :push_ubuntu => [
+    :package_ubuntu,
+    :push_ubuntu_server,
+    :push_ubuntu_agent
+  ]
+
+  task :push_ubuntu_server do
     Dir.chdir('server') do
       sh("rake release:push_ubuntu REV=#{PKG_REV}")
     end
+  end
+
+  task :push_ubuntu_agent do
     Dir.chdir('agent') do
       sh("rake release:push_ubuntu REV=#{PKG_REV}")
     end
