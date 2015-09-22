@@ -17,6 +17,7 @@ module Kontena::Cli::Services
     option "--cmd", "CMD", "Command to execute"
     option "--instances", "INSTANCES", "How many instances should be deployed"
     option ["-u", "--user"], "USER", "Username who executes first process inside container"
+    option "--privileged", :flag, "Give extended privileges to this service", default: false
     option "--cap-add", "CAP_ADD", "Add capabitilies", multivalued: true
     option "--cap-drop", "CAP_DROP", "Drop capabitilies", multivalued: true
 
@@ -43,6 +44,7 @@ module Kontena::Cli::Services
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
       data[:image] = parse_image(image) if image
+      data[:privileged] = privileged?
       data[:cap_add] = cap_add_list unless cap_add_list.empty?
       data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
       data
