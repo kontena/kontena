@@ -19,6 +19,7 @@ module Docker
       docker_opts['Env'] += grid_service.env if grid_service.env
       docker_opts['ExposedPorts'] = self.exposed_ports(grid_service.ports) if grid_service.ports
       docker_opts['Volumes'] = self.build_volumes(grid_service) if grid_service.stateless? && grid_service.volumes
+      docker_opts['Privileged'] = grid_service.privileged if grid_service.privileged
       docker_opts['CapAdd'] = grid_service.cap_add if grid_service.cap_add && grid_service.cap_add.size > 0
       docker_opts['CapDrop'] = grid_service.cap_drop if grid_service.cap_drop && grid_service.cap_drop.size > 0
       docker_opts['Labels'] = self.build_labels(grid_service, container)

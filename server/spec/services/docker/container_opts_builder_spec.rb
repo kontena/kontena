@@ -3,12 +3,28 @@ require_relative '../../spec_helper'
 describe Docker::ContainerOptsBuilder do
 
   let(:grid_service) do
-    GridService.create!(name: 'test', image_name: 'redis:2.8', grid_service_links: [GridServiceLink.new(alias: 'test', linked_grid_service: linked_grid_service)])
+    GridService.create!(
+      name: 'test',
+      image_name: 'redis:2.8',
+      grid_service_links: [
+        GridServiceLink.new(alias: 'test', linked_grid_service: linked_grid_service)
+      ]
+    )
   end
 
   let(:linked_grid_service) do
-    grid_service = GridService.create!(name: 'linked-service-test', image_name: 'ubuntu-trusty', image: ubunty_trusty)
-    Container.create(grid_service: grid_service, name: 'linked-service-test-1', network_settings: {'ip_address' => '0.0.0.0'}, image: 'ubuntu_trusty', env: ['SOME_KEY=value'])
+    grid_service = GridService.create!(
+      name: 'linked-service-test',
+      image_name: 'ubuntu-trusty',
+      image: ubunty_trusty
+    )
+    Container.create(
+      grid_service: grid_service,
+      name: 'linked-service-test-1',
+      network_settings: {'ip_address' => '0.0.0.0'},
+      image: 'ubuntu_trusty',
+      env: ['SOME_KEY=value']
+    )
     grid_service
   end
 
@@ -54,6 +70,18 @@ describe Docker::ContainerOptsBuilder do
     it 'does not set CapDrop if it\'s not set' do
       opts = described_class.build_opts(grid_service, container)
       expect(opts['CapDrop']).to be_nil
+    end
+
+    it 'sets Privileged' do
+      grid_service.privileged = true
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['Privileged']).to eq(true)
+    end
+
+    it 'does not set Privileged if privileged is nil' do
+      grid_service.privileged = nil
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts.has_key?('Privileged')).to eq(false)
     end
   end
 
