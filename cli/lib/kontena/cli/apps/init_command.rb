@@ -55,7 +55,7 @@ module Kontena::Cli::Apps
 
     protected
     def create_dockerfile?
-      %w(y yes).include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
+      ['', 'y', 'yes'].include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
     end
 
     def create_env_file(app_json)
@@ -78,7 +78,7 @@ module Kontena::Cli::Apps
 
     def current_user
       token = require_token
-      client(token).get('user')
+      client(token).get('user') rescue ''
     end
 
     def create_dockerfile
@@ -101,7 +101,7 @@ module Kontena::Cli::Apps
     end
 
     def create_docker_compose_yml?
-      %w(y yes).include? ask("#{docker_compose_file} not found. Do you want to create it? [Yn]: ").downcase
+      ['', 'y', 'yes'].include? ask("#{docker_compose_file} not found. Do you want to create it? [Yn]: ").downcase
     end
 
     def create_docker_compose_yml(procfile, addons, env_file)
