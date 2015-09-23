@@ -1,5 +1,7 @@
 language: ruby
 rvm:
+  - 2.0
+  - 2.1
   - 2.2
 cache: bundler
 addons:
@@ -12,4 +14,14 @@ env:
   - TEST_DIR=server
   - TEST_DIR=agent
   - TEST_DIR=cli
+matrix:
+  exclude:
+    - rvm: 2.0
+      env: TEST_DIR=server
+    - rvm: 2.1
+      env: TEST_DIR=server
+    - rvm: 2.0
+      env: TEST_DIR=agent
+    - rvm: 2.1
+      env: TEST_DIR=agent
 script: CI=true cd $TEST_DIR && bundle install && bundle exec rspec spec/
