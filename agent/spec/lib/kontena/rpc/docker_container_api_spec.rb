@@ -18,7 +18,8 @@ describe Kontena::Rpc::DockerContainerApi do
       expect(Docker::Container).to receive(:create).with({
         'Image' => 'nginx:latest',
         'Entrypoint' => ['/w/w'],
-        'Cmd' => image.info['Config']['Cmd']
+        'Cmd' => image.info['Config']['Cmd'],
+        'HostConfig' => hash_including('VolumesFrom' => ['weavewait:ro'])
       }).and_return(spy(:container))
       opts = {
         'Image' => 'nginx:latest'
