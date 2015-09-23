@@ -53,35 +53,35 @@ describe Docker::ContainerOptsBuilder do
     it 'sets CapAdd' do
       grid_service.cap_add = ['NET_ADMIN']
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapAdd']).to eq(['NET_ADMIN'])
+      expect(opts['HostConfig']['CapAdd']).to eq(['NET_ADMIN'])
     end
 
     it 'does not set CapAdd if it\'s not set' do
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapAdd']).to be_nil
+      expect(opts['HostConfig']['CapAdd']).to be_nil
     end
 
     it 'sets CapDrop' do
       grid_service.cap_drop = ['SETUID']
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapDrop']).to eq(['SETUID'])
+      expect(opts['HostConfig']['CapDrop']).to eq(['SETUID'])
     end
 
     it 'does not set CapDrop if it\'s not set' do
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapDrop']).to be_nil
+      expect(opts['HostConfig']['CapDrop']).to be_nil
     end
 
     it 'sets Privileged' do
       grid_service.privileged = true
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['Privileged']).to eq(true)
+      expect(opts['HostConfig']['Privileged']).to eq(true)
     end
 
     it 'does not set Privileged if privileged is nil' do
       grid_service.privileged = nil
       opts = described_class.build_opts(grid_service, container)
-      expect(opts.has_key?('Privileged')).to eq(false)
+      expect(opts['HostConfig'].has_key?('Privileged')).to eq(false)
     end
   end
 
@@ -89,6 +89,13 @@ describe Docker::ContainerOptsBuilder do
     it 'returns correct volumes hash' do
       grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock:ro']
       expect(described_class.build_volumes(grid_service)).to eq({'/foo/bar' => {}, '/var/run/docker.sock' => {}})
+    end
+  end
+
+  describe '#build_bind_volumes' do
+    it 'returns correct volume bind array' do
+      grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock']
+      expect(described_class.build_bind_volumes(grid_service)).to eq(['/var/run/docker.sock:/var/run/docker.sock'])
     end
   end
 

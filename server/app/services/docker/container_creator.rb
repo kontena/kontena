@@ -17,8 +17,6 @@ module Docker
     ##
     # @return [Container]
     def create_container(name, deploy_rev)
-      client = self.host_node.rpc_client(10)
-
       container = Container.create(
         host_node: self.host_node,
         name: name,
@@ -28,7 +26,13 @@ module Docker
       ContainerOverlayConfig.reserve_overlay_cidr(self.grid_service, container)
       docker_opts = ContainerOptsBuilder.build_opts(self.grid_service, container)
       ContainerOverlayConfig.modify_labels(container, docker_opts['Labels'])
-      resp = request_create_container(client, docker_opts)
+
+      if grid_service.stateful?
+        volume_container = self.ensure_volume_container(container, docker_opts)
+        docker_opts['HostConfig']['VolumesFrom'] = [volume_container.container_id]
+      end
+
+      resp = request_create_container(docker_opts)
       sync_container_with_docker_response(container, resp)
       container
     rescue => exc
@@ -37,10 +41,9 @@ module Docker
     end
 
     ##
-    # @param [RpcClient] client
     # @param [Hash] docker_opts
     # @return [Container]
-    def request_create_container(client, docker_opts)
+    def request_create_container(docker_opts)
       client.request('/containers/create', docker_opts)
     end
 
@@ -51,6 +54,38 @@ module Docker
       container.attributes_from_docker(resp)
       container.grid_service = self.grid_service
       container.save
+    end
+
+    ##
+    # @param [Container] container
+    # @param [Hash] docker_opts
+    # @return [Container]
+    def ensure_volume_container(container, docker_opts)
+      volume_opts = ContainerOptsBuilder.build_volume_opts(
+          grid_service, container.name, docker_opts['Image']
+      )
+      volume_container = grid_service.volume_by_name(volume_opts['name'])
+      unless volume_container
+        resp = request_create_container(volume_opts)
+        volume_container = grid_service.containers.build(
+          host_node: host_node,
+          grid: grid_service.grid,
+          name: volume_opts['name'],
+          image: docker_opts['Image'],
+          container_type: 'volume',
+          overlay_cidr: SecureRandom.hex(18)
+        )
+        volume_container.attributes_from_docker(resp)
+        volume_container.save
+      end
+
+      volume_container
+    end
+
+    ##
+    # @return [RpcClient]
+    def client
+      self.host_node.rpc_client(10)
     end
   end
 end
