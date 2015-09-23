@@ -38,7 +38,7 @@ module Kontena::Cli::Apps
 
     protected
     def create_dockerfile?
-      %w(y yes).include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
+      %W(y yes #{''}).include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
     end
 
     def current_user
@@ -65,7 +65,7 @@ module Kontena::Cli::Apps
     end
 
     def create_docker_compose_yml?
-      %w(y yes).include? ask("#{docker_compose_file} not found. Do you want to create it? [Yn]: ").downcase
+      %W(y yes #{''}).include? ask("#{docker_compose_file} not found. Do you want to create it? [Yn]: ").downcase
     end
 
     def create_docker_compose_yml
