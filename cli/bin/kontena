@@ -31,6 +31,7 @@ require 'kontena/cli/registry_command'
 require 'kontena/cli/external_registry_command'
 require 'kontena/cli/deploy_command'
 require 'kontena/cli/app_command'
+require 'kontena/cli/etcd_command'
 require 'kontena/cli/version_command'
 
 class MainCommand < Clamp::Command
@@ -44,6 +45,7 @@ class MainCommand < Clamp::Command
   subcommand "vpn", "VPN specific commands", Kontena::Cli::VpnCommand
   subcommand "registry", "Registry specific commands", Kontena::Cli::RegistryCommand
   subcommand "container", "Container specific commands", Kontena::Cli::ContainerCommand
+  subcommand "etcd", "Etcd specific commands", Kontena::Cli::EtcdCommand
   subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
   subcommand "register", "Register Kontena Account", Kontena::Cli::RegisterCommand
   subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
