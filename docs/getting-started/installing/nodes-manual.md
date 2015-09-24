@@ -38,30 +38,30 @@ write_files:
         [Service]
         Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19" --bip="10.255.0.1/16"'
 coreos:
-  - name: 00-eth.network
-    runtime: true
-    content: |
-      [Match]
-      Name=eth*
-      [Network]
-      DHCP=yes
-      DNS=10.255.0.1
-      DNS=8.8.8.8
-      DNS=8.8.4.4
-      DOMAINS=kontena.local
-      [DHCP]
-      UseDNS=false
-  - name: etcd2.service
-    command: start
-    enable: true
-    content: |
-      Description=etcd 2.0
-      After=docker.service
-      [Service]
-      Restart=always
-      RestartSec=5
-      ExecStart=/usr/bin/docker logs --tail=10 -f kontena-etcd
   units:
+    - name: 00-eth.network
+      runtime: true
+      content: |
+        [Match]
+        Name=eth*
+        [Network]
+        DHCP=yes
+        DNS=10.255.0.1
+        DNS=8.8.8.8
+        DNS=8.8.4.4
+        DOMAINS=kontena.local
+        [DHCP]
+        UseDNS=false
+    - name: etcd2.service
+      command: start
+      enable: true
+      content: |
+        Description=etcd 2.0
+        After=docker.service
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStart=/usr/bin/docker logs --tail=10 -f kontena-etcd
     - name: 10-weave.network
       runtime: false
       content: |
