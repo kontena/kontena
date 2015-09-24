@@ -54,14 +54,5 @@ describe Docker::ContainerCreator do
       ).once.and_return(volume_response)
       subject.ensure_volume_container(container, docker_opts)
     end
-
-    it 'sets dummy value to overlay_cidr' do
-      volume_response = {'Id' => 'bb', 'State' => {}, 'Config' => {}, 'NetworkSettings' => {}, 'Volumes' => {}}
-      allow(subject).to receive(:request_create_container).with(
-        hash_including('name' => "#{container.name}-volumes")
-      ).once.and_return(volume_response)
-      volume_container = subject.ensure_volume_container(container, docker_opts)
-      expect(volume_container.overlay_cidr).not_to be_nil
-    end
   end
 end

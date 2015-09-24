@@ -95,7 +95,7 @@ class Container
   # @param [Hash] info
   def attributes_from_docker(info)
     config = info['Config'] || {}
-    labels = config['Labels']
+    labels = config['Labels'] || {}
     state = info['State'] || {}
     self.attributes = {
         container_id: info['Id'],
