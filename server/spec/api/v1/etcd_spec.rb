@@ -29,7 +29,7 @@ describe '/v1/etcd/:grid_name/:etcd_path' do
   describe 'GET' do
     it 'gets etcd value via rpc client' do
       expect(fake_client).to receive(:request)
-        .with('/etcd/get', '/foo/bar').and_return({value: 'baz'})
+        .with('/etcd/get', '/foo/bar', {}).and_return({value: 'baz'})
       get "/v1/etcd/#{grid.name}//foo/bar", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['value']).to eq('baz')
