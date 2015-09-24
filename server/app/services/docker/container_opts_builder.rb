@@ -10,9 +10,6 @@ module Docker
       docker_opts['name'] = container.name
       docker_opts['Hostname'] = "#{container.name}.kontena.local"
       docker_opts['User'] = grid_service.user if grid_service.user
-      docker_opts['CpuShares'] = grid_service.cpu_shares if grid_service.cpu_shares
-      docker_opts['Memory'] = grid_service.memory if grid_service.memory
-      docker_opts['MemorySwap'] = grid_service.memory_swap if grid_service.memory_swap
       docker_opts['Cmd'] = grid_service.cmd if grid_service.cmd
       docker_opts['Entrypoint'] = grid_service.entrypoint if grid_service.entrypoint
       docker_opts['Env'] = self.build_linked_services_env_vars(grid_service)
@@ -25,6 +22,9 @@ module Docker
       host_config['RestartPolicy'] = {
           'Name' => 'always'
       }
+      host_config['CpuShares'] = grid_service.cpu_shares if grid_service.cpu_shares
+      host_config['Memory'] = grid_service.memory if grid_service.memory
+      host_config['MemorySwap'] = grid_service.memory_swap if grid_service.memory_swap
       host_config['Privileged'] = grid_service.privileged if grid_service.privileged
       host_config['CapAdd'] = grid_service.cap_add if grid_service.cap_add && grid_service.cap_add.size > 0
       host_config['CapDrop'] = grid_service.cap_drop if grid_service.cap_drop && grid_service.cap_drop.size > 0

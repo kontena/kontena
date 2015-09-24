@@ -50,6 +50,24 @@ describe Docker::ContainerOptsBuilder do
       expect(opts['Hostname']).to eq('redis-1.kontena.local')
     end
 
+    it 'sets Memory' do
+      grid_service.memory = 128.megabytes
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['Memory']).to eq(128.megabytes)
+    end
+
+    it 'sets MemorySwap' do
+      grid_service.memory_swap = 192.megabytes
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['MemorySwap']).to eq(192.megabytes)
+    end
+
+    it 'sets CpuShares' do
+      grid_service.cpu_shares = 500
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['CpuShares']).to eq(500)
+    end
+
     it 'sets CapAdd' do
       grid_service.cap_add = ['NET_ADMIN']
       opts = described_class.build_opts(grid_service, container)
