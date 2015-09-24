@@ -18,7 +18,7 @@ class Container
   field :volumes, type: Array, default: []
   field :deploy_rev, type: String
   field :container_type, type: String, default: 'container'
-  field :overlay_cidr, type: String
+  #field :overlay_cidr, type: String
 
   validates_uniqueness_of :container_id, scope: [:host_node_id]
 
@@ -27,6 +27,7 @@ class Container
   belongs_to :host_node
   has_many :container_logs
   has_many :container_stats
+  has_one :overlay_cidr, dependent: :destroy
 
   index({ grid_id: 1 })
   index({ grid_service_id: 1 })
@@ -35,7 +36,6 @@ class Container
   index({ deleted_at: 1 }, {sparse: true})
   index({ container_id: 1 })
   index({ state: 1 })
-  index({ grid_id: 1, overlay_cidr: 1 }, { sparse: true, unique: true })
 
   default_scope -> { where(deleted_at: nil, container_type: 'container') }
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
@@ -95,27 +95,39 @@ class Container
   ##
   # @param [Hash] info
   def attributes_from_docker(info)
+    config = info['Config'] || {}
+    labels = config['Labels']
+    state = info['State'] || {}
     self.attributes = {
         container_id: info['Id'],
         driver: info['Driver'],
         exec_driver: info['ExecDriver'],
-        image: info['Config']['Image'],
-        env: info['Config']['Env'],
+        image: config['Image'],
+        env: config['Env'],
         network_settings: self.parse_docker_network_settings(info['NetworkSettings']),
         state: {
-            error: info['State']['Error'],
-            exit_code: info['State']['ExitCode'],
-            pid: info['State']['Pid'],
-            oom_killed: info['State']['OOMKilled'],
-            paused: info['State']['Paused'],
-            restarting: info['State']['Restarting'],
-            running: info['State']['Running']
+            error: state['Error'],
+            exit_code: state['ExitCode'],
+            pid: state['Pid'],
+            oom_killed: state['OOMKilled'],
+            paused: state['Paused'],
+            restarting: state['Restarting'],
+            running: state['Running']
         },
-        finished_at: (info['State']['FinishedAt'] ? Time.parse(info['State']['FinishedAt']) : nil),
-        started_at: (info['State']['StartedAt'] ? Time.parse(info['State']['StartedAt']) : nil),
+        finished_at: (state['FinishedAt'] ? Time.parse(state['FinishedAt']) : nil),
+        started_at: (state['StartedAt'] ? Time.parse(state['StartedAt']) : nil),
         deleted_at: nil,
         volumes: info['Volumes'].map{|k, v| [{container: k, node: v}]}
     }
+    if labels['io.kontena.container.overlay_cidr'] && self.overlay_cidr.nil?
+      ip, subnet = labels['io.kontena.container.overlay_cidr'].split('/')
+      OverlayCidr.create(
+        grid: self.grid,
+        container: self,
+        ip: ip,
+        subnet: subnet
+      )
+    end
   end
 
   ##

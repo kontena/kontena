@@ -18,6 +18,7 @@ module Docker
     # @return [Container]
     def create_container(name, deploy_rev)
       container = Container.create(
+        grid: grid_service.grid,
         host_node: self.host_node,
         name: name,
         image: self.grid_service.image,
@@ -72,8 +73,7 @@ module Docker
           grid: grid_service.grid,
           name: volume_opts['name'],
           image: docker_opts['Image'],
-          container_type: 'volume',
-          overlay_cidr: SecureRandom.hex(18)
+          container_type: 'volume'
         )
         volume_container.attributes_from_docker(resp)
         volume_container.save

@@ -99,7 +99,7 @@ module Docker
     # @param [GridService] grid_service
     # @return [Array]
     def self.build_env(grid_service)
-      env = grid_service.env || []
+      env = grid_service.env.dup || []
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
       env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
       env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"

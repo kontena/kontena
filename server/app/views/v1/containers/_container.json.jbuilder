@@ -19,5 +19,9 @@ json.deploy_rev container.deploy_rev
 json.image container.image
 json.env container.env
 json.volumes container.volumes
-json.overlay_cidr container.overlay_cidr
+if container.overlay_cidr
+  json.overlay_cidr container.overlay_cidr.to_s
+else
+  json.overlay_cidr nil
+end
 json.network_settings container.network_settings

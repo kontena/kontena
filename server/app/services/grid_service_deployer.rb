@@ -70,6 +70,7 @@ class GridServiceDeployer
   rescue => exc
     self.grid_service.update_attribute(:state, prev_state)
     error "Unknown error: #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
     false
   end
 

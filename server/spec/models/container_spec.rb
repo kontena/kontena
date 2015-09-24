@@ -4,7 +4,7 @@ describe Container do
   it { should be_timestamped_document }
   it { should have_fields(
         :container_id, :name, :driver,
-        :exec_driver, :image, :overlay_cidr).of_type(String) }
+        :exec_driver, :image).of_type(String) }
   it { should have_fields(:env, :volumes).of_type(Array) }
   it { should have_fields(:network_settings, :state).of_type(Hash) }
   it { should have_fields(:finished_at, :started_at).of_type(Time) }
@@ -12,6 +12,7 @@ describe Container do
   it { should belong_to(:grid) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:host_node) }
+  it { should have_one(:overlay_cidr) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
 
@@ -20,8 +21,6 @@ describe Container do
   it { should have_index_for(host_node_id: 1) }
   it { should have_index_for(container_id: 1) }
   it { should have_index_for(state: 1) }
-  it { should have_index_for(grid_id: 1, overlay_cidr: 1)
-        .with_options(sparse: true, unique: true) }
 
   describe '#status' do
     it 'returns deleted when deleted_at timestamp is set' do
