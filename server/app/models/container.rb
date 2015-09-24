@@ -18,7 +18,6 @@ class Container
   field :volumes, type: Array, default: []
   field :deploy_rev, type: String
   field :container_type, type: String, default: 'container'
-  #field :overlay_cidr, type: String
 
   validates_uniqueness_of :container_id, scope: [:host_node_id]
 
