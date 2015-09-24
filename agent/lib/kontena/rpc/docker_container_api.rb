@@ -41,17 +41,10 @@ module Kontena
 
       ##
       # @param [String] id
-      # @param [Hash] opts
       # @return [Hash]
-      def start(id, opts)
+      def start(id)
         container = Docker::Container.get(id)
-        dns = resolve_dns
-        if dns
-          opts['Dns'] = [dns]
-          opts['DnsSearch'] = ['kontena.local']
-        end
-        self.overlay_adapter.modify_start_opts(opts)
-        container.start(opts)
+        container.start
         container.json
       rescue Docker::Error::NotFoundError => exc
         raise RpcServer::Error.new(404, 'Not found')
@@ -145,12 +138,6 @@ module Kontena
         container.delete(opts)
       rescue Docker::Error::NotFoundError => exc
         raise RpcServer::Error.new(404, 'Not found')
-      end
-
-      private
-
-      def resolve_dns
-        interface_ip('docker0')
       end
     end
   end

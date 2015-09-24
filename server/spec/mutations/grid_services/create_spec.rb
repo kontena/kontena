@@ -232,6 +232,18 @@ describe GridServices::Create do
       expect(outcome.success?).to be_falsey
     end
 
+    it 'saves privileged' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          privileged: true
+      ).run
+      expect(outcome.result.privileged).to eq(true)
+    end
+
     it 'saves cap_add' do
       outcome = described_class.new(
           current_user: user,

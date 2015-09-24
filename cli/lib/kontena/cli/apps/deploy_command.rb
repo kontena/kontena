@@ -129,6 +129,7 @@ module Kontena::Cli::Apps
       data[:affinity] = options['affinity'] if options['affinity']
       data[:user] = options['user'] if options['user']
       data[:stateful] = options['stateful'] == true
+      data[:privileged] = options['privileged'] unless options['privileged'].nil?
       data[:cap_add] = options['cap_add'] if options['cap_add']
       data[:cap_drop] = options['cap_drop'] if options['cap_drop']
       data
