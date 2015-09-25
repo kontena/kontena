@@ -23,10 +23,10 @@ class LoadBalancerConfigurer
       set("#{etcd_path}/services/#{name}/virtual_hosts", virtual_hosts)
       set("#{etcd_path}/services/#{name}/virtual_path", virtual_path)
     else
-      set("#{etcd_path}/tcp-services/#{name}/port", backend_port)
+      set("#{etcd_path}/tcp-services/#{name}/frontend_port", frontend_port)
+      set("#{etcd_path}/tcp-services/#{name}/backend_port", backend_port)
       set("#{etcd_path}/tcp-services/#{name}/balance", balance)
     end
-    set("#{etcd_path}/tcp-services/#{name}/updated_at", Time.now.utc.to_s)
 
     remove_old_configs
   end
@@ -68,6 +68,11 @@ class LoadBalancerConfigurer
   # @return [String, NilClass]
   def backend_port
     env_hash['KONTENA_LB_BACKEND_PORT']
+  end
+
+  # @return [String, NilClass]
+  def frontend_port
+    env_hash['KONTENA_LB_FRONTEND_PORT']
   end
 
   # @return [String]
