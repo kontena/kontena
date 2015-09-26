@@ -19,7 +19,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
-      }.to change{ redis_service.reload.env }.to(['FOO=bar', 'BAR=baz'])
+      }.to change{ redis_service.reload.env }.to(['FOO=bar'])
     end
 
     it 'updates affinity variables' do

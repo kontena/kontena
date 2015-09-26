@@ -1,18 +1,27 @@
 language: ruby
 rvm:
+  - 2.0
+  - 2.1
   - 2.2
-services:
-  - redis-server
-sudo: required
-before_install:
-  - "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10"
-  - "echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list"
-  - "sudo apt-get update"
-  - "sudo apt-get install mongodb-org-server"
-before_script:
-  - "until nc -z localhost 27017; do echo Waiting for MongoDB; sleep 1; done"
+cache: bundler
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+    packages:
+      - mongodb-org-server
 env:
   - TEST_DIR=server
   - TEST_DIR=agent
   - TEST_DIR=cli
+matrix:
+  exclude:
+    - rvm: 2.0
+      env: TEST_DIR=server
+    - rvm: 2.1
+      env: TEST_DIR=server
+    - rvm: 2.0
+      env: TEST_DIR=agent
+    - rvm: 2.1
+      env: TEST_DIR=agent
 script: CI=true cd $TEST_DIR && bundle install && bundle exec rspec spec/

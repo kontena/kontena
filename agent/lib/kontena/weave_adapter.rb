@@ -1,8 +1,10 @@
 require_relative 'helpers/node_helper'
+require_relative 'helpers/iface_helper'
 
 module Kontena
   class WeaveAdapter
     include Helpers::NodeHelper
+    include Helpers::IfaceHelper
     include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || 'v1.1.0'
@@ -38,12 +40,23 @@ module Kontena
       end
       opts['Entrypoint'] = ['/w/w']
       opts['Cmd'] = cmd
+
+      modify_host_config(opts)
+
+      opts
     end
 
-    def modify_start_opts(opts)
-      ensure_weave_wait
-      opts['VolumesFrom'] ||= []
-      opts['VolumesFrom'] << 'weavewait:ro'
+    # @param [Hash] opts
+    def modify_host_config(opts)
+      host_config = opts['HostConfig'] || {}
+      host_config['VolumesFrom'] ||= []
+      host_config['VolumesFrom'] << 'weavewait:ro'
+      dns = interface_ip('docker0')
+      if dns
+        host_config['Dns'] = [dns]
+        host_config['DnsSearch'] = ['kontena.local']
+      end
+      opts['HostConfig'] = host_config
     end
 
     # @param [Array<String>] cmd

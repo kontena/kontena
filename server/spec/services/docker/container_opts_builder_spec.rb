@@ -3,12 +3,28 @@ require_relative '../../spec_helper'
 describe Docker::ContainerOptsBuilder do
 
   let(:grid_service) do
-    GridService.create!(name: 'test', image_name: 'redis:2.8', grid_service_links: [GridServiceLink.new(alias: 'test', linked_grid_service: linked_grid_service)])
+    GridService.create!(
+      name: 'test',
+      image_name: 'redis:2.8',
+      grid_service_links: [
+        GridServiceLink.new(alias: 'test', linked_grid_service: linked_grid_service)
+      ]
+    )
   end
 
   let(:linked_grid_service) do
-    grid_service = GridService.create!(name: 'linked-service-test', image_name: 'ubuntu-trusty', image: ubunty_trusty)
-    Container.create(grid_service: grid_service, name: 'linked-service-test-1', network_settings: {'ip_address' => '0.0.0.0'}, image: 'ubuntu_trusty', env: ['SOME_KEY=value'])
+    grid_service = GridService.create!(
+      name: 'linked-service-test',
+      image_name: 'ubuntu-trusty',
+      image: ubunty_trusty
+    )
+    Container.create(
+      grid_service: grid_service,
+      name: 'linked-service-test-1',
+      network_settings: {'ip_address' => '0.0.0.0'},
+      image: 'ubuntu_trusty',
+      env: ['SOME_KEY=value']
+    )
     grid_service
   end
 
@@ -34,26 +50,56 @@ describe Docker::ContainerOptsBuilder do
       expect(opts['Hostname']).to eq('redis-1.kontena.local')
     end
 
+    it 'sets Memory' do
+      grid_service.memory = 128.megabytes
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['Memory']).to eq(128.megabytes)
+    end
+
+    it 'sets MemorySwap' do
+      grid_service.memory_swap = 192.megabytes
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['MemorySwap']).to eq(192.megabytes)
+    end
+
+    it 'sets CpuShares' do
+      grid_service.cpu_shares = 500
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['CpuShares']).to eq(500)
+    end
+
     it 'sets CapAdd' do
       grid_service.cap_add = ['NET_ADMIN']
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapAdd']).to eq(['NET_ADMIN'])
+      expect(opts['HostConfig']['CapAdd']).to eq(['NET_ADMIN'])
     end
 
     it 'does not set CapAdd if it\'s not set' do
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapAdd']).to be_nil
+      expect(opts['HostConfig']['CapAdd']).to be_nil
     end
 
     it 'sets CapDrop' do
       grid_service.cap_drop = ['SETUID']
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapDrop']).to eq(['SETUID'])
+      expect(opts['HostConfig']['CapDrop']).to eq(['SETUID'])
     end
 
     it 'does not set CapDrop if it\'s not set' do
       opts = described_class.build_opts(grid_service, container)
-      expect(opts['CapDrop']).to be_nil
+      expect(opts['HostConfig']['CapDrop']).to be_nil
+    end
+
+    it 'sets Privileged' do
+      grid_service.privileged = true
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['Privileged']).to eq(true)
+    end
+
+    it 'does not set Privileged if privileged is nil' do
+      grid_service.privileged = nil
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig'].has_key?('Privileged')).to eq(false)
     end
   end
 
@@ -61,6 +107,13 @@ describe Docker::ContainerOptsBuilder do
     it 'returns correct volumes hash' do
       grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock:ro']
       expect(described_class.build_volumes(grid_service)).to eq({'/foo/bar' => {}, '/var/run/docker.sock' => {}})
+    end
+  end
+
+  describe '#build_bind_volumes' do
+    it 'returns correct volume bind array' do
+      grid_service.volumes = ['/foo/bar', '/var/run/docker.sock:/var/run/docker.sock']
+      expect(described_class.build_bind_volumes(grid_service)).to eq(['/var/run/docker.sock:/var/run/docker.sock'])
     end
   end
 

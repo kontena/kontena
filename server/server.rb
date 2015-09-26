@@ -7,7 +7,7 @@ Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
   VERSION = File.read('./VERSION').strip
-  
+
   if ENV['RACK_ENV'] == 'test'
     logger = nil
   else
@@ -61,6 +61,10 @@ class Server < Roda
 
       r.on('external_registries') do
         r.run V1::ExternalRegistriesApi
+      end
+
+      r.on('etcd') do
+        r.run V1::EtcdApi
       end
     end
   end

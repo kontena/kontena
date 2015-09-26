@@ -15,6 +15,7 @@ module GridServices
       array :cap_add do
         string
       end
+      boolean :privileged
       array :cap_drop do
         string
       end
@@ -48,6 +49,7 @@ module GridServices
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory
       attributes[:memory_swap] = self.memory_swap if self.memory_swap
+      attributes[:privileged] = self.privileged unless self.privileged.nil?
       attributes[:cap_add] = self.cap_add if self.cap_add
       attributes[:cap_drop] = self.cap_drop if self.cap_drop
       attributes[:cmd] = self.cmd if self.cmd
