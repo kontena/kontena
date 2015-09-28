@@ -57,6 +57,12 @@ module Kontena::Cli::Apps
         end
       end
 
+      if options['external_links']
+        options['links'] ||= []
+        options['links'] = options['links'] + options['external_links']
+        options.delete('external_links')
+      end
+
       merge_env_vars(options)
 
       if service_exists?(name)

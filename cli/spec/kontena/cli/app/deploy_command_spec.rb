@@ -180,6 +180,24 @@ yml
         end
       end
 
+      it 'merges external links to links' do
+        allow(subject).to receive(:current_dir).and_return("kontena-test")
+        allow(YAML).to receive(:load).and_return(services)
+        services['wordpress']['external_links'] = ['loadbalancer:loadbalancer']
+        data = {
+            :name =>"kontena-test-wordpress",
+            :image=>"wordpress:latest",
+            :env=> nil,
+            :container_count=>2,
+            :stateful=>false,
+            :links=>[{:name => "kontena-test-mysql", :alias => "db"}, {:name => "loadbalancer", :alias => "loadbalancer"}],
+            :ports=>[{:container_port => "80", :node_port => "80", :protocol => "tcp"}]
+        }
+
+        expect(subject).to receive(:create_service).with('1234567', '1', data)
+        subject.run([])
+      end
+
       it 'creates mysql service before wordpress' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
         data = {:name =>"kontena-test-mysql", :image=>'mysql:5.6', :env=>["MYSQL_ROOT_PASSWORD=kontena-test_secret"], :container_count=>nil, :stateful=>true}
