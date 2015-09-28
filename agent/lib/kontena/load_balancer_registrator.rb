@@ -41,7 +41,7 @@ module Kontena
     def on_container_event(event)
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
-        if container
+        if container && load_balanced?(container)
           self.register_container(container)
         end
       elsif event.status == 'die'
