@@ -10,7 +10,7 @@ describe LoadBalancerConfigurer do
   let(:balanced_service) { GridService.create!(
       image_name: 'nginx:latest', name: 'web', grid: grid,
       env: [
-        'KONTENA_LB_BACKEND_PORT=80',
+        'KONTENA_LB_INTERNAL_PORT=80',
         'KONTENA_LB_MODE=http',
         'KONTENA_LB_BALANCE=source',
         'KONTENA_LB_VIRTUAL_HOSTS=www.kontena.io,kontena.io'
