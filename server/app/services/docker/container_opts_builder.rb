@@ -33,7 +33,7 @@ module Docker
       if bind_volumes.size > 0
         host_config['Binds'] = bind_volumes
       end
-      docker_opts['PortBindings'] = port_bindings(grid_service.ports) if grid_service.ports
+      host_config['PortBindings'] = port_bindings(grid_service.ports) if grid_service.ports
 
       docker_opts['HostConfig'] = host_config
       docker_opts
