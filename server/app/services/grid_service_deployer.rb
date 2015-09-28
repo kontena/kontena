@@ -1,5 +1,6 @@
 require 'celluloid'
 require_relative 'grid_scheduler'
+require_relative 'load_balancer_configurer'
 
 class GridServiceDeployer
   include Celluloid
@@ -39,6 +40,7 @@ class GridServiceDeployer
     prev_state = self.grid_service.state
     self.grid_service.update_attribute(:state, 'deploying')
 
+    self.configure_load_balancer
     pulled_nodes = Set.new
     deploy_rev = Time.now.utc.to_s
     self.grid_service.container_count.times do |i|
@@ -67,6 +69,7 @@ class GridServiceDeployer
   rescue => exc
     self.grid_service.update_attribute(:state, prev_state)
     error "Unknown error: #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
     false
   end
 
@@ -146,5 +149,19 @@ class GridServiceDeployer
     response['open']
   rescue RpcClient::Error
     return false
+  end
+
+  def configure_load_balancer
+    load_balancers = self.grid_service.linked_to_load_balancers
+    return if load_balancers.size == 0
+
+    load_balancer = load_balancers[0]
+    node = self.grid_service.grid.host_nodes.connected.first
+    return unless node
+
+    lb_conf = LoadBalancerConfigurer.new(
+      node.rpc_client, load_balancer, self.grid_service
+    )
+    lb_conf.async.configure
   end
 end

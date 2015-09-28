@@ -18,6 +18,7 @@ class Grid
   has_many :container_stats
   has_many :audit_logs
   has_many :registries, dependent: :delete
+  has_many :overlay_cidrs
   has_and_belongs_to_many :users
 
   index({ name: 1 }, { unique: true })
@@ -53,7 +54,7 @@ class Grid
   end
 
   def reserved_overlay_ips
-    reserved_ips = self.containers.map{|c| c.overlay_cidr.to_s.split('/')[0] }
+    reserved_ips = self.containers.map{|c| c.overlay_cidr.try(:ip) }.delete_if{|ip| ip.nil?}
   end
 
   def available_overlay_ips

@@ -2,8 +2,10 @@ class GridService
   include Mongoid::Document
   include Mongoid::Timestamps
 
+  LB_IMAGE = 'kontena/lb:latest'
+
   field :image_name, type: String
-  field :labels, type: Array, default: []
+  field :labels, type: Hash, default: {}
   field :affinity, type: Array, default: []
   field :name, type: String
   field :stateful, type: Boolean
@@ -39,25 +41,55 @@ class GridService
   validates_uniqueness_of :name, scope: [:grid_id]
 
   scope :visible, -> { where(name: {'$nin' => ['vpn', 'registry']}) }
+  scope :load_balancer, -> { where(image_name: LB_IMAGE) }
 
+  # @return [String]
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 
+  # @param [String] state
   def set_state(state)
     self.update_attribute(:state, state)
   end
 
+  # @return [Boolean]
   def stateful?
     self.stateful == true
   end
 
+  # @return [Boolean]
   def stateless?
     !stateful?
   end
 
+  # @return [Boolean]
   def deploying?
     self.state == 'deploying'
+  end
+
+  # @return [Boolean]
+  def load_balancer?
+    self.image_name.to_s.include?(LB_IMAGE)
+  end
+
+  # @return [Boolean]
+  def linked_to_load_balancer?
+    self.grid_service_links.map{|l| l.linked_grid_service }.any?{|s| s.load_balancer? }
+  end
+
+  # @return [Array<GridService>]
+  def linked_to_load_balancers
+    self.grid_service_links.map{|l| l.linked_grid_service }.select{|s| s.load_balancer? }
+  end
+
+  # @return [Hash]
+  def env_hash
+    if @env_hash.nil?
+      @env_hash = self.env.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+    end
+
+    @env_hash
   end
 
   ##

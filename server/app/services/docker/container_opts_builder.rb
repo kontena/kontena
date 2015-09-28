@@ -13,7 +13,7 @@ module Docker
       docker_opts['Cmd'] = grid_service.cmd if grid_service.cmd
       docker_opts['Entrypoint'] = grid_service.entrypoint if grid_service.entrypoint
       docker_opts['Env'] = self.build_linked_services_env_vars(grid_service)
-      docker_opts['Env'] += grid_service.env if grid_service.env
+      docker_opts['Env'] += self.build_env(grid_service)
       docker_opts['ExposedPorts'] = self.exposed_ports(grid_service.ports) if grid_service.ports
       docker_opts['Volumes'] = self.build_volumes(grid_service) if grid_service.stateless? && grid_service.volumes
       docker_opts['Labels'] = self.build_labels(grid_service, container)
@@ -33,7 +33,7 @@ module Docker
       if bind_volumes.size > 0
         host_config['Binds'] = bind_volumes
       end
-      docker_opts['PortBindings'] = port_bindings(grid_service.ports) if grid_service.ports
+      host_config['PortBindings'] = port_bindings(grid_service.ports) if grid_service.ports
 
       docker_opts['HostConfig'] = host_config
       docker_opts
@@ -99,8 +99,10 @@ module Docker
     # @param [GridService] grid_service
     # @return [Array]
     def self.build_env(grid_service)
-      env = grid_service.env || []
+      env = grid_service.env.dup || []
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
+      env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
+      env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
       env
     end
 
@@ -115,6 +117,14 @@ module Docker
         'io.kontena.service.name' => grid_service.name.to_s,
         'io.kontena.grid.name' => grid_service.grid.try(:name)
       }
+      if grid_service.linked_to_load_balancer?
+        lb = grid_service.linked_to_load_balancers[0]
+        internal_port = grid_service.env_hash['KONTENA_LB_INTERNAL_PORT'] || '80'
+        mode = grid_service.env_hash['KONTENA_LB_MODE'] || 'http'
+        labels['io.kontena.load_balancer.name'] = lb.name
+        labels['io.kontena.load_balancer.internal_port'] = internal_port
+        labels['io.kontena.load_balancer.mode'] = mode
+      end
       labels
     end
 
