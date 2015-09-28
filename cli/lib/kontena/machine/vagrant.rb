@@ -6,5 +6,6 @@ unless which('vagrant')
 end
 
 require_relative 'random_name'
+require_relative 'vagrant/master_provisioner'
 require_relative 'vagrant/node_provisioner'
 require_relative 'vagrant/node_destroyer'

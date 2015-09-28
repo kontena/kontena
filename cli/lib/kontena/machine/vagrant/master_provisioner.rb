@@ -6,31 +6,22 @@ require 'shell-spinner'
 module Kontena
   module Machine
     module Vagrant
-      class NodeProvisioner
-        include RandomName
+      class MasterProvisioner
 
-        attr_reader :client, :api_client
-
-        # @param [Kontena::Client] api_client Kontena api client
-        def initialize(api_client)
-          @api_client = api_client
-        end
+        attr_reader :client
 
         def run!(opts)
-          grid = opts[:grid]
-          name = opts[:name] || generate_name
+          name = 'kontena-master'
           version = opts[:version]
-          vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
+          vagrant_path = "#{Dir.home}/.kontena/vagrant_master"
           FileUtils.mkdir_p(vagrant_path)
 
-          template = File.join(__dir__ , '/Vagrantfile.node.rb.erb')
+          template = File.join(__dir__ , '/Vagrantfile.master.rb.erb')
           cloudinit_template = File.join(__dir__ , '/cloudinit.yml')
           vars = {
             name: name,
             version: version,
             memory: opts[:memory] || 1024,
-            master_uri: opts[:master_uri],
-            grid_token: opts[:grid_token],
             cloudinit: "#{vagrant_path}/cloudinit.yml"
           }
           vagrant_data = erb(File.read(template), vars)
@@ -45,22 +36,12 @@ module Kontena
                 end
               end
             end
-            ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{grid.colorize(:cyan)} " do
-              sleep 1 until node_exists_in_grid?(grid, name)
-            end
+            puts "Kontena Master is now running at #{'http://192.168.66.100:8080'.colorize(:green)}"
           end
-        end
-
-        def generate_name
-          "#{super}-#{rand(1..99)}"
         end
 
         def erb(template, vars)
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
-        end
-
-        def node_exists_in_grid?(grid, name)
-          api_client.get("grids/#{grid}/nodes")['nodes'].find{|n| n['name'] == name}
         end
       end
     end
