@@ -45,11 +45,6 @@ describe LoadBalancerConfigurer do
     end
 
     context 'http' do
-      it 'sets port to etcd' do
-        expect(subject).to receive(:set).with(/\/lb\/services\/web\/port/, '80').once
-        subject.configure
-      end
-
       it 'sets balance to etcd' do
         expect(subject).to receive(:set).with(/\/lb\/services\/web\/balance/, 'source').once
         subject.configure
@@ -64,20 +59,15 @@ describe LoadBalancerConfigurer do
     context 'tcp' do
       before(:each) do
         balanced_service.env = [
-          'KONTENA_LB_FRONTEND_PORT=80',
-          'KONTENA_LB_BACKEND_PORT=8080',
+          'KONTENA_LB_EXTERNAL_PORT=80',
+          'KONTENA_LB_INTERNAL_PORT=8080',
           'KONTENA_LB_MODE=tcp',
           'KONTENA_LB_BALANCE=roundrobin'
         ]
       end
 
-      it 'sets frontend_port to etcd' do
-        expect(subject).to receive(:set).with(/\/lb\/tcp-services\/web\/frontend_port/, '80').once
-        subject.configure
-      end
-
-      it 'sets backend_port to etcd' do
-        expect(subject).to receive(:set).with(/\/lb\/tcp-services\/web\/backend_port/, '8080').once
+      it 'sets external_port to etcd' do
+        expect(subject).to receive(:set).with(/\/lb\/tcp-services\/web\/external_port/, '80').once
         subject.configure
       end
 
