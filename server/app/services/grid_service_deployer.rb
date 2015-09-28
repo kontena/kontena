@@ -40,6 +40,7 @@ class GridServiceDeployer
     prev_state = self.grid_service.state
     self.grid_service.update_attribute(:state, 'deploying')
 
+    self.configure_load_balancer
     pulled_nodes = Set.new
     deploy_rev = Time.now.utc.to_s
     self.grid_service.container_count.times do |i|
@@ -54,8 +55,6 @@ class GridServiceDeployer
       end
       self.deploy_service_container(node, container_name, deploy_rev)
     end
-
-    self.configure_load_balancer
 
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       self.remove_service_container(container)

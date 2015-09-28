@@ -17,14 +17,15 @@ class LoadBalancerConfigurer
   def configure
     name = balanced_service.name
     etcd_path = "#{ETCD_PREFIX}#{load_balancer.name}"
+    mkdir("#{etcd_path}/services")
+    mkdir("#{etcd_path}/tcp-services")
+    mkdir("#{etcd_path}/certs")
     if http?
-      set("#{etcd_path}/services/#{name}/port", backend_port)
       set("#{etcd_path}/services/#{name}/balance", balance)
       set("#{etcd_path}/services/#{name}/virtual_hosts", virtual_hosts)
       set("#{etcd_path}/services/#{name}/virtual_path", virtual_path)
     else
-      set("#{etcd_path}/tcp-services/#{name}/frontend_port", frontend_port)
-      set("#{etcd_path}/tcp-services/#{name}/backend_port", backend_port)
+      set("#{etcd_path}/tcp-services/#{name}/external_port", external_port)
       set("#{etcd_path}/tcp-services/#{name}/balance", balance)
     end
 
@@ -44,6 +45,11 @@ class LoadBalancerConfigurer
   # @param [String] key
   def unset(key)
     rpc_client.request("/etcd/delete", key, {})
+  end
+
+  # @param [String] key
+  def mkdir(key)
+    rpc_client.request("/etcd/set", key, {dir: true})
   end
 
   def remove_old_configs
@@ -66,18 +72,10 @@ class LoadBalancerConfigurer
   end
 
   # @return [String, NilClass]
-  def backend_port
-    env_hash['KONTENA_LB_BACKEND_PORT']
+  def external_port
+    env_hash['KONTENA_LB_EXTERNAL_PORT']
   end
 
-<<<<<<< HEAD
-=======
-  # @return [String, NilClass]
-  def frontend_port
-    env_hash['KONTENA_LB_FRONTEND_PORT']
-  end
-
->>>>>>> 2e1de6ba91a5b5645d99fe648a8e5f9415c35699
   # @return [String]
   def mode
     env_hash['KONTENA_LB_MODE'] || 'http'
@@ -90,7 +88,11 @@ class LoadBalancerConfigurer
 
   # @return [String, NilClass]
   def virtual_path
-    env_hash['KONTENA_LB_VIRTUAL_PATH']
+    if virtual_hosts.to_s == ''
+      env_hash['KONTENA_LB_VIRTUAL_PATH'] || '/'
+    else
+      env_hash['KONTENA_LB_VIRTUAL_PATH']
+    end
   end
 
   # @return [String, NilClass]

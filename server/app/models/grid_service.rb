@@ -2,7 +2,7 @@ class GridService
   include Mongoid::Document
   include Mongoid::Timestamps
 
-  LB_IMAGE = 'jakolehm/kontena-lb:latest'
+  LB_IMAGE = 'kontena/lb:latest'
 
   field :image_name, type: String
   field :labels, type: Hash, default: {}

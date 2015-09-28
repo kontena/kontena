@@ -27,6 +27,7 @@ module Kontena
     #
     def start!
       Thread.new {
+        sleep 1 until etcd_running?
         logger.info(LOG_NAME) { 'fetching containers information' }
         Docker::Container.all(all: false).each do |container|
           if load_balanced?(container)
@@ -43,31 +44,67 @@ module Kontena
         if container
           self.register_container(container)
         end
-      elsif event.status == 'destroy'
+      elsif event.status == 'die'
         self.unregister_container(event.id)
       end
     end
 
     # @param [Docker::Container] container
     def register_container(container)
-      labels = container.json['Config']['Labels']
+      labels = container.json['Config']['Labels'] || {}
       lb = labels['io.kontena.load_balancer.name']
-      cache[container.id] = lb
-      etcd.set("#{ETCD_PREFIX}/#{lb}/services/updated_at", Time.now.utc.to_s)
+      service_name = labels['io.kontena.service.name']
+      name = labels['io.kontena.container.name']
+      overlay_cidr = labels['io.kontena.container.overlay_cidr']
+      port = labels['io.kontena.load_balancer.internal_port'] || '80'
+      mode = labels['io.kontena.load_balancer.mode'] || 'http'
+      return if lb.nil? || overlay_cidr.nil?
+
+      cache[container.id] = {lb: lb, service: service_name, container: name}
+      ip, subnet = overlay_cidr.split('/')
+      if mode == 'http'
+        key = "#{ETCD_PREFIX}/#{lb}/services/#{service_name}/upstreams/#{name}"
+      else
+        key = "#{ETCD_PREFIX}/#{lb}/tcp-services/#{service_name}/upstreams/#{name}"
+      end
+      logger.info(LOG_NAME) { "Adding container #{name} to load balancer #{lb}" }
+      retries = 0
+      begin
+        etcd.set(key, {value: "#{ip}:#{port}"})
+      rescue Errno::ECONNREFUSED => exc
+        retries += 1
+        if retries < 10
+          sleep 0.1
+          retry
+        else
+          raise exc
+        end
+      end
     rescue => exc
       logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-      logger.debug(LOG_NAME) { "#{exc.backtrace.join("\n")}" } if exc.backtrace
+      logger.info(LOG_NAME) { "#{exc.backtrace.join("\n")}" } if exc.backtrace
     end
 
     # @param [String] container_id
     def unregister_container(container_id)
       if cache[container_id]
-        lb = cache.delete(container_id)
-        etcd.set("#{ETCD_PREFIX}/#{lb}/services/updated_at", Time.now.utc.to_s)
+        entry = cache.delete(container_id)
+        logger.info(LOG_NAME) { "Removing container #{entry[:container]} from load balancer #{entry[:lb]}" }
+        begin
+          etcd.delete("#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}")
+        rescue Errno::ECONNREFUSED => exc
+          retries += 1
+          if retries < 10
+            sleep 0.1
+            retry
+          else
+            raise exc
+          end
+        end
       end
     rescue => exc
       logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-      logger.debug(LOG_NAME) { "#{exc.backtrace.join("\n")}" } if exc.backtrace
+      logger.info(LOG_NAME) { "#{exc.backtrace.join("\n")}" } if exc.backtrace
     end
 
     # @param [Docker::Container] container
@@ -77,6 +114,13 @@ module Kontena
       !labels['io.kontena.load_balancer.name'].nil?
     rescue
       false
+    end
+
+    # @return [Boolean]
+    def etcd_running?
+      etcd = Docker::Container.get('kontena-etcd') rescue nil
+      return false if etcd.nil?
+      etcd.info['State']['Running'] == true
     end
 
     ##
