@@ -7,6 +7,7 @@ module Kontena::Cli::Apps
     include Common
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
 
     parameter "[SERVICE] ...", "Services to start"
@@ -18,11 +19,29 @@ module Kontena::Cli::Apps
       require_token
       @services = load_services_from_yml
       Dir.chdir(File.dirname(filename))
+      build_services(services) unless no_build?
       init_services(services)
       deploy_services(deploy_queue)
     end
 
     private
+
+    def build_services(services)
+      return unless dockerfile
+
+      services.each do |name, service|
+        if service['build'] && build_needed?(service['image'])
+          puts "Building image #{service['image'].colorize(:cyan)}"
+          build_docker_image(service['image'], service['build'])
+          puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
+          push_docker_image(service['image'])
+        end
+      end
+    end
+
+    def dockerfile
+      @dockerfile ||= File.new('Dockerfile') rescue nil
+    end
 
     def init_services(services)
       services.each do |name, config|
@@ -32,7 +51,7 @@ module Kontena::Cli::Apps
 
     def deploy_services(queue)
       queue.each do |service|
-        puts "deploying #{service['id']}"
+        puts "deploying #{service['id'].colorize(:cyan)}"
         data = {}
         if service['deploy']
           data[:strategy] = service['deploy']['strategy'] if service['deploy']['strategy']
@@ -40,6 +59,14 @@ module Kontena::Cli::Apps
         end
         deploy_service(token, service['id'].split('/').last, data)
       end
+    end
+
+    def build_docker_image(name, path)
+      system("docker build -t #{name} #{path}")
+    end
+
+    def push_docker_image(image)
+      system("docker push #{image}")
     end
 
     def create_or_update_service(name, options)
@@ -77,7 +104,7 @@ module Kontena::Cli::Apps
 
     def create(name, options)
       name = prefixed_name(name)
-      puts "creating #{name}"
+      puts "creating #{name.colorize(:cyan)}"
       data = {name: name}
       data.merge!(parse_data(options))
       create_service(token, current_grid, data)
@@ -86,12 +113,24 @@ module Kontena::Cli::Apps
     def update(id, options)
       id = prefixed_name(id)
       data = parse_data(options)
-      puts "updating #{id}"
+      puts "updating #{id.colorize(:cyan)}"
       update_service(token, id, data)
     end
 
+    def build_needed?(image)
+      docker_file_timestamp = dockerfile.mtime
+      image_info = `docker inspect #{image.split(' ').first} 2>&1` ; result=$?.success?
+      if result
+        image_info = JSON.parse(image_info)
+        docker_file_timestamp > DateTime.parse(image_info[0]['Created']).to_time
+      else
+        true
+      end
+    end
+
+
     def in_deploy_queue?(name)
-      deploy_queue.find {|service| service['id'] == prefixed_name(name)} != nil
+      deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
     end
 
     def merge_env_vars(options)

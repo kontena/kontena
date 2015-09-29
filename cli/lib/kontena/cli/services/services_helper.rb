@@ -113,7 +113,7 @@ module Kontena
             print '.'
             sleep 1
           end
-          puts ' done'
+          puts ' done'.colorize(:green)
           puts ''
         end
 
