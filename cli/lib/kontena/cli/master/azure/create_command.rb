@@ -10,6 +10,7 @@ module Kontena::Cli::Master::Azure
     option "--ssh-key", "SSH KEY", "SSH private key file", required: true
     option "--password", "PASSWORD", "Password"
     option "--location", "LOCATION", "Location", default: 'West Europe'
+    option "--ssl-cert", "SSL CERT", "SSL certificate file"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
     def execute
@@ -18,6 +19,7 @@ module Kontena::Cli::Master::Azure
       provisioner.run!(
           password: password,
           ssh_key: ssh_key,
+          ssl_cert: ssl_cert,
           size: size,
           virtual_network: network,
           subnet: subnet,
