@@ -82,11 +82,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vbguest.auto_update = false
   end
 
-  config.vm.define "kontena-master" do |docker|
+  config.vm.define "<%= name %>" do |docker|
     docker.vm.box = "coreos-stable"
     docker.vm.box_url = "http://stable.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json"
     docker.vm.network "private_network", ip: "192.168.66.100"
-    docker.vm.hostname = "kontena-master"
+    docker.vm.hostname = "<%= name %>"
     docker.vm.provider "virtualbox" do |vb|
       vb.gui = false
       vb.customize ["modifyvm", :id, "--memory", "512"]

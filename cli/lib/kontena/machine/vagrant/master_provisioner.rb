@@ -7,13 +7,22 @@ module Kontena
   module Machine
     module Vagrant
       class MasterProvisioner
+        include RandomName
 
+        API_URL = 'http://192.168.66.100:8080'
         attr_reader :client
 
+        def initialize
+          @client = Excon.new(API_URL)
+        end
+
         def run!(opts)
-          name = 'kontena-master'
+          name = generate_name
           version = opts[:version]
-          vagrant_path = "#{Dir.home}/.kontena/vagrant_master"
+          vagrant_path = "#{Dir.home}/.kontena/vagrant_master/"
+          if Dir.exist?(vagrant_path)
+            abort("Oops... cannot create Kontena Master! You can run only one Kontena Master with Vagrant".colorize(:red))
+          end
           FileUtils.mkdir_p(vagrant_path)
 
           template = File.join(__dir__ , '/Vagrantfile.master.rb.erb')
@@ -36,12 +45,26 @@ module Kontena
                 end
               end
             end
-            puts "Kontena Master is now running at #{'http://192.168.66.100:8080'.colorize(:green)}"
+            ShellSpinner "Waiting for #{name.colorize(:cyan)} to start " do
+              sleep 1 until master_running?
+            end
+            puts "Kontena Master is now running at #{API_URL}"
+            puts "Use #{"kontena login #{API_URL}".colorize(:light_black)} to complete Kontena Master setup"
           end
         end
 
         def erb(template, vars)
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
+        end
+
+        def master_running?
+          client.get(path: '/').status == 200
+        rescue
+          false
+        end
+
+        def generate_name
+          "kontena-master-#{super}-#{rand(1..99)}"
         end
       end
     end

@@ -6,6 +6,7 @@ module Kontena::Cli::Master
   require_relative 'vagrant/stop_command'
   require_relative 'vagrant/restart_command'
   require_relative 'vagrant/ssh_command'
+  require_relative 'vagrant/terminate_command'
 
   class VagrantCommand < Clamp::Command
 
@@ -14,6 +15,7 @@ module Kontena::Cli::Master
     subcommand "start", "Start Vagrant master", Vagrant::StartCommand
     subcommand "stop", "Stop Vagrant master", Vagrant::StopCommand
     subcommand "restart", "Restart Vagrant master", Vagrant::RestartCommand
+    subcommand "terminate", "Terminate Vagrant master", Vagrant::TerminateCommand
 
     def execute
     end
