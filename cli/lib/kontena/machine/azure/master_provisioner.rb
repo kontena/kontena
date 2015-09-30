@@ -2,7 +2,6 @@ require 'fileutils'
 require 'erb'
 require 'open3'
 require 'shell-spinner'
-require_relative '../../../../lib/kontena/cli/login_command'
 
 module Kontena
   module Machine
@@ -55,6 +54,7 @@ module Kontena
                 custom_data: Base64.encode64(user_data(userdata_vars)),
                 ssh_key: opts[:ssh_key]
             }
+
             options = {
                 cloud_service_name: cloud_service_name,
                 deployment_name: vm_name,
@@ -71,16 +71,17 @@ module Kontena
 
             if opts[:ssl_cert]
               master_url = "https://#{virtual_machine.ipaddress}"
-              Excon.defaults[:ssl_verify_peer] = false
             else
               master_url = "http://#{virtual_machine.ipaddress}"
             end
+
           end
           @http_client = Excon.new("#{master_url}", :connect_timeout => 10)
 
           ShellSpinner "Waiting for #{vm_name.colorize(:cyan)} to start" do
             sleep 5 until master_running?
           end
+
           puts "Kontena Master is now running at #{master_url}"
           puts "Use #{"kontena login #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
         end
