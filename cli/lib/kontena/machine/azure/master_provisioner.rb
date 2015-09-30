@@ -10,7 +10,7 @@ module Kontena
       class MasterProvisioner
         include RandomName
 
-        attr_reader :client
+        attr_reader :client, :http_client
 
         # @param [String] subscription_id Azure subscription id
         # @param [String] certificate Path to Azure management certificate
@@ -26,9 +26,13 @@ module Kontena
 
         def run!(opts)
           abort('Invalid ssh key') unless File.exists?(File.expand_path(opts[:ssh_key]))
-          vm_name = 'kontena-master'
+          if opts[:ssl_cert]
+            abort('Invalid ssl cert') unless File.exists?(File.expand_path(opts[:ssl_cert]))
+            ssl_cert = File.read(File.expand_path(opts[:ssl_cert]))
+          end
           cloud_service_name = generate_cloud_service_name
-          virtual_machine = nil
+          vm_name = cloud_service_name
+          master_url = ''
           ShellSpinner "Creating Azure Virtual Machine #{vm_name.colorize(:cyan)}" do
             if opts[:virtual_network].nil?
               location = opts[:location].downcase.gsub(' ', '-')
@@ -39,6 +43,7 @@ module Kontena
             end
 
             userdata_vars = {
+                ssl_cert: ssl_cert,
                 version: opts[:version]
             }
 
@@ -55,7 +60,7 @@ module Kontena
                 deployment_name: vm_name,
                 virtual_network_name: opts[:virtual_network],
                 subnet_name: opts[:subnet],
-                tcp_endpoints: '80,8080,443,8443',
+                tcp_endpoints: '80,443',
                 private_key_file: opts[:ssh_key],
                 ssh_port: 22,
                 vm_size: opts[:size],
@@ -63,11 +68,21 @@ module Kontena
 
 
             virtual_machine =  client.vm_management.create_virtual_machine(params,options)
-          end
 
-          puts "Kontena Master is now running at #{(virtual_machine.ipaddress+':8080').colorize(:green)}"
-          login_command = Kontena::Cli::LoginCommand.new('')
-          login_command.run(["#{virtual_machine.ipaddress}:8080"])
+            if opts[:ssl_cert]
+              master_url = "https://#{virtual_machine.ipaddress}"
+              Excon.defaults[:ssl_verify_peer] = false
+            else
+              master_url = "http://#{virtual_machine.ipaddress}"
+            end
+          end
+          @http_client = Excon.new("#{master_url}", :connect_timeout => 10)
+
+          ShellSpinner "Waiting for #{vm_name.colorize(:cyan)} to start" do
+            sleep 5 until master_running?
+          end
+          puts "Kontena Master is now running at #{master_url}"
+          puts "Use #{"kontena login #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
         end
 
         def erb(template, vars)
@@ -79,11 +94,15 @@ module Kontena
           erb(File.read(cloudinit_template), vars)
         end
 
+        def master_running?
+          http_client.get(path: '/').status == 200
+        rescue
+          false
+        end
 
         def generate_cloud_service_name
           "kontena-master-#{generate_name}-#{rand(1..99)}"
         end
-
 
         def cloud_service(name)
           client.cloud_service_management.get_cloud_service(name)

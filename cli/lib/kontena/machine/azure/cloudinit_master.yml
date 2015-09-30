@@ -5,6 +5,27 @@ write_files:
     owner: root
     content: |
       KONTENA_VERSION=<%= version %>
+      <% if ssl_cert %>SSL_CERT="/etc/kontena-server.pem"<% end %>
+
+  - path: /etc/kontena-server.pem
+    permissions: 0600
+    owner: root
+    content: | <% ssl_cert.split(/\n/).each do |row| %>
+      <%= row %><% end %>
+  - path: /opt/bin/kontena-haproxy.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/bin/sh
+      if [ -n "$SSL_CERT" ]; then
+        SSL_CERT=$(awk 1 ORS='\\n' $SSL_CERT)
+      else
+        SSL_CERT="**None**"
+      fi
+      /usr/bin/docker run --name=kontena-server-haproxy \
+        --link kontena-server-api:kontena-server-api \
+        -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
+        -p 80:80 -p 443:443 kontena/haproxy:latest
 coreos:
   update:
       reboot-strategy: off
@@ -58,5 +79,26 @@ coreos:
         ExecStart=/usr/bin/docker run --name kontena-server-api \
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
-            -p 8080:9292 \
             kontena/server:${KONTENA_VERSION}
+
+    - name: kontena-server-haproxy.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-haproxy
+        After=network-online.target
+        After=docker.service
+        Description=Kontena Server HAProxy
+        Documentation=http://www.kontena.io/
+        Requires=network-online.target
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        EnvironmentFile=/etc/kontena-server.env
+        ExecStartPre=-/usr/bin/docker stop kontena-server-haproxy
+        ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
+        ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
+        ExecStart=/opt/bin/kontena-haproxy.sh
