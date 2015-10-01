@@ -5,13 +5,13 @@ write_files:
     owner: root
     content: |
       KONTENA_VERSION=<%= version %>
-      <% if ssl_cert %>SSL_CERT="/etc/kontena-server.pem"<% end %>
+      <% if ssl_cert %>SSL_CERT="/etc/kontena-server.pem"
 
   - path: /etc/kontena-server.pem
     permissions: 0600
     owner: root
     content: | <% ssl_cert.split(/\n/).each do |row| %>
-      <%= row %><% end %>
+      <%= row %><% end %><% end %>
   - path: /opt/bin/kontena-haproxy.sh
     permissions: 0755
     owner: root
