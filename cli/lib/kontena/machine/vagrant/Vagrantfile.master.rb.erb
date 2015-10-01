@@ -65,6 +65,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name kontena-server-api \
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+            <% if auth_server %>-e AUTH_API_URL=<%= auth_server %><% end %> \
             -p 8080:9292 \
             kontena/server:${KONTENA_VERSION}
 INIT

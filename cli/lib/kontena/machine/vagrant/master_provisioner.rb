@@ -19,6 +19,8 @@ module Kontena
         def run!(opts)
           name = generate_name
           version = opts[:version]
+          memory = opts[:memory] || 1024
+          auth_server = opts[:auth_server]
           vagrant_path = "#{Dir.home}/.kontena/vagrant_master/"
           if Dir.exist?(vagrant_path)
             abort("Oops... cannot create Kontena Master! You can run only one Kontena Master with Vagrant".colorize(:red))
@@ -30,7 +32,8 @@ module Kontena
           vars = {
             name: name,
             version: version,
-            memory: opts[:memory] || 1024,
+            memory: memory,
+            auth_server: auth_server,
             cloudinit: "#{vagrant_path}/cloudinit.yml"
           }
           vagrant_data = erb(File.read(template), vars)
