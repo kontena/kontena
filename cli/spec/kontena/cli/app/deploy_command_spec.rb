@@ -224,4 +224,31 @@ yml
       end
     end
   end
+
+  describe '#normalize_env_vars' do
+    it 'converts env hash to array' do
+      opts = {
+        'environment' => {
+          'FOO' => 'bar',
+          'BAR' => 'baz'
+        }
+      }
+      subject.normalize_env_vars(opts)
+      env = opts['environment']
+      expect(env).to include('FOO=bar')
+      expect(env).to include('BAR=baz')
+    end
+
+    it 'does nothing to env array' do
+      opts = {
+        'environment' => [
+          'FOO=bar', 'BAR=baz'
+        ]
+      }
+      subject.normalize_env_vars(opts)
+      env = opts['environment']
+      expect(env).to include('FOO=bar')
+      expect(env).to include('BAR=baz')
+    end
+  end
 end
