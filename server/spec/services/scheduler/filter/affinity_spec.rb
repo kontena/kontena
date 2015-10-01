@@ -86,5 +86,28 @@ describe Scheduler::Filter::Affinity do
         expect(filtered).to eq(nodes - [nodes[1]])
       end
     end
+
+    context 'service' do
+      let(:redis_service) { GridService.create!(name: 'redis', image_name: 'redis:2.8')}
+
+      before(:each) do
+        redis_service.containers.create!(name: 'redis-1', host_node: nodes[0])
+        redis_service.containers.create!(name: 'redis-2', host_node: nodes[2])
+      end
+
+      it 'returns node-1 if affinity: service==redis' do
+        service = double(:service, affinity: ['service==redis'])
+        filtered = subject.for_service(service, 'app-1', nodes)
+        expect(filtered.size).to eq(2)
+        expect(filtered).to eq([nodes[0], nodes[2]])
+      end
+
+      it 'does not return node-2 if affinity: service!=redis' do
+        service = double(:service, affinity: ['service!=redis'])
+        filtered = subject.for_service(service, 'app-1', nodes)
+        expect(filtered.size).to eq(1)
+        expect(filtered).to eq([nodes[1]])
+      end
+    end
   end
 end
