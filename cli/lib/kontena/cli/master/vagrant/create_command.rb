@@ -4,7 +4,7 @@ module Kontena::Cli::Master::Vagrant
 
     option "--memory", "MEMORY", "How much memory node has", default: '512'
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
-    option "--auth-server", "AUTH_SERVER", "Define authentication server url"
+    option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url"
 
     def execute
       require 'kontena/machine/vagrant'
@@ -12,7 +12,7 @@ module Kontena::Cli::Master::Vagrant
       provisioner.run!(
         memory: memory,
         version: version,
-        auth_server: auth_server
+        auth_server: auth_provider_url
       )
     end
   end
