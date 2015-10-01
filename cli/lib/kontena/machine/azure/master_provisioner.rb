@@ -43,6 +43,7 @@ module Kontena
 
             userdata_vars = {
                 ssl_cert: ssl_cert,
+                auth_server: opts[:auth_server],
                 version: opts[:version]
             }
 

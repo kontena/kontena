@@ -11,6 +11,7 @@ module Kontena::Cli::Master::Azure
     option "--password", "PASSWORD", "Password"
     option "--location", "LOCATION", "Location", default: 'West Europe'
     option "--ssl-cert", "SSL CERT", "SSL certificate file"
+    option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
     def execute
@@ -24,6 +25,7 @@ module Kontena::Cli::Master::Azure
           virtual_network: network,
           subnet: subnet,
           location: location,
+          auth_server: auth_provider_url,
           version: version
       )
     end
