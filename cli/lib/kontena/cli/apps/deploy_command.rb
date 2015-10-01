@@ -22,8 +22,6 @@ module Kontena::Cli::Apps
       deploy_services(deploy_queue)
     end
 
-    private
-
     def init_services(services)
       services.each do |name, config|
         create_or_update_service(name, config)
@@ -57,6 +55,7 @@ module Kontena::Cli::Apps
         end
       end
 
+      normalize_env_vars(options)
       merge_env_vars(options)
 
       if service_exists?(name)
@@ -92,6 +91,12 @@ module Kontena::Cli::Apps
 
     def in_deploy_queue?(name)
       deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
+    end
+
+    def normalize_env_vars(options)
+      if options['environment'].is_a?(Hash)
+        options['environment'] = options['environment'].map{|k, v| "#{k}=#{v}"}
+      end
     end
 
     def merge_env_vars(options)
