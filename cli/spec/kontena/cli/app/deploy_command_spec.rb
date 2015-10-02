@@ -37,7 +37,7 @@ wordpress:
     service: wordpress
   stateful: true
   environment:
-    - WORDPRESS_DB_PASSWORD=%{prefix}_secret
+    - WORDPRESS_DB_PASSWORD=%{project}_secret
   instances: 2
   deploy:
     strategy: ha
@@ -47,7 +47,7 @@ mysql:
     service: mysql
   stateful: true
   environment:
-    - MYSQL_ROOT_PASSWORD=%{prefix}_secret
+    - MYSQL_ROOT_PASSWORD=%{project}_secret
 yml
     yml_content
   end
