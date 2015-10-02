@@ -132,6 +132,7 @@ module Kontena::Cli::Apps
       data[:privileged] = options['privileged'] unless options['privileged'].nil?
       data[:cap_add] = options['cap_add'] if options['cap_add']
       data[:cap_drop] = options['cap_drop'] if options['cap_drop']
+      data[:net] = options['net'] if options['net']
       data
     end
 
