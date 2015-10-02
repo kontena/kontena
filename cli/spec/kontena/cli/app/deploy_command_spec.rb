@@ -37,7 +37,7 @@ wordpress:
     service: wordpress
   stateful: true
   environment:
-    - WORDPRESS_DB_PASSWORD=%{prefix}_secret
+    - WORDPRESS_DB_PASSWORD=%{project}_secret
   instances: 2
   deploy:
     strategy: ha
@@ -47,7 +47,7 @@ mysql:
     service: mysql
   stateful: true
   environment:
-    - MYSQL_ROOT_PASSWORD=%{prefix}_secret
+    - MYSQL_ROOT_PASSWORD=%{project}_secret
 yml
     yml_content
   end
@@ -108,7 +108,7 @@ yml
         allow(File).to receive(:read).with('kontena.yml').and_return(kontena_yml)
         allow(File).to receive(:read).with('docker-compose.yml').and_return(docker_compose_yml)
         allow(subject).to receive(:get_service).and_raise(Kontena::Errors::StandardError.new(404, 'Not Found'))
-        allow(subject).to receive(:create_service).and_return({'id' => 'kontena-test-mysql'},{'id' => 'kontena-test-wordpress'})
+        allow(subject).to receive(:create_service).and_return({'id' => 'kontena-test-mysql', 'name' => 'kontena-test-mysql'},{'id' => 'kontena-test-wordpress', 'name' => 'kontena-test-wordpress'})
         allow(subject).to receive(:current_grid).and_return('1')
         allow(subject).to receive(:deploy_service).and_return(nil)
       end
