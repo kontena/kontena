@@ -20,6 +20,7 @@ module Kontena::Cli::Services
     option "--privileged", :flag, "Give extended privileges to this service", default: false
     option "--cap-add", "CAP_ADD", "Add capabitilies", multivalued: true
     option "--cap-drop", "CAP_DROP", "Drop capabitilies", multivalued: true
+    option "--net", "NET", "Network mode"
 
     def execute
       require_api_url
@@ -47,6 +48,7 @@ module Kontena::Cli::Services
       data[:privileged] = privileged?
       data[:cap_add] = cap_add_list unless cap_add_list.empty?
       data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
+      data[:net] = net if net
       data
     end
   end
