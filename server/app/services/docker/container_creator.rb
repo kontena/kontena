@@ -24,9 +24,10 @@ module Docker
         image: self.grid_service.image,
         deploy_rev: deploy_rev
       )
-      ContainerOverlayConfig.reserve_overlay_cidr(self.grid_service, container)
+      if self.grid_service.overlay_network?
+        ContainerOverlayConfig.reserve_overlay_cidr(self.grid_service, container)
+      end
       docker_opts = ContainerOptsBuilder.build_opts(self.grid_service, container)
-      ContainerOverlayConfig.modify_labels(container, docker_opts['Labels'])
 
       if grid_service.stateful?
         volume_container = self.ensure_volume_container(container, docker_opts)

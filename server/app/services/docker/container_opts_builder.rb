@@ -14,7 +14,9 @@ module Docker
       docker_opts['Entrypoint'] = grid_service.entrypoint if grid_service.entrypoint
       docker_opts['Env'] = self.build_linked_services_env_vars(grid_service)
       docker_opts['Env'] += self.build_env(grid_service)
-      docker_opts['ExposedPorts'] = self.exposed_ports(grid_service.ports) if grid_service.ports
+      if grid_service.overlay_network? && grid_service.ports
+        docker_opts['ExposedPorts'] = self.exposed_ports(grid_service.ports)
+      end
       docker_opts['Volumes'] = self.build_volumes(grid_service) if grid_service.stateless? && grid_service.volumes
       docker_opts['Labels'] = self.build_labels(grid_service, container)
 
@@ -33,7 +35,10 @@ module Docker
       if bind_volumes.size > 0
         host_config['Binds'] = bind_volumes
       end
-      host_config['PortBindings'] = port_bindings(grid_service.ports) if grid_service.ports
+      if grid_service.overlay_network? && grid_service.ports
+        host_config['PortBindings'] = port_bindings(grid_service.ports)
+      end
+      host_config['NetworkMode'] = grid_service.net if grid_service.net
 
       docker_opts['HostConfig'] = host_config
       docker_opts
@@ -124,6 +129,9 @@ module Docker
         labels['io.kontena.load_balancer.name'] = lb.name
         labels['io.kontena.load_balancer.internal_port'] = internal_port
         labels['io.kontena.load_balancer.mode'] = mode
+      end
+      if grid_service.overlay_network?
+        ContainerOverlayConfig.modify_labels(container, labels)
       end
       labels
     end

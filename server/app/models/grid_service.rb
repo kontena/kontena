@@ -23,6 +23,7 @@ class GridService
   field :privileged, type: Boolean
   field :cap_add, type: Array, default: []
   field :cap_drop, type: Array, default: []
+  field :net, type: String, default: 'bridge'
   field :state, type: String, default: 'initialized'
 
   belongs_to :grid
@@ -90,6 +91,11 @@ class GridService
     end
 
     @env_hash
+  end
+
+  # @return [Boolean]
+  def overlay_network?
+    self.net.to_s == 'bridge'
   end
 
   ##
