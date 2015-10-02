@@ -14,9 +14,11 @@ module Kontena::Cli::Apps
     attr_reader :services, :service_prefix
 
     def execute
-      @services = load_services_from_yml
+      require_config_file(filename)
+
+      @service_prefix = project_name || current_dir
+      @services = load_services(filename, service_list, service_prefix)
       if services.size > 0
-        Dir.chdir(File.dirname(filename))
         stop_services(services)
       elsif !service_list.empty?
         puts "No such service: #{service_list.join(', ')}".colorize(:red)

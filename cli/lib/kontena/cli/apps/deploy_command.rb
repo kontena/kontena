@@ -1,10 +1,12 @@
 require 'yaml'
 require_relative 'common'
+require_relative 'docker_helper'
 
 module Kontena::Cli::Apps
   class DeployCommand < Clamp::Command
     include Kontena::Cli::Common
     include Common
+    include DockerHelper
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
@@ -12,38 +14,25 @@ module Kontena::Cli::Apps
 
     parameter "[SERVICE] ...", "Services to start"
 
-    attr_reader :services, :service_prefix
+    attr_reader :services, :service_prefix, :deploy_queue
 
     def execute
       require_api_url
       require_token
-      @services = load_services_from_yml
+      require_config_file(filename)
+
+      @deploy_queue = []
+      @service_prefix = project_name || current_dir
       Dir.chdir(File.dirname(filename))
-      build_services(services) unless no_build?
-      init_services(services)
+      @services = load_services(filename, service_list, service_prefix)
+      process_docker_images(services) if !no_build? && dockerfile_exist?
+      create_or_update_services(services)
       deploy_services(deploy_queue)
     end
 
     private
 
-    def build_services(services)
-      return unless dockerfile
-
-      services.each do |name, service|
-        if service['build'] && build_needed?(service['image'])
-          puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service['image'], service['build'])
-          puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
-          push_docker_image(service['image'])
-        end
-      end
-    end
-
-    def dockerfile
-      @dockerfile ||= File.new('Dockerfile') rescue nil
-    end
-
-    def init_services(services)
+    def create_or_update_services(services)
       services.each do |name, config|
         create_or_update_service(name, config)
       end
@@ -61,17 +50,8 @@ module Kontena::Cli::Apps
       end
     end
 
-    def build_docker_image(name, path)
-      system("docker build -t #{name} #{path}")
-    end
-
-    def push_docker_image(image)
-      system("docker push #{image}")
-    end
-
     def create_or_update_service(name, options)
-
-      # skip if service is already created or updated or it's not present
+      # skip if service is already processed or it's not present
       return nil if in_deploy_queue?(name) || !services.keys.include?(name)
 
       # create/update linked services recursively before continuing
@@ -117,18 +97,6 @@ module Kontena::Cli::Apps
       update_service(token, id, data)
     end
 
-    def build_needed?(image)
-      docker_file_timestamp = dockerfile.mtime
-      image_info = `docker inspect #{image.split(' ').first} 2>&1` ; result=$?.success?
-      if result
-        image_info = JSON.parse(image_info)
-        docker_file_timestamp > DateTime.parse(image_info[0]['Created']).to_time
-      else
-        true
-      end
-    end
-
-
     def in_deploy_queue?(name)
       deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
     end
@@ -173,8 +141,5 @@ module Kontena::Cli::Apps
       data
     end
 
-    def deploy_queue
-      @deploy_queue ||= []
-    end
   end
 end
