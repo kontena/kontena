@@ -6,31 +6,34 @@ require 'shell-spinner'
 module Kontena
   module Machine
     module Vagrant
-      class NodeProvisioner
+      class MasterProvisioner
         include RandomName
 
-        attr_reader :client, :api_client
+        API_URL = 'http://192.168.66.100:8080'
+        attr_reader :client
 
-        # @param [Kontena::Client] api_client Kontena api client
-        def initialize(api_client)
-          @api_client = api_client
+        def initialize
+          @client = Excon.new(API_URL)
         end
 
         def run!(opts)
-          grid = opts[:grid]
-          name = opts[:name] || generate_name
+          name = generate_name
           version = opts[:version]
-          vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
+          memory = opts[:memory] || 1024
+          auth_server = opts[:auth_server]
+          vagrant_path = "#{Dir.home}/.kontena/vagrant_master/"
+          if Dir.exist?(vagrant_path)
+            abort("Oops... cannot create Kontena Master! You can run only one Kontena Master with Vagrant".colorize(:red))
+          end
           FileUtils.mkdir_p(vagrant_path)
 
-          template = File.join(__dir__ , '/Vagrantfile.node.rb.erb')
+          template = File.join(__dir__ , '/Vagrantfile.master.rb.erb')
           cloudinit_template = File.join(__dir__ , '/cloudinit.yml')
           vars = {
             name: name,
             version: version,
-            memory: opts[:memory] || 1024,
-            master_uri: opts[:master_uri],
-            grid_token: opts[:grid_token],
+            memory: memory,
+            auth_server: auth_server,
             cloudinit: "#{vagrant_path}/cloudinit.yml"
           }
           vagrant_data = erb(File.read(template), vars)
@@ -45,22 +48,26 @@ module Kontena
                 end
               end
             end
-            ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{grid.colorize(:cyan)} " do
-              sleep 1 until node_exists_in_grid?(grid, name)
+            ShellSpinner "Waiting for #{name.colorize(:cyan)} to start " do
+              sleep 1 until master_running?
             end
+            puts "Kontena Master is now running at #{API_URL}"
+            puts "Use #{"kontena login #{API_URL}".colorize(:light_black)} to complete Kontena Master setup"
           end
-        end
-
-        def generate_name
-          "#{super}-#{rand(1..99)}"
         end
 
         def erb(template, vars)
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
         end
 
-        def node_exists_in_grid?(grid, name)
-          api_client.get("grids/#{grid}/nodes")['nodes'].find{|n| n['name'] == name}
+        def master_running?
+          client.get(path: '/').status == 200
+        rescue
+          false
+        end
+
+        def generate_name
+          "kontena-master-#{super}-#{rand(1..99)}"
         end
       end
     end

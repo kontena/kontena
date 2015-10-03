@@ -3,8 +3,7 @@ require 'fileutils'
 module Kontena
   module Machine
     module Vagrant
-      class NodeDestroyer
-        include RandomName
+      class MasterDestroyer
 
         attr_reader :client, :api_client
 
@@ -13,10 +12,14 @@ module Kontena
           @api_client = api_client
         end
 
-        def run!(grid, name)
-          vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
+        def run!
+          if api_client.get("grids")['grids'].size > 0
+            abort("Cannot remove kontena-master because it has grids".colorize(:red))
+          end
+
+          vagrant_path = "#{Dir.home}/.kontena/vagrant_master"
           Dir.chdir(vagrant_path) do
-            ShellSpinner "Terminating Vagrant machine #{name.colorize(:cyan)} " do
+            ShellSpinner "Terminating Vagrant kontena-master " do
               Open3.popen2('vagrant destroy -f') do |stdin, output, wait|
                 while o = output.gets
                   puts o if ENV['DEBUG']
@@ -25,12 +28,6 @@ module Kontena
                   FileUtils.remove_entry_secure(vagrant_path)
                 end
               end
-            end
-          end
-          node = api_client.get("grids/#{grid}/nodes")['nodes'].find{|n| n['name'] == name}
-          if node
-            ShellSpinner "Removing node #{name.colorize(:cyan)} from grid #{grid.colorize(:cyan)} " do
-              api_client.delete("grids/#{grid}/nodes/#{name}")
             end
           end
         end

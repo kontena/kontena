@@ -24,6 +24,7 @@ require 'kontena/cli/forgot_password_command'
 require 'kontena/cli/reset_password_command'
 require 'kontena/cli/container_command'
 require 'kontena/cli/grid_command'
+require 'kontena/cli/master_command'
 require 'kontena/cli/node_command'
 require 'kontena/cli/service_command'
 require 'kontena/cli/vpn_command'
@@ -42,6 +43,7 @@ class MainCommand < Clamp::Command
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "deploy", "Create and deploy multiple services from YAML file", Kontena::Cli::DeployCommand
   subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand
+  subcommand "master", "Master specific commands", Kontena::Cli::MasterCommand
   subcommand "vpn", "VPN specific commands", Kontena::Cli::VpnCommand
   subcommand "registry", "Registry specific commands", Kontena::Cli::RegistryCommand
   subcommand "container", "Container specific commands", Kontena::Cli::ContainerCommand
