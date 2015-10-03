@@ -77,6 +77,7 @@ module Kontena
             end
 
           end
+          Excon.defaults[:ssl_verify_peer] = false
           @http_client = Excon.new("#{master_url}", :connect_timeout => 10)
 
           ShellSpinner "Waiting for #{vm_name.colorize(:cyan)} to start" do
