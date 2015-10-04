@@ -8,7 +8,7 @@ module Kontena
       end
 
       def require_token
-        token = settings['server']['token']
+        token = ENV['KONTENA_TOKEN'] || settings['server']['token']
         unless token
           raise ArgumentError.new("Please login first using: kontena login")
         end
@@ -48,7 +48,7 @@ module Kontena
       end
 
       def api_url
-        url = settings['server']['url']
+        url = ENV['KONTENA_URL'] || settings['server']['url']
         unless url
           raise ArgumentError.new("It seem's that you are not logged into Kontena master, please login with: kontena login")
         end
@@ -72,7 +72,7 @@ module Kontena
       end
 
       def current_grid
-        settings['server']['grid']
+        ENV['KONTENA_GRID'] || settings['server']['grid']
       end
 
       def save_settings
