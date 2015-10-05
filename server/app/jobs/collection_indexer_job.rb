@@ -2,8 +2,20 @@
 class CollectionIndexerJob
   include Celluloid
   include Celluloid::Logger
+  include DistributedLocks
+
+  def initialize
+    async.perform
+  end
 
   def perform
+    with_dlock('container_indexer_job', 5) do
+      index_collections
+      sleep 5.minutes.to_i
+    end
+  end
+
+  def index_collections
     info 'CollectionIndexerJob: removing undefined indexes'
     Mongoid::Tasks::Database.remove_undefined_indexes
     info 'CollectionIndexerJob: removing undefined indexes finished'

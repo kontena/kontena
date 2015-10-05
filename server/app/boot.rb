@@ -7,7 +7,6 @@ end
 ENV['RACK_ENV'] = 'development' unless ENV['RACK_ENV']
 
 require 'celluloid'
-require 'sucker_punch'
 require 'roda'
 require 'mongoid'
 require 'json'
@@ -24,6 +23,6 @@ Dir[__dir__ + '/helpers/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/mutations/**/*.rb'].each {|file| require file }
 
-Dir[__dir__ + '/services/**/*.rb'].each {|file| require file }
-
 Dir[__dir__ + '/jobs/**/*.rb'].each {|file| require file }
+
+Dir[__dir__ + '/services/**/*.rb'].each {|file| require file }
