@@ -186,9 +186,6 @@ class WebsocketBackend
         EM.next_tick {
           client[:ws].send(MessagePack.dump(msg['message']).bytes)
         }
-      else
-        sleep 0.2
-        handle_rpc_response([1, msg['message'][1], {code: 503, message: 'Node unavailable'}, nil])
       end
     end
   rescue => exc
