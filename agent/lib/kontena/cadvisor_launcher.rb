@@ -4,7 +4,7 @@ module Kontena
   class CadvisorLauncher
     include Kontena::Logging
 
-    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.16.0'
+    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.18.0'
     CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'google/cadvisor'
     LOG_NAME = 'CadvisorLauncher'
 
