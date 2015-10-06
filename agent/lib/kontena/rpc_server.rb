@@ -50,5 +50,21 @@ module Kontena
         return [1, msg_id, {error: 'service not implemented'}, nil]
       end
     end
+
+    ##
+    # @param [Array] message msgpack-rpc notification array
+    def handle_notification(message)
+      handler = message[1].split('/')[1]
+      method = message[1].split('/')[2]
+      if klass = HANDLERS[handler]
+        begin
+          logger.info(LOG_NAME) { "rpc notification: #{klass.name}##{method} #{message[2]}" }
+          result = klass.new.send(method, *message[2])
+        rescue => exc
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+          logger.error(LOG_NAME) { exc.backtrace.join("\n") }
+        end
+      end
+    end
   end
 end

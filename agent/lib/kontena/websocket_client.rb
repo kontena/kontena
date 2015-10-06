@@ -22,13 +22,16 @@ module Kontena
       logger.info(LOG_NAME) { "initialized with token #{@api_token}" }
       @subscribers = {}
       @rpc_server = Kontena::RpcServer.new
+      @abort = false
+
     end
 
     def connect
-      logger.debug(LOG_NAME) { 'connecting' }
+      logger.debug(LOG_NAME) { 'connecting to master' }
       headers = {
           'Kontena-Grid-Token' => self.api_token.to_s,
-          'Kontena-Node-Id' => host_id.to_s
+          'Kontena-Node-Id' => host_id.to_s,
+          'Kontena-Version' => Kontena::Agent::VERSION
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {ping: KEEPALIVE_TIME, headers: headers})
 
@@ -41,9 +44,7 @@ module Kontena
         self.on_message(@ws, event)
       end
       @ws.on :close do |event|
-        logger.info(LOG_NAME) { "connection closed with code: #{event.code}" }
-        sleep 1
-        self.connect
+        self.on_close(event)
       end
       @ws.on :error do |event|
         logger.info(LOG_NAME) { "connection closed with error: #{event.message}" }
@@ -58,6 +59,8 @@ module Kontena
       }
     end
 
+    # @param [Faye::WebSocket::Client] ws
+    # @param [Faye::WebSocket::Api::Event] event
     def on_message(ws, event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
@@ -69,17 +72,63 @@ module Kontena
         EM.next_tick {
           Pubsub.publish("rpc_response:#{data[1]}", data)
         }
+      elsif notification_message?(data)
+        EM.defer {
+          @rpc_server.handle_notification(data)
+        }
       end
     end
 
+    # @param [Faye::WebSocket::Api::Event] event
+    def on_close(event)
+      if event.code == 4001
+        self.handle_invalid_token(event)
+      elsif event.code == 4010
+        self.handle_invalid_version(event)
+      end
+      logger.info(LOG_NAME) { "connection closed with code: #{event.code}" }
+      sleep 1
+      EM.next_tick{ self.connect }
+    rescue => exc
+      logger.error(LOG_NAME) { exc.message }
+    end
+
+    # @param [Faye::WebSocket::Api::Event] event
+    def handle_invalid_token(event)
+      logger.error(LOG_NAME) {
+        "master does not accept our token, shutting down ..."
+      }
+      EM.next_tick{ abort("Shutting down ...") }
+    end
+
+    # @param [Faye::WebSocket::Api::Event] event
+    def handle_invalid_version(event)
+      agent_version = Kontena::Agent::VERSION
+      logger.error(LOG_NAME) {
+        "master does not accept our version (#{agent_version}), shutting down ..."
+      }
+      EM.next_tick{ abort("Shutting down ...") }
+    end
+
+    # @param [Array] msg
+    # @return [Boolean]
     def request_message?(msg)
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 0
     end
 
+    # @param [Array] msg
+    # @return [Boolean]
     def response_message?(msg)
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
     end
 
+    # @param [Array] msg
+    # @return [Boolean]
+    def notification_message?(msg)
+      msg.is_a?(Array) && msg.size == 3 && msg[0] == 2
+    end
+
+    # @return [String]
     def host_id
       Docker.info['ID']
     end

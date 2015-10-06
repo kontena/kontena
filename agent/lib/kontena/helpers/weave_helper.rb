@@ -48,10 +48,11 @@ module Kontena
 
       # @param [String] container_id
       def remove_dns(container_id)
+        retries = 0
         begin
           dns_client.delete(path: "/name/#{container_id}")
         rescue Docker::Error::NotFoundError
-          
+
         rescue Excon::Errors::SocketError => exc
           retries += 1
           if retries < 5

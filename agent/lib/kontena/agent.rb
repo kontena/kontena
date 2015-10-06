@@ -1,6 +1,8 @@
 module Kontena
   class Agent
 
+    VERSION = File.read('./VERSION').strip
+
     def initialize(opts)
       @opts = opts
 
