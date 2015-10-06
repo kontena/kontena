@@ -6,6 +6,7 @@ require_relative 'nodes/update_command'
 require_relative 'nodes/vagrant_command'
 require_relative 'nodes/digital_ocean_command'
 require_relative 'nodes/azure_command'
+require_relative 'nodes/aws_command'
 
 class Kontena::Cli::NodeCommand < Clamp::Command
 
@@ -17,6 +18,7 @@ class Kontena::Cli::NodeCommand < Clamp::Command
   subcommand "vagrant", "Vagrant specific commands", Kontena::Cli::Nodes::VagrantCommand
   subcommand "digitalocean", "DigitalOcean specific commands", Kontena::Cli::Nodes::DigitalOceanCommand
   subcommand "azure", "Azure specific commands", Kontena::Cli::Nodes::AzureCommand
+  subcommand "aws", "AWS specific commands", Kontena::Cli::Nodes::AwsCommand
 
   def execute
   end
