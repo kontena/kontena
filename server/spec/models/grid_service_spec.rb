@@ -51,6 +51,21 @@ describe GridService do
     end
   end
 
+  describe '#set_state' do
+    it 'sets value of state column' do
+      subject.set_state('running')
+      expect(subject.state).to eq('running')
+    end
+
+    it 'does not modify updated_at field' do
+      five_hours_ago = Time.now.utc - 5.hours
+      grid_service.timeless.update_attribute(:updated_at, five_hours_ago)
+      grid_service.clear_timeless_option
+      grid_service.set_state('running')
+      expect(grid_service.updated_at).to eq(five_hours_ago)
+    end
+  end
+
   describe '#container_by_name' do
     it 'returns related container by name' do
       container = grid_service.containers.create!(name: 'redis-1')
