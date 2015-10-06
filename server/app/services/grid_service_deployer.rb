@@ -38,7 +38,7 @@ class GridServiceDeployer
   # @param [Hash] creds
   def deploy(creds = nil)
     prev_state = self.grid_service.state
-    self.grid_service.update_attribute(:state, 'deploying')
+    self.grid_service.set_state('deploying')
 
     self.configure_load_balancer
     pulled_nodes = Set.new
@@ -59,15 +59,15 @@ class GridServiceDeployer
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       self.remove_service_container(container)
     end
-    self.grid_service.update_attribute(:state, 'running')
+    self.grid_service.set_state('running')
 
     true
   rescue RpcClient::Error => exc
-    self.grid_service.update_attribute(:state, prev_state)
+    self.grid_service.set_state(prev_state)
     error "RPC error: #{exc.class.name} #{exc.message}"
     false
   rescue => exc
-    self.grid_service.update_attribute(:state, prev_state)
+    self.grid_service.set_state(prev_state)
     error "Unknown error: #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
@@ -95,6 +95,10 @@ class GridServiceDeployer
   # @param [String] deploy_rev
   def deploy_service_container(node, container_name, deploy_rev)
     old_container = self.grid_service.container_by_name(container_name)
+    if old_container && old_container.up_to_date? && old_container.status == 'running'
+      old_container.update_attribute(:deploy_rev, deploy_rev)
+      return
+    end
     if old_container && old_container.exists_on_node?
       self.remove_service_container(old_container)
     end
