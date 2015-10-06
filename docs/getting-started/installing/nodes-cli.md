@@ -17,27 +17,34 @@ We are adding support for other platforms gradually based on your requests. If y
 
 ```
 Usage:
-    kontena node vagrant create [OPTIONS]
+    kontena node vagrant create [OPTIONS] [NAME]
+
+Parameters:
+    [NAME]                        Node name
 
 Options:
-    --name NAME                   Node name
-    --memory MEMORY               How much memory node has (default: 1024)
-    --version VERSION             Define installed Kontena version (default: latest)
+    --memory MEMORY               How much memory node has (default: "1024")
+    --version VERSION             Define installed Kontena version (default: "latest")
+    -h, --help                    print help
+
 ```
 
 ## Digital Ocean
 
 ```
 Usage:
-    kontena node digitalocean create [OPTIONS]
+    kontena node digitalocean create [OPTIONS] [NAME]
+
+Parameters:
+    [NAME]                        Node name
 
 Options:
-    --name NAME                   Node name
     --token TOKEN                 DigitalOcean API token
     --ssh-key SSH_KEY             Path to ssh public key
     --size SIZE                   Droplet size (default: "1gb")
     --region REGION               Region (default: "ams2")
-    --version VERSION             Define installed Kontena version (default: latest)
+    --version VERSION             Define installed Kontena version (default: "latest")
+    -h, --help                    print help
 ```
 
 ## AWS

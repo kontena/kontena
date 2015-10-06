@@ -1,31 +1,30 @@
-module Kontena::Cli::Nodes::DigitalOcean
+module Kontena::Cli::Master::DigitalOcean
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
 
-    parameter "[NAME]", "Node name"
     option "--token", "TOKEN", "DigitalOcean API token", required: true
     option "--ssh-key", "SSH_KEY", "Path to ssh public key", required: true
+    option "--ssl-cert", "SSL CERT", "SSL certificate file"
     option "--size", "SIZE", "Droplet size", default: '1gb'
     option "--region", "REGION", "Region", default: 'ams2'
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
+    option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url"
+
 
     def execute
-      require_api_url
-      require_current_grid
 
       require 'kontena/machine/digital_ocean'
-      grid = client(require_token).get("grids/#{current_grid}")
-      provisioner = Kontena::Machine::DigitalOcean::NodeProvisioner.new(client(require_token), token)
+
+      provisioner = Kontena::Machine::DigitalOcean::MasterProvisioner.new(token)
       provisioner.run!(
-        master_uri: api_url,
-        grid_token: grid['token'],
-        grid: current_grid,
-        ssh_key: ssh_key,
-        name: name,
-        size: size,
-        region: region,
-        version: version
+          ssh_key: ssh_key,
+          ssl_cert: ssl_cert,
+          size: size,
+          region: region,
+          version: version,
+          auth_server: auth_provider_url,
       )
     end
+
   end
 end
