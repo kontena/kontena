@@ -48,6 +48,10 @@ module V1
             @logs = container.container_logs.order(created_at: :desc).limit(500).to_a.reverse
             render('container_logs/index')
           end
+
+          r.on 'inspect' do
+            Docker::ContainerInspector.new(container).inspect_container
+          end
         end
 
         # POST /v1/containers/:grid_name/:service_name/:name

@@ -139,6 +139,15 @@ module Kontena
       rescue Docker::Error::NotFoundError => exc
         raise RpcServer::Error.new(404, 'Not found')
       end
+
+      ##
+      # @param [String] id
+      #
+      def inspect(id, opts)
+        container = Docker::Container.get(id)
+        container.json
+      end
+
     end
   end
 end
