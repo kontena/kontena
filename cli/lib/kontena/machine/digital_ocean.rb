@@ -9,3 +9,4 @@ end
 require_relative 'random_name'
 require_relative 'digital_ocean/node_provisioner'
 require_relative 'digital_ocean/node_destroyer'
+require_relative 'digital_ocean/master_provisioner'
