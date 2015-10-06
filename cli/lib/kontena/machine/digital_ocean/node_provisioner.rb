@@ -43,9 +43,11 @@ module Kontena
           ShellSpinner "Creating DigitalOcean droplet #{droplet.name.colorize(:cyan)} " do
             sleep 5 until client.droplets.find(id: created.id).status == 'active'
           end
+          node = nil
           ShellSpinner "Waiting for node #{droplet.name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
-            sleep 2 until droplet_exists_in_grid?(opts[:grid], droplet)
+            sleep 2 until node = droplet_exists_in_grid?(opts[:grid], droplet)
           end
+          set_labels(node, ["region=#{opts[:region]}"])
         end
 
         def user_data(vars)
@@ -67,6 +69,11 @@ module Kontena
 
         def erb(template, vars)
           ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
+        end
+
+        def set_labels(node, labels)
+          data = {labels: labels}
+          api_client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
         end
       end
     end
