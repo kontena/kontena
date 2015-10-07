@@ -1,0 +1,21 @@
+
+module Kontena::Cli::Etcd
+  class GetCommand < Clamp::Command
+    include Kontena::Cli::Common
+
+    parameter "KEY", "Etcd key"
+
+    def execute
+      require_api_url
+      token = require_token
+      response = client(token).get("etcd/#{current_grid}/#{key}")
+      if response['value']
+        puts response['value']
+      elsif response['children']
+        abort "Cannot get value from a directory"
+      elsif response['error']
+        abort response['error']
+      end
+    end
+  end
+end

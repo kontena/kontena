@@ -106,5 +106,15 @@ module Kontena::Cli::Services
         expect(subject.parse_service_id('second-grid/mysql')).to eq('second-grid/mysql')
       end
     end
+
+    describe '#parse_image' do
+      it 'adds :default tag if no tag exist' do
+        expect(subject.parse_image('nginx')).to eq('nginx:latest')
+      end
+
+      it 'does not touch image name if tag is set' do
+        expect(subject.parse_image('redis:3.0')).to eq('redis:3.0')
+      end
+    end
   end
 end

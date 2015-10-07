@@ -9,7 +9,7 @@ describe GridServiceDeployer do
   let(:node) { HostNode.create!(node_id: SecureRandom.uuid) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy, grid_service, []).wrapped_object }
-  let(:ubuntu_trusty) { Image.create!(name:'ubuntu-trusty', exposed_ports: [{'port' => '3306', 'protocol' => 'tcp'}]) }
+  let(:ubuntu_trusty) { Image.create!(name:'ubuntu-trusty', image_id: '86ce37374f40e95cfe8af7327c34ea9919ef216ea965377565fcfad3c378a2c3', exposed_ports: [{'port' => '3306', 'protocol' => 'tcp'}]) }
 
   describe '#deploy_service_container' do
     it 'calls create and start' do
@@ -21,6 +21,8 @@ describe GridServiceDeployer do
     end
 
     it 'removes previous container if it exists' do
+      grid_service.image = ubuntu_trusty
+      grid_service.save
       container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo')
       allow(container).to receive(:exists_on_node?).and_return(true)
       allow(grid_service).to receive(:container_by_name).and_return(container)
@@ -31,6 +33,49 @@ describe GridServiceDeployer do
 
       subject.deploy_service_container(node, 'redis-1', 'v1.0')
     end
+
+    context 'when container is running and up-to-date' do
+      before(:each) do
+        grid_service.image = ubuntu_trusty
+        grid_service.state = 'running'
+        grid_service.save
+      end
+
+      it 'does not re-deploy it' do
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id, state: {'running' => 1})
+        allow(grid_service).to receive(:container_by_name).and_return(container)
+        expect(subject).not_to receive(:remove_service_container).with(container)
+        expect(subject).not_to receive(:create_service_container)
+        subject.deploy_service_container(node, 'redis-1', 'v1.0')
+      end
+
+      it "updates container's deploy revision" do
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id, state: {'running' => 1})
+        allow(grid_service).to receive(:container_by_name).and_return(container)
+        subject.deploy_service_container(node, 'redis-1', 'v1.0')
+        container.reload
+        expect(container.deploy_rev).to eq('v1.0')
+      end
+
+    end
+
+    context 'when container is outdated' do
+      it 'deploys it' do
+        grid_service.image = ubuntu_trusty
+        grid_service.save
+        container = grid_service.containers.create!(name: 'redis-1', container_id: 'foo', image_version: ubuntu_trusty.image_id)
+        allow(container).to receive(:exists_on_node?).and_return(true)
+        allow(grid_service).to receive(:container_by_name).and_return(container)
+        grid_service.timeless.update_attribute(:updated_at, (Time.now.utc + 3 * 60))
+        grid_service.reload
+
+        expect(subject).to receive(:remove_service_container).with(container).once
+        expect(subject).to receive(:create_service_container).and_return(spy)
+
+        subject.deploy_service_container(node, 'redis-1', 'v1.0')
+      end
+    end
+
   end
 
   describe '#ensure_image' do

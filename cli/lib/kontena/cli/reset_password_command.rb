@@ -4,9 +4,11 @@ class Kontena::Cli::ResetPasswordCommand < Clamp::Command
   parameter "TOKEN", "Password reset token"
 
   def execute
+    require 'highline/import'
+    
     require_api_url
-    password = password("Password: ")
-    password2 = password("Password again: ")
+    password = ask("Password: ") { |q| q.echo = "*" }
+    password2 = ask("Password again: ") { |q| q.echo = "*" }
     if password != password2
       abort("Passwords don't match")
     end

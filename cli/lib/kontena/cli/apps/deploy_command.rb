@@ -91,7 +91,7 @@ module Kontena::Cli::Apps
     end
 
     def in_deploy_queue?(name)
-      deploy_queue.find {|service| service['id'] == prefixed_name(name)} != nil
+      deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
     end
 
     def merge_env_vars(options)
@@ -115,7 +115,7 @@ module Kontena::Cli::Apps
     # @param [Hash] options
     def parse_data(options)
       data = {}
-      data[:image] = options['image']
+      data[:image] = parse_image(options['image'])
       data[:env] = options['environment']
       data[:container_count] = options['instances']
       data[:links] = parse_links(options['links']) if options['links']
@@ -129,8 +129,10 @@ module Kontena::Cli::Apps
       data[:affinity] = options['affinity'] if options['affinity']
       data[:user] = options['user'] if options['user']
       data[:stateful] = options['stateful'] == true
+      data[:privileged] = options['privileged'] unless options['privileged'].nil?
       data[:cap_add] = options['cap_add'] if options['cap_add']
       data[:cap_drop] = options['cap_drop'] if options['cap_drop']
+      data[:net] = options['net'] if options['net']
       data
     end
 

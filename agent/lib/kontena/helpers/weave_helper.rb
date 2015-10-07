@@ -34,10 +34,12 @@ module Kontena
             body: URI.encode_www_form('fqdn' => name, 'check-alive' => 'true'),
             headers: { "Content-Type" => "application/x-www-form-urlencoded" }
           )
+        rescue Docker::Error::NotFoundError
+
         rescue Excon::Errors::SocketError => exc
           retries += 1
           if retries < 5
-            sleep 0.05
+            sleep 0.1
             retry
           end
           raise exc
@@ -48,10 +50,12 @@ module Kontena
       def remove_dns(container_id)
         begin
           dns_client.delete(path: "/name/#{container_id}")
+        rescue Docker::Error::NotFoundError
+          
         rescue Excon::Errors::SocketError => exc
           retries += 1
           if retries < 5
-            sleep 0.05
+            sleep 0.1
             retry
           end
           raise exc

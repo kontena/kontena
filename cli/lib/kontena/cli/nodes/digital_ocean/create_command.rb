@@ -2,7 +2,7 @@ module Kontena::Cli::Nodes::DigitalOcean
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
 
-    option "--name", "NAME", "Node name"
+    parameter "[NAME]", "Node name"
     option "--token", "TOKEN", "DigitalOcean API token", required: true
     option "--ssh-key", "SSH_KEY", "Path to ssh public key", required: true
     option "--size", "SIZE", "Droplet size", default: '1gb'

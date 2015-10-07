@@ -20,8 +20,8 @@ module Kontena
         begin
           start_etcd
         rescue => exc
-          logger.error(LOG_NAME) { exc.message }
-          logger.error(LOG_NAME) { exc.backtrace.join("\n") }
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+          logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
         end
       }
     end
@@ -59,7 +59,17 @@ module Kontena
       container = Docker::Container.get('kontena-etcd') rescue nil
       container.remove(force: true) if container
 
-      info = self.node_info
+      begin
+        info = self.node_info
+      rescue Excon::Errors::Error => exc
+        logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+        logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+        sleep 1
+        retry
+      end
+      if info.nil?
+        raise "failed to fetch node information from master"
+      end
       cluster_size = info['grid']['initial_size']
       node_number = info['node_number']
       name = "node-#{info['node_number']}"
@@ -82,8 +92,10 @@ module Kontena
           '--initial-cluster', initial_cluster(cluster_size).join(','),
           '--initial-cluster-state', 'new'
         ]
+        logger.info(LOG_NAME) { "starting etcd service as a cluster member" }
       else
         cmd = cmd + ['--proxy', 'on']
+        logger.info(LOG_NAME) { "starting etcd service as a proxy" }
       end
 
       container = Docker::Container.create(
@@ -99,6 +111,7 @@ module Kontena
       )
       container.start
       Pubsub.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
+      logger.info(LOG_NAME) { "started etcd service" }
     end
 
     # @param [Integer] cluster_size

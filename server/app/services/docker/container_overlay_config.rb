@@ -10,9 +10,11 @@ module Docker
       grid.available_overlay_ips.shuffle.each do |ip|
         next if ip[-2..-1] == '.0' || ip[-4..-1] == '.255'
         begin
-          container.set(
-            grid_id: grid.id,
-            overlay_cidr: "#{ip}/#{grid.overlay_network_size}"
+          OverlayCidr.create!(
+            grid: grid,
+            container: container,
+            ip: ip,
+            subnet: grid.overlay_network_size
           )
           break
         rescue Moped::Errors::OperationFailure
@@ -24,7 +26,9 @@ module Docker
     # @param [Container] container
     # @param [Hash] labels
     def self.modify_labels(container, labels)
-      labels['io.kontena.container.overlay_cidr'] = container.overlay_cidr
+      if container.overlay_cidr
+        labels['io.kontena.container.overlay_cidr'] = container.overlay_cidr.to_s
+      end
     end
   end
 end

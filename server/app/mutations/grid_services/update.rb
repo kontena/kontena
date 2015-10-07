@@ -15,6 +15,7 @@ module GridServices
       array :cap_add do
         string
       end
+      boolean :privileged
       array :cap_drop do
         string
       end
@@ -25,6 +26,7 @@ module GridServices
       array :env do
         string
       end
+      string :net, matches: /^(bridge|host|container:.+-%)$/
       array :ports do
         hash do
           required do
@@ -48,26 +50,18 @@ module GridServices
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory
       attributes[:memory_swap] = self.memory_swap if self.memory_swap
+      attributes[:privileged] = self.privileged unless self.privileged.nil?
       attributes[:cap_add] = self.cap_add if self.cap_add
       attributes[:cap_drop] = self.cap_drop if self.cap_drop
       attributes[:cmd] = self.cmd if self.cmd
-      attributes[:env] = merge_env(grid_service.env, self.env) if self.env
+      attributes[:env] = self.env if self.env
+      attributes[:net] = self.net if self.net
       attributes[:ports] = self.ports if self.ports
       attributes[:affinity] = self.affinity if self.affinity
       grid_service.attributes = attributes
       grid_service.save
 
       grid_service
-    end
-
-    ##
-    # @param [Array<String>] env1
-    # @param [Array<String>] env2
-    # @return [Array<String>]
-    def merge_env(env1, env2)
-      env1_hash = env1.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
-      env2_hash = env2.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
-      env1_hash.merge(env2_hash).map{|k, v| "#{k}=#{v}"}
     end
   end
 end

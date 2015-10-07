@@ -23,7 +23,7 @@ module Kontena
           vagrant_path = "#{Dir.home}/.kontena/#{grid}/#{name}"
           FileUtils.mkdir_p(vagrant_path)
 
-          template = File.join(__dir__ , '/Vagrantfile.coreos.rb.erb')
+          template = File.join(__dir__ , '/Vagrantfile.node.rb.erb')
           cloudinit_template = File.join(__dir__ , '/cloudinit.yml')
           vars = {
             name: name,

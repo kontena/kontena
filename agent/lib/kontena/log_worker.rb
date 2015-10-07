@@ -55,17 +55,17 @@ module Kontena
             'stack_size'=> 0
           }
           container.streaming_logs(stream_opts) {|stream, chunk|
-            self.logger.debug(LOG_NAME) { chunk }
             self.on_message(container.id, stream, chunk)
           }
         rescue Excon::Errors::SocketError
-          logger.info(LOG_NAME) { "log socket error: #{container.id}" }
+          logger.error(LOG_NAME) { "log socket error: #{container.id}" }
           retry
         rescue Docker::Error::TimeoutError
-          logger.info(LOG_NAME) { "log stream timeout: #{container.id}" }
+          logger.error(LOG_NAME) { "log stream timeout: #{container.id}" }
           retry
         rescue => exc
-          logger.error(LOG_NAME) { "error while streaming logs: #{exc.message}"}
+          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}"}
+          logger.debug(LOG_NAME) { "#{exc.backtrace.join("\n")}"}
         end
       }
     end

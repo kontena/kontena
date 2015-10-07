@@ -56,8 +56,11 @@ describe Grid do
   describe '#available_overlay_ips' do
     it 'should not include reserved ip' do
       grid = Grid.create!(name: 'test')
-      container = grid.containers.create(name: 'foo-1', overlay_cidr: "10.81.2.12/#{subject.overlay_network_size}")
-      expect(grid.available_overlay_ips).not_to include(container.overlay_cidr.split('/')[0])
+      container = grid.containers.create(name: 'foo-1')
+      grid.overlay_cidrs.create(
+        container: container, ip: "1081.2.12", subnet: subject.overlay_network_size
+      )
+      expect(grid.available_overlay_ips).not_to include(container.overlay_cidr.ip)
     end
   end
 

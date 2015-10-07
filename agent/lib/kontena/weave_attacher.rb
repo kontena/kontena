@@ -76,6 +76,8 @@ module Kontena
 
         @weave_adapter.exec(['--local', 'attach', overlay_cidr, container.id])
       end
+    rescue Docker::Error::NotFoundError
+
     rescue => exc
       logger.error(LOG_NAME){ "#{exc.class.name}: #{exc.message}" }
       logger.error(LOG_NAME){ exc.backtrace.join("\n") }
@@ -84,6 +86,8 @@ module Kontena
     # @param [Docker::Event] event
     def weave_detach(event)
       remove_dns(event.id)
+    rescue Docker::Error::NotFoundError
+      
     rescue => exc
       logger.error(LOG_NAME){ exc.message }
       logger.error(LOG_NAME){ exc.backtrace.join("\n") }

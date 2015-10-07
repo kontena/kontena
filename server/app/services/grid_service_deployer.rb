@@ -1,5 +1,6 @@
 require 'celluloid'
 require_relative 'grid_scheduler'
+require_relative 'load_balancer_configurer'
 
 class GridServiceDeployer
   include Celluloid
@@ -37,8 +38,9 @@ class GridServiceDeployer
   # @param [Hash] creds
   def deploy(creds = nil)
     prev_state = self.grid_service.state
-    self.grid_service.update_attribute(:state, 'deploying')
+    self.grid_service.set_state('deploying')
 
+    self.configure_load_balancer
     pulled_nodes = Set.new
     deploy_rev = Time.now.utc.to_s
     self.grid_service.container_count.times do |i|
@@ -57,16 +59,17 @@ class GridServiceDeployer
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       self.remove_service_container(container)
     end
-    self.grid_service.update_attribute(:state, 'running')
+    self.grid_service.set_state('running')
 
     true
   rescue RpcClient::Error => exc
-    self.grid_service.update_attribute(:state, prev_state)
+    self.grid_service.set_state(prev_state)
     error "RPC error: #{exc.class.name} #{exc.message}"
     false
   rescue => exc
-    self.grid_service.update_attribute(:state, prev_state)
+    self.grid_service.set_state(prev_state)
     error "Unknown error: #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
     false
   end
 
@@ -92,6 +95,10 @@ class GridServiceDeployer
   # @param [String] deploy_rev
   def deploy_service_container(node, container_name, deploy_rev)
     old_container = self.grid_service.container_by_name(container_name)
+    if old_container && old_container.up_to_date? && old_container.status == 'running'
+      old_container.update_attribute(:deploy_rev, deploy_rev)
+      return
+    end
     if old_container && old_container.exists_on_node?
       self.remove_service_container(old_container)
     end
@@ -146,5 +153,19 @@ class GridServiceDeployer
     response['open']
   rescue RpcClient::Error
     return false
+  end
+
+  def configure_load_balancer
+    load_balancers = self.grid_service.linked_to_load_balancers
+    return if load_balancers.size == 0
+
+    load_balancer = load_balancers[0]
+    node = self.grid_service.grid.host_nodes.connected.first
+    return unless node
+
+    lb_conf = LoadBalancerConfigurer.new(
+      node.rpc_client, load_balancer, self.grid_service
+    )
+    lb_conf.async.configure
   end
 end

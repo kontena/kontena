@@ -4,7 +4,7 @@ describe Container do
   it { should be_timestamped_document }
   it { should have_fields(
         :container_id, :name, :driver,
-        :exec_driver, :image, :overlay_cidr).of_type(String) }
+        :exec_driver, :image, :image_version).of_type(String) }
   it { should have_fields(:env, :volumes).of_type(Array) }
   it { should have_fields(:network_settings, :state).of_type(Hash) }
   it { should have_fields(:finished_at, :started_at).of_type(Time) }
@@ -12,6 +12,7 @@ describe Container do
   it { should belong_to(:grid) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:host_node) }
+  it { should have_one(:overlay_cidr) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
 
@@ -20,8 +21,20 @@ describe Container do
   it { should have_index_for(host_node_id: 1) }
   it { should have_index_for(container_id: 1) }
   it { should have_index_for(state: 1) }
-  it { should have_index_for(grid_id: 1, overlay_cidr: 1)
-        .with_options(sparse: true, unique: true) }
+
+  let(:grid) do
+    Grid.create(name: 'test-grid')
+  end
+
+  let(:grid_service) do
+    service = GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
+    service.image = image
+    service
+  end
+
+  let(:image) do
+    Image.create(image_id: '12345', name: 'redis:2.8')
+  end
 
   describe '#status' do
     it 'returns deleted when deleted_at timestamp is set' do
@@ -101,5 +114,37 @@ describe Container do
         ]
       )
     end
+  end
+
+  describe '#up_to_date?' do
+    context 'when image id differs from grid service image id' do
+      it 'returns false ' do
+        subject.grid_service = grid_service
+
+        grid_service.image.image_id = '12345'
+        subject.image_version = '1234567'
+        expect(subject.up_to_date?).to be_falsey
+      end
+    end
+
+    context 'when grid service is updated after container is created' do
+      it 'returns false' do
+        subject.grid_service = grid_service
+        grid_service.timeless.updated_at = Time.now.utc + 3
+        subject.created_at = Time.now.utc
+        expect(subject.up_to_date?).to be_falsey
+      end
+    end
+
+    context 'when image is not updated and container is created after last update of grid service' do
+      it 'return false' do
+        subject.grid_service = grid_service
+        subject.image_version = '12345'
+        grid_service.timeless.updated_at = Time.now.utc - 3
+        subject.created_at = Time.now.utc
+        expect(subject.up_to_date?).to be_truthy
+      end
+    end
+
   end
 end

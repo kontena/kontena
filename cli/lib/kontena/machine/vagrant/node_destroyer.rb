@@ -1,3 +1,4 @@
+require 'fileutils'
 
 module Kontena
   module Machine
@@ -19,6 +20,9 @@ module Kontena
               Open3.popen2('vagrant destroy -f') do |stdin, output, wait|
                 while o = output.gets
                   puts o if ENV['DEBUG']
+                end
+                if wait.value == 0
+                  FileUtils.remove_entry_secure(vagrant_path)
                 end
               end
             end

@@ -2,9 +2,11 @@ require_relative '../spec_helper'
 
 describe GridService do
   it { should be_timestamped_document }
-  it { should have_fields(:image_name, :name, :user, :entrypoint, :state).of_type(String) }
+  it { should have_fields(:image_name, :name, :user, :entrypoint, :state, :net).of_type(String) }
   it { should have_fields(:container_count, :memory, :memory_swap, :cpu_shares).of_type(Fixnum) }
-  it { should have_fields(:labels, :affinity, :cmd, :ports, :env, :volumes, :volumes_from, :cap_add, :cap_drop).of_type(Array) }
+  it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from, :cap_add, :cap_drop).of_type(Array) }
+  it { should have_fields(:labels).of_type(Hash) }
+  it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
 
   it { should belong_to(:grid) }
   it { should embed_many(:grid_service_links) }
@@ -46,6 +48,21 @@ describe GridService do
     it 'returns false if not stateless' do
       subject.stateful = true
       expect(subject.stateless?).to eq(false)
+    end
+  end
+
+  describe '#set_state' do
+    it 'sets value of state column' do
+      subject.set_state('running')
+      expect(subject.state).to eq('running')
+    end
+
+    it 'does not modify updated_at field' do
+      five_hours_ago = Time.now.utc - 5.hours
+      grid_service.timeless.update_attribute(:updated_at, five_hours_ago)
+      grid_service.clear_timeless_option
+      grid_service.set_state('running')
+      expect(grid_service.updated_at).to eq(five_hours_ago)
     end
   end
 
