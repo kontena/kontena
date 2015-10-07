@@ -39,6 +39,7 @@ describe Kontena::Pubsub do
       expect(described_class.subscriptions.size).to eq(0)
       described_class.subscribe('foo') {|mag| p msg }
       described_class.clear!
+      sleep 0.01
       expect(described_class.subscriptions.size).to eq(0)
     end
   end
