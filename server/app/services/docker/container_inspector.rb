@@ -11,7 +11,7 @@ module Docker
 
     def inspect_container
       begin
-        response = client.request('/containers/inspect', container.container_id, {})
+        response = client.request('/containers/inspect', container.container_id)
         return response
       rescue RpcClient::Error => exc
         unless exc.code == 404

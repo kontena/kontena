@@ -10,7 +10,7 @@ module Kontena::Cli::Containers
 
       service_name = container_id.match(/(.+)-(\d+)/)[1]
       result = client(token).get("containers/#{current_grid}/#{service_name}/#{container_id}/inspect")
-      puts puts JSON.pretty_generate(result)
+      puts JSON.pretty_generate(result)
     end
   end
 end

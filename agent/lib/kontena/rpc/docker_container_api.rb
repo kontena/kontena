@@ -143,7 +143,7 @@ module Kontena
       ##
       # @param [String] id
       #
-      def inspect(id, opts)
+      def inspect(id)
         container = Docker::Container.get(id)
         container.json
       end
