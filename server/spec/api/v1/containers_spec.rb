@@ -15,6 +15,11 @@ describe '/v1/containers' do
   let(:docker_executor) do
     spy(:executor)
   end
+
+  let(:docker_inspector) do
+    spy(:inspector)
+  end
+
   let(:valid_token) do
     AccessToken.create!(user: david, scopes: ['user'])
   end
@@ -82,6 +87,14 @@ describe '/v1/containers' do
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(1)
         expect(json_response['logs'].first['container_id']).to eq(redis_container.id.to_s)
+      end
+    end
+
+    describe '/inspect' do
+      it 'return container info' do
+        expect(Docker::ContainerInspector).to receive(:new).with(redis_container).and_return(docker_inspector)
+        expect(docker_inspector).to receive(:inspect_container)
+        get "/v1/containers/#{redis_container.to_path}/inspect", {}, request_headers
       end
     end
   end
