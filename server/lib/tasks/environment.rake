@@ -8,7 +8,6 @@ task :environment do
   ENV['RACK_ENV'] = 'development' unless ENV['RACK_ENV']
 
   require 'celluloid'
-  require 'sucker_punch'
   require 'roda'
   require 'mongoid'
   require 'json'
