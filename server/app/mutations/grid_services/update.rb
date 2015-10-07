@@ -26,6 +26,7 @@ module GridServices
       array :env do
         string
       end
+      string :net, matches: /^(bridge|host|container:.+-%)$/
       array :ports do
         hash do
           required do
@@ -54,6 +55,7 @@ module GridServices
       attributes[:cap_drop] = self.cap_drop if self.cap_drop
       attributes[:cmd] = self.cmd if self.cmd
       attributes[:env] = self.env if self.env
+      attributes[:net] = self.net if self.net
       attributes[:ports] = self.ports if self.ports
       attributes[:affinity] = self.affinity if self.affinity
       grid_service.attributes = attributes

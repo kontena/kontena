@@ -28,6 +28,7 @@ module GridServices
       array :env do
         string
       end
+      string :net, matches: /^(bridge|host|container:.+)$/
       array :ports do
         hash do
           required do

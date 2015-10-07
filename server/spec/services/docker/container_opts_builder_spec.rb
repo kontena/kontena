@@ -2,9 +2,11 @@ require_relative '../../spec_helper'
 
 describe Docker::ContainerOptsBuilder do
 
+  let(:grid) { Grid.create!(name: 'test') }
   let(:grid_service) do
     GridService.create!(
       name: 'test',
+      grid: grid,
       image_name: 'redis:2.8',
       grid_service_links: [
         GridServiceLink.new(alias: 'test', linked_grid_service: linked_grid_service)
@@ -48,6 +50,37 @@ describe Docker::ContainerOptsBuilder do
     it 'sets Hostname' do
       opts = described_class.build_opts(grid_service, container)
       expect(opts['Hostname']).to eq('redis-1.kontena.local')
+    end
+
+    it 'sets ExposedPorts & PortBindings' do
+      grid_service.ports = [
+        {
+          'ip' => '0.0.0.0',
+          'container_port' => 80,
+          'node_port' => 80,
+          'protocol' => 'tcp'
+        }
+      ]
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['ExposedPorts']).to include('80/tcp' => {})
+      expect(opts['HostConfig']['PortBindings']['80/tcp']).to include(
+        {'HostPort' => '80'}
+      )
+    end
+
+    it 'does not set ExposedPorts & PortBindings when network mode is not bridge' do
+      grid_service.net = 'host'
+      grid_service.ports = [
+        {
+          'ip' => '0.0.0.0',
+          'container_port' => 80,
+          'node_port' => 80,
+          'protocol' => 'tcp'
+        }
+      ]
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['ExposedPorts']).to eq(nil)
+      expect(opts['HostConfig']['PortBindings']).to eq(nil)
     end
 
     it 'sets Memory' do
@@ -100,6 +133,47 @@ describe Docker::ContainerOptsBuilder do
       grid_service.privileged = nil
       opts = described_class.build_opts(grid_service, container)
       expect(opts['HostConfig'].has_key?('Privileged')).to eq(false)
+    end
+
+    it 'sets NetworkMode' do
+      grid_service.net = 'host'
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['NetworkMode']).to eq('host')
+    end
+
+    it 'does not set NetworkMode if net is nil' do
+      grid_service.net = nil
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig'].has_key?('NetworkMode')).to eq(false)
+    end
+  end
+
+  describe '.build_labels' do
+    let(:container) { grid_service.containers.build(name: 'redis-1')}
+
+    it 'sets base labels' do
+      labels = described_class.build_labels(grid_service, container)
+      expect(labels).to include('io.kontena.container.name' => container.name)
+      expect(labels).to include('io.kontena.service.id' => grid_service.id.to_s)
+      expect(labels).to include('io.kontena.service.name' => grid_service.name)
+      expect(labels).to include('io.kontena.grid.name' => grid_service.grid.name)
+    end
+
+    it 'does not set load balancer labels if service is not linked to any' do
+      labels = described_class.build_labels(grid_service, container)
+      expect(labels.keys).not_to include('io.kontena.load_balancer.name')
+    end
+
+    it 'sets load balancer labels if service is linked to load balancer' do
+      lb = GridService.create!(
+        name: 'lb', image_name: 'kontena/lb:latest', grid: grid
+      )
+      grid_service.grid_service_links << GridServiceLink.new(linked_grid_service: lb)
+      grid_service.save
+      labels = described_class.build_labels(grid_service, container)
+      expect(labels).to include('io.kontena.load_balancer.name' => lb.name)
+      expect(labels).to include('io.kontena.load_balancer.mode' => 'http')
+      expect(labels).to include('io.kontena.load_balancer.internal_port' => '80')
     end
   end
 
