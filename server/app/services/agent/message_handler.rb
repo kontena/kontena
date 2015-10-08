@@ -14,7 +14,8 @@ module Agent
             message = @queue.pop
             self.handle_message(message)
           rescue => exc
-            puts exc.message
+            puts "#{exc.class.name}: #{exc.message}"
+            puts exc.backtrace.join("\n") if exc.backtrace
           end
         end
       }
@@ -60,13 +61,37 @@ module Agent
     # @param [Hash] data
     def on_container_info(grid, data)
       info = data['container']
+      labels = info['Config']['Labels'] || {}
       container_id = data['container']['Id']
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
         container.attributes_from_docker(info)
         container.updated_at = Time.now.utc
         container.save
+      elsif !labels['io.kontena.container.name'].nil?
+        node = grid.host_nodes.find_by(node_id: data['node'])
+        service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
+        container = grid.containers.build(
+          container_id: container_id,
+          name: labels['io.kontena.container.name'],
+          container_type: labels['io.kontena.container.type'] || 'container',
+          grid_service: service,
+          host_node: node
+        )
+        container.attributes_from_docker(info)
+        container.save
+      else
+        node = grid.host_nodes.find_by(node_id: data['node'])
+        container = grid.containers.build(
+          container_id: container_id,
+          name: info['Name'].split("/")[1],
+          container_type: 'container',
+          host_node: node
+        )
+        container.attributes_from_docker(info)
+        container.save
       end
+    rescue Moped::Errors::OperationFailure
     end
 
     ##

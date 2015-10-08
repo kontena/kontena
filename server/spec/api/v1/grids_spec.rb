@@ -152,6 +152,15 @@ describe '/v1/grids' do
         expect(json_response['users'].size).to eq(1)
       end
     end
+
+    describe '/container_logs' do
+      it 'returns grid container logs' do
+        grid = david.grids.first
+        get "/v1/grids/#{grid.to_path}/container_logs", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(0)
+      end
+    end
   end
 
   describe 'POST /:name/users' do

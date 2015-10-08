@@ -53,6 +53,12 @@ module V1
         r.route 'external_registries'
       end
 
+      # /v1/grids/:name/container_logs
+      r.on ':name/container_logs' do |name|
+        load_grid(name)
+        r.route 'grid_container_logs'
+      end
+
       r.post do
         r.is do
           data = parse_json_body
