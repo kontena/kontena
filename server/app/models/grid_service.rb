@@ -26,7 +26,7 @@ class GridService
   field :net, type: String, default: 'bridge'
   field :state, type: String, default: 'initialized'
   field :log_driver, type: String
-  field :log_opt, type: Array, default: []
+  field :log_opts, type: Array, default: []
 
   belongs_to :grid
   belongs_to :image

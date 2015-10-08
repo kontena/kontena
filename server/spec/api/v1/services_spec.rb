@@ -50,7 +50,7 @@ describe '/v1/services' do
       expect(json_response.keys.sort).to eq(%w(
         id created_at updated_at image affinity name stateful user
         container_count cmd entrypoint ports env memory memory_swap cpu_shares
-        volumes volumes_from cap_add cap_drop state grid_id links
+        volumes volumes_from cap_add cap_drop state grid_id links log_driver log_opts
       ).sort)
       expect(json_response['id']).to eq(redis_service.to_path)
       expect(json_response['image']).to eq(redis_service.image_name)

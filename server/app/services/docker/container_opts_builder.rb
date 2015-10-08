@@ -42,7 +42,8 @@ module Docker
 
       docker_opts['HostConfig'] = host_config
       log_opts = self.build_log_opts(grid_service)
-      docker_opts['LogConfig'] = log_opts unless log_opts.empty?
+      host_config['LogConfig'] = log_opts unless log_opts.empty?
+
       docker_opts
     end
 
@@ -179,7 +180,7 @@ module Docker
       log_config = {}
       log_config['Type'] = grid_service.log_driver if grid_service.log_driver
       log_config['Config'] = {}
-      grid_service.log_opt.each { |log_opt|
+      grid_service.log_opts.each { |log_opt|
         key, value = log_opt.split("=")
         log_config['Config'][key] = value
       }

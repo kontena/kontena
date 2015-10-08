@@ -85,6 +85,13 @@ module Kontena
             puts "    - #{c}"
           end
 
+          puts "  log_driver: #{service['log_driver']}"
+
+          puts "  log_opts:"
+          service['log_opts'].to_a.each do |opt|
+            puts "    - #{opt}"
+          end
+
           puts "  containers:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
