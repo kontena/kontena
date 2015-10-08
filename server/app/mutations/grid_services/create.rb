@@ -56,6 +56,10 @@ module GridServices
       array :affinity do
         string
       end
+      hash :log_opts do
+        string :*
+      end
+      string :log_driver
     end
 
     def validate

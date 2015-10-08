@@ -21,3 +21,5 @@ json.cap_drop grid_service.cap_drop
 json.state grid_service.state
 json.grid_id grid_service.grid_id.to_s
 json.links grid_service.grid_service_links.map{|s| {alias: s.alias, grid_service_id: s.linked_grid_service.to_path }}
+json.log_driver grid_service.log_driver
+json.log_opts grid_service.log_opts

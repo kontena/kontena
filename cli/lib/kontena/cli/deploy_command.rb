@@ -148,6 +148,9 @@ class Kontena::Cli::DeployCommand < Clamp::Command
     data[:stateful] = options['stateful'] == true
     data[:cap_add] = options['cap_add'] if options['cap_add']
     data[:cap_drop] = options['cap_drop'] if options['cap_drop']
+    data[:log_driver] = options['log_driver'] if options['log_driver']
+    data[:log_opts] = options['log_opt'] if options['log_opt'] && !options['log_opt'].empty?
+
     data
   end
 

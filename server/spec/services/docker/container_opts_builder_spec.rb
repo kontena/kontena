@@ -146,6 +146,24 @@ describe Docker::ContainerOptsBuilder do
       opts = described_class.build_opts(grid_service, container)
       expect(opts['HostConfig'].has_key?('NetworkMode')).to eq(false)
     end
+
+    it 'sets logging driver' do
+      grid_service.log_driver = 'gelf'
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['LogConfig']['Type']).to eq('gelf')
+    end
+
+    it 'sets logging opts' do
+      grid_service.log_driver = 'gelf'
+      grid_service.log_opts = {:'gelf-address'=>'udp://192.168.0.42:12201', :'gelf-tag'=>'foo'}
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['LogConfig']['Type']).to eq('gelf')
+      expect(opts['HostConfig']['LogConfig']['Config'].size).to eq(2)
+      expect(opts['HostConfig']['LogConfig']['Config']['gelf-address']).to eq('udp://192.168.0.42:12201')
+      expect(opts['HostConfig']['LogConfig']['Config']['gelf-tag']).to eq('foo')
+
+    end
+
   end
 
   describe '.build_labels' do
@@ -175,6 +193,7 @@ describe Docker::ContainerOptsBuilder do
       expect(labels).to include('io.kontena.load_balancer.mode' => 'http')
       expect(labels).to include('io.kontena.load_balancer.internal_port' => '80')
     end
+
   end
 
   describe '.build_volumes' do

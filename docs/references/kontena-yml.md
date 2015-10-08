@@ -221,3 +221,24 @@ deploy:
   strategy: ha
   wait_for_port: true
 ```
+
+
+#### log_driver
+
+Specify the log driver for docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
+
+#### log_opts
+
+Specify options for log driver
+
+```
+nginx:
+  image: nginx:latest
+  ports:
+    - 80:80
+  log_driver: fluentd
+  log_opt:
+    fluentd-address: 192.168.99.1:24224
+    fluentd-tag: docker.{{.Name}}
+
+```

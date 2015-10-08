@@ -41,6 +41,9 @@ module Docker
       host_config['NetworkMode'] = grid_service.net if grid_service.net
 
       docker_opts['HostConfig'] = host_config
+      log_opts = self.build_log_opts(grid_service)
+      host_config['LogConfig'] = log_opts unless log_opts.empty?
+
       docker_opts
     end
 
@@ -168,6 +171,21 @@ module Docker
         bindings["#{p['container_port']}/#{p['protocol']}"] = [{'HostPort' => p['node_port'].to_s}]
       end
       bindings
+    end
+
+    ##
+    # @param [GridService] grid_service
+    # @return [Hash]
+    def self.build_log_opts(grid_service)
+      log_config = {}
+      log_config['Type'] = grid_service.log_driver if grid_service.log_driver
+      log_config['Config'] = {}
+      puts grid_service.log_opts
+      grid_service.log_opts.each { |key, value|
+        log_config['Config'][key.to_s] = value
+      }
+      puts log_config
+      log_config
     end
   end
 end
