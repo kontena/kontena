@@ -6,9 +6,9 @@ describe NodeCleanupJob do
 
   describe '#cleanup_stale_nodes' do
     it 'removes old nodes' do
-      HostNode.create!(name: "node-1", connected: false, updated_at: 2.hours.ago)
-      HostNode.create!(name: "node-2", connected: true, updated_at: 2.hours.ago)
-      HostNode.create!(name: "node-3", connected: true, updated_at: 10.minutes.ago)
+      HostNode.create!(name: "node-1", connected: false, last_seen_at: 2.hours.ago)
+      HostNode.create!(name: "node-2", connected: true, last_seen_at: 2.hours.ago)
+      HostNode.create!(name: "node-3", connected: true, last_seen_at: 10.minutes.ago)
 
       expect {
         subject.cleanup_stale_nodes

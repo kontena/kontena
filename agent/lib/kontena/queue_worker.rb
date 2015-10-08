@@ -15,19 +15,19 @@ module Kontena
       Pubsub.subscribe('websocket:connect') do |client|
         self.client = client
       end
+      Pubsub.subscribe('websocket:connected') do |event|
+        self.register_client_events
+      end
     end
 
     ##
     # @param [WebsocketClient] client
     def client=(client)
       @client = client
-      self.register_client_events
     end
 
     def register_client_events
-      client.on :open do |event|
-        self.start_queue_processing
-      end
+      self.start_queue_processing
       client.on :close do |event|
         self.stop_queue_processing
       end

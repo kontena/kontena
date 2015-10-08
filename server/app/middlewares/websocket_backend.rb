@@ -56,6 +56,14 @@ class WebsocketBackend
       unless node
         node = grid.host_nodes.create!(node_id: node_id)
       end
+
+      agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
+      unless self.valid_agent_version?(agent_version)
+        logger.error "version mismatch: server (#{Server::VERSION}), node (#{agent_version})"
+        self.handle_invalid_agent_version(ws, node)
+        return
+      end
+
       logger.info "node opened connection: #{node.name || node_id}"
       node.set(connected: true, last_seen_at: Time.now.utc)
       client = {
@@ -65,10 +73,13 @@ class WebsocketBackend
           created_at: Time.now
       }
       @clients << client
+      self.notify_master_info(ws)
     else
       logger.error 'invalid grid token, closing connection'
-      ws.close
+      ws.close(4001)
     end
+  rescue => exc
+    logger.error "#{exc.class.name}: #{exc.message}"
   end
 
   ##
@@ -172,6 +183,43 @@ class WebsocketBackend
     @clients.find{|c| c[:id] == id}
   end
 
+  # @param [String] agent_version
+  # @return [Boolean]
+  def valid_agent_version?(agent_version)
+    Gem::Dependency.new('', "~> #{self.our_version}").match?('', agent_version)
+  end
+
+  # @return [String]
+  def our_version
+    major, minor, patch = Server::VERSION.split('.')
+    "#{major}.#{minor}.0"
+  end
+
+  # @param [Faye::WebSocket] ws
+  # @param [HostNode] node
+  def handle_invalid_agent_version(ws, node)
+    node.set(connected: false, last_seen_at: Time.now.utc)
+    self.notify_master_info(ws)
+    sleep 1
+    ws.close(4010)
+  end
+
+  # @param [Faye::WebSocket] ws
+  def notify_master_info(ws)
+    params = [
+      {version: Server::VERSION}
+    ]
+    self.send_message(ws, [2, '/agent/master_info', params])
+  end
+
+  # @param [Faye::Websocket] ws
+  # @param [Array] message
+  def send_message(ws, message)
+    EM.next_tick {
+      ws.send(MessagePack.dump(message).bytes)
+    }
+  end
+
   def subscribe_to_rpc
     MongoPubsub.subscribe('rpc_client') do |message|
       self.on_pubsub_message(message)
@@ -183,9 +231,7 @@ class WebsocketBackend
     if msg && msg.is_a?(Hash) && msg['type'] == 'request'
       client = client_for_id(msg['id'])
       if client
-        EM.next_tick {
-          client[:ws].send(MessagePack.dump(msg['message']).bytes)
-        }
+        self.send_message(client[:ws], msg['message'])
       end
     end
   rescue => exc
@@ -197,17 +243,22 @@ class WebsocketBackend
       sleep 1 until EM.reactor_running?
       EM::PeriodicTimer.new(KEEPALIVE_TIME) do
         @clients.each do |client|
-          timer = EM::Timer.new(5) do
-            self.on_close(client[:ws])
-          end
-          client[:ws].ping{
-            timer.cancel
-            node = HostNode.find_by(node_id: client[:id])
-            if node
-              node.set(connected: true, last_seen_at: Time.now.utc)
-            end
-          }
+          self.verify_client_connection(client)
         end
+      end
+    }
+  end
+
+  # @param [Hash] client
+  def verify_client_connection(client)
+    timer = EM::Timer.new(5) do
+      self.on_close(client[:ws])
+    end
+    client[:ws].ping {
+      timer.cancel
+      node = HostNode.find_by(node_id: client[:id])
+      if node
+        node.set(connected: true, last_seen_at: Time.now.utc)
       end
     }
   end

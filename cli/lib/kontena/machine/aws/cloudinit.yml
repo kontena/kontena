@@ -9,7 +9,7 @@ write_files:
       KONTENA_TOKEN="<%= grid_token %>"
       KONTENA_PEER_INTERFACE=eth1
       KONTENA_VERSION=<%= version %>
-  - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
+  - path: /etc/systemd/system/docker.service.d/50-kontena.conf
     content: |
         [Service]
         Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19" --bip="172.17.42.1/16"'
@@ -61,5 +61,6 @@ coreos:
             -e KONTENA_TOKEN=${KONTENA_TOKEN} \
             -e KONTENA_PEER_INTERFACE=${KONTENA_PEER_INTERFACE} \
             -v=/var/run/docker.sock:/var/run/docker.sock \
+            -v=/etc/kontena-agent.env:/etc/kontena.env \
             --net=host \
             kontena/agent:${KONTENA_VERSION}
