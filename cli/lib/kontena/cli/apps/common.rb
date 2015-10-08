@@ -4,12 +4,12 @@ module Kontena::Cli::Apps
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
-    def load_services_from_yml
-      @service_prefix = project_name || current_dir
-
+    def require_config_file(filename)
       abort("File #{filename} does not exist") unless File.exists?(filename)
-      services = parse_yml_file(filename, nil, service_prefix)
+    end
 
+    def load_services(filename, service_list, prefix)
+      services = parse_services(filename, nil, prefix)
       services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
       services
     end
@@ -32,24 +32,52 @@ module Kontena::Cli::Apps
       get_service(token, prefixed_name(name)) rescue false
     end
 
-    def parse_yml_file(file, name = nil, prefix='')
-      services = YAML.load(File.read(file) % {prefix: prefix})
+    def parse_services(file, name = nil, prefix='')
+      services = YAML.load(File.read(file) % {project: prefix})
       services.each do |name, options|
+        normalize_env_vars(options)
         if options.has_key?('extends')
-          extends = options['extends']
+          extension_file = options['extends']['file']
+          service_name =  options['extends']['service']
           options.delete('extends')
-          services[name] = parse_yml_file(extends['file'], extends['service']).merge(options)
+          services[name] = extend_options(options, extension_file , service_name, prefix)
         end
-        if options.has_key?('build') 
-          options.delete('build')
-        end
-
       end
       if name.nil?
         services
       else
         services[name]
       end
+    end
+
+    def extend_options(options, file, service_name, prefix)
+      parent_options = parse_services(file, service_name, prefix)
+      options['environment'] = extend_env_vars(parent_options, options)
+      parent_options.merge(options)
+    end
+
+    def normalize_env_vars(options)
+      if options['environment'].is_a?(Hash)
+        options['environment'] = options['environment'].map{|k, v| "#{k}=#{v}"}
+      end
+    end
+
+    def extend_env_vars(from, to)
+      env_vars = to['environment'] || []
+      if from['environment']
+        from['environment'].each do |env|
+          env_vars << env unless to['environment'] && to['environment'].find {|key| key.split('=').first == env.split('=').first}
+        end
+      end
+      env_vars
+    end
+
+    def dockerfile_exist?
+      !dockerfile.nil?
+    end
+
+    def dockerfile
+      @dockerfile ||= File.new('Dockerfile') rescue nil
     end
   end
 end

@@ -1,30 +1,38 @@
 require 'yaml'
 require_relative 'common'
+require_relative 'docker_helper'
 
 module Kontena::Cli::Apps
   class DeployCommand < Clamp::Command
     include Kontena::Cli::Common
     include Common
+    include DockerHelper
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
 
     parameter "[SERVICE] ...", "Services to start"
 
-    attr_reader :services, :service_prefix
+    attr_reader :services, :service_prefix, :deploy_queue
 
     def execute
       require_api_url
       require_token
-      @services = load_services_from_yml
+      require_config_file(filename)
+
+      @deploy_queue = []
+      @service_prefix = project_name || current_dir
       Dir.chdir(File.dirname(filename))
-      init_services(services)
+      @services = load_services(filename, service_list, service_prefix)
+      process_docker_images(services) if !no_build? && dockerfile_exist?
+      create_or_update_services(services)
       deploy_services(deploy_queue)
     end
 
     private
 
-    def init_services(services)
+    def create_or_update_services(services)
       services.each do |name, config|
         create_or_update_service(name, config)
       end
@@ -32,7 +40,7 @@ module Kontena::Cli::Apps
 
     def deploy_services(queue)
       queue.each do |service|
-        puts "deploying #{service['id']}"
+        puts "deploying #{service['id'].colorize(:cyan)}"
         data = {}
         if service['deploy']
           data[:strategy] = service['deploy']['strategy'] if service['deploy']['strategy']
@@ -43,8 +51,7 @@ module Kontena::Cli::Apps
     end
 
     def create_or_update_service(name, options)
-
-      # skip if service is already created or updated or it's not present
+      # skip if service is already processed or it's not present
       return nil if in_deploy_queue?(name) || !services.keys.include?(name)
 
       # create/update linked services recursively before continuing
@@ -77,7 +84,7 @@ module Kontena::Cli::Apps
 
     def create(name, options)
       name = prefixed_name(name)
-      puts "creating #{name}"
+      puts "creating #{name.colorize(:cyan)}"
       data = {name: name}
       data.merge!(parse_data(options))
       create_service(token, current_grid, data)
@@ -86,7 +93,7 @@ module Kontena::Cli::Apps
     def update(id, options)
       id = prefixed_name(id)
       data = parse_data(options)
-      puts "updating #{id}"
+      puts "updating #{id.colorize(:cyan)}"
       update_service(token, id, data)
     end
 
@@ -136,8 +143,5 @@ module Kontena::Cli::Apps
       data
     end
 
-    def deploy_queue
-      @deploy_queue ||= []
-    end
   end
 end

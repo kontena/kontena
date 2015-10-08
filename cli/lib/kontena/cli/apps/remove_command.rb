@@ -16,8 +16,10 @@ module Kontena::Cli::Apps
     def execute
       require_api_url
       require_token
+      require_config_file(filename)
 
-      @services = load_services_from_yml
+      @service_prefix = project_name || current_dir
+      @services = load_services(filename, service_list, service_prefix)
       if services.size > 0
         Dir.chdir(File.dirname(filename))
         remove_services(services)
