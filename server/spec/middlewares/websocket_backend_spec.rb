@@ -20,6 +20,11 @@ describe WebsocketBackend do
       expect(subject.valid_agent_version?('0.9.1')).to eq(true)
     end
 
+    it 'returns true when exact match with beta' do
+      stub_const('Server::VERSION', '0.9.0.beta')
+      expect(subject.valid_agent_version?('0.9.0.beta')).to eq(true)
+    end
+
     it 'returns true when patch level is greater' do
       expect(subject.valid_agent_version?('0.9.2')).to eq(true)
     end

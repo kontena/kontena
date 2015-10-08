@@ -191,8 +191,10 @@ class WebsocketBackend
 
   # @return [String]
   def our_version
-    major, minor, patch = Server::VERSION.split('.')
-    "#{major}.#{minor}.0"
+    major, minor, patch, extension = Server::VERSION.split('.')
+    version = "#{major}.#{minor}.0"
+    version << ".#{extension}" if extension
+    version
   end
 
   # @param [Faye::WebSocket] ws
