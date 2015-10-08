@@ -83,7 +83,7 @@ if words.size > 0
       end
     when 'master'
       completion.clear
-      sub_commands = %w(vagrant azure)
+      sub_commands = %w(vagrant azure aws)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.nodes

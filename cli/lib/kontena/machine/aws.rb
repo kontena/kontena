@@ -7,6 +7,7 @@ rescue LoadError
 end
 
 require_relative 'random_name'
+require_relative 'aws/master_provisioner'
 require_relative 'aws/node_provisioner'
 require_relative 'aws/node_destroyer'
 
