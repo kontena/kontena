@@ -3,6 +3,7 @@
 
 # resolve bin path, ignoring symlinks
 require 'pathname'
+require 'yaml'
 bin_file = Pathname.new(__FILE__).realpath
 
 # add self to libpath
@@ -52,6 +53,16 @@ class Helper
   rescue
     []
   end
+
+  def yml_services
+    if File.exist?('kontena.yml')
+      services = YAML.load(File.read('kontena.yml'))
+      services.keys
+    end
+  rescue
+    []
+  end
+
 end
 
 helper = Helper.new
@@ -116,7 +127,13 @@ if words.size > 0
       completion.push %w(add list delete)
     when 'app'
       completion.clear
-      completion.push %w(init deploy start stop remove rm ps list)
+      sub_commands = %w(init build deploy start stop remove rm ps list logs)
+      if words[1]
+        completion.push(sub_commands) unless sub_commands.include?(words[1])
+        completion.push helper.yml_services
+      else
+        completion.push sub_commands
+      end
   end
 end
 
