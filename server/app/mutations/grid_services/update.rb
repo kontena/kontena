@@ -40,6 +40,10 @@ module GridServices
       array :affinity do
         string
       end
+      hash :log_opts do
+        string :*
+      end
+      string :log_driver
     end
 
     def execute
@@ -58,6 +62,9 @@ module GridServices
       attributes[:net] = self.net if self.net
       attributes[:ports] = self.ports if self.ports
       attributes[:affinity] = self.affinity if self.affinity
+      attributes[:log_driver] = self.log_driver if self.log_driver
+      attributes[:log_opts] = self.log_opts if self.log_opts
+
       grid_service.attributes = attributes
       grid_service.save
 

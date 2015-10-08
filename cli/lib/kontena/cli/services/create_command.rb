@@ -63,7 +63,7 @@ module Kontena::Cli::Services
       data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
       data[:net] = net if net
       data[:log_driver] = log_driver if log_driver
-      data[:log_opts] = log_opt_list unless log_opt_list.empty?
+      data[:log_opts] = parse_log_opts(log_opt_list)
       data
     end
   end

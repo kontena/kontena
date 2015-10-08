@@ -21,6 +21,8 @@ module Kontena::Cli::Services
     option "--cap-add", "CAP_ADD", "Add capabitilies", multivalued: true
     option "--cap-drop", "CAP_DROP", "Drop capabitilies", multivalued: true
     option "--net", "NET", "Network mode"
+    option "--log-driver", "LOG_DRIVER", "Set logging driver"
+    option "--log-opt", "LOG_OPT", "Add logging options", multivalued: true
 
     def execute
       require_api_url
@@ -49,6 +51,8 @@ module Kontena::Cli::Services
       data[:cap_add] = cap_add_list unless cap_add_list.empty?
       data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
       data[:net] = net if net
+      data[:log_driver] = log_driver if log_driver
+      data[:log_opts] = parse_log_opts(log_opt_list)
       data
     end
   end

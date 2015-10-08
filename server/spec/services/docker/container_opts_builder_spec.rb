@@ -155,7 +155,7 @@ describe Docker::ContainerOptsBuilder do
 
     it 'sets logging opts' do
       grid_service.log_driver = 'gelf'
-      grid_service.log_opts = ['gelf-address=udp://192.168.0.42:12201', 'gelf-tag=foo']
+      grid_service.log_opts = {:'gelf-address'=>'udp://192.168.0.42:12201', :'gelf-tag'=>'foo'}
       opts = described_class.build_opts(grid_service, container)
       expect(opts['HostConfig']['LogConfig']['Type']).to eq('gelf')
       expect(opts['HostConfig']['LogConfig']['Config'].size).to eq(2)

@@ -180,10 +180,11 @@ module Docker
       log_config = {}
       log_config['Type'] = grid_service.log_driver if grid_service.log_driver
       log_config['Config'] = {}
-      grid_service.log_opts.each { |log_opt|
-        key, value = log_opt.split("=")
-        log_config['Config'][key] = value
+      puts grid_service.log_opts
+      grid_service.log_opts.each { |key, value|
+        log_config['Config'][key.to_s] = value
       }
+      puts log_config
       log_config
     end
   end

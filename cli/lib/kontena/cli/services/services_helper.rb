@@ -88,8 +88,8 @@ module Kontena
           puts "  log_driver: #{service['log_driver']}"
 
           puts "  log_opts:"
-          service['log_opts'].to_a.each do |opt|
-            puts "    - #{opt}"
+          service['log_opts'].each do |opt, value|
+            puts "    #{opt}: #{value}"
           end
 
           puts "  containers:"
@@ -208,6 +208,18 @@ module Kontena
             image = "#{image}:latest"
           end
           image
+        end
+
+        ##
+        # @param [Array] log_opts
+        # @return [Hash]
+        def parse_log_opts(log_opts)
+          opts = {}
+          log_opts.each do |opt|
+            key, value = opt.split('=')
+            opts[key] = value
+          end
+          opts
         end
       end
     end

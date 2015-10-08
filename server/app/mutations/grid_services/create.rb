@@ -56,8 +56,8 @@ module GridServices
       array :affinity do
         string
       end
-      array :log_opts do
-        string
+      hash :log_opts do
+        string :*
       end
       string :log_driver
     end
