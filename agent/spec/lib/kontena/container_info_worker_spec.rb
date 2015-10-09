@@ -52,7 +52,7 @@ describe Kontena::ContainerInfoWorker do
 
   describe '#publish_info' do
     it 'publishes event to queue' do
-      subject.publish_info(spy(:container))
+      subject.publish_info(spy(:container, json: {'Config' => {}}))
       expect(queue.length).to eq(1)
     end
 
