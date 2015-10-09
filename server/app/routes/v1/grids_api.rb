@@ -9,6 +9,7 @@ module V1
     include Auditor
 
     plugin :multi_route
+    plugin :streaming
 
     Dir[File.join(__dir__, '/grids/*.rb')].each{|f| require f}
 

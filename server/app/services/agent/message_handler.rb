@@ -36,7 +36,7 @@ module Agent
         when 'container:event'
           self.on_container_event(grid, data['data'])
         when 'container:log'
-          self.on_container_log(grid, data['data'])
+          self.on_container_log(grid, message['node_id'], data['data'])
         when 'container:stats'
           self.on_container_stat(grid, data['data'])
         else
@@ -108,8 +108,9 @@ module Agent
 
     ##
     # @param [Grid] grid
+    # @param [String] node_id
     # @param [Hash] data
-    def on_container_log(grid, data)
+    def on_container_log(grid, node_id, data)
       container = grid.containers.find_by(container_id: data['id'])
       if container
         if data['time']
@@ -119,6 +120,7 @@ module Agent
         end
         ContainerLog.with(safe: false).create(
             grid: grid,
+            host_node_id: node_id,
             grid_service: container.grid_service,
             container: container,
             created_at: created_at,

@@ -4,27 +4,51 @@ module Kontena::Cli::Grids
 
     option ["-f", "--follow"], :flag, "Follow (tail) logs", default: false
     option ["-s", "--search"], "SEARCH", "Search from logs"
-    option ["-c", "--container"], "CONTAINER", "Show only specified container logs"
+    option "--lines", "LINES", "Number of lines to show from the end of the logs"
+    option "--node", "NODE", "Filter by node name", multivalued: true
+    option "--service", "SERVICE", "Filter by service name", multivalued: true
+    option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
 
     def execute
       require_api_url
       token = require_token
-      last_id = nil
-      loop do
-        query_params = []
-        query_params << "from=#{last_id}" unless last_id.nil?
-        query_params << "search=#{search}" if search
-        query_params << "container=#{container}" if container
 
-        result = client(token).get("grids/#{current_grid}/container_logs?#{query_params.join('&')}")
-        result['logs'].each do |log|
+      query_params = {}
+      query_params[:nodes] = node_list.join(",") unless node_list.empty?
+      query_params[:services] = service_list.join(",") unless service_list.empty?
+      query_params[:containers] = container_list.join(",") unless container_list.empty?
+      query_params[:search] = search if search
+      query_params[:limit] = lines if lines
+
+
+      if follow?
+        query_params[:follow] = 1
+        stream_logs(token, query_params)
+      else
+        list_logs(token, query_params)
+      end
+    end
+
+    def list_logs(token, query_params)
+      result = client(token).get("grids/#{current_grid}/container_logs", query_params)
+      result['logs'].each do |log|
+        color = color_for_container(log['name'])
+        puts "#{log['name'].colorize(color)} | #{log['data']}"
+      end
+    end
+
+    def stream_logs(token, query_params)
+      streamer = lambda do |chunk, remaining_bytes, total_bytes|
+        log = JSON.parse(chunk)
+        if log
           color = color_for_container(log['name'])
           puts "#{log['name'].colorize(color)} | #{log['data']}"
-          last_id = log['id']
         end
-        break unless follow?
-        sleep(2)
       end
+
+      result = client(token).get_stream(
+        "grids/#{current_grid}/container_logs", streamer, query_params
+      )
     end
 
     def color_for_container(container_id)

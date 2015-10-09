@@ -7,6 +7,7 @@ class ContainerLog
   field :name, type: String
 
   belongs_to :grid
+  belongs_to :host_node
   belongs_to :grid_service
   belongs_to :container
 
