@@ -34,7 +34,8 @@ describe '/v1/services' do
       grid: david.grids.first,
       name: 'redis',
       image_name: 'redis:2.8',
-      stateful: true
+      stateful: true,
+      env: ['FOO=BAR']
     )
   end
 
@@ -221,5 +222,20 @@ describe '/v1/services' do
     end
   end
 
+  describe 'POST /:id/envs' do
+    it 'adds env variable' do
+      data = {env: 'BAR=BAZ'}
+      post "/v1/services/#{redis_service.to_path}/envs", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(redis_service.reload.env).to include('BAR=BAZ')
+    end
+  end
 
+  describe 'DELETE /:id/envs' do
+    it 'removes env variable' do
+      delete "/v1/services/#{redis_service.to_path}/envs/FOO", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(redis_service.reload.env).to eq([])
+    end
+  end
 end
