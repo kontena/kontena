@@ -39,6 +39,12 @@ module V1
         r.route 'service_stats'
       end
 
+      # /v1/services/:grid_name/:service_name/envs
+      r.on ':grid_name/:service_name/envs' do |grid_name, service_name|
+        @grid_service = load_grid_service(grid_name, service_name)
+        r.route 'service_envs'
+      end
+
       # /v1/services/:grid_name/:service_name
       r.on ':grid_name/:service_name' do |grid_name, service_name|
         @grid_service = load_grid_service(grid_name, service_name)
