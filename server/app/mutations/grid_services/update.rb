@@ -1,5 +1,9 @@
+require_relative 'common'
+
 module GridServices
   class Update < Mutations::Command
+    include Common
+
     required do
       model :current_user, class: User
       model :grid_service, class: GridService
@@ -37,6 +41,14 @@ module GridServices
           end
         end
       end
+      array :links do
+        hash do
+          required do
+            string :name
+            string :alias
+          end
+        end
+      end
       array :affinity do
         string
       end
@@ -44,6 +56,16 @@ module GridServices
         string :*
       end
       string :log_driver
+    end
+
+    def validate
+      if self.links
+        self.links.each do |link|
+          unless self.grid_service.grid.grid_services.find_by(name: link[:name])
+            add_error(:links, :not_found, "Service #{link[:name]} does not exist")
+          end
+        end
+      end
     end
 
     def execute
@@ -64,6 +86,9 @@ module GridServices
       attributes[:affinity] = self.affinity if self.affinity
       attributes[:log_driver] = self.log_driver if self.log_driver
       attributes[:log_opts] = self.log_opts if self.log_opts
+      if self.links
+        attributes[:grid_service_links] = build_grid_service_links(self.grid_service.grid, self.links)
+      end
 
       grid_service.attributes = attributes
       grid_service.save

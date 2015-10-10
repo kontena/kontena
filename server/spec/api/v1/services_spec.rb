@@ -20,6 +20,15 @@ describe '/v1/services' do
     AccessToken.create!(user: david, scopes: ['user'])
   end
 
+  let(:app_service) do
+    GridService.create!(
+      grid: david.grids.first,
+      name: 'app',
+      image_name: 'my/app:latest',
+      stateful: false
+    )
+  end
+
   let(:redis_service) do
     GridService.create!(
       grid: david.grids.first,
@@ -60,6 +69,46 @@ describe '/v1/services' do
       request_headers.delete('HTTP_AUTHORIZATION')
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(403)
+    end
+  end
+
+  describe 'PUT /:id' do
+    it 'updates service links' do
+      redis_service
+      data = {
+        links: [
+          {name: 'redis', alias: 'redis'}
+        ]
+      }
+      put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['links']).to include({
+        'alias' => 'redis', 'grid_service_id' => redis_service.to_path
+      })
+    end
+
+    it 'resets links if array is empty' do
+      app_service.grid_service_links << GridServiceLink.new(
+        linked_grid_service: redis_service,
+        alias: 'redis'
+      )
+      app_service.save!
+      data = {
+        links: []
+      }
+      put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['links']).to eq([])
+    end
+
+    it 'returns error when linked service does not exist' do
+      data = {
+        links: [
+          {name: 'foo', alias: 'redis'}
+        ]
+      }
+      put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(422)
     end
   end
 

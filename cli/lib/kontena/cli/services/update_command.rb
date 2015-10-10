@@ -10,6 +10,7 @@ module Kontena::Cli::Services
     option "--image", "IMAGE", "Docker image to use"
     option ["-p", "--ports"], "PORTS", "Publish a service's port to the host", multivalued: true
     option ["-e", "--env"], "ENV", "Set environment variables", multivalued: true
+    option ["-l", "--link"], "LINK", "Add link to another service in the form of name:alias", multivalued: true
     option ["-a", "--affinity"], "AFFINITY", "Set service affinity", multivalued: true
     option ["-c", "--cpu-shares"], "CPU_SHARES", "CPU shares (relative weight)"
     option ["-m", "--memory"], "MEMORY", "Memory limit (format: <number><optional unit>, where unit = b, k, m or g)"
@@ -38,6 +39,7 @@ module Kontena::Cli::Services
     def parse_service_data_from_options
       data = {}
       data[:ports] = parse_ports(ports_list) unless ports_list.empty?
+      data[:links] = parse_links(link_list) unless link_list.empty?
       data[:memory] = parse_memory(memory) if memory
       data[:memory_swap] = parse_memory(memory_swap) if memory_swap
       data[:cpu_shares] = cpu_shares if cpu_shares
