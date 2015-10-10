@@ -64,6 +64,7 @@ module Kontena::Cli::Apps
         end
       end
 
+      merge_external_links(options)
       merge_env_vars(options)
 
       if service_exists?(name)
@@ -112,6 +113,14 @@ module Kontena::Cli::Apps
       end
 
       options['environment'].uniq! {|s| s.split('=').first}
+    end
+
+    def merge_external_links(options)
+      if options['external_links']
+        options['links'] ||= []
+        options['links'] = options['links'] + options['external_links']
+        options.delete('external_links')
+      end
     end
 
     def read_env_file(path)
