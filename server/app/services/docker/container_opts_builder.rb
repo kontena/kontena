@@ -35,6 +35,10 @@ module Docker
       if bind_volumes.size > 0
         host_config['Binds'] = bind_volumes
       end
+      if grid_service.volumes_from.size > 0
+        i = container.name.match(/^.+-(\d+)$/)[1]
+        host_config['VolumesFrom'] = grid_service.volumes_from.map{|v| v % [i] }
+      end
       if grid_service.overlay_network? && grid_service.ports
         host_config['PortBindings'] = port_bindings(grid_service.ports)
       end
@@ -180,11 +184,9 @@ module Docker
       log_config = {}
       log_config['Type'] = grid_service.log_driver if grid_service.log_driver
       log_config['Config'] = {}
-      puts grid_service.log_opts
       grid_service.log_opts.each { |key, value|
         log_config['Config'][key.to_s] = value
       }
-      puts log_config
       log_config
     end
   end

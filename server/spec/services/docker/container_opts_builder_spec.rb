@@ -52,6 +52,12 @@ describe Docker::ContainerOptsBuilder do
       expect(opts['Hostname']).to eq('redis-1.kontena.local')
     end
 
+    it 'sets VolumesFrom' do
+      grid_service.volumes_from = ['foobar-%s', 'test-3']
+      opts = described_class.build_opts(grid_service, container)
+      expect(opts['HostConfig']['VolumesFrom']).to eq(['foobar-1', 'test-3'])
+    end
+
     it 'sets ExposedPorts & PortBindings' do
       grid_service.ports = [
         {
@@ -161,9 +167,7 @@ describe Docker::ContainerOptsBuilder do
       expect(opts['HostConfig']['LogConfig']['Config'].size).to eq(2)
       expect(opts['HostConfig']['LogConfig']['Config']['gelf-address']).to eq('udp://192.168.0.42:12201')
       expect(opts['HostConfig']['LogConfig']['Config']['gelf-tag']).to eq('foo')
-
     end
-
   end
 
   describe '.build_labels' do

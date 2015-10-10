@@ -27,7 +27,7 @@ module Scheduler
       def filter_candidates_by_volume(candidates, service, container_name)
         i = container_number(container_name)
         volumes = service.volumes_from.map{|v| v % [i] }
-        nodes.each do |node|
+        candidates.dup.each do |node|
           container_names = node.containers.map {|c| c.name}
           if !container_names.any?{|name| volumes.include?(name) }
             candidates.delete(node)
@@ -41,7 +41,7 @@ module Scheduler
       def filter_candidates_by_net(candidates, service, container_name)
         i = container_number(container_name)
         net = service.net % [i]
-        nodes.each do |node|
+        candidates.dup.each do |node|
           container_names = node.containers.map {|c| c.name}
           if !container_names.include?(net)
             candidates.delete(node)
