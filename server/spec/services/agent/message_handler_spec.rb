@@ -3,6 +3,7 @@ require_relative '../../spec_helper'
 describe Agent::MessageHandler do
 
   let(:grid) { Grid.create! }
+  let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
   let(:subject) { described_class.new(grid) }
 
   describe '#on_container_event' do
@@ -18,7 +19,7 @@ describe Agent::MessageHandler do
     it 'creates new container log entry if container exists' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
       expect {
-        subject.on_container_log(grid, {
+        subject.on_container_log(grid, node.id.to_s, {
           'id' => container.container_id,
           'data' => 'foo',
           'type' => 'stderr'
@@ -28,7 +29,7 @@ describe Agent::MessageHandler do
 
     it 'saves container.name to log' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
-      subject.on_container_log(grid, {
+      subject.on_container_log(grid, node.id.to_s, {
         'id' => container.container_id,
         'data' => 'foo',
         'type' => 'stderr'
@@ -38,7 +39,7 @@ describe Agent::MessageHandler do
 
     it 'does not create entry if container does not exist' do
       expect {
-        subject.on_container_log(grid, {
+        subject.on_container_log(grid, node.id.to_s, {
           'id' => 'does_not_exist',
           'data' => 'foo',
           'type' => 'stderr'

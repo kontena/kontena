@@ -50,6 +50,9 @@ module Kontena
     # @param [Docker::Container]
     def publish_info(container)
       data = container.json
+      labels = data['Config']['Labels'] || {}
+      return if labels['io.kontena.container.skip_logs']
+
       event = {
         event: 'container:info',
         data: {

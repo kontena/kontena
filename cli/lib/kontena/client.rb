@@ -24,14 +24,35 @@ module Kontena
     #
     # @param [String] path
     # @param [Hash,NilClass] params
+    # @param [Hash] headers
     # @return [Hash]
     def get(path, params = nil, headers = {})
-      response = http_client.get(path: request_uri(path), query: params, headers: request_headers(headers))
+      response = http_client.get(
+        path: request_uri(path),
+        query: params,
+        headers: request_headers(headers)
+      )
       if response.status == 200
         parse_response(response)
       else
         handle_error_response(response)
       end
+    end
+
+    # Get request
+    #
+    # @param [String] path
+    # @param [Lambda] response_block
+    # @param [Hash,NilClass] params
+    # @param [Hash] headers
+    def get_stream(path, response_block, params = nil, headers = {})
+      http_client.get(
+        read_timeout: 360,
+        path: request_uri(path),
+        query: params,
+        headers: request_headers(headers),
+        response_block: response_block
+      )
     end
 
     # Post request

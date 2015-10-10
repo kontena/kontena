@@ -69,6 +69,7 @@ class WebsocketBackend
       client = {
           ws: ws,
           id: node_id.to_s,
+          node_id: node.id,
           grid_id: grid.id,
           created_at: Time.now
       }
@@ -127,6 +128,7 @@ class WebsocketBackend
     if client
       @incoming_queue << {
           'grid_id' => client[:grid_id].to_s,
+          'node_id' => client[:node_id].to_s,
           'data' => data
       }
     end

@@ -7,10 +7,12 @@ class ContainerLog
   field :name, type: String
 
   belongs_to :grid
+  belongs_to :host_node
   belongs_to :grid_service
   belongs_to :container
 
   index({ grid_id: 1 })
+  index({ host_node: 1 })
   index({ grid_service_id: 1 })
   index({ container_id: 1 })
   index({ name: 1 })

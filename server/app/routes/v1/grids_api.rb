@@ -9,6 +9,7 @@ module V1
     include Auditor
 
     plugin :multi_route
+    plugin :streaming
 
     Dir[File.join(__dir__, '/grids/*.rb')].each{|f| require f}
 
@@ -51,6 +52,12 @@ module V1
       r.on ':name/external_registries' do |name|
         load_grid(name)
         r.route 'external_registries'
+      end
+
+      # /v1/grids/:name/container_logs
+      r.on ':name/container_logs' do |name|
+        load_grid(name)
+        r.route 'grid_container_logs'
       end
 
       r.post do
