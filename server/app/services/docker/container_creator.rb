@@ -31,7 +31,8 @@ module Docker
 
       if grid_service.stateful?
         volume_container = self.ensure_volume_container(container, docker_opts)
-        docker_opts['HostConfig']['VolumesFrom'] = [volume_container.container_id]
+        docker_opts['HostConfig']['VolumesFrom'] ||= []
+        docker_opts['HostConfig']['VolumesFrom'] += [volume_container.container_id]
       end
 
       resp = request_create_container(docker_opts)
