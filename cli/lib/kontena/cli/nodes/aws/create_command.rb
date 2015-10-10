@@ -2,7 +2,7 @@ module Kontena::Cli::Nodes::Aws
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
 
-    option "--name", "NAME", "Node name"
+    parameter "[NAME]", "Node name"
     option "--access-key", "ACCESS_KEY", "AWS access key ID", required: true
     option "--secret-key", "SECRET_KEY", "AWS secret key", required: true
     option "--region", "REGION", "EC2 Region", default: 'eu-west-1'
