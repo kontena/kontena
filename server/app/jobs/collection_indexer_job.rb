@@ -16,10 +16,6 @@ class CollectionIndexerJob
   end
 
   def index_collections
-    info 'CollectionIndexerJob: removing undefined indexes'
-    Mongoid::Tasks::Database.remove_undefined_indexes
-    info 'CollectionIndexerJob: removing undefined indexes finished'
-
     info 'CollectionIndexerJob: creating indexes'
     Mongoid::Tasks::Database.create_indexes
     info 'CollectionIndexerJob: creating indexes finished'
