@@ -1,5 +1,9 @@
+require_relative 'common'
+
 module GridServices
   class Create < Mutations::Command
+    include Common
+
     required do
       model :current_user, class: User
       model :grid, class: Grid
@@ -66,6 +70,13 @@ module GridServices
       if self.stateful && self.volumes_from && self.volumes_from.size > 0
         add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
       end
+      if self.links
+        self.links.each do |link|
+          unless self.grid.grid_services.find_by(name: link[:name])
+            add_error(:links, :not_found, "Service #{link[:name]} does not exist")
+          end
+        end
+      end
     end
 
     def execute
@@ -73,27 +84,10 @@ module GridServices
       attributes.delete(:current_user)
       attributes[:image_name] = attributes.delete(:image)
       attributes.delete(:links)
-      attributes[:grid_service_links] = build_grid_service_links(links)
-      GridService.create!(attributes)
-    end
-
-    ##
-    # @param [Array] links
-    # @return [Array]
-    def build_grid_service_links(links)
-      grid_service_links = []
-      if self.links_present?
-        self.links.each do |link|
-          linked_service = GridService.find_by(name: link[:name])
-          if linked_service && self.current_user.grid_ids.include?(linked_service.grid_id)
-            grid_service_links << GridServiceLink.new(
-                linked_grid_service: linked_service,
-                alias: link[:alias]
-            )
-          end
-        end
+      if self.links
+        attributes[:grid_service_links] = build_grid_service_links(self.grid, self.links)
       end
-      grid_service_links
+      GridService.create!(attributes)
     end
   end
 end
