@@ -5,6 +5,7 @@ module Kontena
     include Kontena::Logging
 
     LOG_NAME = 'StatsWorker'
+    INTERVAL = 60
 
     attr_reader :url, :queue
 
@@ -21,7 +22,7 @@ module Kontena
         sleep 1 until cadvisor_running?
         logger.info(LOG_NAME) { 'cadvisor is running, starting stats loop' }
         loop do
-          sleep 10
+          sleep INTERVAL
           logger.debug(LOG_NAME) { 'fetching stats' }
           begin
             data = fetch_stats
