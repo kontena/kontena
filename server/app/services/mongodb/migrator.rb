@@ -53,11 +53,11 @@ module Mongodb
         migrations << MigrationProxy.new(file, name.camelize, version)
       end
 
-      migrations
+      migrations.sort_by(&:version)
     end
 
     def migrate
-      with_dlock('container_indexer_job', 0) do
+      with_dlock('mongodb_migrate', 0) do
         migrate_without_lock
       end
     end
