@@ -3,10 +3,10 @@ set -e
 
 /usr/bin/docker pull kontena/server:VERSION
 /usr/bin/docker pull kontena/haproxy:latest
-/usr/bin/docker pull mongo:2.8
+/usr/bin/docker pull mongo:3.0
 
 /usr/bin/docker inspect kontena-server-mongo-data > /dev/null || \
-  /usr/bin/docker create --name kontena-server-mongo-data mongo:2.8
+  /usr/bin/docker create --name kontena-server-mongo-data mongo:3.0
 
 start kontena-server-mongo || true
 start kontena-server-api || true
