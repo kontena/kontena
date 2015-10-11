@@ -57,8 +57,7 @@ GEM
       activesupport
     optionable (0.2.0)
     origin (2.1.1)
-    puma (2.11.1)
-      rack (>= 1.1, < 2.0)
+    puma (2.14.0)
     rack (1.5.5)
     rack-test (0.6.2)
       rack (>= 1.0)
