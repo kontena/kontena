@@ -37,6 +37,7 @@ module Kontena
         rescue Docker::Error::NotFoundError
 
         rescue Excon::Errors::SocketError => exc
+          @dns_client = nil
           retries += 1
           if retries < 5
             sleep 0.1
@@ -54,6 +55,7 @@ module Kontena
         rescue Docker::Error::NotFoundError
 
         rescue Excon::Errors::SocketError => exc
+          @dns_client = nil
           retries += 1
           if retries < 5
             sleep 0.1
