@@ -10,6 +10,7 @@
 - Vagrant master provision
 - etcd helper commands
 - multi-master improvements
+- grid wide container logs
 - Weave 1.1.1
 - cAdvisor 0.18.0
 - service affinity
