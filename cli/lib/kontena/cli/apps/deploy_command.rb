@@ -20,11 +20,11 @@ module Kontena::Cli::Apps
       require_api_url
       require_token
       require_config_file(filename)
-
+      dir = Dir.getwd
       @deploy_queue = []
       @service_prefix = project_name || current_dir
-      Dir.chdir(File.dirname(filename))
       @services = load_services(filename, service_list, service_prefix)
+      Dir.chdir(dir)
       process_docker_images(services) if !no_build? && dockerfile_exist?
       create_or_update_services(services)
       deploy_services(deploy_queue)

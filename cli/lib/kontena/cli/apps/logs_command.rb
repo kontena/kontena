@@ -19,7 +19,6 @@ module Kontena::Cli::Apps
       @service_prefix = project_name || current_dir
       @services = load_services(filename, service_list, service_prefix)
       if services.size > 0
-        Dir.chdir(File.dirname(filename))
         show_logs(services)
       elsif !service_list.empty?
         puts "No such service: #{service_list.join(', ')}".colorize(:red)

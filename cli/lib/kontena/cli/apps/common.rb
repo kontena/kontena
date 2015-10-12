@@ -33,7 +33,8 @@ module Kontena::Cli::Apps
     end
 
     def parse_services(file, name = nil, prefix='')
-      services = YAML.load(File.read(file) % {project: prefix})
+      services = YAML.load(File.read(File.expand_path(file)) % {project: prefix})
+      Dir.chdir(File.dirname(File.expand_path(file)))
       services.each do |name, options|
         normalize_env_vars(options)
         if options.has_key?('extends')

@@ -105,8 +105,8 @@ yml
       before(:each) do
         allow(subject).to receive(:settings).and_return(settings)
         allow(File).to receive(:exists?).and_return(true)
-        allow(File).to receive(:read).with('kontena.yml').and_return(kontena_yml)
-        allow(File).to receive(:read).with('docker-compose.yml').and_return(docker_compose_yml)
+        allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
+        allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose.yml").and_return(docker_compose_yml)
         allow(subject).to receive(:get_service).and_raise(Kontena::Errors::StandardError.new(404, 'Not Found'))
         allow(subject).to receive(:create_service).and_return({'id' => 'cli/kontena-test-mysql', 'name' => 'kontena-test-mysql'},{'id' => 'cli/kontena-test-wordpress', 'name' => 'kontena-test-wordpress'})
         allow(subject).to receive(:current_grid).and_return('1')
@@ -115,17 +115,18 @@ yml
 
       it 'reads ./kontena.yml file by default' do
         allow(subject).to receive(:settings).and_return(settings)
-        expect(File).to receive(:read).with('kontena.yml').and_return(kontena_yml)
+        expect(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
         subject.run([])
       end
 
       it 'reads given yml file' do
-        expect(File).to receive(:read).with('custom.yml').and_return(kontena_yml)
+        expect(File).to receive(:read).with("#{Dir.getwd}/custom.yml").and_return(kontena_yml)
         subject.run(["--file", "custom.yml"])
       end
 
       it 'uses current directory as service name prefix by default' do
         current_dir = '/kontena/tests/stacks'
+        allow(Dir).to receive(:chdir).and_return(true)
         allow(Dir).to receive(:getwd).and_return(current_dir)
         expect(File).to receive(:basename).with(current_dir).and_return('stacks')
         subject.run([])
