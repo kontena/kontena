@@ -122,6 +122,15 @@ db:
   image: mysql:5.6
 ```
 
+#### external_links
+Link to services in the same grid outside application scope. `external_links` follow semantics similar to links.
+
+```
+external_links:
+  - loadbalancer 
+  - common-redis:redis   
+```
+
 #### instances
 
 Number of containers to run for this service (default: 1). 

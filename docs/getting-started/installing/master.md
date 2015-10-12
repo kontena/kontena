@@ -1,10 +1,90 @@
 ---
-title: Master (production)
-toc_order: 2
+title: Installing Kontena Master
+toc_order: 1
 ---
 
-# Installing Kontena Master for Production
+# Installing Kontena Master
 
+## Installing with Kontena CLI
+
+Kontena CLI may be used to provision Kontena Master based on [CoreOS](https://coreos.com/using-coreos/), fully configured and ready for action! At the moment, you can provision Kontena Master to following platforms:
+
+* Amazon AWS
+* Microsoft Azure
+* DigitalOcean
+* Vagrant (local environment)
+
+We are adding support for other platforms gradually based on your requests. If you'd like to see support for the platform you are using, please [post your request](https://github.com/kontena/kontena/issues) as an issue to our GitHub repository.
+
+### Amazon AWS
+
+```
+Usage:
+    kontena master aws create [OPTIONS]
+
+Options:
+    --access-key ACCESS_KEY       AWS access key ID
+    --secret-key SECRET_KEY       AWS secret key
+    --region REGION               EC2 Region (default: "eu-west-1")
+    --zone ZONE                   EC2 Availability Zone (default: "a")
+    --vpc-id VPC ID               Virtual Private Cloud (VPC) ID
+    --subnet-id SUBNET ID         VPC option to specify subnet to launch instance into
+    --key-pair KEY_PAIR           EC2 Key Pair
+    --type SIZE                   Instance type (default: "t2.small")
+    --storage STORAGE             Storage size (GiB) (default: "30")
+    --version VERSION             Define installed Kontena version (default: "latest")
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+```
+
+### Microsoft Azure
+
+```
+Usage:
+    kontena master azure create [OPTIONS]
+
+Options:
+    --subscription-id SUBSCRIPTION ID Azure subscription id
+    --subscription-cert CERTIFICATE Path to Azure management certificate
+    --size SIZE                   SIZE (default: "Small")
+    --network NETWORK             Virtual Network name
+    --subnet SUBNET               Subnet name
+    --ssh-key SSH KEY             SSH private key file
+    --password PASSWORD           Password
+    --location LOCATION           Location (default: "West Europe")
+    --ssl-cert SSL CERT           SSL certificate file
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+    --version VERSION             Define installed Kontena version (default: "latest")
+```
+
+### Digital Ocean
+
+```
+Usage:
+    kontena master digitalocean create [OPTIONS]
+
+Options:
+    --token TOKEN                 DigitalOcean API token
+    --ssh-key SSH_KEY             Path to ssh public key
+    --ssl-cert SSL CERT           SSL certificate file
+    --size SIZE                   Droplet size (default: "1gb")
+    --region REGION               Region (default: "ams2")
+    --version VERSION             Define installed Kontena version (default: "latest")
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+```
+
+### Vagrant
+
+```
+Usage:
+    kontena master vagrant create [OPTIONS]
+
+Options:
+    --memory MEMORY               How much memory node has (default: "512")
+    --version VERSION             Define installed Kontena version (default: "latest")
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+```
+
+## Manual Install
 
 ### CoreOS
 

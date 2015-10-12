@@ -1,6 +1,6 @@
 ---
 title: Deploy
-toc_order: 6
+toc_order: 7
 ---
 
 ## Deployment strategies
