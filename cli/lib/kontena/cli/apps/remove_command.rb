@@ -19,9 +19,9 @@ module Kontena::Cli::Apps
       require_config_file(filename)
 
       @service_prefix = project_name || current_dir
+      #Dir.chdir(File.dirname(filename))
       @services = load_services(filename, service_list, service_prefix)
       if services.size > 0
-        Dir.chdir(File.dirname(filename))
         remove_services(services)
       elsif !service_list.empty?
         puts "No such service: #{service_list.join(', ')}".colorize(:red)

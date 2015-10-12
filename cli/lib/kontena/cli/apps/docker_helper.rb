@@ -1,9 +1,9 @@
 module Kontena::Cli::Apps
   module DockerHelper
 
-    def process_docker_images(services)
+    def process_docker_images(services, force_build = false)
       services.each do |name, service|
-        if service['build'] && !image_exist?(service['image'])
+        if service['build'] && (!image_exist?(service['image']) || force_build)
           abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
           puts "Building image #{service['image'].colorize(:cyan)}"
           build_docker_image(service['image'], service['build'])
