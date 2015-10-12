@@ -5,6 +5,7 @@ Dotenv.load
 
 VERSION = File.read('./VERSION').strip
 UBUNTU_IMAGE = 'kontena-ubuntu-build'
+UBUNTU_REPO = ENV['UBUNTU_REPO'] || 'kontena'
 PKG_REV = ENV['PKG_REV'] || '1'
 
 namespace :release do
@@ -98,13 +99,13 @@ namespace :release do
 
   task :push_ubuntu_server do
     Dir.chdir('server') do
-      sh("rake release:push_ubuntu REV=#{PKG_REV}")
+      sh("rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
     end
   end
 
   task :push_ubuntu_agent do
     Dir.chdir('agent') do
-      sh("rake release:push_ubuntu REV=#{PKG_REV}")
+      sh("rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
     end
   end
 end

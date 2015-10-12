@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.9.0 (2015-10-12)
+
+- Heroku style deployment model (optional)
+- integrated loadbalancing based on haproxy/confd
+- AWS master/node provision
+- Azure master/node provision
+- DigitalOcean master provision
+- Vagrant master provision
+- etcd helper commands
+- multi-master improvements
+- grid wide container logs
+- Weave 1.1.1
+- cAdvisor 0.18.0
+- service affinity
+- support for env dictionaries in kontena.yml
+- support for service network mode option
+- support for service log options
+- support for picking cli credentials from env variables
+- support for auto-updating nodes (node/agent version follows master)
+- service add-env/remove-env cli commands
+- container inspect cli command
+- allow to update service links
+- improved db indexing/migration logic
+
 ## 0.8.4 (2015-09-21)
 
 - handle agent connection errors on boot
