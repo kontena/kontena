@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.0 (TBD)
+## 0.9.0 (2015-10-12)
 
 - Heroku style deployment model (optional)
 - integrated loadbalancing based on haproxy/confd
