@@ -3,10 +3,10 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
 
     parameter "NODE_ID", "Node id"
-    option ["-i", "--identity-file"], "IDENTITY_FILE", "Ssh private key to use"
+    option ["-i", "--identity-file"], "IDENTITY_FILE", "Path to ssh private key"
     option ["-u", "--user"], "USER", "Login as a user", default: "core"
-    option "--private-ip", :flag, "Connect to node using private ip"
-    option "--internal-ip", :flag, "Connect to node through VPN"
+    option "--private-ip", :flag, "Connect to node's private IP address"
+    option "--internal-ip", :flag, "Connect to node's internal IP address (requires VPN connection)"
 
     def execute
       require_api_url
