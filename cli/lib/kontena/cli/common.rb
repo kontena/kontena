@@ -1,4 +1,5 @@
 require 'colorize'
+require 'uri'
 
 module Kontena
   module Cli
@@ -52,7 +53,18 @@ module Kontena
         unless url
           raise ArgumentError.new("It seem's that you are not logged into Kontena master, please login with: kontena login")
         end
+        ensure_custom_ssl_ca(url)
         url
+      end
+
+      def ensure_custom_ssl_ca(url)
+        return if Excon.defaults[:ssl_ca_file]
+
+        uri = URI::parse(url)
+        cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
+        if File.exist?(cert_file)
+          Excon.defaults[:ssl_ca_file] = cert_file
+        end
       end
 
       def current_grid=(grid)
