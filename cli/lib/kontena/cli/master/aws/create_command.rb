@@ -4,11 +4,12 @@ module Kontena::Cli::Master::Aws
 
     option "--access-key", "ACCESS_KEY", "AWS access key ID", required: true
     option "--secret-key", "SECRET_KEY", "AWS secret key", required: true
+    option "--key-pair", "KEY_PAIR", "EC2 Key Pair", required: true
+    option "--ssl-cert", "SSL CERT", "SSL certificate file"
     option "--region", "REGION", "EC2 Region", default: 'eu-west-1'
     option "--zone", "ZONE", "EC2 Availability Zone", default: 'a'
     option "--vpc-id", "VPC ID", "Virtual Private Cloud (VPC) ID"
     option "--subnet-id", "SUBNET ID", "VPC option to specify subnet to launch instance into"
-    option "--key-pair", "KEY_PAIR", "EC2 Key Pair", required: true
     option "--type", "SIZE", "Instance type", default: 't2.small'
     option "--storage", "STORAGE", "Storage size (GiB)", default: '30'
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
@@ -23,6 +24,7 @@ module Kontena::Cli::Master::Aws
           vpc: vpc_id,
           zone: zone,
           subnet: subnet_id,
+          ssl_cert: ssl_cert,
           storage: storage,
           version: version,
           key_pair: key_pair,
