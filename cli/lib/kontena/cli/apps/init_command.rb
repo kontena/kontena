@@ -148,18 +148,27 @@ module Kontena::Cli::Apps
       create_yml(docker_compose, docker_compose_file)
     end
 
-    def generate_kontena_services(docker_compose = nil)
+    def generate_kontena_services(docker_compose_file = nil)
       services = {}
-      if docker_compose && File.exist?(docker_compose)
+      if docker_compose_file && File.exist?(docker_compose_file)
         # extend services from docker-compose.yml
-        compose_services = YAML.load(File.read(docker_compose))
+        compose_services = YAML.load(File.read(docker_compose_file))
         compose_services.each do |name, options|
+          # if we have web process, let's create loadbalancer service first
+          services['loadbalancer'] = loadbalancer if name == 'web'
+
           services[name] = {'extends' => { 'file' => 'docker-compose.yml', 'service' => name }}
           if options.has_key?('build')
             image = image_name || "registry.kontena.local/#{File.basename(Dir.getwd)}:latest"
             services[name]['image'] = image
           end
 
+          # if we have web process, configure loadbalancer options
+          if name == 'web'
+            services[name]['links'] = options['links'] || []
+            link_to_loadbalancer(services[name])
+          end
+          
           # we have to generate Kontena urls to env vars for Heroku addons
           # redis://openredis:6379 -> redis://project-name-openredis:6379
           if options['links']
@@ -173,10 +182,27 @@ module Kontena::Cli::Apps
           end
         end
       else
-        # no docker-compose.yml found, just create dummy service with image name
-        services = {'web' => { 'image' => "registry.kontena.local/#{File.basename(Dir.getwd)}:latest" }}
+        # no docker-compose.yml found, just create dummy service with image name and link it to load balancer
+        services = {'web' => { 'image' => "registry.kontena.local/#{File.basename(Dir.getwd)}:latest", 'links' => [], 'environment' => ['PORT=5000'] }}
+        services['loadbalancer'] = loadbalancer
+        link_to_loadbalancer(services['web'])
       end
       services
+    end
+
+    def loadbalancer
+      {
+          'image' => 'kontena/lb:latest',
+          'ports' => ['80:80']
+      }
+    end
+
+    def link_to_loadbalancer(service)
+      service['environment'] ||= []
+      service['environment'] << 'KONTENA_LB_MODE=http'
+      service['environment'] << 'KONTENA_LB_BALANCE=roundrobin'
+      service['environment'] << 'KONTENA_LB_INTERNAL_PORT=5000'
+      service['links'] << 'loadbalancer'
     end
 
     def create_yml(services, file='kontena.yml')
