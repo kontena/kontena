@@ -168,7 +168,12 @@ module Kontena::Cli::Apps
             services[name]['links'] = options['links'] || []
             link_to_loadbalancer(services[name])
           end
-          
+
+          # set Heroku addon service as stateful by default
+          if valid_addons.has_key?(name)
+            services[name]['stateful'] = true
+          end
+
           # we have to generate Kontena urls to env vars for Heroku addons
           # redis://openredis:6379 -> redis://project-name-openredis:6379
           if options['links']
