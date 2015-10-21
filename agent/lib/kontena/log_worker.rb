@@ -4,20 +4,17 @@ module Kontena
   class LogWorker
     include Kontena::Logging
 
-    LOG_NAME = 'LogWorker'
-
     attr_reader :queue, :streaming_threads
 
     ##
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
-      logger.info(LOG_NAME) { 'initialized' }
       @streaming_threads = {}
-
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event) rescue nil
       end
+      info 'initialized'
     end
 
     ##
@@ -46,7 +43,7 @@ module Kontena
           tail = 0
         end
         begin
-          logger.info(LOG_NAME) { "starting to stream logs for container: #{container.id}" }
+          info "starting to stream logs for container: #{container.id}"
           stream_opts = {
             'stdout' => true,
             'stderr' => true,
@@ -58,14 +55,14 @@ module Kontena
             self.on_message(container.id, stream, chunk)
           }
         rescue Excon::Errors::SocketError
-          logger.error(LOG_NAME) { "log socket error: #{container.id}" }
+          error "log socket error: #{container.id}"
           retry
         rescue Docker::Error::TimeoutError
-          logger.error(LOG_NAME) { "log stream timeout: #{container.id}" }
+          error "log stream timeout: #{container.id}"
           retry
         rescue => exc
-          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}"}
-          logger.debug(LOG_NAME) { "#{exc.backtrace.join("\n")}"}
+          error "#{exc.class.name}: #{exc.message}"
+          debug "#{exc.backtrace.join("\n")}"
         end
       }
     end
@@ -91,7 +88,7 @@ module Kontena
     def stop_streaming_container_logs(container_id)
       thread = @streaming_threads[container_id]
       if thread
-        logger.info(LOG_NAME) { "stopped log streaming for container: #{container_id}" }
+        info "stopped log streaming for container: #{container_id}"
         thread.kill
         thread.join
         @streaming_threads.delete(container_id)

@@ -6,14 +6,13 @@ module Kontena
   class EventWorker
     include Kontena::Logging
 
-    LOG_NAME = 'EventWorker'
-
     attr_reader :queue
 
     ##
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
+      info 'initialized'
     end
 
     ##
@@ -26,20 +25,20 @@ module Kontena
     end
 
     def stream_events
-      logger.info('EventWorker') { 'started to stream docker events' }
+      info 'started to stream docker events'
       begin
         Docker::Event.stream do |event|
           Celluloid::Future.new{ self.publish_event(event) }
         end
       rescue Docker::Error::TimeoutError
-        logger.error(LOG_NAME){ 'Connection timeout.. retrying' }
+        error 'connection timeout.. retrying'
         retry
       rescue Excon::Errors::SocketError => exc
-        logger.error(LOG_NAME){ 'Connection refused.. retrying' }
+        error 'connection refused.. retrying'
         sleep 0.01
         retry
       rescue => exc
-        logger.error(LOG_NAME){ "Unknown error: #{exc.message}" }
+        error "#{exc.class.name}: #{exc.message}"
         sleep 0.01
         retry
       end
@@ -60,7 +59,7 @@ module Kontena
       self.queue << data
       Pubsub.publish('container:event', event)
     rescue => exc
-      logger.error(LOG_NAME) { "publish_event: #{exc.message}" }
+      error "#{exc.class.name}: #{exc.message}"
     end
   end
 end

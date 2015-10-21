@@ -6,10 +6,9 @@ module Kontena
 
     CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.18.0'
     CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'google/cadvisor'
-    LOG_NAME = 'CadvisorLauncher'
 
     def initialize
-      logger.info(LOG_NAME) { 'initialized' }
+      info 'initialized'
     end
 
     def start!
@@ -17,8 +16,8 @@ module Kontena
         begin
           start_cadvisor
         rescue => exc
-          puts exc.message
-          puts exc.backtrace.join("\n")
+          error exc.message
+          error exc.backtrace.join("\n")
         end
       }
     end
@@ -33,7 +32,7 @@ module Kontena
     # @param [String] image
     def pull_image(image)
       return if Docker::Image.exist?(image)
-      logger.info(LOG_NAME) { "pulling image #{image}" }
+      info "pulling image #{image}"
       Docker::Image.create('fromImage' => image)
       sleep 1 until Docker::Image.exist?(image)
     end

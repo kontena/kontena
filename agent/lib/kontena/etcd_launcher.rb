@@ -9,10 +9,9 @@ module Kontena
 
     ETCD_VERSION = ENV['ETCD_VERSION'] || '2.1.2'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
-    LOG_NAME = 'EtcdLauncher'
 
     def initialize
-      logger.info(LOG_NAME) { 'initialized' }
+      info 'initialized'
     end
 
     def start!
@@ -20,8 +19,8 @@ module Kontena
         begin
           start_etcd
         rescue => exc
-          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-          logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+          error "#{exc.class.name}: #{exc.message}"
+          debug exc.backtrace.join("\n")
         end
       }
     end
@@ -62,8 +61,8 @@ module Kontena
       begin
         info = self.node_info
       rescue Excon::Errors::Error => exc
-        logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-        logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+        error "#{exc.class.name}: #{exc.message}"
+        debug exc.backtrace.join("\n")
         sleep 1
         retry
       end
@@ -92,10 +91,10 @@ module Kontena
           '--initial-cluster', initial_cluster(cluster_size).join(','),
           '--initial-cluster-state', 'new'
         ]
-        logger.info(LOG_NAME) { "starting etcd service as a cluster member" }
+        info "starting etcd service as a cluster member"
       else
         cmd = cmd + ['--proxy', 'on']
-        logger.info(LOG_NAME) { "starting etcd service as a proxy" }
+        info "starting etcd service as a proxy"
       end
 
       container = Docker::Container.create(
@@ -111,7 +110,7 @@ module Kontena
       )
       container.start
       Pubsub.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
-      logger.info(LOG_NAME) { "started etcd service" }
+      info "started etcd service"
     end
 
     # @param [Integer] cluster_size

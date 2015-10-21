@@ -5,19 +5,17 @@ module Kontena
   class QueueWorker
     include Kontena::Logging
 
-    LOG_NAME = 'QueueWorker'
-
     attr_reader :queue, :client
 
     def initialize
       @queue = Queue.new
-      logger.info(LOG_NAME) { 'initialized' }
       Pubsub.subscribe('websocket:connect') do |client|
         self.client = client
       end
       Pubsub.subscribe('websocket:connected') do |event|
         self.register_client_events
       end
+      info 'initialized'
     end
 
     ##
@@ -39,7 +37,7 @@ module Kontena
     def start_queue_processing
       return unless @queue_thread.nil?
 
-      logger.info(LOG_NAME) { 'started processing' }
+      info 'started processing'
       @queue_thread = Thread.new {
         loop do
           begin
@@ -57,7 +55,7 @@ module Kontena
     #
     def stop_queue_processing
       if @queue_thread
-        logger.info(LOG_NAME) { 'stopped processing' }
+        info 'stopped processing'
         @queue_thread.kill
         @queue_thread.join
         @queue_thread = nil
@@ -67,9 +65,8 @@ module Kontena
     ##
     # @param [Hash] event
     def on_queue_push(event)
-      logger.debug(LOG_NAME) { "queue push: #{event}" }
-      if @queue.length > 1000
-        logger.debug(LOG_NAME) { 'queue is over limit, popping item' }
+      if @queue.length > 10_000
+        debug 'queue is over limit, popping item'
         @queue.pop
       end
       @queue << event
