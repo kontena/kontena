@@ -12,7 +12,6 @@ describe GridServices::Deploy do
     grid.host_nodes << host_node
     grid
   }
-  let(:deploy_actor) { spy(:deploy_actor) }
   let(:deployer) { spy(:deployer, async: deploy_actor, can_deploy?: true) }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
   let(:subject) { described_class.new(current_user: user, grid_service: redis_service, strategy: 'ha')}
@@ -26,7 +25,7 @@ describe GridServices::Deploy do
     it 'sends deploy call to deployer' do
       # since validate method is called in constructor we need to stub deployer method globally before initialization
       allow_any_instance_of(described_class).to receive(:deployer).and_return(deployer)
-      expect(deploy_actor).to receive(:deploy).once
+      expect(deployer).to receive(:deploy_async).once
       subject.run
     end
   end
