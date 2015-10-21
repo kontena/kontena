@@ -12,7 +12,7 @@ describe GridServices::Deploy do
     grid.host_nodes << host_node
     grid
   }
-  let(:deployer) { spy(:deployer, async: deploy_actor, can_deploy?: true) }
+  let(:deployer) { spy(:deployer, can_deploy?: true) }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
   let(:subject) { described_class.new(current_user: user, grid_service: redis_service, strategy: 'ha')}
 
