@@ -1,6 +1,8 @@
+require_relative 'logging'
+
 class MongoPubsub
   include Celluloid
-  include Celluloid::Logger
+  include Logging
 
   class Subscription
     include Celluloid
@@ -109,7 +111,7 @@ class MongoPubsub
       begin
         latest = self.collection.find.sort(:$natural => -1).limit(1).first
         query = {_id: {:$gt => latest[:_id]}}
-        info "#{self.class.name}: starting to tail collection"
+        info "starting to tail collection"
         self.collection.find(query).sort(:$natural => 1).tailable.each do |item|
           channel = item['channel']
           data = item['data'].freeze
@@ -128,7 +130,7 @@ class MongoPubsub
           end
         end
       rescue => exc
-        error "#{self.class.name}: error while tailing: #{exc.message}"
+        error "error while tailing: #{exc.message}"
         error exc.backtrace
         sleep 0.1
         retry

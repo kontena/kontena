@@ -1,7 +1,9 @@
+require 'celluloid'
+require_relative '../services/logging'
 
 class NodeCleanupJob
   include Celluloid
-  include Celluloid::Logger
+  include Logging
   include DistributedLocks
 
   def initialize
@@ -9,9 +11,12 @@ class NodeCleanupJob
   end
 
   def perform
+    info 'starting to cleanup stale connections'
     every(1.minute.to_i) do
       cleanup_stale_connections
     end
+
+    info 'starting to cleanup stale nodes'
     every(1.hour.to_i) do
       cleanup_stale_nodes
     end
@@ -19,7 +24,6 @@ class NodeCleanupJob
 
   def cleanup_stale_connections
     with_dlock('node_cleanup_job:stale_connections', 0) do
-      info 'NodeCleanupJob: starting to cleanup stale connections'
       HostNode.where(:last_seen_at.lt => 1.minute.ago).each do |node|
         node.set(connected: false)
       end
@@ -28,7 +32,6 @@ class NodeCleanupJob
 
   def cleanup_stale_nodes
     with_dlock('node_cleanup_job:stale_nodes', 0) do
-      info 'NodeCleanupJob: starting to cleanup stale nodes'
       HostNode.where(:last_seen_at.lt => 1.hour.ago).each do |node|
         unless node.connected?
           node.destroy

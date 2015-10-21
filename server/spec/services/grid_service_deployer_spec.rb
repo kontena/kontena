@@ -1,14 +1,11 @@
 require_relative '../spec_helper'
 
 describe GridServiceDeployer do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
   let(:node) { HostNode.create!(node_id: SecureRandom.uuid) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
-  let(:subject) { described_class.new(strategy, grid_service, []).wrapped_object }
+  let(:subject) { described_class.new(strategy, grid_service, []) }
   let(:ubuntu_trusty) { Image.create!(name:'ubuntu-trusty', image_id: '86ce37374f40e95cfe8af7327c34ea9919ef216ea965377565fcfad3c378a2c3', exposed_ports: [{'port' => '3306', 'protocol' => 'tcp'}]) }
 
   describe '#deploy_service_container' do

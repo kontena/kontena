@@ -1,9 +1,6 @@
 require_relative '../spec_helper'
 
 describe LoadBalancerConfigurer do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
   let(:node) { HostNode.create!(node_id: SecureRandom.uuid) }
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:client) { spy(:client) }
@@ -18,7 +15,7 @@ describe LoadBalancerConfigurer do
     )
   }
   let(:load_balancer) { GridService.create!(image_name: 'kontena/lb:latest', name: 'lb', grid: grid) }
-  let(:subject) { described_class.new(client, load_balancer, balanced_service).wrapped_object }
+  let(:subject) { described_class.new(client, load_balancer, balanced_service) }
 
   describe '#set' do
     it 'sets value to key' do

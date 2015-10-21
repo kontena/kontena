@@ -1,7 +1,9 @@
+require 'celluloid'
+require_relative '../services/logging'
 
 class DistributedLockCleanupJob
   include Celluloid
-  include Celluloid::Logger
+  include Logging
   include DistributedLocks
 
   def initialize
@@ -9,8 +11,8 @@ class DistributedLockCleanupJob
   end
 
   def perform
+    info 'starting to cleanup stale locks'
     loop do
-      info 'DistributedLockCleanupJob: starting to cleanup stale locks'
       DistributedLock.where(created_at: {:$lt => 5.minutes.ago}).destroy
       sleep 5.minutes.to_i
     end

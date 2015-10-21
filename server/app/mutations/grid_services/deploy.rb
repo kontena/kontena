@@ -42,7 +42,7 @@ module GridServices
     end
 
     def execute
-      deployer.async.deploy(creds_for_registry)
+      deployer.deploy_async(creds_for_registry)
 
       self.grid_service
     end
