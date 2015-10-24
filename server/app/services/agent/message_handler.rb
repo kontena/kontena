@@ -62,7 +62,7 @@ module Agent
     def on_container_info(grid, data)
       info = data['container']
       labels = info['Config']['Labels'] || {}
-      container_id = data['container']['Id']
+      container_id = info['Id']
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
         container.attributes_from_docker(info)
