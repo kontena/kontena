@@ -1,1 +1,1 @@
-Celluloid.logger.level = Logger::INFO if ENV['RACK_ENV'] == 'production'
+Celluloid.logger.level = Logger::ERROR if ENV['RACK_ENV'] == 'production'

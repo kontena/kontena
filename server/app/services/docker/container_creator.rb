@@ -17,8 +17,9 @@ module Docker
     ##
     # @return [Container]
     def create_container(name, deploy_rev)
-      container = Container.create(
+      container = Container.create!(
         grid: grid_service.grid,
+        grid_service: grid_service,
         host_node: self.host_node,
         name: name,
         image: self.grid_service.image,
@@ -32,11 +33,11 @@ module Docker
       if grid_service.stateful?
         volume_container = self.ensure_volume_container(container, docker_opts)
         docker_opts['HostConfig']['VolumesFrom'] ||= []
-        docker_opts['HostConfig']['VolumesFrom'] += [volume_container.container_id]
+        docker_opts['HostConfig']['VolumesFrom'] += [volume_container.name]
       end
 
-      resp = request_create_container(docker_opts)
-      sync_container_with_docker_response(container, resp)
+      request_create_container(docker_opts)
+      sleep 0.2 until container_created?(container)
       container
     rescue => exc
       container.destroy if container
@@ -52,15 +53,6 @@ module Docker
 
     ##
     # @param [Container] container
-    # @param [Hash] resp
-    def sync_container_with_docker_response(container, resp)
-      container.attributes_from_docker(resp)
-      container.grid_service = self.grid_service
-      container.save
-    end
-
-    ##
-    # @param [Container] container
     # @param [Hash] docker_opts
     # @return [Container]
     def ensure_volume_container(container, docker_opts)
@@ -69,16 +61,15 @@ module Docker
       )
       volume_container = grid_service.volume_by_name(volume_opts['name'])
       unless volume_container
-        resp = request_create_container(volume_opts)
-        volume_container = grid_service.containers.build(
+        volume_container = grid_service.containers.create!(
           host_node: host_node,
           grid: grid_service.grid,
           name: volume_opts['name'],
           image: docker_opts['Image'],
           container_type: 'volume'
         )
-        volume_container.attributes_from_docker(resp)
-        volume_container.save
+        request_create_container(volume_opts)
+        sleep 0.2 until container_created?(volume_container)
       end
 
       volume_container
@@ -88,6 +79,12 @@ module Docker
     # @return [RpcClient]
     def client
       self.host_node.rpc_client(10)
+    end
+
+    # @param [Container] container
+    # @return [Boolean]
+    def container_created?(container)
+      !container.reload.container_id.nil?
     end
   end
 end

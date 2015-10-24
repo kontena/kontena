@@ -62,9 +62,13 @@ module Docker
         'Entrypoint' => '/bin/sh',
         'Volumes' => self.build_volumes(grid_service),
         'Cmd' => ['echo', 'Data only container'],
-        'Env' => [
-          "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
-        ]
+        'Labels' => {
+          'io.kontena.container.name' => "#{container_name}-volumes",
+          'io.kontena.container.type' => 'volume',
+          'io.kontena.service.id' => grid_service.id.to_s,
+          'io.kontena.service.name' => grid_service.name.to_s,
+          'io.kontena.grid.name' => grid_service.grid.try(:name)
+        }
       }
     end
 

@@ -9,6 +9,8 @@ describe Container do
   it { should have_fields(:network_settings, :state).of_type(Hash) }
   it { should have_fields(:finished_at, :started_at).of_type(Time) }
 
+  it { should validate_uniqueness_of(:container_id).scoped_to(:host_node_id) }
+
   it { should belong_to(:grid) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:host_node) }
