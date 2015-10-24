@@ -39,10 +39,8 @@ module Kontena::Cli::Apps
       app_env = create_env_file(app_json)
       addons = app_json['addons'] || []
 
-      kontena_yml_generator = KontenaYmlGenerator.new(image_name, service_prefix)
       if File.exist?(docker_compose_file)
         puts "Found #{docker_compose_file}."
-        kontena_yml_generator.generate_from_compose_file(docker_compose_file)
       elsif create_docker_compose_yml?
         puts "Creating #{docker_compose_file.colorize(:cyan)}"
         docker_compose_generator = DockerComposeGenerator.new(docker_compose_file)
@@ -55,12 +53,12 @@ module Kontena::Cli::Apps
         puts "Creating #{'kontena.yml'.colorize(:cyan)}"
       end
 
+      kontena_yml_generator = KontenaYmlGenerator.new(image_name, service_prefix)
       if File.exist?(docker_compose_file)
         kontena_yml_generator.generate_from_compose_file(docker_compose_file)
       else
         kontena_yml_generator.generate(procfile, addons, app_env)
       end
-
 
       puts "Your app is ready! Deploy with 'kontena app deploy'.".colorize(:green)
     end
