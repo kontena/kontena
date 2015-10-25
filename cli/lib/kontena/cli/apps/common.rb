@@ -122,7 +122,7 @@ module Kontena::Cli::Apps
           },
           'memcachedcloud' => {
               'image' => 'memcached:latest',
-              'envirnoment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
+              'environment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
           }
       }
     end
