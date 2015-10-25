@@ -68,6 +68,7 @@ module Docker
           image: docker_opts['Image'],
           container_type: 'volume'
         )
+        volume_opts['Labels']['io.kontena.container.id'] = volume_container.id.to_s
         request_create_container(volume_opts)
         sleep 0.2 until container_created?(volume_container)
       end
