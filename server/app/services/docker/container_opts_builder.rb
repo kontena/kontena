@@ -83,7 +83,7 @@ module Docker
         image = Image.find_by(name: linked_service.image_name)
         next unless image
         containers_count = linked_service.containers.size
-        linked_service.containers.each_with_index do |container, index|
+        linked_service.containers.order(:_id.asc).each_with_index do |container, index|
           container_index = containers_count > 1 ? "_#{index + 1}" : ''
           link_alias = "#{link.alias.upcase.sub("-", "_")}#{container_index}"
           ip_address = container.network_settings['ip_address']
