@@ -87,7 +87,15 @@ module GridServices
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid, self.links)
       end
-      GridService.create!(attributes)
+      
+      grid_service = GridService.new(attributes)
+      unless grid_service.save
+        grid_service.errors.each do |key, message|
+          add_error(key, :invalid, message)
+        end
+      end
+
+      grid_service
     end
   end
 end
