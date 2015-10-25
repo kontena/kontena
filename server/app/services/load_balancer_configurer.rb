@@ -1,5 +1,4 @@
 class LoadBalancerConfigurer
-  include Celluloid
 
   ETCD_PREFIX = '/kontena/haproxy/'
 
@@ -33,6 +32,11 @@ class LoadBalancerConfigurer
     end
 
     remove_old_configs
+  end
+
+  # @return [Celluloid::Future]
+  def configure_async
+    Celluloid::Future.new{ self.configure }
   end
 
   # @param [String] key

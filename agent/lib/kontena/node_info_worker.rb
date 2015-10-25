@@ -10,13 +10,13 @@ module Kontena
     include Helpers::NodeHelper
     include Helpers::IfaceHelper
 
-    LOG_NAME = 'NodeInfoWorker'
     attr_reader :queue
 
     ##
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
+      info 'initialized'
     end
 
     ##
@@ -32,7 +32,7 @@ module Kontena
     # Publish node info to queue
     #
     def publish_node_info
-      logger.info(LOG_NAME) { 'publishing node information' }
+      info 'publishing node information'
       docker_info = Docker.info
       docker_info['PublicIp'] = self.public_ip
       docker_info['PrivateIp'] = self.private_ip
@@ -42,7 +42,7 @@ module Kontena
       }
       self.queue << event
     rescue => exc
-      logger.error(LOG_NAME) { "publish_node_info: #{exc.message}" }
+      error "publish_node_info: #{exc.message}"
     end
 
     ##
@@ -54,7 +54,7 @@ module Kontena
         Net::HTTP.get('whatismyip.akamai.com', '/')
       end
     rescue => exc
-      logger.error(LOG_NAME) { "Cannot resolve public ip: #{exc.message}"}
+      error "Cannot resolve public ip: #{exc.message}"
       nil
     end
 

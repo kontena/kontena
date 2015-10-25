@@ -7,7 +7,6 @@ module Kontena
   class WebsocketClient
     include Kontena::Logging
 
-    LOG_NAME = 'WebsocketClient'
     KEEPALIVE_TIME = 30
 
     attr_reader :api_uri, :api_token, :ws
@@ -19,15 +18,14 @@ module Kontena
     def initialize(api_uri, api_token)
       @api_uri = api_uri
       @api_token = api_token.to_s
-      logger.info(LOG_NAME) { "initialized with token #{@api_token}" }
       @subscribers = {}
       @rpc_server = Kontena::RpcServer.new
       @abort = false
-
+      info "initialized with token #{@api_token}"
     end
 
     def connect
-      logger.debug(LOG_NAME) { 'connecting to master' }
+      debug 'connecting to master'
       headers = {
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
@@ -38,7 +36,7 @@ module Kontena
       Pubsub.publish('websocket:connect', self)
 
       @ws.on :open do |event|
-        logger.info(LOG_NAME) { 'connection established' }
+        info 'connection established'
       end
       @ws.on :message do |event|
         self.on_message(@ws, event)
@@ -47,7 +45,7 @@ module Kontena
         self.on_close(event)
       end
       @ws.on :error do |event|
-        logger.info(LOG_NAME) { "connection closed with error: #{event.message}" }
+        error "connection closed with error: #{event.message}"
       end
     end
 
@@ -86,7 +84,7 @@ module Kontena
       elsif event.code == 4010
         self.handle_invalid_version(event)
       end
-      logger.info(LOG_NAME) { "connection closed with code: #{event.code}" }
+      info "connection closed with code: #{event.code}"
       sleep 1
       EM.next_tick{ self.connect }
     rescue => exc
@@ -95,18 +93,14 @@ module Kontena
 
     # @param [Faye::WebSocket::Api::Event] event
     def handle_invalid_token(event)
-      logger.error(LOG_NAME) {
-        "master does not accept our token, shutting down ..."
-      }
+      error "master does not accept our token, shutting down ..."
       EM.next_tick{ abort("Shutting down ...") }
     end
 
     # @param [Faye::WebSocket::Api::Event] event
     def handle_invalid_version(event)
       agent_version = Kontena::Agent::VERSION
-      logger.error(LOG_NAME) {
-        "master does not accept our version (#{agent_version}), shutting down ..."
-      }
+      error "master does not accept our version (#{agent_version}), shutting down ..."
       EM.next_tick{ abort("Shutting down ...") }
     end
 

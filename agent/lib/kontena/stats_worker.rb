@@ -4,7 +4,6 @@ module Kontena
   class StatsWorker
     include Kontena::Logging
 
-    LOG_NAME = 'StatsWorker'
     INTERVAL = 60
 
     attr_reader :url, :queue
@@ -13,17 +12,17 @@ module Kontena
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
-      logger.info(LOG_NAME) { 'initialized' }
+      info 'initialized'
     end
 
     def start!
       Thread.new {
-        logger.info(LOG_NAME) { 'waiting for cadvisor' }
+        info 'waiting for cadvisor'
         sleep 1 until cadvisor_running?
-        logger.info(LOG_NAME) { 'cadvisor is running, starting stats loop' }
+        info 'cadvisor is running, starting stats loop'
         loop do
           sleep INTERVAL
-          logger.debug(LOG_NAME) { 'fetching stats' }
+          debug 'fetching stats'
           begin
             data = fetch_stats
             if data
@@ -32,7 +31,7 @@ module Kontena
               end
             end
           rescue => exc
-            logger.error(LOG_NAME) { "error on stats fetching: #{exc.message}"}
+            error "error on stats fetching: #{exc.message}"
           end
         end
       }
@@ -81,7 +80,7 @@ module Kontena
         JSON.parse(resp.body) rescue nil
       end
     rescue => exc
-      logger.error(LOG_NAME) { "failed to fetch cadvisor stats: #{exc.message}" }
+      error "failed to fetch cadvisor stats: #{exc.message}"
       nil
     end
 

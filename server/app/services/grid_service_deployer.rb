@@ -1,10 +1,10 @@
 require 'celluloid'
+require_relative 'logging'
 require_relative 'grid_scheduler'
 require_relative 'load_balancer_configurer'
 
 class GridServiceDeployer
-  include Celluloid
-  include Celluloid::Logger
+  include Logging
 
   attr_reader :grid_service, :nodes, :scheduler, :config
 
@@ -71,6 +71,13 @@ class GridServiceDeployer
     error "Unknown error: #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
+  end
+
+  ##
+  # @param [Hash] creds
+  # @return [Celluloid::Future]
+  def deploy_async(creds = nil)
+    Celluloid::Future.new{ self.deploy(creds) }
   end
 
   ##
@@ -166,6 +173,6 @@ class GridServiceDeployer
     lb_conf = LoadBalancerConfigurer.new(
       node.rpc_client, load_balancer, self.grid_service
     )
-    lb_conf.async.configure
+    lb_conf.configure_async
   end
 end

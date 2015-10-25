@@ -16,7 +16,7 @@ describe Kontena::NodeInfoWorker do
       expect(subject).to receive(:publish_node_info).once
       allow(Docker::Container).to receive(:all).and_return([])
       thread = subject.start!
-      sleep 0.001
+      sleep 0.01
       thread.kill
     end
   end

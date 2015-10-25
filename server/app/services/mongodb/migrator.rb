@@ -1,10 +1,11 @@
+require 'celluloid'
 require_relative 'migration'
 require_relative 'migration_proxy'
+require_relative '../logging'
 
 module Mongodb
   class Migrator
-    include Celluloid
-    include Celluloid::Logger
+    include Logging
     include DistributedLocks
 
     class MigratorError < StandardError; end
@@ -62,10 +63,15 @@ module Mongodb
       end
     end
 
+    # @return [Celluloid::Future]
+    def migrate_async
+      Celluloid::Future.new{ self.migrate }
+    end
+
     def migrate_without_lock
       migrations.each do |migration|
         unless already_migrated?(migration)
-          info "Mongodb::Migration: migrating #{migration.name}"
+          info "migrating #{migration.name}"
           migration.migrate(:up)
           save_migration_version(migration)
         end

@@ -1,12 +1,10 @@
 require_relative '../../spec_helper'
 
 describe Mongodb::Migrator do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-  
+
   describe '#migrations' do
     before(:each) do
-      expect(subject.wrapped_object).to receive(:load_migration_files).and_return(
+      expect(subject).to receive(:load_migration_files).and_return(
         [
           './db/migrations/02_foo.rb',
           './db/migrations/01_bar.rb',

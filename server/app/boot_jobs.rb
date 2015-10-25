@@ -3,5 +3,5 @@ require_relative 'services/mongodb/migrator'
 
 unless ENV['RACK_ENV'] == 'test'
   JobSupervisor.run!
-  Mongodb::Migrator.new.async.migrate
+  Mongodb::Migrator.new.migrate_async
 end

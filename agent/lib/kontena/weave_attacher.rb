@@ -9,10 +9,8 @@ module Kontena
     include Kontena::Logging
     include Helpers::WeaveHelper
 
-    LOG_NAME = 'WeaveAttacher'
-
     def initialize
-      logger.info(LOG_NAME) { 'initialized' }
+      info 'initialized'
       @weave_adapter = WeaveAdapter.new
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event)
@@ -28,7 +26,7 @@ module Kontena
     #
     def start!
       Thread.new {
-        logger.info(LOG_NAME) { 'fetching containers information' }
+        info 'fetching containers information'
         sleep 1 until weave_running?
         Docker::Container.all(all: false).each do |container|
           self.weave_attach(container)
@@ -79,18 +77,18 @@ module Kontena
     rescue Docker::Error::NotFoundError
 
     rescue => exc
-      logger.error(LOG_NAME){ "#{exc.class.name}: #{exc.message}" }
-      logger.error(LOG_NAME){ exc.backtrace.join("\n") }
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
     end
 
     # @param [Docker::Event] event
     def weave_detach(event)
       remove_dns(event.id)
     rescue Docker::Error::NotFoundError
-      
+
     rescue => exc
-      logger.error(LOG_NAME){ exc.message }
-      logger.error(LOG_NAME){ exc.backtrace.join("\n") }
+      error exc.message
+      error exc.backtrace.join("\n")
     end
   end
 end

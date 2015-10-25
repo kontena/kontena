@@ -8,18 +8,17 @@ module Kontena
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
 
-    LOG_NAME = 'LoadBalancerRegistrator'
     ETCD_PREFIX = '/kontena/haproxy'
 
     attr_reader :etcd, :cache
 
     def initialize
-      logger.info(LOG_NAME) { 'initialized' }
       @etcd = Etcd.client(host: gateway, port: 2379)
       @cache = {}
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event)
       end
+      info 'initialized'
     end
 
     ##
@@ -28,7 +27,7 @@ module Kontena
     def start!
       Thread.new {
         sleep 1 until etcd_running?
-        logger.info(LOG_NAME) { 'fetching containers information' }
+        info 'fetching containers information'
         Docker::Container.all(all: false).each do |container|
           if load_balanced?(container)
             self.register_container(container)
@@ -67,7 +66,7 @@ module Kontena
       else
         key = "#{ETCD_PREFIX}/#{lb}/tcp-services/#{service_name}/upstreams/#{name}"
       end
-      logger.info(LOG_NAME) { "Adding container #{name} to load balancer #{lb}" }
+      info "adding container #{name} to load balancer #{lb}"
       retries = 0
       begin
         etcd.set(key, {value: "#{ip}:#{port}"})
@@ -81,15 +80,15 @@ module Kontena
         end
       end
     rescue => exc
-      logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-      logger.info(LOG_NAME) { "#{exc.backtrace.join("\n")}" } if exc.backtrace
+      error "#{exc.class.name}: #{exc.message}"
+      debug "#{exc.backtrace.join("\n")}" if exc.backtrace
     end
 
     # @param [String] container_id
     def unregister_container(container_id)
       if cache[container_id]
         entry = cache.delete(container_id)
-        logger.info(LOG_NAME) { "Removing container #{entry[:container]} from load balancer #{entry[:lb]}" }
+        info "removing container #{entry[:container]} from load balancer #{entry[:lb]}"
         begin
           etcd.delete("#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}")
         rescue Errno::ECONNREFUSED => exc
@@ -103,8 +102,8 @@ module Kontena
         end
       end
     rescue => exc
-      logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-      logger.info(LOG_NAME) { "#{exc.backtrace.join("\n")}" } if exc.backtrace
+      error "#{exc.class.name}: #{exc.message}"
+      debug "#{exc.backtrace.join("\n")}" if exc.backtrace
     end
 
     # @param [Docker::Container] container

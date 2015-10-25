@@ -8,8 +8,6 @@ module Kontena
   class RpcServer
     include Kontena::Logging
 
-    LOG_NAME = 'RpcServer'
-
     HANDLERS = {
         'containers' => Kontena::Rpc::DockerContainerApi,
         'images' => Kontena::Rpc::DockerImageApi,
@@ -36,14 +34,14 @@ module Kontena
       method = message[2].split('/')[2]
       if klass = HANDLERS[handler]
         begin
-          logger.info(LOG_NAME) { "rpc request: #{klass.name}##{method} #{message[3]}" }
+          info "rpc request: #{klass.name}##{method} #{message[3]}"
           result = klass.new.send(method, *message[3])
           return [1, msg_id, nil, result]
         rescue RpcServer::Error => exc
           return [1, msg_id, {code: exc.code, message: exc.message, backtrace: exc.backtrace}, nil]
         rescue => exc
-          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-          logger.error(LOG_NAME) { exc.backtrace.join("\n") }
+          error "#{exc.class.name}: #{exc.message}"
+          error exc.backtrace.join("\n")
           return [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}", backtrace: exc.backtrace}, nil]
         end
       else
@@ -58,11 +56,11 @@ module Kontena
       method = message[1].split('/')[2]
       if klass = HANDLERS[handler]
         begin
-          logger.info(LOG_NAME) { "rpc notification: #{klass.name}##{method} #{message[2]}" }
+          info "rpc notification: #{klass.name}##{method} #{message[2]}"
           result = klass.new.send(method, *message[2])
         rescue => exc
-          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-          logger.error(LOG_NAME) { exc.backtrace.join("\n") }
+          error "#{exc.class.name}: #{exc.message}"
+          error exc.backtrace.join("\n")
         end
       end
     end

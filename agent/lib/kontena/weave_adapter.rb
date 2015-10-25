@@ -1,3 +1,4 @@
+require_relative 'logging'
 require_relative 'helpers/node_helper'
 require_relative 'helpers/iface_helper'
 
@@ -10,7 +11,6 @@ module Kontena
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.1.1'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
-    LOG_NAME = 'WeaveAdapter'
 
     # @param [Hash] opts
     def modify_create_opts(opts)
@@ -91,15 +91,15 @@ module Kontena
         begin
           response = container.tap(&:start).wait
         rescue Docker::Error::NotFoundError => exc
-          logger.error(LOG_NAME){ exc.message }
+          error exc.message
           return false
         rescue => exc
           retries += 1
-          logger.error(LOG_NAME){ exc.message }
+          error exc.message
           sleep 0.5
           retry if retries < 10
 
-          logger.error(LOG_NAME){ exc.message }
+          error exc.message
           return false
         end
         response
@@ -121,8 +121,8 @@ module Kontena
           begin
             info = self.node_info
           rescue Excon::Errors::Error => exc
-            logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-            logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+            error "#{exc.class.name}: #{exc.message}"
+            debug exc.backtrace.join("\n")
             sleep 1
             retry
           end
@@ -137,19 +137,19 @@ module Kontena
             ] + peer_ips
           )
           if peer_ips.size > 0
-            logger.info(LOG_NAME) { "router started with peers #{peer_ips.join(', ')}" }
+            info "router started with peers #{peer_ips.join(', ')}"
           else
-            logger.info(LOG_NAME) { "router started without known peers" }
+            info "router started without known peers"
           end
 
           if info['node_number']
             weave_bridge = "10.81.0.#{info['node_number']}/19"
             self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
-            logger.info(LOG_NAME) { "bridge exposed: #{weave_bridge}" }
+            info "bridge exposed: #{weave_bridge}"
           end
         rescue => exc
-          logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
-          logger.debug(LOG_NAME) { exc.backtrace.join("\n") }
+          error "#{exc.class.name}: #{exc.message}"
+          debug exc.backtrace.join("\n")
         end
       }
     end

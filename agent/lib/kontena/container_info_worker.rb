@@ -5,7 +5,6 @@ module Kontena
   class ContainerInfoWorker
     include Kontena::Logging
 
-    LOG_NAME = 'ContainerInfoWorker'
     attr_reader :queue, :node_info
 
     ##
@@ -16,6 +15,7 @@ module Kontena
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event) rescue nil
       end
+      info 'initialized'
     end
 
     ##
@@ -24,7 +24,7 @@ module Kontena
     def start!
       Thread.new {
         loop do
-          logger.info(LOG_NAME) { 'fetching containers information' }
+          info 'fetching containers information'
           Docker::Container.all(all: true).each do |container|
             self.publish_info(container)
           end
@@ -43,7 +43,7 @@ module Kontena
     rescue Docker::Error::NotFoundError
       self.publish_destroy_event(event)
     rescue => exc
-      logger.error(LOG_NAME) { "on_container_event: #{exc.message}" }
+      error "on_container_event: #{exc.message}"
     end
 
     ##
@@ -60,11 +60,11 @@ module Kontena
           container: data
         }
       }
-      logger.debug(LOG_NAME) { event }
+      debug event
       self.queue << event
     rescue Docker::Error::NotFoundError
     rescue => exc
-      logger.error(LOG_NAME) { "#{exc.class.name}: #{exc.message}" }
+      error exc.message
     end
 
     ##
