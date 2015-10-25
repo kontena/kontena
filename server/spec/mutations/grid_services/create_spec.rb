@@ -68,6 +68,19 @@ describe GridServices::Create do
       expect(outcome.errors.message.keys).to include('name')
     end
 
+    it 'does not allow duplicate name within a grid' do
+      GridService.create!(name: 'redis', image_name: 'redis:latest', grid: grid)
+      outcome = described_class.new(
+        current_user: user,
+        grid: grid,
+        image: 'redis:2.8',
+        name: 'redis',
+        stateful: true
+      ).run
+      expect(outcome.success?).to be(false)
+      expect(outcome.errors.message.keys).to include('name')
+    end
+
     it 'saves container_count' do
       outcome = described_class.new(
           current_user: user,
