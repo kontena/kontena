@@ -80,5 +80,51 @@ module Kontena::Cli::Apps
     def dockerfile
       @dockerfile ||= File.new('Dockerfile') rescue nil
     end
+
+    def create_yml(services, file='kontena.yml')
+      yml = File.new(file, 'w')
+      yml.puts services.to_yaml
+      yml.close
+    end
+
+    def app_json
+      if !@app_json && File.exist?('app.json')
+        @app_json = JSON.parse(File.read('app.json'))
+      end
+      @app_json
+    end
+
+    def valid_addons(prefix=nil)
+      if prefix
+        prefix = "#{prefix}-"
+      end
+
+      {
+          'openredis' => {
+              'image' => 'redis:latest',
+              'environment' => ["REDIS_URL=redis://#{prefix}openredis:6379"]
+          },
+          'redis' => {
+              'image' => 'redis:latest',
+              'environment' => ["REDIS_URL=redis://#{prefix}redis:6379"]
+          },
+          'rediscloud' => {
+              'image' => 'redis:latest',
+              'environment' => ["REDISCLOUD_URL=redis://#{prefix}rediscloud:6379"]
+          },
+          'postgresql' => {
+              'image' => 'postgres:latest',
+              'environment' => ["DATABASE_URL=postgres://#{prefix}postgres:@postgresql:5432/postgres"]
+          },
+          'mongolab' => {
+              'image' => 'mongo:latest',
+              'environment' => ["MONGOLAB_URI=#{prefix}mongolab:27017"]
+          },
+          'memcachedcloud' => {
+              'image' => 'memcached:latest',
+              'environment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
+          }
+      }
+    end
   end
 end

@@ -1,9 +1,15 @@
 require 'yaml'
 require 'securerandom'
+require_relative 'common'
+require_relative 'dockerfile_generator'
+require_relative 'docker_compose_generator'
+require_relative 'kontena_yml_generator'
+
 
 module Kontena::Cli::Apps
   class InitCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Common
 
     option ["-f", "--file"], "FILE", "Specify a docker-compose file", attribute_name: :docker_compose_file, default: 'docker-compose.yml'
     option ["-i", "--image-name"], "IMAGE_NAME", "Specify a docker image name"
@@ -19,51 +25,46 @@ module Kontena::Cli::Apps
 
       if File.exist?('Dockerfile')
         puts 'Found Dockerfile'
-      else
-        create_dockerfile if create_dockerfile?
+      elsif create_dockerfile?
+        puts "Creating #{'Dockerfile'.colorize(:cyan)}"
+        DockerfileGenerator.new.generate(base_image, current_user['email'])
       end
+
+      if File.exist?('Procfile')
+        procfile = YAML.load(File.read('Procfile'))
+      else
+        procfile = {}
+      end
+
+      app_env = create_env_file(app_json)
+      addons = app_json['addons'] || []
 
       if File.exist?(docker_compose_file)
         puts "Found #{docker_compose_file}."
-      else
-        if File.exist?('Procfile')
-          procfile = YAML.load(File.read('Procfile'))
-        else
-          procfile = {}
-        end
-
-        app_env = nil
-        addons = []
-
-        if app_json
-          app_env = create_env_file(app_json)
-          addons = app_json['addons'] || []
-        end
-
-        create_docker_compose_yml(procfile, addons, app_env) if create_docker_compose_yml?
+      elsif create_docker_compose_yml?
+        puts "Creating #{docker_compose_file.colorize(:cyan)}"
+        docker_compose_generator = DockerComposeGenerator.new(docker_compose_file)
+        docker_compose_generator.generate(procfile, addons, app_env)
       end
 
-      services = generate_kontena_services(docker_compose_file)
       if File.exist?('kontena.yml')
-        merge_kontena_yml!(services)
-        puts "#{'kontena.yml'.colorize(:cyan)} updated."
+        puts "Updating #{'kontena.yml'.colorize(:cyan)}"
       else
         puts "Creating #{'kontena.yml'.colorize(:cyan)}"
       end
-      create_yml(services, 'kontena.yml')
+
+      kontena_yml_generator = KontenaYmlGenerator.new(image_name, service_prefix)
+      if File.exist?(docker_compose_file)
+        kontena_yml_generator.generate_from_compose_file(docker_compose_file)
+      else
+        kontena_yml_generator.generate(procfile, addons, app_env)
+      end
 
       puts "Your app is ready! Deploy with 'kontena app deploy'.".colorize(:green)
     end
 
 
     protected
-
-    def app_json
-      if !@app_json && File.exist?('app.json')
-        @app_json = JSON.parse(File.read('app.json'))
-      end
-      @app_json
-    end
 
     def create_dockerfile?
       ['', 'y', 'yes'].include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
@@ -92,130 +93,9 @@ module Kontena::Cli::Apps
       client(token).get('user') rescue ''
     end
 
-    def create_dockerfile
-      puts "Creating #{'Dockerfile'.colorize(:cyan)}"
-      dockerfile = File.new('Dockerfile', 'w')
-      dockerfile.puts "FROM #{base_image}"
-      dockerfile.puts "MAINTAINER #{current_user['email']}"
-      dockerfile.puts 'CMD ["/start", "web"]'
-      dockerfile.close
-    end
-
-    def merge_kontena_yml!(services)
-      puts "kontena.yml already exists. Merging changes."
-      kontena_services = YAML.load(File.read('kontena.yml'))
-      services.each do |name, options|
-        if kontena_services[name]
-          services[name].merge!(kontena_services[name])
-        end
-      end
-    end
-
     def create_docker_compose_yml?
       ['', 'y', 'yes'].include? ask("#{docker_compose_file} not found. Do you want to create it? [Yn]: ").downcase
     end
 
-    def create_docker_compose_yml(procfile, addons, env_file)
-      puts "Creating #{docker_compose_file.colorize(:cyan)}"
-      if procfile.keys.size > 0
-        # generate services found in Procfile
-        docker_compose = {}
-        procfile.keys.each do |service|
-          docker_compose[service] = {'build' => '.' }
-          docker_compose[service]['environment'] = ['PORT=5000'] if app_json && service == 'web' # Heroku generates PORT env variable so should we do too
-          docker_compose[service]['command'] = "/start #{service}" if service != 'web'
-          docker_compose[service]['env_file'] = env_file if env_file
-
-          # generate addon services
-          addons.each do |addon|
-            addon_service = addon.split(":")[0]
-            addon_service.slice!('heroku-')
-            if valid_addons.has_key?(addon_service)
-              docker_compose[service]['links'] = [] unless docker_compose[service]['links']
-              docker_compose[service]['links'] << "#{addon_service}:#{addon_service}"
-              docker_compose[service]['environment'] = [] unless docker_compose[service]['environment']
-              docker_compose[service]['environment'] += valid_addons[addon_service]['environment']
-              docker_compose[addon_service] = {'image' => valid_addons[addon_service]['image']}
-            end
-          end
-        end
-      else
-        # no Procfile found, create dummy web service
-        docker_compose = {'web' => { 'build' => '.'}}
-        docker_compose['web']['env_file'] = env_file if env_file
-      end
-      # create docker-compose.yml file
-      create_yml(docker_compose, docker_compose_file)
-    end
-
-    def generate_kontena_services(docker_compose = nil)
-      services = {}
-      if docker_compose && File.exist?(docker_compose)
-        # extend services from docker-compose.yml
-        compose_services = YAML.load(File.read(docker_compose))
-        compose_services.each do |name, options|
-          services[name] = {'extends' => { 'file' => 'docker-compose.yml', 'service' => name }}
-          if options.has_key?('build')
-            image = image_name || "registry.kontena.local/#{File.basename(Dir.getwd)}:latest"
-            services[name]['image'] = image
-          end
-
-          # we have to generate Kontena urls to env vars for Heroku addons
-          # redis://openredis:6379 -> redis://project-name-openredis:6379
-          if options['links']
-            options['links'].each do |link|
-              service_link = link.split(':').first
-              if valid_addons.has_key?(service_link)
-                services[name]['environment'] ||= []
-                services[name]['environment'] += valid_addons(service_prefix)[service_link]['environment']
-              end
-            end
-          end
-        end
-      else
-        # no docker-compose.yml found, just create dummy service with image name
-        services = {'web' => { 'image' => "registry.kontena.local/#{File.basename(Dir.getwd)}:latest" }}
-      end
-      services
-    end
-
-    def create_yml(services, file='kontena.yml')
-      yml = File.new(file, 'w')
-      yml.puts services.to_yaml
-      yml.close
-    end
-
-    def valid_addons(prefix=nil)
-      if prefix
-        prefix = "#{prefix}-"
-      end
-
-      {
-        'openredis' => {
-            'image' => 'redis:latest',
-            'environment' => ["REDIS_URL=redis://#{prefix}openredis:6379"]
-        },
-        'redis' => {
-          'image' => 'redis:latest',
-          'environment' => ["REDIS_URL=redis://#{prefix}redis:6379"]
-        },
-        'rediscloud' => {
-          'image' => 'redis:latest',
-          'environment' => ["REDISCLOUD_URL=#{prefix}redis://rediscloud:6379"]
-        },
-        'postgresql' => {
-          'image' => 'postgres:latest',
-          'environment' => ["DATABASE_URL=postgres://#{prefix}postgres:@postgresql:5432/postgres"]
-        },
-        'mongolab' => {
-          'image' => 'mongo:latest',
-          'environment' => ["MONGOLAB_URI=#{prefix}mongolab:27017"]
-        },
-        'memcachedcloud' => {
-          'image' => 'memcached:latest',
-          'enviroment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
-        }
-      }
-    end
   end
 end
