@@ -110,7 +110,7 @@ module Kontena::Cli::Apps
           },
           'rediscloud' => {
               'image' => 'redis:latest',
-              'environment' => ["REDISCLOUD_URL=#{prefix}redis://rediscloud:6379"]
+              'environment' => ["REDISCLOUD_URL=redis://#{prefix}rediscloud:6379"]
           },
           'postgresql' => {
               'image' => 'postgres:latest',
@@ -122,7 +122,7 @@ module Kontena::Cli::Apps
           },
           'memcachedcloud' => {
               'image' => 'memcached:latest',
-              'enviroment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
+              'envirnoment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
           }
       }
     end
