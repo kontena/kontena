@@ -62,22 +62,25 @@ module Agent
     def on_container_info(grid, data)
       info = data['container']
       labels = info['Config']['Labels'] || {}
-      container_id = data['container']['Id']
+      container_id = info['Id']
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
         container.attributes_from_docker(info)
         container.updated_at = Time.now.utc
         container.save
       elsif !labels['io.kontena.container.name'].nil?
-        node = grid.host_nodes.find_by(node_id: data['node'])
-        service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
-        container = grid.containers.build(
-          container_id: container_id,
-          name: labels['io.kontena.container.name'],
-          container_type: labels['io.kontena.container.type'] || 'container',
-          grid_service: service,
-          host_node: node
-        )
+        container = grid.containers.unscoped.find_by(name: labels['io.kontena.container.name'])
+        unless container
+          node = grid.host_nodes.find_by(node_id: data['node'])
+          service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
+          container = grid.containers.build(
+            container_id: container_id,
+            name: labels['io.kontena.container.name'],
+            container_type: labels['io.kontena.container.type'] || 'container',
+            grid_service: service,
+            host_node: node
+          )
+        end
         container.attributes_from_docker(info)
         container.save
       else

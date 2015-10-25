@@ -13,29 +13,28 @@ describe Docker::ContainerCreator do
     it 'calls #request_create_container' do
       allow(host_node).to receive(:rpc_client).and_return(client)
       expect(subject).to receive(:request_create_container).and_return({})
-      allow(subject).to receive(:sync_container_with_docker_response)
+      allow(subject).to receive(:container_created?).and_return(true)
       subject.create_container('foo-1', 'rev1')
     end
 
     it 'creates a new container' do
-      docker_response = {'State' => {}, 'Config' => {}, 'NetworkSettings' => {}, 'Volumes' => {}}
-      expect(subject).to receive(:request_create_container).and_return(docker_response)
+      allow(subject).to receive(:container_created?).and_return(true)
+      expect(subject).to receive(:request_create_container)
       expect {
         subject.create_container('foo-1', 'rev1')
       }.to change{ grid_service.containers.count }.by(1)
     end
 
     it 'creates a data volume container if service is stateful' do
+      allow(subject).to receive(:container_created?).and_return(true)
       grid_service.stateful = true
-      container_response = {'Id' => 'aa', 'State' => {}, 'Config' => {}, 'NetworkSettings' => {}, 'Volumes' => {}}
       expect(subject).to receive(:request_create_container).with(
         hash_including('name' => 'foo-1')
-      ).once.and_return(container_response)
+      ).once
 
-      volume_response = {'Id' => 'bb', 'State' => {}, 'Config' => {}, 'NetworkSettings' => {}, 'Volumes' => {}}
       expect(subject).to receive(:request_create_container).with(
           hash_including('name' => 'foo-1-volumes')
-      ).once.and_return(volume_response)
+      ).once
 
       expect {
         subject.create_container('foo-1', 'rev1')
@@ -44,14 +43,13 @@ describe Docker::ContainerCreator do
   end
 
   describe '#ensure_volume_container' do
-
     let(:docker_opts) { {'Image' => container.image} }
 
     it 'sends container create call to docker' do
-      volume_response = {'Id' => 'bb', 'State' => {}, 'Config' => {}, 'NetworkSettings' => {}, 'Volumes' => {}}
+      allow(subject).to receive(:container_created?).and_return(true)
       expect(subject).to receive(:request_create_container).with(
         hash_including('name' => "#{container.name}-volumes")
-      ).once.and_return(volume_response)
+      ).once
       subject.ensure_volume_container(container, docker_opts)
     end
   end

@@ -47,4 +47,52 @@ describe Agent::MessageHandler do
       }.to change{ grid.container_logs.count }.by(0)
     end
   end
+
+  describe '#on_container_info' do
+    it 'updates container info if container is found by container_id' do
+      container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
+      expect(container.running?).to eq(false)
+      subject.on_container_info(grid, {
+        'container' => {
+          'Id' => container.container_id,
+          'NetworkSettings' => {},
+          'State' => {
+            'Running' => true
+          },
+          'Config' => {
+            'Labels' => {
+              'io.kontena.container.name' => 'foo-1'
+            }
+          },
+
+          'Volumes' => []
+        }
+      })
+      expect(container.reload.running?).to eq(true)
+    end
+
+    it 'updates container if container is found by label name' do
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.create!(name: 'foo-1')
+      expect(container.running?).to eq(false)
+      subject.on_container_info(grid, {
+        'container' => {
+          'Id' => container_id,
+          'NetworkSettings' => {},
+          'State' => {
+            'Running' => true
+          },
+          'Config' => {
+            'Labels' => {
+              'io.kontena.container.name' => 'foo-1'
+            }
+          },
+
+          'Volumes' => []
+        }
+      })
+      expect(container.reload.running?).to eq(true)
+      expect(container.container_id).to eq(container_id)
+    end
+  end
 end
