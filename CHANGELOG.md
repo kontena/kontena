@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.1 (2015-10-25)
+
+- app init: fix addon services persistence
+- update weave to 1.1.2
+- fix race condition in container volume creation
+- fix internal error when user tried to create service with duplicate name
+- fix linked services environment variable build order
+- add missing --ssl-cert option to AWS master provisioner
+
 ## 0.9.0 (2015-10-12)
 
 - Heroku style deployment model (optional)
