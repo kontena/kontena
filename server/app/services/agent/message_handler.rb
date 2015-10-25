@@ -68,12 +68,13 @@ module Agent
         container.attributes_from_docker(info)
         container.updated_at = Time.now.utc
         container.save
-      elsif !labels['io.kontena.container.name'].nil?
-        container = grid.containers.unscoped.find_by(name: labels['io.kontena.container.name'])
+      elsif !labels['io.kontena.container.id'].nil?
+        container = grid.containers.unscoped.find_by(id: labels['io.kontena.container.id'])
         unless container
           node = grid.host_nodes.find_by(node_id: data['node'])
           service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
           container = grid.containers.build(
+            id: BSON::ObjectId.from_string(labels['io.kontena.container.id']),
             container_id: container_id,
             name: labels['io.kontena.container.name'],
             container_type: labels['io.kontena.container.type'] || 'container',
