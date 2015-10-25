@@ -231,7 +231,15 @@ describe Docker::ContainerOptsBuilder do
 
     context 'when linked service has multiple containers' do
       before :each do
-        Container.create(grid_service: linked_grid_service, name: 'linked-service-test-2', network_settings: {'ip_address' => '0.0.0.1'}, image: 'ubuntu_trusty', env: ['SOME_KEY=value'])
+        Container.create(
+          grid_service: linked_grid_service,
+          name: 'linked-service-test-2',
+          network_settings: {
+            'ip_address' => '0.0.0.1'
+          },
+          image: 'ubuntu_trusty',
+          env: ['SOME_KEY=value']
+        )
       end
       it 'generates env variables from exposed ports of image with container index' do
         env_vars = described_class.build_linked_services_env_vars(grid_service)
