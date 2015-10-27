@@ -17,7 +17,10 @@ module Kontena::Cli::Apps
         docker_compose = {}
         procfile.keys.each do |service|
           docker_compose[service] = {'build' => '.' }
-          docker_compose[service]['environment'] = ['PORT=5000'] if app_json && service == 'web' # Heroku generates PORT env variable so should we do too
+          if app_json && service == 'web' # Heroku generates PORT env variable so should we do too
+            docker_compose[service]['environment'] = ['PORT=5000']
+            docker_compose[service]['ports'] = ['5000:5000']
+          end
           docker_compose[service]['command'] = "/start #{service}" if service != 'web'
           docker_compose[service]['env_file'] = env_file if env_file
 
