@@ -5,9 +5,9 @@
 [![Build Status](https://travis-ci.org/kontena/kontena.svg?branch=master)](https://travis-ci.org/kontena/kontena)
 [![Join the chat at https://gitter.im/kontena/kontena](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kontena/kontena?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![Kontena Introduction](https://asciinema.org/a/25815.png)](https://asciinema.org/a/25815)
-
 [Kontena](http://www.kontena.io) is a new developer friendly, open source platform for orchestrating applications that are run on Docker containers. It simplifies deploying and running containerized applications on any infrastructure. By leveraging technologies such as [Docker](https://www.docker.com/), [CoreOS](https://coreos.com/) and [Weave](http://weave.works/), it provides complete solution for organizations of any size.
+
+[![Kontena Introduction](https://asciinema.org/a/25815.png)](https://asciinema.org/a/25815)
 
 Kontena is built to maximize developer happiness; it is designed for application developers and therefore does not require ops teams to setup or maintain. Therefore, it is an ideal choice for organizations without aspiration to configure and maintain scalable Docker container infrastructure.
 
