@@ -7,9 +7,9 @@
 
 [Kontena](http://www.kontena.io) is a new developer friendly, open source platform for orchestrating applications that are run on Docker containers. It simplifies deploying and running containerized applications on any infrastructure. By leveraging technologies such as [Docker](https://www.docker.com/), [CoreOS](https://coreos.com/) and [Weave](http://weave.works/), it provides complete solution for organizations of any size.
 
-[![Kontena Introduction](https://asciinema.org/a/25815.png)](https://asciinema.org/a/25815)
-
 Kontena is built to maximize developer happiness; it is designed for application developers and therefore does not require ops teams to setup or maintain. Therefore, it is an ideal choice for organizations without aspiration to configure and maintain scalable Docker container infrastructure.
+
+[![Kontena Introduction](https://asciinema.org/a/25815.png)](https://asciinema.org/a/25815)
 
 To accelerate and break barriers for containerized application development, Kontena features some of the most essential technologies built-in such as:
 
