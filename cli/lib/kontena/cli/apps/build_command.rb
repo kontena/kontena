@@ -17,10 +17,8 @@ module Kontena::Cli::Apps
     def execute
       require_config_file(filename)
       @service_prefix = project_name || current_dir
-      dir = Dir.getwd
       @services = load_services(filename, service_list, service_prefix)
-      Dir.chdir(dir)
-      process_docker_images(services, true) if dockerfile_exist?
+      process_docker_images(services, true)
     end
   end
 end
