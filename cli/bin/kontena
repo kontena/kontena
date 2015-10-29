@@ -37,8 +37,8 @@ require 'kontena/cli/version_command'
 
 class MainCommand < Clamp::Command
 
-  subcommand "app", "Grid specific commands", Kontena::Cli::AppCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
+  subcommand "app", "App specific commands", Kontena::Cli::AppCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "deploy", "Create and deploy multiple services from YAML file", Kontena::Cli::DeployCommand
   subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand
