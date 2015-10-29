@@ -27,7 +27,7 @@ module Kontena::Cli::Apps
         puts 'Found Dockerfile'
       elsif create_dockerfile?
         puts "Creating #{'Dockerfile'.colorize(:cyan)}"
-        DockerfileGenerator.new.generate(base_image, current_user['email'])
+        DockerfileGenerator.new.generate(base_image)
       end
 
       if File.exist?('Procfile')
@@ -86,11 +86,6 @@ module Kontena::Cli::Apps
         return '.env'
       end
       nil
-    end
-
-    def current_user
-      token = require_token
-      client(token).get('user') rescue ''
     end
 
     def create_docker_compose_yml?
