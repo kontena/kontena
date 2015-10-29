@@ -62,4 +62,31 @@ describe HostNode do
       expect(subject.node_number).to eq(2)
     end
   end
+
+  describe '#initial_node?' do
+    let(:grid) { Grid.new(name: 'test') }
+    before(:each) do
+      subject.grid = grid
+    end
+
+    it 'returns true if node is part of initial cluster' do
+      allow(subject).to receive(:node_number).and_return(1)
+      allow(grid).to receive(:initial_size).and_return(3)
+      expect(subject.initial_node?).to eq(true)
+
+      allow(subject).to receive(:node_number).and_return(3)
+      allow(grid).to receive(:initial_size).and_return(3)
+      expect(subject.initial_node?).to eq(true)
+    end
+
+    it 'returns false if node is not part of initial cluster' do
+      allow(subject).to receive(:node_number).and_return(2)
+      allow(grid).to receive(:initial_size).and_return(1)
+      expect(subject.initial_node?).to eq(false)
+
+      allow(subject).to receive(:node_number).and_return(4)
+      allow(grid).to receive(:initial_size).and_return(3)
+      expect(subject.initial_node?).to eq(false)
+    end
+  end
 end

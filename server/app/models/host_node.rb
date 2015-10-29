@@ -74,6 +74,13 @@ class HostNode
     RpcClient.new(self.node_id, timeout)
   end
 
+  # @return [Boolean]
+  def initial_node?
+    self.node_number <= self.grid.initial_size
+  rescue
+    false
+  end
+
   private
 
   def reserve_node_number

@@ -33,7 +33,7 @@ class NodeCleanupJob
   def cleanup_stale_nodes
     with_dlock('node_cleanup_job:stale_nodes', 0) do
       HostNode.where(:last_seen_at.lt => 1.hour.ago).each do |node|
-        unless node.connected?
+        if !node.initial_node? && !node.connected?
           node.destroy
         end
       end
