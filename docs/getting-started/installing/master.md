@@ -104,7 +104,7 @@ write_files:
     permissions: 0600
     owner: root
     content: |
-      <your ssl_certificate encoded with "awk 1 ORS='\\n' cert.pem">
+      <your ssl_certificate>
 
   - path: /opt/bin/kontena-haproxy.sh
     permissions: 0755
