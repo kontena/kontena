@@ -119,7 +119,7 @@ write_files:
       /usr/bin/docker run --name=kontena-server-haproxy \
         --link kontena-server-api:kontena-server-api \
         -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
-        -p 8080:80 -p 8443:443 kontena/haproxy:latest
+        -p 80:80 -p 443:443 kontena/haproxy:latest
 coreos:
   units:
     - name: kontena-server-mongo.service
