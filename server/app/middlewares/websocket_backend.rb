@@ -1,6 +1,8 @@
 require 'faye/websocket'
 require 'thread'
 require_relative '../services/agent/message_handler'
+require_relative '../services/agent/node_plugger'
+require_relative '../services/agent/node_unplugger'
 
 class WebsocketBackend
   KEEPALIVE_TIME = 30 # in seconds
@@ -54,7 +56,7 @@ class WebsocketBackend
       node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
       node = grid.host_nodes.find_by(node_id: node_id)
       unless node
-        node = grid.host_nodes.create!(node_id: node_id)
+        node = grid.host_nodes.create!(node_id: node_id, name: node_id)
       end
 
       agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
@@ -65,7 +67,6 @@ class WebsocketBackend
       end
 
       logger.info "node opened connection: #{node.name || node_id}"
-      node.set(connected: true, last_seen_at: Time.now.utc)
       client = {
           ws: ws,
           id: node_id.to_s,
@@ -75,6 +76,7 @@ class WebsocketBackend
       }
       @clients << client
       self.notify_master_info(ws)
+      Agent::NodePlugger.new(grid, node).plugin!
     else
       logger.error 'invalid grid token, closing connection'
       ws.close(4001)
@@ -160,7 +162,7 @@ class WebsocketBackend
     if client
       node = HostNode.find_by(node_id: client[:id])
       if node
-        node.update_attribute(:connected, false)
+        Agent::NodeUnplugger.new(node).unplug!
         logger.info "node closed connection: #{node.name || node.node_id}"
       end
       @clients.delete(client)

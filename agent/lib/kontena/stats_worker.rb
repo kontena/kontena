@@ -12,6 +12,10 @@ module Kontena
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
+      Pubsub.subscribe('service_pod:start') do |event|
+        self.collect_stats
+      end
+
       info 'initialized'
     end
 
@@ -23,18 +27,22 @@ module Kontena
         loop do
           sleep INTERVAL
           debug 'fetching stats'
-          begin
-            data = fetch_stats
-            if data
-              data.values.each do |container|
-                self.send_container_stats(container)
-              end
-            end
-          rescue => exc
-            error "error on stats fetching: #{exc.message}"
-          end
+          self.collect_stats
         end
       }
+    end
+
+    def collect_stats
+      begin
+        data = fetch_stats
+        if data
+          data.values.each do |container|
+            self.send_container_stats(container)
+          end
+        end
+      rescue => exc
+        error "error on stats fetching: #{exc.message}"
+      end
     end
 
     ##

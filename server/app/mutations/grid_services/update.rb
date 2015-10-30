@@ -56,6 +56,37 @@ module GridServices
         string :*
       end
       string :log_driver
+      array :devices do
+        string
+      end
+      array :sidekicks do
+        hash do
+          required do
+            string :image
+            string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+          end
+          optional do
+            string :user
+            integer :cpu_shares, min: 0, max: 1024
+            integer :memory
+            integer :memory_swap
+            boolean :privileged
+            array :cap_add do
+              string
+            end
+            array :cap_drop do
+              string
+            end
+            array :cmd do
+              string
+            end
+            string :entrypoint
+            array :devices do
+              string
+            end
+          end
+        end
+      end
     end
 
     def validate
@@ -86,6 +117,7 @@ module GridServices
       attributes[:affinity] = self.affinity if self.affinity
       attributes[:log_driver] = self.log_driver if self.log_driver
       attributes[:log_opts] = self.log_opts if self.log_opts
+      attributes[:devices] = self.devices if self.devices
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid_service.grid, self.links)
       end

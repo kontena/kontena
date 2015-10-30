@@ -4,16 +4,15 @@ module Scheduler
 
       ##
       # @param [GridService] service
-      # @param [String] container_name
+      # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
-      def for_service(service, container_name, nodes)
+      def for_service(service, instance_number, nodes)
         return nodes if service.affinity.nil? || service.affinity.size == 0
 
-        i = container_name.match(/^.+-(\d+)$/)[1]
         candidates = nodes.dup
         nodes.each do |node|
           service.affinity.each do |affinity|
-            affinity = affinity % [i]
+            affinity = affinity % [instance_number.to_s]
             key, comparator, value = split_affinity(affinity)
             if key == 'node'
               unless node_match?(node, comparator, value)

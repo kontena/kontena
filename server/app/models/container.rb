@@ -92,69 +92,8 @@ class Container
     self.volumes.nil? || self.volumes.size == 0
   end
 
-  ##
-  # @param [Hash] info
-  def attributes_from_docker(info)
-    config = info['Config'] || {}
-    labels = config['Labels'] || {}
-    state = info['State'] || {}
-    self.attributes = {
-        container_id: info['Id'],
-        driver: info['Driver'],
-        exec_driver: info['ExecDriver'],
-        image: config['Image'],
-        image_version: info['Image'],
-        env: config['Env'],
-        network_settings: self.parse_docker_network_settings(info['NetworkSettings']),
-        state: {
-            error: state['Error'],
-            exit_code: state['ExitCode'],
-            pid: state['Pid'],
-            oom_killed: state['OOMKilled'],
-            paused: state['Paused'],
-            restarting: state['Restarting'],
-            running: state['Running']
-        },
-        finished_at: (state['FinishedAt'] ? Time.parse(state['FinishedAt']) : nil),
-        started_at: (state['StartedAt'] ? Time.parse(state['StartedAt']) : nil),
-        deleted_at: nil,
-        volumes: info['Volumes'].map{|k, v| [{container: k, node: v}]}
-    }
-    if labels['io.kontena.container.overlay_cidr'] && self.overlay_cidr.nil?
-      ip, subnet = labels['io.kontena.container.overlay_cidr'].split('/')
-      OverlayCidr.create(
-        grid: self.grid,
-        container: self,
-        ip: ip,
-        subnet: subnet
-      )
-    end
-  end
-
-  ##
-  # @param [Hash] network
-  # @return [Hash]
-  def parse_docker_network_settings(network)
-    if network['Ports']
-      ports = {}
-      network['Ports'].each{|container_port, port_map|
-        if port_map
-          ports[container_port] = port_map.map{|j| { node_ip: j['HostIp'], node_port: j['HostPort'].to_i}}
-        end
-      }
-    else
-      ports = nil
-    end
-
-    {
-        bridge: network['Bridge'],
-        gateway: network['Gateway'],
-        ip_address: network['IPAddress'],
-        ip_prefix_len: network['IPPrefixLen'],
-        mac_address: network['MacAddress'],
-        port_mapping: network['PortMapping'],
-        ports: ports
-    }
+  def deleted?
+    self.status == 'deleted'
   end
 
   ##

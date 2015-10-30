@@ -64,6 +64,9 @@ module GridServices
         string :*
       end
       string :log_driver
+      array :devices do
+        string
+      end
     end
 
     def validate

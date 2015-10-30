@@ -57,7 +57,6 @@ module Kontena
           '/sys' => {},
           '/var/lib/docker' => {}
         },
-        'ExposedPorts' => {'8080/tcp' => {}},
         'HostConfig' => {
           'Binds' => [
             '/:/rootfs:ro',

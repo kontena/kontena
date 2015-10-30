@@ -4,11 +4,12 @@ module Scheduler
 
       ##
       # @param [GridService] service
-      # @param [String] container_name
+      # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
       # @return [Array<HostNode>]
-      def for_service(service, container_name, nodes)
+      def for_service(service, instance_number, nodes)
         candidates = nodes.dup
+        container_name = "#{service.name}-#{instance_number}"
         ports = service.ports.map{|p| p['node_port']}
         nodes.each do |node|
           containers_for_node(node).each do |container|

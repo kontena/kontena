@@ -4,18 +4,18 @@ module Scheduler
 
       ##
       # @param [GridService] service
-      # @param [String] container_name
+      # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
       # @return [Array<HostNode>]
-      def for_service(service, container_name, nodes)
+      def for_service(service, instance_number, nodes)
         candidates = nodes.dup
         return candidates unless has_dependencies?(service)
 
         if filter_by_volume?(service)
-          filter_candidates_by_volume(candidates, service, container_name)
+          filter_candidates_by_volume(candidates, service, instance_number)
         end
         if filter_by_net?(service)
-          filter_candidates_by_net(candidates, service, container_name)
+          filter_candidates_by_net(candidates, service, instance_number)
         end
 
         candidates
@@ -23,10 +23,10 @@ module Scheduler
 
       # @param [Array<HostNode>] candidates
       # @param [GridService] service
-      # @param [String] container_name
-      def filter_candidates_by_volume(candidates, service, container_name)
-        i = container_number(container_name)
-        volumes = service.volumes_from.map{|v| v % [i] }
+      # @param [Integer] instance_number
+      def filter_candidates_by_volume(candidates, service, instance_number)
+        container_name = container_name(instance_number)
+        volumes = service.volumes_from.map{|v| v % [instance_number] }
         candidates.dup.each do |node|
           container_names = node.containers.map {|c| c.name}
           if !container_names.any?{|name| volumes.include?(name) }
@@ -37,10 +37,9 @@ module Scheduler
 
       # @param [Array<HostNode>] candidates
       # @param [GridService] service
-      # @param [String] container_name
-      def filter_candidates_by_net(candidates, service, container_name)
-        i = container_number(container_name)
-        net = service.net % [i]
+      # @param [Integer] instance_number
+      def filter_candidates_by_net(candidates, service, instance_number)
+        net = service.net % [instance_number]
         candidates.dup.each do |node|
           container_names = node.containers.map {|c| c.name}
           if !container_names.include?(net)
@@ -66,10 +65,8 @@ module Scheduler
         false
       end
 
-      def container_number(container_name)
-        if match = container_name.match(/^.+-(\d+)$/)
-          match[1]
-        end
+      def container_name(instance_number)
+        "#{grid_service.name}-#{instance_number}"
       end
     end
   end

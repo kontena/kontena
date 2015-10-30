@@ -13,13 +13,14 @@ module GridServices
     end
 
     required do
-      model :current_user, class: User
       model :grid_service
       string :strategy, nils: true, default: 'ha'
     end
 
     optional do
+      model :current_user, class: User
       integer :wait_for_port
+      float :min_health, min: 0.0, max: 1.0
     end
 
     def validate
@@ -42,6 +43,18 @@ module GridServices
     end
 
     def execute
+      if self.strategy
+        self.grid_service.strategy = self.strategy
+      end
+      if self.wait_for_port
+        self.grid_service.deploy_opts['wait_for_port'] = self.wait_for_port
+      end
+      if self.min_health
+        self.grid_service.deploy_opts['min_health'] = self.min_health
+      end
+
+      self.grid_service.save
+
       deployer.deploy_async(creds_for_registry)
 
       self.grid_service
@@ -75,18 +88,10 @@ module GridServices
       if @deployer.nil?
         nodes = self.grid_service.grid.host_nodes.connected.to_a
         strategy = STRATEGIES[self.strategy].new
-        @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes, deploy_options)
+        @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes)
       end
 
       @deployer
-    end
-
-    ##
-    # @return [Hash]
-    def deploy_options
-      deploy_options = {}
-      deploy_options[:wait_for_port] = self.wait_for_port if self.wait_for_port
-      deploy_options
     end
   end
 end

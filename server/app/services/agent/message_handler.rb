@@ -60,42 +60,8 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_info(grid, data)
-      info = data['container']
-      labels = info['Config']['Labels'] || {}
-      container_id = info['Id']
-      container = grid.containers.unscoped.find_by(container_id: container_id)
-      if container
-        container.attributes_from_docker(info)
-        container.updated_at = Time.now.utc
-        container.save
-      elsif !labels['io.kontena.container.id'].nil?
-        container = grid.containers.unscoped.find_by(id: labels['io.kontena.container.id'])
-        unless container
-          node = grid.host_nodes.find_by(node_id: data['node'])
-          service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
-          container = grid.containers.build(
-            id: BSON::ObjectId.from_string(labels['io.kontena.container.id']),
-            container_id: container_id,
-            name: labels['io.kontena.container.name'],
-            container_type: labels['io.kontena.container.type'] || 'container',
-            grid_service: service,
-            host_node: node
-          )
-        end
-        container.attributes_from_docker(info)
-        container.save
-      else
-        node = grid.host_nodes.find_by(node_id: data['node'])
-        container = grid.containers.build(
-          container_id: container_id,
-          name: info['Name'].split("/")[1],
-          container_type: 'container',
-          host_node: node
-        )
-        container.attributes_from_docker(info)
-        container.save
-      end
-    rescue Moped::Errors::OperationFailure
+      info_mapper = ContainerInfoMapper.new(grid)
+      info_mapper.from_agent(data)
     end
 
     ##

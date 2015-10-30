@@ -39,7 +39,7 @@ module Kontena
         rescue Excon::Errors::SocketError => exc
           @dns_client = nil
           retries += 1
-          if retries < 5
+          if retries < 20
             sleep 0.1
             retry
           end
@@ -57,7 +57,7 @@ module Kontena
         rescue Excon::Errors::SocketError => exc
           @dns_client = nil
           retries += 1
-          if retries < 5
+          if retries < 20
             sleep 0.1
             retry
           end

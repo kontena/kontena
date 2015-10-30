@@ -3,8 +3,8 @@ module GridServices
 
     ##
     # @param [Grid] grid
-    # @param [Array] links
-    # @return [Array]
+    # @param [Array<Hash>] links
+    # @return [Array<GridServiceLink>]
     def build_grid_service_links(grid, links)
       grid_service_links = []
       links.each do |link|

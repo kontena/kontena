@@ -1,7 +1,7 @@
 Dir[__dir__ + '/scheduler/**/*.rb'].each {|file| require file }
 Dir[__dir__ + '/docker/*.rb'].each {|file| require file }
 
-class GridScheduler
+class GridServiceScheduler
 
   attr_reader :strategy, :filters
 
@@ -18,21 +18,21 @@ class GridScheduler
 
   ##
   # @param [GridService] grid_service
-  # @param [String] container_name
+  # @param [Integer] instance_number
   # @param [Array<HostNode>] nodes
-  def select_node(grid_service, container_name, nodes)
-    nodes = self.filter_nodes(grid_service, container_name, nodes)
-    self.strategy.find_node(grid_service, container_name, nodes)
+  def select_node(grid_service, instance_number, nodes)
+    nodes = self.filter_nodes(grid_service, instance_number, nodes)
+    self.strategy.find_node(grid_service, instance_number, nodes)
   end
 
   ##
   # @param [GridService] grid_service
-  # @param [String] name
+  # @param [Integer] instance_number
   # @param [Array<HostNode>]
   # @return [Array<HostNode>]
-  def filter_nodes(grid_service, name, nodes)
+  def filter_nodes(grid_service, instance_number, nodes)
     self.filters.each do |filter|
-      nodes = filter.for_service(grid_service, name, nodes)
+      nodes = filter.for_service(grid_service, instance_number, nodes)
     end
 
     nodes

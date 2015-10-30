@@ -4,15 +4,17 @@ module Scheduler
 
       ##
       # @param [GridService] grid_service
-      # @param [String] container_name
+      # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
       # @return [HostNode,NilClass]
-      def find_node(grid_service, container_name, nodes)
+      def find_node(grid_service, instance_number, nodes)
         if grid_service.stateless?
           candidates = self.sort_candidates(nodes, grid_service)
           candidates.first
         else
-          prev_container = grid_service.containers.volumes.find_by(name: "#{container_name}-volumes")
+          prev_container = grid_service.containers.volumes.find_by(
+            name: "#{grid_service.name}-#{instance_number}-volumes"
+          )
           if prev_container
             prev_container.host_node
           else
@@ -24,7 +26,7 @@ module Scheduler
 
       def sort_candidates(nodes, grid_service)
         nodes.shuffle.sort_by{|node|
-          node.containers.where(grid_service_id: grid_service.id).count
+          node.reload.containers.scoped.where(grid_service_id: grid_service.id).count
         }
       end
     end

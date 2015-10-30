@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe GridScheduler do
+describe GridServiceScheduler do
 
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }

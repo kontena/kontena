@@ -1,7 +1,3 @@
-%w(create).each do |command|
-  require_relative "../../mutations/containers/#{command}"
-end
-
 module V1
   class ContainersApi < Roda
     include OAuth2TokenVerifier

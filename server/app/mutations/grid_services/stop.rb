@@ -9,13 +9,19 @@ module GridServices
       prev_state = self.grid_service.state
       begin
         self.grid_service.set_state('stopping')
-        self.grid_service.containers.each do |container|
-          Docker::ContainerStopper.new(container).stop_container
-        end
+        Celluloid::Future.new{
+          self.stop_service_instances
+        }
         self.grid_service.set_state('stopped')
       rescue => exc
         self.grid_service.set_state(prev_state)
         raise exc
+      end
+    end
+
+    def stop_service_instances
+      self.grid_service.containers.each do |container|
+        Docker::ServiceStopper.new(container.host_node).stop_service_instance(container.name)
       end
     end
   end
