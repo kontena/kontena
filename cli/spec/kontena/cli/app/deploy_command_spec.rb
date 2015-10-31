@@ -126,7 +126,6 @@ yml
 
       it 'uses current directory as service name prefix by default' do
         current_dir = '/kontena/tests/stacks'
-        allow(Dir).to receive(:chdir).and_return(true)
         allow(Dir).to receive(:getwd).and_return(current_dir)
         expect(File).to receive(:basename).with(current_dir).and_return('stacks')
         subject.run([])

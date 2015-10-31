@@ -34,14 +34,15 @@ module Kontena::Cli::Apps
 
     def parse_services(file, name = nil, prefix='')
       services = YAML.load(File.read(File.expand_path(file)) % {project: prefix})
-      Dir.chdir(File.dirname(File.expand_path(file)))
-      services.each do |name, options|
-        normalize_env_vars(options)
-        if options.has_key?('extends')
-          extension_file = options['extends']['file']
-          service_name =  options['extends']['service']
-          options.delete('extends')
-          services[name] = extend_options(options, extension_file , service_name, prefix)
+      Dir.chdir(File.dirname(File.expand_path(file))) do
+        services.each do |name, options|
+          normalize_env_vars(options)
+          if options.has_key?('extends')
+            extension_file = options['extends']['file']
+            service_name =  options['extends']['service']
+            options.delete('extends')
+            services[name] = extend_options(options, extension_file , service_name, prefix)
+          end
         end
       end
       if name.nil?
@@ -71,14 +72,6 @@ module Kontena::Cli::Apps
         end
       end
       env_vars
-    end
-
-    def dockerfile_exist?
-      !dockerfile.nil?
-    end
-
-    def dockerfile
-      @dockerfile ||= File.new('Dockerfile') rescue nil
     end
 
     def create_yml(services, file='kontena.yml')
