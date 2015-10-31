@@ -22,8 +22,7 @@ module Kontena::Cli::Vpn
         abort('Node not found') if node.nil?
       end
 
-      public_ip = ip || node['public_ip']
-
+      vpn_ip = node_vpn_ip(node)
       data = {
         name: 'vpn',
         stateful: true,
@@ -36,7 +35,7 @@ module Kontena::Cli::Vpn
           }
         ],
         cap_add: ['NET_ADMIN'],
-        env: ["OVPN_SERVER_URL=udp://#{public_ip}:1194"],
+        env: ["OVPN_SERVER_URL=udp://#{vpn_ip}:1194"],
         affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)
@@ -47,8 +46,21 @@ module Kontena::Cli::Vpn
         sleep 1
       end
       puts ' done'
-      puts "OpenVPN service is now started (udp://#{public_ip}:1194)."
+      puts "OpenVPN service is now started (udp://#{vpn_ip}:1194)."
       puts "Use 'kontena vpn config' to fetch OpenVPN client config to your machine (it takes a while until config is ready)."
+    end
+
+    # @param [Hash] node
+    # @return [String]
+    def node_vpn_ip(node)
+      ip unless ip.nil?
+
+      # vagrant
+      if api_url == 'http://192.168.66.100:8080'
+        node['private_ip']
+      else
+        node['public_ip']
+      end
     end
   end
 end
