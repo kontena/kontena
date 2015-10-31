@@ -11,7 +11,7 @@ write_files:
   - path: /etc/systemd/system/docker.service.d/50-kontena.conf
     content: |
         [Service]
-        Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19" --bip="172.17.42.1/16"'
+        Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19" --bip="172.17.43.1/16"'
 coreos:
   units:
     - name: 00-eth.network
@@ -21,7 +21,7 @@ coreos:
         Name=eth*
         [Network]
         DHCP=yes
-        DNS=172.17.42.1
+        DNS=172.17.43.1
         DNS=172.28.128.1
         DNS=8.8.8.8
         DOMAINS=kontena.local
