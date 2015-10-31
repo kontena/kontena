@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.2 (2015-10-31)
+
+- export port for web process on app init command
+- increase timeout on container create
+- fix dockerfile resolving when build points to non-default location
+- remove duplicate app subcommand
+- do not generate maintainer to dockerfile on app init
+- fix error in app init when app.json is not present
+- change docker bridge to non-default value on provisioners
+- fix `kontena master vagrant start` command (credits: [virtualstaticvoid](https://github.com/virtualstaticvoid))
+- fix vpn/dns config in linux workstations
+- use nodes internal ip for vpn in vagrant
+
 ## 0.9.1 (2015-10-25)
 
 - app init: fix addon services persistence
