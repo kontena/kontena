@@ -79,7 +79,7 @@ module Docker
     ##
     # @return [RpcClient]
     def client
-      self.host_node.rpc_client(10)
+      self.host_node.rpc_client(60)
     end
 
     # @param [Container] container
