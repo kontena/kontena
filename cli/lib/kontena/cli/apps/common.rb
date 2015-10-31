@@ -90,6 +90,8 @@ module Kontena::Cli::Apps
     def app_json
       if !@app_json && File.exist?('app.json')
         @app_json = JSON.parse(File.read('app.json'))
+      else
+        @app_json = {}
       end
       @app_json
     end
