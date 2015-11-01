@@ -53,7 +53,6 @@ class HostNode
       execution_driver: attrs['ExecutionDriver'],
       ipv4_forwarding: attrs['IPv4Forwarding'],
       kernel_version: attrs['KernelVersion'],
-      labels: attrs['Labels'],
       mem_total: attrs['MemTotal'],
       mem_limit: attrs['MemoryLimit'],
       cpus: attrs['NCPU'],
@@ -61,6 +60,9 @@ class HostNode
       public_ip: attrs['PublicIp'],
       private_ip: attrs['PrivateIp']
     }
+    if self.labels.nil? || self.labels.size == 0
+      self.labels = attrs['Labels']
+    end
   end
 
   def connected?

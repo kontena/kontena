@@ -42,6 +42,19 @@ describe HostNode do
         subject.attributes_from_docker({'PrivateIp' => '192.168.66.2'})
       }.to change{ subject.private_ip }.to('192.168.66.2')
     end
+
+    it 'sets labels' do
+      expect {
+        subject.attributes_from_docker({'Labels' => ['foo=bar']})
+      }.to change{ subject.labels }.to(['foo=bar'])
+    end
+
+    it 'does not overwrite existing labels' do
+      subject.labels = ['bar=baz']
+      expect {
+        subject.attributes_from_docker({'Labels' => ['foo=bar']})
+      }.not_to change{ subject.labels }
+    end
   end
 
   describe '#save!' do
