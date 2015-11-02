@@ -74,5 +74,18 @@ describe HostNode do
       subject.save!
       expect(subject.node_number).to eq(2)
     end
+
+    it 'appends node_number to name if name is not unique' do
+      grid = Grid.create!(name: 'test')
+      node1 = HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
+
+      subject.attributes = {name: 'node', grid: grid}
+      subject.save
+      expect(subject.name).to eq('node-2')
+
+      subject.name = 'foo'
+      subject.save
+      expect(subject.name).to eq('foo')
+    end
   end
 end

@@ -28,7 +28,7 @@ class HostNode
   has_many :containers, dependent: :destroy
   has_and_belongs_to_many :images
 
-  after_save :reserve_node_number
+  after_save :reserve_node_number, :ensure_unique_name
 
   index({ grid_id: 1 })
   index({ node_id: 1 })
@@ -89,6 +89,15 @@ class HostNode
       self.update_attribute(:node_number, node_number)
     rescue Moped::Errors::OperationFailure => exc
       retry
+    end
+  end
+
+  def ensure_unique_name
+    return unless self.grid
+    return unless self.grid.respond_to?(:host_nodes)
+
+    if self.grid.host_nodes.unscoped.where(:id.ne => self.id, name: self.name).count > 0
+      self.set(name: "#{self.name}-#{self.node_number}")
     end
   end
 end
