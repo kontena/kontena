@@ -87,6 +87,8 @@ module Scheduler
       # @param [String] compare
       # @param [String] value
       def label_match?(node, compare, value)
+        return false if node.labels.nil?
+        
         if compare == '=='
           node.labels.include?(value)
         elsif compare == '!='
