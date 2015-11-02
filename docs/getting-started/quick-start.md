@@ -17,7 +17,7 @@ You can install the Kontena CLI with Rubygems package manager (included in Ruby)
 $ gem install kontena-cli
 ```
 
-After the installation is complete, you can test the installation by checking the Kontena CLI version `kontena -v`.
+After the installation is complete, you can test the installation by checking the Kontena CLI version `kontena version`.
 
 **OPTIONAL**
 
@@ -29,7 +29,7 @@ $ which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 
 ## Step 2. Register Personal User Account
 
-With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs form user actions. Create your own personal user account (if not created already).
+With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs from user actions. Create your own personal user account (if not created already).
 
 ```
 $ kontena register
@@ -76,7 +76,7 @@ Welcome! See 'kontena --help' to get started.
 Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. The Grid can be created with command `kontena grid create`. For example, to create a grid named `mygrid`:
 
 ```
-$ kontena grid create testing
+$ kontena grid create mygrid
 ```
 
 ## Step 5. Install Kontena Nodes
