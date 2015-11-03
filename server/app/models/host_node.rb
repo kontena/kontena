@@ -46,7 +46,6 @@ class HostNode
   def attributes_from_docker(attrs)
     self.attributes = {
       node_id: attrs['ID'],
-      name: attrs['Name'],
       os: attrs['OperatingSystem'],
       docker_root_dir: attrs['DockerRootDir'],
       driver: attrs['Driver'],
@@ -60,6 +59,9 @@ class HostNode
       public_ip: attrs['PublicIp'],
       private_ip: attrs['PrivateIp']
     }
+    if self.name.nil?
+      self.name = attrs['Name']
+    end
     if self.labels.nil? || self.labels.size == 0
       self.labels = attrs['Labels']
     end

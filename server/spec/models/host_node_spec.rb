@@ -31,6 +31,19 @@ describe HostNode do
   end
 
   describe '#attributes_from_docker' do
+    it 'sets name' do
+      expect {
+        subject.attributes_from_docker({'Name' => 'node-3'})
+      }.to change{ subject.name }.to('node-3')
+    end
+
+    it 'does not set name if name is already set' do
+      subject.name = 'foobar'
+      expect {
+        subject.attributes_from_docker({'Name' => 'node-3'})
+      }.not_to change{ subject.name }
+    end
+
     it 'sets public_ip' do
       expect {
         subject.attributes_from_docker({'PublicIp' => '127.0.0.1'})
