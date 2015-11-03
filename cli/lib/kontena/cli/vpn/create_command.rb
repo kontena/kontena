@@ -53,7 +53,7 @@ module Kontena::Cli::Vpn
     # @param [Hash] node
     # @return [String]
     def node_vpn_ip(node)
-      ip unless ip.nil?
+      return ip unless ip.nil?
 
       # vagrant
       if api_url == 'http://192.168.66.100:8080'
