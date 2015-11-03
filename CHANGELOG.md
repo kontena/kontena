@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.3 (2015-11-03)
+
+- do not overwrite existing node labels on update
+- fix node label affinity when labels do not exist
+- append node number to node name if name is not unique within grid
+- fix user provided ip on vpn create
+
 ## 0.9.2 (2015-10-31)
 
 - export port for web process on app init command
