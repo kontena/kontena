@@ -31,6 +31,19 @@ describe HostNode do
   end
 
   describe '#attributes_from_docker' do
+    it 'sets name' do
+      expect {
+        subject.attributes_from_docker({'Name' => 'node-3'})
+      }.to change{ subject.name }.to('node-3')
+    end
+
+    it 'does not set name if name is already set' do
+      subject.name = 'foobar'
+      expect {
+        subject.attributes_from_docker({'Name' => 'node-3'})
+      }.not_to change{ subject.name }
+    end
+
     it 'sets public_ip' do
       expect {
         subject.attributes_from_docker({'PublicIp' => '127.0.0.1'})
@@ -73,6 +86,19 @@ describe HostNode do
       subject.attributes = {node_id: 'bb', grid_id: 1}
       subject.save!
       expect(subject.node_number).to eq(2)
+    end
+
+    it 'appends node_number to name if name is not unique' do
+      grid = Grid.create!(name: 'test')
+      node1 = HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
+
+      subject.attributes = {name: 'node', grid: grid}
+      subject.save
+      expect(subject.name).to eq('node-2')
+
+      subject.name = 'foo'
+      subject.save
+      expect(subject.name).to eq('foo')
     end
   end
 end
