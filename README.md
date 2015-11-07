@@ -30,7 +30,7 @@ Kontena supports any application that can run in a Docker container, and can run
 
 ## Getting Started
 
-Please see our [Quick Start](https://github.com/kontena/kontena/blob/master/docs/getting-started/quick-start.md) guide.
+Please see our [Quick Start](http://www.kontena.io/docs/getting-started/quick-start) guide.
 
 ## Contact Us
 
