@@ -24,7 +24,7 @@ module Kontena
       start_em
 
       @weave_attacher.start!
-      @client.connect
+      @client.ensure_connect
       @node_info_worker.start!
       @container_info_worker.start!
       @log_worker.start!

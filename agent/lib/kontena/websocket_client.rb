@@ -22,6 +22,20 @@ module Kontena
       @rpc_server = Kontena::RpcServer.new
       @abort = false
       info "initialized with token #{@api_token}"
+      @connected = false
+    end
+
+    def ensure_connect
+      EM::PeriodicTimer.new(1) {
+        unless connected?
+          self.connect
+        end
+      }
+    end
+
+    # @return [Boolean]
+    def connected?
+      @connected
     end
 
     def connect
@@ -36,7 +50,7 @@ module Kontena
       Pubsub.publish('websocket:connect', self)
 
       @ws.on :open do |event|
-        info 'connection established'
+        self.on_open(event)
       end
       @ws.on :message do |event|
         self.on_message(@ws, event)
@@ -55,6 +69,12 @@ module Kontena
       EM.next_tick {
         @ws.send(msg)
       }
+    end
+
+    # @param [Faye::WebSocket::Api::Event] event
+    def on_open(event)
+      info 'connection established'
+      @connected = true
     end
 
     # @param [Faye::WebSocket::Client] ws
@@ -79,14 +99,13 @@ module Kontena
 
     # @param [Faye::WebSocket::Api::Event] event
     def on_close(event)
+      @connected = false
       if event.code == 4001
         self.handle_invalid_token(event)
       elsif event.code == 4010
         self.handle_invalid_version(event)
       end
       info "connection closed with code: #{event.code}"
-      sleep 1
-      EM.next_tick{ self.connect }
     rescue => exc
       logger.error(LOG_NAME) { exc.message }
     end

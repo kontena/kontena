@@ -26,4 +26,15 @@ describe Kontena::WebsocketClient do
       Timeout::timeout(1){ sleep 0.01 until received }
     end
   end
+
+  describe '#connected?' do
+    it 'returns false by default' do
+      expect(subject.connected?).to eq(false)
+    end
+
+    it 'returns true if connection is established' do
+      subject.on_open(spy(:event))
+      expect(subject.connected?).to eq(true)
+    end
+  end
 end
