@@ -53,7 +53,13 @@ module Kontena
           end
 
           puts "  env: "
-          service['env'].to_a.each{|e| puts "    - #{e}"}
+          service['env'].to_a.each do |e|
+            if e.length > 50
+              puts "    - #{e[0..50]}..."
+            else
+              puts "    - #{e}"
+            end
+          end
 
           puts "  ports:"
           service['ports'].to_a.each do |p|
