@@ -11,6 +11,7 @@ require_relative 'services/delete_command'
 require_relative 'services/containers_command'
 require_relative 'services/logs_command'
 require_relative 'services/stats_command'
+require_relative 'services/envs_command'
 require_relative 'services/add_env_command'
 require_relative 'services/remove_env_command'
 
@@ -29,6 +30,7 @@ class Kontena::Cli::ServiceCommand < Clamp::Command
   subcommand "containers", "List service containers", Kontena::Cli::Services::ContainersCommand
   subcommand "logs", "Show service logs", Kontena::Cli::Services::LogsCommand
   subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
+  subcommand "envs", "Show environment variables", Kontena::Cli::Services::EnvsCommand
   subcommand "add-env", "Add environment variable", Kontena::Cli::Services::AddEnvCommand
   subcommand "remove-env", "Remove environment variable", Kontena::Cli::Services::RemoveEnvCommand
 
