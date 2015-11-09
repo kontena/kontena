@@ -100,7 +100,6 @@ module Kontena
       container = Docker::Container.create(
         'name' => 'kontena-etcd',
         'Image' => image,
-        'HostName' => 'etcd',
         'Cmd' => cmd,
         'HostConfig' => {
           'NetworkMode' => 'host',
