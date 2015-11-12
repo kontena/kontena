@@ -105,12 +105,15 @@ module Kontena
             puts "      rev: #{container['deploy_rev']}"
             puts "      node: #{container['node']['name']}"
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
-            puts "      ip: #{container['overlay_cidr'].split('/')[0]}"
+            puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
             puts "      public ip: #{container['node']['public_ip']}"
             if container['status'] == 'unknown'
               puts "      status: #{container['status'].colorize(:yellow)}"
             else
               puts "      status: #{container['status']}"
+            end
+            if container['state']['error'] && container['state']['error'] != ''
+              puts "      reason: #{container['state']['error']}"
             end
           end
         end
