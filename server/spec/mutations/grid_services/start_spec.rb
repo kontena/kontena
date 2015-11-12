@@ -33,18 +33,11 @@ describe GridServices::Start do
       prev_state = redis_service.state
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      expect(subject).to receive(:starter_for).and_raise(StandardError.new('error'))
+      expect(subject).to receive(:start_service_instance).and_raise(StandardError.new('error'))
       expect {
         subject.run
       }.to raise_exception
       expect(redis_service.state).to eq(prev_state)
-    end
-  end
-
-  describe '#starter_for' do
-    it 'returns Docker::ContainerStarter' do
-      container = redis_service.containers.create!(name: 'redis-1', container_id: '34')
-      expect(subject.starter_for(container)).to be_instance_of(Docker::ContainerStarter)
     end
   end
 end

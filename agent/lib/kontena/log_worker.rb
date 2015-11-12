@@ -43,7 +43,7 @@ module Kontena
           tail = 0
         end
         begin
-          info "starting to stream logs for container: #{container.id}"
+          debug "starting to stream logs for container: #{container.id}"
           stream_opts = {
             'stdout' => true,
             'stderr' => true,

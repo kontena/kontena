@@ -1,3 +1,5 @@
+require_relative '../grid_scheduler'
+
 module Agent
   class NodeUnplugger
 
@@ -9,6 +11,7 @@ module Agent
       @grid = node.grid
     end
 
+    # @return [Celluloid::Future]
     def unplug!
       Celluloid::Future.new {
         begin
@@ -26,18 +29,7 @@ module Agent
 
     def reschedule_services
       sleep 5
-      grid.grid_services.each do |service|
-        if service.stateless? && !service.deploying?
-          reschedule_service(service)
-        end
-      end
-    end
-
-    def reschedule_service(service)
-      GridServices::Deploy.run(
-        grid_service: service,
-        strategy: service.strategy
-      )
+      GridScheduler.new(grid).reschedule
     end
   end
 end

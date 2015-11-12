@@ -1,8 +1,10 @@
 require 'docker'
+require_relative '../logging'
 
 module Kontena
   module ServicePods
     class Stopper
+      include Kontena::Logging
 
       attr_reader :service_name
 
@@ -15,8 +17,11 @@ module Kontena
       def perform
         service_container = get_container(self.service_name)
         if service_container.running?
+          info "stopping service: #{self.service_name}"
           service_container.stop
         end
+
+        Pubsub.publish('service_pod:stop', self.service_name)
 
         service_container
       end

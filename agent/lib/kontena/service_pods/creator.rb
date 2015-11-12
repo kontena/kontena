@@ -1,9 +1,11 @@
 require 'docker'
 require_relative '../image_puller'
+require_relative '../logging'
 
 module Kontena
   module ServicePods
     class Creator
+      include Kontena::Logging
 
       attr_reader :service_pod, :overlay_adapter, :image_credentials
 
@@ -17,6 +19,7 @@ module Kontena
 
       # @return [Docker::Container]
       def perform
+        info "creating service: #{service_pod.name}"
         if service_pod.stateful?
           data_container = self.ensure_data_container(service_pod)
           service_pod.volumes_from << data_container.id
@@ -24,14 +27,17 @@ module Kontena
 
         service_container = get_container(service_pod.name)
         if service_container
+          info "removing previous version of service: #{service_pod.name}"
           self.cleanup_container(service_container)
         end
         service_config = service_pod.service_config
         overlay_adapter.modify_create_opts(service_config)
         service_container = create_container(service_config)
         service_container.start
+        info "service started: #{service_pod.name}"
 
         Pubsub.publish('service_pod:start', service_pod.name)
+        Pubsub.publish('stats:collect', nil)
 
         service_container
       rescue => exc
@@ -50,6 +56,7 @@ module Kontena
       def ensure_data_container(service_pod)
         data_container = get_container(service_pod.data_volume_name)
         unless data_container
+          info "creating data volumes for service: #{service_pod.name}"
           data_container = create_container(service_pod.data_volume_config)
         end
 

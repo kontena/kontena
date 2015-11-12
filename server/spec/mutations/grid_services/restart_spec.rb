@@ -7,24 +7,23 @@ describe GridServices::Restart do
     grid.users << user
     grid
   }
-  let(:restarter) { spy(:restarter) }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
+  let(:node) { HostNode.create!(name: 'node-1', grid: grid)}
 
   describe '#run' do
-    it 'sends restart to restarter for each container' do
-      allow(restarter).to receive(:restart_container)
-      redis_service.containers.create!(name: 'redis-1-volume', container_id: '12', container_type: 'volume')
-      container = redis_service.containers.create!(name: 'redis-1', container_id: '34')
+    it 'sends restart' do
+      container = redis_service.containers.create!(
+        name: 'redis-1', container_id: '34', host_node: node
+      )
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      expect(subject).to receive(:restarter_for).with(container).once.and_return(restarter)
+      expect(subject).to receive(:restart_service_instance).with(node, container.name).once
       subject.run
     end
 
     it 'sets service state to running' do
-      allow(restarter).to receive(:restart_container)
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      allow(subject).to receive(:restarter_for).and_return(restarter)
+      allow(:subject).to receive(:restart_service_instance)
       subject.run
       expect(redis_service.state).to eq('running')
     end
@@ -33,19 +32,10 @@ describe GridServices::Restart do
       prev_state = redis_service.state
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      expect(subject).to receive(:restarter_for).and_raise(StandardError.new('error'))
-      expect {
-        subject.run
-      }.to raise_exception
+      expect(subject).to receive(:restart_service_instances).and_raise(StandardError.new('error'))
+      outcome = subject.run
+      outcome.result.value
       expect(redis_service.state).to eq(prev_state)
-    end
-  end
-
-  describe '#restarter_for' do
-    it 'returns Docker::ContainerRestarter' do
-      container = redis_service.containers.create!(name: 'redis-1', container_id: '34')
-      subject = described_class.new(current_user: user, grid_service: redis_service)
-      expect(subject.restarter_for(container)).to be_instance_of(Docker::ContainerRestarter)
     end
   end
 end

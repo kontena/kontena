@@ -13,8 +13,14 @@ module Agent
       info = data['container']
       labels = info['Config']['Labels'] || {}
       node_id = data['node']
+      id = labels['io.kontena.container.id']
       container_id = data['container']['Id']
-      container = grid.containers.unscoped.find_by(container_id: container_id)
+      if id
+        container = grid.containers.unscoped.find_by(id: BSON::ObjectId.from_string(id))
+      end
+      if container.nil?
+        container = grid.containers.unscoped.find_by(container_id: container_id)
+      end
       if container
         self.update_container_attributes(container, info)
       elsif !labels['io.kontena.service.id'].nil?

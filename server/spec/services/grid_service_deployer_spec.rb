@@ -32,15 +32,4 @@ describe GridServiceDeployer do
       subject.deploy_service_instance(node, 1, 'v1.0')
     end
   end
-
-  describe '#ensure_image' do
-    it 'calls ImagePuller for image update' do
-      image = 'redis:2.8'
-      puller = spy
-      allow(subject).to receive(:image_puller).and_return(puller)
-      expect(subject).to receive(:image_puller).with(node, nil)
-      expect(puller).to receive(:pull_image).with(image).and_return(ubuntu_trusty)
-      subject.ensure_image(node, image)
-    end
-  end
 end

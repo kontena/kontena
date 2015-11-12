@@ -84,7 +84,8 @@ describe Agent::MessageHandler do
           },
           'Config' => {
             'Labels' => {
-              'io.kontena.container.id' => container.id.to_s
+              'io.kontena.container.id' => container.id.to_s,
+              'io.kontena.service.id' => 'foobarbaz'
             }
           },
 

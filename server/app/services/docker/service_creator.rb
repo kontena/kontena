@@ -3,7 +3,7 @@ require_relative 'image_puller'
 module Docker
   class ServiceCreator
 
-    attr_reader :grid_service, :host_node
+    attr_reader :grid_service, :host_node, :service_container
 
     ##
     # @param [GridService] grid_service
@@ -18,6 +18,12 @@ module Docker
     # @param [String] deploy_rev
     # @param [Hash,NilClass] creds
     def create_service_instance(instance_number, deploy_rev, creds)
+      @service_container = Container.create!(
+        grid: grid_service.grid,
+        grid_service: grid_service,
+        host_node: host_node,
+        name: "#{grid_service.name}-#{instance_number}"
+      )
       service_spec = self.service_spec(instance_number, deploy_rev, creds)
       self.request_create_service(service_spec)
     end
@@ -112,7 +118,7 @@ module Docker
     # @return [Hash]
     def build_labels
       labels = {
-        'io.kontena.container.id' => Container.new.id.to_s,
+        'io.kontena.container.id' => service_container.id.to_s,
         'io.kontena.service.id' => grid_service.id.to_s,
         'io.kontena.service.name' => grid_service.name.to_s,
         'io.kontena.grid.name' => grid_service.grid.try(:name)

@@ -6,23 +6,26 @@ module GridServices
     end
 
     def execute
-      prev_state = self.grid_service.state
-      begin
-        self.grid_service.set_state('restarting')
-        Celluloid::Future.new{
-          self.restart_service_instances
-        }
-        self.grid_service.set_state('running')
-      rescue => exc
-        self.grid_service.set_state(prev_state)
-        raise exc
-      end
+      Celluloid::Future.new{
+        self.restart_service_instances
+      }
     end
 
     def restart_service_instances
-      self.grid_service.containers.scoped.each do |container|
-        Docker::ServiceRestarter.new(container.host_node).restart_service_instance(container.name)
+      prev_state = self.grid_service.state
+      begin
+        self.grid_service.set_state('restarting')
+        self.grid_service.containers.scoped.each do |container|
+          self.restart_service_instance(container.host_node, container.name)
+        end
+        self.grid_service.set_state('running')
+      rescue => exc
+        self.grid_service.set_state(prev_state)
       end
+    end
+
+    def restart_service_instance(node, service_instance_name)
+      Docker::ServiceRestarter.new(node).restart_service_instance(service_instance_name)
     end
   end
 end

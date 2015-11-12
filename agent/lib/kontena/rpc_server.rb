@@ -36,7 +36,7 @@ module Kontena
       method = message[2].split('/')[2]
       if klass = HANDLERS[handler]
         begin
-          info "rpc request: #{klass.name}##{method} #{message[3]}"
+          debug "rpc request: #{klass.name}##{method} #{message[3]}"
           result = klass.new.send(method, *message[3])
           return [1, msg_id, nil, result]
         rescue RpcServer::Error => exc

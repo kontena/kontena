@@ -1,8 +1,10 @@
 require 'docker'
+require_relative '../logging'
 
 module Kontena
   module ServicePods
     class Terminator
+      include Kontena::Logging
 
       attr_reader :service_name
 
@@ -15,14 +17,18 @@ module Kontena
       def perform
         service_container = get_container(self.service_name)
         if service_container
+          info "terminating service: #{self.service_name}"
           service_container.stop
           service_container.wait
           service_container.delete(v: true, force: true)
         end
         data_container = get_container("#{self.service_name}-volumes")
         if data_container
+          info "cleaning up service volumes: #{self.service_name}"
           data_container.delete(v: true, force: true)
         end
+
+        Pubsub.publish('service_pod:terminate', self.service_name)
 
         service_container
       end

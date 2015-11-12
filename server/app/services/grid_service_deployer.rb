@@ -66,13 +66,19 @@ class GridServiceDeployer
       }
       pending_deploys = deploy_futures.select{|f| !f.ready?}
       if pending_deploys.size >= (self.grid_service.container_count * self.min_health).floor
-        in_progress[0].value
+        info "throttling deploy [#{self.grid_service.name}], there are #{pending_deploys.size} deploys in progress"
+        pending_deploys[0].value
       end
     end
+    deploy_futures.select{|f| !f.ready?}.each{|f| f.value }
 
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       instance_number = container.name.match(/^.+-(\d+)$/)[1]
+      info "removing service instance #{container.name}"
       self.terminate_service_instance(instance_number, container.host_node)
+    end
+    self.grid_service.containers.unscoped.where(:container_id => nil, :deploy_rev => {:$ne => deploy_rev}).each do |container|
+      container.destroy
     end
     self.grid_service.set_state('running')
 
@@ -80,6 +86,7 @@ class GridServiceDeployer
   rescue RpcClient::Error => exc
     self.grid_service.set_state(prev_state)
     error "RPC error: #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
     false
   rescue => exc
     self.grid_service.set_state(prev_state)
@@ -168,7 +175,7 @@ class GridServiceDeployer
 
   # @return [Float]
   def min_health
-    1.0 - (self.grid_service.deploy_opts['min_health'] || 0.0).to_f
+    1.0 - (self.grid_service.deploy_opts['min_health'] || 0.6).to_f
   end
 
   # @return [Boolean]

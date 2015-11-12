@@ -1,24 +1,37 @@
 require 'docker'
+require_relative 'logging'
 
 module Kontena
   class ImagePuller
+    include Kontena::Logging
 
     # @param [String] image
     # @param [Hash, NilClass] creds
     def ensure_image(image, creds = nil)
-      unless fresh_pull?(image)
-        update_image_cache(image)
-        retries = 0
-        begin
-          Docker::Image.create({'fromImage' => image}, creds)
-        rescue => exc
-          retries += 1
-          if retries < 10
-            sleep 0.1
-            retry
-          end
-          raise exc
+      self.class.mutex.synchronize do
+        unless fresh_pull?(image)
+          self.pull_image(image, creds)
         end
+      end
+    end
+
+    def pull_image(image, creds)
+      if creds.nil?
+        info "pulling image: #{image}"
+      else
+        info "pulling image with credentials: #{image}"
+      end
+      update_image_cache(image)
+      retries = 0
+      begin
+        Docker::Image.create({'fromImage' => image}, creds)
+      rescue => exc
+        retries += 1
+        if retries < 10
+          sleep 0.1
+          retry
+        end
+        raise exc
       end
     end
 
@@ -29,6 +42,11 @@ module Kontena
       self.class.image_cache[image] >= (Time.now.utc - 60)
     end
 
+    def image_exists?(image)
+      image = Docker::Image.get(image) rescue nil
+      !image.nil?
+    end
+
     # @param [String] image
     def update_image_cache(image)
       self.class.image_cache[image] = Time.now.utc
@@ -37,6 +55,11 @@ module Kontena
     # @return [Hash]
     def self.image_cache
       @image_cache ||= {}
+    end
+
+    # @return [Mutex]
+    def self.mutex
+      @mutex ||= Mutex.new
     end
   end
 end
