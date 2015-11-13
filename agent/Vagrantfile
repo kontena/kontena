@@ -1,50 +1,81 @@
 # -*- mode: ruby -*-
-# vi: set ft=ruby :
+# # vi: set ft=ruby :
 
-# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
-VAGRANTFILE_API_VERSION = "2"
+require 'fileutils'
+
+Vagrant.require_version ">= 1.6.0"
+
+CLOUD_CONFIG_PATH = File.join(File.dirname(__FILE__), "userdata.vagrant")
+
+# Defaults for config options defined in CONFIG
+$num_instances = 3
+$instance_name_prefix = "core"
+$update_channel = "stable"
+$image_version = "current"
+$vm_memory = 1024
+$vm_cpus = 1
+
+# Attempt to apply the deprecated environment variable NUM_INSTANCES to
+# $num_instances while allowing config.rb to override it
+if ENV["NUM_INSTANCES"].to_i > 0 && ENV["NUM_INSTANCES"]
+  $num_instances = ENV["NUM_INSTANCES"].to_i
+end
+
+def vm_memory
+  $vb_memory.nil? ? $vm_memory : $vb_memory
+end
+
+def vm_cpus
+  $vb_cpus.nil? ? $vm_cpus : $vb_cpus
+end
 
 provision_script = <<SCRIPT
-sudo mkdir /var/lib/docker
-sudo apt-get install -y btrfs-tools
-sudo mkfs.btrfs /dev/sdb
-sudo echo '/dev/sdb	/var/lib/docker	 btrfs	defaults	0 0' >> /etc/fstab
-sudo mount -a
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x80f70e11f0f0d5f10cb20e62f5da5f09c3173aa6
-sudo echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
-sudo echo deb http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu trusty main > /etc/apt/sources.list.d/ruby-ng.list
-sudo apt-get update
-sudo apt-get install -y -q lxc-docker python-pip ruby2.2 ruby2.2-dev build-essential libssl-dev ca-certificates
-sudo pip install docker-compose
-sudo gem install bundler
-sudo gpasswd -a vagrant docker
+sudo mkdir -p /opt/bin
+curl -sL https://github.com/docker/compose/releases/download/1.5.0/docker-compose-`uname -s`-`uname -m` > /opt/bin/docker-compose
+chmod 755 /opt/bin/docker-compose
 SCRIPT
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  3.times do |i|
-    node_number = i + 1
-    config.vm.define "docker#{node_number}" do |docker|
-      docker.vm.box = "ubuntu/trusty64"
-      docker.vm.network "private_network", ip: "192.168.66.#{node_number + 1}"
-      docker.vm.hostname = "node-#{node_number}"
-      docker.vm.provider "virtualbox" do |vb|
-        vb.gui = false
-        vb.customize ["modifyvm", :id, "--memory", "768"]
-        vb.auto_nat_dns_proxy = false
-        vb.customize ["modifyvm", :id, "--natdnsproxy1", "off" ]
-        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off" ]
-        lfs_disk = "virtualbox/agent_docker_#{node_number}" + ".vdi"
-        unless File.exist?(lfs_disk)
-            vb.customize ['createhd', '--filename', lfs_disk, '--size', 20 * 1024]
-        end
-         vb.customize ['storageattach', :id, '--storagectl', 'SATAController', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lfs_disk]
-      end
-      docker.vm.provision "shell", inline: (provision_script % ["10.81.#{i + 1}.0/24"])
-    end
+Vagrant.configure("2") do |config|
+  # always use Vagrants insecure key
+  config.ssh.insert_key = false
 
+  config.vm.box = "coreos-%s" % $update_channel
+  if $image_version != "current"
+      config.vm.box_version = $image_version
+  end
+  config.vm.box_url = "http://%s.release.core-os.net/amd64-usr/%s/coreos_production_vagrant.json" % [$update_channel, $image_version]
+
+  config.vm.provider :virtualbox do |v|
+    # On VirtualBox, we don't have guest additions or a functional vboxsf
+    # in CoreOS, so tell Vagrant that so it can be smarter.
+    v.check_guest_additions = false
+    v.functional_vboxsf     = false
   end
 
+  # plugin conflict
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    config.vbguest.auto_update = false
+  end
 
+  (1..$num_instances).each do |i|
+    config.vm.define vm_name = "%s-%02d" % [$instance_name_prefix, i] do |config|
+      config.vm.hostname = vm_name
+
+
+      config.vm.provider :virtualbox do |vb|
+        vb.gui = false
+        vb.memory = vm_memory
+        vb.cpus = vm_cpus
+      end
+      config.vm.network "private_network", ip: "192.168.66.#{i+100}"
+      config.vm.synced_folder ".", "/home/core/share", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+
+      if File.exist?(CLOUD_CONFIG_PATH)
+        config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}", :destination => "/tmp/vagrantfile-user-data"
+        config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
+        config.vm.provision :shell, :inline => provision_script
+      end
+    end
+  end
 end
