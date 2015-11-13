@@ -86,7 +86,7 @@ module Kontena
 
     def client
       if @client.nil?
-        @client = Excon.new("http://127.0.0.1:8080/api/v1.2/docker/")
+        @client = Excon.new("http://127.0.0.1:8989/api/v1.2/docker/")
       end
       @client
     end
