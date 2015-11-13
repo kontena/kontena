@@ -38,6 +38,11 @@ module Kontena
         Celluloid::Future.new { self.perform }
       end
 
+      # @param [String] service_name
+      def self.perform_async(service_name)
+        self.new(service_name).perform_async
+      end
+
       private
 
       # @return [Docker::Container, NilClass]

@@ -1,8 +1,9 @@
 require_relative 'grid_service_deployer'
 require_relative '../mutations/grid_services/deploy'
+require_relative 'logging'
 
 class GridScheduler
-
+  include Logging
   attr_reader :grid
 
   # @param [Grid] grid
@@ -10,6 +11,7 @@ class GridScheduler
     @grid = grid
   end
 
+  # @return [Celluloid::Future]
   def reschedule
     Celluloid::Future.new {
       self.reschedule_services
@@ -20,23 +22,39 @@ class GridScheduler
     grid.grid_services.each do |service|
       if service.stateless? && !service.deploying?
         reschedule_stateless_service(service)
-      elsif service.stateful? && !service.deploying?
-        reschedule_stateful_service(service)
       end
+    end
+  rescue => exc
+    error exc.message
+    debug exc.backtrace if exc.backtrace
+  end
+
+  # @param [GridService] service
+  def reschedule_stateless_service(service)
+    if should_reschedule_service?(service)
+      GridServices::Deploy.run(
+        grid_service: service,
+        strategy: service.strategy
+      )
+    else
+      info "seems that re-scheduling does not change anything for #{service.to_path}... aborting"
     end
   end
 
-  def reschedule_stateless_service(service)
-    GridServices::Deploy.run(
-      grid_service: service,
-      strategy: service.strategy
+  # @param [GridService] service
+  # @return [Boolean]
+  def should_reschedule_service?(service)
+    current_nodes = service.containers.map{|c| c.host_node}.delete_if{|n| n.nil?}.uniq.sort
+    available_nodes = service.grid.host_nodes.connected.to_a
+    service_deployer = GridServiceDeployer.new(
+      self.strategy(service.strategy), service, available_nodes
     )
+    selected_nodes = service_deployer.selected_nodes.uniq.sort
+    selected_nodes != current_nodes
   end
 
-  def reschedule_stateful_service(service)
-    GridServices::Deploy.run(
-      grid_service: service,
-      strategy: service.strategy
-    )
+  # @param [String] name
+  def strategy(name)
+    GridServiceScheduler::STRATEGIES[name].new
   end
 end

@@ -17,6 +17,7 @@ module Agent
       Celluloid::Future.new {
         begin
           self.update_node
+          self.send_node_info
           self.reschedule_services
         rescue => exc
           puts exc.message
@@ -31,6 +32,23 @@ module Agent
     def reschedule_services
       sleep 5
       GridScheduler.new(grid).reschedule
+    end
+
+    def send_node_info
+      rpc_client.request('/agent/node_info', node_info)
+    end
+
+    private
+
+    # @return [Hash]
+    def node_info
+      template = Tilt.new('app/views/v1/host_nodes/_host_node.json.jbuilder')
+      JSON.parse(template.render(nil, node: node))
+    end
+
+    # @return [RpcClient]
+    def rpc_client
+      RpcClient.new(node.node_id, 5)
     end
   end
 end

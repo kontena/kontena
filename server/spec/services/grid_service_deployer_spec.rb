@@ -11,7 +11,7 @@ describe GridServiceDeployer do
   describe '#deploy_service_instance' do
     it 'calls create_service_instance' do
       container = spy
-      expect(subject).to receive(:create_service_instance).with(node, 1, 'v1.0')
+      expect(subject).to receive(:create_service_instance).with(node, 1, 'v1.0', nil)
       expect(subject).to receive(:wait_for_service_to_start).and_return(true)
       subject.deploy_service_instance(node, 1, 'v1.0')
     end
@@ -26,7 +26,7 @@ describe GridServiceDeployer do
       )
 
       allow(subject).to receive(:wait_for_service_to_start).and_return(true)
-      expect(subject).to receive(:create_service_instance).with(node, 1, 'v1.0')
+      expect(subject).to receive(:create_service_instance).with(node, 1, 'v1.0', nil)
       expect(subject).to receive(:terminate_service_instance).with(1).once
 
       subject.deploy_service_instance(node, 1, 'v1.0')

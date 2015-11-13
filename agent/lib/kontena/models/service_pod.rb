@@ -2,8 +2,8 @@ module Kontena
   module Models
     class ServicePod
 
-      attr_reader :service_name, :instance_number, :deploy_rev, :labels,
-                  :stateful, :image_name, :user, :cmd, :entrypoint, :memory,
+      attr_reader :service_name, :instance_number, :deploy_rev, :updated_at,
+                  :labels, :stateful, :image_name, :user, :cmd, :entrypoint, :memory,
                   :memory_swap, :cpu_shares, :privileged, :cap_add, :cap_drop,
                   :devices, :ports, :env, :volumes, :volumes_from, :net,
                   :log_driver, :log_opts, :image_credentials
@@ -13,6 +13,7 @@ module Kontena
         @service_name = attrs['service_name']
         @instance_number = attrs['instance_number'] || 1
         @deploy_rev = attrs['deploy_rev']
+        @updated_at = attrs['updated_at']
         @labels = attrs['labels'] || {}
         @stateful = attrs['stateful'] || false
         @image_name = attrs['image_name']
@@ -43,7 +44,7 @@ module Kontena
 
       # @return [Boolean]
       def can_expose_ports?
-        !self.overlay_network.nil?
+        !self.overlay_network.nil? && self.net == 'bridge'
       end
 
       # @return [Boolean]
@@ -74,6 +75,7 @@ module Kontena
           'HostName' => "#{self.name}.kontena.local"
 
         }
+        docker_opts['Env'] = self.env
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
         docker_opts['Entrypoint'] = self.entrypoint if self.entrypoint
@@ -179,8 +181,12 @@ module Kontena
       def build_volumes
         volumes = {}
         self.volumes.each do |vol|
-          vol, _ = vol.split(':')
-          volumes[vol] = {}
+          path1, path2, _ = vol.split(':')
+          if path2.nil?
+            volumes[path1] = {}
+          else
+            volumes[path2] = {}
+          end
         end
         volumes
       end
@@ -211,7 +217,8 @@ module Kontena
       # @return [Hash]
       def build_log_opts
         log_config = {}
-        log_config['Type'] = self.log_driver if self.log_driver
+        return log_config if self.log_driver.nil?
+        log_config['Type'] = self.log_driver
         log_config['Config'] = {}
         if self.log_opts
           self.log_opts.each { |key, value|

@@ -56,7 +56,7 @@ class WebsocketBackend
       node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
       node = grid.host_nodes.find_by(node_id: node_id)
       unless node
-        node = grid.host_nodes.create!(node_id: node_id, name: node_id)
+        node = grid.host_nodes.create!(node_id: node_id)
       end
 
       agent_version = req.env['HTTP_KONTENA_VERSION'].to_s

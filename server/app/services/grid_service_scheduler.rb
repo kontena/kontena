@@ -3,6 +3,11 @@ Dir[__dir__ + '/docker/*.rb'].each {|file| require file }
 
 class GridServiceScheduler
 
+  STRATEGIES = {
+      'ha' => Scheduler::Strategy::HighAvailability,
+      'random' => Scheduler::Strategy::Random
+  }.freeze
+
   attr_reader :strategy, :filters
 
   ##
@@ -16,13 +21,22 @@ class GridServiceScheduler
     ]
   end
 
+  # @param [Integer] node_count
+  # @param [Integer] instance_count
+  # @return [Integer]
+  def instance_count(node_count, instance_count)
+    self.strategy.instance_count(node_count, instance_count)
+  end
+
   ##
   # @param [GridService] grid_service
   # @param [Integer] instance_number
   # @param [Array<HostNode>] nodes
-  def select_node(grid_service, instance_number, nodes)
+  # @param [String] rev
+  # @return [HostNode, NilClass]
+  def select_node(grid_service, instance_number, nodes, rev = nil)
     nodes = self.filter_nodes(grid_service, instance_number, nodes)
-    self.strategy.find_node(grid_service, instance_number, nodes)
+    self.strategy.find_node(grid_service, instance_number, nodes, rev)
   end
 
   ##

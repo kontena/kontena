@@ -4,21 +4,17 @@ module GridServices
   class Deploy < Mutations::Command
 
     DEFAULT_REGISTRY = 'index.docker.io'
-    STRATEGIES = {
-        'ha' => Scheduler::Strategy::HighAvailability,
-        'random' => Scheduler::Strategy::Random
-    }.freeze
 
     class ExecutionError < StandardError
     end
 
     required do
       model :grid_service
-      string :strategy, nils: true, default: 'ha'
     end
 
     optional do
       model :current_user, class: User
+      string :strategy
       integer :wait_for_port
       float :min_health, min: 0.0, max: 1.0
     end
@@ -32,9 +28,11 @@ module GridServices
         add_error(:service, :invalid_state, 'Service is currently deploying')
         return
       end
-      unless STRATEGIES[self.strategy]
+      if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
         return
+      elsif self.strategy
+        self.grid_service.strategy = self.strategy
       end
 
       if !deployer.can_deploy?
@@ -87,11 +85,15 @@ module GridServices
     def deployer
       if @deployer.nil?
         nodes = self.grid_service.grid.host_nodes.connected.to_a
-        strategy = STRATEGIES[self.strategy].new
+        strategy = self.strategies[self.grid_service.strategy].new
         @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes)
       end
 
       @deployer
+    end
+
+    def strategies
+      GridServiceScheduler::STRATEGIES
     end
   end
 end

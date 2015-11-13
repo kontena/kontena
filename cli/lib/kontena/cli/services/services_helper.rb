@@ -36,9 +36,13 @@ module Kontena
           grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
           puts "  status: #{service['state'] }"
+          puts "  image: #{service['image']}"
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
           puts "  scaling: #{service['container_count'] }"
-          puts "  image: #{service['image']}"
+          puts "  strategy: #{service['strategy']}"
+          puts "  deploy_opts:"
+          puts "    wait_for_port: #{service['deploy_opts']['wait_for_port'] || '-'}"
+          puts "    min_health: #{service['deploy_opts']['min_health']}"
           puts "  dns: #{service['name']}.#{grid}.kontena.local"
 
           puts "  affinity: "
@@ -103,10 +107,10 @@ module Kontena
           result['containers'].each do |container|
             puts "    #{container['name']}:"
             puts "      rev: #{container['deploy_rev']}"
-            puts "      node: #{container['node']['name']}"
+            puts "      node: #{container['node']['name'] rescue 'unknown'}"
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
             puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
-            puts "      public ip: #{container['node']['public_ip']}"
+            puts "      public ip: #{container['node']['public_ip'] rescue 'unknown'}"
             if container['status'] == 'unknown'
               puts "      status: #{container['status'].colorize(:yellow)}"
             else

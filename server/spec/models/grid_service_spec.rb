@@ -8,11 +8,12 @@ describe GridService do
                           :memory_swap, :cpu_shares).of_type(Fixnum) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
                           :cap_add, :cap_drop, :volumes).of_type(Array) }
-  it { should have_fields(:labels, :deploy_opts, :log_opts).of_type(Hash) }
+  it { should have_fields(:labels, :log_opts).of_type(Hash) }
   it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
 
   it { should belong_to(:grid) }
   it { should embed_many(:grid_service_links) }
+  it { should embed_one(:deploy_opts) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
@@ -51,6 +52,36 @@ describe GridService do
     it 'returns false if not stateless' do
       subject.stateful = true
       expect(subject.stateless?).to eq(false)
+    end
+  end
+
+  describe '#running?' do
+    it 'returns true if service is running' do
+      subject.state = 'running'
+      expect(subject.running?).to eq(true)
+    end
+
+    it 'returns false if service is not running' do
+      subject.state = 'stopped'
+      expect(subject.running?).to eq(false)
+    end
+  end
+
+  describe '#all_instances_exist?' do
+    before(:each) do
+      subject.attributes = {name: 'test', image_name: 'foo/bar:latest'}
+      subject.container_count = 2
+      subject.save!
+    end
+
+    it 'returns true if all instances exist' do
+      2.times{|i| subject.containers.create!(name: "test-#{i}") }
+      expect(subject.all_instances_exist?).to eq(true)
+    end
+
+    it 'returns false if not all instances exist' do
+      1.times{|i| subject.containers.create!(name: "test-#{i}") }
+      expect(subject.all_instances_exist?).to eq(false)
     end
   end
 

@@ -18,12 +18,6 @@ module Docker
     # @param [String] deploy_rev
     # @param [Hash,NilClass] creds
     def create_service_instance(instance_number, deploy_rev, creds)
-      @service_container = Container.create!(
-        grid: grid_service.grid,
-        grid_service: grid_service,
-        host_node: host_node,
-        name: "#{grid_service.name}-#{instance_number}"
-      )
       service_spec = self.service_spec(instance_number, deploy_rev, creds)
       self.request_create_service(service_spec)
     end
@@ -33,6 +27,7 @@ module Docker
     # @param [Hash,NilClass] creds
     # @return [Hash]
     def service_spec(instance_number, deploy_rev, creds = nil)
+      self.ensure_service_container(instance_number)
       spec = {
         service_name: grid_service.name,
         updated_at: grid_service.updated_at.to_s,
@@ -132,6 +127,17 @@ module Docker
         labels['io.kontena.load_balancer.mode'] = mode
       end
       labels
+    end
+
+    def ensure_service_container(instance_number)
+      if @service_container.nil?
+        @service_container = Container.create!(
+          grid: grid_service.grid,
+          grid_service: grid_service,
+          host_node: host_node,
+          name: "#{grid_service.name}-#{instance_number}"
+        )
+      end
     end
   end
 end

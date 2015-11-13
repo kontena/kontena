@@ -21,6 +21,7 @@ module GridServices
         self.grid_service.set_state('running')
       rescue => exc
         self.grid_service.set_state(prev_state)
+        raise exc
       end
     end
 

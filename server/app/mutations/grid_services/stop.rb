@@ -7,16 +7,16 @@ module GridServices
 
     def execute
       prev_state = self.grid_service.state
-      begin
-        self.grid_service.set_state('stopping')
-        Celluloid::Future.new{
+      Celluloid::Future.new{
+        begin
+          self.grid_service.set_state('stopping')
           self.stop_service_instances
-        }
-        self.grid_service.set_state('stopped')
-      rescue => exc
-        self.grid_service.set_state(prev_state)
-        raise exc
-      end
+          self.grid_service.set_state('stopped')
+        rescue => exc
+          self.grid_service.set_state(prev_state)
+          raise exc
+        end
+      }
     end
 
     def stop_service_instances

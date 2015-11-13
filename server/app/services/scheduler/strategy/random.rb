@@ -2,6 +2,12 @@ module Scheduler
   module Strategy
     class Random
 
+      # @param [Integer] node_count
+      # @param [Integer] instance_count
+      def instance_count(node_count, instance_count)
+        instance_count.to_i
+      end
+
       ##
       # @param [GridService] grid_service
       # @param [Integer] instance_number

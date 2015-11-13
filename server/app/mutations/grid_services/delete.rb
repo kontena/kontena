@@ -6,7 +6,6 @@ module GridServices
     end
 
     def validate
-
       linked_to_services = self.grid_service.linked_to_services
       if linked_to_services.count > 0
         add_error(:service, :invalid, "Cannot delete service that is linked to another service (#{linked_to_services.map{|s| s.name}.join(', ')})")
@@ -17,7 +16,6 @@ module GridServices
       prev_state = self.grid_service.state
       begin
         self.grid_service.set_state('deleting')
-
         self.grid_service.containers.scoped.each do |container|
           terminate_from_node(container.host_node, container.name)
         end

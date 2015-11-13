@@ -24,12 +24,29 @@ class GridServiceDeployer
   #
   # @return [Boolean]
   def can_deploy?
+    deploy_rev = Time.now.utc.to_s
     self.grid_service.container_count.times do |i|
-      node = self.scheduler.select_node(self.grid_service, i, self.nodes)
+      node = self.scheduler.select_node(
+        self.grid_service, i + 1, self.nodes, deploy_rev
+      )
       return false unless node
     end
 
     true
+  end
+
+  # @return [Array<HostNode>]
+  def selected_nodes
+    nodes = []
+    deploy_rev = Time.now.utc.to_s
+    self.grid_service.container_count.times do |i|
+      node = self.scheduler.select_node(
+        self.grid_service, i + 1, self.nodes, deploy_rev
+      )
+      nodes << node if node
+    end
+
+    nodes
   end
 
   # @param [Hash] creds
@@ -46,51 +63,59 @@ class GridServiceDeployer
   # @param [Hash] creds
   def deploy(creds = nil)
     prev_state = self.grid_service.state
-    info "starting to deploy #{self.grid_service.name}"
+    info "starting to deploy #{self.grid_service.to_path}"
     self.grid_service.set_state('deploying')
 
     self.configure_load_balancer
     deploy_rev = Time.now.utc.to_s
     deploy_futures = []
-    self.grid_service.container_count.times do |i|
+
+    self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count).times do |i|
       instance_number = i + 1
       unless self.grid_service.deploying?
-        raise "halting deploy of #{self.grid_service.name}, state has changed"
+        raise "halting deploy of #{self.grid_service.to_path}, state has changed"
       end
-      node = self.scheduler.select_node(self.grid_service, instance_number, self.nodes)
+      node = self.scheduler.select_node(
+        self.grid_service, instance_number, self.nodes, deploy_rev
+      )
       unless node
-        raise "Cannot find applicable node for service instance #{self.grid_service.name}-#{instance_number}"
+        raise "Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}"
       end
       deploy_futures << Celluloid::Future.new {
         self.deploy_service_instance(node, instance_number, deploy_rev, creds)
       }
       pending_deploys = deploy_futures.select{|f| !f.ready?}
       if pending_deploys.size >= (self.grid_service.container_count * self.min_health).floor
-        info "throttling deploy [#{self.grid_service.name}], there are #{pending_deploys.size} deploys in progress"
+        info "throttling deploy [#{self.grid_service.to_path}], there are #{pending_deploys.size} deploys in progress"
         pending_deploys[0].value
       end
+      sleep 0.3
     end
     deploy_futures.select{|f| !f.ready?}.each{|f| f.value }
 
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       instance_number = container.name.match(/^.+-(\d+)$/)[1]
-      info "removing service instance #{container.name}"
+      info "removing service instance #{container.to_path}"
       self.terminate_service_instance(instance_number, container.host_node)
+      container.set(:deleted_at => Time.now.utc)
     end
     self.grid_service.containers.unscoped.where(:container_id => nil, :deploy_rev => {:$ne => deploy_rev}).each do |container|
       container.destroy
     end
+
+    info "service #{self.grid_service.to_path} has been deployed"
+
     self.grid_service.set_state('running')
 
     true
   rescue RpcClient::Error => exc
     self.grid_service.set_state(prev_state)
-    error "RPC error: #{exc.class.name} #{exc.message}"
+    error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
   rescue => exc
     self.grid_service.set_state(prev_state)
-    error "Unknown error: #{exc.class.name} #{exc.message}"
+    error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
   end
@@ -116,18 +141,20 @@ class GridServiceDeployer
     end
 
     self.create_service_instance(node, instance_number, deploy_rev, creds)
-    self.wait_for_service_to_start(instance_number, deploy_rev)
+    self.wait_for_service_to_start(node, instance_number, deploy_rev)
     true
   end
 
+  # @param [HostNode] node
   # @param [String] instance_number
   # @param [String] deploy_rev
-  def wait_for_service_to_start(instance_number, deploy_rev)
+  def wait_for_service_to_start(node, instance_number, deploy_rev)
     # node/agent has 60 seconds to do it's job
     Timeout.timeout(60) do
       sleep 0.5 until self.deployed_service_container_exists?(instance_number, deploy_rev)
       if self.wait_for_port?
-        sleep 0.5 until port_responding?(node, self.wait_for_port)
+        container = self.find_service_instance_container(instance_number, deploy_rev)
+        sleep 0.5 until port_responding?(container, self.wait_for_port)
       end
     end
   end
@@ -154,8 +181,15 @@ class GridServiceDeployer
   # @param [String] deploy_rev
   # @return [Boolean]
   def deployed_service_container_exists?(instance_number, deploy_rev)
+    !self.find_service_instance_container(instance_number, deploy_rev).nil?
+  end
+
+  # @param [String] instance_number
+  # @param [String] deploy_rev
+  # @return [Container, NilClass]
+  def find_service_instance_container(instance_number, deploy_rev)
     container_name = "#{self.grid_service.name}-#{instance_number}"
-    !self.grid_service.containers.find_by(name: container_name, deploy_rev: deploy_rev).nil?
+    self.grid_service.containers.find_by(name: container_name, deploy_rev: deploy_rev)
   end
 
   # @param [String] instance_number
@@ -175,24 +209,24 @@ class GridServiceDeployer
 
   # @return [Float]
   def min_health
-    1.0 - (self.grid_service.deploy_opts['min_health'] || 0.6).to_f
+    1.0 - (self.grid_service.deploy_opts.min_health || 0.6).to_f
   end
 
   # @return [Boolean]
   def wait_for_port?
-    !self.grid_service.deploy_opts['wait_for_port'].nil?
+    !self.grid_service.deploy_opts.wait_for_port.nil?
   end
 
   # @return [Integer]
   def wait_for_port
-    self.grid_service.deploy_opts['wait_for_port']
+    self.grid_service.deploy_opts.wait_for_port
   end
 
   ##
-  # @param [HostNode] node
+  # @param [Container] node
   # @param [String] port
-  def port_responding?(node, port)
-    rpc_client = RpcClient.new(node.node_id, 2)
+  def port_responding?(container, port)
+    rpc_client = RpcClient.new(container.host_node.node_id, 2)
     response = rpc_client.request('/agent/port_open?', container.network_settings[:ip_address], port)
     response['open']
   rescue RpcClient::Error

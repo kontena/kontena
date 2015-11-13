@@ -13,45 +13,35 @@ module Kontena
       # @return [Hash]
       def create(service)
         service_spec = Kontena::Models::ServicePod.new(service)
-        executor = Kontena::ServicePods::Creator.new(service_spec)
-        executor.perform_async
-
+        Kontena::ServicePods::Creator.perform_async(service_spec)
         {}
       end
 
       # @param [String] service_name
       # @return [Hash]
       def start(service_name)
-        executor = Kontena::ServicePods::Starter.new(service_name)
-        executor.perform_async
-
+        Kontena::ServicePods::Starter.perform_async(service_name)
         {}
       end
 
       # @param [String] service_name
       # @return [Hash]
       def stop(service_name)
-        executor = Kontena::ServicePods::Stopper.new(service_name)
-        executor.perform_async
-
+        Kontena::ServicePods::Stopper.perform_async(service_name)
         {}
       end
 
       # @param [String] service_name
       # @return [Hash]
       def restart(service_name)
-        executor = Kontena::ServicePods::Restarter.new(service_name)
-        executor.perform_async
-
+        Kontena::ServicePods::Restarter.perform_async(service_name)
         {}
       end
 
       # @param [String] service_name
       # @return [Hash]
       def terminate(service_name)
-        terminator = Kontena::ServicePods::Terminator.new(service_name)
-        terminator.perform_async
-
+        Kontena::ServicePods::Terminator.perform_async(service_name)
         {}
       end
     end

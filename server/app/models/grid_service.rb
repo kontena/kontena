@@ -30,7 +30,6 @@ class GridService
   field :devices, type: Array, default: []
 
   field :strategy, type: String, default: 'ha'
-  field :deploy_opts, type: Hash, default: {}
 
   belongs_to :grid
   belongs_to :image
@@ -39,6 +38,7 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   embeds_many :grid_service_links
+  embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
 
   index({ grid_id: 1 })
   index({ name: 1 })
@@ -75,6 +75,16 @@ class GridService
   # @return [Boolean]
   def deploying?
     self.state == 'deploying'
+  end
+
+  # @return [Boolean]
+  def running?
+    self.state == 'running'
+  end
+
+  # @return [Boolean]
+  def all_instances_exist?
+    self.containers.count >= self.container_count
   end
 
   # @return [Boolean]

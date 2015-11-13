@@ -1,6 +1,8 @@
 require_relative '../../spec_helper'
 
 describe GridServices::Restart do
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
@@ -23,8 +25,9 @@ describe GridServices::Restart do
     it 'sets service state to running' do
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      allow(:subject).to receive(:restart_service_instance)
-      subject.run
+      allow(subject).to receive(:restart_service_instance)
+      outcome = subject.run
+      outcome.result.value
       expect(redis_service.state).to eq('running')
     end
 
@@ -32,9 +35,12 @@ describe GridServices::Restart do
       prev_state = redis_service.state
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      expect(subject).to receive(:restart_service_instances).and_raise(StandardError.new('error'))
+      expect(subject).to receive(:restart_service_instance).and_raise(StandardError.new('error'))
       outcome = subject.run
-      outcome.result.value
+      expect(outcome.success?).to be_truthy
+      expect {
+        outcome.result.value
+      }.to raise_exception(StandardError)
       expect(redis_service.state).to eq(prev_state)
     end
   end
