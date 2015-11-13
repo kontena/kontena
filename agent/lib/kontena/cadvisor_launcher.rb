@@ -47,7 +47,9 @@ module Kontena
         'Image' => image,
         'Cmd' => [
           '--logtostderr=true',
-          '--listen_ip=127.0.0.1'
+          '--listen_ip=127.0.0.1',
+          '--port=8989',
+          '--storage_duration=2m'
         ],
         'Volumes' => {
           '/rootfs' => {},
