@@ -4,16 +4,26 @@ toc_order: 7
 ---
 
 ## Deployment strategies
-Kontena can use different scheduling algorithms when deploying containers to more than one node. At the moment the following strategies are available:
+Kontena can use different scheduling algorithms when deploying services to more than one node. At the moment the following strategies are available:
 
 **High Availability (HA)**
 
-Service with `ha` strategy will deploy its containers to different host nodes. This means that the containers will be spread across all nodes.
+Service with `ha` strategy will deploy its instances to different host nodes. This means that the service instances will be spread across all nodes.
 
 ```
 deploy:
   strategy: ha
 ```
+
+**Daemon**
+
+Service with `daemon` strategy will deploy given number of instances to all nodes.
+
+```
+deploy:
+  strategy: daemon
+```
+
 
 **Random**
 
@@ -26,7 +36,7 @@ deploy:
 
 **Wait for port**
 
-When a service has multiple instances and `wait_for_port` definition, Kontena's scheduler will wait that container is responding to port before starting to deploy another instance. This way it is possible to achieve zero-downtime deploys. 
+When a service has multiple instances and `wait_for_port` definition, Kontena's scheduler will wait that container is responding to port before starting to deploy another instance. This way it is possible to achieve zero-downtime deploys.
 
 ```
 instances: 3
