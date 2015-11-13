@@ -108,26 +108,16 @@ module Kontena
       end
     end
 
-    def start!
-      Thread.new {
+    # @param [Hash] info
+    # @return [Celluloid::Future]
+    def start(info)
+      Celluloid::Future.new {
         begin
           ensure_images
 
           weave = Docker::Container.get('weave') rescue nil
           if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
             weave.delete(force: true)
-          end
-
-          begin
-            info = self.node_info
-          rescue Excon::Errors::Error => exc
-            error "#{exc.class.name}: #{exc.message}"
-            debug exc.backtrace.join("\n")
-            sleep 1
-            retry
-          end
-          if info.nil?
-            raise "failed to fetch node information from master"
           end
 
           peer_ips = info['peer_ips'] || []
@@ -147,6 +137,7 @@ module Kontena
             self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
             info "bridge exposed: #{weave_bridge}"
           end
+          info
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
           debug exc.backtrace.join("\n")

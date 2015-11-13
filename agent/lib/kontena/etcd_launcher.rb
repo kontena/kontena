@@ -4,7 +4,6 @@ require_relative 'helpers/iface_helper'
 module Kontena
   class EtcdLauncher
     include Kontena::Logging
-    include Helpers::NodeHelper
     include Helpers::IfaceHelper
 
     ETCD_VERSION = ENV['ETCD_VERSION'] || '2.2.1'
@@ -14,10 +13,12 @@ module Kontena
       info 'initialized'
     end
 
-    def start!
-      Thread.new {
+    # @param [Hash] node_info
+    # @return [Celluloid::Future]
+    def start(node_info)
+      Celluloid::Future.new {
         begin
-          start_etcd
+          start_etcd(node_info)
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
           debug exc.backtrace.join("\n")
@@ -25,13 +26,14 @@ module Kontena
       }
     end
 
-    def start_etcd
+    # @param [Hash] node_info
+    def start_etcd(node_info)
       image = "#{ETCD_IMAGE}:#{ETCD_VERSION}"
 
       pull_image(image)
       create_data_container(image)
       sleep 1 until weave_running?
-      create_container(image)
+      create_container(image, node_info)
     end
 
     # @param [String] image
@@ -54,21 +56,11 @@ module Kontena
     end
 
     # @param [String] image
-    def create_container(image)
+    # @param [Hash] info
+    def create_container(image, info)
       container = Docker::Container.get('kontena-etcd') rescue nil
       container.remove(force: true) if container
 
-      begin
-        info = self.node_info
-      rescue Excon::Errors::Error => exc
-        error "#{exc.class.name}: #{exc.message}"
-        debug exc.backtrace.join("\n")
-        sleep 1
-        retry
-      end
-      if info.nil?
-        raise "failed to fetch node information from master"
-      end
       cluster_size = info['grid']['initial_size']
       node_number = info['node_number']
       name = "node-#{info['node_number']}"
@@ -96,6 +88,7 @@ module Kontena
         cmd = cmd + ['--proxy', 'on']
         info "starting etcd service as a proxy"
       end
+      info "cluster members: #{initial_cluster(cluster_size).join(',')}"
 
       container = Docker::Container.create(
         'name' => 'kontena-etcd',

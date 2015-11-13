@@ -9,6 +9,12 @@ module Kontena
         {}
       end
 
+      # @param [Hash] data
+      def node_info(data)
+        Pubsub.publish('agent:node_info', data)
+        {}
+      end
+
       ##
       # @param [String] ip
       # @param [String] port
