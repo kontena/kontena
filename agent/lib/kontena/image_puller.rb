@@ -31,7 +31,11 @@ module Kontena
           sleep 0.1
           retry
         end
-        raise exc
+        unless image_exists?(image)
+          raise exc
+        else
+          info "image pull failed, using local image: #{image}"
+        end
       end
     end
 
@@ -39,7 +43,7 @@ module Kontena
     # @return [Boolean]
     def fresh_pull?(image)
       return false unless self.class.image_cache[image]
-      self.class.image_cache[image] >= (Time.now.utc - 60)
+      self.class.image_cache[image] >= (Time.now.utc - 600)
     end
 
     def image_exists?(image)

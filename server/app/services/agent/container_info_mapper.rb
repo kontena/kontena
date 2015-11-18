@@ -13,14 +13,8 @@ module Agent
       info = data['container']
       labels = info['Config']['Labels'] || {}
       node_id = data['node']
-      id = labels['io.kontena.container.id']
       container_id = data['container']['Id']
-      if id
-        container = grid.containers.unscoped.find_by(id: BSON::ObjectId.from_string(id))
-      end
-      if container.nil?
-        container = grid.containers.unscoped.find_by(container_id: container_id)
-      end
+      container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
         self.update_container_attributes(container, info)
       elsif !labels['io.kontena.service.id'].nil?
@@ -99,7 +93,7 @@ module Agent
           started_at: (state['StartedAt'] ? Time.parse(state['StartedAt']) : nil),
           deleted_at: nil
       }
-      if labels['io.kontena.container.deploy_rev']
+      if container.deploy_rev.nil? && labels['io.kontena.container.deploy_rev']
         container.deploy_rev = labels['io.kontena.container.deploy_rev']
       end
       if info['NetworkSettings']
@@ -123,7 +117,17 @@ module Agent
         overlay_cidr.set(container_id: container.id)
         overlay_cidr
       else
-        nil
+        overlay_cidr = OverlayCidr.build(
+          grid: container.grid,
+          container: container,
+          ip: ip,
+          subnet: subnet
+        )
+        if overlay_cidr.save
+          overlay_cidr
+        else
+          nil
+        end
       end
     end
 

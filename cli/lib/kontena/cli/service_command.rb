@@ -14,6 +14,7 @@ require_relative 'services/stats_command'
 require_relative 'services/envs_command'
 require_relative 'services/add_env_command'
 require_relative 'services/remove_env_command'
+require_relative 'services/monitor_command'
 
 class Kontena::Cli::ServiceCommand < Clamp::Command
 
@@ -33,6 +34,7 @@ class Kontena::Cli::ServiceCommand < Clamp::Command
   subcommand "envs", "Show environment variables", Kontena::Cli::Services::EnvsCommand
   subcommand "add-env", "Add environment variable", Kontena::Cli::Services::AddEnvCommand
   subcommand "remove-env", "Remove environment variable", Kontena::Cli::Services::RemoveEnvCommand
+  subcommand "monitor", "Monitor", Kontena::Cli::Services::MonitorCommand
 
   def execute
   end

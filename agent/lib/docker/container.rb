@@ -14,21 +14,6 @@ module Docker
     end
 
     # @return [Boolean]
-    def sidekick_container?
-      !self.master_container?
-    end
-
-    # @return [Boolean]
-    def master_container?
-      self.labels['io.kontena.container.parent'].nil?
-    end
-
-    # @return [Boolean]
-    def sidekick_of?(container)
-      self.labels['io.kontena.container.parent'] == container.labels['io.kontena.container.name']
-    end
-
-    # @return [Boolean]
     def service_container?
       self.labels['io.kontena.container.type'] == 'container'
     end

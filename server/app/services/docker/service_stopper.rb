@@ -18,7 +18,7 @@ module Docker
     ##
     # @param [Hash] service_spec
     def request_stop_service(name)
-      client.request('/service_pods/start', name)
+      client.request('/service_pods/stop', name)
     end
 
     ##

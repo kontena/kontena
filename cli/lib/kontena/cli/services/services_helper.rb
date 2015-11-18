@@ -128,13 +128,6 @@ module Kontena
         def deploy_service(token, service_id, data)
           param = parse_service_id(service_id)
           client(token).post("services/#{param}/deploy", data)
-          print 'deploying '
-          until client(token).get("services/#{param}")['state'] != 'deploying' do
-            print '.'
-            sleep 1
-          end
-          puts ' done'.colorize(:green)
-          puts ''
         end
 
         # @param [String] token

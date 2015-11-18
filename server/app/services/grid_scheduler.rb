@@ -26,7 +26,7 @@ class GridScheduler
     end
   rescue => exc
     error exc.message
-    debug exc.backtrace if exc.backtrace
+    debug exc.backtrace.join("\n") if exc.backtrace
   end
 
   # @param [GridService] service
@@ -49,6 +49,10 @@ class GridScheduler
     service_deployer = GridServiceDeployer.new(
       self.strategy(service.strategy), service, available_nodes
     )
+    if service_deployer.instance_count != service.containers.count
+      return true
+    end
+
     selected_nodes = service_deployer.selected_nodes.uniq.sort
     selected_nodes != current_nodes
   end

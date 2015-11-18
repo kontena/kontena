@@ -16,16 +16,16 @@ module Scheduler
       # @return [HostNode,NilClass]
       def find_node(grid_service, instance_number, nodes, rev = nil)
         if grid_service.stateless?
-          candidates = self.sort_candidates(nodes, grid_service, rev)
+          candidates = self.sort_candidates(nodes, grid_service, instance_number)
           candidates.first
         else
           prev_container = grid_service.containers.volumes.find_by(
             name: "#{grid_service.name}-#{instance_number}-volumes"
           )
-          if prev_container
-            prev_container.host_node
+          if prev_container && nodes.include?(prev_container.host_node)
+            nodes.find{|n| n == prev_container.host_node }
           else
-            candidates = self.sort_candidates(nodes, grid_service, rev)
+            candidates = self.sort_candidates(nodes, grid_service, instance_number)
             candidates.first
           end
         end
@@ -33,12 +33,17 @@ module Scheduler
 
       # @param [Array<HostNode>] nodes
       # @param [GridService] grid_service
-      # @param [String, NilClass] rev
-      def sort_candidates(nodes, grid_service, rev = nil)
+      # @param [Integer] instance_number
+      def sort_candidates(nodes, grid_service, instance_number)
         nodes.shuffle.sort_by{|node|
-          query = node.reload.containers.scoped.where(grid_service_id: grid_service.id)
-          query = query.where(deploy_rev: rev) if rev
-          query.count
+          container = node.containers.find_by(name: "#{grid_service.name}-#{instance_number}")
+          if container
+            rank = 0
+          else
+            rank = 1
+          end
+
+          [node.schedule_counter, rank]
         }
       end
     end

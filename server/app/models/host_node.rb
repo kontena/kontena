@@ -24,6 +24,8 @@ class HostNode
   field :private_ip, type: String
   field :last_seen_at, type: Time
 
+  attr_accessor :schedule_counter
+
   belongs_to :grid
   has_many :containers, dependent: :destroy
   has_and_belongs_to_many :images
@@ -76,6 +78,11 @@ class HostNode
   # @return [RpcClient]
   def rpc_client(timeout = 300)
     RpcClient.new(self.node_id, timeout)
+  end
+
+  # @return [Integer]
+  def schedule_counter
+    @schedule_counter ||= 0
   end
 
   private

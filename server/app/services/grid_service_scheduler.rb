@@ -5,6 +5,7 @@ class GridServiceScheduler
 
   STRATEGIES = {
       'ha' => Scheduler::Strategy::HighAvailability,
+      'daemon' => Scheduler::Strategy::Daemon,
       'random' => Scheduler::Strategy::Random
   }.freeze
 
@@ -19,6 +20,7 @@ class GridServiceScheduler
         Scheduler::Filter::Port.new,
         Scheduler::Filter::Dependency.new
     ]
+    @mutex = Mutex.new
   end
 
   # @param [Integer] node_count
@@ -35,8 +37,17 @@ class GridServiceScheduler
   # @param [String] rev
   # @return [HostNode, NilClass]
   def select_node(grid_service, instance_number, nodes, rev = nil)
-    nodes = self.filter_nodes(grid_service, instance_number, nodes)
-    self.strategy.find_node(grid_service, instance_number, nodes, rev)
+    selected_node = nil
+    @mutex.synchronize {
+      filtered_nodes = self.filter_nodes(grid_service, instance_number, nodes)
+      selected_node = self.strategy.find_node(grid_service, instance_number, filtered_nodes, rev)
+    }
+    if selected_node
+      node = nodes.find{|n| n == selected_node}
+      node.schedule_counter += 1
+    end
+
+    selected_node
   end
 
   ##

@@ -61,6 +61,7 @@ describe '/v1/services' do
         id created_at updated_at image affinity name stateful user
         container_count cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid_id links log_driver log_opts
+        strategy deploy_opts
       ).sort)
       expect(json_response['id']).to eq(redis_service.to_path)
       expect(json_response['image']).to eq(redis_service.image_name)
@@ -115,7 +116,7 @@ describe '/v1/services' do
 
   describe 'GET /:id/containers' do
     it 'returns service containers' do
-      container = redis_service.containers.create!(name: 'redis-1')
+      container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
       get "/v1/services/#{redis_service.to_path}/containers", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['containers'].size).to eq(1)
@@ -125,7 +126,7 @@ describe '/v1/services' do
 
   describe 'GET /:id/container_logs' do
     it 'returns service container logs' do
-      container = redis_service.containers.create!(name: 'redis-1')
+      container = redis_service.containers.create!(name: 'redis-1', container_id: 'bbb')
       container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
       get "/v1/services/#{redis_service.to_path}/container_logs", nil, request_headers
       expect(response.status).to eq(200)
@@ -135,7 +136,7 @@ describe '/v1/services' do
 
     context 'when from parameter is passed' do
       it 'returns service container logs created after passed id' do
-        container = redis_service.containers.create!(name: 'redis-1')
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
         log1 = container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
         log2 = container.container_logs.create!(data: 'foo2', type: 'stdout', grid_service: redis_service)
         get "/v1/services/#{redis_service.to_path}/container_logs?from=#{log1.id}", nil, request_headers
@@ -150,7 +151,7 @@ describe '/v1/services' do
   describe 'GET /:id/stats' do
     context 'when container has stats data' do
       it 'returns service stats' do
-        container = redis_service.containers.create!(name: 'redis-1')
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
         container.container_stats.create!(container_stat_data)
         get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
@@ -162,7 +163,7 @@ describe '/v1/services' do
     end
     context 'when container has not stats data' do
       it 'returns empty result' do
-        redis_service.containers.create!(name: 'redis-1')
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
         get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(1)

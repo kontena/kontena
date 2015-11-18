@@ -67,10 +67,11 @@ class GridServiceDeployer
     self.grid_service.set_state('deploying')
 
     self.configure_load_balancer
+    started_at = Time.now.utc
     deploy_rev = Time.now.utc.to_s
     deploy_futures = []
-
-    self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count).times do |i|
+    total_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
+    total_instances.times do |i|
       instance_number = i + 1
       unless self.grid_service.deploying?
         raise "halting deploy of #{self.grid_service.to_path}, state has changed"
@@ -85,19 +86,26 @@ class GridServiceDeployer
         self.deploy_service_instance(node, instance_number, deploy_rev, creds)
       }
       pending_deploys = deploy_futures.select{|f| !f.ready?}
-      if pending_deploys.size >= (self.grid_service.container_count * self.min_health).floor
+      if pending_deploys.size >= (total_instances * self.min_health).floor
         info "throttling deploy [#{self.grid_service.to_path}], there are #{pending_deploys.size} deploys in progress"
-        pending_deploys[0].value
+        pending_deploys[0].value rescue nil
       end
-      sleep 0.3
+      sleep 0.1
     end
-    deploy_futures.select{|f| !f.ready?}.each{|f| f.value }
+    deploy_futures.select{|f| !f.ready?}.each{|f| f.value rescue nil }
 
+    cleanup_futures = []
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
-      instance_number = container.name.match(/^.+-(\d+)$/)[1]
-      info "removing service instance #{container.to_path}"
-      self.terminate_service_instance(instance_number, container.host_node)
-      container.set(:deleted_at => Time.now.utc)
+      cleanup_futures << Celluloid::Future.new {
+        instance_number = container.name.match(/^.+-(\d+)$/)[1]
+        info "removing service instance #{container.to_path}"
+        self.terminate_service_instance(instance_number, container.host_node)
+        container.set(:deleted_at => Time.now.utc)
+      }
+      pending_cleanups = cleanup_futures.select{|f| !f.ready?}
+      if pending_cleanups.size > self.nodes.size
+        pending_cleanups[0].value rescue nil
+      end
     end
     self.grid_service.containers.unscoped.where(:container_id => nil, :deploy_rev => {:$ne => deploy_rev}).each do |container|
       container.destroy
@@ -129,6 +137,11 @@ class GridServiceDeployer
         self.deploy(creds)
       end
     }
+  end
+
+  # @return [Integer]
+  def instance_count
+    self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
   end
 
   # @param [HostNode] node
@@ -181,7 +194,12 @@ class GridServiceDeployer
   # @param [String] deploy_rev
   # @return [Boolean]
   def deployed_service_container_exists?(instance_number, deploy_rev)
-    !self.find_service_instance_container(instance_number, deploy_rev).nil?
+    container = self.find_service_instance_container(instance_number, deploy_rev)
+    if container && container.container_id
+      true
+    else
+      false
+    end
   end
 
   # @param [String] instance_number
@@ -209,7 +227,7 @@ class GridServiceDeployer
 
   # @return [Float]
   def min_health
-    1.0 - (self.grid_service.deploy_opts.min_health || 0.6).to_f
+    1.0 - (self.grid_service.deploy_opts.min_health || 0.8).to_f
   end
 
   # @return [Boolean]

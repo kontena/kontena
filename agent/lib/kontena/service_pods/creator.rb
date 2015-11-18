@@ -1,4 +1,5 @@
 require 'docker'
+require 'celluloid'
 require_relative '../image_puller'
 require_relative '../logging'
 
@@ -29,6 +30,7 @@ module Kontena
         if service_container
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
+            notify_master(service_container, service_pod.deploy_rev)
             return service_container
           else
             info "removing previous version of service: #{service_pod.name}"
@@ -41,6 +43,7 @@ module Kontena
         service_container.start
         info "service started: #{service_pod.name}"
 
+        notify_master(service_container, service_pod.deploy_rev)
         Pubsub.publish('service_pod:start', service_pod.name)
         Pubsub.publish('stats:collect', nil)
 
@@ -58,7 +61,7 @@ module Kontena
       # @param [ServicePod] service_pod
       # @param [#modify_create_opts] overlay_adapter
       def self.perform_async(service_pod, overlay_adapter = Kontena::WeaveAdapter.new)
-        self.new(service_pod, overlay_adapter)
+        self.new(service_pod, overlay_adapter).perform_async
       end
 
       ##
@@ -131,6 +134,18 @@ module Kontena
         return true if image_created > container_created
 
         false
+      end
+
+      def notify_master(service_container, deploy_rev)
+        msg = {
+          event: 'container:event',
+          data: {
+            id: service_container.id,
+            status: 'deployed',
+            deploy_rev: deploy_rev
+          }
+        }
+        Pubsub.publish('queue_worker:add_message', msg)
       end
     end
   end

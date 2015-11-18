@@ -7,14 +7,10 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
     parameter "INSTANCES", "Scales service to given number of instances"
-    option '--strategy', 'STRATEGY', 'Define deploy strategy (ha / random)'
 
     def execute
       token = require_token
-      client(token).put("services/#{parse_service_id(name)}", {container_count: instances})
-      opts = {}
-      opts[:strategy] = strategy if strategy
-      deploy_service(token, name, opts)
+      client(token).post("services/#{parse_service_id(name)}/scale", {instances: instances})
     end
   end
 end

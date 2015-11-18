@@ -27,7 +27,6 @@ module Docker
     # @param [Hash,NilClass] creds
     # @return [Hash]
     def service_spec(instance_number, deploy_rev, creds = nil)
-      self.ensure_service_container(instance_number)
       spec = {
         service_name: grid_service.name,
         updated_at: grid_service.updated_at.to_s,
@@ -65,6 +64,9 @@ module Docker
       spec[:labels] = labels
 
       spec
+    rescue => exc
+      puts exc.message
+      puts exc.backtrace.join("\n")
     end
 
     # @return [OverlayCidr]
@@ -129,15 +131,15 @@ module Docker
       labels
     end
 
-    def ensure_service_container(instance_number)
+    def service_container
       if @service_container.nil?
-        @service_container = Container.create!(
+        @service_container = Container.new(
           grid: grid_service.grid,
           grid_service: grid_service,
-          host_node: host_node,
-          name: "#{grid_service.name}-#{instance_number}"
+          host_node: host_node
         )
       end
+      @service_container
     end
   end
 end

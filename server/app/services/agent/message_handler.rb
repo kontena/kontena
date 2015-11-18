@@ -72,6 +72,8 @@ module Agent
       if container
         if data['status'] == 'destroy'
           container.mark_for_delete
+        elsif data['status'] == 'deployed'
+          container.set(:container_id => data['id'], :deploy_rev => data['deploy_rev'])
         end
       end
     end
