@@ -65,7 +65,8 @@ DEPENDENCIES
   docker-api
   dotenv
   etcd
-  faye-websocket
+  eventmachine (~> 1.0.8)
+  faye-websocket (~> 0.10.1)
   msgpack
   rake
   rspec
