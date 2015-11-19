@@ -117,7 +117,7 @@ module Agent
         overlay_cidr.set(container_id: container.id)
         overlay_cidr
       else
-        overlay_cidr = OverlayCidr.build(
+        overlay_cidr = OverlayCidr.new(
           grid: container.grid,
           container: container,
           ip: ip,
