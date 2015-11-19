@@ -21,7 +21,7 @@ class ServiceBalancerJob
 
   def balance_services
     GridService.each do |service|
-      if service.running? && !service.all_instances_exist?
+      if service.running? && service.stateless? && !service.all_instances_exist?
         balance_service(service)
       end
     end
