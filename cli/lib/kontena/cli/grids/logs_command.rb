@@ -22,6 +22,7 @@ module Kontena::Cli::Grids
 
 
       if follow?
+        @buffer = ''
         query_params[:follow] = 1
         stream_logs(token, query_params)
       else
@@ -39,7 +40,17 @@ module Kontena::Cli::Grids
 
     def stream_logs(token, query_params)
       streamer = lambda do |chunk, remaining_bytes, total_bytes|
-        log = JSON.parse(chunk)
+        begin
+          unless @buffer.empty?
+            chunk = @buffer + chunk
+          end
+          unless chunk.empty?
+            log = JSON.parse(chunk)
+          end
+          @buffer = ''
+        rescue => exc
+          @buffer << chunk
+        end
         if log
           color = color_for_container(log['name'])
           puts "#{log['name'].colorize(color)} | #{log['data']}"
