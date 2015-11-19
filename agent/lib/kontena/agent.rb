@@ -18,22 +18,40 @@ module Kontena
       @stats_worker = Kontena::StatsWorker.new(@queue_worker.queue)
       @etcd_launcher = Kontena::EtcdLauncher.new
       @lb_registrator = Kontena::LoadBalancerRegistrator.new
+
+      @started = false
+      Pubsub.subscribe('agent:node_info') do |info|
+        self.start(info)
+      end
     end
 
-    def start!
+    # Connect to master server
+    def connect!
       start_em
+      @client.ensure_connect
+    end
+
+    # @param [Hash] node_info
+    def start(node_info)
+      return if self.started?
+      @started = true
+      @weave_adapter.start(node_info).value
+      @etcd_launcher.start(node_info).value
 
       @weave_attacher.start!
-      @client.ensure_connect
       @node_info_worker.start!
       @container_info_worker.start!
       @log_worker.start!
       @event_worker.start!
-      @cadvisor_launcher.start!
-      @stats_worker.start!
-      @weave_adapter.start!
-      @etcd_launcher.start!
       @lb_registrator.start!
+
+      @cadvisor_launcher.start.value
+      @stats_worker.start!
+    end
+
+    # @return [Boolean]
+    def started?
+      @started == true
     end
 
     def start_em

@@ -6,7 +6,6 @@ module GridServices
     end
 
     def validate
-
       linked_to_services = self.grid_service.linked_to_services
       if linked_to_services.count > 0
         add_error(:service, :invalid, "Cannot delete service that is linked to another service (#{linked_to_services.map{|s| s.name}.join(', ')})")
@@ -18,10 +17,7 @@ module GridServices
       begin
         self.grid_service.set_state('deleting')
         self.grid_service.containers.scoped.each do |container|
-          remover_for(container).remove_container
-        end
-        self.grid_service.containers.volumes.each do |container|
-          remover_for(container).remove_container
+          terminate_from_node(container.host_node, container.name)
         end
       rescue => exc
         self.grid_service.set_state(prev_state)
@@ -31,10 +27,11 @@ module GridServices
     end
 
     ##
-    # @param [Container] container
+    # @param [HostNode] node
     # @return [Docker::ContainerRemover]
-    def remover_for(container)
-      Docker::ContainerRemover.new(container)
+    def terminate_from_node(node, service_name)
+      terminator = Docker::ServiceTerminator.new(node)
+      terminator.terminate_service_instance(service_name)
     end
   end
 end

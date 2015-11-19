@@ -11,8 +11,9 @@ module Kontena
       info 'initialized'
     end
 
-    def start!
-      Thread.new {
+    # @return [Celluloid::Future]
+    def start
+      Celluloid::Future.new {
         begin
           start_cadvisor
         rescue => exc
@@ -57,7 +58,6 @@ module Kontena
           '/sys' => {},
           '/var/lib/docker' => {}
         },
-        'ExposedPorts' => {'8080/tcp' => {}},
         'HostConfig' => {
           'Binds' => [
             '/:/rootfs:ro',

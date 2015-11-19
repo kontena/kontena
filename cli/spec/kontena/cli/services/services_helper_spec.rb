@@ -47,13 +47,6 @@ module Kontena::Cli::Services
         expect(client).to receive(:post).with('services/test-grid/1/deploy', {'strategy' => 'ha'})
         subject.deploy_service(token, '1', {'strategy' => 'ha'})
       end
-
-      it 'polls Kontena Server until service is running' do
-        allow(client).to receive(:post).with('services/test-grid/1/deploy', anything)
-        expect(client).to receive(:get).with('services/test-grid/1').twice.and_return({'state' => 'deploying'}, {'state' => 'running'})
-
-        subject.deploy_service(token, '1', {'strategy' => 'ha'})
-      end
     end
 
     describe '#parse_ports' do

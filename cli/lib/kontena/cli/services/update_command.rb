@@ -8,7 +8,7 @@ module Kontena::Cli::Services
     parameter "NAME", "Service name"
 
     option "--image", "IMAGE", "Docker image to use"
-    option ["-p", "--ports"], "PORTS", "Publish a service's port to the host", multivalued: true
+    option ["-p", "--ports"], "PORT", "Publish a service's port to the host", multivalued: true
     option ["-e", "--env"], "ENV", "Set environment variables", multivalued: true
     option ["-l", "--link"], "LINK", "Add link to another service in the form of name:alias", multivalued: true
     option ["-a", "--affinity"], "AFFINITY", "Set service affinity", multivalued: true
@@ -24,6 +24,9 @@ module Kontena::Cli::Services
     option "--net", "NET", "Network mode"
     option "--log-driver", "LOG_DRIVER", "Set logging driver"
     option "--log-opt", "LOG_OPT", "Add logging options", multivalued: true
+    option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, random)"
+    option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
+    option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
 
     def execute
       require_api_url
@@ -38,6 +41,7 @@ module Kontena::Cli::Services
     # @return [Hash]
     def parse_service_data_from_options
       data = {}
+      data[:strategy] = deploy_strategy if deploy_strategy
       data[:ports] = parse_ports(ports_list) unless ports_list.empty?
       data[:links] = parse_links(link_list) unless link_list.empty?
       data[:memory] = parse_memory(memory) if memory
@@ -55,6 +59,10 @@ module Kontena::Cli::Services
       data[:net] = net if net
       data[:log_driver] = log_driver if log_driver
       data[:log_opts] = parse_log_opts(log_opt_list)
+      data[:deploy_opts] = {}
+      data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
+      data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
+      data.delete(:deploy_opts) if data[:deploy_opts].empty?
       data
     end
   end

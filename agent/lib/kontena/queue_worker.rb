@@ -15,6 +15,9 @@ module Kontena
       Pubsub.subscribe('websocket:connected') do |event|
         self.register_client_events
       end
+      Pubsub.subscribe('queue_worker:add_message') do |msg|
+        self.queue << msg
+      end
       info 'initialized'
     end
 

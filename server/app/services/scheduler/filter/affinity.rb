@@ -4,16 +4,15 @@ module Scheduler
 
       ##
       # @param [GridService] service
-      # @param [String] container_name
+      # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
-      def for_service(service, container_name, nodes)
+      def for_service(service, instance_number, nodes)
         return nodes if service.affinity.nil? || service.affinity.size == 0
 
-        i = container_name.match(/^.+-(\d+)$/)[1]
         candidates = nodes.dup
         nodes.each do |node|
           service.affinity.each do |affinity|
-            affinity = affinity % [i]
+            affinity = affinity % [instance_number.to_s]
             key, comparator, value = split_affinity(affinity)
             if key == 'node'
               unless node_match?(node, comparator, value)
@@ -75,7 +74,11 @@ module Scheduler
       # @param [String] compare
       # @param [String] value
       def service_match?(node, compare, value)
-        service_names = node.containers.map{|c| c.grid_service.name}.uniq
+        service_names = node.containers.delete_if{|c|
+            c.grid_service.nil?
+          }.map{|c|
+            c.grid_service.name
+          }.uniq
         if compare == '=='
           service_names.any?{|n| n == value}
         elsif compare == '!='
@@ -87,12 +90,18 @@ module Scheduler
       # @param [String] compare
       # @param [String] value
       def label_match?(node, compare, value)
-        return false if node.labels.nil?
-        
         if compare == '=='
-          node.labels.include?(value)
+          if node.labels.nil?
+            return false
+          else
+            node.labels.include?(value)
+          end
         elsif compare == '!='
-          !node.labels.include?(value)
+          if node.labels.nil?
+            true
+          else
+            !node.labels.include?(value)
+          end
         else
           false
         end

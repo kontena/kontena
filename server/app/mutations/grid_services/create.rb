@@ -13,6 +13,7 @@ module GridServices
     end
 
     optional do
+      string :strategy
       integer :container_count
       string :user
       integer :cpu_shares, min: 0, max: 1024
@@ -64,6 +65,15 @@ module GridServices
         string :*
       end
       string :log_driver
+      array :devices do
+        string
+      end
+      hash :deploy_opts do
+        optional do
+          integer :wait_for_port
+          float :min_health
+        end
+      end
     end
 
     def validate
@@ -77,6 +87,9 @@ module GridServices
           end
         end
       end
+      if self.strategy && !self.strategies[self.strategy]
+        add_error(:strategy, :invalid_strategy, 'Strategy not supported')
+      end
     end
 
     def execute
@@ -87,7 +100,7 @@ module GridServices
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid, self.links)
       end
-      
+
       grid_service = GridService.new(attributes)
       unless grid_service.save
         grid_service.errors.each do |key, message|
@@ -96,6 +109,10 @@ module GridServices
       end
 
       grid_service
+    end
+
+    def strategies
+      GridServiceScheduler::STRATEGIES
     end
   end
 end

@@ -21,7 +21,7 @@ module Kontena
       @subscribers = {}
       @rpc_server = Kontena::RpcServer.new
       @abort = false
-      info "initialized with token #{@api_token}"
+      info "initialized with token #{@api_token[0..10]}..."
       @connected = false
     end
 

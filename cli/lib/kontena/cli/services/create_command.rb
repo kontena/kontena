@@ -27,6 +27,9 @@ module Kontena::Cli::Services
     option "--net", "NET", "Network mode"
     option "--log-driver", "LOG_DRIVER", "Set logging driver"
     option "--log-opt", "LOG_OPT", "Add logging options", multivalued: true
+    option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, random)"
+    option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
+    option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
 
     def execute
       require_api_url
@@ -64,6 +67,10 @@ module Kontena::Cli::Services
       data[:net] = net if net
       data[:log_driver] = log_driver if log_driver
       data[:log_opts] = parse_log_opts(log_opt_list)
+      data[:strategy] = deploy_strategy if deploy_strategy
+      data[:deploy_opts] = {}
+      data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
+      data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
       data
     end
   end

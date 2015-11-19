@@ -4,22 +4,19 @@ module GridServices
   class Deploy < Mutations::Command
 
     DEFAULT_REGISTRY = 'index.docker.io'
-    STRATEGIES = {
-        'ha' => Scheduler::Strategy::HighAvailability,
-        'random' => Scheduler::Strategy::Random
-    }.freeze
 
     class ExecutionError < StandardError
     end
 
     required do
-      model :current_user, class: User
       model :grid_service
-      string :strategy, nils: true, default: 'ha'
     end
 
     optional do
+      model :current_user, class: User
+      string :strategy
       integer :wait_for_port
+      float :min_health, min: 0.0, max: 1.0
     end
 
     def validate
@@ -31,9 +28,11 @@ module GridServices
         add_error(:service, :invalid_state, 'Service is currently deploying')
         return
       end
-      unless STRATEGIES[self.strategy]
+      if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
         return
+      elsif self.strategy
+        self.grid_service.strategy = self.strategy
       end
 
       if !deployer.can_deploy?
@@ -42,6 +41,18 @@ module GridServices
     end
 
     def execute
+      if self.strategy
+        self.grid_service.strategy = self.strategy
+      end
+      if self.wait_for_port
+        self.grid_service.deploy_opts['wait_for_port'] = self.wait_for_port
+      end
+      if self.min_health
+        self.grid_service.deploy_opts['min_health'] = self.min_health
+      end
+
+      self.grid_service.save
+
       deployer.deploy_async(creds_for_registry)
 
       self.grid_service
@@ -74,19 +85,15 @@ module GridServices
     def deployer
       if @deployer.nil?
         nodes = self.grid_service.grid.host_nodes.connected.to_a
-        strategy = STRATEGIES[self.strategy].new
-        @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes, deploy_options)
+        strategy = self.strategies[self.grid_service.strategy].new
+        @deployer = GridServiceDeployer.new(strategy, self.grid_service, nodes)
       end
 
       @deployer
     end
 
-    ##
-    # @return [Hash]
-    def deploy_options
-      deploy_options = {}
-      deploy_options[:wait_for_port] = self.wait_for_port if self.wait_for_port
-      deploy_options
+    def strategies
+      GridServiceScheduler::STRATEGIES
     end
   end
 end

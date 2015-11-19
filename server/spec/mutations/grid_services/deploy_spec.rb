@@ -28,6 +28,14 @@ describe GridServices::Deploy do
       expect(deployer).to receive(:deploy_async).once
       subject.run
     end
+
+    it 'saves strategy' do
+      allow_any_instance_of(described_class).to receive(:deployer).and_return(deployer)
+      redis_service.set(:strategy => 'random')
+      expect {
+        outcome = subject.run
+      }.to change{ redis_service.reload.strategy }.to('ha')
+    end
   end
 
   describe '#registry_name' do

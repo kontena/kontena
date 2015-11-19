@@ -84,6 +84,22 @@ module V1
             end
           end
 
+          r.on('scale') do
+            data = parse_json_body
+            outcome = GridServices::Scale.run(
+                current_user: current_user,
+                grid_service: @grid_service,
+                instances: data['instances']
+            )
+            if outcome.success?
+              audit_event(r, @grid_service.grid, @grid_service, 'scale', @grid_service)
+              {}
+            else
+              response.status = 422
+              outcome.errors.message
+            end
+          end
+
           r.on('restart') do
             outcome = GridServices::Restart.run(
                 current_user: current_user,

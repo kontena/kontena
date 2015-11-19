@@ -1,3 +1,6 @@
+require 'celluloid'
+require_relative 'mongo_pubsub'
+
 class RpcClient
 
   class Error < StandardError
@@ -34,8 +37,9 @@ class RpcClient
       id: self.node_id,
       message: [0, id, method, params]
     }
+    response_future = response(id)
     MongoPubsub.publish_async(RPC_CHANNEL, payload)
-    result, error = wait_for_response(id)
+    result, error = response_future.value
 
     if block_given?
       error = raise Error.new(error['code'], error['message'], error['backtrace']) if error
@@ -49,8 +53,14 @@ class RpcClient
     end
   end
 
+  # @param [Fixnum] request_id
+  # @return [Celluloid::Future]
+  def response(request_id)
+    Celluloid::Future.new{ self.wait_for_response(request_id) }
+  end
+
   ##
-  # @param [String] request_id
+  # @param [Fixnum] request_id
   # @return [Array<Object>]
   def wait_for_response(request_id)
     result = nil
@@ -69,7 +79,7 @@ class RpcClient
         sleep 0.001 until resp_received
       end
     rescue
-      raise RpcClient::TimeoutError.new(503, 'Connection time out')
+      raise RpcClient::TimeoutError.new(503, "Connection timeout (#{self.timeout}s)")
     ensure
       subscription.terminate if subscription.alive?
     end

@@ -39,12 +39,7 @@ module Kontena::Cli::Apps
     def deploy_services(queue)
       queue.each do |service|
         puts "deploying #{service['id'].colorize(:cyan)}"
-        data = {}
-        if service['deploy']
-          data[:strategy] = service['deploy']['strategy'] if service['deploy']['strategy']
-          data[:wait_for_port] = service['deploy']['wait_for_port'] if service['deploy']['wait_for_port']
-        end
-        deploy_service(token, service['id'].split('/').last, data)
+        deploy_service(token, service['id'].split('/').last, {})
       end
     end
 
@@ -57,7 +52,6 @@ module Kontena::Cli::Apps
         parse_links(options['links']).each_with_index do |linked_service, index|
           # change prefixed service name also to links options
           options['links'][index] = "#{prefixed_name(linked_service[:name])}:#{linked_service[:alias]}"
-
           create_or_update_service(linked_service[:name], services[linked_service[:name]]) unless in_deploy_queue?(linked_service[:name])
         end
       end
@@ -70,9 +64,6 @@ module Kontena::Cli::Apps
       else
         service = create(name, options)
       end
-
-      # add deploy options to service
-      service['deploy'] = options['deploy']
 
       deploy_queue.push service
     end
@@ -149,6 +140,15 @@ module Kontena::Cli::Apps
       data[:net] = options['net'] if options['net']
       data[:log_driver] = options['log_driver'] if options['log_driver']
       data[:log_opts] = options['log_opt'] if options['log_opt'] && !options['log_opt'].empty?
+
+      deploy_opts = options['deploy'] || {}
+      data[:strategy] = deploy_opts['strategy'] if deploy_opts['strategy']
+      deploy = {}
+      deploy[:wait_for_port] = deploy_opts['wait_for_port'] if deploy_opts.has_key?('wait_for_port')
+      deploy[:min_health] = deploy_opts['min_health'] if deploy_opts.has_key?('min_health')
+      unless deploy.empty?
+        data[:deploy] = deploy
+      end
 
       data
     end

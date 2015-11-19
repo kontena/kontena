@@ -147,6 +147,7 @@ yml
               :env=>["MYSQL_ADMIN_PASSWORD=password", "TEST_ENV_VAR=test", "TEST_ENV_VAR2=test3"],
               :container_count=>2,
               :stateful=>false,
+              :strategy=>'ha',
               :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
               :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
           }
@@ -171,6 +172,7 @@ yml
               :env=>["MYSQL_ADMIN_PASSWORD=password", "TEST_ENV_VAR=test"],
               :container_count=>2,
               :stateful=>false,
+              :strategy=>'ha',
               :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
               :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
           }
@@ -190,6 +192,7 @@ yml
             :env=> nil,
             :container_count=>2,
             :stateful=>false,
+            :strategy=>'ha',
             :links=>[{:name => "kontena-test-mysql", :alias => "db"}, {:name => "loadbalancer", :alias => "loadbalancer"}],
             :ports=>[{:container_port => "80", :node_port => "80", :protocol => "tcp"}]
         }
@@ -215,6 +218,7 @@ yml
             :env=>["WORDPRESS_DB_PASSWORD=kontena-test_secret"],
             :container_count=>2,
             :stateful=>true,
+            :strategy=>'ha',
             :links=>[{:name=>"kontena-test-mysql", :alias=>"mysql"}],
             :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
         }
@@ -226,7 +230,7 @@ yml
       it 'deploys services' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
         expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-mysql', {})
-        expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-wordpress', {:strategy => 'ha'})
+        expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-wordpress', {})
         subject.run([])
       end
 

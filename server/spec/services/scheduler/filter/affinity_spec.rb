@@ -74,21 +74,21 @@ describe Scheduler::Filter::Affinity do
 
       it 'returns node-1 if affinity: container==redis-1' do
         service = double(:service, affinity: ['container==redis-1'])
-        filtered = subject.for_service(service, 'app-1', nodes)
+        filtered = subject.for_service(service, 1, nodes)
         expect(filtered.size).to eq(1)
         expect(filtered).to eq([nodes[0]])
       end
 
       it 'returns node-2 if affinity: container==redis-%i and current container name is app-2' do
         service = double(:service, affinity: ['container==redis-%i'])
-        filtered = subject.for_service(service, 'app-2', nodes)
+        filtered = subject.for_service(service, 2, nodes)
         expect(filtered.size).to eq(1)
         expect(filtered).to eq([nodes[1]])
       end
 
       it 'does not return node-2 if affinity: container!=redis-2' do
         service = double(:service, affinity: ['container!=redis-2'])
-        filtered = subject.for_service(service, 'app-1', nodes)
+        filtered = subject.for_service(service, 1, nodes)
         expect(filtered.size).to eq(2)
         expect(filtered).to eq(nodes - [nodes[1]])
       end
@@ -104,14 +104,14 @@ describe Scheduler::Filter::Affinity do
 
       it 'returns node-1 if affinity: service==redis' do
         service = double(:service, affinity: ['service==redis'])
-        filtered = subject.for_service(service, 'app-1', nodes)
+        filtered = subject.for_service(service, 1, nodes)
         expect(filtered.size).to eq(2)
         expect(filtered).to eq([nodes[0], nodes[2]])
       end
 
       it 'does not return node-2 if affinity: service!=redis' do
         service = double(:service, affinity: ['service!=redis'])
-        filtered = subject.for_service(service, 'app-1', nodes)
+        filtered = subject.for_service(service, 1, nodes)
         expect(filtered.size).to eq(1)
         expect(filtered).to eq([nodes[1]])
       end

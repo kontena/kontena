@@ -17,6 +17,9 @@ end
 if !api_uri
   exit('KONTENA_URI is required')
 end
+if api_uri.match(/^http.*/)
+  api_uri = api_uri.sub('http', 'ws')
+end
 
 Kontena::Logging.initialize_logger(STDOUT)
 
@@ -24,6 +27,6 @@ agent = Kontena::Agent.new(
   api_uri: api_uri,
   api_token: api_token
 )
-agent.start!
+agent.connect!
 
 sleep

@@ -8,7 +8,7 @@ class GridService
   field :labels, type: Hash, default: {}
   field :affinity, type: Array, default: []
   field :name, type: String
-  field :stateful, type: Boolean
+  field :stateful, type: Boolean, default: false
   field :user, type: String
   field :container_count, type: Fixnum, default: 1
   field :cmd, type: Array
@@ -27,6 +27,9 @@ class GridService
   field :state, type: String, default: 'initialized'
   field :log_driver, type: String
   field :log_opts, type: Hash, default: {}
+  field :devices, type: Array, default: []
+
+  field :strategy, type: String, default: 'ha'
 
   belongs_to :grid
   belongs_to :image
@@ -35,6 +38,7 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   embeds_many :grid_service_links
+  embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
 
   index({ grid_id: 1 })
   index({ name: 1 })
@@ -74,6 +78,16 @@ class GridService
   end
 
   # @return [Boolean]
+  def running?
+    self.state == 'running'
+  end
+
+  # @return [Boolean]
+  def all_instances_exist?
+    self.containers.count >= self.container_count
+  end
+
+  # @return [Boolean]
   def load_balancer?
     self.image_name.to_s.include?(LB_IMAGE)
   end
@@ -86,6 +100,16 @@ class GridService
   # @return [Array<GridService>]
   def linked_to_load_balancers
     self.grid_service_links.map{|l| l.linked_grid_service }.select{|s| s.load_balancer? }
+  end
+
+  # @param [GridService] service
+  # @param [String] service_alias
+  def link_to(service, service_alias = nil)
+    service_alias = service.name if service_alias.nil?
+    self.grid_service_links << GridServiceLink.new(
+      linked_grid_service: service,
+      alias: service_alias
+    )
   end
 
   # @return [Hash]

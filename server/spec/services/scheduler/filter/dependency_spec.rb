@@ -16,17 +16,6 @@ describe Scheduler::Filter::Dependency do
     GridService.create(name: 'mysql', image_name: 'mysql:latest')
   }
 
-  describe '#container_number' do
-    it 'returns container number' do
-      expect(subject.container_number('my-container-12-4')).to eq('4')
-      expect(subject.container_number('my-container-4')).to eq('4')
-    end
-
-    it 'returns nil if number cannot be parsed' do
-      expect(subject.container_number('my-container')).to eq(nil)
-    end
-  end
-
   describe '#filter_by_volume?' do
     it 'returns true if service has volumes_from' do
       logstash_service.volumes_from = ['mysql-service-%s']

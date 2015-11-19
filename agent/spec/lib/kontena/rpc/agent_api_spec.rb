@@ -16,4 +16,28 @@ describe Kontena::Rpc::AgentApi do
       end
     end
   end
+
+  describe '#master_info' do
+    it 'sends publishes event' do
+      listener = spy(:listener)
+      Kontena::Pubsub.subscribe('websocket:connected') do |event|
+        listener.handle(event)
+      end
+      expect(listener).to receive(:handle)
+      subject.master_info({'version' => '0.10.0'})
+      sleep 0.01
+    end
+  end
+
+  describe '#node_info' do
+    it 'sends publishes event' do
+      listener = spy(:listener)
+      Kontena::Pubsub.subscribe('agent:node_info') do |event|
+        listener.handle(event)
+      end
+      expect(listener).to receive(:handle)
+      subject.node_info({'version' => '0.10.0'})
+      sleep 0.01
+    end
+  end
 end

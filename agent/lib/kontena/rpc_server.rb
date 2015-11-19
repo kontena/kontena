@@ -2,6 +2,7 @@ require_relative 'rpc/docker_container_api'
 require_relative 'rpc/docker_image_api'
 require_relative 'rpc/agent_api'
 require_relative 'rpc/etcd_api'
+require_relative 'rpc/service_pods_api'
 require_relative 'logging'
 
 module Kontena
@@ -10,6 +11,7 @@ module Kontena
 
     HANDLERS = {
         'containers' => Kontena::Rpc::DockerContainerApi,
+        'service_pods' => Kontena::Rpc::ServicePodsApi,
         'images' => Kontena::Rpc::DockerImageApi,
         'agent' => Kontena::Rpc::AgentApi,
         'etcd' => Kontena::Rpc::EtcdApi
@@ -34,7 +36,7 @@ module Kontena
       method = message[2].split('/')[2]
       if klass = HANDLERS[handler]
         begin
-          info "rpc request: #{klass.name}##{method} #{message[3]}"
+          debug "rpc request: #{klass.name}##{method} #{message[3]}"
           result = klass.new.send(method, *message[3])
           return [1, msg_id, nil, result]
         rescue RpcServer::Error => exc

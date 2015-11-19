@@ -7,23 +7,22 @@ module GridServices
 
     def execute
       prev_state = self.grid_service.state
-      begin
-        self.grid_service.set_state('starting')
-        self.grid_service.containers.scoped.each do |container|
-          starter_for(container).start_container
+      Celluloid::Future.new{
+        begin
+          self.grid_service.set_state('starting')
+          self.start_service_instances
+          self.grid_service.set_state('running')
+        rescue => exc
+          self.grid_service.set_state(prev_state)
+          raise exc
         end
-        self.grid_service.set_state('running')
-      rescue => exc
-        self.grid_service.set_state(prev_state)
-        raise exc
-      end
+      }
     end
 
-    ##
-    # @param [Container] container
-    # @return [Docker::ContainerStarter]
-    def starter_for(container)
-      Docker::ContainerStarter.new(container)
+    def start_service_instances
+      self.grid_service.containers.scoped.each do |container|
+        Docker::ServiceStarter.new(container.host_node).start_service_instance(container.name)
+      end
     end
   end
 end

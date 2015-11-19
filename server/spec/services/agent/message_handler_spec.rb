@@ -73,7 +73,7 @@ describe Agent::MessageHandler do
 
     it 'updates container if container is found by internal id' do
       container_id = SecureRandom.hex(16)
-      container = grid.containers.create!(name: 'foo-1')
+      container = grid.containers.new(name: 'foo-1')
       expect(container.running?).to eq(false)
       subject.on_container_info(grid, {
         'container' => {
@@ -84,7 +84,8 @@ describe Agent::MessageHandler do
           },
           'Config' => {
             'Labels' => {
-              'io.kontena.container.id' => container.id.to_s
+              'io.kontena.container.id' => container.id.to_s,
+              'io.kontena.service.id' => 'foobarbaz'
             }
           },
 

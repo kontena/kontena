@@ -22,7 +22,7 @@ production:
   sessions:
     default:
       options:
-        pool_size: 25
+        pool_size: 40
       uri: <%= ENV['MONGODB_URI'] %>
   options:
     use_utc: true

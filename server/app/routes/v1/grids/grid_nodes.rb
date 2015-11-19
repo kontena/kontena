@@ -1,3 +1,4 @@
+require_relative '../../../mutations/host_nodes/remove'
 V1::GridsApi.route('grid_nodes') do |r|
 
   # GET /v1/grids/:id/nodes
@@ -21,7 +22,8 @@ V1::GridsApi.route('grid_nodes') do |r|
     r.on ':id' do |id|
       node = @grid.host_nodes.find_by(name: id)
       if node
-        node.destroy
+        audit_event(r, @grid, node, 'remove node')
+        HostNodes::Remove.run(host_node: node)
         response.status = 200
         {}
       else

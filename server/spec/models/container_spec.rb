@@ -85,39 +85,6 @@ describe Container do
     end
   end
 
-  describe '#parse_docker_network_settings' do
-    let(:docker_data) do
-      {
-        "Bridge" => "docker0",
-        "Gateway" => "172.17.42.1",
-        "IPAddress" => "172.17.0.26",
-        "IPPrefixLen" => 16,
-        "MacAddress" => "02:42:ac:11:00:1a",
-        "PortMapping" => nil,
-        "Ports" => {
-          "6379/tcp" => [
-            {
-              "HostIp" => "0.0.0.0",
-              "HostPort" => "6379"
-            }
-          ]
-        }
-      }
-    end
-
-    it 'parses ports correctly' do
-      res = subject.parse_docker_network_settings(docker_data)
-      expect(res[:ports]).to eq(
-        "6379/tcp" => [
-          {
-            node_ip: "0.0.0.0",
-            node_port: 6379
-          }
-        ]
-      )
-    end
-  end
-
   describe '#up_to_date?' do
     context 'when image id differs from grid service image id' do
       it 'returns false ' do

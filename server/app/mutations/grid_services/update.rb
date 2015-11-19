@@ -10,6 +10,7 @@ module GridServices
     end
 
     optional do
+      string :strategy
       string :image
       integer :container_count
       string :user
@@ -56,6 +57,15 @@ module GridServices
         string :*
       end
       string :log_driver
+      array :devices do
+        string
+      end
+      hash :deploy_opts do
+        optional do
+          integer :wait_for_port
+          float :min_health
+        end
+      end
     end
 
     def validate
@@ -66,10 +76,15 @@ module GridServices
           end
         end
       end
+
+      if self.strategy && !self.strategies[self.strategy]
+        add_error(:strategy, :invalid_strategy, 'Strategy not supported')
+      end
     end
 
     def execute
       attributes = {}
+      attributes[:strategy] = self.strategy if self.strategy
       attributes[:image_name] = self.image if self.image
       attributes[:container_count] = self.container_count if self.container_count
       attributes[:user] = self.user if self.user
@@ -86,6 +101,8 @@ module GridServices
       attributes[:affinity] = self.affinity if self.affinity
       attributes[:log_driver] = self.log_driver if self.log_driver
       attributes[:log_opts] = self.log_opts if self.log_opts
+      attributes[:devices] = self.devices if self.devices
+      attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid_service.grid, self.links)
       end
@@ -94,6 +111,10 @@ module GridServices
       grid_service.save
 
       grid_service
+    end
+
+    def strategies
+      GridServiceScheduler::STRATEGIES
     end
   end
 end

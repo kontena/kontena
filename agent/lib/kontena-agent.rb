@@ -7,9 +7,10 @@ require 'active_support/core_ext/time'
 require 'active_support/core_ext/module/delegation'
 
 Celluloid.logger.level = Logger::ERROR
-
 Excon.defaults[:ssl_verify_peer] = false # if ENV['DISABLE_SSL_VERIFY_PEER']
 
+require_relative 'docker/version'
+require_relative 'docker/container'
 require_relative 'kontena/pubsub'
 require_relative 'kontena/weave_attacher'
 require_relative 'kontena/node_info_worker'
