@@ -35,11 +35,11 @@ module Kontena
     def start(node_info)
       return if self.started?
       @started = true
+      @node_info_worker.start!
       @weave_adapter.start(node_info).value
       @etcd_launcher.start(node_info).value
 
       @weave_attacher.start!
-      @node_info_worker.start!
       @container_info_worker.start!
       @log_worker.start!
       @event_worker.start!
