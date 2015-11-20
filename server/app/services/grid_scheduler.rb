@@ -20,13 +20,19 @@ class GridScheduler
 
   def reschedule_services
     grid.grid_services.each do |service|
-      if service.stateless? && !service.deploying?
+      if can_reschedule_service?(service)
         reschedule_stateless_service(service)
       end
     end
   rescue => exc
     error exc.message
     debug exc.backtrace.join("\n") if exc.backtrace
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def can_reschedule_service?(service)
+    service.stateless? && !service.deploying? && !service.dependant_services?
   end
 
   # @param [GridService] service
