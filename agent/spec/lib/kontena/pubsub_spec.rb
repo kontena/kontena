@@ -4,6 +4,7 @@ describe Kontena::Pubsub do
   before(:each) {
     Celluloid.shutdown
     Celluloid.boot
+    described_class.clear!
   }
   after(:each) {
     described_class.clear!
