@@ -16,6 +16,14 @@ describe Scheduler::Filter::Dependency do
     GridService.create(name: 'mysql', image_name: 'mysql:latest')
   }
 
+  describe '#filter_candidates_by_volume' do
+    it 'finds no candidates if no volumes match' do
+      logstash_service.volumes_from = ['mysql-service-%s']
+      subject.filter_candidates_by_volume(nodes, logstash_service, 2)
+      expect(nodes).to eq([])
+    end
+  end
+
   describe '#filter_by_volume?' do
     it 'returns true if service has volumes_from' do
       logstash_service.volumes_from = ['mysql-service-%s']
