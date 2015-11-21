@@ -19,7 +19,7 @@ describe GridServices::Start do
       container = redis_service.containers.create!(name: 'redis-1', container_id: '34')
       expect(subject).to receive(:start_service_instances).and_return(true)
 
-      subject.run
+      subject.run.result.value
     end
 
     it 'sets service state to running' do

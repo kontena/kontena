@@ -1,3 +1,12 @@
+if ENV['COVERAGE']
+  require 'simplecov'
+
+  SimpleCov.start do
+    root './lib/'
+    add_group 'Agent', 'lib/'
+  end
+end
+
 require_relative '../lib/kontena-agent'
 require 'webmock/rspec'
 
