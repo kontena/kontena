@@ -8,6 +8,7 @@ module Mongodb
     end
 
     def self.up
+      raise NotImplementedError
     end
 
     def self.db
