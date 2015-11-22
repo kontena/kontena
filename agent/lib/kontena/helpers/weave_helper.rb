@@ -1,20 +1,9 @@
 require 'docker'
+require_relative 'iface_helper'
 
 module Kontena
   module Helpers
     module WeaveHelper
-
-      # @return [String]
-      def weave_ip
-        weave = Docker::Container.get('weave') rescue nil
-        if weave
-          ip = weave.info['NetworkSettings']['IPAddress']
-          if ip && @weave_ip && ip != @weave_ip
-            @dns_client = nil
-          end
-          @weave_ip = ip
-        end
-      end
 
       # @return [Boolean]
       def weave_running?
@@ -66,7 +55,7 @@ module Kontena
       end
 
       def dns_client
-        @dns_client ||= Excon.new("http://#{self.weave_ip}:6784")
+        @dns_client ||= Excon.new("http://127.0.0.1:6784")
       end
     end
   end
