@@ -19,7 +19,7 @@ describe GridServices::Restart do
       )
       subject = described_class.new(current_user: user, grid_service: redis_service)
       expect(subject).to receive(:restart_service_instance).with(node, container.name).once
-      subject.run
+      subject.run.result.value
     end
 
     it 'sets service state to running' do
