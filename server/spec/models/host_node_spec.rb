@@ -100,5 +100,14 @@ describe HostNode do
       subject.save
       expect(subject.name).to eq('foo')
     end
+
+    it 'does not append node_number to name if name is empty' do
+      grid = Grid.create!(name: 'test')
+      node1 = HostNode.create!(node_id: 'aa', node_number: 1, grid: grid)
+
+      subject.attributes = {grid: grid}
+      subject.save
+      expect(subject.name).to be_nil
+    end
   end
 end

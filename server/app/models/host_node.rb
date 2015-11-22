@@ -102,6 +102,7 @@ class HostNode
   end
 
   def ensure_unique_name
+    return if self.name.to_s.empty?
     return unless self.grid
     return unless self.grid.respond_to?(:host_nodes)
 
