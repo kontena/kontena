@@ -34,10 +34,6 @@ module GridServices
       elsif self.strategy
         self.grid_service.strategy = self.strategy
       end
-
-      if !deployer.can_deploy?
-        add_error(:nodes, :too_few, 'Too few applicable nodes available')
-      end
     end
 
     def execute
