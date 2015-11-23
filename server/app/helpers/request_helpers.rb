@@ -4,7 +4,7 @@ module RequestHelpers
     base.plugin :json
     base.plugin :all_verbs
     base.plugin :default_headers, 'Content-Type'=>'application/json'
-    base.plugin :render, engine: 'json.jbuilder', views: 'app/views/v1'
+    base.plugin :render, cache: true, engine: 'json.jbuilder', views: 'app/views/v1'
     base.plugin :error_handler do |e|
       if e.is_a?(RpcClient::Error)
         { code: e.code, message: e.message, backtrace: e.backtrace }
