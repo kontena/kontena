@@ -50,12 +50,23 @@ module GridServices
       if self.min_health
         self.grid_service.deploy_opts['min_health'] = self.min_health
       end
-
       self.grid_service.save
 
-      deployer.deploy_async(creds_for_registry)
+      deploy_future = deployer.deploy_async(creds_for_registry)
+      self.deploy_dependant_services(deploy_future)
 
       self.grid_service
+    end
+
+    # @param [Celluloid::Future] parent_deploy
+    # @return [Celluloid::Future]
+    def deploy_dependant_services(parent_deploy)
+      Celluloid::Future.new {
+        parent_deploy.value # wait for parent deploy to finish
+        self.grid_service.dependant_services.each do |serv|
+          self.class.run(grid_service: serv)
+        end
+      }
     end
 
     ##
