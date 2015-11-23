@@ -38,7 +38,9 @@ module Kontena
           end
         end
         service_config = service_pod.service_config
-        overlay_adapter.modify_create_opts(service_config)
+        if service_pod.overlay_network
+          overlay_adapter.modify_create_opts(service_config)
+        end
         service_container = create_container(service_config)
         service_container.start
         info "service started: #{service_pod.name}"
