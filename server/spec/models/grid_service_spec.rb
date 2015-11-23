@@ -110,4 +110,40 @@ describe GridService do
       expect(grid_service.container_by_name('not_found')).to be_nil
     end
   end
+
+  describe '#dependant_services' do
+    let(:subject) { grid_service }
+
+    it 'returns dependant by volumes_from' do
+      backupper = GridService.create!(
+        grid: grid, name: 'backupper',
+        image_name: 'backupper:latest', volumes_from: ["#{subject.name}-%s"]
+      )
+      follower = GridService.create!(
+        grid: grid, name: 'follower',
+        image_name: 'follower:latest', volumes_from: ["#{subject.name}-1"]
+      )
+      dependant_services = subject.dependant_services
+      expect(dependant_services.size).to eq(2)
+      expect(dependant_services).to include(backupper)
+      expect(dependant_services).to include(follower)
+    end
+
+    it 'returns dependant services by service affinity' do
+      avoider = GridService.create!(
+        grid: grid, name: 'avoider',
+        image_name: 'avoider:latest',
+        affinity: ["service!=#{subject.name}"]
+      )
+      follower = GridService.create!(
+        grid: grid, name: 'follower',
+        image_name: 'follower:latest',
+        affinity: ["service==#{subject.name}"]
+      )
+      dependant_services = subject.dependant_services
+      expect(dependant_services.size).to eq(2)
+      expect(dependant_services).to include(avoider)
+      expect(dependant_services).to include(follower)
+    end
+  end
 end
