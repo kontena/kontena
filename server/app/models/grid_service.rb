@@ -57,9 +57,7 @@ class GridService
 
   # @param [String] state
   def set_state(state)
-    result = self.timeless.update_attribute(:state, state)
-    self.clear_timeless_option
-    result
+    self.set(:state => state)
   end
 
   # @return [Boolean]
