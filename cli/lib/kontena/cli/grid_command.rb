@@ -17,7 +17,7 @@ class Kontena::Cli::GridCommand < Clamp::Command
   subcommand "use", "Switch to use specific grid", Kontena::Cli::Grids::UseCommand
   subcommand "show", "Show grid details", Kontena::Cli::Grids::ShowCommand
   subcommand "logs", "Show logs from grid containers", Kontena::Cli::Grids::LogsCommand
-  subcommand "remove", "Remove a grid", Kontena::Cli::Grids::RemoveCommand
+  subcommand ["remove","rm"], "Remove a grid", Kontena::Cli::Grids::RemoveCommand
   subcommand "current", "Show current grid details", Kontena::Cli::Grids::CurrentCommand
   subcommand "audit-log", "Show audit log of the current grid", Kontena::Cli::Grids::AuditLogCommand
   subcommand "list-users", "List current grid users", Kontena::Cli::Grids::ListUsersCommand
