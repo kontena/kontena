@@ -23,6 +23,7 @@ module Kontena
       @abort = false
       info "initialized with token #{@api_token[0..10]}..."
       @connected = false
+      @connecting = false
     end
 
     def ensure_connect
@@ -38,7 +39,14 @@ module Kontena
       @connected
     end
 
+    # @return [Boolean]
+    def connecting?
+      @connecting
+    end
+
     def connect
+      return if connecting?
+      @connecting = true
       debug 'connecting to master'
       headers = {
           'Kontena-Grid-Token' => self.api_token.to_s,
@@ -75,6 +83,7 @@ module Kontena
     def on_open(event)
       info 'connection established'
       @connected = true
+      @connecting = false
     end
 
     # @param [Faye::WebSocket::Client] ws
@@ -100,6 +109,7 @@ module Kontena
     # @param [Faye::WebSocket::Api::Event] event
     def on_close(event)
       @connected = false
+      @connecting = false
       if event.code == 4001
         self.handle_invalid_token(event)
       elsif event.code == 4010
