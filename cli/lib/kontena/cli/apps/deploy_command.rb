@@ -38,8 +38,10 @@ module Kontena::Cli::Apps
 
     def deploy_services(queue)
       queue.each do |service|
-        puts "deploying #{service['id'].colorize(:cyan)}"
-        deploy_service(token, service['id'].split('/').last, {})
+        name = service['id'].split('/').last
+        short_name = name.sub("#{service_prefix}-", "")
+        puts "deploying #{short_name.colorize(:cyan)}"
+        deploy_service(token, name, {})
       end
     end
 
@@ -73,17 +75,17 @@ module Kontena::Cli::Apps
     end
 
     def create(name, options)
-      name = prefixed_name(name)
       puts "creating #{name.colorize(:cyan)}"
+      name = prefixed_name(name)
       data = {name: name}
       data.merge!(parse_data(options))
       create_service(token, current_grid, data)
     end
 
     def update(id, options)
+      puts "updating #{id.colorize(:cyan)}"
       id = prefixed_name(id)
       data = parse_data(options)
-      puts "updating #{id.colorize(:cyan)}"
       update_service(token, id, data)
     end
 
