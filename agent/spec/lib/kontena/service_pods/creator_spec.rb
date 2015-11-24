@@ -86,4 +86,38 @@ describe Kontena::ServicePods::Creator do
       expect(subject.service_uptodate?(service_container)).to be_truthy
     end
   end
+
+  describe '#recreate_service_container?' do
+    it 'returns false if RestartPolicy=no' do
+      service_container = spy(:service_container,
+        state: {},
+        restart_policy: {'Name' => 'no'}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_falsey
+    end
+
+    it 'returns false if container is running' do
+      service_container = spy(:service_container,
+        state: {'Running' => true},
+        restart_policy: {'Name' => 'always'}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_falsey
+    end
+
+    it 'returns false if RestartPolicy=always and container is stopped without error message' do
+      service_container = spy(:service_container,
+        state: {'Running' => false, 'Error' => ''},
+        restart_policy: {'Name' => 'always'}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_falsey
+    end
+
+    it 'returns true if RestartPolicy=always and container is stopped with error message' do
+      service_container = spy(:service_container,
+        state: {'Running' => false, 'Error' => 'oh noes'},
+        restart_policy: {'Name' => 'always'}
+      )
+      expect(subject.recreate_service_container?(service_container)).to be_truthy
+    end
+  end
 end
