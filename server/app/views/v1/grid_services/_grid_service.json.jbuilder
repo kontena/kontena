@@ -26,3 +26,7 @@ json.log_opts grid_service.log_opts
 json.strategy grid_service.strategy
 json.deploy_opts grid_service.deploy_opts
 json.pid grid_service.pid
+json.instances do
+  json.total grid_service.containers.count
+  json.running grid_service.containers.where('state.running' => true).count
+end
