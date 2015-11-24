@@ -28,6 +28,7 @@ class GridService
   field :log_driver, type: String
   field :log_opts, type: Hash, default: {}
   field :devices, type: Array, default: []
+  field :pid, type: String
 
   field :strategy, type: String, default: 'ha'
 

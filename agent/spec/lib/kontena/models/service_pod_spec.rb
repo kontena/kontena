@@ -239,6 +239,11 @@ describe Kontena::Models::ServicePod do
       data['cpu_shares'] = 500
       expect(host_config['CpuShares']).to eq(500)
     end
+
+    it 'sets PidMode if set' do
+      data['pid'] = 'host'
+      expect(host_config['PidMode']).to eq('host')
+    end
   end
 
   describe '#build_exposed_ports' do

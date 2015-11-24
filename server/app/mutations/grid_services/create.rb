@@ -74,6 +74,7 @@ module GridServices
           float :min_health
         end
       end
+      string :pid, matches: /^(host)$/
     end
 
     def validate
