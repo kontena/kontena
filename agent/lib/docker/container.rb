@@ -8,9 +8,24 @@ module Docker
       cached_json['Config']['Labels'] || {}
     end
 
+    # @return [Hash]
+    def host_config
+      cached_json['HostConfig']
+    end
+
+    # @return [Hash]
+    def state
+      self.json['State']
+    end
+
+    # @return [Hash]
+    def restart_policy
+      self.host_config['RestartPolicy']
+    end
+
     # @return [Boolean]
     def running?
-      self.json['State']['Running']
+      self.state['Running']
     end
 
     # @return [Boolean]

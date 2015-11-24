@@ -106,6 +106,7 @@ module Kontena
       # @param [Docker::Container] service_container
       # @return [Boolean]
       def service_uptodate?(service_container)
+        return false if recreate_service_container?(service_container)
         return false if service_container.info['Config']['Image'] != service_pod.image_name
         return false if container_outdated?(service_container)
         return false if image_outdated?(service_pod.image_name, service_container)
@@ -138,6 +139,17 @@ module Kontena
         false
       end
 
+      # @param [Docker::Container] service_container
+      # @return [Boolean]
+      def recreate_service_container?(service_container)
+        state = service_container.state
+        service_container.restart_policy['Name'] == 'always' &&
+            state['Running'] == false &&
+            !state['Error'].empty?
+      end
+
+      # @param [Docker::Container] service_container
+      # @param [String] deploy_rev
       def notify_master(service_container, deploy_rev)
         msg = {
           event: 'container:event',
