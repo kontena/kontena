@@ -50,7 +50,8 @@ module Docker
         volumes_from: grid_service.volumes_from,
         net: grid_service.net,
         log_driver: grid_service.log_driver,
-        log_opts: grid_service.log_opts
+        log_opts: grid_service.log_opts,
+        pid: grid_service.pid
       }
       spec[:env] = build_env
       overlay_cidr = nil

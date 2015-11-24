@@ -102,6 +102,8 @@ module Kontena
             puts "    #{opt}: #{value}"
           end
 
+          puts "  pid: #{service['pid']}"
+
           puts "  containers:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|

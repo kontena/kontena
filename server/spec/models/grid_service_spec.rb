@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe GridService do
   it { should be_timestamped_document }
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
-                          :net, :log_driver).of_type(String) }
+                          :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares).of_type(Fixnum) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
