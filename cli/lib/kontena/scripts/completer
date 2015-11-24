@@ -103,7 +103,8 @@ if words.size > 0
       end
     when 'service'
       completion.clear
-      sub_commands = %w(containers create delete deploy list logs restart scale show start stats stop update)
+      sub_commands = %w(containers create delete deploy list logs restart
+                      scale show start stats stop update monitor)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.services
@@ -127,7 +128,8 @@ if words.size > 0
       completion.push %w(add list delete)
     when 'app'
       completion.clear
-      sub_commands = %w(init build deploy start stop remove rm ps list logs)
+      sub_commands = %w(init build deploy start stop remove rm ps list
+                        logs monitor show)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.yml_services
