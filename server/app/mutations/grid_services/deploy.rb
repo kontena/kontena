@@ -14,42 +14,16 @@ module GridServices
 
     optional do
       model :current_user, class: User
-      string :strategy
-      integer :wait_for_port
-      float :min_health, min: 0.0, max: 1.0
-    end
-
-    def validate
-      unless self.grid_service.grid.has_initial_nodes?
-        add_error(:grid, :invalid_state, 'Grid does not have initial nodes ready')
-        return
-      end
-      if self.grid_service.deploying?
-        add_error(:service, :invalid_state, 'Service is currently deploying')
-        return
-      end
-      if self.strategy && !self.strategies[self.strategy]
-        add_error(:strategy, :invalid_strategy, 'Strategy not supported')
-        return
-      elsif self.strategy
-        self.grid_service.strategy = self.strategy
-      end
+      boolean :touch, default: true
     end
 
     def execute
-      if self.strategy
-        self.grid_service.strategy = self.strategy
-      end
-      if self.wait_for_port
-        self.grid_service.deploy_opts['wait_for_port'] = self.wait_for_port
-      end
-      if self.min_health
-        self.grid_service.deploy_opts['min_health'] = self.min_health
-      end
-      self.grid_service.save
+      self.grid_service.set(:deploy_requested_at => Time.now.utc)
 
-      deploy_future = deployer.deploy_async(creds_for_registry)
-      self.deploy_dependant_services(deploy_future)
+      unless self.grid_service.deploying?
+        deploy_future = deployer.deploy_async(creds_for_registry)
+        self.deploy_dependant_services(deploy_future)
+      end
 
       self.grid_service
     end

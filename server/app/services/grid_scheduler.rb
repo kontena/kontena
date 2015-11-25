@@ -32,18 +32,17 @@ class GridScheduler
   # @param [GridService] service
   # @return [Boolean]
   def can_reschedule_service?(service)
-    service.stateless? && !service.deploying? && !service.dependant_services?
+    service.stateless? && service.running? && !service.dependant_services?
   end
 
   # @param [GridService] service
   def reschedule_stateless_service(service)
     if should_reschedule_service?(service)
       GridServices::Deploy.run(
-        grid_service: service,
-        strategy: service.strategy
+        grid_service: service
       )
     else
-      info "seems that re-scheduling does not change anything for #{service.to_path}... aborting"
+      info "seems that re-scheduling does not change anything for #{service.to_path}... skipping"
     end
   end
 

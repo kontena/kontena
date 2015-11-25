@@ -30,6 +30,8 @@ class GridService
   field :devices, type: Array, default: []
   field :pid, type: String
 
+  field :deploy_requested_at, type: DateTime
+  field :deployed_at, type: DateTime
   field :strategy, type: String, default: 'ha'
 
   belongs_to :grid
@@ -83,7 +85,7 @@ class GridService
 
   # @return [Boolean]
   def all_instances_exist?
-    self.containers.count >= self.container_count
+    self.containers.where('state.running' => true).count >= self.container_count
   end
 
   # @return [Boolean]
