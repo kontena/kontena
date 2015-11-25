@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative 'common'
 
 module Kontena::Cli::Apps
@@ -35,8 +34,10 @@ module Kontena::Cli::Apps
       end
       logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
       logs.each do |log|
-        color = color_for_container(log['name'])
-        puts "#{log['name'].colorize(color)} | #{log['data']}"
+        name = log['name'].sub("#{@service_prefix}-", '')
+        service = name.match(/^(.+)-\d+/)[1]
+        color = color_for_container(service)
+        puts "#{name.colorize(color)} | #{log['data']}"
       end
     end
 

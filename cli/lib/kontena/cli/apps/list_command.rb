@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative 'common'
 
 module Kontena::Cli::Apps
@@ -27,15 +26,22 @@ module Kontena::Cli::Apps
     end
 
     def show_services(services)
-      puts "%-30.30s %-50.50s %-15s %-10.10s %-15.20s %-50s" % ['NAME', 'IMAGE', 'INSTANCES', 'STATEFUL', 'STATE', 'PORTS']
+      titles = ['NAME', 'IMAGE', 'INSTANCES', 'STATEFUL', 'STATE', 'PORTS']
+      puts "%-30.30s %-50.50s %-15s %-10.10s %-15.20s %-50s" % titles
 
       services.each do |service_name, opts|
         service = get_service(token, prefixed_name(service_name)) rescue false
         if service
+          name = service['name'].sub("#{@service_prefix}-", '')
           state = service['stateful'] ? 'yes' : 'no'
-
-          ports = service['ports'].map{|p| "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"}.join(", ")
-          puts "%-30.30s %-50.50s %-15.10s %-10.10s %-15.20s %-50s" % [service['name'], service['image'], service['container_count'], state, service['state'], ports]
+          ports = service['ports'].map{|p|
+            "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"
+          }.join(", ")
+          running = service['instances']['running']
+          desired = service['container_count']
+          instances = "#{running} / #{desired}"
+          vars = [name, service['image'], instances, state, service['state'], ports]
+          puts "%-30.30s %-50.50s %-15.10s %-10.10s %-15.20s %-50s" % vars
         end
       end
     end
