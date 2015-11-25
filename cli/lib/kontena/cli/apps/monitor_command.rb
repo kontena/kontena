@@ -31,12 +31,14 @@ module Kontena::Cli::Apps
         nodes = {}
         services.each do |name, data|
           service = prefixed_name(name)
-          result = client(token).get("services/#{current_grid}/#{service}/containers")
-          services[name]['instances'] = result['containers'].size
-          result['containers'].each do |container|
-            container['service'] = name
-            nodes[container['node']['name']] ||= []
-            nodes[container['node']['name']] << container
+          result = client(token).get("services/#{current_grid}/#{service}/containers") rescue nil
+          if result
+            services[name]['instances'] = result['containers'].size
+            result['containers'].each do |container|
+              container['service'] = name
+              nodes[container['node']['name']] ||= []
+              nodes[container['node']['name']] << container
+            end
           end
         end
         clear_terminal
