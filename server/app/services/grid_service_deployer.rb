@@ -53,7 +53,7 @@ class GridServiceDeployer
   # @return [Celluloid::Future]
   def deploy_async(creds = nil)
     Celluloid::Future.new{
-      with_dlock("deploy_async/#{self.grid_service.id}") do
+      with_dlock("deploy_async/#{self.grid_service.id}", 0) do
         self.deploy(creds)
       end
     }
@@ -65,16 +65,18 @@ class GridServiceDeployer
     prev_state = self.grid_service.state
     info "starting to deploy #{self.grid_service.to_path}"
     self.grid_service.set_state('deploying')
+    self.grid_service.set(:deployed_at => Time.now.utc)
 
     self.configure_load_balancer
     started_at = Time.now.utc
     deploy_rev = Time.now.utc.to_s
     deploy_futures = []
+    prev_instance_count = self.grid_service.containers.count
     total_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     total_instances.times do |i|
       instance_number = i + 1
       unless self.grid_service.deploying?
-        raise "halting deploy of #{self.grid_service.to_path}, state has changed"
+        raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
       end
       node = self.scheduler.select_node(
         self.grid_service, instance_number, self.nodes, deploy_rev
@@ -86,14 +88,37 @@ class GridServiceDeployer
         self.deploy_service_instance(node, instance_number, deploy_rev, creds)
       }
       pending_deploys = deploy_futures.select{|f| !f.ready?}
-      if pending_deploys.size >= (total_instances * self.min_health).floor
-        info "throttling deploy [#{self.grid_service.to_path}], there are #{pending_deploys.size} deploys in progress"
+      if prev_instance_count > 0 && pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size > 40
+        info "throttling service instance #{self.grid_service.to_path} deploy because of min_health limit (#{pending_deploys.size} instances in-progress)"
         pending_deploys[0].value rescue nil
+      elsif prev_instance_count == 0 && pending_deploys.size > 40
+        info "throttling service instance #{self.grid_service.to_path} deploy because there are #{pending_deploys.size} instances in-progress"
       end
       sleep 0.1
     end
     deploy_futures.select{|f| !f.ready?}.each{|f| f.value rescue nil }
 
+    sleep 0.1
+    self.cleanup_deploy(deploy_rev)
+
+    info "service #{self.grid_service.to_path} has been deployed"
+    self.grid_service.set_state('running')
+
+    true
+  rescue RpcClient::Error => exc
+    self.grid_service.set_state(prev_state)
+    error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
+    false
+  rescue => exc
+    self.grid_service.set_state(prev_state)
+    error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
+    false
+  end
+
+  # @param [String] deploy_rev
+  def cleanup_deploy(deploy_rev)
     cleanup_futures = []
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       cleanup_futures << Celluloid::Future.new {
@@ -110,22 +135,6 @@ class GridServiceDeployer
     self.grid_service.containers.unscoped.where(:container_id => nil, :deploy_rev => {:$ne => deploy_rev}).each do |container|
       container.destroy
     end
-
-    info "service #{self.grid_service.to_path} has been deployed"
-
-    self.grid_service.set_state('running')
-
-    true
-  rescue RpcClient::Error => exc
-    self.grid_service.set_state(prev_state)
-    error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
-    error exc.backtrace.join("\n") if exc.backtrace
-    false
-  rescue => exc
-    self.grid_service.set_state(prev_state)
-    error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
-    error exc.backtrace.join("\n") if exc.backtrace
-    false
   end
 
   ##

@@ -9,6 +9,7 @@ describe GridService do
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
                           :cap_add, :cap_drop, :volumes).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
+  it { should have_fields(:deploy_requested_at, :deployed_at).of_type(DateTime) }
   it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
 
   it { should belong_to(:grid) }
@@ -75,12 +76,13 @@ describe GridService do
     end
 
     it 'returns true if all instances exist' do
-      2.times{|i| subject.containers.create!(name: "test-#{i}") }
+      2.times{|i| subject.containers.create!(name: "test-#{i}", state: {running: true}) }
       expect(subject.all_instances_exist?).to eq(true)
     end
 
     it 'returns false if not all instances exist' do
-      1.times{|i| subject.containers.create!(name: "test-#{i}") }
+      subject.containers.create!(name: "test-1", state: {running: true})
+      subject.containers.create!(name: "test-2", state: {running: false})
       expect(subject.all_instances_exist?).to eq(false)
     end
   end
