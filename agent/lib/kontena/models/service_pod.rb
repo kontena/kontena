@@ -6,7 +6,8 @@ module Kontena
                   :labels, :stateful, :image_name, :user, :cmd, :entrypoint, :memory,
                   :memory_swap, :cpu_shares, :privileged, :cap_add, :cap_drop,
                   :devices, :ports, :env, :volumes, :volumes_from, :net,
-                  :log_driver, :log_opts, :image_credentials, :pid
+                  :log_driver, :log_opts, :image_credentials, :pid,
+                  :hooks
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -36,6 +37,7 @@ module Kontena
         @log_driver = attrs['log_driver']
         @log_opts = attrs['log_opts']
         @pid = attrs['pid']
+        @hooks = attrs['hooks'] || []
       end
 
       # @return [String, NilClass]
