@@ -54,7 +54,7 @@ describe GridServices::Update do
     end
 
     it 'builds hook' do
-      hooks = subject.build_grid_service_hooks
+      hooks = subject.build_grid_service_hooks([])
       expect(hooks.size).to eq(1)
       expect(hooks[0].cmd).to eq('sleep 10')
     end
