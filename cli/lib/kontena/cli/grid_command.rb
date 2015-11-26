@@ -5,6 +5,7 @@ require_relative 'grids/show_command'
 require_relative 'grids/logs_command'
 require_relative 'grids/remove_command'
 require_relative 'grids/current_command'
+require_relative 'grids/env_command'
 require_relative 'grids/audit_log_command'
 require_relative 'grids/list_users_command'
 require_relative 'grids/add_user_command'
@@ -19,6 +20,7 @@ class Kontena::Cli::GridCommand < Clamp::Command
   subcommand "logs", "Show logs from grid containers", Kontena::Cli::Grids::LogsCommand
   subcommand "remove", "Remove a grid", Kontena::Cli::Grids::RemoveCommand
   subcommand "current", "Show current grid details", Kontena::Cli::Grids::CurrentCommand
+  subcommand "env", "Show the current grid environment details", Kontena::Cli::Grids::EnvCommand
   subcommand "audit-log", "Show audit log of the current grid", Kontena::Cli::Grids::AuditLogCommand
   subcommand "list-users", "List current grid users", Kontena::Cli::Grids::ListUsersCommand
   subcommand "add-user", "Add user to the current grid", Kontena::Cli::Grids::AddUserCommand
