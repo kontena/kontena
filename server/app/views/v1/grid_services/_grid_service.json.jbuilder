@@ -9,6 +9,7 @@ json.user grid_service.user
 json.container_count grid_service.container_count
 json.cmd grid_service.cmd
 json.entrypoint grid_service.entrypoint
+json.net grid_service.net
 json.ports grid_service.ports
 json.env grid_service.env
 json.memory grid_service.memory
@@ -30,3 +31,4 @@ json.instances do
   json.total grid_service.containers.count
   json.running grid_service.containers.where('state.running' => true).count
 end
+json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])

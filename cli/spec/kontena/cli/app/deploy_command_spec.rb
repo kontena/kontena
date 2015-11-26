@@ -152,7 +152,7 @@ yml
               :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
           }
 
-          expect(subject).to receive(:create_service).with('1234567', '1', data)
+          expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
           subject.run([])
         end
       end
@@ -177,7 +177,7 @@ yml
               :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
           }
 
-          expect(subject).to receive(:create_service).with('1234567', '1', data)
+          expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
           subject.run([])
         end
       end
@@ -197,14 +197,20 @@ yml
             :ports=>[{:container_port => "80", :node_port => "80", :protocol => "tcp"}]
         }
 
-        expect(subject).to receive(:create_service).with('1234567', '1', data)
+        expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
         subject.run([])
       end
 
       it 'creates mysql service before wordpress' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
-        data = {:name =>"kontena-test-mysql", :image=>'mysql:5.6', :env=>["MYSQL_ROOT_PASSWORD=kontena-test_secret"], :container_count=>nil, :stateful=>true}
-        expect(subject).to receive(:create_service).with('1234567', '1', data)
+        data = {
+            :name =>"kontena-test-mysql",
+            :image=>'mysql:5.6',
+            :env=>["MYSQL_ROOT_PASSWORD=kontena-test_secret"],
+            :container_count=>nil,
+            :stateful=>true,
+        }
+        expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
 
         subject.run([])
       end
@@ -222,7 +228,7 @@ yml
             :links=>[{:name=>"kontena-test-mysql", :alias=>"mysql"}],
             :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
         }
-        expect(subject).to receive(:create_service).with('1234567', '1', data)
+        expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
 
         subject.run([])
       end
@@ -244,6 +250,13 @@ yml
           subject.run(['wordpress'])
         end
       end
+    end
+  end
+
+  describe '#parse_data' do
+    it 'adds empty hooks hash if not defined' do
+      data = {'image' => 'foo/bar:latest'}
+      subject.send(:parse_data, data)
     end
   end
 end
