@@ -41,8 +41,10 @@ module Kontena::Cli::Apps
           desired = service['container_count']
           instances = "#{running} / #{desired}"
           vars = [name, service['image'], instances, state, service['state'], ports]
-          puts "%-30.30s %-50.50s %-15.10s %-10.10s %-15.20s %-50s" % vars
+        else
+          vars = [service_name, '-', '-', '-', '-', '-']
         end
+        puts "%-30.30s %-50.50s %-15.10s %-10.10s %-15.20s %-50s" % vars
       end
     end
   end
