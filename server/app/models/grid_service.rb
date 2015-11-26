@@ -41,6 +41,7 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   embeds_many :grid_service_links
+  embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
 
   index({ grid_id: 1 })

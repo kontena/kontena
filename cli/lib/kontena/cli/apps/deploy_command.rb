@@ -152,6 +152,8 @@ module Kontena::Cli::Apps
         data[:deploy] = deploy
       end
 
+      data[:hooks] = options['hooks'] || {}
+
       data
     end
 

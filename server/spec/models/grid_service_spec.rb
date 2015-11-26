@@ -14,6 +14,7 @@ describe GridService do
 
   it { should belong_to(:grid) }
   it { should embed_many(:grid_service_links) }
+  it { should embed_many(:hooks) }
   it { should embed_one(:deploy_opts) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
