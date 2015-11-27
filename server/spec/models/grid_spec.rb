@@ -87,4 +87,18 @@ describe Grid do
       expect(grid.has_initial_nodes?).to eq(false)
     end
   end
+
+  describe '#initial_node``' do
+    let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
+
+    it 'returns true if node is initial member' do
+      node = HostNode.create(grid: grid, node_id: 'aa', node_number: 2)
+      expect(grid.initial_node?(node)).to be_truthy
+    end
+
+    it 'returns false if node is not initial member' do
+      node = HostNode.create(grid: grid, node_id: 'aa', node_number: 4)
+      expect(grid.initial_node?(node)).to be_falsey
+    end
+  end
 end
