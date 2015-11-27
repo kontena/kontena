@@ -27,7 +27,7 @@ class GridServiceDeployer
     deploy_rev = Time.now.utc.to_s
     self.grid_service.container_count.times do |i|
       node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes, deploy_rev
+        self.grid_service, i + 1, self.nodes
       )
       return false unless node
     end
@@ -38,10 +38,9 @@ class GridServiceDeployer
   # @return [Array<HostNode>]
   def selected_nodes
     nodes = []
-    deploy_rev = Time.now.utc.to_s
     self.grid_service.container_count.times do |i|
       node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes, deploy_rev
+        self.grid_service, i + 1, self.nodes
       )
       nodes << node if node
     end
@@ -79,7 +78,7 @@ class GridServiceDeployer
         raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
       end
       node = self.scheduler.select_node(
-        self.grid_service, instance_number, self.nodes, deploy_rev
+        self.grid_service, instance_number, self.nodes
       )
       unless node
         raise "Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}"

@@ -34,13 +34,12 @@ class GridServiceScheduler
   # @param [GridService] grid_service
   # @param [Integer] instance_number
   # @param [Array<HostNode>] nodes
-  # @param [String] rev
   # @return [HostNode, NilClass]
-  def select_node(grid_service, instance_number, nodes, rev = nil)
+  def select_node(grid_service, instance_number, nodes)
     selected_node = nil
     @mutex.synchronize {
       filtered_nodes = self.filter_nodes(grid_service, instance_number, nodes)
-      selected_node = self.strategy.find_node(grid_service, instance_number, filtered_nodes, rev)
+      selected_node = self.strategy.find_node(grid_service, instance_number, filtered_nodes)
     }
     if selected_node
       node = nodes.find{|n| n == selected_node}
