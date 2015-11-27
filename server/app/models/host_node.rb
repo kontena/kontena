@@ -69,8 +69,14 @@ class HostNode
     end
   end
 
+  # @return [Boolean]
   def connected?
     self.connected == true
+  end
+
+  # @return [Boolean]
+  def stateful?
+    self.containers.unscoped.any?{|container| container.grid_service && container.grid_service.stateful? }
   end
 
   ##
