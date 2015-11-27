@@ -12,7 +12,7 @@ module Scheduler
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
-      def find_node(grid_service, container_name, nodes)
+      def find_node(grid_service, instance_number, nodes)
         if grid_service.stateless?
           nodes.sample
         else

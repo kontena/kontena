@@ -25,7 +25,6 @@ module Scheduler
       # @param [GridService] service
       # @param [Integer] instance_number
       def filter_candidates_by_volume(candidates, service, instance_number)
-        container_name = "#{service.name}-#{instance_number}"
         volumes = service.volumes_from.map{|v| v % [instance_number] }
         candidates.dup.each do |node|
           container_names = node.containers.map {|c| c.name}
