@@ -4,7 +4,7 @@ require_relative '../services/logging'
 class ServiceBalancerJob
   include Celluloid
   include Logging
-  include DistributedLocks
+  include CurrentLeader
 
   def initialize
     async.perform
@@ -13,7 +13,7 @@ class ServiceBalancerJob
   def perform
     info 'starting to watch services'
     every(20) do
-      with_dlock('balance_services', nil) do
+      if leader?
         balance_services
       end
     end

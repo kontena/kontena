@@ -3,7 +3,7 @@ require_relative '../services/logging'
 
 class ContainerCleanupJob
   include Celluloid
-  include DistributedLocks
+  include CurrentLeader
   include Logging
 
   def initialize(perform = true)
@@ -13,7 +13,7 @@ class ContainerCleanupJob
   def perform
     info 'starting to cleanup stale containers'
     loop do
-      with_dlock('container_cleanup_job', 0) do
+      if leader?
         cleanup_stale_containers
         destroy_deleted_containers
 
