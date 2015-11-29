@@ -9,8 +9,8 @@ module Kontena::Cli::Services
     parameter "INSTANCES", "Scales service to given number of instances"
 
     def execute
-      token = require_token
-      client(token).post("services/#{parse_service_id(name)}/scale", {instances: instances})
+      token = require_token      
+      scale_service(token, name, instances)
     end
   end
 end
