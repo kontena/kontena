@@ -1,3 +1,4 @@
+require 'yaml'
 require_relative '../services/services_helper'
 
 module Kontena::Cli::Apps

@@ -3,16 +3,18 @@ require_relative '../spec_helper'
 describe GridService do
   it { should be_timestamped_document }
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
-                          :net, :log_driver).of_type(String) }
+                          :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares).of_type(Fixnum) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
                           :cap_add, :cap_drop, :volumes).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
+  it { should have_fields(:deploy_requested_at, :deployed_at).of_type(DateTime) }
   it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
 
   it { should belong_to(:grid) }
   it { should embed_many(:grid_service_links) }
+  it { should embed_many(:hooks) }
   it { should embed_one(:deploy_opts) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
@@ -75,12 +77,13 @@ describe GridService do
     end
 
     it 'returns true if all instances exist' do
-      2.times{|i| subject.containers.create!(name: "test-#{i}") }
+      2.times{|i| subject.containers.create!(name: "test-#{i}", state: {running: true}) }
       expect(subject.all_instances_exist?).to eq(true)
     end
 
     it 'returns false if not all instances exist' do
-      1.times{|i| subject.containers.create!(name: "test-#{i}") }
+      subject.containers.create!(name: "test-1", state: {running: true})
+      subject.containers.create!(name: "test-2", state: {running: false})
       expect(subject.all_instances_exist?).to eq(false)
     end
   end
@@ -108,6 +111,42 @@ describe GridService do
 
     it 'returns nil if container is not found' do
       expect(grid_service.container_by_name('not_found')).to be_nil
+    end
+  end
+
+  describe '#dependant_services' do
+    let(:subject) { grid_service }
+
+    it 'returns dependant by volumes_from' do
+      backupper = GridService.create!(
+        grid: grid, name: 'backupper',
+        image_name: 'backupper:latest', volumes_from: ["#{subject.name}-%s"]
+      )
+      follower = GridService.create!(
+        grid: grid, name: 'follower',
+        image_name: 'follower:latest', volumes_from: ["#{subject.name}-1"]
+      )
+      dependant_services = subject.dependant_services
+      expect(dependant_services.size).to eq(2)
+      expect(dependant_services).to include(backupper)
+      expect(dependant_services).to include(follower)
+    end
+
+    it 'returns dependant services by service affinity' do
+      avoider = GridService.create!(
+        grid: grid, name: 'avoider',
+        image_name: 'avoider:latest',
+        affinity: ["service!=#{subject.name}"]
+      )
+      follower = GridService.create!(
+        grid: grid, name: 'follower',
+        image_name: 'follower:latest',
+        affinity: ["service==#{subject.name}"]
+      )
+      dependant_services = subject.dependant_services
+      expect(dependant_services.size).to eq(2)
+      expect(dependant_services).to include(avoider)
+      expect(dependant_services).to include(follower)
     end
   end
 end

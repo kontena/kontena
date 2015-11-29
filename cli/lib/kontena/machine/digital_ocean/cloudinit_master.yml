@@ -24,7 +24,7 @@ write_files:
       fi
       /usr/bin/docker run --name=kontena-server-haproxy \
         --link kontena-server-api:kontena-server-api \
-        -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
+        -e SSL_CERT="$SSL_CERT" \
         -p 80:80 -p 443:443 kontena/haproxy:latest
 coreos:
   update:

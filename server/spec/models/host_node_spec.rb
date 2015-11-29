@@ -30,6 +30,33 @@ describe HostNode do
     end
   end
 
+  describe '#stateful?' do
+    let(:grid) { Grid.create!(name: 'test') }
+    let(:stateful_service) { GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true) }
+    let(:stateless_service) { GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false) }
+    let(:node) { HostNode.create(name: 'node-1', grid: grid)}
+
+    it 'returns false by default' do
+      expect(subject.stateful?).to be_falsey
+    end
+
+    it 'returns true if node has stateful service' do
+      stateful_service.containers.create!(name: 'stateful-1', host_node: node)
+      expect(node.stateful?).to be_truthy
+    end
+
+    it 'returns false if node has stateless service' do
+      stateless_service.containers.create!(name: 'stateless-1', host_node: node)
+      expect(node.stateful?).to be_falsey
+    end
+
+    it 'returns true if node has stateful and stateless service' do
+      stateful_service.containers.create!(name: 'stateful-1', host_node: node)
+      stateless_service.containers.create!(name: 'stateless-1', host_node: node)
+      expect(node.stateful?).to be_truthy
+    end
+  end
+
   describe '#attributes_from_docker' do
     it 'sets name' do
       expect {

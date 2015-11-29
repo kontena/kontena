@@ -51,7 +51,7 @@ module Kontena::Cli::Services
     end
 
     def clear_terminal
-      puts "\e[H\e[2J"
+      print "\e[H\e[2J"
     end
   end
 end

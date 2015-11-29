@@ -12,22 +12,37 @@ module Scheduler
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
-      # @param [String] rev
       # @return [HostNode,NilClass]
-      def find_node(grid_service, instance_number, nodes, rev = nil)
+      def find_node(grid_service, instance_number, nodes)
         if grid_service.stateless?
+          find_stateless_node(grid_service, instance_number, nodes)
+        else
+          find_stateful_node(grid_service, instance_number, nodes)
+        end
+      end
+
+      # @param [GridService] grid_service
+      # @param [Integer] instance_number
+      # @param [Array<HostNode>] nodes
+      # @return [HostNode,NilClass]
+      def find_stateless_node(grid_service, instance_number, nodes)
+        candidates = self.sort_candidates(nodes, grid_service, instance_number)
+        candidates.first
+      end
+
+      # @param [GridService] grid_service
+      # @param [Integer] instance_number
+      # @param [Array<HostNode>] nodes
+      # @return [HostNode,NilClass]
+      def find_stateful_node(grid_service, instance_number, nodes)
+        prev_container = grid_service.containers.volumes.find_by(
+            name: "#{grid_service.name}-#{instance_number}-volumes"
+        )
+        if prev_container
+          nodes.find{|n| n == prev_container.host_node }
+        else
           candidates = self.sort_candidates(nodes, grid_service, instance_number)
           candidates.first
-        else
-          prev_container = grid_service.containers.volumes.find_by(
-            name: "#{grid_service.name}-#{instance_number}-volumes"
-          )
-          if prev_container && nodes.include?(prev_container.host_node)
-            nodes.find{|n| n == prev_container.host_node }
-          else
-            candidates = self.sort_candidates(nodes, grid_service, instance_number)
-            candidates.first
-          end
         end
       end
 

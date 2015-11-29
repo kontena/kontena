@@ -66,6 +66,21 @@ module GridServices
           float :min_health
         end
       end
+      string :pid, matches: /^(host)$/
+      hash :hooks do
+        optional do
+          array :post_start do
+            hash do
+              required do
+                string :name
+                string :cmd
+                string :instances
+                boolean :oneshot, default: false
+              end
+            end
+          end
+        end
+      end
     end
 
     def validate
@@ -103,8 +118,13 @@ module GridServices
       attributes[:log_opts] = self.log_opts if self.log_opts
       attributes[:devices] = self.devices if self.devices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
+
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid_service.grid, self.links)
+      end
+
+      if self.hooks
+        attributes[:hooks] = self.build_grid_service_hooks(self.grid_service.hooks.to_a)
       end
 
       grid_service.attributes = attributes

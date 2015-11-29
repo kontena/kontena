@@ -17,7 +17,7 @@ gem 'httpclient', '~> 2.3'
 group :development, :test do
   gem 'dotenv'
   gem 'rspec', '~> 3.1.0', require: false
-  gem 'mongoid-rspec', '~> 2.0.0.rc1', require: false
+  gem 'mongoid-rspec', '~> 2.1.0', require: false
   gem 'rack-test', require: false
   gem 'rerun', require: false
   gem 'simplecov', require: false

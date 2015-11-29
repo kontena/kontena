@@ -1,4 +1,3 @@
-require 'yaml'
 require 'securerandom'
 require_relative 'common'
 require_relative 'dockerfile_generator'

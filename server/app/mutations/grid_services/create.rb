@@ -74,6 +74,21 @@ module GridServices
           float :min_health
         end
       end
+      string :pid, matches: /^(host)$/
+      hash :hooks do
+        optional do
+          array :post_start do
+            hash do
+              required do
+                string :name
+                string :cmd
+                string :instances
+                boolean :oneshot, default: false
+              end
+            end
+          end
+        end
+      end
     end
 
     def validate
@@ -96,9 +111,15 @@ module GridServices
       attributes = self.inputs.clone
       attributes.delete(:current_user)
       attributes[:image_name] = attributes.delete(:image)
+
       attributes.delete(:links)
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid, self.links)
+      end
+
+      attributes.delete(:hooks)
+      if self.hooks
+        attributes[:hooks] = self.build_grid_service_hooks([])
       end
 
       grid_service = GridService.new(attributes)

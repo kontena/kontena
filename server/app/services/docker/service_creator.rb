@@ -50,7 +50,8 @@ module Docker
         volumes_from: grid_service.volumes_from,
         net: grid_service.net,
         log_driver: grid_service.log_driver,
-        log_opts: grid_service.log_opts
+        log_opts: grid_service.log_opts,
+        pid: grid_service.pid
       }
       spec[:env] = build_env
       overlay_cidr = nil
@@ -62,6 +63,7 @@ module Docker
         labels['io.kontena.container.overlay_cidr'] = overlay_cidr.to_s
       end
       spec[:labels] = labels
+      spec[:hooks] = build_hooks(instance_number)
 
       spec
     rescue => exc
@@ -129,6 +131,22 @@ module Docker
         labels['io.kontena.load_balancer.mode'] = mode
       end
       labels
+    end
+
+    # @return [Array<Hash>]
+    def build_hooks(instance_number)
+      hooks = []
+      grid_service.hooks.each do |hook|
+        if hook.instances.include?('*') || hook.instances.include?(instance_number.to_s)
+          unless hook.done_for?(instance_number.to_s)
+            hooks << {type: hook.type, cmd: hook.cmd}
+            hook.push(:done => instance_number.to_s) if hook.oneshot
+          end
+        end
+      end
+      hooks
+    rescue => exc
+      puts exc.message
     end
 
     def service_container

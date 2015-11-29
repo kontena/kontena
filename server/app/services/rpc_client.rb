@@ -53,16 +53,10 @@ class RpcClient
     end
   end
 
+  ##
   # @param [Fixnum] request_id
   # @return [Celluloid::Future]
   def response(request_id)
-    Celluloid::Future.new{ self.wait_for_response(request_id) }
-  end
-
-  ##
-  # @param [Fixnum] request_id
-  # @return [Array<Object>]
-  def wait_for_response(request_id)
     result = nil
     error = nil
     resp_received = false
@@ -74,17 +68,20 @@ class RpcClient
         resp_received = true
       end
     end
-    begin
-      Timeout::timeout(self.timeout) do
-        sleep 0.001 until resp_received
-      end
-    rescue
-      raise RpcClient::TimeoutError.new(503, "Connection timeout (#{self.timeout}s)")
-    ensure
-      subscription.terminate if subscription.alive?
-    end
 
-    [result, error]
+    Celluloid::Future.new {
+      begin
+        Timeout::timeout(self.timeout) do
+          sleep 0.001 until resp_received
+        end
+      rescue
+        raise RpcClient::TimeoutError.new(503, "Connection timeout (#{self.timeout}s)")
+      ensure
+        subscription.terminate if subscription.alive?
+      end
+
+      [result, error]
+    }
   end
 
   ##

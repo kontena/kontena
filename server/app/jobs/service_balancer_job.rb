@@ -4,7 +4,7 @@ require_relative '../services/logging'
 class ServiceBalancerJob
   include Celluloid
   include Logging
-  include DistributedLocks
+  include CurrentLeader
 
   def initialize
     async.perform
@@ -12,18 +12,33 @@ class ServiceBalancerJob
 
   def perform
     info 'starting to watch services'
-    every(1.minute.to_i) do
-      with_dlock('balance_services', 0) do
+    every(20) do
+      if leader?
         balance_services
       end
     end
   end
 
   def balance_services
-    GridService.each do |service|
-      if service.running? && service.stateless? && !service.all_instances_exist?
+    GridService.order(:updated_at => :asc).each do |service|
+      if should_balance_service?(service)
         balance_service(service)
       end
+    end
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def should_balance_service?(service)
+    if service.running? && service.stateless?
+      return true if !service.all_instances_exist?
+      return false if service.deployed_at.nil?
+      return true if service.updated_at > service.deployed_at
+      if service.deploy_requested_at && service.deploy_requested_at > service.deployed_at
+        return true
+      end
+    else
+      false
     end
   end
 

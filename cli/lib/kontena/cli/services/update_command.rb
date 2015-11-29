@@ -27,6 +27,8 @@ module Kontena::Cli::Services
     option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, random)"
     option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
     option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
+    option "--pid", "PID", "Pid namespace to use"
+
 
     def execute
       require_api_url
@@ -63,6 +65,7 @@ module Kontena::Cli::Services
       data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
       data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
       data.delete(:deploy_opts) if data[:deploy_opts].empty?
+      data[:pid] = pid if pid
       data
     end
   end

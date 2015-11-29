@@ -38,7 +38,9 @@ module Kontena
           end
         end
         service_config = service_pod.service_config
-        overlay_adapter.modify_create_opts(service_config)
+        if service_pod.overlay_network
+          overlay_adapter.modify_create_opts(service_config)
+        end
         service_container = create_container(service_config)
         service_container.start
         info "service started: #{service_pod.name}"
@@ -47,10 +49,12 @@ module Kontena
         Pubsub.publish('service_pod:start', service_pod.name)
         Pubsub.publish('stats:collect', nil)
 
+        self.run_hooks(service_container, 'post_start')
+
         service_container
       rescue => exc
-        puts "#{exc.class.name}: #{exc.message}"
-        puts "#{exc.backtrace.join("\n")}" if exc.backtrace
+        error "#{exc.class.name}: #{exc.message}"
+        error "#{exc.backtrace.join("\n")}" if exc.backtrace
       end
 
       # @return [Celluloid::Future]
@@ -62,6 +66,47 @@ module Kontena
       # @param [#modify_create_opts] overlay_adapter
       def self.perform_async(service_pod, overlay_adapter = Kontena::WeaveAdapter.new)
         self.new(service_pod, overlay_adapter).perform_async
+      end
+
+      # @param [Docker::Container] service_container
+      # @param [String] type
+      # @return [Boolean]
+      def run_hooks(service_container, type)
+        service_pod.hooks.each do |hook|
+          if hook['type'] == type
+            info "running #{type} hook: #{hook['cmd']}"
+            command = ['/bin/sh', '-c', hook['cmd']]
+            log_hook_output(service_container.id, ["running #{type} hook: #{hook['cmd']}"], 'stdout')
+            stdout, stderr, exit_code = service_container.exec(command)
+            log_hook_output(service_container.id, stdout, 'stdout')
+            log_hook_output(service_container.id, stderr, 'stderr')
+            if exit_code != 0
+              raise "Failed to execute hook: #{hook['cmd']}"
+            end
+          end
+        end
+        true
+      rescue => exc
+        error exc.message
+        false
+      end
+
+      # @param [String] id
+      # @param [Array<String>] lines
+      # @param [String] type
+      def log_hook_output(id, lines, type)
+        lines.each do |chunk|
+          msg = {
+              event: 'container:log',
+              data: {
+                  id: id,
+                  time: Time.now.utc.xmlschema,
+                  type: type,
+                  data: chunk
+              }
+          }
+          Kontena::Pubsub.publish('queue_worker:add_message', msg)
+        end
       end
 
       ##
@@ -104,6 +149,7 @@ module Kontena
       # @param [Docker::Container] service_container
       # @return [Boolean]
       def service_uptodate?(service_container)
+        return false if recreate_service_container?(service_container)
         return false if service_container.info['Config']['Image'] != service_pod.image_name
         return false if container_outdated?(service_container)
         return false if image_outdated?(service_pod.image_name, service_container)
@@ -136,6 +182,17 @@ module Kontena
         false
       end
 
+      # @param [Docker::Container] service_container
+      # @return [Boolean]
+      def recreate_service_container?(service_container)
+        state = service_container.state
+        service_container.restart_policy['Name'] == 'always' &&
+            state['Running'] == false &&
+            (!state['Error'].empty? || state['ExitCode'].to_i != 0)
+      end
+
+      # @param [Docker::Container] service_container
+      # @param [String] deploy_rev
       def notify_master(service_container, deploy_rev)
         msg = {
           event: 'container:event',

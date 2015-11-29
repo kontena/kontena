@@ -45,64 +45,101 @@ module Kontena
           puts "    min_health: #{service['deploy_opts']['min_health']}"
           puts "  dns: #{service['name']}.#{grid}.kontena.local"
 
-          puts "  affinity: "
-          service['affinity'].to_a.each do |a|
-            puts "    - #{a}"
-          end
-
-          if service['cmd']
-            puts "  cmd: #{service['cmd'].join(' ')}"
-          else
-            puts "  cmd: "
-          end
-
-          puts "  env: "
-          service['env'].to_a.each do |e|
-            if e.length > 50
-              puts "    - #{e[0..50]}..."
-            else
-              puts "    - #{e}"
+          if service['affinity'].to_a.size > 0
+            puts "  affinity: "
+            service['affinity'].to_a.each do |a|
+              puts "    - #{a}"
             end
           end
 
-          puts "  ports:"
-          service['ports'].to_a.each do |p|
-            puts "    - #{p['node_port']}:#{p['container_port']}/#{p['protocol']}"
+          unless service['cmd'].to_s.empty?
+            if service['cmd']
+              puts "  cmd: #{service['cmd'].join(' ')}"
+            else
+              puts "  cmd: "
+            end
           end
 
-          puts "  volumes:"
-          service['volumes'].to_a.each do |v|
-            puts "    - #{v}"
+          if service['hooks'].to_a.size > 0
+            puts "  hooks: "
+            service['hooks'].to_a.each do |hook|
+                puts "    - name: #{hook['name']}"
+                puts "      type: #{hook['type']}"
+                puts "      cmd: #{hook['cmd']}"
+                puts "      oneshot: #{hook['oneshot']}"
+            end
           end
 
-          puts "  volumes_from:"
-          service['volumes_from'].to_a.each do |v|
-            puts "    - #{v}"
+          if service['env'].to_a.size > 0
+            puts "  env: "
+            service['env'].to_a.each do |e|
+              if e.length > 50
+                puts "    - #{e[0..50]}..."
+              else
+                puts "    - #{e}"
+              end
+            end
           end
 
-          puts "  links: "
-          service['links'].to_a.each do |l|
-            puts "    - #{l['alias']}"
+          unless service['net'].to_s.empty?
+            puts "  net: #{service['net']}"
           end
 
-          puts "  cap_add:"
-          service['cap_add'].to_a.each do |c|
-            puts "    - #{c}"
+          if service['ports'].to_a.size > 0
+            puts "  ports:"
+            service['ports'].to_a.each do |p|
+              puts "    - #{p['node_port']}:#{p['container_port']}/#{p['protocol']}"
+            end
           end
 
-          puts "  cap_drop:"
-          service['cap_drop'].to_a.each do |c|
-            puts "    - #{c}"
+          if service['volumes'].to_a.size > 0
+            puts "  volumes:"
+            service['volumes'].to_a.each do |v|
+              puts "    - #{v}"
+            end
           end
 
-          puts "  log_driver: #{service['log_driver']}"
-
-          puts "  log_opts:"
-          service['log_opts'].each do |opt, value|
-            puts "    #{opt}: #{value}"
+          if service['volumes_from'].to_a.size > 0
+            puts "  volumes_from:"
+            service['volumes_from'].to_a.each do |v|
+              puts "    - #{v}"
+            end
           end
 
-          puts "  containers:"
+          if service['links'].to_a.size > 0
+            puts "  links: "
+            service['links'].to_a.each do |l|
+              puts "    - #{l['alias']}"
+            end
+          end
+
+          if service['cap_add'].to_a.size > 0
+            puts "  cap_add:"
+            service['cap_add'].to_a.each do |c|
+              puts "    - #{c}"
+            end
+          end
+
+          if service['cap_drop'].to_a.size > 0
+            puts "  cap_drop:"
+            service['cap_drop'].to_a.each do |c|
+              puts "    - #{c}"
+            end
+          end
+
+          unless service['log_driver'].to_s.empty?
+            puts "  log_driver: #{service['log_driver']}"
+            puts "  log_opts:"
+            service['log_opts'].each do |opt, value|
+              puts "    #{opt}: #{value}"
+            end
+          end
+
+          unless service['pid'].to_s.empty?
+            puts "  pid: #{service['pid']}"
+          end
+
+          puts "  instances:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
             puts "    #{container['name']}:"

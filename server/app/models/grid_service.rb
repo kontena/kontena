@@ -28,7 +28,10 @@ class GridService
   field :log_driver, type: String
   field :log_opts, type: Hash, default: {}
   field :devices, type: Array, default: []
+  field :pid, type: String
 
+  field :deploy_requested_at, type: DateTime
+  field :deployed_at, type: DateTime
   field :strategy, type: String, default: 'ha'
 
   belongs_to :grid
@@ -38,6 +41,7 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   embeds_many :grid_service_links
+  embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
 
   index({ grid_id: 1 })
@@ -57,9 +61,7 @@ class GridService
 
   # @param [String] state
   def set_state(state)
-    result = self.timeless.update_attribute(:state, state)
-    self.clear_timeless_option
-    result
+    self.set(:state => state)
   end
 
   # @return [Boolean]
@@ -84,7 +86,7 @@ class GridService
 
   # @return [Boolean]
   def all_instances_exist?
-    self.containers.count >= self.container_count
+    self.containers.where('state.running' => true).count >= self.container_count
   end
 
   # @return [Boolean]
@@ -140,5 +142,54 @@ class GridService
 
   def linked_to_services
     self.grid.grid_services.where(:'grid_service_links.linked_grid_service_id' => self.id)
+  end
+
+  # Resolve services that depend on us
+  #
+  # @return [Array<GridService>]
+  def dependant_services
+    grid = self.grid
+    dependant = []
+    dependant += grid.grid_services.where(:$or => [
+        {:volumes_from => {:$regex => /^#{self.name}-%s/}},
+        {:volumes_from => {:$regex => /^#{self.name}-\d+/}},
+        {:affinity => "service==#{self.name}"},
+        {:affinity => "service!=#{self.name}"},
+        {:net => {:$regex => /^container:#{self.name}-%s/}},
+        {:net => {:$regex => /^container:#{self.name}-\d+/}}
+      ]
+    )
+    dependant.delete(self)
+
+    dependant
+  end
+
+  # Are there any dependant services?
+  #
+  # @return [Boolean]
+  def dependant_services?
+    self.dependant_services.size > 0
+  end
+
+  # Is service depending on other services?
+  #
+  # @return [Boolean]
+  def depending_on_other_services?
+    if self.affinity
+      if self.affinity.any?{|a| a.match(/^service(!=|==).+/)}
+        return true
+      end
+      if self.affinity.any?{|a| a.match(/^container(!=|==).+/)}
+        return true
+      end
+    end
+
+    if self.volumes_from
+      return true if self.volumes_from.size > 0
+    end
+
+    return true if self.net.to_s.match(/^container:.+/)
+
+    false
   end
 end

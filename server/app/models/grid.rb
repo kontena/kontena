@@ -41,22 +41,27 @@ class Grid
     (1..254).to_a - reserved_numbers
   end
 
+  # @return [String]
   def overlay_network_size
     self.overlay_cidr.split('/')[1]
   end
 
+  # @return [String]
   def overlay_network_ip
     self.overlay_cidr.split('/')[0]
   end
 
+  # @return [Array<IPAddr>]
   def all_overlay_ips
     @all_overlay_ips ||= (IPAddr.new(self.overlay_cidr).to_range.map(&:to_s) - IPAddr.new("#{self.overlay_network_ip}/#{OVERLAY_BRIDGE_NETWORK_SIZE}").to_range.map(&:to_s))
   end
 
+  # @return [Array<IPAddr>]
   def reserved_overlay_ips
-    reserved_ips = self.containers.map{|c| c.overlay_cidr.try(:ip) }.delete_if{|ip| ip.nil?}
+    self.containers.map{|c| c.overlay_cidr.try(:ip) }.delete_if{|ip| ip.nil?}
   end
 
+  # @return [Array<IPAddr>]
   def available_overlay_ips
     self.all_overlay_ips - self.reserved_overlay_ips
   end
@@ -66,6 +71,12 @@ class Grid
   # @return [Boolean]
   def has_initial_nodes?
     self.host_nodes.where(node_number: {:$lte => self.initial_size}).count == self.initial_size
+  end
+
+  # @param [HostNode] node
+  # @return [Boolean]
+  def initial_node?(node)
+    node.node_number <= self.initial_size.to_i
   end
 
   private

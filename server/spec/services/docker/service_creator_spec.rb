@@ -105,6 +105,10 @@ describe Docker::ServiceCreator do
       expect(service_spec).to include(:log_opts => {})
     end
 
+    it 'includes hooks' do
+      expect(service_spec).to include(:hooks => [])
+    end
+
     describe '[:env]' do
       let(:env) { service_spec[:env] }
 

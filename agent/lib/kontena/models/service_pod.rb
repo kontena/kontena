@@ -6,7 +6,8 @@ module Kontena
                   :labels, :stateful, :image_name, :user, :cmd, :entrypoint, :memory,
                   :memory_swap, :cpu_shares, :privileged, :cap_add, :cap_drop,
                   :devices, :ports, :env, :volumes, :volumes_from, :net,
-                  :log_driver, :log_opts, :image_credentials
+                  :log_driver, :log_opts, :image_credentials, :pid,
+                  :hooks
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -35,6 +36,8 @@ module Kontena
         @net = attrs['net'] || 'bridge'
         @log_driver = attrs['log_driver']
         @log_opts = attrs['log_opts']
+        @pid = attrs['pid']
+        @hooks = attrs['hooks'] || []
       end
 
       # @return [String, NilClass]
@@ -124,6 +127,7 @@ module Kontena
         host_config['Privileged'] = self.privileged if self.privileged
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0
+        host_config['PidMode'] = self.pid if self.pid
 
         log_opts = self.build_log_opts
         host_config['LogConfig'] = log_opts unless log_opts.empty?
