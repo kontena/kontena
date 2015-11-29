@@ -7,8 +7,9 @@ module Kontena::Cli::Apps
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
-
-    parameter "[SERVICE] ...", "Services to start"
+    option ["-s", "--search"], "SEARCH", "Search from logs"
+    option ["-t", "--follow"], :flag, "Follow (tail) logs", default: false
+    parameter "[SERVICE] ...", "Show only specified service logs"
 
     attr_reader :services, :service_prefix
 
@@ -26,20 +27,25 @@ module Kontena::Cli::Apps
     end
 
     def show_logs(services)
-      logs = []
-      services.each do |service_name, opts|
-        service = get_service(token, prefixed_name(service_name)) rescue false
-        if service
-          result = client(token).get("services/#{service['id']}/container_logs")
+      last_id = nil
+      loop do
+        query_params = []
+        query_params << "from=#{last_id}" unless last_id.nil?
+        query_params << "search=#{search}" if search
+        logs = []
+        services.each do |service_name, opts|
+          service = get_service(token, prefixed_name(service_name)) rescue false
+          result = client(token).get("services/#{service['id']}/container_logs?#{query_params.join('&')}") if service
           logs = logs + result['logs']
         end
-      end
-      logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
-      logs.each do |log|
-        name = log['name'].sub("#{@service_prefix}-", '')
-        service = name.match(/^(.+)-\d+/)[1]
-        color = color_for_container(service)
-        puts "#{name.colorize(color)} | #{log['data']}"
+        logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
+        logs.each do |log|
+          color = color_for_container(log['name'])
+          puts "#{log['name'].colorize(color)} | #{log['data']}"
+          last_id = log['id']
+        end
+        break unless follow?
+        sleep(2)
       end
     end
 
