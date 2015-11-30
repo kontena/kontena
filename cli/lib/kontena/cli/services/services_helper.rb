@@ -24,6 +24,14 @@ module Kontena
 
         # @param [String] token
         # @param [String] service_id
+        # @param [Integer] instances
+        def scale_service(token, service_id, instances)
+          param = parse_service_id(service_id)
+          client(token).post("services/#{param}/scale", {instances: instances})
+        end
+
+        # @param [String] token
+        # @param [String] service_id
         def get_service(token, service_id)
           param = parse_service_id(service_id)
           client(token).get("services/#{param}")
