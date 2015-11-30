@@ -7,6 +7,8 @@ class GridServiceDeployer
   include Logging
   include DistributedLocks
 
+  class NodeMissingError < StandardError; end
+
   attr_reader :grid_service, :nodes, :scheduler
 
   ##
@@ -77,7 +79,7 @@ class GridServiceDeployer
         self.grid_service, instance_number, self.nodes
       )
       unless node
-        raise "Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}"
+        raise NodeMissingError.new("Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}")
       end
       deploy_futures << Celluloid::Future.new {
         self.deploy_service_instance(node, instance_number, deploy_rev, creds)
@@ -98,6 +100,9 @@ class GridServiceDeployer
     self.grid_service.set_state('running')
 
     true
+  rescue NodeMissingError => exc
+    error exc.message
+    info "service #{self.grid_service.to_path} deploy cancelled"
   rescue RpcClient::Error => exc
     self.grid_service.set_state('running')
     error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
@@ -115,16 +120,21 @@ class GridServiceDeployer
     cleanup_futures = []
     self.grid_service.containers.where(:deploy_rev => {:$ne => deploy_rev}).each do |container|
       instance_number = container.name.match(/^.+-(\d+)$/)[1]
+      container.set(:deleted_at => Time.now.utc)
+
       # just to be on a safe side.. we don't want to destroy anything accidentally
       if instance_number.to_i <= total_instances
         deployed_container = self.find_service_instance_container(instance_number, deploy_rev)
-        next if deployed_container.nil?
+        if deployed_container.nil?
+          next
+        elsif deployed_container.host_node_id == container.host_node_id
+          next
+        end
       end
 
       cleanup_futures << Celluloid::Future.new {
         info "removing service instance #{container.to_path}"
         self.terminate_service_instance(instance_number, container.host_node)
-        container.set(:deleted_at => Time.now.utc)
       }
       pending_cleanups = cleanup_futures.select{|f| !f.ready?}
       if pending_cleanups.size > self.nodes.size

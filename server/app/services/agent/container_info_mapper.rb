@@ -16,6 +16,7 @@ module Agent
       container_id = data['container']['Id']
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
+        return false if container.deleted?
         self.update_container_attributes(container, info)
       elsif !labels['io.kontena.service.id'].nil?
         self.create_service_container(node_id, info)
