@@ -149,7 +149,7 @@ module Kontena::Cli::Apps
       deploy[:wait_for_port] = deploy_opts['wait_for_port'] if deploy_opts.has_key?('wait_for_port')
       deploy[:min_health] = deploy_opts['min_health'] if deploy_opts.has_key?('min_health')
       unless deploy.empty?
-        data[:deploy] = deploy
+        data[:deploy_opts] = deploy
       end
 
       data[:hooks] = options['hooks'] || {}
