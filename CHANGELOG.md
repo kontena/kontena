@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.10.0 (2015-11-29)
+
+- improved scheduler with auto-failover/rebalance
+- new deploy strategy: daemon
+- new deploy option: min_health
+- post-start hooks (commands) for service
+- multi-master leader election
+- docker 1.9 compatibility
+- etcd upgrade to 2.2
+- cadvisor upgrade to 0.19
+- optimized cadvisor resource usage
+- cadvisor port changed to 8989
+- improved agent connection logic to master
+- initial db migration issue fix
+- enable roda render cache
+- new `pid` option for service
+- possibility to add custom pem file for cli (for each kontena master)
+- new commands: `app monitor` & `service monitor <service>`
+- new command: `app scale`
+- new command: `app show <service>`
+- new commands: `service add-env <service>` & `service remove-env <service>`
+- new command: `node ssh <service>`
+- show reason for service instance error (from docker) in service details
+- handle partial log streams better in cli
+
 ## 0.9.3 (2015-11-03)
 
 - do not overwrite existing node labels on update
