@@ -72,3 +72,9 @@ $ kontena service logs nginx
 ```
 $ kontena service stats nginx
 ```
+
+## Monitor Service Instances
+
+```
+$ kontena service monitor nginx
+```

@@ -41,7 +41,7 @@ affinity:
 
 ```
 affinity:
-    - container!=wordpress
+    - service==wordpress
 ```
 
 #### cap_add, cap_drop
@@ -51,7 +51,7 @@ Add or drop container capabilities.
 ```
 cap_add:
   - ALL
-  
+
 cap_drop:
   - NET_ADMIN
   - SYS_ADMIN
@@ -82,7 +82,7 @@ environment:
   - BACKEND_PORT=3306
   - FRONTEND_PORT=3306
   - MODE=tcp
-``` 
+```
 
 #### env_file
 
@@ -99,7 +99,7 @@ Extend another service, in the current file or another, optionally overriding co
 **docker-compose.yml**
 
 ```
-app: 
+app:
   build: .
   links:
     - db:db
@@ -127,13 +127,13 @@ Link to services in the same grid outside application scope. `external_links` fo
 
 ```
 external_links:
-  - loadbalancer 
+  - loadbalancer
   - common-redis:redis   
 ```
 
 #### instances
 
-Number of containers to run for this service (default: 1). 
+Number of containers to run for this service (default: 1).
 
 ```
 instances: 3
@@ -202,7 +202,7 @@ volumes_from:
 
 These Kontena spefic keys define how Kontena will schedule and orchestrate containers across different nodes. Read more about deployments [here](../using-kontena/deploy.md).
 
-#### strategy
+**strategy**
 
 How to deploy service's containers to different host nodes.
 
@@ -213,7 +213,7 @@ deploy:
 
 ```
 deploy:
-    strategy: random
+    strategy: daemon
 ```
 
 ```
@@ -221,7 +221,8 @@ deploy:
     strategy: random
 ```
 
-#### wait_for_port
+**wait_for_port**
+
 Wait the port is responding before moving to deploy another instance.
 
 ```
@@ -231,6 +232,28 @@ deploy:
   wait_for_port: true
 ```
 
+**min_health**
+The minimum percentage (number between 0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying.
+
+```
+instances: 3
+deploy:
+  strategy: ha
+  min_health: 0.5
+```
+
+#### hooks
+
+**post_start**
+
+```
+hooks:
+  post_start
+    - name: sleep
+      cmd: sleep 10
+      instances: *
+      oneshot: true
+```
 
 #### log_driver
 

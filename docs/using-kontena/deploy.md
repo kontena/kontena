@@ -24,7 +24,6 @@ deploy:
   strategy: daemon
 ```
 
-
 **Random**
 
 Service with `random` strategy will deploy service containers to host nodes randomly.
@@ -44,13 +43,26 @@ deploy:
   wait_for_port: true
 ```
 
+**Min health**
+
+A number (percentage) between 0.0 and 1.0 that is multiplied with the instance count. This is the minimum number of healthy nodes that do not sacrifice overall service availability. Kontena will make sure, during the deploy process, that at any point of time this number of healthy instances are up.
+
+```
+instances: 3
+deploy:
+  min_health: 0.5
+```
+
+The default `min_health` is 1.0, which means no instances can be deployed in parallel (deploy will progress one-by-one). A value of 0.5 means that during a deploy half of the instances can be deployed in parallel.
+
+
 ## Scheduling Conditions
 When creating services, you can direct the host(s) of where the containers should be launched based on scheduling rules.
 
 ### Affinity
 An affinity condition is when Kontena is trying to find a field that matches (`==`) given value. An anti-affinity condition is when Kontena is trying to find a field that does not match (`!=`) given value.
 
-Kontena has the ability to compare values against host node name and labels and container name.
+Kontena has the ability to compare values against node name, labels and service name.
 
 ```
 affinity:
@@ -59,10 +71,10 @@ affinity:
 
 ```
 affinity:
-    - label==AWS
+    - label==az=1a
 ```
 
 ```
 affinity:
-    - container!=wordpress
+    - service==mysql
 ```
