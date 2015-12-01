@@ -38,10 +38,7 @@ module Kontena::Cli::Apps
 
     def deploy_services(queue)
       queue.each do |service|
-        name = service['id'].split('/').last
-        short_name = name.sub("#{service_prefix}-", "")
-        puts "deploying #{short_name.colorize(:cyan)}"
-        deploy_service(token, name, {})
+        deploy_service(token, service['id'].split('/').last, {})
       end
     end
 
