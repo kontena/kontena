@@ -39,13 +39,10 @@ module Kontena::Cli::Vpn
         affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)
-      result = client(token).post("services/#{current_grid}/vpn/deploy", {})
-      print 'deploying '
-      until client(token).get("services/#{current_grid}/vpn")['state'] != 'deploying' do
-        print '.'
-        sleep 1
+      client(token).post("services/#{current_grid}/vpn/deploy", {})
+      ShellSpinner "Deploying vpn service " do
+        sleep 1 until client(token).get("services/#{current_grid}/vpn")['state'] != 'deploying'
       end
-      puts ' done'
       puts "OpenVPN service is now started (udp://#{vpn_ip}:1194)."
       puts "Use 'kontena vpn config' to fetch OpenVPN client config to your machine (it takes a while until config is ready)."
     end
