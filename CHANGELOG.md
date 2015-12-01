@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.0 (2015-11-29)
+## 0.10.0 (2015-12-01)
 
 - improved scheduler with auto-failover/rebalance
 - new deploy strategy: daemon
