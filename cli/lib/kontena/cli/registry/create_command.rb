@@ -72,13 +72,10 @@ module Kontena::Cli::Registry
           affinity: ["node==#{node['name']}"]
       }
       client(token).post("grids/#{current_grid}/services", data)
-      result = client(token).post("services/#{current_grid}/registry/deploy", {})
-      print 'deploying registry service '
-      until client(token).get("services/#{current_grid}/registry")['state'] != 'deploying' do
-        print '.'
-        sleep 1
+      client(token).post("services/#{current_grid}/registry/deploy", {})
+      ShellSpinner "Deploying registry service " do
+        sleep 1 until client(token).get("services/#{current_grid}/registry")['state'] != 'deploying'
       end
-      puts ' done'
       puts "Docker Registry 2.1 is now running at registry.kontena.local."
       puts "Note: OpenVPN connection is needed to establish connection to this registry. See 'kontena vpn' for details."
       puts 'Note 2: you must set "--insecure-registry 10.81.0.0/19" to your client docker daemon before you are able to push to this registry.'
