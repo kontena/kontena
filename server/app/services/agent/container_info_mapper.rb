@@ -17,12 +17,21 @@ module Agent
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
         return false if container.deleted?
-        self.update_container_attributes(container, info)
+        self.update_service_container(node_id, container, info)
       elsif !labels['io.kontena.service.id'].nil?
         self.create_service_container(node_id, info)
       else
         self.create_container(node_id, info)
       end
+    end
+
+    # @param [String] node_id
+    # @param [Container] container
+    # @param [Hash] info
+    def update_service_container(node_id, container, info)
+      node = grid.host_nodes.find_by(node_id: node_id)
+      container.host_node = node if node
+      self.update_container_attributes(container, info)
     end
 
     # @param [Container] container

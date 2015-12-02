@@ -3,6 +3,7 @@ require_relative '../../spec_helper'
 describe Agent::ContainerInfoMapper do
   let(:grid) { Grid.create! }
   let(:node) { HostNode.create!(name: 'node-1', node_id: 'aaa', grid: grid) }
+  let(:node2) { HostNode.create!(name: 'node-2', node_id: 'bbb', grid: grid) }
   let(:service) do
     GridService.create!(
       grid: grid,
@@ -12,14 +13,27 @@ describe Agent::ContainerInfoMapper do
   end
   let(:subject) { described_class.new(grid) }
 
-  describe '#from_agent' do
+  describe '#update_service_container' do
+    let(:container) do
+      service.containers.create!(name: 'app-1', host_node: node, container_id: SecureRandom.hex(32))
+    end
 
-
+    it 'updates container host_node' do
+      data = {
+          'Id' => container.container_id,
+          'Config' => {
+              'Labels' => {}
+          }
+      }
+      node2
+      subject.update_service_container('bbb', container, data)
+      expect(container.reload.host_node).to eq(node2)
+    end
   end
 
   describe '#create_service_container' do
     it 'creates a new container to grid' do
-      data= {
+      data = {
         'Id' => SecureRandom.hex(32),
         'Config' => {
           'Labels' => {
