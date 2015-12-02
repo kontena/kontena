@@ -6,6 +6,7 @@ require_relative '../services/agent/node_unplugger'
 
 class WebsocketBackend
   KEEPALIVE_TIME = 30 # in seconds
+  RPC_MSG_TYPES = %w(request notify)
 
   attr_reader :logger
 
@@ -16,8 +17,9 @@ class WebsocketBackend
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
     @incoming_queue = Queue.new
+
     Agent::MessageHandler.new(@incoming_queue).run
-    subscribe_to_rpc
+    subscribe_to_rpc_channel
     watch_connections
   end
 
@@ -59,14 +61,7 @@ class WebsocketBackend
         node = grid.host_nodes.create!(node_id: node_id)
       end
 
-      agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
-      unless self.valid_agent_version?(agent_version)
-        logger.error "version mismatch: server (#{Server::VERSION}), node (#{agent_version})"
-        self.handle_invalid_agent_version(ws, node)
-        return
-      end
-
-      logger.info "node opened connection: #{node.name || node_id}"
+      node_plugger = Agent::NodePlugger.new(grid, node)
       client = {
           ws: ws,
           id: node_id.to_s,
@@ -75,8 +70,17 @@ class WebsocketBackend
           created_at: Time.now
       }
       @clients << client
-      self.notify_master_info(ws)
-      Agent::NodePlugger.new(grid, node).plugin!
+
+      agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
+      unless self.valid_agent_version?(agent_version)
+        logger.error "version mismatch: server (#{Server::VERSION}), node (#{agent_version})"
+        node_plugger.send_master_info
+        self.handle_invalid_agent_version(ws, node)
+        return
+      end
+
+      logger.info "node opened connection: #{node.name || node_id}"
+      node_plugger.plugin!
     else
       logger.error 'invalid grid token, closing connection'
       ws.close(4001)
@@ -205,17 +209,9 @@ class WebsocketBackend
   # @param [HostNode] node
   def handle_invalid_agent_version(ws, node)
     node.set(connected: false, last_seen_at: Time.now.utc)
-    self.notify_master_info(ws)
-    sleep 1
-    ws.close(4010)
-  end
-
-  # @param [Faye::WebSocket] ws
-  def notify_master_info(ws)
-    params = [
-      {version: Server::VERSION}
-    ]
-    self.send_message(ws, [2, '/agent/master_info', params])
+    EventMachine::Timer.new(1) do
+      ws.close(4010) if ws
+    end
   end
 
   # @param [Faye::Websocket] ws
@@ -226,22 +222,22 @@ class WebsocketBackend
     }
   end
 
-  def subscribe_to_rpc
+  def subscribe_to_rpc_channel
     MongoPubsub.subscribe('rpc_client') do |message|
-      self.on_pubsub_message(message)
+      if message && message.is_a?(Hash) && RPC_MSG_TYPES.include?(message['type'].to_s)
+        self.on_rpc_message(message)
+      end
     end
   end
 
   # @param [Hash] msg
-  def on_pubsub_message(msg)
-    if msg && msg.is_a?(Hash) && msg['type'] == 'request'
-      client = client_for_id(msg['id'])
-      if client
-        self.send_message(client[:ws], msg['message'])
-      end
+  def on_rpc_message(msg)
+    client = client_for_id(msg['id'])
+    if client
+      self.send_message(client[:ws], msg['message'])
     end
   rescue => exc
-    logger.error "on_redis_message: #{exc.message}"
+    logger.error "on_pubsub_message: #{exc.message}"
   end
 
   def watch_connections

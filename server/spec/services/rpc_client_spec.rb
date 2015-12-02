@@ -15,9 +15,9 @@ describe RpcClient do
     MongoPubsub.publish(channel, {message: [1, id, error, nil]})
   end
 
-  def fake_server(&block)
+  def fake_server(type = 'request')
     MongoPubsub.subscribe(channel) do |resp|
-      if resp['type'] == 'request'
+      if resp['type'] == type
         yield(resp)
       end
     end
@@ -46,6 +46,19 @@ describe RpcClient do
         subject.request('/hello/service', :foo, :bar)
       }.to raise_error(RpcClient::Error)
 
+      server.terminate
+    end
+  end
+
+  describe '#notify' do
+    it 'sends notification to server' do
+      receiver = spy(:receiver)
+      server = fake_server('notify') {|resp|
+        receiver.handle(resp['message'][2])
+      }
+      expect(receiver).to receive(:handle).with([:foo, :bar])
+      subject.notify('/hello/service', :foo, :bar)
+      sleep 0.05
       server.terminate
     end
   end

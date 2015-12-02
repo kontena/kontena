@@ -17,6 +17,7 @@ module Agent
       Celluloid::Future.new {
         begin
           self.update_node
+          self.send_master_info
           self.send_node_info
           self.reschedule_services
         rescue => exc
@@ -35,7 +36,11 @@ module Agent
     end
 
     def send_node_info
-      rpc_client.request('/agent/node_info', node_info)
+      rpc_client.notify('/agent/node_info', node_info)
+    end
+
+    def send_master_info
+      rpc_client.notify('/agent/master_info', {version: Server::VERSION})
     end
 
     private
