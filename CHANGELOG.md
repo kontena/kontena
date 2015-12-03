@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.1 (2015-12-03)
+
+- update container node mapping always when updating container info
+- fix agent version update message sending
+- use docker hub registry v2 as a default when adding external registry
+- use debug log level for rpc notifications in agent
+
 ## 0.10.0 (2015-12-01)
 
 - improved scheduler with auto-failover/rebalance
