@@ -58,8 +58,8 @@ module Kontena
       method = message[1].split('/')[2]
       if klass = HANDLERS[handler]
         begin
-          info "rpc notification: #{klass.name}##{method} #{message[2]}"
-          result = klass.new.send(method, *message[2])
+          debug "rpc notification: #{klass.name}##{method} #{message[2]}"
+          klass.new.send(method, *message[2])
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
           error exc.backtrace.join("\n")
