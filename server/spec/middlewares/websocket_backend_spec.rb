@@ -41,4 +41,25 @@ describe WebsocketBackend do
       expect(subject.valid_agent_version?('1.0.1')).to eq(false)
     end
   end
+
+  describe '#subscribe_to_rpc_channel' do
+    let(:client) do
+      {
+          ws: spy(:ws)
+      }
+    end
+
+    it 'sends message if client is found' do
+      allow(subject).to receive(:client_for_id).and_return(client)
+      expect(subject).to receive(:send_message).with(client[:ws], 'hello')
+      MongoPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
+      sleep 0.05
+    end
+
+    it 'does not send message if client is not found' do
+      expect(subject).not_to receive(:send_message).with(client[:ws], 'hello')
+      MongoPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
+      sleep 0.05
+    end
+  end
 end

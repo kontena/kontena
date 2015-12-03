@@ -29,6 +29,7 @@ class RpcClient
 
   ##
   # @param [String] method
+  # @param [Array<Object>] params
   # @return [Object]
   def request(method, *params)
     id = request_id
@@ -82,6 +83,17 @@ class RpcClient
 
       [result, error]
     }
+  end
+
+  # @param [String] method
+  # @param [Array<Object>] params
+  def notify(method, *params)
+    payload = {
+        type: 'notify',
+        id: self.node_id,
+        message: [2, method, params]
+    }
+    MongoPubsub.publish_async(RPC_CHANNEL, payload)
   end
 
   ##
