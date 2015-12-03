@@ -5,7 +5,7 @@ module Kontena::Cli::ExternalRegistries
     def execute
       require 'highline/import'
 
-      default_url = 'https://index.docker.io/v1/'
+      default_url = 'https://index.docker.io/v2/'
       require_api_url
       require_current_grid
       token = require_token
