@@ -19,6 +19,10 @@ namespace :release do
     %w(agent cli server).each do |dir|
       File.write("./#{dir}/VERSION", VERSION)
     end
+
+  end
+
+  task :setup_ubuntu do
     headline "Building Docker image for Ubuntu package builds ..."
     sh("docker build -t #{UBUNTU_IMAGE} -f Dockerfile.build_ubuntu .")
   end
@@ -52,7 +56,7 @@ namespace :release do
   end
 
   task :package_ubuntu => [
-    :setup, :package_ubuntu_server, :package_ubuntu_agent
+    :setup, :setup_ubuntu, :package_ubuntu_server, :package_ubuntu_agent
   ]
 
   task :package_ubuntu_server do
