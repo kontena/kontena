@@ -11,14 +11,15 @@ class Grid
   field :initial_size, type: Integer, default: 1
   field :overlay_cidr, type: String, default: '10.81.0.0/19'
 
-  has_many :host_nodes
-  has_many :grid_services
-  has_many :containers
+  has_many :host_nodes, dependent: :destroy
+  has_many :grid_services, dependent: :destroy
+  has_many :grid_secrets, dependent: :delete
+  has_many :containers, dependent: :delete
   has_many :container_logs
-  has_many :container_stats
+  has_many :container_stats, dependent: :delete
   has_many :audit_logs
   has_many :registries, dependent: :delete
-  has_many :overlay_cidrs
+  has_many :overlay_cidrs, dependent: :delete
   has_and_belongs_to_many :users
 
   index({ name: 1 }, { unique: true })

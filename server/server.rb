@@ -66,6 +66,10 @@ class Server < Roda
       r.on('etcd') do
         r.run V1::EtcdApi
       end
+
+      r.on('secrets') do
+        r.run V1::SecretsApi
+      end
     end
   end
 end

@@ -7,7 +7,7 @@ module Kontena
                   :memory_swap, :cpu_shares, :privileged, :cap_add, :cap_drop,
                   :devices, :ports, :env, :volumes, :volumes_from, :net,
                   :log_driver, :log_opts, :image_credentials, :pid,
-                  :hooks
+                  :hooks, :secrets
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -38,6 +38,7 @@ module Kontena
         @log_opts = attrs['log_opts']
         @pid = attrs['pid']
         @hooks = attrs['hooks'] || []
+        @secrets = attrs['secrets'] || []
       end
 
       # @return [String, NilClass]
@@ -78,7 +79,7 @@ module Kontena
           'HostName' => "#{self.name}.kontena.local"
 
         }
-        docker_opts['Env'] = self.env
+        docker_opts['Env'] = self.build_env
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
         docker_opts['Entrypoint'] = self.entrypoint if self.entrypoint
@@ -230,6 +231,15 @@ module Kontena
           }
         end
         log_config
+      end
+
+      # @return [Array]
+      def build_env
+        env = self.env.dup
+        self.secrets.each do |s|
+          env << "#{s['name']}=#{s['value']}" if s['type'] == 'env'
+        end
+        env
       end
     end
   end
