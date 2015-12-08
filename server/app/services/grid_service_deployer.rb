@@ -101,6 +101,7 @@ class GridServiceDeployer
 
     true
   rescue NodeMissingError => exc
+    self.grid_service.set_state('running')
     error exc.message
     info "service #{self.grid_service.to_path} deploy cancelled"
   rescue RpcClient::Error => exc
