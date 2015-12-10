@@ -1,6 +1,5 @@
 module GridSecrets
   class Create < Mutations::Command
-    include Common
 
     required do
       model :grid, class: Grid

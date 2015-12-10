@@ -5,9 +5,9 @@ class GridSecret
   belongs_to :grid
 
   field :name, type: String
-  field :value, type: String
+  field :encrypted_value, type: String, encrypted: true
 
-  validates_presence_of :name, :value
+  validates_presence_of :name, :encrypted_value
   validates_uniqueness_of :name, scope: [:grid_id]
 
   index({ grid_id: 1 })
