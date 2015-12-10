@@ -21,7 +21,7 @@ V1::GridsApi.route('grid_secrets') do |r|
   # GET /v1/grids/:name/services
   r.get do
     r.is do
-      @grid_secrets = @grid.grid_secrets.visible
+      @grid_secrets = @grid.grid_secrets
       render('grid_secrets/index')
     end
   end

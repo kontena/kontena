@@ -1,13 +1,13 @@
-require_relative 'vault/create_command'
+require_relative 'vault/write_command'
 require_relative 'vault/list_command'
-require_relative 'vault/show_command'
-require_relative 'vault/delete_command'
+require_relative 'vault/read_command'
+require_relative 'vault/remove_command'
 
 class Kontena::Cli::VaultCommand < Clamp::Command
 
-  subcommand "create", "Create secret", Kontena::Cli::Vault::CreateCommand
+  subcommand "write", "Write a secret", Kontena::Cli::Vault::CreateCommand
   subcommand ["list", "ls"], "List secrets", Kontena::Cli::Vault::ListCommand
-  subcommand "show", "Show secret", Kontena::Cli::Vault::ShowCommand
+  subcommand "read", "Read secret", Kontena::Cli::Vault::ReadCommand
   subcommand ["remove", "rm"], "Remove secret", Kontena::Cli::Vault::RemoveCommand
 
   def execute

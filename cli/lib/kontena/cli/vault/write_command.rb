@@ -1,5 +1,5 @@
 module Kontena::Cli::Vault
-  class CreateCommand < Clamp::Command
+  class WriteCommand < Clamp::Command
     include Kontena::Cli::Common
 
     parameter "NAME", "Secret name"

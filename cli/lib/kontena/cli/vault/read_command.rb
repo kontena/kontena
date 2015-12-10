@@ -1,5 +1,5 @@
 module Kontena::Cli::Vault
-  class ShowCommand < Clamp::Command
+  class ReadCommand < Clamp::Command
     include Kontena::Cli::Common
 
     parameter "NAME", "Secret name"

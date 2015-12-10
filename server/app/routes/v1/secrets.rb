@@ -28,19 +28,21 @@ module V1
 
       # /v1/secrets/:grid_name/:secret_name
       r.on ':grid_name/:secret_name' do |grid_name, secret_name|
-        @grid_secret = load_grid_service(grid_name, secret_name)
+        @grid_secret = load_grid_secret(grid_name, secret_name)
 
         # GET /v1/secrets/:grid_name/:secret_name
         r.get do
           r.is do
-            render('grid_secret/show')
+            audit_event(r, @grid_secret.grid, @grid_secret, 'show')
+            render('grid_secrets/show')
           end
         end
 
         # DELETE /v1/secrets/:grid_name/:secret_name
         r.delete do
           r.is do
-            audit_event(r, @grid_service.grid, @grid_secret, 'delete')
+            @grid_secret.destroy
+            audit_event(r, @grid_secret.grid, @grid_secret, 'delete')
             {}
           end
         end
