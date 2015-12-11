@@ -2,6 +2,10 @@ require_relative '../../../mutations/grid_secrets/create'
 
 V1::GridsApi.route('grid_secrets') do |r|
 
+  unless SymmetricEncryption.cipher?
+    halt_request(503, {error: 'Vault not configured'})
+  end
+
   # POST /v1/grids/:name/services
   r.post do
     data = parse_json_body

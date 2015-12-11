@@ -10,6 +10,10 @@ module V1
       validate_access_token
       require_current_user
 
+      unless SymmetricEncryption.cipher?
+        halt_request(503, {error: 'Vault not configured'})
+      end
+
       # @param [String] grid_name
       # @param [String] secret_name
       # @return [GridSecret]
