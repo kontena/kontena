@@ -92,6 +92,17 @@ A reference to file that contains environment variables.
 env_file: production.env
 ```
 
+#### secrets
+
+A list of secrets to be added from vault to the service containers on launch.
+
+```
+secrets:
+  - secret: CUSTOMER_DB_PASSWORD
+    name: MYSQL_PASSWORD
+    type: env
+```
+
 #### extends
 
 Extend another service, in the current file or another, optionally overriding configuration. You can for example extend `docker-compose.yml` services and introduce only Kontena specific fields in `kontena.yml`.
