@@ -8,8 +8,9 @@ module Kontena::Cli::Vault
       require_api_url
       token = require_token
       result = client(token).get("secrets/#{current_grid}/#{name}")
-      puts "name: #{result['name']}"
-      puts "value: #{result['value']}"
+      puts "#{result['name']}:"
+      puts "  created_at: #{result['created_at']}"
+      puts "  value: #{result['value']}"
     end
   end
 end
