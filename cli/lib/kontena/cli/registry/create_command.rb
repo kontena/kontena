@@ -1,3 +1,5 @@
+require 'shell-spinner'
+
 module Kontena::Cli::Registry
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
