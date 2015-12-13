@@ -1,5 +1,6 @@
 module Agent
   class ContainerInfoMapper
+    include EventStream::GridEventNotifier
 
     attr_reader :grid
 
@@ -18,8 +19,10 @@ module Agent
       if container
         return false if container.deleted?
         self.update_service_container(node_id, container, info)
+        trigger_grid_event(self.grid, 'container', 'update', ContainerSerializer.new(container).to_hash) if container.grid_service
       elsif !labels['io.kontena.service.id'].nil?
-        self.create_service_container(node_id, info)
+        container = self.create_service_container(node_id, info)
+        trigger_grid_event(self.grid, 'container', 'create', ContainerSerializer.new(container).to_hash)
       else
         self.create_container(node_id, info)
       end
@@ -75,6 +78,7 @@ module Agent
         host_node: node
       )
       self.update_container_attributes(container, info)
+      container
     end
 
     # @param [Container] container

@@ -1,8 +1,9 @@
-require_relative 'common'
+  require_relative 'common'
 
 module GridServices
   class Update < Mutations::Command
     include Common
+    include EventStream::GridEventNotifier
 
     required do
       model :current_user, class: User
@@ -129,7 +130,7 @@ module GridServices
 
       grid_service.attributes = attributes
       grid_service.save
-
+      trigger_grid_event(grid_service.grid, 'service', 'update', GridServiceSerializer.new(grid_service).to_hash)
       grid_service
     end
 

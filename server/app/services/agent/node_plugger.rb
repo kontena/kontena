@@ -1,8 +1,9 @@
 require_relative '../grid_scheduler'
+require_relative '../event_stream/grid_event_notifier'
 
 module Agent
   class NodePlugger
-
+    include EventStream::GridEventNotifier
     attr_reader :node, :grid
 
     # @param [Grid] grid
@@ -20,6 +21,7 @@ module Agent
           self.send_master_info
           self.send_node_info
           self.reschedule_services
+          self.trigger_grid_event(grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
         rescue => exc
           puts exc.message
         end

@@ -1,5 +1,7 @@
 require_relative '../../mutations/grids/create'
 require_relative '../../mutations/grids/update'
+require_relative '../../services/event_stream/grid_event_server'
+require_relative '../../services/event_stream/grid_event_notifier'
 
 module V1
   class GridsApi < Roda
@@ -7,11 +9,30 @@ module V1
     include CurrentUser
     include RequestHelpers
     include Auditor
+    include EventStream::GridEventNotifier
 
     plugin :multi_route
     plugin :streaming
+    plugin :websockets, :ping => 45
 
     Dir[File.join(__dir__, '/grids/*.rb')].each{|f| require f}
+
+    def validate_access_token
+      if request.params['token']
+        validate_ws_access_token(request.params['token'])
+      else
+        super
+      end
+    end
+
+    def validate_ws_access_token(token)
+      access_token = AccessToken.find_by(token: token)
+      unless access_token
+        halt_request(403, {error: 'Access denied'})
+        return
+      end
+      @current_user_id = access_token.user_id
+    end
 
     route do |r|
 
@@ -86,14 +107,14 @@ module V1
         # GET /v1/grids
         r.is do
           @grids = current_user.grids
-          render('grids/index')
+          GridSerializer.new(@grids).to_json(root: :grids)
         end
 
         # GET /v1/grids/:name
         r.on ':name' do |name|
           load_grid(name)
           r.is do
-            render('grids/show')
+            GridSerializer.new(@grid).to_json
           end
 
           r.on 'container_logs' do
@@ -105,6 +126,19 @@ module V1
             limit = request.params['limit'] || 500
             @logs = @grid.audit_logs.order(created_at: :desc).limit(limit).to_a.reverse
             render('audit_logs/index')
+          end
+
+          r.on 'events' do
+            r.websocket do |ws|
+              EventStream::GridEventServer.serve(ws, @grid, r.params)
+            end
+
+            @access_token = AccessTokens::Create.run(
+                user: current_user,
+                scopes: ['user'],
+                type: 'ws'
+            ).result
+            render('auth/show')
           end
         end
       end

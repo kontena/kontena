@@ -1,9 +1,13 @@
+require_relative '../../services/event_stream/grid_event_notifier'
+require_relative '../../serializers/grid_service_serializer'
+
 module V1
   class ServicesApi < Roda
     include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
     include Auditor
+    include EventStream::GridEventNotifier
 
     plugin :multi_route
 
@@ -168,6 +172,7 @@ module V1
             )
             if outcome.success?
               audit_event(r, @grid_service.grid, @grid_service, 'delete', @grid_service)
+              trigger_grid_event(@grid_service.grid, 'service', 'delete', GridServiceSerializer.new(@grid_service).to_hash)
               {}
             else
               response.status = 422

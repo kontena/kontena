@@ -1,8 +1,9 @@
 require_relative '../grid_scheduler'
+require_relative '../event_stream/grid_event_notifier'
 
 module Agent
   class NodeUnplugger
-
+    include EventStream::GridEventNotifier
     attr_reader :node, :grid
 
     # @param [HostNode] node
@@ -25,6 +26,7 @@ module Agent
 
     def update_node
       node.update_attribute(:connected, false)
+      self.trigger_grid_event(grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
     end
 
     def reschedule_services

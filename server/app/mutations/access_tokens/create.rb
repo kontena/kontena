@@ -10,9 +10,14 @@ module AccessTokens
       end
     end
 
+    optional do
+      string :type
+    end
+
     def execute
       AccessToken.create!(
         user: self.user,
+        token_type: self.type,
         scopes: self.scopes,
         expires_at: 3.hours.from_now,
         token: "kontena-#{SecureRandom.base64(64)}",

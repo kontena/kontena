@@ -3,6 +3,7 @@ require_relative 'common'
 module GridServices
   class Create < Mutations::Command
     include Common
+    include EventStream::GridEventNotifier
 
     required do
       model :current_user, class: User
@@ -123,7 +124,9 @@ module GridServices
       end
 
       grid_service = GridService.new(attributes)
-      unless grid_service.save
+      if grid_service.save
+        trigger_grid_event(self.grid, 'service', 'create', GridServiceSerializer.new(grid_service).to_hash)
+      else
         grid_service.errors.each do |key, message|
           add_error(key, :invalid, message)
         end
