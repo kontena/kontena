@@ -37,6 +37,7 @@ GEM
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
     json (1.8.2)
+    json-serializer (0.0.9)
     listen (2.8.3)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
@@ -119,6 +120,7 @@ DEPENDENCIES
   dotenv
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)
+  json-serializer
   mongoid (~> 4.0.0)
   mongoid-rspec (~> 2.1.0)
   msgpack

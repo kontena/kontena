@@ -2,10 +2,12 @@ require 'celluloid'
 require_relative 'logging'
 require_relative 'grid_service_scheduler'
 require_relative 'load_balancer_configurer'
+require_relative './event_stream/grid_event_notifier'
 
 class GridServiceDeployer
   include Logging
   include DistributedLocks
+  include EventStream::GridEventNotifier
 
   class NodeMissingError < StandardError; end
 
@@ -63,8 +65,8 @@ class GridServiceDeployer
   # @param [Hash] creds
   def deploy(creds = nil)
     info "starting to deploy #{self.grid_service.to_path}"
-    self.grid_service.set_state('deploying')
     self.grid_service.set(:deployed_at => Time.now.utc)
+    self.grid_service.set_state('deploying')
 
     self.configure_load_balancer
     deploy_rev = Time.now.utc.to_s

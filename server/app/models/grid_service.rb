@@ -1,6 +1,9 @@
+require_relative '../services/event_stream/grid_event_notifier'
+
 class GridService
   include Mongoid::Document
   include Mongoid::Timestamps
+  include EventStream::GridEventNotifier
 
   LB_IMAGE = 'kontena/lb:latest'
 
@@ -62,7 +65,9 @@ class GridService
 
   # @param [String] state
   def set_state(state)
-    self.set(:state => state)
+    result = self.set(:state => state)
+    trigger_grid_event(self.grid, 'service', 'update', GridServiceSerializer.new(self).to_hash)
+    result
   end
 
   # @return [Boolean]
