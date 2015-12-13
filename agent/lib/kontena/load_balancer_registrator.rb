@@ -91,6 +91,8 @@ module Kontena
         info "removing container #{entry[:container]} from load balancer #{entry[:lb]}"
         begin
           etcd.delete("#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}")
+        rescue Etcd::KeyNotFound
+
         rescue Errno::ECONNREFUSED => exc
           retries += 1
           if retries < 10

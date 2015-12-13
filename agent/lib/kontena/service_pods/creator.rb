@@ -42,6 +42,11 @@ module Kontena
           overlay_adapter.modify_create_opts(service_config)
         end
         service_container = create_container(service_config)
+
+        if service_pod.load_balanced? && service_pod.instance_number == 1
+          Kontena::Pubsub.publish('lb:ensure_config', service_container)
+        end
+
         service_container.start
         info "service started: #{service_pod.name}"
 

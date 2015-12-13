@@ -18,6 +18,7 @@ module Kontena
       @stats_worker = Kontena::StatsWorker.new(@queue_worker.queue)
       @etcd_launcher = Kontena::EtcdLauncher.new
       @lb_registrator = Kontena::LoadBalancerRegistrator.new
+      @lb_configurer = Kontena::LoadBalancerConfigurer.new
 
       @started = false
       Pubsub.subscribe('agent:node_info') do |info|
