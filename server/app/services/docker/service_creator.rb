@@ -119,7 +119,7 @@ module Docker
       secrets = []
       grid = grid_service.grid
       grid_service.secrets.each do |secret|
-        grid_secret = grid.grid_secret.find_by(name: secret.secret)
+        grid_secret = grid.grid_secrets.find_by(name: secret.secret)
         item = {name: secret.name, type: secret.type, value: nil}
         if grid_secret
           item[:value] = grid_secret.value
