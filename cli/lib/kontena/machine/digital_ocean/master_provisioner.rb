@@ -30,7 +30,9 @@ module Kontena
           userdata_vars = {
               ssl_cert: ssl_cert,
               auth_server: opts[:auth_server],
-              version: opts[:version]
+              version: opts[:version],
+              vault_secret: opts[:vault_secret],
+              vault_iv: opts[:vault_iv]
           }
 
           droplet = DropletKit::Droplet.new(
@@ -76,7 +78,7 @@ module Kontena
         end
 
         def ssh_key(public_key)
-          ssh_key = client.ssh_keys.all.find{|key| key.public_key == public_key}
+          client.ssh_keys.all.find{|key| key.public_key == public_key}
         end
 
         def master_running?

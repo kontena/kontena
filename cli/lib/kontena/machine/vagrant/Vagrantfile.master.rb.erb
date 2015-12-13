@@ -12,6 +12,8 @@ write_files:
     owner: root
     content: |
       KONTENA_VERSION=<%= version %>
+      KONTENA_VAULT_SECRET=<%= vault_secret %>
+      KONTENA_VAULT_IV=<%= vault_iv %>
 coreos:
   update:
       reboot-strategy: off
@@ -65,6 +67,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name kontena-server-api \
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+            -e VAULT_SECRET=${KONTENA_VAULT_SECRET} -e VAULT_IV=${KONTENA_VAULT_IV} \
             <% if auth_server %>-e AUTH_API_URL=<%= auth_server %><% end %> \
             -p 8080:9292 \
             kontena/server:${KONTENA_VERSION}

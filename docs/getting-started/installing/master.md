@@ -32,6 +32,8 @@ Options:
     --key-pair KEY_PAIR           EC2 Key Pair
     --type SIZE                   Instance type (default: "t2.small")
     --storage STORAGE             Storage size (GiB) (default: "30")
+    --vault-secret VAULT_SECRET   Secret key for Vault
+    --vault-iv VAULT_IV           Initialization vector for Vault
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
 ```
@@ -53,6 +55,8 @@ Options:
     --location LOCATION           Location (default: "West Europe")
     --ssl-cert SSL CERT           SSL certificate file
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+    --vault-secret VAULT_SECRET   Secret key for Vault
+    --vault-iv VAULT_IV           Initialization vector for Vault
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
 
@@ -68,6 +72,8 @@ Options:
     --ssl-cert SSL CERT           SSL certificate file
     --size SIZE                   Droplet size (default: "1gb")
     --region REGION               Region (default: "ams2")
+    --vault-secret VAULT_SECRET   Secret key for Vault
+    --vault-iv VAULT_IV           Initialization vector for Vault
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
 ```
@@ -80,6 +86,8 @@ Usage:
 
 Options:
     --memory MEMORY               How much memory node has (default: "512")
+    --vault-secret VAULT_SECRET   Secret key for Vault
+    --vault-iv VAULT_IV           Initialization vector for Vault
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
 ```
