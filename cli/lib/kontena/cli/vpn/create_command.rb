@@ -1,3 +1,5 @@
+require 'shell-spinner'
+
 module Kontena::Cli::Vpn
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
