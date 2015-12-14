@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.2 (2015-12-14)
+
+- fix shell spinner error on vpn & registry commands
+- revert state to running if deploy is cancelled
+
 ## 0.10.1 (2015-12-03)
 
 - update container node mapping always when updating container info
