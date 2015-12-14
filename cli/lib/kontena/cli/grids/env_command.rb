@@ -5,14 +5,20 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
+    parameter "[NAME]", "Grid name"
     option ["-e", "--export"], :flag, "Add export", default: false
 
     def execute
       require_api_url
-      if current_grid.nil?
-        abort 'No grid selected. To select grid, please run: kontena grid use <grid name>'
+
+      name_or_current = name.nil? ? current_grid : name
+
+      if name_or_current.nil?
+        abort "No grid selected. Use: kontena grid env <name>, or select a grid with: kontena grid use <name>"
       else
-        grid = client(require_token).get("grids/#{current_grid}")
+        grid = find_grid_by_name(name_or_current)
+        abort("Grid not found".colorize(:red)) unless grid
+
         prefix = export? ? 'export ' : ''
         puts "#{prefix}KONTENA_URI=#{settings['server']['url'].sub('http', 'ws')}"
         puts "#{prefix}KONTENA_TOKEN=#{grid['token']}"
