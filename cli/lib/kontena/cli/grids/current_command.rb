@@ -5,13 +5,20 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
+    option ["--name"], :flag, "Show name only", default: false
+
     def execute
       require_api_url
       if current_grid.nil?
         abort 'No grid selected. To select grid, please run: kontena grid use <grid name>'
       else
+
         grid = client(require_token).get("grids/#{current_grid}")
-        print_grid(grid)
+        if name?
+          puts "#{grid['name']}"
+        else
+          print_grid(grid)
+        end
       end
     end
   end
