@@ -21,7 +21,7 @@ class Server < Roda
     r.root do
       {
         name: 'Kontena Master',
-        tagline: 'Application Containers for Masses',
+        tagline: 'The Container Platform',
         version: VERSION
       }
     end
