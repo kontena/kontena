@@ -28,6 +28,9 @@ describe Kontena::Models::ServicePod do
       'env' => [
         'KONTENA_SERVICE_NAME=redis-cache'
       ],
+      'secrets' => [
+          {'name' => 'PASSWD', 'value' => 'secret123', 'type' => 'env'}
+      ],
       'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
@@ -122,6 +125,10 @@ describe Kontena::Models::ServicePod do
 
     it 'includes Env' do
       expect(subject.service_config['Env']).to include('KONTENA_SERVICE_NAME=redis-cache')
+    end
+
+    it 'includes secrest in Env' do
+      expect(subject.service_config['Env']).to include('PASSWD=secret123')
     end
 
     it 'does not include user if nil' do

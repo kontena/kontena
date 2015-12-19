@@ -15,9 +15,13 @@ GEM
     builder (3.2.2)
     celluloid (0.16.0)
       timers (~> 4.0.0)
+    coercible (1.0.0)
+      descendants_tracker (~> 0.0.1)
     connection_pool (2.1.2)
     crack (0.4.2)
       safe_yaml (~> 1.0.0)
+    descendants_tracker (0.0.4)
+      thread_safe (~> 0.3, >= 0.3.1)
     diff-lcs (1.2.5)
     docile (1.1.5)
     dotenv (1.0.2)
@@ -88,6 +92,8 @@ GEM
       multi_json (~> 1.0)
       simplecov-html (~> 0.9.0)
     simplecov-html (0.9.0)
+    symmetric-encryption (3.8.2)
+      coercible (~> 1.0)
     thread_safe (0.3.5)
     tilt (1.4.1)
     tilt-jbuilder (0.6.1)
@@ -125,9 +131,7 @@ DEPENDENCIES
   roda (~> 2.5.0)
   rspec (~> 3.1.0)
   simplecov
+  symmetric-encryption
   tilt-jbuilder
   webmock
   websocket-driver (~> 0.6.2)
-
-BUNDLED WITH
-   1.10.6

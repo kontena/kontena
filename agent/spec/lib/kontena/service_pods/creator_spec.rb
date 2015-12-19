@@ -19,7 +19,7 @@ describe Kontena::ServicePods::Creator do
       'env' => [
         'KONTENA_SERVICE_NAME=redis-cache'
       ],
-      'net' => 'bridge',
+      'net' => 'bridge'
     }
   end
 

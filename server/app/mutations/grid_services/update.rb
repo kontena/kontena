@@ -81,6 +81,14 @@ module GridServices
           end
         end
       end
+      array :secrets do
+        hash do
+          required do
+            string :secret
+            string :name
+          end
+        end
+      end
     end
 
     def validate
@@ -125,6 +133,10 @@ module GridServices
 
       if self.hooks
         attributes[:hooks] = self.build_grid_service_hooks(self.grid_service.hooks.to_a)
+      end
+
+      if self.secrets
+        attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
       end
 
       grid_service.attributes = attributes

@@ -60,6 +60,12 @@ module V1
         r.route 'grid_container_logs'
       end
 
+      # /v1/grids/:name/secrets
+      r.on ':name/secrets' do |name|
+        load_grid(name)
+        r.route 'grid_secrets'
+      end
+
       r.post do
         r.is do
           data = parse_json_body

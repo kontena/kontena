@@ -45,5 +45,23 @@ module GridServices
 
       service_hooks
     end
+
+    # @return [Array<GridServiceSecret>]
+    def build_grid_service_secrets(existing_secrets)
+      service_secrets = []
+      self.secrets.each do |secret|
+        service_secret = existing_secrets.find{|s| s.secret == secret['secret']}
+        unless service_secret
+          service_secret = GridServiceSecret.new(
+              secret: secret['secret'],
+              name: secret['name']
+          )
+        end
+        service_secret.name = secret['name']
+        service_secrets << service_secret
+      end
+
+      service_secrets
+    end
   end
 end

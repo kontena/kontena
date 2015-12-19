@@ -109,6 +109,10 @@ describe Docker::ServiceCreator do
       expect(service_spec).to include(:hooks => [])
     end
 
+    it 'includes secrets' do
+      expect(service_spec).to include(:secrets => [])
+    end
+
     describe '[:env]' do
       let(:env) { service_spec[:env] }
 

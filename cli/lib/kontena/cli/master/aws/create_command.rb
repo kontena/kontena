@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module Kontena::Cli::Master::Aws
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
@@ -12,6 +14,8 @@ module Kontena::Cli::Master::Aws
     option "--subnet-id", "SUBNET ID", "VPC option to specify subnet to launch instance into"
     option "--type", "SIZE", "Instance type", default: 't2.small'
     option "--storage", "STORAGE", "Storage size (GiB)", default: '30'
+    option "--vault-secret", "VAULT_SECRET", "Secret key for Vault"
+    option "--vault-iv", "VAULT_IV", "Initialization vector for Vault"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
     option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url"
 
@@ -28,7 +32,9 @@ module Kontena::Cli::Master::Aws
           storage: storage,
           version: version,
           key_pair: key_pair,
-          auth_server: auth_provider_url
+          auth_server: auth_provider_url,
+          vault_secret: vault_secret || SecureRandom.hex(24),
+          vault_iv: vault_iv || SecureRandom.hex(24)
       )
     end
   end

@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module Kontena::Cli::Master::Azure
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
@@ -11,6 +13,8 @@ module Kontena::Cli::Master::Azure
     option "--password", "PASSWORD", "Password"
     option "--location", "LOCATION", "Location", default: 'West Europe'
     option "--ssl-cert", "SSL CERT", "SSL certificate file"
+    option "--vault-secret", "VAULT_SECRET", "Secret key for Vault"
+    option "--vault-iv", "VAULT_IV", "Initialization vector for Vault"
     option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
@@ -26,7 +30,9 @@ module Kontena::Cli::Master::Azure
           subnet: subnet,
           location: location,
           auth_server: auth_provider_url,
-          version: version
+          version: version,
+          vault_secret: vault_secret || SecureRandom.hex(24),
+          vault_iv: vault_iv || SecureRandom.hex(24)
       )
     end
   end

@@ -7,6 +7,7 @@ describe Grid do
   it { should have_and_belong_to_many(:users) }
   it { should have_many(:host_nodes) }
   it { should have_many(:grid_services) }
+  it { should have_many(:grid_secrets) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }

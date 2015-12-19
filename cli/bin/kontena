@@ -33,6 +33,7 @@ require 'kontena/cli/external_registry_command'
 require 'kontena/cli/deploy_command'
 require 'kontena/cli/app_command'
 require 'kontena/cli/etcd_command'
+require 'kontena/cli/vault_command'
 require 'kontena/cli/version_command'
 
 class MainCommand < Clamp::Command
@@ -40,6 +41,7 @@ class MainCommand < Clamp::Command
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
+  subcommand "vault", "Vault specific commands", Kontena::Cli::VaultCommand
   subcommand "deploy", "Create and deploy multiple services from YAML file", Kontena::Cli::DeployCommand
   subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand
   subcommand "master", "Master specific commands", Kontena::Cli::MasterCommand

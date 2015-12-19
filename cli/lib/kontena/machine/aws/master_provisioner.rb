@@ -37,7 +37,9 @@ module Kontena
           userdata_vars = {
               ssl_cert: ssl_cert,
               auth_server: opts[:auth_server],
-              version: opts[:version]
+              version: opts[:version],
+              vault_secret: opts[:vault_secret],
+              vault_iv: opts[:vault_iv]
           }
 
           security_group = ensure_security_group(opts[:vpc])

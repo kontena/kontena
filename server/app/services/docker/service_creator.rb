@@ -54,6 +54,7 @@ module Docker
         pid: grid_service.pid
       }
       spec[:env] = build_env
+      spec[:secrets] = build_secrets
       overlay_cidr = nil
       if grid_service.overlay_network?
         overlay_cidr = reserve_overlay_cidr
@@ -104,13 +105,28 @@ module Docker
     end
 
     ##
-    # @return [Array]
+    # @return [Array<String>]
     def build_env
       env = grid_service.env.dup || []
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
       env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
       env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
       env
+    end
+
+    # @return [Array<Hash>]
+    def build_secrets
+      secrets = []
+      grid = grid_service.grid
+      grid_service.secrets.each do |secret|
+        grid_secret = grid.grid_secrets.find_by(name: secret.secret)
+        item = {name: secret.name, type: secret.type, value: nil}
+        if grid_secret
+          item[:value] = grid_secret.value
+        end
+        secrets << item
+      end
+      secrets
     end
 
     ##
