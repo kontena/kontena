@@ -272,6 +272,17 @@ module Kontena
           end
           opts
         end
+
+        # @param [Array<String>] secret_opts
+        # @return [Array<Hash>]
+        def parse_secrets(secret_opts)
+          secrets = []
+          secret_opts.each do |s|
+            secret, name, type = s.split(':')
+            secrets << {secret: secret, name: name, type: type}
+          end
+          secrets
+        end
       end
     end
   end
