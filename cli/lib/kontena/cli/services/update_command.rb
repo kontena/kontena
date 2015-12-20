@@ -28,7 +28,7 @@ module Kontena::Cli::Services
     option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
     option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
     option "--pid", "PID", "Pid namespace to use"
-
+    option "--secret", "SECRET", "Import secret from Vault", multivalued: true
 
     def execute
       require_api_url
@@ -51,6 +51,7 @@ module Kontena::Cli::Services
       data[:cpu_shares] = cpu_shares if cpu_shares
       data[:affinity] = affinity_list unless affinity_list.empty?
       data[:env] = env_list unless env_list.empty?
+      data[:secrets] = parse_secrets(secret_list)
       data[:container_count] = instances if instances
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
