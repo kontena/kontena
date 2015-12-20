@@ -127,8 +127,14 @@ describe Kontena::Models::ServicePod do
       expect(subject.service_config['Env']).to include('KONTENA_SERVICE_NAME=redis-cache')
     end
 
-    it 'includes secrest in Env' do
+    it 'includes secrets in Env' do
       expect(subject.service_config['Env']).to include('PASSWD=secret123')
+    end
+
+    it 'includes secrets in Env with same key' do
+      data['secrets'] << {'name' => 'SSL_CERTS', 'value' => 'foo', 'type' => 'env'}
+      data['secrets'] << {'name' => 'SSL_CERTS', 'value' => 'bar', 'type' => 'env'}
+      expect(subject.service_config['Env'].last).to eq("SSL_CERTS=foo\nbar")
     end
 
     it 'does not include user if nil' do
