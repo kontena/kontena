@@ -41,7 +41,7 @@ class ContainerSerializer < JsonSerializer
   end
 
   def node
-    HostNodeSerializer.new(object.host_node).to_hash
+    HostNodeSerializer.new(object.host_node).to_hash if object.host_node
   end
 
   def to_hash
