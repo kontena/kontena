@@ -90,6 +90,7 @@ describe GridService do
 
   describe '#set_state' do
     it 'sets value of state column' do
+      allow(subject).to receive(:trigger_grid_event)
       subject.set_state('running')
       expect(subject.state).to eq('running')
     end
@@ -100,6 +101,11 @@ describe GridService do
       grid_service.clear_timeless_option
       grid_service.set_state('running')
       expect(grid_service.updated_at).to eq(five_hours_ago)
+    end
+
+    it 'triggers update grid event' do
+      expect(grid_service).to receive(:trigger_grid_event).once.with(grid, 'service', 'update', GridServiceSerializer.new(grid_service).to_hash.merge({state: 'running' }))
+      grid_service.set_state('running')
     end
   end
 
