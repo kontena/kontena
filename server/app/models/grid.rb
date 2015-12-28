@@ -66,6 +66,18 @@ class Grid
     self.all_overlay_ips - self.reserved_overlay_ips
   end
 
+  def number_of_cores
+    cpus = 0
+    self.host_nodes.each {|node| cpus += node.cpus.to_i}
+    cpus
+  end
+
+  def total_memory
+    memory = 0
+    self.host_nodes.each {|node| memory += node.mem_total.to_i}
+    memory
+  end
+
   # Does grid have all the initial nodes created?
   #
   # @return [Boolean]
