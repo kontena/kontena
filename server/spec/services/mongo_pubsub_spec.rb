@@ -34,11 +34,9 @@ describe MongoPubsub do
       mailbox1 = []
       mailbox2 = []
       sub1 = described_class.subscribe('channel1') {|msg|
-        #puts "1: #{msg}"
         mailbox1 << msg
       }
       sub2 = described_class.subscribe('channel1') {|msg|
-        #puts "2: #{msg}"
         mailbox2 << msg
       }
       100.times do |i|
@@ -51,6 +49,25 @@ describe MongoPubsub do
       expect(mailbox2).to eq(expected_mailbox)
       sub1.terminate
       sub2.terminate
+    end
+
+    it 'cleanups threads' do
+      GC.start
+
+      sub1 = described_class.subscribe('channel1') {|msg| }
+      sub2 = described_class.subscribe('channel1') {|msg| }
+      sub1.terminate
+      sub2.terminate
+
+      thread_count = Thread.list.count
+
+      sub1 = described_class.subscribe('channel1') {|msg| }
+      sub2 = described_class.subscribe('channel1') {|msg| }
+      sub1.terminate
+      sub2.terminate
+
+      GC.start
+      expect(thread_count == Thread.list.count).to be_truthy
     end
   end
 end

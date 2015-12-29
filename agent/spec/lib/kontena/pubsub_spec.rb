@@ -16,6 +16,24 @@ describe Kontena::Pubsub do
         described_class.subscribe('foo') {|sub| p msg}
       }.to change{ described_class.subscriptions.size }.by(1)
     end
+
+    it 'cleans threads' do
+      GC.start
+      subscriptions = []
+      3.times do
+        subscriptions << described_class.subscribe('foo') {|sub| p msg}
+      end
+      subscriptions.each{|s| described_class.unsubscribe(s)}
+      thread_count = Thread.list.count
+
+      subscriptions = []
+      3.times do
+        subscriptions << described_class.subscribe('foo') {|sub| p msg}
+      end
+      subscriptions.each{|s| described_class.unsubscribe(s)}
+      GC.start
+      expect(Thread.list.count == thread_count).to be_truthy
+    end
   end
 
   describe '.publish' do

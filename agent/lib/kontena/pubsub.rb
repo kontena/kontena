@@ -4,8 +4,7 @@ module Kontena
     class Subscription
       include Celluloid
 
-      exclusive :send_message
-
+      finalizer :cleanup
       attr_reader :channel
 
       # @param [String] channel
@@ -13,7 +12,7 @@ module Kontena
       def initialize(channel, block)
         @channel = channel
         @block = block
-        @queue = Queue.new
+        @queue = []
         async.process
       end
 
@@ -25,16 +24,23 @@ module Kontena
       private
 
       def process
-        defer {
-          while msg = @queue.pop
-            send_message(msg)
-          end
-        }
+        sleep 0.001
+        @process = true
+        while @process
+          msg = @queue.shift
+          send_message(msg) if msg
+          sleep 0.001
+        end
+        @queue.clear
       end
 
       # @param [Object] msg
       def send_message(msg)
         @block.call(msg)
+      end
+
+      def cleanup
+        @process = false
       end
     end
 
