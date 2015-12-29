@@ -7,22 +7,26 @@ class MongoPubsub
   class Subscription
     include Celluloid
 
+    finalizer :cleanup
     attr_reader :channel
 
     # @param [String] channel
     def initialize(channel, block)
       @channel = channel
       @block = block
-      @queue = Queue.new
+      @queue = []
       async.process
     end
 
     def process
-      defer {
-        while data = @queue.pop
-          send_message(data)
-        end
-      }
+      sleep 0.001
+      @process = true
+      while @process == true
+        data = @queue.shift
+        send_message(data) if data
+        sleep 0.001
+      end
+      @queue.clear
     end
 
     def queue_message(data)
@@ -34,6 +38,10 @@ class MongoPubsub
     # @param [Hash] data
     def send_message(data)
       @block.call(data)
+    end
+
+    def cleanup
+      @process = false
     end
   end
 
