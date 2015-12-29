@@ -29,15 +29,15 @@ module Agent
 
       data = message['data']
       case data['event']
-        when 'node:info'
+        when 'node:info'.freeze
           self.on_node_info(grid, data['data'])
-        when 'container:info'
+        when 'container:info'.freeze
           self.on_container_info(grid, data['data'])
-        when 'container:event'
+        when 'container:event'.freeze
           self.on_container_event(grid, data['data'])
-        when 'container:log'
+        when 'container:log'.freeze
           self.on_container_log(grid, message['node_id'], data['data'])
-        when 'container:stats'
+        when 'container:stats'.freeze
           self.on_container_stat(grid, data['data'])
         else
           puts "unknown event: #{message}"
@@ -48,7 +48,7 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_node_info(grid, data)
-      node = grid.host_nodes.find_by(node_id: data['ID'])
+      node = with_cache{ grid.host_nodes.find_by(node_id: data['ID']) }
       if !node
         node = grid.host_nodes.build
       end
@@ -68,7 +68,7 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_event(grid, data)
-      container = grid.containers.unscoped.find_by(container_id: data['id'])
+      container = with_cache{ grid.containers.unscoped.find_by(container_id: data['id']) }
       if container
         if data['status'] == 'destroy'
           container.mark_for_delete
@@ -83,7 +83,7 @@ module Agent
     # @param [String] node_id
     # @param [Hash] data
     def on_container_log(grid, node_id, data)
-      container = grid.containers.find_by(container_id: data['id'])
+      container = with_cache{ grid.containers.find_by(container_id: data['id']) }
       if container
         if data['time']
           created_at = Time.parse(data['time'])
@@ -107,9 +107,9 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_stat(grid, data)
-      data = fixnums_to_float(data)
-      container = grid.containers.find_by(container_id: data['id'])
+      container = with_cache{ grid.containers.find_by(container_id: data['id']) }
       if container
+        data = fixnums_to_float(data)
         ContainerStat.with(safe: false).create(
             grid: grid,
             grid_service: container.grid_service,
@@ -146,6 +146,10 @@ module Agent
         end
         i += 1
       end
+    end
+
+    def with_cache
+      Mongoid::QueryCache.cache { yield }
     end
   end
 end

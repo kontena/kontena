@@ -14,7 +14,7 @@ module Agent
       labels = info['Config']['Labels'] || {}
       node_id = data['node']
       container_id = data['container']['Id']
-      container = grid.containers.unscoped.find_by(container_id: container_id)
+      container = with_cache { grid.containers.unscoped.find_by(container_id: container_id) }
       if container
         return false if container.deleted?
         self.update_service_container(node_id, container, info)
@@ -29,7 +29,7 @@ module Agent
     # @param [Container] container
     # @param [Hash] info
     def update_service_container(node_id, container, info)
-      node = grid.host_nodes.find_by(node_id: node_id)
+      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
       container.host_node = node if node
       self.update_container_attributes(container, info)
     end
@@ -37,9 +37,15 @@ module Agent
     # @param [Container] container
     # @param [Hash] info
     def update_container_attributes(container, info)
-      self.container_attributes_from_docker(container, info)
+      attributes = self.container_attributes_from_docker(container, info)
       return false if container.deleted?
-      container.save
+
+      if container.new_record?
+        container.save
+      else
+        attributes[:host_node_id] = container.host_node.try(:id)
+        container.set(attributes)
+      end
     end
 
     # @param [String] node_id
@@ -47,8 +53,8 @@ module Agent
     def create_service_container(node_id, info)
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
-      node = grid.host_nodes.find_by(node_id: node_id)
-      service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
+      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
+      service = with_cache { grid.grid_services.find_by(id: labels['io.kontena.service.id']) }
       container = grid.containers.build(
         container_id: container_id,
         name: labels['io.kontena.container.name'],
@@ -67,7 +73,7 @@ module Agent
     # @param [Hash] info
     def create_container(node_id, info)
       container_id = info['Id']
-      node = grid.host_nodes.find_by(node_id: node_id)
+      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
       container = grid.containers.build(
         container_id: container_id,
         name: info['Name'].split("/")[1],
@@ -83,7 +89,7 @@ module Agent
       config = info['Config'] || {}
       labels = config['Labels'] || {}
       state = info['State'] || {}
-      container.attributes = {
+      attributes = {
           container_id: info['Id'],
           driver: info['Driver'],
           exec_driver: info['ExecDriver'],
@@ -99,22 +105,26 @@ module Agent
               restarting: state['Restarting'],
               running: state['Running']
           },
+          updated_at: Time.now.utc,
           finished_at: (state['FinishedAt'] ? Time.parse(state['FinishedAt']) : nil),
           started_at: (state['StartedAt'] ? Time.parse(state['StartedAt']) : nil),
           deleted_at: nil
       }
       if container.deploy_rev.nil? && labels['io.kontena.container.deploy_rev']
-        container.deploy_rev = labels['io.kontena.container.deploy_rev']
+        attributes[:deploy_rev] = labels['io.kontena.container.deploy_rev']
       end
       if info['NetworkSettings']
-        container.network_settings = self.parse_docker_network_settings(info['NetworkSettings'])
+        attributes[:network_settings] = self.parse_docker_network_settings(info['NetworkSettings'])
       end
       if info['Volumes']
-        container.volumes = info['Volumes'].map{|k, v| [{container: k, node: v}]}
+        attributes[:volumes] = info['Volumes'].map{|k, v| [{container: k, node: v}]}
       end
+      container.attributes = attributes
       if labels['io.kontena.container.overlay_cidr'] && container.overlay_cidr.nil?
         self.update_overlay_cidr_from_labels(container, labels)
       end
+
+      attributes
     end
 
     # @param [Container] container
@@ -169,5 +179,8 @@ module Agent
       }
     end
 
+    def with_cache
+      Mongoid::QueryCache.cache { yield }
+    end
   end
 end
