@@ -236,8 +236,18 @@ module Kontena
       # @return [Array]
       def build_env
         env = self.env.dup
-        self.secrets.each do |s|
-          env << "#{s['name']}=#{s['value']}" if s['type'] == 'env'
+        secrets_hash = {}
+        self.secrets.select{|s| s['type'] == 'env'}.each do |s|
+          val = secrets_hash[s['name']]
+          if val.nil?
+            val = s['value']
+          else
+            val = "#{val}\n#{s['value']}"
+          end
+          secrets_hash[s['name']] = val
+        end
+        secrets_hash.each do |name, value|
+          env << "#{name}=#{value}"
         end
         env
       end
