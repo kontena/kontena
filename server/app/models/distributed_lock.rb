@@ -15,7 +15,9 @@ class DistributedLock
       Timeout.timeout(timeout) do
         sleep 0.01 until lock_id = self.obtain_lock(name)
       end
-      return yield
+      if lock_id
+        return yield
+      end
     rescue Timeout::Error
       return false
     ensure

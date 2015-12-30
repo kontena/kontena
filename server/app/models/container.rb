@@ -27,7 +27,7 @@ class Container
   belongs_to :host_node
   has_many :container_logs
   has_many :container_stats
-  has_one :overlay_cidr, dependent: :destroy
+  has_one :overlay_cidr, dependent: :nullify
 
   index({ grid_id: 1 })
   index({ grid_service_id: 1 })

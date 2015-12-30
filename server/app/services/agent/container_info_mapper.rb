@@ -134,20 +134,8 @@ module Agent
       ip, subnet = labels['io.kontena.container.overlay_cidr'].split('/')
       overlay_cidr = container.grid.overlay_cidrs.where(ip: ip, subnet: subnet).first
       if overlay_cidr
-        overlay_cidr.set(container_id: container.id)
+        overlay_cidr.set(container_id: container.id, reserved_at: Time.now.utc)
         overlay_cidr
-      else
-        overlay_cidr = OverlayCidr.new(
-          grid: container.grid,
-          container: container,
-          ip: ip,
-          subnet: subnet
-        )
-        if overlay_cidr.save
-          overlay_cidr
-        else
-          nil
-        end
       end
     end
 

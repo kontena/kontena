@@ -1,16 +1,30 @@
 require_relative '../../spec_helper'
 
 describe Grids::Create do
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
   let(:user) { User.create!(email: 'joe@domain.com')}
 
   describe '#run' do
     it 'creates a new grid' do
       expect {
-        described_class.new(
+        subject = described_class.new(
             user: user,
             name: nil
-        ).run
+        )
+        allow(subject).to receive(:initialize_subnet)
+        subject.run
       }.to change{ Grid.count }.by(1)
+    end
+
+    it 'initializes subnet' do
+      outcome = described_class.new(
+          user: user,
+          name: nil
+      ).run
+      sleep 0.1
+      grid = outcome.result
+      expect(grid.overlay_cidrs.count > 0).to be_truthy
     end
 
     context 'when name is provided' do
@@ -19,6 +33,7 @@ describe Grids::Create do
             user: user,
             name: 'test-grid'
         )
+        allow(subject).to receive(:initialize_subnet)
         expect(subject).not_to receive(:generate_name)
         subject.run
       end

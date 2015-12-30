@@ -36,7 +36,7 @@ describe RpcClient do
       server.terminate
     end
 
-    it 'should perform' do
+    it 'should perform', performance: true do
       server = fake_server {|resp|
         response = resp['message'][3]
         response.unshift(resp['message'][2])
@@ -60,7 +60,7 @@ describe RpcClient do
       end_time = Time.now.to_f
       duration = end_time - start_time
       expect(responses.size).to eq(rounds)
-      expect(duration <= 2.0).to be_truthy
+      expect(duration <= 5.0).to be_truthy
 
       server.terminate
     end
