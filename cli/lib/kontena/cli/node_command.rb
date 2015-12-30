@@ -15,7 +15,7 @@ class Kontena::Cli::NodeCommand < Clamp::Command
   subcommand "show", "Show node", Kontena::Cli::Nodes::ShowCommand
   subcommand "ssh", "Ssh into node", Kontena::Cli::Nodes::SshCommand
   subcommand "update", "Update node", Kontena::Cli::Nodes::UpdateCommand
-  subcommand "remove", "Remove node", Kontena::Cli::Nodes::RemoveCommand
+  subcommand ["remove","rm"], "Remove node", Kontena::Cli::Nodes::RemoveCommand
 
   subcommand "vagrant", "Vagrant specific commands", Kontena::Cli::Nodes::VagrantCommand
   subcommand "digitalocean", "DigitalOcean specific commands", Kontena::Cli::Nodes::DigitalOceanCommand
