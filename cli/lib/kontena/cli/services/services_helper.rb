@@ -1,5 +1,6 @@
 require 'kontena/client'
 require_relative '../common'
+require 'shell-spinner'
 
 module Kontena
   module Cli
@@ -173,6 +174,16 @@ module Kontena
         def deploy_service(token, service_id, data)
           param = parse_service_id(service_id)
           client(token).post("services/#{param}/deploy", data)
+        end
+
+        # @param [String] token
+        # @param [String] name
+        def wait_for_deploy_to_finish(token, name)
+          ShellSpinner " " do
+            until client(token).get("services/#{name}")['state'] != 'deploying' do
+              sleep 1
+            end
+          end
         end
 
         # @param [String] token

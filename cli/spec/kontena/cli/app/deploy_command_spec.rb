@@ -108,6 +108,11 @@ yml
   end
 
   describe '#deploy' do
+
+    before(:each) do
+      allow(subject).to receive(:wait_for_deploy_to_finish).and_return(true)
+    end
+
     context 'when api_url is nil' do
       it 'raises error' do
         allow(subject).to receive(:settings).and_return(settings_without_api_url)

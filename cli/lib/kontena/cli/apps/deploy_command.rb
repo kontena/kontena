@@ -11,6 +11,7 @@ module Kontena::Cli::Apps
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
+    option '--async', :flag, 'Run deploys async/parallel'
 
     parameter "[SERVICE] ...", "Services to start"
 
@@ -38,7 +39,14 @@ module Kontena::Cli::Apps
 
     def deploy_services(queue)
       queue.each do |service|
-        deploy_service(token, service['id'].split('/').last, {})
+        name = service['id'].split('/').last
+        deploy_service(token, name, {})
+        print "deploying #{name.sub("#{service_prefix}-", '').colorize(:cyan)}"
+        unless async?
+          wait_for_deploy_to_finish(token, service['id'])
+        else
+          puts ''
+        end
       end
     end
 
