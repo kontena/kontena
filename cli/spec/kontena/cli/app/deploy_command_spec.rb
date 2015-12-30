@@ -8,7 +8,28 @@ describe Kontena::Cli::Apps::DeployCommand do
   end
 
   let(:settings) do
-    {'server' => {'url' => 'http://kontena.test', 'token' => token}}
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'some_master', 'url' => 'some_master'},
+         {'name' => 'alias', 'url' => 'someurl', 'token' => token}
+     ]
+    }
+  end
+
+  let(:settings_without_api_url) do
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'alias', 'token' => token}
+     ]
+    }
+  end
+
+  let(:settings_without_token) do
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'alias', 'url' => 'url'}
+     ]
+    }
   end
 
   let(:token) do
@@ -89,14 +110,14 @@ yml
   describe '#deploy' do
     context 'when api_url is nil' do
       it 'raises error' do
-        allow(subject).to receive(:settings).and_return({'server' => {}})
+        allow(subject).to receive(:settings).and_return(settings_without_api_url)
         expect{subject.run([])}.to raise_error(ArgumentError)
       end
     end
 
     context 'when token is nil' do
       it 'raises error' do
-        allow(subject).to receive(:settings).and_return({'server' => {'url' => 'http://kontena.test'}})
+        allow(subject).to receive(:settings).and_return(settings_without_token)
         expect{subject.run([])}.to raise_error(ArgumentError)
       end
     end

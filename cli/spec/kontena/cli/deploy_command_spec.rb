@@ -8,8 +8,30 @@ describe Kontena::Cli::DeployCommand do
   end
 
   let(:settings) do
-    {'server' => {'url' => 'http://kontena.test', 'token' => token}}
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'some_master', 'url' => 'some_master'},
+         {'name' => 'alias', 'url' => 'someurl', 'token' => token}
+     ]
+    }
   end
+
+  let(:settings_without_api_url) do
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'alias', 'token' => token}
+     ]
+    }
+  end
+
+  let(:settings_without_token) do
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'alias', 'url' => 'url'}
+     ]
+    }
+  end
+
 
   let(:token) do
     '1234567'
@@ -75,14 +97,14 @@ yml
   describe '#deploy' do
     context 'when api_url is nil' do
       it 'raises error' do
-        allow(subject).to receive(:settings).and_return({'server' => {}})
+        allow(subject).to receive(:settings).and_return(settings_without_api_url)
         expect{subject.run([])}.to raise_error(ArgumentError)
       end
     end
 
     context 'when token is nil' do
       it 'raises error' do
-        allow(subject).to receive(:settings).and_return({'server' => {'url' => 'http://kontena.test'}})
+        allow(subject).to receive(:settings).and_return(settings_without_token)
         expect{subject.run([])}.to raise_error(ArgumentError)
       end
     end
@@ -118,6 +140,10 @@ yml
       end
 
       context 'when yml file has multiple env files' do
+        before(:each) do
+          allow(subject).to receive(:settings).and_return(settings)
+        end
+
         it 'merges environment variables correctly' do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
           allow(YAML).to receive(:load).and_return(services)

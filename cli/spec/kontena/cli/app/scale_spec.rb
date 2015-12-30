@@ -8,7 +8,12 @@ describe Kontena::Cli::Apps::ScaleCommand do
   end
 
   let(:settings) do
-    {'server' => {'url' => 'http://kontena.test', 'token' => token}}
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'some_master', 'url' => 'some_master'},
+         {'name' => 'alias', 'url' => 'someurl', 'token' => token}
+     ]
+    }
   end
 
   let(:token) do

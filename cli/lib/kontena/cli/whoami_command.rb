@@ -10,7 +10,8 @@ class Kontena::Cli::WhoamiCommand < Clamp::Command
     end
 
     require_api_url
-    puts "Master: #{settings['server']['url']}"
+    puts "Master: #{self.current_master['name']}"
+    puts "URL: #{api_url}"
     token = require_token
     response = client(token).get('user')
     puts "User: #{response['email']}"

@@ -3,13 +3,16 @@ class Kontena::Cli::LoginCommand < Clamp::Command
 
   parameter "URL", "Kontena Master URI"
 
+  option ['-n', '--name'], 'NAME', 'Local alias name for the master. Default default'
+
   def execute
     require 'highline/import'
 
     until !url.nil? && !url.empty?
       api_url = ask('Kontena Master Node URL: ')
     end
-    update_api_url(url)
+
+    @api_url = url
 
     unless request_server_info
       puts 'Could not connect to server'.colorize(:red)
@@ -21,7 +24,7 @@ class Kontena::Cli::LoginCommand < Clamp::Command
     response = do_login(email, password)
 
     if response
-      update_access_token(response['access_token'])
+      update_master_info(name, url, response['access_token'])
       display_logo
       puts ''
       puts "Logged in as #{response['user']['name'].green}"
@@ -52,6 +55,14 @@ class Kontena::Cli::LoginCommand < Clamp::Command
     end
   end
 
+
+  def login_client
+    if @login_client.nil?
+      @login_client = Kontena::Client.new(@api_url)
+    end
+    @login_client
+  end
+
   def do_login(email, password)
     params = {
         username: email,
@@ -59,13 +70,13 @@ class Kontena::Cli::LoginCommand < Clamp::Command
         grant_type: 'password',
         scope: 'user'
     }
-    client.post('auth', params)
+    login_client.post('auth', params)
   end
 
   def request_server_info
     valid = true
     begin
-      client.get('ping') # test server connection
+      login_client.get('ping') # test server connection
     rescue Excon::Errors::SocketError => exc
       if exc.message.include?('Unable to verify certificate')
         puts "The server uses a certificate signed by an unknown authority.".colorize(:red)
@@ -81,21 +92,20 @@ class Kontena::Cli::LoginCommand < Clamp::Command
   end
 
   ##
-  # Store api_url to config file
   #
-  # @param [String] api_url
-  def update_api_url(api_url)
-    settings['server']['url'] = api_url
-    save_settings
-  end
+  # @param [String] name
+  # @param [String] url
+  # @param [String] token
+  #
+  def update_master_info(name, url, token)
+    name = name || 'default'
+    master = {
+        'name' => name,
+        'url' => url,
+        'token' => token
+    }
 
-  ##
-  # Store access token to config file
-  #
-  # @param [String] access_token
-  def update_access_token(access_token)
-    settings['server']['token'] = access_token
-    save_settings
+    self.add_master(name, master)
   end
 
   def display_logo
