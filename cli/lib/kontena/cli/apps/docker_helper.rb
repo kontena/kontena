@@ -9,11 +9,11 @@ module Kontena::Cli::Apps
 
       services.each do |name, service|
         if service['build'] && (!image_exist?(service['image']) || force_build)
+          dockerfile = service['dockerfile'] || 'Dockerfile'
           abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
-          abort("'#{service['build']}' does not have Dockerfile") unless dockerfile_exist?(service['build'])
+          abort("'#{service['build']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build'], dockerfile)
           puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service['image'], service['build'], no_cache)
-
+          build_docker_image(service['image'], service['build'], dockerfile, no_cache)
           puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
           push_docker_image(service['image'])
         end
@@ -25,12 +25,11 @@ module Kontena::Cli::Apps
     end
 
 
-    def build_docker_image(name, path, no_cache=false)
+    def build_docker_image(name, path, dockerfile, no_cache=false)
       if no_cache
-        ret = system("docker build -t #{name} --no-cache #{path}")
+        ret = system("docker build -t #{name} -f #{dockerfile} --no-cache #{path}")
       else
-        ret = system("docker build -t #{name} #{path}")
-      end
+      ret = system("docker build -t #{name} -f #{dockerfile} #{path}")
       abort("Failed to build image #{name.colorize(:cyan)}") unless ret
       ret
     end
@@ -45,8 +44,8 @@ module Kontena::Cli::Apps
       `docker history #{image} 2>&1` ; $?.success?
     end
 
-    def dockerfile_exist?(path)
-      file = File.join(File.expand_path(path), 'Dockerfile')
+    def dockerfile_exist?(path, dockerfile)
+      file = File.join(File.expand_path(path), dockerfile)
       File.exist?(file)
     end
   end
