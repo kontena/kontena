@@ -36,7 +36,7 @@ module Kontena::Cli::Apps
         services.each do |service_name, opts|
           service = get_service(token, prefixed_name(service_name)) rescue false
           result = client(token).get("services/#{service['id']}/container_logs?#{query_params.join('&')}") if service
-          logs = logs + result['logs']
+          logs = logs + result['logs'] if result && result['logs']
         end
         logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
         logs.each do |log|
