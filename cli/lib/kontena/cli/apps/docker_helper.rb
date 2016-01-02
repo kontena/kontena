@@ -29,7 +29,8 @@ module Kontena::Cli::Apps
       if no_cache
         ret = system("docker build -t #{name} -f #{dockerfile} --no-cache #{path}")
       else
-      ret = system("docker build -t #{name} -f #{dockerfile} #{path}")
+        ret = system("docker build -t #{name} -f #{dockerfile} #{path}")
+      end
       abort("Failed to build image #{name.colorize(:cyan)}") unless ret
       ret
     end
