@@ -15,6 +15,9 @@ module Kontena
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event) rescue nil
       end
+      Pubsub.subscribe('container:publish_info') do |container|
+        self.publish_info(container) rescue nil
+      end
       info 'initialized'
     end
 
@@ -27,8 +30,9 @@ module Kontena
           info 'fetching containers information'
           Docker::Container.all(all: true).each do |container|
             self.publish_info(container)
+            sleep 0.01
           end
-          sleep 60
+          sleep 50
         end
       }
     end
@@ -54,7 +58,7 @@ module Kontena
       return if labels['io.kontena.container.skip_logs']
 
       event = {
-        event: 'container:info',
+        event: 'container:info'.freeze,
         data: {
           node: self.node_info['ID'],
           container: data
