@@ -143,7 +143,7 @@ class WebsocketBackend
   ##
   # @param [Array] data
   def handle_rpc_response(data)
-    MongoPubsub.publish_async('rpc_client', {message: data})
+    MongoPubsub.publish_async("#{rpc_client}:#{data[1]}", {message: data})
   end
 
   ##
