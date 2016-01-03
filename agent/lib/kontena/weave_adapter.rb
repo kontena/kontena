@@ -120,12 +120,23 @@ module Kontena
             weave.delete(force: true)
           end
 
+          weave = nil
           peer_ips = info['peer_ips'] || []
-          self.exec([
-            '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-            '--password', ENV['KONTENA_TOKEN']
-            ] + peer_ips
-          )
+          until weave && weave.running? do
+            self.exec([
+              '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
+              '--password', ENV['KONTENA_TOKEN']
+              ] + peer_ips
+            )
+            weave = Docker::Container.get('weave') rescue nil
+            wait = Time.now.to_f + 10.0
+            sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
+
+            if weave.nil? || !weave.running?
+              self.exec(['--local', 'reset'])
+            end
+          end
+
           if peer_ips.size > 0
             info "router started with peers #{peer_ips.join(', ')}"
           else
