@@ -5,9 +5,6 @@ class MongoPubsub
   include Logging
 
   class Subscription
-    include Celluloid
-
-    finalizer :cleanup
     attr_reader :channel
 
     # @param [String] channel
@@ -15,33 +12,54 @@ class MongoPubsub
       @channel = channel
       @block = block
       @queue = []
-      async.process
+      @process = false
+      @stopped = false
     end
 
-    def process
-      sleep 0.001
-      @process = true
-      while @process == true
-        data = @queue.shift
-        send_message(data) if data
-        sleep 0.001
-      end
-      @queue.clear
+    def processing?
+      @process == true
+    end
+
+    def terminate
+      stop
+      MongoPubsub.unsubscribe(self)
+    end
+
+    def stop
+      @stopped = true
+    end
+
+    def stopped?
+      @stopped == true
     end
 
     def queue_message(data)
+      return if stopped?
       @queue << data
+      unless processing?
+        process
+      end
     end
 
     private
 
+    def process
+      @process = true
+      Celluloid::Future.new {
+        while @process == true && @stopped == false
+          data = @queue.shift
+          if data
+            send_message(data)
+          else
+            @process = false
+          end
+        end
+      }
+    end
+
     # @param [Hash] data
     def send_message(data)
       @block.call(data)
-    end
-
-    def cleanup
-      @process = false
     end
   end
 
@@ -59,7 +77,6 @@ class MongoPubsub
   # @return [Subscription]
   def subscribe(channel, block)
     subscription = Subscription.new(channel, block)
-    self.link subscription
     self.subscriptions << subscription
 
     subscription
@@ -67,7 +84,7 @@ class MongoPubsub
 
   # @param [Subscription] subscription
   def unsubscribe(subscription)
-    subscription.terminate if subscription.alive?
+    subscription.stop unless subscription.stopped?
     self.subscriptions.delete(subscription)
   end
 
@@ -99,6 +116,11 @@ class MongoPubsub
     @supervisor.actors.first.subscribe(channel, block)
   end
 
+  # @param [Subscription] subscription
+  def self.unsubscribe(subscription)
+    @supervisor.actors.first.unsubscribe(subscription)
+  end
+
   def self.start!(collection)
     @supervisor = self.supervise(collection)
   end
@@ -109,6 +131,10 @@ class MongoPubsub
       actor.unsubscribe(subscription)
     end
     actor.subscriptions = []
+  end
+
+  def self.subscriptions
+    @supervisor.actors.first.subscriptions
   end
 
   private
@@ -122,17 +148,12 @@ class MongoPubsub
         info "starting to tail collection"
         self.collection.find(query).sort(:$natural => 1).tailable.each do |item|
           channel = item['channel']
-          data = item['data'].freeze
-          subscribers = self.subscriptions.select{|s|
-            begin
-              s.alive? && s.channel == channel
-            rescue Celluloid::DeadActorError
-              false
-            end
-          }
+          data = item['data']
+
+          subscribers = self.subscriptions.select{|s| s.channel == channel }
           subscribers.each do |subscription|
             begin
-              subscription.async.queue_message(data) if subscription && subscription.alive?
+              subscription.queue_message(data.dup) if subscription
             rescue Celluloid::DeadActorError
             end
           end
@@ -158,9 +179,5 @@ class MongoPubsub
       )
       self.publish('test', {})
     end
-  end
-
-  def trap_subscription_exit(subscription, reason)
-    self.unsubscribe(subscription)
   end
 end
