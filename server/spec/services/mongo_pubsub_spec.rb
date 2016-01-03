@@ -69,5 +69,29 @@ describe MongoPubsub do
       GC.start
       expect(thread_count == Thread.list.count).to be_truthy
     end
+
+    it 'should perform' do
+      requests = []
+      responses = []
+      servers = []
+      clients = []
+      rounds = 100
+      start_time = Time.now.to_f
+      rounds.times do |i|
+        servers << described_class.subscribe("server:#{i}") {|msg|
+          requests << msg
+          described_class.publish("client:#{msg['request']}", {:response => i})
+        }
+        clients << described_class.subscribe("client:#{i}") {|msg|
+          responses << msg
+        }
+        described_class.publish_async("server:#{i}", {:request => i})
+      end
+      sleep 0.1 until responses.size == rounds
+      end_time = Time.now.to_f
+      duration = end_time - start_time
+      expect(responses.size).to eq(rounds)
+      expect(duration <= 1.0).to be_truthy
+    end
   end
 end

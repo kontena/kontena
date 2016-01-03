@@ -78,7 +78,7 @@ class RpcClient
       rescue
         raise RpcClient::TimeoutError.new(503, "Connection timeout (#{self.timeout}s)")
       ensure
-        subscription.terminate if subscription.alive?
+        subscription.terminate
       end
 
       [result, error]
