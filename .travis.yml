@@ -16,8 +16,6 @@ env:
   - TEST_DIR=cli
 matrix:
   exclude:
-    - rvm: 2.0
-      env: TEST_DIR=server
     - rvm: 2.1
       env: TEST_DIR=server
     - rvm: 2.0

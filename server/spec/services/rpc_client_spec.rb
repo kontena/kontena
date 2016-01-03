@@ -60,7 +60,7 @@ describe RpcClient do
       end_time = Time.now.to_f
       duration = end_time - start_time
       expect(responses.size).to eq(rounds)
-      expect(duration <= 1.0).to be_truthy
+      expect(duration <= 2.0).to be_truthy
 
       server.terminate
     end
