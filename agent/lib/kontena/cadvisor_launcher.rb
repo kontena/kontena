@@ -67,6 +67,7 @@ module Kontena
             '/var/lib/docker:/var/lib/docker:ro'
           ],
           'NetworkMode' => 'host',
+          'PidMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
