@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative 'mongo_pubsub'
 
 class RpcClient
@@ -38,9 +37,10 @@ class RpcClient
       id: self.node_id,
       message: [0, id, method, params]
     }
-    response_future = response(id)
+    response = []
+    subscription = subscribe_to_response(id, response)
     MongoPubsub.publish_async(RPC_CHANNEL, payload)
-    result, error = response_future.value
+    result, error = wait_for_response(subscription, response)
 
     if block_given?
       error = raise Error.new(error['code'], error['message'], error['backtrace']) if error
@@ -56,33 +56,32 @@ class RpcClient
 
   ##
   # @param [Fixnum] request_id
-  # @return [Celluloid::Future]
-  def response(request_id)
-    result = nil
-    error = nil
-    resp_received = false
-    subscription = MongoPubsub.subscribe(RPC_CHANNEL) do |msg|
+  # @param [Array] resp
+  # @return [MongoPubsub::Subscription]
+  def subscribe_to_response(request_id, resp)
+    MongoPubsub.subscribe("#{RPC_CHANNEL}:#{request_id}") do |msg|
       resp_message = msg['message']
       if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
         error = resp_message[2]
         result = resp_message[3]
-        resp_received = true
+        resp << result
+        resp << error
       end
     end
+  end
 
-    Celluloid::Future.new {
-      begin
-        Timeout::timeout(self.timeout) do
-          sleep 0.001 until resp_received
-        end
-      rescue
-        raise RpcClient::TimeoutError.new(503, "Connection timeout (#{self.timeout}s)")
-      ensure
-        subscription.terminate
-      end
-
-      [result, error]
-    }
+  # @param [MongoPubsub::Subscription] subscription
+  # @param [Array] resp
+  # @return [Array]
+  def wait_for_response(subscription, resp)
+    wait = self.timeout.to_i.seconds.from_now.to_f
+    sleep 0.01 until (resp.size == 2 || wait < Time.now.to_f)
+    unless resp.size == 2
+      raise RpcClient::TimeoutError.new(503, "Connection timeout (#{self.timeout}s)")
+    end
+    resp
+  ensure
+    subscription.terminate
   end
 
   # @param [String] method
