@@ -1,10 +1,10 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (4.1.8)
-      activesupport (= 4.1.8)
+    activemodel (4.1.14)
+      activesupport (= 4.1.14)
       builder (~> 3.1)
-    activesupport (4.1.8)
+    activesupport (4.1.14)
       i18n (~> 0.6, >= 0.6.9)
       json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
@@ -36,12 +36,12 @@ GEM
     jbuilder (2.2.5)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
-    json (1.8.2)
+    json (1.8.3)
     listen (2.8.3)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
-    minitest (5.6.1)
+    minitest (5.8.3)
     mongoid (4.0.2)
       activemodel (~> 4.0)
       moped (~> 2.0.0)
@@ -114,7 +114,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activesupport (~> 4.1.0)
+  activesupport (~> 4.1.14)
   celluloid (~> 0.16.0)
   dotenv
   faye-websocket (~> 0.10.0)
@@ -135,3 +135,6 @@ DEPENDENCIES
   tilt-jbuilder
   webmock
   websocket-driver (~> 0.6.2)
+
+BUNDLED WITH
+   1.10.6
