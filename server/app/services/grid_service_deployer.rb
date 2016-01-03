@@ -8,6 +8,7 @@ class GridServiceDeployer
   include DistributedLocks
 
   class NodeMissingError < StandardError; end
+  class DeployError < StandardError; end
 
   attr_reader :grid_service, :nodes, :scheduler
 
@@ -53,7 +54,7 @@ class GridServiceDeployer
   # @return [Celluloid::Future]
   def deploy_async(creds = nil)
     Celluloid::Future.new{
-      with_dlock("deploy_async/#{self.grid_service.id}", 0) do
+      unless self.grid_service.reload.deploying?
         self.deploy(creds)
       end
     }
@@ -69,6 +70,9 @@ class GridServiceDeployer
     self.configure_load_balancer
     deploy_rev = Time.now.utc.to_s
     deploy_futures = []
+    %w(TERM INT).each do |signal|
+      Signal.trap(signal) { self.grid_service.set_state('running') }
+    end
     total_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     total_instances.times do |i|
       instance_number = i + 1
@@ -81,19 +85,23 @@ class GridServiceDeployer
       unless node
         raise NodeMissingError.new("Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}")
       end
+      info "deploying service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
       deploy_futures << Celluloid::Future.new {
         self.deploy_service_instance(node, instance_number, deploy_rev, creds)
       }
       pending_deploys = deploy_futures.select{|f| !f.ready?}
-      if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size > 40
+      if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size >= 40
         info "throttling service instance #{self.grid_service.to_path} deploy because of min_health limit (#{pending_deploys.size} instances in-progress)"
         pending_deploys[0].value rescue nil
+        sleep 0.1 until pending_deploys.any?{|f| f.ready?}
+      end
+      if deploy_futures.any?{|f| f.ready? && f.value == false}
+        raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
       end
       sleep 0.1
     end
     deploy_futures.select{|f| !f.ready?}.each{|f| f.value }
 
-    sleep 0.1
     self.cleanup_deploy(total_instances, deploy_rev)
 
     info "service #{self.grid_service.to_path} has been deployed"
@@ -104,6 +112,11 @@ class GridServiceDeployer
     self.grid_service.set_state('running')
     error exc.message
     info "service #{self.grid_service.to_path} deploy cancelled"
+    false
+  rescue DeployError => exc
+    self.grid_service.set_state('running')
+    error exc.message
+    false
   rescue RpcClient::Error => exc
     self.grid_service.set_state('running')
     error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
@@ -147,17 +160,6 @@ class GridServiceDeployer
     end
   end
 
-  ##
-  # @param [Hash] creds
-  # @return [Celluloid::Future]
-  def deploy_async(creds = nil)
-    Celluloid::Future.new{
-      with_dlock("deploy_async/#{self.grid_service.id}") do
-        self.deploy(creds)
-      end
-    }
-  end
-
   # @return [Integer]
   def instance_count
     self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
@@ -176,7 +178,7 @@ class GridServiceDeployer
     self.wait_for_service_to_start(node, instance_number, deploy_rev)
     true
   rescue => exc
-    error "failed to deploy service instance #{self.grid_service.to_path}-#{instance_number}"
+    error "failed to deploy service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
     error exc.message
     false
   end
