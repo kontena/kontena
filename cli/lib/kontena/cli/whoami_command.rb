@@ -12,9 +12,11 @@ class Kontena::Cli::WhoamiCommand < Clamp::Command
     require_api_url
     puts "Master: #{self.current_master['name']}"
     puts "URL: #{api_url}"
+    puts "Grid: #{current_grid}"
     token = require_token
-    response = client(token).get('user')
-    puts "User: #{response['email']}"
+    user = client(token).get('user')
+    puts "User: #{user['email']}"
+
   end
 
 end
