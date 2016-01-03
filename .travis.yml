@@ -3,6 +3,7 @@ rvm:
   - 2.0
   - 2.1
   - 2.2
+  - 2.3
 cache: bundler
 addons:
   apt:
@@ -16,10 +17,6 @@ env:
   - TEST_DIR=cli
 matrix:
   exclude:
-    - rvm: 2.0
-      env: TEST_DIR=server
-    - rvm: 2.1
-      env: TEST_DIR=server
     - rvm: 2.0
       env: TEST_DIR=agent
     - rvm: 2.1
