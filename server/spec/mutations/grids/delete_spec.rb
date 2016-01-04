@@ -7,7 +7,14 @@ describe Grids::Delete do
     grid.users << user
     grid
   }
-  let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
+
+  let(:redis_service) {
+    GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')
+  }
+
+  let(:node) {
+    grid.host_nodes.create!(node_id: 'abc')
+  }
 
   describe '#run' do
     it 'deletes a grid' do
@@ -19,6 +26,12 @@ describe Grids::Delete do
 
     it 'returns error if grid has services' do
       redis_service
+      outcome = described_class.new(grid: grid).run
+      expect(outcome.errors.size).to eq(1)
+    end
+
+    it 'returns error if grid has nodes' do
+      node
       outcome = described_class.new(grid: grid).run
       expect(outcome.errors.size).to eq(1)
     end
