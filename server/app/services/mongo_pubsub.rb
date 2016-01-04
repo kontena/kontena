@@ -63,7 +63,6 @@ class MongoPubsub
     end
   end
 
-  trap_exit :trap_subscription_exit
   attr_accessor :collection, :subscriptions
 
   # @param [Moped::Collection]

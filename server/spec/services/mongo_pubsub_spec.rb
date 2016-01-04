@@ -70,7 +70,7 @@ describe MongoPubsub do
       expect(thread_count == Thread.list.count).to be_truthy
     end
 
-    it 'should perform' do
+    it 'should perform', performance: true do
       requests = []
       responses = []
       servers = []

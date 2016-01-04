@@ -32,7 +32,7 @@ describe Grid do
 
   describe '#overlay_network_size' do
     it 'should return subnet size from cidr' do
-      expect(subject.overlay_network_size).to eq('19')
+      expect(subject.overlay_network_size).to eq('23')
     end
   end
 
@@ -50,18 +50,7 @@ describe Grid do
 
     it 'should include all ips that are not in bridge subnet' do
       expect(subject.all_overlay_ips[0]).to eq('10.81.1.0')
-      expect(subject.all_overlay_ips.last).to eq('10.81.31.255')
-    end
-  end
-
-  describe '#available_overlay_ips' do
-    it 'should not include reserved ip' do
-      grid = Grid.create!(name: 'test')
-      container = grid.containers.create(name: 'foo-1')
-      grid.overlay_cidrs.create(
-        container: container, ip: "1081.2.12", subnet: subject.overlay_network_size
-      )
-      expect(grid.available_overlay_ips).not_to include(container.overlay_cidr.ip)
+      expect(subject.all_overlay_ips.last).to eq('10.81.1.255')
     end
   end
 

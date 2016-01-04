@@ -1,5 +1,5 @@
-require 'httpclient'
-require './app/helpers/random_name_helper'
+require 'celluloid'
+require_relative '../../helpers/random_name_helper'
 
 module Grids
   class Create < Mutations::Command
@@ -13,19 +13,28 @@ module Grids
 
     def execute
       self.name = generate_name if self.name.blank?
-      grid = Grid.create(
+      grid = Grid.new(
         name: self.name,
         initial_size: self.initial_size
       )
-      if grid.errors.size > 0
+      unless grid.save
         grid.errors.each do |key, message|
           add_error(key, :invalid, message)
         end
         return
+      else
+        initialize_subnet(grid)
       end
       user.grids << grid
 
       grid
+    end
+
+    def initialize_subnet(grid)
+      Celluloid::Future.new{
+        overlay_allocator = Docker::OverlayCidrAllocator.new(grid)
+        overlay_allocator.initialize_grid_subnet
+      }
     end
   end
 end

@@ -15,6 +15,7 @@ class ContainerCleanupJob
     loop do
       if leader?
         cleanup_stale_containers
+        cleanup_reserved_overlay_cidrs
         destroy_deleted_containers
 
         sleep 1.minute.to_i
@@ -29,6 +30,12 @@ class ContainerCleanupJob
       elsif c.host_node.nil?
         c.destroy
       end
+    end
+  end
+
+  def cleanup_reserved_overlay_cidrs
+    OverlayCidr.where(:reserved_at.ne => nil, :reserved_at.lt => 2.minutes.ago, :container_id => nil).each do |c|
+      c.set(:reserved_at => nil)
     end
   end
 
