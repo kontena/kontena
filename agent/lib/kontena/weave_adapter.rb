@@ -104,7 +104,7 @@ module Kontena
         end
         response
       ensure
-        container.delete(force: true) if container
+        container.delete(force: true, v: true) if container
       end
     end
 
