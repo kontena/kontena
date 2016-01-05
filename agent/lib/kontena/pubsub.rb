@@ -2,45 +2,61 @@ module Kontena
   class Pubsub
 
     class Subscription
-      include Celluloid
-
-      finalizer :cleanup
       attr_reader :channel
 
       # @param [String] channel
-      # @param [Proc] block
       def initialize(channel, block)
         @channel = channel
         @block = block
         @queue = []
-        async.process
+        @process = false
+        @stopped = false
       end
 
-      # @param [Object] msg
-      def push(msg)
-        @queue << msg
+      def processing?
+        @process == true
+      end
+
+      def terminate
+        stop
+        Pubsub.unsubscribe(self)
+      end
+
+      def stop
+        @stopped = true
+      end
+
+      def stopped?
+        @stopped == true
+      end
+
+      def push(data)
+        return if stopped?
+        @queue << data
+        unless processing?
+          process
+        end
       end
 
       private
 
       def process
-        sleep 0.001
         @process = true
-        while @process
-          msg = @queue.shift
-          send_message(msg) if msg
-          sleep 0.001
-        end
-        @queue.clear
+        Celluloid::Future.new {
+          while @process == true && @stopped == false
+            data = @queue.shift
+            if data
+              send_message(data)
+            else
+              @process = false
+            end
+          end
+        }
       end
 
-      # @param [Object] msg
-      def send_message(msg)
-        @block.call(msg)
-      end
-
-      def cleanup
-        @process = false
+      # @param [Hash] data
+      def send_message(data)
+        @block.call(data)
       end
     end
 
@@ -60,23 +76,17 @@ module Kontena
 
     # @param [Subscription]
     def self.unsubscribe(subscription)
-      subscription.terminate if subscription.alive?
+      subscription.stop unless subscription.stopped?
       subscriptions.delete(subscription)
     end
 
     # @param [String] channel
     # @param [Object] msg
     def self.publish(channel, msg)
-      receivers = subscriptions.select{|s|
-        begin
-          s.alive? && s.channel == channel
-        rescue Celluloid::DeadActorError
-          unsubscribe(s)
-        end
-      }
+      receivers = subscriptions.select{|s| s.channel == channel}
       receivers.each do |subscription|
         begin
-          subscription.async.push(msg)
+          subscription.push(msg)
         rescue
           unsubscribe(subscription)
         end
@@ -84,8 +94,10 @@ module Kontena
     end
 
     def self.clear!
-      subscriptions.each do |sub|
-        unsubscribe(sub)
+      while subscriptions.size > 0
+        subscriptions.each do |sub|
+          unsubscribe(sub)
+        end
       end
     end
   end

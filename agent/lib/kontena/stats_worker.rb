@@ -12,10 +12,6 @@ module Kontena
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
-      Pubsub.subscribe('service_pod:start') do |event|
-        self.collect_stats
-      end
-
       info 'initialized'
     end
 
@@ -38,6 +34,7 @@ module Kontena
         if data
           data.values.each do |container|
             self.send_container_stats(container)
+            sleep 0.1
           end
         end
       rescue => exc

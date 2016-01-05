@@ -4,7 +4,7 @@ describe Kontena::LogWorker do
 
   let(:queue) { Queue.new }
   let(:subject) { described_class.new(queue) }
-  let(:container) { double(:container, id: 'foo', info: {'Labels' => {}}) }
+  let(:container) { double(:container, id: 'foo', labels: {}) }
 
   describe '#stream_container_logs' do
     it 'starts to stream container logs immediately' do

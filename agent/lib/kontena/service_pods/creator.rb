@@ -45,9 +45,8 @@ module Kontena
         service_container.start
         info "service started: #{service_pod.name}"
 
-        notify_master(service_container, service_pod.deploy_rev)
         Pubsub.publish('service_pod:start', service_pod.name)
-        Pubsub.publish('stats:collect', nil)
+        Pubsub.publish('container:publish_info', service_container)
 
         self.run_hooks(service_container, 'post_start')
 

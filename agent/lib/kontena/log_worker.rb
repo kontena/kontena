@@ -32,18 +32,17 @@ module Kontena
     # @param [Docker::Container] container
     # @param [String] status
     def stream_container_logs(container, status)
-      labels = container.info['Labels'] || container.info['Config']['Labels']
+      labels = container.labels rescue nil
       return if labels && labels['io.kontena.container.skip_logs']
 
       @streaming_threads[container.id] = Thread.new {
-        if status == 'create'
+        if status == 'create'.freeze
           sleep 2
-          tail = 'all'
+          tail = 'all'.freeze
         else
           tail = 0
         end
         begin
-          debug "starting to stream logs for container: #{container.id}"
           stream_opts = {
             'stdout' => true,
             'stderr' => true,
@@ -53,6 +52,7 @@ module Kontena
           }
           container.streaming_logs(stream_opts) {|stream, chunk|
             self.on_message(container.id, stream, chunk)
+            sleep 0.01
           }
         rescue Excon::Errors::SocketError
           error "log socket error: #{container.id}"
@@ -73,7 +73,7 @@ module Kontena
     # @param [String] chunk
     def on_message(id, stream, chunk)
       self.queue << {
-          event: 'container:log',
+          event: 'container:log'.freeze,
           data: {
               id: id,
               time: Time.now.utc.xmlschema,
@@ -88,7 +88,6 @@ module Kontena
     def stop_streaming_container_logs(container_id)
       thread = @streaming_threads[container_id]
       if thread
-        info "stopped log streaming for container: #{container_id}"
         thread.kill
         thread.join
         @streaming_threads.delete(container_id)
@@ -99,7 +98,7 @@ module Kontena
     # @param [Docker::Event] event
     def on_container_event(event)
       if %w( stop die ).include?(event.status)
-        Thread.new {
+        Celluloid::Future.new {
           stop_streaming_container_logs(event.id)
         }
       elsif %w( start create ).include?(event.status)
