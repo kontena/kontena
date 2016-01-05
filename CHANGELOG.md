@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.3 (2016-01-05)
+
+- fix `app scale` command
+- cleanup weaveexec volumes
+
 ## 0.10.2 (2015-12-14)
 
 - fix shell spinner error on vpn & registry commands
