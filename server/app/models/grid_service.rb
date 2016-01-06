@@ -52,7 +52,6 @@ class GridService
   validates_presence_of :name, :image_name
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  scope :visible, -> { where(name: {'$nin' => ['vpn', 'registry']}) }
   scope :load_balancer, -> { where(image_name: LB_IMAGE) }
 
   # @return [String]
