@@ -35,7 +35,7 @@ module Docker
       grid.all_overlay_ips.each do |ip|
         next if ip[-2..-1] == skip_first || ip[-4..-1] == skip_last
         begin
-          OverlayCidr.with(safe: false).create(
+          OverlayCidr.with(write: {w: 0, j: false, fsync: false}).create(
               grid: grid,
               ip: ip,
               subnet: grid.overlay_network_size,

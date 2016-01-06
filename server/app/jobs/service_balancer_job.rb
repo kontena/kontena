@@ -5,6 +5,7 @@ class ServiceBalancerJob
   include Celluloid
   include Logging
   include CurrentLeader
+  include Workers
 
   def initialize
     async.perform
@@ -45,11 +46,6 @@ class ServiceBalancerJob
   # @param [GridService] service
   def balance_service(service)
     info "rebalancing service: #{service.to_path}"
-    outcome = GridServices::Deploy.run(
-      grid_service: service
-    )
-    unless outcome.success?
-      error "rebalancing failed: #{service.to_path}"
-    end
+    worker(:grid_service_scheduler).async.perform(service.id)
   end
 end

@@ -4,6 +4,8 @@ require_relative 'logging'
 
 class GridScheduler
   include Logging
+  include Workers
+
   attr_reader :grid
 
   # @param [Grid] grid
@@ -11,11 +13,8 @@ class GridScheduler
     @grid = grid
   end
 
-  # @return [Celluloid::Future]
   def reschedule
-    Celluloid::Future.new {
-      self.reschedule_services
-    }
+    self.reschedule_services
   end
 
   def reschedule_services
@@ -38,9 +37,7 @@ class GridScheduler
   # @param [GridService] service
   def reschedule_stateless_service(service)
     if should_reschedule_service?(service)
-      GridServices::Deploy.run(
-        grid_service: service
-      )
+      worker(:grid_service_scheduler).async.perform(service.id)
     else
       info "seems that re-scheduling does not change anything for #{service.to_path}... skipping"
     end

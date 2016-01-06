@@ -95,11 +95,13 @@ class WebsocketBackend
   def on_message(ws, event)
     data = MessagePack.unpack(event.data.pack('c*'))
     if agent_message?(data)
-      handle_agent_message(ws, data)
-    elsif rpc_request?(data)
-      handle_rpc_request(ws, data)
+      EM.next_tick {
+        handle_agent_message(ws, data)
+      }
     elsif rpc_response?(data)
-      handle_rpc_response(data)
+      EM.next_tick {
+        handle_rpc_response(data)
+      }
     end
   rescue => exc
     logger.error "Cannot unpack message, reason #{exc.message}"
@@ -120,13 +122,6 @@ class WebsocketBackend
   end
 
   ##
-  # @param [Object] data
-  # @return [Boolean]
-  def rpc_request?(data)
-    data.is_a?(Array) && data.size == 4 && data[0] == 0
-  end
-
-  ##
   # @param [Faye::WebSocket::Event] ws
   # @param [Hash] data
   def handle_agent_message(ws, data)
@@ -143,18 +138,7 @@ class WebsocketBackend
   ##
   # @param [Array] data
   def handle_rpc_response(data)
-    MongoPubsub.publish_async("#{rpc_client}:#{data[1]}", {message: data})
-  end
-
-  ##
-  # @param [Faye::WebSocket]
-  # @param [Array] data
-  def handle_rpc_request(ws, data)
-    client = client_for_ws(ws)
-    Thread.new {
-      response = RpcServer.handle_request(client[:grid_id].to_s, data)
-      ws.send(MessagePack.dump(response).bytes)
-    }
+    MongoPubsub.publish_async("rpc_client:#{data[1]}", {message: data})
   end
 
   ##
@@ -237,7 +221,7 @@ class WebsocketBackend
       self.send_message(client[:ws], msg['message'])
     end
   rescue => exc
-    logger.error "on_pubsub_message: #{exc.message}"
+    logger.error "on_rpc_message: #{exc.message}"
   end
 
   def watch_connections
