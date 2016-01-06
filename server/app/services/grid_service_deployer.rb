@@ -1,7 +1,6 @@
 require 'celluloid'
 require_relative 'logging'
 require_relative 'grid_service_scheduler'
-require_relative 'load_balancer_configurer'
 
 class GridServiceDeployer
   include Logging
@@ -58,7 +57,6 @@ class GridServiceDeployer
     self.grid_service.set_state('deploying')
     self.grid_service.set(:deployed_at => Time.now.utc)
 
-    self.configure_load_balancer
     deploy_rev = Time.now.utc.to_s
     deploy_futures = []
     %w(TERM).each do |signal|
@@ -191,19 +189,5 @@ class GridServiceDeployer
     else
       DEFAULT_REGISTRY
     end
-  end
-
-  def configure_load_balancer
-    load_balancers = self.grid_service.linked_to_load_balancers
-    return if load_balancers.size == 0
-
-    load_balancer = load_balancers[0]
-    node = self.grid_service.grid.host_nodes.connected.first
-    return unless node
-
-    lb_conf = LoadBalancerConfigurer.new(
-      node.rpc_client, load_balancer, self.grid_service
-    )
-    lb_conf.configure_async
   end
 end

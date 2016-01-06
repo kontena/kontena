@@ -47,7 +47,7 @@ module Kontena
     def create_data_container(image)
       data_container = Docker::Container.get('kontena-etcd-data') rescue nil
       unless data_container
-        data_container = Docker::Container.create(
+        Docker::Container.create(
           'name' => 'kontena-etcd-data',
           'Image' => image,
           'Volumes' => {'/var/lib/etcd' => {}}

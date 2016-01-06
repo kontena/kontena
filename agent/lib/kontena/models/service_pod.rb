@@ -1,13 +1,37 @@
 module Kontena
   module Models
     class ServicePod
-
-      attr_reader :service_name, :instance_number, :deploy_rev, :updated_at,
-                  :labels, :stateful, :image_name, :user, :cmd, :entrypoint, :memory,
-                  :memory_swap, :cpu_shares, :privileged, :cap_add, :cap_drop,
-                  :devices, :ports, :env, :volumes, :volumes_from, :net,
-                  :log_driver, :log_opts, :image_credentials, :pid,
-                  :hooks, :secrets
+      
+      attr_reader :service_name,
+                  :instance_number,
+                  :deploy_rev,
+                  :updated_at,
+                  :labels,
+                  :stateful,
+                  :image_name,
+                  :image_credentials,
+                  :user,
+                  :cmd,
+                  :entrypoint,
+                  :memory,
+                  :memory_swap,
+                  :cpu_shares,
+                  :privileged,
+                  :pid,
+                  :cap_add,
+                  :cap_drop,
+                  :devices,
+                  :ports,
+                  :env,
+                  :secrets,
+                  :volumes,
+                  :volumes_from,
+                  :net,
+                  :log_driver,
+                  :log_opts,
+                  :pid,
+                  :hooks,
+                  :secrets
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -59,6 +83,11 @@ module Kontena
       # @return [Boolean]
       def stateful?
         !self.stateless?
+      end
+
+      # @return [Boolean]
+      def load_balanced?
+        !self.labels['io.kontena.load_balancer.name'].nil?
       end
 
       # @return [String]

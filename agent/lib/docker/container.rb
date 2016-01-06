@@ -43,6 +43,15 @@ module Docker
       self.labels['io.kontena.container.overlay_cidr']
     end
 
+    # @return [Hash]
+    def env_hash
+      if @env_hash.nil?
+        @env_hash = cached_json['Config']['Env'].inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      end
+
+      @env_hash
+    end
+
     private
 
     # @return [Hash]
