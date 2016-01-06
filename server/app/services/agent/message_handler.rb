@@ -9,11 +9,19 @@ module Agent
 
     def run
       Thread.new {
+        i = 0
         loop do
           begin
-            message = @queue.pop
-            self.handle_message(message)
+            Mongoid::QueryCache.cache {
+              message = @queue.pop
+              self.handle_message(message)
+            }
+            i += 1
             Thread.pass
+            if i > 100
+              i = 0
+              Mongoid::QueryCache.clear_cache
+            end
           rescue => exc
             puts "#{exc.class.name}: #{exc.message}"
             puts exc.backtrace.join("\n") if exc.backtrace
@@ -25,7 +33,7 @@ module Agent
     ##
     # @param [Hash] message
     def handle_message(message)
-      grid = with_cache { Grid.find_by(id: message['grid_id']) }
+      grid = Grid.find_by(id: message['grid_id'])
       return if grid.nil?
 
       data = message['data']
@@ -49,7 +57,7 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_node_info(grid, data)
-      node = with_cache{ grid.host_nodes.find_by(node_id: data['ID']) }
+      node = grid.host_nodes.find_by(node_id: data['ID'])
       if !node
         node = grid.host_nodes.build
       end
@@ -69,7 +77,7 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_event(grid, data)
-      container = with_cache{ grid.containers.unscoped.find_by(container_id: data['id']) }
+      container = grid.containers.unscoped.find_by(container_id: data['id'])
       if container
         if data['status'] == 'destroy'
           container.mark_for_delete
@@ -84,7 +92,7 @@ module Agent
     # @param [String] node_id
     # @param [Hash] data
     def on_container_log(grid, node_id, data)
-      container = with_cache{ grid.containers.find_by(container_id: data['id']) }
+      container = grid.containers.find_by(container_id: data['id'])
       if container
         if data['time']
           created_at = Time.parse(data['time'])
@@ -108,7 +116,7 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_stat(grid, data)
-      container = with_cache{ grid.containers.find_by(container_id: data['id']) }
+      container = grid.containers.find_by(container_id: data['id'])
       if container
         data = fixnums_to_float(data)
         ContainerStat.with(write: {w: 0, fsync: false, j: false}).create(
@@ -147,10 +155,6 @@ module Agent
         end
         i += 1
       end
-    end
-
-    def with_cache
-      Mongoid::QueryCache.cache { yield }
     end
   end
 end

@@ -14,7 +14,7 @@ module Agent
       labels = info['Config']['Labels'] || {}
       node_id = data['node']
       container_id = data['container']['Id']
-      container = with_cache { grid.containers.unscoped.find_by(container_id: container_id) }
+      container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
         return false if container.deleted?
         self.update_service_container(node_id, container, info)
@@ -29,7 +29,7 @@ module Agent
     # @param [Container] container
     # @param [Hash] info
     def update_service_container(node_id, container, info)
-      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
+      node = grid.host_nodes.find_by(node_id: node_id)
       container.host_node = node if node
       self.update_container_attributes(container, info)
     end
@@ -53,8 +53,8 @@ module Agent
     def create_service_container(node_id, info)
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
-      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
-      service = with_cache { grid.grid_services.find_by(id: labels['io.kontena.service.id']) }
+      node = grid.host_nodes.find_by(node_id: node_id)
+      service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
       container = grid.containers.build(
         container_id: container_id,
         name: labels['io.kontena.container.name'],
@@ -73,7 +73,7 @@ module Agent
     # @param [Hash] info
     def create_container(node_id, info)
       container_id = info['Id']
-      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
+      node = grid.host_nodes.find_by(node_id: node_id)
       container = grid.containers.build(
         container_id: container_id,
         name: info['Name'].split("/")[1],
@@ -165,10 +165,6 @@ module Agent
           port_mapping: network['PortMapping'],
           ports: ports
       }
-    end
-
-    def with_cache
-      Mongoid::QueryCache.cache { yield }
     end
   end
 end
