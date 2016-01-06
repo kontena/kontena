@@ -1,6 +1,7 @@
 module HostNodes
   class Remove < Mutations::Command
-
+    include Workers
+    
     required do
       model :host_node
     end
@@ -10,7 +11,7 @@ module HostNodes
       self.host_node.destroy
 
       if grid
-        GridScheduler.new(grid).reschedule
+        worker(:grid_scheduler).async.perform(grid.id)
       end
     end
   end

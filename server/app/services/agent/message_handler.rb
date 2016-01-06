@@ -13,6 +13,7 @@ module Agent
           begin
             message = @queue.pop
             self.handle_message(message)
+            Thread.pass
           rescue => exc
             puts "#{exc.class.name}: #{exc.message}"
             puts exc.backtrace.join("\n") if exc.backtrace
@@ -24,7 +25,7 @@ module Agent
     ##
     # @param [Hash] message
     def handle_message(message)
-      grid = Grid.find_by(id: message['grid_id'])
+      grid = with_cache { Grid.find_by(id: message['grid_id']) }
       return if grid.nil?
 
       data = message['data']
@@ -73,7 +74,7 @@ module Agent
         if data['status'] == 'destroy'
           container.mark_for_delete
         elsif data['status'] == 'deployed'
-          container.set(:container_id => data['id'], :deploy_rev => data['deploy_rev'])
+          container.set(:deploy_rev => data['deploy_rev'])
         end
       end
     end
@@ -90,15 +91,15 @@ module Agent
         else
           created_at = Time.now.utc
         end
-        ContainerLog.with(safe: false).create(
-            grid: grid,
-            host_node_id: node_id,
-            grid_service: container.grid_service,
-            container: container,
-            created_at: created_at,
-            name: container.name,
-            type: data['type'],
-            data: data['data']
+        ContainerLog.with(write: {w: 0, fsync: false, j: false}).collection.insert(
+          grid_id: grid.id,
+          host_node_id: node_id,
+          grid_service_id: container.grid_service_id,
+          container_id: container.id,
+          created_at: created_at,
+          name: container.name,
+          type: data['type'],
+          data: data['data']
         )
       end
     end
@@ -110,7 +111,7 @@ module Agent
       container = with_cache{ grid.containers.find_by(container_id: data['id']) }
       if container
         data = fixnums_to_float(data)
-        ContainerStat.with(safe: false).create(
+        ContainerStat.with(write: {w: 0, fsync: false, j: false}).create(
             grid: grid,
             grid_service: container.grid_service,
             container: container,

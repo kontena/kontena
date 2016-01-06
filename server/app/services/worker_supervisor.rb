@@ -1,0 +1,5 @@
+class WorkerSupervisor < Celluloid::SupervisionGroup
+  pool GridSchedulerWorker, as: :grid_scheduler_worker
+  pool GridServiceSchedulerWorker, as: :grid_service_scheduler_worker
+  pool GridSubnetInitializerWorker, as: :grid_subnet_initializer_worker
+end

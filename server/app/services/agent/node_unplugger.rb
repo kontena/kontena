@@ -2,6 +2,7 @@ require_relative '../grid_scheduler'
 
 module Agent
   class NodeUnplugger
+    include Workers
 
     attr_reader :node, :grid
 
@@ -13,14 +14,12 @@ module Agent
 
     # @return [Celluloid::Future]
     def unplug!
-      Celluloid::Future.new {
-        begin
-          self.update_node
-          self.reschedule_services
-        rescue => exc
-          puts exc.message
-        end
-      }
+      begin
+        self.update_node
+        self.reschedule_services
+      rescue => exc
+        puts exc.message
+      end
     end
 
     def update_node
@@ -28,8 +27,7 @@ module Agent
     end
 
     def reschedule_services
-      sleep 5
-      GridScheduler.new(grid).reschedule
+      worker(:grid_scheduler).async.later(60, grid_id)
     end
   end
 end

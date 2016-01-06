@@ -36,6 +36,7 @@ class Container
   index({ deleted_at: 1 }, {sparse: true})
   index({ container_id: 1 })
   index({ state: 1 })
+  index({ name: 1 })
 
   default_scope -> { where(deleted_at: nil, container_type: 'container') }
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
@@ -73,7 +74,10 @@ class Container
   end
 
   def mark_for_delete
-    self.update_attribute(:deleted_at, Time.now.utc)
+    self.set(:deleted_at => Time.now.utc)
+    if self.overlay_cidr
+      self.overlay_cidr.set(:container_id => nil, :reserved_at => nil)
+    end
   end
 
   def running?
