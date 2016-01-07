@@ -20,7 +20,7 @@ $ kontena vault write <name> <value>
 ### List Secrets
 
 ```
-$ kontean vault list
+$ kontena vault list
 ```
 
 ### Read a Secret
@@ -34,7 +34,7 @@ $ kontena vault read <name>
 ### Remove a Secret
 
 ```
-$ kontean vault rm <name>
+$ kontena vault rm <name>
 ```
 
 ### Using Secrets with Services
