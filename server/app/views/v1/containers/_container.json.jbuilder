@@ -2,25 +2,23 @@ json.id container.to_path
 json.name container.name
 json.container_id container.container_id
 json.grid_id container.grid_id.to_s
-Mongoid::QueryCache.cache do
-  json.node do
-    if container.host_node
-      host_node = container.host_node
-      json.id host_node.node_id
-      json.connected host_node.connected
-      json.last_seen_at host_node.last_seen_at
-      json.name host_node.name
-      json.labels host_node.labels
-      json.public_ip host_node.public_ip
-      json.private_ip host_node.private_ip
-      json.node_number host_node.node_number
-      json.grid do
-        grid = host_node.grid
-        json.id grid.to_path
-        json.name grid.name
-        json.token grid.token
-        json.initial_size grid.initial_size
-      end
+json.node do
+  if container.host_node
+    host_node = container.host_node
+    json.id host_node.node_id
+    json.connected host_node.connected
+    json.last_seen_at host_node.last_seen_at
+    json.name host_node.name
+    json.labels host_node.labels
+    json.public_ip host_node.public_ip
+    json.private_ip host_node.private_ip
+    json.node_number host_node.node_number
+    json.grid do
+      grid = host_node.grid
+      json.id grid.to_path
+      json.name grid.name
+      json.token grid.token
+      json.initial_size grid.initial_size
     end
   end
 end
