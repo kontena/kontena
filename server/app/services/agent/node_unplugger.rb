@@ -12,7 +12,6 @@ module Agent
       @grid = node.grid
     end
 
-    # @return [Celluloid::Future]
     def unplug!
       begin
         self.update_node
@@ -27,7 +26,7 @@ module Agent
     end
 
     def reschedule_services
-      worker(:grid_scheduler).async.later(60, grid_id)
+      worker(:grid_scheduler).async.later(60, grid.id)
     end
   end
 end
