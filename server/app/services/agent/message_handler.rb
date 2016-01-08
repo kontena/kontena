@@ -1,10 +1,18 @@
 module Agent
   class MessageHandler
+    include Logging
+
+    attr_reader :db_session
 
     ##
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
+      @db_session = ContainerLog.collection.session.with(
+        write: {
+          w: 0, fsync: false, j: false
+        }
+      )
     end
 
     def run
@@ -18,13 +26,13 @@ module Agent
             }
             i += 1
             Thread.pass
-            if i > 100
+            if i > 1000
               i = 0
               Mongoid::QueryCache.clear_cache
             end
           rescue => exc
-            puts "#{exc.class.name}: #{exc.message}"
-            puts exc.backtrace.join("\n") if exc.backtrace
+            error "#{exc.class.name}: #{exc.message}"
+            error exc.backtrace.join("\n") if exc.backtrace
           end
         end
       }
@@ -49,7 +57,7 @@ module Agent
         when 'container:stats'.freeze
           self.on_container_stat(grid, data['data'])
         else
-          puts "unknown event: #{message}"
+          error "unknown event: #{message}"
       end
     end
 
@@ -99,7 +107,7 @@ module Agent
         else
           created_at = Time.now.utc
         end
-        ContainerLog.with(write: {w: 0, fsync: false, j: false}).collection.insert(
+        db_session[:container_logs].insert(
           grid_id: grid.id,
           host_node_id: node_id,
           grid_service_id: container.grid_service_id,
@@ -116,13 +124,15 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_stat(grid, data)
+      return if @queue.length > 100
+
       container = grid.containers.find_by(container_id: data['id'])
       if container
         data = fixnums_to_float(data)
-        ContainerStat.with(write: {w: 0, fsync: false, j: false}).create(
-            grid: grid,
-            grid_service: container.grid_service,
-            container: container,
+        db_session[:container_stats].insert(
+            grid_id: grid.id,
+            grid_service_id: container.grid_service_id,
+            container_id: container.id,
             spec: data['spec'],
             cpu: data['cpu'],
             memory: data['memory'],
