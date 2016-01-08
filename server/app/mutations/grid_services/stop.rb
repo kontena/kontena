@@ -21,7 +21,9 @@ module GridServices
 
     def stop_service_instances
       self.grid_service.containers.each do |container|
-        Docker::ServiceStopper.new(container.host_node).stop_service_instance(container.name)
+        if container.running?
+          Docker::ServiceStopper.new(container.host_node).stop_service_instance(container.name)
+        end
       end
     end
   end
