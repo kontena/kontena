@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 ruby '2.2.3'
 
-gem 'rack', '~> 1.5.2'
+gem 'rack', '~> 1.6.4'
 gem 'roda', '~> 2.5.0'
 gem 'celluloid', '~> 0.16.0'
 gem 'tilt-jbuilder'
