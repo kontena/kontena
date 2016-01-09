@@ -16,7 +16,6 @@ module Agent
       container_id = data['container']['Id']
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
-        return false if container.deleted?
         self.update_service_container(node_id, container, info)
       elsif !labels['io.kontena.service.id'].nil?
         self.create_service_container(node_id, info)
@@ -38,13 +37,12 @@ module Agent
     # @param [Hash] info
     def update_container_attributes(container, info)
       attributes = self.container_attributes_from_docker(container, info)
-      return false if container.deleted?
 
       if container.new_record?
         container.save
       else
         attributes[:host_node_id] = container.host_node.try(:id)
-        container.set(attributes)
+        container.with(write: {w: 0, j: false, fsync: false}).set(attributes)
       end
     end
 
@@ -103,6 +101,7 @@ module Agent
               oom_killed: state['OOMKilled'],
               paused: state['Paused'],
               restarting: state['Restarting'],
+              dead: state['Dead'],
               running: state['Running']
           },
           updated_at: Time.now.utc,

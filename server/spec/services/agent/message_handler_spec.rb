@@ -11,7 +11,7 @@ describe Agent::MessageHandler do
       container = grid.containers.create!(container_id: SecureRandom.hex(16))
       expect {
         subject.on_container_event(grid, {'id' => container.container_id, 'status' => 'destroy'})
-      }.to change{ grid.containers.count }.by(-1)
+      }.to change{ grid.containers.unscoped.count }.by(-1)
     end
   end
 

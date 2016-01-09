@@ -87,6 +87,15 @@ describe GridService do
       subject.containers.create!(name: "test-2", state: {running: false})
       expect(subject.all_instances_exist?).to eq(false)
     end
+
+    it 'returns true if containers are marked as deleted' do
+      2.times{|i|
+        subject.containers.create!(
+          name: "test-#{i}", state: {running: true}, deleted_at: Time.now.utc
+          )
+      }
+      expect(subject.all_instances_exist?).to eq(true)
+    end
   end
 
   describe '#set_state' do

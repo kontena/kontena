@@ -41,6 +41,12 @@ describe Docker::Container do
     end
   end
 
+  describe '#config' do
+    it 'returns Config hash' do
+      expect(subject.config.keys).to include('Labels')
+    end
+  end
+
   describe '#restart_policy' do
     it 'returns HostConfig.RestartPolicy hash' do
       expect(subject.restart_policy).to include('Name' => 'always')

@@ -12,6 +12,14 @@ module Kontena
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
+    # @param [Docker::Container] container
+    # @return [Boolean]
+    def adapter_container?(container)
+      container.config['Image'].include?(WEAVEEXEC_IMAGE)
+    rescue Docker::Error::NotFoundError
+      false
+    end
+
     # @param [Hash] opts
     def modify_create_opts(opts)
       ensure_weave_wait
@@ -165,8 +173,10 @@ module Kontena
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
+          info "pulling #{image}"
           Docker::Image.create({'fromImage' => image})
           sleep 1 until Docker::Image.exist?(image)
+          info "image #{image} pulled "
         end
       end
     end

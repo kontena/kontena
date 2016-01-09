@@ -4,8 +4,6 @@ module Kontena
   class StatsWorker
     include Kontena::Logging
 
-    INTERVAL = 60
-
     attr_reader :url, :queue
 
     ##
@@ -20,9 +18,9 @@ module Kontena
         info 'waiting for cadvisor'
         sleep 1 until cadvisor_running?
         info 'cadvisor is running, starting stats loop'
+        last_collected = Time.now.to_i
         loop do
-          sleep INTERVAL
-          debug 'fetching stats'
+          sleep 1 until last_collected < (Time.now.to_i - 60)
           self.collect_stats
         end
       }
@@ -34,7 +32,7 @@ module Kontena
         if data
           data.values.each do |container|
             self.send_container_stats(container)
-            sleep 0.1
+            sleep 0.5
           end
         end
       rescue => exc

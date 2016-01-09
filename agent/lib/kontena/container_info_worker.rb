@@ -11,12 +11,15 @@ module Kontena
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
-
+      @weave_adapter = WeaveAdapter.new
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event) rescue nil
       end
       Pubsub.subscribe('container:publish_info') do |container|
         self.publish_info(container) rescue nil
+      end
+      Pubsub.subscribe('websocket:connected') do |event|
+        self.publish_all_containers
       end
       info 'initialized'
     end
@@ -26,24 +29,27 @@ module Kontena
     #
     def start!
       Thread.new {
-        loop do
-          info 'fetching containers information'
-          Docker::Container.all(all: true).each do |container|
-            self.publish_info(container)
-            sleep 0.01
-          end
-          sleep 50
-        end
+        info 'fetching containers information'
+        self.publish_all_containers
       }
+    end
+
+    def publish_all_containers
+      Docker::Container.all(all: true).each do |container|
+        self.publish_info(container)
+        sleep 0.05
+      end
     end
 
     ##
     # @param [Docker::Event] event
     def on_container_event(event)
-      return if event.status == 'destroy'
+      return if event.status == 'destroy'.freeze
 
       container = Docker::Container.get(event.id)
-      self.publish_info(container) if container
+      if container && !@weave_adapter.adapter_container?(container)
+        self.publish_info(container)
+      end
     rescue Docker::Error::NotFoundError
       self.publish_destroy_event(event)
     rescue => exc
@@ -64,7 +70,6 @@ module Kontena
           container: data
         }
       }
-      debug event
       self.queue << event
     rescue Docker::Error::NotFoundError
     rescue => exc
