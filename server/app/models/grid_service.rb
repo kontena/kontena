@@ -86,7 +86,9 @@ class GridService
 
   # @return [Boolean]
   def all_instances_exist?
-    self.containers.where('state.running' => true).count >= self.container_count
+    self.containers.unscoped.where(
+      'container_type' => 'container', 'state.running' => true
+    ).count >= self.container_count
   end
 
   # @return [Boolean]

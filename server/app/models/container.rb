@@ -55,19 +55,17 @@ class Container
   def status
     return 'deleted' if self.deleted_at
 
-    if self.updated_at.nil? || self.updated_at < (Time.now.utc - 2.minutes)
-      return 'unknown'
-    end
-
     s = self.state
     if s['paused']
       'paused'
-    elsif s['running']
-      'running'
     elsif s['restarting']
       'restarting'
     elsif s['oom_killed']
       'oom_killed'
+    elsif s['dead']
+      'dead'
+    elsif s['running']
+      'running'
     else
       'stopped'
     end

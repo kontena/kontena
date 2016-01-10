@@ -88,7 +88,7 @@ module Agent
       container = grid.containers.unscoped.find_by(container_id: data['id'])
       if container
         if data['status'] == 'destroy'
-          container.mark_for_delete
+          container.destroy
         elsif data['status'] == 'deployed'
           container.set(:deploy_rev => data['deploy_rev'])
         end

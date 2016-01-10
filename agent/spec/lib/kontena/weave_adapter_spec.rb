@@ -6,6 +6,18 @@ describe Kontena::WeaveAdapter do
     allow(subject).to receive(:ensure_weave_wait).and_return(true)
   end
 
+  describe '#adapter_container' do
+    it 'returns true if weave exec container' do
+      container = spy(:container, :config => {'Image' => 'weaveworks/weaveexec:latest'})
+      expect(subject.adapter_container?(container)).to be_truthy
+    end
+
+    it 'returns false if not weave exec container' do
+      container = spy(:container, :config => {'Image' => 'redis:latest'})
+      expect(subject.adapter_container?(container)).to be_falsey
+    end
+  end
+
   describe '#modify_host_config' do
     it 'adds weavewait to empty VolumesFrom' do
       opts = {}

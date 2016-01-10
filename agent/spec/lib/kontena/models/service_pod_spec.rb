@@ -383,4 +383,15 @@ describe Kontena::Models::ServicePod do
       })
     end
   end
+
+  describe '#load_balanced?' do
+    it 'returns true if labels include info' do
+      data['labels']['io.kontena.load_balancer.name'] = 'lb'
+      expect(subject.load_balanced?).to be_truthy
+    end
+
+    it 'returns false if labels does not have info about lb' do
+      expect(subject.load_balanced?).to be_falsey
+    end
+  end
 end

@@ -12,24 +12,13 @@ class ContainerCleanupJob
 
   def perform
     info 'starting to cleanup stale containers'
+    sleep 0.1
     loop do
       if leader?
-        cleanup_stale_containers
         cleanup_reserved_overlay_cidrs
         destroy_deleted_containers
-
-        sleep 1.minute.to_i
       end
-    end
-  end
-
-  def cleanup_stale_containers
-    Container.where(:updated_at.lt => 2.minutes.ago).each do |c|
-      if c.host_node && c.host_node.connected?
-        c.mark_for_delete
-      elsif c.host_node.nil?
-        c.destroy
-      end
+      sleep 1.minute.to_i
     end
   end
 

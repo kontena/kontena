@@ -10,37 +10,8 @@ describe ContainerCleanupJob do
   let(:node3) { HostNode.create!(name: "node-3", connected: true, last_seen_at: 3.seconds.ago) }
   let(:subject) { described_class.new(false) }
 
-  describe '#cleanup_stale_containers' do
-    it 'marks container for deletion if node is not connected and container is not updated' do
-      Container.create!(
-        name: 'foo-1', host_node: node2, grid: grid, updated_at: 5.minutes.ago
-      )
-      expect {
-        subject.cleanup_stale_containers
-      }.to change{ Container.deleted.count }.by(1)
-    end
-
-    it 'destroys container if host node has been removed' do
-      Container.create!(
-        name: 'foo-1', grid: grid, updated_at: 5.minutes.ago
-      )
-      expect {
-        subject.cleanup_stale_containers
-      }.to change{ Container.unscoped.count }.by(-1)
-    end
-
-    it 'does not touch container that has been updated within two minutes' do
-      Container.create!(
-        name: 'foo-1', host_node: node2, grid: grid, updated_at: 1.minute.ago
-      )
-      expect {
-        subject.cleanup_stale_containers
-      }.to change{ Container.deleted.count }.by(0)
-    end
-  end
-
   describe '#destroy_deleted_containers' do
-    it 'destroys containers that have been marked for deletetion' do
+    it 'destroys containers that have been marked for deletion' do
       Container.create!(
         name: 'foo-1', host_node: node2, grid: grid, deleted_at: 1.minutes.ago
       )

@@ -14,6 +14,11 @@ module Docker
     end
 
     # @return [Hash]
+    def config
+      cached_json['Config']
+    end
+
+    # @return [Hash]
     def state
       self.json['State']
     end

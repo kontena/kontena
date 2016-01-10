@@ -44,11 +44,6 @@ describe Container do
       expect(subject.status).to eq('deleted')
     end
 
-    it 'returns unknown if updated_at timestamp is far enough in the past' do
-      subject.updated_at = Time.now.utc - 3.minutes
-      expect(subject.status).to eq('unknown')
-    end
-
     it 'returns paused if docker state is paused' do
       subject.updated_at = Time.now
       subject.state['paused'] = true
@@ -77,6 +72,12 @@ describe Container do
       subject.updated_at = Time.now
       subject.state['oom_killed'] = true
       expect(subject.status).to eq('oom_killed')
+    end
+
+    it 'returns dead if docker state is dead' do
+      subject.updated_at = Time.now
+      subject.state['dead'] = true
+      expect(subject.status).to eq('dead')
     end
 
     it 'returns stopped otherwise' do

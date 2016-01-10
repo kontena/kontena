@@ -32,7 +32,7 @@ module Agent
 
     def reschedule_services(prev_seen_at)
       return if !prev_seen_at.nil? && prev_seen_at > 2.minutes.ago.utc
-      worker(:grid_scheduler).async.later(5, grid.id)
+      worker(:grid_scheduler).async.later(30, grid.id)
     end
 
     def send_node_info
