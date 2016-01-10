@@ -2,12 +2,12 @@ api:
   build: .
   dockerfile: Dockerfile.alpine
   ports:
-    - 4040:9292
+    - 80:9292
   environment:
     - RACK_ENV=production
     - MONGODB_URI=mongodb://mongodb:27017/kontena_development
   links:
    - mongodb
 mongodb:
-  image: mongo:2.8
+  image: mongo:3.0
   command: mongod --smallfiles
