@@ -13,6 +13,11 @@ write_files:
     content: |
         [Service]
         Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/19" --bip="172.17.43.1/16"'
+  - path: /etc/sysctl.d/99-inotify.conf
+    owner: root
+    permissions: 0644
+    content: |
+      fs.inotify.max_user_instances = 8192
 coreos:
   units:
     - name: 00-eth.network
