@@ -15,8 +15,10 @@ module GridServices
     end
 
     def execute
-      self.grid_service.set(:deploy_requested_at => Time.now.utc)
-
+      self.grid_service.set(
+        :deploy_requested_at => Time.now.utc,
+        :state => 'deploy_pending'
+      )
       worker(:grid_service_scheduler).async.perform(self.grid_service.id)
 
       self.grid_service

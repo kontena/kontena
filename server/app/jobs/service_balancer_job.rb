@@ -46,6 +46,7 @@ class ServiceBalancerJob
   # @param [GridService] service
   def balance_service(service)
     info "rebalancing service: #{service.to_path}"
+    service.set_state('deploy_pending')
     worker(:grid_service_scheduler).async.perform(service.id)
   end
 end

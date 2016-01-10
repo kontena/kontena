@@ -84,6 +84,10 @@ class GridService
     self.state == 'running'
   end
 
+  def deploy_pending?
+    self.state == 'deploy_pending'
+  end
+
   # @return [Boolean]
   def all_instances_exist?
     self.containers.unscoped.where(

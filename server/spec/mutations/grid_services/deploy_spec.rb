@@ -30,5 +30,12 @@ describe GridServices::Deploy do
         subject.run
       }.to change{ redis_service.reload.deploy_requested_at }
     end
+
+    it 'sets state to deploy_pending' do
+      allow(subject).to receive(:worker).with(:grid_service_scheduler).once.and_return(worker)
+      expect {
+        subject.run
+      }.to change{ redis_service.reload.deploy_pending? }.from(false).to(true)
+    end
   end
 end
