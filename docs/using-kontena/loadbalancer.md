@@ -15,6 +15,8 @@ The Kontena Load Balancer key features:
 * Fully automated configuration
 * Dynamic routing
 * Support for TCP and HTTP traffic
+* SSL termination on multiple certificates
+* Link certificates from Kontena Vault
 
 ## Using Kontena Load Balancer
 
@@ -65,6 +67,64 @@ galera:
     - galera_lb
 ```
 
+## SSL Termination
+
+Kontena Load Balancer supports ssl termination on multiple certificates. These certificates can be configured to load balancer by setting `SSL_CERTS` environment variable. Recommended way to do this is by using Kontena Vault.
+
+The certificate specified in Kontena Load Balancer is a pem file, containing a public certificate followed by a private key (public certificate must be put before the private key, order matters).
+
+You can run the following script to generate a self-signed certificate:
+
+```
+$ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out ca.pem -days 1080 -nodes -subj '/CN=*/O=My Company Name LTD./C=US'
+$ cat ca.pem key.pem > cert.pem
+```
+
+Once you have the pem file, you can save it to the Kontena Vault:
+
+```
+$ kontena vault write my_company_cert "$(cat cert.pem)"
+```
+
+And finally you can link the certificate from Vault to your load balancer:
+
+```
+loadbalancer:
+  image: kontena/lb:latest
+  ports:
+    - 443:443
+  secrets:
+    - secret: my_company_cert
+      name: SSL_CERTS
+      type: env
+```
+
+
+#### An example with 2 certificates (www.domain.com and api.domain.com):
+
+Write certificates to Kontena Vault:
+
+```
+$ kontena vault write www_domain_com_cert "$(cat www_domain_com.pem)"
+$ kontena vault write api_domain_com_cert "$(cat api_domain_com.pem)"
+```
+(pem files must contain both public certificate and private key)
+
+Map secrets from Vault to lb service:
+
+```
+loadbalancer:
+  image: kontena/lb:latest
+  ports:
+    - 443:443
+  secrets:
+    - secret: www_domain_com_cert
+      name: SSL_CERTS
+      type: env
+    - secret: api_domain_com_cert
+      name: SSL_CERTS
+      type: env
+```
 
 ## Config Env variables for balanced services
 
@@ -75,7 +135,3 @@ galera:
 * `KONTENA_LB_VIRTUAL_HOSTS`: comma separated list of virtual hosts (only for http mode)
 * `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request, example "/api" (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings, each line will be appended to either related backend section or listen session in the HAProxy configuration file
-
-## Config env variables for load balancer
-
-* `SSL_CERTS`: one or more ssl certificates that are used to terminate ssl connections, first certificate is used as default
