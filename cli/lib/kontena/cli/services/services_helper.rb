@@ -79,6 +79,15 @@ module Kontena
             end
           end
 
+          if service['secrets'].to_a.size > 0
+            puts "  secrets: "
+            service['secrets'].to_a.each do |s|
+              puts "    - secret: #{s['secret']}"
+              puts "      secret: #{s['name']}"
+              puts "      type: #{s['type']}"
+            end
+          end
+
           if service['env'].to_a.size > 0
             puts "  env: "
             service['env'].to_a.each do |e|

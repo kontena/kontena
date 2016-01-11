@@ -12,6 +12,7 @@ json.entrypoint grid_service.entrypoint
 json.net grid_service.net
 json.ports grid_service.ports
 json.env grid_service.env
+json.secrets grid_service.secrets.as_json(only: [:secret, :name, :type])
 json.memory grid_service.memory
 json.memory_swap grid_service.memory_swap
 json.cpu_shares grid_service.cpu_shares
