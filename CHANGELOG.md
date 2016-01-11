@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.11.0 (2016-01-10)
+
+- secrets management (vault)
+- multi master management in cli
+- heroku support
+- new overlay cidr allocator
+- fix memory leak in pubsub
+- agent message handler performance improvements
+- improve rpc client performance
+- improve agent cpu & mem usage
+- optimize service start/stop mutations
+- show vpn & registry services in service list
+- add short rm for remove subcommands
+- reject grid remove if grid has nodes
+- halt deploy if deployer notices timeout
+- use PidMode=host with cadvisor
+- refactor lb configuration logic from master to agents
+- change service state to deploy_pending when rebalancing or manual deploy is triggered
+- switch to puma cluster mode & allow to define puma workers/threads via env variables
+- try to acquire distributed lock only once if timeout is zero
+- pass `external-registry add` values as options
+- rewrite container `/etc/hosts` file with weave
+- new parameter `grid env [NAME]` to specify grid, defaults to current grid
+- new option `grid current --name` to show only current grid name
+- new option `node list --all` to show nodes from all grids
+- fix `app logs` error when some of the defined services does not exist in master
+- tab complete `master use` names
+- raise inotify max user instances in node cloudinit.yml
+- require ruby 2.0 or later in kontena-cli
+- update weave to 1.4.1
+- update docker-api to latest version
+- update puma & rack to latest version
+- update msgpack to latest version
+- update faye-websocket to latest version
+- update activesupport to latest patch version
+- update kontena master tagline
+
 ## 0.10.3 (2016-01-05)
 
 - fix `app scale` command
