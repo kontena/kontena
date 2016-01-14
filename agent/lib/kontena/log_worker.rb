@@ -52,7 +52,6 @@ module Kontena
           }
           container.streaming_logs(stream_opts) {|stream, chunk|
             self.on_message(container.id, stream, chunk)
-            sleep 0.01
           }
         rescue Excon::Errors::SocketError
           error "log socket error: #{container.id}"
