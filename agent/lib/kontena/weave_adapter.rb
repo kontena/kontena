@@ -20,6 +20,13 @@ module Kontena
       false
     end
 
+    # @return [Boolean]
+    def running?
+      weave = Docker::Container.get('weave') rescue nil
+      return false if weave.nil?
+      weave.running?
+    end
+
     # @param [Hash] opts
     def modify_create_opts(opts)
       ensure_weave_wait
