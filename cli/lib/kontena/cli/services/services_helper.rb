@@ -83,7 +83,7 @@ module Kontena
             puts "  secrets: "
             service['secrets'].to_a.each do |s|
               puts "    - secret: #{s['secret']}"
-              puts "      secret: #{s['name']}"
+              puts "      name: #{s['name']}"
               puts "      type: #{s['type']}"
             end
           end
