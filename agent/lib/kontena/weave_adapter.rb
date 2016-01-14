@@ -8,7 +8,7 @@ module Kontena
     include Helpers::IfaceHelper
     include Kontena::Logging
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.4.1'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.4.2'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
