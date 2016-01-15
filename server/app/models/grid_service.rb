@@ -97,7 +97,8 @@ class GridService
 
   # @return [Boolean]
   def load_balancer?
-    self.image_name.to_s.include?(LB_IMAGE)
+    self.image_name.to_s.include?(LB_IMAGE) ||
+      (self.env && self.env.include?('KONTENA_SERVICE_ROLE=lb'))
   end
 
   # @return [Boolean]
