@@ -18,6 +18,28 @@ describe Kontena::WeaveAdapter do
     end
   end
 
+  describe '#running?' do
+    it 'returns true if weave is running' do
+      weave = spy(:weave, :running? => true)
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.running?).to be_truthy
+    end
+
+    it 'returns false if weave is not running' do
+      weave = spy(:weave, :running? => false)
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns false if weave does not exist' do
+      weave = spy(:weave, :running? => false)
+      allow(Docker::Container).to receive(:get).with('weave') {
+        raise Docker::Error::NotFoundError.new
+      }
+      expect(subject.running?).to be_falsey
+    end
+  end
+
   describe '#modify_host_config' do
     it 'adds weavewait to empty VolumesFrom' do
       opts = {}

@@ -27,6 +27,9 @@ module Kontena
           service_pod.volumes_from << data_container.id
         end
         service_container = get_container(service_pod.name)
+
+        sleep 1 until overlay_adapter.running?
+
         if service_container
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
