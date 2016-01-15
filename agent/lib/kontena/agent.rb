@@ -37,14 +37,14 @@ module Kontena
       return if self.started?
       @started = true
       @node_info_worker.start!
-      @weave_adapter.start(node_info).value
-      @etcd_launcher.start(node_info).value
-
-      @weave_attacher.start!
       @container_info_worker.start!
       @log_worker.start!
-      @event_worker.start!
       @lb_registrator.start!
+      @event_worker.start!
+
+      @weave_adapter.start(node_info).value
+      @weave_attacher.start!
+      @etcd_launcher.start(node_info).value
 
       @cadvisor_launcher.start.value
       @stats_worker.start!
