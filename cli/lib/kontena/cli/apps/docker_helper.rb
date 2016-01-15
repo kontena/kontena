@@ -26,14 +26,11 @@ module Kontena::Cli::Apps
 
 
     def build_docker_image(name, path, dockerfile, no_cache=false)
-      if dockerfile != "Dockerfile"
-        dockerfile = File.join(File.expand_path(path), dockerfile)
-        dockerfile_option = "-f #{dockerfile }"
-      end
-      cache_option = "--no-cache" if no_cache
-
-      ret = system("docker build -t #{name} #{dockerfile_option} #{cache_option} #{path}".strip.gsub(/\s+/, " "))
-
+      cmd = ["docker build -t #{name}"]
+      cmd << "-f #{File.join(File.expand_path(path), dockerfile)}" if dockerfile != "Dockerfile"
+      cmd << "--no-cache" if no_cache
+      cmd << path      
+      ret = system(cmd.join(' '))
       abort("Failed to build image #{name.colorize(:cyan)}") unless ret
       ret
     end
