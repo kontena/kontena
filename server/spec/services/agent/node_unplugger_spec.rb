@@ -16,9 +16,11 @@ describe Agent::NodeUnplugger do
 
     it 'marks containers as deleted' do
       node.containers.create!(name: 'foo-1')
+      volume = node.containers.create!(name: 'foo-1-volumes', container_type: 'volume')
       expect {
         subject.unplug!
       }.to change{ node.containers.count }.by(-1)
+      expect(volume.reload.deleted_at).to be_nil
     end
   end
 end
