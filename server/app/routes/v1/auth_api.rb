@@ -22,10 +22,10 @@ module V1
             halt_request(403, 'Forbidden') and return
           end
           user.update_attribute(:external_id, result['id'])
-
-
         rescue AuthService::Client::Error => e
-          halt_request(e.code, JSON.dump(e.message)) and return
+          msg = JSON.parse(e.message) rescue nil
+          msg = e.message if msg.nil?
+          halt_request(e.code, msg) and return
         end
         @access_token = AccessTokens::Create.run(
             user: user,
