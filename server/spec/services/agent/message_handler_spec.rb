@@ -3,15 +3,45 @@ require_relative '../../spec_helper'
 describe Agent::MessageHandler do
 
   let(:grid) { Grid.create! }
+  let(:queue) { Queue.new }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
-  let(:subject) { described_class.new(grid) }
+  let(:subject) { described_class.new(queue) }
+
+  describe '#run' do
+    it 'performs', :performance => true do
+      container = grid.containers.create!(container_id: SecureRandom.hex(16))
+      data = {
+        'grid_id' => grid.id.to_s,
+        'data' => {
+          'event' => 'container:log',
+          'data' => {
+            'id' => container.container_id,
+            'data' => 'foo',
+            'type' => 'stderr'
+          }
+        }
+      }
+      subject.run
+      start_time = Time.now.to_f
+      bm = Benchmark.measure do
+        1_000.times do
+          queue << data
+        end
+        sleep 0.01 until queue.length == 0
+      end
+      #puts bm
+      total_time = Time.now.to_f - start_time
+      expect(container.container_logs.count).to eq(1_000)
+      expect(total_time < 0.5).to be_truthy
+    end
+  end
 
   describe '#on_container_event' do
     it 'deletes container on destroy event' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16))
       expect {
         subject.on_container_event(grid, {'id' => container.container_id, 'status' => 'destroy'})
-      }.to change{ grid.containers.unscoped.count }.by(-1)
+      }.to change{ grid.reload.containers.unscoped.count }.by(-1)
     end
   end
 
@@ -24,6 +54,7 @@ describe Agent::MessageHandler do
           'data' => 'foo',
           'type' => 'stderr'
         })
+        subject.flush_logs
       }.to change{ grid.container_logs.count }.by(1)
     end
 
@@ -34,6 +65,7 @@ describe Agent::MessageHandler do
         'data' => 'foo',
         'type' => 'stderr'
       })
+      subject.flush_logs
       expect(container.container_logs.last.name).to eq(container.name)
     end
 
@@ -45,6 +77,28 @@ describe Agent::MessageHandler do
           'type' => 'stderr'
         })
       }.to change{ grid.container_logs.count }.by(0)
+    end
+
+    it 'performs', :performance => true do
+      containers = []
+      10.times do
+        containers << grid.containers.create!(container_id: SecureRandom.hex(16)).container_id
+      end
+
+      start_time = Time.now.to_f
+      bm = Benchmark.measure do
+        1_000.times do
+          subject.on_container_log(grid, node.id.to_s, {
+            'id' => containers[rand(0..9)],
+            'data' => 'foo',
+            'type' => 'stderr'
+          })
+        end
+      end
+      #puts bm
+      total_time = Time.now.to_f - start_time
+      expect(grid.container_logs.count).to eq(1_000)
+      expect(total_time < 0.5).to be_truthy
     end
   end
 
