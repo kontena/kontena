@@ -8,6 +8,10 @@ module Agent
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
+      @logs = []
+      @stats = []
+      @cached_grid = nil
+      @cached_container = nil
       @db_session = ContainerLog.collection.session.with(
         write: {
           w: 0, fsync: false, j: false
@@ -20,15 +24,13 @@ module Agent
         i = 0
         loop do
           begin
-            Mongoid::QueryCache.cache {
-              message = @queue.pop
-              self.handle_message(message)
-            }
+            message = @queue.pop
+            self.handle_message(message)
             i += 1
             Thread.pass
-            if i > 1000
+            if i > 100
               i = 0
-              Mongoid::QueryCache.clear_cache
+              @cached_grid = nil
             end
           rescue => exc
             error "#{exc.class.name}: #{exc.message}"
@@ -41,7 +43,7 @@ module Agent
     ##
     # @param [Hash] message
     def handle_message(message)
-      grid = Grid.find_by(id: message['grid_id'])
+      grid = cached_grid(message['grid_id'])
       return if grid.nil?
 
       data = message['data']
@@ -85,11 +87,13 @@ module Agent
     # @param [Grid] grid
     # @param [Hash] data
     def on_container_event(grid, data)
-      container = grid.containers.unscoped.find_by(container_id: data['id'])
+      container = grid_container(grid.id, data['id'])
       if container
         if data['status'] == 'destroy'
+          container = Container.instantiate(container)
           container.destroy
         elsif data['status'] == 'deployed'
+          container = Container.instantiate(container)
           container.set(:deploy_rev => data['deploy_rev'])
         end
       end
@@ -100,24 +104,32 @@ module Agent
     # @param [String] node_id
     # @param [Hash] data
     def on_container_log(grid, node_id, data)
-      container = grid.containers.find_by(container_id: data['id'])
+      container = cached_container(grid.id, data['id'])
       if container
         if data['time']
           created_at = Time.parse(data['time'])
         else
           created_at = Time.now.utc
         end
-        db_session[:container_logs].insert(
+        @logs << {
           grid_id: grid.id,
           host_node_id: node_id,
-          grid_service_id: container.grid_service_id,
-          container_id: container.id,
+          grid_service_id: container['grid_service_id'],
+          container_id: container['_id'],
           created_at: created_at,
-          name: container.name,
+          name: container['name'],
           type: data['type'],
           data: data['data']
-        )
+        }
+        if @logs.size >= 5
+          flush_logs
+        end
       end
+    end
+
+    def flush_logs
+      db_session[:container_logs].insert(@logs)
+      @logs.clear
     end
 
     ##
@@ -126,20 +138,24 @@ module Agent
     def on_container_stat(grid, data)
       return if @queue.length > 100
 
-      container = grid.containers.find_by(container_id: data['id'])
+      container = grid_container(grid.id, data['id'])
       if container
         data = fixnums_to_float(data)
-        db_session[:container_stats].insert(
-            grid_id: grid.id,
-            grid_service_id: container.grid_service_id,
-            container_id: container.id,
-            spec: data['spec'],
-            cpu: data['cpu'],
-            memory: data['memory'],
-            filesystem: data['filesystem'],
-            diskio: data['diskio'],
-            network: data['network']
-        )
+        @stats << {
+          grid_id: grid.id,
+          grid_service_id: container['grid_service_id'],
+          container_id: container['_id'],
+          spec: data['spec'],
+          cpu: data['cpu'],
+          memory: data['memory'],
+          filesystem: data['filesystem'],
+          diskio: data['diskio'],
+          network: data['network']
+        }
+        if @stats.size >= 5
+          db_session[:container_stats].insert(@stats.dup)
+          @stats.clear
+        end
       end
     end
 
@@ -165,6 +181,41 @@ module Agent
         end
         i += 1
       end
+    end
+
+    # @param [ObjectId] grid_id
+    # @param [String] id
+    # @return [Hash, NilClass]
+    def cached_container(grid_id, id)
+      if @cached_container && @cached_container['container_id'] == id
+        container = @cached_container
+      else
+        container = grid_container(grid_id, id)
+        @cached_container = container if container
+      end
+
+      container
+    end
+
+    # @param [ObjectId] grid_id
+    # @param [String] id
+    # @return [Hash, NilClass]
+    def grid_container(grid_id, id)
+      container = db_session[:containers].find(
+          grid_id: grid_id, container_id: id
+        ).limit(1).one
+    end
+
+    # @param [String] id
+    # @return [Grid,NilClass]
+    def cached_grid(id)
+      if @cached_grid && @cached_grid.id.to_s.freeze == id
+        grid = @cached_grid
+      else
+        grid = Grid.find_by(id: id)
+        @cached_grid = grid
+      end
+      grid
     end
   end
 end
