@@ -17,6 +17,9 @@ module Kontena
       Pubsub.subscribe('lb:ensure_config') do |event|
         self.ensure_config(event)
       end
+      Pubsub.subscribe('lb:remove_config') do |event|
+        self.remove_config(event)
+      end
       info 'initialized'
     end
 
@@ -26,25 +29,24 @@ module Kontena
       service_name = container.labels['io.kontena.service.name']
       etcd_path = "#{ETCD_PREFIX}/#{name}"
       env_hash = container.env_hash
-      external_port = env_hash['KONTENA_LB_EXTERNAL_PORT']
+
       mode = env_hash['KONTENA_LB_MODE'] || 'http'
       balance = env_hash['KONTENA_LB_BALANCE'] || 'roundrobin'
-      virtual_hosts = env_hash['KONTENA_LB_VIRTUAL_HOSTS']
-      virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH']
       custom_settings = env_hash['KONTENA_LB_CUSTOM_SETTINGS']
-
-      if virtual_hosts.to_s == '' && virtual_path.to_s == ''
-        virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH'] || '/'
-      end
-
       info "registering #{service_name} to load balancer #{name} (#{mode})"
       if mode == 'http'
+        virtual_hosts = env_hash['KONTENA_LB_VIRTUAL_HOSTS']
+        virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH']
+        if virtual_hosts.to_s == '' && virtual_path.to_s == ''
+          virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH'] || '/'
+        end
         set("#{etcd_path}/services/#{service_name}/balance", balance)
         set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
         set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
         set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)
         rmdir("#{etcd_path}/tcp-services/#{service_name}") rescue nil
       else
+        external_port = env_hash['KONTENA_LB_EXTERNAL_PORT'] || '5000'
         set("#{etcd_path}/tcp-services/#{service_name}/external_port", external_port)
         set("#{etcd_path}/tcp-services/#{service_name}/balance", balance)
         set("#{etcd_path}/tcp-services/#{service_name}/custom_settings", custom_settings)
@@ -55,6 +57,20 @@ module Kontena
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n") if exc.backtrace
+    end
+
+    # @param [Docker::Container] container
+    def remove_config(container)
+      name = container.labels['io.kontena.load_balancer.name']
+      service_name = container.labels['io.kontena.service.name']
+      mode = container.env_hash['KONTENA_LB_MODE'] || 'http'
+      info "un-registering #{service_name} from load balancer #{name} (#{mode})"
+      if mode == 'http'
+        etcd_path = "#{ETCD_PREFIX}/#{name}/services/#{service_name}"
+      else
+        etcd_path = "#{ETCD_PREFIX}/#{name}/tcp-services/#{service_name}"
+      end
+      rmdir(etcd_path)
     end
 
     # @param [String] key

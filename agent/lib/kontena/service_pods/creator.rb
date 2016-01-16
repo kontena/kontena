@@ -46,7 +46,7 @@ module Kontena
         end
         service_container = create_container(service_config)
 
-        if service_pod.load_balanced? && service_pod.instance_number == 1
+        if service_container.load_balanced? && service_container.instance_number == 1
           Kontena::Pubsub.publish('lb:ensure_config', service_container)
         end
 
