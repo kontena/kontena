@@ -32,22 +32,6 @@ describe Kontena::LoadBalancerRegistrator do
     end
   end
 
-  describe '#load_balanced?' do
-    it 'returns false if container is notbalanced' do
-      expect(subject.load_balanced?(container)).to eq(true)
-    end
-    it 'returns true if container is balanced' do
-      allow(container).to receive(:info).and_return({
-        'Config' => {
-          'Labels' => {
-            'io.kontena.load_balancer.name' => 'lb1'
-          }
-        }
-      })
-      expect(subject.load_balanced?(container)).to eq(true)
-    end
-  end
-
   describe '#etcd_running?' do
     it 'returns false if etcd does not exist' do
       expect(Docker::Container).to receive(:get).with('kontena-etcd').and_raise(Docker::Error::NotFoundError.new('foo'))

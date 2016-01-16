@@ -43,6 +43,16 @@ module Docker
       self.labels['io.kontena.container.type'] == 'volume'
     end
 
+    # @return [Boolean]
+    def load_balanced?
+      !self.labels['io.kontena.load_balancer.name'].nil?
+    end
+
+    # @return [Integer]
+    def instance_number
+      self.labels['io.kontena.service.instance_number'].to_i
+    end
+
     # @return [String, NilClass]
     def overlay_cidr
       self.labels['io.kontena.container.overlay_cidr']

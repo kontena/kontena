@@ -85,11 +85,6 @@ module Kontena
         !self.stateless?
       end
 
-      # @return [Boolean]
-      def load_balanced?
-        !self.labels['io.kontena.load_balancer.name'].nil?
-      end
-
       # @return [String]
       def name
         "#{self.service_name}-#{self.instance_number}"

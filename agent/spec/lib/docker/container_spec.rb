@@ -52,4 +52,17 @@ describe Docker::Container do
       expect(subject.restart_policy).to include('Name' => 'always')
     end
   end
+
+  describe '#load_balanced?' do
+    it 'returns true if load balanced' do
+      allow(subject).to receive(:labels).and_return({
+        'io.kontena.load_balancer.name' => 'lb'
+      })
+      expect(subject.load_balanced?).to be_truthy
+    end
+
+    it 'returns false by default' do
+      expect(subject.load_balanced?).to be_falsey
+    end
+  end
 end
