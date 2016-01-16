@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.1 (2016-01-16)
+
+- cleanup etcd correctly when load balanced service is removed
+- fix MessageHandler internal caching
+- send correct json on auth failure
+- do not mark volumes for deletion on unplug event
+- search alternate Dockerfile from build context
+- do not throttle container log streaming
+- update weave to 1.4.2
+- send container information to master asap (don't wait for weave to start)
+- fix "bring your own load balancer" functionality
+
 ## 0.11.0 (2016-01-10)
 
 - secrets management (vault)
