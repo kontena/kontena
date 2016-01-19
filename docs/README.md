@@ -19,7 +19,7 @@ The summary of Kontena key features:
 
 Kontena is used with Kontena command line interface **Kontena CLI**. At the moment, there is no graphical (web based) UI for Kontena.
 
-# Learn More
+## Learn More
 
 > If you are new to Kontena, it’s recommended to first go through the [quick start](getting-started/quick-start.md) guide.
 
