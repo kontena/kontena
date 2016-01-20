@@ -1,7 +1,8 @@
 require_relative '../../spec_helper'
 
 describe '/v1/grids' do
-
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
   let(:request_headers) do
     {
         'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}"
@@ -122,14 +123,14 @@ describe '/v1/grids' do
         expect(json_response['services'].size).to eq(1)
       end
 
-      it 'does not show internal services' do
+      it 'it returns internal services' do
         grid = david.grids.first
         grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
         grid.grid_services.create!(name: 'vpn', image_name: 'kontena/openvpn:latest')
         grid.grid_services.create!(name: 'registry', image_name: 'registry:2.0')
         get "/v1/grids/#{grid.to_path}/services", nil, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['services'].size).to eq(1)
+        expect(json_response['services'].size).to eq(3)
       end
     end
 

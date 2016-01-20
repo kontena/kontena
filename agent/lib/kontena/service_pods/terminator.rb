@@ -17,6 +17,9 @@ module Kontena
       def perform
         service_container = get_container(self.service_name)
         if service_container
+          if service_container.load_balanced? && service_container.instance_number == 1
+            Kontena::Pubsub.publish('lb:remove_config', service_container)
+          end
           info "terminating service: #{self.service_name}"
           service_container.stop
           service_container.wait

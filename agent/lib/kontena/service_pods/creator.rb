@@ -27,6 +27,9 @@ module Kontena
           service_pod.volumes_from << data_container.id
         end
         service_container = get_container(service_pod.name)
+
+        sleep 1 until overlay_adapter.running?
+
         if service_container
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
@@ -42,12 +45,16 @@ module Kontena
           overlay_adapter.modify_create_opts(service_config)
         end
         service_container = create_container(service_config)
+
+        if service_container.load_balanced? && service_container.instance_number == 1
+          Kontena::Pubsub.publish('lb:ensure_config', service_container)
+        end
+
         service_container.start
         info "service started: #{service_pod.name}"
 
-        notify_master(service_container, service_pod.deploy_rev)
         Pubsub.publish('service_pod:start', service_pod.name)
-        Pubsub.publish('stats:collect', nil)
+        Pubsub.publish('container:publish_info', service_container)
 
         self.run_hooks(service_container, 'post_start')
 

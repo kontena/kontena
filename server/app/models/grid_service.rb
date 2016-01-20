@@ -55,7 +55,6 @@ class GridService
   validates_presence_of :name, :image_name
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  scope :visible, -> { where(name: {'$nin' => ['vpn', 'registry']}) }
   scope :load_balancer, -> { where(image_name: LB_IMAGE) }
 
   # @return [String]
@@ -90,14 +89,21 @@ class GridService
     self.state == 'running'
   end
 
+  def deploy_pending?
+    self.state == 'deploy_pending'
+  end
+
   # @return [Boolean]
   def all_instances_exist?
-    self.containers.where('state.running' => true).count >= self.container_count
+    self.containers.unscoped.where(
+      'container_type' => 'container', 'state.running' => true
+    ).count >= self.container_count
   end
 
   # @return [Boolean]
   def load_balancer?
-    self.image_name.to_s.include?(LB_IMAGE)
+    self.image_name.to_s.include?(LB_IMAGE) ||
+      (self.env && self.env.include?('KONTENA_SERVICE_ROLE=lb'))
   end
 
   # @return [Boolean]

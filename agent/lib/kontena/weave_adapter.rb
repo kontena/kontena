@@ -8,9 +8,24 @@ module Kontena
     include Helpers::IfaceHelper
     include Kontena::Logging
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.3.1'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.4.2'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
+
+    # @param [Docker::Container] container
+    # @return [Boolean]
+    def adapter_container?(container)
+      container.config['Image'].include?(WEAVEEXEC_IMAGE)
+    rescue Docker::Error::NotFoundError
+      false
+    end
+
+    # @return [Boolean]
+    def running?
+      weave = Docker::Container.get('weave') rescue nil
+      return false if weave.nil?
+      weave.running?
+    end
 
     # @param [Hash] opts
     def modify_create_opts(opts)
@@ -104,7 +119,7 @@ module Kontena
         end
         response
       ensure
-        container.delete(force: true) if container
+        container.delete(force: true, v: true) if container
       end
     end
 
@@ -120,12 +135,23 @@ module Kontena
             weave.delete(force: true)
           end
 
+          weave = nil
           peer_ips = info['peer_ips'] || []
-          self.exec([
-            '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-            '--password', ENV['KONTENA_TOKEN']
-            ] + peer_ips
-          )
+          until weave && weave.running? do
+            self.exec([
+              '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
+              '--password', ENV['KONTENA_TOKEN']
+              ] + peer_ips
+            )
+            weave = Docker::Container.get('weave') rescue nil
+            wait = Time.now.to_f + 10.0
+            sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
+
+            if weave.nil? || !weave.running?
+              self.exec(['--local', 'reset'])
+            end
+          end
+
           if peer_ips.size > 0
             info "router started with peers #{peer_ips.join(', ')}"
           else
@@ -154,8 +180,10 @@ module Kontena
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
+          info "pulling #{image}"
           Docker::Image.create({'fromImage' => image})
           sleep 1 until Docker::Image.exist?(image)
+          info "image #{image} pulled "
         end
       end
     end

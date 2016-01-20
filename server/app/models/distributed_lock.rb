@@ -12,10 +12,16 @@ class DistributedLock
   def self.with_lock(name, timeout = 60)
     lock_id = nil
     begin
-      Timeout.timeout(timeout) do
-        sleep 0.01 until lock_id = self.obtain_lock(name)
+      if timeout.to_f > 0.0
+        Timeout.timeout(timeout) do
+          sleep 0.01 until lock_id = self.obtain_lock(name)
+        end
+      else
+        lock_id = self.obtain_lock(name)
       end
-      return yield
+      if lock_id
+        return yield
+      end
     rescue Timeout::Error
       return false
     ensure

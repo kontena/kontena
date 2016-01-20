@@ -4,6 +4,8 @@ require_relative '../event_stream/grid_event_notifier'
 module Agent
   class NodeUnplugger
     include EventStream::GridEventNotifier
+    include Logging
+
     attr_reader :node, :grid
 
     # @param [HostNode] node
@@ -12,26 +14,21 @@ module Agent
       @grid = node.grid
     end
 
-    # @return [Celluloid::Future]
     def unplug!
-      Celluloid::Future.new {
-        begin
-          self.update_node
-          self.reschedule_services
-        rescue => exc
-          puts exc.message
-        end
-      }
+      begin
+        self.update_node
+      rescue => exc
+        error exc.message
+      end
     end
 
     def update_node
       node.update_attribute(:connected, false)
       self.trigger_grid_event(grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
-    end
-
-    def reschedule_services
-      sleep 5
-      GridScheduler.new(grid).reschedule
+      deleted_at = Time.now.utc
+      node.containers.unscoped.where(:container_type.ne => 'volume').each do |c|
+        c.with(safe: false).set(:deleted_at => deleted_at)
+      end
     end
   end
 end

@@ -28,7 +28,7 @@ module Kontena
       info 'started to stream docker events'
       begin
         Docker::Event.stream do |event|
-          Celluloid::Future.new{ self.publish_event(event) }
+          self.publish_event(event)
         end
       rescue Docker::Error::TimeoutError
         error 'connection timeout.. retrying'
@@ -48,7 +48,7 @@ module Kontena
     # @param [Docker::Event] event
     def publish_event(event)
       data = {
-        event: 'container:event',
+        event: 'container:event'.freeze,
         data: {
           id: event.id,
           status: event.status,
@@ -57,7 +57,7 @@ module Kontena
         }
       }
       self.queue << data
-      Pubsub.publish('container:event', event)
+      Pubsub.publish('container:event'.freeze, event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
     end

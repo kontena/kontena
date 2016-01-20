@@ -63,6 +63,16 @@ class Helper
     []
   end
 
+  def master_names
+    config_file = File.expand_path('~/.kontena_client.json')
+    if(File.exist?(config_file))
+      config = JSON.parse(File.read(config_file))
+      return config['servers'].map{|s| s['name']}
+    end
+  rescue
+    []
+  end
+
 end
 
 helper = Helper.new
@@ -94,8 +104,10 @@ if words.size > 0
       end
     when 'master'
       completion.clear
-      sub_commands = %w(vagrant digitalocean azure aws)
-      if words[1]
+      sub_commands = %w(list use vagrant digitalocean azure aws)
+      if words[1] && words[1] == 'use'
+        completion.push helper.master_names
+      elsif words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push %w(create)
       else

@@ -2,8 +2,6 @@ require_relative '../../spec_helper'
 
 describe Kontena::Pubsub do
   before(:each) {
-    Celluloid.shutdown
-    Celluloid.boot
     described_class.clear!
   }
   after(:each) {
@@ -23,14 +21,14 @@ describe Kontena::Pubsub do
       3.times do
         subscriptions << described_class.subscribe('foo') {|sub| p msg}
       end
-      subscriptions.each{|s| described_class.unsubscribe(s)}
+      subscriptions.each{|s| s.terminate }
       thread_count = Thread.list.count
 
       subscriptions = []
       3.times do
         subscriptions << described_class.subscribe('foo') {|sub| p msg}
       end
-      subscriptions.each{|s| described_class.unsubscribe(s)}
+      subscriptions.each{|s| s.terminate }
       GC.start
       expect(Thread.list.count == thread_count).to be_truthy
     end
@@ -44,12 +42,13 @@ describe Kontena::Pubsub do
           messages << msg
         }
       end
-      described_class.subscribe('bar') {|msg|
+      subs = described_class.subscribe('bar') {|msg|
         messages << msg
       }
       described_class.publish('foo', 'test')
       sleep 0.01
       expect(messages.size).to eq(2)
+      subs.terminate
     end
   end
 

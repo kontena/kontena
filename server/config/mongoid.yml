@@ -13,6 +13,9 @@ test:
       database: kontena_test
       options:
         pool_size: 25
+        read: :primary
+        write:
+          w: 1
       hosts:
         - localhost:27017
   options:
@@ -23,7 +26,10 @@ production:
     default:
       options:
         pool_size: 40
-      uri: <%= ENV['MONGODB_URI'] %>
+        read: :primary
+        write:
+          w: 1
+      uri: <%= ENV['MONGODB_URI'] || ENV['MONGOHQ_URL'] %>
   options:
     use_utc: true
     raise_not_found_error: false

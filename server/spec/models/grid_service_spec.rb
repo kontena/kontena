@@ -87,6 +87,15 @@ describe GridService do
       subject.containers.create!(name: "test-2", state: {running: false})
       expect(subject.all_instances_exist?).to eq(false)
     end
+
+    it 'returns true if containers are marked as deleted' do
+      2.times{|i|
+        subject.containers.create!(
+          name: "test-#{i}", state: {running: true}, deleted_at: Time.now.utc
+          )
+      }
+      expect(subject.all_instances_exist?).to eq(true)
+    end
   end
 
   describe '#set_state' do
@@ -154,6 +163,23 @@ describe GridService do
       expect(dependant_services.size).to eq(2)
       expect(dependant_services).to include(avoider)
       expect(dependant_services).to include(follower)
+    end
+  end
+
+  describe '#load_balancer?' do
+    it 'returns true if official kontena/lb image' do
+      subject.image_name = 'kontena/lb:latest'
+      expect(subject.load_balancer?).to eq(true)
+    end
+
+    it 'returns true if custom image with KONTENA_SERVICE_ROLE=lb env variable' do
+      subject.image_name = 'custom/lb:latest'
+      subject.env << 'KONTENA_SERVICE_ROLE=lb'
+      expect(subject.load_balancer?).to eq(true)
+    end
+
+    it 'returns false by default' do
+      expect(subject.load_balancer?).to eq(false)
     end
   end
 end

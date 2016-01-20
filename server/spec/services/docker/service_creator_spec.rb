@@ -1,7 +1,7 @@
 require_relative '../../spec_helper'
 
 describe Docker::ServiceCreator do
-  let(:grid) { Grid.create!(name: 'test-grid') }
+  let(:grid) { Grid.create!(name: 'test-grid', overlay_cidr: '10.81.0.0/23') }
   let(:node) { HostNode.create!(name: 'node-1', node_id: 'a') }
   let(:lb) do
     GridService.create!(
@@ -21,6 +21,12 @@ describe Docker::ServiceCreator do
   end
 
   let(:subject) { described_class.new(service, node) }
+
+  before(:each) do
+    10.times do |i|
+      grid.overlay_cidrs.create!(ip: "10.81.1.#{i + 1}", subnet: '23')
+    end
+  end
 
   describe '#service_spec' do
     let(:service_spec) { subject.service_spec(2, 'rev') }

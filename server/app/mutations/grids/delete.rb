@@ -7,6 +7,7 @@ module Grids
 
     def validate
       add_error(:grid, :services_exist, 'Grid has services') if grid.grid_services.exists?
+      add_error(:grid, :host_nodes, 'Grid has nodes') if grid.host_nodes.exists?
     end
 
     def execute

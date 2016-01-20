@@ -14,6 +14,11 @@ module Docker
     end
 
     # @return [Hash]
+    def config
+      cached_json['Config']
+    end
+
+    # @return [Hash]
     def state
       self.json['State']
     end
@@ -38,9 +43,28 @@ module Docker
       self.labels['io.kontena.container.type'] == 'volume'
     end
 
+    # @return [Boolean]
+    def load_balanced?
+      !self.labels['io.kontena.load_balancer.name'].nil?
+    end
+
+    # @return [Integer]
+    def instance_number
+      self.labels['io.kontena.service.instance_number'].to_i
+    end
+
     # @return [String, NilClass]
     def overlay_cidr
       self.labels['io.kontena.container.overlay_cidr']
+    end
+
+    # @return [Hash]
+    def env_hash
+      if @env_hash.nil?
+        @env_hash = cached_json['Config']['Env'].inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      end
+
+      @env_hash
     end
 
     private

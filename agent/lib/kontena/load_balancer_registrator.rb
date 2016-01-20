@@ -29,7 +29,7 @@ module Kontena
         sleep 1 until etcd_running?
         info 'fetching containers information'
         Docker::Container.all(all: false).each do |container|
-          if load_balanced?(container)
+          if container.load_balanced?
             self.register_container(container)
           end
         end
@@ -40,7 +40,7 @@ module Kontena
     def on_container_event(event)
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
-        if container && load_balanced?(container)
+        if container && container.load_balanced?
           self.register_container(container)
         end
       elsif event.status == 'die'
@@ -91,6 +91,8 @@ module Kontena
         info "removing container #{entry[:container]} from load balancer #{entry[:lb]}"
         begin
           etcd.delete("#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}")
+        rescue Etcd::KeyNotFound
+
         rescue Errno::ECONNREFUSED => exc
           retries += 1
           if retries < 10
@@ -104,15 +106,6 @@ module Kontena
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       debug "#{exc.backtrace.join("\n")}" if exc.backtrace
-    end
-
-    # @param [Docker::Container] container
-    # @return [Boolean]
-    def load_balanced?(container)
-      labels = container.json['Config']['Labels']
-      !labels['io.kontena.load_balancer.name'].nil?
-    rescue
-      false
     end
 
     # @return [Boolean]

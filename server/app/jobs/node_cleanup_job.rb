@@ -25,6 +25,10 @@ class NodeCleanupJob
   def cleanup_stale_connections
     HostNode.where(:last_seen_at.lt => 1.minute.ago).each do |node|
       node.set(connected: false)
+      deleted_at = Time.now.utc
+      node.containers.unscoped.each do |c|
+        c.with(safe: false).set(:deleted_at => deleted_at)
+      end
     end
   end
 

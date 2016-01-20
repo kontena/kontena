@@ -282,7 +282,14 @@ yml
   describe '#parse_data' do
     it 'adds empty hooks hash if not defined' do
       data = {'image' => 'foo/bar:latest'}
-      subject.send(:parse_data, data)
+      result = subject.send(:parse_data, data)
+      expect(result[:hooks]).to eq({})
+    end
+
+    it 'read secrets if defined' do
+      data = {'image' => 'foo/bar:latest', 'secrets' => [{'secret' => 'MYSQL_ADMIN_PASSWORD', 'name' =>  'WORDPRESS_DB_PASSWORD', 'type' => 'env'}]}
+      result = subject.send(:parse_data, data)
+      expect(result[:secrets]).to eq([{'secret' => 'MYSQL_ADMIN_PASSWORD', 'name' => 'WORDPRESS_DB_PASSWORD', 'type' => 'env'}])
     end
   end
 end

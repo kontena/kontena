@@ -27,7 +27,7 @@ class Container
   belongs_to :host_node
   has_many :container_logs
   has_many :container_stats
-  has_one :overlay_cidr, dependent: :destroy
+  has_one :overlay_cidr, dependent: :nullify
 
   index({ grid_id: 1 })
   index({ grid_service_id: 1 })
@@ -36,6 +36,7 @@ class Container
   index({ deleted_at: 1 }, {sparse: true})
   index({ container_id: 1 })
   index({ state: 1 })
+  index({ name: 1 })
 
   default_scope -> { where(deleted_at: nil, container_type: 'container') }
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
@@ -54,26 +55,27 @@ class Container
   def status
     return 'deleted' if self.deleted_at
 
-    if self.updated_at.nil? || self.updated_at < (Time.now.utc - 2.minutes)
-      return 'unknown'
-    end
-
     s = self.state
     if s['paused']
       'paused'
-    elsif s['running']
-      'running'
     elsif s['restarting']
       'restarting'
     elsif s['oom_killed']
       'oom_killed'
+    elsif s['dead']
+      'dead'
+    elsif s['running']
+      'running'
     else
       'stopped'
     end
   end
 
   def mark_for_delete
-    self.update_attribute(:deleted_at, Time.now.utc)
+    self.set(:deleted_at => Time.now.utc)
+    if self.overlay_cidr
+      self.overlay_cidr.set(:container_id => nil, :reserved_at => nil)
+    end
   end
 
   def running?

@@ -15,9 +15,8 @@ module Agent
       labels = info['Config']['Labels'] || {}
       node_id = data['node']
       container_id = data['container']['Id']
-      container = with_cache { grid.containers.unscoped.find_by(container_id: container_id) }
+      container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
-        return false if container.deleted?
         self.update_service_container(node_id, container, info)
         trigger_grid_event(self.grid, 'container', 'update', ContainerSerializer.new(container).to_hash) if container.grid_service
       elsif !labels['io.kontena.service.id'].nil?
@@ -32,7 +31,7 @@ module Agent
     # @param [Container] container
     # @param [Hash] info
     def update_service_container(node_id, container, info)
-      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
+      node = grid.host_nodes.find_by(node_id: node_id)
       container.host_node = node if node
       self.update_container_attributes(container, info)
     end
@@ -41,13 +40,12 @@ module Agent
     # @param [Hash] info
     def update_container_attributes(container, info)
       attributes = self.container_attributes_from_docker(container, info)
-      return false if container.deleted?
 
       if container.new_record?
         container.save
       else
         attributes[:host_node_id] = container.host_node.try(:id)
-        container.set(attributes)
+        container.with(write: {w: 0, j: false, fsync: false}).set(attributes)
       end
     end
 
@@ -56,8 +54,8 @@ module Agent
     def create_service_container(node_id, info)
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
-      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
-      service = with_cache { grid.grid_services.find_by(id: labels['io.kontena.service.id']) }
+      node = grid.host_nodes.find_by(node_id: node_id)
+      service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
       container = grid.containers.build(
         container_id: container_id,
         name: labels['io.kontena.container.name'],
@@ -76,7 +74,7 @@ module Agent
     # @param [Hash] info
     def create_container(node_id, info)
       container_id = info['Id']
-      node = with_cache { grid.host_nodes.find_by(node_id: node_id) }
+      node = grid.host_nodes.find_by(node_id: node_id)
       container = grid.containers.build(
         container_id: container_id,
         name: info['Name'].split("/")[1],
@@ -107,6 +105,7 @@ module Agent
               oom_killed: state['OOMKilled'],
               paused: state['Paused'],
               restarting: state['Restarting'],
+              dead: state['Dead'],
               running: state['Running']
           },
           updated_at: Time.now.utc,
@@ -138,20 +137,8 @@ module Agent
       ip, subnet = labels['io.kontena.container.overlay_cidr'].split('/')
       overlay_cidr = container.grid.overlay_cidrs.where(ip: ip, subnet: subnet).first
       if overlay_cidr
-        overlay_cidr.set(container_id: container.id)
+        overlay_cidr.set(container_id: container.id, reserved_at: Time.now.utc)
         overlay_cidr
-      else
-        overlay_cidr = OverlayCidr.new(
-          grid: container.grid,
-          container: container,
-          ip: ip,
-          subnet: subnet
-        )
-        if overlay_cidr.save
-          overlay_cidr
-        else
-          nil
-        end
       end
     end
 
@@ -181,10 +168,6 @@ module Agent
           port_mapping: network['PortMapping'],
           ports: ports
       }
-    end
-
-    def with_cache
-      Mongoid::QueryCache.cache { yield }
     end
   end
 end

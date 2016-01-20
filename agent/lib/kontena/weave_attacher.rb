@@ -72,7 +72,7 @@ module Kontena
           add_dns(container.id, ip, name)
         end
 
-        @weave_adapter.exec(['--local', 'attach', overlay_cidr, container.id])
+        @weave_adapter.exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
       end
     rescue Docker::Error::NotFoundError
 

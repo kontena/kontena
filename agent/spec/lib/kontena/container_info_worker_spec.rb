@@ -29,7 +29,7 @@ describe Kontena::ContainerInfoWorker do
 
     it 'fetches container info' do
       event = double(:event, status: 'start', id: 'foo')
-      container = spy(:container)
+      container = spy(:container, :config => {'Image' => 'foo/bar:latest'})
       expect(Docker::Container).to receive(:get).once.and_return(container)
       expect(subject).to receive(:publish_info).with(container)
       subject.on_container_event(event)

@@ -4,6 +4,8 @@ require_relative '../event_stream/grid_event_notifier'
 module Agent
   class NodePlugger
     include EventStream::GridEventNotifier
+    include Workers
+
     attr_reader :node, :grid
 
     # @param [Grid] grid
@@ -15,26 +17,25 @@ module Agent
 
     # @return [Celluloid::Future]
     def plugin!
-      Celluloid::Future.new {
-        begin
-          self.update_node
-          self.send_master_info
-          self.send_node_info
-          self.reschedule_services
-          self.trigger_grid_event(grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
-        rescue => exc
-          puts exc.message
-        end
-      }
+      begin
+        prev_seen_at = node.last_seen_at
+        self.update_node
+        self.send_master_info
+        self.send_node_info
+        self.reschedule_services(prev_seen_at)
+      rescue => exc
+        puts exc.message
+      end
     end
 
     def update_node
       node.set(connected: true, last_seen_at: Time.now.utc)
+      self.trigger_grid_event(grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
     end
 
-    def reschedule_services
-      sleep 5
-      GridScheduler.new(grid).reschedule
+    def reschedule_services(prev_seen_at)
+      return if !prev_seen_at.nil? && prev_seen_at > 2.minutes.ago.utc
+      worker(:grid_scheduler).async.later(30, grid.id)
     end
 
     def send_node_info

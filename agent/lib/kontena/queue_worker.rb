@@ -40,12 +40,15 @@ module Kontena
     def start_queue_processing
       return unless @queue_thread.nil?
 
-      info 'started processing'
+      stop_overflow_watcher
+
       @queue_thread = Thread.new {
+        info 'started processing'
         loop do
           begin
             item = @queue.pop
             client.send_message(MessagePack.dump(item).bytes)
+            sleep 0.001
           rescue => exc
             logger.error exc.message
           end
@@ -63,16 +66,40 @@ module Kontena
         @queue_thread.join
         @queue_thread = nil
       end
+
+      start_overflow_watcher
     end
 
-    ##
-    # @param [Hash] event
-    def on_queue_push(event)
-      if @queue.length > 10_000
-        debug 'queue is over limit, popping item'
-        @queue.pop
+    def start_overflow_watcher
+      return unless @overflow_thread.nil?
+
+      @overflow_thread = Thread.new {
+        info 'started overflow watcher'
+        loop do
+          begin
+            cleanup_queue
+            sleep 1
+          rescue => exc
+            logger.error exc.message
+          end
+        end
+      }
+    end
+
+    def stop_overflow_watcher
+      if @overflow_thread
+        info 'stopped overflow watcher'
+        @overflow_thread.kill
+        @overflow_thread.join
+        @overflow_thread = nil
       end
-      @queue << event
+    end
+
+    def cleanup_queue
+      if @queue.length > 10_000
+        info 'queue is over limit, cleaning up'
+        1000.times { @queue.pop }
+      end
     end
   end
 end

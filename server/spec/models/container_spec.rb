@@ -14,7 +14,7 @@ describe Container do
   it { should belong_to(:grid) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:host_node) }
-  it { should have_one(:overlay_cidr) }
+  it { should have_one(:overlay_cidr).with_dependent(:nullify) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
 
@@ -42,11 +42,6 @@ describe Container do
     it 'returns deleted when deleted_at timestamp is set' do
       subject.deleted_at = Time.now.utc
       expect(subject.status).to eq('deleted')
-    end
-
-    it 'returns unknown if updated_at timestamp is far enough in the past' do
-      subject.updated_at = Time.now.utc - 3.minutes
-      expect(subject.status).to eq('unknown')
     end
 
     it 'returns paused if docker state is paused' do
@@ -77,6 +72,12 @@ describe Container do
       subject.updated_at = Time.now
       subject.state['oom_killed'] = true
       expect(subject.status).to eq('oom_killed')
+    end
+
+    it 'returns dead if docker state is dead' do
+      subject.updated_at = Time.now
+      subject.state['dead'] = true
+      expect(subject.status).to eq('dead')
     end
 
     it 'returns stopped otherwise' do

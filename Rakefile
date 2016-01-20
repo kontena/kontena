@@ -37,14 +37,14 @@ namespace :release do
   task :build_server do
     headline "Starting to build kontena-server ..."
     Dir.chdir('server') do
-      sh("rake release:build_docker")
+      sh("bundle exec rake release:build_docker")
     end
   end
 
   task :build_agent do
     headline "Starting to build kontena-agent ..."
     Dir.chdir('agent') do
-      sh("rake release:build_docker")
+      sh("bundle exec rake release:build_docker")
     end
   end
 

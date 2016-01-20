@@ -9,7 +9,8 @@ module Kontena::Cli::Apps
 
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
-    parameter "[SERVICE] ...", "Services to start"
+    option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false
+    parameter "[SERVICE] ...", "Services to build"
 
     attr_reader :services, :service_prefix
 
@@ -17,7 +18,7 @@ module Kontena::Cli::Apps
       require_config_file(filename)
       @service_prefix = project_name || current_dir
       @services = load_services(filename, service_list, service_prefix)
-      process_docker_images(services, true)
+      process_docker_images(services, true, no_cache?)
     end
   end
 end

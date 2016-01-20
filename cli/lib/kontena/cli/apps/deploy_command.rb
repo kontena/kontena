@@ -158,6 +158,7 @@ module Kontena::Cli::Apps
       end
 
       data[:hooks] = options['hooks'] || {}
+      data[:secrets] = options['secrets'] if options['secrets']
 
       data
     end
