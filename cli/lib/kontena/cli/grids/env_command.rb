@@ -20,8 +20,12 @@ module Kontena::Cli::Grids
         abort("Grid not found".colorize(:red)) unless grid
 
         prefix = export? ? 'export ' : ''
-        puts "#{prefix}KONTENA_URI=#{settings['server']['url'].sub('http', 'ws')}"
-        puts "#{prefix}KONTENA_TOKEN=#{grid['token']}"
+
+        server = settings['servers'].find{|s| s['name'] == settings['current_server']}
+        if server
+          puts "#{prefix}KONTENA_URI=#{server['url'].sub('http', 'ws')}"
+          puts "#{prefix}KONTENA_TOKEN=#{server['token']}"
+        end
       end
     end
   end
