@@ -11,6 +11,7 @@ module Kontena::Cli::Grids
       puts "  nodes: #{grid['node_count']}"
       puts "  services: #{grid['service_count']}"
       puts "  containers: #{grid['container_count']}"
+      puts "  custom_peers: #{grid['custom_peers'].join(',')}"
     end
 
     def grids

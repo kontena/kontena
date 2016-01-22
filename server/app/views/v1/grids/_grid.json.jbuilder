@@ -6,3 +6,4 @@ json.node_count grid.host_nodes.count
 json.service_count grid.grid_services.count
 json.container_count grid.containers.count
 json.user_count grid.users.count
+json.custom_peers grid.custom_peers
