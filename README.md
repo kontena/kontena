@@ -18,6 +18,7 @@ To accelerate and break barriers for containerized application development, Kont
 * Zero-downtime dynamic load balancing
 * Abstraction to describe services running in containers
 * Private Docker image repository
+* Kontena Vault - a secure storage for managing secrets
 * VPN access to backend containers
 * Heroku-like application deployment workflow
 
