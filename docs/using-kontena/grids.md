@@ -36,3 +36,53 @@ $ kontena grid current
 ```
 
 Shows currently used grid details.
+
+## Show Current Grid Logs
+
+```
+$ kontena grid logs
+```
+
+## Show Current Grid Audit Logs
+
+```
+$ kontena grid audit-log
+```
+
+## Remove a Grid
+
+```
+$ kontena grid remove mygrid
+
+```
+
+Removes a grid named `mygrid`.
+
+
+## Show Current Grid Environment Details
+
+```
+$ kontena grid env
+```
+
+## List Current Grid Users
+
+```
+$ kontena grid list-users
+```
+
+## Add User to the Current Grid
+
+```
+$ kontena grid add-user not@val.id
+```
+
+Adds user with email `not@val.id` to the current grid. Note: user has to be invited to master first.
+
+## Remove a User from the Current Grid
+
+```
+$ kontena grid remove-user not@val.id
+```
+
+Removes a user with an email `not@val.id` from the current grid.
