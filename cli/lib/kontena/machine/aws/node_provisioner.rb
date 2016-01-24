@@ -2,12 +2,14 @@ require 'fileutils'
 require 'erb'
 require 'open3'
 require 'shell-spinner'
+require_relative 'common'
 
 module Kontena
   module Machine
     module Aws
       class NodeProvisioner
         include RandomName
+        include Common
 
         attr_reader :client, :api_client, :region
 
@@ -17,8 +19,10 @@ module Kontena
         # @param [String] region
         def initialize(api_client, access_key_id, secret_key, region)
           @api_client = api_client
-          @client = Fog::Compute.new(:provider => 'AWS', :aws_access_key_id => access_key_id, :aws_secret_access_key => secret_key, :region => region)
-
+          @client = Fog::Compute.new(
+            :provider => 'AWS', :aws_access_key_id => access_key_id,
+            :aws_secret_access_key => secret_key, :region => region
+          )
         end
 
         # @param [Hash] opts
@@ -70,7 +74,7 @@ module Kontena
           ShellSpinner "Creating AWS instance #{name.colorize(:cyan)} " do
             instance.wait_for { ready? }
           end
-          client.create_tags(instance.id, {'kontena_name' => name, 'kontena_grid' => opts[:grid]})
+          client.create_tags(instance.id, {'Name' => name, 'kontena_grid' => opts[:grid]})
           node = nil
           ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
             sleep 2 until node = instance_exists_in_grid?(opts[:grid], name)
@@ -103,28 +107,10 @@ module Kontena
           security_group.authorize_port_range(80..80)
           security_group.authorize_port_range(443..443)
           security_group.authorize_port_range(22..22)
+          security_group.authorize_port_range(1194..1194, ip_protocol: 'udp')
           security_group.authorize_port_range(6783..6783, group: {security_group.owner_id => security_group.group_id}, ip_protocol: 'tcp')
-          security_group.authorize_port_range(6783..6783, group: {security_group.owner_id => security_group.group_id}, ip_protocol: 'udp')
+          security_group.authorize_port_range(6783..6784, group: {security_group.owner_id => security_group.group_id}, ip_protocol: 'udp')
           security_group
-        end
-
-
-        # @param [String] region
-        # @return String
-        def resolve_ami(region)
-          images = {
-              'eu-central-1' => 'ami-74bbba69',
-              'ap-northeast-1' => 'ami-1e77ff1e',
-              'us-gov-west-1' => 'ami-f1d1b2d2',
-              'sa-east-1' => 'ami-632ba17e',
-              'ap-southeast-2' => 'ami-83f8b4b9',
-              'ap-southeast-1' => 'ami-12060c40',
-              'us-east-1' => 'ami-f396fa96',
-              'us-west-2' => 'ami-99bfada9',
-              'us-west-1' => 'ami-dbe71d9f',
-              'eu-west-1' => 'ami-83e9c8f4'
-          }
-          images[region]
         end
 
         def default_subnet(vpc, zone)

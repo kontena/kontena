@@ -29,8 +29,6 @@ write_files:
         -e SSL_CERT="$SSL_CERT" \
         -p 80:80 -p 443:443 kontena/haproxy:latest
 coreos:
-  update:
-      reboot-strategy: off
   units:
     - name: kontena-server-mongo.service
       command: start
@@ -70,6 +68,8 @@ coreos:
         Requires=network-online.target
         Requires=docker.service
         Requires=kontena-server-mongo.service
+        Before=kontena-server-haproxy.service
+        Wants=kontena-server-haproxy.service
 
         [Service]
         Restart=always
@@ -97,6 +97,7 @@ coreos:
         Documentation=http://www.kontena.io/
         Requires=network-online.target
         Requires=docker.service
+        Requires=kontena-server-api.service
 
         [Service]
         Restart=always

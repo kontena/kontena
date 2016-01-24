@@ -2,20 +2,26 @@ require 'fileutils'
 require 'erb'
 require 'open3'
 require 'shell-spinner'
+require_relative 'common'
 
 module Kontena
   module Machine
     module Aws
       class MasterProvisioner
         include RandomName
+        include Common
         attr_reader :client, :http_client, :region
 
         # @param [String] access_key_id aws_access_key_id
         # @param [String] secret_key aws_secret_access_key
         # @param [String] region
         def initialize(access_key_id, secret_key, region)
-          @client = Fog::Compute.new(:provider => 'AWS', :aws_access_key_id => access_key_id, :aws_secret_access_key => secret_key, :region => region)
-
+          @client = Fog::Compute.new(
+            :provider => 'AWS',
+            :aws_access_key_id => access_key_id,
+            :aws_secret_access_key => secret_key,
+            :region => region
+          )
         end
 
         # @param [Hash] opts
@@ -111,25 +117,6 @@ module Kontena
           security_group.authorize_port_range(22..22)
           security_group
         end
-
-        # @param [String] region
-        # @return String
-        def resolve_ami(region)
-          images = {
-              'eu-central-1' => 'ami-74bbba69',
-              'ap-northeast-1' => 'ami-1e77ff1e',
-              'us-gov-west-1' => 'ami-f1d1b2d2',
-              'sa-east-1' => 'ami-632ba17e',
-              'ap-southeast-2' => 'ami-83f8b4b9',
-              'ap-southeast-1' => 'ami-12060c40',
-              'us-east-1' => 'ami-f396fa96',
-              'us-west-2' => 'ami-99bfada9',
-              'us-west-1' => 'ami-dbe71d9f',
-              'eu-west-1' => 'ami-83e9c8f4'
-          }
-          images[region]
-        end
-
 
         def default_subnet(vpc, zone)
           client.subnets.all('vpc-id' => vpc, 'availabilityZone' => zone).first
