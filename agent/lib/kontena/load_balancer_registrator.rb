@@ -46,6 +46,9 @@ module Kontena
       elsif event.status == 'die'
         self.unregister_container(event.id)
       end
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
+      debug "#{exc.backtrace.join("\n")}" if exc.backtrace
     end
 
     # @param [Docker::Container] container
