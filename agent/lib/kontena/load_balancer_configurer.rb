@@ -71,6 +71,8 @@ module Kontena
         etcd_path = "#{ETCD_PREFIX}/#{name}/tcp-services/#{service_name}"
       end
       rmdir(etcd_path)
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
     end
 
     # @param [String] key
