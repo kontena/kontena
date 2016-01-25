@@ -5,6 +5,14 @@ describe Kontena::NodeInfoWorker do
   let(:queue) { Queue.new }
   let(:subject) { described_class.new(queue) }
 
+  describe '#initialize' do
+    it 'subscribes to websocket:connected channel' do
+      expect(subject).to receive(:publish_node_info).once
+      Kontena::Pubsub.publish('websocket:connected', {})
+      sleep 0.01
+    end
+  end
+
   describe '#start!' do
     it 'returns thread' do
       allow(subject).to receive(:publish_node_info)
@@ -13,6 +21,7 @@ describe Kontena::NodeInfoWorker do
     end
 
     it 'calls #publish_node_info' do
+      expect(subject).to receive(:sleep).once
       expect(subject).to receive(:publish_node_info).once
       allow(Docker::Container).to receive(:all).and_return([])
       thread = subject.start!

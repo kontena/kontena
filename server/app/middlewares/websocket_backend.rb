@@ -245,6 +245,8 @@ class WebsocketBackend
       node = HostNode.find_by(node_id: client[:id])
       if node
         node.set(connected: true, last_seen_at: Time.now.utc)
+      else
+        self.on_close(client[:ws])
       end
     }
   end

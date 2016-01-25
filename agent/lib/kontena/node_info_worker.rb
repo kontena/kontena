@@ -16,15 +16,18 @@ module Kontena
     # @param [Queue] queue
     def initialize(queue)
       @queue = queue
+      Pubsub.subscribe('websocket:connected') do |event|
+        self.publish_node_info
+      end
       info 'initialized'
     end
 
-    ##
-    # Start work
-    #
     def start!
       Thread.new {
-        self.publish_node_info
+        loop do
+          sleep 300
+          self.publish_node_info
+        end
       }
     end
 
