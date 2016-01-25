@@ -17,6 +17,7 @@ module Kontena::Cli::Services
     option ["-c", "--cpu-shares"], "CPU_SHARES", "CPU shares (relative weight)"
     option ["-m", "--memory"], "MEMORY", "Memory limit (format: <number><optional unit>, where unit = b, k, m or g)"
     option ["--memory-swap"], "MEMORY_SWAP", "Total memory usage (memory + swap), set \'-1\' to disable swap (format: <number><optional unit>, where unit = b, k, m or g)"
+    option "--entrypoint", "ENTRYPOINT", "Overwrite the default ENTRYPOINT of the image"
     option "--cmd", "CMD", "Command to execute"
     option "--instances", "INSTANCES", "How many instances should be deployed"
     option ["-u", "--user"], "USER", "Username who executes first process inside container"
@@ -61,6 +62,7 @@ module Kontena::Cli::Services
       data[:env] = env_list unless env_list.empty?
       data[:secrets] = parse_secrets(secret_list)
       data[:container_count] = instances if instances
+      data[:entrypoint] = entrypoint if entrypoint
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
       data[:image] = parse_image(image) if image

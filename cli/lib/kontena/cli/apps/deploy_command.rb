@@ -137,6 +137,7 @@ module Kontena::Cli::Apps
       data[:cpu_shares] = options['cpu_shares'] if options['cpu_shares']
       data[:volumes] = options['volumes'] if options['volumes']
       data[:volumes_from] = options['volumes_from'] if options['volumes_from']
+      data[:entrypoint] = options['entrypoint'] if options['entrypoint']
       data[:cmd] = options['command'].split(" ") if options['command']
       data[:affinity] = options['affinity'] if options['affinity']
       data[:user] = options['user'] if options['user']
