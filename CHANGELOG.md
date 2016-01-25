@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.2 (2016-01-25)
+
+- better error handling on lb changes
+- update node information when agent reconnects
+- aws provisioner update
+- grid env subcommand fix
+
 ## 0.11.1 (2016-01-16)
 
 - cleanup etcd correctly when load balanced service is removed
