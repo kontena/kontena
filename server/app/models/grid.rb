@@ -20,7 +20,7 @@ class Grid
   has_many :grid_secrets, dependent: :delete
   has_many :containers, dependent: :delete
   has_many :container_logs
-  has_many :container_stats, dependent: :delete
+  has_many :container_stats
   has_many :audit_logs
   has_many :registries, dependent: :delete
   has_many :overlay_cidrs, dependent: :delete
