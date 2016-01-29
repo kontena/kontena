@@ -116,7 +116,7 @@ class Kontena::Cli::LoginCommand < Clamp::Command
 |   < (_) | | | | ||  __/ | | | (_| |
 |_|\\_\\___/|_| |_|\\__\\___|_| |_|\\__,_|
 -------------------------------------
-Copyright (c)2015 Kontena, Inc.
+Copyright (c)2016 Kontena, Inc.
 LOGO
     puts logo
   end

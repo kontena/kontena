@@ -67,7 +67,7 @@ Password: *********
 |   < (_) | | | | ||  __/ | | | (_| |
 |_|\_\___/|_| |_|\__\___|_| |_|\__,_|
 -------------------------------------
-Copyright (c)2015 Kontena, Inc.
+Copyright (c)2016 Kontena, Inc.
 
 Logged in as your.email@domain.com
 Welcome! See 'kontena --help' to get started.
