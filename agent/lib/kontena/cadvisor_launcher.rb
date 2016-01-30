@@ -4,8 +4,8 @@ module Kontena
   class CadvisorLauncher
     include Kontena::Logging
 
-    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.19.3'
-    CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'kontena/cadvisor'
+    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || 'v0.20.4'
+    CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'google/cadvisor'
 
     def initialize
       info 'initialized'
