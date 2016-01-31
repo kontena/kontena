@@ -11,6 +11,9 @@ GEM
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
     addressable (2.3.8)
+    authority (3.1.0)
+      activesupport (>= 3.0.0)
+      rake (>= 0.8.7)
     bson (2.3.0)
     builder (3.2.2)
     celluloid (0.16.0)
@@ -115,6 +118,7 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport (~> 4.1.14)
+  authority
   celluloid (~> 0.16.0)
   dotenv
   faye-websocket (~> 0.10.0)

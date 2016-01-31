@@ -178,6 +178,7 @@ describe '/v1/grids' do
     end
     it 'assigns user to grid' do
       grid = david.grids.first
+      expect(UserAuthorizer).to receive(:assignable_by?).with(david, {to: grid}).and_return(true)
       post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
       expect(grid.reload.users.size).to eq(2)
       expect(emily.reload.grids.include?(grid)).to be_truthy
@@ -185,6 +186,7 @@ describe '/v1/grids' do
 
     it 'creates audit log entry' do
       grid = david.grids.first
+      allow(UserAuthorizer).to receive(:assignable_by?).with(david, {to: grid}).and_return(true)
       expect {
         post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
       }.to change{ AuditLog.count }.by(1)
@@ -196,6 +198,7 @@ describe '/v1/grids' do
 
     it 'returns array of grid users' do
       grid = david.grids.first
+      allow(UserAuthorizer).to receive(:assignable_by?).with(david, {to: grid}).and_return(true)
       post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
       expect(response.status).to eq(201)
       expect(json_response['users'].size).to eq(2)

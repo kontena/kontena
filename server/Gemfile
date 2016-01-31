@@ -15,6 +15,7 @@ gem 'puma'
 gem 'random_token'
 gem 'msgpack'
 gem 'httpclient', '~> 2.3'
+gem 'authority'
 
 group :development, :test do
   gem 'dotenv'
