@@ -22,6 +22,7 @@ module Kontena
         loop do
           sleep 1 until last_collected < (Time.now.to_i - 60)
           self.collect_stats
+          last_collected = Time.now.to_i
         end
       }
     end
