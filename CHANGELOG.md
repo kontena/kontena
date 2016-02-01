@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.3 (2016-02-01)
+
+- fix error on grid destroy
+- fix agent stats collect interval
+
 ## 0.11.2 (2016-01-25)
 
 - better error handling on lb changes
