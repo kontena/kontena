@@ -4,7 +4,7 @@ module Kontena
   class CadvisorLauncher
     include Kontena::Logging
 
-    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.19.3'
+    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.19.5'
     CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'kontena/cadvisor'
 
     def initialize
@@ -47,27 +47,21 @@ module Kontena
         'name' => 'kontena-cadvisor',
         'Image' => image,
         'Cmd' => [
-          '--logtostderr=true',
+          '--docker_only',
           '--listen_ip=127.0.0.1',
           '--port=8989',
           '--storage_duration=2m',
           '--housekeeping_interval=30s'
         ],
         'Volumes' => {
-          '/rootfs' => {},
-          '/var/run' => {},
-          '/sys' => {},
-          '/var/lib/docker' => {}
+          '/host' => {},
         },
         'HostConfig' => {
           'Binds' => [
-            '/:/rootfs:ro',
-            '/var/run:/var/run',
-            '/sys:/sys:ro',
-            '/var/lib/docker:/var/lib/docker:ro'
+            '/:/host:rw'
           ],
-          'NetworkMode' => 'host',
           'PidMode' => 'host',
+          'Privileged' => true,
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
