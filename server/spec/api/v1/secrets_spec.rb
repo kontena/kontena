@@ -1,7 +1,5 @@
 require_relative '../../spec_helper'
 
-
-
 describe 'secrets' do
 
   let(:request_headers) do
@@ -45,6 +43,30 @@ describe 'secrets' do
     it 'returns error if user has no access to grid' do
       data = {name: 'PASSWD', value: 'secretzz'}
       post "/v1/grids/#{another_grid.to_path}/secrets", data.to_json, request_headers
+      expect(response.status).to eq(404)
+    end
+  end
+
+  describe 'PUT /v1/grids/:grid/secrets/:name' do
+    it 'updates a secret' do
+      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+      data = {value: 'secretzz'}
+      expect {
+        put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ secret.reload.value }.to('secretzz')
+    end
+
+    it 'returns error if secret not found' do
+      data = {value: 'secretzz'}
+      put "/v1/grids/#{grid.to_path}/secrets/BAR", data.to_json, request_headers
+      expect(response.status).to eq(404)
+    end
+
+    it 'returns error if user has no access to grid' do
+      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+      data = {value: 'secretzz'}
+      post "/v1/grids/#{another_grid.to_path}/secrets/FOO", data.to_json, request_headers
       expect(response.status).to eq(404)
     end
   end
@@ -111,4 +133,3 @@ describe 'secrets' do
     end
   end
 end
-
