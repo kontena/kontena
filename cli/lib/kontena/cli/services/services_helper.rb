@@ -211,6 +211,13 @@ module Kontena
 
         # @param [String] token
         # @param [String] service_id
+        def restart_service(token, service_id)
+          param = parse_service_id(service_id)          
+          client(token).post("services/#{param}/restart", {})
+        end
+
+        # @param [String] token
+        # @param [String] service_id
         def delete_service(token, service_id)
           param = parse_service_id(service_id)
           client(token).delete("services/#{param}")
