@@ -145,6 +145,7 @@ module Kontena::Cli::Apps
       data[:cap_add] = options['cap_add'] if options['cap_add']
       data[:cap_drop] = options['cap_drop'] if options['cap_drop']
       data[:net] = options['net'] if options['net']
+      data[:pid] = options['pid'] if options['pid']
       data[:log_driver] = options['log_driver'] if options['log_driver']
       data[:log_opts] = options['log_opt'] if options['log_opt'] && !options['log_opt'].empty?
 
