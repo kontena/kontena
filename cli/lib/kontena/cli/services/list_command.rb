@@ -10,22 +10,24 @@ module Kontena::Cli::Services
       token = require_token
 
       grids = client(token).get("grids/#{current_grid}/services")
-      titles = ['NAME', 'IMAGE', 'INSTANCES', 'STATEFUL', 'STATE']
-      puts "%-30.30s %-50.50s %-10s %-8s %-10s" % titles
+      titles = ['NAME', 'INSTANCES', 'STATEFUL', 'STATE', 'EXPOSED PORTS']
+      puts "%-60.60s %-10s %-8s %-10s %-50s" % titles
       grids['services'].each do |service|
         stateful = service['stateful'] ? 'yes' : 'no'
-        image = service['image']
-        if image.length > 50
-          image = image[0..10] << '...' << image[-35..-1]
-        end
+        running = service['instances']['running']
+        desired = service['container_count']
+        instances = "#{running} / #{desired}"
+        ports = service['ports'].map{|p|
+          "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"
+        }.join(", ")
         vars = [
           service['name'],
-          image,
-          service['container_count'],
+          instances,
           stateful,
-          service['state']
+          service['state'],
+          ports
         ]
-        puts "%-30.30s %-50.50s %-10.10s %-8s %-10s" % vars
+        puts "%-60.60s %-10.10s %-8s %-10s %-50s" % vars
       end
     end
   end
