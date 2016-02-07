@@ -11,14 +11,18 @@ module GridServices
 
     optional do
       model :current_user, class: User
-      boolean :touch, default: true
+      boolean :force, default: false
     end
 
     def execute
-      self.grid_service.set(
+      attrs = {
         :deploy_requested_at => Time.now.utc,
         :state => 'deploy_pending'
-      )
+      }
+      if self.force
+        attrs[:updated_at] = Time.now.utc
+      end
+      self.grid_service.set(attrs)
       worker(:grid_service_scheduler).async.perform(self.grid_service.id)
 
       self.grid_service

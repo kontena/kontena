@@ -174,12 +174,37 @@ describe '/v1/services' do
   end
 
   describe 'POST /:id/deploy' do
+    let(:worker) { spy(:worker) }
+    before(:each) do
+      allow(Celluloid::Actor).to receive(:[]).with(:grid_service_scheduler_worker).and_return(worker)
+    end
     it 'deploys service' do
-      expect(GridServices::Deploy).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
-        .and_return(double.as_null_object)
+      spy = spy(:executor)
+      expect(worker).to receive(:async).once.and_return(spy)
+      expect(spy).to receive(:perform).with(redis_service.id)
       post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
       expect(response.status).to eq(200)
+    end
+
+    it 'changes state to deploy_pending' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ redis_service.reload.state }.to('deploy_pending')
+    end
+
+    it 'does not change updated_at by default' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
+        expect(response.status).to eq(200)
+      }.not_to change{ redis_service.reload.updated_at }
+    end
+
+    it 'changes updated_at when force=true' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/deploy", {force: true}.to_json, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ redis_service.reload.updated_at }
     end
   end
 

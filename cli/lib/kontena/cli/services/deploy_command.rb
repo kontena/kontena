@@ -6,12 +6,15 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
+    option '--force-deploy', :flag, 'Force deploy even if service does not have any changes'
 
     def execute
       require_api_url
       token = require_token
       service_id = name
-      deploy_service(token, service_id, {})
+      data = {}
+      data[:force] = true if force_deploy?
+      deploy_service(token, service_id, data)
     end
   end
 end
