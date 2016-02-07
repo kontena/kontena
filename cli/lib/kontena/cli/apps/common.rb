@@ -9,32 +9,46 @@ module Kontena::Cli::Apps
       abort("File #{filename} does not exist") unless File.exists?(filename)
     end
 
+    # @param [String] filename
+    # @param [Array<String>] service_list
+    # @param [String] prefix
+    # @return [Hash]
     def load_services(filename, service_list, prefix)
       services = parse_services(filename, nil, prefix)
       services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
       services
     end
 
+    # @return [String]
     def token
       @token ||= require_token
     end
 
+    # @param [String] name
+    # @return [String]
     def prefixed_name(name)
       return name if service_prefix.strip == ""
 
       "#{service_prefix}-#{name}"
     end
 
+    # @return [String]
     def current_dir
       File.basename(Dir.getwd)
     end
 
+    # @param [String] name
+    # @return [Boolean]
     def service_exists?(name)
       get_service(token, prefixed_name(name)) rescue false
     end
 
-    def parse_services(file, name = nil, prefix='')
-      services = YAML.load(File.read(File.expand_path(file)) % {project: prefix})
+    # @param [String] file
+    # @param [String,NilClass] name
+    # @param [String] prefix
+    # @return [Hash]
+    def parse_services(file, name = nil, prefix = '')
+      services = YAML.load(File.read(File.expand_path(file)) % {project: prefix, grid: current_grid})
       Dir.chdir(File.dirname(File.expand_path(file))) do
         services.each do |name, options|
           normalize_env_vars(options)
@@ -53,18 +67,27 @@ module Kontena::Cli::Apps
       end
     end
 
+    # @param [Hash] options
+    # @param [String] file
+    # @param [String] service_name
+    # @param [String] prefix
+    # @return [Hash]
     def extend_options(options, file, service_name, prefix)
       parent_options = parse_services(file, service_name, prefix)
       options['environment'] = extend_env_vars(parent_options, options)
       parent_options.merge(options)
     end
 
+    # @param [Hash] options
     def normalize_env_vars(options)
       if options['environment'].is_a?(Hash)
         options['environment'] = options['environment'].map{|k, v| "#{k}=#{v}"}
       end
     end
 
+    # @param [Hash] from
+    # @param [Hash] to
+    # @return [Array]
     def extend_env_vars(from, to)
       env_vars = to['environment'] || []
       if from['environment']
@@ -75,12 +98,15 @@ module Kontena::Cli::Apps
       env_vars
     end
 
-    def create_yml(services, file='kontena.yml')
+    # @param [Hash] services
+    # @param [String] file
+    def create_yml(services, file = 'kontena.yml')
       yml = File.new(file, 'w')
       yml.puts services.to_yaml
       yml.close
     end
 
+    # @return [Hash]
     def app_json
       if !@app_json && File.exist?('app.json')
         @app_json = JSON.parse(File.read('app.json'))
