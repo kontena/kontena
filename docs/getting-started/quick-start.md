@@ -24,7 +24,7 @@ After the installation is complete, you can test the installation by checking th
 To enable tab-completion for bash, add this to your `.bashrc` scripts:
 
 ```
-$ which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
+which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 ```
 
 ## Step 2. Register Personal User Account
