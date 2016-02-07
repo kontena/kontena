@@ -12,6 +12,7 @@ module Kontena::Cli::Apps
     option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option '--async', :flag, 'Run deploys async/parallel'
+    option '--force-deploy', :flag, 'Force deploy even if service does not have any changes'
 
     parameter "[SERVICE] ...", "Services to start"
 
@@ -31,12 +32,14 @@ module Kontena::Cli::Apps
 
     private
 
+    # @param [Hash] services
     def create_or_update_services(services)
       services.each do |name, config|
         create_or_update_service(name, config)
       end
     end
 
+    # @param [Array] queue
     def deploy_services(queue)
       queue.each do |service|
         name = service['id'].split('/').last
@@ -50,6 +53,8 @@ module Kontena::Cli::Apps
       end
     end
 
+    # @param [String] name
+    # @param [Hash] options
     def create_or_update_service(name, options)
       # skip if service is already processed or it's not present
       return nil if in_deploy_queue?(name) || !services.keys.include?(name)
@@ -75,10 +80,13 @@ module Kontena::Cli::Apps
       deploy_queue.push service
     end
 
+    # @param [String] name
     def find_service_by_name(name)
       get_service(token, prefixed_name(name)) rescue nil
     end
 
+    # @param [String] name
+    # @param [Hash] options
     def create(name, options)
       puts "creating #{name.colorize(:cyan)}"
       name = prefixed_name(name)
@@ -87,17 +95,22 @@ module Kontena::Cli::Apps
       create_service(token, current_grid, data)
     end
 
+    # @param [String] id
+    # @param [Hash] options
     def update(id, options)
       puts "updating #{id.colorize(:cyan)}"
       id = prefixed_name(id)
       data = parse_data(options)
       update_service(token, id, data)
+      deploy_service(token, id, {force: true}) if force_deploy?
     end
 
+    # @param [String] name
     def in_deploy_queue?(name)
       deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
     end
 
+    # @param [Hash] options
     def merge_env_vars(options)
       return unless options['env_file']
 
@@ -111,6 +124,7 @@ module Kontena::Cli::Apps
       options['environment'].uniq! {|s| s.split('=').first}
     end
 
+    # @param [Hash] options
     def merge_external_links(options)
       if options['external_links']
         options['links'] ||= []
@@ -119,6 +133,7 @@ module Kontena::Cli::Apps
       end
     end
 
+    # @param [String] path
     def read_env_file(path)
       File.readlines(path).delete_if { |line| line.start_with?('#') || line.empty? }
     end
@@ -162,6 +177,5 @@ module Kontena::Cli::Apps
 
       data
     end
-
   end
 end

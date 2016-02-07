@@ -181,6 +181,27 @@ describe '/v1/services' do
       post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
       expect(response.status).to eq(200)
     end
+
+    it 'changes state to deploy_pending' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ redis_service.reload.state }.to('deploy_pending')
+    end
+
+    it 'does not change updated_at by default' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
+        expect(response.status).to eq(200)
+      }.not_to change{ redis_service.reload.updated_at }
+    end
+
+    it 'changes updated_at when force=true' do
+      expect {
+        post "/v1/services/#{redis_service.to_path}/deploy", {force: true}.to_json, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ redis_service.reload.updated_at }
+    end
   end
 
   describe 'POST /:id/stop' do
