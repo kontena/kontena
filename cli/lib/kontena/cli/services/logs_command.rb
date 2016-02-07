@@ -3,6 +3,7 @@ require_relative 'services_helper'
 module Kontena::Cli::Services
   class LogsCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
     include ServicesHelper
 
     parameter "NAME", "Service name"

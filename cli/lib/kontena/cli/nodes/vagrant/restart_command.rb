@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes::Vagrant
   class RestartCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NAME", "Node name"
 

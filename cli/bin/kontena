@@ -13,6 +13,7 @@ STDOUT.sync = true
 require 'clamp'
 require 'kontena/client'
 require 'kontena/cli/common'
+require 'kontena/cli/grid_options'
 require 'kontena/cli/app_command'
 require 'kontena/cli/register_command'
 require 'kontena/cli/login_command'

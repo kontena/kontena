@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes::Azure
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     option "--subscription-id", "SUBSCRIPTION ID", "Azure subscription id", required: true
     option "--subscription-cert", "CERTIFICATE", "Path to Azure management certificate", attribute_name: :certificate, required: true

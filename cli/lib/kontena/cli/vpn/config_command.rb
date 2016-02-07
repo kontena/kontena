@@ -1,6 +1,7 @@
 module Kontena::Cli::Vpn
   class ConfigCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     def execute
       require 'rbconfig'

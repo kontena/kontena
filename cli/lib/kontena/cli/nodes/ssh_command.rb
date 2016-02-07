@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes
   class SshCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NODE_ID", "Node id"
     option ["-i", "--identity-file"], "IDENTITY_FILE", "Path to ssh private key"

@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes
   class ShowCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NODE_ID", "Node id"
 

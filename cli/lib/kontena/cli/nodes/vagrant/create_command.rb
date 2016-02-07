@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes::Vagrant
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "[NAME]", "Node name"
     option "--memory", "MEMORY", "How much memory node has", default: '1024'

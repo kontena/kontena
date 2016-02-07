@@ -1,6 +1,7 @@
 module Kontena::Cli::ExternalRegistries
   class DeleteCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NAME", "External registry name to delete"
 

@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes::Aws
   class RestartCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NAME", "Node name"
     option "--access-key", "ACCESS_KEY", "AWS access key ID", required: true

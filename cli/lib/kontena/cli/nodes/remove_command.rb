@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes
   class RemoveCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NODE_ID", "Node id"
 

@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes::Azure
   class RestartCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NAME", "Node name"
     option "--subscription-id", "SUBSCRIPTION ID", "Azure subscription id", required: true

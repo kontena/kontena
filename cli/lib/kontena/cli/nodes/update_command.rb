@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes
   class UpdateCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NODE_ID", "Node id"
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
