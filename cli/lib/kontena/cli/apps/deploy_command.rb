@@ -43,7 +43,9 @@ module Kontena::Cli::Apps
     def deploy_services(queue)
       queue.each do |service|
         name = service['id'].split('/').last
-        deploy_service(token, name, {})
+        options = {}
+        options[:force] = true if force_deploy?
+        deploy_service(token, name, options)
         print "deploying #{name.sub("#{service_prefix}-", '').colorize(:cyan)}"
         unless async?
           wait_for_deploy_to_finish(token, service['id'])
@@ -102,7 +104,6 @@ module Kontena::Cli::Apps
       id = prefixed_name(id)
       data = parse_data(options)
       update_service(token, id, data)
-      deploy_service(token, id, {force: true}) if force_deploy?
     end
 
     # @param [String] name
