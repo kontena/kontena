@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.4 (2016-02-08)
+
+- add missing vault update command
+- add missing app restart command
+- add missing --force-deploy option to deploy commands
+- fix broken pid option in kontena.yml
+
 ## 0.11.3 (2016-02-01)
 
 - fix error on grid destroy
