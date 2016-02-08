@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.5 (2016-02-08)
+
+- handle force_deploy flag correctly on app deploy command
+
 ## 0.11.4 (2016-02-08)
 
 - add missing vault update command
