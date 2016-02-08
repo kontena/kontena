@@ -136,13 +136,9 @@ module Kontena
           end
 
           weave = nil
-          peer_ips = info['peer_ips'] || []
+          peer_ips = resolve_peer_ips(info)
           until weave && weave.running? do
-            self.exec([
-              '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-              '--password', ENV['KONTENA_TOKEN']
-              ] + peer_ips
-            )
+            launch_router(peer_ips)
             weave = Docker::Container.get('weave') rescue nil
             wait = Time.now.to_f + 10.0
             sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
@@ -159,9 +155,7 @@ module Kontena
           end
 
           if info['node_number']
-            weave_bridge = "10.81.0.#{info['node_number']}/19"
-            self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
-            info "bridge exposed: #{weave_bridge}"
+            expose_bridge(info)
           end
           info
         rescue => exc
@@ -169,6 +163,34 @@ module Kontena
           debug exc.backtrace.join("\n")
         end
       }
+    end
+
+    # @param [Hash] info
+    def resolve_peer_ips(info)
+      custom_peer_ips || info['peer_ips'] || []
+    end
+
+    # @param [Array<String>] peer_ips
+    def launch_router(peer_ips)
+      self.exec([
+        '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
+        '--password', ENV['KONTENA_TOKEN']
+        ] + peer_ips
+      )
+    end
+
+    # @param [Hash] info
+    def expose_bridge(info)
+      weave_bridge = "10.81.0.#{info['node_number']}/19"
+      self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
+      info "bridge exposed: #{weave_bridge}"
+    end
+
+    # @return [Array<String>]
+    def custom_peer_ips
+      if ENV['WEAVE_CUSTOM_PEERS']
+        ENV['WEAVE_CUSTOM_PEERS'].split(',')
+      end
     end
 
     private
