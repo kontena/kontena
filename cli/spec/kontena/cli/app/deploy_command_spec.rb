@@ -591,7 +591,7 @@ yml
         data = {
           'image' => 'foo/bar:latest',
           'hooks' => {
-            'post_start': []
+            'post_start' => []
           }
         }
         result = subject.send(:parse_data, data)
