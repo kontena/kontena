@@ -12,6 +12,7 @@ describe Kontena::Cli::Apps::DockerHelper do
       it 'returns true' do
         expect(subject.validate_image_name('registry.kontena.local/image-name:latest')).to be_truthy
         expect(subject.validate_image_name('my-registry.com/organization/image_name:latest')).to be_truthy
+        expect(subject.validate_image_name('my-registry.com:5000/organization/image_name:latest')).to be_truthy
         expect(subject.validate_image_name('mysql:5.1')).to be_truthy
         expect(subject.validate_image_name('wordpress')).to be_truthy
       end
@@ -26,7 +27,6 @@ describe Kontena::Cli::Apps::DockerHelper do
         expect(subject.validate_image_name('mysql 5.1')).to be_falsey
         expect(subject.validate_image_name('*.mydomain.com/mysql')).to be_falsey
       end
-
     end
   end
 end
