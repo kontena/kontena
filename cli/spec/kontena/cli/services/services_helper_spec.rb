@@ -41,6 +41,27 @@ module Kontena::Cli::Services
       end
     end
 
+    describe '#stop_service' do
+      it 'creates POST services/:id/stop request to Kontena Server' do
+        expect(client).to receive(:post).with('services/test-grid/test-service/stop', {})
+        subject.stop_service(token, 'test-service')
+      end
+    end
+
+    describe '#start_service' do
+      it 'creates POST services/:id/start request to Kontena Server' do
+        expect(client).to receive(:post).with('services/test-grid/test-service/start', {})
+        subject.start_service(token, 'test-service')
+      end
+    end
+
+    describe '#restart_service' do
+      it 'creates POST services/:id/restart request to Kontena Server' do
+        expect(client).to receive(:post).with('services/test-grid/test-service/restart', {})
+        subject.restart_service(token, 'test-service')
+      end
+    end
+
     describe '#deploy_service' do
       it 'creates POST services/:id/deploy request to Kontena Server' do
         allow(client).to receive(:get).with('services/test-grid/1').and_return({'state' => 'running'})
