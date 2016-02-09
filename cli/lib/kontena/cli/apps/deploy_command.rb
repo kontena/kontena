@@ -146,15 +146,15 @@ module Kontena::Cli::Apps
       data[:image] = parse_image(options['image'])
       data[:env] = options['environment']
       data[:container_count] = options['instances']
-      data[:links] = parse_links(options['links']) if options['links']
-      data[:ports] = parse_ports(options['ports']) if options['ports']
+      data[:links] = parse_links(options['links'] || [])
+      data[:ports] = parse_ports(options['ports'] || [])
       data[:memory] = parse_memory(options['mem_limit']) if options['mem_limit']
       data[:memory_swap] = parse_memory(options['memswap_limit']) if options['memswap_limit']
       data[:cpu_shares] = options['cpu_shares'] if options['cpu_shares']
-      data[:volumes] = options['volumes'] if options['volumes']
-      data[:volumes_from] = options['volumes_from'] if options['volumes_from']
+      data[:volumes] = options['volumes'] || []
+      data[:volumes_from] = options['volumes_from'] || []
       data[:cmd] = options['command'].split(" ") if options['command']
-      data[:affinity] = options['affinity'] if options['affinity']
+      data[:affinity] = options['affinity'] || []
       data[:user] = options['user'] if options['user']
       data[:stateful] = options['stateful'] == true
       data[:privileged] = options['privileged'] unless options['privileged'].nil?

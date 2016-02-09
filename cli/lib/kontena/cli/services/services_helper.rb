@@ -153,6 +153,14 @@ module Kontena
             end
           end
 
+          unless service['memory'].to_s.empty?
+            puts "  memory: #{int_to_filesize(service['memory'])}"
+          end
+
+          unless service['memory_swap'].to_s.empty?
+            puts "  memory_swap: #{int_to_filesize(service['memory_swap'])}"
+          end
+
           unless service['pid'].to_s.empty?
             puts "  pid: #{service['pid']}"
           end
@@ -212,7 +220,7 @@ module Kontena
         # @param [String] token
         # @param [String] service_id
         def restart_service(token, service_id)
-          param = parse_service_id(service_id)          
+          param = parse_service_id(service_id)
           client(token).post("services/#{param}/restart", {})
         end
 
@@ -309,6 +317,16 @@ module Kontena
             secrets << {secret: secret, name: name, type: type}
           end
           secrets
+        end
+
+        def int_to_filesize(int)
+          {
+            'B'  => 1000,
+            'KB' => 1000 * 1000,
+            'MB' => 1000 * 1000 * 1000,
+            'GB' => 1000 * 1000 * 1000 * 1000,
+            'TB' => 1000 * 1000 * 1000 * 1000 * 1000
+          }.each_pair { |e, s| return "#{(int.to_i / (s / 1000))}#{e}" if int < s }
         end
       end
     end
