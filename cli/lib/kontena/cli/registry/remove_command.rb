@@ -1,10 +1,8 @@
 module Kontena::Cli::Registry
-  class DeleteCommand < Clamp::Command
+  class RemoveCommand < Clamp::Command
     include Kontena::Cli::Common
 
     def execute
-       puts "DEPRECATION WARNING: Support for 'kontena registry delete' will be dropped. Use 'kontena registry remove' instead.".colorize(:red)
-
       require_api_url
       token = require_token
 

@@ -21,7 +21,7 @@ class Kontena::Cli::AppCommand < Clamp::Command
   subcommand "stop", "Stop services", Kontena::Cli::Apps::StopCommand
   subcommand "restart", "Restart services", Kontena::Cli::Apps::RestartCommand
   subcommand "show", "Show service details", Kontena::Cli::Apps::ShowCommand
-  subcommand ["ps", "list"], "List services", Kontena::Cli::Apps::ListCommand
+  subcommand ["ps", "list", "ls"], "List services", Kontena::Cli::Apps::ListCommand
   subcommand ["logs"], "Show service logs", Kontena::Cli::Apps::LogsCommand
   subcommand "monitor", "Monitor services", Kontena::Cli::Apps::MonitorCommand
   subcommand ["remove","rm"], "Remove services", Kontena::Cli::Apps::RemoveCommand

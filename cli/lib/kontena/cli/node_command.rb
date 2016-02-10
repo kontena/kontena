@@ -11,7 +11,7 @@ require_relative 'nodes/azure_command'
 
 class Kontena::Cli::NodeCommand < Clamp::Command
 
-  subcommand "list", "List grid nodes", Kontena::Cli::Nodes::ListCommand
+  subcommand ["list","ls"], "List grid nodes", Kontena::Cli::Nodes::ListCommand
   subcommand "show", "Show node", Kontena::Cli::Nodes::ShowCommand
   subcommand "ssh", "Ssh into node", Kontena::Cli::Nodes::SshCommand
   subcommand "update", "Update node", Kontena::Cli::Nodes::UpdateCommand

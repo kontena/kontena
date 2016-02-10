@@ -13,7 +13,7 @@ require_relative 'grids/remove_user_command'
 
 class Kontena::Cli::GridCommand < Clamp::Command
 
-  subcommand "list", "List all grids", Kontena::Cli::Grids::ListCommand
+  subcommand ["list","ls"], "List all grids", Kontena::Cli::Grids::ListCommand
   subcommand "create", "Create a new grid", Kontena::Cli::Grids::CreateCommand
   subcommand "use", "Switch to use specific grid", Kontena::Cli::Grids::UseCommand
   subcommand "show", "Show grid details", Kontena::Cli::Grids::ShowCommand
