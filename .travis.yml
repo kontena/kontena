@@ -16,13 +16,12 @@ env:
   - TEST_DIR=cli
 matrix:
   exclude:
+    - rvm: 2.0.0-p648
+      env: TEST_DIR=server
     - rvm: 2.1.8
       env: TEST_DIR=server
     - rvm: 2.0.0-p648
       env: TEST_DIR=agent
     - rvm: 2.1.8
       env: TEST_DIR=agent
-  allow_failures:
-    - rvm: 2.0.0-p648
-      env: TEST_DIR=server
 script: CI=true cd $TEST_DIR && bundle install && bundle exec rspec spec/
