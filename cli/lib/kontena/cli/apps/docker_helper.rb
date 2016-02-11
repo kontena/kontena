@@ -1,7 +1,10 @@
 module Kontena::Cli::Apps
   module DockerHelper
 
-    def process_docker_images(services, force_build = false, no_cache=false)
+    # @param [Hash] services
+    # @param [Boolean] force_build
+    # @param [Boolean] no_cache
+    def process_docker_images(services, force_build = false, no_cache = false)
       if services.none?{|name, service| service['build']}
         puts "Not found any service with build option"
         return
@@ -20,31 +23,44 @@ module Kontena::Cli::Apps
       end
     end
 
+    # @param [String] name
+    # @return [Boolean]
     def validate_image_name(name)
-      !(/^[\w.\/\-]+:?+[\w+.]+$/ =~ name).nil?
+      !(/^[\w.\/\-:]+:?+[\w+.]+$/ =~ name).nil?
     end
 
-
+    # @param [String] name
+    # @param [String] path
+    # @param [String] dockerfile
+    # @param [Boolean] no_cache
+    # @return [Integer]
     def build_docker_image(name, path, dockerfile, no_cache=false)
       cmd = ["docker build -t #{name}"]
       cmd << "-f #{File.join(File.expand_path(path), dockerfile)}" if dockerfile != "Dockerfile"
       cmd << "--no-cache" if no_cache
-      cmd << path      
+      cmd << path
       ret = system(cmd.join(' '))
       abort("Failed to build image #{name.colorize(:cyan)}") unless ret
       ret
     end
 
+    # @param [String] image
+    # @return [Integer]
     def push_docker_image(image)
       ret = system("docker push #{image}")
       abort("Failed to push image #{image.colorize(:cyan)}") unless ret
       ret
     end
 
+    # @param [String] image
+    # @return [Boolean]
     def image_exist?(image)
       `docker history #{image} 2>&1` ; $?.success?
     end
 
+    # @param [String] path
+    # @param [String] dockerfile
+    # @return [Boolean]
     def dockerfile_exist?(path, dockerfile)
       file = File.join(File.expand_path(path), dockerfile)
       File.exist?(file)
