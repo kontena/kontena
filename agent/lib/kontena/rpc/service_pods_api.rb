@@ -39,9 +39,10 @@ module Kontena
       end
 
       # @param [String] service_name
+      # @param [Hash] opts
       # @return [Hash]
-      def terminate(service_name)
-        Kontena::ServicePods::Terminator.perform_async(service_name)
+      def terminate(service_name, opts = {})
+        Kontena::ServicePods::Terminator.perform_async(service_name, opts)
         {}
       end
     end

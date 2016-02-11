@@ -18,6 +18,9 @@ module Kontena
       Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event)
       end
+      Pubsub.subscribe('lb:ensure_instance_config') do |service_container|
+        self.register_container(service_container)
+      end
       info 'initialized'
     end
 

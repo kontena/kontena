@@ -17,11 +17,10 @@ describe GridServices::Delete do
   end
 
   describe '#run' do
-    it 'deletes a service' do
-      service = redis_service
-      expect {
-        described_class.new(current_user: user, grid_service: service).run
-      }.to change{ GridService.count }.by(-1)
+    it 'calls grid_service_remove worker' do
+      subject = described_class.new(current_user: user, grid_service: redis_service)
+      expect(subject).to receive(:worker).with(:grid_service_remove).and_return(spy)
+      subject.run
     end
 
     context 'when service is linked to another service' do

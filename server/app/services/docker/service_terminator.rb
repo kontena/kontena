@@ -11,16 +11,18 @@ module Docker
 
     ##
     # @param [String] service_name
-    def terminate_service_instance(service_name)
+    # @param [Hash] opts
+    def terminate_service_instance(service_name, opts = {})
       if host_node.connected?
-        self.request_terminate_service(service_name)
+        self.request_terminate_service(service_name, opts)
       end
     end
 
     ##
-    # @param [Hash] service_spec
-    def request_terminate_service(name)
-      client.request('/service_pods/terminate', name)
+    # @param [String] name
+    # @param [Hash] opts
+    def request_terminate_service(name, opts = {})
+      client.request('/service_pods/terminate', name, opts)
     end
 
     ##
