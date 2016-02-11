@@ -66,6 +66,12 @@ module V1
         r.route 'grid_secrets'
       end
 
+      # /v1/grids/:name/custom_peers
+      r.on ':name/custom_peers' do |name|
+        load_grid(name)
+        r.route 'grid_custom_peers'
+      end
+
       r.post do
         r.is do
           data = parse_json_body

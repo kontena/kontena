@@ -14,6 +14,7 @@ class Grid
   field :token, type: String
   field :initial_size, type: Integer, default: 1
   field :overlay_cidr, type: String, default: -> { Grid.default_overlay_cidr }
+  field :custom_peers, type: Array, default: []
 
   has_many :host_nodes, dependent: :destroy
   has_many :grid_services, dependent: :destroy

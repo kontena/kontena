@@ -10,6 +10,8 @@ require_relative 'grids/audit_log_command'
 require_relative 'grids/list_users_command'
 require_relative 'grids/add_user_command'
 require_relative 'grids/remove_user_command'
+require_relative 'grids/add_custom_peer_command'
+require_relative 'grids/remove_custom_peer_command'
 
 class Kontena::Cli::GridCommand < Clamp::Command
 
@@ -25,6 +27,8 @@ class Kontena::Cli::GridCommand < Clamp::Command
   subcommand "list-users", "List current grid users", Kontena::Cli::Grids::ListUsersCommand
   subcommand "add-user", "Add user to the current grid", Kontena::Cli::Grids::AddUserCommand
   subcommand "remove-user", "Remove user from the current grid", Kontena::Cli::Grids::RemoveUserCommand
+  subcommand "add-custom-peer", "Add custom peer ip address to the current grid", Kontena::Cli::Grids::AddCustomPeerCommand
+  subcommand "remove-custom-peer", "Remove custom peer ip address from the current grid", Kontena::Cli::Grids::RemoveCustomPeerCommand
 
   def execute
   end
