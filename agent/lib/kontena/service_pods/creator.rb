@@ -34,6 +34,7 @@ module Kontena
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
             notify_master(service_container, service_pod.deploy_rev)
+            Kontena::Pubsub.publish('lb:ensure_instance_config', service_container)
             return service_container
           else
             info "removing previous version of service: #{service_pod.name}"

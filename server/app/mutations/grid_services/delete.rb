@@ -1,5 +1,7 @@
 module GridServices
   class Delete < Mutations::Command
+    include Workers
+
     required do
       model :current_user, class: User
       model :grid_service
@@ -17,25 +19,7 @@ module GridServices
     end
 
     def execute
-      prev_state = self.grid_service.state
-      begin
-        self.grid_service.set_state('deleting')
-        self.grid_service.containers.scoped.each do |container|
-          terminate_from_node(container.host_node, container.name)
-        end
-      rescue => exc
-        self.grid_service.set_state(prev_state)
-        raise exc
-      end
-      self.grid_service.destroy
-    end
-
-    ##
-    # @param [HostNode] node
-    # @return [Docker::ContainerRemover]
-    def terminate_from_node(node, service_name)
-      terminator = Docker::ServiceTerminator.new(node)
-      terminator.terminate_service_instance(service_name)
+      worker(:grid_service_remove).async.perform(self.grid_service.id)
     end
   end
 end
