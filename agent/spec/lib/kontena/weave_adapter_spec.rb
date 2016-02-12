@@ -41,6 +41,13 @@ describe Kontena::WeaveAdapter do
   end
 
   describe '#modify_host_config' do
+
+    let(:bridge_ip) { '172.42.1.1' }
+
+    before(:each) do
+      expect(subject).to receive(:interface_ip).and_return(bridge_ip)
+    end
+
     it 'adds weavewait to empty VolumesFrom' do
       opts = {}
       subject.modify_host_config(opts)
@@ -53,6 +60,22 @@ describe Kontena::WeaveAdapter do
       }
       subject.modify_host_config(opts)
       expect(opts['HostConfig']['VolumesFrom']).to include('weavewait:ro')
+    end
+
+    it 'adds dns settings' do
+      opts = {}
+      subject.modify_host_config(opts)
+      expect(opts['HostConfig']['Dns']).to include(bridge_ip)
+    end
+
+    it 'does not add dns settings when NetworkMode=host' do
+      opts = {
+        'HostConfig' => {
+          'NetworkMode' => 'host'
+        }
+      }
+      subject.modify_host_config(opts)
+      expect(opts['HostConfig']['Dns']).to be_nil
     end
   end
 end

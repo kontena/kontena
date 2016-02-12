@@ -67,7 +67,7 @@ module Kontena
       host_config['VolumesFrom'] ||= []
       host_config['VolumesFrom'] << 'weavewait:ro'
       dns = interface_ip('docker0')
-      if dns
+      if dns && host_config['NetworkMode'].to_s != 'host'
         host_config['Dns'] = [dns]
         host_config['DnsSearch'] = ['kontena.local']
       end
