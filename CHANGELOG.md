@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.6 (2016-02-13)
+
+- do not update container.deleted_at timestamp if it's already set
+- fix error in docker 1.9 when net=host
+- fix race conditions in lb cleanup procedure
+- allow registry/image name with custom port in kontena.yml
+- show missing memory & memory_swap in service details
+- fix error in service restart command
+
 ## 0.11.5 (2016-02-08)
 
 - handle force_deploy flag correctly on app deploy command
