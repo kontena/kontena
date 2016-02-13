@@ -26,8 +26,8 @@ class NodeCleanupJob
     HostNode.where(:last_seen_at.lt => 1.minute.ago).each do |node|
       node.set(connected: false)
       deleted_at = Time.now.utc
-      node.containers.unscoped.each do |c|
-        c.with(safe: false).set(:deleted_at => deleted_at)
+      node.containers.each do |c|
+        c.with(safe: false).set(:deleted_at => deleted_at) unless c.deleted_at
       end
     end
   end

@@ -38,4 +38,43 @@ describe NodeCleanupJob do
       }.not_to change{ HostNode.count }
     end
   end
+
+  describe '#cleanup_stale_connections' do
+    let(:node) do
+      HostNode.create!(name: "node-1", grid: grid, connected: false, last_seen_at: 2.hours.ago)
+    end
+
+    let(:service) do
+      GridService.create!(name: "test", image_name: "my/test:latest")
+    end
+
+    it 'does not update node.containers deleted_at if they are already set' do
+      container = service.containers.create(
+        name: "test-1",
+        deleted_at: Time.now,
+        host_node: node
+      )
+      expect {
+        subject.cleanup_stale_connections
+      }.not_to change{ container.reload.deleted_at }
+    end
+
+    it 'does not update node.containers deleted_at if container type is volume' do
+      container = service.containers.create(
+        name: "test-1",
+        container_type: "volume",
+        host_node: node
+      )
+      expect {
+        subject.cleanup_stale_connections
+      }.not_to change{ container.reload.deleted_at }
+    end
+
+    it 'updates node.containers deleted_at if they are not set' do
+      container = service.containers.create(name: "test-1", host_node: node)
+      expect {
+        subject.cleanup_stale_connections
+      }.to change{ container.reload.deleted_at }
+    end
+  end
 end
