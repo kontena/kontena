@@ -2,15 +2,17 @@
 title: MongoDB Cluster
 ---
 
-# MongoDB Replica Set Cluster on Kontena
+# MongoDB Replica Set on Kontena
+
+> Prerequisites: You need to have working [Kontena](http://www.kontena.io) Container Platform installed. If you are new to Kontena, check [quick start guide](http://www.kontena.io/docs/getting-started/quick-start).
 
 ![mongodb logo](https://www.mongodb.com/assets/MongoDB_Brand_Resources/MongoDB-Logo-5c3a7405a85675366beb3a5ec4c032348c390b3f142f5e6dddf1d78e2df5cb5c.png)
 
-## Deploy
+## Deploy   
 
-> Prerequisites: You need to have working [Kontena](http://www.kontena.io) Container Platform installed. If you are new to Kontena, check [quick start guide](http://www.kontena.io/docs/getting-started/quick-start).   
+**Step 1:** download [kontena.yml](kontena.yml)
 
-Deploy the stack:
+**Step 2:** deploy the stack:
 
 ```
 $ kontena app deploy
