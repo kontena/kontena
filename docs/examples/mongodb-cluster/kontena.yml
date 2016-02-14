@@ -1,0 +1,23 @@
+peer:
+  image: mongo:3.2
+  stateful: true
+  command: --replSet kontena --smallfiles
+  instances: 3
+  hooks:
+    post_start:
+      - cmd: sleep 10
+        name: sleep
+        instances: 1
+        oneshot: true
+      - cmd: mongo --eval "printjson(rs.initiate());"
+        name: rs_initiate
+        instances: 1
+        oneshot: true
+      - cmd: mongo --eval "printjson(rs.add('%{project}-peer-2'))"
+        name: rs_add2
+        instances: 1
+        oneshot: true
+      - cmd: mongo --eval "printjson(rs.add('%{project}-peer-3'))"
+        name: rs_add3
+        instances: 1
+        oneshot: true

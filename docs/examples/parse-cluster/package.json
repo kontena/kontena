@@ -1,0 +1,14 @@
+{
+  "name": "kontena-parse-server",
+  "version": "1.0.0",
+  "description": "Parse Server on Kontena",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "parse-server" : "2.0.0",
+    "express": "^4.13.3",
+    "parse": "~1.6.12"
+  }
+}

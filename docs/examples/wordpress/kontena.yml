@@ -1,0 +1,15 @@
+wordpress:
+  image: wordpress:4.1
+  stateful: true
+  ports:
+    - 8080:80
+  links:
+    - mysql:wordpress-mysql
+  environment:
+    - WORDPRESS_DB_HOST=%{project}-mysql.kontena.local
+  env_file: wordpress.env
+mysql:
+  image: mariadb:5.5
+  stateful: true
+  environment:
+    - MYSQL_ROOT_PASSWORD=secret

@@ -1,0 +1,8 @@
+node:
+  stateful: true
+  image: cassandra:2.2
+  instances: 3
+  deploy:
+    wait_for_port: 9042
+  environment:
+  - CASSANDRA_SEEDS=%{project}-node-1

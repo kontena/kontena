@@ -1,0 +1,51 @@
+galera-seed:
+  image: jakolehm/galera-mariadb-10.0-xtrabackup:latest
+  stateful: true
+  command: seed
+  env_file: galera-seed.env
+
+galera:
+  image: jakolehm/galera-mariadb-10.0-xtrabackup:latest
+  stateful: true
+  instances: 3
+  command: "node wordpress-cluster-galera-seed-1.kontena.local,wordpress-cluster-galera.kontena.local"
+  env_file: galera.env
+  links:
+    - galera-ha
+  environment:
+    - KONTENA_LB_MODE=tcp
+    - KONTENA_LB_BALANCE=roundrobin
+    - KONTENA_LB_INTERNAL_PORT=3306
+    - KONTENA_LB_EXTERNAL_PORT=3306
+
+galera-ha:
+  image: kontena/lb:latest
+  instances: 2
+
+wordpress:
+  image: wordpress:4.1
+  stateful: true
+  instances: 3
+  links:
+    - wordpress-ha
+  environment:
+    - KONTENA_LB_MODE=http
+    - KONTENA_LB_BALANCE=source
+    - KONTENA_LB_INTERNAL_PORT=80
+    - WORDPRESS_DB_HOST=%{project}-galera-ha.kontena.local
+  env_file: wordpress.env
+
+wordpress-btsync:
+  image: jakolehm/btsync:latest
+  volumes_from:
+    - "wordpress-cluster-wordpress-%%s"
+  environment:
+    - SYNC_DIR=/var/www/html/wp-content
+  instances: 3
+  command: "YOUR_SECRET_KEY_HERE"
+
+wordpress-ha:
+  image: kontena/lb:latest
+  instances: 2
+  ports:
+    - 80:80

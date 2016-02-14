@@ -1,0 +1,9 @@
+master:
+  image: kontena/jenkins:latest
+  stateful: true
+
+slave:
+  image: kontena/jenkins-slave:latest
+  command: -master http://%{project}-master:8080/
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
