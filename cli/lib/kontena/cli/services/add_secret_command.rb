@@ -1,0 +1,23 @@
+require_relative 'services_helper'
+
+module Kontena::Cli::Services
+  class AddSecretCommand < Clamp::Command
+    include Kontena::Cli::Common
+    include ServicesHelper
+
+    parameter "NAME", "Service name"
+    parameter "SECRET", "Secret to be added from Vault (syntax: secret:name:type)"
+
+    def execute
+      require_api_url
+      token = require_token
+      result = client(token).get("services/#{parse_service_id(name)}")
+      secrets = result['secrets']
+      secrets << parse_secrets([secret])[0]
+      data = {
+        secrets: secrets
+      }
+      client(token).put("services/#{parse_service_id(name)}", data)
+    end
+  end
+end

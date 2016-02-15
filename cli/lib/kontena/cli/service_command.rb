@@ -11,10 +11,14 @@ require_relative 'services/delete_command'
 require_relative 'services/containers_command'
 require_relative 'services/logs_command'
 require_relative 'services/stats_command'
+require_relative 'services/monitor_command'
+
 require_relative 'services/envs_command'
 require_relative 'services/add_env_command'
 require_relative 'services/remove_env_command'
-require_relative 'services/monitor_command'
+
+require_relative 'services/add_secret_command'
+require_relative 'services/remove_secret_command'
 
 class Kontena::Cli::ServiceCommand < Clamp::Command
 
@@ -31,10 +35,14 @@ class Kontena::Cli::ServiceCommand < Clamp::Command
   subcommand "containers", "List service containers", Kontena::Cli::Services::ContainersCommand
   subcommand "logs", "Show service logs", Kontena::Cli::Services::LogsCommand
   subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
+  subcommand "monitor", "Monitor", Kontena::Cli::Services::MonitorCommand
+
   subcommand "envs", "Show environment variables", Kontena::Cli::Services::EnvsCommand
   subcommand "add-env", "Add environment variable", Kontena::Cli::Services::AddEnvCommand
   subcommand "remove-env", "Remove environment variable", Kontena::Cli::Services::RemoveEnvCommand
-  subcommand "monitor", "Monitor", Kontena::Cli::Services::MonitorCommand
+
+  subcommand "add-secret", "Add secret from Vault", Kontena::Cli::Services::AddSecretCommand
+  subcommand "remove-secret", "Remove secret", Kontena::Cli::Services::RemoveSecretCommand
 
   def execute
   end
