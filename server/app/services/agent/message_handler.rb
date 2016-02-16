@@ -1,5 +1,6 @@
 module Agent
   class MessageHandler
+    include EventStream::GridEventNotifier
     include Logging
 
     attr_reader :db_session
@@ -73,6 +74,8 @@ module Agent
       end
       node.attributes_from_docker(data)
       node.save!
+      trigger_grid_event(node.grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
+      node
     end
 
     ##
@@ -91,10 +94,12 @@ module Agent
       if container
         if data['status'] == 'destroy'
           container = Container.instantiate(container)
+          trigger_grid_event(grid, 'container', 'delete', ContainerSerializer.new(container).to_hash)
           container.destroy
         elsif data['status'] == 'deployed'
           container = Container.instantiate(container)
           container.set(:deploy_rev => data['deploy_rev'])
+          trigger_grid_event(grid, 'container', 'update', ContainerSerializer.new(container).to_hash)
         end
       end
     end

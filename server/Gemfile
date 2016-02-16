@@ -15,6 +15,7 @@ gem 'puma'
 gem 'random_token'
 gem 'msgpack'
 gem 'httpclient', '~> 2.3'
+gem 'json-serializer'
 
 group :development, :test do
   gem 'dotenv'

@@ -3,8 +3,10 @@ require 'thread'
 require_relative '../services/agent/message_handler'
 require_relative '../services/agent/node_plugger'
 require_relative '../services/agent/node_unplugger'
+require_relative '../services/event_stream/grid_event_notifier'
 
 class WebsocketBackend
+  include EventStream::GridEventNotifier
   KEEPALIVE_TIME = 30 # in seconds
   RPC_MSG_TYPES = %w(request notify)
 
@@ -26,6 +28,11 @@ class WebsocketBackend
   def call(env)
     if Faye::WebSocket.websocket?(env)
       req = Rack::Request.new(env)
+
+      if req.path != '/'
+        return @app.call(env)
+      end
+
       ws = Faye::WebSocket.new(env)
 
       ws.on :open do |event|
@@ -59,6 +66,7 @@ class WebsocketBackend
       node = grid.host_nodes.find_by(node_id: node_id)
       unless node
         node = grid.host_nodes.create!(node_id: node_id)
+        trigger_grid_event(node.grid, 'node', 'create', HostNodeSerializer.new(node).to_hash)
       end
 
       node_plugger = Agent::NodePlugger.new(grid, node)
@@ -151,6 +159,7 @@ class WebsocketBackend
       node = HostNode.find_by(node_id: client[:id])
       if node
         Agent::NodeUnplugger.new(node).unplug!
+        trigger_grid_event(node.grid, 'grid', 'update', GridSerializer.new(node.grid).to_hash)
         logger.info "node closed connection: #{node.name || node.node_id}"
       end
       @clients.delete(client)

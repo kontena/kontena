@@ -1,7 +1,9 @@
 require_relative '../grid_scheduler'
+require_relative '../event_stream/grid_event_notifier'
 
 module Agent
   class NodePlugger
+    include EventStream::GridEventNotifier
     include Workers
 
     attr_reader :node, :grid
@@ -28,6 +30,7 @@ module Agent
 
     def update_node
       node.set(connected: true, last_seen_at: Time.now.utc)
+      self.trigger_grid_event(grid, 'node', 'update', HostNodeSerializer.new(node).to_hash)
     end
 
     def reschedule_services(prev_seen_at)

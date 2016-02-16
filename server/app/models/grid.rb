@@ -61,6 +61,18 @@ class Grid
     @all_overlay_ips ||= (IPAddr.new(self.overlay_cidr).to_range.map(&:to_s) - IPAddr.new("#{self.overlay_network_ip}/#{OVERLAY_BRIDGE_NETWORK_SIZE}").to_range.map(&:to_s))
   end
 
+  def number_of_cores
+    cpus = 0
+    self.host_nodes.each {|node| cpus += node.cpus.to_i}
+    cpus
+  end
+
+  def total_memory
+    memory = 0
+    self.host_nodes.each {|node| memory += node.mem_total.to_i}
+    memory
+  end
+
   # Does grid have all the initial nodes created?
   #
   # @return [Boolean]
