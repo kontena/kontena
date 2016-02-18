@@ -96,7 +96,7 @@ Options:
 
 ### CoreOS
 
-Example cloud-config (replace SSL certificate):
+Example cloud-config:
 
 ```yaml
 #cloud-config
@@ -106,6 +106,8 @@ write_files:
     owner: root
     content: |
       KONTENA_VERSION=latest
+      KONTENA_VAULT_KEY=<your vault_key>
+      KONTENA_VAULT_IV=<your vault_iv>
       SSL_CERT="/etc/kontena-server.pem"
 
   - path: /etc/kontena-server.pem
@@ -177,6 +179,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name kontena-server-api \
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+            -e VAULT_KEY=${KONTENA_VAULT_KEY} -e VAULT_IV=${KONTENA_VAULT_IV} \
             kontena/server:${KONTENA_VERSION}
 
     - name: kontena-server-haproxy.service
@@ -201,6 +204,14 @@ coreos:
         ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
         ExecStart=/opt/bin/kontena-haproxy.sh
 ```
+
+`KONTENA_VAULT_KEY` & `KONTENA_VAULT_IV` should be random strings. They can be generated from bash:
+
+```
+$ cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
+```
+
+The SSL certificate specified is a pem file, containing a public certificate followed by a private key (public certificate must be put before the private key, order matters).
 
 ### Ubuntu 14.04
 
