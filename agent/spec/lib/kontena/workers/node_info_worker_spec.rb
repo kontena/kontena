@@ -1,38 +1,34 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe Kontena::NodeInfoWorker do
+describe Kontena::Workers::NodeInfoWorker do
 
   let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue) }
+  let(:subject) { described_class.new(queue, false) }
+
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
 
   describe '#initialize' do
     it 'subscribes to websocket:connected channel' do
-      expect(subject).to receive(:publish_node_info).once
+      expect(subject.wrapped_object).to receive(:publish_node_info).once
       Kontena::Pubsub.publish('websocket:connected', {})
       sleep 0.01
     end
   end
 
-  describe '#start!' do
-    it 'returns thread' do
-      allow(subject).to receive(:publish_node_info)
-      allow(Docker::Container).to receive(:all).and_return([])
-      expect(subject.start!).to be_instance_of(Thread)
-    end
-
+  describe '#start' do
     it 'calls #publish_node_info' do
-      expect(subject).to receive(:sleep).once
-      expect(subject).to receive(:publish_node_info).once
-      allow(Docker::Container).to receive(:all).and_return([])
-      thread = subject.start!
-      sleep 0.01
-      thread.kill
+      stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
+      expect(subject.wrapped_object).to receive(:publish_node_info).at_least(:once)
+      subject.async.start
+      sleep 0.1
+      subject.terminate
     end
   end
 
   describe '#publish_node_info' do
     before(:each) do
-      allow(subject).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
+      allow(subject.wrapped_object).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
       allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
       allow(Docker).to receive(:info).and_return({
         'Name' => 'node-1',

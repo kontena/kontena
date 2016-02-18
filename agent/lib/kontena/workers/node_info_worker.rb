@@ -1,34 +1,35 @@
-require 'docker'
 require 'net/http'
-require_relative 'logging'
-require_relative 'helpers/node_helper'
-require_relative 'helpers/iface_helper'
+require_relative '../helpers/node_helper'
+require_relative '../helpers/iface_helper'
 
-module Kontena
+module Kontena::Workers
   class NodeInfoWorker
+    include Celluloid
     include Kontena::Logging
-    include Helpers::NodeHelper
-    include Helpers::IfaceHelper
+    include Kontena::Helpers::NodeHelper
+    include Kontena::Helpers::IfaceHelper
 
     attr_reader :queue
 
+    PUBLISH_INTERVAL = 300
+
     ##
     # @param [Queue] queue
-    def initialize(queue)
+    # @param [Boolean] autostart
+    def initialize(queue, autostart = true)
       @queue = queue
-      Pubsub.subscribe('websocket:connected') do |event|
+      Kontena::Pubsub.subscribe('websocket:connected') do |event|
         self.publish_node_info
       end
       info 'initialized'
+      async.start if autostart
     end
 
-    def start!
-      Thread.new {
-        loop do
-          sleep 300
-          self.publish_node_info
-        end
-      }
+    def start
+      loop do
+        sleep PUBLISH_INTERVAL
+        self.publish_node_info
+      end
     end
 
     ##
@@ -51,11 +52,7 @@ module Kontena
     ##
     # @return [String, NilClass]
     def public_ip
-      if ENV['COREOS_PUBLIC_IPV4']
-        ENV['COREOS_PUBLIC_IPV4']
-      else
-        Net::HTTP.get('whatismyip.akamai.com', '/')
-      end
+      Net::HTTP.get('whatismyip.akamai.com', '/')
     rescue => exc
       error "Cannot resolve public ip: #{exc.message}"
       nil

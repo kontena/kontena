@@ -1,10 +1,8 @@
-require 'docker'
-require_relative 'pubsub'
-require_relative 'logging'
-require_relative 'helpers/iface_helper'
+require_relative '../helpers/iface_helper'
 
-module Kontena
-  class LoadBalancerRegistrator
+module Kontena::LoadBalancers
+  class Registrator
+    include Celluloid
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
 
@@ -12,31 +10,27 @@ module Kontena
 
     attr_reader :etcd, :cache
 
-    def initialize
-      @etcd = Etcd.client(host: gateway, port: 2379)
+    def initialize(autostart = true)
+      @etcd = Etcd.client(host: self.class.gateway, port: 2379)
       @cache = {}
-      Pubsub.subscribe('container:event') do |event|
+      Kontena::Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event)
       end
-      Pubsub.subscribe('lb:ensure_instance_config') do |service_container|
+      Kontena::Pubsub.subscribe('lb:ensure_instance_config') do |service_container|
         self.register_container(service_container)
       end
       info 'initialized'
+      async.start if autostart
     end
 
-    ##
-    # Start work
-    #
-    def start!
-      Thread.new {
-        sleep 1 until etcd_running?
-        info 'fetching containers information'
-        Docker::Container.all(all: false).each do |container|
-          if container.load_balanced?
-            self.register_container(container)
-          end
+    def start
+      sleep 1 until etcd_running?
+      info 'fetching containers information'
+      Docker::Container.all(all: false).each do |container|
+        if container.load_balanced?
+          self.register_container(container)
         end
-      }
+      end
     end
 
     # @param [Docker::Event] event
@@ -123,7 +117,7 @@ module Kontena
 
     ##
     # @return [String, NilClass]
-    def gateway
+    def self.gateway
       interface_ip('docker0')
     end
   end

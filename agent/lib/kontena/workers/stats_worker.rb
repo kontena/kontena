@@ -1,7 +1,6 @@
-require_relative 'logging'
-
-module Kontena
+module Kontena::Workers
   class StatsWorker
+    include Celluloid
     include Kontena::Logging
 
     attr_reader :url, :queue
@@ -11,26 +10,26 @@ module Kontena
     def initialize(queue)
       @queue = queue
       info 'initialized'
+      async.start
     end
 
-    def start!
-      Thread.new {
-        info 'waiting for cadvisor'
-        sleep 1 until cadvisor_running?
-        info 'cadvisor is running, starting stats loop'
+    def start
+      info 'waiting for cadvisor'
+      sleep 1 until cadvisor_running?
+      info 'cadvisor is running, starting stats loop'
+      last_collected = Time.now.to_i
+      loop do
+        sleep 1 until last_collected < (Time.now.to_i - 60)
+        self.collect_stats
         last_collected = Time.now.to_i
-        loop do
-          sleep 1 until last_collected < (Time.now.to_i - 60)
-          self.collect_stats
-          last_collected = Time.now.to_i
-        end
-      }
+      end
     end
 
     def collect_stats
       begin
         data = fetch_stats
         if data
+          debug "total stats size: #{data.values.size}"
           data.values.each do |container|
             self.send_container_stats(container)
             sleep 0.5
@@ -44,31 +43,30 @@ module Kontena
     ##
     # @param [Hash] container
     def send_container_stats(container)
-      prev_stat = container['stats'][-2]
+      prev_stat = container[:stats][-2]
       return if prev_stat.nil?
 
-      current_stat = container['stats'][-1]
+      current_stat = container[:stats][-1]
 
-      num_cores = current_stat['cpu']['usage']['per_cpu_usage'].count
-      raw_cpu_usage = current_stat['cpu']['usage']['total'] - prev_stat['cpu']['usage']['total']
-      interval_in_ns = get_interval(current_stat['timestamp'], prev_stat['timestamp'])
+      num_cores = current_stat[:cpu][:usage][:per_cpu_usage].count
+      raw_cpu_usage = current_stat[:cpu][:usage][:total] - prev_stat[:cpu][:usage][:total]
+      interval_in_ns = get_interval(current_stat[:timestamp], prev_stat[:timestamp])
 
       event = {
-        event: 'container:stats',
+        event: 'container:stats'.freeze,
         data: {
-          id: container['aliases'][1],
-          spec: container['spec'],
+          id: container[:aliases][1],
           cpu: {
             usage: raw_cpu_usage,
             usage_pct: (((raw_cpu_usage / interval_in_ns ) / num_cores ) * 100).round(2)
           },
           memory: {
-            usage: current_stat['memory']['usage'],
-            working_set: current_stat['memory']['working_set']
+            usage: current_stat[:memory][:usage],
+            working_set: current_stat[:memory][:working_set]
           },
-          filesystem: current_stat['filesystem'],
-          diskio: current_stat['diskio'],
-          network: current_stat['network']
+          filesystem: current_stat[:filesystem],
+          diskio: current_stat[:diskio],
+          network: current_stat[:network]
         }
       }
 
@@ -81,7 +79,7 @@ module Kontena
     def fetch_stats
       resp = client.get
       if resp.status == 200
-        JSON.parse(resp.body) rescue nil
+        JSON.parse(resp.body, symbolize_names: true) rescue nil
       end
     rescue => exc
       error "failed to fetch cadvisor stats: #{exc.message}"

@@ -8,17 +8,10 @@ module Kontena
 
       @queue_worker = Kontena::QueueWorker.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
-      @node_info_worker = Kontena::NodeInfoWorker.new(@queue_worker.queue)
-      @container_info_worker = Kontena::ContainerInfoWorker.new(@queue_worker.queue)
-      @log_worker = Kontena::LogWorker.new(@queue_worker.queue)
       @weave_attacher = Kontena::WeaveAttacher.new
       @weave_adapter = Kontena::WeaveAdapter.new
-      @event_worker = Kontena::EventWorker.new(@queue_worker.queue)
       @cadvisor_launcher = Kontena::CadvisorLauncher.new
-      @stats_worker = Kontena::StatsWorker.new(@queue_worker.queue)
       @etcd_launcher = Kontena::EtcdLauncher.new
-      @lb_registrator = Kontena::LoadBalancerRegistrator.new
-      @lb_configurer = Kontena::LoadBalancerConfigurer.new
 
       @started = false
       Pubsub.subscribe('agent:node_info') do |info|
@@ -36,18 +29,50 @@ module Kontena
     def start(node_info)
       return if self.started?
       @started = true
-      @node_info_worker.start!
-      @container_info_worker.start!
-      @log_worker.start!
-      @lb_registrator.start!
-      @event_worker.start!
+
+      supervisor = Celluloid::Supervision::Container.run!
+      supervisor.supervise(
+        type: Kontena::Workers::LogWorker,
+        as: :log_worker,
+        args: [@queue_worker.queue]
+      )
+      supervisor.supervise(
+        type: Kontena::Workers::NodeInfoWorker,
+        as: :node_info_worker,
+        args: [@queue_worker.queue]
+      )
+      supervisor.supervise(
+        type: Kontena::Workers::ContainerInfoWorker,
+        as: :container_info_worker,
+        args: [@queue_worker.queue]
+      )
+      supervisor.supervise(
+        type: Kontena::LoadBalancers::Configurer,
+        as: :lb_configurer
+      )
+      supervisor.supervise(
+        type: Kontena::LoadBalancers::Registrator,
+        as: :lb_registrator
+      )
+      supervisor.supervise(
+        type: Kontena::Workers::EventWorker,
+        as: :event_worker,
+        args: [@queue_worker.queue]
+      )
 
       @weave_adapter.start(node_info).value
       @weave_attacher.start!
       @etcd_launcher.start(node_info).value
 
       @cadvisor_launcher.start.value
-      @stats_worker.start!
+      supervisor.supervise(
+        type: Kontena::Workers::StatsWorker,
+        as: :stats_worker,
+        args: [@queue_worker.queue]
+      )
+    rescue => exc
+      puts exc.message
+      puts exc.backtrace.join("\n")
     end
 
     # @return [Boolean]

@@ -15,8 +15,16 @@ module Kontena
     # @param [Docker::Container] container
     # @return [Boolean]
     def adapter_container?(container)
-      container.config['Image'].include?(WEAVEEXEC_IMAGE)
+      adapter_image?(container.config['Image'])
     rescue Docker::Error::NotFoundError
+      false
+    end
+
+    # @param [String] image
+    # @return [Boolean]
+    def adapter_image?(image)
+      image.to_s.include?(WEAVEEXEC_IMAGE)
+    rescue
       false
     end
 
