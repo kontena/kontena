@@ -10,6 +10,7 @@ require_relative 'grids/audit_log_command'
 require_relative 'grids/list_users_command'
 require_relative 'grids/add_user_command'
 require_relative 'grids/remove_user_command'
+require_relative 'grids/user_command'
 
 class Kontena::Cli::GridCommand < Clamp::Command
 
@@ -22,9 +23,11 @@ class Kontena::Cli::GridCommand < Clamp::Command
   subcommand "current", "Show current grid details", Kontena::Cli::Grids::CurrentCommand
   subcommand "env", "Show the current grid environment details", Kontena::Cli::Grids::EnvCommand
   subcommand "audit-log", "Show audit log of the current grid", Kontena::Cli::Grids::AuditLogCommand
-  subcommand "list-users", "List current grid users", Kontena::Cli::Grids::ListUsersCommand
-  subcommand "add-user", "Add user to the current grid", Kontena::Cli::Grids::AddUserCommand
-  subcommand "remove-user", "Remove user from the current grid", Kontena::Cli::Grids::RemoveUserCommand
+
+  subcommand "user", "Manage grid users", Kontena::Cli::Grids::UserCommand
+  subcommand "list-users", "[DEPRECATED] List current grid users", Kontena::Cli::Grids::ListUsersCommand
+  subcommand "add-user", "[DEPRECATED] Add user to the current grid", Kontena::Cli::Grids::AddUserCommand
+  subcommand "remove-user", "[DEPRECATED] Remove user from the current grid", Kontena::Cli::Grids::RemoveUserCommand
 
   def execute
   end

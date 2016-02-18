@@ -8,6 +8,7 @@ module Kontena::Cli::Grids
     parameter "EMAIL", "Email address"
 
     def execute
+      puts "DEPRECATION WARNING: Support for 'kontena grid add-users' will be dropped. Use 'kontena grid user add' instead.".colorize(:red)
       require_api_url
       token = require_token
       data = { email: email }
