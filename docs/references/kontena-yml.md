@@ -240,7 +240,7 @@ Wait the port is responding before moving to deploy another instance.
 instances: 3
 deploy:
   strategy: ha
-  wait_for_port: true
+  wait_for_port: 3000
 ```
 
 **min_health**
