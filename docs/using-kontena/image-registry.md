@@ -20,38 +20,99 @@ You should use the Kontena's built-in Image Registry if you want to:
 
 ### Create Image Registry Service
 
-Create using local volume storage backend:
+#### Local volume storage backend:
 
 ```
 $ kontena registry create
 ```
 
-Create using Amazon S3 storage backend:
+#### Amazon S3 storage backend:
+
+Write Amazon S3 access keys to Kontena Vault:
 
 ```
-$ kontena registry create --s3-access-key=<access_key> --s3-secret-key=<secret_key> --s3-bucket=<bucket_name> --s3-region=<optional_aws_region>
+$ kontena vault write REGISTRY_STORAGE_S3_ACCESSKEY <access_key>
+$ kontena vault write REGISTRY_STORAGE_S3_SECRETKEY <secret_key>
 ```
 
-Create using Azure storage backend:
+Create registry service:
 
 ```
-$ kontena registry create --azure-account-name=<account_name> --azure-account-key=<account_key> --azure-container-name=<container_name>
+$ kontena registry create --s3-bucket=<bucket_name> --s3-region=<optional_aws_region>
+```
+
+#### Azure storage backend:
+
+Write Azure account key to Kontena Vault:
+
+```
+$ kontena vault write REGISTRY_STORAGE_AZURE_ACCOUNTKEY <azure_account_key>
+```
+
+Create registry service:
+
+```
+$ kontena registry create --azure-account-name=<account_name> --azure-container-name=<container_name>
 ```
 
 ### Accessing Image Registry
 
-Before you can push images to registry, you should setup Kontena VPN service. In addition to VPN, you must set `--insecure-registry=registry.kontena.local` to your local docker daemon opts.
+Before you can push images to registry, you should setup Kontena VPN service. In addition to VPN, you must set `--insecure-registry=registry.<grid_name>.kontena.local` to your local docker daemon opts.
 
 Building and pushing image to registry:
 
 ```
-$ docker build -t registry.kontena.local/myimage:mytag .
-$ docker push registry.kontena.local/myimage:mytag
+$ docker build -t registry.<grid_name>.kontena.local/myimage:mytag .
+$ docker push registry.<grid_name>.kontena.local/myimage:mytag
 ```
 
 Deploying image from registry:
 
 ```
-$ kontena service create myservice registry.kontena.local/myimage:mytag
+$ kontena service create myservice registry.<grid_name>.kontena.local/myimage:mytag
 $ kontena service deploy myservice
+```
+
+### TLS/SSL
+
+Generate your own certificate:
+
+```
+$ openssl req -x509 -newkey rsa:2048 -keyout registry_key.pem -out registry_ca.pem -days 1080 -nodes -subj '/CN=registry.<grid_name>.kontena.local/O=My Company Name LTD./C=US'
+```
+
+Write key and certificate to Kontena Vault:
+
+```
+$ kontena vault write REGISTRY_HTTP_TLS_KEY "$(cat registry_key.pem)"
+$ kontena vault write REGISTRY_HTTP_TLS_CERTIFICATE "$(cat registry_ca.pem)"
+```
+
+Redeploy Kontena Image Registry:
+
+```
+$ kontena service deploy --force registry
+```
+
+Then you have to instruct your local docker daemon to trust that certificate. This is done by copying the `registry_ca.pem` file to `/etc/docker/certs.d/registry.<grid_name>.kontena.local/ca.crt`.
+
+
+### Authentication
+
+Kontena Image Registry supports basic authentication. Authentication can be enabled by writing `REGISTRY_AUTH_PASSWORD` to Kontena Vault:
+
+```
+$ kontena vault write REGISTRY_AUTH_PASSWORD <password>
+```
+
+After the password has been set you should redeploy registry service:
+
+```
+$ kontena service deploy --force registry
+```
+
+Login to registry using Docker client:
+
+```
+$ docker login -u admin -e not@val.id -p <registry_password> registry.<grid_name>.kontena.local
 ```
