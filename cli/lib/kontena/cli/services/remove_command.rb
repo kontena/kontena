@@ -1,14 +1,13 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class DeleteCommand < Clamp::Command
+  class RemoveCommand < Clamp::Command
     include Kontena::Cli::Common
     include ServicesHelper
 
     parameter "NAME", "Service name"
 
     def execute
-       puts "DEPRECATION WARNING: Support for 'kontena service delete' will be dropped. Use 'kontena service remove' instead.".colorize(:red)
       require_api_url
       token = require_token
 
