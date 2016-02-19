@@ -11,7 +11,8 @@ describe Grids::AssignUser do
 
   describe '#run' do
 
-    it 'validates that current user belongs to grid' do
+    it 'validates that current user has permission to assign users' do
+      expect(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(false)
       grid.users.delete_all
       outcome = described_class.new(
           current_user: current_user,
@@ -22,7 +23,7 @@ describe Grids::AssignUser do
     end
 
     it 'assigns a user to grid' do
-      user
+      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
       expect {
         described_class.new(
             current_user: current_user,
@@ -33,6 +34,7 @@ describe Grids::AssignUser do
     end
 
     it 'returns array of grid users' do
+      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
       outcome = described_class.new(
           current_user: current_user,
           user: user,

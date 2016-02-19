@@ -6,7 +6,7 @@ module Users
     end
 
     def validate
-      if self.user != User.first
+      unless self.user.can_create?(User)
         add_error(:user, :invalid, 'Operation not allowed')
       end
     end
