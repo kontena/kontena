@@ -6,7 +6,7 @@ module Kontena
     include Kontena::Logging
     include Helpers::IfaceHelper
 
-    ETCD_VERSION = ENV['ETCD_VERSION'] || '2.2.1'
+    ETCD_VERSION = ENV['ETCD_VERSION'] || '2.2.4'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
 
     def initialize

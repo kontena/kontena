@@ -1,6 +1,6 @@
 FROM gliderlabs/alpine:3.2
 RUN apk-install ca-certificates openssl
-ENV ETCD_RELEASE=2.2.1
+ENV ETCD_RELEASE=2.2.4
 ADD https://github.com/coreos/etcd/releases/download/v${ETCD_RELEASE}/etcd-v${ETCD_RELEASE}-linux-amd64.tar.gz \
     etcd-v${ETCD_RELEASE}-linux-amd64.tar.gz
 RUN tar xzvf etcd-v${ETCD_RELEASE}-linux-amd64.tar.gz && \
