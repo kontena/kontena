@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes::DigitalOcean
   class TerminateCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NAME", "Node name"
     option "--token", "TOKEN", "DigitalOcean API token", required: true

@@ -3,6 +3,7 @@ require 'shell-spinner'
 module Kontena::Cli::Vpn
   class CreateCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     option '--node', 'NODE', 'Node name where VPN is deployed'
     option '--ip', 'IP', 'Node ip-address'

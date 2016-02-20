@@ -1,6 +1,7 @@
 module Kontena::Cli::Vault
   class ListCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     def execute
       require_api_url

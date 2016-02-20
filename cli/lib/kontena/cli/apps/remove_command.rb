@@ -3,6 +3,7 @@ require_relative 'common'
 module Kontena::Cli::Apps
   class RemoveCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
     include Common
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'

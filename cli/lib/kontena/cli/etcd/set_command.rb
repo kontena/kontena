@@ -3,6 +3,7 @@ require_relative 'common'
 module Kontena::Cli::Etcd
   class SetCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
     include Common
 
     parameter "KEY", "Etcd key"
@@ -12,7 +13,7 @@ module Kontena::Cli::Etcd
       require_api_url
       token = require_token
       validate_key
-      
+
       data = {value: value}
       response = client(token).post("etcd/#{current_grid}/#{key}", data)
       if response['error']

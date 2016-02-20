@@ -5,6 +5,7 @@ require_relative 'docker_helper'
 module Kontena::Cli::Apps
   class DeployCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
     include Common
     include DockerHelper
 

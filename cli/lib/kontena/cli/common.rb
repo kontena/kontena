@@ -95,7 +95,11 @@ module Kontena
       end
 
       def current_grid
-        ENV['KONTENA_GRID'] || current_master['grid']
+        if self.respond_to?(:grid)
+          ENV['KONTENA_GRID'] || grid || current_master['grid']
+        else
+          ENV['KONTENA_GRID'] || current_master['grid']
+        end
       end
 
       def current_master_index

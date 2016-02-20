@@ -1,6 +1,7 @@
 module Kontena::Cli::Nodes
   class ListCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     option ["--all"], :flag, "List nodes for all grids", default: false
 

@@ -1,6 +1,7 @@
 module Kontena::Cli::Vpn
   class DeleteCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     def execute
        puts "DEPRECATION WARNING: Support for 'kontena vpn delete' will be dropped. Use 'kontena vpn remove' instead.".colorize(:red)
