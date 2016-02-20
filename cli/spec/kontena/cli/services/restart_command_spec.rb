@@ -3,33 +3,11 @@ require "kontena/cli/services/restart_command"
 
 describe Kontena::Cli::Services::RestartCommand do
 
-  let(:subject) do
-    described_class.new(File.basename($0))
-  end
-
-  let(:client) do
-    double
-  end
-
-  let(:token) do
-    '1234567'
-  end
-
-  let(:settings) do
-    {'current_server' => 'alias',
-     'servers' => [
-         {'name' => 'some_master', 'url' => 'some_master'},
-         {'name' => 'alias', 'url' => 'someurl', 'token' => token}
-     ]
-    }
-  end
+  include ClientHelpers
 
   describe '#execute' do
 
     before(:each) do
-      allow(subject).to receive(:client).with(token).and_return(client)
-      allow(subject).to receive(:current_grid).and_return('test-grid')
-      allow(subject).to receive(:settings).and_return(settings)
       allow(subject).to receive(:restart_service).and_return({})
     end
 

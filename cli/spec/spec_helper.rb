@@ -20,3 +20,5 @@ RSpec.configure do |config|
   config.order = 'random'
 
 end
+
+require_relative 'support/client_helpers'
