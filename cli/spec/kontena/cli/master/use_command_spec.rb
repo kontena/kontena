@@ -7,6 +7,8 @@ describe Kontena::Cli::Master::UseCommand do
     described_class.new(File.basename($0))
   end
 
+  let(:client) { spy(:client) }
+
   let(:valid_settings) do
     {'current_server' => 'alias',
      'servers' => [
@@ -17,13 +19,19 @@ describe Kontena::Cli::Master::UseCommand do
   end
 
   describe '#use' do
-
     it 'should update current master' do
+      allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:settings).and_return(valid_settings)
       expect(subject).to receive(:current_master=).with('some_master')
       subject.run(['some_master'])
     end
 
+    it 'should fetch grid list from master' do
+      allow(subject).to receive(:require_token).and_return('token')
+      allow(subject).to receive(:client).and_return(client)
+      allow(subject).to receive(:settings).and_return(valid_settings)
+      expect(client).to receive(:get).with('grids')
+      subject.run(['some_master'])
+    end
   end
-
 end
