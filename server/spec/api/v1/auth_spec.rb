@@ -12,6 +12,10 @@ describe '/v1/auth' do
     User.create!(email: 'david@domain.com', external_id: '123456')
   end
 
+  let(:master_admin_role) do
+    Role.create(name: 'master_admin', description: 'Master admin')
+  end
+
   describe 'POST' do
     before(:each) do
       allow_any_instance_of(AuthService::Client).to receive(:authenticate).and_return(auth_result)
@@ -30,6 +34,7 @@ describe '/v1/auth' do
     end
 
     it 'creates admin user if users are not found' do
+      master_admin_role # initialize
       data = {
           username: 'david@domain.com',
           password: 'secret1234',
@@ -39,6 +44,7 @@ describe '/v1/auth' do
       expect {
         post '/v1/auth', data.to_json
       }.to change{ User.count }.by(1)
+      expect(User.first.roles.all.include?(Role.master_admin)).to be_truthy
     end
 
     it 'updates user data if user is found' do

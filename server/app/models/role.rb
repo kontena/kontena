@@ -20,4 +20,8 @@ class Role
   def master_admin?
     self.name == MASTER_ADMIN_ROLE
   end
+
+  def self.master_admin
+    self.find_by(name: MASTER_ADMIN_ROLE)
+  end
 end

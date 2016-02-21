@@ -15,6 +15,7 @@ module V1
           email = result['email']
           if User.count == 0
             user = User.create(email: email)
+            user.roles << Role.master_admin
           else
             user = User.find_by(email: email)
           end
