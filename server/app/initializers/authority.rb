@@ -11,3 +11,5 @@ Authority.configure do |config|
     :unassign => 'unassignable'
   }
 end
+
+require_relative '../authorizers/application_authorizer'
