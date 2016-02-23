@@ -27,7 +27,19 @@ module Kontena::Launchers
     # @param [String] topic
     # @param [Hash] info
     def on_overlay_start(topic, info)
-      self.start_etcd(info)
+      retries = 0
+      begin        
+        self.start_etcd(info)
+      rescue Docker::Error::ServerError => exc
+        if retries < 4
+          retries += 1
+          sleep 0.25
+          retry
+        end
+        log_error(exc)
+      rescue => exc
+        log_error(exc)
+      end
     end
 
     # @param [Hash] node_info
@@ -143,6 +155,12 @@ module Kontena::Launchers
     # @return [String, NilClass]
     def docker_gateway
       interface_ip('docker0')
+    end
+
+    # @param [Exception] exc
+    def log_error(exc)
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
     end
   end
 end

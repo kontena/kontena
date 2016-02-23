@@ -21,5 +21,14 @@ describe Kontena::Launchers::Cadvisor do
       expect(subject.wrapped_object).to receive(:create_container).with(subject.image)
       subject.start
     end
+
+    it 'retries 4 times if Docker::Error::ServerError is raised' do
+      allow(subject.wrapped_object).to receive(:start_cadvisor) do
+        raise Docker::Error::ServerError
+      end
+      expect(subject.wrapped_object).to receive(:start_cadvisor).exactly(5).times
+      subject.start
+      sleep 0.01
+    end
   end
 end

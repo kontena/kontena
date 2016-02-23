@@ -28,6 +28,21 @@ describe Kontena::Launchers::Etcd do
     end
   end
 
+  describe '#on_overlay_start' do
+    it 'starts etcd' do
+      expect(subject.wrapped_object).to receive(:start_etcd).and_return(true)
+      subject.on_overlay_start('topic', {})
+    end
+
+    it 'retries 4 times if Docker::Error::ServerError is raised' do
+      allow(subject.wrapped_object).to receive(:start_etcd) do
+        raise Docker::Error::ServerError
+      end
+      expect(subject.wrapped_object).to receive(:start_etcd).exactly(5).times
+      subject.on_overlay_start('topic', {})
+    end
+  end
+
   describe '#start_etcd' do
     it 'creates etcd containers after image is pulled' do
       allow(subject.wrapped_object).to receive(:image_pulled?).and_return(true)
