@@ -8,12 +8,21 @@ describe Kontena::Cli::Master::Users::RemoveRoleCommand do
     described_class.new(File.basename($0))
   end
 
+  let(:valid_settings) do
+    {'current_server' => 'alias',
+     'servers' => [
+         {'name' => 'some_master', 'url' => 'some_master'},
+         {'name' => 'alias', 'url' => 'someurl', 'token' => '123456'}
+     ]
+    }
+  end
 
   let(:client) { spy(:client) }
 
   describe "#remove-role" do
     before(:each) do
       allow(subject).to receive(:client).and_return(client)
+      allow(subject).to receive(:settings).and_return(valid_settings)
     end
 
     it 'makes remove role request for all given users' do
