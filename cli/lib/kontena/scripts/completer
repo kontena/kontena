@@ -81,7 +81,7 @@ words = ARGV
 words.delete_at(0)
 
 completion = []
-completion.push %w(app deploy forgot-password master node grid invite service container vpn external-registry registry login logout whoami) if words.size < 2
+completion.push %w(app deploy forgot-password master node grid service container vpn external-registry registry login logout whoami) if words.size < 2
 if words.size > 0
   case words[0]
     when 'grid'
@@ -104,9 +104,12 @@ if words.size > 0
       end
     when 'master'
       completion.clear
-      sub_commands = %w(list use vagrant digitalocean azure aws)
+      sub_commands = %w(list use vagrant digitalocean azure aws users)
       if words[1] && words[1] == 'use'
         completion.push helper.master_names
+      elsif words[1] && words[1] == 'users'
+        users_sub_commands = %(invite list add-role remove-role)
+        completion.push users_sub_commands
       elsif words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push %w(create)
