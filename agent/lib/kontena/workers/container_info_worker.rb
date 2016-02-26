@@ -1,37 +1,32 @@
-require 'docker'
-require_relative 'logging'
-
-module Kontena
+module Kontena::Workers
   class ContainerInfoWorker
+    include Celluloid
     include Kontena::Logging
 
-    attr_reader :queue, :node_info
+    attr_reader :queue
 
     ##
     # @param [Queue] queue
-    def initialize(queue)
+    # @param [Boolean] autostart
+    def initialize(queue, autostart = true)
       @queue = queue
-      @weave_adapter = WeaveAdapter.new
-      Pubsub.subscribe('container:event') do |event|
+      @weave_adapter = Kontena::WeaveAdapter.new
+      Kontena::Pubsub.subscribe('container:event') do |event|
         self.on_container_event(event) rescue nil
       end
-      Pubsub.subscribe('container:publish_info') do |container|
+      Kontena::Pubsub.subscribe('container:publish_info') do |container|
         self.publish_info(container) rescue nil
       end
-      Pubsub.subscribe('websocket:connected') do |event|
+      Kontena::Pubsub.subscribe('websocket:connected') do |event|
         self.publish_all_containers
       end
       info 'initialized'
+      async.start if autostart
     end
 
-    ##
-    # Start work
-    #
-    def start!
-      Thread.new {
-        info 'fetching containers information'
-        self.publish_all_containers
-      }
+    def start
+      info 'fetching containers information'
+      self.publish_all_containers
     end
 
     def publish_all_containers
@@ -47,7 +42,7 @@ module Kontena
       return if event.status == 'destroy'.freeze
 
       container = Docker::Container.get(event.id)
-      if container && !@weave_adapter.adapter_container?(container)
+      if container
         self.publish_info(container)
       end
     rescue Docker::Error::NotFoundError
@@ -80,10 +75,10 @@ module Kontena
     # @param [Docker::Event] event
     def publish_destroy_event(event)
       data = {
-          event: 'container:event',
+          event: 'container:event'.freeze,
           data: {
               id: event.id,
-              status: 'destroy',
+              status: 'destroy'.freeze,
               from: event.from,
               time: event.time
           }

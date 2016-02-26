@@ -1,27 +1,22 @@
-require 'docker'
-require 'celluloid'
-require_relative 'logging'
-
-module Kontena
+module Kontena::Workers
   class EventWorker
+    include Celluloid
     include Kontena::Logging
 
     attr_reader :queue
 
-    ##
     # @param [Queue] queue
-    def initialize(queue)
+    # @param [Boolean] autostart
+    def initialize(queue, autostart = true)
       @queue = queue
+      @overlay_adapter = Kontena::WeaveAdapter.new
       info 'initialized'
+      async.start if autostart
     end
 
-    ##
-    # Start to stream events from Docker
-    #
-    def start!
-      Thread.new {
-        self.stream_events
-      }
+    def start
+      sleep 0.01
+      self.stream_events
     end
 
     def stream_events
@@ -37,16 +32,13 @@ module Kontena
         error 'connection refused.. retrying'
         sleep 0.01
         retry
-      rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
-        sleep 0.01
-        retry
       end
     end
 
-    ##
     # @param [Docker::Event] event
     def publish_event(event)
+      return if @overlay_adapter.adapter_image?(event.from)
+
       data = {
         event: 'container:event'.freeze,
         data: {
@@ -57,7 +49,7 @@ module Kontena
         }
       }
       self.queue << data
-      Pubsub.publish('container:event'.freeze, event)
+      Kontena::Pubsub.publish('container:event'.freeze, event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
     end

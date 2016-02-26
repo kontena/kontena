@@ -1,17 +1,21 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe Kontena::LoadBalancerRegistrator do
+describe Kontena::LoadBalancers::Registrator do
 
   before(:each) do
-    allow_any_instance_of(described_class).to receive(:gateway).and_return('172.72.42.1')
+    Celluloid.boot
+    allow(described_class).to receive(:gateway).and_return('172.72.42.1')
   end
 
+  after(:each) { Celluloid.shutdown }
+
+  let(:subject) { described_class.new(false) }
   let(:event) { spy(:event, id: 'foobar', status: 'start') }
   let(:container) { spy(:container, id: '12345', info: {'Name' => 'test'}) }
 
   describe '#initialize' do
     it 'starts to listen container events' do
-      expect(subject).to receive(:on_container_event).once.with(event)
+      expect(subject.wrapped_object).to receive(:on_container_event).once.with(event)
       Kontena::Pubsub.publish('container:event', event)
       sleep 0.05
     end
@@ -20,14 +24,14 @@ describe Kontena::LoadBalancerRegistrator do
   describe '#on_container_event' do
     it 'calls #register_container on start event' do
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
-      expect(subject).to receive(:register_container).once.with(container)
+      expect(subject.wrapped_object).to receive(:register_container).once.with(container)
       subject.on_container_event(event)
     end
 
     it 'calls #unregister_container on die event' do
       allow(event).to receive(:status).and_return('die')
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
-      expect(subject).to receive(:unregister_container).once.with(event.id)
+      expect(subject.wrapped_object).to receive(:unregister_container).once.with(event.id)
       subject.on_container_event(event)
     end
   end
@@ -80,37 +84,37 @@ describe Kontena::LoadBalancerRegistrator do
     }
 
     it 'registers container ip:port to etcd' do
-      expect(subject.etcd).to receive(:set).with(anything, {value: '10.81.3.24:8080'})
+      expect(subject.wrapped_object.etcd).to receive(:set).with(anything, {value: '10.81.3.24:8080'})
       subject.register_container(http_container)
     end
 
     it 'registers container info to cache' do
-      allow(subject.etcd).to receive(:set)
-      expect(subject.cache).to receive(:[]=).with(
+      allow(subject.wrapped_object.etcd).to receive(:set)
+      expect(subject.wrapped_object.cache).to receive(:[]=).with(
         http_container.id, hash_including(lb: 'lb1', service: 'web', container: 'web-2')
       )
       subject.register_container(http_container)
     end
 
     it 'does nothing if container does not have lb info' do
-      expect(subject.etcd).not_to receive(:set)
+      expect(subject.wrapped_object.etcd).not_to receive(:set)
       subject.register_container(container)
     end
   end
 
   describe '#unregister_container' do
     it 'unregisters container if id exists in cache' do
-      allow(subject.cache).to receive(:[]).with(event.id).and_return(true)
-      allow(subject.cache).to receive(:delete).with(event.id).and_return({
+      allow(subject.wrapped_object.cache).to receive(:[]).with(event.id).and_return(true)
+      allow(subject.wrapped_object.cache).to receive(:delete).with(event.id).and_return({
         lb: 'lb1', service: 'web', container: 'web-2'
       })
 
-      expect(subject.etcd).to receive(:delete)
+      expect(subject.wrapped_object.etcd).to receive(:delete)
       subject.unregister_container(event.id)
     end
 
     it 'does nothing if id is not in cache' do
-      expect(subject.etcd).not_to receive(:delete)
+      expect(subject.wrapped_object.etcd).not_to receive(:delete)
       subject.unregister_container(event.id)
     end
   end

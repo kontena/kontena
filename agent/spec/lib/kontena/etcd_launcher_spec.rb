@@ -2,6 +2,9 @@ require_relative '../../spec_helper'
 
 describe Kontena::EtcdLauncher do
 
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
+
   describe '#start!' do
     it 'returns a thread' do
       allow(subject).to receive(:start_etcd)

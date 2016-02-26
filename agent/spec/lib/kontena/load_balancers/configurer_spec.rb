@@ -1,11 +1,14 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe Kontena::LoadBalancerConfigurer do
+describe Kontena::LoadBalancers::Configurer do
 
   before(:each) do
-    allow_any_instance_of(described_class).to receive(:gateway).and_return('172.72.42.1')
-    allow(subject).to receive(:etcd).and_return(etcd)
+    Celluloid.boot
+    allow(described_class).to receive(:gateway).and_return('172.72.42.1')
+    allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
   end
+  
+  after(:each) { Celluloid.shutdown }
 
   let(:etcd) { spy(:etcd) }
   let(:event) { spy(:event, id: 'foobar', status: 'start') }
@@ -22,10 +25,10 @@ describe Kontena::LoadBalancerConfigurer do
 
   describe '#initialize' do
     it 'starts to listen container events' do
-      expect(subject).to receive(:ensure_config).once.with(event)
+      expect(subject.wrapped_object).to receive(:ensure_config).once.with(event)
       Kontena::Pubsub.publish('lb:ensure_config', event)
 
-      expect(subject).to receive(:remove_config).once.with(event)
+      expect(subject.wrapped_object).to receive(:remove_config).once.with(event)
       Kontena::Pubsub.publish('lb:remove_config', event)
       sleep 0.05
     end
@@ -79,14 +82,14 @@ describe Kontena::LoadBalancerConfigurer do
     end
 
     it 'removes tcp-services' do
-      expect(subject).to receive(:rmdir).
+      expect(subject.wrapped_object).to receive(:rmdir).
         with("#{etcd_prefix}/lb/tcp-services/test-api")
       subject.ensure_config(container)
     end
 
     it 'removes services if mode is tcp' do
       container.env_hash['KONTENA_LB_MODE'] = 'tcp'
-      expect(subject).to receive(:rmdir).
+      expect(subject.wrapped_object).to receive(:rmdir).
         with("#{etcd_prefix}/lb/services/test-api")
       subject.ensure_config(container)
     end
@@ -94,14 +97,14 @@ describe Kontena::LoadBalancerConfigurer do
 
   describe '#remove_config' do
     it 'removes http config from etcd' do
-      expect(subject).to receive(:rmdir).
+      expect(subject.wrapped_object).to receive(:rmdir).
         with("#{etcd_prefix}/lb/services/test-api")
       subject.remove_config(container)
     end
 
     it 'removes tcp config from etcd' do
       container.env_hash['KONTENA_LB_MODE'] = 'tcp'
-      expect(subject).to receive(:rmdir).
+      expect(subject.wrapped_object).to receive(:rmdir).
         with("#{etcd_prefix}/lb/tcp-services/test-api")
       subject.remove_config(container)
     end

@@ -1,11 +1,12 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe Kontena::ContainerInfoWorker do
+describe Kontena::Workers::ContainerInfoWorker do
 
   let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue) }
+  let(:subject) { described_class.new(queue, false) }
 
   before(:each) do
+    Celluloid.boot
     allow(Docker).to receive(:info).and_return({
       'Name' => 'node-1',
       'Labels' => nil,
@@ -13,10 +14,14 @@ describe Kontena::ContainerInfoWorker do
     })
   end
 
-  describe '#start!' do
-    it 'returns thread' do
-      allow(Docker::Container).to receive(:all).and_return([])
-      expect(subject.start!).to be_instance_of(Thread)
+  after(:each) do
+    Celluloid.shutdown
+  end
+
+  describe '#start' do
+    it 'calls #publish_all_containers' do
+      allow(subject.wrapped_object).to receive(:publish_all_containers)
+      subject.start
     end
   end
 
@@ -31,21 +36,21 @@ describe Kontena::ContainerInfoWorker do
       event = double(:event, status: 'start', id: 'foo')
       container = spy(:container, :config => {'Image' => 'foo/bar:latest'})
       expect(Docker::Container).to receive(:get).once.and_return(container)
-      expect(subject).to receive(:publish_info).with(container)
+      expect(subject.wrapped_object).to receive(:publish_info).with(container)
       subject.on_container_event(event)
     end
 
     it 'publishes destroy event if container is not found' do
       event = double(:event, status: 'start', id: 'foo')
       expect(Docker::Container).to receive(:get).once.and_raise(Docker::Error::NotFoundError)
-      expect(subject).to receive(:publish_destroy_event).with(event)
+      expect(subject.wrapped_object).to receive(:publish_destroy_event).with(event)
       subject.on_container_event(event)
     end
 
     it 'logs error on unknown exception' do
       event = double(:event, status: 'start', id: 'foo')
       expect(Docker::Container).to receive(:get).once.and_raise(StandardError)
-      expect(subject.logger).to receive(:error).once
+      expect(subject.wrapped_object.logger).to receive(:error).once
       subject.on_container_event(event)
     end
   end
@@ -58,7 +63,7 @@ describe Kontena::ContainerInfoWorker do
 
     it 'publishes valid message' do
       container = double(:container, json: {'Config' => {}})
-      allow(subject).to receive(:node_info).and_return({'ID' => 'host_id'})
+      allow(subject.wrapped_object).to receive(:node_info).and_return({'ID' => 'host_id'})
       subject.publish_info(container)
       valid_event = {
           event: 'container:info',

@@ -2,6 +2,9 @@ require_relative '../../../spec_helper'
 
 describe Kontena::Rpc::AgentApi do
 
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
+
   describe '#port_open?' do
     it 'returns {open: false} if port is not open' do
       expect(subject.port_open?('100.64.2.2', 6379, 0.01)).to eq({open: false})

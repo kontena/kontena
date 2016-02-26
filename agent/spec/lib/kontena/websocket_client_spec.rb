@@ -4,6 +4,9 @@ describe Kontena::WebsocketClient do
 
   let(:subject) { described_class.new('', '')}
 
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
+
   around(:each) do |example|
     EM.run {
       example.run

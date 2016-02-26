@@ -1,10 +1,12 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe Kontena::EventWorker do
+describe Kontena::Workers::EventWorker do
 
   let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue) }
+  let(:subject) { described_class.new(queue, false) }
 
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
 
   describe '#publish_event' do
     it 'adds event to queue' do

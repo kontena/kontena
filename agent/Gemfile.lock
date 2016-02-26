@@ -8,8 +8,23 @@ GEM
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     addressable (2.3.8)
-    celluloid (0.16.0)
-      timers (~> 4.0.0)
+    celluloid (0.17.3)
+      celluloid-essentials
+      celluloid-extras
+      celluloid-fsm
+      celluloid-pool
+      celluloid-supervision
+      timers (>= 4.1.1)
+    celluloid-essentials (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-extras (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-fsm (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-pool (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-supervision (0.20.5)
+      timers (>= 4.1.1)
     crack (0.4.2)
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
@@ -25,7 +40,7 @@ GEM
     faye-websocket (0.10.1)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
-    hitimes (1.2.2)
+    hitimes (1.2.3)
     i18n (0.7.0)
     json (1.8.3)
     minitest (5.5.0)
@@ -51,7 +66,7 @@ GEM
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.0)
     thread_safe (0.3.4)
-    timers (4.0.1)
+    timers (4.1.1)
       hitimes
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -67,7 +82,7 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport (~> 4.2.0)
-  celluloid (~> 0.16.0)
+  celluloid (~> 0.17.3)
   docker-api
   dotenv
   etcd
@@ -80,4 +95,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.10.6
+   1.11.2

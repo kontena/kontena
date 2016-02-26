@@ -5,7 +5,7 @@ gem 'eventmachine', '~> 1.0.8'
 gem 'faye-websocket', '~> 0.10.1'
 gem 'msgpack'
 gem 'activesupport', '~> 4.2.0'
-gem 'celluloid', '~> 0.16.0'
+gem 'celluloid', '~> 0.17.3'
 gem 'etcd'
 
 group :development, :test do

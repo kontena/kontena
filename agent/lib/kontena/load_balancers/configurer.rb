@@ -1,10 +1,8 @@
-require 'docker'
-require_relative 'pubsub'
-require_relative 'logging'
-require_relative 'helpers/iface_helper'
+require_relative '../helpers/iface_helper'
 
-module Kontena
-  class LoadBalancerConfigurer
+module Kontena::LoadBalancers
+  class Configurer
+    include Celluloid
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
 
@@ -13,11 +11,11 @@ module Kontena
     attr_reader :etcd
 
     def initialize
-      @etcd = Etcd.client(host: gateway, port: 2379)
-      Pubsub.subscribe('lb:ensure_config') do |event|
+      @etcd = Etcd.client(host: self.class.gateway, port: 2379)
+      Kontena::Pubsub.subscribe('lb:ensure_config') do |event|
         self.ensure_config(event)
       end
-      Pubsub.subscribe('lb:remove_config') do |event|
+      Kontena::Pubsub.subscribe('lb:remove_config') do |event|
         self.remove_config(event)
       end
       info 'initialized'
@@ -149,7 +147,7 @@ module Kontena
 
     ##
     # @return [String, NilClass]
-    def gateway
+    def self.gateway
       interface_ip('docker0')
     end
   end

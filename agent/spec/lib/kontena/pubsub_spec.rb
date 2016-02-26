@@ -1,11 +1,14 @@
 require_relative '../../spec_helper'
 
 describe Kontena::Pubsub do
+  
   before(:each) {
+    Celluloid.boot
     described_class.clear!
   }
   after(:each) {
     described_class.clear!
+    Celluloid.shutdown
   }
 
   describe '.subscribe' do
