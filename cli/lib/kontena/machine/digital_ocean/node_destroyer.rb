@@ -19,8 +19,10 @@ module Kontena
           droplet = client.droplets.all.find{|d| d.name == name}
           if droplet
             ShellSpinner "Terminating DigitalOcean droplet #{name.colorize(:cyan)} " do
-              client.droplets.delete(id: droplet.id)
-              sleep 2 until client.droplets.find(id: droplet.id).is_a?(String)
+              result = client.droplets.delete(id: droplet.id)
+              if result.is_a?(String)
+                abort "Cannot delete droplet #{name.colorize(:cyan)} in DigitalOcean"
+              end
             end
           else
             abort "Cannot find droplet #{name.colorize(:cyan)} in DigitalOcean"
