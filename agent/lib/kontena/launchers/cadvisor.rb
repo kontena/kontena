@@ -1,33 +1,36 @@
 require 'docker'
 
-module Kontena
-  class CadvisorLauncher
+module Kontena::Launchers
+  class Cadvisor
+    include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
 
     CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.19.5'
     CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'kontena/cadvisor'
 
-    def initialize
+    def initialize(autostart = true)
       info 'initialized'
+
+      async.start if autostart
     end
 
-    # @return [Celluloid::Future]
     def start
-      Celluloid::Future.new {
-        begin
-          start_cadvisor
-        rescue => exc
-          error exc.message
-          error exc.backtrace.join("\n")
-        end
-      }
+      begin
+        start_cadvisor
+      rescue => exc
+        error exc.message
+        error exc.backtrace.join("\n")
+      end
     end
 
     def start_cadvisor
-      image = "#{CADVISOR_IMAGE}:#{CADVISOR_VERSION}"
-
       pull_image(image)
       create_container(image)
+    end
+
+    def image
+      @image ||= "#{CADVISOR_IMAGE}:#{CADVISOR_VERSION}"
     end
 
     # @param [String] image

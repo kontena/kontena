@@ -3,9 +3,9 @@ require 'logger'
 module Kontena
   module Logging
 
-    def self.initialize_logger(log_target = STDOUT)
+    def self.initialize_logger(log_target = STDOUT, log_level = Logger::INFO)
       @logger = Logger.new(log_target)
-      @logger.level = Logger::INFO
+      @logger.level = log_level
       @logger
     end
 
@@ -25,7 +25,7 @@ module Kontena
     # Send a debug message
     # @param [String] string
     def debug(string)
-      logger.debug(self.class.name) { string }
+      logger.debug(self.class.name.gsub('Kontena::', '')) { string }
     end
 
     # Send a info message

@@ -12,23 +12,6 @@ module Kontena
     class DockerContainerApi
       include Kontena::Helpers::IfaceHelper
 
-      attr_reader :overlay_adapter
-
-      def initialize
-        @overlay_adapter = Kontena::WeaveAdapter.new
-      end
-
-      ##
-      # @param [Hash]
-      # @return [Hash]
-      def create(opts)
-        self.overlay_adapter.modify_create_opts(opts)
-        container = Docker::Container.create(opts)
-        container.json
-      rescue Docker::Error::DockerError => exc
-        raise RpcServer::Error.new(400, "Cannot create container #{opts}", exc.backtrace)
-      end
-
       ##
       # @param [String] id
       # @return [Hash]

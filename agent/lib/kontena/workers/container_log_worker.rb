@@ -5,22 +5,29 @@ module Kontena::Workers
 
     finalizer :log_exit
 
+    CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
+    EVENT_NAME = 'container:log'
+
     # @param [Docker::Container] container
-    # @param [Integer] since unix timestamp
-    # @param [Boolean] autostart
-    def initialize(container, since = 0, autostart = true)
+    # @param [Queue] queue
+    def initialize(container, queue)
       @container = container
-      async.stream_logs(since) if autostart
+      @queue = queue
     end
 
     # @param [Integer] since unix timestamp
-    def stream_logs(since = 0)
-      debug "starting to stream logs from %s" % [@container.name]
+    def start(since = 0)
+      if since > 0
+        debug "starting to stream logs from %s (since %s)" % [@container.name, since.to_s]
+      else
+        debug "starting to stream logs from %s" % [@container.name]
+      end
       begin
         stream_opts = {
           'stdout' => true,
           'stderr' => true,
           'follow' => true,
+          'timestamps' => true,
           'stack_size'=> 0
         }
         if since > 0
@@ -47,16 +54,20 @@ module Kontena::Workers
     # @param [String] stream
     # @param [String] chunk
     def on_message(id, stream, chunk)
+      match = chunk.match(CHUNK_REGEX)
+      return unless match
+      time = DateTime.parse(match[1])
+      data = match[2]
       msg = {
-          event: 'container:log'.freeze,
+          event: EVENT_NAME,
           data: {
               id: id,
-              time: Time.now.utc.xmlschema,
+              time: time.utc.xmlschema,
               type: stream,
-              data: chunk
+              data: data
           }
       }
-      Actor[:log_worker].handle_message(msg)
+      @queue << msg
     end
 
     def log_exit

@@ -3,8 +3,8 @@ require_relative 'container_log_worker'
 module Kontena::Workers
   class LogWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Helpers::IfaceHelper
 
     attr_reader :queue, :etcd, :workers
 
@@ -19,27 +19,52 @@ module Kontena::Workers
     # @param [Boolean] autostart
     def initialize(queue, autostart = true)
       @queue = queue
+      @queue_processing = false
       @workers = {}
-      @etcd = Etcd.client(host: self.class.etcd_host, port: 2379)
-      Kontena::Pubsub.subscribe('container:event') do |event|
-        self.on_container_event(event) rescue nil
-      end
+      @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
+      subscribe('container:event', :on_container_event)
+      subscribe('queue_worker:start', :on_queue_started)
+      subscribe('queue_worker:stop', :on_queue_stopped)
       info 'initialized'
 
       async.start if autostart
       Signal.trap('SIGTERM') { self.mark_timestamps }
     end
 
+    # @param [String] topic
+    # @param [Object] data
+    def on_queue_started(topic, data)
+      @queue_processing = true
+      async.start
+      info 'started log streaming'
+    end
+
+    # @param [String] topic
+    # @param [Object] data
+    def on_queue_stopped(topic, data)
+      @queue_processing = false
+      async.stop
+      info 'stopped log streaming'
+    end
+
+    def queue_processing?
+      @queue_processing == true
+    end
+
     def start
-      sleep 0.01
+      sleep 1 until Actor[:etcd_launcher].running?
       Docker::Container.all.each do |container|
         self.stream_container_logs(container)
       end
     end
 
-    # @param [Hash] msg
-    def handle_message(msg)
-      queue << msg
+    def stop
+      @workers.keys.dup.each do |id|
+        self.stop_streaming_container_logs(id)
+        self.mark_timestamp(id, Time.now.to_i)
+      end
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
     end
 
     def mark_timestamps
@@ -52,47 +77,51 @@ module Kontena::Workers
     # @param [String] container_id
     # @param [Integer] timestamp
     def mark_timestamp(container_id, timestamp)
-      etcd.set("#{ETCD_PREFIX}/#{container_id}", {value: timestamp, ttl: 60*60})
+      etcd.set("#{ETCD_PREFIX}/#{container_id}", {value: timestamp, ttl: 60*60*24*7})
     rescue
       nil
     end
 
     # @param [Docker::Container] container
     def stream_container_logs(container)
-      unless workers[container.id]
-        since = 0
-        key = etcd.get("#{ETCD_PREFIX}/#{container.id}") rescue nil
-        if key
-          etcd.delete("#{ETCD_PREFIX}/#{container.id}")
-          since = key.value.to_i
+      exclusive {
+        unless workers[container.id]
+          workers[container.id] = ContainerLogWorker.new(container, queue)
+          since = 0
+          key = etcd.get("#{ETCD_PREFIX}/#{container.id}") rescue nil
+          if key
+            etcd.delete("#{ETCD_PREFIX}/#{container.id}")
+            since = key.value.to_i
+          end
+          workers[container.id].async.start(since.to_i)
         end
-        workers[container.id] = ContainerLogWorker.new(container, since.to_i)
-      end
+      }
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
     end
 
     # @param [String] container_id
     def stop_streaming_container_logs(container_id)
       worker = workers.delete(container_id)
       if worker
-        worker.terminate if worker.alive?
+        # we have to use kill because worker is blocked by log stream
+        Celluloid::Actor.kill(worker) if worker.alive?
       end
     end
 
+    # @param [String] topic
     # @param [Docker::Event] event
-    def on_container_event(event)
+    def on_container_event(topic, event)
       if STOP_EVENTS.include?(event.status)
         stop_streaming_container_logs(event.id)
       elsif START_EVENTS.include?(event.status)
         container = Docker::Container.get(event.id) rescue nil
-        if container
+        if container && queue_processing?
           stream_container_logs(container)
+        elsif container
+          mark_timestamp(container.id, Time.now.to_i)
         end
       end
-    end
-
-    # @return [String]
-    def self.etcd_host
-      interface_ip('docker0')
     end
   end
 end

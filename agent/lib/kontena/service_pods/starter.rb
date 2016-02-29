@@ -21,7 +21,7 @@ module Kontena
           service_container.restart
         end
 
-        Pubsub.publish('service_pod:start', self.service_name)
+        Celluloid::Notifications.publish('service_pod:start', self.service_name)
 
         service_container
       end

@@ -1,16 +1,25 @@
-require_relative 'logging'
-require_relative 'helpers/node_helper'
-require_relative 'helpers/iface_helper'
+require_relative '../logging'
+require_relative '../helpers/node_helper'
+require_relative '../helpers/iface_helper'
 
-module Kontena
-  class WeaveAdapter
-    include Helpers::NodeHelper
-    include Helpers::IfaceHelper
+module Kontena::NetworkAdapters
+  class Weave
+    include Celluloid
+    include Celluloid::Notifications
+    include Kontena::Helpers::NodeHelper
+    include Kontena::Helpers::IfaceHelper
     include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.4.2'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
+
+    def initialize(autostart = true)
+      @images_exist = false
+      info 'initialized'
+      subscribe('agent:node_info', :on_node_info)
+      async.ensure_images if autostart
+    end
 
     # @param [Docker::Container] container
     # @return [Boolean]
@@ -33,6 +42,11 @@ module Kontena
       weave = Docker::Container.get('weave') rescue nil
       return false if weave.nil?
       weave.running?
+    end
+
+    # @return [Boolean]
+    def images_exist?
+      @images_exist == true
     end
 
     # @param [Hash] opts
@@ -131,52 +145,54 @@ module Kontena
       end
     end
 
+    # @param [String] topic
     # @param [Hash] info
-    # @return [Celluloid::Future]
+    def on_node_info(topic, info)
+      async.start(info)
+    end
+
+    # @param [Hash] info
     def start(info)
-      Celluloid::Future.new {
-        begin
-          ensure_images
+      sleep 1 until images_exist?
 
-          weave = Docker::Container.get('weave') rescue nil
-          if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
-            weave.delete(force: true)
-          end
+      weave = Docker::Container.get('weave') rescue nil
+      if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
+        weave.delete(force: true)
+      end
 
-          weave = nil
-          peer_ips = info['peer_ips'] || []
-          until weave && weave.running? do
-            self.exec([
-              '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-              '--password', ENV['KONTENA_TOKEN']
-              ] + peer_ips
-            )
-            weave = Docker::Container.get('weave') rescue nil
-            wait = Time.now.to_f + 10.0
-            sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
+      weave = nil
+      peer_ips = info['peer_ips'] || []
+      until weave && weave.running? do
+        self.exec([
+          '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
+          '--password', ENV['KONTENA_TOKEN']
+          ] + peer_ips
+        )
+        weave = Docker::Container.get('weave') rescue nil
+        wait = Time.now.to_f + 10.0
+        sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
 
-            if weave.nil? || !weave.running?
-              self.exec(['--local', 'reset'])
-            end
-          end
-
-          if peer_ips.size > 0
-            info "router started with peers #{peer_ips.join(', ')}"
-          else
-            info "router started without known peers"
-          end
-
-          if info['node_number']
-            weave_bridge = "10.81.0.#{info['node_number']}/19"
-            self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
-            info "bridge exposed: #{weave_bridge}"
-          end
-          info
-        rescue => exc
-          error "#{exc.class.name}: #{exc.message}"
-          debug exc.backtrace.join("\n")
+        if weave.nil? || !weave.running?
+          self.exec(['--local', 'reset'])
         end
-      }
+      end
+
+      if peer_ips.size > 0
+        info "router started with peers #{peer_ips.join(', ')}"
+      else
+        info "router started without known peers"
+      end
+
+      if info['node_number']
+        weave_bridge = "10.81.0.#{info['node_number']}/19"
+        self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
+        info "bridge exposed: #{weave_bridge}"
+      end
+      Celluloid::Notifications.publish('network_adapter:start', info)
+      info
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
+      debug exc.backtrace.join("\n")
     end
 
     private
@@ -194,9 +210,12 @@ module Kontena
           info "image #{image} pulled "
         end
       end
+      @images_exist = true
     end
 
     def ensure_weave_wait
+      sleep 1 until images_exist?
+
       weave_wait = Docker::Container.get('weavewait') rescue nil
       if weave_wait && weave_wait.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
         weave_wait.delete(force: true)

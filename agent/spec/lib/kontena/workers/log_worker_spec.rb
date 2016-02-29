@@ -5,19 +5,28 @@ describe Kontena::Workers::LogWorker do
   let(:queue) { Queue.new }
   let(:subject) { described_class.new(queue, false) }
   let(:container) { spy(:container, id: 'foo', labels: {}) }
+  let(:etcd) { spy(:etcd) }
 
   before(:each) do
-    allow(Kontena::Workers::LogWorker).to receive(:etcd_host).and_return('127.0.0.1')
     Celluloid.boot
+    allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
   end
 
   after(:each) { Celluloid.shutdown }
 
-  describe '#handle_message' do
-    it 'appends message to queue' do
-      expect {
-        subject.handle_message({})
-      }.to change{ subject.queue.length }.by(1)
+  describe '#on_queue_started' do
+    it 'sets #queue_processing? to true' do
+      allow(subject.wrapped_object).to receive(:async).and_return(spy)
+      subject.on_queue_started('topic', {})
+      expect(subject.queue_processing?).to be_truthy
+    end
+  end
+
+  describe '#on_queue_stopped' do
+    it 'sets #queue_processing? to false' do
+      allow(subject.wrapped_object).to receive(:async).and_return(spy)
+      subject.on_queue_stopped('topic', {})
+      expect(subject.queue_processing?).to be_falsey
     end
   end
 
@@ -59,7 +68,7 @@ describe Kontena::Workers::LogWorker do
     it 'terminates worker if it exist' do
       worker = spy(:worker, :alive? => true)
       subject.workers[container.id] = worker
-      expect(worker).to receive(:terminate)
+      expect(Celluloid::Actor).to receive(:kill).with(worker)
       subject.stop_streaming_container_logs(container.id)
     end
   end
@@ -67,20 +76,22 @@ describe Kontena::Workers::LogWorker do
   describe '#on_container_event' do
     it 'stops streaming on die' do
       expect(subject.wrapped_object).to receive(:stop_streaming_container_logs).once.with('foo')
-      subject.on_container_event(double(:event, id: 'foo', status: 'die'))
+      subject.on_container_event('topic', double(:event, id: 'foo', status: 'die'))
       sleep 0.01
     end
 
     it 'starts streaming on start' do
       allow(Docker::Container).to receive(:get).and_return(container)
+      allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
       expect(subject.wrapped_object).to receive(:stream_container_logs).once.with(container)
-      subject.on_container_event(double(:event, id: 'foo', status: 'start'))
+      subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
     end
 
-    it 'starts streaming on create' do
+    it 'does not start streaming on create' do
       allow(Docker::Container).to receive(:get).and_return(container)
+      allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
       expect(subject.wrapped_object).not_to receive(:stream_container_logs)
-      subject.on_container_event(double(:event, id: 'foo', status: 'create'))
+      subject.on_container_event('topic', double(:event, id: 'foo', status: 'create'))
     end
   end
 end

@@ -3,6 +3,10 @@ require 'docker'
 module Docker
   class Container
 
+    def name
+      cached_json['Name']
+    end
+
     # @return [Hash]
     def labels
       cached_json['Config']['Labels'] || {}

@@ -5,6 +5,7 @@ require_relative '../helpers/iface_helper'
 module Kontena::Workers
   class NodeInfoWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
@@ -18,9 +19,7 @@ module Kontena::Workers
     # @param [Boolean] autostart
     def initialize(queue, autostart = true)
       @queue = queue
-      Kontena::Pubsub.subscribe('websocket:connected') do |event|
-        self.publish_node_info
-      end
+      subscribe('websocket:connected', :on_websocket_connected)
       info 'initialized'
       async.start if autostart
     end
@@ -32,9 +31,12 @@ module Kontena::Workers
       end
     end
 
-    ##
-    # Publish node info to queue
-    #
+    # @param [String] topic
+    # @param [Hash] data
+    def on_websocket_connected(topic, data)
+      self.publish_node_info
+    end
+
     def publish_node_info
       info 'publishing node information'
       docker_info = Docker.info

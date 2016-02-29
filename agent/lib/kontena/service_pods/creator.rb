@@ -8,13 +8,11 @@ module Kontena
     class Creator
       include Kontena::Logging
 
-      attr_reader :service_pod, :overlay_adapter, :image_credentials
+      attr_reader :service_pod, :image_credentials
 
       # @param [ServicePod] service_pod
-      # @param [#modify_create_opts] overlay_adapter
-      def initialize(service_pod, overlay_adapter = Kontena::WeaveAdapter.new)
+      def initialize(service_pod)
         @service_pod = service_pod
-        @overlay_adapter = overlay_adapter
         @image_credentials = service_pod.image_credentials
       end
 
@@ -28,13 +26,13 @@ module Kontena
         end
         service_container = get_container(service_pod.name)
 
-        sleep 1 until overlay_adapter.running?
+        sleep 1 until Celluloid::Actor[:network_adapter].running?
 
         if service_container
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
             notify_master(service_container, service_pod.deploy_rev)
-            Kontena::Pubsub.publish('lb:ensure_instance_config', service_container)
+            Celluloid::Notifications.publish('lb:ensure_instance_config', service_container)
             return service_container
           else
             info "removing previous version of service: #{service_pod.name}"
@@ -43,19 +41,19 @@ module Kontena
         end
         service_config = service_pod.service_config
         if service_pod.overlay_network
-          overlay_adapter.modify_create_opts(service_config)
+          Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
         end
         service_container = create_container(service_config)
 
         if service_container.load_balanced? && service_container.instance_number == 1
-          Kontena::Pubsub.publish('lb:ensure_config', service_container)
+          Celluloid::Notifications.publish('lb:ensure_config', service_container)
         end
 
         service_container.start
         info "service started: #{service_pod.name}"
 
-        Pubsub.publish('service_pod:start', service_pod.name)
-        Pubsub.publish('container:publish_info', service_container)
+        Celluloid::Notifications.publish('service_pod:start', service_pod.name)
+        Celluloid::Notifications.publish('container:publish_info', service_container)
 
         self.run_hooks(service_container, 'post_start')
 
@@ -71,9 +69,8 @@ module Kontena
       end
 
       # @param [ServicePod] service_pod
-      # @param [#modify_create_opts] overlay_adapter
-      def self.perform_async(service_pod, overlay_adapter = Kontena::WeaveAdapter.new)
-        self.new(service_pod, overlay_adapter).perform_async
+      def self.perform_async(service_pod)
+        self.new(service_pod).perform_async
       end
 
       # @param [Docker::Container] service_container
@@ -113,7 +110,7 @@ module Kontena
                   data: chunk
               }
           }
-          Kontena::Pubsub.publish('queue_worker:add_message', msg)
+          Celluloid::Actor[:queue_worker].send_message(msg)
         end
       end
 
@@ -210,7 +207,7 @@ module Kontena
             deploy_rev: deploy_rev
           }
         }
-        Pubsub.publish('queue_worker:add_message', msg)
+        Celluloid::Actor[:queue_worker].send_message(msg)
       end
     end
   end

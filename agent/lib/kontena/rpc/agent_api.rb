@@ -4,14 +4,14 @@ module Kontena
 
       # @param [Hash] data
       def master_info(data)
-        Pubsub.publish('websocket:connected', {master: data})
+        Celluloid::Notifications.publish('websocket:connected', {master: data})
         update_version(data['version']) if data['version']
         {}
       end
 
       # @param [Hash] data
       def node_info(data)
-        Pubsub.publish('agent:node_info', data)
+        Celluloid::Notifications.publish('agent:node_info', data)
         {}
       end
 
