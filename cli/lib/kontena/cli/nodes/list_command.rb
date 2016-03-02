@@ -12,7 +12,7 @@ module Kontena::Cli::Nodes
 
       if all?
         grids = client(token).get("grids")
-        puts "%-30s %-30s %-40s %-15s %-30s %-10s" % [ 'Grid', 'Name', 'OS', 'Driver', 'Labels', 'Status']
+        puts "%-70s %-10s %-40s" % [ 'Name', 'Status', 'Labels']
 
         grids['grids'].each do |grid|
           nodes = client(token).get("grids/#{grid['name']}/nodes")
@@ -22,31 +22,26 @@ module Kontena::Cli::Nodes
             else
               status = 'offline'
             end
-            puts "%-30.30s %-30.30s %-40.40s %-15s %-30.30s %-10s" % [
-              grid['name'],
-              node['name'],
-              "#{node['os']} (#{node['kernel_version']})",
-              node['driver'],
-              (node['labels'] || ['-']).join(","),
-              status
+            puts "%-70.70s %-10s %-40s" % [
+              "#{grid['name']}/#{node['name']}",
+              status,
+              (node['labels'] || ['-']).join(",")
             ]
           end
         end
       else
         nodes = client(token).get("grids/#{current_grid}/nodes")
-        puts "%-30s %-40s %-15s %-30s %-10s" % ['Name', 'OS', 'Driver', 'Labels', 'Status']
+        puts "%-70s %-10s %-40s" % ['Name', 'Status', 'Labels']
         nodes['nodes'].each do |node|
           if node['connected']
             status = 'online'
           else
             status = 'offline'
           end
-          puts "%-30.30s %-40.40s %-15s %-30.30s %-10s" % [
+          puts "%-70.70s %-10s %-40s" % [
             node['name'],
-            "#{node['os']} (#{node['kernel_version']})",
-            node['driver'],
-            (node['labels'] || ['-']).join(","),
-            status
+            status,
+            (node['labels'] || ['-']).join(",")
           ]
         end
       end
