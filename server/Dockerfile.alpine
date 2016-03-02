@@ -1,14 +1,14 @@
-FROM gliderlabs/alpine:3.2
+FROM gliderlabs/alpine:3.3
 MAINTAINER jari@kontena.io
 
-RUN apk update && apk --update add ruby ruby-dev ca-certificates \
-    libssl1.0 openssl libstdc++ tzdata
+RUN apk update && apk --update add ruby ruby-irb ruby-tzinfo ruby-bigdecimal \
+    ruby-io-console ca-certificates libssl1.0 openssl libstdc++
 
 ADD Gemfile /app/
 ADD Gemfile.lock /app/
 
-RUN apk --update add --virtual build-dependencies build-base openssl-dev && \
-    gem install bundler && \
+RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-dev && \
+    gem install bundler --no-ri --no-rdoc && \
     cd /app ; bundle install --without development test && \
     apk del build-dependencies
 
