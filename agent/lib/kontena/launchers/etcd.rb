@@ -1,46 +1,61 @@
-require_relative 'helpers/node_helper'
-require_relative 'helpers/iface_helper'
+require_relative '../helpers/node_helper'
+require_relative '../helpers/iface_helper'
 
-module Kontena
-  class EtcdLauncher
+module Kontena::Launchers
+  class Etcd
+    include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
-    include Helpers::IfaceHelper
+    include Kontena::Helpers::IfaceHelper
 
     ETCD_VERSION = ENV['ETCD_VERSION'] || '2.2.4'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
 
-    def initialize
+    def initialize(autostart = true)
+      @image_pulled = false
+      @running = false
+      @image_name = "#{ETCD_IMAGE}:#{ETCD_VERSION}"
       info 'initialized'
+      subscribe('network_adapter:start', :on_overlay_start)
+      async.start if autostart
     end
 
-    # @param [Hash] node_info
-    # @return [Celluloid::Future]
-    def start(node_info)
-      Celluloid::Future.new {
-        begin
-          start_etcd(node_info)
-        rescue => exc
-          error "#{exc.class.name}: #{exc.message}"
-          debug exc.backtrace.join("\n")
-        end
-      }
+    def start
+      pull_image(@image_name)
+    end
+
+    # @param [String] topic
+    # @param [Hash] info
+    def on_overlay_start(topic, info)
+      self.start_etcd(info)
     end
 
     # @param [Hash] node_info
     def start_etcd(node_info)
-      image = "#{ETCD_IMAGE}:#{ETCD_VERSION}"
+      sleep 1 until image_pulled?
 
-      pull_image(image)
-      create_data_container(image)
-      sleep 1 until weave_running?
-      create_container(image, node_info)
+      create_data_container(@image_name)
+      create_container(@image_name, node_info)
     end
 
     # @param [String] image
     def pull_image(image)
-      return if Docker::Image.exist?(image)
+      if Docker::Image.exist?(image)
+        @image_pulled = true
+        return
+      end
       Docker::Image.create('fromImage' => image)
       sleep 1 until Docker::Image.exist?(image)
+      @image_pulled = true
+    end
+
+    # @return [Boolean]
+    def image_pulled?
+      @image_pulled == true
+    end
+
+    def running?
+      @running == true
     end
 
     # @param [String] image
@@ -59,7 +74,13 @@ module Kontena
     # @param [Hash] info
     def create_container(image, info)
       container = Docker::Container.get('kontena-etcd') rescue nil
-      container.remove(force: true) if container
+      if container && container.info['Config']['Image'] != image
+        container.delete(force: true)
+      elsif container && container.running?
+        info "etcd is already running"
+        @running = true
+        return
+      end
 
       cluster_size = info['grid']['initial_size']
       node_number = info['node_number']
@@ -101,8 +122,10 @@ module Kontena
         }
       )
       container.start
-      Pubsub.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
+      Celluloid::Notifications.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
       info "started etcd service"
+      @running = true
+      container
     end
 
     # @param [Integer] cluster_size
@@ -120,13 +143,6 @@ module Kontena
     # @return [String, NilClass]
     def docker_gateway
       interface_ip('docker0')
-    end
-
-    # @return [Boolean]
-    def weave_running?
-      weave = Docker::Container.get('weave') rescue nil
-      return false if weave.nil?
-      weave.info['State']['Running'] == true
     end
   end
 end

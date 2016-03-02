@@ -56,6 +56,7 @@ module Kontena::Workers
         event: 'container:stats'.freeze,
         data: {
           id: container[:aliases][1],
+          spec: container[:spec],
           cpu: {
             usage: raw_cpu_usage,
             usage_pct: (((raw_cpu_usage / interval_in_ns ) / num_cores ) * 100).round(2)

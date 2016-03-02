@@ -33,14 +33,14 @@ module Kontena
           data_container.delete(v: true, force: true)
         end
 
-        Pubsub.publish('service_pod:terminate', self.service_name)
+        Celluloid::Notifications.publish('service_pod:terminate', self.service_name)
 
         service_container
       end
 
       # @param [Docker::Container] service_container
       def remove_from_load_balancer(service_container)
-        Kontena::Pubsub.publish('lb:remove_config', service_container)
+        Celluloid::Notifications.publish('lb:remove_config', service_container)
       end
 
       # @param [Docker::Container] service_container

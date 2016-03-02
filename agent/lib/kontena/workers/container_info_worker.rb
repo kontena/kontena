@@ -1,6 +1,7 @@
 module Kontena::Workers
   class ContainerInfoWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
 
     attr_reader :queue
@@ -10,16 +11,9 @@ module Kontena::Workers
     # @param [Boolean] autostart
     def initialize(queue, autostart = true)
       @queue = queue
-      @weave_adapter = Kontena::WeaveAdapter.new
-      Kontena::Pubsub.subscribe('container:event') do |event|
-        self.on_container_event(event) rescue nil
-      end
-      Kontena::Pubsub.subscribe('container:publish_info') do |container|
-        self.publish_info(container) rescue nil
-      end
-      Kontena::Pubsub.subscribe('websocket:connected') do |event|
-        self.publish_all_containers
-      end
+      subscribe('container:event', :on_container_event)
+      subscribe('container:publish_info', :on_container_publish_info)
+      subscribe('websocket:connected', :on_websocket_connected)
       info 'initialized'
       async.start if autostart
     end
@@ -38,8 +32,9 @@ module Kontena::Workers
 
     ##
     # @param [Docker::Event] event
-    def on_container_event(event)
+    def on_container_event(topic, event)
       return if event.status == 'destroy'.freeze
+      return if event.id.nil?
 
       container = Docker::Container.get(event.id)
       if container
@@ -48,7 +43,16 @@ module Kontena::Workers
     rescue Docker::Error::NotFoundError
       self.publish_destroy_event(event)
     rescue => exc
-      error "on_container_event: #{exc.message}"
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
+    end
+
+    def on_container_publish_info(topic, container)
+      self.publish_info(container)
+    end
+
+    def on_websocket_connected(topic, data)
+      self.publish_all_containers
     end
 
     ##

@@ -15,8 +15,8 @@ describe Kontena::LoadBalancers::Registrator do
 
   describe '#initialize' do
     it 'starts to listen container events' do
-      expect(subject.wrapped_object).to receive(:on_container_event).once.with(event)
-      Kontena::Pubsub.publish('container:event', event)
+      expect(subject.wrapped_object).to receive(:on_container_event).once.with('container:event', event)
+      Celluloid::Notifications.publish('container:event', event)
       sleep 0.05
     end
   end
@@ -25,14 +25,14 @@ describe Kontena::LoadBalancers::Registrator do
     it 'calls #register_container on start event' do
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
       expect(subject.wrapped_object).to receive(:register_container).once.with(container)
-      subject.on_container_event(event)
+      subject.on_container_event('topic', event)
     end
 
     it 'calls #unregister_container on die event' do
       allow(event).to receive(:status).and_return('die')
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
       expect(subject.wrapped_object).to receive(:unregister_container).once.with(event.id)
-      subject.on_container_event(event)
+      subject.on_container_event('topic', event)
     end
   end
 

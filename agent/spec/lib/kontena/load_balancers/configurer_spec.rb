@@ -7,7 +7,7 @@ describe Kontena::LoadBalancers::Configurer do
     allow(described_class).to receive(:gateway).and_return('172.72.42.1')
     allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
   end
-  
+
   after(:each) { Celluloid.shutdown }
 
   let(:etcd) { spy(:etcd) }
@@ -26,10 +26,10 @@ describe Kontena::LoadBalancers::Configurer do
   describe '#initialize' do
     it 'starts to listen container events' do
       expect(subject.wrapped_object).to receive(:ensure_config).once.with(event)
-      Kontena::Pubsub.publish('lb:ensure_config', event)
+      Celluloid::Notifications.publish('lb:ensure_config', event)
 
       expect(subject.wrapped_object).to receive(:remove_config).once.with(event)
-      Kontena::Pubsub.publish('lb:remove_config', event)
+      Celluloid::Notifications.publish('lb:remove_config', event)
       sleep 0.05
     end
   end

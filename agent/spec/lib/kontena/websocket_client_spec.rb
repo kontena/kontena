@@ -14,22 +14,6 @@ describe Kontena::WebsocketClient do
     }
   end
 
-  describe '#on_message' do
-    it 'calls subscribers when response message' do
-      subscriber = spy
-      received = false
-      expect(subscriber).to receive(:on_message).once
-      Kontena::Pubsub.subscribe('rpc_response:test') do |msg|
-        received = true
-        subscriber.on_message(msg)
-      end
-      event = double(:event, data: MessagePack.dump([1, 'test', nil, 'daa']).bytes)
-      subject.on_message(double.as_null_object, event)
-      EM.run_deferred_callbacks
-      Timeout::timeout(1){ sleep 0.01 until received }
-    end
-  end
-
   describe '#connected?' do
     it 'returns false by default' do
       expect(subject.connected?).to eq(false)
@@ -38,6 +22,33 @@ describe Kontena::WebsocketClient do
     it 'returns true if connection is established' do
       subject.on_open(spy(:event))
       expect(subject.connected?).to eq(true)
+    end
+  end
+
+  describe '#on_open' do
+    it 'sets state to connected' do
+      expect(subject.connected?).to be_falsey
+      subject.on_open(spy)
+      expect(subject.connected?).to be_truthy
+    end
+  end
+
+  describe '#request_message?' do
+    it 'returns trus on request message' do
+      msg = [0, 1, 1, 1]
+      expect(subject.request_message?(msg)).to be_truthy
+    end
+
+    it 'returns false if not an request message' do
+      msg = [1, 1, 1, 1]
+      expect(subject.request_message?(msg)).to be_falsey
+    end
+  end
+
+  describe '#notification_message?' do
+    it 'returns trus if notification message' do
+      msg = [2, 1, 1]
+      expect(subject.notification_message?(msg)).to be_truthy
     end
   end
 end

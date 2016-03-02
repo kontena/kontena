@@ -11,7 +11,7 @@ describe Kontena::Workers::NodeInfoWorker do
   describe '#initialize' do
     it 'subscribes to websocket:connected channel' do
       expect(subject.wrapped_object).to receive(:publish_node_info).once
-      Kontena::Pubsub.publish('websocket:connected', {})
+      Celluloid::Notifications.publish('websocket:connected', {})
       sleep 0.01
     end
   end

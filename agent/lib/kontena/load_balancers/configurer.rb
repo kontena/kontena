@@ -3,6 +3,7 @@ require_relative '../helpers/iface_helper'
 module Kontena::LoadBalancers
   class Configurer
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
 
@@ -12,13 +13,17 @@ module Kontena::LoadBalancers
 
     def initialize
       @etcd = Etcd.client(host: self.class.gateway, port: 2379)
-      Kontena::Pubsub.subscribe('lb:ensure_config') do |event|
-        self.ensure_config(event)
-      end
-      Kontena::Pubsub.subscribe('lb:remove_config') do |event|
-        self.remove_config(event)
-      end
+      subscribe('lb:ensure_config', :on_ensure_config)
+      subscribe('lb:remove_config', :on_remove_config)
       info 'initialized'
+    end
+
+    def on_ensure_config(topic, event)
+      self.ensure_config(event)
+    end
+
+    def on_remove_config(topic, event)
+      self.remove_config(event)
     end
 
     # @param [Docker::Container] container

@@ -1,7 +1,10 @@
 module Kontena::Workers
   class EventWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
+
+    EVENT_NAME = 'container:event'
 
     attr_reader :queue
 
@@ -9,7 +12,6 @@ module Kontena::Workers
     # @param [Boolean] autostart
     def initialize(queue, autostart = true)
       @queue = queue
-      @overlay_adapter = Kontena::WeaveAdapter.new
       info 'initialized'
       async.start if autostart
     end
@@ -37,10 +39,10 @@ module Kontena::Workers
 
     # @param [Docker::Event] event
     def publish_event(event)
-      return if @overlay_adapter.adapter_image?(event.from)
+      return if Actor[:network_adapter].adapter_image?(event.from)
 
       data = {
-        event: 'container:event'.freeze,
+        event: EVENT_NAME,
         data: {
           id: event.id,
           status: event.status,
@@ -49,7 +51,7 @@ module Kontena::Workers
         }
       }
       self.queue << data
-      Kontena::Pubsub.publish('container:event'.freeze, event)
+      publish(EVENT_NAME, event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
     end

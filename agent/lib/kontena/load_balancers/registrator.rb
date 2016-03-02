@@ -1,24 +1,18 @@
-require_relative '../helpers/iface_helper'
-
 module Kontena::LoadBalancers
   class Registrator
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Helpers::IfaceHelper
 
     ETCD_PREFIX = '/kontena/haproxy'
 
     attr_reader :etcd, :cache
 
     def initialize(autostart = true)
-      @etcd = Etcd.client(host: self.class.gateway, port: 2379)
+      @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
       @cache = {}
-      Kontena::Pubsub.subscribe('container:event') do |event|
-        self.on_container_event(event)
-      end
-      Kontena::Pubsub.subscribe('lb:ensure_instance_config') do |service_container|
-        self.register_container(service_container)
-      end
+      subscribe('container:event', :on_container_event)
+      subscribe('lb:ensure_instance_config', :on_lb_ensure_instance_config)
       info 'initialized'
       async.start if autostart
     end
@@ -33,8 +27,15 @@ module Kontena::LoadBalancers
       end
     end
 
+    # @param [String] topic
+    # @param [Docker::Container] service_container
+    def on_lb_ensure_instance_config(topic, service_container)
+      self.register_container(service_container)
+    end
+
+    # @param [String] topic
     # @param [Docker::Event] event
-    def on_container_event(event)
+    def on_container_event(topic, event)
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
         if container && container.load_balanced?
@@ -113,12 +114,6 @@ module Kontena::LoadBalancers
       etcd = Docker::Container.get('kontena-etcd') rescue nil
       return false if etcd.nil?
       etcd.info['State']['Running'] == true
-    end
-
-    ##
-    # @return [String, NilClass]
-    def self.gateway
-      interface_ip('docker0')
     end
   end
 end

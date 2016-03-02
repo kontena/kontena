@@ -7,6 +7,7 @@ Docker.options[:write_timeout] = (60*60)
 Docker.validate_version!
 
 $stdout.sync = true
+$0 = 'kontena-agent'
 
 api_token = ENV['KONTENA_TOKEN']
 api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
@@ -21,7 +22,12 @@ if api_uri.match(/^http.*/)
   api_uri = api_uri.sub('http', 'ws')
 end
 
-Kontena::Logging.initialize_logger(STDOUT)
+if ENV['LOG_LEVEL']
+  log_level = ENV['LOG_LEVEL'].to_i
+else
+  log_level = Logger::INFO
+end
+Kontena::Logging.initialize_logger(STDOUT, log_level)
 
 agent = Kontena::Agent.new(
   api_uri: api_uri,

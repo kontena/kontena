@@ -83,6 +83,7 @@ module Kontena
     # @param [String] channel
     # @param [Object] msg
     def self.publish(channel, msg)
+      Celluloid::Notifications.publish(channel, msg)
       receivers = subscriptions.select{|s| s.channel == channel}
       receivers.each do |subscription|
         begin

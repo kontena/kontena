@@ -55,7 +55,6 @@ RSpec.configure do |config|
   end
 
   config.before(:each) do
-    Kontena::Pubsub.clear!
   end
 
 # The settings below are suggested to provide a good initial experience

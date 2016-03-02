@@ -1,10 +1,17 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe Kontena::WeaveAdapter do
+describe Kontena::NetworkAdapters::Weave do
+
+  let(:bridge_ip) { '172.42.1.1' }
+  let(:subject) { described_class.new(false) }
 
   before(:each) do
-    allow(subject).to receive(:ensure_weave_wait).and_return(true)
+    Celluloid.boot
+    allow(subject.wrapped_object).to receive(:ensure_weave_wait).and_return(true)
+    allow(subject.wrapped_object).to receive(:interface_ip).and_return(bridge_ip)
   end
+
+  after(:each) { Celluloid.shutdown }
 
   describe '#adapter_container' do
     it 'returns true if weave exec container' do
@@ -41,13 +48,6 @@ describe Kontena::WeaveAdapter do
   end
 
   describe '#modify_host_config' do
-
-    let(:bridge_ip) { '172.42.1.1' }
-
-    before(:each) do
-      expect(subject).to receive(:interface_ip).and_return(bridge_ip)
-    end
-
     it 'adds weavewait to empty VolumesFrom' do
       opts = {}
       subject.modify_host_config(opts)

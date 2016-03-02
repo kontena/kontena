@@ -29,7 +29,7 @@ describe Kontena::Workers::ContainerInfoWorker do
     it 'does nothing if status == destroy' do
       event = double(:event, status: 'destroy')
       expect(Docker::Container).not_to receive(:get)
-      subject.on_container_event(event)
+      subject.on_container_event('topic', event)
     end
 
     it 'fetches container info' do
@@ -37,21 +37,21 @@ describe Kontena::Workers::ContainerInfoWorker do
       container = spy(:container, :config => {'Image' => 'foo/bar:latest'})
       expect(Docker::Container).to receive(:get).once.and_return(container)
       expect(subject.wrapped_object).to receive(:publish_info).with(container)
-      subject.on_container_event(event)
+      subject.on_container_event('topic', event)
     end
 
     it 'publishes destroy event if container is not found' do
       event = double(:event, status: 'start', id: 'foo')
       expect(Docker::Container).to receive(:get).once.and_raise(Docker::Error::NotFoundError)
       expect(subject.wrapped_object).to receive(:publish_destroy_event).with(event)
-      subject.on_container_event(event)
+      subject.on_container_event('topic', event)
     end
 
     it 'logs error on unknown exception' do
       event = double(:event, status: 'start', id: 'foo')
       expect(Docker::Container).to receive(:get).once.and_raise(StandardError)
-      expect(subject.wrapped_object.logger).to receive(:error).once
-      subject.on_container_event(event)
+      expect(subject.wrapped_object.logger).to receive(:error).twice
+      subject.on_container_event('topic', event)
     end
   end
 

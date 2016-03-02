@@ -55,7 +55,7 @@ module Kontena
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {ping: KEEPALIVE_TIME, headers: headers})
 
-      Pubsub.publish('websocket:connect', self)
+      Celluloid::Notifications.publish('websocket:connect', self)
 
       @ws.on :open do |event|
         self.on_open(event)
@@ -95,10 +95,6 @@ module Kontena
           response = @rpc_server.handle_request(data)
           self.send_message(MessagePack.dump(response).bytes)
         }
-      elsif response_message?(data)
-        EM.next_tick {
-          Pubsub.publish("rpc_response:#{data[1]}", data)
-        }
       elsif notification_message?(data)
         EM.defer {
           @rpc_server.handle_notification(data)
@@ -115,6 +111,7 @@ module Kontena
       elsif event.code == 4010
         self.handle_invalid_version(event)
       end
+      Celluloid::Notifications.publish('websocket:disconnect', event)
       info "connection closed with code: #{event.code}"
     rescue => exc
       logger.error(LOG_NAME) { exc.message }
@@ -137,12 +134,6 @@ module Kontena
     # @return [Boolean]
     def request_message?(msg)
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 0
-    end
-
-    # @param [Array] msg
-    # @return [Boolean]
-    def response_message?(msg)
-      msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
     end
 
     # @param [Array] msg
