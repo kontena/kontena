@@ -41,7 +41,7 @@ class GridServiceDeployer
   # @return [Array<HostNode>]
   def selected_nodes
     nodes = []
-    self.grid_service.container_count.times do |i|
+    self.instance_count.times do |i|
       node = self.scheduler.select_node(
         self.grid_service, i + 1, self.nodes
       )
@@ -62,7 +62,7 @@ class GridServiceDeployer
     %w(TERM).each do |signal|
       Signal.trap(signal) { self.grid_service.set_state('running') }
     end
-    total_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
+    total_instances = self.instance_count
     total_instances.times do |i|
       instance_number = i + 1
       unless self.grid_service.deploying?
@@ -162,7 +162,16 @@ class GridServiceDeployer
 
   # @return [Integer]
   def instance_count
-    self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
+    max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
+    nodes = []
+    max_instances.times do |i|
+      node = self.scheduler.select_node(
+        self.grid_service, i + 1, self.nodes
+      )
+      nodes << node if node
+    end
+    filtered_count = nodes.uniq.size
+    self.scheduler.instance_count(filtered_count, self.grid_service.container_count)
   end
 
   # @return [Float]
