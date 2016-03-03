@@ -17,7 +17,7 @@ module Kontena
         end
 
         def run!(grid, name)
-          instance = client.servers.all({'tag:kontena_name' => name}).first
+          instance = client.servers.all({'tag:Name' => name}).first
           if instance
             ShellSpinner "Terminating AWS instance #{name.colorize(:cyan)} " do
               instance.destroy
