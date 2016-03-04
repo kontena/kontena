@@ -1,6 +1,4 @@
 #!/bin/sh
 
-stop kontena-server-api || true
-stop kontena-server-mongo || true
-stop kontena-server-redis || true
-stop kontena-server-haproxy || true
+status kontena-server-api | grep start && stop kontena-server-api
+status kontena-server-mongo | grep start && stop kontena-server-mongo

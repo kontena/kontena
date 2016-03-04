@@ -1,4 +1,5 @@
 /etc/default/kontena-server-haproxy
+/etc/default/kontena-server-api
 /etc/init/kontena-server-api.conf
 /etc/init/kontena-server-haproxy.conf
 /etc/init/kontena-server-mongo.conf
