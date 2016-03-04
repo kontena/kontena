@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
 
-stop kontena-server-api || true
-stop kontena-server-mongo || true
-stop kontena-server-redis || true
+status kontena-server-api | grep start && stop kontena-server-api || true
+status kontena-server-mongo | grep start && stop kontena-server-mongo || true

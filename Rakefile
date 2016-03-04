@@ -60,11 +60,11 @@ namespace :release do
   ]
 
   task :package_ubuntu_server do
-    sh("docker run -it --rm -w /build/server -v #{Dir.pwd}/server/build:/build/server/build #{UBUNTU_IMAGE} rake release:build_ubuntu REV=#{PKG_REV}")
+    sh("docker run -it --rm -w /server -v #{Dir.pwd}/server:/server #{UBUNTU_IMAGE} rake release:build_ubuntu REV=#{PKG_REV}")
   end
 
   task :package_ubuntu_agent do
-    sh("docker run -it --rm -w /build/agent -v #{Dir.pwd}/agent/build:/build/agent/build #{UBUNTU_IMAGE} rake release:build_ubuntu REV=#{PKG_REV}")
+    sh("docker run -it --rm -w /agent -v #{Dir.pwd}/agent:/agent #{UBUNTU_IMAGE} rake release:build_ubuntu REV=#{PKG_REV}")
   end
 
   task :push => [
