@@ -2,9 +2,51 @@ require_relative "../../../spec_helper"
 require "kontena/cli/apps/common"
 
 describe Kontena::Cli::Apps::Common do
+  include ClientHelpers
+  include FixturesHelpers
 
   let(:subject) do
     Class.new { include Kontena::Cli::Apps::Common}.new
+  end
+
+  let(:kontena_yml) do
+    fixture('kontena.yml')
+  end
+
+  let(:docker_compose_yml) do
+    fixture('docker-compose.yml')
+  end
+
+  let(:mysql_yml) do
+    fixture('mysql.yml')
+  end
+
+  let(:services) do
+    {
+      'wordpress' => {
+        'image' => 'wordpress:4.1',
+        'ports' => ['80:80']
+      }
+    }
+  end
+
+  describe '#parse_services' do
+
+    it 'returns services from given YAML file' do
+      allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
+      allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose.yml").and_return(docker_compose_yml)
+      services = subject.parse_services('kontena.yml')
+      expect(services['wordpress']).not_to be_nil
+    end
+
+    it 'raises error if extended service is not found from base file' do
+      allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
+      allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose.yml").and_return(mysql_yml)
+
+      expect {
+        subject.parse_services('kontena.yml')
+      }.to raise_error(SystemExit)
+    end
   end
 
   describe '#normalize_env_vars' do

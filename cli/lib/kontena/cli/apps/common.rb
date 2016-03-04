@@ -63,6 +63,7 @@ module Kontena::Cli::Apps
       if name.nil?
         services
       else
+        abort("Service #{name} not found in #{file}") unless services.has_key?(name)
         services[name]
       end
     end
