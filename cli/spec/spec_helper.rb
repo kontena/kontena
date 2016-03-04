@@ -18,7 +18,10 @@ RSpec.configure do |config|
   # the seed, which is printed after each run.
   #     --seed 1234
   config.order = 'random'
-
+  config.before(:each) do
+    allow(Dir).to receive(:home).and_return('/tmp/')
+  end
 end
 
 require_relative 'support/client_helpers'
+require_relative 'support/fixtures_helpers'

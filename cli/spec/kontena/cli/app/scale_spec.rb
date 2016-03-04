@@ -2,42 +2,23 @@ require_relative "../../../spec_helper"
 require "kontena/cli/apps/scale_command"
 
 describe Kontena::Cli::Apps::ScaleCommand do
+  include FixturesHelpers
+  include ClientHelpers
 
   let(:subject) do
     described_class.new(File.basename($0))
   end
 
-  let(:settings) do
-    {'current_server' => 'alias',
-     'servers' => [
-         {'name' => 'some_master', 'url' => 'some_master'},
-         {'name' => 'alias', 'url' => 'someurl', 'token' => token}
-     ]
-    }
-  end
-
-  let(:token) do
-    '1234567'
-  end
-
   let(:kontena_yml) do
-    yml_content = <<yml
-wordpress:
-  image: wordpress:latest
-  instances: 2
-yml
+    fixture('wordpress-scaled.yml')
   end
 
   let(:kontena_yml_no_instances) do
-    yml_content = <<yml
-wordpress:
-  image: wordpress:latest
-yml
+    fixture('wordpress.yml')
   end
 
   describe '#execute' do
     before(:each) do
-      allow(subject).to receive(:settings).and_return(settings)
       allow(subject).to receive(:current_dir).and_return("kontena-test")
       allow(File).to receive(:exists?).and_return(true)
       allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
