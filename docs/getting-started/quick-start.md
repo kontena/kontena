@@ -29,7 +29,7 @@ which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 
 ## Step 2. Register Personal User Account
 
-With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs form user actions. Create your own personal user account (if not created already).
+With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs from user actions. Create your own personal user account (if not created already).
 
 ```
 $ kontena register
