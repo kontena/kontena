@@ -8,5 +8,10 @@ set -e
 /usr/bin/docker inspect kontena-server-mongo-data > /dev/null || \
   /usr/bin/docker create --name kontena-server-mongo-data mongo:3.0
 
+VAULT_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+VAULT_IV=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+sed -i -r "s#\#VAULT_KEY=.*#VAULT_KEY=${VAULT_KEY}#" /etc/default/kontena-server-api
+sed -i -r "s#\#VAULT_IV=.*#VAULT_IV=${VAULT_IV}#" /etc/default/kontena-server-api
+
 start kontena-server-mongo || true
 start kontena-server-api || true
