@@ -3,6 +3,7 @@ require 'kontena/cli/grid_options'
 require "kontena/cli/apps/deploy_command"
 
 describe Kontena::Cli::Apps::DeployCommand do
+  include FixturesHelpers
 
   let(:subject) do
     described_class.new(File.basename($0))
@@ -38,40 +39,11 @@ describe Kontena::Cli::Apps::DeployCommand do
   end
 
   let(:docker_compose_yml) do
-    yml_content = <<yml
-wordpress:
-  image: wordpress:4.1
-  ports:
-    - 80:80
-  links:
-    - mysql:mysql
-mysql:
-  image: mysql:5.6
-yml
-    yml_content
+    fixture('docker-compose.yml')
   end
 
   let(:kontena_yml) do
-    yml_content = <<yml
-wordpress:
-  extends:
-    file: docker-compose.yml
-    service: wordpress
-  stateful: true
-  environment:
-    - WORDPRESS_DB_PASSWORD=%{project}_secret
-  instances: 2
-  deploy:
-    strategy: ha
-mysql:
-  extends:
-    file: docker-compose.yml
-    service: mysql
-  stateful: true
-  environment:
-    - MYSQL_ROOT_PASSWORD=%{project}_secret
-yml
-    yml_content
+    fixture('kontena.yml')
   end
 
   let(:services) do

@@ -1,0 +1,8 @@
+wordpress:
+  image: wordpress:4.1
+  ports:
+    - 80:80
+  links:
+    - mysql:mysql
+mysql:
+  image: mysql:5.6

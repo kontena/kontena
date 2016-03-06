@@ -30,6 +30,7 @@ describe Kontena::Cli::Master::UseCommand do
       allow(subject).to receive(:require_token).and_return('token')
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:settings).and_return(valid_settings)
+      expect(subject).to receive(:current_master=).with('some_master')
       expect(client).to receive(:get).with('grids')
       subject.run(['some_master'])
     end
