@@ -11,6 +11,7 @@ $:.unshift File.expand_path('../../lib', bin_file)
 STDOUT.sync = true
 
 require 'clamp'
+require 'ruby_dig'
 require 'kontena/client'
 require 'kontena/cli/common'
 require 'kontena/cli/grid_options'

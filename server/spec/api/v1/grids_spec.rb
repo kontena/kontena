@@ -273,27 +273,27 @@ describe '/v1/grids' do
     end
 
     it 'requires valid grid' do
-      put "/v1/grids/foobar", {name: 'ne'}.to_json, request_headers
+      put "/v1/grids/foobar", {}.to_json, request_headers
       expect(response.status).to eq(404)
     end
 
-    it 'requires valid name' do
+    it 'updates stats.statsd' do
       grid = david.grids.first
-      put "/v1/grids/#{grid.to_path}", {name: 'ne'}.to_json, request_headers
-      expect(response.status).to eq(422)
-    end
-
-    it 'updates grid with given name' do
-      grid = david.grids.first
-      put "/v1/grids/#{grid.to_path}", {name: 'new-name'}.to_json, request_headers
-      grid.reload
-      expect(grid.name).to eq('new-name')
-    end
-
-    it 'returns error on invalid name' do
-      grid = david.grids.first
-      put "/v1/grids/#{grid.to_path}", {name: 'new name'}.to_json, request_headers
-      expect(response.status).to eq(422)
+      server = '192.168.89.12'
+      port = 8125
+      data = {
+        stats: {
+          statsd: {
+            server: server,
+            port: port
+          }
+        }
+      }
+      put "/v1/grids/#{grid.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      statsd = grid.reload.stats['statsd']
+      expect(statsd['server']).to eq(server)
+      expect(statsd['port']).to eq(port)
     end
 
     it 'returns grid' do

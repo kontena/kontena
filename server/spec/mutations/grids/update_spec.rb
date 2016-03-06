@@ -8,15 +8,23 @@ describe Grids::Update do
     grid
   }
 
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
 
   describe '#run' do
-    it 'updates a grid' do
-      described_class.new(grid: grid, name: 'updated-grid').run
-      expect(grid.reload.name).to eq('updated-grid')
+    it 'updates statsd settings' do
+      stats = {
+        statsd: {
+          server: '127.0.0.1',
+          port: 8125
+        }
+      }
+      described_class.new(grid: grid, stats: stats).run
+      expect(grid.reload.stats['statsd']['server']).to eq('127.0.0.1')
     end
 
     it 'returns error if grid has errors' do
-      outcome = described_class.new(grid: grid, name: 'up').run
+      outcome = described_class.new(grid: grid, stats: 'foo').run
       expect(outcome.success?).to be_falsey
     end
   end
