@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.7 (2016-03-07)
+
+- increase deploy timeout to 5 minutes
+- update docker-api
+- make default logs/stats collections smaller
+
 ## 0.11.6 (2016-02-13)
 
 - do not update container.deleted_at timestamp if it's already set
