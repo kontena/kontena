@@ -105,6 +105,12 @@ Kontena Image Registry supports basic authentication. Authentication can be enab
 $ kontena vault write REGISTRY_AUTH_PASSWORD <password>
 ```
 
+And then updating the service with auth secret to read it from vault:
+
+```
+$ kontena service update --secret REGISTRY_AUTH_PASSWORD:AUTH_PASSWORD:env registry
+```
+
 After the password has been set you should redeploy registry service:
 
 ```
