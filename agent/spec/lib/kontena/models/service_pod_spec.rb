@@ -123,6 +123,11 @@ describe Kontena::Models::ServicePod do
       expect(service_config['HostName']).not_to be_nil
     end
 
+    it 'does not include HostName if host network' do
+      data['net'] = 'host'
+      expect(service_config.has_key?('HostName')).to be_falsey
+    end
+
     it 'includes Env' do
       expect(subject.service_config['Env']).to include('KONTENA_SERVICE_NAME=redis-cache')
     end

@@ -1,7 +1,7 @@
 module Kontena
   module Models
     class ServicePod
-      
+
       attr_reader :service_name,
                   :instance_number,
                   :deploy_rev,
@@ -99,10 +99,11 @@ module Kontena
       def service_config
         docker_opts = {
           'name' => self.name,
-          'Image' => self.image_name,
-          'HostName' => "#{self.name}.kontena.local"
-
+          'Image' => self.image_name
         }
+        if self.net.to_s != 'host'
+          docker_opts['HostName'] = "#{self.name}.kontena.local"
+        end
         docker_opts['Env'] = self.build_env
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
