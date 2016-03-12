@@ -1,16 +1,36 @@
 module Kontena::Workers
   class StatsWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
 
-    attr_reader :url, :queue
+    attr_reader :queue, :statsd, :node_name
 
     ##
     # @param [Queue] queue
-    def initialize(queue)
+    # @param [Boolean] autostart
+    def initialize(queue, autostart = true)
       @queue = queue
+      @statsd = nil
+      @node_name = nil
       info 'initialized'
-      async.start
+      subscribe('agent:node_info', :on_node_info)
+      async.start if autostart
+    end
+
+    # @param [String] topic
+    # @param [Hash] info
+    def on_node_info(topic, info)
+      @node_name = info['name']
+      statsd_conf = info.dig('grid', 'stats', 'statsd')
+      if statsd_conf
+        info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
+        @statsd = Statsd.new(
+          statsd_conf['server'], statsd_conf['port'].to_i || 8125
+        ).tap{|sd| sd.namespace = info.dig('grid', 'name')}
+      else
+        @statsd = nil
+      end
     end
 
     def start
@@ -72,6 +92,7 @@ module Kontena::Workers
       }
 
       self.queue << event
+      send_statsd_metrics(container[:aliases][0], event[:data])
     end
 
     ##
@@ -94,6 +115,8 @@ module Kontena::Workers
       @client
     end
 
+    # @param [String] current
+    # @param [String] previous
     def get_interval(current, previous)
       cur  = Time.parse(current).to_f
       prev = Time.parse(previous).to_f
@@ -107,6 +130,28 @@ module Kontena::Workers
       cadvisor = Docker::Container.get('kontena-cadvisor') rescue nil
       return false if cadvisor.nil?
       cadvisor.info['State']['Running'] == true
+    end
+
+    # @param [Hash] event
+    def send_statsd_metrics(name, event)
+      return unless statsd
+      labels = event[:spec][:labels]
+      if labels && labels[:'io.kontena.service.name']
+        key_base = "services.#{name}"
+      else
+        key_base = "#{node_name}.containers.#{name}"
+      end
+      statsd.gauge("#{key_base}.cpu.usage", event[:cpu][:usage_pct])
+      statsd.gauge("#{key_base}.memory.usage", event[:memory][:usage])
+      interfaces = event.dig(:network, :interfaces) || []
+      interfaces.each do |iface|
+        [:rx_bytes, :tx_bytes].each do |metric|
+          statsd.gauge("#{key_base}.network.iface.#{iface[:name]}.#{metric}", iface[metric])
+        end
+      end
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
     end
   end
 end

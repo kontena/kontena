@@ -122,10 +122,8 @@ module V1
           # PUT /v1/grids/:id
           r.is do
             data = parse_json_body
-            outcome = Grids::Update.run(
-                grid: @grid,
-                name: data['name']
-            )
+            data[:grid] = @grid
+            outcome = Grids::Update.run(data)
             if outcome.success?
               @grid = outcome.result
               audit_event(r, @grid, @grid, 'update')

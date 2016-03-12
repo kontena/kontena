@@ -11,6 +11,10 @@ module Kontena::Cli::Grids
       puts "  nodes: #{grid['node_count']}"
       puts "  services: #{grid['service_count']}"
       puts "  containers: #{grid['container_count']}"
+      if statsd = grid.dig('stats', 'statsd')
+        puts "  stats:"
+        puts "    statsd: #{statsd['server']}:#{statsd['port']}"
+      end
     end
 
     def grids

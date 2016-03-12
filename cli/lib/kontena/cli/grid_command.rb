@@ -1,5 +1,6 @@
 require_relative 'grids/list_command'
 require_relative 'grids/create_command'
+require_relative 'grids/update_command'
 require_relative 'grids/use_command'
 require_relative 'grids/show_command'
 require_relative 'grids/logs_command'
@@ -16,6 +17,7 @@ class Kontena::Cli::GridCommand < Clamp::Command
 
   subcommand ["list","ls"], "List all grids", Kontena::Cli::Grids::ListCommand
   subcommand "create", "Create a new grid", Kontena::Cli::Grids::CreateCommand
+  subcommand "update", "Update grid", Kontena::Cli::Grids::UpdateCommand
   subcommand "use", "Switch to use specific grid", Kontena::Cli::Grids::UseCommand
   subcommand "show", "Show grid details", Kontena::Cli::Grids::ShowCommand
   subcommand "logs", "Show logs from grid containers", Kontena::Cli::Grids::LogsCommand

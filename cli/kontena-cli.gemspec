@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'clamp'
   spec.add_runtime_dependency 'highline'
   spec.add_runtime_dependency 'shell-spinner'
+  spec.add_runtime_dependency 'ruby_dig'
 end
