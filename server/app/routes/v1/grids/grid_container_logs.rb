@@ -10,6 +10,7 @@ V1::GridsApi.route('grid_container_logs') do |r|
       limit = (r['limit'] || 100).to_i
       follow = r['follow'] || false
       from = r['from']
+      since = r['since']
 
       unless r['containers'].nil?
         container_names = r['containers'].split(',')
@@ -35,6 +36,10 @@ V1::GridsApi.route('grid_container_logs') do |r|
           scope = scope.where(name: {:$in => container_names}) if container_names
           scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
           scope = scope.where(:id.gt => from) unless from.nil?
+          if !since.nil? && from.nil?
+            since = DateTime.parse(since) rescue nil
+            scope = scope.where(:created_at.gt => since)
+          end
           scope = scope.order(:_id => -1)
           if first_run
             logs = scope.limit(limit).to_a.reverse
@@ -54,6 +59,10 @@ V1::GridsApi.route('grid_container_logs') do |r|
         scope = scope.where(name: {:$in => container_names}) if container_names
         scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
         scope = scope.where(:id.gt => from ) unless from.nil?
+        if !since.nil? && from.nil?
+          since = DateTime.parse(since) rescue nil
+          scope = scope.where(:created_at.gt => since)
+        end
         @logs = scope.order(:_id => -1).limit(limit).to_a.reverse
         render('container_logs/index')
       end

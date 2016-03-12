@@ -8,6 +8,8 @@ module Kontena::Cli::Apps
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
+    option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
+    option "--since", "SINCE", "Show logs since given timestamp"
     option ["-s", "--search"], "SEARCH", "Search from logs"
     option ["-t", "--follow"], :flag, "Follow (tail) logs", default: false
     parameter "[SERVICE] ...", "Show only specified service logs"
@@ -32,6 +34,8 @@ module Kontena::Cli::Apps
       loop do
         query_params = []
         query_params << "from=#{last_id}" unless last_id.nil?
+        query_params << "limit=#{lines}"
+        query_params << "since=#{since}" if !since.nil? && last_id.nil?
         query_params << "search=#{search}" if search
         logs = []
         services.each do |service_name, opts|
@@ -42,7 +46,8 @@ module Kontena::Cli::Apps
         logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
         logs.each do |log|
           color = color_for_container(log['name'])
-          puts "#{log['name'].colorize(color)} | #{log['data']}"
+          prefix = "#{log['created_at']} #{log['name']}:".colorize(color)
+          puts "#{prefix} #{log['data']}"
           last_id = log['id']
         end
         break unless follow?
