@@ -16,11 +16,18 @@ module Kontena::Launchers
     end
 
     def start
+      retries = 0
       begin
         start_cadvisor
+      rescue Docker::Error::ServerError => exc
+        if retries < 4
+          retries += 1
+          sleep 0.25
+          retry
+        end
+        log_error(exc)
       rescue => exc
-        error exc.message
-        error exc.backtrace.join("\n")
+        log_error(exc)
       end
     end
 
@@ -69,6 +76,12 @@ module Kontena::Launchers
         }
       )
       container.start
+    end
+
+    # @param [Exception] exc
+    def log_error(exc)
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
     end
   end
 end
