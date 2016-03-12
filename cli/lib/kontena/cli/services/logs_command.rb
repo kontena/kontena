@@ -8,8 +8,10 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
     option ["-f", "--follow"], :flag, "Follow (tail) logs", default: false
+    option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
+    option "--since", "SINCE", "Show logs since given timestamp"
     option ["-s", "--search"], "SEARCH", "Search from logs"
-    option ["-c", "--container"], "CONTAINER", "Show only specified container logs"
+    option ["-i", "--instance"], "INSTANCE", "Show only given instance specific logs"
 
     def execute
       require_api_url
@@ -17,14 +19,19 @@ module Kontena::Cli::Services
       last_id = nil
       loop do
         query_params = []
+        query_params << "limit=#{lines}"
         query_params << "from=#{last_id}" unless last_id.nil?
+        query_params << "since=#{since}" if !since.nil? && last_id.nil?
         query_params << "search=#{search}" if search
-        query_params << "container=#{container}" if container
+        query_params << "container=#{name}-#{instance}" if instance
 
         result = client(token).get("services/#{current_grid}/#{name}/container_logs?#{query_params.join('&')}")
         result['logs'].each do |log|
           color = color_for_container(log['name'])
-          puts "#{log['name'].colorize(color)} | #{log['data']}"
+          instance_number = log['name'].match(/^.+-(\d+)$/)[1]
+          name = instance_number.nil? ? log['name'] : instance_number
+          prefix = "#{log['created_at']} [#{name}]:".colorize(color)
+          puts "#{prefix} #{log['data']}"
           last_id = log['id']
         end
         break unless follow?

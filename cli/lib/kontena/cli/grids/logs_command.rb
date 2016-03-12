@@ -5,6 +5,7 @@ module Kontena::Cli::Grids
     option ["-f", "--follow"], :flag, "Follow (tail) logs", default: false
     option ["-s", "--search"], "SEARCH", "Search from logs"
     option "--lines", "LINES", "Number of lines to show from the end of the logs"
+    option "--since", "SINCE", "Show logs since given timestamp"
     option "--node", "NODE", "Filter by node name", multivalued: true
     option "--service", "SERVICE", "Filter by service name", multivalued: true
     option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
@@ -19,7 +20,7 @@ module Kontena::Cli::Grids
       query_params[:containers] = container_list.join(",") unless container_list.empty?
       query_params[:search] = search if search
       query_params[:limit] = lines if lines
-
+      query_params[:since] = since if since
 
       if follow?
         @buffer = ''
@@ -34,7 +35,11 @@ module Kontena::Cli::Grids
       result = client(token).get("grids/#{current_grid}/container_logs", query_params)
       result['logs'].each do |log|
         color = color_for_container(log['name'])
-        puts "#{log['name'].colorize(color)} | #{log['data']}"
+        prefix = ""
+        prefix << "#{log['created_at']} "
+        prefix << "#{log['name']}:"
+        prefix = prefix.colorize(color)
+        puts "#{prefix} #{log['data']}"
       end
     end
 

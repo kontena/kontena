@@ -144,7 +144,25 @@ describe '/v1/services' do
         expect(json_response['logs'].size).to eq(1)
         expect(json_response['logs'].first['data']).to eq('foo2')
       end
+    end
 
+    context 'when since parameter is passed' do
+      it 'returns service container logs created after passed timestamp' do
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        log1 = container.container_logs.create!(
+          data: 'foo', type: 'stdout', grid_service: redis_service, created_at: 5.minutes.ago
+        )
+        log2 = container.container_logs.create!(
+          data: 'foo2', type: 'stdout', grid_service: redis_service, created_at: 3.minutes.ago
+        )
+        log3 = container.container_logs.create!(
+          data: 'foo3', type: 'stdout', grid_service: redis_service, created_at: 1.minutes.ago
+        )
+        get "/v1/services/#{redis_service.to_path}/container_logs?since=#{log2.created_at}", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
+        expect(json_response['logs'].first['data']).to eq('foo2')
+      end
     end
   end
 

@@ -62,6 +62,10 @@ module V1
             scope = scope.where(name: r['container']) unless r['container'].nil?
             scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
             scope = scope.where(:id.gt => r['from'] ) unless r['from'].nil?
+            if !r['since'].nil? && r['from'].nil?
+              since = DateTime.parse(r['since']) rescue nil
+              scope = scope.where(:created_at.gt => since)
+            end
 
             @logs = scope.order(:_id => -1).limit(limit).to_a.reverse
             render('container_logs/index')
