@@ -28,6 +28,7 @@ class HostNode
 
   belongs_to :grid
   has_many :containers, dependent: :destroy
+  has_many :host_node_stats
   has_and_belongs_to_many :images
 
   after_save :reserve_node_number, :ensure_unique_name

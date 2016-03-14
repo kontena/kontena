@@ -150,4 +150,18 @@ describe Agent::MessageHandler do
       expect(container.container_id).to eq(container_id)
     end
   end
+
+  describe '#on_node_stat' do
+    it 'saves host_node_stat item' do
+      node
+      expect {
+        subject.on_node_stat(grid, {
+          'node_id' => node.node_id,
+          'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
+          'memory' => {},
+          'filesystems' => []
+        })
+      }.to change{ node.host_node_stats.count }.by(1)
+    end
+  end
 end

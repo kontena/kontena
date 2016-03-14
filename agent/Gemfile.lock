@@ -72,6 +72,7 @@ GEM
       hitimes
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
+    vmstat (2.1.0)
     webmock (1.21.0)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
@@ -96,6 +97,7 @@ DEPENDENCIES
   ruby_dig
   simplecov
   statsd-ruby
+  vmstat
   webmock
 
 BUNDLED WITH

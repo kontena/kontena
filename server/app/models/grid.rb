@@ -17,6 +17,7 @@ class Grid
   field :stats, type: Hash, default: {}
 
   has_many :host_nodes, dependent: :destroy
+  has_many :host_node_stats
   has_many :grid_services, dependent: :destroy
   has_many :grid_secrets, dependent: :delete
   has_many :containers, dependent: :delete

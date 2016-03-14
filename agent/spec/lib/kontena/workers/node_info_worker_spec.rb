@@ -5,7 +5,10 @@ describe Kontena::Workers::NodeInfoWorker do
   let(:queue) { Queue.new }
   let(:subject) { described_class.new(queue, false) }
 
-  before(:each) { Celluloid.boot }
+  before(:each) {
+    Celluloid.boot
+    allow(subject.wrapped_object).to receive(:node_id).and_return('docker_id')
+  }
   after(:each) { Celluloid.shutdown }
 
   describe '#initialize' do
@@ -20,6 +23,14 @@ describe Kontena::Workers::NodeInfoWorker do
     it 'calls #publish_node_info' do
       stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
       expect(subject.wrapped_object).to receive(:publish_node_info).at_least(:once)
+      subject.async.start
+      sleep 0.1
+      subject.terminate
+    end
+
+    it 'calls #publish_node_info' do
+      stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
+      expect(subject.wrapped_object).to receive(:publish_node_stats).at_least(:once)
       subject.async.start
       sleep 0.1
       subject.terminate
@@ -59,6 +70,14 @@ describe Kontena::Workers::NodeInfoWorker do
       subject.publish_node_info
       info = subject.queue.pop
       expect(info[:data]['PrivateIp']).to eq('192.168.66.2')
+    end
+  end
+
+  describe '#publish_node_stats' do
+    it 'adds node stats to queue' do
+      expect {
+        subject.publish_node_stats
+      }.to change{ subject.queue.length }.by(1)
     end
   end
 end
