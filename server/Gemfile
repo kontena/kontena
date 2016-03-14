@@ -16,6 +16,7 @@ gem 'random_token'
 gem 'msgpack'
 gem 'httpclient', '~> 2.3'
 gem 'authority'
+gem 'ruby_dig'
 
 group :development, :test do
   gem 'dotenv'

@@ -35,21 +35,29 @@ module Docker
     # @return [Boolean]
     def running?
       self.state['Running']
+    rescue
+      false
     end
 
     # @return [Boolean]
     def service_container?
       self.labels['io.kontena.container.type'] == 'container'
+    rescue
+      false
     end
 
     # @return [Boolean]
     def volume_container?
       self.labels['io.kontena.container.type'] == 'volume'
+    rescue
+      false
     end
 
     # @return [Boolean]
     def load_balanced?
       !self.labels['io.kontena.load_balancer.name'].nil?
+    rescue
+      false
     end
 
     # @return [Integer]

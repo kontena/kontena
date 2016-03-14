@@ -50,6 +50,8 @@ module Agent
       case data['event']
         when 'node:info'.freeze
           self.on_node_info(grid, data['data'])
+        when 'node:stats'.freeze
+          self.on_node_stat(grid, data['data'])
         when 'container:info'.freeze
           self.on_container_info(grid, data['data'])
         when 'container:event'.freeze
@@ -157,6 +159,23 @@ module Agent
           @stats.clear
         end
       end
+    end
+
+    ##
+    # @param [Grid] grid
+    # @param [Hash] data
+    def on_node_stat(grid, data)
+      node = grid.host_nodes.find_by(node_id: data['id'])
+      return unless node
+      data = fixnums_to_float(data)
+      stat = {
+        grid_id: grid.id,
+        host_node_id: node.id,
+        memory: data['memory'],
+        load: data['load'],
+        filesystem: data['filesystem']
+      }
+      db_session[:host_node_stats].insert(stat)
     end
 
     ##

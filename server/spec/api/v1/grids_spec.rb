@@ -145,6 +145,16 @@ describe '/v1/grids' do
       end
     end
 
+    describe '/nodes/:name' do
+      it 'returns grid node' do
+        grid = david.grids.first
+        node = grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid)
+        get "/v1/grids/#{grid.to_path}/nodes/#{node.name}", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['name']).to eq(node.name)
+      end
+    end
+
     describe '/users' do
       it 'returns grid users' do
         grid = david.grids.first

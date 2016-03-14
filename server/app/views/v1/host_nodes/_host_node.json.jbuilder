@@ -5,6 +5,7 @@ json.updated_at node.updated_at
 json.last_seen_at node.last_seen_at
 json.name node.name
 json.os node.os
+json.engine_root_dir node.docker_root_dir
 json.driver node.driver
 json.kernel_version node.kernel_version
 json.labels node.labels
@@ -17,4 +18,12 @@ json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|node| node.private_ip}.c
 json.node_number node.node_number
 json.grid do
   json.partial!("app/views/v1/grids/grid", grid: node.grid) if node.grid
+end
+json.resource_usage do
+  stats = node.host_node_stats.last
+  if stats
+    json.memory stats.memory
+    json.load stats.load
+    json.filesystem stats.filesystem
+  end
 end
