@@ -7,7 +7,12 @@ describe Kontena::Workers::NodeInfoWorker do
 
   before(:each) {
     Celluloid.boot
-    allow(subject.wrapped_object).to receive(:node_id).and_return('docker_id')
+    allow(Docker).to receive(:info).and_return({
+      'Name' => 'node-1',
+      'Labels' => nil,
+      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
+    })
+    allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
   }
   after(:each) { Celluloid.shutdown }
 
@@ -40,12 +45,6 @@ describe Kontena::Workers::NodeInfoWorker do
   describe '#publish_node_info' do
     before(:each) do
       allow(subject.wrapped_object).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
-      allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
-      allow(Docker).to receive(:info).and_return({
-        'Name' => 'node-1',
-        'Labels' => nil,
-        'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
-      })
     end
 
     it 'adds node info to queue' do
