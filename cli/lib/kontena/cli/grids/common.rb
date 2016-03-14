@@ -7,12 +7,33 @@ module Kontena::Cli::Grids
       puts "#{grid['name']}:"
       puts "  uri: #{self.current_master['url'].sub('http', 'ws')}"
       puts "  token: #{grid['token']}"
-      puts "  users: #{grid['user_count']}"
-      puts "  nodes: #{grid['node_count']}"
-      puts "  services: #{grid['service_count']}"
-      puts "  containers: #{grid['container_count']}"
+      root_dir = grid['engine_root_dir']
+      nodes = client(require_token).get("grids/#{grid['name']}/nodes")
+      nodes = nodes['nodes'].select{|n| n['connected'] == true }
+      node_count = nodes.size
+      puts "  stats:"
+      puts "    nodes: #{nodes.size} of #{grid['node_count']}"
+
+      cpu_total = nodes.map{|n| n['cpus'].to_i}.inject(:+)
+      puts "    cpus: #{cpu_total || 0}"
+
+      loads = calculate_loads(nodes, node_count)
+      puts "    load: #{(loads[:'1m'] || 0.0).round(2)} #{(loads[:'5m'] || 0.0).round(2)} #{(loads[:'15m'] || 0.0).round(2)}"
+
+      mem_total = nodes.map{|n| n['mem_total'].to_i}.inject(:+)
+      mem_wired = nodes.map{|n|
+        n.dig('resource_usage', 'memory', 'active').to_f
+      }.inject(:+)
+      puts "    memory: #{to_gigabytes(mem_wired)} of #{to_gigabytes(mem_total)} GB"
+
+      total_fs = calculate_filesystem_stats(nodes)
+      puts "    filesystem: #{to_gigabytes(total_fs['used'])} of #{to_gigabytes(total_fs['total'])} GB"
+
+      puts "    users: #{grid['user_count']}"
+      puts "    services: #{grid['service_count']}"
+      puts "    containers: #{grid['container_count']}"
       if statsd = grid.dig('stats', 'statsd')
-        puts "  stats:"
+        puts "  exports:"
         puts "    statsd: #{statsd['server']}:#{statsd['port']}"
       end
     end
@@ -21,8 +42,44 @@ module Kontena::Cli::Grids
       @grids ||= client(require_token).get('grids')
     end
 
+    # @param [Array<Hash>] nodes
+    # @param [Fixnum] node_count
+    # @return [Hash]
+    def calculate_loads(nodes, node_count)
+      loads = {:'1m' => 0.0, :'5m' => 0.0, :'15m' => 0.0}
+      return loads if node_count == 0
+
+      loads[:'1m'] = nodes.map{|n| n.dig('resource_usage', 'load', '1m').to_f }.inject(:+) / node_count
+      loads[:'5m'] = nodes.map{|n| n.dig('resource_usage', 'load', '5m').to_f }.inject(:+) / node_count
+      loads[:'15m'] = nodes.map{|n| n.dig('resource_usage', 'load', '15m').to_f }.inject(:+) / node_count
+      loads
+    end
+
+    # @param [Array<Hash>] nodes
+    # @return [Hash]
+    def calculate_filesystem_stats(nodes)
+      total_fs = {
+        'used' => 0.0,
+        'total' => 0.0
+      }
+      nodes.each do |node|
+        root_dir = node['engine_root_dir']
+        filesystems = node.dig('resource_usage', 'filesystem') || []
+        root_fs = filesystems.find{|fs| fs['name'] == root_dir}
+        total_fs['used'] += root_fs['used']
+        total_fs['total'] += root_fs['total']
+      end
+
+      total_fs
+    end
+
     def find_grid_by_name(name)
       grids['grids'].find {|grid| grid['name'] == name }
+    end
+
+    def to_gigabytes(amount)
+      return 0.0 if amount.nil?
+      (amount.to_f / 1024 / 1024 / 1024).to_f.round(2)
     end
   end
 end
