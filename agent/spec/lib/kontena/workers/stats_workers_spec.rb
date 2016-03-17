@@ -46,23 +46,34 @@ describe Kontena::Workers::StatsWorker do
   end
 
   describe '#send_statsd_metrics' do
-    let(:event) {
+    let(:event) do
       {
         id: 'aaaaaa',
         spec: {
-
+          labels: {
+            :'io.kontena.service.name' => 'foobar'
+          }
         },
         cpu: {
           usage_pct: 12.32
         },
         memory: {
-          usage: current_stat[:memory][:usage],
-          working_set: current_stat[:memory][:working_set]
+          usage: 24 * 1024 * 1024
         },
-        filesystem: current_stat[:filesystem],
-        diskio: current_stat[:diskio],
-        network: current_stat[:network]
+        filesystem: [],
+        diskio: [],
+        network: []
       }
-    }
+    end
+
+    let(:statsd) do
+      spy(:statsd)
+    end
+
+    it 'sends statsd metrics' do
+      allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
+      expect(statsd).to receive(:gauge)
+      subject.send_statsd_metrics('foobar', event)
+    end
   end
 end
