@@ -1,8 +1,8 @@
-FROM gliderlabs/alpine:3.3
+FROM alpine:3.2
 MAINTAINER jari@kontena.io
 
 RUN apk update && apk --update add ruby ruby-irb ruby-tzinfo ruby-bigdecimal \
-    ruby-io-console ca-certificates libssl1.0 openssl libstdc++
+    ruby-io-console ruby-json ca-certificates libssl1.0 openssl libstdc++
 
 ADD Gemfile /app/
 ADD Gemfile.lock /app/
