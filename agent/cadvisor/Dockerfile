@@ -4,7 +4,7 @@ MAINTAINER jari@kontena.io
 RUN apk add --update ca-certificates util-linux && \
     rm -rf /var/cache/apk/*
 
-ADD https://github.com/google/cadvisor/releases/download/v0.19.5/cadvisor /usr/bin/cadvisor
+ADD https://github.com/google/cadvisor/releases/download/v0.22.0/cadvisor /usr/bin/cadvisor
 RUN chmod +x /usr/bin/cadvisor
 ADD entrypoint.sh /
 
