@@ -11,7 +11,7 @@ module Kontena::Workers
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
 
-    attr_reader :queue
+    attr_reader :queue, :statsd
 
     PUBLISH_INTERVAL = 60
 
@@ -20,7 +20,9 @@ module Kontena::Workers
     # @param [Boolean] autostart
     def initialize(queue, autostart = true)
       @queue = queue
+      @statsd = nil
       subscribe('websocket:connected', :on_websocket_connected)
+      subscribe('agent:node_info', :on_node_info)
       info 'initialized'
       async.start if autostart
     end
@@ -38,6 +40,20 @@ module Kontena::Workers
     def on_websocket_connected(topic, data)
       self.publish_node_info
       self.publish_node_stats
+    end
+
+    # @param [String] topic
+    # @param [Hash] info
+    def on_node_info(topic, info)
+      statsd_conf = info.dig('grid', 'stats', 'statsd')
+      if statsd_conf
+        info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
+        @statsd = Statsd.new(
+          statsd_conf['server'], statsd_conf['port'].to_i || 8125
+        ).tap{|sd| sd.namespace = info.dig('grid', 'name')}
+      else
+        @statsd = nil
+      end
     end
 
     def publish_node_info
@@ -108,6 +124,29 @@ module Kontena::Workers
           }
       }
       self.queue << event
+      send_statsd_metrics(event[:data])
+    end
+
+    # @param [Hash] event
+    def send_statsd_metrics(event)
+      return unless statsd
+      key_base = "#{docker_info['Name']}"
+      statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
+      statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])
+      statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
+      statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
+      statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
+      statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
+      event[:filesystem].each do |fs|
+        name = fs[:name].split("/")[1..-1].join(".")
+        statsd.gauge("#{key_base}.filesystem.#{name}.free", fs[:free])
+        statsd.gauge("#{key_base}.filesystem.#{name}.available", fs[:available])
+        statsd.gauge("#{key_base}.filesystem.#{name}.used", fs[:used])
+        statsd.gauge("#{key_base}.filesystem.#{name}.total", fs[:total])
+      end
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
     end
 
     # @return [Hash]

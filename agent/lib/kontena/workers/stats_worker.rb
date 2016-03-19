@@ -132,6 +132,7 @@ module Kontena::Workers
       cadvisor.info['State']['Running'] == true
     end
 
+    # @param [String] name
     # @param [Hash] event
     def send_statsd_metrics(name, event)
       return unless statsd

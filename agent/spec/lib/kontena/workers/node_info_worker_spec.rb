@@ -42,6 +42,35 @@ describe Kontena::Workers::NodeInfoWorker do
     end
   end
 
+  describe '#on_node_info' do
+    it 'initializes statsd client if node has statsd config' do
+      info = {
+        'grid' => {
+          'stats' => {
+            'statsd' => {
+              'server' => '192.168.24.33',
+              'port' => 8125
+            }
+          }
+        }
+      }
+      expect(subject.statsd).to be_nil
+      subject.on_node_info('agent:node_info', info)
+      expect(subject.statsd).not_to be_nil
+    end
+
+    it 'does not initialize statsd if no statsd config exists' do
+      info = {
+        'grid' => {
+          'stats' => {}
+        }
+      }
+      expect(subject.statsd).to be_nil
+      subject.on_node_info('agent:node_info', info)
+      expect(subject.statsd).to be_nil
+    end
+  end
+
   describe '#publish_node_info' do
     before(:each) do
       allow(subject.wrapped_object).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
