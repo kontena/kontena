@@ -28,9 +28,10 @@ module Kontena
 
     def ensure_connect
       EM::PeriodicTimer.new(1) {
-        unless connected?
-          self.connect
-        end
+        self.connect unless connected?
+      }
+      EM::PeriodicTimer.new(KEEPALIVE_TIME) {
+        self.verify_connection if connected?
       }
     end
 
@@ -47,13 +48,13 @@ module Kontena
     def connect
       return if connecting?
       @connecting = true
-      debug 'connecting to master'
+      info 'connecting to master'
       headers = {
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
           'Kontena-Version' => Kontena::Agent::VERSION
       }
-      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {ping: KEEPALIVE_TIME, headers: headers})
+      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
       Celluloid::Notifications.publish('websocket:connect', self)
 
@@ -113,6 +114,7 @@ module Kontena
       end
       Celluloid::Notifications.publish('websocket:disconnect', event)
       info "connection closed with code: #{event.code}"
+      @ws = nil
     rescue => exc
       logger.error(LOG_NAME) { exc.message }
     end
@@ -145,6 +147,19 @@ module Kontena
     # @return [String]
     def host_id
       Docker.info['ID']
+    end
+
+    def verify_connection
+      timer = EM::Timer.new(5) do
+        if @connected
+          info "did not receive pong, closing connection"
+          @connected = false
+          self.ws.close(1000)
+        end
+      end
+      self.ws.ping {
+        timer.cancel
+      }
     end
   end
 end
