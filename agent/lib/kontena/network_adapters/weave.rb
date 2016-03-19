@@ -224,7 +224,12 @@ module Kontena::NetworkAdapters
       unless weave_wait
         Docker::Container.create(
           'name' => 'weavewait',
-          'Image' => "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
+          'Image' => "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}",
+          'Volumes' => {
+            '/w' => {},
+            '/w-noop' => {},
+            '/w-nomcast' => {}
+          }
         )
       end
     end
