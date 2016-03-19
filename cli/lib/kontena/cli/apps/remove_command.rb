@@ -32,6 +32,7 @@ module Kontena::Cli::Apps
       services.find_all {|service_name, options| options['links'] && options['links'].size > 0 }.each do |service_name, options|
         delete(service_name, options)
         services.delete(service_name)
+        sleep 1
       end
       services.each do |service_name, options|
         delete(service_name, options)
