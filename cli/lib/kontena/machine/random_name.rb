@@ -3,9 +3,9 @@ module Kontena
     module RandomName
 
       def generate_name
-        rnd = Random.rand(64)
-
-        "#{adjectives[rnd%adjectives.length]}-#{nouns[rnd%adjectives.length]}"
+        rnd1 = Random.rand(64)
+        rnd2 = Random.rand(64)
+        "#{adjectives[rnd1%adjectives.length]}-#{nouns[rnd2%adjectives.length]}"
       end
 
       private
