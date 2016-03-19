@@ -6,7 +6,7 @@ module Kontena::Launchers
     include Celluloid::Notifications
     include Kontena::Logging
 
-    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.19.5'
+    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.22.0'
     CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'kontena/cadvisor'
 
     def initialize(autostart = true)
