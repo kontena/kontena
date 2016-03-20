@@ -67,8 +67,8 @@ module Kontena::Cli::Registry
         if preferred_node
           node = nodes['nodes'].find{|n| n['connected'] && n['name'] == preferred_node }
           abort('Node not found') if node.nil?
+          affinity << "node==#{node['name']}"
         end
-        affinity << "node==#{node['name']}"
       end
 
       if vault_secret_exists?('REGISTRY_AUTH_PASSWORD')
