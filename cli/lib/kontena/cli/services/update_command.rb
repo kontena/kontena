@@ -52,7 +52,7 @@ module Kontena::Cli::Services
       data[:cpu_shares] = cpu_shares if cpu_shares
       data[:affinity] = affinity_list unless affinity_list.empty?
       data[:env] = env_list unless env_list.empty?
-      data[:secrets] = parse_secrets(secret_list)
+      data[:secrets] = parse_secrets(secret_list) unless secret_list.empty?
       data[:container_count] = instances if instances
       data[:cmd] = cmd.split(" ") if cmd
       data[:user] = user if user
