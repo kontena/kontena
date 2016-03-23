@@ -2,7 +2,7 @@ module Kontena::Cli::Grids
   class LogsCommand < Clamp::Command
     include Kontena::Cli::Common
 
-    option ["-f", "--follow"], :flag, "Follow (tail) logs", default: false
+    option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     option ["-s", "--search"], "SEARCH", "Search from logs"
     option "--lines", "LINES", "Number of lines to show from the end of the logs"
     option "--since", "SINCE", "Show logs since given timestamp"
@@ -22,7 +22,7 @@ module Kontena::Cli::Grids
       query_params[:limit] = lines if lines
       query_params[:since] = since if since
 
-      if follow?
+      if tail?
         @buffer = ''
         query_params[:follow] = 1
         stream_logs(token, query_params)
