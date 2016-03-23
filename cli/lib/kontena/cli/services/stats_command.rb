@@ -7,18 +7,18 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
-    option ["-f", "--follow"], :flag, "Follow stats in real time", default: false
+    option ["-t", "--tail"], :flag, "Tail (follow) stats in real time", default: false
 
     def execute
       require_api_url
       token = require_token
-      if follow?
+      if tail?
         system('clear')
         render_header
       end
       loop do
-        fetch_stats(token, name, follow?)
-        break unless follow?
+        fetch_stats(token, name, tail?)
+        break unless tail?
         sleep(2)
       end
     end
