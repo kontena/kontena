@@ -7,7 +7,7 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
-    option ["-f", "--follow"], :flag, "Follow (tail) logs", default: false
+    option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
     option "--since", "SINCE", "Show logs since given timestamp"
     option ["-s", "--search"], "SEARCH", "Search from logs"
@@ -34,7 +34,7 @@ module Kontena::Cli::Services
           puts "#{prefix} #{log['data']}"
           last_id = log['id']
         end
-        break unless follow?
+        break unless tail?
         sleep(2)
       end
     end

@@ -11,7 +11,7 @@ module Kontena::Cli::Apps
     option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
     option "--since", "SINCE", "Show logs since given timestamp"
     option ["-s", "--search"], "SEARCH", "Search from logs"
-    option ["-t", "--follow"], :flag, "Follow (tail) logs", default: false
+    option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     parameter "[SERVICE] ...", "Show only specified service logs"
 
     attr_reader :services, :service_prefix
@@ -50,7 +50,7 @@ module Kontena::Cli::Apps
           puts "#{prefix} #{log['data']}"
           last_id = log['id']
         end
-        break unless follow?
+        break unless tail?
         sleep(2)
       end
     end
