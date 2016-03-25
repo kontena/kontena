@@ -30,4 +30,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
     docker.vm.provision "shell", inline: provision_script
   end
+
 end
