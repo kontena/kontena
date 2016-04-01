@@ -266,6 +266,22 @@ hooks:
       oneshot: true
 ```
 
+**pre_build**
+
+`pre_build` hooks define executables that are executed before the actual docker image building. If multiple hooks are provided they are executed in the order defined. If any of the commands fail the build is aborted.
+
+```
+hooks:
+  pre_build
+    - name: npm install
+      cmd: npm install
+    - name: grunt
+      cmd: grunt dist
+```
+
+
+
+
 #### log_driver
 
 Specify the log driver for docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
