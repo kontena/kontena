@@ -2,11 +2,12 @@
 title: Deploy
 toc_order: 7
 ---
+# Deploy
 
-## Deployment strategies
+## Deployment Strategies
 Kontena can use different scheduling algorithms when deploying services to more than one node. At the moment the following strategies are available:
 
-**High Availability (HA)**
+### High Availability (HA)
 
 Service with `ha` strategy will deploy its instances to different host nodes. This means that the service instances will be spread across all nodes.
 
@@ -15,7 +16,7 @@ deploy:
   strategy: ha
 ```
 
-**Daemon**
+### Daemon
 
 Service with `daemon` strategy will deploy given number of instances to all nodes.
 
@@ -24,7 +25,7 @@ deploy:
   strategy: daemon
 ```
 
-**Random**
+### Random
 
 Service with `random` strategy will deploy service containers to host nodes randomly.
 
@@ -33,7 +34,9 @@ deploy:
   strategy: random
 ```
 
-**Wait for port**
+## Other Deploy Options
+
+### Wait for port
 
 When a service has multiple instances and `wait_for_port` definition, Kontena's scheduler will wait that container is responding to port before starting to deploy another instance. This way it is possible to achieve zero-downtime deploys.
 
@@ -43,7 +46,7 @@ deploy:
   wait_for_port: true
 ```
 
-**Min health**
+### Min health
 
 A number (percentage) between 0.0 and 1.0 that is multiplied with the instance count. This is the minimum number of healthy nodes that do not sacrifice overall service availability. Kontena will make sure, during the deploy process, that at any point of time this number of healthy instances are up.
 
@@ -57,9 +60,11 @@ The default `min_health` is 1.0, which means no instances can be deployed in par
 
 
 ## Scheduling Conditions
-When creating services, you can direct the host(s) of where the containers should be launched based on scheduling rules.
+
+When creating services, you can direct the node(s) of where the containers should be launched based on scheduling rules.
 
 ### Affinity
+
 An affinity condition is when Kontena is trying to find a field that matches (`==`) given value. An anti-affinity condition is when Kontena is trying to find a field that does not match (`!=`) given value.
 
 Kontena has the ability to compare values against node name, labels and service name.
