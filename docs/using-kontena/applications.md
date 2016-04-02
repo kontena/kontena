@@ -171,7 +171,7 @@ $ kontena app deploy wordpress         # only deploy services named "wordpress" 
 
 ### Example `kontena.yml`
 
-Here's and example of typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md).
+Here's an example of typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md).
 
 ```
 wordpress:
