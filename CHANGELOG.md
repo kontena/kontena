@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.12.0 (2016-04-03)
+
+- improve user roles implementation
+- automatic image gc for nodes
+- initial statsd metrics implementation
+- docker 1.10 support
+- weave 1.4.5
+- cadvisor 0.12.0
+- etcd 2.2.4
+- move cadvisor to host namespace
+- refactor agent workers to actors
+- improve node/host level metrics
+- improve output of `node list` sub-command
+- improve output of `service list` sub-command
+- improve output of `logs` sub-commands
+- new grid sub-command `grid cloud-config`
+- new node sub-commands `service add/remove-label`
+- new service sub-commands `service add/remove-secret`
+- add possibility to override current grid with `--grid` option
+- support for DigitalOcean floating ip's
+- more consistent `--tail` cli option
+- more consistent remove subcommands
+- make default log/stats collection size smaller
+- retry weave, etcd and cadvisor start on docker exception
+- raise error if extended service is missing in base yaml file
+- update mongodb driver (moped) to latest stable version
+- fix: add wait after removing app services that are linked to other services
+- fix: verify agent ws connections periodically
+- fix: node name randomness
+- fix: do not set hostname if host network mode
+- fix: daemon strategy instance count with affinity
+- fix: DigitalOcean node termination
+- fix: AWS node termination not using correct tag
+- remove: deprecated top-level deploy command
+
 ## 0.11.7 (2016-03-07)
 
 - increase deploy timeout to 5 minutes
