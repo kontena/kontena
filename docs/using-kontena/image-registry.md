@@ -18,15 +18,23 @@ You should use the Kontena's built-in Image Registry if you want to:
 
 ## Using Image Registry
 
+* [Create Image Registry Service](image-registry#create-image-registry-service)
+  * [Local Storage Backend](image-registry#local-storage-backend)
+  * [Amazon S3 Storage Backend](image-registry#amazon-s3-storage-backend)
+  * [Azure Storage Backend](image-registry#azure-storage-backend)
+* [Accessing Image Registry](image-registry#accessing-image-registry)
+* [TLS/SSL](image-registry#tls-ssl)
+* [Authentication](image-registry#authentication)
+
 ### Create Image Registry Service
 
-#### Local volume storage backend:
+#### Local Storage Backend
 
 ```
 $ kontena registry create
 ```
 
-#### Amazon S3 storage backend:
+#### Amazon S3 Storage Backend
 
 Write Amazon S3 access keys to Kontena Vault:
 
@@ -41,7 +49,7 @@ Create registry service:
 $ kontena registry create --s3-bucket=<bucket_name> --s3-region=<optional_aws_region>
 ```
 
-#### Azure storage backend:
+#### Azure storage backend
 
 Write Azure account key to Kontena Vault:
 

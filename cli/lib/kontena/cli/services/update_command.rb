@@ -25,11 +25,11 @@ module Kontena::Cli::Services
     option "--net", "NET", "Network mode"
     option "--log-driver", "LOG_DRIVER", "Set logging driver"
     option "--log-opt", "LOG_OPT", "Add logging options", multivalued: true
-    option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, random)"
+    option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, daemon, random)"
     option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
     option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
     option "--pid", "PID", "Pid namespace to use"
-    option "--secret", "SECRET", "Import secret from Vault", multivalued: true
+    option "--secret", "SECRET", "Import secret from Vault (format: <secret>:<name>:<type>)", multivalued: true
 
     def execute
       require_api_url
