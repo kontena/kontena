@@ -119,7 +119,8 @@ if words.size > 0
     when 'service'
       completion.clear
       sub_commands = %w(containers create delete deploy list logs restart
-                      scale show start stats stop update monitor)
+                      scale show start stats stop update monitor envs
+                      add-env remove-env add-secret remove-secret)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.services
