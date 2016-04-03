@@ -7,7 +7,7 @@
 - initial statsd metrics implementation
 - docker 1.10 support
 - weave 1.4.5
-- cadvisor 0.12.0
+- cadvisor 0.22.0
 - etcd 2.2.4
 - move cadvisor to host namespace
 - refactor agent workers to actors
