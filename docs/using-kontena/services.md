@@ -34,6 +34,8 @@ Kontena monitors the state of each service instance and actively manages to ensu
 * [Remove Environment Variable](services#remove-environment-variable-from-service)
 * [Add Secret](services#add-secret-to-service)
 * [Remove Secret](services#remove-secret-from-service)
+* [Link Service](services#link-service)
+* [Unlink Service](services#unlink-service)
 * [Remove Service](services#remove-service)
 
 ### List Services
@@ -298,6 +300,30 @@ $ kontena service add-secret <name> <secret>
 
 ```
 $ kontena service remove-secret <name> <secret>
+```
+
+**Options:**
+
+```
+--grid GRID                   Specify grid to use
+```
+
+### Link Service
+
+```
+$ kontena service link <name> <target>
+```
+
+**Options:**
+
+```
+--grid GRID                   Specify grid to use
+```
+
+### Unlink Service
+
+```
+$ kontena service unlink <name> <target>
 ```
 
 **Options:**
