@@ -9,10 +9,13 @@ toc_order: 1
 
 Kontena CLI may be used to provision Kontena Master based on [CoreOS](https://coreos.com/using-coreos/), fully configured and ready for action! At the moment, you can provision Kontena Master to following platforms:
 
-* Amazon AWS
-* Microsoft Azure
-* DigitalOcean
-* Vagrant (local environment)
+* [Amazon AWS](master#amazon-aws)
+* [Microsoft Azure](master#microsoft-azure)
+* [DigitalOcean](master#digitalocean)
+* [Vagrant (local environment)](master#vagrant)
+* [Manual Install](master#manual-install)
+  * [CoreOS](master#coreos)
+  * [Ubuntu](master#ubuntu-14-04)
 
 We are adding support for other platforms gradually based on your requests. If you'd like to see support for the platform you are using, please [post your request](https://github.com/kontena/kontena/issues) as an issue to our GitHub repository.
 
@@ -60,7 +63,7 @@ Options:
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
 
-### Digital Ocean
+### DigitalOcean
 
 ```
 Usage:
@@ -93,6 +96,8 @@ Options:
 ```
 
 ## Manual Install
+
+Kontena Master can be installed manually to almost any linux distribution. Below you can find examples for CoreOS and Ubuntu.
 
 ### CoreOS
 

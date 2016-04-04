@@ -5,7 +5,21 @@ toc_order: 6
 
 # Upgrading Kontena from Previous Versions
 
-### Upgrading from 0.10 to 0.11 (latest)
+### Upgrading from 0.11 to 0.12 (latest)
+
+** Official Installation Method**
+
+- restart master:
+
+```
+$ sudo systemctl restart kontena-server-api
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+** Custom Installs**
+- update master & agent containers to 0.12
+
+### Upgrading from 0.10 to 0.11
 
 ** Official Installation Method**
 
