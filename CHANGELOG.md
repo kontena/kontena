@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.12.0 (2016-04-03)
+## 0.12.0 (2016-04-04)
 
 - improve user roles implementation
 - automatic image gc for nodes
@@ -18,6 +18,7 @@
 - new grid sub-command `grid cloud-config`
 - new node sub-commands `service add/remove-label`
 - new service sub-commands `service add/remove-secret`
+- new service sub-commands `service link/unlink`
 - add possibility to override current grid with `--grid` option
 - support for DigitalOcean floating ip's
 - more consistent `--tail` cli option
