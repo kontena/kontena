@@ -21,6 +21,9 @@ require_relative 'services/remove_env_command'
 require_relative 'services/add_secret_command'
 require_relative 'services/remove_secret_command'
 
+require_relative 'services/link_command'
+require_relative 'services/unlink_command'
+
 class Kontena::Cli::ServiceCommand < Clamp::Command
 
   subcommand ["list","ls"], "List services", Kontena::Cli::Services::ListCommand
@@ -45,6 +48,9 @@ class Kontena::Cli::ServiceCommand < Clamp::Command
 
   subcommand "add-secret", "Add secret from Vault", Kontena::Cli::Services::AddSecretCommand
   subcommand "remove-secret", "Remove secret", Kontena::Cli::Services::RemoveSecretCommand
+
+  subcommand "link", "Link service to another service", Kontena::Cli::Services::LinkCommand
+  subcommand "unlink", "Unlink service from another service", Kontena::Cli::Services::UnlinkCommand
 
   def execute
   end
