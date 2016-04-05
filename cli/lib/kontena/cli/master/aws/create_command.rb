@@ -6,18 +6,18 @@ module Kontena::Cli::Master::Aws
 
     option "--access-key", "ACCESS_KEY", "AWS access key ID", required: true
     option "--secret-key", "SECRET_KEY", "AWS secret key", required: true
-    option "--key-pair", "KEY_PAIR", "EC2 Key Pair", required: true
-    option "--ssl-cert", "SSL CERT", "SSL certificate file"
+    option "--key-pair", "KEY_PAIR", "EC2 key pair name", required: true
+    option "--ssl-cert", "SSL CERT", "SSL certificate file (default: generate self-signed cert)"
     option "--region", "REGION", "EC2 Region", default: 'eu-west-1'
     option "--zone", "ZONE", "EC2 Availability Zone", default: 'a'
-    option "--vpc-id", "VPC ID", "Virtual Private Cloud (VPC) ID"
-    option "--subnet-id", "SUBNET ID", "VPC option to specify subnet to launch instance into"
+    option "--vpc-id", "VPC ID", "Virtual Private Cloud (VPC) ID (default: default vpc)"
+    option "--subnet-id", "SUBNET ID", "VPC option to specify subnet to launch instance into (default: first subnet from vpc/az)"
     option "--type", "SIZE", "Instance type", default: 't2.small'
     option "--storage", "STORAGE", "Storage size (GiB)", default: '30'
-    option "--vault-secret", "VAULT_SECRET", "Secret key for Vault"
-    option "--vault-iv", "VAULT_IV", "Initialization vector for Vault"
+    option "--vault-secret", "VAULT_SECRET", "Secret key for Vault (default: generate random secret)"
+    option "--vault-iv", "VAULT_IV", "Initialization vector for Vault (default: generate random iv)"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
-    option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url"
+    option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url (optional)"
 
     def execute
       require 'kontena/machine/aws'
