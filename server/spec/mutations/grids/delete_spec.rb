@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Grids::Delete do  
+describe Grids::Delete do
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
@@ -31,13 +31,13 @@ describe Grids::Delete do
 
     context 'when user has permission to delete grids' do
       before(:each) do
-        allow(GridAuthorizer).to receive(:deletable_by?).with(user).and_return(true)
+        allow_any_instance_of(GridAuthorizer).to receive(:deletable_by?).with(user).and_return(true)
       end
 
       it 'deletes a grid' do
-        grid
+        grid # create
         expect {
-          described_class.new(user: user, grid: grid).run
+          outcome = described_class.new(user: user, grid: grid).run
         }.to change{ Grid.count }.by(-1)
       end
 

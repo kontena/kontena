@@ -48,7 +48,7 @@ describe GridAuthorizer do
 
     context 'when user is grid admin' do
       it 'does not let delete grid' do
-        expect(grid.authorizer).not_täjo be_deletable_by(grid_admin)
+        expect(grid.authorizer).not_to be_deletable_by(grid_admin)
       end
     end
   end
