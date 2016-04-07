@@ -26,15 +26,17 @@ module Kontena
 
         # @param [Hash] opts
         def run!(opts)
-          ami = resolve_ami(client.region)
+          ami = resolve_ami(region)
           abort('No valid AMI found for region') unless ami
+
+          opts[:vpc] = default_vpc.vpc_id unless opts[:vpc]
 
           security_group = ensure_security_group(opts[:grid], opts[:vpc])
           name = opts[:name ] || generate_name
 
-          opts[:vpc] = default_vpc.vpc_id unless opts[:vpc]
+
           if opts[:subnet].nil?
-            subnet = default_subnet(opts[:vpc], ec2.client.config.region+opts[:zone])
+            subnet = default_subnet(opts[:vpc], region+opts[:zone])
           else
             subnet = ec2.subnet(opts[:subnet])
           end
@@ -81,7 +83,7 @@ module Kontena
           ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
             sleep 2 until node = instance_exists_in_grid?(opts[:grid], name)
           end
-          labels = ["region=#{client.region}", "az=#{opts[:zone]}"]
+          labels = ["region=#{region}", "az=#{opts[:zone]}"]
           set_labels(node, labels)
         end
 
@@ -141,6 +143,11 @@ module Kontena
           })
 
           sg
+        end
+
+        # @return [String]
+        def region
+          ec2.client.config.region
         end
 
         def user_data(vars)

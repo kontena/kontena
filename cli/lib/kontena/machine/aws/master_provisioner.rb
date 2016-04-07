@@ -34,11 +34,11 @@ module Kontena
             end
           end
 
-          ami = resolve_ami(ec2.client.config.region)
+          ami = resolve_ami(region)
           abort('No valid AMI found for region') unless ami
           opts[:vpc] = default_vpc.vpc_id unless opts[:vpc]
           if opts[:subnet].nil?
-            subnet = default_subnet(opts[:vpc], ec2.client.config.region+opts[:zone])
+            subnet = default_subnet(opts[:vpc], region+opts[:zone])
           else
             subnet = ec2.subnet(opts[:subnet])
           end
@@ -138,6 +138,11 @@ module Kontena
           })
 
           sg
+        end
+
+        # @return [String]
+        def region
+          ec2.client.config.region
         end
 
         def user_data(vars)

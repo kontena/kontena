@@ -5,7 +5,7 @@ module Kontena
     module Aws
       class NodeDestroyer
 
-        attr_reader :client, :api_client
+        attr_reader :ec2, :api_client
 
         # @param [Kontena::Client] api_client Kontena api client
         # @param [String] access_key_id aws_access_key_id
@@ -13,15 +13,27 @@ module Kontena
         # @param [String] region
         def initialize(api_client, access_key_id, secret_key, region = 'eu-west-1')
           @api_client = api_client
-          @client = Fog::Compute.new(:provider => 'AWS', :aws_access_key_id => access_key_id, :aws_secret_access_key => secret_key, :region => region)
+          @ec2 = ::Aws::EC2::Resource.new(
+            region: region,
+            credentials: ::Aws::Credentials.new(access_key_id, secret_key)
+          )
         end
 
         def run!(grid, name)
-          instance = client.servers.all({'tag:Name' => name}).first
+          instances = ec2.instances({
+            filters: [
+              {name: 'tag:Name', values: [name]}
+            ]
+          })
+          abort("Cannot find AWS instance #{name}") if instances.to_a.size == 0
+          abort("There are multiple instances with name #{name}") if instances.to_a.size > 1
+          instance = instances.first
           if instance
             ShellSpinner "Terminating AWS instance #{name.colorize(:cyan)} " do
-              instance.destroy
-              sleep 2 until client.servers.get(instance.id).state == 'terminated'
+              instance.terminate
+              until instance.reload.state.name.to_s == 'terminated'
+                sleep 2
+              end
             end
           else
             abort "Cannot find instance #{name.colorize(:cyan)} in AWS"
