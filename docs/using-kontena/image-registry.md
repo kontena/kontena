@@ -99,7 +99,7 @@ $ kontena vault write REGISTRY_HTTP_TLS_CERTIFICATE "$(cat registry_ca.pem)"
 Redeploy Kontena Image Registry:
 
 ```
-$ kontena service deploy --force registry
+$ kontena service deploy --force-deploy registry
 ```
 
 Then you have to instruct your local docker daemon to trust that certificate. This is done by copying the `registry_ca.pem` file to `/etc/docker/certs.d/registry.<grid_name>.kontena.local/ca.crt`.
@@ -113,10 +113,16 @@ Kontena Image Registry supports basic authentication. Authentication can be enab
 $ kontena vault write REGISTRY_AUTH_PASSWORD <password>
 ```
 
+And then updating the service with auth secret to read it from vault:
+
+```
+$ kontena service update --secret REGISTRY_AUTH_PASSWORD:AUTH_PASSWORD:env registry
+```
+
 After the password has been set you should redeploy registry service:
 
 ```
-$ kontena service deploy --force registry
+$ kontena service deploy --force-deploy registry
 ```
 
 Login to registry using Docker client:
