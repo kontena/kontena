@@ -6,6 +6,7 @@ describe Kontena::Cli::Services::ContainersCommand do
   include ClientHelpers
 
   describe '#execute' do
+
     before(:each) do
       allow(client).to receive(:get).and_return({
         'containers' => []
