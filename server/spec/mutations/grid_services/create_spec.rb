@@ -280,5 +280,29 @@ describe GridServices::Create do
       ).run
       expect(outcome.result.cap_drop).to eq(['SETUID'])
     end
+
+    it 'saves valid restart' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          restart: 'always'
+      ).run
+      expect(outcome.result.restart).to eq('always')
+    end
+
+    it 'returns error if invalid restart' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: true,
+          restart: 'foobar'
+      ).run
+      expect(outcome.success?).to be_falsey
+    end
   end
 end

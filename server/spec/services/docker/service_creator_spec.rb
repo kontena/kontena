@@ -119,6 +119,10 @@ describe Docker::ServiceCreator do
       expect(service_spec).to include(:secrets => [])
     end
 
+    it 'includes restart' do
+      expect(service_spec).to include(:restart => nil)
+    end
+
     describe '[:env]' do
       let(:env) { service_spec[:env] }
 

@@ -31,7 +31,8 @@ module Kontena
                   :log_opts,
                   :pid,
                   :hooks,
-                  :secrets
+                  :secrets,
+                  :restart
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -63,6 +64,7 @@ module Kontena
         @pid = attrs['pid']
         @hooks = attrs['hooks'] || []
         @secrets = attrs['secrets'] || []
+        @restart = attrs['restart']
       end
 
       # @return [String, NilClass]
@@ -131,7 +133,7 @@ module Kontena
       def service_host_config
         host_config = {
           'RestartPolicy' => {
-            'Name' => 'always'
+            'Name' => self.restart || 'always'
           }
         }
         bind_volumes = self.build_bind_volumes
