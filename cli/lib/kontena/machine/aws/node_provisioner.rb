@@ -119,27 +119,33 @@ module Kontena
             vpc_id: vpc_id
           })
 
-          sg.authorize_ingress({
+          sg.authorize_ingress({ # SSH
             ip_protocol: 'tcp', from_port: 22, to_port: 22, cidr_ip: '0.0.0.0/0'
           })
-          sg.authorize_ingress({
+          sg.authorize_ingress({ # HTTP
             ip_protocol: 'tcp', from_port: 80, to_port: 80, cidr_ip: '0.0.0.0/0'
           })
-          sg.authorize_ingress({
+          sg.authorize_ingress({ # HTTPS
             ip_protocol: 'tcp', from_port: 443, to_port: 443, cidr_ip: '0.0.0.0/0'
           })
-          sg.authorize_ingress({
+          sg.authorize_ingress({ # OpenVPN
             ip_protocol: 'udp', from_port: 1194, to_port: 1194, cidr_ip: '0.0.0.0/0'
           })
-          sg.authorize_ingress({
-            ip_protocol: 'tcp', from_port: 6783, to_port: 6783,
-            source_security_group_name: sg.group_id,
-            source_security_group_owner_id: sg.owner_id
-          })
-          sg.authorize_ingress({
-            ip_protocol: 'udp', from_port: 6783, to_port: 6784,
-            source_security_group_name: sg.group_id,
-            source_security_group_owner_id: sg.owner_id
+          sg.authorize_ingress({ # Overlay / Weave network
+            ip_permissions: [
+              {
+                from_port: 6783, to_port: 6783, ip_protocol: 'tcp',
+                user_id_group_pairs: [
+                  { group_id: sg.group_id, vpc_id: vpc_id }
+                ]
+              },
+              {
+                from_port: 6783, to_port: 6784, ip_protocol: 'udp',
+                user_id_group_pairs: [
+                  { group_id: sg.group_id, vpc_id: vpc_id }
+                ]
+              }
+            ]
           })
 
           sg
