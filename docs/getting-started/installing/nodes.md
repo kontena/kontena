@@ -27,14 +27,14 @@ Usage:
     kontena node aws create [OPTIONS]
 
 Options:
-    --name NAME                   Node name
+    --grid GRID                   Specify grid to use
     --access-key ACCESS_KEY       AWS access key ID
     --secret-key SECRET_KEY       AWS secret key
+    --key-pair KEY_PAIR           EC2 Key Pair
     --region REGION               EC2 Region (default: "eu-west-1")
     --zone ZONE                   EC2 Availability Zone (default: "a")
-    --vpc-id VPC ID               Virtual Private Cloud (VPC) ID
-    --subnet-id SUBNET ID         VPC option to specify subnet to launch instance into
-    --key-pair KEY_PAIR           EC2 Key Pair
+    --vpc-id VPC ID               Virtual Private Cloud (VPC) ID (default: default vpc)
+    --subnet-id SUBNET ID         VPC option to specify subnet to launch instance into (default: first subnet in vpc/az)
     --type SIZE                   Instance type (default: "t2.small")
     --storage STORAGE             Storage size (GiB) (default: "30")
     --version VERSION             Define installed Kontena version (default: "latest")
