@@ -29,6 +29,7 @@ Kontena has built-in role based user management. The first user that logs in to 
 * [Remove Users from Role](users#remove-users-from-role)
 * [Add User to Grid](users#add-users-to-role)
 * [Remove User from Grid](users#remove-user-from-grid)
+* [Remove User from Kontena Master](users#remove-user-from-kontena-master)
 
 ### Register a New Kontena Account
 
@@ -82,4 +83,10 @@ $ kontena grid remove-user <email>
 
 ```
 --grid GRID                   Specify grid to use
+```
+
+### Remove User from Kontena Master
+
+```
+$ kontena master users remove <email>
 ```
