@@ -52,18 +52,15 @@ describe '/v1/users' do
     end
 
     it 'creates new user' do
-
       data = {
-          email: 'jane@domain.com',
+        email: 'jane@domain.com',
       }
       expect{
         post '/v1/users', data.to_json, request_headers
         expect(response.status).to eq(201)
         expect(json_response['email']).not_to be_nil
       }.to change{User.count}.by(1)
-
     end
-
   end
 
   describe 'POST /:username/roles' do
@@ -97,6 +94,37 @@ describe '/v1/users' do
       expect(response.status).to eq(200)
       jane.reload
       expect(jane.roles.include?(grid_admin)).to be_falsey
+    end
+  end
+
+  describe 'DELETE /:username' do
+    before(:each) do
+      jane
+      john
+    end
+
+    it 'allows to remove user if master admin' do
+      john.roles << master_admin
+      expect {
+        delete "/v1/users/#{jane.email}", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ User.count }.by(-1)
+    end
+
+    it 'does not allow to remove user if not master admin' do
+      delete "/v1/users/#{jane.email}", nil, request_headers
+      expect(response.status).to eq(400)
+    end
+
+    it 'does not allow to remove self' do
+      john.roles << master_admin
+      delete "/v1/users/#{john.email}", nil, request_headers
+      expect(response.status).to eq(400)
+    end
+
+    it 'required authenticated user' do
+      delete "/v1/users/#{jane.email}", nil, {}
+      expect(response.status).to eq(403)
     end
   end
 end
