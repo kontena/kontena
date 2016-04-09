@@ -133,7 +133,7 @@ module Kontena
       def service_host_config
         host_config = {
           'RestartPolicy' => {
-            'Name' => self.restart || 'always'
+            'Name' => self.restart
           }
         }
         bind_volumes = self.build_bind_volumes

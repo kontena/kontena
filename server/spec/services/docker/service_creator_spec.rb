@@ -120,7 +120,7 @@ describe Docker::ServiceCreator do
     end
 
     it 'includes restart' do
-      expect(service_spec).to include(:restart => nil)
+      expect(service_spec).to include(:restart => 'always')
     end
 
     describe '[:env]' do

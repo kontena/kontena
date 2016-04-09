@@ -268,10 +268,6 @@ describe Kontena::Models::ServicePod do
       data['restart'] = 'no'
       expect(host_config['RestartPolicy']['Name']).to eq('no')
     end
-
-    it 'sets restart to always if not set' do
-      expect(host_config['RestartPolicy']['Name']).to eq('always')
-    end
   end
 
   describe '#build_exposed_ports' do

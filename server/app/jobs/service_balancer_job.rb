@@ -32,6 +32,7 @@ class ServiceBalancerJob
   # @return [Boolean]
   def should_balance_service?(service)
     if service.running? && service.stateless?
+      return false if %w(no unless-stopped).include?(service.restart)
       return true if !service.all_instances_exist?
       return false if service.deployed_at.nil?
       return true if service.updated_at > service.deployed_at

@@ -288,9 +288,9 @@ describe GridServices::Create do
           image: 'redis:2.8',
           name: 'redis',
           stateful: false,
-          restart: 'always'
+          restart: 'on-failure:10'
       ).run
-      expect(outcome.result.restart).to eq('always')
+      expect(outcome.result.restart).to eq('on-failure:10')
     end
 
     it 'returns error if invalid restart' do
