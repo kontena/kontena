@@ -1,9 +1,6 @@
 V1::UsersApi.route('user_roles') do |r|
   r.is do
     r.post do
-      validate_access_token
-      require_current_user
-
       params = parse_json_body
 
       role = Role.find_by(name: params['role'])
@@ -25,9 +22,6 @@ V1::UsersApi.route('user_roles') do |r|
 
   r.on ':role' do |role|
     r.delete do
-      validate_access_token
-      require_current_user
-
       role = Role.find_by(name: role)
       options = {
         current_user: current_user,

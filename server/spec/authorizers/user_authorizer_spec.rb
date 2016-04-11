@@ -34,6 +34,10 @@ describe UserAuthorizer do
       it 'lets read users' do
         expect(UserAuthorizer).to be_readable_by(master_admin)
       end
+
+      it 'lets remove users' do
+        expect(UserAuthorizer).to be_deletable_by(master_admin)
+      end
     end
 
     context 'when user is not master admin' do
@@ -43,6 +47,10 @@ describe UserAuthorizer do
 
       it 'does not let read users' do
         expect(UserAuthorizer).not_to be_readable_by(grid_admin)
+      end
+
+      it 'does not let remove users' do
+        expect(UserAuthorizer).not_to be_deletable_by(grid_admin)
       end
     end
   end
@@ -56,5 +64,4 @@ describe UserAuthorizer do
       expect(user.authorizer).to be_assignable_by(grid_admin, {to: grid})
     end
   end
-
 end
