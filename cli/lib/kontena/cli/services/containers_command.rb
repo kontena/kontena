@@ -18,7 +18,7 @@ module Kontena::Cli::Services
         puts "  rev: #{container['deploy_rev']}"
         puts "  node: #{container['node']['name']}"
         puts "  dns: #{container['name']}.#{current_grid}.kontena.local"
-        puts "  ip: #{container['overlay_cidr'].split('/')[0]}"
+        puts "  ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
         puts "  public ip: #{container['node']['public_ip']}"
         if container['status'] == 'unknown'
           puts "  status: #{container['status'].colorize(:yellow)}"
