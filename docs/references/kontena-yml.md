@@ -266,6 +266,18 @@ hooks:
       oneshot: true
 ```
 
+#### restart
+The restart policy for the service and containers
+
+```
+restart: no | on-failure[:max-retries] | always | unless-stopped
+```
+
+For the container restart policies see: https://docs.docker.com/engine/reference/run/#restart-policies-restart
+
+At service level it means that only services with policies `always` or `unless-stopped` will be restarted and/or rescheduled by the master automatically.
+
+
 #### log_driver
 
 Specify the log driver for docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
