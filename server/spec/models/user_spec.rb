@@ -28,4 +28,22 @@ describe User do
       end
     end
   end
+
+  describe '#accessible_grids' do
+    context 'when user is master_admin' do
+      it 'returns all grids' do
+        Grid.create(name: 'test')
+        Grid.create(name: 'test2')
+        allow(subject).to receive(:master_admin?).and_return(true)
+        expect(subject.accessible_grids.count).to eq(2)
+      end
+    end
+    it 'returns user grids' do
+      user = User.create(email: 'john.doe@example.org')
+      user.grids << Grid.create(name: 'test')
+      user.grids << Grid.create(name: 'test2')
+      Grid.create(name: 'test3')
+      expect(user.reload.accessible_grids.count).to eq(2)
+    end
+  end
 end

@@ -25,6 +25,16 @@ class User
   end
 
   ##
+  # @return [Mongoid::Criteria]
+  def accessible_grids
+    if self.master_admin?
+      Grid.all
+    else
+      self.grids
+    end
+  end
+
+  ##
   # @param [String] role
   def in_role?(role)
     self.roles.where(name: role).exists?

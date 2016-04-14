@@ -22,10 +22,8 @@ module V1
       # @param [String] name
       # @return [Grid]
       def load_grid(name)
-        @grid = current_user.grids.find_by(name: name)
-        if !@grid
-          halt_request(404, {error: 'Not found'})
-        end
+        @grid = current_user.accessible_grids.find_by(name: name)
+        halt_request(404, {error: 'Not found'}) unless @grid
       end
 
       r.on ':name/services' do |name|
@@ -91,7 +89,7 @@ module V1
 
         # GET /v1/grids
         r.is do
-          @grids = current_user.grids
+          @grids = current_user.accessible_grids
           render('grids/index')
         end
 
