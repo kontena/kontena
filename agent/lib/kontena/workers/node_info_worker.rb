@@ -95,18 +95,11 @@ module Kontena::Workers
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
-      memory = Vmstat.memory
       event = {
           event: 'node:stats',
           data: {
             id: docker_info['ID'],
-            memory: {
-              wired: memory.wired_bytes,
-              active: memory.active_bytes,
-              inactive: memory.inactive_bytes,
-              free: memory.free_bytes,
-              total: memory.total_bytes
-            },
+            memory: calculate_memory,
             load: {
               :'1m' => load_avg.one_minute,
               :'5m' => load_avg.five_minutes,
@@ -147,6 +140,31 @@ module Kontena::Workers
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
+    end
+
+    # @return [Hash]
+    def calculate_memory
+      memory = {}
+      return memory unless File.exist?('/proc/meminfo')
+      File.open('/proc/meminfo').each do |line|
+        case line
+        when /^MemTotal:\s+(\d+) (.+)$/
+          memory[:total] = $1.to_i * 1024
+        when /^MemFree:\s+(\d+) (.+)$/
+          memory[:free] = $1.to_i * 1024
+        when /^Active:\s+(\d+) (.+)$/
+          memory[:active] = $1.to_i * 1024
+        when /^Inactive:\s+(\d+) (.+)$/
+          memory[:inactive] = $1.to_i * 1024
+        when /^Cached:\s+(\d+) (.+)$/
+          memory[:cached] = $1.to_i * 1024
+        when /^Buffers:\s+(\d+) (.+)$/
+          memory[:buffers] = $1.to_i * 1024
+        end
+      end
+      memory[:used] = memory[:total] - memory[:free]
+
+      memory
     end
 
     # @return [Hash]
