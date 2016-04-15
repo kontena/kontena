@@ -3,6 +3,7 @@ module Grids
 
     required do
       model :grid
+      model :user
     end
 
     optional do
@@ -16,6 +17,10 @@ module Grids
           end
         end
       end
+    end
+
+    def validate
+      add_error(:user, :invalid, 'Operation not allowed') unless user.can_update?(grid)
     end
 
     def execute

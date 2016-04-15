@@ -43,6 +43,10 @@ describe '/v1/grids' do
   end
 
   describe 'POST' do
+    before(:each) do
+      allow(GridAuthorizer).to receive(:creatable_by?).with(david).and_return(true)
+    end
+
     it 'creates a new grid' do
       expect {
         post '/v1/grids', {}.to_json, request_headers
@@ -275,6 +279,10 @@ describe '/v1/grids' do
 
 
   describe 'PUT /:name' do
+    before(:each) do
+      allow_any_instance_of(GridAuthorizer).to receive(:updatable_by?).with(david).and_return(true)
+    end
+
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       grid = david.grids.first
@@ -327,6 +335,10 @@ describe '/v1/grids' do
   end
 
   describe 'DELETE /:name' do
+    before(:each) do
+      allow_any_instance_of(GridAuthorizer).to receive(:deletable_by?).with(david).and_return(true)
+    end
+
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       grid = david.grids.first

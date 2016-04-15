@@ -123,6 +123,7 @@ module V1
           r.is do
             data = parse_json_body
             data[:grid] = @grid
+            data[:user] = current_user
             outcome = Grids::Update.run(data)
             if outcome.success?
               @grid = outcome.result
@@ -143,7 +144,7 @@ module V1
 
           # DELETE /v1/grids/:name
           r.is do
-            outcome = Grids::Delete.run({grid: @grid})
+            outcome = Grids::Delete.run({user: current_user, grid: @grid})
             if outcome.success?
               audit_event(r, @grid, @grid, 'delete')
               response.status = 200

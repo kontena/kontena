@@ -11,6 +11,10 @@ module Grids
       integer :initial_size, default: 1, min: 1, max: 7
     end
 
+    def validate
+      add_error(:user, :invalid, 'Operation not allowed') unless user.can_create?(Grid)
+    end
+
     def execute
       self.name = generate_name if self.name.blank?
       grid = Grid.new(
