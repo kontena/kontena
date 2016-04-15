@@ -110,6 +110,28 @@ describe '/v1/grids' do
 
   end
 
+  describe 'GET /' do
+    context 'when user is master_admin' do
+      it 'returns all grids' do
+        david # create
+        david.roles << Role.create(name: 'master_admin', description: 'Master admin')
+        emily # create
+
+        get "/v1/grids", nil, request_headers        
+        expect(response.status).to eq(200)
+        expect(json_response['grids'].size).to eq(2)
+      end
+    end
+
+    it 'returns users grids' do
+      david # create
+      emily # create
+      get "/v1/grids", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['grids'].size).to eq(1)
+    end
+  end
+
   describe 'GET /:name' do
     it 'returns grid' do
       grid = david.grids.first
