@@ -2,6 +2,7 @@ module Kontena::Cli::Nodes
   class ShowCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::BytesHelper
 
     parameter "NODE_ID", "Node id"
 
@@ -28,22 +29,22 @@ module Kontena::Cli::Nodes
       end
       puts "  stats:"
       puts "    cpus: #{node['cpus']}"
-      puts "    load: #{node['resource_usage']['load']['1m'].round(2)}, #{node['resource_usage']['load']['5m'].round(2)}, #{node['resource_usage']['load']['15m'].round(2)}" if node['resource_usage']['load']
-      puts "    memory: #{to_mb(node['resource_usage']['memory']['active'])}M / #{to_mb(node['resource_usage']['memory']['total'])}M" if node['resource_usage']['memory']
+      loads = node.dig('resource_usage', 'load')
+      if loads
+        puts "    load: #{loads['1m'].round(2)} #{loads['5m'].round(2)} #{loads['15m'].round(2)}"
+      end
+      mem = node.dig('resource_usage', 'memory')
+      if mem
+        mem_used = mem['used'] - (mem['cached'] + mem['buffers'])
+        puts "    memory: #{to_gigabytes(mem_used, 2)} of #{to_gigabytes(mem['total'], 2)} GB"
+      end
       if node['resource_usage']['filesystem']
         puts "    filesystem:"
         node['resource_usage']['filesystem'].each do |filesystem|
-          puts "      - #{filesystem['name']}: #{to_gb(filesystem['used'])}G / #{to_gb(filesystem['total'])}G"
+          puts "      - #{filesystem['name']}: #{to_gigabytes(filesystem['used'], 2)} of #{to_gigabytes(filesystem['total'], 2)} GB"
         end
       end
     end
 
-    def to_mb(bytes)
-      (bytes.to_f / 1024 / 1024).round
-    end
-
-    def to_gb(bytes)
-      (bytes.to_f / 1024 / 1024 / 1024).round(2)
-    end
   end
 end
