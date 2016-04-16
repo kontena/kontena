@@ -12,7 +12,7 @@ module Kontena::Cli::Nodes
 
       if all?
         grids = client(token).get("grids")
-        puts "%-70s %-10s %-40s" % [ 'Name', 'Status', 'Labels']
+        puts "%-70s %-10s %-40s" % [ 'Name', 'Public IP', 'Status', 'Labels']
 
         grids['grids'].each do |grid|
           nodes = client(token).get("grids/#{grid['name']}/nodes")
@@ -31,15 +31,16 @@ module Kontena::Cli::Nodes
         end
       else
         nodes = client(token).get("grids/#{current_grid}/nodes")
-        puts "%-70s %-10s %-40s" % ['Name', 'Status', 'Labels']
+        puts "%-70s %-20s %-10s %-40s" % ['Name', 'Public IP', 'Status', 'Labels']
         nodes['nodes'].each do |node|
           if node['connected']
             status = 'online'
           else
             status = 'offline'
           end
-          puts "%-70.70s %-10s %-40s" % [
+          puts "%-70.70s %-20s %-10s %-40s" % [
             node['name'],
+            node['public_ip'],
             status,
             (node['labels'] || ['-']).join(",")
           ]
