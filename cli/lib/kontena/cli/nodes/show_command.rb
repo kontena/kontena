@@ -22,12 +22,28 @@ module Kontena::Cli::Nodes
       puts "  os: #{node['os']}"
       puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"
-      puts "  cpus: #{node['cpus']}"
-      puts "  memory: #{node['mem_total'] / 1024 / 1024}M"
       puts "  labels:"
       if node['labels']
         node['labels'].each{|l| puts "    - #{l}"}
       end
+      puts "  stats:"
+      puts "    cpus: #{node['cpus']}"
+      puts "    load: #{node['resource_usage']['load']['1m'].round(2)}, #{node['resource_usage']['load']['5m'].round(2)}, #{node['resource_usage']['load']['15m'].round(2)}" if node['resource_usage']['load']
+      puts "    memory: #{to_mb(node['resource_usage']['memory']['active'])}M / #{to_mb(node['resource_usage']['memory']['total'])}M" if node['resource_usage']['memory']
+      if node['resource_usage']['filesystem']
+        puts "    filesystem:"
+        node['resource_usage']['filesystem'].each do |filesystem|
+          puts "      - #{filesystem['name']}: #{to_gb(filesystem['used'])}G / #{to_gb(filesystem['total'])}G"
+        end
+      end
+    end
+
+    def to_mb(bytes)
+      (bytes.to_f / 1024 / 1024).round
+    end
+
+    def to_gb(bytes)
+      (bytes.to_f / 1024 / 1024 / 1024).round(2)
     end
   end
 end
