@@ -114,8 +114,8 @@ module GridServices
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
-      @re ||= Regexp.union(/^no$/, /^on-failure/, /^always$/, /^unless-stopped$/)
-      if self.restart && self.restart.match(@re).nil?
+      re = Regexp.union(/^no$/, /^on-failure/, /^always$/, /^unless-stopped$/)
+      if self.restart && self.restart.match(re).nil?
         add_error(:restart, :invalid_restart, 'Invalid restart option provided')
       end 
     end
