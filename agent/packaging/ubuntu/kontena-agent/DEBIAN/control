@@ -2,7 +2,7 @@ Package: kontena-agent
 Version: VERSION
 Maintainer: jari@kontena.io
 Architecture: all
-Depends: docker-engine (>= 1.8.3), docker-engine (<< 1.10.0)
+Depends: docker-engine (>> 1.8), docker-engine (<< 1.11)
 Provides: kontena-weave, kontena-etcd
 Conflicts: kontena-weave, kontena-etcd
 Replaces: kontena-weave, kontena-etcd
