@@ -9,7 +9,7 @@ module Kontena::Cli::Grids
       require_api_url
 
       if grids['grids'].size == 0
-        puts "You don't have any grids yet. Create first one with 'kontena grids create' command".colorize(:yellow)
+        puts "You don't have any grids yet. Create first one with 'kontena grid create' command".colorize(:yellow)
       end
 
       puts '%-30.30s %-8s %-12s %-10s' % ['Name', 'Nodes', 'Services', 'Users']
