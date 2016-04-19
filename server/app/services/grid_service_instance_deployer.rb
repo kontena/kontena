@@ -108,7 +108,12 @@ class GridServiceInstanceDeployer
   # @param [String] port
   def port_responding?(container, port)
     rpc_client = RpcClient.new(container.host_node.node_id, 2)
-    response = rpc_client.request('/agent/port_open?', container.network_settings[:ip_address], port)
+    if container.overlay_cidr
+      ip = container.overlay_cidr.ip
+    else
+      ip = '127.0.0.1'
+    end
+    response = rpc_client.request('/agent/port_open?', ip, port)
     response['open']
   rescue RpcClient::Error
     return false
