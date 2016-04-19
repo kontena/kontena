@@ -8,7 +8,7 @@ module Kontena::Cli::Vault
       token = require_token
       result = client(token).get("grids/#{current_grid}/secrets")
 
-      column_width_paddings = '%-54.53s %-25.25s'
+      column_width_paddings = '%-54.54s %-25.25s'
       puts column_width_paddings % ['NAME', 'CREATED AT']
       result['secrets'].each do |secret|
         puts column_width_paddings % [secret['name'], secret['created_at']]
