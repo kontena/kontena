@@ -118,7 +118,7 @@ module GridServices
       attributes[:cap_add] = self.cap_add if self.cap_add
       attributes[:cap_drop] = self.cap_drop if self.cap_drop
       attributes[:cmd] = self.cmd if self.cmd
-      attributes[:env] = self.env if self.env
+      attributes[:env] = self.build_grid_service_envs(self.env) if self.env
       attributes[:net] = self.net if self.net
       attributes[:ports] = self.ports if self.ports
       attributes[:affinity] = self.affinity if self.affinity
@@ -143,6 +143,20 @@ module GridServices
       grid_service.save
 
       grid_service
+    end
+
+    # @param [Array<String>] envs
+    # @return [Array<String>]
+    def build_grid_service_envs(env)
+      new_env = GridService.new(env: env).env_hash
+      current_env = self.grid_service.env_hash
+      new_env.each do |k, v|
+        if v.empty? && current_env[k]
+          new_env[k] = current_env[k]
+        end
+      end
+
+      new_env.map{|k, v| "#{k}=#{v}"}
     end
 
     def strategies
