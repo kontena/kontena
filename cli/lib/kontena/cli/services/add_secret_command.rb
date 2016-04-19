@@ -3,10 +3,11 @@ require_relative 'services_helper'
 module Kontena::Cli::Services
   class AddSecretCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
     include ServicesHelper
 
     parameter "NAME", "Service name"
-    parameter "SECRET", "Secret to be added from Vault (syntax: secret:name:type)"
+    parameter "SECRET", "Secret to be added from Vault (format: secret:name:type)"
 
     def execute
       require_api_url

@@ -3,6 +3,7 @@ require 'ipaddr'
 class Grid
   include Mongoid::Document
   include Mongoid::Timestamps
+  include Authority::Abilities
 
   OVERLAY_BRIDGE_NETWORK_SIZE = 24
 

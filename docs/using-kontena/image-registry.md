@@ -18,15 +18,23 @@ You should use the Kontena's built-in Image Registry if you want to:
 
 ## Using Image Registry
 
+* [Create Image Registry Service](image-registry#create-image-registry-service)
+  * [Local Storage Backend](image-registry#local-storage-backend)
+  * [Amazon S3 Storage Backend](image-registry#amazon-s3-storage-backend)
+  * [Azure Storage Backend](image-registry#azure-storage-backend)
+* [Accessing Image Registry](image-registry#accessing-image-registry)
+* [TLS/SSL](image-registry#tls-ssl)
+* [Authentication](image-registry#authentication)
+
 ### Create Image Registry Service
 
-#### Local volume storage backend:
+#### Local Storage Backend
 
 ```
 $ kontena registry create
 ```
 
-#### Amazon S3 storage backend:
+#### Amazon S3 Storage Backend
 
 Write Amazon S3 access keys to Kontena Vault:
 
@@ -41,7 +49,7 @@ Create registry service:
 $ kontena registry create --s3-bucket=<bucket_name> --s3-region=<optional_aws_region>
 ```
 
-#### Azure storage backend:
+#### Azure storage backend
 
 Write Azure account key to Kontena Vault:
 
@@ -91,7 +99,7 @@ $ kontena vault write REGISTRY_HTTP_TLS_CERTIFICATE "$(cat registry_ca.pem)"
 Redeploy Kontena Image Registry:
 
 ```
-$ kontena service deploy --force registry
+$ kontena service deploy --force-deploy registry
 ```
 
 Then you have to instruct your local docker daemon to trust that certificate. This is done by copying the `registry_ca.pem` file to `/etc/docker/certs.d/registry.<grid_name>.kontena.local/ca.crt`.
@@ -105,10 +113,16 @@ Kontena Image Registry supports basic authentication. Authentication can be enab
 $ kontena vault write REGISTRY_AUTH_PASSWORD <password>
 ```
 
+And then updating the service with auth secret to read it from vault:
+
+```
+$ kontena service update --secret REGISTRY_AUTH_PASSWORD:AUTH_PASSWORD:env registry
+```
+
 After the password has been set you should redeploy registry service:
 
 ```
-$ kontena service deploy --force registry
+$ kontena service deploy --force-deploy registry
 ```
 
 Login to registry using Docker client:

@@ -9,10 +9,13 @@ toc_order: 1
 
 Kontena CLI may be used to provision Kontena Master based on [CoreOS](https://coreos.com/using-coreos/), fully configured and ready for action! At the moment, you can provision Kontena Master to following platforms:
 
-* Amazon AWS
-* Microsoft Azure
-* DigitalOcean
-* Vagrant (local environment)
+* [Amazon AWS](master#amazon-aws)
+* [Microsoft Azure](master#microsoft-azure)
+* [DigitalOcean](master#digitalocean)
+* [Vagrant (local environment)](master#vagrant)
+* [Manual Install](master#manual-install)
+  * [CoreOS](master#coreos)
+  * [Ubuntu](master#ubuntu-14-04)
 
 We are adding support for other platforms gradually based on your requests. If you'd like to see support for the platform you are using, please [post your request](https://github.com/kontena/kontena/issues) as an issue to our GitHub repository.
 
@@ -25,17 +28,18 @@ Usage:
 Options:
     --access-key ACCESS_KEY       AWS access key ID
     --secret-key SECRET_KEY       AWS secret key
+    --key-pair KEY_PAIR           EC2 key pair name
+    --ssl-cert SSL CERT           SSL certificate file (default: generate self-signed cert)
     --region REGION               EC2 Region (default: "eu-west-1")
     --zone ZONE                   EC2 Availability Zone (default: "a")
-    --vpc-id VPC ID               Virtual Private Cloud (VPC) ID
-    --subnet-id SUBNET ID         VPC option to specify subnet to launch instance into
-    --key-pair KEY_PAIR           EC2 Key Pair
+    --vpc-id VPC ID               Virtual Private Cloud (VPC) ID (default: default vpc)
+    --subnet-id SUBNET ID         VPC option to specify subnet to launch instance into (default: first subnet from vpc/az)
     --type SIZE                   Instance type (default: "t2.small")
     --storage STORAGE             Storage size (GiB) (default: "30")
-    --vault-secret VAULT_SECRET   Secret key for Vault
-    --vault-iv VAULT_IV           Initialization vector for Vault
+    --vault-secret VAULT_SECRET   Secret key for Vault (default: generate random secret)
+    --vault-iv VAULT_IV           Initialization vector for Vault (default: generate random iv)
     --version VERSION             Define installed Kontena version (default: "latest")
-    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url (optional)
 ```
 
 ### Microsoft Azure
@@ -60,7 +64,7 @@ Options:
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
 
-### Digital Ocean
+### DigitalOcean
 
 ```
 Usage:
@@ -93,6 +97,8 @@ Options:
 ```
 
 ## Manual Install
+
+Kontena Master can be installed manually to almost any linux distribution. Below you can find examples for CoreOS and Ubuntu.
 
 ### CoreOS
 

@@ -3,7 +3,7 @@ title: Kontena FAQ
 toc_order: 2
 ---
 
-# Kontena FAQ
+# Frequently Asked Questions
 
 ## How do I get started with Kontena?
 

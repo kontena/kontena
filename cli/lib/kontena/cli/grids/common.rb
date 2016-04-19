@@ -21,10 +21,8 @@ module Kontena::Cli::Grids
       puts "    load: #{(loads[:'1m'] || 0.0).round(2)} #{(loads[:'5m'] || 0.0).round(2)} #{(loads[:'15m'] || 0.0).round(2)}"
 
       mem_total = nodes.map{|n| n['mem_total'].to_i}.inject(:+)
-      mem_wired = nodes.map{|n|
-        n.dig('resource_usage', 'memory', 'active').to_f
-      }.inject(:+)
-      puts "    memory: #{to_gigabytes(mem_wired)} of #{to_gigabytes(mem_total)} GB"
+      mem_used = calculate_mem_used(nodes)
+      puts "    memory: #{to_gigabytes(mem_used)} of #{to_gigabytes(mem_total)} GB"
 
       total_fs = calculate_filesystem_stats(nodes)
       puts "    filesystem: #{to_gigabytes(total_fs['used'])} of #{to_gigabytes(total_fs['total'])} GB"
@@ -53,6 +51,19 @@ module Kontena::Cli::Grids
       loads[:'5m'] = nodes.map{|n| n.dig('resource_usage', 'load', '5m').to_f }.inject(:+) / node_count
       loads[:'15m'] = nodes.map{|n| n.dig('resource_usage', 'load', '15m').to_f }.inject(:+) / node_count
       loads
+    end
+
+    # @param [Array<Hash>] nodes
+    # @return [Float]
+    def calculate_mem_used(nodes)
+      nodes.map{|n|
+        mem = n.dig('resource_usage', 'memory')
+        if mem
+          mem['used'] - (mem['cached'] + mem['buffers'])
+        else
+          0.0
+        end
+      }.inject(:+)
     end
 
     # @param [Array<Hash>] nodes

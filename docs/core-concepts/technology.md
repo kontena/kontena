@@ -5,7 +5,7 @@ toc_order: 2
 
 # Technology
 
-## Docker
+## Docker Engine
 
 > The Linux container engine
 
@@ -34,7 +34,6 @@ Some of the rubygems that we rely on:
 * mongoid
 * mutations
 * docker-api
-* rubydns
 * etcd
 * celluloid
 * rspec

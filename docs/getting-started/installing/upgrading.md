@@ -5,7 +5,18 @@ toc_order: 6
 
 # Upgrading Kontena from Previous Versions
 
-### Upgrading from 0.10 to 0.11 (latest)
+Upgrading Kontena is easy. Usually it's enough to just update Kontena Master
+and nodes will follow automatically (if upgrade is required). Cli updates
+can be installed via rubygems.
+
+## Versions
+
+* [0.11 to 0.12 (latest)](upgrading#upgrading-from-0-11-to-0-12-latest-)
+* [0.10 to 0.11](upgrading#upgrading-from-0-10-to-0-11)
+* [0.9 to 0.10](upgrading#upgrading-from-0-9-to-0-10)
+* [0.8 to 0.9](upgrading#upgrading-from-0-8-to-9)
+
+### Upgrading from 0.11 to 0.12 (latest)
 
 ** Official Installation Method**
 
@@ -14,6 +25,32 @@ toc_order: 6
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
+```
+
+- update cli:
+
+```
+$ gem install kontena-cli:0.12
+```
+
+** Custom Installs**
+- update master, agent and cli to 0.12
+
+### Upgrading from 0.10 to 0.11
+
+** Official Installation Method**
+
+- restart master:
+
+```
+$ sudo systemctl restart kontena-server-api
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+- update cli:
+
+```
+$ gem install kontena-cli:0.12
 ```
 
 - to enable Kontena Vault, set `VAULT_KEY` and `VAULT_IV` env variables to master:

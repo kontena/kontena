@@ -22,10 +22,8 @@ module V1
       # @param [String] name
       # @return [Grid]
       def load_grid(name)
-        @grid = current_user.grids.find_by(name: name)
-        if !@grid
-          halt_request(404, {error: 'Not found'})
-        end
+        @grid = current_user.accessible_grids.find_by(name: name)
+        halt_request(404, {error: 'Not found'}) unless @grid
       end
 
       r.on ':name/services' do |name|
@@ -91,7 +89,7 @@ module V1
 
         # GET /v1/grids
         r.is do
-          @grids = current_user.grids
+          @grids = current_user.accessible_grids
           render('grids/index')
         end
 
@@ -123,6 +121,7 @@ module V1
           r.is do
             data = parse_json_body
             data[:grid] = @grid
+            data[:user] = current_user
             outcome = Grids::Update.run(data)
             if outcome.success?
               @grid = outcome.result
@@ -143,7 +142,7 @@ module V1
 
           # DELETE /v1/grids/:name
           r.is do
-            outcome = Grids::Delete.run({grid: @grid})
+            outcome = Grids::Delete.run({user: current_user, grid: @grid})
             if outcome.success?
               audit_event(r, @grid, @grid, 'delete')
               response.status = 200

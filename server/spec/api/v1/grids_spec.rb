@@ -43,6 +43,10 @@ describe '/v1/grids' do
   end
 
   describe 'POST' do
+    before(:each) do
+      allow(GridAuthorizer).to receive(:creatable_by?).with(david).and_return(true)
+    end
+
     it 'creates a new grid' do
       expect {
         post '/v1/grids', {}.to_json, request_headers
@@ -104,6 +108,28 @@ describe '/v1/grids' do
       end
     end
 
+  end
+
+  describe 'GET /' do
+    context 'when user is master_admin' do
+      it 'returns all grids' do
+        david # create
+        david.roles << Role.create(name: 'master_admin', description: 'Master admin')
+        emily # create
+
+        get "/v1/grids", nil, request_headers        
+        expect(response.status).to eq(200)
+        expect(json_response['grids'].size).to eq(2)
+      end
+    end
+
+    it 'returns users grids' do
+      david # create
+      emily # create
+      get "/v1/grids", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['grids'].size).to eq(1)
+    end
   end
 
   describe 'GET /:name' do
@@ -275,6 +301,10 @@ describe '/v1/grids' do
 
 
   describe 'PUT /:name' do
+    before(:each) do
+      allow_any_instance_of(GridAuthorizer).to receive(:updatable_by?).with(david).and_return(true)
+    end
+
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       grid = david.grids.first
@@ -327,6 +357,10 @@ describe '/v1/grids' do
   end
 
   describe 'DELETE /:name' do
+    before(:each) do
+      allow_any_instance_of(GridAuthorizer).to receive(:deletable_by?).with(david).and_return(true)
+    end
+
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       grid = david.grids.first

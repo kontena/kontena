@@ -5,26 +5,22 @@ toc_order: 5
 
 # Private Registries
 
-## Add external private registry
+It's possible to use private Docker image registries with Kontena by configuring
+registry credentials to Kontena Master.
+
+### Add Private Registry Configuration
 
 ```
-$ kontena external-registry add
-Username:
-Password:
-Email:
-URL [https://index.docker.io/v1/]:
+$ kontena external-registry add --username <user> --email <email> --password <password> <url>
 ```
 
-Just fill in your credentials and external registry address
-and you should be able to deploy private images from the added image registry.
-
-## List external private registries
+### List Private Registries
 
 ```
 $ kontena external-registry list
 ```
 
-## Remove external private registry
+### Remove Private Registry Configuration
 
 ```
 $ kontena external-registry delete <NAME>

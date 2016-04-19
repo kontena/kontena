@@ -16,6 +16,8 @@ Kontena app commands include:
 * `kontena app rm` - Remove Application
 * `kontena app ps` - List Application Services
 * `kontena app logs` - Display Application Logs
+* `kontena app monitor` - Monitor Application Service Instances
+* `kontena app show` - Display Application Service Details
 
 ## Initializing Application
 
@@ -169,7 +171,7 @@ $ kontena app deploy wordpress         # only deploy services named "wordpress" 
 
 ### Example `kontena.yml`
 
-Here's and example of typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md). 
+Here's an example of typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md).
 
 ```
 wordpress:
