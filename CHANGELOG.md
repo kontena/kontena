@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.12.1 (2016-04-19)
+
+- use overlay ip when checking port status on deploy
+- allow to use docker 1.10.x on ubuntu
+- allow master_admin role to see all grids
+- add missing `master users rm` command
+- switch aws provisioning commands to use official aws-sdk
+- fix authorize on grid actions
+- fix node memory calculation (take buffers & caches into account)
+- fix `vault list` command output width cropping
+- fix typo in `grid list` command when no grids exist
+- fix `service containers` exception on nil overlay_cidr
+
 ## 0.12.0 (2016-04-04)
 
 - improve user roles implementation
