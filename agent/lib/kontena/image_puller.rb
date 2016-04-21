@@ -6,22 +6,23 @@ module Kontena
     include Kontena::Logging
 
     # @param [String] image
+    # @param [String] deploy_rev
     # @param [Hash, NilClass] creds
-    def ensure_image(image, creds = nil)
+    def ensure_image(image, deploy_rev, creds = nil)
       self.class.mutex.synchronize do
-        unless fresh_pull?(image)
-          self.pull_image(image, creds)
+        unless fresh_pull?("#{image}:#{deploy_rev}")
+          self.pull_image(image, deploy_rev, creds)
         end
       end
     end
 
-    def pull_image(image, creds)
+    def pull_image(image, deploy_rev, creds)
       if creds.nil?
         info "pulling image: #{image}"
       else
         info "pulling image with credentials: #{image}"
       end
-      update_image_cache(image)
+      update_image_cache("#{image}:#{deploy_rev}")
       retries = 0
       begin
         Docker::Image.create({'fromImage' => image}, creds)

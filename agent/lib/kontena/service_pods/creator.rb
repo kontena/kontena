@@ -148,7 +148,7 @@ module Kontena
       # Make sure that image exists
       def ensure_image(name)
         image_puller = Kontena::ImagePuller.new
-        image_puller.ensure_image(name, image_credentials)
+        image_puller.ensure_image(name, service_pod.deploy_rev, image_credentials)
       end
 
       # @param [Docker::Container] service_container
