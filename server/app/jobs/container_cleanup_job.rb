@@ -23,7 +23,7 @@ class ContainerCleanupJob
   end
 
   def cleanup_reserved_overlay_cidrs
-    OverlayCidr.where(:reserved_at.ne => nil, :reserved_at.lt => 2.minutes.ago, :container_id => nil).each do |c|
+    OverlayCidr.where(:reserved_at.ne => nil, :reserved_at.lt => 20.minutes.ago, :container_id => nil).each do |c|
       c.set(:reserved_at => nil)
     end
   end
