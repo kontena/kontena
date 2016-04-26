@@ -40,9 +40,7 @@ module Kontena::Workers
         sleep 1 until weave_running?
         container = Docker::Container.get(event.id) rescue nil
         if container
-          unless container.info['Name'].include?('/weave')
-            self.weave_attach(container)
-          end
+          self.weave_attach(container)
         end
       elsif event.status == 'destroy'
         sleep 1 until weave_running?
