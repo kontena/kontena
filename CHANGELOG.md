@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.2 (2016-04-26)
+
+- fix too aggressive overlay cidr cleanup (#626)
+- fix image puller cache invalidation on new deploy using same image tag (#627)
+- do not ignore containers with name containing weave (#631)
+- return nil for current_grid if master settings not present in cli (#632)
+
 ## 0.12.1 (2016-04-19)
 
 - use overlay ip when checking port status on deploy
