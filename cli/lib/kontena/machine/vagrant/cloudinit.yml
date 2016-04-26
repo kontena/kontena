@@ -18,6 +18,8 @@ write_files:
     content: |
       fs.inotify.max_user_instances = 8192
 coreos:
+  update:
+      reboot-strategy: off
   units:
     - name: 00-eth.network
       runtime: true
