@@ -46,6 +46,10 @@ describe Kontena::Cli::Common do
       expect(subject.current_grid).to eq('foo_grid')
     end
 
+    it 'returns nil if settings are not present' do
+      allow(subject).to receive(:current_master).and_raise(ArgumentError)
+      expect(subject.current_grid).to be_nil
+    end
   end
 
   describe '#api_url' do

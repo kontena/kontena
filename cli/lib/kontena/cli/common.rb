@@ -100,6 +100,8 @@ module Kontena
         else
           ENV['KONTENA_GRID'] || current_master['grid']
         end
+      rescue ArgumentError => e
+        nil      
       end
 
       def current_master_index
