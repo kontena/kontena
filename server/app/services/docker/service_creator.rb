@@ -51,7 +51,8 @@ module Docker
         net: grid_service.net,
         log_driver: grid_service.log_driver,
         log_opts: grid_service.log_opts,
-        pid: grid_service.pid
+        pid: grid_service.pid,
+        restart: grid_service.restart
       }
       spec[:env] = build_env
       spec[:secrets] = build_secrets

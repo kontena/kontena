@@ -34,7 +34,8 @@ describe Kontena::Models::ServicePod do
       'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
-      'log_driver' => nil
+      'log_driver' => nil,
+      'restart' => nil
     }
   end
 
@@ -261,6 +262,11 @@ describe Kontena::Models::ServicePod do
     it 'sets PidMode if set' do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
+    end
+
+    it 'sets restart if set' do
+      data['restart'] = 'no'
+      expect(host_config['RestartPolicy']['Name']).to eq('no')
     end
   end
 

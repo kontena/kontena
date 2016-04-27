@@ -596,5 +596,17 @@ describe Kontena::Cli::Apps::DeployCommand do
         expect(result[:secrets]).to be_nil
       end
     end
+
+    context 'restart' do
+      it 'returns restart policy given' do
+        data = {
+          'image' => 'foo/bar:latest',
+          'restart' => 'always'
+        }
+        result = subject.send(:parse_data, data)
+        expect(result[:restart]).to eq('always')
+      end
+
+    end
   end
 end

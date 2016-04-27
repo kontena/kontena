@@ -33,6 +33,11 @@ module Kontena::Cli::Services
     option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
     option "--pid", "PID", "Pid namespace to use"
     option "--secret", "SECRET", "Import secret from Vault (format: <secret>:<name>:<env>)", multivalued: true
+    option "--restart", "RESTART", "Restart policy of the container" do |opt|
+      re = Regexp.union('^no$', '^on-failure', '^always$', '^unless-stopped$')
+      raise ArgumentError unless opt.match(re)
+      opt
+    end
 
     def execute
       require_api_url
@@ -76,6 +81,7 @@ module Kontena::Cli::Services
       data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
       data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
       data[:pid] = pid if pid
+      data[:restart] = restart if restart
       data
     end
   end

@@ -177,6 +177,7 @@ module Kontena::Cli::Apps
 
       data[:hooks] = options['hooks'] || {}
       data[:secrets] = options['secrets'] if options['secrets']
+      data[:restart] = options['restart'] if options['restart']
 
       data
     end
