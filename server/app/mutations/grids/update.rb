@@ -17,16 +17,31 @@ module Grids
           end
         end
       end
+      array :trusted_subnets do
+        string
+      end
     end
 
     def validate
       add_error(:user, :invalid, 'Operation not allowed') unless user.can_update?(grid)
+      if self.trusted_subnets
+        self.trusted_subnets.each do |subnet|
+          begin
+            IPAddr.new(subnet)
+          rescue IPAddr::InvalidAddressError
+            add_error(:trusted_subnets, :invalid, "Invalid trusted_subnet #{subnet}")
+          end
+        end
+      end
     end
 
     def execute
       attributes = {}
       if self.stats
         attributes[:stats] = self.stats
+      end
+      if self.trusted_subnets
+        attributes[:trusted_subnets] = self.trusted_subnets
       end
       grid.update_attributes(attributes)
       if grid.errors.size > 0

@@ -15,6 +15,7 @@ class Grid
   field :token, type: String
   field :initial_size, type: Integer, default: 1
   field :overlay_cidr, type: String, default: -> { Grid.default_overlay_cidr }
+  field :trusted_subnets, type: Array, default: []
   field :stats, type: Hash, default: {}
 
   has_many :host_nodes, dependent: :destroy

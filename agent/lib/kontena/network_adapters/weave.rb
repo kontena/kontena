@@ -163,11 +163,15 @@ module Kontena::NetworkAdapters
       weave = nil
       peer_ips = info['peer_ips'] || []
       until weave && weave.running? do
-        self.exec([
+        exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
           '--password', ENV['KONTENA_TOKEN']
-          ] + peer_ips
-        )
+        ]
+        if info['trusted_subnets']
+          exec_params += ['--trusted-subnets', info['trusted_subnets']]
+        end
+        exec_params += peer_ips
+        self.exec(exec_params)
         weave = Docker::Container.get('weave') rescue nil
         wait = Time.now.to_f + 10.0
         sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)

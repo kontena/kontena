@@ -117,7 +117,7 @@ describe '/v1/grids' do
         david.roles << Role.create(name: 'master_admin', description: 'Master admin')
         emily # create
 
-        get "/v1/grids", nil, request_headers        
+        get "/v1/grids", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['grids'].size).to eq(2)
       end
@@ -138,6 +138,7 @@ describe '/v1/grids' do
       get "/v1/grids/#{grid.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['id']).to eq(grid.to_path)
+      expect(json_response['trusted_subnets']).to eq([])
     end
 
     describe '/services' do
@@ -334,6 +335,20 @@ describe '/v1/grids' do
       statsd = grid.reload.stats['statsd']
       expect(statsd['server']).to eq(server)
       expect(statsd['port']).to eq(port)
+    end
+
+    it 'updates trusted_subnets' do
+      grid = david.grids.first
+      data = {
+        trusted_subnets: ['192.168.10.0/24']
+      }
+      put "/v1/grids/#{grid.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['trusted_subnets']).to eq(data[:trusted_subnets])
+
+      put "/v1/grids/#{grid.to_path}", {}, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['trusted_subnets']).to eq(data[:trusted_subnets])
     end
 
     it 'returns grid' do
