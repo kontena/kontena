@@ -167,8 +167,8 @@ module Kontena::NetworkAdapters
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
           '--password', ENV['KONTENA_TOKEN']
         ]
-        if info['trusted_subnets']
-          exec_params += ['--trusted-subnets', info['trusted_subnets']]
+        if info['grid']['trusted_subnets']
+          exec_params += ['--trusted-subnets', info['grid']['trusted_subnets'].join(',')]
         end
         exec_params += peer_ips
         self.exec(exec_params)
@@ -185,6 +185,9 @@ module Kontena::NetworkAdapters
         info "router started with peers #{peer_ips.join(', ')}"
       else
         info "router started without known peers"
+      end
+      if info['grid']['trusted_subnets']
+        info "using trusted subnets: #{info['grid']['trusted_subnets']}"
       end
 
       if info['node_number']
