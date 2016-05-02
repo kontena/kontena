@@ -2,6 +2,7 @@ module Kontena::Cli::Nodes
   class ShowCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::BytesHelper
 
     parameter "NODE_ID", "Node id"
 
@@ -22,12 +23,28 @@ module Kontena::Cli::Nodes
       puts "  os: #{node['os']}"
       puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"
-      puts "  cpus: #{node['cpus']}"
-      puts "  memory: #{node['mem_total'] / 1024 / 1024}M"
       puts "  labels:"
       if node['labels']
         node['labels'].each{|l| puts "    - #{l}"}
       end
+      puts "  stats:"
+      puts "    cpus: #{node['cpus']}"
+      loads = node.dig('resource_usage', 'load')
+      if loads
+        puts "    load: #{loads['1m'].round(2)} #{loads['5m'].round(2)} #{loads['15m'].round(2)}"
+      end
+      mem = node.dig('resource_usage', 'memory')
+      if mem
+        mem_used = mem['used'] - (mem['cached'] + mem['buffers'])
+        puts "    memory: #{to_gigabytes(mem_used, 2)} of #{to_gigabytes(mem['total'], 2)} GB"
+      end
+      if node['resource_usage']['filesystem']
+        puts "    filesystem:"
+        node['resource_usage']['filesystem'].each do |filesystem|
+          puts "      - #{filesystem['name']}: #{to_gigabytes(filesystem['used'], 2)} of #{to_gigabytes(filesystem['total'], 2)} GB"
+        end
+      end
     end
+
   end
 end
