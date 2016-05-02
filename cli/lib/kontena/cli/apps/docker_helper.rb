@@ -15,6 +15,10 @@ module Kontena::Cli::Apps
           dockerfile = service['dockerfile'] || 'Dockerfile'
           abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
           abort("'#{service['build']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build'], dockerfile)
+          if service['hooks'] && service['hooks']['pre_build']
+            puts "Running pre_build hook".colorize(:cyan)
+            run_pre_build_hook(service['hooks']['pre_build'])
+          end
           puts "Building image #{service['image'].colorize(:cyan)}"
           build_docker_image(service['image'], service['build'], dockerfile, no_cache)
           puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
@@ -64,6 +68,14 @@ module Kontena::Cli::Apps
     def dockerfile_exist?(path, dockerfile)
       file = File.join(File.expand_path(path), dockerfile)
       File.exist?(file)
+    end
+
+    # @param [Hash] hook
+    def run_pre_build_hook(hook)
+      hook.each do |h|
+        ret = system(h['cmd'])
+        abort("Failed to run pre_build hook: #{h['name']}!".colorize(:red)) unless ret
+      end
     end
   end
 end
