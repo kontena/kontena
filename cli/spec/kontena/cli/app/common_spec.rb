@@ -78,26 +78,74 @@ describe Kontena::Cli::Apps::Common do
 
   describe '#extend_env_vars' do
     it 'inherites env vars from upper level' do
-      from = {'environment' => ['FOO=bar']}
-      to = {}
+      from = ['FOO=bar']
+      to = nil
       env_vars = subject.extend_env_vars(from, to)
       expect(env_vars).to eq(['FOO=bar'])
     end
 
     it 'overrides values' do
-      from = {'environment' => ['FOO=bar']}
-      to = {'environment' => ['FOO=baz']}
+      from = ['FOO=bar']
+      to = ['FOO=baz']
       env_vars = subject.extend_env_vars(from, to)
       expect(env_vars).to eq(['FOO=baz'])
     end
 
     it 'combines variables' do
-      from = {'environment' => ['FOO=bar']}
-      to = {'environment' => ['BAR=baz']}
+      from = ['FOO=bar']
+      to = ['BAR=baz']
       env_vars = subject.extend_env_vars(from, to)
       expect(env_vars).to eq(['BAR=baz', 'FOO=bar'])
     end
+  end
 
+  describe '#extend_secrets' do
+    it 'inherites secrets from upper level' do
+      secret = {
+        'secret' => 'CUSTOMER_DB_PASSWORD',
+        'name' => 'MYSQL_PASSWORD',
+        'type' => 'env'
+      }
+      from = [secret]
+      to = nil
+      secrets = subject.extend_secrets(from, to)
+      expect(secrets).to eq([secret])
+    end
 
+    it 'overrides secrets' do
+      from_secret = {
+        'secret' => 'CUSTOMER_DB_PASSWORD',
+        'name' => 'MYSQL_PASSWORD',
+        'type' => 'env'
+      }
+
+      to_secret = {
+        'secret' => 'CUSTOMER_DB_PASSWORD',
+        'name' => 'MYSQL_ROOT_PASSWORD',
+        'type' => 'env'
+      }
+      from = [from_secret]
+      to = [to_secret]
+      secrets = subject.extend_secrets(from, to)
+      expect(secrets).to eq([to_secret])
+    end
+
+    it 'combines secrets' do
+      from_secret = {
+        'secret' => 'CUSTOMER_DB_PASSWORD',
+        'name' => 'MYSQL_PASSWORD',
+        'type' => 'env'
+      }
+
+      to_secret = {
+        'secret' => 'CUSTOMER_API_TOKEN',
+        'name' => 'API_TOKEN',
+        'type' => 'env'
+      }
+      from = [from_secret]
+      to = [to_secret]
+      secrets = subject.extend_secrets(from, to)
+      expect(secrets).to eq([to_secret, from_secret])
+    end
   end
 end
