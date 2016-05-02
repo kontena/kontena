@@ -18,6 +18,7 @@ class GridServiceScheduler
     @filters = [
         Scheduler::Filter::Affinity.new,
         Scheduler::Filter::Port.new,
+        Scheduler::Filter::Memory.new,
         Scheduler::Filter::Dependency.new
     ]
     @mutex = Mutex.new
