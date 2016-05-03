@@ -1,5 +1,5 @@
-module Kontena::Cli::Nodes
-  class RemoveLabelCommand < Clamp::Command
+module Kontena::Cli::Nodes::Labels
+  class AddCommand < Clamp::Command
     include Kontena::Cli::Common
 
     parameter "NODE_ID", "Node id"
@@ -11,12 +11,8 @@ module Kontena::Cli::Nodes
       token = require_token
 
       node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
-      unless node['labels'].include?(label)
-        abort("Node #{node['name']} does not have label #{label}")
-      end
-      node['labels'].delete(label)
       data = {}
-      data[:labels] = node['labels']
+      data[:labels] = node['labels'].to_a | [label]
       client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
     end
   end

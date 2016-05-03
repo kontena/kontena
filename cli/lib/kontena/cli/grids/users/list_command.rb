@@ -1,9 +1,9 @@
-require_relative 'common'
+require_relative '../common'
 
-module Kontena::Cli::Grids
-  class ListUsersCommand < Clamp::Command
+module Kontena::Cli::Grids::Users
+  class ListCommand < Clamp::Command
     include Kontena::Cli::Common
-    include Common
+    include Kontena::Cli::Grids::Common
 
     def execute
       require_api_url

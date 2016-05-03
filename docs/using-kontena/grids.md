@@ -84,13 +84,13 @@ $ kontena grid cloud-config
 #### List Current Grid Users
 
 ```
-$ kontena grid list-users
+$ kontena grid user list
 ```
 
 #### Add User to the Current Grid
 
 ```
-$ kontena grid add-user not@val.id
+$ kontena grid user add not@val.id
 ```
 
 Adds user with email `not@val.id` to the current grid. Note: user has to be invited to master first.
@@ -98,7 +98,7 @@ Adds user with email `not@val.id` to the current grid. Note: user has to be invi
 #### Remove a User from the Current Grid
 
 ```
-$ kontena grid remove-user not@val.id
+$ kontena grid user remove not@val.id
 ```
 
 Removes a user with an email `not@val.id` from the current grid.

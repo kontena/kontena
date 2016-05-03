@@ -1,7 +1,8 @@
-require_relative "../../../spec_helper"
-require "kontena/cli/services/remove_secret_command"
+require_relative "../../../../spec_helper"
+require "kontena/cli/grid_options"
+require "kontena/cli/services/secrets/unlink_command"
 
-describe Kontena::Cli::Services::RemoveSecretCommand do
+describe Kontena::Cli::Services::Secrets::UnlinkCommand do
 
   include ClientHelpers
 

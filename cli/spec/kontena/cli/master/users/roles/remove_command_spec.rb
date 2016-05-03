@@ -1,8 +1,8 @@
-require_relative "../../../../spec_helper"
+require_relative "../../../../../spec_helper"
 require 'kontena/cli/master/users_command'
-require 'kontena/cli/master/users/remove_role_command'
+require 'kontena/cli/master/users/roles/remove_command'
 
-describe Kontena::Cli::Master::Users::RemoveRoleCommand do
+describe Kontena::Cli::Master::Users::Roles::RemoveCommand do
 
   let(:subject) do
     described_class.new(File.basename($0))

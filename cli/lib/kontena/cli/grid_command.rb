@@ -8,9 +8,7 @@ require_relative 'grids/remove_command'
 require_relative 'grids/current_command'
 require_relative 'grids/env_command'
 require_relative 'grids/audit_log_command'
-require_relative 'grids/list_users_command'
-require_relative 'grids/add_user_command'
-require_relative 'grids/remove_user_command'
+require_relative 'grids/user_command'
 require_relative 'grids/cloud_config_command'
 require_relative 'grids/trusted_subnet_command'
 
@@ -26,9 +24,7 @@ class Kontena::Cli::GridCommand < Clamp::Command
   subcommand "current", "Show current grid details", Kontena::Cli::Grids::CurrentCommand
   subcommand "env", "Show the current grid environment details", Kontena::Cli::Grids::EnvCommand
   subcommand "audit-log", "Show audit log of the current grid", Kontena::Cli::Grids::AuditLogCommand
-  subcommand "list-users", "List current grid users", Kontena::Cli::Grids::ListUsersCommand
-  subcommand "add-user", "Add user to the current grid", Kontena::Cli::Grids::AddUserCommand
-  subcommand "remove-user", "Remove user from the current grid", Kontena::Cli::Grids::RemoveUserCommand
+  subcommand "user", "User specific commands", Kontena::Cli::Grids::UserCommand
   subcommand "cloud-config", "Generate cloud-config", Kontena::Cli::Grids::CloudConfigCommand
   subcommand "trusted-subnet", "Trusted subnet related commands", Kontena::Cli::Grids::TrustedSubnetCommand
 

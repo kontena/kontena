@@ -1,8 +1,8 @@
-require_relative "../../../../spec_helper"
+require_relative "../../../../../spec_helper"
 require 'kontena/cli/master/users_command'
-require 'kontena/cli/master/users/add_role_command'
+require 'kontena/cli/master/users/roles/add_command'
 
-describe Kontena::Cli::Master::Users::AddRoleCommand do
+describe Kontena::Cli::Master::Users::Roles::AddCommand do
 
   let(:subject) do
     described_class.new(File.basename($0))

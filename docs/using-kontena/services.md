@@ -251,7 +251,7 @@ $ kontena service monitor <name>
 ### Show Service Environment Variables
 
 ```
-$ kontena service envs <name>
+$ kontena service env list <name>
 ```
 
 **Options:**
@@ -263,7 +263,7 @@ $ kontena service envs <name>
 ### Add Environment Variable to Service
 
 ```
-$ kontena service add-env <name> <env>
+$ kontena service env add <name> <env>
 ```
 
 **Options:**
@@ -275,7 +275,7 @@ $ kontena service add-env <name> <env>
 ### Remove Environment Variable from Service
 
 ```
-$ kontena service remove-env <name> <env>
+$ kontena service env remove <name> <env>
 ```
 
 **Options:**
@@ -284,10 +284,10 @@ $ kontena service remove-env <name> <env>
 --grid GRID                   Specify grid to use
 ```
 
-### Add Secret to Service
+### Link Secret to Service
 
 ```
-$ kontena service add-secret <name> <secret>
+$ kontena service secret link <name> <secret>
 ```
 
 **Options:**
@@ -296,10 +296,10 @@ $ kontena service add-secret <name> <secret>
 --grid GRID                   Specify grid to use
 ```
 
-### Remove Secret from Service
+### Unlink Secret from Service
 
 ```
-$ kontena service remove-secret <name> <secret>
+$ kontena service secret unlink <name> <secret>
 ```
 
 **Options:**

@@ -1,10 +1,10 @@
-require_relative 'common'
+require_relative '../common'
 
-module Kontena::Cli::Grids
-  class AddUserCommand < Clamp::Command
+module Kontena::Cli::Grids::Users
+  class AddCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include Common
+    include Kontena::Cli::Grids::Common
 
     parameter "EMAIL", "Email address"
 
