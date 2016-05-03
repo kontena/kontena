@@ -24,13 +24,6 @@ write_files:
       nameserver 172.17.43.1
       nameserver 8.8.8.8
       nameserver 8.8.4.4
-  - path: /opt/bin/floating_ip.sh
-    permissions: 0755
-    owner: root
-    content: |
-      #!/bin/sh
-      IP=$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/anchor_ipv4/address)
-      /usr/bin/ip addr add $IP/16 dev eth0
 coreos:
   units:
     - name: 10-weave.network
@@ -41,21 +34,6 @@ coreos:
         Name=weave*
 
         [Network]
-    - name: floating-ip.service
-      command: start
-      enable: true
-      content: |
-        [Unit]
-        Description=floating-ip
-        After=network-online.target
-        Description=DigitalOcean Floating IP
-        Documentation=https://www.digitalocean.com/community/tutorials/how-to-enable-floating-ips-on-an-older-droplet#coreos
-        Requires=network-online.target
-
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStart=/opt/bin/floating_ip.sh
     - name: kontena-agent.service
       command: start
       enable: true
