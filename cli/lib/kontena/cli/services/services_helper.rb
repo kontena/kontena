@@ -277,11 +277,11 @@ module Kontena
         # @return [Integer]
         def parse_memory(memory)
           if memory.end_with?('k')
-            memory.to_i * 1000
+            memory.to_i * 1024
           elsif memory.end_with?('m')
-            memory.to_i * 1000000
+            memory.to_i * 1024 * 1024
           elsif memory.end_with?('g')
-            memory.to_i * 1000000000
+            memory.to_i * 1024 * 1024 * 1024
           else
             memory.to_i
           end

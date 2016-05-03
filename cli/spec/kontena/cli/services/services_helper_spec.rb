@@ -130,5 +130,23 @@ module Kontena::Cli::Services
         expect(subject.parse_image('redis:3.0')).to eq('redis:3.0')
       end
     end
+
+    describe '#parse_memory' do
+      it 'parses kilobytes' do
+        expect(subject.parse_memory("1024k")).to eq(1 * 1024 * 1024)
+      end
+
+      it 'parses megabytes' do
+        expect(subject.parse_memory("32m")).to eq(32 * 1024 * 1024)
+      end
+
+      it 'parses gigabytes' do
+        expect(subject.parse_memory("2g")).to eq(2 * 1024 * 1024 * 1024)
+      end
+
+      it 'parses plain bytes' do
+        expect(subject.parse_memory("#{12 * 1024 * 1024}")).to eq(12 * 1024 * 1024)
+      end
+    end
   end
 end

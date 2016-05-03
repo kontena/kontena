@@ -65,12 +65,24 @@ Recall the optional COMMAND
 bundle exec thin -p 3000
 ```
 
-#### cpu_shares, mem_limit, memswap_limit
+#### cpu_shares
 
-The relative CPU priority and the memory limit of the created containers. [Learn more](https://docs.docker.com/reference/run/#runtime-constraints-on-resources).
+By default, all containers get the same proportion of CPU cycles.
+This proportion can be modified by changing the container’s CPU share
+weighting relative to the weighting of all other running containers.
+[Learn more](https://docs.docker.com/engine/reference/run/#cpu-share-constraints)
+
 ```
-cpu_shares: 73
-mem_limit: 1000000000
+cpu_shares: 1024
+```
+
+#### mem_limit, memswap_limit
+
+Memory limits of the created containers. [Learn more](https://docs.docker.com/reference/run/#runtime-constraints-on-resources).
+
+```
+mem_limit: 512m
+memswap_limit: 1024m
 ```
 
 #### environment

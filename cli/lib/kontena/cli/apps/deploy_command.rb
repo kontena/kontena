@@ -149,8 +149,8 @@ module Kontena::Cli::Apps
       data[:container_count] = options['instances']
       data[:links] = parse_links(options['links'] || [])
       data[:ports] = parse_ports(options['ports'] || [])
-      data[:memory] = parse_memory(options['mem_limit']) if options['mem_limit']
-      data[:memory_swap] = parse_memory(options['memswap_limit']) if options['memswap_limit']
+      data[:memory] = parse_memory(options['mem_limit'].to_s) if options['mem_limit']
+      data[:memory_swap] = parse_memory(options['memswap_limit'].to_s) if options['memswap_limit']
       data[:cpu_shares] = options['cpu_shares'] if options['cpu_shares']
       data[:volumes] = options['volumes'] || []
       data[:volumes_from] = options['volumes_from'] || []
