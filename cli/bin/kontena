@@ -78,6 +78,8 @@ rescue => exc
   if ENV['DEBUG']
     raise exc
   else
-    abort(exc.message)
+    puts "Kontena error: #{exc.message}"
+    puts "Rerun the command with environment DEBUG=true set to get full the exception"
+    abort()
   end
 end
