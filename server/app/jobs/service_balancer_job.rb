@@ -38,6 +38,11 @@ class ServiceBalancerJob
       if service.deploy_requested_at && service.deploy_requested_at > service.deployed_at
         return true
       end
+      if redeploy = service.deploy_opts[:redeploy_after]
+        return true if (service.deployed_at.to_i + redeploy.to_i) < Time.now.to_i
+      end
+
+      false
     else
       false
     end

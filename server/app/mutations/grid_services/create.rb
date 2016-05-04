@@ -72,6 +72,7 @@ module GridServices
         optional do
           integer :wait_for_port
           float :min_health
+          integer :redeploy_after
         end
       end
       string :pid, matches: /^(host)$/
