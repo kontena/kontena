@@ -32,7 +32,8 @@ module Kontena::Cli::Nodes
       else
         nodes = client(token).get("grids/#{current_grid}/nodes")
         puts "%-70s %-10s %-40s" % ['Name', 'Status', 'Labels']
-        nodes['nodes'].each do |node|
+        nodes = nodes['nodes'].sort_by{|n| n['node_number'] }
+        nodes.each do |node|
           if node['connected']
             status = 'online'
           else
