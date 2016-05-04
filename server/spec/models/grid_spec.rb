@@ -2,7 +2,10 @@ require_relative '../spec_helper'
 
 describe Grid do
   it { should be_timestamped_document }
-  it { should have_fields(:name, :token, :initial_size, :overlay_cidr, :stats)}
+  it { should have_fields(:name, :token, :overlay_cidr).of_type(String) }
+  it { should have_fields(:initial_size).of_type(Integer) }
+  it { should have_fields(:stats).of_type(Hash) }
+  it { should have_fields(:trusted_subnets).of_type(Array) }
 
   it { should have_and_belong_to_many(:users) }
   it { should have_many(:host_nodes) }

@@ -12,6 +12,7 @@ require_relative 'grids/list_users_command'
 require_relative 'grids/add_user_command'
 require_relative 'grids/remove_user_command'
 require_relative 'grids/cloud_config_command'
+require_relative 'grids/trusted_subnet_command'
 
 class Kontena::Cli::GridCommand < Clamp::Command
 
@@ -29,6 +30,7 @@ class Kontena::Cli::GridCommand < Clamp::Command
   subcommand "add-user", "Add user to the current grid", Kontena::Cli::Grids::AddUserCommand
   subcommand "remove-user", "Remove user from the current grid", Kontena::Cli::Grids::RemoveUserCommand
   subcommand "cloud-config", "Generate cloud-config", Kontena::Cli::Grids::CloudConfigCommand
+  subcommand "trusted-subnet", "Trusted subnet related commands", Kontena::Cli::Grids::TrustedSubnetCommand
 
   def execute
   end
