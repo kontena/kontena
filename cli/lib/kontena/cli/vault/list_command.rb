@@ -10,7 +10,7 @@ module Kontena::Cli::Vault
 
       column_width_paddings = '%-54s %-25.25s'
       puts column_width_paddings % ['NAME', 'CREATED AT']
-      result['secrets'].each do |secret|
+      result['secrets'].sort_by { |s| s['name'] }.each do |secret|
         puts column_width_paddings % [secret['name'], secret['created_at']]
       end
     end

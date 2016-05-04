@@ -12,7 +12,7 @@ module Kontena::Cli::Services
       require_api_url
       token = require_token
       service = client(token).get("services/#{parse_service_id(name)}")
-      service["env"].each do |env|
+      service["env"].sort.each do |env|
         puts env
       end
     end
