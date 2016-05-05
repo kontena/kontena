@@ -319,6 +319,20 @@ module Kontena
           secrets
         end
 
+        # @param [String] time
+        # @return [Integer]
+        def parse_relative_time(time)
+          if time.end_with?('min')
+            time.to_i * 60
+          elsif time.end_with?('h')
+            time.to_i * 60 * 60
+          elsif time.end_with?('d')
+            time.to_i * 60 * 60 * 24
+          else
+            memory.to_i
+          end
+        end
+
         def int_to_filesize(int)
           {
             'B'  => 1000,

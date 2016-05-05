@@ -66,6 +66,9 @@ module Kontena::Cli::Services
       data[:deploy_opts] = {}
       data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
       data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
+      if redeploy_after
+        data[:deploy_opts][:redeploy_after] = parse_relative_time(redeploy_after)
+      end
       data.delete(:deploy_opts) if data[:deploy_opts].empty?
       data[:pid] = pid if pid
       data
