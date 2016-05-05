@@ -32,14 +32,14 @@ class ServiceBalancerJob
   # @return [Boolean]
   def should_balance_service?(service)
     if service.running? && service.stateless?
-      return true if !service.all_instances_exist?
       return false if service.deployed_at.nil?
+      return true if !service.all_instances_exist?
       return true if service.updated_at > service.deployed_at
       if service.deploy_requested_at && service.deploy_requested_at > service.deployed_at
         return true
       end
-      if redeploy = service.deploy_opts[:redeploy_after]
-        return true if (service.deployed_at.to_i + redeploy.to_i) < Time.now.to_i
+      if deploy_interval = service.deploy_opts.interval
+        return true if (service.deployed_at.to_i + deploy_interval.to_i) < Time.now.to_i
       end
 
       false

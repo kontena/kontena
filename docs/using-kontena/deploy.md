@@ -58,13 +58,13 @@ deploy:
 
 The default `min_health` is 1.0, which means no instances can be deployed in parallel (deploy will progress one-by-one). A value of 0.5 means that during a deploy half of the instances can be deployed in parallel.
 
-### Redeploy after
+### Interval
 
-A time after scheduler will make re-deploy of service. This can be used as an "erosion-resistance" mechanism.
+Deploy interval of service. Service will be automatically scheduled for deploy after this time unless it has been scheduled by other events. This can be used as an "erosion-resistance" mechanism.
 
 ```
 deploy:
-  redeploy_after: 8h
+  interval: 8h
 ```
 
 ## Scheduling Conditions

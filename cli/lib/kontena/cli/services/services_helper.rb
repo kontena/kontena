@@ -329,7 +329,7 @@ module Kontena
           elsif time.end_with?('d')
             time.to_i * 60 * 60 * 24
           else
-            memory.to_i
+            time.to_i
           end
         end
 

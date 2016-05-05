@@ -80,8 +80,8 @@ module Kontena::Cli::Services
       if deploy_wait_for_port
         data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i
       end
-      if redeploy_after
-        data[:deploy_opts][:redeploy_after] = parse_relative_time(redeploy_after)
+      if deploy_interval
+        data[:deploy_opts][:deploy_interval] = parse_relative_time(deploy_interval)
       end
       data[:pid] = pid if pid
       data

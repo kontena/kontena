@@ -148,5 +148,23 @@ module Kontena::Cli::Services
         expect(subject.parse_memory("#{12 * 1024 * 1024}")).to eq(12 * 1024 * 1024)
       end
     end
+
+    describe '#parse_relative_time' do
+      it 'parses minutes' do
+        expect(subject.parse_relative_time("60min")).to eq(60 * 60)
+      end
+
+      it 'parses hours' do
+        expect(subject.parse_relative_time("8h")).to eq(8 * 60 * 60)
+      end
+
+      it 'parses days' do
+        expect(subject.parse_relative_time("7d")).to eq(7 * 24 * 60 * 60)
+      end
+
+      it 'parses seconds by default' do
+        expect(subject.parse_relative_time("600")).to eq(600)
+      end
+    end
   end
 end
