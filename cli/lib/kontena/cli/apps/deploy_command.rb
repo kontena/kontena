@@ -175,8 +175,8 @@ module Kontena::Cli::Apps
       if deploy_opts.has_key?('min_health')
         deploy[:min_health] = deploy_opts['min_health']
       end
-      if deploy_opts.has_key?('redeploy_after')
-        deploy[:redeploy_after] = parse_relative_time(deploy_opts['redeploy_after'])
+      if deploy_opts.has_key?('interval')
+        deploy[:interval] = parse_relative_time(deploy_opts['interval'])
       end
       unless deploy.empty?
         data[:deploy_opts] = deploy

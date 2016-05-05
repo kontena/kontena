@@ -52,6 +52,7 @@ module Kontena
           puts "  deploy_opts:"
           puts "    wait_for_port: #{service['deploy_opts']['wait_for_port'] || '-'}"
           puts "    min_health: #{service['deploy_opts']['min_health']}"
+          puts "    interval: #{service['deploy_opts']['interval'] || '-'}"
           puts "  dns: #{service['name']}.#{grid}.kontena.local"
 
           if service['affinity'].to_a.size > 0
