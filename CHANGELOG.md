@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.3 (2016-05-06)
+
+- fix node unplugger unclean shutdown (#662)
+
 ## 0.12.2 (2016-04-26)
 
 - fix too aggressive overlay cidr cleanup (#626)
