@@ -1,5 +1,8 @@
+require_relative 'common'
+
 module GridSecrets
   class Create < Mutations::Command
+    include Common
 
     required do
       model :grid, class: Grid
@@ -19,7 +22,7 @@ module GridSecrets
         end
         return
       end
-
+      self.refresh_grid_services(grid_secret)
       grid_secret
     end
   end
