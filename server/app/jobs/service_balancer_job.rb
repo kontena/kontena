@@ -39,7 +39,10 @@ class ServiceBalancerJob
         return true
       end
       if deploy_interval = service.deploy_opts.interval
-        return true if (service.deployed_at.to_i + deploy_interval.to_i) < Time.now.to_i
+        if (service.deployed_at.to_i + deploy_interval.to_i) < Time.now.to_i
+          service.set(:updated_at => Time.now)
+          return true
+        end
       end
 
       false
