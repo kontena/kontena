@@ -8,13 +8,13 @@ module Kontena::Cli::Grids::TrustedSubnets
     def execute
       require_api_url
       token = require_token
-      grid = client(token).get("grids/#{current_grid}")
+      grid = client(token).get("grids/#{name}")
       trusted_subnets = grid['trusted_subnets'] || []
       unless trusted_subnets.delete(self.subnet)
         abort("Grid does not have trusted subnet #{self.subnet}")
       end
       data = {trusted_subnets: trusted_subnets}
-      client(token).put("grids/#{current_grid}", data)
+      client(token).put("grids/#{name}", data)
     end
   end
 end
