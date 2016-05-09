@@ -14,7 +14,7 @@ module Scheduler
           container = service.containers.first
           if container
             stats = container.container_stats.last
-            memory = stats.memory['usage'] * 1.25
+            memory = stats.memory['usage'] * 1.25 if stats
           end
         end
 
