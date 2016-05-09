@@ -40,7 +40,7 @@ module Kontena::Cli::Services
 
     def render_stat_row(stat)
       memory = stat['memory'].nil? ? 'N/A' : filesize_to_human(stat['memory']['usage'])
-      if !stat['memory'].nil? && stat['memory']['limit'] != 1.8446744073709552e+19
+      if !stat['memory'].nil? && stat['memory']['limit'] != 9.223372036854772e+18
         memory_limit = filesize_to_human(stat['memory']['limit'])
         memory_pct = "#{(stat['memory']['usage'].to_f / stat['memory']['limit'].to_f * 100).round(2)}%"
       else
@@ -58,6 +58,7 @@ module Kontena::Cli::Services
     # @param [Integer] size
     # @return [String]
     def filesize_to_human(size)
+      return '0B' if size.to_f == 0.0
       units = %w{B K M G T}
       e = (Math.log(size) / Math.log(1000)).floor
       s = '%.2f' % (size.to_f / 1000**e)
