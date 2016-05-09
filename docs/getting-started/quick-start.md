@@ -17,7 +17,7 @@ You can install the Kontena CLI with Rubygems package manager (included in Ruby)
 $ gem install kontena-cli
 ```
 
-After the installation is complete, you can test the installation by checking the Kontena CLI version `kontena -v`.
+After the installation is complete, you can test the installation by checking the Kontena CLI version `kontena version`.
 
 **OPTIONAL**
 
