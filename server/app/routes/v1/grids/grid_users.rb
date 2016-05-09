@@ -5,6 +5,7 @@ V1::GridsApi.route('grid_users') do |r|
   r.post do
     data = parse_json_body
     user = User.find_by(email: data['email'])
+    halt_request(404, {error: 'User not found'}) unless user
     outcome = Grids::AssignUser.run({grid: @grid, current_user: current_user, user: user})
     if outcome.success?
       audit_event(r, @grid, user, 'assign user')
@@ -21,6 +22,7 @@ V1::GridsApi.route('grid_users') do |r|
   r.delete do
     r.on :email do |email|
       user = User.find_by(email: email)
+      halt_request(404, {error: 'User not found'}) unless user
       outcome = Grids::UnassignUser.run({grid: @grid, current_user: current_user, user: user})
       if outcome.success?
         audit_event(r, @grid, user, 'unassign user')
