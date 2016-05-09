@@ -24,15 +24,15 @@ describe Kontena::Cli::Grids::TrustedSubnets::RemoveCommand do
     end
 
     it 'removes subnet from grid' do
-      allow(client).to receive(:get).with("grids/test-grid").and_return(
+      allow(client).to receive(:get).with("grids/my-grid").and_return(
         'trusted_subnets' => ['192.168.12.0/24', '192.168.50.0/24']
       )
       expect(client).to receive(:put).with(
-        'grids/test-grid', hash_including({trusted_subnets: [
+        'grids/my-grid', hash_including({trusted_subnets: [
           '192.168.12.0/24'
         ]})
       )
-      subject.run(['test-grid', '192.168.50.0/24'])
+      subject.run(['my-grid', '192.168.50.0/24'])
     end
   end
 end

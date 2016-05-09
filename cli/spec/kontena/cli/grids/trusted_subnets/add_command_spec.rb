@@ -24,15 +24,15 @@ describe Kontena::Cli::Grids::TrustedSubnets::AddCommand do
     end
 
     it 'adds subnet to grid' do
-      allow(client).to receive(:get).with("grids/test-grid").and_return(
+      allow(client).to receive(:get).with("grids/my-grid").and_return(
         'trusted_subnets' => ['192.168.12.0/24']
       )
       expect(client).to receive(:put).with(
-        'grids/test-grid', hash_including({trusted_subnets: [
+        'grids/my-grid', hash_including({trusted_subnets: [
           '192.168.12.0/24', '10.12.0.0/19'
         ]})
       )
-      subject.run(['test-grid', '10.12.0.0/19'])
+      subject.run(['my-grid', '10.12.0.0/19'])
     end
   end
 end

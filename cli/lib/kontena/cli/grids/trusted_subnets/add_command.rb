@@ -8,9 +8,9 @@ module Kontena::Cli::Grids::TrustedSubnets
     def execute
       require_api_url
       token = require_token
-      grid = client(token).get("grids/#{current_grid}")
+      grid = client(token).get("grids/#{name}")
       data = {trusted_subnets: grid['trusted_subnets'] + [self.subnet]}
-      client(token).put("grids/#{current_grid}", data)
+      client(token).put("grids/#{name}", data)
     end
   end
 end
