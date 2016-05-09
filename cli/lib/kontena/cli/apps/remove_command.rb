@@ -28,33 +28,42 @@ module Kontena::Cli::Apps
 
     end
 
+    private
     def remove_services(services)
       services.find_all {|service_name, options| options['links'] && options['links'].size > 0 }.each do |service_name, options|
-        delete(service_name, options)
+        delete(service_name, options, false)
         services.delete(service_name)
-        sleep 1
       end
       services.each do |service_name, options|
         delete(service_name, options)
       end
     end
 
-    def delete(name, options)
+    def delete(name, options, async = true)
       unless deleted_services.include?(name)
-        print "deleting #{name}"
-        service = get_service(token, prefixed_name(name)) rescue nil
-
-        if(!service.nil?)
-          print "."
-          delete_service(token, prefixed_name(name))
-          print ". done"
-          deleted_services << name
-          puts ''
-        else
-          puts "No such service: #{name}".colorize(:red)
+        print "deleting #{name.colorize(:cyan)}"
+        ShellSpinner " " do
+          service = get_service(token, prefixed_name(name)) rescue nil
+          if(service)
+            delete_service(token, prefixed_name(name))
+            unless async
+              wait_for_delete_to_finish(service)
+            end
+            deleted_services << name
+          else
+            puts "No such service: #{name}".colorize(:red)
+          end
         end
       end
     end
+
+    def wait_for_delete_to_finish(service)
+      until service.nil?
+        service = get_service(token, service['name']) rescue nil
+        sleep 0.5
+      end
+    end
+
 
     ##
     #
