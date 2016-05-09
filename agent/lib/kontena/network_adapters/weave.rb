@@ -187,7 +187,7 @@ module Kontena::NetworkAdapters
         info "router started without known peers"
       end
       if info['grid']['trusted_subnets']
-        info "using trusted subnets: #{info['grid']['trusted_subnets']}"
+        info "using trusted subnets: #{info['grid']['trusted_subnets'].join(',')}"
       end
 
       if info['node_number']
