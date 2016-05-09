@@ -211,7 +211,7 @@ describe '/v1/grids' do
     it 'requires existing email' do
       grid = david.grids.first
       post "/v1/grids/#{grid.to_path}/users", {email: 'invalid@domain.com'}.to_json, request_headers
-      expect(response.status).to eq(422)
+      expect(response.status).to eq(404)
     end
     it 'assigns user to grid' do
       grid = david.grids.first
@@ -267,7 +267,7 @@ describe '/v1/grids' do
     it 'requires existing email' do
       grid = david.grids.first
       delete "/v1/grids/#{grid.to_path}/users/invalid@domain.com", nil, request_headers
-      expect(response.status).to eq(422)
+      expect(response.status).to eq(404)
     end
 
     it 'unassigns user from grid' do
