@@ -6,7 +6,7 @@ module Kontena::Launchers
     include Celluloid::Notifications
     include Kontena::Logging
 
-    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.22.0'
+    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.23.0'
     CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'kontena/cadvisor'
 
     def initialize(autostart = true)
@@ -51,8 +51,14 @@ module Kontena::Launchers
     # @param [String] image
     def create_container(image)
       container = Docker::Container.get('kontena-cadvisor') rescue nil
-      container.remove(force: true) if container
+      if container && container.info['Config']['Image'] != image
+        container.delete(force: true)
+      elsif container && container.running?
+        info "cadvisor is already running"
+        return
+      end
 
+      info "starting cadvisor service"
       container = Docker::Container.create(
         'name' => 'kontena-cadvisor',
         'Image' => image,
