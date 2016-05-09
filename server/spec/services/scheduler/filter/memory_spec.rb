@@ -21,8 +21,8 @@ describe Scheduler::Filter::Memory do
     end
 
     it 'returns all nodes if service instance memory stats are not available' do
-      test_service.update_attribute(:memory, 512.megabytes)
       nodes.each{|n| n.update_attribute(:mem_total, 1.gigabytes) }
+      test_service.containers.create(name: 'test-service-1')
       filtered = subject.for_service(test_service, 'test-service-1', nodes)
       expect(filtered).to eq(nodes)
     end
