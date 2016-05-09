@@ -102,6 +102,8 @@ module Kontena::Workers
       resp = client.get
       if resp.status == 200
         JSON.parse(resp.body, symbolize_names: true) rescue nil
+      else
+        error "failed to fetch cadvisor stats: #{resp.status} #{resp.body}"
       end
     rescue => exc
       error "failed to fetch cadvisor stats: #{exc.message}"
