@@ -38,30 +38,6 @@ module AuthService
       response['user']
     end
 
-    ##
-    # @param [Hash] obj
-    def register(obj)
-      post("#{api_url}/v1/users", obj)
-    end
-
-    ##
-    # @param [Hash] obj
-    def confirm_account(obj)
-      post("#{api_url}/v1/user/email_confirm", obj)
-    end
-
-    ##
-    # @param [Hash] obj
-    def request_password_reset(obj)
-      post("#{api_url}/v1/user/password_reset", obj)
-    end
-
-    ##
-    # @param [Hash] obj
-    def reset_password(obj)
-      put("#{api_url}/v1/user/password_reset", obj)
-    end
-
     private
 
     def post(path, obj, params = {})
@@ -71,15 +47,6 @@ module AuthService
           query: params
       }
       handle_response(http_client.post(path, request_options))
-    end
-
-    def put(path, obj, params = {})
-      request_options = {
-          header: default_headers,
-          body: JSON.dump(obj),
-          query: params
-      }
-      handle_response(http_client.put(path, request_options))
     end
 
     def handle_response(response)
