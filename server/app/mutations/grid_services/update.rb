@@ -62,8 +62,9 @@ module GridServices
       end
       hash :deploy_opts do
         optional do
-          integer :wait_for_port
+          integer :wait_for_port, nils: true
           float :min_health
+          integer :interval, nils: true
         end
       end
       string :pid, matches: /^(host)$/

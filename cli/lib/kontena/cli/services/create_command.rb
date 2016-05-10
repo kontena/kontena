@@ -31,6 +31,7 @@ module Kontena::Cli::Services
     option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, daemon, random)"
     option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
     option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
+    option "--deploy-interval", "TIME", "Auto-deploy with given interval (format: <number><unit>, where unit = min, h, d)"
     option "--pid", "PID", "Pid namespace to use"
     option "--secret", "SECRET", "Import secret from Vault (format: <secret>:<name>:<env>)", multivalued: true
 
@@ -73,8 +74,15 @@ module Kontena::Cli::Services
       data[:log_opts] = parse_log_opts(log_opt_list)
       data[:strategy] = deploy_strategy if deploy_strategy
       data[:deploy_opts] = {}
-      data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
-      data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
+      if deploy_min_health
+        data[:deploy_opts][:min_health] = deploy_min_health.to_f
+      end
+      if deploy_wait_for_port
+        data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i
+      end
+      if deploy_interval
+        data[:deploy_opts][:interval] = parse_relative_time(deploy_interval)
+      end
       data[:pid] = pid if pid
       data
     end

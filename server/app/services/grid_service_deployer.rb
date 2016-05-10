@@ -47,6 +47,7 @@ class GridServiceDeployer
       )
       nodes << node if node
     end
+    self.nodes.each{|n| n.schedule_counter = 0}
 
     nodes
   end
@@ -170,6 +171,7 @@ class GridServiceDeployer
       )
       nodes << node if node
     end
+    self.nodes.each{|n| n.schedule_counter = 0}
     filtered_count = nodes.uniq.size
     self.scheduler.instance_count(filtered_count, self.grid_service.container_count)
   end

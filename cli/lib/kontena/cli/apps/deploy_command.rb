@@ -169,8 +169,15 @@ module Kontena::Cli::Apps
       deploy_opts = options['deploy'] || {}
       data[:strategy] = deploy_opts['strategy'] if deploy_opts['strategy']
       deploy = {}
-      deploy[:wait_for_port] = deploy_opts['wait_for_port'] if deploy_opts.has_key?('wait_for_port')
-      deploy[:min_health] = deploy_opts['min_health'] if deploy_opts.has_key?('min_health')
+      if deploy_opts.has_key?('wait_for_port')
+        deploy[:wait_for_port] = deploy_opts['wait_for_port']
+      end
+      if deploy_opts.has_key?('min_health')
+        deploy[:min_health] = deploy_opts['min_health']
+      end
+      if deploy_opts.has_key?('interval')
+        deploy[:interval] = parse_relative_time(deploy_opts['interval'])
+      end
       unless deploy.empty?
         data[:deploy_opts] = deploy
       end

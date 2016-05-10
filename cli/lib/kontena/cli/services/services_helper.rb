@@ -50,8 +50,13 @@ module Kontena
           puts "  scaling: #{service['container_count'] }"
           puts "  strategy: #{service['strategy']}"
           puts "  deploy_opts:"
-          puts "    wait_for_port: #{service['deploy_opts']['wait_for_port'] || '-'}"
           puts "    min_health: #{service['deploy_opts']['min_health']}"
+          if service['deploy_opts']['wait_for_port']
+            puts "    wait_for_port: #{service['deploy_opts']['wait_for_port']}"
+          end
+          if service['deploy_opts']['interval']
+            puts "    interval: #{service['deploy_opts']['interval']}"
+          end
           puts "  dns: #{service['name']}.#{grid}.kontena.local"
 
           if service['affinity'].to_a.size > 0
@@ -317,6 +322,25 @@ module Kontena
             secrets << {secret: secret, name: name, type: type}
           end
           secrets
+        end
+
+        # @param [String] time
+        # @return [Integer, NilClass]
+        def parse_relative_time(time)
+          if time.end_with?('min')
+            time.to_i * 60
+          elsif time.end_with?('h')
+            time.to_i * 60 * 60
+          elsif time.end_with?('d')
+            time.to_i * 60 * 60 * 24
+          else
+            time = time.to_i
+            if time == 0
+              nil
+            else
+              time
+            end
+          end
         end
 
         def int_to_filesize(int)
