@@ -6,6 +6,10 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
+    MEM_MAX_LIMITS = [
+      1.8446744073709552e+19, 9.223372036854772e+18
+    ]
+
     parameter "NAME", "Service name"
     option ["-t", "--tail"], :flag, "Tail (follow) stats in real time", default: false
 
@@ -40,7 +44,7 @@ module Kontena::Cli::Services
 
     def render_stat_row(stat)
       memory = stat['memory'].nil? ? 'N/A' : filesize_to_human(stat['memory']['usage'])
-      if !stat['memory'].nil? && stat['memory']['limit'] != 9.223372036854772e+18
+      if !stat['memory'].nil? && (stat['memory']['limit'] && !MEM_MAX_LIMITS.include?(stat['memory']['limit']))
         memory_limit = filesize_to_human(stat['memory']['limit'])
         memory_pct = "#{(stat['memory']['usage'].to_f / stat['memory']['limit'].to_f * 100).round(2)}%"
       else
