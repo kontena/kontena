@@ -35,6 +35,7 @@ require 'kontena/cli/external_registry_command'
 require 'kontena/cli/app_command'
 require 'kontena/cli/etcd_command'
 require 'kontena/cli/vault_command'
+require 'kontena/cli/user_command'
 require 'kontena/cli/version_command'
 
 class MainCommand < Clamp::Command
@@ -54,9 +55,7 @@ class MainCommand < Clamp::Command
   subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
   subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
-  subcommand "verify-account", "Verify registered account", Kontena::Cli::VerifyAccountCommand
-  subcommand "forgot-password", "Request password reset for Kontena account", Kontena::Cli::ForgotPasswordCommand
-  subcommand "reset-password", "Reset Kontena account password", Kontena::Cli::ResetPasswordCommand
+  subcommand "user", "User related commands", Kontena::Cli::UserCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
 
   def execute
