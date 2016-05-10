@@ -86,7 +86,7 @@ if words.size > 0
   case words[0]
     when 'grid'
       completion.clear
-      sub_commands = %w(add-user audit-log create current list list-users remove remove-user show use)
+      sub_commands = %w(add-user audit-log create current list user remove show use)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.grids
@@ -108,7 +108,7 @@ if words.size > 0
       if words[1] && words[1] == 'use'
         completion.push helper.master_names
       elsif words[1] && words[1] == 'users'
-        users_sub_commands = %(invite list add-role remove-role)
+        users_sub_commands = %(invite list role)
         completion.push users_sub_commands
       elsif words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
@@ -119,8 +119,8 @@ if words.size > 0
     when 'service'
       completion.clear
       sub_commands = %w(containers create delete deploy list logs restart
-                      scale show start stats stop update monitor envs
-                      add-env remove-env add-secret remove-secret)
+                      scale show start stats stop update monitor env
+                      secret link unlink)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.services

@@ -1,10 +1,10 @@
-require_relative 'services_helper'
+require_relative '../services_helper'
 
-module Kontena::Cli::Services
-  class RemoveEnvCommand < Clamp::Command
+module Kontena::Cli::Services::Envs
+  class RemoveCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include ServicesHelper
+    include Kontena::Cli::Services::ServicesHelper
 
     parameter "NAME", "Service name"
     parameter "ENV", "Environment variable name"

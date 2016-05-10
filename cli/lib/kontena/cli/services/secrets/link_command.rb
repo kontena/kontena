@@ -1,10 +1,10 @@
-require_relative 'services_helper'
+require_relative '../services_helper'
 
-module Kontena::Cli::Services
-  class AddSecretCommand < Clamp::Command
+module Kontena::Cli::Services::Secrets
+  class LinkCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include ServicesHelper
+    include Kontena::Cli::Services::ServicesHelper
 
     parameter "NAME", "Service name"
     parameter "SECRET", "Secret to be added from Vault (format: secret:name:type)"

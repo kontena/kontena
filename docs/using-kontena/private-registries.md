@@ -23,5 +23,5 @@ $ kontena external-registry list
 ### Remove Private Registry Configuration
 
 ```
-$ kontena external-registry delete <NAME>
+$ kontena external-registry delete <name>
 ```

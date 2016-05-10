@@ -14,12 +14,8 @@ require_relative 'services/logs_command'
 require_relative 'services/stats_command'
 require_relative 'services/monitor_command'
 
-require_relative 'services/envs_command'
-require_relative 'services/add_env_command'
-require_relative 'services/remove_env_command'
-
-require_relative 'services/add_secret_command'
-require_relative 'services/remove_secret_command'
+require_relative 'services/env_command'
+require_relative 'services/secret_command'
 
 require_relative 'services/link_command'
 require_relative 'services/unlink_command'
@@ -42,12 +38,9 @@ class Kontena::Cli::ServiceCommand < Clamp::Command
   subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
   subcommand "monitor", "Monitor", Kontena::Cli::Services::MonitorCommand
 
-  subcommand "envs", "Show environment variables", Kontena::Cli::Services::EnvsCommand
-  subcommand "add-env", "Add environment variable", Kontena::Cli::Services::AddEnvCommand
-  subcommand "remove-env", "Remove environment variable", Kontena::Cli::Services::RemoveEnvCommand
+  subcommand "env", "Environment variable specific commands", Kontena::Cli::Services::EnvCommand
 
-  subcommand "add-secret", "Add secret from Vault", Kontena::Cli::Services::AddSecretCommand
-  subcommand "remove-secret", "Remove secret", Kontena::Cli::Services::RemoveSecretCommand
+  subcommand "secret", "Secret specific commands", Kontena::Cli::Services::SecretCommand
 
   subcommand "link", "Link service to another service", Kontena::Cli::Services::LinkCommand
   subcommand "unlink", "Unlink service from another service", Kontena::Cli::Services::UnlinkCommand

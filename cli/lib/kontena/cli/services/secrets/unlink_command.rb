@@ -1,10 +1,10 @@
-require_relative 'services_helper'
+require_relative '../services_helper'
 
-module Kontena::Cli::Services
-  class RemoveSecretCommand < Clamp::Command
+module Kontena::Cli::Services::Secrets
+  class UnlinkCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include ServicesHelper
+    include Kontena::Cli::Services::ServicesHelper
 
     parameter "NAME", "Service name"
     parameter "SECRET", "Secret to be removed (format: secret:name:type)"

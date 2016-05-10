@@ -52,19 +52,19 @@ $ kontena master users invite <email>
 ### Add Users to Role
 
 ```
-$ kontena master users add-role <role> <email>
+$ kontena master users role add <role> <email>
 ```
 
 ### Remove Users from Role
 
 ```
-$ kontena master users remove-role <role> <email>
+$ kontena master users role remove <role> <email>
 ```
 
 ### Add User to Grid
 
 ```
-$ kontena grid add-user <email>
+$ kontena grid user add <email>
 ```
 
 **Options:**
@@ -76,7 +76,7 @@ $ kontena grid add-user <email>
 ### Remove User from Grid
 
 ```
-$ kontena grid remove-user <email>
+$ kontena grid user remove <email>
 ```
 
 **Options:**

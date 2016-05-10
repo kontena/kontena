@@ -4,8 +4,7 @@ require_relative 'nodes/show_command'
 require_relative 'nodes/update_command'
 require_relative 'nodes/ssh_command'
 
-require_relative 'nodes/add_label_command'
-require_relative 'nodes/remove_label_command'
+require_relative 'nodes/label_command'
 
 require_relative 'nodes/vagrant_command'
 require_relative 'nodes/digital_ocean_command'
@@ -20,8 +19,7 @@ class Kontena::Cli::NodeCommand < Clamp::Command
   subcommand "update", "Update node", Kontena::Cli::Nodes::UpdateCommand
   subcommand ["remove","rm"], "Remove node", Kontena::Cli::Nodes::RemoveCommand
 
-  subcommand "add-label", "Add label to node", Kontena::Cli::Nodes::AddLabelCommand
-  subcommand "remove-label", "Remove label from node", Kontena::Cli::Nodes::RemoveLabelCommand
+  subcommand "label", "Node label specific commands", Kontena::Cli::Nodes::LabelCommand
 
   subcommand "vagrant", "Vagrant specific commands", Kontena::Cli::Nodes::VagrantCommand
   subcommand "digitalocean", "DigitalOcean specific commands", Kontena::Cli::Nodes::DigitalOceanCommand
