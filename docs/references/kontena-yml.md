@@ -25,6 +25,21 @@ image: kontena/haproxy:latest
 image: registry.kontena.local/ghost:latest
 ```
 
+#### build
+
+Path to the build context
+
+```
+build: .
+```
+
+#### dockerfile
+
+Alternate Dockerfile.
+
+```
+dockerfile: Dockerfile-alternate
+```
 #### affinity
 
 Affinity conditions of hosts where containers should be launched
@@ -171,6 +186,28 @@ links:
   - mysql:wordpress-mysql
 ```
 
+#### net
+Network mode.
+
+```
+net: "bridge"
+```
+
+```
+net: "host"
+```
+
+```
+net: "none"
+```
+
+#### pid
+Sets the PID mode to the host PID mode.
+
+```
+pid: host
+```
+
 #### ports
 
 Expose ports. Specify both ports (HOST:CONTAINER).
@@ -179,6 +216,13 @@ Expose ports. Specify both ports (HOST:CONTAINER).
 ports:
   - "80:80"
   - "53160:53160/udp"
+```
+
+#### privileged
+Give extended privileges to service.
+
+```
+privileged: true
 ```
 
 #### stateful
@@ -271,7 +315,7 @@ deploy:
 
 ```
 hooks:
-  post_start
+  post_start:
     - name: sleep
       cmd: sleep 10
       instances: *
@@ -284,15 +328,12 @@ hooks:
 
 ```
 hooks:
-  pre_build
+  pre_build:
     - name: npm install
       cmd: npm install
     - name: grunt
       cmd: grunt dist
 ```
-
-
-
 
 #### log_driver
 
@@ -312,4 +353,40 @@ nginx:
     fluentd-address: 192.168.99.1:24224
     fluentd-tag: docker.{{.Name}}
 
+```
+
+## Example kontena.yml
+```
+loadbalancer:
+  image: kontena/lb:latest
+  ports:
+    - 80:80
+app:
+  build: .  
+  image: registry.kontena.local/example-app:latest
+  instances: 2
+  privileged: true  
+  links:
+    - loadbalancer
+  environment:
+    - DB_URL=%{project}-db.kontena.local
+    - KONTENA_LB_INTERNAL_PORT=80
+    - KONTENA_LB_VIRTUAL_HOSTS=www.my-app.com
+  deploy:
+    strategy: ha
+    wait_for_port: 80
+  hooks:
+    post_start:
+      - name: sleep
+        cmd: sleep 10
+        instances: *
+  log_driver: fluentd
+  log_opt:
+    fluentd-address: 192.168.99.1:24224
+    fluentd-tag: docker.{{.Name}}
+db:
+  image: mysql:5.6
+  stateful: true
+  volumes:
+    - /var/lib/mysql
 ```
