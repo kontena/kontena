@@ -8,6 +8,7 @@ module Kontena
     module DigitalOcean
       class MasterProvisioner
         include RandomName
+        include Machine::CertHelper
 
         attr_reader :client, :http_client
 
@@ -25,6 +26,10 @@ module Kontena
           if opts[:ssl_cert]
             abort('Invalid ssl cert') unless File.exists?(File.expand_path(opts[:ssl_cert]))
             ssl_cert = File.read(File.expand_path(opts[:ssl_cert]))
+          else
+            ShellSpinner "Generating self-signed SSL certificate" do
+              ssl_cert = generate_self_signed_cert
+            end
           end
 
           userdata_vars = {
@@ -53,11 +58,8 @@ module Kontena
               sleep 5
             end
           end
-          if opts[:ssl_cert]
-            master_url = "https://#{droplet.public_ip}"
-          else
-            master_url = "http://#{droplet.public_ip}"
-          end
+
+          master_url = "https://#{droplet.public_ip}"
           Excon.defaults[:ssl_verify_peer] = false
           @http_client = Excon.new("#{master_url}", :connect_timeout => 10)
 
