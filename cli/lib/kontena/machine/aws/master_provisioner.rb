@@ -47,7 +47,8 @@ module Kontena
               auth_server: opts[:auth_server],
               version: opts[:version],
               vault_secret: opts[:vault_secret],
-              vault_iv: opts[:vault_iv]
+              vault_iv: opts[:vault_iv],
+              mongodb_uri: opts[:mongodb_uri]
           }
 
           security_group = ensure_security_group(opts[:vpc])
@@ -83,12 +84,12 @@ module Kontena
           master_url = "https://#{ec2_instance.public_ip_address}"
           Excon.defaults[:ssl_verify_peer] = false
           http_client = Excon.new(master_url, :connect_timeout => 10)
-          ShellSpinner "Waiting for #{name.colorize(:cyan)} to start" do
+          ShellSpinner "Waiting for #{name.colorize(:cyan)} to start " do
             sleep 5 until master_running?(http_client)
           end
 
           puts "Kontena Master is now running at #{master_url}"
-          puts "Use #{"kontena login #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
+          puts "Use #{"kontena login --name=#{name.sub('kontena-master-', '')} #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
         end
 
         ##
@@ -151,7 +152,7 @@ module Kontena
         end
 
         def generate_name
-          "kontena-master-#{super}-#{rand(1..99)}"
+          "kontena-master-#{super}-#{rand(1..9)}"
         end
 
         def master_running?(http_client)
@@ -161,7 +162,7 @@ module Kontena
         end
 
         def erb(template, vars)
-          ERB.new(template).result(
+          ERB.new(template, nil, '%<>-').result(
             OpenStruct.new(vars).instance_eval { binding }
           )
         end
