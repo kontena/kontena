@@ -32,7 +32,8 @@ module Kontena
               auth_server: opts[:auth_server],
               version: opts[:version],
               vault_secret: opts[:vault_secret],
-              vault_iv: opts[:vault_iv]
+              vault_iv: opts[:vault_iv],
+              mongodb_uri: opts[:mongodb_uri]
           }
 
           droplet = DropletKit::Droplet.new(
@@ -65,7 +66,7 @@ module Kontena
           end
 
           puts "Kontena Master is now running at #{master_url}"
-          puts "Use #{"kontena login #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
+          puts "Use #{"kontena login --name=#{droplet.name.sub('kontena-master-', '')} #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
         end
 
         def user_data(vars)
@@ -74,7 +75,7 @@ module Kontena
         end
 
         def generate_name
-          "kontena-master-#{super}-#{rand(1..99)}"
+          "kontena-master-#{super}-#{rand(1..9)}"
         end
 
         def ssh_key(public_key)
@@ -88,7 +89,7 @@ module Kontena
         end
 
         def erb(template, vars)
-          ERB.new(template).result(OpenStruct.new(vars).instance_eval { binding })
+          ERB.new(template, nil, '%<>-').result(OpenStruct.new(vars).instance_eval { binding })
         end
       end
     end

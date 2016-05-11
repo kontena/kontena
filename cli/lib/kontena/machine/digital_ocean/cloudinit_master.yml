@@ -30,6 +30,7 @@ write_files:
         -p 80:80 -p 443:443 kontena/haproxy:latest
 coreos:
   units:
+<% unless mongodb_uri -%>
     - name: kontena-server-mongo.service
       command: start
       enable: true
@@ -53,7 +54,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
             --volumes-from=kontena-server-mongo-data \
             mongo:3.0 mongod --smallfiles
-
+<% end -%>
     - name: kontena-server-api.service
       command: start
       enable: true
@@ -65,9 +66,13 @@ coreos:
         After=kontena-server-mongo.service
         Description=Kontena Master
         Documentation=http://www.kontena.io/
+        Before=kontena-server-haproxy.service
+        Wants=kontena-server-haproxy.service
         Requires=network-online.target
         Requires=docker.service
+<% unless mongodb_uri -%>
         Requires=kontena-server-mongo.service
+<% end %>
 
         [Service]
         Restart=always
@@ -77,10 +82,16 @@ coreos:
         ExecStartPre=-/usr/bin/docker rm kontena-server-api
         ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
         ExecStart=/usr/bin/docker run --name kontena-server-api \
+<% if mongodb_uri -%>
+            -e MONGODB_URI=<%= mongodb_uri %> \
+<% else -%>
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+<% end -%>
+<% if auth_server %>
+            -e AUTH_API_URL=<%= auth_server %> \
+<% end -%>
             -e VAULT_KEY=${KONTENA_VAULT_KEY} -e VAULT_IV=${KONTENA_VAULT_IV} \
-            <% if auth_server %>-e AUTH_API_URL=<%= auth_server %><% end %> \
             kontena/server:${KONTENA_VERSION}
 
     - name: kontena-server-haproxy.service
@@ -95,6 +106,7 @@ coreos:
         Documentation=http://www.kontena.io/
         Requires=network-online.target
         Requires=docker.service
+        Requires=kontena-server-api.service
 
         [Service]
         Restart=always
