@@ -4,11 +4,12 @@ module Kontena::Cli::User
 
     parameter "EMAIL", "Email address"
 
-    def execute
-      require_api_url
+    option "--auth-provider-url", "URL", "Auth provider URL", default: "https://auth.kontena.io/"
 
+    def execute
       params = {email: email}
-      client.post('user/password_reset', params)
+      auth_client = Kontena::Client.new(auth_provider_url)
+      auth_client.post('user/password_reset', params)
       puts 'Email with password reset instructions is sent to your email address. Please follow the instructions to change your password.'
     end
   end
