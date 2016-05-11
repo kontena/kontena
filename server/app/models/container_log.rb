@@ -16,6 +16,5 @@ class ContainerLog
   index({ grid_service_id: 1 })
   index({ container_id: 1 })
   index({ name: 1 })
-  index({ data: 'text' }, { background: true })
   index({ created_at: 1 })
 end

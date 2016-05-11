@@ -34,7 +34,6 @@ V1::GridsApi.route('grid_container_logs') do |r|
           scope = scope.where(grid_service_id: {:$in => services}) if services
           scope = scope.where(host_node_id: {:$in => nodes}) if nodes
           scope = scope.where(name: {:$in => container_names}) if container_names
-          scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
           scope = scope.where(:id.gt => from) unless from.nil?
           if !since.nil? && from.nil?
             since = DateTime.parse(since) rescue nil
@@ -57,7 +56,6 @@ V1::GridsApi.route('grid_container_logs') do |r|
         scope = scope.where(grid_service_id: {:$in => services}) if services
         scope = scope.where(host_node_id: {:$in => nodes}) if nodes
         scope = scope.where(name: {:$in => container_names}) if container_names
-        scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
         scope = scope.where(:id.gt => from ) unless from.nil?
         if !since.nil? && from.nil?
           since = DateTime.parse(since) rescue nil
