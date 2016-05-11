@@ -3,7 +3,6 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
 
     option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
-    option ["-s", "--search"], "SEARCH", "Search from logs"
     option "--lines", "LINES", "Number of lines to show from the end of the logs"
     option "--since", "SINCE", "Show logs since given timestamp"
     option "--node", "NODE", "Filter by node name", multivalued: true
@@ -18,7 +17,6 @@ module Kontena::Cli::Grids
       query_params[:nodes] = node_list.join(",") unless node_list.empty?
       query_params[:services] = service_list.join(",") unless service_list.empty?
       query_params[:containers] = container_list.join(",") unless container_list.empty?
-      query_params[:search] = search if search
       query_params[:limit] = lines if lines
       query_params[:since] = since if since
 

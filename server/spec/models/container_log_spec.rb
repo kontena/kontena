@@ -15,5 +15,4 @@ describe ContainerLog do
   it { should have_index_for(host_node_id: 1) }
   it { should have_index_for(grid_service_id: 1) }
   it { should have_index_for(name: 1) }
-  it { should have_index_for(data: 'text') }
 end

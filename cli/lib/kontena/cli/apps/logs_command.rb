@@ -10,7 +10,6 @@ module Kontena::Cli::Apps
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
     option "--since", "SINCE", "Show logs since given timestamp"
-    option ["-s", "--search"], "SEARCH", "Search from logs"
     option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     parameter "[SERVICE] ...", "Show only specified service logs"
 
@@ -36,7 +35,6 @@ module Kontena::Cli::Apps
         query_params << "from=#{last_id}" unless last_id.nil?
         query_params << "limit=#{lines}"
         query_params << "since=#{since}" if !since.nil? && last_id.nil?
-        query_params << "search=#{search}" if search
         logs = []
         services.each do |service_name, opts|
           service = get_service(token, prefixed_name(service_name)) rescue false

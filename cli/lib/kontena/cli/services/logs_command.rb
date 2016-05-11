@@ -10,7 +10,6 @@ module Kontena::Cli::Services
     option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
     option "--since", "SINCE", "Show logs since given timestamp"
-    option ["-s", "--search"], "SEARCH", "Search from logs"
     option ["-i", "--instance"], "INSTANCE", "Show only given instance specific logs"
 
     def execute
@@ -22,7 +21,6 @@ module Kontena::Cli::Services
         query_params << "limit=#{lines}"
         query_params << "from=#{last_id}" unless last_id.nil?
         query_params << "since=#{since}" if !since.nil? && last_id.nil?
-        query_params << "search=#{search}" if search
         query_params << "container=#{name}-#{instance}" if instance
 
         result = client(token).get("services/#{current_grid}/#{name}/container_logs?#{query_params.join('&')}")
