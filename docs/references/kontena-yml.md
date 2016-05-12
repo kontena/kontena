@@ -379,11 +379,7 @@ app:
     post_start:
       - name: sleep
         cmd: sleep 10
-        instances: *
-  log_driver: fluentd
-  log_opt:
-    fluentd-address: 192.168.99.1:24224
-    fluentd-tag: docker.{{.Name}}
+        instances: *  
 db:
   image: mysql:5.6
   stateful: true
