@@ -97,6 +97,13 @@ describe Agent::ContainerInfoMapper do
       expect(container.env).to eq(['FOO=bar'])
     end
 
+    it 'strips secrets from env' do
+      service.secrets.create(secret: 'TEST_FOO', name: 'FOO', type: 'env')
+      docker_data['Config']['Env'] = ['FOO=bar','BAR=baz']
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.env).to eq(['BAR=baz'])
+    end
+
     it 'sets running state' do
       docker_data['State']['Running'] = true
       subject.container_attributes_from_docker(container, docker_data)
