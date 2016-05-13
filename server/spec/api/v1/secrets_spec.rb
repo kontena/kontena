@@ -33,6 +33,21 @@ describe 'secrets' do
       }.to change{ grid.grid_secrets.count }.by(1)
     end
 
+    it 'creates an audit entry' do
+      data = {name: 'PASSWD', value: 'secretzz'}
+      expect {
+        post "/v1/grids/#{grid.to_path}/secrets", data.to_json, request_headers
+      }.to change{ grid.audit_logs.count }.by(1)
+    end
+
+    it 'filters request body from audit entry' do
+      data = {name: 'PASSWD', value: 'secretzz'}
+
+      post "/v1/grids/#{grid.to_path}/secrets", data.to_json, request_headers
+      entry = grid.audit_logs.last
+      expect(entry.request_body).to be_nil
+    end
+
     it 'returns error on duplicate name' do
       grid.grid_secrets.create!(name: 'PASSWD', value: 'aaaa')
       data = {name: 'PASSWD', value: 'secretzz'}
@@ -55,6 +70,22 @@ describe 'secrets' do
         put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
         expect(response.status).to eq(200)
       }.to change{ secret.reload.value }.to('secretzz')
+    end
+
+    it 'creates an audit entry' do
+      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+      data = {value: 'secretzz'}
+      expect {
+        put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
+      }.to change{ grid.audit_logs.count }.by(1)
+    end
+
+    it 'filters request body from audit entry' do
+      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+      data = {value: 'secretzz'}
+      put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
+      entry = grid.audit_logs.last
+      expect(entry.request_body).to be_nil
     end
 
     it 'returns error if secret not found' do

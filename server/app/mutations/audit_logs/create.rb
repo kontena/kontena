@@ -4,7 +4,7 @@ module AuditLogs
       model :user
       model :grid
       string :event_name
-      string :event_status
+      string :event_status, default: 'success'
       string :resource_type
       string :resource_id
       string :source_ip, default: '0.0.0.0'

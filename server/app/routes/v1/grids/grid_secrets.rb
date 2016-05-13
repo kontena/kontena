@@ -14,7 +14,7 @@ V1::GridsApi.route('grid_secrets') do |r|
     if outcome.success?
       response.status = 201
       @grid_secret = outcome.result
-      audit_event(r, @grid, @grid_secret, 'create')
+      audit_event(r, @grid, @grid_secret, 'create', nil, [:body])
       render('grid_secrets/show')
     else
       response.status = 422
@@ -33,7 +33,7 @@ V1::GridsApi.route('grid_secrets') do |r|
           value: data['value']
         )
         if outcome.success?
-          audit_event(r, @grid, secret, 'update secret')
+          audit_event(r, @grid, secret, 'update secret', nil, [:body])
           response.status = 200
           @grid_secret = outcome.result
           render('grid_secrets/show')
