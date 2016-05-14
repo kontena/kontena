@@ -281,14 +281,17 @@ module Kontena
         # @param [String] memory
         # @return [Integer]
         def parse_memory(memory)
-          if memory.end_with?('k')
+          case memory
+          when /^\d+(k|K)$/
             memory.to_i * 1024
-          elsif memory.end_with?('m')
+          when /^\d+(m|M)$/
             memory.to_i * 1024 * 1024
-          elsif memory.end_with?('g')
+          when /^\d+(g|G)$/
             memory.to_i * 1024 * 1024 * 1024
-          else
+          when /^\d+$/
             memory.to_i
+          else
+            raise ArgumentError.new("Invalid memory value: #{memory}")
           end
         end
 
