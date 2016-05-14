@@ -87,6 +87,7 @@ module Agent
       config = info['Config'] || {}
       labels = config['Labels'] || {}
       state = info['State'] || {}
+      strip_secrets_from_env(container.grid_service, config['Env']) if container.grid_service
       attributes = {
           container_id: info['Id'],
           driver: info['Driver'],
@@ -124,6 +125,16 @@ module Agent
       end
 
       attributes
+    end
+
+    # @param [GridService] grid_service
+    # @param [Array] env
+    # @return [Array]
+    def strip_secrets_from_env(grid_service, env)
+      grid_service.secrets.each do |secret|
+        env.delete_if { |item| item.split('=').first == secret.name }
+      end
+      env
     end
 
     # @param [Container] container
