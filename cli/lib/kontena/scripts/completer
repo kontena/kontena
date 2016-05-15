@@ -55,8 +55,14 @@ class Helper
   end
 
   def yml_services
-    if File.exist?('kontena.yml')      
-      yaml = YAML.load(File.read('kontena.yml'))
+    # Check if using another configuration file instead of 'kontena.yml'
+    # and list the services from that. Fallback to 'kontena.yml'
+    for i in 0...ARGV.length
+      file_name = ARGV[i + 1] if '-f' == ARGV[i] || '--file' == ARGV[i]
+    end
+    file_name = 'kontena.yml' if file_name == nil
+    if File.exist?(file_name)
+      yaml = YAML.load(File.read(file_name))
       if yaml['version'] == '2'
         services = yaml['services']
       else
@@ -151,7 +157,11 @@ if words.size > 0
       completion.clear
       sub_commands = %w(init build config deploy start stop remove rm ps list
                         logs monitor show)
-      if words[1]
+      # List current directory entries when using another configuration file
+      if words[1] && (words[2] == '-f' || words[2] == '--file') &&
+         !Dir.entries('.').include?(words[3])
+        completion.push(Dir.entries('.'))
+      elsif words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.yml_services
       else
