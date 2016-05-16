@@ -16,6 +16,7 @@ module Kontena::Cli::Master::Aws
     option "--storage", "STORAGE", "Storage size (GiB)", default: '30'
     option "--vault-secret", "VAULT_SECRET", "Secret key for Vault (default: generate random secret)"
     option "--vault-iv", "VAULT_IV", "Initialization vector for Vault (default: generate random iv)"
+    option "--mongodb-uri", "URI", "External MongoDB uri (optional)"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
     option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url (optional)"
 
@@ -34,7 +35,8 @@ module Kontena::Cli::Master::Aws
           key_pair: key_pair,
           auth_server: auth_provider_url,
           vault_secret: vault_secret || SecureRandom.hex(24),
-          vault_iv: vault_iv || SecureRandom.hex(24)
+          vault_iv: vault_iv || SecureRandom.hex(24),
+          mongodb_uri: mongodb_uri
       )
     end
   end
