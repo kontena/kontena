@@ -96,9 +96,15 @@ class GridService
 
   # @return [Boolean]
   def all_instances_exist?
-    self.containers.unscoped.where(
-      'container_type' => 'container', 'state.running' => true
-    ).count >= self.container_count
+    if self.strategy == 'daemon'
+      self.containers.unscoped.where(
+        'container_type' => 'container', 'state.running' => true
+      ).count == (self.container_count * self.grid.host_nodes.connected.count)
+    else
+      self.containers.unscoped.where(
+        'container_type' => 'container', 'state.running' => true
+      ).count == self.container_count
+    end
   end
 
   # @return [Boolean]
