@@ -44,6 +44,15 @@ class ServiceBalancerJob
           return true
         end
       end
+      if service.containers.any?{|c| service.net == 'bridge' && c.overlay_cidr.nil?}
+        service.set(:updated_at => Time.now)
+        return true
+      end
+    elsif service.running? && service.stateful?
+      if service.containers.any?{|c| service.net == 'bridge' && c.overlay_cidr.nil?}
+        service.set(:updated_at => Time.now)
+        return true
+      end
 
       false
     else

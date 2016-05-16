@@ -10,6 +10,7 @@ describe ServiceBalancerJob do
   describe '#should_balance_service?' do
     let(:service) do
       GridService.new(
+        name: 'foo',
         state: 'running',
         created_at: 5.minutes.ago,
         updated_at: 4.minutes.ago
@@ -17,9 +18,25 @@ describe ServiceBalancerJob do
     end
 
     context 'stateful' do
-      it 'returns false' do
+      it 'returns false by default' do
         service.stateful = true
         expect(subject.should_balance_service?(service)).to be_falsey
+      end
+
+      it 'returns false if all instances have overlay_cidr' do
+        service.stateful = true
+        container = Container.new
+        allow(container).to receive(:overlay_cidr).and_return(spy)
+        containers = [container]
+        allow(service).to receive(:containers).and_return(containers)
+        expect(subject.should_balance_service?(service)).to be_falsey
+      end
+
+      it 'returns true if any of the instances are missing overlay_cidr' do
+        service.stateful = true
+        containers = [Container.new]
+        allow(service).to receive(:containers).and_return(containers)
+        expect(subject.should_balance_service?(service)).to be_truthy
       end
     end
 
@@ -59,6 +76,27 @@ describe ServiceBalancerJob do
         service.deploy_opts.interval = 60 * 60
         allow(service).to receive(:all_instances_exist?).and_return(true)
         expect(subject.should_balance_service?(service)).to be_falsey
+      end
+
+      it 'returns false by default' do
+        service.stateful = true
+        expect(subject.should_balance_service?(service)).to be_falsey
+      end
+
+      it 'returns false if all instances have overlay_cidr' do
+        container = Container.new
+        allow(container).to receive(:overlay_cidr).and_return(spy)
+        containers = [container]
+        allow(service).to receive(:containers).and_return(containers)
+        expect(subject.should_balance_service?(service)).to be_falsey
+      end
+
+      it 'returns true if any of the instances are missing overlay_cidr' do
+        service.deployed_at = 3.minutes.ago
+        containers = [Container.new]
+        allow(service).to receive(:all_instances_exist?).and_return(true)
+        allow(service).to receive(:containers).and_return(containers)
+        expect(subject.should_balance_service?(service)).to be_truthy
       end
     end
   end
