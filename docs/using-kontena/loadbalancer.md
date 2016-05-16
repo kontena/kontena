@@ -134,4 +134,5 @@ loadbalancer:
 * `KONTENA_LB_EXTERNAL_PORT`: service port that load balancer starts to listen (only for tcp mode)
 * `KONTENA_LB_VIRTUAL_HOSTS`: comma separated list of virtual hosts (only for http mode)
 * `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request, example "/api" (only for http mode)
+* `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings, each line will be appended to either related backend section or listen session in the HAProxy configuration file
