@@ -60,9 +60,6 @@ class GridServiceDeployer
 
     deploy_rev = Time.now.utc.to_s
     deploy_futures = []
-    %w(TERM).each do |signal|
-      Signal.trap(signal) { self.grid_service.set_state('running') }
-    end
     total_instances = self.instance_count
     total_instances.times do |i|
       instance_number = i + 1
