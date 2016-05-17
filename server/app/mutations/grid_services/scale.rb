@@ -10,7 +10,7 @@ module GridServices
 
     def execute
       self.grid_service.set(:container_count => self.instances)
-      worker(:grid_service_scheduler).async.perform(self.grid_service.id)
+      GridServiceDeploy.create(grid_service: self.grid_service)
       self.grid_service
     end
   end

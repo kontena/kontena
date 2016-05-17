@@ -3,9 +3,10 @@ require_relative '../spec_helper'
 describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
+  let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service) }
   let(:node1) { HostNode.create!(node_id: SecureRandom.uuid, grid: grid) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
-  let(:subject) { described_class.new(strategy, grid_service, grid.host_nodes.to_a) }
+  let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
 
   describe '#registry_name' do
     it 'returns DEFAULT_REGISTRY by default' do
@@ -39,7 +40,8 @@ describe GridServiceDeployer do
         image_name: 'kontena/redis:2.8', name: 'redis', grid: grid,
         container_count: 3, affinity: ['label==foo']
       )
-      subject = described_class.new(strategy, service, grid.host_nodes.to_a)
+      service_deploy = GridServiceDeploy.create(grid_service: service)
+      subject = described_class.new(strategy, service_deploy, grid.host_nodes.to_a)
       expect(subject.selected_nodes.size).to eq(3)
       expect(subject.selected_nodes.uniq.size).to eq(2)
     end
@@ -58,8 +60,9 @@ describe GridServiceDeployer do
         image_name: 'kontena/redis:2.8', name: 'redis', grid: grid,
         container_count: 3, affinity: ['label==foo']
       )
+      service_deploy = GridServiceDeploy.create(grid_service: service)
       subject = described_class.new(
-        Scheduler::Strategy::Daemon.new, service, grid.host_nodes.to_a
+        Scheduler::Strategy::Daemon.new, service_deploy, grid.host_nodes.to_a
       )
       expect(subject.instance_count).to eq(6)
     end

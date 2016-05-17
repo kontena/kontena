@@ -37,7 +37,7 @@ class GridScheduler
   # @param [GridService] service
   def reschedule_stateless_service(service)
     if should_reschedule_service?(service)
-      worker(:grid_service_scheduler).async.perform(service.id)
+      GridServiceDeploy.create(grid_service: service)
     else
       info "seems that re-scheduling does not change anything for #{service.to_path}... skipping"
     end

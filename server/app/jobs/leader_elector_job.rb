@@ -30,7 +30,7 @@ class LeaderElectorJob
   # Fastest master to acquire lock wins
   def elect
     with_dlock(DLOCK_KEY, nil) do
-      info "Ok, we are the leader of masters" unless @was_leader
+      info "won election ♚" unless @was_leader
       promote
       sleep 58
     end

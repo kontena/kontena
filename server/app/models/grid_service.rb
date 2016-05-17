@@ -40,6 +40,7 @@ class GridService
   has_many :container_logs
   has_many :container_stats
   has_many :audit_logs
+  has_many :grid_service_deploys, dependent: :destroy
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
@@ -75,6 +76,11 @@ class GridService
   end
 
   # @return [Boolean]
+  def initialized?
+    self.state == 'initialized'
+  end
+
+  # @return [Boolean]
   def deploying?
     self.state == 'deploying'
   end
@@ -85,7 +91,7 @@ class GridService
   end
 
   def deploy_pending?
-    self.state == 'deploy_pending'
+    self.grid_service_deploys.where(started_at: nil).count > 0
   end
 
   # @return [Boolean]
