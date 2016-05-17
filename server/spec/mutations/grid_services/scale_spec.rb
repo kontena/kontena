@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe GridServices::Deploy do
+describe GridServices::Scale do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
 
@@ -12,8 +12,16 @@ describe GridServices::Deploy do
     grid.host_nodes << host_node
     grid
   }
-  let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
-  let(:subject) { described_class.new(current_user: user, grid_service: redis_service, instances: 2)}
+  let(:redis_service) {
+    GridService.create(
+      grid: grid, name: 'redis', image_name: 'redis:2.8'
+    )
+  }
+  let(:subject) {
+    described_class.new(
+      current_user: user, grid_service: redis_service, instances: 2
+    )
+  }
 
   describe '#run' do
     it 'sends deploy call to worker' do
@@ -23,6 +31,7 @@ describe GridServices::Deploy do
     end
 
     it 'updates container_count' do
+      redis_service # create
       expect {
         subject.run
       }.to change{ redis_service.reload.container_count }.from(1).to(2)
