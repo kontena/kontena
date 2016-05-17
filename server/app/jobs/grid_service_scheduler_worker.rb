@@ -1,8 +1,8 @@
 class GridServiceSchedulerWorker
   include Celluloid
 
-  def initialize
-    async.watch
+  def initialize(autostart = true)
+    async.watch if autostart
   end
 
   def watch

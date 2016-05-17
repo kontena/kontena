@@ -7,22 +7,26 @@ describe GridServiceSchedulerWorker do
   let(:grid) { Grid.create(name: 'test')}
   let(:service) { GridService.create(name: 'test', image_name: 'foo/bar:latest', grid: grid)}
   let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
+  let(:subject) { described_class.new(false) }
 
   describe '#check_deploy_queue' do
     it 'picks oldest item from deploy queue' do
       newest = service_deploy
       oldest = GridServiceDeploy.create(grid_service: service, created_at: 1.minute.ago)
-      sleep 0.1
       subject.check_deploy_queue
-
-      puts newest.reload.started_at
-      puts oldest.reload.started_at
-      #expect(newest.reload.started_at).to be_nil
-      #expect(oldest.reload.started_at).not_to be_nil
+      expect(newest.reload.started_at).to be_nil
+      expect(oldest.reload.started_at).not_to be_nil
     end
 
     it 'triggers perform if service can be deployed' do
       expect(subject.wrapped_object).to receive(:perform).with(service_deploy)
+      subject.check_deploy_queue
+    end
+
+    it 'does not create deploy if service is stopped' do
+      service.set_state('stopped')
+      service_deploy # create
+      expect(subject.wrapped_object).not_to receive(:perform)
       subject.check_deploy_queue
     end
   end
