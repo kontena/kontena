@@ -25,12 +25,11 @@ module Kontena::Cli::Apps
       elsif !service_list.empty?
         puts "No such service: #{service_list.join(', ')}".colorize(:red)
       end
-
     end
 
     private
     def remove_services(services)
-      services.find_all {|service_name, options| options['links'] && options['links'].size > 0 }.each do |service_name, options|
+      services.find_all {|service_name, options| options[:links] && options[:links].size > 0 }.each do |service_name, options|
         delete(service_name, options, false)
         services.delete(service_name)
       end

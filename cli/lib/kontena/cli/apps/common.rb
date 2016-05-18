@@ -1,7 +1,9 @@
 require 'yaml'
 require_relative '../services/services_helper'
+require_relative './service_generator'
 
 module Kontena::Cli::Apps
+  require_relative './yaml/reader'
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
@@ -14,7 +16,12 @@ module Kontena::Cli::Apps
     # @param [String] prefix
     # @return [Hash]
     def load_services(filename, service_list, prefix)
-      services = parse_services(filename, nil, prefix)
+      ENV['project'] = prefix
+      ENV['grid'] = current_grid
+      reader = YAML::Reader.new(filename)
+      outcome = reader.execute
+      abort_on_validation_failure(outcome[:errors]) if outcome[:errors].size > 0
+      services = ServiceGenerator.new(outcome[:result]).generate
       services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
       services
     end
@@ -43,76 +50,6 @@ module Kontena::Cli::Apps
       get_service(token, prefixed_name(name)) rescue false
     end
 
-    # @param [String] file
-    # @param [String,NilClass] name
-    # @param [String] prefix
-    # @return [Hash]
-    def parse_services(file, name = nil, prefix = '')
-      services = YAML.load(File.read(File.expand_path(file)) % {project: prefix, grid: current_grid})
-      Dir.chdir(File.dirname(File.expand_path(file))) do
-        services.each do |name, options|
-          normalize_env_vars(options)
-          if options.has_key?('extends')
-            extension_file = options['extends']['file']
-            service_name =  options['extends']['service']
-            options.delete('extends')
-            services[name] = extend_options(options, extension_file , service_name, prefix)
-          end
-        end
-      end
-      if name.nil?
-        services
-      else
-        abort("Service #{name} not found in #{file}") unless services.has_key?(name)
-        services[name]
-      end
-    end
-
-    # @param [Hash] options
-    # @param [String] file
-    # @param [String] service_name
-    # @param [String] prefix
-    # @return [Hash]
-    def extend_options(options, file, service_name, prefix)
-      parent_options = parse_services(file, service_name, prefix)
-      options['environment'] = extend_env_vars(parent_options['environment'], options['environment'])
-      options['secrets'] = extend_secrets(parent_options['secrets'], options['secrets'])
-      parent_options.merge(options)
-    end
-
-    # @param [Hash] options
-    def normalize_env_vars(options)
-      if options['environment'].is_a?(Hash)
-        options['environment'] = options['environment'].map{|k, v| "#{k}=#{v}"}
-      end
-    end
-
-    # @param [Array] from
-    # @param [Array] to
-    # @return [Array]
-    def extend_env_vars(from, to)
-      env_vars = to || []
-      if from
-        from.each do |env|
-          env_vars << env unless to && to.find {|key| key.split('=').first == env.split('=').first}
-        end
-      end
-      env_vars
-    end
-
-    # @param [Array] from
-    # @param [Array] to
-    # @return [Array]
-    def extend_secrets(from, to)
-      secrets = to || []
-      if from
-        from.each do |from_secret|
-          secrets << from_secret unless to && to.any? {|to_secret| to_secret['secret'] == from_secret['secret']}
-        end
-      end
-      secrets
-    end
-
     # @param [Hash] services
     # @param [String] file
     def create_yml(services, file = 'kontena.yml')
@@ -130,6 +67,25 @@ module Kontena::Cli::Apps
       end
       @app_json
     end
+
+    def abort_on_validation_failure(errors)
+      STDERR.puts "YAML validation failed!".colorize(:red)
+      errors.each do |files|
+        files.each do |file, services|
+          STDERR.puts "#{file}:".colorize(:red)
+          services.each do |service|
+            service.each do |name, errors|
+              STDERR.puts "  #{name}:".colorize(:red)
+              errors.each do |key, error|
+                STDERR.puts "    - #{key}: #{error.to_json}".colorize(:red)
+              end
+            end
+          end
+        end
+      end
+      abort
+    end
+
 
     def valid_addons(prefix=nil)
       if prefix
