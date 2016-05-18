@@ -11,12 +11,33 @@ can be installed via rubygems.
 
 ## Versions
 
-* [0.11 to 0.12 (latest)](upgrading#upgrading-from-0-11-to-0-12-latest-)
+* [0.12 to 0.13 (latest)](upgrading#upgrading-from-0-12-to-0-13-latest-)
+* [0.11 to 0.12](upgrading#upgrading-from-0-11-to-0-12)
 * [0.10 to 0.11](upgrading#upgrading-from-0-10-to-0-11)
 * [0.9 to 0.10](upgrading#upgrading-from-0-9-to-0-10)
 * [0.8 to 0.9](upgrading#upgrading-from-0-8-to-9)
 
-### Upgrading from 0.11 to 0.12 (latest)
+### Upgrading from 0.12 to 0.13 (latest)
+
+** Official Installation Method**
+
+- restart master:
+
+```
+$ sudo systemctl restart kontena-server-api
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+- update cli:
+
+```
+$ gem install kontena-cli
+```
+
+** Custom Installs**
+- update master, agent and cli to 0.13
+
+### Upgrading from 0.11 to 0.12
 
 ** Official Installation Method**
 
