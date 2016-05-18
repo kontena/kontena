@@ -17,7 +17,7 @@
 - schedule deploy if service instance has missing overlay_cidr (#685)
 - remove invalid signal trap (#689)
 
-** CLI **
+**CLI**
 - pre-build hooks (#588)
 - unify cli subcommands (#648)
 - improved memory parsing (#681)
