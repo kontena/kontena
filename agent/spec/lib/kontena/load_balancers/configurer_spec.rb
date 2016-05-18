@@ -74,6 +74,13 @@ describe Kontena::LoadBalancers::Configurer do
       subject.ensure_config(container)
     end
 
+    it 'sets keep_virtual_path' do
+      container.env_hash['KONTENA_LB_KEEP_VIRTUAL_PATH'] = 'true'
+      expect(etcd).to receive(:set).
+        with("#{etcd_prefix}/lb/services/test-api/keep_virtual_path", {value: 'true'})
+      subject.ensure_config(container)
+    end
+
     it 'sets custom virtual_hosts' do
       container.env_hash['KONTENA_LB_VIRTUAL_HOSTS'] = 'www.domain.com'
       expect(etcd).to receive(:set).
