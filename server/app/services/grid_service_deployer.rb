@@ -91,21 +91,17 @@ class GridServiceDeployer
 
     true
   rescue NodeMissingError => exc
-    self.grid_service.set_state('running')
     error exc.message
     info "service #{self.grid_service.to_path} deploy cancelled"
     false
   rescue DeployError => exc
-    self.grid_service.set_state('running')
     error exc.message
     false
   rescue RpcClient::Error => exc
-    self.grid_service.set_state('running')
     error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
   rescue => exc
-    self.grid_service.set_state('running')
     error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
