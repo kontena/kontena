@@ -16,14 +16,13 @@ module GridServices
 
     def execute
       attrs = {
-        :deploy_requested_at => Time.now.utc,
-        :state => 'deploy_pending'
+        :deploy_requested_at => Time.now.utc
       }
       if self.force
         attrs[:updated_at] = Time.now.utc
       end
       self.grid_service.set(attrs)
-      worker(:grid_service_scheduler).async.perform(self.grid_service.id)
+      GridServiceDeploy.create(grid_service: self.grid_service)
 
       self.grid_service
     end

@@ -11,16 +11,28 @@ class GridServiceDeployer
 
   DEFAULT_REGISTRY = 'index.docker.io'
 
-  attr_reader :grid_service, :nodes, :scheduler
+  attr_reader :grid_service_deploy, :grid_service, :nodes, :scheduler
 
   ##
   # @param [#find_node] strategy
-  # @param [GridService] grid_service
+  # @param [GridServiceDeploy] grid_service_deploy
   # @param [Array<HostNode>] nodes
-  def initialize(strategy, grid_service, nodes)
+  def initialize(strategy, grid_service_deploy, nodes)
+    @grid_service_deploy = grid_service_deploy
     @scheduler = GridServiceScheduler.new(strategy)
-    @grid_service = grid_service
+    @grid_service = grid_service_deploy.grid_service
     @nodes = nodes
+    self.subscribe_to_ping
+  end
+
+  def subscribe_to_ping
+    channel = "grid_service_deployer:#{grid_service.id}"
+    MongoPubsub.subscribe(channel) do |event|
+      event_name = event['event'].to_s
+      if event_name == 'ping'
+        MongoPubsub.publish(channel, {event: 'pong'})
+      end
+    end
   end
 
   ##
@@ -63,7 +75,7 @@ class GridServiceDeployer
     total_instances = self.instance_count
     total_instances.times do |i|
       instance_number = i + 1
-      unless self.grid_service.deploying?
+      unless self.grid_service.reload.deploying?
         raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
       end
       self.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, creds)
@@ -73,29 +85,28 @@ class GridServiceDeployer
 
     self.cleanup_deploy(total_instances, deploy_rev)
 
+    self.grid_service_deploy.set(finished_at: Time.now.utc)
     info "service #{self.grid_service.to_path} has been deployed"
     self.grid_service.set_state('running')
 
     true
   rescue NodeMissingError => exc
-    self.grid_service.set_state('running')
     error exc.message
     info "service #{self.grid_service.to_path} deploy cancelled"
     false
   rescue DeployError => exc
-    self.grid_service.set_state('running')
     error exc.message
     false
   rescue RpcClient::Error => exc
-    self.grid_service.set_state('running')
     error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
   rescue => exc
-    self.grid_service.set_state('running')
     error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     false
+  ensure
+    self.grid_service.set_state('running')
   end
 
   # @param [Integer] total_instances

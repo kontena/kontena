@@ -21,6 +21,7 @@ describe GridService do
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
+  it { should have_many(:grid_service_deploys) }
 
 
   it { should have_index_for(grid_id: 1) }

@@ -19,13 +19,8 @@ describe GridSecrets::Create do
     service.secrets << GridServiceSecret.create(grid_service: service, secret: 'db_secret', name: 'service_secret', type: 'env')
     service
   }
-  let(:worker) { spy(:worker) }
 
   describe '#run' do
-    before(:each) do
-      allow(subject).to receive(:worker).with(:grid_service_scheduler).and_return(worker)
-    end
-    
     it 'creates a new grid secret' do
       expect {
         subject.run
@@ -46,11 +41,9 @@ describe GridSecrets::Create do
     it 'schedules deploy for related grid services' do
       web # create
       db # create
-
-      expect(subject).to receive(:worker).with(:grid_service_scheduler).once.and_return(worker)
-      expect(worker).to receive(:perform).once.with(web.id)
-      expect(worker).not_to receive(:perform).with(web.id)
-      subject.run
+      expect {
+        subject.run
+      }.to change{ web.grid_service_deploys.count }.by(1)
     end
   end
 end

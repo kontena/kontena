@@ -7,7 +7,7 @@ cache: bundler
 addons:
   apt:
     sources:
-      - mongodb-upstart
+      - mongodb-3.0-precise
     packages:
       - mongodb-org-server
 env:
