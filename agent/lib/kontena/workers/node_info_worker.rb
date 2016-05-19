@@ -85,14 +85,10 @@ module Kontena::Workers
     # @return [String]
     def private_ip
       if ENV['KONTENA_PRIVATE_IP'].to_s != ''
-        ip = ENV['KONTENA_PRIVATE_IP'].to_s.strip
+        ENV['KONTENA_PRIVATE_IP'].to_s.strip
       else
-        ip = interface_ip(private_interface)
-        unless ip
-          ip = interface_ip('eth0')
-        end
+        interface_ip(private_interface) || interface_ip('eth0')
       end
-      ip
     end
 
     # @return [String]
