@@ -92,6 +92,19 @@ class HostNode
     @schedule_counter ||= 0
   end
 
+  # @return [String]
+  def region
+    if @region.nil?
+      @region = 'default'
+      self.labels.each do |label|
+        if match = label.match(/^region=(.+)/)
+          @region = match[1]
+        end
+      end
+    end
+    @region
+  end
+
   private
 
   def reserve_node_number

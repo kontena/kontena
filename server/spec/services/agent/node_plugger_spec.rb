@@ -3,7 +3,12 @@ require_relative '../../spec_helper'
 describe Agent::NodePlugger do
 
   let(:grid) { Grid.create! }
-  let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
+  let(:node) {
+    HostNode.create!(
+      grid: grid, name: 'test-node', labels: ['region=ams2'],
+      private_ip: '10.12.1.2', public_ip: '80.240.128.3'
+    )
+  }
   let(:subject) { described_class.new(grid, node) }
   let(:client) { spy(:client) }
 
@@ -41,6 +46,22 @@ describe Agent::NodePlugger do
       node.set(:last_seen_at => (Time.now.utc - 1.minute - 59.seconds))
       expect(subject).not_to receive(:worker).with(:grid_scheduler)
       subject.plugin!
+    end
+  end
+
+  describe '#node_info' do
+    it 'returns correct peer ips' do
+      HostNode.create!(
+        grid: grid, name: 'test-node-2', labels: ['region=ams2'],
+        private_ip: '10.12.1.3', public_ip: '80.240.128.4'
+      )
+      HostNode.create!(
+        grid: grid, name: 'test-node-3', labels: ['region=ams3'],
+        private_ip: '10.23.1.4', public_ip: '146.185.176.0'
+      )
+      info = subject.node_info
+      expect(info['peer_ips']).to include('10.12.1.3')
+      expect(info['peer_ips']).to include('146.185.176.0')
     end
   end
 end

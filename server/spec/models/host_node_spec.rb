@@ -138,4 +138,15 @@ describe HostNode do
       expect(subject.name).to be_nil
     end
   end
+
+  describe '#region' do
+    it 'returns default if region is not found from labels' do
+      expect(subject.region).to eq('default')
+    end
+
+    it 'returns region from labels' do
+      subject.labels = ['foo=bar', 'region=ams2']
+      expect(subject.region).to eq('ams2')
+    end
+  end
 end
