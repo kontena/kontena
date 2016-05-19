@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1 (2016-05-19)
+
+- fix agent websocket hang on close when connection is unstable (#698)
+
 ## 0.13.0 (2016-05-18)
 
 **Master & Agent**
