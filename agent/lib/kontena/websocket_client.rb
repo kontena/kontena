@@ -31,7 +31,9 @@ module Kontena
         self.connect unless connected?
       }
       EM::PeriodicTimer.new(KEEPALIVE_TIME) {
-        self.verify_connection if connected?
+        if connected?
+          EM.next_tick{ self.verify_connection }
+        end
       }
     end
 
@@ -48,7 +50,7 @@ module Kontena
     def connect
       return if connecting?
       @connecting = true
-      info 'connecting to master'
+      info "connecting to master at #{api_uri}"
       headers = {
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
@@ -107,6 +109,7 @@ module Kontena
     def on_close(event)
       @connected = false
       @connecting = false
+      @ws = nil
       if event.code == 4001
         self.handle_invalid_token(event)
       elsif event.code == 4010
@@ -114,7 +117,6 @@ module Kontena
       end
       Celluloid::Notifications.publish('websocket:disconnect', event)
       info "connection closed with code: #{event.code}"
-      @ws = nil
     rescue => exc
       logger.error(LOG_NAME) { exc.message }
     end
@@ -150,16 +152,17 @@ module Kontena
     end
 
     def verify_connection
-      timer = EM::Timer.new(5) do
+      timer = EM::Timer.new(2) do
         if @connected
           info "did not receive pong, closing connection"
-          @connected = false
           self.ws.close(1000)
         end
       end
       self.ws.ping {
         timer.cancel
       }
+    rescue => exc
+      error exc.message
     end
   end
 end
