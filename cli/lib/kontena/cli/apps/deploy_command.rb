@@ -25,7 +25,7 @@ module Kontena::Cli::Apps
       require_config_file(filename)
       @deploy_queue = []
       @service_prefix = project_name || current_dir
-      @services = load_services(filename, service_list, service_prefix)
+      @services = services_from_yaml(filename, service_list, service_prefix)
       process_docker_images(services) if !no_build?
       create_or_update_services(services)
       deploy_services(deploy_queue)
@@ -73,7 +73,6 @@ module Kontena::Cli::Apps
       end
 
       merge_external_links(options)
-      merge_env_vars(options)
 
       if service_exists?(name)
         service = update(name, options)
@@ -113,31 +112,12 @@ module Kontena::Cli::Apps
     end
 
     # @param [Hash] options
-    def merge_env_vars(options)
-      return unless options['env_file']
-
-      options['env_file'] = [options['env_file']] if options['env_file'].is_a?(String)
-      options['environment'] = [] unless options['environment']
-
-      options['env_file'].each do |env_file|
-        options['environment'].concat(read_env_file(env_file))
-      end
-
-      options['environment'].uniq! {|s| s.split('=').first}
-    end
-
-    # @param [Hash] options
     def merge_external_links(options)
-      if options['external_links']
-        options['links'] ||= []
-        options['links'] = options['links'] + options['external_links']
-        options.delete('external_links')
+      if options[:external_links]
+        options[:links] ||= []
+        options[:links] = options[:links] + options[:external_links]
+        options.delete(:external_links)
       end
-    end
-
-    # @param [String] path
-    def read_env_file(path)
-      File.readlines(path).delete_if { |line| line.start_with?('#') || line.empty? }
-    end
+    end    
   end
 end

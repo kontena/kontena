@@ -168,85 +168,63 @@ describe Kontena::Cli::Apps::YAML::Reader do
   end
 
   describe '#execute' do
-    context 'version 1' do
-      before(:each) do
-        allow(ENV).to receive(:[]).with('project').and_return('test')
-        allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
+    before(:each) do
+      allow(ENV).to receive(:[]).with('project').and_return('test')
+      allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
 
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena.yml'))
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('docker-compose.yml'))
-          .and_return(fixture('docker-compose.yml'))
-      end
-
-      it 'extends services' do
-        docker_compose_yml = YAML.load(fixture('docker-compose.yml') % { project: 'test' })
-        wordpress_options = {
-          'stateful' => true,
-          'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
-          'instances' => 2,
-          'deploy' => { 'strategy' => 'ha' }
-        }
-        mysql_options = { 'stateful' => true, 'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'] }
-        expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
-          .with(wordpress_options)
-          .once
-          .and_return(service_extender)
-        expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
-          .with(mysql_options)
-          .once
-          .and_return(service_extender)
-        expect(service_extender).to receive(:extend).with(docker_compose_yml['wordpress'])
-        expect(service_extender).to receive(:extend).with(docker_compose_yml['mysql'])
-
-        subject.execute
-      end
-
-      context 'environment variables' do
-        it 'converts env hash to array' do
-          result = subject.execute[:result]
-          expect(result['wordpress']['environment']).to eq(['WORDPRESS_DB_PASSWORD=test_secret'])
-        end
-
-        it 'does nothing to env array' do
-          result = subject.execute[:result]
-          expect(result['mysql']['environment']).to eq(['MYSQL_ROOT_PASSWORD=test_secret'])
-        end
-      end
-      it 'returns result hash' do
-        outcome = subject.execute
-        expect(outcome[:result]).to eq(valid_result)
-      end
-
-      it 'returns validation errors' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena-invalid.yml'))
-        outcome = subject.execute        
-        expect(outcome[:errors].size).to eq(1)
-      end
-
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena.yml'))
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('docker-compose.yml'))
+        .and_return(fixture('docker-compose.yml'))
     end
 
-    context 'version 2' do
-      before(:each) do
-        allow(ENV).to receive(:[]).with('project').and_return('test')
-        allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
+    it 'extends services' do
+      docker_compose_yml = YAML.load(fixture('docker-compose.yml') % { project: 'test' })
+      wordpress_options = {
+        'stateful' => true,
+        'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
+        'instances' => 2,
+        'deploy' => { 'strategy' => 'ha' }
+      }
+      mysql_options = { 'stateful' => true, 'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'] }
+      expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
+        .with(wordpress_options)
+        .once
+        .and_return(service_extender)
+      expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
+        .with(mysql_options)
+        .once
+        .and_return(service_extender)
+      expect(service_extender).to receive(:extend).with(docker_compose_yml['wordpress'])
+      expect(service_extender).to receive(:extend).with(docker_compose_yml['mysql'])
 
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('kontena_v2.yml'))
+      subject.execute
+    end
 
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('docker-compose_v2.yml'))
-          .and_return(fixture('docker-compose_v2.yml'))
+    context 'environment variables' do
+      it 'converts env hash to array' do
+        result = subject.execute[:result]
+        expect(result['wordpress']['environment']).to eq(['WORDPRESS_DB_PASSWORD=test_secret'])
       end
-      it 'reads v2 format' do
-        allow_any_instance_of(Kontena::Cli::Apps::YAML::Validator).to receive(:validate).and_return([])
-        expect(subject.execute[:result]).to eq(valid_v2_result)
+
+      it 'does nothing to env array' do
+        result = subject.execute[:result]
+        expect(result['mysql']['environment']).to eq(['MYSQL_ROOT_PASSWORD=test_secret'])
       end
+    end
+    it 'returns result hash' do
+      outcome = subject.execute
+      expect(outcome[:result]).to eq(valid_result)
+    end
+
+    it 'returns validation errors' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena-invalid.yml'))
+      outcome = subject.execute
+      expect(outcome[:errors].size).to eq(1)
     end
   end
 end

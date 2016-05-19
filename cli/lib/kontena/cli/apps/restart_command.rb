@@ -16,7 +16,7 @@ module Kontena::Cli::Apps
       require_config_file(filename)
 
       @service_prefix = project_name || current_dir
-      @services = load_services(filename, service_list, service_prefix)
+      @services = services_from_yaml(filename, service_list, service_prefix)
       if services.size > 0
         restart_services(services)
       elsif !service_list.empty?

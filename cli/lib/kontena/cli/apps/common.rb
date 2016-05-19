@@ -1,9 +1,9 @@
 require 'yaml'
 require_relative '../services/services_helper'
 require_relative './service_generator'
+require_relative './yaml/reader'
 
 module Kontena::Cli::Apps
-  require_relative './yaml/reader'
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
@@ -15,15 +15,18 @@ module Kontena::Cli::Apps
     # @param [Array<String>] service_list
     # @param [String] prefix
     # @return [Hash]
-    def load_services(filename, service_list, prefix)
-      ENV['project'] = prefix
-      ENV['grid'] = current_grid
-      reader = YAML::Reader.new(filename)
-      outcome = reader.execute
+    def services_from_yaml(filename, service_list, prefix)
+      populate_env_variables(prefix, current_grid)
+      outcome = YAML::Reader.new(filename).execute
       abort_on_validation_failure(outcome[:errors]) if outcome[:errors].size > 0
       services = ServiceGenerator.new(outcome[:result]).generate
       services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
       services
+    end
+
+    def populate_env_variables(project, grid)
+      ENV['project'] = project
+      ENV['grid'] = grid
     end
 
     # @return [String]

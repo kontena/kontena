@@ -11,11 +11,7 @@ module Kontena::Cli::Apps
         @file = file
         @validation_errors = []
         load_yaml
-      end
-
-      def validate
-        result = validator.validate(yaml)
-        validation_errors << { file => result } if result.size > 0
+        validate unless v2?
       end
 
       ##
@@ -23,7 +19,6 @@ module Kontena::Cli::Apps
       # @return [Hash]
       def execute(service = nil)
         result = {}
-        validate
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:result] = parse_services(service)
         end
@@ -39,6 +34,21 @@ module Kontena::Cli::Apps
 
       private
 
+      def load_yaml
+        content = File.read(File.expand_path(file))
+        content = content % { project: ENV['project'], grid: ENV['grid'] }
+        interpolate(content)
+        replace_dollar_dollars(content)
+        @yaml = ::YAML.load(content)
+      end
+
+      # @return [Array] array of validation errors
+      def validate
+        result = validator.validate(yaml)
+        validation_errors << { file => result } if result.size > 0
+      end
+
+      # @return [Kontena::Cli::Apps::YAML::Validator]
       def validator
         if @validator.nil?
           @validator = YAML::Validator.new
@@ -46,9 +56,8 @@ module Kontena::Cli::Apps
         @validator
       end
 
-
       ##
-      # @param [String] service to parse
+      # @param [String] service - optional service to parse
       # @return [Hash]
       def parse_services(service = nil)
         if service.nil?
@@ -62,20 +71,15 @@ module Kontena::Cli::Apps
         end
       end
 
+      # @param [String] name - name of the service
+      # @param [Hash] options - service config
       def process_service(name, options)
         normalize_env_vars(options)
         options = extend_service(name, options) if options.key?('extends')
         options
       end
 
-      def load_yaml
-        content = File.read(File.expand_path(file))
-        content = content % { project: ENV['project'], grid: ENV['grid'] }
-        interpolate(content)
-        replace_dollar_dollars(content)
-        @yaml = ::YAML.load(content)
-      end
-
+      # @return [Hash] - services from YAML file
       def services
         if v2?
           yaml['services']
@@ -84,14 +88,8 @@ module Kontena::Cli::Apps
         end
       end
 
-      def populate_env_variables(options)
-        options.each do |key, value|
-          ENV[key.to_s] = value unless ENV.key?(key.to_s)
-        end
-      end
-
       ##
-      # @param [String] text
+      # @param [String] text - content of YAML file
       def interpolate(text)
         text.gsub!(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
           var = v.tr('${}', '')
@@ -101,14 +99,14 @@ module Kontena::Cli::Apps
       end
 
       ##
-      # @param [String] text
+      # @param [String] text - content of yaml file
       def replace_dollar_dollars(text)
         text.gsub!('$$', '$')
       end
 
-      # @param [String] name
-      # @param [Hash] options
-      # @return [Hash]
+      # @param [String] name - name of the service
+      # @param [Hash] options - service config
+      # @return [Hash] - updated service config
       def extend_service(name, options)
         service = options['extends']['service']
         file_name = options['extends']['file']
@@ -128,7 +126,7 @@ module Kontena::Cli::Apps
         ServiceExtender.new(options).extend(parent_service)
       end
 
-      # @param [Hash] options
+      # @param [Hash] options - service config
       def normalize_env_vars(options)
         if options['environment'].is_a?(Hash)
           options['environment'] = options['environment'].map { |k, v| "#{k}=#{v}" }

@@ -26,9 +26,10 @@ module Kontena::Cli::Apps
           optional('mem_limit') { int? | str? }
           optional('memswap_limit') { int? | str? }
           optional('environment') { array? | type?(Hash) }
-          optional('env_file') { str? }
+          optional('env_file') { str? | array? }
           optional('external_links') { str? }
           optional('instances') { int? }
+          optional('external_links') { array? }
           optional('links') { array? }
           optional('ports') { array? }
           optional('volumes') { array? }
