@@ -56,7 +56,7 @@ class ServiceBalancerJob
   def should_balance_service?(service)
     if service.running? && service.stateless?
       return false if service.deployed_at.nil?
-      return true if !service.all_instances_exist?
+      return true if !self.all_instances_exist?(service)
       if service.containers.any?{|c| service.net == 'bridge' && c.overlay_cidr.nil?}
         service.set(:updated_at => Time.now)
         return true
@@ -82,6 +82,25 @@ class ServiceBalancerJob
       false
     else
       false
+    end
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def all_instances_exist?(service)
+    if service.strategy == 'daemon'
+      return false unless service.grid
+
+      running_count = service.containers.unscoped.where(
+        'container_type' => 'container', 'state.running' => true
+      ).count
+      max = (service.container_count * service.grid.host_nodes.connected.count)
+      min = service.container_count
+      running_count >= min && running_count <= max
+    else
+      service.containers.unscoped.where(
+        'container_type' => 'container', 'state.running' => true
+      ).count == service.container_count
     end
   end
 
