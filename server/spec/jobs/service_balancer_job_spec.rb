@@ -96,9 +96,8 @@ describe ServiceBalancerJob do
 
       it 'returns true if any of the instances are missing overlay_cidr' do
         service.deployed_at = 3.minutes.ago
-        containers = [Container.new]
+        service.containers.create!(name: "test-1", state: {running: true})
         allow(service).to receive(:all_instances_exist?).and_return(true)
-        allow(service).to receive(:containers).and_return(containers)
         expect(subject.should_balance_service?(service)).to be_truthy
       end
     end
