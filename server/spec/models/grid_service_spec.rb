@@ -71,34 +71,6 @@ describe GridService do
     end
   end
 
-  describe '#all_instances_exist?' do
-    before(:each) do
-      subject.attributes = {name: 'test', image_name: 'foo/bar:latest'}
-      subject.container_count = 2
-      subject.save!
-    end
-
-    it 'returns true if all instances exist' do
-      2.times{|i| subject.containers.create!(name: "test-#{i}", state: {running: true}) }
-      expect(subject.all_instances_exist?).to eq(true)
-    end
-
-    it 'returns false if not all instances exist' do
-      subject.containers.create!(name: "test-1", state: {running: true})
-      subject.containers.create!(name: "test-2", state: {running: false})
-      expect(subject.all_instances_exist?).to eq(false)
-    end
-
-    it 'returns true if containers are marked as deleted' do
-      2.times{|i|
-        subject.containers.create!(
-          name: "test-#{i}", state: {running: true}, deleted_at: Time.now.utc
-          )
-      }
-      expect(subject.all_instances_exist?).to eq(true)
-    end
-  end
-
   describe '#set_state' do
     it 'sets value of state column' do
       subject.set_state('running')
