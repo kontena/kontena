@@ -43,13 +43,13 @@ module Agent
       rpc_client.notify('/agent/master_info', {version: Server::VERSION})
     end
 
-    private
-
     # @return [Hash]
     def node_info
       template = Tilt.new('app/views/v1/host_nodes/_host_node.json.jbuilder')
       JSON.parse(template.render(nil, node: node))
     end
+
+    private
 
     # @return [RpcClient]
     def rpc_client
