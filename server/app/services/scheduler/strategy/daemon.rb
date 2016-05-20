@@ -15,7 +15,7 @@ module Scheduler
       # @param [Integer] instance_number
       def sort_candidates(nodes, grid_service, instance_number)
         nodes.sort_by{|node|
-          node.schedule_counter
+          [node.schedule_counter, node.node_number]
         }
       end
     end
