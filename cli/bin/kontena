@@ -76,6 +76,6 @@ rescue Kontena::Errors::StandardError => exc
 rescue => exc
   raise exc if ENV['DEBUG']
   $stderr.puts "Kontena error: #{exc.message}"
-  $stderr.puts "Rerun the command with environment DEBUG=true set to get full the exception"
+  $stderr.puts "Rerun the command with environment DEBUG=true set to get the full exception"
   abort
 end
