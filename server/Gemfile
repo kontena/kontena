@@ -17,6 +17,7 @@ gem 'msgpack'
 gem 'httpclient', '~> 2.3'
 gem 'authority'
 gem 'ruby_dig'
+gem 'rollbar', require: false
 
 group :development, :test do
   gem 'dotenv'
