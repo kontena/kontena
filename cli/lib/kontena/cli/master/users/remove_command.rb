@@ -5,10 +5,13 @@ module Kontena::Cli::Master::Users
     include Kontena::Cli::Common
 
     parameter "EMAIL ...", "List of emails"
+    option "--confirm", :flag, "Confirm remove", default: false, attribute_name: :confirmed
 
     def execute
       require_api_url
       token = require_token
+      confirm unless confirmed?
+
       email_list.each do |email|
         begin
           client(token).delete("users/#{email}")

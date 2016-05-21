@@ -23,11 +23,13 @@ describe Kontena::Cli::Master::Users::Roles::RemoveCommand do
     before(:each) do
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:settings).and_return(valid_settings)
+      allow(subject).to receive(:confirm).and_return(true)
     end
 
     it 'makes remove role request for all given users' do
       expect(client).to receive(:delete).with("users/john@example.org/roles/role").once
       expect(client).to receive(:delete).with("users/jane@example.org/roles/role").once
+      expect(subject).to receive(:confirm).once
 
       subject.run(['role', 'john@example.org', 'jane@example.org'])
     end

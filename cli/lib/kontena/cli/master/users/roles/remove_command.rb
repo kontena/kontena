@@ -6,11 +6,13 @@ module Kontena::Cli::Master::Users::Roles
 
     parameter "ROLE", "Role name"
     parameter "USER ...", "List of users"
+    option "--confirm", :flag, "Confirm remove", default: false, attribute_name: :confirmed
 
 
     def execute
       require_api_url
       token = require_token
+      confirm unless confirmed?
 
       user_list.each do |email|
         begin

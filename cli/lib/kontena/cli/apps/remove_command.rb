@@ -8,6 +8,7 @@ module Kontena::Cli::Apps
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
+    option '--confirm', :flag, 'Confirm remove', default: false, attribute_name: :confirmed
 
     parameter "[SERVICE] ...", "Remove services"
 
@@ -17,6 +18,7 @@ module Kontena::Cli::Apps
       require_api_url
       require_token
       require_config_file(filename)
+      confirm unless confirmed?
       
       @services = services_from_yaml(filename, service_list, service_prefix)
       if services.size > 0
