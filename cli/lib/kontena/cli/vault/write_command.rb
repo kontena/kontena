@@ -8,6 +8,8 @@ module Kontena::Cli::Vault
 
     def execute
       require_api_url
+      require_current_grid
+
       token = require_token
       secret = value
       if secret.to_s == ''
