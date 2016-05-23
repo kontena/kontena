@@ -118,6 +118,6 @@ module Kontena::Cli::Apps
         options[:links] = options[:links] + options[:external_links]
         options.delete(:external_links)
       end
-    end    
+    end
   end
 end

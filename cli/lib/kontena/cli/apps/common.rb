@@ -16,15 +16,23 @@ module Kontena::Cli::Apps
     # @param [String] prefix
     # @return [Hash]
     def services_from_yaml(filename, service_list, prefix)
-      populate_env_variables(prefix, current_grid)
+      set_env_variables(prefix, current_grid)
       outcome = YAML::Reader.new(filename).execute
-      abort_on_validation_failure(outcome[:errors]) if outcome[:errors].size > 0
-      services = ServiceGenerator.new(outcome[:result]).generate
-      services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
-      services
+      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
+      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
+      generate_services(outcome[:result], service_list)
     end
 
-    def populate_env_variables(project, grid)
+    ##
+    # @param [Hash] yaml
+    # @param [Array<String>] services to pick
+    def generate_services(yaml, services = [])
+      kontena_services = ServiceGenerator.new(yaml).generate
+      kontena_services.delete_if { |name, service| !services.include?(name)} unless services.empty?
+      kontena_services
+    end
+
+    def set_env_variables(project, grid)
       ENV['project'] = project
       ENV['grid'] = grid
     end
@@ -38,7 +46,6 @@ module Kontena::Cli::Apps
     # @return [String]
     def prefixed_name(name)
       return name if service_prefix.strip == ""
-
       "#{service_prefix}-#{name}"
     end
 
@@ -71,24 +78,32 @@ module Kontena::Cli::Apps
       @app_json
     end
 
-    def abort_on_validation_failure(errors)
-      STDERR.puts "YAML validation failed!".colorize(:red)
-      errors.each do |files|
+    def display_notifications(messages, color = :yellow)
+      messages.each do |files|
         files.each do |file, services|
-          STDERR.puts "#{file}:".colorize(:red)
+          STDERR.puts "#{file}:".colorize(color)
           services.each do |service|
             service.each do |name, errors|
-              STDERR.puts "  #{name}:".colorize(:red)
+              STDERR.puts "  #{name}:".colorize(color)
               errors.each do |key, error|
-                STDERR.puts "    - #{key}: #{error.to_json}".colorize(:red)
+                STDERR.puts "    - #{key}: #{error.to_json}".colorize(color)
               end
             end
           end
         end
       end
-      abort
+    end
+    def hint_on_validation_notifications(errors)
+      STDERR.puts "YAML contains the following unsupported options and they were rejected:".colorize(:green)
+      display_notifications(errors)
     end
 
+    def abort_on_validation_errors(errors)
+      STDERR.puts "YAML validation failed!".colorize(:red)
+      display_notifications(errors, :red)
+
+      abort
+    end
 
     def valid_addons(prefix=nil)
       if prefix

@@ -3,25 +3,25 @@ require 'yaml'
 module Kontena::Cli::Apps
   module YAML
     class ServiceExtender
-      attr_reader :options
+      attr_reader :service_config
 
-      # @param [Hash] options
-      def initialize(options)
-        @options = options
+      # @param [Hash] service_config
+      def initialize(service_config)
+        @service_config = service_config
       end
 
-      # @param [Hash] parent_options
+      # @param [Hash] from
       # @return [Hash]
-      def extend(parent_options)
-        options['environment'] = extend_env_vars(
-          parent_options['environment'],
-          options['environment']
+      def extend(from)
+        service_config['environment'] = extend_env_vars(
+          from['environment'],
+          service_config['environment']
         )
-        options['secrets'] = extend_secrets(
-          parent_options['secrets'],
-          options['secrets']
+        service_config['secrets'] = extend_secrets(
+          from['secrets'],
+          service_config['secrets']
         )
-        parent_options.merge(options)
+        from.merge(service_config)
       end
 
       private

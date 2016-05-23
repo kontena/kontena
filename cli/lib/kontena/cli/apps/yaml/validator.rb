@@ -3,6 +3,20 @@ require 'dry-validation'
 module Kontena::Cli::Apps
   module YAML
     class Validator
+
+      VALID_KEYS = %w(
+      affinity build dockerfile cap_add cap_drop command deploy env_file environment extends external_links
+      image links log_driver log_opt net pid ports volumes volumes_from cpu_shares
+      mem_limit memswap_limit privileged stateful instances hooks secrets
+      ).freeze
+
+      UNSUPPORTED_KEYS = %w(
+      cgroup_parent container_name devices depends_on dns dns_search tmpfs entrypoint
+      expose extra_hosts labels logging network_mode networks security_opt stop_signal ulimits volume_driver
+      cpu_quota cpuset domainname hostname ipc mac_address
+      read_only restart shm_size stdin_open tty user working_dir
+      ).freeze
+
       ##
       # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
       def initialize
@@ -23,14 +37,14 @@ module Kontena::Cli::Apps
           optional('cap_drop') { array? | none? }
           optional('command') { str? | none? }
           optional('cpu_shares') { int? | none? }
+          optional('external_links') { array? }
           optional('mem_limit') { int? | str? }
           optional('memswap_limit') { int? | str? }
           optional('environment') { array? | type?(Hash) }
           optional('env_file') { str? | array? }
-          optional('external_links') { str? }
           optional('instances') { int? }
-          optional('external_links') { array? }
           optional('links') { array? }
+          optional('net') { inclusion?(%w(host bridge)) }
           optional('ports') { array? }
           optional('volumes') { array? }
           optional('volumes_from') { array? }
@@ -64,17 +78,48 @@ module Kontena::Cli::Apps
       # @param [Hash] yaml
       # @return [Array] validation_errors
       def validate(yaml)
-        validation_errors = []
+        result = {
+          errors: [],
+          notifications: []
+        }
+
         yaml.each do |service, options|
-          result = validate_service(options)
-          validation_errors << { service => result.messages } if result.failure?
+          key_errors = validate_keys(options)
+          option_errors = validate_options(options)
+          result[:errors] << { service => option_errors.messages } if option_errors.failure?
+          result[:notifications] << { service => key_errors } if key_errors.size > 0
         end
-        validation_errors
+        result
       end
 
-      def validate_service(options)
-        @yaml_schema.call(options)
+      ##
+      # @param [Hash] service_config
+      def validate_options(service_config)
+        @yaml_schema.call(service_config)
       end
+
+      ##
+      # @param [Hash] service_config
+      # @return [Array<String>] errors
+      def validate_keys(service_config)
+        errors = {}
+        service_config.keys.each do |key|
+          error = validate_key(key)
+          errors[key] << error if error
+        end
+        errors
+      end
+
+      ##
+      # @param [String] key
+      def validate_key(key)
+        if UNSUPPORTED_KEYS.include?(key)
+          ['unsupported option']
+        elsif !VALID_KEYS.include?(key)
+          ['invalid option']
+        else
+          nil
+        end
     end
   end
 end

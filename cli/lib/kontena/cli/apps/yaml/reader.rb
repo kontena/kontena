@@ -5,24 +5,26 @@ require_relative 'validator'
 module Kontena::Cli::Apps
   module YAML
     class Reader
-      attr_reader :yaml, :file, :validation_errors
+      attr_reader :yaml, :file, :errors, :notifications
 
       def initialize(file)
         @file = file
-        @validation_errors = []
+        @errors = []
+        @notifications = []
         load_yaml
         validate unless v2?
       end
 
       ##
-      # @param [String] service to read
+      # @param [String] service_name
       # @return [Hash]
-      def execute(service = nil)
+      def execute(service_name = nil)
         result = {}
         Dir.chdir(File.dirname(File.expand_path(file))) do
-          result[:result] = parse_services(service)
+          result[:result] = parse_services(service_name)
+          result[:errors] = errors
+          result[:notifications] = notifications
         end
-        result[:errors] = validation_errors
         result
       end
 
@@ -45,7 +47,13 @@ module Kontena::Cli::Apps
       # @return [Array] array of validation errors
       def validate
         result = validator.validate(yaml)
-        validation_errors << { file => result } if result.size > 0
+        store_failures(result)
+        result
+      end
+
+      def store_failures(data)
+        errors << { file => data[:errors] } unless data[:errors].empty?
+        notifications << { file => data[:notifications] } unless data[:notifications].empty?
       end
 
       # @return [Kontena::Cli::Apps::YAML::Validator]
@@ -57,26 +65,23 @@ module Kontena::Cli::Apps
       end
 
       ##
-      # @param [String] service - optional service to parse
+      # @param [String] service_name - optional service to parse
       # @return [Hash]
-      def parse_services(service = nil)
-        if service.nil?
-          services.each do |name, options|
-            services[name] = process_service(name, options)
-          end
+      def parse_services(service_name = nil)
+        if service_name.nil?
+          services.each { |name, config| services[name] = process_config(config) }
           yaml
         else
-          abort("Service '#{service}' not found in #{file}".colorize(:red)) unless services.key?(service)
-          process_service(service, services[service])
+          abort("Service '#{name}' not found in #{file}".colorize(:red)) unless services.key?(name)
+          process_config(services[service_name])
         end
       end
 
-      # @param [String] name - name of the service
-      # @param [Hash] options - service config
-      def process_service(name, options)
-        normalize_env_vars(options)
-        options = extend_service(name, options) if options.key?('extends')
-        options
+      # @param [Hash] service_config
+      def process_config(service_config)
+        normalize_env_vars(service_config)
+        service_config = extend_config(service_config) if service_config.key?('extends')
+        service_config
       end
 
       # @return [Hash] - services from YAML file
@@ -104,26 +109,25 @@ module Kontena::Cli::Apps
         text.gsub!('$$', '$')
       end
 
-      # @param [String] name - name of the service
-      # @param [Hash] options - service config
-      # @return [Hash] - updated service config
-      def extend_service(name, options)
-        service = options['extends']['service']
-        file_name = options['extends']['file']
-        if file_name
-          outcome = Reader.new(file_name).execute(service)
-          if outcome[:errors].size > 0
-            outcome[:errors].each do |errors|
-              validation_errors <<  errors
-            end
-          end
-          parent_service = outcome[:result]
+      # @param [Hash] service_config
+      # @return [Hash] updated service config
+      def extend_config(service_config)
+        service_name = service_config['extends']['service']
+        filename = service_config['extends']['file']
+        if filename
+          parent_service = from_external_file(filename, service_name)
         else
-          abort("Service '#{service}' not found in #{file}".colorize(:red)) unless services.key?(service)
-          parent_service = services[service]
+          abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
+          parent_service = process_config(services[service_name])
         end
-        options.delete('extends')
-        ServiceExtender.new(options).extend(parent_service)
+        ServiceExtender.new(service_config).extend(parent_service)
+      end
+
+      def from_external_file(filename, service_name)
+        outcome = Reader.new(filename).execute(service_name)
+        errors.concat outcome[:errors] unless errors.any? { |item| item.key?(filename) }
+        notifications.concat outcome[:notifications] unless notifications.any? { |item| item.key?(filename) }
+        outcome[:result]
       end
 
       # @param [Hash] options - service config

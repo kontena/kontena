@@ -35,7 +35,8 @@ describe Kontena::Cli::Apps::Common do
       allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
       allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose.yml").and_return(docker_compose_yml)
     end
-    it 'populate env variables' do
+
+    it 'populates env variables' do
       services = subject.services_from_yaml('kontena.yml',[],'load-test')
       expect(ENV['grid']).to eq('test-grid')
       expect(ENV['project']).to eq('load-test')
@@ -48,7 +49,7 @@ describe Kontena::Cli::Apps::Common do
 
     it 'aborts on validation failure' do
       allow_any_instance_of(Kontena::Cli::Apps::YAML::Validator).to receive(:validate)
-        .and_return([{ 'wordress' => [] } ])
+        .and_return({ :errors => [{ 'wordress' => [] }], :notifications => [] })
       expect { subject.services_from_yaml('kontena.yml',[],'') }.to raise_error(SystemExit)
     end
 
