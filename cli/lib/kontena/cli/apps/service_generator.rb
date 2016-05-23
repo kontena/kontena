@@ -28,7 +28,6 @@ module Kontena::Cli::Apps
 
       options['env_file'] = [options['env_file']] if options['env_file'].is_a?(String)
       options['environment'] = [] unless options['environment']
-
       options['env_file'].each do |env_file|
         options['environment'].concat(read_env_file(env_file))
       end
@@ -45,7 +44,6 @@ module Kontena::Cli::Apps
     # @param [Hash] options
     # @return [Hash]
     def parse_data(options)
-
       data = {}
       data[:image] = parse_image(options['image'])
       data[:env] = merge_env_vars(options)
@@ -69,7 +67,6 @@ module Kontena::Cli::Apps
       data[:pid] = options['pid'] if options['pid']
       data[:log_driver] = options['log_driver'] if options['log_driver']
       data[:log_opts] = options['log_opt'] if options['log_opt'] && !options['log_opt'].empty?
-
       deploy_opts = options['deploy'] || {}
       data[:strategy] = deploy_opts['strategy'] if deploy_opts['strategy']
       deploy = {}
@@ -78,12 +75,9 @@ module Kontena::Cli::Apps
       unless deploy.empty?
         data[:deploy_opts] = deploy
       end
-
       data[:hooks] = options['hooks'] || {}
       data[:secrets] = options['secrets'] if options['secrets']
-
       data
     end
-
   end
 end

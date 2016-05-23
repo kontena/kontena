@@ -120,6 +120,7 @@ module Kontena::Cli::Apps
         else
           nil
         end
+      end
     end
   end
 end
