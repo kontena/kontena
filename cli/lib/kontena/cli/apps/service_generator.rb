@@ -6,18 +6,16 @@ module Kontena::Cli::Apps
   class ServiceGenerator
     include Kontena::Cli::Services::ServicesHelper
 
-    attr_reader :yaml
+    attr_reader :service_config
 
-    def initialize(yaml)
-      @yaml = yaml
+    def initialize(service_config)
+      @service_config = service_config
     end
 
+    ##
+    # @return [Hash]
     def generate
-      services = {}
-      yaml.each do |name, options|
-        services[name] = parse_data(options)
-      end
-      services
+      parse_data(service_config)
     end
 
     private

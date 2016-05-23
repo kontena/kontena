@@ -27,7 +27,10 @@ module Kontena::Cli::Apps
     # @param [Hash] yaml
     # @param [Array<String>] services to pick
     def generate_services(yaml, services = [])
-      kontena_services = ServiceGenerator.new(yaml).generate
+      kontena_services = {}
+      yaml.each do |service_name, config|
+        kontena_services[service_name] = ServiceGenerator.new(config).generate
+      end
       kontena_services.delete_if { |name, service| !services.include?(name)} unless services.empty?
       kontena_services
     end
