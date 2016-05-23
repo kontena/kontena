@@ -72,7 +72,7 @@ module Kontena::Cli::Apps
           services.each { |name, config| services[name] = process_config(config) }
           yaml
         else
-          abort("Service '#{name}' not found in #{file}".colorize(:red)) unless services.key?(name)
+          abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
           process_config(services[service_name])
         end
       end

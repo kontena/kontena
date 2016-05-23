@@ -19,6 +19,10 @@ describe Kontena::Cli::Apps::YAML::Reader do
   let(:valid_result) do
     {
       'wordpress' => {
+        'extends' => {
+          'file' => 'docker-compose.yml',
+          'service' => 'wordpress'
+        },
         'image' => 'wordpress:4.1',
         'ports' => ['80:80'],
         'links' => ['mysql:mysql'],
@@ -29,6 +33,10 @@ describe Kontena::Cli::Apps::YAML::Reader do
         'secrets' => []
       },
       'mysql' => {
+        'extends' => {
+          'file' => 'docker-compose.yml',
+          'service' => 'mysql'
+        },
         'image' => 'mysql:5.6',
         'stateful' => true,
         'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'],
@@ -183,12 +191,23 @@ describe Kontena::Cli::Apps::YAML::Reader do
     it 'extends services' do
       docker_compose_yml = YAML.load(fixture('docker-compose.yml') % { project: 'test' })
       wordpress_options = {
+        'extends' => {
+          'file' => 'docker-compose.yml',
+          'service' => 'wordpress'
+        },
         'stateful' => true,
         'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
         'instances' => 2,
         'deploy' => { 'strategy' => 'ha' }
       }
-      mysql_options = { 'stateful' => true, 'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'] }
+      mysql_options = {
+        'extends' => {
+          'file' => 'docker-compose.yml',
+          'service' => 'mysql'
+        },
+        'stateful' => true,
+        'environment' => ['MYSQL_ROOT_PASSWORD=test_secret']
+      }
       expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
         .with(wordpress_options)
         .once

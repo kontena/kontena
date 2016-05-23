@@ -105,7 +105,7 @@ module Kontena::Cli::Apps
         errors = {}
         service_config.keys.each do |key|
           error = validate_key(key)
-          errors[key] << error if error
+          errors[key] = error if error
         end
         errors
       end
