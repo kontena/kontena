@@ -13,7 +13,7 @@ module Kontena::Cli::Master::Users
         begin
           data = { email: email }
           response = client(token).post('users', data)
-          puts "Invitation send to #{email}"
+          puts "Invited #{email} (no email gets sent)"
         rescue
           puts "Failed to invite #{email}".colorize(:red)
           puts exc.message
