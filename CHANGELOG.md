@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.13.2 (2016-05-24)
+
+**Master & Agent**
+- fix how daemon service state is calculated (#716)
+- fix error in HostNode#region when labels is nil (#714)
+- fix daemon scheduler node sorting (#708)
+- fix how service instance running count is checked (#707)
+- take region into account when resolving peer ip's (#706)
+
+**CLI**
+- fix service name displaying on app deploy (#717)
+- fix confusing user invite text (#715)
+- show debug help only for non Kontena StandardErrors (#710)
+
+
 ## 0.13.1 (2016-05-19)
 
 - fix agent websocket hang on close when connection is unstable (#698)
