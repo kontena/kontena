@@ -1,6 +1,6 @@
 # Kontena
 
-> Docker container platform built to maximize developer happiness. Works on any cloud, easy to setup, simple to use. http://www.kontena.io 
+> The developer friendly container and micro services platform. Works on any cloud, easy to setup, simple to use. http://www.kontena.io 
 
 [![Build Status](https://travis-ci.org/kontena/kontena.svg?branch=master)](https://travis-ci.org/kontena/kontena)
 [![Join the chat at https://gitter.im/kontena/kontena](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kontena/kontena?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
