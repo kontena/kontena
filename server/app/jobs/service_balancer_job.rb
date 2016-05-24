@@ -22,16 +22,21 @@ class ServiceBalancerJob
 
   def balance_services
     GridService.order(:updated_at => :asc).each do |service|
-      fix_stale_deploy(service)
-      if should_balance_service?(service)
-        balance_service(service)
+      begin
+        fix_stale_deploy(service)
+        if should_balance_service?(service)
+          balance_service(service)
+        end
+      rescue => exc
+        error "error occurred in service #{service.to_path}"
+        error exc.message
       end
     end
   end
 
   # @param [GridService] service
   def fix_stale_deploy(service)
-    if service.deploying? && service.deployed_at < 10.minutes.ago
+    if service.deploying? && service.deployed_at < 5.minutes.ago
       info "service deploy seems stale, investigating: #{service.to_path}"
       channel = "grid_service_deployer:#{service.id}"
       alive = false
@@ -88,19 +93,40 @@ class ServiceBalancerJob
   # @param [GridService] service
   # @return [Boolean]
   def all_instances_exist?(service)
-    if service.strategy == 'daemon'
-      return false unless service.grid
+    desired_count = desired_count_for_service(service)
+    running_count = service.containers.where(
+      :'state.running' => true
+    ).count
 
-      running_count = service.containers.unscoped.where(
-        'container_type' => 'container', 'state.running' => true
-      ).count
-      max = (service.container_count * service.grid.host_nodes.connected.count)
-      min = service.container_count
-      running_count >= min && running_count <= max
+    return true if running_count == desired_count
+
+    offline_count = service.containers.unscoped.where(
+      :'state.running' => true,
+      :deleted_at.gt => grace_period_for_service(service).ago
+    ).count
+
+    (running_count + offline_count) >= desired_count
+  end
+
+  # @param [GridService] service
+  # @return [Fixnum]
+  def desired_count_for_service(service)
+    return 0 unless service.grid
+
+    if service.daemon?
+      (service.container_count * service.grid.host_nodes.connected.count)
     else
-      service.containers.unscoped.where(
-        'container_type' => 'container', 'state.running' => true
-      ).count == service.container_count
+      service.container_count
+    end
+  end
+
+  # @param [GridService] service
+  # @return [ActiveSupport::Duration]
+  def grace_period_for_service(service)
+    if service.daemon?
+      3.minutes
+    else
+      1.minute
     end
   end
 

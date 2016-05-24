@@ -108,25 +108,86 @@ describe ServiceBalancerJob do
       service.set(container_count: 2)
     end
 
-    it 'returns true if all instances exist' do
-      2.times{|i| service.containers.create!(name: "test-#{i}", state: {running: true}) }
-      expect(subject.all_instances_exist?(service)).to eq(true)
-    end
+    context 'default' do
+      it 'returns true if all instances exist' do
+        2.times{|i| service.containers.create!(name: "test-#{i}", state: {running: true}) }
+        expect(subject.all_instances_exist?(service)).to eq(true)
+      end
 
-    it 'returns false if not all instances exist' do
-      service.strategy = 'daemon'
-      service.containers.create!(name: "test-1", state: {running: true})
-      service.containers.create!(name: "test-2", state: {running: false})
-      expect(subject.all_instances_exist?(service)).to eq(false)
-    end
+      it 'returns false if not all instances are running' do
+        service.containers.create!(name: "test-1", state: {running: true})
+        service.containers.create!(name: "test-2", state: {running: false})
+        expect(subject.all_instances_exist?(service)).to eq(false)
+      end
 
-    it 'returns true if containers are marked as deleted' do
-      2.times{|i|
+      it 'returns true if containers are marked as deleted and are within grace period' do
         service.containers.create!(
-          name: "test-#{i}", state: {running: true}, deleted_at: Time.now.utc
-          )
-      }
-      expect(subject.all_instances_exist?(service)).to eq(true)
+          name: "test-1", state: {running: true}, deleted_at: 5.seconds.ago
+        )
+        service.containers.create!(
+          name: "test-2", state: {running: true}, deleted_at: 50.seconds.ago
+        )
+        expect(subject.all_instances_exist?(service)).to eq(true)
+      end
+    end
+
+    context 'daemon strategy' do
+      let(:nodes) do
+        nodes = []
+        nodes << HostNode.create!(name: "node-1", grid: grid, connected: true)
+        nodes << HostNode.create!(name: "node-2", grid: grid, connected: false)
+        nodes
+      end
+
+      before(:each) do
+        nodes
+        service.set(strategy: 'daemon')
+      end
+
+      it 'returns true if all instances exist' do
+        2.times{|i| service.containers.create!(name: "test-#{i}", state: {running: true}) }
+        expect(subject.all_instances_exist?(service)).to eq(true)
+      end
+
+      it 'returns false if not all instances exist within grace period' do
+        nodes.each{|n| n.set(connected: true)}
+        
+        service.containers.create!(
+          name: "test-1", state: {running: true}, host_node: nodes[0]
+        )
+        service.containers.create!(
+          name: "test-2", state: {running: true},
+          host_node: nodes[1], deleted_at: 10.minutes.ago
+        )
+        service.containers.create!(
+          name: "test-3", state: {running: true},
+          host_node: nodes[2], deleted_at: 7.minutes.ago
+        )
+        service.containers.create!(
+          name: "test-4", state: {running: true},
+          host_node: nodes[3]
+        )
+        expect(subject.all_instances_exist?(service)).to eq(false)
+      end
+
+      it 'returns true if all instances exist within grace period' do
+        service.containers.create!(
+          name: "test-1", state: {running: true}, host_node: nodes[0]
+        )
+        service.containers.create!(
+          name: "test-2", state: {running: true},
+          host_node: nodes[1]
+        )
+        service.containers.create!(
+          name: "test-3", state: {running: true},
+          host_node: nodes[2], deleted_at: 1.minutes.ago
+        )
+        service.containers.create!(
+          name: "test-4", state: {running: true},
+          host_node: nodes[3], deleted_at: 1.minutes.ago
+        )
+        expect(subject.all_instances_exist?(service)).to eq(true)
+      end
     end
   end
 end

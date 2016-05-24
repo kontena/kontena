@@ -38,24 +38,35 @@ describe GridService do
   describe '#stateful?' do
     it 'returns true if stateful' do
       subject.stateful = true
-      expect(subject.stateful?).to eq(true)
+      expect(subject.stateful?).to be_truthy
     end
 
     it 'returns false if not stateful' do
       subject.stateful = false
-      expect(subject.stateful?).to eq(false)
+      expect(subject.stateful?).to be_falsey
     end
   end
 
   describe '#stateless?' do
     it 'returns true if stateless' do
       subject.stateful = false
-      expect(subject.stateless?).to eq(true)
+      expect(subject.stateless?).to be_truthy
     end
 
     it 'returns false if not stateless' do
       subject.stateful = true
-      expect(subject.stateless?).to eq(false)
+      expect(subject.stateless?).to be_falsey
+    end
+  end
+
+  describe '#daemon?' do
+    it 'returns true if strategy is daemon' do
+      subject.strategy = 'daemon'
+      expect(subject.daemon?).to be_truthy
+    end
+
+    it 'returns false if strategy is not daemon' do
+      expect(subject.daemon?).to be_falsey
     end
   end
 
