@@ -144,6 +144,11 @@ describe HostNode do
       expect(subject.region).to eq('default')
     end
 
+    it 'returns default if labels is nil' do
+      allow(subject).to receive(:labels).and_return(nil)
+      expect(subject.region).to eq('default')
+    end
+
     it 'returns region from labels' do
       subject.labels = ['foo=bar', 'region=ams2']
       expect(subject.region).to eq('ams2')
