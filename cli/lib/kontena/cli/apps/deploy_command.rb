@@ -47,7 +47,7 @@ module Kontena::Cli::Apps
         options = {}
         options[:force] = true if force_deploy?
         deploy_service(token, name, options)
-        print "deploying #{name.sub("#{service_prefix}-", '').colorize(:cyan)}"
+        print "deploying #{unprefixed_name(name).colorize(:cyan)}"
         unless async?
           wait_for_deploy_to_finish(token, service['id'])
         else
@@ -110,6 +110,16 @@ module Kontena::Cli::Apps
     # @param [String] name
     def in_deploy_queue?(name)
       deploy_queue.find {|service| service['name'] == prefixed_name(name)} != nil
+    end
+
+    #
+    # @param [String] name
+    def unprefixed_name(name)
+      if service_prefix.empty?
+        name
+      else
+        name.sub("#{service_prefix}-", '')
+      end
     end
 
     # @param [Hash] options
