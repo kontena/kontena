@@ -75,6 +75,10 @@ class GridService
     !stateful?
   end
 
+  def daemon?
+    self.strategy == 'daemon'
+  end
+
   # @return [Boolean]
   def initialized?
     self.state == 'initialized'
