@@ -93,7 +93,12 @@ describe Kontena::Launchers::Etcd do
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(container).to receive(:running?).and_return(true)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
-      node_info = { }
+      node_info = { 
+        'node_number' => 1,
+        'grid' => {
+          'initial_size' => 3
+        }
+      }
 
       subject.create_container('etcd', node_info)
 
@@ -106,7 +111,12 @@ describe Kontena::Launchers::Etcd do
       allow(container).to receive(:running?).and_return(false)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
       expect(container).to receive(:start)
-      node_info = { }
+      node_info = { 
+        'node_number' => 1,
+        'grid' => {
+          'initial_size' => 3
+        }
+      }
 
       subject.create_container('etcd', node_info)
 
@@ -158,7 +168,7 @@ describe Kontena::Launchers::Etcd do
       container = double
       allow(Docker::Container).to receive(:get).and_return(nil)
       allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
-      expect(subject.wrapped_object).to receive(:update_membership)
+      expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
       node_info = {
         'node_number' => 1,
         'grid' => {
@@ -232,6 +242,24 @@ describe Kontena::Launchers::Etcd do
     
   end
 
+  describe '#delete_membership' do
+    it 'sends DELETE request to etcd members api' do
+      excon = double
+      expect(excon).to receive(:delete).with(hash_including(:path => "/v2/members/12345"))
+
+      subject.delete_membership(excon, '12345')
+    end
+  end
+
+  describe '#add_membership' do
+    it 'sends POST request to etcd members api' do
+      excon = double
+      expect(excon).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.1:2380"]}'))
+
+      subject.add_membership(excon, 'http://10.81.0.1:2380')
+    end
+  end
+
   describe '#update_membership' do
     it 'retries 3 times if Excon error connecting to etcd' do
       excon = double
@@ -253,8 +281,9 @@ describe Kontena::Launchers::Etcd do
       response = double
       allow(excon).to receive(:get).and_return(response)
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
-      expect(excon).to receive(:delete).with(hash_including(:path => "/v2/members/4e12ae023cc6f88d"))
-      expect(excon).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.1:2380"]}'))
+      expect(subject.wrapped_object).to receive(:delete_membership).with(excon, '4e12ae023cc6f88d')
+      expect(subject.wrapped_object).to receive(:add_membership).with(excon, "http://10.81.0.1:2380")
+      
       node_info = {
         'node_number' => 1,
         'grid' => {
@@ -270,8 +299,8 @@ describe Kontena::Launchers::Etcd do
       response = double
       allow(excon).to receive(:get).and_return(response)
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
-      expect(excon).not_to receive(:delete)
-      expect(excon).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.3:2380"]}'))
+      expect(subject.wrapped_object).not_to receive(:delete_membership)
+      expect(subject.wrapped_object).to receive(:add_membership).with(excon, "http://10.81.0.3:2380")
       node_info = {
         'node_number' => 3,
         'grid' => {
