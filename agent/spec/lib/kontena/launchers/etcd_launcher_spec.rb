@@ -260,7 +260,7 @@ describe Kontena::Launchers::Etcd do
     end
   end
 
-  describe '#update_membership' do
+  describe '#find_etcd_node' do
     it 'retries 3 times if Excon error connecting to etcd' do
       excon = double
       allow(Excon).to receive(:new).and_return(excon)
@@ -272,17 +272,38 @@ describe Kontena::Launchers::Etcd do
           'initial_size' => 3
         }
       }
-      subject.update_membership(node_info)
+
+      expect(subject.find_etcd_node(node_info)).to eq(nil)
     end
 
-    it 'deletes and adds when matching peer found from etcd' do
+    it 'returns connection to working etcd node' do
       excon = double
       allow(Excon).to receive(:new).and_return(excon)
+      expect(excon).to receive(:get).exactly(1).times
+      response = double
+      allow(excon).to receive(:get).and_return(response)
+      allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
+      node_info = {
+        'node_number' => 1,
+        'grid' => {
+          'initial_size' => 3
+        }
+      }
+
+      expect(subject.find_etcd_node(node_info)).to eq(excon)
+    end
+  end
+
+  describe '#update_membership' do
+
+    it 'deletes and adds when matching peer and client URL found from etcd' do
+      excon = double
+      allow(subject.wrapped_object).to receive(:find_etcd_node).and_return(excon)
       response = double
       allow(excon).to receive(:get).and_return(response)
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
       expect(subject.wrapped_object).to receive(:delete_membership).with(excon, '4e12ae023cc6f88d')
-      expect(subject.wrapped_object).to receive(:add_membership).with(excon, "http://10.81.0.1:2380")
+      expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.1:2380')
       
       node_info = {
         'node_number' => 1,
@@ -290,24 +311,42 @@ describe Kontena::Launchers::Etcd do
           'initial_size' => 3
         }
       }
-      subject.update_membership(node_info)
+      expect(subject.update_membership(node_info)).to eq('existing')
+    end
+
+    it 'return new when matching peer found from etcd' do
+      excon = double
+      allow(subject.wrapped_object).to receive(:find_etcd_node).and_return(excon)
+      response = double
+      allow(excon).to receive(:get).and_return(response)
+      allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":[]}]}')
+      expect(subject.wrapped_object).not_to receive(:delete_membership)
+      expect(subject.wrapped_object).not_to receive(:add_membership)
+      
+      node_info = {
+        'node_number' => 1,
+        'grid' => {
+          'initial_size' => 3
+        }
+      }
+      expect(subject.update_membership(node_info)).to eq('new')
     end
 
     it 'only adds when no matching peer found from etcd' do
       excon = double
-      allow(Excon).to receive(:new).and_return(excon)
+      allow(subject.wrapped_object).to receive(:find_etcd_node).and_return(excon)
       response = double
       allow(excon).to receive(:get).and_return(response)
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
       expect(subject.wrapped_object).not_to receive(:delete_membership)
-      expect(subject.wrapped_object).to receive(:add_membership).with(excon, "http://10.81.0.3:2380")
+      expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.3:2380')
       node_info = {
         'node_number' => 3,
         'grid' => {
           'initial_size' => 3
         }
       }
-      subject.update_membership(node_info)
+      expect(subject.update_membership(node_info)).to eq('new')
     end
   end
 end

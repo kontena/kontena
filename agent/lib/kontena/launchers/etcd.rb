@@ -88,19 +88,20 @@ module Kontena::Launchers
       cluster_size = info['grid']['initial_size']
       node_number = info['node_number']
       cluster_state = 'new'
+      weave_ip = weave_ip(info['node_number'])
 
       container = Docker::Container.get('kontena-etcd') rescue nil
       if container && container.info['Config']['Image'] != image
         container.delete(force: true)
       elsif container && container.running?
-        info "etcd is already running"
+        info 'etcd is already running'
         @running = true
-        return
+        return container
       elsif container && !container.running?
-        info "etcd container exists but not running, starting it"
+        info 'etcd container exists but not running, starting it'
         container.start
         @running = true
-        return
+        return container
       elsif container.nil? && node_number <= cluster_size
         # No previous container exists, update previous membership info if needed
         cluster_state = update_membership(info)
@@ -113,15 +114,15 @@ module Kontena::Launchers
 
       cmd = [
         '--name', name, '--data-dir', '/var/lib/etcd',
-        '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip(info)}:2379,http://#{docker_ip}:2379",
+        '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
         '--initial-cluster', initial_cluster(cluster_size).join(',')
       ]
       if node_number <= cluster_size
         cmd = cmd + [
-          '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip(info)}:2379,http://#{docker_ip}:2379",
-          '--listen-peer-urls', "http://#{weave_ip(info)}:2380",
-          '--advertise-client-urls', "http://#{weave_ip(info)}:2379",
-          '--initial-advertise-peer-urls', "http://#{weave_ip(info)}:2380",
+          '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
+          '--listen-peer-urls', "http://#{weave_ip}:2380",
+          '--advertise-client-urls', "http://#{weave_ip}:2379",
+          '--initial-advertise-peer-urls', "http://#{weave_ip}:2380",
           '--initial-cluster-token', grid_name,
           '--initial-cluster-state', cluster_state
         ]
@@ -143,8 +144,8 @@ module Kontena::Launchers
         }
       )
       container.start
-      Celluloid::Notifications.publish('dns:add', {id: container.id, ip: weave_ip(info), name: 'etcd.kontena.local'})
-      info "started etcd service"
+      Celluloid::Notifications.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
+      info 'started etcd service'
       @running = true
       container
     end
@@ -154,51 +155,63 @@ module Kontena::Launchers
     # @param [String] node weave ip
     # @return [String] the state of the cluster member
     def update_membership(info)
-      info "checking if etcd previous membership needs to be updated"
-      tries = info['grid']['initial_size']
-      node_number = info['node_number']
-      peer_url = "http://#{weave_ip(info)}:2380"
-      client_url = "http://#{weave_ip(info)}:2379"
+      info 'checking if etcd previous membership needs to be updated'
+      
+      etcd_connection = find_etcd_node(info)
+      return 'new' unless etcd_connection # No etcd hosts available, bootstrapping first node --> new cluster
 
+      weave_ip = weave_ip(info['node_number'])
+      peer_url = "http://#{weave_ip}:2380"
+      client_url = "http://#{weave_ip}:2379"
+      
+      members = JSON.parse(etcd_connection.get.body)
+      members['members'].each do |member|
+        if member['peerURLs'].include?(peer_url) && member['clientURLs'].include?(client_url)
+          # When there's both peer and client URLs, the given peer has been a member of the cluster
+          # and needs to be replaced
+          delete_membership(etcd_connection, member['id'])
+          sleep 1 # There seems to be some race condition with etcd member API, thus some sleeping required
+          add_membership(etcd_connection, peer_url)
+          sleep 1
+          return 'existing'
+        elsif member['peerURLs'].include?(peer_url) && !member['clientURLs'].include?(client_url)
+          # Peer found but not been part of the cluster yet, no modification needed and it can join as new member
+          return 'new'
+        end
+      end
+
+      info 'previous member info not found at all, adding'
+      add_membership(etcd_connection, peer_url)
+
+      'new' # Newly added member will join as new member
+    end
+
+    ##
+    # Finds a working etcd node from set of initial nodes
+    # 
+    # @param [Hash] node info
+    # @return [Hash] The cluster members as given by etcd API 
+    def find_etcd_node(info)
+      tries = info['grid']['initial_size']
       begin
         etcd_host = "http://10.81.0.#{tries}:2379/v2/members"
 
         info "connecting to existing etcd at #{etcd_host}"
         connection = Excon.new(etcd_host)
-        members = JSON.parse(connection.get().body)
-        peer_found = false
-        members['members'].each do |member|
-          if member['peerURLs'].include?(peer_url) && member['clientURLs'].include?(client_url)
-            # When there's both peer and client URLs, the given peer has been a member of the cluster
-            # and needs to be replaced
-            delete_membership(connection, member['id'])
-            sleep 1
-            add_membership(connection, peer_url)
-            sleep 1
-            return 'existing'
-          elsif member['peerURLs'].include?(peer_url) && !member['clientURLs'].include?(client_url)
-            peer_found = true
-          end
-        end
+        members = JSON.parse(connection.get.body)
 
-        unless peer_found
-          info "previous member info not found at all, adding"
-          add_membership(connection, peer_url)
-        end
-        
+        return connection
       rescue Excon::Errors::Error => exc
         tries -= 1
         if tries > 0
-          info "retrying next etcd host"
+          info 'retrying next etcd host'
           retry
         else
-          error "cannot remove previous etcd membership info"
-          log_error exc
+          info 'no online etcd host found, we\'re probably bootstrapping first node'
         end
       end
-      'new'
+      nil
     end
-
 
     # Deletes membership of given etcd peer
     #
@@ -216,8 +229,8 @@ module Kontena::Launchers
     # @param [String] The peer URL of the new peer to be added to the cluster
     def add_membership(connection, peer_url)
       info "Adding new etcd membership info with peer URL #{peer_url}"
-      connection.post(:body => JSON.generate({"peerURLs": [peer_url]}),
-                      :headers => { "Content-Type" => "application/json" })
+      connection.post(:body => JSON.generate(peerURLs: [peer_url]),
+                      :headers => { 'Content-Type' => 'application/json' })
     end
 
     # @param [Integer] cluster_size
@@ -240,8 +253,8 @@ module Kontena::Launchers
     ##
     # @param [Hash] node info
     # @return [String] weave network ip of the node
-    def weave_ip(info)
-      "10.81.0.#{info['node_number']}"
+    def weave_ip(node_number)
+      "10.81.0.#{node_number}"
     end
     # @param [Exception] exc
     def log_error(exc)
