@@ -19,7 +19,7 @@ class GridServiceSchedulerWorker
     if service_deploy && (service_deploy.grid_service.running? || service_deploy.grid_service.initialized?)
       self.perform(service_deploy)
     elsif service_deploy
-      service_deploy.set(started_at: nil)
+      service_deploy.destroy
     end
   end
 
