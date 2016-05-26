@@ -82,16 +82,36 @@ describe Kontena::LoadBalancers::Registrator do
         }
       })
     }
+    let(:tcp_container) {
+      spy(:container, id: '12345', json: {
+        'Name' => 'test',
+        'Config' => {
+          'Labels' => {
+            'io.kontena.load_balancer.name' => 'lb1',
+            'io.kontena.service.name' => 'tcp',
+            'io.kontena.container.name' => 'tcp-2',
+            'io.kontena.container.overlay_cidr' => '10.81.3.25/19',
+            'io.kontena.load_balancer.internal_port' => '5000',
+            'io.kontena.load_balancer.mode' => 'tcd'
+          }
+        }
+      })
+    }
 
     it 'registers container ip:port to etcd' do
-      expect(subject.wrapped_object.etcd).to receive(:set).with(anything, {value: '10.81.3.24:8080'})
+      expect(subject.wrapped_object.etcd).to receive(:set).with('/kontena/haproxy/lb1/services/web/upstreams/web-2', {value: '10.81.3.24:8080'})
       subject.register_container(http_container)
+    end
+
+    it 'registers tcp container ip:port to etcd' do
+      expect(subject.wrapped_object.etcd).to receive(:set).with('/kontena/haproxy/lb1/tcp-services/tcp/upstreams/tcp-2', {value: '10.81.3.25:5000'})
+      subject.register_container(tcp_container)
     end
 
     it 'registers container info to cache' do
       allow(subject.wrapped_object.etcd).to receive(:set)
       expect(subject.wrapped_object.cache).to receive(:[]=).with(
-        http_container.id, hash_including(lb: 'lb1', service: 'web', container: 'web-2')
+        http_container.id, hash_including(lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080')
       )
       subject.register_container(http_container)
     end
@@ -100,21 +120,50 @@ describe Kontena::LoadBalancers::Registrator do
       expect(subject.wrapped_object.etcd).not_to receive(:set)
       subject.register_container(container)
     end
+
+    it 'retries etcd set operation' do
+      allow(subject.wrapped_object.etcd).to receive(:set).and_raise(Errno::ECONNREFUSED)
+      expect(subject.wrapped_object.etcd).to receive(:set).exactly(10).times
+      expect(subject.wrapped_object.cache).to receive(:[]=).with(
+        http_container.id, hash_including(lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080')
+      )
+      subject.register_container(http_container)
+    end
   end
 
   describe '#unregister_container' do
-    it 'unregisters container if id exists in cache' do
+    it 'unregisters container if id exists in cache and valid entry in etcd' do
       allow(subject.wrapped_object.cache).to receive(:[]).with(event.id).and_return(true)
       allow(subject.wrapped_object.cache).to receive(:delete).with(event.id).and_return({
-        lb: 'lb1', service: 'web', container: 'web-2'
+        lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080'
       })
-
       expect(subject.wrapped_object.etcd).to receive(:delete)
+      expect(subject.wrapped_object.etcd).to receive(:get).with('/kontena/haproxy/lb1/services/web/upstreams/web-2').and_return('10.81.3.24:8080')
+      subject.unregister_container(event.id)
+    end
+
+    it 'does not unregister container if id exists in cache and invalid entry in etcd' do
+      allow(subject.wrapped_object.cache).to receive(:[]).with(event.id).and_return(true)
+      allow(subject.wrapped_object.cache).to receive(:delete).with(event.id).and_return({
+        lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080'
+      })
+      expect(subject.wrapped_object.etcd).not_to receive(:delete)
+      expect(subject.wrapped_object.etcd).to receive(:get).with('/kontena/haproxy/lb1/services/web/upstreams/web-2').and_return('10.81.3.111:8080')
       subject.unregister_container(event.id)
     end
 
     it 'does nothing if id is not in cache' do
       expect(subject.wrapped_object.etcd).not_to receive(:delete)
+      subject.unregister_container(event.id)
+    end
+
+    it 'retries etcd delete operation' do
+      allow(subject.wrapped_object.cache).to receive(:[]).with(event.id).and_return(true)
+      allow(subject.wrapped_object.cache).to receive(:delete).with(event.id).and_return({
+        lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080'
+      })
+      allow(subject.wrapped_object.etcd).to receive(:get).and_raise(Errno::ECONNREFUSED)
+      expect(subject.wrapped_object.etcd).to receive(:get).exactly(10).times
       subject.unregister_container(event.id)
     end
   end

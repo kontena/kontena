@@ -60,8 +60,8 @@ module Kontena::LoadBalancers
       mode = labels['io.kontena.load_balancer.mode'] || 'http'
       return if lb.nil? || overlay_cidr.nil?
 
-      cache[container.id] = {lb: lb, service: service_name, container: name}
       ip, subnet = overlay_cidr.split('/')
+      cache[container.id] = {lb: lb, service: service_name, container: name, value: "#{ip}:#{port}"}
       if mode == 'http'
         key = "#{ETCD_PREFIX}/#{lb}/services/#{service_name}/upstreams/#{name}"
       else
@@ -90,8 +90,13 @@ module Kontena::LoadBalancers
       if cache[container_id]
         entry = cache.delete(container_id)
         info "removing container #{entry[:container]} from load balancer #{entry[:lb]}"
+        retries = 0
         begin
-          etcd.delete("#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}")
+          key = "#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}"
+          # Check that we're really removing the right container info
+          val = etcd.get(key)
+          etcd.delete(key) if val == entry[:value]
+
         rescue Etcd::KeyNotFound
 
         rescue Errno::ECONNREFUSED => exc
