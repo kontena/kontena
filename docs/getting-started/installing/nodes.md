@@ -12,6 +12,7 @@ Kontena CLI may be used to provision new Kontena Nodes based on [CoreOS](https:/
 * [Amazon AWS](nodes#amazon-aws)
 * [Microsoft Azure](nodes#microsoft-azure)
 * [DigitalOcean](nodes#digitalocean)
+* [Packet](nodes#packet)
 * [Vagrant (local environment)](nodes#vagrant)
 * [Docker Machine](nodes#docker-machine)
 * [Manual Install](nodes#manual-install)
@@ -68,12 +69,33 @@ Usage:
     kontena node digitalocean create [OPTIONS]
 
 Options:
+    --grid GRID                   Specify grid to use
     --name NAME                   Node name
     --token TOKEN                 DigitalOcean API token
     --ssh-key SSH_KEY             Path to ssh public key
     --size SIZE                   Droplet size (default: "1gb")
     --region REGION               Region (default: "ams2")
     --version VERSION             Define installed Kontena version (default: latest)
+```
+
+### Packet
+
+```
+Usage:
+    kontena node packet create [OPTIONS]
+
+Parameters:
+    [NAME]                        Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --token TOKEN                 Packet API token
+    --project PROJECT ID          Packet project id
+    --type TYPE                   Server type (baremetal_0, baremetal_1, ..) (default: "baremetal_0")
+    --facility FACILITY CODE      Facility (default: "ams1")
+    --billing BILLING             Billing cycle (default: "hourly")
+    --ssh-key PATH                Path to ssh public key (optional)
+    --version VERSION             Define installed Kontena version (default: "latest")
 ```
 
 ### Vagrant
