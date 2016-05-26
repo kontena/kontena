@@ -8,6 +8,7 @@ write_files:
       KONTENA_TOKEN="<%= grid_token %>"
       KONTENA_PEER_INTERFACE=eth1
       KONTENA_VERSION=<%= version %>
+      KONTENA_PRIVATE_IP=$private_ipv4
   - path: /etc/systemd/system/docker.service.d/50-kontena.conf
     content: |
         [Service]
