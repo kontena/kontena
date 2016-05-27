@@ -2,6 +2,7 @@
 
 ## 0.13.3 (2016-05-27)
 
+**Master & Agent:**
 - fix possible agent websocket ping_timer race condition (#731)
 - fix upstream removal to remove only right container instance (#727)
 - fix service balancer not picking up instances without any deploys (#725)
