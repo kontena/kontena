@@ -4,7 +4,10 @@ describe Kontena::WebsocketClient do
 
   let(:subject) { described_class.new('', '')}
 
-  before(:each) { Celluloid.boot }
+  before(:each) {
+    Celluloid.boot
+    allow(subject).to receive(:host_id).and_return('ABCD')
+  }
   after(:each) { Celluloid.shutdown }
 
   around(:each) do |example|
@@ -26,10 +29,66 @@ describe Kontena::WebsocketClient do
   end
 
   describe '#on_open' do
-    it 'sets state to connected' do
+    it 'sets connected to true' do
       expect(subject.connected?).to be_falsey
       subject.on_open(spy)
       expect(subject.connected?).to be_truthy
+    end
+
+    it 'sets connecting to false' do
+      subject.connect
+      expect(subject.connecting?).to be_truthy
+      subject.on_open(spy)
+      expect(subject.connecting?).to be_falsey
+    end
+
+    it 'cancels ping timer' do
+      timer = spy(:timer)
+      allow(subject).to receive(:ping_timer).and_return(timer)
+      expect(timer).to receive(:cancel)
+      subject.on_open(spy)
+    end
+  end
+
+  describe '#on_close' do
+    let(:event) { Faye::WebSocket::API::CloseEvent.new('close', {}) }
+
+    it 'publishes event' do
+      expect(Celluloid::Notifications).to receive(:publish)
+      subject.on_close(event)
+    end
+
+    it 'sets connected to false' do
+      subject.on_open(spy)
+      expect {
+        subject.on_close(event)
+      }.to change{ subject.connected? }.from(true).to(false)
+    end
+
+    it 'sets connecting to false' do
+      subject.connect
+      expect {
+        subject.on_close(event)
+      }.to change{ subject.connecting? }.from(true).to(false)
+    end
+
+    it 'handles 4001 error code' do
+      event = Faye::WebSocket::API::CloseEvent.new('close', code: 4001)
+      expect(subject).to receive(:handle_invalid_token).once.with(event)
+      subject.on_close(event)
+    end
+
+    it 'handles 4010 error code' do
+      event = Faye::WebSocket::API::CloseEvent.new('close', code: 4010)
+      expect(subject).to receive(:handle_invalid_version).once.with(event)
+      subject.on_close(event)
+    end
+
+    it 'cancels ping timer' do
+      timer = spy(:timer)
+      allow(subject).to receive(:ping_timer).and_return(timer)
+      expect(timer).to receive(:cancel)
+      subject.on_close(event)
     end
   end
 
