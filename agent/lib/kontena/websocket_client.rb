@@ -52,6 +52,7 @@ module Kontena
 
     def connect
       return if connecting?
+      @connected = false
       @connecting = true
       info "connecting to master at #{api_uri}"
       headers = {

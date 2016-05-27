@@ -28,6 +28,21 @@ describe Kontena::WebsocketClient do
     end
   end
 
+  describe '#connect' do
+    it 'sets connecting to true' do
+      expect {
+        subject.connect
+      }.to change{ subject.connecting? }.from(false).to(true)
+    end
+
+    it 'sets connected to false' do
+      subject.on_open(spy)
+      expect {
+        subject.connect
+      }.to change{ subject.connected? }.from(true).to(false)
+    end
+  end
+
   describe '#on_open' do
     it 'sets connected to true' do
       expect(subject.connected?).to be_falsey
