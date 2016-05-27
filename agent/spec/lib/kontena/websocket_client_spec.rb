@@ -89,13 +89,13 @@ describe Kontena::WebsocketClient do
 
     it 'handles 4001 error code' do
       event = Faye::WebSocket::API::CloseEvent.new('close', code: 4001)
-      expect(subject).to receive(:handle_invalid_token).once.with(event)
+      expect(subject).to receive(:handle_invalid_token).once
       subject.on_close(event)
     end
 
     it 'handles 4010 error code' do
       event = Faye::WebSocket::API::CloseEvent.new('close', code: 4010)
-      expect(subject).to receive(:handle_invalid_version).once.with(event)
+      expect(subject).to receive(:handle_invalid_version).once
       subject.on_close(event)
     end
 

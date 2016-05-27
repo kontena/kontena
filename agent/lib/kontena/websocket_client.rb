@@ -115,9 +115,9 @@ module Kontena
       @connecting = false
       @ws = nil
       if event.code == 4001
-        handle_invalid_token(event)
+        handle_invalid_token
       elsif event.code == 4010
-        handle_invalid_version(event)
+        handle_invalid_version
       end
       Celluloid::Notifications.publish('websocket:disconnect', event)
       info "connection closed with code: #{event.code}"
@@ -125,14 +125,12 @@ module Kontena
       error exc.message
     end
 
-    # @param [Faye::WebSocket::API::Event] event
-    def handle_invalid_token(event)
+    def handle_invalid_token
       error 'master does not accept our token, shutting down ...'
       EM.next_tick { abort('Shutting down ...') }
     end
 
-    # @param [Faye::WebSocket::API::Event] _
-    def handle_invalid_version(_)
+    def handle_invalid_version
       agent_version = Kontena::Agent::VERSION
       error "master does not accept our version (#{agent_version}), shutting down ..."
       EM.next_tick { abort("Shutting down ...") }
