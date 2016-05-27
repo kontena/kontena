@@ -63,11 +63,11 @@ module Kontena::Cli::Apps
       return nil if in_deploy_queue?(name) || !services.key?(name)
 
       # create/update linked services recursively before continuing
-      unless options[:links].empty?
-        options[:links].each_with_index do |linked_service, index|
+      unless options['links'].empty?
+        options['links'].each_with_index do |linked_service, index|
           # change prefixed service name also to links options
-          linked_service_name = linked_service[:name]
-          options[:links][index][:name] = "#{prefixed_name(linked_service[:name])}"
+          linked_service_name = linked_service['name']
+          options['links'][index]['name'] = "#{prefixed_name(linked_service['name'])}"
           create_or_update_service(linked_service_name, services[linked_service_name]) unless in_deploy_queue?(linked_service_name)
         end
       end
@@ -93,7 +93,7 @@ module Kontena::Cli::Apps
     def create(name, options)
       puts "creating #{name.colorize(:cyan)}"
       name = prefixed_name(name)
-      data = {name: name}
+      data = { 'name' => name }
       data.merge!(options)
       create_service(token, current_grid, data)
     end
@@ -113,10 +113,10 @@ module Kontena::Cli::Apps
 
     # @param [Hash] options
     def merge_external_links(options)
-      if options[:external_links]
-        options[:links] ||= []
-        options[:links] = options[:links] + options[:external_links]
-        options.delete(:external_links)
+      if options['external_links']
+        options['links'] ||= []
+        options['links'] = options['links'] + options['external_links']
+        options.delete('external_links')
       end
     end
   end

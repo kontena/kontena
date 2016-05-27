@@ -5,7 +5,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
   let(:subject) do
     described_class.new({})
   end
-  
+
   describe '#parse_data' do
     context 'volumes' do
       it 'returns volumes if set' do
@@ -16,7 +16,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           ]
         }
         result = subject.send(:parse_data, data)
-        expect(result[:volumes]).to eq(data['volumes'])
+        expect(result['volumes']).to eq(data['volumes'])
       end
 
       it 'returns empty volumes if not set' do
@@ -24,7 +24,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:volumes]).to eq([])
+        expect(result['volumes']).to eq([])
       end
     end
 
@@ -37,7 +37,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           ]
         }
         result = subject.send(:parse_data, data)
-        expect(result[:volumes_from]).to eq(data['volumes_from'])
+        expect(result['volumes_from']).to eq(data['volumes_from'])
       end
 
       it 'returns empty volumes_from if not set' do
@@ -45,7 +45,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:volumes_from]).to eq([])
+        expect(result['volumes_from']).to eq([])
       end
     end
 
@@ -56,7 +56,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'command' => 'ls -la'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:cmd]).to eq(data['command'].split(' '))
+        expect(result['cmd']).to eq(data['command'].split(' '))
       end
 
       it 'does not return cmd if not set' do
@@ -64,7 +64,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result.has_key?(:cmd)).to be_falsey
+        expect(result.has_key?('cmd')).to be_falsey
       end
     end
 
@@ -77,7 +77,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           ]
         }
         result = subject.send(:parse_data, data)
-        expect(result[:affinity]).to eq(data['affinity'])
+        expect(result['affinity']).to eq(data['affinity'])
       end
 
       it 'returns affinity as empty array if not set' do
@@ -85,8 +85,8 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result.has_key?(:affinity)).to be_truthy
-        expect(result[:affinity]).to eq([])
+        expect(result.has_key?('affinity')).to be_truthy
+        expect(result['affinity']).to eq([])
       end
     end
 
@@ -97,7 +97,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'user' => 'user'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:user]).to eq('user')
+        expect(result['user']).to eq('user')
       end
 
       it 'does not return user if not set' do
@@ -105,7 +105,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result.has_key?(:user)).to be_falsey
+        expect(result.has_key?('user')).to be_falsey
       end
     end
 
@@ -116,7 +116,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'stateful' => true
         }
         result = subject.send(:parse_data, data)
-        expect(result[:stateful]).to eq(true)
+        expect(result['stateful']).to eq(true)
       end
 
       it 'returns stateful as false if not set' do
@@ -124,7 +124,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:stateful]).to eq(false)
+        expect(result['stateful']).to eq(false)
       end
     end
 
@@ -135,7 +135,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'privileged' => false
         }
         result = subject.send(:parse_data, data)
-        expect(result[:privileged]).to eq(false)
+        expect(result['privileged']).to eq(false)
       end
 
       it 'does not return privileged if not set' do
@@ -143,7 +143,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:privileged]).to be_nil
+        expect(result['privileged']).to be_nil
       end
     end
 
@@ -156,7 +156,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           ]
         }
         result = subject.send(:parse_data, data)
-        expect(result[:cap_add]).to eq(data['cap_add'])
+        expect(result['cap_add']).to eq(data['cap_add'])
       end
 
       it 'does not return cap_add if not set' do
@@ -164,7 +164,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:cap_add]).to be_nil
+        expect(result['cap_add']).to be_nil
       end
     end
 
@@ -177,7 +177,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           ]
         }
         result = subject.send(:parse_data, data)
-        expect(result[:cap_drop]).to eq(data['cap_drop'])
+        expect(result['cap_drop']).to eq(data['cap_drop'])
       end
 
       it 'does not return cap_drop if not set' do
@@ -185,7 +185,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:cap_drop]).to be_nil
+        expect(result['cap_drop']).to be_nil
       end
     end
 
@@ -196,7 +196,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'net' => 'host'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:net]).to eq('host')
+        expect(result['net']).to eq('host')
       end
 
       it 'does not return pid if not set' do
@@ -204,7 +204,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:net]).to be_nil
+        expect(result['net']).to be_nil
       end
     end
 
@@ -215,7 +215,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'pid' => 'host'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:pid]).to eq('host')
+        expect(result['pid']).to eq('host')
       end
 
       it 'does not return pid if not set' do
@@ -223,7 +223,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:pid]).to be_nil
+        expect(result['pid']).to be_nil
       end
     end
 
@@ -234,7 +234,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'log_driver' => 'syslog'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:log_driver]).to eq('syslog')
+        expect(result['log_driver']).to eq('syslog')
       end
 
       it 'does not return log_driver if not set' do
@@ -242,7 +242,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:log_driver]).to be_nil
+        expect(result['log_driver']).to be_nil
       end
     end
 
@@ -257,7 +257,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           }
         }
         result = subject.send(:parse_data, data)
-        expect(result[:log_opts]).to eq(data['log_opt'])
+        expect(result['log_opts']).to eq(data['log_opt'])
       end
 
       it 'does not return log_opts if log_opt is not set' do
@@ -265,7 +265,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:log_opts]).to be_nil
+        expect(result['log_opts']).to be_nil
       end
     end
 
@@ -278,7 +278,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           }
         }
         result = subject.send(:parse_data, data)
-        expect(result[:deploy_opts][:wait_for_port]).to eq('8080')
+        expect(result['deploy_opts']['wait_for_port']).to eq('8080')
       end
 
       it 'returns deploy_opts if deploy.min_health is defined' do
@@ -289,7 +289,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           }
         }
         result = subject.send(:parse_data, data)
-        expect(result[:deploy_opts][:min_health]).to eq('0.5')
+        expect(result['deploy_opts']['min_health']).to eq('0.5')
       end
 
       it 'sets strategy if deploy.strategy is defined' do
@@ -300,7 +300,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           }
         }
         result = subject.send(:parse_data, data)
-        expect(result[:strategy]).to eq('daemon')
+        expect(result['strategy']).to eq('daemon')
       end
 
       it 'does not return deploy_opts if no deploy options are defined' do
@@ -308,7 +308,7 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result[:deploy_opts]).to be_nil
+        expect(result['deploy_opts']).to be_nil
       end
     end
 
@@ -321,13 +321,13 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           }
         }
         result = subject.send(:parse_data, data)
-        expect(result[:hooks]).to eq(data['hooks'])
+        expect(result['hooks']).to eq(data['hooks'])
       end
 
       it 'does returns empty hook hash if not defined' do
         data = {'image' => 'foo/bar:latest'}
         result = subject.send(:parse_data, data)
-        expect(result[:hooks]).to eq({})
+        expect(result['hooks']).to eq({})
       end
     end
 
@@ -340,13 +340,13 @@ describe Kontena::Cli::Apps::ServiceGenerator do
           ]
         }
         result = subject.send(:parse_data, data)
-        expect(result[:secrets]).to eq(data['secrets'])
+        expect(result['secrets']).to eq(data['secrets'])
       end
 
       it 'does not return secrets if not defined' do
         data = {'image' => 'foo/bar:latest'}
         result = subject.send(:parse_data, data)
-        expect(result[:secrets]).to be_nil
+        expect(result['secrets']).to be_nil
       end
     end
   end

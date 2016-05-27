@@ -141,14 +141,9 @@ describe Kontena::Cli::Apps::DeployCommand do
           expect(File).to receive(:readlines).with('.env').and_return(dot_env)
 
           data = {
-              :name =>"kontena-test-wordpress",
-              :image=>"wordpress:latest",
-              :env=>["MYSQL_ADMIN_PASSWORD=password", "TEST_ENV_VAR=test", "TEST_ENV_VAR2=test3"],
-              :container_count=>2,
-              :stateful=>false,
-              :strategy=>'ha',
-              :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
-              :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
+              'name' => 'kontena-test-wordpress',
+              'image' => 'wordpress:latest',
+              'env' => ['MYSQL_ADMIN_PASSWORD=password', 'TEST_ENV_VAR=test', 'TEST_ENV_VAR2=test3'],
           }
 
           expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
@@ -166,14 +161,9 @@ describe Kontena::Cli::Apps::DeployCommand do
           expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
 
           data = {
-              :name =>"kontena-test-wordpress",
-              :image=>"wordpress:latest",
-              :env=>["MYSQL_ADMIN_PASSWORD=password", "TEST_ENV_VAR=test"],
-              :container_count=>2,
-              :stateful=>false,
-              :strategy=>'ha',
-              :links=>[{:name=>"kontena-test-mysql", :alias=>"db"}],
-              :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
+              'name' => 'kontena-test-wordpress',
+              'image' => 'wordpress:latest',
+              'env' => ['MYSQL_ADMIN_PASSWORD=password', 'TEST_ENV_VAR=test']
           }
 
           expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
@@ -183,17 +173,21 @@ describe Kontena::Cli::Apps::DeployCommand do
 
       it 'merges external links to links' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
-        allow(YAML).to receive(:load).and_return(services)
         services['wordpress']['external_links'] = ['loadbalancer:loadbalancer']
+        allow(YAML).to receive(:load).and_return(services)
         data = {
-            :name =>"kontena-test-wordpress",
-            :image=>"wordpress:latest",
-            :env=> nil,
-            :container_count=>2,
-            :stateful=>false,
-            :strategy=>'ha',
-            :links=>[{:name => "kontena-test-mysql", :alias => "db"}, {:name => "loadbalancer", :alias => "loadbalancer"}],
-            :ports=>[{:container_port => "80", :node_port => "80", :protocol => "tcp"}]
+          'name' => 'kontena-test-wordpress',
+          'image' => 'wordpress:latest',
+          'links' => [
+            {
+              'name' => 'kontena-test-mysql',
+              'alias' => 'db'
+            },
+            {
+              'name' => 'loadbalancer',
+              'alias' => 'loadbalancer'
+            }
+          ]
         }
 
         expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
@@ -203,11 +197,11 @@ describe Kontena::Cli::Apps::DeployCommand do
       it 'creates mysql service before wordpress' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
         data = {
-            :name => "kontena-test-mysql",
-            :image =>'mysql:5.6',
-            :env => ["MYSQL_ROOT_PASSWORD=kontena-test_secret"],
-            :container_count => nil,
-            :stateful => true,
+            'name' => 'kontena-test-mysql',
+            'image' => 'mysql:5.6',
+            'env' => ['MYSQL_ROOT_PASSWORD=kontena-test_secret'],
+            'container_count' => nil,
+            'stateful' => true,
         }
         expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
 
@@ -215,17 +209,17 @@ describe Kontena::Cli::Apps::DeployCommand do
       end
 
       it 'creates wordpress service' do
-        allow(subject).to receive(:current_dir).and_return("kontena-test")
+        allow(subject).to receive(:current_dir).and_return('kontena-test')
 
         data = {
-            :name =>"kontena-test-wordpress",
-            :image=>"wordpress:4.1",
-            :env=>["WORDPRESS_DB_PASSWORD=kontena-test_secret"],
-            :container_count=>2,
-            :stateful=>true,
-            :strategy=>'ha',
-            :links=>[{:name=>"kontena-test-mysql", :alias=>"mysql"}],
-            :ports=>[{:container_port=>"80", :node_port=>"80", :protocol=>"tcp"}]
+          'name' => 'kontena-test-wordpress',
+          'image' => 'wordpress:4.1',
+          'env' => ['WORDPRESS_DB_PASSWORD=kontena-test_secret'],
+          'container_count' => 2,
+          'stateful' => true,
+          'strategy' => 'ha',
+          'links' => [{ 'name' => 'kontena-test-mysql', 'alias' => 'mysql' }],
+          'ports' => [{ 'container_port' => '80', 'node_port' => '80', 'protocol' => 'tcp' }]
         }
         expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
 
@@ -233,7 +227,7 @@ describe Kontena::Cli::Apps::DeployCommand do
       end
 
       it 'deploys services' do
-        allow(subject).to receive(:current_dir).and_return("kontena-test")
+        allow(subject).to receive(:current_dir).and_return('kontena-test')
         expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-mysql', {})
         expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-wordpress', {})
         subject.run([])

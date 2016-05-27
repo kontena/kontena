@@ -12,15 +12,15 @@ module Kontena::Cli::Apps
 
       services.each do |name, service|
         if service['build'] && (!image_exist?(service['image']) || force_build)
-          dockerfile = service['dockerfile'] || 'Dockerfile'
+          dockerfile = service['build']['dockerfile'] || 'Dockerfile'
           abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
-          abort("'#{service['build']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build'], dockerfile)
+          abort("'#{service['build']['context']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build']['context'], dockerfile)
           if service['hooks'] && service['hooks']['pre_build']
             puts "Running pre_build hook".colorize(:cyan)
             run_pre_build_hook(service['hooks']['pre_build'])
           end
           puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service['image'], service['build'], dockerfile, no_cache)
+          build_docker_image(service['image'], service['build']['context'], dockerfile, no_cache)
           puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
           push_docker_image(service['image'])
         end
