@@ -56,7 +56,7 @@ module Kontena
           ShellSpinner "Waiting for node #{device.hostname.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} (estimate 4 minutes) " do
             sleep 2 until node = device_exists_in_grid?(opts[:grid], device)
           end
-          set_labels(node, ["region=#{opts[:region]}"])
+          set_labels(node, ["region=#{opts[:facility]}"])
         end
 
         def generate_name
