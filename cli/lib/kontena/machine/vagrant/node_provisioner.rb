@@ -48,6 +48,7 @@ module Kontena
             ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{grid.colorize(:cyan)} " do
               sleep 1 until node_exists_in_grid?(grid, name)
             end
+            set_labels(node, ["region=#{opts[:region]}", "provider=vagrant"])
           end
         end
 
@@ -61,6 +62,11 @@ module Kontena
 
         def node_exists_in_grid?(grid, name)
           api_client.get("grids/#{grid}/nodes")['nodes'].find{|n| n['name'] == name}
+        end
+
+        def set_labels(node, labels)
+          data = {labels: labels}
+          api_client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
         end
       end
     end
