@@ -16,6 +16,48 @@ describe GridServices::Deploy do
   let(:subject) { described_class.new(current_user: user, grid_service: redis_service, strategy: 'ha')}
 
   describe '#run' do
+    it 'does not allow to deploy service that is already deploying' do
+      redis_service.set_state('deploying')
+      outcome = subject.run
+      expect(outcome.success?).to be_falsey
+      expect(outcome.errors.message['state']).not_to be_nil
+    end
+
+    it 'does not allow to deploy service that is starting' do
+      redis_service.set_state('starting')
+      outcome = subject.run
+      expect(outcome.success?).to be_falsey
+      expect(outcome.errors.message['state']).not_to be_nil
+    end
+
+    it 'does not allow to deploy service that is stopping' do
+      redis_service.set_state('stopping')
+      outcome = subject.run
+      expect(outcome.success?).to be_falsey
+      expect(outcome.errors.message['state']).not_to be_nil
+    end
+
+    it 'allows to deploy service that is initialized' do
+      redis_service.set_state('initialized')
+      outcome = subject.run
+      expect(outcome.success?).to be_truthy
+      expect(redis_service.reload.running?).to be_truthy
+    end
+
+    it 'allows to deploy service that is running' do
+      redis_service.set_state('running')
+      outcome = subject.run
+      expect(outcome.success?).to be_truthy
+      expect(redis_service.reload.running?).to be_truthy
+    end
+
+    it 'allows to deploy service that is stopped' do
+      redis_service.set_state('stopped')
+      outcome = subject.run
+      expect(outcome.success?).to be_truthy
+      expect(redis_service.reload.running?).to be_truthy
+    end
+
     it 'sends deploy call to worker' do
       grid
       expect {
