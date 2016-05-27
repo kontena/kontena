@@ -14,6 +14,7 @@ json.mem_limit node.mem_limit
 json.cpus node.cpus
 json.public_ip node.public_ip
 json.private_ip node.private_ip
+json.agent_version node.agent_version
 json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|n|
   if n.region == node.region
     n.private_ip

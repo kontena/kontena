@@ -96,6 +96,12 @@ describe HostNode do
         subject.attributes_from_docker({'Labels' => ['foo=bar']})
       }.not_to change{ subject.labels }
     end
+
+    it 'sets agent_version' do
+      expect {
+        subject.attributes_from_docker({'AgentVersion' => '1.2.3'})
+      }.to change{ subject.agent_version }.to('1.2.3')
+    end
   end
 
   describe '#save!' do

@@ -99,6 +99,12 @@ describe Kontena::Workers::NodeInfoWorker do
       info = subject.queue.pop
       expect(info[:data]['PrivateIp']).to eq('192.168.66.2')
     end
+
+    it 'contains agent_version' do
+      subject.publish_node_info
+      info = subject.queue.pop
+      expect(info[:data]['AgentVersion']).to match(/\d+\.\d+\.\d+/)
+    end
   end
 
   describe '#publish_node_stats' do
@@ -108,6 +114,7 @@ describe Kontena::Workers::NodeInfoWorker do
       }.to change{ subject.queue.length }.by(1)
     end
   end
+
 
   describe '#public_ip' do
     it 'returns ip from env if set' do
