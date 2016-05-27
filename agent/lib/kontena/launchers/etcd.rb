@@ -8,7 +8,7 @@ module Kontena::Launchers
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
 
-    ETCD_VERSION = ENV['ETCD_VERSION'] || '2.2.4'
+    ETCD_VERSION = ENV['ETCD_VERSION'] || '2.3.3'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
 
     def initialize(autostart = true)
@@ -85,20 +85,31 @@ module Kontena::Launchers
     # @param [String] image
     # @param [Hash] info
     def create_container(image, info)
+      cluster_size = info['grid']['initial_size']
+      node_number = info['node_number']
+      cluster_state = 'new'
+      weave_ip = weave_ip(info['node_number'])
+
       container = Docker::Container.get('kontena-etcd') rescue nil
       if container && container.info['Config']['Image'] != image
         container.delete(force: true)
       elsif container && container.running?
-        info "etcd is already running"
+        info 'etcd is already running'
         @running = true
-        return
+        return container
+      elsif container && !container.running?
+        info 'etcd container exists but not running, starting it'
+        container.start
+        @running = true
+        return container
+      elsif container.nil? && node_number <= cluster_size
+        # No previous container exists, update previous membership info if needed
+        cluster_state = update_membership(info)
       end
 
-      cluster_size = info['grid']['initial_size']
-      node_number = info['node_number']
+      
       name = "node-#{info['node_number']}"
       grid_name = info['grid']['name']
-      weave_ip = "10.81.0.#{info['node_number']}"
       docker_ip = docker_gateway
 
       cmd = [
@@ -113,10 +124,9 @@ module Kontena::Launchers
           '--advertise-client-urls', "http://#{weave_ip}:2379",
           '--initial-advertise-peer-urls', "http://#{weave_ip}:2380",
           '--initial-cluster-token', grid_name,
-          '--initial-cluster', initial_cluster(cluster_size).join(','),
-          '--initial-cluster-state', 'new'
+          '--initial-cluster-state', cluster_state
         ]
-        info "starting etcd service as a cluster member"
+        info "starting etcd service as a cluster member with initial state: #{cluster_state}"
       else
         cmd = cmd + ['--proxy', 'on']
         info "starting etcd service as a proxy"
@@ -135,9 +145,92 @@ module Kontena::Launchers
       )
       container.start
       Celluloid::Notifications.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
-      info "started etcd service"
+      info 'started etcd service'
       @running = true
       container
+    end
+
+    # Removes possible previous member with the same IP
+    #
+    # @param [String] node weave ip
+    # @return [String] the state of the cluster member
+    def update_membership(info)
+      info 'checking if etcd previous membership needs to be updated'
+      
+      etcd_connection = find_etcd_node(info)
+      return 'new' unless etcd_connection # No etcd hosts available, bootstrapping first node --> new cluster
+
+      weave_ip = weave_ip(info['node_number'])
+      peer_url = "http://#{weave_ip}:2380"
+      client_url = "http://#{weave_ip}:2379"
+      
+      members = JSON.parse(etcd_connection.get.body)
+      members['members'].each do |member|
+        if member['peerURLs'].include?(peer_url) && member['clientURLs'].include?(client_url)
+          # When there's both peer and client URLs, the given peer has been a member of the cluster
+          # and needs to be replaced
+          delete_membership(etcd_connection, member['id'])
+          sleep 1 # There seems to be some race condition with etcd member API, thus some sleeping required
+          add_membership(etcd_connection, peer_url)
+          sleep 1
+          return 'existing'
+        elsif member['peerURLs'].include?(peer_url) && !member['clientURLs'].include?(client_url)
+          # Peer found but not been part of the cluster yet, no modification needed and it can join as new member
+          return 'new'
+        end
+      end
+
+      info 'previous member info not found at all, adding'
+      add_membership(etcd_connection, peer_url)
+
+      'new' # Newly added member will join as new member
+    end
+
+    ##
+    # Finds a working etcd node from set of initial nodes
+    # 
+    # @param [Hash] node info
+    # @return [Hash] The cluster members as given by etcd API 
+    def find_etcd_node(info)
+      tries = info['grid']['initial_size']
+      begin
+        etcd_host = "http://10.81.0.#{tries}:2379/v2/members"
+
+        info "connecting to existing etcd at #{etcd_host}"
+        connection = Excon.new(etcd_host)
+        members = JSON.parse(connection.get.body)
+
+        return connection
+      rescue Excon::Errors::Error => exc
+        tries -= 1
+        if tries > 0
+          info 'retrying next etcd host'
+          retry
+        else
+          info 'no online etcd host found, we\'re probably bootstrapping first node'
+        end
+      end
+      nil
+    end
+
+    # Deletes membership of given etcd peer
+    #
+    # @param [Excon::Connection] etcd HTTP members API connection
+    # @param [String] id of the peer to be removed
+    def delete_membership(connection, id)
+      info "Removing existing etcd membership info with id #{id}"
+      connection.delete(:path => "/v2/members/#{id}")
+    end
+
+    ##
+    # Add new peer membership
+    #
+    # @param [Excon::Connection] etcd HTTP members API connection
+    # @param [String] The peer URL of the new peer to be added to the cluster
+    def add_membership(connection, peer_url)
+      info "Adding new etcd membership info with peer URL #{peer_url}"
+      connection.post(:body => JSON.generate(peerURLs: [peer_url]),
+                      :headers => { 'Content-Type' => 'application/json' })
     end
 
     # @param [Integer] cluster_size
@@ -157,6 +250,12 @@ module Kontena::Launchers
       interface_ip('docker0')
     end
 
+    ##
+    # @param [Hash] node info
+    # @return [String] weave network ip of the node
+    def weave_ip(node_number)
+      "10.81.0.#{node_number}"
+    end
     # @param [Exception] exc
     def log_error(exc)
       error "#{exc.class.name}: #{exc.message}"
