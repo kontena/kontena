@@ -77,6 +77,8 @@ GEM
       listen (~> 2.7, >= 2.7.3)
     roda (2.5.0)
       rack
+    rollbar (2.11.3)
+      multi_json
     rspec (3.1.0)
       rspec-core (~> 3.1.0)
       rspec-expectations (~> 3.1.0)
@@ -134,6 +136,7 @@ DEPENDENCIES
   random_token
   rerun
   roda (~> 2.5.0)
+  rollbar
   rspec (~> 3.1.0)
   ruby_dig
   simplecov
