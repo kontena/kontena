@@ -10,10 +10,18 @@ describe Kontena::Cli::Apps::YAML::Validator do
   end
 
   describe '#validate_options' do
-    it 'requires image' do
-      result = subject.validate_options('build' => '.')
-      expect(result.success?).to be_falsey
-      expect(result.messages.key?('image')).to be_truthy
+    context 'image' do
+      it 'image is optional' do
+        result = subject.validate_options('build' => '.')
+        expect(result.success?).to be_truthy
+        expect(result.messages.key?('image')).to be_falsey
+      end
+
+      it 'must be string' do
+        result = subject.validate_options('image' => 10)
+        expect(result.success?).to be_falsey
+        expect(result.messages.key?('image')).to be_truthy
+      end    
     end
 
     it 'validates stateful is boolean' do
