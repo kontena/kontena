@@ -17,10 +17,10 @@ module Kontena::Cli::Apps
     def execute
       require_config_file(filename)
       @service_prefix = project_name || current_dir
-      yml_service = load_services(filename, [service], service_prefix)
+      yml_service = services_from_yaml(filename, [service], service_prefix)
       if yml_service[service]
         options = yml_service[service]
-        abort("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['instances']
+        abort("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['container_count']
         @service_prefix = project_name || current_dir
         scale_service(require_token, prefixed_name(service), instances)
       else

@@ -10,7 +10,7 @@ describe Kontena::Cli::Apps::DockerHelper do
   let(:services_with_valid_hooks) do
     {
         'test_service' => {
-            'build' => '.',
+            'build' => { 'context' => '.' },
             'image' => 'test_service',
             'hooks' => {
               'pre_build' => [
@@ -25,7 +25,7 @@ describe Kontena::Cli::Apps::DockerHelper do
   let(:services_with_invalid_hook) do
     {
         'test_service' => {
-            'build' => '.',
+            'build' => { 'context' => '.' },
             'image' => 'test_service',
             'hooks' => {
               'pre_build' => [
@@ -40,7 +40,7 @@ describe Kontena::Cli::Apps::DockerHelper do
   let(:services_with_no_hook) do
     {
         'test_service' => {
-            'build' => '.',
+            'build' => { 'context' => '.' },
             'image' => 'test_service',
         }
     }
@@ -70,7 +70,7 @@ describe Kontena::Cli::Apps::DockerHelper do
   end
 
   describe '#run_pre_build_hook' do
-    
+
     context 'when hook defined' do
       it 'runs the hook' do
         allow(subject).to receive(:build_docker_image)
