@@ -48,7 +48,7 @@ module Kontena
             ShellSpinner "Waiting for node #{name.colorize(:cyan)} join to grid #{grid.colorize(:cyan)} " do
               sleep 1 until node_exists_in_grid?(grid, name)
             end
-            set_labels(node, ["region=#{opts[:region]}", "provider=vagrant"])
+            set_labels(node, ["provider=vagrant"])
           end
         end
 
