@@ -58,6 +58,20 @@ describe HostNode do
     end
   end
 
+  describe '#initial_member?' do
+    let(:grid) { Grid.create!(name: 'test', initial_size: 1) }
+    let(:node_1) { HostNode.create(name: 'node-1', grid: grid, node_number: 1)}
+    let(:node_2) { HostNode.create(name: 'node-2', grid: grid, node_number: 2)}
+
+    it 'returns true if initial_member' do
+      expect(node_1.initial_member?).to be_truthy
+    end
+
+    it 'returns false if not initial_member' do
+      expect(node_2.initial_member?).to be_falsey
+    end
+  end
+
   describe '#attributes_from_docker' do
     it 'sets name' do
       expect {
