@@ -5,7 +5,7 @@ module GridServices
     class ExecutionError < StandardError
     end
 
-    VALID_STATES = %w(initialized running stopped)
+    VALID_STATES = %w(initialized running deploying stopped)
 
     required do
       model :grid_service
@@ -23,14 +23,13 @@ module GridServices
     end
 
     def execute
-      attrs = { deploy_requested_at: Time.now.utc, state: 'running' }
-      if self.force
-        attrs[:updated_at] = Time.now.utc
-      end
-      self.grid_service.set(attrs)
-      GridServiceDeploy.create(grid_service: self.grid_service)
+      attrs = { deploy_requested_at: Time.now.utc }
+      attrs[:state] = 'running' unless grid_service.deploying?
+      attrs[:updated_at] = Time.now.utc if force
+      grid_service.set(attrs)
+      GridServiceDeploy.create(grid_service: grid_service)
 
-      self.grid_service
+      grid_service
     end
   end
 end
