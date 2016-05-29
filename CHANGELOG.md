@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.4 (2016-05-29)
+
+**Master & Agent:**
+- allow to deploy service that is already in deploying state (#743)
+
+**Packaging:**
+- add resolvconf as dependency in ubuntu kontena-agent (#744)
+
 ## 0.13.3 (2016-05-27)
 
 **Master & Agent:**
