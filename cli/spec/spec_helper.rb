@@ -22,7 +22,6 @@ RSpec.configure do |config|
     allow(Dir).to receive(:home).and_return('/tmp/')
   end
 end
-RSpec::Expectations.configuration.warn_about_potential_false_positives = false
 
 require_relative 'support/client_helpers'
 require_relative 'support/fixtures_helpers'
