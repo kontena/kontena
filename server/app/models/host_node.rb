@@ -23,6 +23,7 @@ class HostNode
   field :public_ip, type: String
   field :private_ip, type: String
   field :last_seen_at, type: Time
+  field :agent_version, type: String
 
   attr_accessor :schedule_counter
 
@@ -60,7 +61,8 @@ class HostNode
       cpus: attrs['NCPU'],
       swap_limit: attrs['SwapLimit'],
       public_ip: attrs['PublicIp'],
-      private_ip: attrs['PrivateIp']
+      private_ip: attrs['PrivateIp'],
+      agent_version: attrs['AgentVersion']
     }
     if self.name.nil?
       self.name = attrs['Name']

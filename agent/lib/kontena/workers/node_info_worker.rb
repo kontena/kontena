@@ -1,7 +1,8 @@
 require 'net/http'
+require 'vmstat'
+
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
-require 'vmstat'
 
 module Kontena::Workers
   class NodeInfoWorker
@@ -60,6 +61,7 @@ module Kontena::Workers
       info 'publishing node information'
       docker_info['PublicIp'] = self.public_ip
       docker_info['PrivateIp'] = self.private_ip
+      docker_info['AgentVersion'] = Kontena::Agent::VERSION
       event = {
           event: 'node:info',
           data: docker_info
