@@ -49,6 +49,7 @@ module Kontena
               vnc: 'off',
               timezone: 'UTC',
               user_data: user_data(userdata_vars),
+              firewall: 'off',
               storage_devices: {
                 storage_device: [
                   {
