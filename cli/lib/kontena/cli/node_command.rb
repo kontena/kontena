@@ -9,6 +9,7 @@ require_relative 'nodes/label_command'
 require_relative 'nodes/vagrant_command'
 require_relative 'nodes/digital_ocean_command'
 require_relative 'nodes/packet_command'
+require_relative 'nodes/upcloud_command'
 require_relative 'nodes/aws_command'
 require_relative 'nodes/azure_command'
 
@@ -25,6 +26,7 @@ class Kontena::Cli::NodeCommand < Clamp::Command
   subcommand "vagrant", "Vagrant specific commands", Kontena::Cli::Nodes::VagrantCommand
   subcommand "digitalocean", "DigitalOcean specific commands", Kontena::Cli::Nodes::DigitalOceanCommand
   subcommand "packet", "Packet specific commands", Kontena::Cli::Nodes::PacketCommand
+  subcommand "upcloud", "Upcloud specific commands", Kontena::Cli::Nodes::UpcloudCommand
   subcommand "aws", "AWS specific commands", Kontena::Cli::Nodes::AwsCommand
   subcommand "azure", "Azure specific commands", Kontena::Cli::Nodes::AzureCommand
 

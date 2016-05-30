@@ -1,0 +1,118 @@
+#cloud-config
+write_files:
+  - path: /etc/kontena-server.env
+    permissions: 0600
+    owner: root
+    content: |
+      KONTENA_VERSION=<%= version %>
+      KONTENA_VAULT_KEY=<%= vault_secret %>
+      KONTENA_VAULT_IV=<%= vault_iv %>
+      <% if ssl_cert %>SSL_CERT="/etc/kontena-server.pem"
+
+  - path: /etc/kontena-server.pem
+    permissions: 0600
+    owner: root
+    content: | <% ssl_cert.split(/\n/).each do |row| %>
+      <%= row %><% end %><% end %>
+  - path: /opt/bin/kontena-haproxy.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/bin/sh
+      if [ -n "$SSL_CERT" ]; then
+        SSL_CERT=$(awk 1 ORS='\\n' $SSL_CERT)
+      else
+        SSL_CERT="**None**"
+      fi
+      /usr/bin/docker run --name=kontena-server-haproxy \
+        --link kontena-server-api:kontena-server-api \
+        -e SSL_CERT="$SSL_CERT" \
+        -p 80:80 -p 443:443 kontena/haproxy:latest
+coreos:
+  units:
+<% unless mongodb_uri -%>
+    - name: kontena-server-mongo.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-mongo
+        After=network-online.target
+        After=docker.service
+        Description=Kontena Server MongoDB
+        Documentation=http://www.mongodb.org/
+        Requires=network-online.target
+        Requires=docker.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        ExecStartPre=/usr/bin/docker pull mongo:3.0
+        ExecStartPre=-/usr/bin/docker create --name=kontena-server-mongo-data mongo:3.0
+        ExecStartPre=-/usr/bin/docker stop kontena-server-mongo
+        ExecStartPre=-/usr/bin/docker rm kontena-server-mongo
+        ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
+            --volumes-from=kontena-server-mongo-data \
+            mongo:3.0 mongod --smallfiles
+<% end -%>
+    - name: kontena-server-api.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-api
+        After=network-online.target
+        After=docker.service
+        After=kontena-server-mongo.service
+        Description=Kontena Master
+        Documentation=http://www.kontena.io/
+        Before=kontena-server-haproxy.service
+        Wants=kontena-server-haproxy.service
+        Requires=network-online.target
+        Requires=docker.service
+<% unless mongodb_uri -%>
+        Requires=kontena-server-mongo.service
+<% end %>
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        EnvironmentFile=/etc/kontena-server.env
+        ExecStartPre=-/usr/bin/docker stop kontena-server-api
+        ExecStartPre=-/usr/bin/docker rm kontena-server-api
+        ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
+        ExecStart=/usr/bin/docker run --name kontena-server-api \
+<% if mongodb_uri -%>
+            -e MONGODB_URI=<%= mongodb_uri %> \
+<% else -%>
+            --link kontena-server-mongo:mongodb \
+            -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+<% end -%>
+<% if auth_server %>
+            -e AUTH_API_URL=<%= auth_server %> \
+<% end -%>
+            -e VAULT_KEY=${KONTENA_VAULT_KEY} -e VAULT_IV=${KONTENA_VAULT_IV} \
+            kontena/server:${KONTENA_VERSION}
+
+    - name: kontena-server-haproxy.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=kontena-server-haproxy
+        After=network-online.target
+        After=docker.service
+        Description=Kontena Server HAProxy
+        Documentation=http://www.kontena.io/
+        Requires=network-online.target
+        Requires=docker.service
+        Requires=kontena-server-api.service
+
+        [Service]
+        Restart=always
+        RestartSec=5
+        EnvironmentFile=/etc/kontena-server.env
+        ExecStartPre=-/usr/bin/docker stop kontena-server-haproxy
+        ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
+        ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
+        ExecStart=/opt/bin/kontena-haproxy.sh
