@@ -4,7 +4,7 @@ module Kontena::Cli::Apps
     # @param [Hash] services
     # @param [Boolean] force_build
     # @param [Boolean] no_cache
-    def process_docker_images(services, force_build = false, no_cache = false)
+    def process_docker_images(services, force_build = false, no_cache = false, build_tag = nil)
       if services.none?{|name, service| service['build']}
         puts "Not found any service with build option"
         return
@@ -12,17 +12,19 @@ module Kontena::Cli::Apps
 
       services.each do |name, service|
         if service['build'] && (!image_exist?(service['image']) || force_build)
-          dockerfile = service['build']['dockerfile'] || 'Dockerfile'
-          abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
+          image = build_tag || service['image']
+          dockerfile = service['dockerfile'] || 'Dockerfile'
+          abort("'#{image}' is not valid Docker image name") unless validate_image_name(image)
           abort("'#{service['build']['context']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build']['context'], dockerfile)
           if service['hooks'] && service['hooks']['pre_build']
             puts "Running pre_build hook".colorize(:cyan)
             run_pre_build_hook(service['hooks']['pre_build'])
           end
-          puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service['image'], service['build']['context'], dockerfile, no_cache)
-          puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
-          push_docker_image(service['image'])
+          
+          puts "Building image #{image.colorize(:cyan)}"
+          build_docker_image(image, service['build'], dockerfile, no_cache)
+          puts "Pushing image #{image.colorize(:cyan)} to registry"
+          push_docker_image(image)
         end
       end
     end
