@@ -33,7 +33,7 @@ module RequestHelpers
     request.halt
   end
 
-  def halt_request(status, body)
+  def halt_request(status, body = {})
     response.status = status
     response.write(body.to_json)
     request.halt

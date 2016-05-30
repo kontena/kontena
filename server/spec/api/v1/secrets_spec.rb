@@ -63,35 +63,47 @@ describe 'secrets' do
   end
 
   describe 'PUT /v1/grids/:grid/secrets/:name' do
-    it 'updates a secret' do
-      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
-      data = {value: 'secretzz'}
-      expect {
+    context 'when secret exists' do
+      it 'updates a secret' do
+        secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+        data = {value: 'secretzz'}
+        expect {
+          put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
+          expect(response.status).to eq(200)
+        }.to change{ secret.reload.value }.to('secretzz')
+      end
+
+      it 'creates an audit entry' do
+        secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+        data = {value: 'secretzz'}
+        expect {
+          put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
+        }.to change{ grid.audit_logs.count }.by(1)
+      end
+
+      it 'filters request body from audit entry' do
+        secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
+        data = {value: 'secretzz'}
         put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
-        expect(response.status).to eq(200)
-      }.to change{ secret.reload.value }.to('secretzz')
+        entry = grid.audit_logs.last
+        expect(entry.request_body).to be_nil
+      end
     end
 
-    it 'creates an audit entry' do
-      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
-      data = {value: 'secretzz'}
-      expect {
-        put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
-      }.to change{ grid.audit_logs.count }.by(1)
-    end
+    context 'when the secret does not exist' do
+      it 'returns error' do
+        data = {value: 'secretzz'}
+        put "/v1/grids/#{grid.to_path}/secrets/BAR", data.to_json, request_headers
+        expect(response.status).to eq(404)
+      end
 
-    it 'filters request body from audit entry' do
-      secret = grid.grid_secrets.create(name: 'FOO', value: 'supersecret')
-      data = {value: 'secretzz'}
-      put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
-      entry = grid.audit_logs.last
-      expect(entry.request_body).to be_nil
-    end
-
-    it 'returns error if secret not found' do
-      data = {value: 'secretzz'}
-      put "/v1/grids/#{grid.to_path}/secrets/BAR", data.to_json, request_headers
-      expect(response.status).to eq(404)
+      it 'creates a new secret if upsert requested' do
+        data = {value: 'secretzz', upsert: true, name: 'FOO'}
+        expect {
+          put "/v1/grids/#{grid.to_path}/secrets/FOO", data.to_json, request_headers
+          expect(response.status).to eq(201)
+        }.to change{ grid.grid_secrets.count }.by(1)
+      end
     end
 
     it 'returns error if user has no access to grid' do
