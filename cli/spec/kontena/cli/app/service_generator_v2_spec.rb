@@ -1,5 +1,6 @@
 require_relative "../../../spec_helper"
 require "kontena/cli/apps/service_generator_v2"
+require 'ruby_dig'
 
 describe Kontena::Cli::Apps::ServiceGeneratorV2 do
   let(:subject) do

@@ -7,8 +7,8 @@ module Kontena::Cli::Apps
     def parse_data(options)
       data = super(options)
       data['net'] = options['network_mode'] if options['network_mode']
-      data['log_driver'] = options['logging']['driver'] if options['logging'] && options['logging']['driver']
-      data['log_opts'] = options['logging']['options'] if options['logging'] && options['logging']['driver'] && !options['logging']['driver'].empty?
+      data['log_driver'] = options.dig('logging', 'driver')
+      data['log_opts'] = options.dig('logging', 'options')
       if options['depends_on']
         data['links'] ||= []
         data['links'] = (data['links'] + parse_links(options['depends_on'])).uniq
