@@ -168,7 +168,7 @@ module Kontena::NetworkAdapters
 
       weave = nil
       peer_ips = info['peer_ips'] || []
-      trusted_subnets = info['grid']['trusted_subnets']
+      trusted_subnets = info.dig('grid', 'trusted_subnets')
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
@@ -199,8 +199,8 @@ module Kontena::NetworkAdapters
 
     # @param [Array<String>] peer_ips
     def connect_peers(peer_ips)
-      self.exec(['--local', 'connect', '--replace'] + peer_ips) if peer_ips.size > 0
       if peer_ips.size > 0
+        self.exec(['--local', 'connect', '--replace'] + peer_ips)
         info "router connected to peers #{peer_ips.join(', ')}"
       else
         info "router does not have any known peers"
