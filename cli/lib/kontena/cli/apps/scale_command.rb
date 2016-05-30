@@ -12,16 +12,14 @@ module Kontena::Cli::Apps
     parameter "SERVICE", "Service to show"
     parameter "INSTANCES", "Scales service to given number of instances"
 
-    attr_reader :services, :service_prefix
+    attr_reader :services
 
     def execute
       require_config_file(filename)
-      @service_prefix = project_name || current_dir
       yml_service = services_from_yaml(filename, [service], service_prefix)
       if yml_service[service]
         options = yml_service[service]
         abort("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['container_count']
-        @service_prefix = project_name || current_dir
         scale_service(require_token, prefixed_name(service), instances)
       else
         abort("Service not found")

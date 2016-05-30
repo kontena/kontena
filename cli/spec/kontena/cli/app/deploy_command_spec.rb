@@ -119,6 +119,7 @@ describe Kontena::Cli::Apps::DeployCommand do
       end
 
       it 'reads given yml file' do
+        allow(subject).to receive(:project_name_from_yaml).and_return nil
         expect(File).to receive(:read).with("#{Dir.getwd}/custom.yml").and_return(kontena_yml)
         subject.run(["--file", "custom.yml"])
       end

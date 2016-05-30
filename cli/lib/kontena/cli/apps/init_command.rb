@@ -15,12 +15,9 @@ module Kontena::Cli::Apps
     option ["-b", "--base-image"], "BASE_IMAGE_NAME", "Specify a docker base image name", default: "kontena/buildstep"
     option ["-p", "--project-name"], "NAME", "Specify an alternate project name (default: directory name)"
 
-    attr_reader :service_prefix
 
     def execute
       require 'highline/import'
-
-      @service_prefix = project_name || File.basename(Dir.getwd)
 
       if File.exist?('Dockerfile')
         puts 'Found Dockerfile'

@@ -17,14 +17,13 @@ module Kontena::Cli::Apps
 
     parameter "[SERVICE] ...", "Services to start"
 
-    attr_reader :services, :service_prefix, :deploy_queue
+    attr_reader :services, :deploy_queue
 
     def execute
       require_api_url
       require_token
       require_config_file(filename)
-      @deploy_queue = []
-      @service_prefix = project_name || current_dir
+      @deploy_queue = []      
       @services = services_from_yaml(filename, service_list, service_prefix)
       process_docker_images(services) if !no_build?
       create_or_update_services(services)

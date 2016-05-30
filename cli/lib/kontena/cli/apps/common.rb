@@ -50,6 +50,21 @@ module Kontena::Cli::Apps
       ENV['grid'] = grid
     end
 
+    def service_prefix
+      @service_prefix ||= project_name || project_name_from_yaml(filename) || current_dir
+    end
+
+    def project_name_from_yaml(file)
+      reader = YAML::Reader.new(file, true)
+      outcome = reader.execute      
+      if outcome[:version] == '2'
+        outcome[:name]
+      else
+        nil
+      end
+    end
+
+
     # @return [String]
     def token
       @token ||= require_token

@@ -11,14 +11,13 @@ module Kontena::Cli::Apps
 
     parameter "[SERVICE] ...", "Remove services"
 
-    attr_reader :services, :service_prefix
+    attr_reader :services
 
     def execute
       require_api_url
       require_token
       require_config_file(filename)
-
-      @service_prefix = project_name || current_dir
+      
       @services = services_from_yaml(filename, service_list, service_prefix)
       if services.size > 0
         remove_services(services)

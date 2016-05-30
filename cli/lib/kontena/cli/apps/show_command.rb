@@ -11,12 +11,11 @@ module Kontena::Cli::Apps
 
     parameter "SERVICE", "Service to show"
 
-    attr_reader :services, :service_prefix
+    attr_reader :services
 
     def execute
       require_config_file(filename)
 
-      @service_prefix = project_name || current_dir
       show_service(require_token, prefixed_name(service))
     end
   end

@@ -13,12 +13,11 @@ module Kontena::Cli::Apps
     option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     parameter "[SERVICE] ...", "Show only specified service logs"
 
-    attr_reader :services, :service_prefix
+    attr_reader :services
 
     def execute
       require_config_file(filename)
 
-      @service_prefix = project_name || current_dir
       @services = services_from_yaml(filename, service_list, service_prefix)
       if services.size > 0
         show_logs(services)
