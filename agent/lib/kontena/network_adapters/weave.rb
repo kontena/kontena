@@ -16,6 +16,7 @@ module Kontena::NetworkAdapters
 
     def initialize(autostart = true)
       @images_exist = false
+      @started = false
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
       async.ensure_images if autostart
@@ -47,6 +48,11 @@ module Kontena::NetworkAdapters
     # @return [Boolean]
     def images_exist?
       @images_exist == true
+    end
+
+    # @return [Boolean]
+    def already_started?
+      @started == true
     end
 
     # @param [Hash] opts
@@ -162,15 +168,13 @@ module Kontena::NetworkAdapters
 
       weave = nil
       peer_ips = info['peer_ips'] || []
+      trusted_subnets = info.dig('grid', 'trusted_subnets')
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
           '--password', ENV['KONTENA_TOKEN']
         ]
-        if info['grid']['trusted_subnets']
-          exec_params += ['--trusted-subnets', info['grid']['trusted_subnets'].join(',')]
-        end
-        exec_params += peer_ips
+        exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         self.exec(exec_params)
         weave = Docker::Container.get('weave') rescue nil
         wait = Time.now.to_f + 10.0
@@ -181,25 +185,36 @@ module Kontena::NetworkAdapters
         end
       end
 
-      if peer_ips.size > 0
-        info "router started with peers #{peer_ips.join(', ')}"
-      else
-        info "router started without known peers"
-      end
-      if info['grid']['trusted_subnets']
-        info "using trusted subnets: #{info['grid']['trusted_subnets'].join(',')}"
-      end
+      connect_peers(peer_ips)
+      info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
 
+      post_start(info) unless already_started?
+
+      @started = true
+      info
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
+      debug exc.backtrace.join("\n")
+    end
+
+    # @param [Array<String>] peer_ips
+    def connect_peers(peer_ips)
+      if peer_ips.size > 0
+        self.exec(['--local', 'connect', '--replace'] + peer_ips)
+        info "router connected to peers #{peer_ips.join(', ')}"
+      else
+        info "router does not have any known peers"
+      end
+    end
+
+    # @param [Hash] info
+    def post_start(info)
       if info['node_number']
         weave_bridge = "10.81.0.#{info['node_number']}/19"
         self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
         info "bridge exposed: #{weave_bridge}"
       end
       Celluloid::Notifications.publish('network_adapter:start', info)
-      info
-    rescue => exc
-      error "#{exc.class.name}: #{exc.message}"
-      debug exc.backtrace.join("\n")
     end
 
     private

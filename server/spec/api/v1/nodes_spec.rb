@@ -1,7 +1,8 @@
 require_relative '../../spec_helper'
 
 describe '/v1/grids' do
-
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
   let(:grid) { Grid.create!(name: 'test') }
   let(:request_headers) do
     {
