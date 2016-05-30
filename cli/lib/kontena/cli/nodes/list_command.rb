@@ -31,13 +31,13 @@ module Kontena::Cli::Nodes
         end
       else
         nodes = client(token).get("grids/#{current_grid}/nodes")
-        puts "%-70s %-10s %-15s %-40s" % ['Name', 'Status', 'Initial node?', 'Labels']
+        puts "%-70s %-10s %-10s %-40s" % ['Name', 'Status', 'Initial', 'Labels']
         nodes = nodes['nodes'].sort_by{|n| n['node_number'] }
         nodes.each do |node|
-          puts "%-70.70s %-10s %-15s %-40s" % [
+          puts "%-70.70s %-10s %-10s %-40s" % [
             node['name'],
             node['connected'] ? 'online' : 'offline',
-            node['initial_member'] ? 'Yes' : 'No',
+            node['initial_member'] ? 'yes' : 'no',
             (node['labels'] || ['-']).join(",")
           ]
         end
