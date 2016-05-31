@@ -72,7 +72,7 @@ module Kontena
             sleep 2 until node = vm_exists_in_grid?(opts[:grid], vm_name)
           end
           if node
-            labels = ["region=#{cloud_service(cloud_service_name).location}"]
+            labels = ["region=#{cloud_service(cloud_service_name).location}", "provider=azure"]
             set_labels(node, labels)
           end
         end
