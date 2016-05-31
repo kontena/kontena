@@ -13,6 +13,7 @@ Kontena CLI may be used to provision new Kontena Nodes based on [CoreOS](https:/
 * [Microsoft Azure](nodes#microsoft-azure)
 * [DigitalOcean](nodes#digitalocean)
 * [Packet](nodes#packet)
+* [Upcloud](nodes#upcloud)
 * [Vagrant (local environment)](nodes#vagrant)
 * [Docker Machine](nodes#docker-machine)
 * [Manual Install](nodes#manual-install)
@@ -96,6 +97,25 @@ Options:
     --billing BILLING             Billing cycle (default: "hourly")
     --ssh-key PATH                Path to ssh public key (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
+```
+
+### Upcloud
+
+```
+Usage:
+    kontena node upcloud create [OPTIONS] [NAME]
+
+    [NAME]                        Node name
+
+    --grid GRID                   Specify grid to use
+    --username USER               Upcloud username
+    --password PASS               Upcloud password
+    --ssh-key SSH_KEY             Path to ssh public key
+    --plan PLAN                   Server size (default: "1xCPU-1GB")
+    --zone ZONE                   Zone (default: "fi-hel1")
+    --version VERSION             Define installed Kontena version (default: "latest")
+
+Note: The username for ssh access is "root"
 ```
 
 ### Vagrant

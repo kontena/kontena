@@ -13,6 +13,7 @@ Kontena CLI may be used to provision Kontena Master based on [CoreOS](https://co
 * [Microsoft Azure](master#microsoft-azure)
 * [DigitalOcean](master#digitalocean)
 * [Packet](master#packet)
+* [Upcloud](master#upcloud)
 * [Vagrant (local environment)](master#vagrant)
 * [Manual Install](master#manual-install)
   * [CoreOS](master#coreos)
@@ -84,6 +85,8 @@ Options:
 ```
 
 ### Packet
+
+```
 Usage:
     kontena master packet create [OPTIONS]
 
@@ -100,6 +103,28 @@ Options:
     --mongodb-uri URI             External MongoDB uri (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+```
+
+### Upcloud
+
+```
+Usage:
+    kontena master upcloud create [OPTIONS]
+
+Options:
+    --username USER               Upcloud username
+    --password PASS               Upcloud password
+    --ssh-key SSH_KEY             Path to ssh public key
+    --ssl-cert SSL CERT           SSL certificate file (optional)
+    --plan PLAN                   Server plan (default: "1xCPU-1GB")
+    --zone ZONE                   Zone (default: "fi-hel1")
+    --vault-secret VAULT_SECRET   Secret key for Vault (optional)
+    --vault-iv VAULT_IV           Initialization vector for Vault (optional)
+    --mongodb-uri URI             External MongoDB uri (optional)
+    --version VERSION             Define installed Kontena version (default: "latest")
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+
+Note: The username for ssh access is "root"
 ```
 
 ### Vagrant

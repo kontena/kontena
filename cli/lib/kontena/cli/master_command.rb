@@ -2,6 +2,7 @@ require_relative 'master/vagrant_command'
 require_relative 'master/aws_command'
 require_relative 'master/digital_ocean_command'
 require_relative 'master/packet_command'
+require_relative 'master/upcloud_command'
 require_relative 'master/azure_command'
 require_relative 'master/use_command'
 require_relative 'master/list_command'
@@ -14,6 +15,7 @@ class Kontena::Cli::MasterCommand < Clamp::Command
   subcommand "aws", "AWS specific commands", Kontena::Cli::Master::AwsCommand
   subcommand "digitalocean", "DigitalOcean specific commands", Kontena::Cli::Master::DigitalOceanCommand
   subcommand "packet", "Packet specific commands", Kontena::Cli::Master::PacketCommand
+  subcommand "upcloud", "Upcloud specific commands", Kontena::Cli::Master::UpcloudCommand
   subcommand "azure", "Azure specific commands", Kontena::Cli::Master::AzureCommand
   subcommand ["list", "ls"], "List masters where client has logged in", Kontena::Cli::Master::ListCommand
   subcommand "use", "Switch to use selected master", Kontena::Cli::Master::UseCommand
