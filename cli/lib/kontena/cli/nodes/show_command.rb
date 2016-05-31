@@ -20,7 +20,7 @@ module Kontena::Cli::Nodes
       puts "  last seen: #{node['last_seen_at']}"
       puts "  public ip: #{node['public_ip']}"
       puts "  private ip: #{node['private_ip']}"
-      puts "  overlay network: 10.81.#{node['node_number']}.0/24"
+      puts "  overlay ip: 10.81.0.#{node['node_number']}"
       puts "  os: #{node['os']}"
       puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"
