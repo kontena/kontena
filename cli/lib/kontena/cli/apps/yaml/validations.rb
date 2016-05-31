@@ -6,10 +6,7 @@ module Kontena::Cli::Apps::YAML
      base.optional('extends').schema do
        key('service').required(:str?)
        optional('file') { str? }
-     end
-     base.rule(image_required: ['extends', 'build', 'image']) do |extends, build, image|
-       extends.none? & build.none? > image.filled?
-     end
+     end    
      base.optional('stateful') { bool? }
      base.optional('affinity') { array? { each { format?(/(?<=\!|\=)=/) } } }
      base.optional('cap_add') { array? | none? }

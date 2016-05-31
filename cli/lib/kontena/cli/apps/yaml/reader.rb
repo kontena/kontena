@@ -1,6 +1,7 @@
 require 'yaml'
 require_relative 'service_extender'
 require_relative 'validator'
+require_relative 'validator_v2'
 
 module Kontena::Cli::Apps
   module YAML
@@ -12,7 +13,7 @@ module Kontena::Cli::Apps
         @errors = []
         @notifications = []
         load_yaml
-        validate unless v2?
+        validate
       end
 
       ##
@@ -21,7 +22,8 @@ module Kontena::Cli::Apps
       def execute(service_name = nil)
         result = {}
         Dir.chdir(File.dirname(File.expand_path(file))) do
-          result[:result] = parse_services(service_name)
+          result[:version] = yaml['version'] || '1'
+          result[:services] = parse_services(service_name)
           result[:errors] = errors
           result[:notifications] = notifications
         end
@@ -59,7 +61,8 @@ module Kontena::Cli::Apps
       # @return [Kontena::Cli::Apps::YAML::Validator]
       def validator
         if @validator.nil?
-          @validator = YAML::Validator.new
+          validator_klass = v2? ? YAML::ValidatorV2 : YAML::Validator
+          @validator = validator_klass.new
         end
         @validator
       end
@@ -70,7 +73,7 @@ module Kontena::Cli::Apps
       def parse_services(service_name = nil)
         if service_name.nil?
           services.each { |name, config| services[name] = process_config(config) }
-          yaml
+          services
         else
           abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
           process_config(services[service_name])
@@ -127,7 +130,7 @@ module Kontena::Cli::Apps
         outcome = Reader.new(filename).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.key?(filename) }
-        outcome[:result]
+        outcome[:services]
       end
 
       # @param [Hash] options - service config

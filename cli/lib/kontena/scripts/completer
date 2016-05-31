@@ -55,8 +55,13 @@ class Helper
   end
 
   def yml_services
-    if File.exist?('kontena.yml')
-      services = YAML.load(File.read('kontena.yml'))
+    if File.exist?('kontena.yml')      
+      yaml = YAML.load(File.read('kontena.yml'))
+      if yaml['version'] == '2'
+        services = yaml['services']
+      else
+        services = yaml
+      end
       services.keys
     end
   rescue

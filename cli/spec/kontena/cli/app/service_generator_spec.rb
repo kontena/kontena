@@ -128,6 +128,27 @@ describe Kontena::Cli::Apps::ServiceGenerator do
       end
     end
 
+    context 'links' do
+      it 'returns empty array if links not set' do
+        data = {
+          'image' => 'wordpress:latest'
+        }
+        result = subject.send(:parse_data, data)
+        expect(result['links']).to eq([])
+      end
+      
+      it 'returns parsed links array' do
+        data = {
+          'image' => 'wordpress:latest',
+          'links' => ['mysql:db']
+        }
+        result = subject.send(:parse_data, data)
+        expect(result['links']).to eq([{
+          'name' => 'mysql',
+          'alias' => 'db'
+        }])
+      end
+    end
     context 'privileged' do
       it 'returns privileged if set' do
         data = {

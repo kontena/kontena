@@ -145,7 +145,7 @@ describe Kontena::Cli::Apps::YAML::Reader do
       allow(File).to receive(:read)
         .with(absolute_yaml_path)
         .and_return(fixture('kontena-with-variables.yml'))
-      services = subject.execute[:result]
+      services = subject.execute[:services]
       expect(services['mysql']['environment'].first).to eq('INTERNAL_VAR=$INTERNAL_VAR')
     end
   end
@@ -224,18 +224,18 @@ describe Kontena::Cli::Apps::YAML::Reader do
 
     context 'environment variables' do
       it 'converts env hash to array' do
-        result = subject.execute[:result]
+        result = subject.execute[:services]
         expect(result['wordpress']['environment']).to eq(['WORDPRESS_DB_PASSWORD=test_secret'])
       end
 
       it 'does nothing to env array' do
-        result = subject.execute[:result]
+        result = subject.execute[:services]
         expect(result['mysql']['environment']).to eq(['MYSQL_ROOT_PASSWORD=test_secret'])
       end
     end
     it 'returns result hash' do
       outcome = subject.execute
-      expect(outcome[:result]).to eq(valid_result)
+      expect(outcome[:services]).to eq(valid_result)
     end
 
     it 'returns validation errors' do

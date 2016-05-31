@@ -1,6 +1,7 @@
 require 'yaml'
 require_relative '../services/services_helper'
 require_relative './service_generator'
+require_relative './service_generator_v2'
 require_relative './yaml/reader'
 
 module Kontena::Cli::Apps
@@ -17,22 +18,31 @@ module Kontena::Cli::Apps
     # @return [Hash]
     def services_from_yaml(filename, service_list, prefix)
       set_env_variables(prefix, current_grid)
-      outcome = YAML::Reader.new(filename).execute
+      reader = YAML::Reader.new(filename)
+      outcome = reader.execute
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
       abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
-      generate_services(outcome[:result], service_list)
+      kontena_services = generate_services(outcome[:services], outcome[:version])
+      kontena_services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
+      kontena_services
     end
 
     ##
     # @param [Hash] yaml
-    # @param [Array<String>] services to pick
-    def generate_services(yaml, services = [])
-      kontena_services = {}
-      yaml.each do |service_name, config|
-        kontena_services[service_name] = ServiceGenerator.new(config).generate
+    # @param [String] version
+    # @return [Hash]
+    def generate_services(yaml_services, version)
+      services = {}
+      if version == '2'
+        generator_klass = ServiceGeneratorV2
+      else
+        generator_klass = ServiceGenerator
       end
-      kontena_services.delete_if { |name, service| !services.include?(name)} unless services.empty?
-      kontena_services
+      yaml_services.each do |service_name, config|
+        abort("Image is missing for #{service_name}. Aborting.") unless config['image']
+        services[service_name] = generator_klass.new(config).generate
+      end
+      services
     end
 
     def set_env_variables(project, grid)
@@ -88,23 +98,27 @@ module Kontena::Cli::Apps
           services.each do |service|
             service.each do |name, errors|
               STDERR.puts "  #{name}:".colorize(color)
-              errors.each do |key, error|
-                STDERR.puts "    - #{key}: #{error.to_json}".colorize(color)
+              if errors.is_a?(String)
+                STDERR.puts "    - #{errors}".colorize(color)
+              else
+                errors.each do |key, error|
+                  STDERR.puts "    - #{key}: #{error.to_json}".colorize(color)
+                end
               end
             end
           end
         end
       end
     end
+
     def hint_on_validation_notifications(errors)
-      STDERR.puts "YAML contains the following unsupported options and they were rejected:".colorize(:green)
+      STDERR.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
       display_notifications(errors)
     end
 
     def abort_on_validation_errors(errors)
-      STDERR.puts "YAML validation failed!".colorize(:red)
+      STDERR.puts "YAML validation failed! Aborting.".colorize(:red)
       display_notifications(errors, :red)
-
       abort
     end
 
