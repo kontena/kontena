@@ -122,6 +122,29 @@ module Kontena
         save_settings
       end
 
+      def error(message = nil)
+        $stderr.puts(message) if message
+        exit(1)
+      end
+
+      def prompt(prefix = '> ')
+        require 'highline/import'
+        ask(prefix)
+      end
+
+      def confirm_command(name, message = nil)
+        puts message if message
+        puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
+
+        prompt == name || error("Confirmation did not match #{name}. Aborted command.")
+      end
+
+      def confirm(message = 'Destructive command. Are you sure? (y/n) or re-run this command with --force option.')
+        puts message
+
+        ['y', 'yes'].include?(prompt) || error("Aborted command.")
+      end
+
       def api_url=(api_url)
         settings['servers'][current_master_index]['url'] = api_url
         save_settings

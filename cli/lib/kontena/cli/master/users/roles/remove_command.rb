@@ -6,11 +6,13 @@ module Kontena::Cli::Master::Users::Roles
 
     parameter "ROLE", "Role name"
     parameter "USER ...", "List of users"
+    option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
 
     def execute
       require_api_url
       token = require_token
+      confirm unless forced?
 
       user_list.each do |email|
         begin

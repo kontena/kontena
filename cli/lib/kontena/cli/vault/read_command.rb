@@ -7,6 +7,8 @@ module Kontena::Cli::Vault
 
     def execute
       require_api_url
+      require_current_grid
+
       token = require_token
       result = client(token).get("secrets/#{current_grid}/#{name}")
       puts "#{result['name']}:"

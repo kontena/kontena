@@ -9,11 +9,13 @@ module Kontena::Cli::Etcd
     parameter "KEY", "Etcd key"
 
     option "--recursive", :flag, "Remove keys recursively"
+    option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
       require_api_url
       token = require_token
       validate_key
+      confirm unless forced?
 
       data = {}
       data[:recursive] = true if recursive?

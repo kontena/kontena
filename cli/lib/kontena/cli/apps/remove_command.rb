@@ -8,6 +8,7 @@ module Kontena::Cli::Apps
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
+    option '--force', :flag, 'Force remove', default: false, attribute_name: :forced
 
     parameter "[SERVICE] ...", "Remove services"
 
@@ -17,7 +18,8 @@ module Kontena::Cli::Apps
       require_api_url
       require_token
       require_config_file(filename)
-      
+      confirm unless forced?
+
       @services = services_from_yaml(filename, service_list, service_prefix)
       if services.size > 0
         remove_services(services)
