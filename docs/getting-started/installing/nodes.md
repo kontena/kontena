@@ -58,10 +58,25 @@ Options:
     --network NETWORK             Virtual Network name
     --subnet SUBNET               Subnet name
     --ssh-key SSH KEY             SSH private key file
-    --password PASSWORD           Password
     --location LOCATION           Location (default: "West Europe")
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
+
+You can use OpenSSL to create your management certificate. You actually need to create two certificates, one for the server (a .cer file) and one for the client (a .pem file). To create the .pem file, execute this:
+
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout mycert.pem -out mycert.pem
+```
+
+To create the .cer certificate, execute this:
+
+```
+openssl x509 -inform pem -in mycert.pem -outform der -out mycert.cer
+```
+
+For more information about Azure certificates, see [Certificates Overview for Azure Cloud Services](https://azure.microsoft.com/en-us/documentation/articles/cloud-services-certs-create/). For a complete description of OpenSSL parameters, see the documentation at http://www.openssl.org/docs/apps/openssl.html.
+
+After you have created these files, you will need to upload the .cer file to Azure via the "Upload" action of the "Settings" tab of the [Azure classic portal](https://manage.windowsazure.com/), and you will need to make note of where you saved the .pem file.
 
 ### DigitalOcean
 

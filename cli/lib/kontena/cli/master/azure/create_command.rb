@@ -10,7 +10,6 @@ module Kontena::Cli::Master::Azure
     option "--network", "NETWORK", "Virtual Network name"
     option "--subnet", "SUBNET", "Subnet name"
     option "--ssh-key", "SSH KEY", "SSH private key file", required: true
-    option "--password", "PASSWORD", "Password"
     option "--location", "LOCATION", "Location", default: 'West Europe'
     option "--ssl-cert", "SSL CERT", "SSL certificate file"
     option "--vault-secret", "VAULT_SECRET", "Secret key for Vault"
@@ -22,7 +21,6 @@ module Kontena::Cli::Master::Azure
       require 'kontena/machine/azure'
       provisioner = Kontena::Machine::Azure::MasterProvisioner.new(subscription_id, certificate)
       provisioner.run!(
-          password: password,
           ssh_key: ssh_key,
           ssl_cert: ssl_cert,
           size: size,

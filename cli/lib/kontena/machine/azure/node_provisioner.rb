@@ -20,7 +20,7 @@ module Kontena
           abort('Invalid management certificate') unless File.exists?(File.expand_path(certificate))
 
           @client = ::Azure
-          client.management_certificate = certificate
+          client.management_certificate = File.expand_path(certificate)
           client.subscription_id        = subscription_id
           client.vm_management.initialize_external_logger(Logger.new) # We don't want all the output
         end
@@ -50,9 +50,9 @@ module Kontena
               vm_name: vm_name,
               vm_user: 'core',
               location: opts[:location],
-              image: '2b171e93f07c4903bcad35bda10acf22__CoreOS-Stable-766.3.0',
+              image: '2b171e93f07c4903bcad35bda10acf22__CoreOS-Stable-1010.5.0',
               custom_data: Base64.encode64(user_data(userdata_vars)),
-              ssh_key: opts[:ssh_key]
+              ssh_key: File.expand_path(opts[:ssh_key])
             }
             options = {
               cloud_service_name: cloud_service_name,
@@ -72,7 +72,10 @@ module Kontena
             sleep 2 until node = vm_exists_in_grid?(opts[:grid], vm_name)
           end
           if node
-            labels = ["region=#{cloud_service(cloud_service_name).location}"]
+            labels = [
+              "region=#{cloud_service(cloud_service_name).location}",
+              "az=#{cloud_service(cloud_service_name).location}"
+            ]
             set_labels(node, labels)
           end
         end
