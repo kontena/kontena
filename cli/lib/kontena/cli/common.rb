@@ -134,12 +134,12 @@ module Kontena
 
       def confirm_command(name, message = nil)
         puts message if message
-        puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --confirm option."
+        puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
         prompt == name || error("Confirmation did not match #{name}. Aborted command.")
       end
 
-      def confirm(message = 'Destructive command. Are you sure? (y/n) or re-run this command with --confirm option.')
+      def confirm(message = 'Destructive command. Are you sure? (y/n) or re-run this command with --force option.')
         puts message
 
         ['y', 'yes'].include?(prompt) || error("Aborted command.")
