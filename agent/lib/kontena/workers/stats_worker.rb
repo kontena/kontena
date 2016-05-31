@@ -68,9 +68,9 @@ module Kontena::Workers
 
       current_stat = container[:stats][-1]
 
-      num_cores = current_stat[:cpu][:usage][:per_cpu_usage].count
-      raw_cpu_usage = current_stat[:cpu][:usage][:total] - prev_stat[:cpu][:usage][:total]
-      interval_in_ns = get_interval(current_stat[:timestamp], prev_stat[:timestamp])
+      num_cores = current_stat.dig(:cpu, :usage, :per_cpu_usage).count rescue 1 # Need to default to something
+      raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
+      interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
 
       event = {
         event: 'container:stats'.freeze,
