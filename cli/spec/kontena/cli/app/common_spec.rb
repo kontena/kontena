@@ -13,6 +13,10 @@ describe Kontena::Cli::Apps::Common do
     fixture('kontena.yml')
   end
 
+  let(:kontena_v2_yml) do
+    fixture('kontena_v2.yml')
+  end
+
   let(:docker_compose_yml) do
     fixture('docker-compose.yml')
   end
@@ -28,6 +32,29 @@ describe Kontena::Cli::Apps::Common do
         'ports' => ['80:80']
       }
     }
+  end
+
+  describe '#service_prefix' do
+    it 'returns given project name' do
+      allow(subject).to receive(:project_name).and_return('test')
+      expect(subject.service_prefix).to eq('test')
+    end
+
+    it 'returns app name from yaml if project name not given' do
+      allow(subject).to receive(:project_name).and_return(nil)
+      allow(subject).to receive(:filename).and_return('kontena.yml')
+      allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose_v2.yml").and_return(docker_compose_yml)
+      allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_v2_yml)
+      expect(subject.service_prefix).to eq('test-project')
+    end
+
+    it 'returns current dir as default' do
+      allow(subject).to receive(:project_name).and_return(nil)
+      allow(subject).to receive(:filename).and_return('kontena.yml')
+      allow(subject).to receive(:project_name_from_yaml).and_return(nil)
+      allow(subject).to receive(:current_dir).and_return('working_dir')
+      expect(subject.service_prefix).to eq('working_dir')
+    end
   end
 
   describe '#load_from_yaml' do

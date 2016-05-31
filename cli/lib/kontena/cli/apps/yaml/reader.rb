@@ -8,12 +8,13 @@ module Kontena::Cli::Apps
     class Reader
       attr_reader :yaml, :file, :errors, :notifications
 
-      def initialize(file)
+      def initialize(file, skip_validation = false)
         @file = file
         @errors = []
         @notifications = []
+        @skip_validation = skip_validation
         load_yaml
-        validate
+        validate unless skip_validation?
       end
 
       ##
@@ -23,6 +24,7 @@ module Kontena::Cli::Apps
         result = {}
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:version] = yaml['version'] || '1'
+          result[:name] = yaml['name']
           result[:services] = parse_services(service_name)
           result[:errors] = errors
           result[:notifications] = notifications
@@ -51,6 +53,10 @@ module Kontena::Cli::Apps
         result = validator.validate(yaml)
         store_failures(result)
         result
+      end
+
+      def skip_validation?
+        @skip_validation == true
       end
 
       def store_failures(data)
@@ -101,7 +107,7 @@ module Kontena::Cli::Apps
       def interpolate(text)
         text.gsub!(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
           var = v.tr('${}', '')
-          puts "The #{var} is not set. Substituting an empty string." unless ENV.key?(var)
+          puts "The #{var} is not set. Substituting an empty string." if !ENV.key?(var) && !skip_validation?
           ENV[var] # replace with equivalent ENV variables
         end
       end
@@ -127,7 +133,7 @@ module Kontena::Cli::Apps
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename).execute(service_name)
+        outcome = Reader.new(filename, @skip_validation).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.key?(filename) }
         outcome[:services]
