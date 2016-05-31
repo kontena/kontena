@@ -5,9 +5,15 @@ toc_order: 1
 
 # Kontena.yml reference
 
-Kontena.yml is a file in YAML format that defines a [Kontena application](../using-kontena/applications.md) with one or more services. It uses the same syntax and keys as Docker-compose, however not all keys are supported. The default name for this file is kontena.yml, although other filenames are supported.
+Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena application](../using-kontena/applications.md) with one or more [services]((../using-kontena/services.md)). It uses the same syntax and keys as [Docker Compose file](https://docs.docker.com/compose/compose-file/), however not all keys are supported. The default name for this file is kontena.yml, although other filenames are supported.
 
-Each key defined in kontena.yml will create a service with that name. The image key is mandatory. Other keys are optional.
+Each key defined in kontena.yml will create a service with that name prefixed with project name. The image key is mandatory. Other keys are optional.
+
+You can use environment variables in configuration values with a Bash-like ${VARIABLE} syntax - see [variable substitution](#variable-substitution) for full details.
+
+
+## Service configuration reference
+> **Note:** Kontena supports both Docker Compose file versions respectively. Volumes and networks introduced in version 2 are not supported by Kontena yet. See more details about versioning on [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
 
 #### image
 
@@ -25,23 +31,46 @@ image: kontena/haproxy:latest
 image: registry.kontena.local/ghost:latest
 ```
 
+#### build
+
+Build can be specified either as a string containing a path to the build context, or an object with the path specified under context and optionally dockerfile (version 2 only).
+
+```
+build: .
+```
+
+```
+build:
+  context: .
+  dockerfile: alternate-dockerfile
+```
+
+#### dockerfile
+> **Note:** Version 1 only
+
+Alternate Dockerfile.
+
+```
+dockerfile: Dockerfile-alternate
+```
+
 #### affinity
 
 Affinity conditions of hosts where containers should be launched
 
 ```
 affinity:
-    - node==node1.kontena.io
+  - node==node1.kontena.io
 ```
 
 ```
 affinity:
-    - label==AWS
+  - label==AWS
 ```
 
 ```
 affinity:
-    - service==wordpress
+  - service==wordpress
 ```
 
 #### cap_add, cap_drop
@@ -85,6 +114,25 @@ mem_limit: 512m
 memswap_limit: 1024m
 ```
 
+#### depends_on
+> **Note:** Version 2 only
+
+Express dependency between services. Kontena will create and deploy services in dependency order.
+
+```
+version: '2'
+services:
+  web:
+    build: .
+    depends_on:
+      - db
+      - redis
+  redis:
+    image: redis:latest
+  db:
+    image: postgres:latest
+```
+
 #### environment
 
 A list of environment variables to be added in the service containers on launch. You can use either an array or a dictionary.
@@ -95,6 +143,14 @@ environment:
   - FRONTEND_PORT=3306
   - MODE=tcp
 ```
+
+```
+environment:
+  DB_HOST: ${project}-db.kontena.local
+```
+
+> **Note:** Kontena will add automatically the following environment variables to running service instances: KONTENA_SERVICE_ID, KONTENA_SERVICE_NAME, KONTENA_GRID_NAME, KONTENA_NODE_NAME
+
 
 #### env_file
 
@@ -146,6 +202,7 @@ db:
 ```
 
 #### external_links
+
 Link to services in the same grid outside application scope. `external_links` follow semantics similar to links.
 
 ```
@@ -171,6 +228,44 @@ links:
   - mysql:wordpress-mysql
 ```
 
+With Kontena you can always reach services by their internal DNS (*service_name.grid.kontena.local*) and links are not needed for the service discovery.
+
+
+Links also express dependency between services in the same way as `depends_on`, so they determine the order of service startup.
+
+#### net
+> **Note:** Version 1 only. In version 2 use [network_mode](#network_mode).
+
+Network mode.
+
+```
+net: "bridge"
+```
+
+```
+net: "host"
+```
+
+#### network_mode
+> **Note:** Version 2 only.
+
+Network mode.
+
+```
+network_mode: "bridge"
+```
+
+```
+network_mode: "host"
+```
+
+#### pid
+Sets the PID mode to the host PID mode.
+
+```
+pid: host
+```
+
 #### ports
 
 Expose ports. Specify both ports (HOST:CONTAINER).
@@ -179,6 +274,13 @@ Expose ports. Specify both ports (HOST:CONTAINER).
 ports:
   - "80:80"
   - "53160:53160/udp"
+```
+
+#### privileged
+Give extended privileges to service.
+
+```
+privileged: true
 ```
 
 #### stateful
@@ -217,9 +319,9 @@ volumes_from:
 
 ```
 volumes_from:
- - wordpress-%s
+ - wordpress-%%s
 ```
-(`-%s` will be replaced with container number, eg first service container will get volumes from wordpress-1, second from wordpress-2 etc)
+(`-%%s` will be replaced with container number, eg first service container will get volumes from wordpress-1, second from wordpress-2 etc)
 
 #### deploy
 
@@ -271,7 +373,7 @@ deploy:
 
 ```
 hooks:
-  post_start
+  post_start:
     - name: sleep
       cmd: sleep 10
       instances: *
@@ -284,21 +386,20 @@ hooks:
 
 ```
 hooks:
-  pre_build
+  pre_build:
     - name: npm install
       cmd: npm install
     - name: grunt
       cmd: grunt dist
 ```
 
-
-
-
 #### log_driver
+> **Note:** Version 1 only. In version 2 use [logging](#logging) options
 
 Specify the log driver for docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
 
 #### log_opts
+> **Note:** Version 1 only. In version 2 use [logging](#logging) options
 
 Specify options for log driver
 
@@ -312,4 +413,71 @@ nginx:
     fluentd-address: 192.168.99.1:24224
     fluentd-tag: docker.{{.Name}}
 
+```
+
+#### logging
+> **Note** Version 2 file format only. In version 1, use log_driver and log_opt.
+
+Logging configuration for the service.
+
+```
+logging:
+  driver: syslog
+  options:
+    syslog-address: "tcp://192.168.0.42:123"
+```
+
+## Variable substitution
+
+Your configuration options can contain environment variables. Kontena uses the variable values from the shell environment in which `kontena app` commands are run. For example, suppose the shell contains EXTERNAL_PORT=8000 and you supply this configuration:
+
+```
+web:
+  build: .
+  image: registry.kontena.local/my-app:latest
+  ports:
+    - "${EXTERNAL_PORT}:5000"
+```
+
+Referencing other services within the same application needs project prefix in the service name. You can use `${project}` variable for that:
+
+```
+web:  
+  image: wordpress:latest
+  environment:
+    - WORDPRESS_DB_HOST=${project}-db
+db:
+  image: mariadb:latest
+```
+
+## Example kontena.yml
+```
+loadbalancer:
+  image: kontena/lb:latest
+  ports:
+    - 80:80
+app:
+  build: .  
+  image: registry.kontena.local/example-app:latest
+  instances: 2
+  privileged: true  
+  links:
+    - loadbalancer
+  environment:
+    - DB_URL=%{project}-db.kontena.local
+    - KONTENA_LB_INTERNAL_PORT=80
+    - KONTENA_LB_VIRTUAL_HOSTS=www.my-app.com
+  deploy:
+    strategy: ha
+    wait_for_port: 80
+  hooks:
+    post_start:
+      - name: sleep
+        cmd: sleep 10
+        instances: *  
+db:
+  image: mysql:5.6
+  stateful: true
+  volumes:
+    - /var/lib/mysql
 ```
