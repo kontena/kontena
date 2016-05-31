@@ -58,7 +58,6 @@ Options:
     --network NETWORK             Virtual Network name
     --subnet SUBNET               Subnet name
     --ssh-key SSH KEY             SSH private key file
-    --password PASSWORD           Password
     --location LOCATION           Location (default: "West Europe")
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
