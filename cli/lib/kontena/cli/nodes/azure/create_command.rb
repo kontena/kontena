@@ -9,7 +9,6 @@ module Kontena::Cli::Nodes::Azure
     option "--network", "NETWORK", "Virtual Network name"
     option "--subnet", "SUBNET", "Subnet name"
     option "--ssh-key", "SSH KEY", "SSH private key file", required: true
-    option "--password", "PASSWORD", "Password"
     option "--location", "LOCATION", "Location", default: 'West Europe'
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
 
@@ -26,7 +25,6 @@ module Kontena::Cli::Nodes::Azure
         master_uri: api_url,
         grid_token: grid['token'],
         grid: current_grid,
-        password: password,
         ssh_key: ssh_key,
         name: name,
         size: size,

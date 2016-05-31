@@ -53,7 +53,7 @@ module Kontena
                 vm_name: vm_name,
                 vm_user: 'core',
                 location: opts[:location],
-                image: '2b171e93f07c4903bcad35bda10acf22__CoreOS-Stable-766.3.0',
+                image: '2b171e93f07c4903bcad35bda10acf22__CoreOS-Stable-1010.5.0',
                 custom_data: Base64.encode64(user_data(userdata_vars)),
                 ssh_key: opts[:ssh_key]
             }
@@ -64,7 +64,7 @@ module Kontena
                 virtual_network_name: opts[:virtual_network],
                 subnet_name: opts[:subnet],
                 tcp_endpoints: '80,443',
-                private_key_file: opts[:ssh_key],
+                private_key_file: File.expand_path(opts[:ssh_key]),
                 ssh_port: 22,
                 vm_size: opts[:size],
             }
