@@ -107,6 +107,11 @@ class HostNode
     @region
   end
 
+  def initial_member?
+    return true if self.node_number <= self.grid.initial_size
+    false
+  end
+
   private
 
   def reserve_node_number

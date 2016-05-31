@@ -24,6 +24,7 @@ module Kontena::Cli::Nodes
       puts "  os: #{node['os']}"
       puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"
+      puts "  initial node: #{node['initial_member'] ? 'yes' : 'no'}"
       puts "  labels:"
       if node['labels']
         node['labels'].each{|l| puts "    - #{l}"}

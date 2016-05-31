@@ -23,6 +23,7 @@ json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|n|
   end
 }.compact
 json.node_number node.node_number
+json.initial_member node.initial_member?
 json.grid do
   json.partial!("app/views/v1/grids/grid", grid: node.grid) if node.grid
 end
