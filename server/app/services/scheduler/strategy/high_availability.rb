@@ -51,15 +51,53 @@ module Scheduler
       # @param [Integer] instance_number
       def sort_candidates(nodes, grid_service, instance_number)
         nodes.shuffle.sort_by{|node|
-          container = node.containers.find_by(name: "#{grid_service.name}-#{instance_number}")
-          if container
-            rank = 0
-          else
-            rank = 1
-          end
+          rank = 10.0
+          rank += instance_rank(node, grid_service, instance_number)
+          rank += memory_rank(node)
+          zone_counter = availability_zone_count(node, nodes)
 
-          [node.schedule_counter, rank]
+          [zone_counter, node.schedule_counter, rank]
         }
+      end
+
+      # @param [HostNode] node
+      # @param [GridService] grid_service
+      # @param [Fixnum] instance_number
+      # @return [Float]
+      def instance_rank(node, grid_service, instance_number)
+        container = node.containers.find_by(
+          name: "#{grid_service.name}-#{instance_number}"
+        )
+        
+        if container
+          -5.0
+        else
+          0.0
+        end
+      end
+
+      # @param [HostNode] node
+      # @return [Float]
+      def memory_rank(node)
+        stats = node.host_node_stats.last
+        if stats
+          stats.memory['used'].to_f / node.mem_total.to_f
+        else
+          0.0
+        end
+      end
+
+      # @param [HostNode] node
+      # @param [Array<HostNode>] nodes
+      # @return [FixNum]
+      def availability_zone_count(node, nodes)
+        nodes_in_zone = nodes.select{|n|
+          node.availability_zone == n.availability_zone
+        }
+        zone_counter = 0
+        nodes_in_zone.each{|n| zone_counter += n.schedule_counter }
+
+        zone_counter
       end
     end
   end
