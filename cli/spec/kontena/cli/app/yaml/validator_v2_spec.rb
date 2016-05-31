@@ -10,6 +10,34 @@ describe Kontena::Cli::Apps::YAML::ValidatorV2 do
   end
 
   describe '#validate_options' do
+    context 'build' do
+      it 'can be string' do
+        result = subject.validate_options('build' => '.')
+        expect(result.success?).to be_truthy
+        expect(result.messages.key?('build')).to be_falsey
+      end
+
+      it 'can be hash' do
+        result = subject.validate_options('build' => { 'context' => '.' })
+        expect(result.success?).to be_truthy
+        expect(result.messages.key?('build')).to be_falsey
+      end
+
+      it 'returns error if build is hash and context is missing' do
+        result = subject.validate_options('build' => {})
+        expect(result.success?).to be_falsey
+        expect(result.messages.key?('build')).to be_truthy
+      end
+
+      it 'returns error if optional dockerfile is not string' do
+        result = subject.validate_options('build' => {
+          'context' => '.',
+          'dockerfile' => 123
+        })
+        expect(result.success?).to be_falsey
+        expect(result.messages.key?('build')).to be_truthy
+      end
+    end
     it 'validates image is string' do
       result = subject.validate_options('image' => true)
       expect(result.success?).to be_falsey
