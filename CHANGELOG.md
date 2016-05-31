@@ -13,6 +13,8 @@
 - support for Docker Compose YAML V2 format (#739)
 - upcloud.com provisioning support (#748)
 - packet.net provisioning support (#726)
+- improve azure provisioning (#763)
+- confirm dialog on destructive commands (#712)
 - allow to define app name in kontena.yml (#751)
 - new sub-command `app config` (#749)
 - show agent version in node details (#736)
