@@ -9,7 +9,7 @@ Kontena can use different scheduling algorithms when deploying services to more 
 
 ### High Availability (HA)
 
-Service with `ha` strategy will deploy its instances to different host nodes. This means that the service instances will be spread across all nodes.
+Service with `ha` strategy will deploy its instances to different host nodes. This means that the service instances will be spread across all availability zones/nodes. Availability zones are resolved from node labels, for example `az=a1` means that node belongs to availability zone `a1`.
 
 ```
 deploy:

@@ -174,4 +174,20 @@ describe HostNode do
       expect(subject.region).to eq('ams2')
     end
   end
+
+  describe '#availability_zone' do
+    it 'returns default if az is not found from labels' do
+      expect(subject.availability_zone).to eq('default')
+    end
+
+    it 'returns default if labels is nil' do
+      allow(subject).to receive(:labels).and_return(nil)
+      expect(subject.availability_zone).to eq('default')
+    end
+
+    it 'returns availability_zone from labels' do
+      subject.labels = ['foo=bar', 'az=b']
+      expect(subject.availability_zone).to eq('b')
+    end
+  end
 end

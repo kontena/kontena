@@ -97,7 +97,7 @@ class HostNode
   # @return [String]
   def region
     if @region.nil?
-      @region = 'default'
+      @region = 'default'.freeze
       self.labels.to_a.each do |label|
         if match = label.match(/^region=(.+)/)
           @region = match[1]
@@ -110,6 +110,19 @@ class HostNode
   def initial_member?
     return true if self.node_number <= self.grid.initial_size
     false
+  end
+
+  # @return [String]
+  def availability_zone
+    if @availability_zone.nil?
+      @availability_zone = 'default'.freeze
+      self.labels.to_a.each do |label|
+        if match = label.match(/^az=(.+)/)
+          @availability_zone = match[1]
+        end
+      end
+    end
+    @availability_zone
   end
 
   private
