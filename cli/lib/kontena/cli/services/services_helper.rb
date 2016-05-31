@@ -202,6 +202,7 @@ module Kontena
         # @param [String] name
         def wait_for_deploy_to_finish(token, name)
           ShellSpinner " " do
+            sleep 1 # wait for master to process deploy request and change state to 'deploying'
             until client(token).get("services/#{name}")['state'] != 'deploying' do
               sleep 1
             end
