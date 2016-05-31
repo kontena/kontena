@@ -1,3 +1,5 @@
+require_relative 'common'
+
 module HostNodes
   class Remove < Mutations::Command
     include Workers
