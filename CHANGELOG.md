@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.14.0 (2016-05-31)
+
+**Master & Agent:**
+- dynamic etcd cluster member replacement functionality (#719)
+- take availability zones into account in ha scheduling strategy (#754)
+- notify grid nodes when node information is updated in master (#752)
+- allow to set agent public/private ip via env (#697)
+- add rollbar support to master (#475)
+
+**CLI:**
+- support for Docker Compose YAML V2 format (#739)
+- upcloud.com provisioning support (#748)
+- packet.net provisioning support (#726)
+- allow to define app name in kontena.yml (#751)
+- new sub-command `app config` (#749)
+- show agent version in node details (#736)
+- use region as az in DigitalOcean (#734)
+- show initial node membership info (#733)
+- option for upserting secrets (#711)
+- improved kontena.yml parsing (#696)
+
 ## 0.13.4 (2016-05-29)
 
 **Master & Agent:**
