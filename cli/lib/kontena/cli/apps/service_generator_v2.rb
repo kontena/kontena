@@ -17,6 +17,9 @@ module Kontena::Cli::Apps
     end
 
     def parse_build_options(options)
+      unless options['build'].is_a?(Hash)
+        options['build'] = { 'context' => options['build']}
+      end
       options['build']
     end
   end

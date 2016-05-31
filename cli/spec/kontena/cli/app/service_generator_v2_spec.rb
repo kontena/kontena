@@ -46,4 +46,29 @@ describe Kontena::Cli::Apps::ServiceGeneratorV2 do
       }])
     end
   end
+
+  describe '#parse_build_options' do
+    context 'when build option is a string' do
+      it 'converts build option to hash' do
+        data = {
+          'build' => '.',
+          'image' => 'myapp'
+        }
+        result = subject.send(:parse_build_options, data)
+        expect(result).to eq({ 'context' => '.' })
+      end
+    end
+    context 'when build options is a hash' do
+      it 'uses it as build options' do
+        data = {
+          'build' => {
+            'context' => '.',
+            'dockerfile' => 'alternate-dockerfile'
+           }
+        }
+        result = subject.send(:parse_build_options, data)
+        expect(result).to eq(data['build'])
+      end
+    end
+  end
 end
