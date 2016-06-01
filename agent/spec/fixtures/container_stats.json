@@ -1,0 +1,76 @@
+{
+	"/system.slice/docker-dcc8a5ef41be9527779a6e81589f5a09d792653fb7f1c3213ee4537381ec1b07.scope": {
+		"id": "a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e",
+		"name": "/system.slice/docker-a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e.scope",
+		"aliases": [
+			"weave",
+			"a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e"
+		],
+		"namespace": "docker",
+		"labels": {
+			"works.weave.role": "system"
+		},
+		"spec": "spec",
+		"stats": [{
+			"timestamp": "2016-05-31T08:46:40.31624557Z",
+			"cpu": {
+				"usage": {
+					"total": 100000000,
+					"per_cpu_usage": [
+						100000000
+					],
+					"user": 100000000,
+					"system": 100000000
+				},
+				"load_average": 0
+			},
+			"diskio": {},
+			"memory": {
+				"usage": 123248640,
+				"cache": 11108352,
+				"rss": 112140288,
+				"working_set": 121257984
+			},
+			"network": {
+				"name": "eth0",
+				"rx_bytes": 274156082
+			},
+			"filesystem": [{
+				"device": "/dev/sda9",
+				"type": "vfs",
+				"capacity": 16718393344,
+				"usage": 18911232
+			}]
+		}, {
+			"timestamp": "2016-05-31T08:47:15.906910438Z",
+			"cpu": {
+				"usage": {
+					"total": 200000000,
+					"per_cpu_usage": [
+						200000000
+					],
+					"user": 200000000,
+					"system": 200000000
+				},
+				"load_average": 0
+			},
+			"diskio": {},
+			"memory": {
+				"usage": 1024,
+				"cache": 11108352,
+				"rss": 112140288,
+				"working_set": 2048
+			},
+			"network": {
+				"name": "eth0",
+				"rx_bytes": 274156226
+			},
+			"filesystem": [{
+				"device": "/dev/sda9",
+				"type": "vfs",
+				"capacity": 16718393344,
+				"usage": 18911232
+			}]
+		}]
+	}
+}

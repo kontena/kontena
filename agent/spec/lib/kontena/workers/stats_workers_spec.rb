@@ -1,9 +1,13 @@
 require_relative '../../../spec_helper'
+require_relative '../../helpers/fixtures_helpers'
 
 describe Kontena::Workers::StatsWorker do
+  include FixturesHelpers
 
   let(:queue) { Queue.new }
   let(:subject) { described_class.new(queue, false) }
+
+  let(:container) { spy(:container, id: 'foo', labels: {}) }
 
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
@@ -14,6 +18,56 @@ describe Kontena::Workers::StatsWorker do
       Celluloid::Notifications.publish('agent:node_info')
       sleep 0.01
     end
+  end
+
+  describe '#collect_stats' do
+    it 'loops through all containers' do
+      containers = [container, spy(:container, id: 'bar', labels: {})]
+      allow(Docker::Container).to receive(:all).and_return(containers)
+      expect(subject.wrapped_object).to receive(:collect_container_stats).once.ordered.with('foo').and_return({})
+      expect(subject.wrapped_object).to receive(:collect_container_stats).once.ordered.with('bar').and_return({})
+      expect(subject.wrapped_object).to receive(:send_container_stats).twice
+      subject.collect_stats
+    end
+
+    it 'does not call send_stats if no container stats found' do 
+      allow(Docker::Container).to receive(:all).and_return([container])
+      expect(subject.wrapped_object).to receive(:collect_container_stats).once.with('foo').and_return(nil)
+      expect(subject.wrapped_object).not_to receive(:send_container_stats)
+      subject.collect_stats
+    end
+  end
+
+  describe '#collect_container_stats' do
+    it 'gets cadvisor stats for given container' do
+      excon = double
+      response = double
+      allow(subject.wrapped_object).to receive(:client).and_return(excon)
+      expect(excon).to receive(:get).with(:path => '/api/v1.2/docker/foo').and_return(response)
+      allow(response).to receive(:status).and_return(200)
+      allow(response).to receive(:body).and_return('{"foo":"bar"}')
+      expect(subject.collect_container_stats('foo')).to eq({:foo => "bar"})
+    end
+
+    it 'retries 3 times' do
+      excon = double
+      allow(subject.wrapped_object).to receive(:client).and_return(excon)
+      allow(excon).to receive(:get).with(:path => '/api/v1.2/docker/foo').and_raise(Excon::Errors::Error)
+      expect(excon).to receive(:get).exactly(3).times
+      subject.collect_container_stats('foo')
+    end
+
+
+    it 'return nil on 500 status' do
+      excon = double
+      response = double
+      allow(subject.wrapped_object).to receive(:client).and_return(excon)
+      allow(excon).to receive(:get).with(:path => '/api/v1.2/docker/foo').and_return(response)
+      allow(response).to receive(:status).and_return(500)
+      allow(response).to receive(:body).and_return('{"foo":"bar"}')
+      expect(subject.collect_container_stats('foo')).to eq(nil)
+    end
+
   end
 
   describe '#on_node_info' do
@@ -79,133 +133,52 @@ describe Kontena::Workers::StatsWorker do
 
 describe '#send_container_stats' do
     let(:event) do
-      {
-        "id": "a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e",
-        "name": "/system.slice/docker-a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e.scope",
-        "aliases": [
-          "weave",
-          "a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e"
-        ],
-        "namespace": "docker",
-        "labels": {
-          "works.weave.role": "system"
-        },
-        "spec": "spec",
-        "stats": [
-          {
-            "timestamp": "2016-05-31T08:46:40.31624557Z",
-            "cpu": {
-              "usage": {
-                "total": 10,
-                "per_cpu_usage": [
-                  10
-                ],
-                "user": 10,
-                "system": 10
-              },
-              "load_average": 0
-            },
-            "diskio": {
-            },
-            "memory": {
-              "usage": 123248640,
-              "cache": 11108352,
-              "rss": 112140288,
-              "working_set": 121257984
-            },
-            "network": {
-              "name": "eth0",
-              "rx_bytes": 274156082
-            },
-            "filesystem": [
-              {
-                "device": "/dev/sda9",
-                "type": "vfs",
-                "capacity": 16718393344,
-                "usage": 18911232
-              }
-            ],
-          },
-          {
-            "timestamp": "2016-05-31T08:47:15.906910438Z",
-            "cpu": {
-              "usage": {
-                "total": 20,
-                "per_cpu_usage": [
-                  20
-                ],
-                "user": 20,
-                "system": 20
-              },
-              "load_average": 0
-            },
-            "diskio": {},
-            "memory": {
-              "usage": 1024,
-              "cache": 11108352,
-              "rss": 112140288,
-              "working_set": 2048,
-            },
-            "network": {
-              "name": "eth0",
-              "rx_bytes": 274156226
-            },
-            "filesystem": [
-              {
-                "device": "/dev/sda9",
-                "type": "vfs",
-                "capacity": 16718393344,
-                "usage": 18911232
-              }
-            ]
-          }
-        ]
-      }
+      JSON.parse(fixture('container_stats.json'), symbolize_names: true)
     end
 
     it 'sends container stats' do
-      #allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
-      #expect(statsd).to receive(:gauge)
       expect(subject.wrapped_object).to receive(:send_statsd_metrics).with('weave', hash_including({
           id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e',
           spec: 'spec',
           cpu: {
-            usage: 10,
-            usage_pct: 0.0
+            usage: 100000000,
+            usage_pct: 0.28
           },
           memory: {
             usage: 1024,
             working_set: 2048
           },
-          filesystem: event.dig(:stats, -1, :filesystem),
-          diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          filesystem: event.dig(event.keys[0], :stats, -1, :filesystem),
+          diskio: event.dig(event.keys[0], :stats, -1, :diskio),
+          network: event.dig(event.keys[0], :stats, -1, :network)
         }
       ))
-      subject.send_container_stats(event)
+      expect {
+        subject.send_container_stats(event)
+      }.to change{ queue.length }.by(1)
     end
 
-    it 'does not fail on missing stats' do
-      #allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
-      #expect(statsd).to receive(:gauge)
-      event[:stats][-1][:cpu][:usage][:per_cpu_usage] = nil
+    it 'does not fail on missing cpu stats' do
+      event[event.keys[0]][:stats][-1][:cpu][:usage][:per_cpu_usage] = nil
       expect(subject.wrapped_object).to receive(:send_statsd_metrics).with('weave', hash_including({
           id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e',
           spec: 'spec',
           cpu: {
-            usage: 10,
-            usage_pct: 0.0
+            usage: 100000000,
+            usage_pct: 0.28
           },
           memory: {
             usage: 1024,
             working_set: 2048
           },
-          filesystem: event.dig(:stats, -1, :filesystem),
-          diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          filesystem: event.dig(event.keys[0], :stats, -1, :filesystem),
+          diskio: event.dig(event.keys[0], :stats, -1, :diskio),
+          network: event.dig(event.keys[0], :stats, -1, :network)
         }
       ))
-      subject.send_container_stats(event)
+      expect {
+        subject.send_container_stats(event)
+      }.to change{ queue.length }.by(1)
     end
   end
 
