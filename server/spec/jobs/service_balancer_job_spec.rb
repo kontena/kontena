@@ -115,6 +115,13 @@ describe ServiceBalancerJob do
         expect(subject.all_instances_exist?(service)).to eq(false)
       end
 
+      it 'returns false if service has too many instances' do
+        service.containers.create!(name: "test-1", state: {running: true})
+        service.containers.create!(name: "test-1", state: {running: true})
+        service.containers.create!(name: "test-2", state: {running: true})
+        expect(subject.all_instances_exist?(service)).to eq(false)
+      end
+
       it 'returns true if containers are marked as deleted and are within grace period' do
         service.containers.create!(
           name: "test-1", state: {running: true}, deleted_at: 5.seconds.ago
