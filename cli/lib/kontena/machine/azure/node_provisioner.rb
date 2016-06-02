@@ -74,7 +74,8 @@ module Kontena
           if node
             labels = [
               "region=#{cloud_service(cloud_service_name).location}",
-              "az=#{cloud_service(cloud_service_name).location}"
+              "az=#{cloud_service(cloud_service_name).location}",
+              "provider=azure"
             ]
             set_labels(node, labels)
           end
