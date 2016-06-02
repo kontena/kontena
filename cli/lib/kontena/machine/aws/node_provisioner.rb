@@ -31,9 +31,11 @@ module Kontena
 
           opts[:vpc] = default_vpc.vpc_id unless opts[:vpc]
 
-          security_group = ensure_security_group(opts[:grid], opts[:vpc])
+          security_groups = opts[:security_groups] ? 
+              resolve_security_groups_to_ids(opts[:security_groups], opts[:vpc]) : 
+              ensure_security_group(opts[:grid], opts[:vpc])
+              
           name = opts[:name ] || generate_name
-
 
           if opts[:subnet].nil?
             subnet = default_subnet(opts[:vpc], region+opts[:zone])
@@ -70,7 +72,7 @@ module Kontena
              {
                device_index: 0,
                subnet_id: subnet.subnet_id,
-               groups: [security_group.group_id],
+               groups: security_groups,
                associate_public_ip_address: opts[:associate_public_ip],
                delete_on_termination: true
              }
@@ -96,21 +98,18 @@ module Kontena
 
         ##
         # @param [String] grid
-        # @return [Aws::EC2::SecurityGroup]
+        # @return [Array] Security group id in array
         def ensure_security_group(grid, vpc_id)
           group_name = "kontena_grid_#{grid}"
-          sg = ec2.security_groups({
-            filters: [
-              {name: 'group-name', values: [group_name]},
-              {name: 'vpc-id', values: [vpc_id]}
-            ]
-          }).first
-          unless sg
+          group_id = resolve_security_groups_to_ids(group_name, vpc_id)
+
+          if group_id.empty?
             ShellSpinner "Creating AWS security group" do
               sg = create_security_group(group_name, vpc_id)
+              group_id = [sg.group_id]
             end
           end
-          sg
+          group_id
         end
 
         ##

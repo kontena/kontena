@@ -43,6 +43,7 @@ Options:
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url (optional)
     --associate-public-ip-address Flag to associate public IP address in VPC that does not do it automatically 
+    --security-groups             Comma separated list of security group names to which the new master will be attached
 ```
 
 ### Microsoft Azure
