@@ -19,7 +19,7 @@ module Kontena::Cli::Master::Aws
     option "--mongodb-uri", "URI", "External MongoDB uri (optional)"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
     option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url (optional)"
-    option "--associate_public_ip_address", :flag, "Whether to associated public IP in case the VPC defaults to not doing it", default: false, attribute_name: :associate_public_ip
+    option "--associate-public-ip-address", :flag, "Whether to associated public IP in case the VPC defaults to not doing it", default: false, attribute_name: :associate_public_ip
 
 
     def execute

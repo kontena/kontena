@@ -42,6 +42,7 @@ Options:
     --vault-iv VAULT_IV           Initialization vector for Vault (default: generate random iv)
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url (optional)
+    --associate-public-ip-address Flag to associate public IP address in VPC that does not do it automatically 
 ```
 
 ### Microsoft Azure
