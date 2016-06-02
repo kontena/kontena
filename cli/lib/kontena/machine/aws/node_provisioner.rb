@@ -54,9 +54,7 @@ module Kontena
             min_count: 1,
             max_count: 1,
             instance_type: opts[:type],
-            security_group_ids: [security_group.group_id],
             key_name: opts[:key_pair],
-            subnet_id: subnet.subnet_id,
             user_data: Base64.encode64(user_data(userdata_vars)),
             block_device_mappings: [
               {
@@ -67,6 +65,15 @@ module Kontena
                   volume_type: 'gp2'
                 }
               }
+            ],
+            network_interfaces: [
+             {
+               device_index: 0,
+               subnet_id: subnet.subnet_id,
+               groups: [security_group.group_id],
+               associate_public_ip_address: opts[:associate_public_ip],
+               delete_on_termination: true
+             }
             ]
           }).first
           ec2_instance.create_tags({

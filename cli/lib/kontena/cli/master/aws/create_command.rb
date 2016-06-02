@@ -19,6 +19,8 @@ module Kontena::Cli::Master::Aws
     option "--mongodb-uri", "URI", "External MongoDB uri (optional)"
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
     option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url (optional)"
+    option "--associate-public-ip-address", :flag, "Whether to associated public IP in case the VPC defaults to not doing it", default: false, attribute_name: :associate_public_ip
+
 
     def execute
       require 'kontena/machine/aws'
@@ -36,7 +38,8 @@ module Kontena::Cli::Master::Aws
           auth_server: auth_provider_url,
           vault_secret: vault_secret || SecureRandom.hex(24),
           vault_iv: vault_iv || SecureRandom.hex(24),
-          mongodb_uri: mongodb_uri
+          mongodb_uri: mongodb_uri,
+          associate_public_ip: associate_public_ip?
       )
     end
   end
