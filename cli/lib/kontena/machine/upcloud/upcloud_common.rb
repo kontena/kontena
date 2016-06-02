@@ -35,6 +35,19 @@ module Kontena
           get("server/#{id}").fetch(:server, nil)
         end
 
+        def api_access?
+          response = get('account')
+          response.kind_of?(Hash) && response.has_key?(:account)
+        rescue
+          false
+        end
+
+        def abort_unless_api_access
+          unless api_access?
+            abort('Upcloud API authentication failed. Check that API access is enabled for the user.')
+          end
+        end
+
         [:get, :post, :delete].each do |http_method|
           define_method http_method do |path, opts={}|
             response = client.send(
@@ -59,12 +72,3 @@ module Kontena
     end
   end
 end
-
-class Testing
-  include Kontena::Machine::Upcloud::UpcloudCommon
-  def initialize(user, pass)
-    @username = user
-    @password = pass
-  end
-end
-

@@ -18,6 +18,9 @@ module Kontena
         end
 
         def run!(grid, name)
+
+          abort_unless_api_access
+
           servers = get('server')
           unless servers && servers.has_key?(:servers)
             abort('Upcloud API error')
