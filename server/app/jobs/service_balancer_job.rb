@@ -157,6 +157,7 @@ class ServiceBalancerJob
       :'state.running' => true,
       :deleted_at.gt => grace_period_for_service(service).ago
     ).count
+    return false if offline_count == 0
 
     (running_count + offline_count) >= desired_count
   end
