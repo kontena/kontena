@@ -20,11 +20,11 @@ module Kontena::Cli::Services
     option "--instances", "INSTANCES", "How many instances should be deployed"
     option ["-u", "--user"], "USER", "Username who executes first process inside container"
     option "--privileged", :flag, "Give extended privileges to this service", default: false
-    option "--cap-add", "CAP_ADD", "Add capabitilies", multivalued: true
-    option "--cap-drop", "CAP_DROP", "Drop capabitilies", multivalued: true
+    option "--cap-add", "CAP_ADD", "Add capabitilies", multivalued: true, default: nil
+    option "--cap-drop", "CAP_DROP", "Drop capabitilies", multivalued: true, default: nil
     option "--net", "NET", "Network mode"
     option "--log-driver", "LOG_DRIVER", "Set logging driver"
-    option "--log-opt", "LOG_OPT", "Add logging options", multivalued: true
+    option "--log-opt", "LOG_OPT", "Add logging options", multivalued: true, default: nil
     option "--deploy-strategy", "STRATEGY", "Deploy strategy to use (ha, daemon, random)"
     option "--deploy-wait-for-port", "PORT", "Wait for port to respond when deploying"
     option "--deploy-min-health", "FLOAT", "The minimum percentage (0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying"
@@ -59,11 +59,11 @@ module Kontena::Cli::Services
       data[:user] = user if user
       data[:image] = parse_image(image) if image
       data[:privileged] = privileged?
-      data[:cap_add] = cap_add_list unless cap_add_list.empty?
-      data[:cap_drop] = cap_drop_list unless cap_drop_list.empty?
+      data[:cap_add] = cap_add_list if cap_add_list
+      data[:cap_drop] = cap_drop_list if cap_drop_list
       data[:net] = net if net
       data[:log_driver] = log_driver if log_driver
-      data[:log_opts] = parse_log_opts(log_opt_list)
+      data[:log_opts] = parse_log_opts(log_opt_list) if log_opt_list
       data[:deploy_opts] = {}
       data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
       data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
