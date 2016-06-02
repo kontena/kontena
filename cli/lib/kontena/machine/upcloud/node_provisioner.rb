@@ -34,6 +34,8 @@ module Kontena
             grid_token: opts[:grid_token],
           }
 
+          abort_unless_api_access
+          
           abort('CoreOS template not found on Upcloud') unless coreos_template = find_template('CoreOS Stable')
           abort('Server plan not found on Upcloud') unless plan = find_plan(opts[:plan])
           abort('Zone not found on Upcloud') unless zone_exist?(opts[:zone])
