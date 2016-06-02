@@ -32,6 +32,26 @@ module Kontena
         def default_vpc
           ec2.vpcs({filters: [{name: "is-default", values: ["true"]}]}).first
         end
+
+        
+
+        ##
+        # Resolves givne list of group names into group ids
+        # @param [String] comma separated list of group names
+        # @return [Array]
+        def resolve_security_groups_to_ids(group_list, vpc_id)
+          ids = group_list.split(',').map { |group|  
+            sg = ec2.security_groups({
+            filters: [
+                {name: 'group-name', values: [group]},
+                {name: 'vpc-id', values: [vpc_id]}
+              ]
+            }).first
+
+            sg ? sg.group_id : nil
+          }
+          ids.compact
+        end
       end
     end
   end

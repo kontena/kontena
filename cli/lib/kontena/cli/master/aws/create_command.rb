@@ -20,6 +20,7 @@ module Kontena::Cli::Master::Aws
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
     option "--auth-provider-url", "AUTH_PROVIDER_URL", "Define authentication provider url (optional)"
     option "--associate-public-ip-address", :flag, "Whether to associated public IP in case the VPC defaults to not doing it", default: false, attribute_name: :associate_public_ip
+    option "--security-groups", "SECURITY GROUPS", "Comma separated list of security groups (names) where the new instance will be attached (default: create 'kontena_master' group if not already existing)"
 
 
     def execute
@@ -39,7 +40,8 @@ module Kontena::Cli::Master::Aws
           vault_secret: vault_secret || SecureRandom.hex(24),
           vault_iv: vault_iv || SecureRandom.hex(24),
           mongodb_uri: mongodb_uri,
-          associate_public_ip: associate_public_ip?
+          associate_public_ip: associate_public_ip?,
+          security_groups: security_groups
       )
     end
   end
