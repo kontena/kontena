@@ -42,6 +42,7 @@ module Kontena
           else
             subnet = ec2.subnet(opts[:subnet])
           end
+          abort('Failed to find subnet!') unless subnet
           userdata_vars = {
               ssl_cert: ssl_cert,
               auth_server: opts[:auth_server],
@@ -58,9 +59,7 @@ module Kontena
             min_count: 1,
             max_count: 1,
             instance_type: opts[:type],
-            security_group_ids: [security_group.group_id],
             key_name: opts[:key_pair],
-            subnet_id: subnet.subnet_id,
             user_data: Base64.encode64(user_data(userdata_vars)),
             block_device_mappings: [
               {
@@ -71,6 +70,15 @@ module Kontena
                   volume_type: 'gp2'
                 }
               }
+            ],
+            network_interfaces: [
+             {
+               device_index: 0,
+               subnet_id: subnet.subnet_id,
+               groups: [security_group.group_id],
+               associate_public_ip_address: opts[:associate_public_ip],
+               delete_on_termination: true
+             }
             ]
           }).first
           ec2_instance.create_tags({
@@ -78,16 +86,23 @@ module Kontena
               {key: 'Name', value: name}
             ]
           })
+          
           ShellSpinner "Creating AWS instance #{name.colorize(:cyan)} " do
             sleep 5 until ec2_instance.reload.state.name == 'running'
           end
-          master_url = "https://#{ec2_instance.public_ip_address}"
-          Excon.defaults[:ssl_verify_peer] = false
-          http_client = Excon.new(master_url, :connect_timeout => 10)
-          ShellSpinner "Waiting for #{name.colorize(:cyan)} to start " do
-            sleep 5 until master_running?(http_client)
+          public_ip = ec2_instance.reload.public_ip_address
+          if public_ip.nil?
+            master_url = "https://#{ec2_instance.private_ip_address}"
+            puts "Could not get public IP for the created master, private connect url is: #{master_url}"
+          else
+            master_url = "https://#{ec2_instance.public_ip_address}"
+            Excon.defaults[:ssl_verify_peer] = false
+            http_client = Excon.new(master_url, :connect_timeout => 10)
+            ShellSpinner "Waiting for #{name.colorize(:cyan)} to start " do
+              sleep 5 until master_running?(http_client)
+            end
           end
-
+          
           puts "Kontena Master is now running at #{master_url}"
           puts "Use #{"kontena login --name=#{name.sub('kontena-master-', '')} #{master_url}".colorize(:light_black)} to complete Kontena Master setup"
         end

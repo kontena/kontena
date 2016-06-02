@@ -40,6 +40,7 @@ Options:
     --type SIZE                   Instance type (default: "t2.small")
     --storage STORAGE             Storage size (GiB) (default: "30")
     --version VERSION             Define installed Kontena version (default: "latest")
+    --associate-public-ip         Flag to associate public IP address in VPC that does not do it automatically
 ```
 
 ### Microsoft Azure

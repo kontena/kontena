@@ -14,6 +14,7 @@ module Kontena::Cli::Nodes::Aws
     option "--type", "SIZE", "Instance type", default: 't2.small'
     option "--storage", "STORAGE", "Storage size (GiB)", default: '30'
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
+    option "--associate_public_ip_address", :flag, "Whether to associated public IP in case the VPC defaults to not doing it", default: false, attribute_name: :associate_public_ip
 
     def execute
       require_api_url
@@ -33,7 +34,8 @@ module Kontena::Cli::Nodes::Aws
           subnet: subnet_id,
           storage: storage,
           version: version,
-          key_pair: key_pair
+          key_pair: key_pair,
+          associate_public_ip: associate_public_ip?
       )
     end
   end
