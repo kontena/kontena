@@ -1,5 +1,3 @@
-require 'pp'
-
 module Kontena::Workers
   class StatsWorker
     include Celluloid
@@ -93,7 +91,8 @@ module Kontena::Workers
 
       current_stat = container.dig(slice_key, :stats, -1)
       # Need to default to something usable in calculations
-      num_cores = current_stat.dig(:cpu, :usage, :per_cpu_usage).count rescue 1 
+      cpu_usages = current_stat.dig(:cpu, :usage, :per_cpu_usage)
+      num_cores = cpu_usages ? cpu_usages.count : 1
       raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
       interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
 
