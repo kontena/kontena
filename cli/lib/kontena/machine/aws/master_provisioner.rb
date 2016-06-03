@@ -84,11 +84,8 @@ module Kontena
              }
             ]
           }).first
-          ec2_instance.create_tags({
-            tags: [
-              {key: 'Name', value: name}
-            ]
-          })
+
+          add_tags(opts[:tags], ec2_instance, name)
           
           ShellSpinner "Creating AWS instance #{name.colorize(:cyan)} " do
             sleep 5 until ec2_instance.reload.state.name == 'running'
