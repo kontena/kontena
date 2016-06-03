@@ -52,7 +52,7 @@ module Kontena
             [
               "region=#{opts[:region]}",
               "az=#{opts[:region]}",
-              "provider=digital_ocean"
+              "provider=digitalocean"
             ]
           )
         end
