@@ -50,6 +50,8 @@ api:
     - internet_lb
 ```
 
+Always remember to link your service to loadbalancer, the linking activates the loadbalancing functionality.
+
 An example of internal TCP load balancer:
 
 ```
@@ -66,6 +68,18 @@ galera:
   links:
     - galera_lb
 ```
+
+## Config Env variables for loadbalancer
+
+These environment variables configure the loadbalancer itself.
+
+* `KONTENA_LB_HEALTH_URI`: uri at which to enable loadbalancer level health check endpoint. Returns `200 OK` when loadbalancer is functional.
+* `STATS_PASSWORD`: the password to access stats
+* `SSL_CERTS`: SSL certificates to be used, see more: [SSL Termination](loadbalancer#ssl-termination)
+
+## Stats
+
+Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances.
 
 ## SSL Termination
 
@@ -128,6 +142,8 @@ loadbalancer:
 
 ## Config Env variables for balanced services
 
+These options are defined on the services that are balanced through lb.
+
 * `KONTENA_LB_MODE`: mode of load balancing, possible values: http (default), tcp
 * `KONTENA_LB_BALANCE`: load balancing algorithm to use, possible values are: roundrobin (default), source, leastcon
 * `KONTENA_LB_INTERNAL_PORT`: service port that is attached to load balancer
@@ -136,3 +152,4 @@ loadbalancer:
 * `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request, example "/api" (only for http mode)
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings, each line will be appended to either related backend section or listen session in the HAProxy configuration file
+
