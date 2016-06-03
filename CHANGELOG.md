@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.1 (2016-06-03)
+
+**Master & Agent:**
+- fix automatic scale down on too many service instances (#772)
+
+**CLI:**
+- allow to use app name defined in yaml on app config command (#779)
+- fix kontena app build command error (#777)
+- enable security group setting for master and nodes in AWS (#775)
+- verify Upcloud API access (#774)
+- provider labels for AWS, Azure and DO nodes (#773)
+- add option in AWS to associate public ip for VPC (#771)
+- fix log_opts disappearing after service update (#770)
+- fix nil on cpu usage and refactor stats worker (#769)
+
 ## 0.14.0 (2016-05-31)
 
 **Master & Agent:**
