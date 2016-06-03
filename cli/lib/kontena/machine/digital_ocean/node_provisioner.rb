@@ -47,7 +47,14 @@ module Kontena
           ShellSpinner "Waiting for node #{droplet.name.colorize(:cyan)} join to grid #{opts[:grid].colorize(:cyan)} " do
             sleep 2 until node = droplet_exists_in_grid?(opts[:grid], droplet)
           end
-          set_labels(node, ["region=#{opts[:region]}", "az=#{opts[:region]}"])
+          set_labels(
+            node,
+            [
+              "region=#{opts[:region]}",
+              "az=#{opts[:region]}",
+              "provider=digitalocean"
+            ]
+          )
         end
 
         def user_data(vars)
