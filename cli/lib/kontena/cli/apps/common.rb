@@ -56,7 +56,7 @@ module Kontena::Cli::Apps
 
     def project_name_from_yaml(file)
       reader = YAML::Reader.new(file, true)
-      outcome = reader.execute      
+      outcome = reader.execute
       if outcome[:version] == '2'
         outcome[:name]
       else
@@ -100,10 +100,8 @@ module Kontena::Cli::Apps
     def app_json
       if !@app_json && File.exist?('app.json')
         @app_json = JSON.parse(File.read('app.json'))
-      else
-        @app_json = {}
       end
-      @app_json
+      @app_json ||= {}
     end
 
     def display_notifications(messages, color = :yellow)

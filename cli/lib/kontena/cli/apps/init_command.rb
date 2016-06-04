@@ -27,12 +27,12 @@ module Kontena::Cli::Apps
       end
 
       if File.exist?('Procfile')
-        procfile = YAML.load(File.read('Procfile'))
+        procfile = ::YAML.load(File.read('Procfile'))
       else
         procfile = {}
       end
 
-      app_env = create_env_file(app_json)
+      app_env = create_env_file(app_json['env']) if app_json['env'] 
       addons = app_json['addons'] || []
 
       if File.exist?(docker_compose_file)
@@ -62,26 +62,26 @@ module Kontena::Cli::Apps
 
     protected
 
+    def service_prefix
+      @service_prefix ||= project_name || current_dir
+    end
+
     def create_dockerfile?
       ['', 'y', 'yes'].include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
     end
 
-    def create_env_file(app_json)
-
-      if app_json['env']
-        app_env = File.new('.env', 'w')
-        app_json['env'].each do |key, env|
-          if env['generator'] == 'secret'
-            value = SecureRandom.hex(64)
-          else
-            value = env['value']
-          end
-          app_env.puts "#{key}=#{value}"
+    def create_env_file(env)
+      app_env = File.new('.env', 'w')
+      app_json['env'].each do |key, env|
+        if env['generator'] == 'secret'
+          value = SecureRandom.hex(64)
+        else
+          value = env['value']
         end
-        app_env.close
-        return '.env'
+        app_env.puts "#{key}=#{value}"
       end
-      nil
+      app_env.close
+      '.env'
     end
 
     def create_docker_compose_yml?
