@@ -16,8 +16,8 @@ module Kontena::Cli::Apps
       services = {}
       # extend services from docker-compose.yml
       file = File.read(docker_compose_file)
-      compose_services = YAML.load(file)
-      compose_services.each do |name, options|
+
+      yml_services(file).each do |name, options|
         services[name] = {'extends' => { 'file' => 'docker-compose.yml', 'service' => name }}
         if options.has_key?('build')
           image = image_name || "registry.kontena.local/#{File.basename(Dir.getwd)}:latest"
@@ -42,7 +42,15 @@ module Kontena::Cli::Apps
         end
       end
       create_yml(services, 'kontena.yml')
+    end
 
+    def yml_services(file)
+      yml = ::YAML.load(file)
+      if yml['version'] == '2'
+        yml['services']
+      else
+        yml
+      end
     end
 
     def generate(procfile, addons, env_file)
@@ -79,17 +87,20 @@ module Kontena::Cli::Apps
     end
 
     def create_yml(services, filename)
-      if File.exist?(filename)
-        kontena_services = YAML.load(File.read(filename))
+      if File.exist?(filename) && !File.zero?(filename)
+        kontena_services = yml_services(File.read(filename))
         services.each do |name, options|
           if kontena_services[name]
             services[name].merge!(kontena_services[name])
           end
         end
       end
-      super(services, filename)
+      kontena_services = {
+        'version' => '2',
+        'name' => service_prefix,
+        'services' => services
+      }
+      super(kontena_services, filename)
     end
-
-
   end
 end
