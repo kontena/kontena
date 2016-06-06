@@ -6,7 +6,7 @@ module Kontena::Cli::Vpn
     include Kontena::Cli::GridOptions
 
     option '--node', 'NODE', 'Node name where VPN is deployed'
-    option '--ip', 'IP', 'Node ip-address'
+    option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
 
     def execute
       require_api_url
@@ -18,8 +18,8 @@ module Kontena::Cli::Vpn
 
       nodes = client(token).get("grids/#{current_grid}/nodes")
       if preferred_node.nil?
-        node = nodes['nodes'].find{|n| n['connected']}
-        abort('Cannot find any online nodes') if node.nil?
+        node = nodes['nodes'].find{|n| n['connected'] && !n['public_ip'].to_s.empty?}
+        abort('Cannot find any online nodes with public ip. If you want to connect with private address, please use --node and/or --ip options.') if node.nil?
       else
         node = nodes['nodes'].find{|n| n['connected'] && n['name'] == preferred_node }
         abort('Node not found') if node.nil?
@@ -54,13 +54,8 @@ module Kontena::Cli::Vpn
     # @return [String]
     def node_vpn_ip(node)
       return ip unless ip.nil?
-
-      # vagrant
-      if api_url == 'http://192.168.66.100:8080'
-        node['private_ip']
-      else
-        node['public_ip']
-      end
+      
+      node['public_ip'].to_s.empty? ? node['private_ip'].to_s : node['public_ip'].to_s
     end
   end
 end

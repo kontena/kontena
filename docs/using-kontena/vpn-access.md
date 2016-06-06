@@ -28,9 +28,17 @@ You should use the Kontena's built-in VPN access if you want to:
 
 ```
 $ kontena vpn create
+Usage:
+    kontena vpn create [OPTIONS]
+
+Options:
+    --node NODE                   Node name where VPN is deployed
+    --ip IP                       Node ip-address to use in VPN service configuration
 ```
 
-> VPN service uses port 1194 (udp), remember to open it to nodes if you are using firewall
+Use the `--node` and/or `--ip` option to override automatic node selection and IP detection in private network setups.
+
+> VPN service uses port 1194 (udp), remember to open it to nodes if you are using firewall!
 
 
 #### Export VPN Configuration:
@@ -44,5 +52,5 @@ $ kontena vpn config > /path/to/kontena.ovpn
 #### Delete VPN Service:
 
 ```
-$ kontena vpn delete
+$ kontena vpn remove
 ```
