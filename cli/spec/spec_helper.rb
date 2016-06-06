@@ -7,6 +7,7 @@
 
 require 'clamp'
 require 'kontena/cli/common'
+require 'kontena/cli/grid_options'
 require 'kontena/client'
 
 RSpec.configure do |config|
