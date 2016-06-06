@@ -5,6 +5,12 @@ module Kontena::Workers
 
     CLEANUP_INTERVAL = 60
     CLEANUP_DELAY = (60*60)
+    IGNORE_IMAGES = [
+      "#{Kontena::NetworkAdapters::Weave::WEAVEEXEC_IMAGE}:#{Kontena::NetworkAdapters::Weave::WEAVE_VERSION}",
+      "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:#{Kontena::NetworkAdapters::Weave::WEAVE_VERSION}",
+      "#{Kontena::Launchers::Etcd::ETCD_IMAGE}:#{Kontena::Launchers::Etcd::ETCD_VERSION}",
+      "#{Kontena::Launchers::Cadvisor::CADVISOR_IMAGE}:#{Kontena::Launchers::Cadvisor::CADVISOR_VERSION}",
+    ]
 
     ##
     # @param [Boolean] autostart
@@ -22,6 +28,7 @@ module Kontena::Workers
 
     def cleanup_images
       images = Docker::Image.all.map{|i| [i.id, i]}.to_h
+      reject_ignored_images(images)
       reject_used_images(images)
       sleep CLEANUP_DELAY
       reject_used_images(images)
@@ -35,7 +42,14 @@ module Kontena::Workers
       end
     end
 
-    # @param [Hash] images
+    # @param [Hash] image_map
+    def reject_ignored_images(image_map)
+      image_map.delete_if{ |id, image|
+        image.info['RepoTags'].to_a.any?{ |tag| IGNORE_IMAGES.include?(tag) }
+      }
+    end
+
+    # @param [Hash] image_map
     def reject_used_images(image_map)
       Docker::Container.all(all: true).each do |container|
         image_map.delete(container.info['ImageID'])
