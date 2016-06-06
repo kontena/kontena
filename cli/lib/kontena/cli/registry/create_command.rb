@@ -12,6 +12,7 @@ module Kontena::Cli::Registry
     option '--s3-region', 'S3_REGION', 'S3 region', default: 'eu-west-1'
     option '--s3-encrypt', :flag, 'Encrypt S3 objects', default: false
     option '--s3-secure', :flag, 'Use secure connection in S3', default: true
+    option '--s3-v4auth', :flag, 'Use v4auth on S3', default: false
     option '--azure-account-name', 'AZURE_ACCOUNT_NAME', 'Azure account name'
     option '--azure-container-name', 'AZURE_CONTAINER_NAME', 'Azure container name'
 
@@ -38,7 +39,8 @@ module Kontena::Cli::Registry
             "REGISTRY_STORAGE_S3_REGION=#{s3_region}",
             "REGISTRY_STORAGE_S3_BUCKET=#{s3_bucket}",
             "REGISTRY_STORAGE_S3_ENCRYPT=#{s3_encrypt?}",
-            "REGISTRY_STORAGE_S3_SECURE=#{s3_secure?}"
+            "REGISTRY_STORAGE_S3_SECURE=#{s3_secure?}",
+            "REGISTRY_STORAGE_S3_V4AUTH=#{s3_v4auth?}"
         ]
         secrets = [
           {secret: 'REGISTRY_STORAGE_S3_ACCESSKEY', name: 'REGISTRY_STORAGE_S3_ACCESSKEY', type: 'env'},
