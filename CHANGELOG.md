@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.2 (2016-06-06)
+
+**Master & Agent:**
+- do not allow ImageCleanupWorker to remove agent images (#791)
+
+**CLI:**
+- add s3-v4auth flag for registry create (#789)
+- improve vpn creation for non-public environments (#787)
+- generate yaml v2 formatted files on app init command (#785)
+
 ## 0.14.1 (2016-06-03)
 
 **Master & Agent:**
