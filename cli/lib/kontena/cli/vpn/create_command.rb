@@ -6,24 +6,17 @@ module Kontena::Cli::Vpn
     include Kontena::Cli::GridOptions
 
     option '--node', 'NODE', 'Node name where VPN is deployed'
-    option '--ip', 'IP', 'Node ip-address'
+    option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
 
     def execute
       require_api_url
       token = require_token
       preferred_node = node
-
+      
       vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
       abort('Vpn already exists') if vpn
 
-      nodes = client(token).get("grids/#{current_grid}/nodes")
-      if preferred_node.nil?
-        node = nodes['nodes'].find{|n| n['connected']}
-        abort('Cannot find any online nodes') if node.nil?
-      else
-        node = nodes['nodes'].find{|n| n['connected'] && n['name'] == preferred_node }
-        abort('Node not found') if node.nil?
-      end
+      node = find_node(token, preferred_node)
 
       vpn_ip = node_vpn_ip(node)
       data = {
@@ -50,16 +43,30 @@ module Kontena::Cli::Vpn
       puts "Use 'kontena vpn config' to fetch OpenVPN client config to your machine (it takes a while until config is ready)."
     end
 
+
+    def find_node(token, preferred_node = nil)
+      nodes = client(token).get("grids/#{current_grid}/nodes")
+
+      if preferred_node.nil?
+        node = nodes['nodes'].find{|n| n['connected'] && !n['public_ip'].to_s.empty?}
+        abort('Cannot find any online nodes with public ip. If you want to connect with private address, please use --node and/or --ip options.') if node.nil?
+      else
+        node = nodes['nodes'].find{|n| n['connected'] && n['name'] == preferred_node }
+        abort('Node not found') if node.nil?
+      end
+      node
+    end
+
     # @param [Hash] node
     # @return [String]
     def node_vpn_ip(node)
       return ip unless ip.nil?
-
+      
       # vagrant
-      if api_url == 'http://192.168.66.100:8080'
-        node['private_ip']
+      if node['labels'] && node['labels'].include?('provider=vagrant')
+        node['private_ip'].to_s 
       else
-        node['public_ip']
+        node['public_ip'].to_s.empty? ? node['private_ip'].to_s : node['public_ip'].to_s
       end
     end
   end
