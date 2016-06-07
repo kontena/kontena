@@ -51,17 +51,4 @@ class Kontena::MainCommand < Kontena::Command
   def self.register(command, description, command_class)
     subcommand(command, description, command_class)
   end
-
-  def self.load_plugins
-    $LOAD_PATH.each do |path|
-      plugin = File.join(path, 'kontena_cli_plugin.rb')
-      if File.exist?(plugin)
-        begin
-          load(plugin)
-        rescue LoadError => exc
-          STDERR.puts "failed to load plugin #{plugin}"
-        end
-      end
-    end
-  end
 end
