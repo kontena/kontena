@@ -20,6 +20,7 @@ require_relative 'cli/app_command'
 require_relative 'cli/etcd_command'
 require_relative 'cli/vault_command'
 require_relative 'cli/user_command'
+require_relative 'cli/plugin_command'
 require_relative 'cli/version_command'
 
 class Kontena::MainCommand < Kontena::Command
@@ -40,6 +41,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
   subcommand "user", "User related commands", Kontena::Cli::UserCommand
+  subcommand "plugin", "Plugin related commands", Kontena::Cli::PluginCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
 
   def execute
