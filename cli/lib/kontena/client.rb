@@ -1,7 +1,7 @@
 require 'json'
 require 'excon'
 require_relative 'errors'
-require 'kontena/cli/version'
+require_relative 'cli/version'
 
 module Kontena
   class Client
@@ -16,7 +16,11 @@ module Kontena
     def initialize(api_url, default_headers = {})
       Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
       @http_client = Excon.new(api_url)
-      @default_headers = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"}.merge(default_headers)
+      @default_headers = {
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
+      }.merge(default_headers)
       @api_url = api_url
     end
 
