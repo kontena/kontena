@@ -50,6 +50,8 @@ GEM
       moped (~> 2.0.0)
       origin (~> 2.1)
       tzinfo (>= 0.3.37)
+    mongoid-enum (0.3.0)
+      mongoid (~> 4.0)
     mongoid-rspec (2.1.0)
       mongoid (~> 4.0.0)
       rake
@@ -127,6 +129,7 @@ DEPENDENCIES
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)
   mongoid (~> 4.0.0)
+  mongoid-enum
   mongoid-rspec (~> 2.1.0)
   msgpack
   mutations
@@ -145,5 +148,8 @@ DEPENDENCIES
   webmock
   websocket-driver (~> 0.6.2)
 
+RUBY VERSION
+   ruby 2.2.3p173
+
 BUNDLED WITH
-   1.11.2
+   1.12.4

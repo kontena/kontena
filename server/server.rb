@@ -70,6 +70,10 @@ class Server < Roda
       r.on('secrets') do
         r.run V1::SecretsApi
       end
+
+      r.on('stacks') do
+        r.run V1::StacksApi
+      end
     end
   end
 end

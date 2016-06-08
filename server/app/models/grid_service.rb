@@ -36,6 +36,7 @@ class GridService
 
   belongs_to :grid
   belongs_to :image
+  belongs_to :stack
   has_many :containers
   has_many :container_logs
   has_many :container_stats

@@ -1,0 +1,1 @@
+json.partial! 'app/views/v1/stacks/stack', stack: @stack
