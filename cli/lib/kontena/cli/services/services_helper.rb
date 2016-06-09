@@ -251,14 +251,20 @@ module Kontena
         # @return [Array<Hash>]
         def parse_ports(port_options)
           port_options.map{|p|
-            node_port, container_port, protocol = p.split(':')
+            port, protocol = p.split('/')
+            protocol ||= 'tcp'
+            port_elements = port.split(':')
+            container_port = port_elements[-1]
+            node_port = port_elements[-2]
+            ip = port_elements[-3] || '0.0.0.0'
             if node_port.nil? || container_port.nil?
               raise ArgumentError.new("Invalid port value #{p}")
             end
             {
-                container_port: container_port,
-                node_port: node_port,
-                protocol: protocol || 'tcp'
+              ip: ip,
+              container_port: container_port,
+              node_port: node_port,
+              protocol: protocol 
             }
           }
         end

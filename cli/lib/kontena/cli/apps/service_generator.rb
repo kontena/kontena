@@ -30,7 +30,7 @@ module Kontena::Cli::Apps
       data['container_count'] = options['instances']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
-      data['ports'] = parse_ports(options['ports'] || [])
+      data['ports'] = parse_stringified_ports(options['ports'] || [])
       data['memory'] = parse_memory(options['mem_limit'].to_s) if options['mem_limit']
       data['memory_swap'] = parse_memory(options['memswap_limit'].to_s) if options['memswap_limit']
       data['cpu_shares'] = options['cpu_shares'] if options['cpu_shares']
@@ -81,16 +81,13 @@ module Kontena::Cli::Apps
 
     # @param [Array<String>] port_options
     # @return [Array<Hash>]
-    def parse_ports(port_options)
-      port_options.map{|p|
-        node_port, container_port, protocol = p.split(':')
-        if node_port.nil? || container_port.nil?
-          raise ArgumentError.new("Invalid port value #{p}")
-        end
+    def parse_stringified_ports(port_options)
+      parse_ports(port_options).map {|p|
         {
-            'container_port' => container_port,
-            'node_port' => node_port,
-            'protocol' => protocol || 'tcp'
+          'ip' => p[:ip],
+          'container_port' => p[:container_port],
+          'node_port' => p[:node_port],
+          'protocol' => p[:protocol]
         }
       }
     end

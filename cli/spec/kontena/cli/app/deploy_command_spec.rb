@@ -220,7 +220,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           'stateful' => true,
           'strategy' => 'ha',
           'links' => [{ 'name' => 'kontena-test-mysql', 'alias' => 'mysql' }],
-          'ports' => [{ 'container_port' => '80', 'node_port' => '80', 'protocol' => 'tcp' }]
+          'ports' => [{ 'ip' => '0.0.0.0','container_port' => '80', 'node_port' => '80', 'protocol' => 'tcp' }]
         }
         expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
 
