@@ -20,7 +20,12 @@ module Kontena
               load(plugin)
               @plugins << spec
             rescue LoadError => exc
-              STDERR.puts "failed to load plugin #{spec.name}"
+              STDERR.puts "failed to load plugin: #{spec.name}"
+              if ENV['DEBUG']
+                STDERR.puts exc.message
+                STDERR.puts exc.backtrace.join("\n")
+              end
+              exit 1
             end
           end
         end
