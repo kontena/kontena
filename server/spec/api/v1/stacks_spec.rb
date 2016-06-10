@@ -72,7 +72,7 @@ describe '/v1/stacks' do
       get "/v1/stacks/#{grid.name}/#{stack.name}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at name version grid_services
+        id created_at updated_at name version grid_services state
       ).sort)
       expect(json_response['grid_services'].size).to eq(2)
       expect(json_response['grid_services'][0].keys.sort).to eq(%w(
@@ -96,7 +96,7 @@ describe '/v1/stacks' do
       expect(response.status).to eq(200)
       expect(json_response['stacks'].size).to eq(2)
       expect(json_response['stacks'][0].keys.sort).to eq(%w(
-        id created_at updated_at name version grid_services
+        id created_at updated_at name version grid_services state
       ).sort)
       expect(json_response['stacks'][0]['grid_services'].size).to eq(2)
       expect(json_response['stacks'][0]['grid_services'][0].keys.sort).to eq(%w(
@@ -112,7 +112,7 @@ describe '/v1/stacks' do
         post "/v1/stacks/#{grid.name}", {name: 'test-stack'}.to_json, request_headers
         expect(response.status).to eq(201)
         expect(json_response.keys.sort).to eq(%w(
-          id created_at updated_at name version grid_services
+          id created_at updated_at name version grid_services state
         ).sort)
       }.to change{ grid.reload.stacks.count }.by(1)
     end

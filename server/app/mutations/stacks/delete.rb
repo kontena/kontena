@@ -11,7 +11,9 @@ module Stacks
       if self.stack.terminated?
         add_error(:stack, :already_terminated, "Stack already terminated")
       end
-      # Should we validate service termination?
+      self.stack.grid_services.each do |service|
+        GridServices::Delete.validate(current_user: self.current_user, grid_service: service)
+      end
     end
 
     def execute
