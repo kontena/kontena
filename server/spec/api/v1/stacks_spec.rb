@@ -117,6 +117,16 @@ describe '/v1/stacks' do
       }.to change{ grid.reload.stacks.count }.by(1)
     end
 
+    it 'creates audit event' do
+      expect {
+        post "/v1/stacks/#{grid.name}", {name: 'test-stack'}.to_json, request_headers
+        expect(response.status).to eq(201)
+        expect(json_response.keys.sort).to eq(%w(
+          id created_at updated_at name version grid_services state
+        ).sort)
+      }.to change{ AuditLog.count }.by(1)
+    end
+
     it 'creates new stack with services' do
       data = {
         name: 'test-stack',
@@ -170,9 +180,10 @@ describe '/v1/stacks' do
       allow(outcome).to receive(:success?).and_return(true)
       allow(outcome).to receive(:result).and_return(stack)
       expect(Stacks::Update).to receive(:run).and_return(outcome)
-      put "/v1/stacks/#{grid.name}/#{stack.name}", data.to_json, request_headers
-      expect(response.status).to eq(200)
-
+      expect {
+        put "/v1/stacks/#{grid.name}/#{stack.name}", data.to_json, request_headers
+        expect(response.status).to eq(200)  
+      }.to change{ AuditLog.count }.by(1)
     end
 
     it 'returns 404 for unknown stack' do
@@ -188,9 +199,10 @@ describe '/v1/stacks' do
       allow(outcome).to receive(:success?).and_return(true)
       allow(Stacks::Delete).to receive(:run).and_return(outcome)
       
-      delete "/v1/stacks/#{grid.name}/#{stack.name}", nil, request_headers
-      expect(response.status).to eq(200)
-      
+      expect {
+        delete "/v1/stacks/#{grid.name}/#{stack.name}", nil, request_headers
+        expect(response.status).to eq(200)  
+      }.to change{ AuditLog.count }.by(1)      
     end
 
     it 'return 422 for stack already terminated' do
@@ -215,6 +227,16 @@ describe '/v1/stacks' do
         post "/v1/stacks/#{grid.name}/#{stack.name}/deploy", nil, request_headers
         expect(response.status).to eq(200)
       }.to change{stack.reload.deployed?}.to(true)
+    end
+
+    it 'deploy creates audit log' do
+      outcome = spy
+      allow(outcome).to receive(:success?).and_return(true)
+      expect(GridServices::Deploy).to receive(:run).exactly(2).times.and_return(outcome)
+      expect {
+        post "/v1/stacks/#{grid.name}/#{stack.name}/deploy", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{AuditLog.count}.by(1)
     end
   end
 

@@ -12,7 +12,10 @@ module Stacks
         add_error(:stack, :already_terminated, "Stack already terminated")
       end
       self.stack.grid_services.each do |service|
-        GridServices::Delete.validate(current_user: self.current_user, grid_service: service)
+        outcome = GridServices::Delete.validate(current_user: self.current_user, grid_service: service)
+        unless outcome.success?
+          add_error(:services, :delete, "Service delete validation failed for service '#{service[:name]}': #{outcome.errors.message}")
+        end
       end
     end
 
@@ -21,7 +24,11 @@ module Stacks
       self.stack.save
       # Remove all services of the stack
       self.stack.grid_services.each do |service|
-        worker(:grid_service_remove).async.perform(service.id)
+        outcome = GridServices::Delete.run(current_user: self.current_user, grid_service: service)
+        unless outcome.success?
+          add_error(:services, :delete, "Service delete validation failed for service '#{service[:name]}': #{outcome.errors.message}")
+        end
+
       end
     end
 

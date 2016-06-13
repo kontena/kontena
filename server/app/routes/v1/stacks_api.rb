@@ -7,8 +7,6 @@ module V1
 
     plugin :multi_route
 
-    #Dir[File.join(__dir__, '/services/*.rb')].each{|f| require f}
-
     route do |r|
       validate_access_token
       require_current_user
@@ -28,7 +26,7 @@ module V1
 
         if outcome.success?
           @stack = outcome.result
-          #audit_event(request, @grid, @grid_secret, 'create', nil, [:body])
+          audit_event(request, @grid, @stack, 'create')
           response.status = 201
           render('stacks/show')
         else
@@ -45,7 +43,7 @@ module V1
 
         if outcome.success?
           @stack = outcome.result
-          #audit_event(request, @grid, @grid_secret, 'update', nil, [:body])
+          audit_event(request, @grid, @stack, 'update')
           response.status = 200
           render('stacks/show')
         else
@@ -59,7 +57,7 @@ module V1
         outcome = Stacks::Delete.run(stack: stack, current_user: current_user)
 
         if outcome.success?
-          #audit_event(request, @grid, @grid_secret, 'update', nil, [:body])
+          audit_event(request, @grid, @stack, 'delete')
           response.status = 200
           {}
         else
@@ -72,7 +70,7 @@ module V1
         outcome = Stacks::Deploy.run(stack: stack, current_user: current_user)
 
         if outcome.success?
-          #audit_event(request, @grid, @grid_secret, 'update', nil, [:body])
+          audit_event(request, @grid, @stack, 'deploy')
           response.status = 200
           {}
         else

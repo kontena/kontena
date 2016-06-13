@@ -16,18 +16,33 @@ describe Stacks::Delete do
   
 
   describe '#run' do
-    it 'calls grid_service_remove worker' do
-      subject = described_class.new(current_user: user, stack: stack)
-      expect(subject).to receive(:worker).with(:grid_service_remove).exactly(2).times.and_return(spy)
-      outcome = subject.run
+    it 'calls grid_service delete mutation' do
+      oc = spy
+      allow(oc).to receive(:success?).and_return(true)
+      expect(GridServices::Delete).to receive(:validate).exactly(2).times.and_return(oc)
+      expect(GridServices::Delete).to receive(:run).exactly(2).times.and_return(spy)
+      outcome = described_class.run(current_user: user, stack: stack)
+      
       expect(outcome.success?).to be_truthy
       expect(stack.reload.terminated?).to be_truthy
+    end
+
+    it 'does not call grid_service delete mutation when validation fails' do
+      oc = spy
+      allow(oc).to receive(:success?).and_return(false)
+      expect(GridServices::Delete).to receive(:validate).exactly(2).times.and_return(oc)
+      expect(GridServices::Delete).not_to receive(:run)
+      
+      outcome = described_class.run(current_user: user, stack: stack)
+      
+      expect(outcome.success?).to be_falsey
+      expect(stack.reload.terminated?).to be_falsey
     end
 
     it 'fails if stack is already terminated' do
       stack.state = :terminated
       subject = described_class.new(current_user: user, stack: stack)
-      expect(subject).not_to receive(:worker)
+      expect(GridServices::Delete).not_to receive(:run)
       outcome = subject.run
       expect(outcome.success?).to be_falsey
       expect(outcome.errors.message).to eq({"stack" => "Stack already terminated"})

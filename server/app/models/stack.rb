@@ -16,7 +16,7 @@ class Stack
   index({ name: 1 })
 
   validates_presence_of :name
-  #validates_uniqueness_of :name, scope: [:grid_id]
+  validates_uniqueness_of :name, scope: [:grid_id]
 
   # @return [String]
   def to_path
