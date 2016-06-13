@@ -33,7 +33,25 @@ module Kontena
           ec2.vpcs({filters: [{name: "is-default", values: ["true"]}]}).first
         end
 
-        
+        ##
+        #
+        # @param tag_list [Array] array of string where each string looks like 'key=value'
+        # @param ec2_instance [] the instance to add tags to
+        # @param name [String] name of the instance
+        def add_tags(tag_list, ec2_instance, name)
+          tags = [
+            {key: 'Name', value: name}
+          ]
+          if tag_list && !tag_list.empty?
+            tag_list.each { |tag|
+              key, value = tag.split('=')
+              tags << {key: key, value: value}
+            }
+          end
+          ec2_instance.create_tags({
+            tags: tags
+          })
+        end        
 
         ##
         # Resolves givne list of group names into group ids

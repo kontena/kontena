@@ -16,6 +16,7 @@ module Kontena::Cli::Nodes::Aws
     option "--version", "VERSION", "Define installed Kontena version", default: 'latest'
     option "--associate-public-ip-address", :flag, "Whether to associated public IP in case the VPC defaults to not doing it", default: false, attribute_name: :associate_public_ip
     option "--security-groups", "SECURITY GROUPS", "Comma separated list of security groups (names) where the new instance will be attached (default: create grid specific group if not already existing)"
+    option "--tag", "TAG", "Tag(s) for the new node", multivalued: true
 
     def execute
       require_api_url
@@ -37,7 +38,8 @@ module Kontena::Cli::Nodes::Aws
           version: version,
           key_pair: key_pair,
           associate_public_ip: associate_public_ip?,
-          security_groups: security_groups
+          security_groups: security_groups,
+          tags: tag_list
       )
     end
   end
