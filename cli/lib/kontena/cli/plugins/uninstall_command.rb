@@ -13,7 +13,7 @@ module Kontena::Cli::Plugins
     end
 
     def uninstall_plugin(name)
-      plugin = "fluent-plugin-#{name}"
+      plugin = "kontena-plugin-#{name}"
       gem_bin = `which gem`.strip
       install_command = "#{gem_bin} install -q #{plugin}"
       success = false
