@@ -287,7 +287,7 @@ describe Kontena::Models::ServicePod do
   describe '#build_port_bindings' do
     let(:ports) do
       [
-        {'container_port' => 2379, 'node_port' => 12379, 'protocol' => 'tcp'},
+        {'ip' => '1.2.3.4', 'container_port' => 2379, 'node_port' => 12379, 'protocol' => 'tcp'},
         {'container_port' => 1194, 'node_port' => 1194, 'protocol' => 'udp'},
       ]
     end
@@ -299,8 +299,8 @@ describe Kontena::Models::ServicePod do
     it 'retuns correct hash when ports are defined' do
       data['ports'] = ports
       port_bindings = subject.build_port_bindings
-      expect(port_bindings['2379/tcp']).to eq([{'HostPort' => '12379'}])
-      expect(port_bindings['1194/udp']).to eq([{'HostPort' => '1194'}])
+      expect(port_bindings['2379/tcp']).to eq([{'HostIp' => '1.2.3.4', 'HostPort' => '12379'}])
+      expect(port_bindings['1194/udp']).to eq([{'HostIp' => '0.0.0.0', 'HostPort' => '1194'}])
     end
   end
 

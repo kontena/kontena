@@ -85,11 +85,45 @@ module Kontena::Cli::Services
 
       it 'returns hash of port options' do
         valid_result = [{
+          ip: '0.0.0.0',
+          container_port: '80',
+          node_port: '80',
+          protocol: 'tcp'
+        }]
+        port_options = subject.parse_ports(['80:80'])
+        expect(port_options).to eq(valid_result)
+      end
+
+      it 'returns hash of port options with protocol' do
+        valid_result = [{
+          ip: '0.0.0.0',
+          container_port: '80',
+          node_port: '80',
+          protocol: 'udp'
+        }]
+        port_options = subject.parse_ports(['80:80/udp'])
+        expect(port_options).to eq(valid_result)
+      end
+
+      it 'returns hash of port options with ip' do
+        valid_result = [{
+            ip: '1.2.3.4',
             container_port: '80',
             node_port: '80',
             protocol: 'tcp'
         }]
-        port_options = subject.parse_ports(['80:80'])
+        port_options = subject.parse_ports(['1.2.3.4:80:80'])
+        expect(port_options).to eq(valid_result)
+      end
+
+      it 'returns hash of port options with ip and protocol' do
+        valid_result = [{
+            ip: '1.2.3.4',
+            container_port: '80',
+            node_port: '80',
+            protocol: 'udp'
+        }]
+        port_options = subject.parse_ports(['1.2.3.4:80:80/udp'])
         expect(port_options).to eq(valid_result)
       end
     end

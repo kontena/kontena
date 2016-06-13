@@ -274,7 +274,10 @@ Expose ports. Specify both ports (HOST:CONTAINER).
 ports:
   - "80:80"
   - "53160:53160/udp"
+  - "1.2.3.4:8443:443"
 ```
+
+**Note:** If you use bind IP in the port exposure definition make sure you use proper affinity rules to bind the service to a node where this address is available.
 
 #### privileged
 Give extended privileges to service.
