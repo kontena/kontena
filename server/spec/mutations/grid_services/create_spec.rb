@@ -280,5 +280,16 @@ describe GridServices::Create do
       ).run
       expect(outcome.result.cap_drop).to eq(['SETUID'])
     end
+
+    it 'saves revision as 1 by default' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false
+      ).run
+      expect(outcome.result.revision).to eq(1)
+    end
   end
 end

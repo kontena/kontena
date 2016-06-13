@@ -12,6 +12,9 @@ module GridServices
           self.grid_service.env.delete(e)
         end
       end
+      if self.grid_service.changed?
+        self.grid_service.revision += 1
+      end
       self.grid_service.save
     end
   end
