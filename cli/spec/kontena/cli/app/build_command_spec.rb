@@ -9,6 +9,10 @@ describe Kontena::Cli::Apps::BuildCommand do
   end
 
   let(:kontena_yml) do
+    fixture('kontena-build.yml')
+  end
+
+  let(:mysql_yml) do
     fixture('kontena.yml')
   end
 
@@ -50,7 +54,15 @@ describe Kontena::Cli::Apps::BuildCommand do
 
     it 'requests process_docker_images with given no_cache option' do
       expect(subject).to receive(:process_docker_images).with(anything, anything, true)
-      subject.run(['--no-cache', true])
+      subject.run(['--no-cache'])
+    end
+
+    it 'raises error if no services found with build options' do
+      allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(mysql_yml)
+      expect(subject).not_to receive(:process_docker_images)
+      expect {
+        subject.run([])
+      }.to raise_error SystemExit
     end
   end
 end

@@ -5,11 +5,6 @@ module Kontena::Cli::Apps
     # @param [Boolean] force_build
     # @param [Boolean] no_cache
     def process_docker_images(services, force_build = false, no_cache = false)
-      if services.none?{|name, service| service['build']}
-        puts "Not found any service with build option"
-        return
-      end
-
       services.each do |name, service|
         if service['build'] && (!image_exist?(service['image']) || force_build)
           dockerfile = service['build']['dockerfile'] || 'Dockerfile'
