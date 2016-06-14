@@ -6,6 +6,7 @@ end
 
 ENV['RACK_ENV'] = 'development' unless ENV['RACK_ENV']
 
+require 'eventmachine'
 require 'celluloid'
 require 'roda'
 require 'mongoid'
