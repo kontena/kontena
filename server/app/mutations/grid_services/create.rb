@@ -13,6 +13,7 @@ module GridServices
     end
 
     optional do
+      model :stack, class: Stack
       string :strategy
       integer :container_count
       string :user

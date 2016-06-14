@@ -32,10 +32,12 @@ class GridService
 
   field :deploy_requested_at, type: DateTime
   field :deployed_at, type: DateTime
+  field :revision, type: Fixnum, default: 1
   field :strategy, type: String, default: 'ha'
 
   belongs_to :grid
   belongs_to :image
+  belongs_to :stack
   has_many :containers
   has_many :container_logs
   has_many :container_stats

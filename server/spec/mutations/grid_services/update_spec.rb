@@ -22,6 +22,30 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.env }.to(['FOO=bar'])
     end
 
+    it 'updates revision' do
+      redis_service.env = ['FOO=BAR', 'BAR=baz']
+      redis_service.save
+      expect {
+        described_class.new(
+            current_user: user,
+            grid_service: redis_service,
+            env: ['FOO=bar']
+        ).run
+      }.to change{ redis_service.reload.revision }.to(2)
+    end
+
+    it 'does not update revision when nothing changes' do
+      redis_service.env = ['FOO=bar']
+      redis_service.save
+      expect {
+        described_class.new(
+            current_user: user,
+            grid_service: redis_service,
+            env: ['FOO=bar']
+        ).run
+      }.not_to change{ redis_service.reload.revision }
+    end
+
     it 'updates affinity variables' do
       redis_service.affinity = ['az==a1', 'disk==ssd']
       redis_service.save

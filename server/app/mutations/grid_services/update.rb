@@ -141,6 +141,9 @@ module GridServices
       end
 
       grid_service.attributes = attributes
+      if grid_service.changed?
+        grid_service.revision += 1
+      end
       grid_service.save
 
       grid_service

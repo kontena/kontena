@@ -69,8 +69,9 @@ class GridServiceDeployer
     creds = self.creds_for_registry
     self.grid_service.set_state('deploying')
     self.grid_service.set(:deployed_at => Time.now.utc)
+    
+    deploy_rev = self.grid_service.revision.to_s
 
-    deploy_rev = Time.now.utc.to_s
     deploy_futures = []
     total_instances = self.instance_count
     total_instances.times do |i|

@@ -7,6 +7,7 @@ module GridServices
 
     def execute
       self.grid_service.env << env
+      grid_service.revision += 1
       self.grid_service.save
     end
   end

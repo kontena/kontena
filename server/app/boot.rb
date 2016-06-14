@@ -14,6 +14,7 @@ require 'mutations'
 require 'logger'
 require 'msgpack'
 require 'tilt/jbuilder.rb'
+require 'mongoid/enum'
 
 Dir[__dir__ + '/initializers/*.rb'].each {|file| require file }
 

@@ -13,6 +13,7 @@ describe GridService do
   it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
 
   it { should belong_to(:grid) }
+  it { should belong_to(:stack) }
   it { should embed_many(:grid_service_links) }
   it { should embed_many(:secrets) }
   it { should embed_many(:hooks) }

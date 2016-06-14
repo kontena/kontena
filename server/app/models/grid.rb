@@ -28,6 +28,7 @@ class Grid
   has_many :audit_logs
   has_many :registries, dependent: :delete
   has_many :overlay_cidrs, dependent: :delete
+  has_many :stacks, dependent: :destroy
   has_and_belongs_to_many :users
 
   index({ name: 1 }, { unique: true })

@@ -33,3 +33,4 @@ json.instances do
   json.running grid_service.containers.where('state.running' => true).count
 end
 json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
+json.revision grid_service.revision
