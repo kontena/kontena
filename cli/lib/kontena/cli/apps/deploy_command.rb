@@ -23,7 +23,7 @@ module Kontena::Cli::Apps
       require_api_url
       require_token
       require_config_file(filename)
-      @deploy_queue = []      
+      @deploy_queue = []
       @services = services_from_yaml(filename, service_list, service_prefix)
       process_docker_images(services) if !no_build?
       create_or_update_services(services)
