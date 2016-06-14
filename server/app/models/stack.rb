@@ -10,7 +10,6 @@ class Stack
   belongs_to :grid
 
   has_many :grid_services
-  #has_many :audit_logs
 
   index({ grid_id: 1 })
   index({ name: 1 })
