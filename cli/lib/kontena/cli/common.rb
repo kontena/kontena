@@ -9,7 +9,7 @@ module Kontena
       end
 
       def require_token
-        token = ENV['KONTENA_TOKEN'] || current_master['token']
+        token = ENV['KONTENA_TOKEN'] || current_master['token'] || current_account['token']
         unless token
           raise ArgumentError.new("Please login first using: kontena login")
         end
@@ -17,15 +17,7 @@ module Kontena
       end
 
       def client(token = nil)
-        if @client.nil?
-          headers = {}
-          unless token.nil?
-            headers['Authorization'] = "Bearer #{token}"
-          end
-
-          @client = Kontena::Client.new(api_url, headers)
-        end
-        @client
+        @client ||= Kontena.master_client
       end
 
       def reset_client
@@ -33,30 +25,11 @@ module Kontena
       end
 
       def settings_filename
-        File.join(Dir.home, '/.kontena_client.json')
+        Kontena.config.settings_filename
       end
 
       def settings
-        if @settings.nil?
-          if File.exists?(settings_filename)
-            @settings = JSON.parse(File.read(settings_filename))
-            unless @settings['current_server']
-              # Let's migrate the old settings model to new
-              @settings['server']['name'] = 'default'
-              @settings = {
-                  'current_server' => 'default',
-                  'servers' => [ @settings['server']]
-              }
-              save_settings
-            end
-          else
-            @settings = {
-                'current_server' => 'default',
-                'servers' => [{}]
-            }
-          end
-        end
-        @settings
+        Kontena.config.settings
       end
 
       def api_url
@@ -79,8 +52,7 @@ module Kontena
       end
 
       def current_grid=(grid)
-        settings['servers'][current_master_index]['grid'] = grid['id']
-        save_settings
+        Kontena.config.current_grid=(grid)
       end
 
       def require_current_grid
@@ -107,6 +79,10 @@ module Kontena
       def current_master_index
         current_server = settings['current_server'] || 'default'
         settings['servers'].find_index{|m| m['name'] == current_server}
+      end
+
+      def current_account
+        Kontena.config.current_account || {}
       end
 
       def current_master
@@ -168,7 +144,7 @@ module Kontena
       end
 
       def save_settings
-        File.write(settings_filename, JSON.pretty_generate(settings))
+        Kontena.config.update
       end
     end
   end
