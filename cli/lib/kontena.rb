@@ -10,10 +10,10 @@ module Kontena
   end
 
   def self.master_client
-    @client ||= Kontena::Cli::MasterClient.new(config.current_master)
+    @master_client ||= Kontena::Cli::MasterClient.new(config.current_master)
   end
 
   def self.account_client
-    @client ||= Kontena::Cli::AccountClient.new(config.current_account)
+    @account_client ||= Kontena::Cli::AccountClient.new(config.current_account)
   end
 end
