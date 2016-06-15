@@ -3,7 +3,7 @@ module Kontena::Cli::Master
     include Kontena::Cli::Common
 
     def execute
-      puts '%-24s %-30s' % ['Name', 'Url']
+      puts '%-24s %-30s %-20s' % ['NAME', 'URL', 'ACCOUNT']
       current_server = settings['current_server']
       settings['servers'].each do |server|
         if server['name'] == current_server
@@ -11,7 +11,7 @@ module Kontena::Cli::Master
         else
           name = server['name']
         end
-        puts '%-24s %-30s' % [name, server['url']]
+        puts '%-24s %-30s %-20s' % [name, server['url'], server['account']]
       end
     end
   end
