@@ -16,8 +16,11 @@ module Kontena
     def initialize(api_url, default_headers = {})
       Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
       @http_client = Excon.new(api_url)
-      @default_headers = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"}.merge(default_headers)
-      @api_url = api_url
+      @default_headers = {
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
+      }.merge(default_headers)
     end
 
     # Get request
@@ -34,6 +37,8 @@ module Kontena
       )
       if response.status == 200
         parse_response(response)
+      elsif response.status == 403 && response.body.to_s.include?('expired')
+        raise Kontena::Errors::SessionExpired
       else
         handle_error_response(response)
       end
@@ -74,6 +79,8 @@ module Kontena
       response = http_client.post(request_options)
       if [200, 201].include?(response.status)
         parse_response(response)
+      elsif response.status == 403 && response.body.to_s.include?('expired')
+        raise Kontena::Errors::SessionExpired
       else
         handle_error_response(response)
       end
@@ -98,6 +105,8 @@ module Kontena
       response = http_client.put(request_options)
       if [200, 201].include?(response.status)
         parse_response(response)
+      elsif response.status == 403 && response.body.to_s.include?('expired')
+        raise Kontena::Errors::SessionExpired
       else
         handle_error_response(response)
       end
@@ -121,6 +130,8 @@ module Kontena
       response = http_client.delete(request_options)
       if response.status == 200
         parse_response(response)
+      elsif response.status == 403 && response.body.to_s.include?('expired')
+        raise Kontena::Errors::SessionExpired
       else
         handle_error_response(response)
       end
