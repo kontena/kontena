@@ -11,7 +11,7 @@ module Kontena
 
       def initialize(config)
         @config = config
-        super @config.url
+        super @config['url']
       end
 
       def require_token
