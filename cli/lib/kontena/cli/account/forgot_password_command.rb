@@ -1,4 +1,4 @@
-module Kontena::Cli::User
+module Kontena::Cli::Account
   class ForgotPasswordCommand < Clamp::Command
     include Kontena::Cli::Common
 

@@ -1,4 +1,4 @@
-module Kontena::Cli::User
+module Kontena::Cli::Account
   class ResetPasswordCommand < Clamp::Command
     include Kontena::Cli::Common
 
