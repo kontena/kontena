@@ -101,22 +101,39 @@ describe Kontena::Cli::Common do
         "server": {
           "url": "https://master.domain.com:8443",
           "grid": "my-grid",
-          "token": "kontena-token"
+          "token": "kontena-token",
+          "email": "kontena@example.com"
         }
       }')
       expected_settings = {
           'current_server' => 'default',
+          'current_account' => 'kontena',
           'servers' => [
               {
                   "url" => "https://master.domain.com:8443",
                   "grid" => "my-grid",
                   "token" => "kontena-token",
-                  "name" => "default"
+                  "name" => "default",
+                  "account" => "kontena",
+                  "account_authentication" => false
               }
+          ],
+          'accounts' => [
+            {
+              "name" => "kontena",
+              "url" => "https://auth.kontena.io",
+              "username" => "kontena@example.com",
+              "token" => nil,
+              "token_expires_at" => nil,
+              "refresh_token" => nil
+            }
           ]
       }
-      expect(File).to receive(:write).with(subject.settings_filename, JSON.pretty_generate(expected_settings))
 
+      expected_content = JSON.pretty_generate(expected_settings)
+      expected_filename = subject.settings_filename
+
+      expect(File).to receive(:write).with(expected_filename, expected_content)
       subject.settings
     end
 
