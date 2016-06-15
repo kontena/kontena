@@ -7,5 +7,7 @@ module Kontena
         super(message)
       end
     end
+
+    class SessionExpired < StandardError; end
   end
 end
