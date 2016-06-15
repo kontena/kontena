@@ -6,6 +6,8 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 require 'clamp'
+require 'kontena'
+require 'kontena/cli'
 require 'kontena/cli/common'
 require 'kontena/cli/grid_options'
 require 'kontena/client'
