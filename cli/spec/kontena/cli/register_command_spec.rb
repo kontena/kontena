@@ -1,7 +1,7 @@
 require_relative "../../spec_helper"
-require "kontena/cli/register_command"
+require "kontena/cli/account/register_command"
 
-describe Kontena::Cli::RegisterCommand do
+describe Kontena::Cli::Account::RegisterCommand do
   describe '#register' do
 
     let(:auth_client) do
