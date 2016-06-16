@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.3 (2016-06-16)
+
+**Master & Agent:**
+- update excon to 0.49.0 (#806)
+- enable eventmachine epoll (#804)
+
+**CLI:**
+- fix aws public ip assign (#808)
+
 ## 0.14.2 (2016-06-06)
 
 **Master & Agent:**
