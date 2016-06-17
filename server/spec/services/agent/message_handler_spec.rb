@@ -164,4 +164,20 @@ describe Agent::MessageHandler do
       }.to change{ node.host_node_stats.count }.by(1)
     end
   end
+
+  describe '#on_container_health' do
+    it 'updates health status' do
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1')
+      container.update_attribute(:container_id, container_id)
+
+      expect {
+        subject.on_container_health(grid, {
+            'id' => container_id,
+            'status' => 'healthy'
+          }
+        )
+      }.to change {container.reload.health_status}.to eq('healthy')
+    end
+  end
 end

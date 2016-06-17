@@ -77,6 +77,11 @@ module Kontena
         type: Kontena::Workers::ImageCleanupWorker,
         as: :image_cleanup_worker
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::HealthCheckWorker,
+        as: :health_check_worker,
+        args: [@queue]
+      )
     end
 
     def supervise_lb

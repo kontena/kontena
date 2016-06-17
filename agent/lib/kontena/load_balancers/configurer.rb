@@ -30,6 +30,7 @@ module Kontena::LoadBalancers
     def ensure_config(container)
       name = container.labels['io.kontena.load_balancer.name']
       service_name = container.labels['io.kontena.service.name']
+      check_uri = container.labels['io.kontena.health_check.uri']
       etcd_path = "#{ETCD_PREFIX}/#{name}"
       env_hash = container.env_hash
 
@@ -45,6 +46,7 @@ module Kontena::LoadBalancers
         end
         keep_virtual_path = env_hash['KONTENA_LB_KEEP_VIRTUAL_PATH']
         set("#{etcd_path}/services/#{service_name}/balance", balance)
+        set("#{etcd_path}/services/#{service_name}/health_check_uri", check_uri)
         set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
         set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
         set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)

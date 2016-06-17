@@ -34,6 +34,12 @@ module Kontena::Cli::Services
     option "--deploy-interval", "TIME", "Auto-deploy with given interval (format: <number><unit>, where unit = min, h, d)"
     option "--pid", "PID", "Pid namespace to use"
     option "--secret", "SECRET", "Import secret from Vault (format: <secret>:<name>:<env>)", multivalued: true
+    option "--health-check-uri", "HEALTH CHECK URI", "URI path for HTTP health check"
+    option "--health-check-timeout", "HEALTH CHECK TIMEOUT", "Timeout for health check"
+    option "--health-check-interval", "HEALTH CHECK INTERVAL", "Interval for health check"
+    option "--health-check-initial-delay", "HEALTH CHECK INITIAL DELAY", "Initial delay for health check"
+    option "--health-check-port", "HEALTH CHECK PORT", "Port for health check"
+    option "--health-check-protocol", "HEALTH CHECK PROTOCOL", "Protocol of health check"
 
     def execute
       require_api_url
@@ -82,6 +88,16 @@ module Kontena::Cli::Services
       end
       if deploy_interval
         data[:deploy_opts][:interval] = parse_relative_time(deploy_interval)
+      end
+      if health_check_port
+        data[:health_check] = { 
+          protocol: health_check_protocol,
+          uri: health_check_uri, 
+          port: health_check_port, 
+          timeout: health_check_timeout, 
+          interval: health_check_interval,
+          initial_delay: health_check_initial_delay
+        }
       end
       data[:pid] = pid if pid
       data

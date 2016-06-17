@@ -25,6 +25,10 @@ describe Kontena::Cli::Apps::Common do
     fixture('mysql.yml')
   end
 
+  let(:health_yml) do
+    fixture('health.yml')
+  end
+
   let(:services) do
     {
       'wordpress' => {
@@ -60,6 +64,7 @@ describe Kontena::Cli::Apps::Common do
   describe '#load_from_yaml' do
     before(:each) do
       allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
+      allow(File).to receive(:read).with("#{Dir.getwd}/health.yml").and_return(health_yml)
       allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose.yml").and_return(docker_compose_yml)
     end
 
@@ -84,6 +89,12 @@ describe Kontena::Cli::Apps::Common do
       services = subject.services_from_yaml('kontena.yml',['wordpress'],'')
       expect(services['wordpress']).not_to be_nil
       expect(services.size).to eq(1)
+    end
+
+    it 'populates health check' do
+      services = subject.services_from_yaml('health.yml',['web'],'')
+      expect(services['web']).not_to be_nil
+      expect(services['web']['health_check']).not_to be_nil
     end
   end
 end

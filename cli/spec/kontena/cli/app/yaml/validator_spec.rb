@@ -279,5 +279,36 @@ describe Kontena::Cli::Apps::YAML::Validator do
         end
       end
     end
+
+    context 'validates health_check' do
+      it 'validates health_check' do
+        result = subject.validate_options('health_check' => {})
+        expect(result.messages.key?('health_check')).to be_truthy        
+      end
+
+      it 'validates health_check port ' do
+        result = subject.validate_options('health_check' => { 'protocol' => 'http', 'port' => 'abc'})
+        expect(result.messages.key?('health_check')).to be_truthy
+
+        result = subject.validate_options('health_check' => { 'protocol' => 'http', 'port' => 8080})
+        expect(result.messages.key?('health_check')).to be_falsey
+      end
+
+      it 'validates health_check uri' do
+        result = subject.validate_options('health_check' => { 'protocol' => 'http', 'port' => 8080, 'uri' => 'foobar'})
+        expect(result.messages.key?('health_check')).to be_truthy
+
+        result = subject.validate_options('health_check' => { 'protocol' => 'http', 'port' => 8080, 'uri' => '/health/foo/bar'})
+        expect(result.messages.key?('health_check')).to be_falsey
+      end
+
+      it 'validates health_check protocol' do
+        result = subject.validate_options('health_check' => { 'protocol' => 'foo', 'port' => 8080, 'uri' => 'foobar'})
+        expect(result.messages.key?('health_check')).to be_truthy
+
+        result = subject.validate_options('health_check' => { 'protocol' => 'tcp', 'port' => 3306 })
+        expect(result.messages.key?('health_check')).to be_falsey
+      end
+    end
   end
 end

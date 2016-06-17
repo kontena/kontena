@@ -45,6 +45,14 @@ module Kontena::Cli::Apps::YAML
        key('name').required
        key('type').required
      end
+     base.optional('health_check').schema do
+      key('protocol') { format?(/^(http|tcp)$/) }
+      key('port') { int? }
+      optional('uri') { format?(/\/[\S]*/) }
+      optional('timeout') { int? }
+      optional('interval') { int? }
+      optional('initial_delay') { int? }
+     end
    end
 
    ##

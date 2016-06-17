@@ -8,7 +8,7 @@ module Kontena::Cli::Apps
       VALID_KEYS = %w(
       affinity build dockerfile cap_add cap_drop command deploy env_file environment extends external_links
       image links log_driver log_opt net pid ports volumes volumes_from cpu_shares
-      mem_limit memswap_limit privileged stateful user instances hooks secrets
+      mem_limit memswap_limit privileged stateful user instances hooks secrets health_check
       ).freeze
 
       UNSUPPORTED_KEYS = %w(

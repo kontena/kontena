@@ -34,3 +34,14 @@ json.instances do
 end
 json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
 json.revision grid_service.revision
+if grid_service.health_check
+	json.health_check do
+		json.protocol grid_service.health_check.protocol
+		json.uri grid_service.health_check.uri
+		json.port grid_service.health_check.port
+		json.timeout grid_service.health_check.timeout
+		json.initial_delay grid_service.health_check.initial_delay
+		json.interval grid_service.health_check.interval
+	end
+	json.health_status grid_service.health_status
+end

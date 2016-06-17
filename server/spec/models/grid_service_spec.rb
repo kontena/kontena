@@ -161,4 +161,19 @@ describe GridService do
       expect(subject.load_balancer?).to eq(false)
     end
   end
+
+  describe '#health_status' do
+    it 'returns health status' do
+      healthy_container = grid_service.containers.create!(name: 'redis-1')
+      healthy_container.update_attribute(:health_status, 'healthy')
+      unhealthy_container = grid_service.containers.create!(name: 'redis-2')
+      unhealthy_container.update_attribute(:health_status, 'unhealthy')
+
+      expect(grid_service.health_status).to eq({healthy: 1, total: 2})
+    end
+
+    it 'returns nil if container is not found' do
+      expect(grid_service.container_by_name('not_found')).to be_nil
+    end
+  end
 end

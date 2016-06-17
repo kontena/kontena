@@ -154,6 +154,16 @@ describe Docker::ServiceCreator do
         expect(labels).to include('io.kontena.load_balancer.internal_port' => '80')
         expect(labels).to include('io.kontena.load_balancer.mode' => 'http')
       end
+
+      it 'includes health check labels if defined' do
+        service.health_check = GridServiceHealthCheck.new(uri: '/', port: 80, protocol: 'http')
+        expect(labels).to include('io.kontena.health_check.protocol' => 'http')
+        expect(labels).to include('io.kontena.health_check.uri' => '/')
+        expect(labels).to include('io.kontena.health_check.port' => '80')
+        expect(labels).to include('io.kontena.health_check.interval' => '60')
+        expect(labels).to include('io.kontena.health_check.timeout' => '10')
+        expect(labels).to include('io.kontena.health_check.initial_delay' => '10')
+      end
     end
   end
 end

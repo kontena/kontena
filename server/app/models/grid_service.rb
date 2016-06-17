@@ -47,6 +47,7 @@ class GridService
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
+  embeds_one :health_check, class_name: 'GridServiceHealthCheck'
 
   index({ grid_id: 1 })
   index({ name: 1 })
@@ -203,5 +204,15 @@ class GridService
     return true if self.net.to_s.match(/^container:.+/)
 
     false
+  end
+
+  def health_status
+    healthy = 0
+
+    self.containers.each do |c|
+      healthy += 1 if c.health_status == 'healthy'
+    end
+
+    {healthy: healthy, total: self.containers.count}
   end
 end

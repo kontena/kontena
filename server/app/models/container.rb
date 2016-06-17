@@ -20,6 +20,9 @@ class Container
   field :deploy_rev, type: String
   field :container_type, type: String, default: 'container'
 
+  field :health_status, type: String
+  field :health_status_at, type: Time
+
   validates_uniqueness_of :container_id, scope: [:host_node_id], allow_nil: true
 
   belongs_to :grid

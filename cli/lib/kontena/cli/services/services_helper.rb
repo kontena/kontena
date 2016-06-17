@@ -170,6 +170,22 @@ module Kontena
             puts "  pid: #{service['pid']}"
           end
 
+          if service['health_check']
+            puts "  health check:"
+            puts "    protocol: #{service['health_check']['protocol']}"
+            puts "    uri: #{service['health_check']['uri']}" if service['health_check']['protocol'] == 'http'
+            puts "    port: #{service['health_check']['port']}"
+            puts "    timeout: #{service['health_check']['timeout']}"
+            puts "    interval: #{service['health_check']['interval']}"
+            puts "    initial_delay: #{service['health_check']['initial_delay']}"
+          end
+          
+          if service['health_status']
+            puts "  health status:"
+            puts "    healthy: #{service['health_status']['healthy']}"
+            puts "    total: #{service['health_status']['total']}"
+          end
+
           puts "  instances:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
