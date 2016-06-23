@@ -208,5 +208,20 @@ module Kontena::Cli::Services
         expect(subject.parse_relative_time("600")).to eq(600)
       end
     end
+
+    describe '#parse_build_args' do
+      it'parses array args' do
+        expect(subject.parse_build_args(['foo=bar', 'baz=baf'])).to eq({'foo' => 'bar', 'baz' => 'baf'})
+      end
+
+      it'parses hash args' do
+        expect(subject.parse_build_args({'foo' => 'bar', 'baz' => 'baf'})).to eq({'foo' => 'bar', 'baz' => 'baf'})
+      end
+
+      it'parses hash args and replaces empty value from env' do
+        expect(ENV).to receive(:[]).with('baz').and_return('baf')
+        expect(subject.parse_build_args({'foo' => 'bar', 'baz' => nil})).to eq({'foo' => 'bar', 'baz' => 'baf'})
+      end
+    end
   end
 end

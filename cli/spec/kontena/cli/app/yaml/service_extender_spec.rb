@@ -100,5 +100,29 @@ describe Kontena::Cli::Apps::YAML::ServiceExtender do
         expect(result['secrets']).to eq([to_secret, from_secret])
       end
     end
+
+    context 'build args' do
+      it 'inherits build args from upper level' do
+        from = { 'build' => { 'args' => {'foo' => 'bar'}} }
+        to = {}
+        result = described_class.new(to).extend(from)
+        expect(result['build']['args']).to eq({'foo' => 'bar'})
+      end
+
+      it 'overrides values' do
+        from = { 'build' => { 'args' => {'foo' => 'bar'}} }
+        to = { 'build' => { 'args' => {'foo' => 'baz'}} }
+        result = described_class.new(to).extend(from)
+        expect(result['build']['args']).to eq({'foo' => 'baz'})
+      end
+
+      it 'combines variables' do
+        from = { 'build' => { 'args' => {'foo' => 'bar'}} }
+        to = { 'build' => { 'args' => {'baz' => 'baf'}} }
+        result = described_class.new(to).extend(from)
+        expect(result['build']['args']).to eq({'foo' => 'bar', 'baz' => 'baf'})
+      end
+    end
+
   end
 end

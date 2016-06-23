@@ -15,7 +15,7 @@ module Kontena::Cli::Apps
             run_pre_build_hook(service['hooks']['pre_build'])
           end
           puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service['image'], service['build']['context'], dockerfile, no_cache)
+          build_docker_image(service['image'], service['build']['context'], dockerfile, no_cache, service['build']['args'])
           puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
           push_docker_image(service['image'])
         end
@@ -33,10 +33,13 @@ module Kontena::Cli::Apps
     # @param [String] dockerfile
     # @param [Boolean] no_cache
     # @return [Integer]
-    def build_docker_image(name, path, dockerfile, no_cache=false)
+    def build_docker_image(name, path, dockerfile, no_cache=false, args = {})
       cmd = ["docker build -t #{name}"]
       cmd << "-f #{File.join(File.expand_path(path), dockerfile)}" if dockerfile != "Dockerfile"
       cmd << "--no-cache" if no_cache
+      args.each do |k, v|
+        cmd << "--build-arg #{k}=#{v}"
+      end
       cmd << path
       ret = system(cmd.join(' '))
       abort("Failed to build image #{name.colorize(:cyan)}") unless ret

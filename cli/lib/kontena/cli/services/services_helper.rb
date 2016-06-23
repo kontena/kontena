@@ -362,6 +362,25 @@ module Kontena
             'TB' => 1000 * 1000 * 1000 * 1000 * 1000
           }.each_pair { |e, s| return "#{(int.to_i / (s / 1000))}#{e}" if int < s }
         end
+
+        def parse_build_args(args)
+          build_args = {}
+          if args.kind_of?(Array)
+            args.each do |arg|
+              key, val = arg.split('=')
+              build_args[key] = val
+            end
+          elsif args.kind_of?(Hash)
+            build_args = build_args.merge(args)
+            build_args.each do |k, v|
+              if v.nil?
+                build_args[k] = ENV[k.to_s] # follow docker compose functionality here
+              end
+            end
+          end
+
+          build_args
+        end
       end
     end
   end
