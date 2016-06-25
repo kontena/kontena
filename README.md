@@ -1,11 +1,12 @@
 # Kontena
 
-> The developer friendly container and micro services platform. Works on any cloud, easy to setup, simple to use. http://www.kontena.io 
+> The developer friendly container and micro services platform. Works on any cloud, easy to setup, simple to use. http://www.kontena.io
 
 [![Build Status](https://travis-ci.org/kontena/kontena.svg?branch=master)](https://travis-ci.org/kontena/kontena)
 [![Join the chat at https://gitter.im/kontena/kontena](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kontena/kontena?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![segment.io](https://api.segment.io/v1/pixel/track?data=ew0KICAid3JpdGVLZXkiOiAiOVdzS1ZsNHR6OXhsUlJ2eWRoWndKTTlRcnlUc2xSUzMiLA0KICAiYW5vbnltb3VzSWQiOiAiZ2l0aHViX3JlcG9fdmlzaXRvciIsDQogICJldmVudCI6ICJwYWdlX3ZpZXciLA0KICAicHJvcGVydGllcyI6IHsNCiAgICAic3ViamVjdCI6ICJrb250ZW5hL2tvbnRlbmEiDQogIH0NCn0NCg==)
 
-[Kontena](http://www.kontena.io) is a new developer friendly, open source platform for orchestrating applications that are run on Docker containers. It simplifies deploying and running containerized applications on any infrastructure. By leveraging technologies such as [Docker](https://www.docker.com/), [CoreOS](https://coreos.com/) and [Weave](http://weave.works/), it provides complete solution for organizations of any size.
+[Kontena](https://www.kontena.io) is a new developer friendly, open source platform for orchestrating applications that are run on Docker containers. It simplifies deploying and running containerized applications on any infrastructure. By leveraging technologies such as [Docker](https://www.docker.com/), [CoreOS](https://coreos.com/) and [Weave](https://www.weave.works/), it provides complete solution for organizations of any size.
 
 Kontena is built to maximize developer happiness; it is designed for application developers and therefore does not require ops teams to setup or maintain. Therefore, it is an ideal choice for organizations without aspiration to configure and maintain scalable Docker container infrastructure.
 
@@ -14,7 +15,7 @@ Kontena is built to maximize developer happiness; it is designed for application
 To accelerate and break barriers for containerized application development, Kontena features some of the most essential technologies built-in such as:
 
 * Multi-host, multi AZ container orchestration
-* Overlay network technology by Weave 
+* Overlay network technology by Weaveworks
 * Zero-downtime dynamic load balancing
 * Abstraction to describe services running in containers
 * Private Docker image repository
@@ -25,9 +26,9 @@ To accelerate and break barriers for containerized application development, Kont
 Kontena supports any application that can run in a Docker container, and can run on any machine that supports CoreOS. You can run Kontena on the cloud provider of your choice or on your own servers. We hope you enjoy!
 
 **Learn more about Kontena:**
-- [Kontena Website](http://www.kontena.io)
+- [Kontena Website](https://www.kontena.io)
 - [Kontena Blog](http://blog.kontena.io)
-- [Documentation](http://www.kontena.io/docs)
+- [Documentation](https://www.kontena.io/docs)
 
 ## Getting Started
 
