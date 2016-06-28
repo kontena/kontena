@@ -2,11 +2,6 @@ require_relative "../../spec_helper"
 require "kontena/cli/common"
 
 describe Kontena::Cli::Common do
-
-  let(:masters) do
-
-  end
-
   let(:subject) do
     Class.new do
       include Kontena::Cli::Common
