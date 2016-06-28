@@ -27,6 +27,7 @@ module Kontena::Cli::Apps::YAML
        optional('strategy') { inclusion?(%w(ha daemon random)) }
        optional('wait_for_port') { int? }
        optional('min_health') { float? }
+       optional('interval') { format?(/^\d+(min|h|d|)$/) }
      end
      base.optional('hooks').schema do
        optional('post_start').each do
