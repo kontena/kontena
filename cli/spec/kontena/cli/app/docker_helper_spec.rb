@@ -103,4 +103,49 @@ describe Kontena::Cli::Apps::DockerHelper do
     end
   end
 
+  describe '#build_docker_image' do
+    it 'builds image' do
+      service = {
+        'build' => { 'context' => '.' },
+        'image' => 'test_service'
+      }
+      expect(subject).to receive(:system).with("docker build -t test_service ."). and_return(true)
+      subject.build_docker_image(service)
+    end
+
+    it 'builds image with no-cache' do
+      service = {
+        'build' => { 'context' => '.' },
+        'image' => 'test_service'
+      }
+      expect(subject).to receive(:system).with("docker build -t test_service --no-cache ."). and_return(true)
+      subject.build_docker_image(service, true)
+    end
+
+    it 'builds image with alternate dockerfile' do
+      service = {
+        'build' => { 'context' => '.', 'dockerfile' => 'other_dockerfile' },
+        'image' => 'test_service'
+      }
+      expected_path = File.join(File.expand_path('.'), 'other_dockerfile')
+      expect(subject).to receive(:system).with("docker build -t test_service -f #{expected_path} ."). and_return(true)
+      subject.build_docker_image(service)
+    end
+
+    it 'builds image' do
+      service = {
+        'build' => { 
+          'context' => '.',
+          'args' => {
+            'FOO' => 'bar',
+            'BAR' => 'foo'
+          }
+        },
+        'image' => 'test_service'
+      }
+      expect(subject).to receive(:system).with("docker build -t test_service --build-arg FOO=bar --build-arg BAR=foo ."). and_return(true)
+      subject.build_docker_image(service)
+    end
+  end
+
 end

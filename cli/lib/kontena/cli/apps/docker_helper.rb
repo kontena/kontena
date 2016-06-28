@@ -15,7 +15,7 @@ module Kontena::Cli::Apps
             run_pre_build_hook(service['hooks']['pre_build'])
           end
           puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service['image'], service['build']['context'], dockerfile, no_cache, service['build']['args'])
+          build_docker_image(service, no_cache)
           puts "Pushing image #{service['image'].colorize(:cyan)} to registry"
           push_docker_image(service['image'])
         end
@@ -28,21 +28,22 @@ module Kontena::Cli::Apps
       !(/^[\w.\/\-:]+:?+[\w+.]+$/ =~ name).nil?
     end
 
-    # @param [String] name
-    # @param [String] path
-    # @param [String] dockerfile
+    # @param [Hash] service
     # @param [Boolean] no_cache
     # @return [Integer]
-    def build_docker_image(name, path, dockerfile, no_cache=false, args = {})
-      cmd = ["docker build -t #{name}"]
-      cmd << "-f #{File.join(File.expand_path(path), dockerfile)}" if dockerfile != "Dockerfile"
+    def build_docker_image(service, no_cache = false)
+      dockerfile = dockerfile = service['build']['dockerfile'] || 'Dockerfile'
+      build_context = service['build']['context']
+      cmd = ["docker build -t #{service['image']}"]
+      cmd << "-f #{File.join(File.expand_path(build_context), dockerfile)}" if dockerfile != "Dockerfile"
       cmd << "--no-cache" if no_cache
+      args = service['build']['args'] || {}
       args.each do |k, v|
         cmd << "--build-arg #{k}=#{v}"
       end
-      cmd << path
+      cmd << build_context
       ret = system(cmd.join(' '))
-      abort("Failed to build image #{name.colorize(:cyan)}") unless ret
+      abort("Failed to build image #{service['image'].colorize(:cyan)}") unless ret
       ret
     end
 
