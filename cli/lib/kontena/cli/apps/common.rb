@@ -45,6 +45,12 @@ module Kontena::Cli::Apps
       services
     end
 
+    def read_yaml(filename)
+      reader = YAML::Reader.new(filename)
+      outcome = reader.execute
+      outcome
+    end
+
     def set_env_variables(project, grid)
       ENV['project'] = project
       ENV['grid'] = grid
@@ -63,7 +69,6 @@ module Kontena::Cli::Apps
         nil
       end
     end
-
 
     # @return [String]
     def token
