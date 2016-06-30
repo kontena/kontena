@@ -4,122 +4,70 @@ require 'uri'
 module Kontena
   module Cli
     module Common
+
       def require_api_url
-        api_url
+        KontenaClient.config.require_master_url
       end
 
       def require_token
-        token = ENV['KONTENA_TOKEN'] || current_master['token']
-        unless token
-          raise ArgumentError.new("Please login first using: kontena login")
-        end
-        token
+        KontenaClient.config.require_token
       end
 
-      def client(token = nil)
-        if @client.nil?
-          headers = {}
-          unless token.nil?
-            headers['Authorization'] = "Bearer #{token}"
-          end
-
-          @client = Kontena::Client.new(api_url, headers)
-        end
-        @client
+      def client(_ = nil)
+        KontenaClient.master.tap {|m| m.uri_path_prefix = 'v1'}
       end
 
       def reset_client
-        @client = nil
+        KontenaClient.clear_master
       end
 
       def settings_filename
-        File.join(Dir.home, '/.kontena_client.json')
+        KontenaClient.config.config_path
       end
 
       def settings
-        if @settings.nil?
-          if File.exists?(settings_filename)
-            @settings = JSON.parse(File.read(settings_filename))
-            unless @settings['current_server']
-              # Let's migrate the old settings model to new
-              @settings['server']['name'] = 'default'
-              @settings = {
-                  'current_server' => 'default',
-                  'servers' => [ @settings['server']]
-              }
-              save_settings
-            end
-          else
-            @settings = {
-                'current_server' => 'default',
-                'servers' => [{}]
-            }
-          end
-        end
-        @settings
+        KontenaClient.config.settings
       end
 
       def api_url
-        url = ENV['KONTENA_URL'] || current_master['url']
-        unless url
-          raise ArgumentError.new("It seem's that you are not logged into Kontena master, please login with: kontena login")
-        end
-        ensure_custom_ssl_ca(url)
-        url
+        require_api_url
       end
 
-      def ensure_custom_ssl_ca(url)
-        return if Excon.defaults[:ssl_ca_file]
-
-        uri = URI::parse(url)
-        cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
-        if File.exist?(cert_file)
-          Excon.defaults[:ssl_ca_file] = cert_file
-        end
+      def ensure_custom_ssl_ca(_)
+        client.ensure_custom_ssl_ca
       end
 
       def current_grid=(grid)
-        settings['servers'][current_master_index]['grid'] = grid['id']
-        save_settings
+        KontenaClient.config.update do |config|
+          config.grid = grid
+        end
       end
 
       def require_current_grid
-        if current_grid.nil?
-          raise ArgumentError.new("Please select grid first using: kontena grid use <grid name>")
-        end
+        KontenaClient.config.require_grid
       end
 
       def clear_current_grid
-        settings['servers'][current_master_index].delete('grid')
-        save_settings
+        KontenaClient.config.update do |config|
+          config.grid = nil
+        end
       end
 
       def current_grid
-        if self.respond_to?(:grid)
-          ENV['KONTENA_GRID'] || grid || current_master['grid']
-        else
-          ENV['KONTENA_GRID'] || current_master['grid']
-        end
+        KontenaClient.config.grid
       rescue ArgumentError => e
-        nil      
-      end
-
-      def current_master_index
-        current_server = settings['current_server'] || 'default'
-        settings['servers'].find_index{|m| m['name'] == current_server}
+        nil
       end
 
       def current_master
-        index = current_master_index
-        unless index
-          raise ArgumentError.new("It seem's that you are not logged into ANY Kontena master, please login with: kontena login")
-        end
-        settings['servers'][index]
+        require_api_url
+        KontenaClient.config.current_master
       end
 
       def current_master=(master_alias)
-        settings['current_server'] = master_alias
-        save_settings
+        KontenaClient.config.update do |config|
+          config.current_master = master_alias
+        end
       end
 
       def error(message = nil)
@@ -146,29 +94,24 @@ module Kontena
       end
 
       def api_url=(api_url)
-        settings['servers'][current_master_index]['url'] = api_url
-        save_settings
+        require_api_url
+        KontenaClient.config.update do |config|
+          config.current_master['url'] = api_url
+        end
       end
 
       def access_token=(token)
-        settings['servers'][current_master_index]['token'] = token
-        save_settings
+        KontenaClient.config.update do |config|
+          config.token = token
+        end
       end
 
       def add_master(server_name, master_info)
-        server_name = server_name || 'default'
-        index = settings['servers'].find_index{|m| m['name'] == server_name}
-        if index
-          settings['servers'][index] = master_info
-        else
-          settings['servers'] << master_info
-        end
-        settings['current_server'] = server_name
-        save_settings
+        KontenaClient.config.add_master(server_name, master_info)
       end
 
       def save_settings
-        File.write(settings_filename, JSON.pretty_generate(settings))
+        KontenaClient.config.update
       end
     end
   end

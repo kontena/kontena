@@ -2,6 +2,8 @@ source 'https://rubygems.org'
 
 # Specify your gem's dependencies in kontena-cli.gemspec
 gemspec
+gem 'kontena_client', github: 'kontena/kontena_client'
+#gem 'kontena_client', path: '/Users/kimmo/Projects/kontena_client'
 group :development, :test do
   gem "rspec"
 end
