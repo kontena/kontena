@@ -324,6 +324,17 @@ describe Kontena::Cli::Apps::ServiceGenerator do
         expect(result['strategy']).to eq('daemon')
       end
 
+      it 'sets interval if deploy.interval is defined' do
+        data = {
+          'image' => 'foo/bar:latest',
+          'deploy' => {
+            'interval' => '1min'
+          }
+        }
+        result = subject.send(:parse_data, data)
+        expect(result['deploy_opts']['interval']).to eq(60)
+      end
+
       it 'does not return deploy_opts if no deploy options are defined' do
         data = {
           'image' => 'foo/bar:latest'

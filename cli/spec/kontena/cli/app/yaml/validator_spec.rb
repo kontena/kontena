@@ -62,6 +62,26 @@ describe Kontena::Cli::Apps::YAML::Validator do
       end
     end
 
+    context 'deploy' do
+      it 'validates interval' do
+        
+        result = subject.validate_options('deploy' => {'interval' => '1xyz'})
+        expect(result.messages.key?('deploy')).to be_truthy
+
+        result = subject.validate_options('deploy' => {'interval' => '1min'})
+        expect(result.messages.key?('deploy')).to be_falsey
+
+        result = subject.validate_options('deploy' => {'interval' => '1h'})
+        expect(result.messages.key?('deploy')).to be_falsey
+
+        result = subject.validate_options('deploy' => {'interval' => '1d'})
+        expect(result.messages.key?('deploy')).to be_falsey
+
+        result = subject.validate_options('deploy' => {'interval' => '100'})
+        expect(result.messages.key?('deploy')).to be_falsey
+      end
+    end
+
     context 'command' do
       it 'is optional' do
         result = subject.validate_options({})
