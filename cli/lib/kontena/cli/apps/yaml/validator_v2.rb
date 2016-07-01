@@ -32,6 +32,7 @@ module Kontena::Cli::Apps
             build.type?(Hash) > build.schema do
               key('context').required
               optional('dockerfile') { str? }
+              optional('args') { array? | type?(Hash)}
             end
           end
           optional('depends_on') { array? }

@@ -21,6 +21,12 @@ module Kontena::Cli::Apps
           from['secrets'],
           service_config['secrets']
         )
+        build_args = extend_build_args(from.dig('build','args'), service_config.dig('build', 'args'))
+        unless build_args.empty?
+          service_config['build'] = {} unless service_config['build']
+          service_config['build']['args'] = build_args
+        end
+        
         from.merge(service_config)
       end
 
@@ -54,6 +60,16 @@ module Kontena::Cli::Apps
           end
         end
         secrets
+      end
+
+      def extend_build_args(from, to)
+        args = to || {}
+        if from
+          from.each do |k,v|
+            args[k] = v unless args.has_key?(k)
+          end
+        end
+        args
       end
     end
   end

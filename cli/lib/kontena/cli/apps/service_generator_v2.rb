@@ -20,6 +20,7 @@ module Kontena::Cli::Apps
       unless options['build'].is_a?(Hash)
         options['build'] = { 'context' => options['build']}
       end
+      options['build']['args'] = parse_build_args(options['build']['args']) if options['build']['args']
       options['build']
     end
   end

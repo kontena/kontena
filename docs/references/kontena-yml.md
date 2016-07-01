@@ -44,6 +44,23 @@ build:
   context: .
   dockerfile: alternate-dockerfile
 ```
+Build arguments are supported in version 2 yaml format. They can be defined either as an array of strings or as hash:
+```
+build:
+  context: .
+  args:
+    - arg1=foo
+    - arg2=bar
+```
+```
+build:
+  context: .
+  args:
+    arg1: foo
+    arg2: bar
+    arg3:
+```
+Build arguments with only a key are resolved to their environment value on the machine the build is running on.
 
 #### dockerfile
 > **Note:** Version 1 only

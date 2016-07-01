@@ -89,6 +89,7 @@ module Kontena::Cli::Apps
       # @param [Hash] service_config
       def process_config(service_config)
         normalize_env_vars(service_config)
+        normalize_build_args(service_config)
         service_config = extend_config(service_config) if service_config.key?('extends')
         service_config
       end
@@ -143,6 +144,20 @@ module Kontena::Cli::Apps
       def normalize_env_vars(options)
         if options['environment'].is_a?(Hash)
           options['environment'] = options['environment'].map { |k, v| "#{k}=#{v}" }
+        end
+      end
+      
+      # @param [Hash] options - service config
+      def normalize_build_args(options)
+        if v2? && options.dig('build', 'args')
+          if options['build']['args'].is_a?(Array)
+            args = options['build']['args'].dup
+            options['build']['args'] = {}
+            args.each do |arg|
+              k,v = arg.split('=')
+              options['build']['args'][k] = v
+            end
+          end
         end
       end
     end
