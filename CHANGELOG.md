@@ -1,6 +1,5 @@
 # Changelog
 
-<<<<<<< 7f8053888039524a65078f47b8000b3fac2099c2
 ## 0.14.5 (2016-07-09)
 
 **Master & Agent:**
@@ -14,21 +13,16 @@
 
 - do not require Master connection on user verification (#839)
 
-=======
->>>>>>> bump version
 ## 0.14.4 (2016-07-01)
 
 **CLI:**
 
 - add hard dependency to dry-types gem (#826, #824)
 
-<<<<<<< 7f8053888039524a65078f47b8000b3fac2099c2
 **Other:**
 
 - remove image before tagging, because --force is deprecated (#833)
 
-=======
->>>>>>> bump version
 ## 0.14.3 (2016-06-16)
 
 **Master & Agent:**
