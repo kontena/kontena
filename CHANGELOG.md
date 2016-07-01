@@ -6,6 +6,10 @@
 
 - add hard dependency to dry-types gem (#826, #824)
 
+**Other:**
+
+- remove image before tagging, because --force is deprecated (#833)
+
 ## 0.14.3 (2016-06-16)
 
 **Master & Agent:**
