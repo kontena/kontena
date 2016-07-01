@@ -20,7 +20,7 @@ module Kontena
         begin
           dns_client.put(
             path: "/name/#{container_id}/#{ip}",
-            body: URI.encode_www_form('fqdn' => name, 'check-alive' => 'true'),
+            body: URI.encode_www_form('fqdn' => name),
             headers: { "Content-Type" => "application/x-www-form-urlencoded" }
           )
         rescue Docker::Error::NotFoundError
