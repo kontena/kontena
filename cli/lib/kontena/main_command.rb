@@ -1,5 +1,6 @@
 require 'clamp'
 require_relative 'command'
+require_relative 'util'
 require_relative 'cli/common'
 require_relative 'cli/bytes_helper'
 require_relative 'cli/grid_options'

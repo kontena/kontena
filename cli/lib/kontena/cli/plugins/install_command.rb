@@ -2,6 +2,7 @@ require 'open3'
 
 module Kontena::Cli::Plugins
   class InstallCommand < Clamp::Command
+    include Kontena::Util
 
     parameter 'NAME', 'Plugin name'
 
@@ -11,7 +12,7 @@ module Kontena::Cli::Plugins
 
     def install_plugin(name)
       plugin = "kontena-plugin-#{name}"
-      gem_bin = `which gem`.strip
+      gem_bin = which('gem')
       install_command = "#{gem_bin} install --no-ri --no-doc #{plugin}"
       success = false
       ShellSpinner "Installing plugin #{name.colorize(:cyan)}" do
