@@ -6,6 +6,8 @@ class GridServiceDeploy
   field :finished_at, type: DateTime
 
   index({ grid_service_id: 1 })
+  index({ created_at: 1 })
+  index({ started_at: 1 })
 
   belongs_to :grid_service
 end
