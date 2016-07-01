@@ -30,13 +30,13 @@ module Kontena::Cli::Apps
 
           rule(build_hash: ['build']) do |build|
             build.type?(Hash) > build.schema do
-              key('context').required
+              required('context').filled
               optional('dockerfile') { str? }
               optional('args') { array? | type?(Hash)}
             end
           end
           optional('depends_on') { array? }
-          optional('network_mode') { inclusion?(%w(host bridge)) }
+          optional('network_mode').value(included_in?: (%w(host bridge)))
           optional('logging').schema do
             optional('driver') { str? }
             optional('options') { type?(Hash) }
