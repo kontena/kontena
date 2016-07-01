@@ -74,6 +74,10 @@ class Server < Roda
       r.on('stacks') do
         r.run V1::StacksApi
       end
+
+      r.on('certificates') do
+        r.run V1::CertificatesApi
+      end
     end
   end
 end

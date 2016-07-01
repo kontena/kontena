@@ -6,6 +6,9 @@ api:
   environment:
     - RACK_ENV=production
     - MONGODB_URI=mongodb://mongodb:27017/kontena_development
+    - VAULT_KEY=jkfldsjkflsdajfaklsjfklasdjfklas
+    - VAULT_IV=kfsdfopweu09fewjlhfksdjifjpoweop
+    - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
   links:
    - mongodb
 mongodb:
