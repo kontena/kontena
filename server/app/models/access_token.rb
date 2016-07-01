@@ -15,4 +15,8 @@ class AccessToken
   index({ token: 1 }, { unique: true })
   index({ refresh_token: 1 }, { unique: true, sparse: true })
   index({ expires_at: 1 }, { unique: true, sparse: true })
+
+  def expired?
+    Time.now.utc > expires_at
+  end
 end
