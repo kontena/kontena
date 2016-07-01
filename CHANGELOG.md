@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.4 (2016-07-01)
+
+**CLI:**
+
+- add hard dependency to dry-types gem (#826, #824)
+
 ## 0.14.3 (2016-06-16)
 
 **Master & Agent:**
