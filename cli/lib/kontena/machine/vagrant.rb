@@ -1,7 +1,4 @@
-require_relative 'common'
-include Kontena::Machine::Common
-
-unless which('vagrant')
+unless Kontena::Util.which('vagrant')
   abort('Vagrant is not installed. See https://www.vagrantup.com/ for instructions.')
 end
 

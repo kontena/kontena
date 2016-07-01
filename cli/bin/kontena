@@ -8,59 +8,12 @@ bin_file = Pathname.new(__FILE__).realpath
 # add self to libpath
 $:.unshift File.expand_path('../../lib', bin_file)
 
+require 'kontena_cli'
 STDOUT.sync = true
 
-require 'clamp'
-require 'ruby_dig'
-require 'kontena/client'
-require 'kontena/cli/common'
-require 'kontena/cli/bytes_helper'
-require 'kontena/cli/grid_options'
-require 'kontena/cli/app_command'
-require 'kontena/cli/register_command'
-require 'kontena/cli/login_command'
-require 'kontena/cli/logout_command'
-require 'kontena/cli/whoami_command'
-require 'kontena/cli/container_command'
-require 'kontena/cli/grid_command'
-require 'kontena/cli/master_command'
-require 'kontena/cli/node_command'
-require 'kontena/cli/service_command'
-require 'kontena/cli/vpn_command'
-require 'kontena/cli/registry_command'
-require 'kontena/cli/external_registry_command'
-require 'kontena/cli/app_command'
-require 'kontena/cli/etcd_command'
-require 'kontena/cli/vault_command'
-require 'kontena/cli/user_command'
-require 'kontena/cli/version_command'
-
-class MainCommand < Clamp::Command
-
-  subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
-  subcommand "app", "App specific commands", Kontena::Cli::AppCommand
-  subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
-  subcommand "vault", "Vault specific commands", Kontena::Cli::VaultCommand
-  subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand
-  subcommand "master", "Master specific commands", Kontena::Cli::MasterCommand
-  subcommand "vpn", "VPN specific commands", Kontena::Cli::VpnCommand
-  subcommand "registry", "Registry specific commands", Kontena::Cli::RegistryCommand
-  subcommand "container", "Container specific commands", Kontena::Cli::ContainerCommand
-  subcommand "etcd", "Etcd specific commands", Kontena::Cli::EtcdCommand
-  subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
-  subcommand "register", "Register Kontena Account", Kontena::Cli::RegisterCommand
-  subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
-  subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
-  subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
-  subcommand "user", "User related commands", Kontena::Cli::UserCommand
-  subcommand "version", "Show version", Kontena::Cli::VersionCommand
-
-  def execute
-  end
-end
-
 begin
-  MainCommand.run
+  Kontena::PluginManager.instance.load_plugins
+  Kontena::MainCommand.run
 rescue Excon::Errors::SocketError => exc
   if exc.message.include?('Unable to verify certificate')
     $stderr.puts "The server uses a certificate signed by an unknown authority.".colorize(:red)

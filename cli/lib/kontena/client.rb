@@ -1,12 +1,12 @@
 require 'json'
 require 'excon'
 require_relative 'errors'
-require 'kontena/cli/version'
+require_relative 'cli/version'
 
 module Kontena
   class Client
 
-    attr_accessor :default_headers
+    attr_accessor :default_headers, :path_prefix
     attr_reader :http_client
 
     # Initialize api client
@@ -16,8 +16,13 @@ module Kontena
     def initialize(api_url, default_headers = {})
       Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
       @http_client = Excon.new(api_url)
-      @default_headers = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"}.merge(default_headers)
+      @default_headers = {
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
+      }.merge(default_headers)
       @api_url = api_url
+      @path_prefix = '/v1/'
     end
 
     # Get request
@@ -134,7 +139,7 @@ module Kontena
     # @param [String] path
     # @return [String]
     def request_uri(path)
-      "/v1/#{path}"
+      "#{path_prefix}#{path}"
     end
 
     ##
@@ -190,10 +195,12 @@ module Kontena
       JSON.dump(obj)
     end
 
+    # @return [Boolean]
     def ignore_ssl_errors?
       ENV['SSL_IGNORE_ERRORS'] == 'true'
     end
 
+    # @param [Excon::Response] response
     def handle_error_response(response)
       message = response.body
       if response.status == 404 && message == ''
