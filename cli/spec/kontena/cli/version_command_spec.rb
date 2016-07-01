@@ -11,7 +11,7 @@ describe Kontena::Cli::VersionCommand do
     end
 
     it 'runs without errors' do
-      subject.run([])
+      expect { subject.run([]) }.not_to raise_error
     end
   end
 end
