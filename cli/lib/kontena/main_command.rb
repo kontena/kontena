@@ -23,11 +23,13 @@ require_relative 'cli/vault_command'
 require_relative 'cli/user_command'
 require_relative 'cli/plugin_command'
 require_relative 'cli/version_command'
+require_relative 'cli/stack_command'
 
 class Kontena::MainCommand < Kontena::Command
 
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
+  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "vault", "Vault specific commands", Kontena::Cli::VaultCommand
   subcommand "node", "Node specific commands", Kontena::Cli::NodeCommand
