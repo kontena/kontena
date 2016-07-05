@@ -55,14 +55,25 @@ module Kontena::Cli::Grids
           @buffer << chunk
         end
         if log
+          @last_seen = log['id']
           color = color_for_container(log['name'])
           puts "#{log['name'].colorize(color)} | #{log['data']}"
         end
       end
 
-      result = client(token).get_stream(
-        "grids/#{current_grid}/container_logs", streamer, query_params
-      )
+      begin
+        if @last_seen
+          query_params[:from] = @last_seen
+        end
+        result = client(token).get_stream(
+          "grids/#{current_grid}/container_logs", streamer, query_params
+        )
+      rescue => exc
+        if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SockerError
+          retry
+        end
+      end
+
     end
 
     def color_for_container(container_id)
