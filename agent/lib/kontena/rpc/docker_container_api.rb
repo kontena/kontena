@@ -11,6 +11,7 @@ module Kontena
     #
     class DockerContainerApi
       include Kontena::Helpers::IfaceHelper
+      include Kontena::Logging
 
       ##
       # @param [String] id

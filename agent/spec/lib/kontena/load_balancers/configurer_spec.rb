@@ -88,6 +88,20 @@ describe Kontena::LoadBalancers::Configurer do
       subject.ensure_config(container)
     end
 
+    it 'sets http check uri' do
+      container.labels['io.kontena.health_check.uri'] = '/health'
+      expect(etcd).to receive(:set).
+        with("#{etcd_prefix}/lb/services/test-api/health_check_uri", {value: '/health'})
+      subject.ensure_config(container)
+    end
+
+    it 'removes http check uri' do
+      container.labels.delete('io.kontena.health_check.uri')
+      expect(etcd).to receive(:delete).
+        with("#{etcd_prefix}/lb/services/test-api/health_check_uri")
+      subject.ensure_config(container)
+    end
+
     it 'removes tcp-services' do
       expect(subject.wrapped_object).to receive(:rmdir).
         with("#{etcd_prefix}/lb/tcp-services/test-api")

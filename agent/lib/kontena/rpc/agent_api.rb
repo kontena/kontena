@@ -1,6 +1,9 @@
+require_relative '../helpers/port_helper'
+
 module Kontena
   module Rpc
     class AgentApi
+      include Kontena::Helpers::PortHelper
 
       # @param [Hash] data
       def master_info(data)
@@ -21,16 +24,7 @@ module Kontena
       # @param [Float] timeout
       # @return [Hash]
       def port_open?(ip, port, timeout = 2.0)
-        Timeout::timeout(timeout) do
-          begin
-            TCPSocket.new(ip, port).close
-            {open: true}
-          rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-            {open: false}
-          end
-        end
-      rescue Timeout::Error
-        {open: false}
+        {open: container_port_open?(ip, port, timeout)}
       end
 
       private

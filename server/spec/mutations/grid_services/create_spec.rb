@@ -291,5 +291,60 @@ describe GridServices::Create do
       ).run
       expect(outcome.result.revision).to eq(1)
     end
+    
+    it 'saves health_check' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            protocol: 'http',
+            uri: '/health',
+            interval: 120,
+            timeout: 5,
+            initial_delay: 10,
+            port: 5000
+          }
+      ).run
+      expect(outcome.result.health_check).not_to be_nil
+      expect(outcome.result.health_check.uri).to eq('/health')
+    end
+
+    it 'fails to save health_check, no port defined' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            uri: '/health',
+            interval: 120,
+            timeout: 5,
+            initial_delay: 10
+          }
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
+    it 'fails to save health_check, interval < timeout' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            protocol: 'tcp',
+            interval: 10,
+            timeout: 50,
+            initial_delay: 10,
+            port: 1234
+          }
+      ).run
+      expect(outcome.success?).to be(false)
+    end
   end
 end

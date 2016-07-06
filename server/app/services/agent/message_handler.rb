@@ -60,6 +60,8 @@ module Agent
           self.on_container_log(grid, message['node_id'], data['data'])
         when 'container:stats'.freeze
           self.on_container_stat(grid, data['data'])
+        when 'container:health'.freeze
+          self.on_container_health(grid, data['data'])
         else
           error "unknown event: #{message}"
       end
@@ -158,6 +160,23 @@ module Agent
           db_session[:container_stats].insert(@stats.dup)
           @stats.clear
         end
+      end
+    end
+
+    ##
+    # @param [Grid] grid
+    # @param [Hash] data
+    def on_container_health(grid, data)
+      container = Container.find_by(
+        grid_id: grid.id, container_id: data['id']
+      )
+      if container
+        container.update_attributes(
+          health_status: data['status'],
+          health_status_at: Time.now
+        )
+      else
+        warn "health status update failed, could not find container for id: #{data['id']}"
       end
     end
 

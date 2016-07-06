@@ -135,6 +135,14 @@ module Docker
         labels['io.kontena.load_balancer.internal_port'] = internal_port
         labels['io.kontena.load_balancer.mode'] = mode
       end
+      if grid_service.health_check
+        labels['io.kontena.health_check.uri'] = grid_service.health_check.uri
+        labels['io.kontena.health_check.protocol'] = grid_service.health_check.protocol
+        labels['io.kontena.health_check.interval'] = grid_service.health_check.interval.to_s
+        labels['io.kontena.health_check.timeout'] = grid_service.health_check.timeout.to_s
+        labels['io.kontena.health_check.initial_delay'] = grid_service.health_check.initial_delay.to_s
+        labels['io.kontena.health_check.port'] = grid_service.health_check.port.to_s
+      end
       labels
     end
 

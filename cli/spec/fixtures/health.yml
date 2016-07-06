@@ -1,0 +1,26 @@
+web:
+  image: nginx
+  stateful: false
+  health_check:
+    protocol: http
+    port: 80
+    interval: 20
+    uri: /
+    initial_delay: 10
+    timeout: 2
+
+
+mysql:
+  image: mysql
+  stateful: false
+  deploy:
+    strategy: ha
+    wait_for_port: 3306
+  environment:
+    - MYSQL_ALLOW_EMPTY_PASSWORD=true
+  health_check:
+    protocol: tcp
+    port: 3306
+    interval: 20
+    initial_delay: 10
+    timeout: 2

@@ -26,9 +26,11 @@ module Kontena
       retries = 0
       begin
         Docker::Image.create({'fromImage' => image}, creds)
+        info "pulled image: #{image}"
       rescue => exc
         retries += 1
         if retries < 10
+          warn "image pull failed: #{exc.message}. Retrying still for #{10 - retries} times."
           sleep 0.1
           retry
         end
