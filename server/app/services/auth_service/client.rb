@@ -30,15 +30,36 @@ module AuthService
     end
 
     def authenticate(obj)
-      response = post("#{api_url}/v1/auth", obj)
-
-      if response.nil?
-        return nil
-      end
-      response['user']
+      auth_response = post("#{api_url}/v1/auth", obj)
+      ENV["AUTH_DEBUG"] && puts("Authclient auth response #{auth_response.inspect}")
+      return nil if auth_response.nil?
+#      tokeninfo_response = get(
+#        "#{api_url}/tokeninfo", 
+#        nil,
+#        nil,
+#        {
+#          'Authorization' => "Bearer #{auth_response['access_token']}"
+#        }
+#      )
+#      ENV["AUTH_DEBUG"] && puts("Authclient tokeninfo response #{tokeninfo_response.inspect}")
+#      return nil if tokeninfo_response.nil?
+      #auth_response.merge(tokeninfo_response)
+      auth_response
+    rescue
+      ENV["AUTH_DEBUG"] && puts("Auth service exception: #{$!} #{$!.message}\n#{$!.backtrace}")
+      nil
     end
 
     private
+
+    def get(path, params={}, obj=nil, headers= {})
+      request_options = {
+          header: default_headers.merge(headers),
+          body: JSON.dump(obj),
+          query: params
+      }
+      handle_response(http_client.get(path, request_options))
+    end
 
     def post(path, obj, params = {})
       request_options = {

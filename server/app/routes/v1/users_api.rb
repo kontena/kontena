@@ -4,7 +4,6 @@ module V1
   class UsersApi < Roda
     include RequestHelpers
     include CurrentUser
-    include OAuth2TokenVerifier
 
     plugin :multi_route
 
@@ -12,7 +11,6 @@ module V1
 
     route do |r|
       r.on ':username' do |username|
-        validate_access_token
         require_current_user
         @user = User.find_by(email: username)
 
@@ -39,7 +37,6 @@ module V1
       end
 
       r.is do
-        validate_access_token
         require_current_user
 
         r.get do

@@ -1,7 +1,7 @@
 require_relative '../services/auth_service'
 
 AuthService.setup do |config|
-  config.api_url = ENV['AUTH_API_URL'] || 'https://auth.kontena.io'
+  config.api_url = ENV['AUTH_API_URL'] || 'https://auth2.kontena.io'
 end
 
 

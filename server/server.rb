@@ -14,6 +14,10 @@ class Server < Roda
     logger = Logger.new(STDOUT)
   end
   use Rack::CommonLogger, logger
+  use TokenAuthentication, exclude: [
+    '/v1/ping',
+    '/v1/auth'
+  ]
   plugin :json
 
   route do |r|

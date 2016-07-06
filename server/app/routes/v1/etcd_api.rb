@@ -1,12 +1,10 @@
 module V1
   class EtcdApi < Roda
-    include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
 
     route do |r|
 
-      validate_access_token
       require_current_user
 
       def load_grid(grid_name)

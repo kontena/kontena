@@ -1,5 +1,8 @@
 source 'https://rubygems.org'
 
+#Clone git kontena/kontena_client and give path here
+gem 'kontena_client', path: '/path/to/kontena_client'
+
 # Specify your gem's dependencies in kontena-cli.gemspec
 gemspec
 group :development, :test do

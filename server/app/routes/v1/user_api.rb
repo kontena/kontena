@@ -1,7 +1,6 @@
 
 module V1
   class UserApi < Roda
-    include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
 
@@ -11,7 +10,6 @@ module V1
 
     # Route: /v1/user
     route do |r|
-      validate_access_token
       require_current_user
 
       # Route /v1/user

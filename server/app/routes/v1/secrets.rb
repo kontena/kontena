@@ -1,13 +1,11 @@
 module V1
   class SecretsApi < Roda
-    include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
     include Auditor
 
     route do |r|
 
-      validate_access_token
       require_current_user
 
       unless SymmetricEncryption.cipher?

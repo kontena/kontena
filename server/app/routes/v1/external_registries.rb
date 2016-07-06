@@ -1,13 +1,11 @@
 
 module V1
   class ExternalRegistriesApi < Roda
-    include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
 
     route do |r|
 
-      validate_access_token
       require_current_user
 
       def load_grid_registry(grid_name, name)

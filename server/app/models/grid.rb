@@ -31,6 +31,8 @@ class Grid
   has_many :stacks, dependent: :destroy
   has_and_belongs_to_many :users
 
+  validates :name, uniqueness: true
+
   index({ name: 1 }, { unique: true })
   index({ token: 1 }, { unique: true })
 

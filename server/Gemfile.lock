@@ -16,6 +16,7 @@ GEM
       rake (>= 0.8.7)
     bson (3.2.6)
     builder (3.2.2)
+    byebug (9.0.5)
     celluloid (0.16.0)
       timers (~> 4.0.0)
     coercible (1.0.0)
@@ -124,6 +125,7 @@ PLATFORMS
 DEPENDENCIES
   activesupport (~> 4.1.14)
   authority
+  byebug
   celluloid (~> 0.16.0)
   dotenv
   faye-websocket (~> 0.10.0)
@@ -152,4 +154,4 @@ RUBY VERSION
    ruby 2.2.3p173
 
 BUNDLED WITH
-   1.12.4
+   1.12.5

@@ -4,36 +4,42 @@ class Kontena::Cli::LoginCommand < Clamp::Command
   parameter "URL", "Kontena Master URI"
 
   option ['-n', '--name'], 'NAME', 'Local alias name for the master. Default default'
+  option ['-U', '--username'], '[USERNAME]', 'Username'
+  option ['-P', '--password'], '[PASSWORD]', 'Password'
 
   def execute
     require 'highline/import'
 
-    until !url.nil? && !url.empty?
-      api_url = ask('Kontena Master Node URL: ')
+    if url
+      api_url = url
+    else
+      until !api_url.nil? && !api_url.empty?
+        api_url = ask('Kontena Master Node URL: ')
+      end
     end
 
-    @api_url = url
+    KontenaClient.config.init_master(api_url, name)
 
-    unless request_server_info
+    unless client.ping
       puts 'Could not connect to server'.colorize(:red)
       return false
     end
 
-    email = ask("Email: ")
-    password = ask("Password: ") { |q| q.echo = "*" }
-    response = do_login(email, password)
+    email = username || ask("Email: ")
+    pass  = password || ask("Password: ") { |q| q.echo = "*" }
+
+    response = client.login(email, pass)
 
     if response
-      update_master_info(name, url, response['access_token'], email)
       display_logo
       puts ''
-      puts "Logged in as #{response['user']['name'].green}"
+      puts "Logged in as #{KontenaClient.config.current_account['username'].green}"
       reset_client
-      grids = client(require_token).get('grids')['grids']
+      grids = client.get('grids')['grids']
       grid = grids[0]
       if grid
-        self.current_grid = grid
-        puts "Using grid #{grid['name'].cyan}"
+        KontenaClient.config.grid = grid
+        puts "Using grid #{KontenaClient.config.grid.cyan}"
         puts ""
         if grids.size > 1
           puts "You have access to following grids and can switch between them using 'kontena grid use <name>'"
@@ -44,7 +50,8 @@ class Kontena::Cli::LoginCommand < Clamp::Command
           puts ""
         end
       else
-        clear_current_grid
+        KontenaClient.config.grid = nil
+        puts "The master has no configured grids. To create one, use: kontena grid create <grid_name>"
       end
 
       puts "Welcome! See 'kontena --help' to get started."
@@ -55,40 +62,18 @@ class Kontena::Cli::LoginCommand < Clamp::Command
     end
   end
 
-
-  def login_client
-    if @login_client.nil?
-      @login_client = Kontena::Client.new(@api_url)
-    end
-    @login_client
-  end
-
-  def do_login(email, password)
-    params = {
-        username: email,
-        password: password,
-        grant_type: 'password',
-        scope: 'user'
-    }
-    login_client.post('auth', params)
-  end
-
   def request_server_info
-    valid = true
-    begin
-      login_client.get('ping') # test server connection
-    rescue Excon::Errors::SocketError => exc
-      if exc.message.include?('Unable to verify certificate')
-        puts "The server uses a certificate signed by an unknown authority.".colorize(:red)
-        puts "Protip: you can bypass the certificate check by setting #{'SSL_IGNORE_ERRORS=true'.colorize(:yellow)} env variable, but any data you send to the server could be intercepted by others."
-        exit(1)
-      else
-        valid = false
-      end
-    rescue => exc
-      valid = false
+    client.ping
+  rescue Excon::Errors::SocketError => exc
+    if exc.message.include?('Unable to verify certificate')
+      puts "The server uses a certificate signed by an unknown authority.".colorize(:red)
+      puts "Protip: you can bypass the certificate check by setting #{'SSL_IGNORE_ERRORS=true'.colorize(:yellow)} env variable, but any data you send to the server could be intercepted by others."
+      exit(1)
     end
-    valid
+    false
+  rescue => exc
+    ENV["DEBUG"] && puts("Exception during ping : #{$!} - #{$!.message}\n#{$!.backtrace}")
+    false
   end
 
   ##
@@ -97,14 +82,14 @@ class Kontena::Cli::LoginCommand < Clamp::Command
   # @param [String] url
   # @param [String] token
   #
-  def update_master_info(name, url, token, email)
+  def update_master_info(name, url, response, email)
     name = name || 'default'
-    master = {
+    master = response.merge(
         'name' => name,
         'url' => url,
-        'token' => token,
         'email' => email
-    }
+    )
+    ENV["DEBUG"] && puts("Updating master info: #{master.inspect}")
 
     self.add_master(name, master)
   end

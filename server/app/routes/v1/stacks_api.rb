@@ -1,6 +1,5 @@
 module V1
   class StacksApi < Roda
-    include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
     include Auditor
@@ -8,7 +7,6 @@ module V1
     plugin :multi_route
 
     route do |r|
-      validate_access_token
       require_current_user
 
       ##

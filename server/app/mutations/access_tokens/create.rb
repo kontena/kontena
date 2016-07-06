@@ -5,6 +5,8 @@ module AccessTokens
 
     required do
       model :user
+      integer :expires_in
+      string :access_token
       array :scopes do
         string in: %w(user)
       end
@@ -15,8 +17,9 @@ module AccessTokens
         user: self.user,
         scopes: self.scopes,
         expires_at: 3.hours.from_now,
-        token: "kontena-#{SecureRandom.base64(64)}",
-        refresh_token: SecureRandom.base64(64)
+        token_type: 'bearer',
+        token: self.access_token,
+        refresh_token: nil
       )
     end
   end

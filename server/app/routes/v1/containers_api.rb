@@ -1,12 +1,10 @@
 module V1
   class ContainersApi < Roda
-    include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
 
     route do |r|
 
-      validate_access_token
       require_current_user
 
       def load_grid_container(grid_name, service_name, container_name)
