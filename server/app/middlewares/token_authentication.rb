@@ -1,5 +1,4 @@
 require 'jsonclient' # Comes with HTTPClient
-require 'byebug'
 
 class TokenAuthentication
 
