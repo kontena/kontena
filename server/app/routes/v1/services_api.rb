@@ -28,6 +28,19 @@ module V1
         grid_service
       end
 
+      def build_scope(service, r)
+        scope = @grid_service.container_logs
+
+        scope = scope.where(name: r['container']) unless r['container'].nil?
+        scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
+        if !r['since'].nil? && r['from'].nil?
+          since = DateTime.parse(r['since']) rescue nil
+          scope = scope.where(:created_at.gt => since)
+        end
+        scope = scope.order(:_id => -1)
+        scope
+      end
+
       # /v1/services/:grid_name/:service_name/containers
       r.on ':grid_name/:service_name/containers' do |grid_name, service_name|
         @grid_service = load_grid_service(grid_name, service_name)
@@ -57,27 +70,22 @@ module V1
           end
 
           r.on 'container_logs' do
-            scope = @grid_service.container_logs
-            limit = (r['limit'] || 100).to_i
-            from = r['from']
             follow = r['follow']
+            from = r['from']
+            limit = (r['limit'] || 100).to_i
+
+            scope = build_scope(@grid_service, r)
 
             if follow
               first_run = true
               stream(loop: true) do |out|
-                scope = scope.where(name: r['container']) unless r['container'].nil?
-                scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
                 scope = scope.where(:id.gt => from ) unless from.nil?
-                if !r['since'].nil? && from.nil?
-                  since = DateTime.parse(r['since']) rescue nil
-                  scope = scope.where(:created_at.gt => since)
-                end
-                scope = scope.order(:_id => -1)
                 if first_run
                   logs = scope.limit(limit).to_a.reverse
                 else
                   logs = scope.to_a.reverse
                 end
+
                 logs.each do |log|
                   out << render('container_logs/_container_log', {locals: {log: log}})
                 end
@@ -87,14 +95,6 @@ module V1
                 from = logs.last.id if logs.last
               end
             else
-              scope = scope.where(name: r['container']) unless r['container'].nil?
-              scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
-              scope = scope.where(:id.gt => r['from'] ) unless r['from'].nil?
-              if !r['since'].nil? && r['from'].nil?
-                since = DateTime.parse(r['since']) rescue nil
-                scope = scope.where(:created_at.gt => since)
-              end
-
               @logs = scope.order(:_id => -1).limit(limit).to_a.reverse
               render('container_logs/index')
             end
