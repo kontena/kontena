@@ -138,7 +138,7 @@ describe Kontena::LoadBalancers::Registrator do
         lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080'
       })
       expect(subject.wrapped_object.etcd).to receive(:delete)
-      expect(subject.wrapped_object.etcd).to receive(:get).with('/kontena/haproxy/lb1/services/web/upstreams/web-2').and_return('10.81.3.24:8080')
+      expect(subject.wrapped_object.etcd).to receive(:get).with('/kontena/haproxy/lb1/services/web/upstreams/web-2').and_return(double(value: '10.81.3.24:8080'))
       subject.unregister_container(event.id)
     end
 
