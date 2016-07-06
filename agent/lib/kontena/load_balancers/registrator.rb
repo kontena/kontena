@@ -94,7 +94,7 @@ module Kontena::LoadBalancers
         begin
           key = "#{ETCD_PREFIX}/#{entry[:lb]}/services/#{entry[:service]}/upstreams/#{entry[:container]}"
           # Check that we're really removing the right container info
-          val = etcd.get(key)
+          val = etcd.get(key).value
           etcd.delete(key) if val == entry[:value]
 
         rescue Etcd::KeyNotFound
