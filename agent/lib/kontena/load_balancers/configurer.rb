@@ -45,12 +45,14 @@ module Kontena::LoadBalancers
           virtual_path = env_hash['KONTENA_LB_VIRTUAL_PATH'] || '/'
         end
         keep_virtual_path = env_hash['KONTENA_LB_KEEP_VIRTUAL_PATH']
+        cookie = env_hash['KONTENA_LB_COOKIE']
         set("#{etcd_path}/services/#{service_name}/balance", balance)
         set("#{etcd_path}/services/#{service_name}/health_check_uri", check_uri)
         set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
         set("#{etcd_path}/services/#{service_name}/virtual_hosts", virtual_hosts)
         set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)
         set("#{etcd_path}/services/#{service_name}/keep_virtual_path", keep_virtual_path)
+        set("#{etcd_path}/services/#{service_name}/cookie", cookie)
         rmdir("#{etcd_path}/tcp-services/#{service_name}") rescue nil
       else
         external_port = env_hash['KONTENA_LB_EXTERNAL_PORT'] || '5000'
