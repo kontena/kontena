@@ -37,6 +37,7 @@ module V1
           since = DateTime.parse(r['since']) rescue nil
           scope = scope.where(:created_at.gt => since)
         end
+        scope = scope.where(:id.gt => r['from'] ) unless r['from'].nil?
         scope = scope.order(:_id => -1)
         scope
       end
