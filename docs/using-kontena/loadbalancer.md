@@ -152,4 +152,5 @@ These options are defined on the services that are balanced through lb.
 * `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request, example "/api" (only for http mode)
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings, each line will be appended to either related backend section or listen session in the HAProxy configuration file
+* `KONTENA_LB_COOKIE`: Enables cookie based session stickyness. With empty value defaults to LB set cookie. Can be customized to utilize application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)
 
