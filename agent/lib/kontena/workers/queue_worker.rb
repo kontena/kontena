@@ -22,9 +22,14 @@ module Kontena::Workers
       info 'initialized'
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('websocket:disconnect', :on_websocket_disconnected)
+      subscribe('status:report', :on_status_report)
       if client.connected?
         async.register_client_events
       end
+    end
+
+    def on_status_report(topic, data)
+      info "queue size: #{@queue.size}"
     end
 
     def processing?

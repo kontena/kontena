@@ -1,5 +1,6 @@
 module Kontena
   class Agent
+    include Kontena::Logging
 
     VERSION = File.read('./VERSION').strip
 
@@ -12,6 +13,17 @@ module Kontena
       self.supervise_network_adapter
       self.supervise_lb
       self.supervise_workers
+
+      Signal.trap('USR2') { send_report_notification }
+    end
+
+    def send_report_notification
+      # notification sending needs to be wrapped into thread to override in trap context limits
+      t = Thread.new do
+        info 'agent status requested with signal, components will report individually'
+        Celluloid::Notifications.publish('status:report', {})
+      end
+      t.join
     end
 
     # Connect to master server

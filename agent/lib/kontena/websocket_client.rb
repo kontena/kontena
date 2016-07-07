@@ -4,6 +4,8 @@ require_relative 'rpc_server'
 module Kontena
   class WebsocketClient
     include Kontena::Logging
+    include Celluloid
+    include Celluloid::Notifications
 
     KEEPALIVE_TIME = 30
 
@@ -27,6 +29,13 @@ module Kontena
       @connected = false
       @connecting = false
       @ping_timer = nil
+      subscribe('status:report', :on_status_report)
+    end
+
+    def on_status_report(topic, data)
+      info "connected: #{@connected}"
+      info "connecting: #{@connecting}"
+      info "ws: #{ws.inspect}"
     end
 
     def ensure_connect
