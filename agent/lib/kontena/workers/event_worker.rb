@@ -39,7 +39,14 @@ module Kontena::Workers
 
     # @param [Docker::Event] event
     def publish_event(event)
+
       return if Actor[:network_adapter].adapter_image?(event.from)
+
+      if Actor[:network_adapter].router_image?(event.from)
+        if event.status == 'restart'
+          publish('network_adapter:restart', event)
+        end
+      end
 
       data = {
         event: EVENT_NAME,

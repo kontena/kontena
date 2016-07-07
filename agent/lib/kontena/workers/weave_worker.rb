@@ -12,6 +12,7 @@ module Kontena::Workers
     def initialize
       info 'initialized'
       subscribe('network_adapter:start', :on_weave_start)
+      subscribe('network_adapter:restart', :on_weave_start)
       subscribe('container:event', :on_container_event)
       subscribe('dns:add', :on_dns_add)
     end
