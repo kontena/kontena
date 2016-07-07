@@ -31,6 +31,7 @@ json.deleted_at container.deleted_at
 json.status container.status
 json.state container.state
 json.deploy_rev container.deploy_rev
+json.service_rev container.service_rev
 json.image container.image
 json.env container.env
 json.volumes container.volumes

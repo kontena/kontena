@@ -18,6 +18,7 @@ class Container
   field :deleted_at, type: Time
   field :volumes, type: Array, default: []
   field :deploy_rev, type: String
+  field :service_rev, type: String
   field :container_type, type: String, default: 'container'
 
   validates_uniqueness_of :container_id, scope: [:host_node_id], allow_nil: true

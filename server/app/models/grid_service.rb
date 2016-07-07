@@ -33,7 +33,6 @@ class GridService
   field :deploy_requested_at, type: DateTime
   field :deployed_at, type: DateTime
   field :revision, type: Fixnum, default: 1
-  field :deploy_rev, type: String, default: '1'
   field :strategy, type: String, default: 'ha'
 
   belongs_to :grid

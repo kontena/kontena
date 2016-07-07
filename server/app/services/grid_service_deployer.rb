@@ -70,11 +70,8 @@ class GridServiceDeployer
     self.grid_service.set_state('deploying')
     self.grid_service.set(:deployed_at => Time.now.utc)
     
-    # Deploy revision needs to be unique per deployment, otherwise deployer cannot remove unnecessary containers
-    deploy_rev = (self.grid_service.deploy_rev.to_i + 1).to_s
-    self.grid_service.set(deploy_rev: deploy_rev)
+    deploy_rev = Time.now.utc.to_s
     
-
     deploy_futures = []
     total_instances = self.instance_count
     total_instances.times do |i|
