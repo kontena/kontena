@@ -15,26 +15,71 @@ module Kontena::Cli::Services
     def execute
       require_api_url
       token = require_token
-      last_id = nil
-      loop do
-        query_params = []
-        query_params << "limit=#{lines}"
-        query_params << "from=#{last_id}" unless last_id.nil?
-        query_params << "since=#{since}" if !since.nil? && last_id.nil?
-        query_params << "container=#{name}-#{instance}" if instance
+      
 
-        result = client(token).get("services/#{current_grid}/#{name}/container_logs?#{query_params.join('&')}")
-        result['logs'].each do |log|
-          color = color_for_container(log['name'])
-          instance_number = log['name'].match(/^.+-(\d+)$/)[1]
-          name = instance_number.nil? ? log['name'] : instance_number
-          prefix = "#{log['created_at']} [#{name}]:".colorize(color)
-          puts "#{prefix} #{log['data']}"
-          last_id = log['id']
-        end
-        break unless tail?
-        sleep(2)
+      query_params = {}
+      query_params[:limit] = lines if lines
+      query_params[:since] = since if since
+      query_params[:container] = "#{name}-#{instance}" if instance
+
+      if tail?
+        @buffer = ''
+        query_params[:follow] = 1
+        stream_logs(token, query_params)
+      else
+        list_logs(token, query_params)
       end
+
+    end
+
+    def render_log_line(log)
+      color = color_for_container(log['name'])
+      instance_number = log['name'].match(/^.+-(\d+)$/)[1]
+      name = instance_number.nil? ? log['name'] : instance_number
+      prefix = "#{log['created_at']} [#{name}]:".colorize(color)
+      puts "#{prefix} #{log['data']}"
+    end
+
+    def list_logs(token, query_params)
+      result = client(token).get("services/#{current_grid}/#{name}/container_logs", query_params)
+      result['logs'].each do |log|
+        render_log_line(log)
+      end
+    end
+
+    def stream_logs(token, query_params)
+      streamer = lambda do |chunk, remaining_bytes, total_bytes|
+        begin
+          unless @buffer.empty?
+            chunk = @buffer + chunk
+          end
+          unless chunk.empty?
+            log = JSON.parse(chunk)
+          end
+          @buffer = ''
+        rescue => exc
+          @buffer << chunk
+        end
+        if log
+          @last_seen = log['id']
+          render_log_line(log)
+        end
+      end
+
+      begin
+        query_params[:follow] = true
+        if @last_seen
+          query_params[:from] = @last_seen
+        end
+        result = client(token).get_stream(
+          "services/#{current_grid}/#{name}/container_logs", streamer, query_params
+        )
+      rescue => exc
+        if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SockerError
+          retry
+        end
+      end
+
     end
 
     def color_for_container(container_id)
