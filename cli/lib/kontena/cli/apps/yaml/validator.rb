@@ -4,7 +4,7 @@ module Kontena::Cli::Apps
     class Validator
       require_relative 'validations'
       include Validations
-      
+
       VALID_KEYS = %w(
       affinity build dockerfile cap_add cap_drop command deploy env_file environment extends external_links
       image links log_driver log_opt net pid ports volumes volumes_from cpu_shares
@@ -24,12 +24,12 @@ module Kontena::Cli::Apps
         base = self
         @yaml_schema = Dry::Validation.Schema do
           base.append_common_validations(self)
-          optional('build').maybe(:str?)
-          optional('dockerfile') { str? }
-          optional('net') { inclusion?(%w(host bridge)) }
-          optional('log_driver') { str? }
-          optional('log_opts') { type?(Hash) }
 
+          optional('build').maybe(:str?)
+          optional('dockerfile').value(:str?)
+          optional('net').value(included_in?: (%w(host bridge)))
+          optional('log_driver').value(:str?)
+          optional('log_opts').value(type?: Hash)
         end
       end
 

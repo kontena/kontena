@@ -3,10 +3,12 @@ module Kontena::Cli::Apps::YAML
 
    def append_common_validations(base)
      base.optional('image').maybe(:str?)
+
      base.optional('extends').schema do
-       key('service').required(:str?)
-       optional('file') { str? }
-     end    
+       required('service').filled(:str?)
+       optional('file').value(:str?)
+     end
+
      base.optional('stateful') { bool? }
      base.optional('affinity') { array? { each { format?(/(?<=\!|\=)=/) } } }
      base.optional('cap_add') { array? | none? }
@@ -23,27 +25,31 @@ module Kontena::Cli::Apps::YAML
      base.optional('ports') { array? }
      base.optional('volumes') { array? }
      base.optional('volumes_from') { array? }
+
      base.optional('deploy').schema do
-       optional('strategy') { inclusion?(%w(ha daemon random)) }
+       optional('strategy').value(included_in?: %w(ha daemon random))
        optional('wait_for_port') { int? }
        optional('min_health') { float? }
        optional('interval') { format?(/^\d+(min|h|d|)$/) }
      end
+
      base.optional('hooks').schema do
        optional('post_start').each do
-         key('name').required
-         key('cmd').required
-         key('instances') { int? | eql?('*') }
+         required('name').filled
+         required('cmd').filled
+         required('instances') { int? | eql?('*') }
          optional('oneshot') { bool? }
        end
+
        optional('pre_build').each do
-         key('cmd').required
+         required('cmd').filled
        end
      end
+
      base.optional('secrets').each do
-       key('secret').required
-       key('name').required
-       key('type').required
+       required('secret').filled
+       required('name').filled
+       required('type').filled
      end
      base.optional('health_check').schema do
       key('protocol') { format?(/^(http|tcp)$/) }
@@ -67,7 +73,7 @@ module Kontena::Cli::Apps::YAML
    def validate_keys(service_config)
      errors = {}
      service_config.keys.each do |key|
-       error = validate_key(key)
+       error = validate_required(key)
        errors[key] = error if error
      end
      errors
@@ -75,7 +81,7 @@ module Kontena::Cli::Apps::YAML
 
    ##
    # @param [String] key
-   def validate_key(key)
+   def validate_required(key)
      if self.class::UNSUPPORTED_KEYS.include?(key)
        ['unsupported option']
      elsif !self.class::VALID_KEYS.include?(key)
