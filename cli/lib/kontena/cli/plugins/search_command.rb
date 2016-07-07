@@ -8,7 +8,7 @@ module Kontena::Cli::Plugins
       abort("Cannot access plugin server") unless results
       puts "%-50s %-10s %-60s" % ['NAME', 'VERSION', 'DESCRIPTION']
       results.each do |item|
-        name = item['name'].sub('kontea-plugin-', '')
+        name = item['name'].sub('kontena-plugin-', '')
         puts "%-50s %-10s %-60s" % [name, item['version'], item['info']]
       end
     end
