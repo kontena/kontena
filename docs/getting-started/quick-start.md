@@ -46,6 +46,7 @@ The easiest (and preferred) way to provision Kontena Master is to use the built-
 Since we will be using Vagrant, please ensure you have Vagrant installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
 
 ```
+$ kontena plugin install vagrant
 $ kontena master vagrant create
 Creating Vagrant machine kontena-master-autumn-waterfall-70 ... done
 Waiting for kontena-master-autumn-waterfall-70 to start ... done
@@ -73,7 +74,7 @@ Logged in as your.email@domain.com
 Welcome! See 'kontena --help' to get started.
 ```
 
-Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. The Grid can be created with command `kontena grid create`. For example, to create a grid named `mygrid`:
+Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. The Grid can be created with command `kontena grid create`. For example, to create a grid named `testing`:
 
 ```
 $ kontena grid create testing

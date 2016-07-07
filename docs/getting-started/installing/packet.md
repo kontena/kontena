@@ -1,0 +1,116 @@
+---
+title: Running Kontena on Packet
+toc_order: 1
+---
+
+# Running Kontena on Packet
+
+- [Prerequisities](packet#prerequisities)
+- [Installing Packet Plugin](packet#installing-kontena-packet-plugin)
+- [Installing Kontena Master](packet#installing-kontena-master)
+- [Installing Kontena Nodes](packet#installing-kontena-nodes)
+- [Packet Command Reference](packet#packet-command-reference)
+
+## Prerequisities
+
+- Kontena Account
+- Packet.net Account. Visit [https://www.packet.net/](https://www.packet.net/) to get started
+
+## Installing Kontena Packet Plugin
+
+```
+$ kontena plugin install packet
+```
+
+## Installing Kontena Master
+
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Packet can be done by just issuing following command:
+
+```
+$ kontena packet master create \
+  --token <packet_api_token> \
+  --project <project_id> \
+  --type baremetal_0
+```
+
+After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
+
+```
+$ kontena login --name packet-master https://<master_ip>/
+```
+
+## Installing Kontena Nodes
+
+Before you can start provision nodes you must first switch cli scope to a grid. Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+
+Switch to existing grid using following command:
+
+```
+$ kontena grid use <grid_name>
+```
+
+Or create a new grid using command:
+
+```
+$ kontena grid create --initial-size=<initial_size> test-grid
+```
+
+Now you can start provision nodes to Packet. Issue following command (with right options) as many times as desired:
+
+```
+$ kontena packet node create \
+  --token <packet_api_token> \
+  --project <project_id> \
+  --type baremetal_0
+```
+
+**Note!** While Kontena works ok even with just single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
+
+After creating nodes, you can verify that they have joined Grid:
+
+```
+$ kontena node list
+```
+
+## Packet Command Reference
+
+#### Create Master
+
+```
+Usage:
+    kontena master packet create [OPTIONS]
+
+Options:
+    --token TOKEN                 Packet API token
+    --project PROJECT ID          Packet project id
+    --ssl-cert PATH               SSL certificate file (optional)
+    --type TYPE                   Server type (baremetal_0, baremetal_1, ..) (default: "baremetal_0")
+    --facility FACILITY CODE      Facility (default: "ams1")
+    --billing BILLING             Billing cycle (default: "hourly")
+    --ssh-key PATH                Path to ssh public key (optional)
+    --vault-secret VAULT_SECRET   Secret key for Vault (optional)
+    --vault-iv VAULT_IV           Initialization vector for Vault (optional)
+    --mongodb-uri URI             External MongoDB uri (optional)
+    --version VERSION             Define installed Kontena version (default: "latest")
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+```
+
+#### Create Node
+
+```
+Usage:
+    kontena node packet create [OPTIONS]
+
+Parameters:
+    [NAME]                        Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --token TOKEN                 Packet API token
+    --project PROJECT ID          Packet project id
+    --type TYPE                   Server type (baremetal_0, baremetal_1, ..) (default: "baremetal_0")
+    --facility FACILITY CODE      Facility (default: "ams1")
+    --billing BILLING             Billing cycle (default: "hourly")
+    --ssh-key PATH                Path to ssh public key (optional)
+    --version VERSION             Define installed Kontena version (default: "latest")
+```
