@@ -12,7 +12,7 @@ class Kontena::Cli::StackCommand < Clamp::Command
   subcommand "show", "Show stack details", Kontena::Cli::Stacks::ShowCommand
   subcommand "update", "Update stack", Kontena::Cli::Stacks::UpdateCommand
   subcommand "deploy", "Deploy Kontena stack", Kontena::Cli::Stacks::DeployCommand
-  subcommand ["remove","rm"], "Remove services", Kontena::Cli::Stacks::RemoveCommand
+  subcommand ["remove","rm"], "Remove stack", Kontena::Cli::Stacks::RemoveCommand
   
   def execute
 
