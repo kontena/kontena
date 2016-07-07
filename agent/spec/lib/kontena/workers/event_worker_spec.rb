@@ -41,23 +41,5 @@ describe Kontena::Workers::EventWorker do
       expect(subject.wrapped_object).not_to receive(:publish)
       subject.publish_event(event)
     end
-
-    it 'publish restart event if restart source is from network router' do
-      event = double(status: 'restart', from: 'weaveworks/weave:1.4.5', id: '123456', time: Time.now)
-      allow(network_adapter).to receive(:adapter_image?).and_return(false)
-      allow(network_adapter).to receive(:router_image?).and_return(true)
-      expect(subject.wrapped_object).to receive(:publish).with('network_adapter:restart', event)
-      expect(subject.wrapped_object).to receive(:publish).with('container:event', event)
-      subject.publish_event(event)
-    end
-
-    it 'publish restart event if restart source is from network router' do
-      event = double(status: 'start', from: 'weaveworks/weave:1.4.5', id: '123456', time: Time.now)
-      allow(network_adapter).to receive(:adapter_image?).and_return(false)
-      allow(network_adapter).to receive(:router_image?).and_return(true)
-      expect(subject.wrapped_object).to receive(:publish).with('container:event', event)
-      subject.publish_event(event)
-    end
-
   end
 end

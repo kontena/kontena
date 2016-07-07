@@ -31,6 +31,15 @@ describe Kontena::Workers::WeaveWorker do
       expect(subject.wrapped_object).to receive(:weave_detach).once.with(event)
       subject.on_container_event('topic', event)
     end
+
+    it 'calls #start on weave restart event' do
+      network_adapter = double(router_image?: true)
+      allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
+      event = spy(:event, id: 'foobar', status: 'restart', from: 'weaveworks/weave:1.4.5')
+      expect(subject.wrapped_object).to receive(:start).once
+      subject.on_container_event('topic', event)
+    end
+
   end
 
   describe '#weave_running?' do
