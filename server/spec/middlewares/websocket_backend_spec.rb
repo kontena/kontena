@@ -62,4 +62,29 @@ describe WebsocketBackend do
       sleep 0.05
     end
   end
+
+  describe '#on_pong' do
+    let(:client) do
+      { id: 'node_id', ws: spy(:ws) }
+    end
+
+    let(:grid) do
+      Grid.create!(name: 'test')
+    end
+
+    let(:node) do
+      HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid)
+    end
+
+    it 'calls on_close if client is not found' do
+      expect(subject).to receive(:on_close).with(client[:ws])
+      subject.on_pong(client)
+    end
+
+    it 'triggers agent plug' do
+      expect(Agent::NodePlugger).to receive(:new).and_return(spy)
+      client[:id] = node.node_id
+      subject.on_pong(client)
+    end
+  end
 end
