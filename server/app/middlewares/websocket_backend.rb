@@ -242,12 +242,20 @@ class WebsocketBackend
     end
     client[:ws].ping {
       timer.cancel
-      node = HostNode.find_by(node_id: client[:id])
-      if node
-        node.set(connected: true, last_seen_at: Time.now.utc)
-      else
-        self.on_close(client[:ws])
-      end
+      self.on_pong(client)
     }
+  end
+
+  # @param [Hash] client
+  def on_pong(client)
+    node = HostNode.find_by(node_id: client[:id])
+    if node
+      unless node.connected?
+        grid = Grid.find_by(node_id: client[:grid_id])
+        Agent::NodePlugger.new(grid, node).plugin! if grid
+      end
+    else
+      self.on_close(client[:ws])
+    end
   end
 end
