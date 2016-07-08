@@ -7,9 +7,7 @@ module Kontena::Cli::User
     option "--auth-provider-url", "URL", "Auth provider URL", default: "https://auth.kontena.io/"
 
     def execute
-      require_api_url
-
-      params = {token: token}
+      params = { token: token }
       begin
         auth_client = Kontena::Client.new(auth_provider_url)
         auth_client.post('user/email_confirm', params)
