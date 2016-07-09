@@ -250,7 +250,9 @@ class WebsocketBackend
   def on_pong(client)
     node = HostNode.find_by(node_id: client[:id])
     if node
-      unless node.connected?
+      if node.connected?
+        node.set(last_seen_at: Time.now.utc)
+      else
         grid = Grid.find_by(node_id: client[:grid_id])
         Agent::NodePlugger.new(grid, node).plugin! if grid
       end
