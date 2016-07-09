@@ -24,7 +24,7 @@ module Kontena::Workers
     def stream_events
       info 'started to stream docker events'
       begin
-        Docker::Event.stream do |event|
+        Docker::Event.stream(query: {type: 'container'}) do |event|
           self.publish_event(event)
         end
       rescue Docker::Error::TimeoutError
