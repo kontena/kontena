@@ -14,10 +14,10 @@ namespace :release do
   desc 'Build docker images'
   task :build_docker => :environment do
     sh('docker pull gliderlabs/alpine:3.2')
-    sh("docker rmi #{DOCKER_NAME}:#{VERSION}")
+    sh("docker rmi #{DOCKER_NAME}:#{VERSION} || true")
     sh("docker build --no-cache -f Dockerfile.alpine -t #{DOCKER_NAME}:#{VERSION} .")
     DOCKER_VERSIONS.each do |v|
-      sh("docker rmi #{DOCKER_NAME}:#{v}")
+      sh("docker rmi #{DOCKER_NAME}:#{v} || true")
       sh("docker tag #{DOCKER_NAME}:#{VERSION} #{DOCKER_NAME}:#{v}")
     end
   end
