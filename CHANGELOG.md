@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.14.5 (2016-07-09)
+
+**Master & Agent:**
+
+- stream only container events (#846)
+- always touch last_seen_at on pong (#845)
+- replug agent on successfull ping (#842)
+- fix etcd upstream removal (#836)
+
+**CLI:**
+
+- do not require Master connection on user verification (#839)
+
 ## 0.14.4 (2016-07-01)
 
 **CLI:**
