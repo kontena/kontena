@@ -22,9 +22,10 @@ module Kontena::Workers
     end
 
     def stream_events
-      info 'started to stream docker events'
+      info 'started to stream docker container events'
+      filters = JSON.dump({type: ['container']})
       begin
-        Docker::Event.stream(query: {type: 'container'}) do |event|
+        Docker::Event.stream({filters: filters}) do |event|
           self.publish_event(event)
         end
       rescue Docker::Error::TimeoutError
