@@ -103,7 +103,7 @@ module Kontena::NetworkAdapters
     def modify_host_config(opts)
       host_config = opts['HostConfig'] || {}
       host_config['VolumesFrom'] ||= []
-      host_config['VolumesFrom'] << 'weavewait:ro'
+      host_config['VolumesFrom'] << "weavewait-#{WEAVE_VERSION}:ro"
       dns = interface_ip('docker0')
       if dns && host_config['NetworkMode'].to_s != 'host'
         host_config['Dns'] = [dns]
@@ -120,21 +120,22 @@ module Kontena::NetworkAdapters
           'Cmd' => cmd,
           'Volumes' => {
             '/var/run/docker.sock' => {},
-            '/hostproc' => {}
+            '/host' => {}
           },
           'Labels' => {
             'io.kontena.container.skip_logs' => '1'
           },
           'Env' => [
-            'PROCFS=/hostproc',
+            'HOST_ROOT=/host',
             "VERSION=#{WEAVE_VERSION}"
           ],
           'HostConfig' => {
             'Privileged' => true,
             'NetworkMode' => 'host',
+            'PidMode' => 'host',
             'Binds' => [
               '/var/run/docker.sock:/var/run/docker.sock',
-              '/proc:/hostproc'
+              '/:/host'
             ]
           }
         )
