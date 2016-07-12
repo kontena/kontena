@@ -10,7 +10,7 @@ module Kontena::NetworkAdapters
     include Kontena::Helpers::IfaceHelper
     include Kontena::Logging
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.4.5'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.6.0'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
@@ -20,6 +20,16 @@ module Kontena::NetworkAdapters
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
       async.ensure_images if autostart
+    end
+
+    # @return [String]
+    def weave_image
+      "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
+    end
+
+    # @return [String]
+    def weave_exec_image
+      "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
     end
 
     # @param [Docker::Container] container
@@ -105,9 +115,8 @@ module Kontena::NetworkAdapters
     # @param [Array<String>] cmd
     def exec(cmd)
       begin
-        image = "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
         container = Docker::Container.create(
-          'Image' => image,
+          'Image' => weave_exec_image,
           'Cmd' => cmd,
           'Volumes' => {
             '/var/run/docker.sock' => {},
@@ -221,8 +230,8 @@ module Kontena::NetworkAdapters
 
     def ensure_images
       images = [
-        "#{WEAVE_IMAGE}:#{WEAVE_VERSION}",
-        "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
+        weave_image,
+        weave_exec_image
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
@@ -238,15 +247,16 @@ module Kontena::NetworkAdapters
     def ensure_weave_wait
       sleep 1 until images_exist?
 
-      weave_wait = Docker::Container.get('weavewait') rescue nil
-      if weave_wait && weave_wait.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
-        weave_wait.delete(force: true)
-        weave_wait = nil
-      end
+      container_name = "weavewait-#{WEAVE_VERSION}"
+      weave_wait = Docker::Container.get(container_name) rescue nil
       unless weave_wait
         Docker::Container.create(
-          'name' => 'weavewait',
-          'Image' => "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}",
+          'name' => container_name,
+          'Image' => weave_exec_image,
+          'Entrypoint' => ['/bin/false'],
+          'Labels' => {
+            'weavevolumes' => ''
+          },
           'Volumes' => {
             '/w' => {},
             '/w-noop' => {},
