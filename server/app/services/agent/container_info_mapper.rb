@@ -113,6 +113,9 @@ module Agent
       if container.deploy_rev.nil? && labels['io.kontena.container.deploy_rev']
         attributes[:deploy_rev] = labels['io.kontena.container.deploy_rev']
       end
+      if labels['io.kontena.container.service_revision']
+        attributes[:service_rev] = labels['io.kontena.container.service_revision']
+      end
       if info['NetworkSettings']
         attributes[:network_settings] = self.parse_docker_network_settings(info['NetworkSettings'])
       end

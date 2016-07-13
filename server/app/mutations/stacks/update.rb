@@ -85,7 +85,8 @@ module Stacks
           add_error(:services, :invalid, "Service delete failed for service '#{service[:name]}': #{outcome.errors.message}")
         end
       end
-
+      self.stack.increase_version
+      self.stack.save
       self.stack.reload
     end
 

@@ -29,6 +29,7 @@ module Docker
     def service_spec(instance_number, deploy_rev, creds = nil)
       spec = {
         service_name: grid_service.name,
+        service_revision: grid_service.revision,
         updated_at: grid_service.updated_at.to_s,
         instance_number: instance_number,
         image_name: grid_service.image_name,

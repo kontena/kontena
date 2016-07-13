@@ -154,7 +154,6 @@ module GridServices
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
       end
-
       grid_service.attributes = attributes
       if grid_service.changed?
         grid_service.revision += 1

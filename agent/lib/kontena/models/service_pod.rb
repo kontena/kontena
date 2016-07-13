@@ -5,6 +5,7 @@ module Kontena
       attr_reader :service_name,
                   :instance_number,
                   :deploy_rev,
+                  :service_revision,
                   :updated_at,
                   :labels,
                   :stateful,
@@ -38,6 +39,7 @@ module Kontena
         @service_name = attrs['service_name']
         @instance_number = attrs['instance_number'] || 1
         @deploy_rev = attrs['deploy_rev']
+        @service_revision = attrs['service_revision']
         @updated_at = attrs['updated_at']
         @labels = attrs['labels'] || {}
         @stateful = attrs['stateful'] || false
@@ -120,7 +122,8 @@ module Kontena
         labels['io.kontena.container.type'] = 'container'
         labels['io.kontena.container.name'] = self.name
         labels['io.kontena.container.pod'] = self.name
-        labels['io.kontena.container.deploy_rev'] = self.deploy_rev
+        labels['io.kontena.container.deploy_rev'] = self.deploy_rev.to_s
+        labels['io.kontena.container.service_revision'] = self.service_revision.to_s
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config

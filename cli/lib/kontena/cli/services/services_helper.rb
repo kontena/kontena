@@ -46,6 +46,7 @@ module Kontena
           puts "#{service['id']}:"
           puts "  status: #{service['state'] }"
           puts "  image: #{service['image']}"
+          puts "  revision: #{service['revision']}"
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
           puts "  scaling: #{service['container_count'] }"
           puts "  strategy: #{service['strategy']}"
@@ -191,6 +192,7 @@ module Kontena
           result['containers'].each do |container|
             puts "    #{container['name']}:"
             puts "      rev: #{container['deploy_rev']}"
+            puts "      service_rev: #{container['service_rev']}"
             puts "      node: #{container['node']['name'] rescue 'unknown'}"
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
             puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"

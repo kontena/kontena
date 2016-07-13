@@ -25,6 +25,16 @@ describe Stacks::Update do
       expect(stack.reload.grid_services.first.image_name).to eq('redis:3.0')
     end
 
+    it 'increases version automatically' do
+      services = [{grid: grid, name: 'redis', image: 'redis:3.0'}]
+      subject = described_class.new(current_user: user, stack: stack, services: services)
+      expect {
+        outcome = subject.run
+        expect(outcome.success?).to be_truthy
+      }.to change{stack.reload.version}.to eq('2')
+      
+    end
+
     it 'fails if stack is already terminated' do
       stack.state = :terminated
       subject = described_class.new(current_user: user, stack: stack)
