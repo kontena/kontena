@@ -48,6 +48,12 @@ module Kontena::NetworkAdapters
       false
     end
 
+    def router_image?(image)
+      image.to_s == "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
+    rescue
+      false
+    end
+
     # @return [Boolean]
     def running?
       weave = Docker::Container.get('weave') rescue nil

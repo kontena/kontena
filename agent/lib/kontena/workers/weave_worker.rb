@@ -45,6 +45,11 @@ module Kontena::Workers
       elsif event.status == 'destroy'
         sleep 1 until weave_running?
         self.weave_detach(event)
+      elsif event.status == 'restart'
+        sleep 1 until weave_running?
+        if Actor[:network_adapter].router_image?(event.from)
+          self.start
+        end
       end
     end
 
