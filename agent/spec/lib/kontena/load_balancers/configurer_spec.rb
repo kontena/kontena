@@ -88,6 +88,20 @@ describe Kontena::LoadBalancers::Configurer do
       subject.ensure_config(container)
     end
 
+    it 'sets cookie' do
+      container.env_hash['KONTENA_LB_COOKIE'] = ''
+      expect(etcd).to receive(:set).
+        with("#{etcd_prefix}/lb/services/test-api/cookie", {value: ''})
+      subject.ensure_config(container)
+    end
+
+    it 'removes cookie setting' do
+      container.env_hash.delete('KONTENA_LB_COOKIE')
+      expect(etcd).to receive(:delete).
+        with("#{etcd_prefix}/lb/services/test-api/cookie")
+      subject.ensure_config(container)
+    end
+
     it 'sets http check uri' do
       container.labels['io.kontena.health_check.uri'] = '/health'
       expect(etcd).to receive(:set).
