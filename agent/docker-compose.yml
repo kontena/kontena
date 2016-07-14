@@ -1,7 +1,7 @@
 agent:
   container_name: kontena-agent
   build: .
-  dockerfile: Dockerfile.alpine
+  dockerfile: Dockerfile
   env_file: .env
   net: host
   environment:

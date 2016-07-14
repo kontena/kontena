@@ -21,8 +21,12 @@ matrix:
       env: TEST_DIR=server
     - rvm: 2.1.8
       env: TEST_DIR=server
+    - rvm: 2.2.3
+      env: TEST_DIR=server
     - rvm: 2.0.0-p648
       env: TEST_DIR=agent
     - rvm: 2.1.8
+      env: TEST_DIR=agent
+    - rvm: 2.2.3
       env: TEST_DIR=agent
 script: CI=true cd $TEST_DIR && bundle install && bundle exec rspec spec/
