@@ -21,7 +21,7 @@ module Kontena::Cli::Apps
           from['secrets'],
           service_config['secrets']
         )
-        build_args = extend_build_args(from.dig('build','args'), service_config.dig('build', 'args'))
+        build_args = extend_build_args(safe_dig(from, 'build', 'args'), safe_dig(service_config, 'build', 'args'))
         unless build_args.empty?
           service_config['build'] = {} unless service_config['build']
           service_config['build']['args'] = build_args
@@ -31,6 +31,18 @@ module Kontena::Cli::Apps
       end
 
       private
+
+      # Compatibility between ruby_dig and Ruby 2.3. Ruby_dig returns
+      # nil when trying to dig into a string, Ruby 2.3 dig raises
+      # TypeError.
+      #
+      # @param [Hash] source_hash
+      # @param [*keys] list_of_keys
+      def safe_dig(hash, *keys)
+        hash.dig(*keys)
+      rescue TypeError
+        nil
+      end
 
       # @param [Array] from
       # @param [Array] to
