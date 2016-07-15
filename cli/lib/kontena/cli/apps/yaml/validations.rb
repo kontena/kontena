@@ -11,10 +11,10 @@ module Kontena::Cli::Apps::YAML
 
      base.optional('stateful') { bool? }
      base.optional('affinity') { array? { each { format?(/(?<=\!|\=)=/) } } }
-     base.optional('cap_add') { array? | none? }
-     base.optional('cap_drop') { array? | none? }
-     base.optional('command') { str? | none? }
-     base.optional('cpu_shares') { int? | none? }
+     base.optional('cap_add').maybe(:array?)
+     base.optional('cap_drop').maybe(:array?)
+     base.optional('command').maybe(:str?)
+     base.optional('cpu_shares').maybe(:int?)
      base.optional('external_links') { array? }
      base.optional('mem_limit') { int? | str? }
      base.optional('memswap_limit') { int? | str? }
@@ -22,15 +22,15 @@ module Kontena::Cli::Apps::YAML
      base.optional('env_file') { str? | array? }
      base.optional('instances') { int? }
      base.optional('links') { array? | empty? }
-     base.optional('ports') { array? }
-     base.optional('volumes') { array? }
-     base.optional('volumes_from') { array? }
+     base.optional('ports').value(:array?)
+     base.optional('volumes').value(:array?)
+     base.optional('volumes_from').value(:array?)
 
      base.optional('deploy').schema do
        optional('strategy').value(included_in?: %w(ha daemon random))
-       optional('wait_for_port') { int? }
-       optional('min_health') { float? }
-       optional('interval') { format?(/^\d+(min|h|d|)$/) }
+       optional('wait_for_port').value(:int?)
+       optional('min_health').value(:float?)
+       optional('interval').value(format?: /^\d+(min|h|d|)$/)
      end
 
      base.optional('hooks').schema do
@@ -38,7 +38,7 @@ module Kontena::Cli::Apps::YAML
          required('name').filled
          required('cmd').filled
          required('instances') { int? | eql?('*') }
-         optional('oneshot') { bool? }
+         optional('oneshot').value(:bool?)
        end
 
        optional('pre_build').each do
@@ -52,12 +52,12 @@ module Kontena::Cli::Apps::YAML
        required('type').filled
      end
      base.optional('health_check').schema do
-      key('protocol') { format?(/^(http|tcp)$/) }
-      key('port') { int? }
-      optional('uri') { format?(/\/[\S]*/) }
-      optional('timeout') { int? }
-      optional('interval') { int? }
-      optional('initial_delay') { int? }
+      required('protocol').filled(format?: /^(http|tcp)$/)
+      required('port').filled(:int?)
+      optional('uri').value(format?: /\/[\S]*/)
+      optional('timeout').value(:int?)
+      optional('interval').value(:int?)
+      optional('initial_delay').value(:int?)
      end
    end
 

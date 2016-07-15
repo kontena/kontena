@@ -25,7 +25,7 @@ module Kontena::Cli::Apps
         @yaml_schema = Dry::Validation.Schema do
           base.append_common_validations(self)
 
-          optional('build').maybe(:str?)
+          optional('build').value(:str?)
           optional('dockerfile').value(:str?)
           optional('net').value(included_in?: (%w(host bridge)))
           optional('log_driver').value(:str?)
