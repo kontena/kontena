@@ -98,13 +98,6 @@ describe Kontena::WebsocketClient do
       expect(subject).to receive(:handle_invalid_version).once
       subject.on_close(event)
     end
-
-    it 'cancels ping timer' do
-      timer = spy(:timer)
-      allow(subject).to receive(:ping_timer).and_return(timer)
-      expect(timer).to receive(:cancel)
-      subject.on_close(event)
-    end
   end
 
   describe '#request_message?' do
@@ -123,6 +116,15 @@ describe Kontena::WebsocketClient do
     it 'returns trus if notification message' do
       msg = [2, 1, 1]
       expect(subject.notification_message?(msg)).to be_truthy
+    end
+  end
+
+  describe '#send_message' do
+    it 'does not raise error if ws is nil' do
+      allow(subject).to receive(:@ws).and_return(nil)
+      expect {
+        subject.send_message('foo')
+      }.not_to raise_error
     end
   end
 end

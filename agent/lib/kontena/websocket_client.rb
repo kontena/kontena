@@ -68,7 +68,7 @@ module Kontena
         on_open(event)
       end
       @ws.on :message do |event|
-        on_message(@ws, event)
+        on_message(event)
       end
       @ws.on :close do |event|
         on_close(event)
@@ -81,7 +81,15 @@ module Kontena
     ##
     # @param [String, Array] msg
     def send_message(msg)
-      EM.next_tick { ws.send(msg) }
+      EM.next_tick {
+        begin
+          @ws.send(msg) if @ws
+        rescue
+          error "failed to send message"
+        end
+      }
+    rescue => exc
+      error "failed to send message: #{exc.message}"
     end
 
     # @param [Faye::WebSocket::API::Event] event
@@ -92,9 +100,8 @@ module Kontena
       @connecting = false
     end
 
-    # @param [Faye::WebSocket::Client] ws
     # @param [Faye::WebSocket::API::Event] event
-    def on_message(ws, event)
+    def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
         EM.defer {
@@ -106,11 +113,12 @@ module Kontena
           rpc_server.handle_notification(data)
         }
       end
+    rescue => exc
+      error exc.message
     end
 
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
-      ping_timer.cancel if ping_timer
       @connected = false
       @connecting = false
       @ws = nil
@@ -154,13 +162,18 @@ module Kontena
     end
 
     def verify_connection
+      return unless @ping_timer.nil?
+
       @ping_timer = EM::Timer.new(2) do
         if @connected
           info 'did not receive pong, closing connection'
           ws.close(1000)
         end
       end
-      ws.ping { @ping_timer.cancel }
+      ws.ping {
+        @ping_timer.cancel
+        @ping_timer = nil
+      }
     rescue => exc
       error exc.message
     end
