@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.6 (2016-07-21)
+
+**Master & Agent:**
+- fix agent not reconnecting to master (#859)
+- do not reschedule service if its already in queue (#853)
+- fix docker event stream filter params (#850)
+
+**CLI:**
+- fix deploy interval handling in app yaml parsing (#821)
+
 ## 0.14.5 (2016-07-09)
 
 **Master & Agent:**
