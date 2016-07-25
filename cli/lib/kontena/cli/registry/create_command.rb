@@ -55,7 +55,7 @@ module Kontena::Cli::Registry
         env = [
             "REGISTRY_STORAGE=azure",
             "REGISTRY_STORAGE_AZURE_ACCOUNTNAME=#{azure_account_name}",
-            "REGISTRY_STORAGE_AZURE_ACCOUNTKEY=#{azure_account_key}"
+            "REGISTRY_STORAGE_AZURE_CONTAINER=#{azure_container_name}"
         ]
         secrets = [
           {secret: 'REGISTRY_STORAGE_AZURE_ACCOUNTKEY', name: 'REGISTRY_STORAGE_AZURE_ACCOUNTKEY', type: 'env'}
