@@ -10,18 +10,13 @@ module Kontena::Cli::Stacks
 
     def execute
       require_api_url
-      require_token
-      
-      show_stack(name)
-      
+      token = require_token
+
+      show_stack(token, name)
     end
 
-    private
-
-    def show_stack(name)
+    def show_stack(token, name)
       stack = client(token).get("stacks/#{current_grid}/#{name}")
-
-      puts stack
 
       puts "#{stack['id']}:"
       puts "  state: #{stack['state']}"
@@ -30,9 +25,14 @@ module Kontena::Cli::Stacks
       puts "  version: #{stack['version']}"
       puts "  services:"
       stack['grid_services'].each do |service|
-        puts "    id: #{service['id']}"
+        puts "    #{service['id']}:"
+        puts "      status: #{service['state'] }"
+        puts "      image: #{service['image']}"
+        puts "      revision: #{service['revision']}"
+        puts "      stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
+        puts "      scaling: #{service['container_count'] }"
+        puts "      strategy: #{service['strategy']}"
       end
     end
-
   end
 end

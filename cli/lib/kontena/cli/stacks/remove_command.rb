@@ -7,20 +7,18 @@ module Kontena::Cli::Stacks
     include Common
 
     parameter "NAME", "Service name"
+    option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
       require_api_url
-      require_token
+      token = require_token
 
-      remove_stack(name)
+      confirm_command(name) unless forced?
+      remove_stack(token, name)
     end
 
-    private
-
-
-    def remove_stack(name)
+    def remove_stack(token, name)
       client(token).delete("stacks/#{current_grid}/#{name}")
     end
-
   end
 end

@@ -10,16 +10,14 @@ module Kontena::Cli::Stacks
 
     def execute
       require_api_url
-      require_token
+      token = require_token
 
-      list_stacks
+      list_stacks(token)
     end
 
-    private
-
-    def list_stacks
+    def list_stacks(token)
       response = client(token).get("stacks/#{current_grid}")
-      
+
       titles = ['NAME', 'SERVICES', 'STATE']
       puts COLUMNS % titles
 
@@ -33,6 +31,5 @@ module Kontena::Cli::Stacks
         puts COLUMNS % vars
       end
     end
-
   end
 end

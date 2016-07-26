@@ -1,4 +1,5 @@
 require_relative '../apps/yaml/reader'
+require_relative '../apps/common'
 
 module Kontena::Cli::Stacks
   module Common
