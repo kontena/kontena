@@ -10,8 +10,24 @@ describe Kontena::Cli::Apps::YAML::Validator do
   end
 
   describe '#validate_options' do
+    context 'build' do
+      it 'is optional' do
+        result = subject.validate_options({})
+        expect(result.success?).to be_truthy
+        expect(result.messages.key?('build')).to be_falsey
+      end
+
+      it 'must be string' do
+        result = subject.validate_options('build' => 12345)
+        expect(result.messages.key?('build')).to be_truthy
+
+        result = subject.validate_options('build' => '.')
+        expect(result.messages.key?('build')).to be_falsey
+      end
+    end
+
     context 'image' do
-      it 'image is optional' do
+      it 'is optional' do
         result = subject.validate_options('build' => '.')
         expect(result.success?).to be_truthy
         expect(result.messages.key?('image')).to be_falsey
@@ -21,7 +37,7 @@ describe Kontena::Cli::Apps::YAML::Validator do
         result = subject.validate_options('image' => 10)
         expect(result.success?).to be_falsey
         expect(result.messages.key?('image')).to be_truthy
-      end    
+      end
     end
 
     it 'validates stateful is boolean' do
@@ -63,22 +79,58 @@ describe Kontena::Cli::Apps::YAML::Validator do
     end
 
     context 'deploy' do
-      it 'validates interval' do
-        
-        result = subject.validate_options('deploy' => {'interval' => '1xyz'})
-        expect(result.messages.key?('deploy')).to be_truthy
-
-        result = subject.validate_options('deploy' => {'interval' => '1min'})
+      it 'is optional' do
+        result = subject.validate_options({})
         expect(result.messages.key?('deploy')).to be_falsey
+      end
 
-        result = subject.validate_options('deploy' => {'interval' => '1h'})
-        expect(result.messages.key?('deploy')).to be_falsey
+      context 'strategy' do
+        it 'accepts daemon' do
+          result = subject.validate_options('deploy' => {'strategy' => 'daemon'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
 
-        result = subject.validate_options('deploy' => {'interval' => '1d'})
-        expect(result.messages.key?('deploy')).to be_falsey
+        it 'accepts random' do
+          result = subject.validate_options('deploy' => {'strategy' => 'random'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
 
-        result = subject.validate_options('deploy' => {'interval' => '100'})
-        expect(result.messages.key?('deploy')).to be_falsey
+        it 'accepts ha' do
+          result = subject.validate_options('deploy' => {'strategy' => 'ha'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
+
+        it 'rejects invalid values' do
+          result = subject.validate_options('deploy' => {'strategy' => 'global'})
+          expect(result.messages.key?('deploy')).to be_truthy
+        end
+      end
+
+      context 'interval' do
+        it 'rejects wrong format' do
+          result = subject.validate_options('deploy' => {'interval' => '1xyz'})
+          expect(result.messages.key?('deploy')).to be_truthy
+        end
+
+        it 'accepts 1min as value' do
+          result = subject.validate_options('deploy' => {'interval' => '1min'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
+
+        it 'accepts 1h as value' do
+          result = subject.validate_options('deploy' => {'interval' => '1h'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
+
+        it 'accepts 1d as value' do
+          result = subject.validate_options('deploy' => {'interval' => '1d'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
+
+        it 'accepts integer as value' do
+          result = subject.validate_options('deploy' => {'interval' => '100'})
+          expect(result.messages.key?('deploy')).to be_falsey
+        end
       end
     end
 
@@ -283,7 +335,7 @@ describe Kontena::Cli::Apps::YAML::Validator do
     context 'validates health_check' do
       it 'validates health_check' do
         result = subject.validate_options('health_check' => {})
-        expect(result.messages.key?('health_check')).to be_truthy        
+        expect(result.messages.key?('health_check')).to be_truthy
       end
 
       it 'validates health_check port ' do
