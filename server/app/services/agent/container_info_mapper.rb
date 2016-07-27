@@ -94,7 +94,11 @@ module Agent
           exec_driver: info['ExecDriver'],
           image: config['Image'],
           image_version: info['Image'],
+          cmd: config['Cmd'],
           env: config['Env'],
+          labels: parse_labels(config['Labels']),
+          hostname: config['Hostname'],
+          domainname: config['Domainname'],
           state: {
               error: state['Error'],
               exit_code: state['ExitCode'],
@@ -174,6 +178,17 @@ module Agent
           port_mapping: network['PortMapping'],
           ports: ports
       }
+    end
+
+    # @param [Hash] labels
+    # @return [Hash]
+    def parse_labels(labels)
+      parsed = {}
+      replace = ';'.freeze
+      labels.each{ |k, v|
+        parsed[k.gsub(/\./, replace)] = v
+      }
+      parsed
     end
   end
 end

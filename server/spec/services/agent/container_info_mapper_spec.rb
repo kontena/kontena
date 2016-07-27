@@ -91,6 +91,12 @@ describe Agent::ContainerInfoMapper do
       expect(container.image_version).to eq('image_id')
     end
 
+    it 'sets image_version' do
+      docker_data['Config']['Cmd'] = ['npm', 'start']
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.cmd).to eq(['npm', 'start'])
+    end
+
     it 'sets env' do
       docker_data['Config']['Env'] = ['FOO=bar']
       subject.container_attributes_from_docker(container, docker_data)
@@ -102,6 +108,28 @@ describe Agent::ContainerInfoMapper do
       docker_data['Config']['Env'] = ['FOO=bar','BAR=baz']
       subject.container_attributes_from_docker(container, docker_data)
       expect(container.env).to eq(['BAR=baz'])
+    end
+
+    it 'sets labels' do
+      docker_data['Config']['Labels'] = {
+        'io.kontena.service.name' => 'test',
+        'io.kontena.grid.name' => 'first-grid',
+      }
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.labels['io;kontena;service;name']).to eq('test')
+      expect(container.labels['io;kontena;grid;name']).to eq('first-grid')
+    end
+
+    it 'sets hostname' do
+      docker_data['Config']['Hostname'] = 'test-1'
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.hostname).to eq('test-1')
+    end
+
+    it 'sets domainname' do
+      docker_data['Config']['Domainname'] = 'mygrid.kontena.local'
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.domainname).to eq('mygrid.kontena.local')
     end
 
     it 'sets running state' do
@@ -142,6 +170,20 @@ describe Agent::ContainerInfoMapper do
           }
         ]
       )
+    end
+  end
+
+  describe 'parse_labels' do
+    let(:labels) {
+      {
+        'io.kontena.service.name' => 'foobar',
+        'io.kontena.grid.name' => 'test'
+      }
+    }
+
+    it 'parses labels correctly' do
+      parsed_labels = subject.parse_labels(labels)
+      expect(parsed_labels['io;kontena;service;name']).to eq('foobar')
     end
   end
 end
