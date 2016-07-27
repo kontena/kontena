@@ -34,6 +34,10 @@ module Docker
       self.host_config['RestartPolicy']
     end
 
+    def default_stack?
+      self.labels['io.kontena.stack.name'].to_s == 'default'.freeze
+    end
+
     # @return [Boolean]
     def autostart?
       return ['always', 'unless-stopped'].include?(self.host_config.dig('RestartPolicy', 'Name'))

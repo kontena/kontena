@@ -12,10 +12,16 @@ module V1
       validate_access_token
       require_current_user
 
-      def load_grid_container(grid_name, service_name, container_name)
+      # @param [String] grid_name
+      # @param [String] stack_name
+      # @param [String] service_name
+      # @param [String] container_name
+      def load_grid_container(grid_name, stack_name, service_name, container_name)
         grid = Grid.find_by(name: grid_name)
         halt_request(404, {error: 'Not found'}) if !grid
-        service = grid.grid_services.find_by(name: service_name)
+        stack = grid.stacks.find_by(name: stack_name)
+        halt_request(404, {error: 'Not found'}) if !stack
+        service = stack.grid_services.find_by(name: service_name)
         halt_request(404, {error: 'Not found'}) if !service
         container = grid.containers.find_by(name: container_name)
         halt_request(404, {error: 'Not found'}) if !container
@@ -28,10 +34,10 @@ module V1
       end
 
       # /v1/containers/:grid_name/:service_name/:name
-      r.on ':grid_name/:service_name/:name' do |grid_name, service_name, name|
-        container = load_grid_container(grid_name, service_name, name)
+      r.on ':grid_name/:stack_name/:service_name/:name' do |grid_name, stack_name, service_name, name|
+        container = load_grid_container(grid_name, stack_name, service_name, name)
 
-        # GET /v1/containers/:grid_name/:service_name/:name
+        # GET /v1/containers/:grid_name/stack_name/:service_name/:name
         r.get do
           r.is do
             @container = container

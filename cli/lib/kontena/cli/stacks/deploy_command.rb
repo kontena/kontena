@@ -12,7 +12,9 @@ module Kontena::Cli::Stacks
       require_api_url
       token = require_token
 
-      deploy_stack(token, name)
+      spinner "Deploying stack #{name}" do
+        deploy_stack(token, name)
+      end
     end
 
     def deploy_stack(token, name)

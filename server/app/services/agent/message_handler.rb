@@ -57,7 +57,7 @@ module Agent
         when 'container:event'.freeze
           self.on_container_event(grid, data['data'])
         when 'container:log'.freeze
-          self.on_container_log(grid, message['node_id'], data['data'])
+          self.on_container_log(grid, data['data'])
         when 'container:stats'.freeze
           self.on_container_stat(grid, data['data'])
         when 'container:health'.freeze
@@ -105,9 +105,8 @@ module Agent
 
     ##
     # @param [Grid] grid
-    # @param [String] node_id
     # @param [Hash] data
-    def on_container_log(grid, node_id, data)
+    def on_container_log(grid, data)
       container = cached_container(grid.id, data['id'])
       if container
         if data['time']
@@ -117,7 +116,7 @@ module Agent
         end
         @logs << {
           grid_id: grid.id,
-          host_node_id: node_id,
+          host_node_id: container['host_node_id'],
           grid_service_id: container['grid_service_id'],
           container_id: container['_id'],
           created_at: created_at,

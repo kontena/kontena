@@ -13,15 +13,9 @@ describe Stack do
   it { should be_timestamped_document }
   it { should have_fields(:name, :version).of_type(String) }
   it { should belong_to(:grid) }
+  it { should have_many(:stack_revisions)}
   it { should have_many(:grid_services)}
-  #it { should have_many(:audit_logs)}
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(name: 1) }
-
-  it 'should set default state to initialized' do
-  	stack = Stack.create(grid: grid, name: 'my stack')
-  	expect(stack.state).to eq(:initialized)
-  	expect(stack.initialized?).to be_truthy
-  end
 end

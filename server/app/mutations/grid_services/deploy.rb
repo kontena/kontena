@@ -28,8 +28,6 @@ module GridServices
       attrs[:updated_at] = Time.now.utc if force
       grid_service.set(attrs)
       GridServiceDeploy.create(grid_service: grid_service)
-
-      grid_service
     end
   end
 end

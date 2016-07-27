@@ -22,7 +22,9 @@ module GridServices
     def start_service_instances
       self.grid_service.containers.scoped.each do |container|
         unless container.running?
-          Docker::ServiceStarter.new(container.host_node).start_service_instance(container.name)
+          Docker::ServiceStarter.new(container.host_node).start_service_instance(
+            self.grid_service, container.instance_number
+          )
         end
       end
     end

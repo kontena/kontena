@@ -9,34 +9,70 @@ describe GridServiceInstanceDeployer do
 
   describe '#service_exists_on_node?' do
     it 'returns true if service exists on node' do
-      grid_service.containers.create!(name: 'redis-2', host_node: node)
+      grid_service.containers.create!(
+        name: 'redis-2', host_node: node,
+        labels: {
+          'io;kontena;service;id' => grid_service.id.to_s,
+          'io;kontena;service;instance_number' => '2'
+        }
+      )
       expect(subject.service_exists_on_node?(node, 2)).to be_truthy
     end
 
     it 'returns false if service does not exists on node' do
-      grid_service.containers.create!(name: 'redis-2', host_node: node)
+      grid_service.containers.create!(
+        name: 'redis-2', host_node: node,
+        labels: {
+          'io;kontena;service;id' => grid_service.id.to_s,
+          'io;kontena;service;instance_number' => '2'
+        }
+      )
       expect(subject.service_exists_on_node?(node, 1)).to be_falsey
     end
   end
 
   describe '#deployed_service_container_exists?' do
     it 'returns true if service exists' do
-      grid_service.containers.create!(name: 'redis-2', host_node: node, deploy_rev: 'rev-a', container_id: 'aaa')
+      grid_service.containers.create!(
+        name: 'redis-2', host_node: node, deploy_rev: 'rev-a', container_id: 'aaa',
+        labels: {
+          'io;kontena;service;id' => grid_service.id.to_s,
+          'io;kontena;service;instance_number' => '2'
+        }
+      )
       expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_truthy
     end
 
     it 'returns false if service does not have container_id' do
-      grid_service.containers.create!(name: 'redis-2', host_node: node, deploy_rev: 'rev-a')
+      grid_service.containers.create!(
+        name: 'redis-2', host_node: node, deploy_rev: 'rev-a',
+        labels: {
+          'io;kontena;service;id' => grid_service.id.to_s,
+          'io;kontena;service;instance_number' => '2'
+        }
+      )
       expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_falsey
     end
 
     it 'returns false if service does not have same rev' do
-      grid_service.containers.create!(name: 'redis-2', host_node: node, deploy_rev: 'rev-b')
+      grid_service.containers.create!(
+        name: 'redis-2', host_node: node, deploy_rev: 'rev-b',
+        labels: {
+          'io;kontena;service;id' => grid_service.id.to_s,
+          'io;kontena;service;instance_number' => '2'
+        }
+      )
       expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_falsey
     end
 
     it 'returns false if service instance does not exist' do
-      grid_service.containers.create!(name: 'redis-1', host_node: node, deploy_rev: 'rev-a', container_id: 'aaa')
+      grid_service.containers.create!(
+        name: 'redis-1', host_node: node, deploy_rev: 'rev-a', container_id: 'aaa',
+        labels: {
+          'io;kontena;service;id' => grid_service.id.to_s,
+          'io;kontena;service;instance_number' => '1'
+        }
+      )
       expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_falsey
     end
   end

@@ -4,6 +4,7 @@ describe Kontena::Rpc::ServicePodsApi do
 
   let(:data) do
     {
+      'service_id' => 'aaaaaaaaa',
       'service_name' => 'redis',
       'instance_number' => 2,
       'deploy_rev' => Time.now.utc.to_s,
@@ -45,25 +46,21 @@ describe Kontena::Rpc::ServicePodsApi do
   describe '#start' do
     it 'calls service pod starter' do
       expect(Kontena::ServicePods::Starter).to receive(:perform_async)
-      subject.start('test-1')
+      subject.start('service_id', 2)
     end
   end
 
   describe '#stop' do
     it 'calls service pod stopper' do
       expect(Kontena::ServicePods::Stopper).to receive(:perform_async)
-      subject.stop('test-1')
+      subject.stop('service_id', 2)
     end
   end
 
   describe '#restart' do
     it 'calls service pod restarter' do
       expect(Kontena::ServicePods::Restarter).to receive(:perform_async)
-      subject.restart('test-1')
+      subject.restart('service_id', 2)
     end
-  end
-
-  describe '#start' do
-
   end
 end

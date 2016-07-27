@@ -27,7 +27,7 @@ describe Docker::ServiceCreator do
     let(:service_spec) { subject.service_spec(2, 'rev') }
 
     it 'includes service_name' do
-      expect(service_spec).to include(:service_name => 'app')
+      expect(service_spec).to include(:service_name => "#{service.stack.name}-#{service.name}")
     end
 
     it 'includes instance_number' do

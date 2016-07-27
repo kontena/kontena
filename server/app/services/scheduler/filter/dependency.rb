@@ -27,8 +27,11 @@ module Scheduler
       def filter_candidates_by_volume(candidates, service, instance_number)
         volumes = service.volumes_from.map{|v| v % [instance_number] }
         candidates.dup.each do |node|
-          container_names = node.containers.map {|c| c.name}
-          if !container_names.any?{|name| volumes.include?(name) }
+          match = node.containers.select { |c|
+            volumes.include?(c.labels['io;kontena;container;name'].to_s) &&
+              c.labels['io;kontena;stack;name'].to_s == service.stack.name
+          }
+          if match.empty?
             candidates.delete(node)
           end
         end
@@ -38,19 +41,26 @@ module Scheduler
       # @param [GridService] service
       # @param [Integer] instance_number
       def filter_candidates_by_net(candidates, service, instance_number)
-        net = service.net % [instance_number]
+        net = service.net.sub('container:', '') % [instance_number]
         candidates.dup.each do |node|
-          container_names = node.containers.map {|c| c.name}
-          if !container_names.include?(net)
+          match = node.containers.select { |c|
+            c.labels['io;kontena;container;name'].to_s == net &&
+              c.labels['io;kontena;stack;name'].to_s == service.stack.name
+          }
+          if match.empty?
             candidates.delete(node)
           end
         end
       end
 
+      # @param [GridService] service
+      # @return [Boolean]
       def filter_by_volume?(service)
         service.volumes_from.size > 0
       end
 
+      # @param [GridService] service
+      # @return [Boolean]
       def filter_by_net?(service)
         !service.net.to_s.match(/^container:.+/).nil?
       end

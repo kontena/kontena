@@ -33,8 +33,12 @@ describe HostNode do
 
   describe '#stateful?' do
     let(:grid) { Grid.create!(name: 'test') }
-    let(:stateful_service) { GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true) }
-    let(:stateless_service) { GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false) }
+    let(:stateful_service) {
+      GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true)
+    }
+    let(:stateless_service) {
+      GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false) 
+    }
     let(:node) { HostNode.create(name: 'node-1', grid: grid)}
 
     it 'returns false by default' do

@@ -66,6 +66,22 @@ describe GridServiceDeployer do
       )
       expect(subject.instance_count).to eq(6)
     end
+
+    it 'returns count based on filtered nodes if strategy is daemon and stack is non-default' do
+      HostNode.create!(node_id: SecureRandom.uuid, grid: grid, labels: ['foo'])
+      HostNode.create!(node_id: SecureRandom.uuid, grid: grid, labels: ['foo'])
+      HostNode.create!(node_id: SecureRandom.uuid, grid: grid, labels: ['bar'])
+      stack = grid.stacks.create(name: 'redis')
+      service = GridService.create!(
+        image_name: 'kontena/redis:2.8', name: 'redis', grid: grid, stack: stack,
+        container_count: 1, affinity: ['label==foo'], strategy: 'daemon'
+      )
+      service_deploy = GridServiceDeploy.create(grid_service: service)
+      subject = described_class.new(
+        Scheduler::Strategy::Daemon.new, service_deploy, grid.host_nodes.to_a
+      )
+      expect(subject.instance_count).to eq(2)
+    end
   end
 
   describe '#deploy' do

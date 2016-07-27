@@ -2,7 +2,8 @@ module Kontena
   module Models
     class ServicePod
 
-      attr_reader :service_name,
+      attr_reader :service_id,
+                  :service_name,
                   :instance_number,
                   :deploy_rev,
                   :service_revision,
@@ -28,6 +29,8 @@ module Kontena
                   :volumes,
                   :volumes_from,
                   :net,
+                  :hostname,
+                  :domainname,
                   :log_driver,
                   :log_opts,
                   :pid,
@@ -37,6 +40,7 @@ module Kontena
 
       # @param [Hash] attrs
       def initialize(attrs = {})
+        @service_id = attrs['service_id']
         @service_name = attrs['service_name']
         @instance_number = attrs['instance_number'] || 1
         @deploy_rev = attrs['deploy_rev']
@@ -61,6 +65,8 @@ module Kontena
         @volumes = attrs['volumes'] || []
         @volumes_from = attrs['volumes_from'] || []
         @net = attrs['net'] || 'bridge'
+        @hostname = attrs['hostname']
+        @domainname = attrs['domainname']
         @log_driver = attrs['log_driver']
         @log_opts = attrs['log_opts']
         @pid = attrs['pid']
@@ -101,7 +107,8 @@ module Kontena
           'Image' => self.image_name
         }
         if self.net.to_s != 'host'
-          docker_opts['HostName'] = "#{self.name}.kontena.local"
+          docker_opts['Hostname'] = self.hostname
+          docker_opts['Domainname'] = self.domainname
         end
         docker_opts['Env'] = self.build_env
         docker_opts['User'] = self.user if self.user
@@ -148,7 +155,7 @@ module Kontena
         end
 
         host_config['NetworkMode'] = self.net
-
+        host_config['DnsSearch'] = [self.domainname]
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
@@ -182,6 +189,7 @@ module Kontena
             'io.kontena.service.id' => self.labels['io.kontena.service.id'],
             'io.kontena.service.instance_number' => self.instance_number.to_s,
             'io.kontena.service.name' => self.labels['io.kontena.service.name'],
+            'io.kontena.stack.name' => self.labels['io.kontena.stack.name'],
             'io.kontena.grid.name' => self.labels['io.kontena.grid.name'],
             'io.kontena.container.type' => 'volume'
           }

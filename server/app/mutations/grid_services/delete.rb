@@ -12,9 +12,9 @@ module GridServices
         add_error(:service, :invalid, "Cannot delete service because it's currently being deployed")
         return
       end
-      linked_to_services = self.grid_service.linked_to_services
-      if linked_to_services.count > 0
-        add_error(:service, :invalid, "Cannot delete service that is linked to another service (#{linked_to_services.map{|s| s.name}.join(', ')})")
+      linked_from_services = self.grid_service.linked_from_services
+      if linked_from_services.count > 0
+        add_error(:service, :invalid, "Cannot delete service that is linked to another service (#{linked_from_services.map{|s| s.name}.join(', ')})")
       end
     end
 

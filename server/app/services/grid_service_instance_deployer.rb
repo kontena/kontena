@@ -23,6 +23,7 @@ class GridServiceInstanceDeployer
   rescue => exc
     error "failed to deploy service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
     error exc.message
+    error exc.backtrace.join("\n")
     false
   end
 
@@ -44,8 +45,9 @@ class GridServiceInstanceDeployer
   # @param [String] instance_number
   # @return [Boolean]
   def service_exists_on_node?(node, instance_number)
-    container_name = "#{self.grid_service.name}-#{instance_number}"
-    old_container = self.grid_service.containers.find_by(name: container_name)
+    old_container = self.grid_service.containers.service_instance(
+      self.grid_service, instance_number
+    ).first
     old_container && old_container.host_node && old_container.host_node == node
   end
 
@@ -74,23 +76,25 @@ class GridServiceInstanceDeployer
   # @param [String] deploy_rev
   # @return [Container, NilClass]
   def find_service_instance_container(instance_number, deploy_rev)
-    container_name = "#{self.grid_service.name}-#{instance_number}"
-    self.grid_service.containers.find_by(name: container_name, deploy_rev: deploy_rev)
+    self.grid_service.containers.service_instance(self.grid_service, instance_number).find_by(
+      deploy_rev: deploy_rev
+    )
   end
 
   # @param [String] instance_number
   # @param [HostNode] node
   def terminate_service_instance(instance_number, node = nil)
-    container_name = "#{self.grid_service.name}-#{instance_number}"
     if node.nil?
-      container = self.grid_service.containers.find_by(name: container_name)
+      container = self.grid_service.containers.service_instance(
+        self.grid_service, instance_number
+      ).first
       return unless container
       return unless container.host_node
       node = container.host_node
     end
     return unless node
     terminator = Docker::ServiceTerminator.new(node)
-    terminator.terminate_service_instance(container_name)
+    terminator.terminate_service_instance(self.grid_service, instance_number)
   end
 
   # @return [Boolean]

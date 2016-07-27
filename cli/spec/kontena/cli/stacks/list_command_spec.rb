@@ -20,7 +20,7 @@ describe Kontena::Cli::Stacks::ListCommand do
       stacks = {
         'stacks' => []
       }
-      expect(client).to receive(:get).with('stacks/test-grid').and_return(stacks)
+      expect(client).to receive(:get).with('grids/test-grid/stacks').and_return(stacks)
       subject.run([])
     end
   end

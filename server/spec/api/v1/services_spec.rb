@@ -58,10 +58,10 @@ describe '/v1/services' do
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at image affinity name stateful user
+        id created_at updated_at stack image affinity name stateful user
         container_count cmd entrypoint ports env memory memory_swap cpu_shares
-        volumes volumes_from cap_add cap_drop state grid_id links log_driver log_opts
-        strategy deploy_opts pid instances net hooks secrets revision
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instances net dns hooks secrets revision
       ).sort)
       expect(json_response['id']).to eq(redis_service.to_path)
       expect(json_response['image']).to eq(redis_service.image_name)
@@ -89,13 +89,13 @@ describe '/v1/services' do
       redis_service
       data = {
         links: [
-          {name: 'redis', alias: 'redis'}
+          {name: 'default/redis', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
       expect(response.status).to eq(200)
       expect(json_response['links']).to include({
-        'alias' => 'redis', 'grid_service_id' => redis_service.to_path
+        'alias' => 'redis', 'id' => redis_service.to_path, 'name' => redis_service.name
       })
     end
 
@@ -116,7 +116,7 @@ describe '/v1/services' do
     it 'returns error when linked service does not exist' do
       data = {
         links: [
-          {name: 'foo', alias: 'redis'}
+          {name: 'default/foo', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
@@ -237,12 +237,32 @@ describe '/v1/services' do
     end
   end
 
+  describe 'GET /:id/deploys/:deploy_id' do
+    it 'returns deploy object' do
+      deployment = redis_service.grid_service_deploys.create
+      get "/v1/services/#{redis_service.to_path}/deploys/#{deployment.id}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['id']).to eq(deployment.id.to_s)
+    end
+
+    it 'returns 404 if deploy not found' do
+      get "/v1/services/#{redis_service.to_path}/deploys/foo", nil, request_headers
+      expect(response.status).to eq(404)
+    end
+  end
+
   describe 'POST /:id/deploy' do
     it 'deploys service' do
       expect {
         post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
       }.to change{ redis_service.grid_service_deploys.count }.by(1)
+    end
+
+    it 'returns deploy object' do
+      post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(GridServiceDeploy.find(json_response['id'])).not_to be_nil
     end
 
     it 'changes state to deploy_pending' do

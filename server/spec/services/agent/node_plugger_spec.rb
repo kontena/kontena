@@ -12,6 +12,10 @@ describe Agent::NodePlugger do
   let(:subject) { described_class.new(grid, node) }
   let(:client) { spy(:client) }
 
+  before(:each) do
+    allow(subject).to receive(:worker).and_return(spy)
+  end
+
   describe '#plugin!' do
     it 'marks node as connected' do
       expect {

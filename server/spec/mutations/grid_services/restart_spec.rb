@@ -15,10 +15,13 @@ describe GridServices::Restart do
   describe '#run' do
     it 'sends restart' do
       container = redis_service.containers.create!(
-        name: 'redis-1', container_id: '34', host_node: node
+        name: 'redis-1', container_id: '34', host_node: node,
+        labels: {
+          'io;kontena;service;instance_number' => '1'
+        }
       )
       subject = described_class.new(current_user: user, grid_service: redis_service)
-      expect(subject).to receive(:restart_service_instance).with(node, container.name).once
+      expect(subject).to receive(:restart_service_instance).with(node, container.instance_number).once
       subject.run.result.value
     end
 

@@ -29,5 +29,4 @@ describe ContainerCleanupJob do
       }.to change{ Container.unscoped.count }.by(0)
     end
   end
-
 end

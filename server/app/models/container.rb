@@ -71,21 +71,21 @@ class Container
   ##
   # @return [String]
   def status
-    return 'deleted' if self.deleted_at
+    return 'deleted'.freeze if self.deleted_at
 
     s = self.state
     if s['paused']
-      'paused'
+      'paused'.freeze
     elsif s['restarting']
-      'restarting'
+      'restarting'.freeze
     elsif s['oom_killed']
-      'oom_killed'
+      'oom_killed'.freeze
     elsif s['dead']
-      'dead'
+      'dead'.freeze
     elsif s['running']
-      'running'
+      'running'.freeze
     else
-      'stopped'
+      'stopped'.freeze
     end
   end
 
@@ -113,21 +113,6 @@ class Container
     self.status == 'deleted'
   end
 
-  ##
-  # @return [Boolean]
-  def exists_on_node?
-    return false if self.container_id.blank? || !self.host_node
-
-    self.host_node.rpc_client.request('/containers/show', self.container_id.to_s)
-    true
-  rescue RpcClient::Error => e
-    if e.code == 404
-      false
-    else
-      raise e
-    end
-  end
-
   def up_to_date?
     self.image_version == self.grid_service.image.image_id && self.created_at > self.grid_service.updated_at
   end
@@ -145,9 +130,9 @@ class Container
 
   # @return [String]
   def instance_name
-    stack = self.labels['io;kontena;stack;name'] || 'default'.freeze
-    service = self.labels['io;kontena;service;name']
-    instance = self.labels['io;kontena;service;instance_number'] || '0'.freeze
+    stack = self.label('io.kontena.stack.name'.freeze) || 'default'.freeze
+    service = self.label('io.kontena.service.name'.freeze)
+    instance = self.label('io.kontena.service.instance_number'.freeze) || '0'.freeze
 
     name = ''
     name << "#{stack}-" if stack
@@ -157,12 +142,24 @@ class Container
     name
   end
 
+  # @param [String] name
+  # @return [String, NilClass]
+  def label(name)
+    key = name.gsub(/\./, ';'.freeze)
+    self.labels[key]
+  end
+
+  # @return [Integer]
+  def instance_number
+    self.label('io.kontena.service.instance_number'.freeze).to_i
+  end
+
   # @param [GridService] service
   # @param [Integer] instance_number
   def self.service_instance(service, instance_number)
     match = {
       :'labels.io;kontena;service;id' => service.id.to_s,
-      :'labels.io;kontena;service;instance_number' => instance_number
+      :'labels.io;kontena;service;instance_number' => instance_number.to_s
     }
     where(match)
   end

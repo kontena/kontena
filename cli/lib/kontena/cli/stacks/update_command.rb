@@ -6,20 +6,22 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
+    parameter "NAME", "Stack name"
+
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena stack file', attribute_name: :filename, default: 'kontena.yml'
-    option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
 
     def execute
       require_api_url
       token = require_token
       require_config_file(filename)
       stack = stack_from_yaml(filename)
-      stack['name'] = name if name
-      update_stack(token, stack)
+      spinner "Updating stack #{name} " do
+        update_stack(token, stack)
+      end
     end
 
     def update_stack(token, stack)
-      client(token).put("stacks/#{current_grid}/#{stack['name']}", stack)
+      client(token).put("stacks/#{current_grid}/#{name}", stack)
     end
   end
 end

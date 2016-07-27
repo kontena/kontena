@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
-    parameter "NAME", "Service name"
+    parameter "NAME", "Stack name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
@@ -14,7 +14,9 @@ module Kontena::Cli::Stacks
       token = require_token
 
       confirm_command(name) unless forced?
-      remove_stack(token, name)
+      spinner "Removing stack #{pastel.cyan(name)} " do
+        remove_stack(token, name)
+      end
     end
 
     def remove_stack(token, name)

@@ -1,5 +1,4 @@
 require_relative 'registry/create_command'
-require_relative 'registry/delete_command'
 require_relative 'registry/remove_command'
 
 class Kontena::Cli::RegistryCommand < Kontena::Command

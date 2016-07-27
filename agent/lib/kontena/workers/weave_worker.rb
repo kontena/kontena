@@ -61,14 +61,23 @@ module Kontena::Workers
       if overlay_cidr
         container_name = labels['io.kontena.container.name']
         service_name = labels['io.kontena.service.name']
+        instance_number = labels['io.kontena.service.instance_number']
+        stack_name = labels['io.kontena.stack.name'] || 'default'.freeze
         grid_name = labels['io.kontena.grid.name']
-        dns_names = [
-          "#{container_name}.kontena.local",
-          "#{service_name}.kontena.local",
-          "#{container_name}.#{grid_name}.kontena.local",
-          "#{service_name}.#{grid_name}.kontena.local"
-        ]
         ip = overlay_cidr.split('/')[0]
+        if container.default_stack?
+          dns_names = [
+            "#{container_name}.kontena.local",
+            "#{service_name}.kontena.local",
+            "#{container_name}.#{grid_name}.kontena.local",
+            "#{service_name}.#{grid_name}.kontena.local"
+          ]
+        else
+          dns_names = [
+            "#{service_name}.#{stack_name}.#{grid_name}.kontena.local",
+            "#{service_name}-#{instance_number}.#{stack_name}.#{grid_name}.kontena.local"
+          ]
+        end
         dns_names.each do |name|
           add_dns(container.id, ip, name)
         end

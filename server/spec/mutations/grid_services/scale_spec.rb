@@ -42,5 +42,10 @@ describe GridServices::Scale do
         subject.run
       }.to change{ redis_service.reload.deploy_pending? }.from(false).to(true)
     end
+
+    it 'returns deploy object in a result' do
+      outcome = subject.run
+      expect(outcome.result).to be_instance_of(GridServiceDeploy)
+    end
   end
 end

@@ -40,13 +40,27 @@ describe Scheduler::Strategy::HighAvailability do
       end
 
       it 'returns node that has data volume container' do
-        stateful_service.containers.create!(name: 'test-3-volumes', host_node: nodes[2], container_type: 'volume', container_id: 'aa')
+        stateful_service.containers.create!(
+          name: 'test-3-volumes', host_node: nodes[2], container_type: 'volume', container_id: 'aa',
+          labels: {
+            'io;kontena;service;id' => stateful_service.id.to_s,
+            'io;kontena;service;instance_number' => '3',
+            'io;kontena;container;type' => 'volume'
+          }
+        )
         expect(subject.find_node(stateful_service, 3, nodes)).to eq(nodes[2])
       end
 
       it 'return nil if data volume node is not available' do
         node4 = HostNode.create!(node_id: 'node4', name: 'node-4', connected: true, grid: grid)
-        stateful_service.containers.create!(name: 'test-3-volumes', host_node: node4, container_type: 'volume', container_id: 'aa')
+        stateful_service.containers.create!(
+          name: 'test-3-volumes', host_node: node4, container_type: 'volume', container_id: 'aa',
+          labels: {
+            'io;kontena;service;id' => stateful_service.id.to_s,
+            'io;kontena;service;instance_number' => '3',
+            'io;kontena;container;type' => 'volume'
+          }
+        )
         expect(subject.find_node(stateful_service, 3, nodes)).to be_nil
       end
     end
@@ -65,12 +79,26 @@ describe Scheduler::Strategy::HighAvailability do
     let(:node) { nodes[0] }
 
     it 'returns zero rank if instance is not already scheduled to node' do
-      stateless_service.containers.create!(name: "#{stateless_service.name}-2", host_node: nodes[2])
+      stateless_service.containers.create!(
+        name: "#{stateless_service.name}-2", host_node: nodes[2],
+        labels: {
+          'io;kontena;service;id' => stateless_service.id.to_s,
+          'io;kontena;service;instance_number' => '2',
+          'io;kontena;container;type' => 'container'
+        }
+      )
       expect(subject.instance_rank(node, stateless_service, 1)).to eq(0.0)
     end
 
     it 'returns negative rank if instance is already scheduled to node' do
-      stateless_service.containers.create!(name: "#{stateless_service.name}-2", host_node: node)
+      stateless_service.containers.create!(
+        name: "#{stateless_service.name}-2", host_node: node,
+        labels: {
+          'io;kontena;service;id' => stateless_service.id.to_s,
+          'io;kontena;service;instance_number' => '2',
+          'io;kontena;container;type' => 'container'
+        }
+      )
       expect(subject.instance_rank(node, stateless_service, 2) < 0.0).to be_truthy
     end
   end

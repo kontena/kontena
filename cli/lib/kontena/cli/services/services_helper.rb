@@ -43,6 +43,7 @@ module Kontena
           service = get_service(token, service_id)
           grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
+          puts "  stack: #{service['stack']['id'] }"
           puts "  status: #{service['state'] }"
           puts "  image: #{service['image']}"
           puts "  revision: #{service['revision']}"
@@ -57,7 +58,7 @@ module Kontena
           if service['deploy_opts']['interval']
             puts "    interval: #{service['deploy_opts']['interval']}"
           end
-          puts "  dns: #{service['name']}.#{grid}.kontena.local"
+          puts "  dns: #{service['dns']}"
 
           if service['affinity'].to_a.size > 0
             puts "  affinity: "
@@ -181,7 +182,9 @@ module Kontena
             puts "    healthy: #{service['health_status']['healthy']}"
             puts "    total: #{service['health_status']['total']}"
           end
+        end
 
+        def show_service_instances(token, service_id)
           puts "  instances:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
@@ -189,7 +192,7 @@ module Kontena
             puts "      rev: #{container['deploy_rev']}"
             puts "      service_rev: #{container['service_rev']}"
             puts "      node: #{container['node']['name'] rescue 'unknown'}"
-            puts "      dns: #{container['name']}.#{grid}.kontena.local"
+            puts "      dns: #{container['hostname']}.#{container['domainname']}"
             puts "      ip: #{container['ip_address']}"
             puts "      public ip: #{container['node']['public_ip'] rescue 'unknown'}"
             if container['health_status']
@@ -219,19 +222,14 @@ module Kontena
         end
 
         # @param [String] token
-        # @param [String] name
+        # @param [Hash] deployment
         # @return [Boolean]
-        def wait_for_deploy_to_finish(token, name, timeout = 600)
-          service = client(token).get("services/#{name}")
-          desired_count = service['container_count']
-          updated_at = DateTime.parse(service['updated_at']) rescue DateTime.now
+        def wait_for_deploy_to_finish(token, deployment, timeout = 600)
           deployed = false
           Timeout::timeout(timeout) do
             until deployed
-              containers = client(token).get("services/#{name}/containers")['containers']
-              deployed = containers.size == desired_count && containers.all?{ |c|
-                DateTime.parse(c['created_at']) >= updated_at rescue false
-              }
+              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
+              deployed = true if deployment['finished_at']
               sleep 1
             end
           end
@@ -272,10 +270,13 @@ module Kontena
         # @param [String] service_id
         # @return [String]
         def parse_service_id(service_id)
-          if service_id.to_s.include?('/')
+          count = service_id.to_s.count('/')
+          if count == 2
             param = service_id
-          else
+          elsif count == 1
             param = "#{current_grid}/#{service_id}"
+          else
+            param = "#{current_grid}/default/#{service_id}"
           end
         end
 

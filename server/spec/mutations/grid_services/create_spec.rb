@@ -7,7 +7,9 @@ describe GridServices::Create do
     grid.users << user
     grid
   }
-  let(:linked_service) { GridService.create(grid: grid, name: 'linked-service', image_name: 'redis:2.8')}
+  let(:linked_service) {
+    GridService.create!(grid: grid, name: 'linked-service', image_name: 'redis:2.8')
+  }
 
   describe '#run' do
     it 'creates a new grid service' do
@@ -195,7 +197,7 @@ describe GridServices::Create do
 
     it 'saves links' do
       links = [
-        {name: linked_service.name, alias: 'link-alias'}
+        {name: "#{linked_service.stack.name}/#{linked_service.name}", alias: 'link-alias'}
       ]
       outcome = described_class.new(
           current_user: user,

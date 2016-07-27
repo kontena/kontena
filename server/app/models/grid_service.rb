@@ -67,12 +67,8 @@ class GridService
   end
 
   # @return [String]
-  def agent_service_name
-    if self.stack.name == 'default'.freeze
-      self.name
-    else
-      "#{self.stack.name}-#{self.name}"
-    end
+  def name_with_stack
+    "#{self.stack.name}-#{self.name}"
   end
 
   # @return [Boolean]
@@ -175,7 +171,8 @@ class GridService
     self.containers.unscoped.volumes.find_by(name: name.to_s)
   end
 
-  def linked_to_services
+  # @return [Mongoid::Criteria]
+  def linked_from_services
     self.grid.grid_services.where(:'grid_service_links.linked_grid_service_id' => self.id)
   end
 
