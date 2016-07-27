@@ -37,9 +37,13 @@ json.state container.state
 json.deploy_rev container.deploy_rev
 json.service_rev container.service_rev
 json.image container.image
+json.cmd container.cmd
 json.env container.env
+json.labels container.labels
 json.volumes container.volumes
 json.ip_address container.ip_address
+json.hostname container.hostname
+json.domainname container.domainname
 json.network_settings container.network_settings
 if container.health_status
   json.health_status do

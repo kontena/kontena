@@ -24,6 +24,10 @@ describe GridService do
   it { should have_many(:audit_logs) }
   it { should have_many(:grid_service_deploys) }
 
+  it { should validate_presence_of(:name) }
+  it { should validate_presence_of(:image_name) }
+  it { should validate_presence_of(:grid_id) }
+  it { should validate_presence_of(:stack_id) }
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_service_ids: 1) }
@@ -80,6 +84,18 @@ describe GridService do
     it 'returns false if service is not running' do
       subject.state = 'stopped'
       expect(subject.running?).to eq(false)
+    end
+  end
+
+  describe '#stopped?' do
+    it 'returns true if service is stopped' do
+      subject.state = 'stopped'
+      expect(subject.stopped?).to eq(true)
+    end
+
+    it 'returns false if service is not stopped' do
+      subject.state = 'running'
+      expect(subject.stopped?).to eq(false)
     end
   end
 
@@ -174,6 +190,18 @@ describe GridService do
 
     it 'returns nil if container is not found' do
       expect(grid_service.container_by_name('not_found')).to be_nil
+    end
+  end
+
+  describe '#agent_service_name' do
+    it 'returns short version for default stack' do
+      expect(grid_service.agent_service_name).to eq(grid_service.name)
+    end
+
+    it 'returns short longer version for non-default stack' do
+      stack = grid.stacks.create(name: 'custom')
+      grid_service.stack = stack
+      expect(grid_service.agent_service_name).to eq("#{stack.name}-#{grid_service.name}")
     end
   end
 end
