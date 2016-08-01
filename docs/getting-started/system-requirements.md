@@ -9,7 +9,7 @@ toc_order: 3
 * **Kontena CLI:** Ruby 2.0 or later
   * **Local Image Builds (optional):** Docker 1.6.x or later
   * **VPN (optional):** OpenVPN client
-  * **Local provisioning of master/nodes (optional):** Vagrant, Virtualbox
+  * **Local provisioning of master/nodes (optional):** Vagrant, VirtualBox
   * **AWS provisioning of master/nodes (optional):** fog-aws rubygem
   * **DigitalOcean provisioning of master/nodes (optional):** droplet_kit rubygem
   * **Packet provisioning of master/nodes (optional):** packethost rubygem
