@@ -20,26 +20,33 @@ module Kontena::Workers
 
     
     def start
-      labels = @container.json['Config']['Labels']
-      uri = labels['io.kontena.health_check.uri']
-      interval = labels['io.kontena.health_check.interval'].to_i
-      initial_delay = labels['io.kontena.health_check.initial_delay'].to_i
-      timeout = labels['io.kontena.health_check.timeout'].to_i
-      port = labels['io.kontena.health_check.port'].to_i
-      protocol = labels['io.kontena.health_check.protocol']
-      ip, _ = @container.overlay_cidr.split('/')
+      initial_delay = @container.labels['io.kontena.health_check.initial_delay'].to_i
+      interval = @container.labels['io.kontena.health_check.interval'].to_i
 
       sleep initial_delay # to allow container to startup properly
 
+      check_status
+
       every(interval) do
-        if protocol == 'http'
-          msg = check_http_status(ip, port, uri, timeout)
-        elsif
-          msg = check_tcp_status(ip, port, timeout)
-        end
-        @queue << msg
+        check_status
       end
       
+    end
+
+    def check_status
+      
+      uri = @container.labels['io.kontena.health_check.uri']
+      timeout = @container.labels['io.kontena.health_check.timeout'].to_i
+      port = @container.labels['io.kontena.health_check.port'].to_i
+      protocol = @container.labels['io.kontena.health_check.protocol']
+      ip, _ = @container.overlay_cidr.split('/')
+
+      if protocol == 'http'
+        msg = check_http_status(ip, port, uri, timeout)
+      else
+        msg = check_tcp_status(ip, port, timeout)
+      end
+      @queue << msg
     end
 
     def check_http_status(ip, port, uri, timeout)
