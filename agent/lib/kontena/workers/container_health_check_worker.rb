@@ -25,10 +25,10 @@ module Kontena::Workers
 
       sleep initial_delay # to allow container to startup properly
 
-      check_status()
+      check_status
 
       every(interval) do
-        check_status()
+        check_status
       end
       
     end
@@ -43,7 +43,7 @@ module Kontena::Workers
 
       if protocol == 'http'
         msg = check_http_status(ip, port, uri, timeout)
-      elsif
+      else
         msg = check_tcp_status(ip, port, timeout)
       end
       @queue << msg
