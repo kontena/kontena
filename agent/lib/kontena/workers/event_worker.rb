@@ -6,36 +6,60 @@ module Kontena::Workers
 
     EVENT_NAME = 'container:event'
 
-    attr_reader :queue
+    attr_reader :queue, :event_queue
+
+    finalizer :stop_processing
 
     # @param [Queue] queue
     # @param [Boolean] autostart
     def initialize(queue, autostart = true)
       @queue = queue
+      @event_queue = Queue.new
+      @processing = true
       info 'initialized'
-      async.start if autostart
+      start if autostart
     end
 
     def start
-      sleep 0.01
-      self.stream_events
+      async.process_events
+      async.stream_events
+    end
+
+    def processing?
+      @processing == true
     end
 
     def stream_events
       info 'started to stream docker container events'
       filters = JSON.dump({type: ['container']})
-      begin
-        Docker::Event.stream({filters: filters}) do |event|
-          self.publish_event(event)
+      defer {
+        begin
+          Docker::Event.stream({filters: filters}) do |event|
+            raise "stop event stream" unless processing?
+            @event_queue << event
+          end
+        rescue Docker::Error::TimeoutError
+          if processing?
+            error 'connection timeout.. retrying'
+            retry
+          end
+        rescue Excon::Errors::SocketError => exc
+          if processing?
+            error 'connection refused.. retrying'
+            sleep 0.01
+            retry
+          end
         end
-      rescue Docker::Error::TimeoutError
-        error 'connection timeout.. retrying'
-        retry
-      rescue Excon::Errors::SocketError => exc
-        error 'connection refused.. retrying'
-        sleep 0.01
-        retry
-      end
+      }
+    end
+
+    def process_events
+      defer {
+        while processing?
+          event = @event_queue.pop
+          publish_event(event)
+        end
+      }
     end
 
     # @param [Docker::Event] event
@@ -55,6 +79,10 @@ module Kontena::Workers
       publish(EVENT_NAME, event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
+    end
+
+    def stop_processing
+      @processing = false
     end
   end
 end
