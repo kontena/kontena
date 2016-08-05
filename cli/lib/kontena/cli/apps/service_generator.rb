@@ -88,7 +88,7 @@ module Kontena::Cli::Apps
 
     # @param [String] path
     def read_env_file(path)
-      File.readlines(path).delete_if { |line| line.start_with?('#') || line.empty? }
+      File.readlines(path).delete_if { |line| line.start_with?('#') || line.strip.empty? }
     end
 
     # @param [Array<String>] port_options
