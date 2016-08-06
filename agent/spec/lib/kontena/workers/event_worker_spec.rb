@@ -14,6 +14,50 @@ describe Kontena::Workers::EventWorker do
   }
   after(:each) { Celluloid.shutdown }
 
+  describe '#start' do
+    it 'starts processing events' do
+      expect(subject.wrapped_object).to receive(:stream_events)
+      expect(subject.wrapped_object).to receive(:process_events)
+      subject.start
+    end
+
+    it 'streams and processes events' do
+      times = 100
+      allow(Docker::Event).to receive(:stream) {|params, &block|
+        times.times {
+          block.call(Docker::Event.new('status', 'id', 'from', 'time'))
+        }
+      }
+      subject.async.start
+      sleep 0.1
+      expect(queue.size).to eq(times)
+    end
+  end
+
+  describe '#process_events' do
+    it 'processes events from queue' do
+      expect(subject.wrapped_object).to receive(:publish_event).exactly(2).times
+      subject.async.process_events
+      subject.event_queue << {msg: 'foo'}
+      subject.event_queue << {msg: 'bar'}
+      sleep 0.01
+      subject.terminate
+    end
+  end
+
+  describe '#stream_events' do
+    it 'streams events from docker' do
+      allow(Docker::Event).to receive(:stream) {|params, &block|
+        1000.times {
+          block.call({})
+        }
+      }
+      subject.async.stream_events
+      sleep 0.01
+      expect(subject.event_queue.size).to eq(1000)
+    end
+  end
+
   describe '#publish_event' do
     it 'adds event to queue' do
       expect {
