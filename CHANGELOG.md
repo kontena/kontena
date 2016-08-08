@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.14.6 (2016-08-08)
+## 0.14.7 (2016-08-08)
 
 **Master & Agent:**
 - update cadvisor to 0.23.2 (#883)
