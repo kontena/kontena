@@ -1,6 +1,6 @@
 api:
   build: .
-  dockerfile: Dockerfile.alpine
+  dockerfile: Dockerfile
   ports:
     - 80:9292
   environment:
