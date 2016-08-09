@@ -13,24 +13,14 @@ class Kontena::Cli::WhoamiCommand < Clamp::Command
     puts "Master: #{self.current_master['name']}"
     puts "URL: #{api_url}"
     puts "Grid: #{current_grid}"
-    if current_master['email']
-      puts "User: #{current_master['email']}"
+    if current_master['email'] || current_master['username']
+      puts "User: #{current_master['email'] || current_master['username']}"
     else # In case local storage doesn't have the user email yet
       token = require_token
       user = client(token).get('user')
       puts "User: #{user['email']}"
-      master = {
-          'name' => current_master['name'],
-          'url' => current_master['url'],
-          'token' => current_master['token'],
-          'email' => user['email'],
-          'grid' => current_master['grid']
-      }
-
-      self.add_master(current_master['name'], master)
+      current_master['username'] = user['email'] || user['username']
+      config.write
     end
-
-
   end
-
 end
