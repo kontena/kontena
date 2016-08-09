@@ -18,6 +18,9 @@ namespace :release do
     headline "Bumping version to #{VERSION}"
     %w(agent cli server).each do |dir|
       File.write("./#{dir}/VERSION", VERSION)
+      Dir.chdir(dir) do
+        sh("bundle install")
+      end
     end
 
   end
