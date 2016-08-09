@@ -73,3 +73,12 @@ Certificate:
             X509v3 Subject Alternative Name: 
                 DNS:www.example.com, DNS:example.com
 ```
+
+## Secrets
+
+Kontena LE integration stores all certificate information securely in [Kontena Vault](vault.md). Upon receiving a certificate from LetsEncrypt Kontena stores three secrets in the vault:
+**LE_CERTIFICATE_`<domain_name>`_PRIVATE_KEY** Private key of the certificate
+**LE_CERTIFICATE_`<domain_name>`_CERTIFICATE** The actual certificate
+**LE_CERTIFICATE_`<domain_name>`_BUNDLE** Bundle of the certificate and private key, suitable to use with [Kontena Loadbalancer](loadbalancer.md).
+
+These can be used with any software that can utilize secrets from environment using normal [secret integration](vault.md#using-secrets-with-applications).
