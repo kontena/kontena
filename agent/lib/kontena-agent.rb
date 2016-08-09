@@ -2,7 +2,7 @@ require 'docker'
 require 'faye/websocket'
 require 'eventmachine'
 require 'thread'
-require 'ruby_dig'
+
 require 'statsd'
 require 'celluloid/current'
 require 'celluloid/autostart'

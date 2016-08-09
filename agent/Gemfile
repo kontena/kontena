@@ -8,7 +8,6 @@ gem 'activesupport', '~> 4.2.0'
 gem 'celluloid', '~> 0.17.3'
 gem 'etcd'
 gem 'statsd-ruby'
-gem 'ruby_dig'
 gem 'vmstat'
 
 group :development, :test do

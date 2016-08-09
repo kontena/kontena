@@ -15,9 +15,8 @@ gem 'random_token'
 gem 'msgpack'
 gem 'httpclient', '~> 2.3'
 gem 'authority'
-gem 'ruby_dig'
-gem 'rollbar', require: false
 gem 'mongoid-enum'
+gem 'rollbar', require: false
 gem 'acme-client'
 gem 'json-jwt', '= 1.5.2'
 
