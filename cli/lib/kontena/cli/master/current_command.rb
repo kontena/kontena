@@ -5,7 +5,7 @@ module Kontena::Cli::Master
     option ["--name"], :flag, "Show name only", default: false
 
     def execute
-      master = current_master
+      master = require_current_master
 
       if name?
         puts master['name']
