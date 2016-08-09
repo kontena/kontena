@@ -94,10 +94,10 @@ describe Kontena::Cli::Common do
   describe '#settings' do
     it 'migrates old settings' do
       mock_config({
-        "server": {
-          "url": "https://master.domain.com:8443",
-          "grid": "my-grid",
-          "token": "kontena-token"
+        "server" => {
+          "url" => "https://master.domain.com:8443",
+          "grid" => "my-grid",
+          "token" => "kontena-token"
         }
       })
       expect(File).to receive(:write) do |filename, content|
