@@ -4,38 +4,10 @@ require "kontena/cli/apps/deploy_command"
 
 describe Kontena::Cli::Apps::DeployCommand do
   include FixturesHelpers
+  include ClientHelpers
 
   let(:subject) do
     described_class.new(File.basename($0))
-  end
-
-  let(:settings) do
-    {'current_server' => 'alias',
-     'servers' => [
-         {'name' => 'some_master', 'url' => 'some_master'},
-         {'name' => 'alias', 'url' => 'someurl', 'token' => token}
-     ]
-    }
-  end
-
-  let(:settings_without_api_url) do
-    {'current_server' => 'alias',
-     'servers' => [
-         {'name' => 'alias', 'token' => token}
-     ]
-    }
-  end
-
-  let(:settings_without_token) do
-    {'current_server' => 'alias',
-     'servers' => [
-         {'name' => 'alias', 'url' => 'url'}
-     ]
-    }
-  end
-
-  let(:token) do
-    '1234567'
   end
 
   let(:docker_compose_yml) do
@@ -64,10 +36,6 @@ describe Kontena::Cli::Apps::DeployCommand do
     }
   end
 
-  let(:client) do
-    double
-  end
-
   let(:options) do
     double({prefix: false, file: false, service: nil})
   end
@@ -88,21 +56,24 @@ describe Kontena::Cli::Apps::DeployCommand do
 
     context 'when api_url is nil' do
       it 'raises error' do
-        allow(subject).to receive(:settings).and_return(settings_without_api_url)
+        allow(subject.config).to receive(:current_master).and_return(
+          Kontena::Cli::Config::Server.new
+        )
         expect{subject.run([])}.to raise_error(ArgumentError)
       end
     end
 
     context 'when token is nil' do
       it 'raises error' do
-        allow(subject).to receive(:settings).and_return(settings_without_token)
+        allow(subject.config).to receive(:current_master).and_return(
+          Kontena::Cli::Config::Server.new(url: 'http://foo.com')
+        )
         expect{subject.run([])}.to raise_error(ArgumentError)
       end
     end
 
     context 'when api url and token are valid' do
       before(:each) do
-        allow(subject).to receive(:settings).and_return(settings)
         allow(File).to receive(:exists?).and_return(true)
         allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
         allow(File).to receive(:read).with("#{Dir.getwd}/docker-compose.yml").and_return(docker_compose_yml)
@@ -113,7 +84,6 @@ describe Kontena::Cli::Apps::DeployCommand do
       end
 
       it 'reads ./kontena.yml file by default' do
-        allow(subject).to receive(:settings).and_return(settings)
         expect(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
         subject.run([])
       end
@@ -147,7 +117,7 @@ describe Kontena::Cli::Apps::DeployCommand do
               'env' => ['MYSQL_ADMIN_PASSWORD=password', 'TEST_ENV_VAR=test', 'TEST_ENV_VAR2=test3'],
           }
 
-          expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
+          expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
           subject.run([])
         end
       end
@@ -167,7 +137,7 @@ describe Kontena::Cli::Apps::DeployCommand do
               'env' => ['MYSQL_ADMIN_PASSWORD=password', 'TEST_ENV_VAR=test']
           }
 
-          expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
+          expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
           subject.run([])
         end
       end
@@ -191,7 +161,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           ]
         }
 
-        expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
+        expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
         subject.run([])
       end
 
@@ -204,7 +174,7 @@ describe Kontena::Cli::Apps::DeployCommand do
             'container_count' => nil,
             'stateful' => true,
         }
-        expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
+        expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
 
         subject.run([])
       end
@@ -222,15 +192,15 @@ describe Kontena::Cli::Apps::DeployCommand do
           'links' => [{ 'name' => 'kontena-test-mysql', 'alias' => 'mysql' }],
           'ports' => [{ 'ip' => '0.0.0.0','container_port' => '80', 'node_port' => '80', 'protocol' => 'tcp' }]
         }
-        expect(subject).to receive(:create_service).with('1234567', '1', hash_including(data))
+        expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
 
         subject.run([])
       end
 
       it 'deploys services' do
         allow(subject).to receive(:current_dir).and_return('kontena-test')
-        expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-mysql', {})
-        expect(subject).to receive(:deploy_service).with('1234567', 'kontena-test-wordpress', {})
+        expect(subject).to receive(:deploy_service).with(duck_type(:access_token), 'kontena-test-mysql', {})
+        expect(subject).to receive(:deploy_service).with(duck_type(:access_token), 'kontena-test-wordpress', {})
         subject.run([])
       end
 
