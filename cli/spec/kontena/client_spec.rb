@@ -13,24 +13,24 @@ describe Kontena::Client do
   describe '#get' do
     it 'passes path to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:get).with(
-        hash_including(path: '/v1/foo')
+      expect(http_client).to receive(:request).with(
+        hash_including(path: '/v1/foo', method: :get)
       ).and_return(spy(:response, status: 200))
       subject.get('foo')
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:get).with(
-        hash_including(query: {bar: 'baz'})
+      expect(http_client).to receive(:request).with(
+        hash_including(query: {bar: 'baz'}, method: :get)
       ).and_return(spy(:response, status: 200))
       subject.get('foo', {bar: 'baz'})
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:get).with(
-        hash_including(headers: hash_including(:'Some-Header' => 'value'))
+      expect(http_client).to receive(:request).with(
+        hash_including(headers: hash_including(:'Some-Header' => 'value'), method: :get)
       ).and_return(spy(:response, status: 200))
       subject.get('foo', nil, {:'Some-Header' => 'value'})
     end
@@ -41,24 +41,24 @@ describe Kontena::Client do
 
     it 'passes path & response_block to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:get).with(
-        hash_including(path: '/v1/foo', response_block: response_block)
+      expect(http_client).to receive(:request).with(
+        hash_including(path: '/v1/foo', response_block: response_block, method: :get)
       ).and_return(spy(:response, status: 200))
       subject.get_stream('foo', response_block)
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:get).with(
-        hash_including(query: {bar: 'baz'})
+      expect(http_client).to receive(:request).with(
+        hash_including(query: {bar: 'baz'}, method: :get)
       ).and_return(spy(:response, status: 200))
       subject.get_stream('foo', response_block, {bar: 'baz'})
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:get).with(
-        hash_including(headers: hash_including(:'Some-Header' => 'value'))
+      expect(http_client).to receive(:request).with(
+        hash_including(headers: hash_including(:'Some-Header' => 'value'), method: :get)
       ).and_return(spy(:response, status: 200))
       subject.get_stream('foo', response_block, nil, {:'Some-Header' => 'value'})
     end
@@ -71,24 +71,24 @@ describe Kontena::Client do
 
     it 'passes path and object to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:post).with(
-        hash_including(path: '/v1/foo', body: kind_of(String))
+      expect(http_client).to receive(:request).with(
+        hash_including(path: '/v1/foo', body: kind_of(String), method: :post)
       ).and_return(spy(:response, status: 200))
       subject.post('foo', data)
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:post).with(
-        hash_including(query: {bar: 'baz'})
+      expect(http_client).to receive(:request).with(
+        hash_including(query: {bar: 'baz'}, method: :post)
       ).and_return(spy(:response, status: 200))
       subject.post('foo', data, {bar: 'baz'})
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:post).with(
-        hash_including(headers: hash_including(:'Some-Header' => 'value'))
+      expect(http_client).to receive(:request).with(
+        hash_including(headers: hash_including(:'Some-Header' => 'value'), method: :post)
       ).and_return(spy(:response, status: 200))
       subject.post('foo', data, nil, {:'Some-Header' => 'value'})
     end
@@ -101,24 +101,24 @@ describe Kontena::Client do
 
     it 'passes path and object to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:put).with(
-        hash_including(path: '/v1/foo', body: kind_of(String))
+      expect(http_client).to receive(:request).with(
+        hash_including(path: '/v1/foo', body: kind_of(String), method: :put)
       ).and_return(spy(:response, status: 200))
       subject.put('foo', data)
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:put).with(
-        hash_including(query: {bar: 'baz'})
+      expect(http_client).to receive(:request).with(
+        hash_including(query: {bar: 'baz'}, method: :put)
       ).and_return(spy(:response, status: 200))
       subject.put('foo', data, {bar: 'baz'})
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:put).with(
-        hash_including(headers: hash_including(:'Some-Header' => 'value'))
+      expect(http_client).to receive(:request).with(
+        hash_including(headers: hash_including(:'Some-Header' => 'value'), method: :put)
       ).and_return(spy(:response, status: 200))
       subject.put('foo', data, nil, {:'Some-Header' => 'value'})
     end
@@ -131,24 +131,24 @@ describe Kontena::Client do
 
     it 'passes path to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:delete).with(
-        hash_including(path: '/v1/foo')
+      expect(http_client).to receive(:request).with(
+        hash_including(path: '/v1/foo', method: :delete)
       ).and_return(spy(:response, status: 200))
       subject.delete('foo')
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:delete).with(
-        hash_including(query: {bar: 'baz'})
+      expect(http_client).to receive(:request).with(
+        hash_including(query: {bar: 'baz'}, method: :delete)
       ).and_return(spy(:response, status: 200))
       subject.delete('foo', nil, {bar: 'baz'})
     end
 
     it 'passes params to client' do
       allow(subject).to receive(:http_client).and_return(http_client)
-      expect(http_client).to receive(:delete).with(
-        hash_including(headers: hash_including(:'Some-Header' => 'value'))
+      expect(http_client).to receive(:request).with(
+        hash_including(headers: hash_including(:'Some-Header' => 'value'), method: :delete)
       ).and_return(spy(:response, status: 200))
       subject.delete('foo', nil, nil, {:'Some-Header' => 'value'})
     end
