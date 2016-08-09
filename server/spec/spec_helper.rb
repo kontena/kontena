@@ -1,6 +1,7 @@
 ENV['RACK_ENV'] = 'test'
 ENV['VAULT_KEY'] = SecureRandom.base64(64)
 ENV['VAULT_IV'] = SecureRandom.base64(64)
+ENV['ACME_ENDPOINT'] = 'https://acme-staging.api.letsencrypt.org/'
 require 'dotenv'
 Dotenv.load
 

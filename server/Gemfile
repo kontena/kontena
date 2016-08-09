@@ -17,7 +17,9 @@ gem 'httpclient', '~> 2.3'
 gem 'authority'
 gem 'ruby_dig'
 gem 'rollbar', require: false
-gem "mongoid-enum"
+gem 'mongoid-enum'
+gem 'acme-client'
+gem 'json-jwt', '= 1.5.2'
 
 group :development, :test do
   gem 'dotenv'

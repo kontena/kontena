@@ -12,3 +12,4 @@ toc_link: false
 * [Services](services.md)
 * [Users](users.md)
 * [VPN Access](vpn-access.md)
+* [Certificates](certificates.md)
