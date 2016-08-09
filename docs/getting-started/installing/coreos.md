@@ -1,19 +1,40 @@
+---
+title: Custom CoreOS Install
+toc_order: 1
+---
+
+# Custom CoreOS Install
+
+- [Prerequisities](coreos#prerequisities)
+- [Installing Kontena Master](coreos#installing-kontena-master)
+- [Installing Kontena Nodes](coreos#installing-kontena-nodes)
+
+## Prerequisities
+
+- Kontena Account
+
+## Installing Kontena Master
+
+Example cloud-config:
+
+```
 #cloud-config
 write_files:
   - path: /etc/kontena-server.env
     permissions: 0600
     owner: root
     content: |
-      KONTENA_VERSION=<%= version %>
-      KONTENA_VAULT_KEY=<%= vault_secret %>
-      KONTENA_VAULT_IV=<%= vault_iv %>
-      <% if ssl_cert %>SSL_CERT="/etc/kontena-server.pem"
+      KONTENA_VERSION=latest
+      KONTENA_VAULT_KEY=<your vault_key>
+      KONTENA_VAULT_IV=<your vault_iv>
+      SSL_CERT="/etc/kontena-server.pem"
 
   - path: /etc/kontena-server.pem
     permissions: 0600
     owner: root
-    content: | <% ssl_cert.split(/\n/).each do |row| %>
-      <%= row %><% end %><% end %>
+    content: |
+      <your ssl_certificate>
+
   - path: /opt/bin/kontena-haproxy.sh
     permissions: 0755
     owner: root
@@ -26,11 +47,10 @@ write_files:
       fi
       /usr/bin/docker run --name=kontena-server-haproxy \
         --link kontena-server-api:kontena-server-api \
-        -e SSL_CERT="$SSL_CERT" \
+        -e SSL_CERT="$SSL_CERT" -e BACKEND_PORT=9292 \
         -p 80:80 -p 443:443 kontena/haproxy:latest
 coreos:
   units:
-<% unless mongodb_uri -%>
     - name: kontena-server-mongo.service
       command: start
       enable: true
@@ -54,7 +74,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
             --volumes-from=kontena-server-mongo-data \
             mongo:3.0 mongod --smallfiles
-<% end -%>
+
     - name: kontena-server-api.service
       command: start
       enable: true
@@ -63,16 +83,10 @@ coreos:
         Description=kontena-server-api
         After=network-online.target
         After=docker.service
-        After=kontena-server-mongo.service
-        Description=Kontena Master
+        Description=Kontena Agent
         Documentation=http://www.kontena.io/
-        Before=kontena-server-haproxy.service
-        Wants=kontena-server-haproxy.service
         Requires=network-online.target
         Requires=docker.service
-<% unless mongodb_uri -%>
-        Requires=kontena-server-mongo.service
-<% end %>
 
         [Service]
         Restart=always
@@ -82,15 +96,8 @@ coreos:
         ExecStartPre=-/usr/bin/docker rm kontena-server-api
         ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
         ExecStart=/usr/bin/docker run --name kontena-server-api \
-  <% if mongodb_uri -%>
-            -e MONGODB_URI=<%= mongodb_uri %> \
-  <% else -%>
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
-  <% end -%>
-  <% if auth_server %>
-            -e AUTH_API_URL=<%= auth_server %> \
-  <% end -%>
             -e VAULT_KEY=${KONTENA_VAULT_KEY} -e VAULT_IV=${KONTENA_VAULT_IV} \
             kontena/server:${KONTENA_VERSION}
 
@@ -106,7 +113,6 @@ coreos:
         Documentation=http://www.kontena.io/
         Requires=network-online.target
         Requires=docker.service
-        Requires=kontena-server-api.service
 
         [Service]
         Restart=always
@@ -116,3 +122,36 @@ coreos:
         ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
         ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
         ExecStart=/opt/bin/kontena-haproxy.sh
+```
+
+`KONTENA_VAULT_KEY` & `KONTENA_VAULT_IV` should be random strings. They can be generated from bash:
+
+```
+$ cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
+```
+
+The SSL certificate specified is a pem file, containing a public certificate followed by a private key (public certificate must be put before the private key, order matters).
+
+After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
+
+```
+$ kontena login --name do-master https://<master_ip>/
+```
+
+## Installing Kontena Nodes
+
+Example cloud-config that can be used as a basis for CoreOS installation can be generated via kontena cli:
+
+
+```
+$ kontena grid cloud-config <name>
+```
+
+**Options:**
+
+```
+--dns DNS                     DNS server
+--peer-interface IFACE        Peer (private) network interface (default: "eth1")
+--docker-bip BIP              Docker bridge ip (default: "172.17.43.1/16")
+--version VERSION             Agent version (default: "latest")
+```
