@@ -1,6 +1,10 @@
 module Kontena
   module Util
     
+    def self.included(base)
+        base.extend(ClassMethods)
+    end
+
     # @param [String] cmd
     def which(cmd)
       exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
@@ -13,5 +17,12 @@ module Kontena
       return nil
     end
     module_function(:which)
+
+    module ClassMethods
+      def experimental?
+        ENV.has_key?('KONTENA_EXPERIMENTAL')
+      end   
+    end
+    
   end
 end
