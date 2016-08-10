@@ -27,10 +27,11 @@ require_relative 'cli/stack_command'
 require_relative 'cli/certificate_command'
 
 class Kontena::MainCommand < Kontena::Command
+  include Kontena::Util
 
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
-  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand
+  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand if experimental?
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "vault", "Vault specific commands", Kontena::Cli::VaultCommand
   subcommand "certificate", "LE Certificate specific commands", Kontena::Cli::CertificateCommand
