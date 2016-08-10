@@ -223,5 +223,41 @@ module Kontena::Cli::Services
         expect(subject.parse_build_args({'foo' => 'bar', 'baz' => nil})).to eq({'foo' => 'bar', 'baz' => 'baf'})
       end
     end
+
+    describe '#health_status' do
+      it 'returns :unknown by default' do
+        expect(subject.health_status({})).to eq(:unknown)
+      end
+
+      it 'returns :healthy if all instances are healthy' do
+        data = {
+          'health_status' => {
+            'healthy' => 3,
+            'total' => 3
+          }
+        }
+        expect(subject.health_status(data)).to eq(:healthy)
+      end
+
+      it 'returns :partial if not all instances are healthy' do
+        data = {
+          'health_status' => {
+            'healthy' => 2,
+            'total' => 3
+          }
+        }
+        expect(subject.health_status(data)).to eq(:partial)
+      end
+
+      it 'returns :unhealthy if all instances are down' do
+        data = {
+          'health_status' => {
+            'healthy' => 0,
+            'total' => 3
+          }
+        }
+        expect(subject.health_status(data)).to eq(:unhealthy)
+      end
+    end
   end
 end

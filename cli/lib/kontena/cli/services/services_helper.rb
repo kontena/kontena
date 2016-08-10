@@ -180,7 +180,7 @@ module Kontena
             puts "    interval: #{service['health_check']['interval']}"
             puts "    initial_delay: #{service['health_check']['initial_delay']}"
           end
-          
+
           if service['health_status']
             puts "  health status:"
             puts "    healthy: #{service['health_status']['healthy']}"
@@ -282,7 +282,7 @@ module Kontena
               ip: ip,
               container_port: container_port,
               node_port: node_port,
-              protocol: protocol 
+              protocol: protocol
             }
           }
         end
@@ -398,6 +398,42 @@ module Kontena
           end
 
           build_args
+        end
+
+        # @param [Symbol] health
+        # @return [String]
+        def health_status_icon(health)
+          if health == :unhealthy
+            icon = '⊗'.freeze
+            icon.colorize(:red)
+          elsif health == :partial
+            icon = '⊙'.freeze
+            icon.colorize(:yellow)
+          elsif health == :healthy
+            icon = '⊛'.freeze
+            icon.colorize(:green)
+          else
+            icon = '⊝'.freeze
+            icon.colorize(:default)
+          end
+        end
+
+        # @param [Hash] service
+        # @return [Symbol]
+        def health_status(service)
+          if service['health_status']
+            healthy = service.dig('health_status', 'healthy')
+            total = service.dig('health_status', 'total')
+            if healthy == 0
+              :unhealthy
+            elsif healthy > 0 && healthy < total
+              :partial
+            else
+              :healthy
+            end
+          else
+            :unknown
+          end
         end
       end
     end
