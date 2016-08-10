@@ -127,7 +127,7 @@ describe 'secrets' do
       expect(response.status).to eq(200)
       expect(json_response['secrets'].size).to eq(1)
       secret = json_response['secrets'][0]
-      expect(secret.keys.sort).to eq(%w(id name created_at).sort)
+      expect(secret.keys.sort).to eq(%w(id name created_at updated_at).sort)
     end
   end
 
