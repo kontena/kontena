@@ -1,11 +1,5 @@
-total_counts = Container.collection.aggregate([
-  { :$match => { grid_id: @grid.id } },
-  { :$group => { _id: "$grid_service_id", total: {:$sum => 1} } }
-])
-running_counts =  Container.collection.aggregate([
-  { :$match => { :grid_id => @grid.id, :'state.running' => true } },
-  { :$group => { _id: "$grid_service_id", total: {:$sum => 1} } }
-])
+total_counts = Container.counts_for_grid_services(@grid.id)
+running_counts = Container.counts_for_grid_services(@grid.id, {:'state.running' => true})
 
 json.services @grid_services do |grid_service|
   json.id grid_service.to_path
