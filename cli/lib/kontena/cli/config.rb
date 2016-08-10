@@ -118,7 +118,7 @@ module Kontena
           name: 'master',
           token_endpoint: '/oauth2/token',
           authorization_endpoint: '/oauth2/authorize',
-          redirection_endpoint: '/oauth2/cb',
+          redirection_endpoint: '/cb',
           token_verify_path: '/v1/user'
         }
       end
