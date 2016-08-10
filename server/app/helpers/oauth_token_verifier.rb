@@ -22,11 +22,11 @@ module OAuth2TokenVerifier
   end
 
   def current_user
-    ENV[TokenAuthentication::CURRENT_USER]
+    env[TokenAuthentication::CURRENT_USER]
   end
 
   def current_access_token
-    ENV[TokenAuthentication::CURRENT_TOKEN]
+    env[TokenAuthentication::CURRENT_TOKEN]
   end
 
   def current_user_admin?
