@@ -1,26 +1,22 @@
-total_counts = Container.counts_for_grid_services(@grid.id)
-running_counts = Container.counts_for_grid_services(@grid.id, {:'state.running' => true})
+total_counts_array = Container.counts_for_grid_services(@grid.id)
+running_counts_array = Container.counts_for_grid_services(@grid.id, {:'state.running' => true})
+
+counts = {}
+total_counts_array.each do |c|
+  counts[c['_id']] ||= {}
+  counts[c['_id']][:total] = c['total']
+end
+running_counts_array.each do |c|
+  counts[c['_id']] ||= {}
+  counts[c['_id']][:running] = c['total']
+end
 
 json.services @grid_services do |grid_service|
-  json.id grid_service.to_path
-  json.created_at grid_service.created_at
-  json.updated_at grid_service.updated_at
-  json.image grid_service.image_name
-  json.name grid_service.name
-  json.stateful grid_service.stateful?
-  json.user grid_service.user
-  json.container_count grid_service.container_count
-  json.cmd grid_service.cmd
-  json.net grid_service.net
-  json.ports grid_service.ports
-  json.state grid_service.state
-  json.strategy grid_service.strategy
-  json.instances do
-    total = total_counts.find{ |c| c['_id'] == grid_service.id } || {'total' => 0}
-    json.total total['total']
-    running = running_counts.find{ |c| c['_id'] == grid_service.id } || {'total' => 0}
-    json.running running['total']
-  end
-  json.revision grid_service.revision
-  json.health_status grid_service.health_status
+  instance_counts = {
+    total: counts[grid_service.id][:total] || 0,
+    running: counts[grid_service.id][:running] || 0
+  }
+  json.partial! 'app/views/v1/grid_services/grid_service',
+    grid_service: grid_service,
+    instance_counts: instance_counts
 end
