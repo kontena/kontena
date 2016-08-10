@@ -4,8 +4,9 @@ module Kontena::Cli::Grids
     ##
     # @param [Hash] grid
     def print_grid(grid)
+      host = ENV['KONTENA_URL'] || self.current_master['url']
       puts "#{grid['name']}:"
-      puts "  uri: #{self.current_master['url'].sub('http', 'ws')}"
+      puts "  uri: #{host.sub('http', 'ws')}"
       puts "  token: #{grid['token']}"
       root_dir = grid['engine_root_dir']
       nodes = client(require_token).get("grids/#{grid['name']}/nodes")
