@@ -19,6 +19,8 @@ gem 'mongoid-enum'
 gem 'rollbar', require: false
 gem 'acme-client'
 gem 'json-jwt', '= 1.5.2'
+gem 'jsonpath'
+gem 'bcrypt'
 
 group :development, :test do
   gem 'dotenv'
