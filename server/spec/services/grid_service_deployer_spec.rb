@@ -67,4 +67,38 @@ describe GridServiceDeployer do
       expect(subject.instance_count).to eq(6)
     end
   end
+
+  describe '#deploy' do
+    let(:channel) { "grid_service_deployer:#{grid_service.id}" }
+
+    it 'subscribes to ping' do
+      events = []
+      subscription = MongoPubsub.subscribe(channel) do |event|
+        events << event if event['event'] == 'pong'
+      end
+      allow(subject).to receive(:cleanup_deploy) do
+        sleep 0.1
+      end
+      allow(subject).to receive(:deploy_service_instance)
+      deploy = Thread.new { subject.deploy }
+      MongoPubsub.publish(channel, {'event' => 'ping'})
+      sleep 0.05
+      expect(events.size).to eq(1)
+      deploy.kill
+    end
+
+    it 'cleans up subscription' do
+      events = []
+      subscription = MongoPubsub.subscribe(channel) do |event|
+        events << event if event['event'] == 'pong'
+      end
+      allow(subject).to receive(:cleanup_deploy)
+      allow(subject).to receive(:deploy_service_instance)
+      subject.deploy
+      sleep 0.01
+      MongoPubsub.publish(channel, {'event' => 'ping'})
+      sleep 0.05
+      expect(events.size).to eq(0)
+    end
+  end
 end

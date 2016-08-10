@@ -11,7 +11,10 @@ class GridServiceDeployer
 
   DEFAULT_REGISTRY = 'index.docker.io'
 
-  attr_reader :grid_service_deploy, :grid_service, :nodes, :scheduler
+  attr_reader :grid_service_deploy,
+              :grid_service,
+              :nodes,
+              :scheduler
 
   ##
   # @param [#find_node] strategy
@@ -22,17 +25,6 @@ class GridServiceDeployer
     @scheduler = GridServiceScheduler.new(strategy)
     @grid_service = grid_service_deploy.grid_service
     @nodes = nodes
-    self.subscribe_to_ping
-  end
-
-  def subscribe_to_ping
-    channel = "grid_service_deployer:#{grid_service.id}"
-    MongoPubsub.subscribe(channel) do |event|
-      event_name = event['event'].to_s
-      if event_name == 'ping'
-        MongoPubsub.publish(channel, {event: 'pong'})
-      end
-    end
   end
 
   ##
@@ -66,12 +58,13 @@ class GridServiceDeployer
 
   def deploy
     info "starting to deploy #{self.grid_service.to_path}"
+    ping_subscription = self.subscribe_to_ping
     creds = self.creds_for_registry
     self.grid_service.set_state('deploying')
     self.grid_service.set(:deployed_at => Time.now.utc)
-    
+
     deploy_rev = Time.now.utc.to_s
-    
+
     deploy_futures = []
     total_instances = self.instance_count
     total_instances.times do |i|
@@ -107,6 +100,7 @@ class GridServiceDeployer
     error exc.backtrace.join("\n") if exc.backtrace
     false
   ensure
+    ping_subscription.terminate if ping_subscription
     self.grid_service.set_state('running')
   end
 
@@ -167,6 +161,17 @@ class GridServiceDeployer
     end
     self.grid_service.containers.unscoped.where(:container_id => nil, :deploy_rev => {:$ne => deploy_rev}).each do |container|
       container.destroy
+    end
+  end
+
+  # @return [MongoPubsub::Subscription]
+  def subscribe_to_ping
+    channel = "grid_service_deployer:#{grid_service.id}"
+    MongoPubsub.subscribe(channel) do |event|
+      event_name = event['event'].to_s
+      if event_name == 'ping'.freeze
+        MongoPubsub.publish(channel, {event: 'pong'.freeze})
+      end
     end
   end
 
