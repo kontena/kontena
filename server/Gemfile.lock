@@ -14,6 +14,7 @@ GEM
     authority (3.1.0)
       activesupport (>= 3.0.0)
       rake (>= 0.8.7)
+    bcrypt (3.1.11)
     bson (3.2.6)
     builder (3.2.2)
     celluloid (0.16.0)
@@ -40,6 +41,8 @@ GEM
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
     json (1.8.3)
+    jsonpath (0.5.8)
+      multi_json
     listen (2.8.3)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
@@ -124,10 +127,12 @@ PLATFORMS
 DEPENDENCIES
   activesupport (~> 4.1.14)
   authority
+  bcrypt
   celluloid (~> 0.16.0)
   dotenv
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)
+  jsonpath
   mongoid (~> 4.0.0)
   mongoid-enum
   mongoid-rspec (~> 2.1.0)
@@ -148,8 +153,5 @@ DEPENDENCIES
   webmock
   websocket-driver (~> 0.6.2)
 
-RUBY VERSION
-   ruby 2.2.3p173
-
 BUNDLED WITH
-   1.12.4
+   1.12.5

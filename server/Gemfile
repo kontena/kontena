@@ -18,6 +18,8 @@ gem 'authority'
 gem 'ruby_dig'
 gem 'rollbar', require: false
 gem "mongoid-enum"
+gem 'jsonpath'
+gem 'bcrypt'
 
 group :development, :test do
   gem 'dotenv'
