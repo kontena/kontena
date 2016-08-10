@@ -26,7 +26,7 @@ module Kontena::Cli::Apps
       data = {}
       data['container_count'] = options['instances']
       data['image'] = parse_image(options['image'])
-      data['env'] = merge_env_vars(options)
+      data['env'] = options['environment'] if options['environment']
       data['container_count'] = options['instances']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
@@ -71,24 +71,6 @@ module Kontena::Cli::Apps
         data['health_check'] = health_check
       end
       data
-    end
-
-    # @param [Hash] options
-    def merge_env_vars(options)
-      return options['environment'] unless options['env_file']
-
-      options['env_file'] = [options['env_file']] if options['env_file'].is_a?(String)
-      options['environment'] = [] unless options['environment']
-      options['env_file'].each do |env_file|
-        options['environment'].concat(read_env_file(env_file))
-      end
-      options['environment'].uniq {|s| s.split('=').first}
-    end
-
-
-    # @param [String] path
-    def read_env_file(path)
-      File.readlines(path).delete_if { |line| line.start_with?('#') || line.strip.empty? }
     end
 
     # @param [Array<String>] port_options

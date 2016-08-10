@@ -16,6 +16,12 @@ describe Kontena::Cli::Apps::YAML::Reader do
     spy
   end
 
+  let(:env_file) do
+    ['APIKEY=12345
+', 'MYSQL_ROOT_PASSWORD=secret
+', 'WP_ADMIN_PASSWORD=verysecret']
+  end
+
   let(:valid_result) do
     {
       'wordpress' => {
@@ -231,6 +237,57 @@ describe Kontena::Cli::Apps::YAML::Reader do
       it 'does nothing to env array' do
         result = subject.execute[:services]
         expect(result['mysql']['environment']).to eq(['MYSQL_ROOT_PASSWORD=test_secret'])
+      end
+
+      context 'when introduced env_file' do
+        before(:each) do
+          allow(File).to receive(:read)
+            .with(absolute_yaml_path('kontena.yml'))
+            .and_return(fixture('kontena-with-env-file.yml'))
+          allow(File).to receive(:readlines).with('.env').and_return(env_file)
+        end
+
+        it 'reads given file' do
+          expect(File).to receive(:readlines).with('.env').and_return(env_file)
+          subject.send(:read_env_file, '.env')
+        end
+
+        it 'discards comment lines' do
+          result = env_file
+          result << "#COMMENTLINE"
+          allow(File).to receive(:readlines).with('.env').and_return(result)
+
+          variables = subject.send(:read_env_file, '.env')
+          expect(variables).to eq([
+            'APIKEY=12345',
+            'MYSQL_ROOT_PASSWORD=secret',
+            'WP_ADMIN_PASSWORD=verysecret'
+            ])
+        end
+
+        it 'discards empty lines' do
+          result = env_file
+          result << '
+    '
+          allow(File).to receive(:readlines).with('.env').and_return(result)
+          variables = subject.send(:read_env_file, '.env')
+          expect(variables).to eq([
+            'APIKEY=12345',
+            'MYSQL_ROOT_PASSWORD=secret',
+            'WP_ADMIN_PASSWORD=verysecret'
+            ])
+        end
+
+        it 'merges variables' do
+          result = subject.execute[:services]
+          expect(result['wordpress']['environment']).to eq([
+            'WORDPRESS_DB_PASSWORD=test_secret',
+            'APIKEY=12345',
+            'MYSQL_ROOT_PASSWORD=secret',
+            'WP_ADMIN_PASSWORD=verysecret'
+            ])
+        end
+
       end
     end
     it 'returns result hash' do
