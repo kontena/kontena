@@ -36,6 +36,7 @@ class TokenAuthentication
     auth = http_authorization(env)
 
     if auth[:token_type].nil?
+      logger.debug "No authentication header"
       if path_included?(env, :soft_exclude)
         return @app.call(env)
       #elsif request.get?
@@ -44,18 +45,20 @@ class TokenAuthentication
         return access_denied_response
       end
     elsif auth[:token_type] == :basic && auth[:username] == ADMIN
+      logger.debug "Basic auth authentication header"
       env[CURRENT_USER] = User.find_admin(auth[:password])
     elsif auth[:token_type] == :bearer
       bearer = auth[:token]
 
       access_token = token_from_db(bearer)
-
-      return expiration_response    if access_token.expired?
-      return access_denied_response if access_token.nil?
+      logger.debug "Access token #{access_token.nil? ? 'not ' : ''}found"
 
       if access_token
+        return expiration_response if access_token.expired?
         env[CURRENT_USER]    = access_token.user
         env[CURRENT_TOKEN]   = access_token
+      else
+        return access_denied_response
       end
     end
 
@@ -107,7 +110,7 @@ class TokenAuthentication
   #   end
   # end
 
-  def authenticate_header(error: nil, error_description: nil)
+  def authenticate_header(error = nil, error_description = nil)
     message_parts = ['Bearer realm="kontena_master"']
     message_parts << "error=\"#{error}\"" if error
     message_parts << "error_description=\"#{error_description}\"" if error_description
@@ -148,7 +151,7 @@ class TokenAuthentication
 
   def token_from_db(token)
     return nil unless token
-    AccessToken.find_by_access_token(token)
+    AccessToken.find_internal_by_access_token(token)
   rescue
     logger.error "Exception while fetching token from db: #{$!} #{$!.message}"
     nil
