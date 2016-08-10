@@ -27,7 +27,9 @@ class Server < Roda
     ],
     soft_exclude: [
       '/oauth2/token',
-      '/oauth2/authorize'
+      '/oauth2/authorize',
+      '/v1/nodes',   #authorized using grid token
+      '/v1/nodes/*'  #authorized using grid token
     ]
   )
 
