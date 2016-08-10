@@ -142,6 +142,7 @@ module GridServices
       attributes[:log_opts] = self.log_opts if self.log_opts
       attributes[:devices] = self.devices if self.devices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
+      attributes[:health_check] = self.health_check if self.health_check
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(self.grid_service.grid, self.links)
