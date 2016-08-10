@@ -69,6 +69,20 @@ describe GridServices::Update do
         ).run
       }.to change{ redis_service.reload.affinity }.to(['az==b1'])
     end
+
+    it 'updates health check' do
+      described_class.new(
+          current_user: user,
+          grid_service: redis_service,
+          health_check: {
+            port: 80,
+            protocol: 'http'
+          }
+      ).run
+      redis_service.reload
+      expect(redis_service.health_check.port).to eq(80)
+      expect(redis_service.health_check.protocol).to eq('http')
+    end
   end
 
   describe '#build_grid_service_hooks' do
