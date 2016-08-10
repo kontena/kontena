@@ -34,7 +34,7 @@ json.instances do
     json.running instance_counts[:running]
   else
     json.total grid_service.containers.count
-    json.total grid_service.containers.count
+    json.running grid_service.containers.count
   end
 end
 json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
