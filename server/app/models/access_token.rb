@@ -13,7 +13,7 @@ class AccessToken
   field :token_type, type: String, default: 'bearer'
   field :token, type: String
   field :refresh_token, type: String
-  field :expires_at, type: Time
+  field :expires_at, type: Time, default: lambda { Time.now.utc + 7200 }
   field :scopes, type: Array
   field :deleted_at, type: Time, default: nil
   field :internal, type: Boolean, default: true
@@ -51,8 +51,8 @@ class AccessToken
     return true unless doc.internal?
     doc.token_plain ||= SecureRandom.hex(16) unless doc.token
     doc.refresh_token_plain ||= SecureRandom.hex(32) unless doc.refresh_token
-    doc.token ||= encrypt(doc.token_plain)
-    doc.refresh_token ||= encrypt(doc.refresh_token_plain)
+    doc.token ||= self.encrypt(doc.token_plain)
+    doc.refresh_token ||= self.encrypt(doc.refresh_token_plain)
   end
 
   class << self
@@ -68,7 +68,7 @@ class AccessToken
     # @return [AccessToken] access_token
     def find_by_refresh_token_and_mark_used(refresh_token)
       AccessToken.where(
-        refresh_token: encrypt(refresh_token),
+        refresh_token: self.encrypt(refresh_token),
         deleted_at: nil,
         internal: true
       ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
@@ -76,7 +76,7 @@ class AccessToken
 
     def find_internal_by_access_token(access_token)
       AccessToken.where(
-        access_token: encrypt(access_token),
+        token: self.encrypt(access_token),
         deleted_at: nil,
         internal: true
       ).find_and_modify({ '$set' => { updated_at: Time.now.utc } })
@@ -97,34 +97,6 @@ class AccessToken
         internal: true,
         user: coded_token.user
       )
-    end
-
-    # Used to create a new access token using omniauth's token object.
-    #
-    # A user may be passed so that you don't have to add it in after .new
-    def new_from_omniauth(token, params = {})
-      return nil unless token.token
-
-      attrs = {
-        internal:      false,
-        token:         token.token,
-        token_type:    'bearer',
-        refresh_token: token.refresh_token,
-        scopes:        token.params['scope'] ? token.params['scope'].split(',') : []
-      }.merge(params)
-
-      attrs[:expires_at] = if token.expires_in
-        Time.now.utc + token.expires_in.to_i
-      elsif token.expires_at
-        Time.at(token.expires_at.to_i)
-      else
-        nil
-      end
-
-      new(attrs)
-    rescue
-      ENV["DEBUG"] && puts("Token parse exception: #{$!} #{$!.message}")
-      nil
     end
   end
 
@@ -147,16 +119,6 @@ class AccessToken
 
   def has_code?
     !self[:code].nil?
-  end
-
-  def client
-    return nil if internal?
-    @client ||= OAuth2::AccessToken.new(
-      AuthProvider.instance.strategy.client,
-      self[:token],
-      refresh_token: self[:refresh_token],
-      expires_in: self[:expires_in]
-    )
   end
 
   # Converts the access token to uri encoded format usable in 
