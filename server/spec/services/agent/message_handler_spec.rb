@@ -29,7 +29,6 @@ describe Agent::MessageHandler do
         end
         sleep 0.01 until queue.length == 0
       end
-      #puts bm
       total_time = Time.now.to_f - start_time
       expect(container.container_logs.count).to eq(1_000)
       expect(total_time < 0.5).to be_truthy
@@ -95,7 +94,6 @@ describe Agent::MessageHandler do
           })
         end
       end
-      #puts bm
       total_time = Time.now.to_f - start_time
       expect(grid.container_logs.count).to eq(1_000)
       expect(total_time < 0.5).to be_truthy

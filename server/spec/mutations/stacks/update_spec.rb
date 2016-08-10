@@ -52,7 +52,6 @@ describe Stacks::Update do
       ]
       subject = described_class.new(current_user: user, stack: stack, services: services)
       outcome = subject.run
-      puts "ERROR: #{outcome.errors.message}" unless outcome.success?
       expect(outcome.success?).to be_truthy
       expect(stack.reload.grid_services.count).to eq(2)
     end
