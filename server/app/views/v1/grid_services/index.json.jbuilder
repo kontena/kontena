@@ -13,8 +13,8 @@ end
 
 json.services @grid_services do |grid_service|
   instance_counts = {
-    total: counts[grid_service.id][:total] || 0,
-    running: counts[grid_service.id][:running] || 0
+    total: counts.dig(grid_service.id, :total) || 0,
+    running: counts.dig(grid_service.id, :running) || 0
   }
   json.partial! 'app/views/v1/grid_services/grid_service',
     grid_service: grid_service,
