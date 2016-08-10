@@ -29,8 +29,13 @@ json.strategy grid_service.strategy
 json.deploy_opts grid_service.deploy_opts
 json.pid grid_service.pid
 json.instances do
-  json.total grid_service.containers.count
-  json.running grid_service.containers.where('state.running' => true).count
+  if defined? instance_counts
+    json.total instance_counts[:total]
+    json.running instance_counts[:running]
+  else
+    json.total grid_service.containers.count
+    json.running json.running grid_service.containers.where('state.running' => true).count
+  end
 end
 json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
 json.revision grid_service.revision

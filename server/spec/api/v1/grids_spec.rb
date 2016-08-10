@@ -144,10 +144,34 @@ describe '/v1/grids' do
     describe '/services' do
       it 'returns grid services' do
         grid = david.grids.first
-        grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
+        service = grid.grid_services.create!(name: "foo", image_name: 'foo/bar')
+        2.times do |i|
+          service.containers.create!(
+            name: "#{service.name}-#{i}", grid: grid,
+            state: {
+              running: true
+            }
+          )
+        end
+        service = grid.grid_services.create!(name: "bar", image_name: 'foo/bar')
+        3.times do |i|
+          service.containers.create!(
+            name: "#{service.name}-#{i}", grid: grid,
+            state: {
+              running: false
+            }
+          )
+        end
+
         get "/v1/grids/#{grid.to_path}/services", nil, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['services'].size).to eq(1)
+        expect(json_response['services'].size).to eq(2)
+        instance = json_response['services'][0]
+        expect(instance['instances']['total']).to eq(3)
+        expect(instance['instances']['running']).to eq(0)
+        instance = json_response['services'][1]
+        expect(instance['instances']['total']).to eq(2)
+        expect(instance['instances']['running']).to eq(2)
       end
 
       it 'it returns internal services' do

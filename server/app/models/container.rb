@@ -120,4 +120,15 @@ class Container
   def up_to_date?
     self.image_version == self.grid_service.image.image_id && self.created_at > self.grid_service.updated_at
   end
+
+  # @param [BSON::ObjectId] grid_id
+  # @param [Hash] match
+  # @return [Array<Hash>]
+  def self.counts_for_grid_services(grid_id, match = {})
+    match = { :grid_id => grid_id}.merge(match)
+    self.collection.aggregate([
+      { :$match => match },
+      { :$group => { _id: "$grid_service_id", total: {:$sum => 1} } }
+    ])
+  end
 end
