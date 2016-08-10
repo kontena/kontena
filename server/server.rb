@@ -1,6 +1,8 @@
 require 'logger'
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
+require_relative 'app/middlewares/token_authentication'
+require 'bcrypt'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
 Logger.class_eval { alias :write :'<<' }
@@ -14,6 +16,71 @@ class Server < Roda
     logger = Logger.new(STDOUT)
   end
   use Rack::CommonLogger, logger
+
+  use(
+    TokenAuthentication,
+    exclude: [
+      '/',
+      '/v1/ping',
+      '/v1/auth',
+      '/cb?*'
+    ],
+    soft_exclude: [
+      '/oauth2/token',
+      '/oauth2/authorize'
+    ]
+  )
+
+  # Accessor to global config. Defaults are loaded from config/defaults.yml.
+  # Changing values in defaults.yml will not overwrite values in DB.
+  def self.config
+    return @config if @config
+    @config = Configuration
+    config_defaults.each do |key, value|
+      if @config[key].nil?
+        logger.debug "Setting configuration key '#{key}' using default '#{value}'"
+        @config[key] = value
+      end
+    end
+    @config
+  end
+
+  # Path to server application root
+  def self.root
+    @root ||= Pathname.new(File.dirname(__FILE__))
+  end
+
+  # Service root url
+  def self.root_url
+    @url ||= config[:root_url]
+  end
+
+  # Global logger
+  def self.logger
+    return @logger if @logger
+    if ENV['RACK_ENV'] == 'test'
+      @logger = Logger.new(File.open(File::NULL, "w"))
+      @logger.level = Logger::UNKNOWN
+    else
+      @logger = Logger.new(STDOUT)
+      @logger.progname = 'API'
+      @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    end
+    @logger
+  end
+
+  # Read the defaults from config/defaults.yml
+  def self.config_defaults
+    defaults_file = Server.root.join('config/defaults.yml')
+    if defaults_file.exist? && defaults_file.readable?
+      logger.debug "Reading configuration defaults from #{defaults_file}"
+      YAML.load(ERB.new(defaults_file.read).result)[ENV['RACK_ENV']] || {}
+    else
+      logger.debug "Configuration defaults #{defaults_file} not available"
+      {}
+    end
+  end
+
   plugin :json
 
   route do |r|
