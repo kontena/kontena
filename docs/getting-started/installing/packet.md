@@ -14,7 +14,7 @@ toc_order: 1
 ## Prerequisities
 
 - Kontena Account
-- Packet.net Account. Visit [https://www.packet.net/](https://www.packet.net/) to get started
+- Packet.net Account. Visit [https://www.packet.net/promo/kontena/](https://www.packet.net/promo/kontena/) to get started
 
 ## Installing Kontena Packet Plugin
 
@@ -78,7 +78,7 @@ $ kontena node list
 
 ```
 Usage:
-    kontena master packet create [OPTIONS]
+    kontena packet master create [OPTIONS]
 
 Options:
     --token TOKEN                 Packet API token
@@ -99,7 +99,7 @@ Options:
 
 ```
 Usage:
-    kontena node packet create [OPTIONS]
+    kontena packet node create [OPTIONS] [NAME]
 
 Parameters:
     [NAME]                        Node name
@@ -113,4 +113,34 @@ Options:
     --billing BILLING             Billing cycle (default: "hourly")
     --ssh-key PATH                Path to ssh public key (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
+```
+
+#### Restart Node
+
+```
+Usage:
+    kontena packet node restart [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --token TOKEN                 Packet API token
+    --project PROJECT ID          Packet project id
+```
+
+#### Terminate Node
+
+```
+Usage:
+    kontena packet node terminate [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --token TOKEN                 Packet API token
+    --project PROJECT ID          Packet project id
 ```

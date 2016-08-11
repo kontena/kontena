@@ -45,6 +45,8 @@ services:
   mongodb:
     image: mongo:3.0
     command: mongod --smallfiles
+    volumes:
+      - kontena-server-mongodb:/data/db
     networks:
       - kontena
 networks:
