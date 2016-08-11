@@ -49,6 +49,11 @@ describe ServiceBalancerJob do
         expect(subject.should_balance_service?(service)).to be_truthy
       end
 
+      it 'returns false if there are pending deploys' do
+        service.grid_service_deploys.create!
+        expect(subject.should_balance_service?(service)).to be_falsey
+      end
+
       it 'returns true if deployed and not all instances exist' do
         service.deployed_at = 3.minutes.ago
         allow(service).to receive(:all_instances_exist?).and_return(false)
