@@ -6,12 +6,6 @@ describe Kontena::Cli::Apps::ServiceGenerator do
     described_class.new({})
   end
 
-  let(:env_file) do
-    'APIKEY=12345
-MYSQL_ROOT_PASSWORD=secret
-WP_ADMIN_PASSWORD=verysecret'.split(/\r?\n/)
-  end
-
   describe '#parse_data' do
     context 'volumes' do
       it 'returns volumes if set' do
@@ -387,50 +381,5 @@ WP_ADMIN_PASSWORD=verysecret'.split(/\r?\n/)
         expect(result['secrets']).to be_nil
       end
     end
-  end
-
-  describe '#read_env_file' do
-    before(:each) do
-      allow(File).to receive(:readlines).with('.env').and_return(env_file)
-    end
-    it 'reads given file' do
-      expect(File).to receive(:readlines).with('.env').and_return(env_file)
-      subject.send(:read_env_file, '.env')
-    end
-
-    it 'returns array' do
-      variables = subject.send(:read_env_file, '.env')
-      expect(variables).to eq([
-        'APIKEY=12345',
-        'MYSQL_ROOT_PASSWORD=secret',
-        'WP_ADMIN_PASSWORD=verysecret'
-        ])
-    end
-
-    it 'discards comment lines' do
-      result = env_file
-      result << "#COMMENTLINE"
-      allow(File).to receive(:readlines).with('.env').and_return(result)
-
-      variables = subject.send(:read_env_file, '.env')
-      expect(variables).to eq([
-        'APIKEY=12345',
-        'MYSQL_ROOT_PASSWORD=secret',
-        'WP_ADMIN_PASSWORD=verysecret'
-        ])
-    end
-
-    it 'discards empty lines' do
-      result = env_file
-      result << '
-'
-      allow(File).to receive(:readlines).with('.env').and_return(result)
-      variables = subject.send(:read_env_file, '.env')
-      expect(variables).to eq([
-        'APIKEY=12345',
-        'MYSQL_ROOT_PASSWORD=secret',
-        'WP_ADMIN_PASSWORD=verysecret'
-        ])
-    end
-  end
+  end  
 end
