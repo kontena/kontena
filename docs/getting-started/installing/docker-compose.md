@@ -1,6 +1,5 @@
 ---
-title: Running Kontena using Docker Compose
-toc_order: 1
+title: Docker Compose
 ---
 
 # Running Kontena using Docker Compose
@@ -45,6 +44,8 @@ services:
   mongodb:
     image: mongo:3.0
     command: mongod --smallfiles
+    volumes:
+      - kontena-server-mongodb:/data/db
     networks:
       - kontena
 networks:

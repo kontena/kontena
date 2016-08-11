@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on Azure
-toc_order: 1
+title: Azure
 ---
 
 # Running Kontena on Azure
@@ -9,7 +8,7 @@ toc_order: 1
 - [Installing Azure Plugin](azure#installing-kontena-aws-plugin)
 - [Installing Kontena Master](azure#installing-kontena-master)
 - [Installing Kontena Nodes](azure#installing-kontena-nodes)
-- [Azure Command Reference](azure#aws-command-reference)
+- [Azure Plugin Command Reference](azure#azure-plugin-command-reference)
 
 ## Prerequisities
 
@@ -82,13 +81,13 @@ $ kontena azure master create \
   --ssh-key <path-to-ssh-private-key>
 ```
 
-## Azure Command Reference
+## Azure Plugin Command Reference
 
 #### Create Master
 
 ```
 Usage:
-    kontena master azure create [OPTIONS]
+    kontena azure master create [OPTIONS]
 
 Options:
     --subscription-id SUBSCRIPTION ID Azure subscription id
@@ -99,9 +98,9 @@ Options:
     --ssh-key SSH KEY             SSH private key file
     --location LOCATION           Location (default: "West Europe")
     --ssl-cert SSL CERT           SSL certificate file
-    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
     --vault-secret VAULT_SECRET   Secret key for Vault
     --vault-iv VAULT_IV           Initialization vector for Vault
+    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
 
@@ -109,12 +108,13 @@ Options:
 
 ```
 Usage:
-    kontena node azure create [OPTIONS] [NAME]
+    kontena azure node create [OPTIONS] [NAME]
 
 Parameters:
     [NAME]                        Node name
 
 Options:
+    --grid GRID                   Specify grid to use
     --subscription-id SUBSCRIPTION ID Azure subscription id
     --subscription-cert CERTIFICATE Path to Azure management certificate
     --size SIZE                   SIZE (default: "Small")
@@ -123,4 +123,34 @@ Options:
     --ssh-key SSH KEY             SSH private key file
     --location LOCATION           Location (default: "West Europe")
     --version VERSION             Define installed Kontena version (default: "latest")
+```
+
+#### Restart Node
+
+```
+Usage:
+    kontena azure node restart [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --subscription-id SUBSCRIPTION ID Azure subscription id
+    --subscription-cert CERTIFICATE Path to Azure management certificate
+```
+
+#### Terminate Node
+
+```
+Usage:
+    kontena azure node terminate [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --subscription-id SUBSCRIPTION ID Azure subscription id
+    --subscription-cert CERTIFICATE Path to Azure management certificate
 ```

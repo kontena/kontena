@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on Vagrant
-toc_order: 1
+title: Vagrant
 ---
 
 # Running Kontena on Vagrant
@@ -9,7 +8,7 @@ toc_order: 1
 - [Installing Vagrant Plugin](vagrant#installing-kontena-vagrant-plugin)
 - [Installing Kontena Master](vagrant#installing-kontena-master)
 - [Installing Kontena Nodes](vagrant#installing-kontena-nodes)
-- [Vagrant Command Reference](vagrant#vagrant-command-reference)
+- [Vagrant Plugin Command Reference](vagrant#vagrant-plugin-command-reference)
 
 ## Prerequisities
 
@@ -33,7 +32,7 @@ $ kontena vagrant master create
 After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
 
 ```
-$ kontena login --name vagrant-master http://<master_ip>/
+$ kontena login --name vagrant-master http://<master_ip>:8080/
 ```
 
 ## Installing Kontena Nodes
@@ -64,7 +63,7 @@ After creating nodes, you can verify that they have joined Grid:
 $ kontena node list
 ```
 
-## Vagrant Command Reference
+## Vagrant Plugin Command Reference
 
 #### Create Master
 
@@ -74,20 +73,125 @@ Usage:
 
 Options:
     --memory MEMORY               How much memory node has (default: "512")
-    --vault-secret VAULT_SECRET   Secret key for Vault
-    --vault-iv VAULT_IV           Initialization vector for Vault
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
+    --vault-secret VAULT_SECRET   Secret key for Vault
+    --vault-iv VAULT_IV           Initialization vector for Vault
+```
+
+#### SSH to Master
+
+```
+Usage:
+    kontena vagrant master ssh [OPTIONS]
+```
+
+#### Start Master
+
+```
+Usage:
+    kontena vagrant master start [OPTIONS]
+```
+
+#### Stop Master
+
+```
+Usage:
+    kontena vagrant master stop [OPTIONS]
+```
+
+#### Restart Master
+
+```
+Usage:
+    kontena vagrant master restart [OPTIONS]
+```
+
+#### Terminate Master
+
+```
+Usage:
+    kontena vagrant master terminate [OPTIONS]
 ```
 
 #### Create Node
 
 ```
 Usage:
-    kontena vagrant node create [OPTIONS]
+    kontena vagrant node create [OPTIONS] [NAME]
+
+Parameters:
+    [NAME]                        Node name
 
 Options:
-    --name NAME                   Node name
-    --memory MEMORY               How much memory node has (default: 1024)
-    --version VERSION             Define installed Kontena version (default: latest)
+    --grid GRID                   Specify grid to use
+    --instances AMOUNT            How many nodes will be created (default: "1")
+    --memory MEMORY               How much memory node has (default: "1024")
+    --version VERSION             Define installed Kontena version (default: "latest")
+```
+
+#### SSH to Node
+
+```
+Usage:
+    kontena vagrant node ssh [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+```
+
+#### Start Node
+
+```
+Usage:
+    kontena vagrant node start [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+```
+
+#### Stop Node
+
+```
+Usage:
+    kontena vagrant node stop [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+```
+
+#### Restart Node
+
+```
+Usage:
+    kontena vagrant node restart [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+```
+
+#### Terminate Node
+
+```
+Usage:
+    kontena vagrant node terminate [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --force                       Force remove (default: false)
 ```

@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on AWS EC2
-toc_order: 1
+title: AWS EC2
 ---
 
 # Running Kontena on AWS EC2
@@ -9,7 +8,7 @@ toc_order: 1
 - [Installing AWS Plugin](aws-ec2#installing-kontena-aws-plugin)
 - [Installing Kontena Master](aws-ec2#installing-kontena-master)
 - [Installing Kontena Nodes](aws-ec2#installing-kontena-nodes)
-- [AWS Command Reference](aws-ec2#aws-command-reference)
+- [AWS Plugin Command Reference](aws-ec2#aws-plugin-command-reference)
 
 ## Prerequisities
 
@@ -72,13 +71,13 @@ $ kontena aws node create \
   --region eu-west-1
 ```
 
-## AWS Command Reference
+## AWS Plugin Command Reference
 
 #### Create Master
 
 ```
 Usage:
-    kontena master aws create [OPTIONS]
+    kontena aws master create [OPTIONS]
 
 Options:
     --access-key ACCESS_KEY       AWS access key ID
@@ -93,17 +92,21 @@ Options:
     --storage STORAGE             Storage size (GiB) (default: "30")
     --vault-secret VAULT_SECRET   Secret key for Vault (default: generate random secret)
     --vault-iv VAULT_IV           Initialization vector for Vault (default: generate random iv)
+    --mongodb-uri URI             External MongoDB uri (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url (optional)
-    --associate-public-ip-address Flag to associate public IP address in VPC that does not do it automatically
-    --security-groups             Comma separated list of security group names to which the new master will be attached
+    --associate-public-ip-address Whether to associated public IP in case the VPC defaults to not doing it (default: true)
+    --security-groups SECURITY_GROUPS Comma separated list of security groups (names) where the new instance will be attached (default: create 'kontena_master' group if not already existing)
 ```
 
 #### Create Node
 
 ```
 Usage:
-    kontena aws node create [OPTIONS]
+    kontena aws node create [OPTIONS] [NAME]
+
+Parameters:
+    [NAME]                        Node name
 
 Options:
     --grid GRID                   Specify grid to use
@@ -117,6 +120,39 @@ Options:
     --type SIZE                   Instance type (default: "t2.small")
     --storage STORAGE             Storage size (GiB) (default: "30")
     --version VERSION             Define installed Kontena version (default: "latest")
-    --associate-public-ip-address Flag to associate public IP address in VPC that does not do it automatically
-    --security-groups             Comma separated list of security group names to which the new master will be attached
+    --associate-public-ip-address Whether to associated public IP in case the VPC defaults to not doing it (default: true)
+    --security-groups SECURITY GROUPS Comma separated list of security groups (names) where the new instance will be attached (default: create grid specific group if not already existing)
+```
+
+
+#### Restart Node
+
+```
+Usage:
+    kontena aws node restart [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --access-key ACCESS_KEY       AWS access key ID
+    --secret-key SECRET_KEY       AWS secret key
+    --region REGION               EC2 Region (default: "eu-west-1")
+```
+
+#### Terminate Node
+
+```
+Usage:
+    kontena aws node terminate [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --access-key ACCESS_KEY       AWS access key ID
+    --secret-key SECRET_KEY       AWS secret key
+    --region REGION               EC2 Region (default: "eu-west-1")
 ```

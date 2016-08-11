@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on DigitalOcean
-toc_order: 1
+title: DigitalOcean
 ---
 
 # Running Kontena on DigitalOcean
@@ -9,7 +8,7 @@ toc_order: 1
 - [Installing DigitalOcean Plugin](digitalocean#installing-kontena-digitalocean-plugin)
 - [Installing Kontena Master](digitalocean#installing-kontena-master)
 - [Installing Kontena Nodes](digitalocean#installing-kontena-nodes)
-- [DigitalOcean Command Reference](digitalocean#digitalocean-command-reference)
+- [DigitalOcean Plugin Command Reference](digitalocean#digitalocean-plugin-command-reference)
 
 ## Prerequisities
 
@@ -75,7 +74,7 @@ After creating nodes, you can verify that they have joined Grid:
 $ kontena node list
 ```
 
-## DigitalOcean Command Reference
+## DigitalOcean Plugin Command Reference
 
 #### Create Master
 
@@ -85,12 +84,13 @@ Usage:
 
 Options:
     --token TOKEN                 DigitalOcean API token
-    --ssh-key SSH_KEY             Path to ssh public key
-    --ssl-cert SSL CERT           SSL certificate file
+    --ssh-key SSH_KEY             Path to ssh public key (default: "~/.ssh/id_rsa.pub")
+    --ssl-cert SSL CERT           SSL certificate file  (optional)
     --size SIZE                   Droplet size (default: "1gb")
     --region REGION               Region (default: "ams2")
-    --vault-secret VAULT_SECRET   Secret key for Vault
-    --vault-iv VAULT_IV           Initialization vector for Vault
+    --vault-secret VAULT_SECRET   Secret key for Vault (optional)
+    --vault-iv VAULT_IV           Initialization vector for Vault (optional)
+    --mongodb-uri URI             External MongoDB uri (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
     --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
 ```
@@ -99,14 +99,45 @@ Options:
 
 ```
 Usage:
-    kontena digitalocean node create [OPTIONS]
+    kontena digitalocean node create [OPTIONS] [NAME]
+
+Parameters:
+    [NAME]                        Node name
 
 Options:
     --grid GRID                   Specify grid to use
-    --name NAME                   Node name
     --token TOKEN                 DigitalOcean API token
-    --ssh-key SSH_KEY             Path to ssh public key
+    --ssh-key SSH_KEY             Path to ssh public key (default: "~/.ssh/id_rsa.pub")
     --size SIZE                   Droplet size (default: "1gb")
     --region REGION               Region (default: "ams2")
-    --version VERSION             Define installed Kontena version (default: latest)
+    --version VERSION             Define installed Kontena version (default: "latest")
+```
+
+#### Restart Node
+
+```
+Usage:
+    kontena digitalocean node restart [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --token TOKEN                 DigitalOcean API token
+```
+
+
+### Terminate Node
+
+```
+Usage:
+    kontena digitalocean node terminate [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --token TOKEN                 DigitalOcean API token
 ```

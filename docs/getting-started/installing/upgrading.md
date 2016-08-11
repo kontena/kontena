@@ -1,6 +1,5 @@
 ---
 title: Upgrading
-toc_order: 6
 ---
 
 # Upgrading Kontena from Previous Versions
@@ -11,13 +10,56 @@ can be installed via rubygems.
 
 ## Versions
 
-* [0.12 to 0.13 (latest)](upgrading#upgrading-from-0-12-to-0-13-latest-)
+* [0.14 to 0.15 (latest)](upgrading#upgrading-from-0-14-to-0-15)
+* [0.13 to 0.14](upgrading#upgrading-from-0-13-to-0-14)
+* [0.12 to 0.13](upgrading#upgrading-from-0-12-to-0-13)
 * [0.11 to 0.12](upgrading#upgrading-from-0-11-to-0-12)
 * [0.10 to 0.11](upgrading#upgrading-from-0-10-to-0-11)
 * [0.9 to 0.10](upgrading#upgrading-from-0-9-to-0-10)
 * [0.8 to 0.9](upgrading#upgrading-from-0-8-to-9)
 
-### Upgrading from 0.12 to 0.13 (latest)
+### Upgrading from 0.14 to 0.15
+
+** Official Installation Method**
+
+- restart master:
+
+```
+$ sudo systemctl restart kontena-server-api
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+- update cli:
+
+```
+$ gem install kontena-cli
+```
+
+** Custom Installs**
+- update master, agent and cli to 0.15
+
+### Upgrading from 0.13 to 0.14
+
+** Official Installation Method**
+
+- restart master:
+
+```
+$ sudo systemctl restart kontena-server-api
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+- update cli:
+
+```
+$ gem install kontena-cli
+```
+
+** Custom Installs**
+- update master, agent and cli to 0.14
+
+
+### Upgrading from 0.12 to 0.13
 
 ** Official Installation Method**
 

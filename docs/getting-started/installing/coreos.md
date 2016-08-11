@@ -1,9 +1,8 @@
 ---
-title: Custom CoreOS Install
-toc_order: 1
+title: CoreOS
 ---
 
-# Custom CoreOS Install
+# CoreOS Install
 
 - [Prerequisities](coreos#prerequisities)
 - [Installing Kontena Master](coreos#installing-kontena-master)
@@ -74,6 +73,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
             --volumes-from=kontena-server-mongo-data \
             mongo:3.0 mongod --smallfiles
+        ExecStop=/usr/bin/docker stop kontena-server-mongo
 
     - name: kontena-server-api.service
       command: start
@@ -100,6 +100,7 @@ coreos:
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
             -e VAULT_KEY=${KONTENA_VAULT_KEY} -e VAULT_IV=${KONTENA_VAULT_IV} \
             kontena/server:${KONTENA_VERSION}
+        ExecStop=/usr/bin/docker stop kontena-server-api
 
     - name: kontena-server-haproxy.service
       command: start
@@ -122,6 +123,7 @@ coreos:
         ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
         ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
         ExecStart=/opt/bin/kontena-haproxy.sh
+        ExecStop=/usr/bin/docker stop kontena-server-haproxy
 ```
 
 `KONTENA_VAULT_KEY` & `KONTENA_VAULT_IV` should be random strings. They can be generated from bash:
@@ -135,7 +137,7 @@ The SSL certificate specified is a pem file, containing a public certificate fol
 After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
 
 ```
-$ kontena login --name do-master https://<master_ip>/
+$ kontena login --name my-master https://<master_ip>/
 ```
 
 ## Installing Kontena Nodes
@@ -144,14 +146,15 @@ Example cloud-config that can be used as a basis for CoreOS installation can be 
 
 
 ```
-$ kontena grid cloud-config <name>
-```
+Usage:
+    kontena grid cloud-config [OPTIONS] NAME
 
-**Options:**
+Parameters:
+    NAME                          Grid name
 
-```
---dns DNS                     DNS server
---peer-interface IFACE        Peer (private) network interface (default: "eth1")
---docker-bip BIP              Docker bridge ip (default: "172.17.43.1/16")
---version VERSION             Agent version (default: "latest")
+Options:
+    --dns DNS                     DNS server
+    --peer-interface IFACE        Peer (private) network interface (default: "eth1")
+    --docker-bip BIP              Docker bridge ip (default: "172.17.43.1/16")
+    --version VERSION             Agent version (default: "latest")
 ```

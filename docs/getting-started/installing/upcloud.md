@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on UpCloud
-toc_order: 1
+title: UpCloud
 ---
 
 # Running Kontena on UpCloud
@@ -9,12 +8,12 @@ toc_order: 1
 - [Installing UpCloud Plugin](upcloud#installing-kontena-upcloud-plugin)
 - [Installing Kontena Master](upcloud#installing-kontena-master)
 - [Installing Kontena Nodes](upcloud#installing-kontena-nodes)
-- [UpCloud Command Reference](upcloud#upcloud-command-reference)
+- [UpCloud Plugin Command Reference](upcloud#upcloud-plugin-command-reference)
 
 ## Prerequisities
 
 - Kontena Account
-- UpCloud Account. Visit [https://www.upcloud.com/](https://www.upcloud.com/) to get started
+- UpCloud Account. Visit [https://www.upcloud.com/kontena/](https://www.upcloud.com/kontena/) to get started
 
 ## Installing Kontena UpCloud Plugin
 
@@ -72,13 +71,13 @@ After creating nodes, you can verify that they have joined Grid:
 $ kontena node list
 ```
 
-## UpCloud Command Reference
+## UpCloud Plugin Command Reference
 
 #### Create Master
 
 ```
 Usage:
-    kontena master upcloud create [OPTIONS]
+    kontena upcloud master create [OPTIONS]
 
 Options:
     --username USER               Upcloud username
@@ -100,10 +99,12 @@ Note: The username for ssh access is "root"
 
 ```
 Usage:
-    kontena node upcloud create [OPTIONS] [NAME]
+    kontena upcloud node create [OPTIONS] [NAME]
 
+Parameters:
     [NAME]                        Node name
 
+Options:
     --grid GRID                   Specify grid to use
     --username USER               Upcloud username
     --password PASS               Upcloud password
@@ -113,4 +114,34 @@ Usage:
     --version VERSION             Define installed Kontena version (default: "latest")
 
 Note: The username for ssh access is "root"
+```
+
+#### Restart Node
+
+```
+Usage:
+    kontena upcloud node restart [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --username USER               Upcloud username
+    --password PASS               Upcloud password
+```
+
+#### Terminate Node
+
+```
+Usage:
+    kontena upcloud node terminate [OPTIONS] NAME
+
+Parameters:
+    NAME                          Node name
+
+Options:
+    --grid GRID                   Specify grid to use
+    --username USER               Upcloud username
+    --password PASS               Upcloud password
 ```
