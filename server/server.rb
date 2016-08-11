@@ -2,6 +2,7 @@ require 'logger'
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/token_authentication'
+require_relative 'app/middlewares/client_version_restriction'
 require 'bcrypt'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
@@ -15,7 +16,9 @@ class Server < Roda
   else
     logger = Logger.new(STDOUT)
   end
+
   use Rack::CommonLogger, logger
+  use ClientVersionRestriction, '0.15.0'
 
   use(
     TokenAuthentication,
@@ -93,6 +96,20 @@ class Server < Roda
         tagline: 'The Container Platform',
         version: VERSION
       }
+    end
+
+    r.on 'cb' do
+      r.run V1::CallbackAPi
+    end
+
+    r.on 'oauth2' do
+      r.on 'token' do 
+        r.run V1::TokenApi
+      end
+
+      r.on 'authorize' do
+        r.run V1::AuthorizeApi
+      end
     end
 
     r.on 'v1' do
