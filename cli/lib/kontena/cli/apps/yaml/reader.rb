@@ -90,6 +90,7 @@ module Kontena::Cli::Apps
       def process_config(service_config)
         normalize_env_vars(service_config)
         merge_env_vars(service_config)
+        expand_build_context(service_config)
         normalize_build_args(service_config)
         service_config = extend_config(service_config) if service_config.key?('extends')
         service_config
@@ -161,10 +162,17 @@ module Kontena::Cli::Apps
         options['environment'].uniq! { |s| s.split('=').first }
       end
 
-
       # @param [String] path
       def read_env_file(path)
         File.readlines(path).map { |line| line.strip }.delete_if { |line| line.start_with?('#') || line.empty? }
+      end
+
+      def expand_build_context(options)
+        if options['build'].is_a?(String)
+          options['build'] = File.expand_path(options['build'])
+        elsif context = options.dig('build', 'context')
+          options['build']['context'] = File.expand_path(context)
+        end
       end
 
       # @param [Hash] options - service config

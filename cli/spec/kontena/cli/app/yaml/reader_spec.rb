@@ -303,4 +303,31 @@ describe Kontena::Cli::Apps::YAML::Reader do
       expect(outcome[:errors].size).to eq(1)
     end
   end
+
+  context 'when build option is string' do
+    it 'expands build option to absolute path' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('docker-compose.yml'))
+        .and_return(fixture('docker-compose.yml'))
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena-build.yml'))
+      outcome = subject.execute
+
+      expect(outcome[:services]['wordpress']['build']).to eq(File.expand_path('.'))
+    end
+  end
+
+  context 'when build option is Hash' do
+    it 'expands build context to absolute path' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('docker-compose.yml'))
+        .and_return(fixture('docker-compose.yml'))
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena_build_v2.yml'))
+      outcome = subject.execute
+      expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
+    end
+  end
 end
