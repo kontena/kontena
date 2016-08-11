@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on UpCloud
-toc_order: 1
+title: UpCloud
 ---
 
 # Running Kontena on UpCloud

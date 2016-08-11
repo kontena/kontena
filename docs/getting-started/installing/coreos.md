@@ -1,9 +1,8 @@
 ---
-title: Custom CoreOS Install
-toc_order: 1
+title: CoreOS
 ---
 
-# Custom CoreOS Install
+# CoreOS Install
 
 - [Prerequisities](coreos#prerequisities)
 - [Installing Kontena Master](coreos#installing-kontena-master)

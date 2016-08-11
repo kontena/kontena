@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on Ubuntu
-toc_order: 1
+title: Ubuntu
 ---
 
 # Running Kontena on Ubuntu

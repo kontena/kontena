@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on Azure
-toc_order: 1
+title: Azure
 ---
 
 # Running Kontena on Azure
@@ -9,7 +8,7 @@ toc_order: 1
 - [Installing Azure Plugin](azure#installing-kontena-aws-plugin)
 - [Installing Kontena Master](azure#installing-kontena-master)
 - [Installing Kontena Nodes](azure#installing-kontena-nodes)
-- [Azure Command Reference](azure#aws-plugin-command-reference)
+- [Azure Plugin Command Reference](azure#azure-plugin-command-reference)
 
 ## Prerequisities
 

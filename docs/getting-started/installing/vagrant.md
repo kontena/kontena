@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on Vagrant
-toc_order: 1
+title: Vagrant
 ---
 
 # Running Kontena on Vagrant

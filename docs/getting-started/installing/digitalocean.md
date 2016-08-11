@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on DigitalOcean
-toc_order: 1
+title: DigitalOcean
 ---
 
 # Running Kontena on DigitalOcean

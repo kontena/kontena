@@ -1,6 +1,5 @@
 ---
-title: Running Kontena using Docker Compose
-toc_order: 1
+title: Docker Compose
 ---
 
 # Running Kontena using Docker Compose

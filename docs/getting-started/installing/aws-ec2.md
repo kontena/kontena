@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on AWS EC2
-toc_order: 1
+title: AWS EC2
 ---
 
 # Running Kontena on AWS EC2

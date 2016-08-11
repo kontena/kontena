@@ -1,6 +1,5 @@
 ---
-title: Running Kontena on Packet
-toc_order: 1
+title: Packet
 ---
 
 # Running Kontena on Packet
