@@ -164,7 +164,7 @@ module Kontena::Cli::Apps
 
       # @param [String] path
       def read_env_file(path)
-        File.readlines(path).delete_if { |line| line.start_with?('#') || line.strip.empty? }.map { |line| line.strip }
+        File.readlines(path).map { |line| line.strip }.delete_if { |line| line.start_with?('#') || line.empty? }
       end
 
       # @param [Hash] options - service config
