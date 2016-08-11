@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+unless ENV['MONGODB_URI']
+  puts "Missing MONGODB_URI environment variable."
+  exit 1
+end
+
+require "irb"
+require "irb/completion"
+require "bundler/setup"
+Bundler.require
+require File.expand_path('../../app/boot.rb', __FILE__)
+
+IRB.start
+
