@@ -78,6 +78,7 @@ class ServiceBalancerJob
   # @param [GridService] service
   # @return [Boolean]
   def should_balance_stateless_service?(service)
+    return false if pending_deploys?(service)
     return true if !all_instances_exist?(service)
 
     if missing_cidr?(service)
@@ -85,7 +86,6 @@ class ServiceBalancerJob
       return true
     end
 
-    return false if pending_deploys?(service)
     return true if lagging_behind?(service)
 
     if interval_passed?(service)
