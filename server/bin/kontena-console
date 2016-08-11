@@ -1,10 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-unless ENV['MONGODB_URI']
-  puts "Missing MONGODB_URI environment variable."
-  exit 1
-end
+ENV['MONGODB_URI'] ||= 'mongodb://mongodb:27017/kontena_server'
 
 require "irb"
 require "irb/completion"
