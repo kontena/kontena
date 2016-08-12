@@ -6,6 +6,8 @@ require_relative 'app/middlewares/client_version_restriction'
 require 'bcrypt'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
+require_relative 'app/routes/oauth2_api'
+
 Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
@@ -21,18 +23,22 @@ class Server < Roda
   use ClientVersionRestriction, '0.15.0'
 
   use(
-    TokenAuthentication,
+    TokenAuthentication, 
     exclude: [
       '/',
       '/v1/ping',
       '/v1/auth',
-      '/cb?*'
-    ],
-    soft_exclude: [
+      '/cb',
       '/oauth2/token',
       '/oauth2/authorize',
       '/v1/nodes',   #authorized using grid token
-      '/v1/nodes/*'  #authorized using grid token
+      '/v1/nodes/*'
+    ],
+    soft_exclude: [
+      '/authenticate*'
+    ],
+    allow_expired: [
+      '/authenticate*'
     ]
   )
 
@@ -98,17 +104,21 @@ class Server < Roda
       }
     end
 
+    r.on 'authenticate' do
+      r.run OAuth2Api::AuthenticateApi
+    end
+
     r.on 'cb' do
-      r.run V1::CallbackAPi
+      r.run OAuth2Api::CallbackApi
     end
 
     r.on 'oauth2' do
       r.on 'token' do 
-        r.run V1::TokenApi
+        r.run OAuth2Api::TokenApi
       end
 
       r.on 'authorize' do
-        r.run V1::AuthorizeApi
+        r.run OAuth2Api::AuthorizeApi
       end
     end
 

@@ -19,7 +19,7 @@ class AccessToken
   field :internal, type: Boolean, default: true
   field :code, type: String, default: nil
 
-  index({ user_id: 1 }, { unique: true })
+  index({ user_id: 1 })
   index({ internal: 1 })
   index({ token: 1 }, { unique: true })
   index({ refresh_token: 1 }, { unique: true, sparse: true })
@@ -48,11 +48,12 @@ class AccessToken
   # Encrypt the plaintext tokens before saving
   set_callback :save, :before do |doc|
     doc.expires_at = nil unless doc.expires_at.to_i > 0
-    return true unless doc.internal?
-    doc.token_plain ||= SecureRandom.hex(16) unless doc.token
-    doc.refresh_token_plain ||= SecureRandom.hex(32) unless doc.refresh_token
-    doc.token ||= self.encrypt(doc.token_plain)
-    doc.refresh_token ||= self.encrypt(doc.refresh_token_plain)
+    if doc.internal?
+      doc.token_plain ||= SecureRandom.hex(16) unless doc.token
+      doc.refresh_token_plain ||= SecureRandom.hex(32) unless doc.refresh_token
+      doc.token ||= self.encrypt(doc.token_plain)
+      doc.refresh_token ||= self.encrypt(doc.refresh_token_plain)
+    end
   end
 
   class << self
@@ -141,7 +142,7 @@ class AccessToken
     else
       query << ["access_token",  self.token_plain]         if self.token_plain
       query << ["refresh_token", self.refresh_token_plain] if self.refresh_token_plain
-      query << ["expires_in", self.expires_at.nil? ? nil : self.expires_at.to_i - Time.now.utc.to_i]
+      query << ["expires_in",    self.expires_in]          if self.expires_at
     end
 
     if uri
@@ -156,6 +157,11 @@ class AccessToken
     else
       URI.encode_www_form(query)
     end
+  end
+
+  def expires_in
+    return nil if expires_at.nil?
+    expires_at.to_i - Time.now.utc.to_i
   end
 
   # Returns true if user has all requested scopes

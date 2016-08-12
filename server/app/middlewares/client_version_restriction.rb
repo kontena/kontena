@@ -2,14 +2,15 @@ class ClientVersionRestriction
 
   attr_reader :min_version
 
-  USERAGENT      = 'HTTP_USER_AGENT'.freeze
-  SLASH          = '/'.freeze
-  KONTENA_CLI    = 'kontena-cli'.freeze
-  CONTENT_TYPE   = 'Content-Type'.freeze
-  CONTENT_LENGTH = 'Content-Length'.freeze
-  JSON_MIME      = 'application/json'.freeze
+  USERAGENT       = 'HTTP_USER_AGENT'.freeze
+  SLASH           = '/'.freeze
+  KONTENA_CLI     = 'kontena-cli'.freeze
+  CONTENT_TYPE    = 'Content-Type'.freeze
+  CONTENT_LENGTH  = 'Content-Length'.freeze
+  JSON_MIME       = 'application/json'.freeze
+  DEFAULT_MINIMUM = '0.14.0'
 
-  def initialize(app, min_version: '0.15.0')
+  def initialize(app, min_version = DEFAULT_MINIMUM) 
     @app = app
     @min_version = Gem::Version.new(min_version)
   end
@@ -23,13 +24,13 @@ class ClientVersionRestriction
           400,
           {
             CONTENT_TYPE   => JSON_MIME,
-            CONTENT_LENGTH => msg.bytesize
+            CONTENT_LENGTH => msg.bytesize.to_s
           },
           [msg]
         ]
         return response
       end
     end
-    app.call(env)
+    @app.call(env)
   end
 end

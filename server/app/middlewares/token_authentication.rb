@@ -11,6 +11,9 @@ class TokenAuthentication
   attr_reader :logger
   attr_reader :opts
   attr_reader :request
+  attr_reader :excludes
+  attr_reader :soft_excludes
+  attr_reader :allow_expired
 
   CURRENT_USER              = 'auth.current_user'.freeze
   CURRENT_TOKEN             = 'auth.current_access_token'.freeze
@@ -20,16 +23,21 @@ class TokenAuthentication
   PATH_INFO                 = 'PATH_INFO'.freeze
   ADMIN                     = 'admin'.freeze
 
-  def initialize(app, options= {})
-    @app    = app
-    @opts   = options
+  def initialize(app, options = {})
+    @app           = app
+    @excludes      = options[:exclude]
+    @soft_excludes = options[:soft_exclude]
+    @allow_expired = options[:allow_expired]
+
     @logger = Logger.new(STDOUT)
     @logger.progname = 'AUTH'
     @logger.level = ENV['DEBUG'] ? Logger::DEBUG : Logger::INFO
   end
 
   def call(env)
-    return @app.call(env) if path_included?(env, :exclude)
+    return @app.call(env) if excluded_path?(env[PATH_INFO])
+
+    logger.debug "Path #{env[PATH_INFO]} is not excluded from authentication"
 
     @request = Rack::Request.new(env)
 
@@ -37,13 +45,6 @@ class TokenAuthentication
 
     if auth[:token_type].nil?
       logger.debug "No authentication header"
-      if path_included?(env, :soft_exclude)
-        return @app.call(env)
-      #elsif request.get?
-      #  return redirect_response
-      else
-        return access_denied_response
-      end
     elsif auth[:token_type] == :basic && auth[:username] == ADMIN
       logger.debug "Basic auth authentication header"
       env[CURRENT_USER] = User.find_admin(auth[:password])
@@ -54,7 +55,14 @@ class TokenAuthentication
       logger.debug "Access token #{access_token.nil? ? 'not ' : ''}found"
 
       if access_token
-        return expiration_response if access_token.expired?
+        # Allow expired tokens if path is soft excluded
+        if access_token.expired? && !allow_expired_path?(env[PATH_INFO])
+          if allow_expired_path?(env[PATH_INFO])
+            logger.debug "Path #{env[PATH_INFO]} allows expired tokens"
+          else
+            return expiration_response 
+          end
+        end
         env[CURRENT_USER]    = access_token.user
         env[CURRENT_TOKEN]   = access_token
       else
@@ -62,20 +70,42 @@ class TokenAuthentication
       end
     end
 
+    unless env[CURRENT_USER]
+      logger.debug "Could not find a user"
+      unless soft_excluded_path?(env[PATH_INFO])
+        logger.debug "Path #{env[PATH_INFO]} is not soft excluded"
+        return access_denied_response
+      end
+    end
     @app.call(env)
+  rescue
+    logger.debug "Token Authentication exception: #{$!} - #{$!.message} -- #{$!.backtrace}"
+    error_response 'server_error', 'Server has encountered an error'
+  end
+
+  def excluded_path?(path)
+    configured_path?(excludes, path)
+  end
+
+  def soft_excluded_path?(path)
+    configured_path?(soft_excludes, path)
+  end
+
+  def allow_expired_path?(path)
+    configured_path?(allow_expired, path)
   end
 
   # Handle multiple types of objects that you can put in :exclude or :soft_exclude
-  def path_included?(env, opt_key)
-    case opts[opt_key]
+  def configured_path?(conf_object, path)
+    case conf_object
     when NilClass
       false
     when Array
-      opts[opt_key].any?{|ex| path_matches?(ex, env[PATH_INFO])}
+      conf_object.any?{|ex| path_matches?(ex, path)}
     when String || Regexp
-      path_matches?(opts[opt_key], env[PATH_INFO])
+      path_matches?(conf_object, path)
     else
-      raise TypeError, "Invalid #{opt_key} option. Use a String, Regexp or an Array including either."
+      raise TypeError, "Invalid exclude option. Use a String, Regexp or an Array including either."
     end
   end
 
@@ -118,13 +148,14 @@ class TokenAuthentication
   end
 
   def error_response(msg = nil, msg_description = nil)
+    message = { error: msg, error_description: msg_description }.to_json
     [
       403,
       {
         'Content-Type'   => 'application/json',
-        'Content-Length' => msg ? msg.bytesize.to_s : 0
+        'Content-Length' => message.bytesize.to_s
       }.merge(authenticate_header(msg, msg_description)),
-      [msg_description || msg]
+      [message]
     ]
   end
 
