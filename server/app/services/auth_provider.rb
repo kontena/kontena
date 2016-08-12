@@ -30,7 +30,7 @@ class AuthProvider < OpenStruct
   # Minimum fields for authentication to work if by luck the defaults are ok
   REQUIRED_FIELDS = [
       :client_id, :client_secret, :authorize_endpoint,
-      :token_endpoint, :userinfo_endpoint
+      :token_endpoint, :userinfo_endpoint, :userinfo_scope
   ]
 
   # Initializes a new auth provider instance.
@@ -41,9 +41,9 @@ class AuthProvider < OpenStruct
     @table[:client_secret] = config[:oauth2_client_secret]
     @table[:authorize_endpoint] = config[:oauth2_authorize_endpoint]
     @table[:code_requires_basic_auth] = config[:oauth2_code_requires_basic_auth] || false
-    @table[:token_endpoint] = config[:outh2_token_endpoint]
-    @table[:token_method] = config[:outh2_token_method] || 'post'
-    @table[:token_post_content_type] = config[:outh2_token_post_content_type] || 'application/json'
+    @table[:token_endpoint] = config[:oauth2_token_endpoint]
+    @table[:token_method] = config[:oauth2_token_method] || 'post'
+    @table[:token_post_content_type] = config[:oauth2_token_post_content_type] || 'application/json'
     @table[:userinfo_scope] = config[:oauth2_userinfo_scope] || 'user:email'
     @table[:userinfo_endpoint] = config[:oauth2_userinfo_endpoint]
     @table[:userinfo_username_jsonpath] = config[:oauth2_userinfo_username_jsonpath] || '$..username;$..login'
@@ -58,10 +58,14 @@ class AuthProvider < OpenStruct
     end
   end
 
+  def missing_fields
+    REQUIRED_FIELDS.select { |field| self[field].nil? }
+  end
+
   # Returns true when all required fields have values. These are the minimum settings that
   # are required for the module to work.
   def valid?
-    REQUIRED_FIELDS.none? { |field| self.field.nil? }
+    missing_fields.empty?
   end
 
   def callback_url
@@ -142,9 +146,11 @@ class AuthProvider < OpenStruct
   # @param [String] access_token
   # @return [Hash] userinfo hash with :username, :id and :email
   def get_userinfo(access_token)
+    uri = URI.parse(self.userinfo_endpoint)
+    uri.path = uri.path.gsub(/\:access\_token/, access_token)
     response = client.request(
       :get,
-      URI.join(self.url, self.userinfo_endpoint).to_s.gsub(/\:access\_token/, access_token),
+      uri.to_s,
       header: {
         'Accept' => 'application/json',
         'Authorization' => "Bearer #{access_token}"
