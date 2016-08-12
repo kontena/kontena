@@ -3,7 +3,7 @@ require_relative '../../mutations/grids/update'
 
 module V1
   class GridsApi < Roda
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
     include Auditor
