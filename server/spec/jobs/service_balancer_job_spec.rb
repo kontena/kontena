@@ -237,6 +237,13 @@ describe ServiceBalancerJob do
       service.set(deploy_requested_at: Time.now.utc, deployed_at: 5.minutes.ago)
       expect(subject.lagging_behind?(service)).to be_truthy
     end
+
+    it 'returns true if service has instances with different deploy_rev' do
+      service.set(deployed_at: Time.now.utc)
+      service.containers.create(name: "#{service.name}-1", deploy_rev: service.deployed_at)
+      service.containers.create(name: "#{service.name}-2", deploy_rev: Time.now.utc - 60)
+      expect(subject.lagging_behind?(service)).to be_truthy
+    end
   end
 
   describe '#interval_passed?' do

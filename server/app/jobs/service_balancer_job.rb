@@ -118,6 +118,7 @@ class ServiceBalancerJob
   def lagging_behind?(service)
     return true if service.deployed_at && service.updated_at > service.deployed_at
     return true if service.deployed_at && service.deploy_requested_at && service.deploy_requested_at > service.deployed_at
+    return true if service.deployed_at && service.containers.where(:deploy_rev.ne => service.deployed_at).count > 0
 
     false
   end
