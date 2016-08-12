@@ -7,6 +7,7 @@ require 'bcrypt'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
 require_relative 'app/routes/oauth2_api'
+Dir[__dir__ + '/app/routes/oauth2/*.rb'].each {|file| require file }
 
 Logger.class_eval { alias :write :'<<' }
 
@@ -30,15 +31,15 @@ class Server < Roda
       '/v1/auth',
       '/cb',
       '/oauth2/token',
-      '/oauth2/authorize',
       '/v1/nodes',   #authorized using grid token
       '/v1/nodes/*'
     ],
     soft_exclude: [
-      '/authenticate*'
+      '/oauth2/authorize',
+      '/authenticate'
     ],
     allow_expired: [
-      '/authenticate*'
+      '/authenticate'
     ]
   )
 
@@ -118,7 +119,7 @@ class Server < Roda
       end
 
       r.on 'authorize' do
-        r.run OAuth2Api::AuthorizeApi
+        r.run OAuth2Api::AuthorizationApi
       end
     end
 

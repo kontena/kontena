@@ -1,7 +1,7 @@
 module V1
   class AuthProviderAPI < Roda
     include RequestHelpers
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
 
     route do |r|
       r.get do
