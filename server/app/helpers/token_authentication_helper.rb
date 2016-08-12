@@ -1,22 +1,31 @@
-module OAuth2TokenVerifier
-  # Validate access token in request headers
-  #
+# Validate access token in request headers
+#
+#
+require_relative '../routes/oauth2_api'
+
+module TokenAuthenticationHelper
+
+  include OAuth2Api::Common
+
   def validate_access_token(*scopes)
     # These only happen when in a "soft exclude" path where
     # the headers are processed but request is not halted
     # by the token authentication middleware.
     
-    unless current_user 
-      halt_request(403, {error: 'Access denied'})
+    unless current_user
+      Server.logger.debug "No current user"
+      mime_halt(403, 'access_denied')
     end
 
     unless current_access_token
-      halt_request(403, {error: 'Access denied'})
+      Server.logger.debug "No current token"
+      mime_halt(403, 'access_denied')
     end
 
     unless scopes.empty?
       unless current_access_token.has_scope?(*scopes)
-        halt_request(403, {error: 'Access denied'})
+        Server.logger.debug "No valid scope"
+        mime_halt(403, 'access_denied')
       end
     end
   end

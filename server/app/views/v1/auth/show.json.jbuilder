@@ -17,5 +17,4 @@ else
   # If the token isn't bearer, we will display it as an authorization code.
   json.set! :grant_type, 'authorization_code'
   json.set! :code, @access_token.code
-  json.set! :redirect_uri, @access_token.redirect_uri
 end

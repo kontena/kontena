@@ -37,6 +37,13 @@ class User
     end
   end
 
+  # Fake setter. When true, an invite code will be generated
+  def with_invite=(boolean)
+    if boolean
+      self[:invite_code] = SecureRandom.hex(4)
+    end
+  end
+
   def is_local_admin?
     self[:email] == 'admin'
   end

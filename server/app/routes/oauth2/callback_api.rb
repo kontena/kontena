@@ -86,10 +86,9 @@ module OAuth2Api
 
         # Clean up user's old access tokens
         user.access_tokens.each do |at|
-          at.destroy if at.expired?
-          next if at.internal?
-          next if at.id == external_access_token.id
-          at.destroy
+          if at.expired? || at.deleted_at || (!at.internal? && at.id != external_access_token.id)
+            at.destroy
+          end
         end
 
         task = AccessTokens::Create.run(

@@ -35,7 +35,10 @@ class TokenAuthentication
   end
 
   def call(env)
-    return @app.call(env) if excluded_path?(env[PATH_INFO])
+    if excluded_path?(env[PATH_INFO])
+      logger.debug "Path #{env[PATH_INFO]} excluded from authentication"
+      return @app.call(env)
+    end
 
     logger.debug "Path #{env[PATH_INFO]} is not excluded from authentication"
 
@@ -140,11 +143,15 @@ class TokenAuthentication
   #   end
   # end
 
-  def authenticate_header(error = nil, error_description = nil)
+  def self.authenticate_header(error = nil, error_description = nil)
     message_parts = ['Bearer realm="kontena_master"']
     message_parts << "error=\"#{error}\"" if error
     message_parts << "error_description=\"#{error_description}\"" if error_description
     { 'WWW-Authenticate' => message_parts.join(",\n    ") }
+  end
+
+  def authenticate_header(error = nil, error_description = nil)
+    self.class.authenticate_header(error, error_description)
   end
 
   def error_response(msg = nil, msg_description = nil)
