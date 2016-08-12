@@ -67,12 +67,25 @@ class AccessToken
     #
     # @param [String] refresh_token
     # @return [AccessToken] access_token
-    def find_by_refresh_token_and_mark_used(refresh_token)
-      AccessToken.where(
+    def find_internal_by_refresh_token(refresh_token)
+      old_token = AccessToken.where(
         refresh_token: self.encrypt(refresh_token),
         deleted_at: nil,
         internal: true
       ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
+
+      return nil unless old_token
+
+      new_token = AccessToken.create!(
+        token_type: 'bearer',
+        expires_at: Time.now.utc + 7200,
+        scopes: old_token.scopes,
+        internal: true,
+        user: old_token.user
+      )
+
+      old_token.destroy
+      new_token
     end
 
     def find_internal_by_access_token(access_token)
@@ -86,18 +99,21 @@ class AccessToken
     # Since we don't know the original saved tokens, we just delete the old one and generate a duplicate with the same scope + user
     #
     # TODO consider hashing codes.
-    def find_by_code(code)
+    def find_internal_by_code(code)
       coded_token = AccessToken.where(code: code, deleted_at: nil).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless coded_token
 
-      AccessToken.create!(
+      new_token = AccessToken.create!(
         token_type: 'bearer',
         expires_at: coded_token.expires_at,
         scopes: coded_token.scopes,
         internal: true,
         user: coded_token.user
       )
+
+      coded_token.destroy
+      new_token
     end
   end
 

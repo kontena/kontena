@@ -10,7 +10,7 @@ module AccessTokens
     optional do
       array :scopes, class: String
       string :scope
-      integer :expires_in
+      duck :expires_in, methods: [:to_i], nils: true
       boolean :refreshable, default: true
       boolean :with_code, default: false
       model :current_access_token

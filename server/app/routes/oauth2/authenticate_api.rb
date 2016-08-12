@@ -1,12 +1,12 @@
 require 'uri'
 require_relative '../../services/auth_provider'
-require_relative '../../helpers/oauth_token_verifier'
+require_relative '../../helpers/token_authentication_helper'
 
 module OAuth2Api
   class AuthenticateApi < Roda
 
     include OAuth2Api::Common
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
 
     route do |r|
       r.get do
