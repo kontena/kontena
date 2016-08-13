@@ -14,12 +14,7 @@ module GridCertificates
       string :email
     end
 
-    def validate
-      
-    end
-
     def execute
-
       registration = acme_client(self.grid).register(contact: "mailto:#{email}")
       registration.agree_terms
     rescue Acme::Client::Error => exc

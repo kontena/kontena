@@ -8,13 +8,12 @@ module GridCertificates
     include Common
     include Logging
 
-    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
-    
+    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze    
 
     required do
       model :grid, class: Grid
       string :secret_name
-      
+
       array :domains do
         string
       end
@@ -63,13 +62,13 @@ module GridCertificates
 
         domain_authz.state = :validated
         domain_authz.save
-  
+
       end
-      
+
       certificate = client.new_certificate(csr)
       cert_priv_key = certificate.request.private_key.to_pem
       cert = certificate.to_pem
-      
+
       secrets = []
       secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
       secrets << upsert_secret("#{self.secret_name}_CERTIFICATE", cert_priv_key)
