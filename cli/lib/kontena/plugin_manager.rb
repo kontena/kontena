@@ -15,7 +15,7 @@ module Kontena
       Gem::Specification.to_a.each do |spec|
         spec.require_paths.to_a.each do |require_path|
           plugin = File.join(spec.gem_dir, require_path, 'kontena_cli_plugin.rb')
-          if File.exist?(plugin)
+          if File.exist?(plugin) && !@plugins.find{ |p| p.name == spec.name }
             begin
               load(plugin)
               @plugins << spec
