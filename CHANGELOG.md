@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.15.0 (2016-08-11)
+
+**Master & Agent:**
+- use correct cadvisor tag in cadvisor launcher (#908)
+- do not schedule service if there are pending deploys (#904)
+- ensure event subscription cleanup after deploy (#895)
+- improve service list api performance (#894)
+- update to Alpine 3.4 (#855)
+- update Weave Net to 1.5.2 (#916, #849)
+- cookie load balancer support (session stickyness) (#841)
+- restart event handling for weave (#838)
+- index GridServiceDeploy#created_at/started_at fields (#834)
+- support for Let's Encrypt certificates (#830)
+- fix race condition in DNS add (#820)
+- initial health check for remote services (#812, #875, #899, #900)
+- fix port definitions to include possibility to set bind ip (#798)
+- initial stacks api (experimental) (#796, #822, #893)
+- support for tagging master and nodes on AWS (#783)
+
+**CLI:**
+- expand build context to absolute path (#906)
+- handle env_file on YAML file parsing (#901)
+- updated_at timestamp to secret listing (#890)
+- discard empty lines in env_file (#880)
+- fix deploying registry on azure (#863)
+- switch coreos to use cgroupfs cgroup driver (#861)
+- do not require config file for whoami command when env is set (#858)
+- log tailing retry in EOF case (#835)
+- update to dry-validation 0.8.0 (#831, #856)
+- support for build args in v2 yaml (#813)
+- container exec command to handle whitespace and strings (#803)
+- show "not found any build options" only in app build command (#801)
+- cli plugins (#794, #917)
+
 ## 0.14.7 (2016-08-08)
 
 **Master & Agent:**
