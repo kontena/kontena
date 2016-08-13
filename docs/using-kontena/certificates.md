@@ -1,5 +1,5 @@
 ---
-title: Load Balancer
+title: Certificate Management
 toc_order: 6
 ---
 
@@ -11,7 +11,7 @@ Certificate management is integrated with Kontena [vault](vault.md) to handle ce
 
 ## Register for LE
 
-To be able to use LetsEncrypt one must first register as user. 
+To be able to use LetsEncrypt one must first register as user.
 ```
 kontena certificate register <you@example.com>
 ```
@@ -70,7 +70,7 @@ Certificate:
         Subject Public Key Info:
         ...
         X509v3 extensions:
-            X509v3 Subject Alternative Name: 
+            X509v3 Subject Alternative Name:
                 DNS:www.example.com, DNS:example.com
 ```
 
