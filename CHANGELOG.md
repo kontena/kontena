@@ -8,7 +8,7 @@
 - ensure event subscription cleanup after deploy (#895)
 - improve service list api performance (#894)
 - update to Alpine 3.4 (#855)
-- update Weave Net to 1.6.0 (#849)
+- update Weave Net to 1.5.2 (#916, #849)
 - cookie load balancer support (session stickyness) (#841)
 - restart event handling for weave (#838)
 - index GridServiceDeploy#created_at/started_at fields (#834)
@@ -32,7 +32,7 @@
 - support for build args in v2 yaml (#813)
 - container exec command to handle whitespace and strings (#803)
 - show "not found any build options" only in app build command (#801)
-- cli plugins (#794)
+- cli plugins (#794, #917)
 
 ## 0.14.7 (2016-08-08)
 
