@@ -13,8 +13,8 @@ module GridCertificates
     ACME_ENDPOINT = 'https://acme-v01.api.letsencrypt.org/'.freeze
 
     def acme_client(grid)
-      client = Acme::Client.new(private_key: acme_private_key(grid), 
-                                endpoint: acme_endpoint, 
+      client = Acme::Client.new(private_key: acme_private_key(grid),
+                                endpoint: acme_endpoint,
                                 connection_options: { request: { open_timeout: 5, timeout: 5 } })
       client
     end
@@ -44,8 +44,7 @@ module GridCertificates
     end
 
     def acme_endpoint
-      ENV['ACME_ENDPOINT'] || ACME_ENDPOINT
+      ENV['ACME_ENDPOINT'] || ACME_ENDPOINT
     end
-
   end
 end
