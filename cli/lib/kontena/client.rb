@@ -51,7 +51,7 @@ module Kontena
         'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
       }.merge(options[:default_headers])
       @path_prefix = options[:path_prefix] || '/v1/'
-      logger.debug "Client initialized with api_url: #{@api_url} token: #{token.nil?.to_s} token_parent: #{token['parent_type'] || 'none'} path_prefix: #{@path_prefix}"
+      logger.debug "Client initialized with api_url: #{@api_url} token: #{token.nil?.to_s} prefix: #{@path_prefix}"
     end
 
     def certificate_info

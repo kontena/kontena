@@ -6,6 +6,7 @@ require_relative 'cli/bytes_helper'
 require_relative 'cli/grid_options'
 require_relative 'cli/app_command'
 require_relative 'cli/register_command'
+require_relative 'cli/auth_command'
 require_relative 'cli/login_command'
 require_relative 'cli/logout_command'
 require_relative 'cli/whoami_command'
@@ -41,6 +42,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
   subcommand "register", "Register Kontena Account", Kontena::Cli::RegisterCommand
   subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
+  subcommand "auth", "Authenticate to authentication provider or Kontena Master", Kontena::Cli::AuthCommand
   subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
   subcommand "user", "User related commands", Kontena::Cli::UserCommand

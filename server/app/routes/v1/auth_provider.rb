@@ -20,6 +20,10 @@ module V1
           @auth_provider[key] = params[key]
         end
 
+        if params['server_name']
+          config[:server_name] = params['server_name']
+        end
+
         if @auth_provider.save
           response.status = 201
           render('auth_provider/show')

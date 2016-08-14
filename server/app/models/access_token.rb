@@ -21,11 +21,11 @@ class AccessToken
 
   index({ user_id: 1 })
   index({ internal: 1 })
-  index({ token: 1 }, { unique: true })
-  index({ refresh_token: 1 }, { unique: true, sparse: true })
+  index({ token: 1 }, { unique: true }) # TODO validate uniqueness when internal
+  index({ refresh_token: 1 }, { sparse: true }) # TODO validate uniqueness when internal
   index({ expires_at: 1 }, { sparse: true })
   index({ deleted_at: 1 }, { sparse: true })
-  index({ code: 1 }, { sparse: true })
+  index({ code: 1 }, { sparse: true, unique: true })
 
   attr_accessor :token_plain
   attr_accessor :refresh_token_plain
@@ -159,6 +159,8 @@ class AccessToken
       query << ["access_token",  self.token_plain]         if self.token_plain
       query << ["refresh_token", self.refresh_token_plain] if self.refresh_token_plain
       query << ["expires_in",    self.expires_in]          if self.expires_at
+      query << ["server_name",   Server.name]              if Server.name
+      query << ["username",      self.user.name]
     end
 
     if uri
