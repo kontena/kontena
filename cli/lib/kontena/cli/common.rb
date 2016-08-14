@@ -149,6 +149,13 @@ module Kontena
       def add_master(server_name, master_info)
         config.add_server(master_info.merge('name' => server_name))
       end
+
+      def any_key_to_continue
+        msg = "Press any key to continue or ctrl-c to cancel.. "
+        print "#{msg}"
+        STDIN.getc
+        print "\r#{" " * msg.length}\r"
+      end
     end
   end
 end

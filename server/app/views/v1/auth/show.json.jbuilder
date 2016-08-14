@@ -13,6 +13,9 @@ if @access_token.token_type.to_s == 'bearer'
     json.email @access_token.user.email
     json.name @access_token.user.name.to_s
   end
+  json.server do
+    json.name Server.name
+  end
 else
   # If the token isn't bearer, we will display it as an authorization code.
   json.set! :grant_type, 'authorization_code'

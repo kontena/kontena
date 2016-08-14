@@ -67,6 +67,10 @@ class Server < Roda
     @url ||= config[:root_url]
   end
 
+  def self.name
+    @name ||= config[:server_name]
+  end
+
   # Global logger
   def self.logger
     return @logger if @logger

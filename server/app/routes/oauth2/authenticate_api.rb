@@ -37,6 +37,9 @@ module OAuth2Api
         invite_code = params['invite_code']
         if invite_code.kind_of?(String) && invite_code.length > 4
           user = User.where(invite_code: invite_code).first
+          unless user
+            mime_halt(403, 'access_denied', 'Invalid invite code') and return
+          end
         elsif current_user
           user = current_user
         end

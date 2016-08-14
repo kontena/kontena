@@ -26,7 +26,7 @@ class User
             unless: :is_local_admin?
 
   index({ email: 1 }, { unique: true })
-  index({ external_id: 1 }, { unique: true })
+  index({ external_id: 1 }, { unique: true, sparse: true })
   index({ invite_code: 1}, { unique: true, sparse: true })
 
   attr_accessor :password
