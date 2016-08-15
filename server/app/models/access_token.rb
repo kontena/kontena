@@ -21,8 +21,8 @@ class AccessToken
 
   index({ user_id: 1 })
   index({ internal: 1 })
-  index({ token: 1 }, { unique: true }) # TODO validate uniqueness when internal
-  index({ refresh_token: 1 }, { sparse: true }) # TODO validate uniqueness when internal
+  index({ token: 1, internal: 1 }, { unique: true, })
+  index({ refresh_token: 1, internal: 1 }, { sparse: true, unique: true })
   index({ expires_at: 1 }, { sparse: true })
   index({ deleted_at: 1 }, { sparse: true })
   index({ code: 1 }, { sparse: true, unique: true })
