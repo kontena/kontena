@@ -38,28 +38,35 @@ module Kontena::Cli::Auth
       end
 
       existing_server = config.find_server_by(url: self.url)
+      
+      if existing_server
+        server = existing_server
+      else
+        server = Kontena::Cli::Config::Server.new(url: self.url, name: self.name)
+        config.servers << server
+      end
 
-      if existing_server && existing_server.token && existing_server.token.access_token
-        client = Kontena::Client.new(existing_server.url, existing_server.token)
+      if self.token
+        # Use supplied token
+        server.token = Kontena::Cli::Config::Token.new(access_token: self.token, parent_type: :master, parent: server.name)
+      elsif server.token.nil?
+        # Create new empty token if the server does not have one yet
+        server.token = Kontena::Cli::Config::Token.new(parent_type: :master, parent: server.name)
+      end
+
+      client = Kontena::Client.new(server.url, server.token)
+
+      if server && server.token && server.token.access_token
+        # See if the existing or supplied authentication works without reauthenticating
         if client.authentication_ok?(master_account.token_verify_path)
-          config.current_master = existing_server.name
+          config.current_master = server.name
           config.write
-          puts "Authentication ok"
+          display_logo
           exit 0
         end
       end
 
-      if existing_server
-        server = existing_server
-      else
-        server = existing_server || Kontena::Cli::Config::Server.new(url: self.url)
-        server.token ||= Kontena::Cli::Config::Token.new
-        config.servers << server
-      end
-
       web_server = LocalhostWebServer.new
-
-      client = Kontena::Client.new(server.url, server.token)
 
       params = {}
       params[:redirect_uri] = "http://localhost:#{web_server.port}/cb"
@@ -84,8 +91,8 @@ module Kontena::Cli::Auth
         uri = URI.parse(response.headers['Location'])
         puts "Opening browser to #{uri.scheme}://#{uri.host}"
         puts
-        puts "If you are running this command over a ssh connection or it's"
-        puts "otherwise impossible to open a browser then you must use a"
+        puts "If you are running this command over an ssh connection or it's"
+        puts "otherwise not possible to open a browser then you must use a"
         puts "pregenerated access token with the --token parameter."
         puts
         puts "Once the authentication is complete you can close the browser"
@@ -94,7 +101,7 @@ module Kontena::Cli::Auth
         any_key_to_continue
 
         puts "If the browser does not open, try visiting this URL manually:"
-        puts uri.to_s
+        puts "<#{uri.to_s}>"
         server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
         browser_thread = Thread.new { Launchy.open(uri.to_s) }
         
@@ -109,17 +116,25 @@ module Kontena::Cli::Auth
           server.token.expires_at = response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil
           server.token.username = response['username']
           if response['server_name']
-            server.name = response['server_name']
+            server.name ||= response['server_name']
           else
-            server.name = self.name || (config.find_server('default') ? "default-#{SecureRandom.hex(2)}" : "default")
+            server.name ||= self.name || (config.find_server('default') ? "default-#{SecureRandom.hex(2)}" : "default")
           end
           config.current_master = server.name
           config.write
-          puts "Authenticated to #{server.name} at #{server.url} as #{server.token.username}"
+          display_logo
+          puts [
+            'Authenticated to'.colorize(:green),
+            server.name.colorize(:yellow),
+            'at'.colorize(:green),
+            server.url.colorize(:yellow),
+            'as'.colorize(:green),
+            server.token.username.colorize(:yellow)
+          ].join(' ')
           exit 0
         end
       else
-        puts "Server error: #{response.body}"
+        puts "Server error: #{response.body}".colorize(:red)
         exit 1
       end
     end
