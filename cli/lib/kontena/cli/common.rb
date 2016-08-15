@@ -154,7 +154,20 @@ module Kontena
         msg = "Press any key to continue or ctrl-c to cancel.. "
         print "#{msg}"
         STDIN.getc
-        print "\r#{" " * msg.length}\r"
+        print "\r#{' ' * msg.length}\r"
+      end
+
+      def display_logo
+        logo = <<LOGO
+ _               _
+| | _____  _ __ | |_ ___ _ __   __ _
+| |/ / _ \\| '_ \\| __/ _ \\ '_ \\ / _` |
+|   < (_) | | | | ||  __/ | | | (_| |
+|_|\\_\\___/|_| |_|\\__\\___|_| |_|\\__,_|
+-------------------------------------
+Copyright (c)2016 Kontena, Inc.
+LOGO
+        puts logo
       end
     end
   end
