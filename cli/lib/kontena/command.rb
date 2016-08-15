@@ -20,10 +20,13 @@ class Kontena::Command < Clamp::Command
   def pre_command_hook(command_type, arguments)
     cmd_type = "#{command_type}_hook".split('_').collect(&:capitalize).join
     if Kontena::Command::Hook::const_defined?(cmd_type)
-      result = Kontena::Command::Hook::const_get(cmd_type).new(arguments).before
-      if result.kind_of?(FalseClass)
-        puts "Execution aborted by #{cmd_type}"
-        exit 1
+      hook = Kontena::Command::Hook::const_get(cmd_type).new(arguments)
+      if hook.respond_to?(:before)
+        result = Kontena::Command::Hook::const_get(cmd_type).new(arguments).before
+        if result.kind_of?(FalseClass)
+          puts "Execution aborted by #{cmd_type}"
+          exit 1
+        end
       end
     end
   end
@@ -31,7 +34,10 @@ class Kontena::Command < Clamp::Command
   def post_command_hook(command_type, arguments, outcome)
     cmd_type = "#{command_type}_hook".split('_').collect(&:capitalize).join
     if Kontena::Command::Hook::const_defined?(cmd_type)
-      outcome = Kontena::Command::Hook::const_get(cmd_type).new(arguments, outcome).after
+      hook = Kontena::Command::Hook::const_get(cmd_type).new(arguments, outcome)
+      if hook.respond_to?(:after)
+        outcome = Kontena::Command::Hook::const_get(cmd_type).new(arguments, outcome).after
+      end
     end
     outcome
   end
