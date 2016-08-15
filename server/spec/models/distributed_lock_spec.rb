@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe DistributedLock do
+describe DistributedLock, performance: true do
   it { should have_fields(:name, :lock_id, :created_at)}
   it { should have_index_for(name: 1).with_options(unique: true) }
 
