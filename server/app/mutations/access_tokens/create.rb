@@ -3,7 +3,7 @@ require "securerandom"
 module AccessTokens
   class Create < Mutations::Command
 
-    VALID_SCOPES = ['user']
+    VALID_INTERNAL_SCOPES = ['user']
 
     required do
       model :user
@@ -27,7 +27,7 @@ module AccessTokens
         self.scopes = scopes
       end
 
-      if self.scopes.any?{|scope| !VALID_SCOPES.include?(scope)}
+      if !self.token && self.scopes.any?{|scope| !VALID_INTERNAL_SCOPES.include?(scope)}
         add_error(:scope, :invalid, 'Invalid scope')
       end
 
