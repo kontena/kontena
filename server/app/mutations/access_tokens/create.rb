@@ -3,6 +3,8 @@ require "securerandom"
 module AccessTokens
   class Create < Mutations::Command
 
+    VALID_SCOPES = ['user']
+
     required do
       model :user
     end
@@ -23,6 +25,10 @@ module AccessTokens
       scopes = self.scope.to_s.gsub(/\s+/, '').split(',')
       if self.scopes.nil? || self.scopes.empty?
         self.scopes = scopes
+      end
+
+      if self.scopes.any?{|scope| !VALID_SCOPES.include?(scope)}
+        add_error(:scope, :invalid, 'Invalid scope')
       end
 
       # Scope is always required
