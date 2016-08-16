@@ -50,9 +50,11 @@ class AccessToken
     doc.expires_at = nil unless doc.expires_at.to_i > 0
     if doc.internal?
       doc.token_plain ||= SecureRandom.hex(16) unless doc.token
-      doc.refresh_token_plain ||= SecureRandom.hex(32) unless doc.refresh_token
+      unless doc.refresh_token || doc.expires_at.nil?
+        doc.refresh_token_plain ||= SecureRandom.hex(32)
+      end
       doc.token ||= self.encrypt(doc.token_plain)
-      doc.refresh_token ||= self.encrypt(doc.refresh_token_plain)
+      doc.refresh_token ||= self.encrypt(doc.refresh_token_plain) if doc.refresh_token_plain
     end
   end
 
@@ -75,6 +77,7 @@ class AccessToken
       ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless old_token
+      return nil if old_token.expired?
 
       new_token = AccessToken.create!(
         token_type: 'bearer',

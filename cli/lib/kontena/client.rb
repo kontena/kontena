@@ -7,6 +7,7 @@ require 'openssl'
 require 'uri'
 require_relative 'errors'
 require_relative 'cli/version'
+require_relative 'cli/config'
 
 module Kontena
   class Client

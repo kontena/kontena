@@ -6,8 +6,53 @@ describe Kontena::Client do
   let(:subject) { described_class.new('https://localhost/v1/') }
   let(:http_client) { double(:http_client) }
 
+  let(:master) { Kontena::Cli::Config::Server.new(url: 'https://localhost', name: 'master') }
+  let(:token) { Kontena::Cli::Config::Token.new(access_token: '1234', refresh_token: '5678', expires_at: nil, parent_type: :master, parent: master) }
+  let(:expiring_token) { Kontena::Cli::Config::Token.new(access_token: '1234', refresh_token: '5678', expires_at: Time.now.utc + 1000, parent_type: :master, parent: master) }
+  let(:expired_token) { Kontena::Cli::Config::Token.new(access_token: '1234', refresh_token: '5678', expires_at: Time.now.utc - 1000, parent_type: :master, parent: master) }
+
   before(:each) do
     allow(subject).to receive(:http_client)
+    allow(Kontena::Cli::Config).to receive(:find_server).and_return(master)
+    allow(Kontena::Cli::Config).to receive(:current_master).and_return(master)
+    allow(Kontena::Cli::Config).to receive(:account).and_return(Kontena::Cli::Config::Account.new(Kontena::Cli::Config.master_account_data))
+    allow(Kontena::Cli::Config).to receive(:write).and_return(true)
+  end
+
+
+  context 'token authentication' do
+
+    it 'takes a token' do
+      client = Kontena::Client.new('https://localhost/v1/', token)
+      expect(client.token).to eq token
+    end
+    
+    it 'uses the access token as a bearer token' do
+      client = Kontena::Client.new('https://localhost/v1/', token)
+      expect(client.http_client).to receive(:request) do |opts|
+        expect(opts[:headers]['Authorization']).to eq "Bearer #{token.access_token}"
+      end.and_return(spy(:response, status: 200))
+      client.get('/v1/foo')
+    end
+
+    it 'does not try to refresh an expiring token that is still valid' do
+      client = Kontena::Client.new('https://localhost/v1/', expiring_token)
+      expect(client.http_client).to receive(:request) do |opts|
+        expect(opts[:headers]['Authorization']).to eq "Bearer #{token.access_token}"
+      end.and_return(spy(:response, status: 200))
+      client.get('/v1/foo')
+    end
+
+    it 'tries to refresh an expired token' do
+      allow(master).to receive(:token).and_return(expired_token)
+      client = Kontena::Client.new(master.url, master.token)
+      allow(client).to receive(:token_refresh_path).and_return('/oauth2/token')
+      expect(client.http_client).to receive(:request).with(hash_including(path: '/oauth2/token', method: :post)).and_return(OpenStruct.new(status: 201, headers: {'Content-Type' => 'application/json'}, body: '{"access_token": "abcd"}'))
+      expect(client.http_client).to receive(:request).with(hash_including(path: '/v1/foo')) do |args|
+        expect(args[:headers]['Authorization']).to eq "Bearer abcd"
+      end.and_return(spy(:response, status: 200))
+      client.get('/v1/foo')
+    end
   end
 
   describe '#get' do

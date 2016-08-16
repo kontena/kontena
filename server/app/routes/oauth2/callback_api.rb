@@ -40,6 +40,7 @@ module OAuth2Api
         if state.user
           state.user.invite_code = nil
           state.user.external_id = user_data[:id]
+          state.user.email = user_data[:email]
           state.user.save
         end
 
@@ -73,7 +74,7 @@ module OAuth2Api
           refresh_token: token_data['refresh_token'],
           expires_at: expires_at,
           refreshable: !token_data['refresh_token'].nil?,
-          scope: token_data['scope'] || AuthProvider.authenticate_scope
+          scope: token_data['scope'] || AuthProvider.instance.userinfo_scope
         )
 
         if task.success?

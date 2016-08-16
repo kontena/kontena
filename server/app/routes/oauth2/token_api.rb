@@ -30,7 +30,6 @@ module OAuth2Api
 
         params = params_from_anywhere
         if params.nil? || params.empty?
-          puts "HWY???"
           mime_halt(400, OAuth2Api::INVALID_REQUEST) and return
         end
 
@@ -50,6 +49,7 @@ module OAuth2Api
         end
 
         if @access_token
+          response.status = 201
           if want_json?
             response.headers[OAuth2Api::CONTENT_TYPE] = OAuth2Api::JSON_MIME
             render(AUTH_SHOW)

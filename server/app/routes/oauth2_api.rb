@@ -62,7 +62,7 @@ module OAuth2Api
     end
 
     def mime_halt(status, error, error_description=nil)
-      response.status = 400
+      response.status = status
       msg = { error: error, error_description: error_description }
       response.headers.merge(TokenAuthentication.authenticate_header(error, error_description))
       if want_json?

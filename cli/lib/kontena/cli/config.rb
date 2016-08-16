@@ -155,7 +155,7 @@ module Kontena
               'account' => 'kontena'
             )
           ],
-          'accounts' => [ default_account ]
+          'accounts' => [ kontena_account_data ]
         }
       end
 
@@ -170,16 +170,6 @@ module Kontena
         else
           settings
         end
-      end
-
-      # Default account configuration hash
-      #
-      # @return [Hash]
-      def default_account
-        {
-          'name' => 'kontena',
-          'url' => 'https://auth2.kontena.io'
-        }
       end
 
       # Return the configuration file path. You can override the default
@@ -463,11 +453,11 @@ module Kontena
         end
 
         def expires?
-          expires_at.nil? ? false : expires_at > 0
+          expires_at.nil? ? false : expires_at.to_i > 0
         end
 
         def expired?
-          expires? && expires_at < Time.now.utc.to_i
+          expires? && expires_at < Time.now.utc
         end
 
         def parent

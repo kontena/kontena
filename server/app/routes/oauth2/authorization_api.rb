@@ -42,7 +42,7 @@ module OAuth2Api
         end
 
         case params[RESPONSE_TYPE]
-        when CODE || TOKEN
+        when CODE, TOKEN
           validate_access_token(USER)
           unless params[SCOPE]
             mime_halt(400, INVALID_SCOPE) and return
@@ -56,6 +56,7 @@ module OAuth2Api
             with_code: params[RESPONSE_TYPE] == CODE
           )
           if task.success?
+            response.status = 201
             @access_token = task.result
             render(AUTH_SHOW)
           else
