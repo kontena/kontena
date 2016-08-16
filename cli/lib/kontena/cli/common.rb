@@ -1,5 +1,7 @@
 require 'colorize'
 require 'uri'
+require 'io/console'
+
 require_relative 'config'
 
 module Kontena
@@ -153,7 +155,7 @@ module Kontena
       def any_key_to_continue
         msg = "Press any key to continue or ctrl-c to cancel.. "
         print "#{msg}"
-        STDIN.getc
+        STDIN.getch
         print "\r#{' ' * msg.length}\r"
       end
 
