@@ -1,5 +1,5 @@
 module V1
-  class AuthProviderAPI < Roda
+  class AuthProviderApi < Roda
     include RequestHelpers
     include TokenAuthenticationHelper
 
@@ -17,14 +17,15 @@ module V1
         params = parse_json_body
 
         @auth_provider.to_h.each do |key, value|
-          @auth_provider[key] = params[key]
-        end
-
-        if params['server_name']
-          config[:server_name] = params['server_name']
+          @auth_provider[key] = params[key.to_s]
         end
 
         if @auth_provider.save
+          Server.logger.debug "Authentication provider settings changed, clearing all stored access tokens."
+
+          admin = User.where(email: 'admin').first
+          AccessToken.all.reject{|a| a.user.id == admin.id}.map(&:destroy)
+
           response.status = 201
           render('auth_provider/show')
         else

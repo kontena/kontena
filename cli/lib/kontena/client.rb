@@ -305,9 +305,9 @@ module Kontena
     #
     # @return [String]
     def token_refresh_path
-      if token.respond_to?(:parent) && token.parent.respond_to?(:account)
-        config.find_account(token.parent.account).token_endpoint
-      else
+      if token.respond_to?(:parent) && token.parent.respond_to?(:account) && token.respond_to?(:config)
+        token.config.find_account(token.parent.account).token_endpoint
+      elsif token.respond_to?(:parent)
         token.parent.token_endpoint
       end
     end
@@ -350,7 +350,7 @@ module Kontena
         token.access_token  = response['access_token']
         token.refresh_token = response['refresh_token']
         token.expires_at = in_to_at(response['expires_in'])
-        token.config.write
+        token.config && token.config.write
         true
       else 
         logger.debug "Got null or bad response to refresh request: #{last_response.inspect}"
@@ -373,7 +373,7 @@ module Kontena
     end
 
     def bearer_authorization_header
-      if token['access_token']
+      if token && token['access_token']
         {AUTHORIZATION => "Bearer #{token['access_token']}"}
       else
         {}

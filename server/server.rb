@@ -132,6 +132,10 @@ class Server < Roda
         r.run V1::PingApi
       end
 
+      r.on 'auth_provider' do
+        r.run V1::AuthProviderApi
+      end
+
       r.post 'auth' do
         r.run V1::AuthApi
       end
