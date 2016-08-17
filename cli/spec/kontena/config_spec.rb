@@ -32,7 +32,7 @@ describe Kontena::Cli::Config do
 
     it 'returns an array of servers' do
       expect(subject.servers).to be_kind_of(Array)
-      expect(subject.servers.first.url).to eq 'http://localhost'
+      expect(subject.servers.first.url).to match /^http/
     end
 
     it 'returns an array of accounts' do
@@ -47,7 +47,7 @@ describe Kontena::Cli::Config do
     it 'sets and returns current grid' do
       subject.current_master = 'test'
       subject.current_grid = 'foo'
-      expect(subject.servers.first.grid).to eq 'foo'
+      expect(subject.current_master.grid).to eq 'foo'
       expect(subject.current_grid).to eq 'foo'
     end
   end
