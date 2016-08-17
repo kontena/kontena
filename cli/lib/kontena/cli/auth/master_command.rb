@@ -123,10 +123,10 @@ module Kontena::Cli::Auth
             http_method: :post,
             path: '/oauth2/token',
             body: {
-              'grant_type': 'authorization_code',
-              'code': response['code'],
-              'client_id': Kontena::Client::CLIENT_ID,
-              'client_secret': Kontena::Client::CLIENT_SECRET
+              'grant_type' => 'authorization_code',
+              'code' => response['code'],
+              'client_id' => Kontena::Client::CLIENT_ID,
+              'client_secret' => Kontena::Client::CLIENT_SECRET
             },
             expects: [201],
             auth: false
