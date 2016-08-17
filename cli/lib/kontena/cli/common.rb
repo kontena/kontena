@@ -11,7 +11,7 @@ module Kontena
       def logger
         return @logger if @logger
         @logger = Logger.new(STDOUT)
-        @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'COMMON'
         @logger
       end
@@ -154,9 +154,13 @@ module Kontena
 
       def any_key_to_continue
         msg = "Press any key to continue or ctrl-c to cancel.. "
-        print "#{msg}"
-        STDIN.getch
+        print "#{msg}".colorize(:white)
+        char = STDIN.getch
         print "\r#{' ' * msg.length}\r"
+        if char == "\u0003"
+          puts "Canceled".colorize(:red)
+          exit 1
+        end
       end
 
       def display_logo
@@ -171,6 +175,23 @@ Copyright (c)2016 Kontena, Inc.
 LOGO
         puts logo
       end
+
+      def display_login_info
+        server = config.current_master
+        if server
+          puts [
+            'Authenticated to'.colorize(:green),
+            server.name.colorize(:yellow),
+            'at'.colorize(:green),
+            server.url.colorize(:yellow),
+            'as'.colorize(:green),
+            server.username.colorize(:yellow)
+          ].join(' ')
+        else
+          puts "Master not selected".colorize(:red)
+        end
+    end
+
     end
   end
 end
