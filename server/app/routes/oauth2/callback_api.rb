@@ -95,7 +95,8 @@ module OAuth2Api
         task = AccessTokens::Create.run(
           user: user,
           scope: 'user',
-          expires_in: 7200
+          expires_in: 7200,
+          with_code: true
         )
 
         if task.success?

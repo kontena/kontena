@@ -62,6 +62,7 @@ module Kontena::Cli::Auth
           config.current_master = server.name
           config.write
           display_logo
+          display_login_info
           exit 0
         end
       end
@@ -102,19 +103,43 @@ module Kontena::Cli::Auth
 
         puts "If the browser does not open, try visiting this URL manually:"
         puts "<#{uri.to_s}>"
+        puts
+
         server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
         browser_thread = Thread.new { Launchy.open(uri.to_s) }
         
         server_thread.join
         browser_thread.join
 
+        puts "The authentication flow was completed successfuly, welcome back!".colorize(:green)
+        any_key_to_continue
+
         response = Thread.main['response']
+
+        # If the master responds with a code, then exchange it to a token
+        if response && response.kind_of?(Hash) && response['code']
+          ENV["DEBUG"] && puts('Master responded with code, exchanging to token')
+          response = client.request(
+            http_method: :post,
+            path: '/oauth2/token',
+            body: {
+              'grant_type': 'authorization_code',
+              'code': response['code'],
+              'client_id': Kontena::Client::CLIENT_ID,
+              'client_secret': Kontena::Client::CLIENT_SECRET
+            },
+            expects: [201],
+            auth: false
+          )
+          ENV["DEBUG"] && puts('Code exchanged')
+        end
+
         if response && response.kind_of?(Hash) && response['access_token']
           server.token = Kontena::Cli::Config::Token.new
           server.token.access_token = response['access_token']
           server.token.refresh_token = response['refresh_token']
           server.token.expires_at = response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil
-          server.token.username = response['username']
+          server.token.username = response.fetch('user', {}).fetch('name', nil) || response.fetch('user', {}).fetch('email', nil)
           if response['server_name']
             server.name ||= response['server_name']
           else
@@ -123,14 +148,7 @@ module Kontena::Cli::Auth
           config.current_master = server.name
           config.write
           display_logo
-          puts [
-            'Authenticated to'.colorize(:green),
-            server.name.colorize(:yellow),
-            'at'.colorize(:green),
-            server.url.colorize(:yellow),
-            'as'.colorize(:green),
-            server.token.username.colorize(:yellow)
-          ].join(' ')
+          display_login_info
           exit 0
         end
       else

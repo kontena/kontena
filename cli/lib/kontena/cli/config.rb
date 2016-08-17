@@ -26,7 +26,7 @@ module Kontena
 
       def initialize
         @logger = Logger.new(STDOUT)
-        @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'CONFIG'
         load_settings_from_env || load_settings_from_config_file
 
@@ -457,7 +457,7 @@ module Kontena
         end
 
         def expired?
-          expires? && expires_at < Time.now.utc
+          expires? && expires_at && expires_at.to_i < Time.now.utc.to_i
         end
 
         def parent

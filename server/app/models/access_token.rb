@@ -162,9 +162,10 @@ class AccessToken
       query << ["access_token",  self.token_plain]         if self.token_plain
       query << ["refresh_token", self.refresh_token_plain] if self.refresh_token_plain
       query << ["expires_in",    self.expires_in]          if self.expires_at
-      query << ["server_name",   Server.name]              if Server.name
       query << ["username",      self.user.name]
     end
+
+    query << ["server_name",   Server.name] if Server.name
 
     if uri
       new_uri = URI.parse(uri)
