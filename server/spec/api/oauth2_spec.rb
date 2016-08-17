@@ -246,20 +246,11 @@ describe 'OAuth2 API' do
       expect(AccessToken.where(refresh_token: 'cdef2345').first.internal?).to be_falsey
       local_token = david.access_tokens.where(internal: true).first
       location = response.headers['Location']
-      acctok = location[/access_token\=([a-z0-9]+)/, 1]
-      reftok = location[/refresh_token\=([a-z0-9]+)/, 1]
-      expect(local_token.encrypt(acctok)).to eq local_token.token
-      expect(local_token.encrypt(reftok)).to eq local_token.refresh_token
+      code = location[/code\=([a-z0-9]+)/, 1]
+      expect(local_token.code).to eq code
       expect(location).to match /^http:\/\/localhost\:1234\/cb\?/
       david.reload
       expect(david.external_id).to eq '12345'
-      get(
-        '/v1/user',
-        nil,
-        json_header.merge('HTTP_AUTHORIZATION' => "Bearer #{acctok}")
-      )
-      expect(response.status).to eq 200
-      expect(response.body).to match /foofoo/
     end
   end
 end
