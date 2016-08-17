@@ -34,6 +34,7 @@ describe Kontena::Cli::Common do
 
     it 'returns grid from env' do
       allow(ENV).to receive(:[]).with(anything).and_return(nil)
+      allow(ENV).to receive(:[]).with('DEBUG').and_call_original
       allow(ENV).to receive(:[]).with('KONTENA_GRID').and_return('foo')
       expect(subject.current_grid).to eq('foo')
     end

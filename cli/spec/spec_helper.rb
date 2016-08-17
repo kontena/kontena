@@ -22,6 +22,15 @@ RSpec.configure do |config|
   config.order = 'random'
   config.before(:each) do
     allow(Dir).to receive(:home).and_return('/tmp/')
+    allow(ENV).to receive(:[]).with(anything).and_call_original
+    allow(ENV).to receive(:[]).with('DEBUG').and_call_original
+    Kontena::Cli::Config.reset_instance
+  end
+  
+  config.after(:each) do
+    RSpec::Mocks.space.proxy_for(File).reset
+    RSpec::Mocks.space.proxy_for(Kontena::Cli::Config).reset
+    File.unlink(Kontena::Cli::Config.default_config_filename) if File.exist?(Kontena::Cli::Config.default_config_filename)
   end
 end
 
