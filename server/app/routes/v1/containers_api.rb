@@ -1,6 +1,6 @@
 module V1
   class ContainersApi < Roda
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
 

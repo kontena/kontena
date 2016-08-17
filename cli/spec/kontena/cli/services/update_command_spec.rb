@@ -23,28 +23,28 @@ describe Kontena::Cli::Services::UpdateCommand do
     end
 
     it 'sends update command' do
-      expect(subject).to receive(:update_service).with(token, 'service', {privileged: false})
+      expect(subject).to receive(:update_service).with(duck_type(:access_token), 'service', {privileged: false})
       subject.run(['service'])
     end
 
     it 'sends --cap-add' do
-      expect(subject).to receive(:update_service).with(token, 'service', hash_including(cap_add: ['NET_ADMIN']))
+      expect(subject).to receive(:update_service).with(duck_type(:access_token), 'service', hash_including(cap_add: ['NET_ADMIN']))
       subject.run(['--cap-add', 'NET_ADMIN', 'service'])
     end
 
     it 'sends --cap-drop' do
-      expect(subject).to receive(:update_service).with(token, 'service', hash_including(cap_drop: ['MKNOD']))
+      expect(subject).to receive(:update_service).with(duck_type(:access_token), 'service', hash_including(cap_drop: ['MKNOD']))
       subject.run(['--cap-drop', 'MKNOD', 'service'])
     end
 
     it 'sends --log-driver' do
-      expect(subject).to receive(:update_service).with(token, 'service', hash_including(log_driver: 'syslog'))
+      expect(subject).to receive(:update_service).with(duck_type(:access_token), 'service', hash_including(log_driver: 'syslog'))
       subject.run(['--log-driver', 'syslog', 'service'])
     end
 
     it 'sends --log-opt' do
       expect(subject).to receive(:update_service).with(
-        token, 'service', hash_including(log_opts: {
+        duck_type(:access_token), 'service', hash_including(log_opts: {
           'gelf-address'  => 'udp://log_forwarder-logstash_internal:12201'
         })
       )

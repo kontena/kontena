@@ -9,35 +9,44 @@ describe Kontena::Cli::Common do
   end
 
   before(:each) do
-    allow(subject).to receive(:settings).and_return({'current_server' => 'default',
-                                                     'servers' => [{}]
-                                                    })
-    allow(subject).to receive(:save_settings)
+    RSpec::Mocks.space.proxy_for(File).reset
+    Kontena::Cli::Config.reset_instance
+  end
+
+  def mock_config(cfg_hash)
+    expect(File).to receive(:readable?).and_return(true)
+    expect(File).to receive(:exist?).and_return(true)
+    expect(File).to receive(:read).and_return(cfg_hash.to_json)
   end
 
   describe '#current_grid' do
     it 'returns nil by default' do
-      allow(subject).to receive(:settings).and_return({'current_server' => 'alias',
-                                                       'servers' => [
-                                                           {'name' => 'some_master', 'url' => 'some_master'},
-                                                           {'name' => 'alias', 'url' => 'someurl'}
-                                                       ]
-                                                      })
+      mock_config({
+        'current_server' => 'alias',
+        'servers' => [
+           {'name' => 'some_master', 'url' => 'some_master'},
+           {'name' => 'alias', 'url' => 'someurl'}
+        ]
+      })
+
       expect(subject.current_grid).to eq(nil)
     end
 
     it 'returns grid from env' do
-      expect(ENV).to receive(:[]).with('KONTENA_GRID').and_return('foo')
+      allow(ENV).to receive(:[]).with(anything).and_return(nil)
+      allow(ENV).to receive(:[]).with('DEBUG').and_call_original
+      allow(ENV).to receive(:[]).with('KONTENA_GRID').and_return('foo')
       expect(subject.current_grid).to eq('foo')
     end
 
     it 'returns grid from json' do
-      allow(subject).to receive(:settings).and_return({'current_server' => 'alias',
-                                                       'servers' => [
-                                                           {'name' => 'some_master', 'url' => 'some_master'},
-                                                           {'name' => 'alias', 'url' => 'someurl', 'grid' => 'foo_grid'}
-                                                       ]
-                                                      })
+      mock_config({
+        'current_server' => 'alias',
+        'servers' => [
+          {'name' => 'some_master', 'url' => 'some_master'},
+          {'name' => 'alias', 'url' => 'someurl', 'grid' => 'foo_grid'}
+        ]
+      })
       expect(subject.current_grid).to eq('foo_grid')
     end
 
@@ -55,7 +64,8 @@ describe Kontena::Cli::Common do
     end
 
     it 'return url from env' do
-      expect(ENV).to receive(:[]).with('KONTENA_URL').and_return('https://domain.com')
+      allow(ENV).to receive(:[]).with(anything).and_return(nil)
+      allow(ENV).to receive(:[]).with('KONTENA_URL').and_return('https://domain.com')
       expect(subject.api_url).to eq('https://domain.com')
     end
   end
@@ -66,22 +76,17 @@ describe Kontena::Cli::Common do
         subject.require_token
       }.to raise_error(ArgumentError)
     end
-
-    it 'return token from env' do
-      expect(ENV).to receive(:[]).with('KONTENA_TOKEN').and_return('secret_token')
-      expect(subject.require_token).to eq('secret_token')
-    end
   end
 
   describe '#current_master' do
     it 'return correct master info' do
-      allow(subject).to receive(:settings).and_return({'current_server' => 'alias',
-                                                       'servers' => [
-                                                           {'name' => 'some_master', 'url' => 'some_master'},
-                                                           {'name' => 'alias', 'url' => 'someurl'}
-                                                       ]
-                                                      })
-
+      mock_config({ 
+        'current_server' => 'alias',
+        'servers' => [
+          {'name' => 'some_master', 'url' => 'some_master'},
+          {'name' => 'alias', 'url' => 'someurl'}
+        ]
+      })
       expect(subject.current_master['url']).to eq('someurl')
       expect(subject.current_master['name']).to eq('alias')
     end
@@ -89,30 +94,26 @@ describe Kontena::Cli::Common do
 
   describe '#settings' do
     it 'migrates old settings' do
-      RSpec::Mocks.space.proxy_for(subject).reset
-
-      allow(File).to receive(:exists?).and_return(true)
-      allow(File).to receive(:read).and_return('{
-        "server": {
-          "url": "https://master.domain.com:8443",
-          "grid": "my-grid",
-          "token": "kontena-token"
+      mock_config({
+        "server" => {
+          "url" => "https://master.domain.com:8443",
+          "grid" => "my-grid",
+          "token" => "kontena-token"
         }
-      }')
-      expected_settings = {
-          'current_server' => 'default',
-          'servers' => [
-              {
-                  "url" => "https://master.domain.com:8443",
-                  "grid" => "my-grid",
-                  "token" => "kontena-token",
-                  "name" => "default"
-              }
-          ]
-      }
-      expect(File).to receive(:write).with(subject.settings_filename, JSON.pretty_generate(expected_settings))
-
-      subject.settings
+      })
+      expect(File).to receive(:write) do |filename, content|
+        expect(File.basename(filename)).to eq(".kontena_client.json")
+        config_hash = JSON.parse(content)
+        expect(config_hash['servers']).to be_kind_of(Array)
+        expect(config_hash['servers'].first).to be_kind_of(Hash)
+        expect(config_hash['servers'].first['name']).to eq("default")
+        expect(config_hash['servers'].first['url']).to eq("https://master.domain.com:8443")
+        expect(config_hash['servers'].first['token']).to eq("kontena-token")
+        expect(config_hash['servers'].first['grid']).to eq("my-grid")
+        expect(config_hash['current_server']).to be_kind_of(String)
+        expect(config_hash['current_server']).to eq("default")
+      end
+      subject.config.write
     end
 
   end

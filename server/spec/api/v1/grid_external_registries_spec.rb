@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe '/v1/grids/:name/external_registries' do
 
   let(:valid_token) { AccessToken.create!(user: david, scopes: ['user']) }
-  let(:request_headers) { { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}" } }
+  let(:request_headers) { { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}" } }
 
   let(:david) do
     User.create!(email: 'david@domain.com', external_id: '123456')
@@ -35,6 +35,8 @@ describe '/v1/grids/:name/external_registries' do
     it 'requires authorization' do
       get "/v1/grids/#{grid.to_path}/external_registries", nil
       expect(response.status).to eq(403)
+      get "/v1/grids/#{grid.to_path}/external_registries", nil, request_headers
+      expect(response.status).to eq(200)
     end
   end
 
@@ -58,7 +60,7 @@ end
 
 describe '/v1/external_registries/:grid/:name' do
   let(:valid_token) { AccessToken.create!(user: david, scopes: ['user']) }
-  let(:request_headers) { { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}" } }
+  let(:request_headers) { { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}" } }
 
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')

@@ -16,7 +16,7 @@ module Kontena::Cli::Services
     end
 
     before(:each) do
-      allow(subject).to receive(:client).with(token).and_return(client)
+      allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:current_grid).and_return('test-grid')
     end
 

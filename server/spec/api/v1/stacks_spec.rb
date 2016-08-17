@@ -7,7 +7,7 @@ describe '/v1/stacks' do
 
   let(:request_headers) do
     {
-        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}"
+        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}"
     }
   end
 
