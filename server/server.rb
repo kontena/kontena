@@ -39,7 +39,7 @@ class Server < Roda
       '/authenticate'
     ],
     allow_expired: [
-      '/authenticate'
+      '/authenticate' 
     ]
   )
 
