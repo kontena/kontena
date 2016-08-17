@@ -9,6 +9,7 @@ describe Kontena::Cli::Config do
     before(:each) do
       allow(File).to receive(:exist?).and_return(false)
       allow(File).to receive(:write).and_return(true)
+      subject.class.reset_instance
       subject.servers << Kontena::Cli::Config::Server.new(
         url: 'http://localhost',
         name: 'test',
