@@ -1,3 +1,4 @@
+# Helpers for dealing with HTTP requests
 module RequestHelpers
 
   def self.included(base)
@@ -20,6 +21,25 @@ module RequestHelpers
     end
   end
 
+  # Parse param hash from X-www-form-urlencoded HTTP body
+  #
+  # @return [Hash]
+  def parse_form_body
+    body = request.body.read
+    if body == ''
+      {}
+    else
+      URI.decode_www_form(body)
+    end
+  rescue
+    response.status = 400
+    response.write("invalid_request")
+    request.halt
+  end
+
+  # Parse param hash from request JSON body
+  #
+  # @return [Hash]
   def parse_json_body
     body = request.body.read
     if body == ''
@@ -33,17 +53,14 @@ module RequestHelpers
     request.halt
   end
 
+  # Stop processing the request, send a HTTP status and a JSON body.
+  #
+  # @param [Fixnum] http_status_code
+  # @param [#to_json] body_obj Anything that responds to #to_json
+  # @return
   def halt_request(status, body = {})
     response.status = status
     response.write(body.to_json)
     request.halt
-  end
-
-  def test_env?
-    ENV['RACK_ENV'].to_s == 'test'
-  end
-
-  def dev_env?
-    ENV['RACK_ENV'].to_s == 'development'
   end
 end

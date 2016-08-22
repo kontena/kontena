@@ -4,7 +4,7 @@ module V1
   class UsersApi < Roda
     include RequestHelpers
     include CurrentUser
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
 
     plugin :multi_route
 

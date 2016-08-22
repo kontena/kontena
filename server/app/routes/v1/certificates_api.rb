@@ -1,6 +1,6 @@
 module V1
   class CertificatesApi < Roda
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
     include Auditor

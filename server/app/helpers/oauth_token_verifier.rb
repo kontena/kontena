@@ -1,3 +1,4 @@
+# TODO can be removed
 module OAuth2TokenVerifier
 
   attr_accessor :current_access_token

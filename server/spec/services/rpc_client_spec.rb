@@ -52,7 +52,6 @@ describe RpcClient do
             client = RpcClient.new(node_id, 5)
             responses << client.request("/hello/service#{i}", i)
           rescue => exc
-            puts exc.message
           end
         }
       end
