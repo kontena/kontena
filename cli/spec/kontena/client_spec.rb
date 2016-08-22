@@ -7,7 +7,7 @@ describe Kontena::Client do
   let(:http_client) { double(:http_client) }
 
   before(:each) do
-    allow(subject).to receive(:http_client)
+    allow(subject).to receive(:http_client).and_return(http_client)
   end
 
   describe '#get' do
@@ -40,7 +40,6 @@ describe Kontena::Client do
     let(:response_block) { Proc.new{ } }
 
     it 'passes path & response_block to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:get).with(
         hash_including(path: '/v1/foo', response_block: response_block)
       ).and_return(spy(:response, status: 200))
@@ -48,7 +47,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:get).with(
         hash_including(query: {bar: 'baz'})
       ).and_return(spy(:response, status: 200))
@@ -56,7 +54,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:get).with(
         hash_including(headers: hash_including(:'Some-Header' => 'value'))
       ).and_return(spy(:response, status: 200))
@@ -70,7 +67,6 @@ describe Kontena::Client do
     end
 
     it 'passes path and object to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:post).with(
         hash_including(path: '/v1/foo', body: kind_of(String))
       ).and_return(spy(:response, status: 200))
@@ -78,7 +74,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:post).with(
         hash_including(query: {bar: 'baz'})
       ).and_return(spy(:response, status: 200))
@@ -86,7 +81,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:post).with(
         hash_including(headers: hash_including(:'Some-Header' => 'value'))
       ).and_return(spy(:response, status: 200))
@@ -100,7 +94,6 @@ describe Kontena::Client do
     end
 
     it 'passes path and object to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:put).with(
         hash_including(path: '/v1/foo', body: kind_of(String))
       ).and_return(spy(:response, status: 200))
@@ -108,7 +101,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:put).with(
         hash_including(query: {bar: 'baz'})
       ).and_return(spy(:response, status: 200))
@@ -116,7 +108,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:put).with(
         hash_including(headers: hash_including(:'Some-Header' => 'value'))
       ).and_return(spy(:response, status: 200))
@@ -130,7 +121,6 @@ describe Kontena::Client do
     end
 
     it 'passes path to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:delete).with(
         hash_including(path: '/v1/foo')
       ).and_return(spy(:response, status: 200))
@@ -138,7 +128,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:delete).with(
         hash_including(query: {bar: 'baz'})
       ).and_return(spy(:response, status: 200))
@@ -146,7 +135,6 @@ describe Kontena::Client do
     end
 
     it 'passes params to client' do
-      allow(subject).to receive(:http_client).and_return(http_client)
       expect(http_client).to receive(:delete).with(
         hash_including(headers: hash_including(:'Some-Header' => 'value'))
       ).and_return(spy(:response, status: 200))
