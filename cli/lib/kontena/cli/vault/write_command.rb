@@ -1,5 +1,5 @@
 module Kontena::Cli::Vault
-  class WriteCommand < Clamp::Command
+  class WriteCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

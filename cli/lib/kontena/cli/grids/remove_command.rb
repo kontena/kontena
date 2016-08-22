@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Grids
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 
@@ -18,7 +18,7 @@ module Kontena::Cli::Grids
         response = client(token).delete("grids/#{grid['id']}")
         if response
           clear_current_grid if grid['id'] == current_grid
-          puts "removed #{grid['name'].cyan}"
+          puts "removed #{pastel.cyan(grid['name'])}"
         end
       else
         abort "Could not resolve grid by name [#{name}]. For a list of existing grids please run: kontena grid list".colorize(:red)

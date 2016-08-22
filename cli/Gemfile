@@ -4,5 +4,8 @@ source 'https://rubygems.org'
 gemspec
 group :development, :test do
   gem "rspec"
+  gem 'simplecov', :require => false, :group => :test
   gem "kontena-plugin-hello", path: "./examples/kontena-plugin-hello"
+  gem 'pry', require: false
+  gem 'pry-byebug', require: false
 end

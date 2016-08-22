@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class StopCommand < Clamp::Command
+  class StopCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common

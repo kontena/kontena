@@ -1,7 +1,7 @@
 require_relative '../../common'
 
 module Kontena::Cli::Master::Users
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "EMAIL ...", "List of emails"

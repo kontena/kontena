@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Etcd
-  class SetCommand < Clamp::Command
+  class SetCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common

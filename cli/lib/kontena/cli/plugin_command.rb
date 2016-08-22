@@ -3,7 +3,7 @@ require_relative 'plugins/search_command'
 require_relative 'plugins/install_command'
 require_relative 'plugins/uninstall_command'
 
-class Kontena::Cli::PluginCommand < Clamp::Command
+class Kontena::Cli::PluginCommand < Kontena::Command
 
   subcommand ["list","ls"], "List plugins", Kontena::Cli::Plugins::ListCommand
   subcommand "search", "Search plugins", Kontena::Cli::Plugins::SearchCommand

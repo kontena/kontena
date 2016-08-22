@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -41,8 +41,7 @@ module Kontena::Cli::Apps
 
     def delete(name, options, async = true)
       unless deleted_services.include?(name)
-        print "deleting #{name.colorize(:cyan)}"
-        ShellSpinner " " do
+        spinner "deleting #{name.colorize(:cyan)}" do
           service = get_service(token, prefixed_name(name)) rescue nil
           if(service)
             delete_service(token, prefixed_name(name))

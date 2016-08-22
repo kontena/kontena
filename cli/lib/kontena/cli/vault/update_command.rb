@@ -1,5 +1,5 @@
 module Kontena::Cli::Vault
-  class UpdateCommand < Clamp::Command
+  class UpdateCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter 'NAME', 'Secret name'

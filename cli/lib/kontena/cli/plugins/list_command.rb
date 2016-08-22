@@ -1,6 +1,5 @@
-
 module Kontena::Cli::Plugins
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
 
     def execute
       titles = ['NAME', 'VERSION', 'DESCRIPTION']
@@ -9,5 +8,6 @@ module Kontena::Cli::Plugins
         puts "%-40s %-10s %-40s" % [plugin.name, plugin.version, plugin.description]
       end
     end
+
   end
 end
