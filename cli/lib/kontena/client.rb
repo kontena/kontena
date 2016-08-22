@@ -12,8 +12,9 @@ module Kontena
     # Initialize api client
     #
     # @param [String] api_url
+    # @param [String,Hash,Kontena::Cli::Config::Token] token
     # @param [Hash] default_headers
-    def initialize(api_url, default_headers = {})
+    def initialize(api_url, token = nil, default_headers = {})
       Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
       @http_client = Excon.new(api_url)
       @default_headers = {
@@ -21,6 +22,14 @@ module Kontena
         'Content-Type' => 'application/json',
         'User-Agent' => "kontena-cli/#{Kontena::Cli::VERSION}"
       }.merge(default_headers)
+
+      if token 
+        if token.kind_of?(String)
+          token = { 'access_token' => token }
+        end
+        @default_headers.merge!('Authorization' => "Bearer #{token}")
+      end
+
       @api_url = api_url
       @path_prefix = '/v1/'
     end
