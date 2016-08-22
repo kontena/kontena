@@ -1,5 +1,5 @@
 module Kontena::Cli::Master
-  class CurrentCommand < Clamp::Command
+  class CurrentCommand < Kontena::Command
     include Kontena::Cli::Common
 
     option ["--name"], :flag, "Show name only", default: false

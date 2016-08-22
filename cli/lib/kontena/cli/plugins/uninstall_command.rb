@@ -1,7 +1,7 @@
 require 'open3'
 
 module Kontena::Cli::Plugins
-  class UninstallCommand < Clamp::Command
+  class UninstallCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter 'NAME', 'Plugin name'

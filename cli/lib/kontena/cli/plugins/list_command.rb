@@ -1,6 +1,6 @@
 
 module Kontena::Cli::Plugins
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
 
     def execute
       titles = ['NAME', 'VERSION', 'DESCRIPTION']

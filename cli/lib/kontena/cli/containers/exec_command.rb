@@ -2,7 +2,7 @@ require_relative '../grid_options'
 require_relative './containers_helper'
 
 module Kontena::Cli::Containers
-  class ExecCommand < Clamp::Command
+  class ExecCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ContainersHelper

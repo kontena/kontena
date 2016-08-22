@@ -6,7 +6,7 @@ require_relative 'kontena_yml_generator'
 
 
 module Kontena::Cli::Apps
-  class InitCommand < Clamp::Command
+  class InitCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 

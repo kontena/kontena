@@ -1,5 +1,5 @@
 module Kontena::Cli::Vpn
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced

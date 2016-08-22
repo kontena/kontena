@@ -1,5 +1,5 @@
 module Kontena::Cli::User
-  class ForgotPasswordCommand < Clamp::Command
+  class ForgotPasswordCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "EMAIL", "Email address"

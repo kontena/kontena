@@ -1,7 +1,7 @@
 require_relative '../../common'
 
 module Kontena::Cli::Master::Users
-  class InviteCommand < Clamp::Command
+  class InviteCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "EMAIL ...", "List of emails"

@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class LogsCommand < Clamp::Command
+  class LogsCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common

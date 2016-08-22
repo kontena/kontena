@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Stacks
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common

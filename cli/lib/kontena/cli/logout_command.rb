@@ -1,4 +1,4 @@
-class Kontena::Cli::LogoutCommand < Clamp::Command
+class Kontena::Cli::LogoutCommand < Kontena::Command
   include Kontena::Cli::Common
 
   def execute

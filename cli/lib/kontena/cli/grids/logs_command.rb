@@ -1,5 +1,5 @@
 module Kontena::Cli::Grids
-  class LogsCommand < Clamp::Command
+  class LogsCommand < Kontena::Command
     include Kontena::Cli::Common
 
     option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false

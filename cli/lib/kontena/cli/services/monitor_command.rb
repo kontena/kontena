@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class MonitorCommand < Clamp::Command
+  class MonitorCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper

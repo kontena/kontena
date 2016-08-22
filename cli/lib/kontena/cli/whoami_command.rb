@@ -1,4 +1,4 @@
-class Kontena::Cli::WhoamiCommand < Clamp::Command
+class Kontena::Cli::WhoamiCommand < Kontena::Command
   include Kontena::Cli::Common
 
   option '--bash-completion-path', :flag, 'Show bash completion path', hidden: true
