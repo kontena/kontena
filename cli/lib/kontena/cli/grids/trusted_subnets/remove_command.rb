@@ -1,5 +1,5 @@
 module Kontena::Cli::Grids::TrustedSubnets
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "NAME", "Grid name"

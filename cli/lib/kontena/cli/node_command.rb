@@ -5,7 +5,7 @@ require_relative 'nodes/update_command'
 require_relative 'nodes/ssh_command'
 require_relative 'nodes/label_command'
 
-class Kontena::Cli::NodeCommand < Clamp::Command
+class Kontena::Cli::NodeCommand < Kontena::Command
 
   subcommand ["list","ls"], "List grid nodes", Kontena::Cli::Nodes::ListCommand
   subcommand "show", "Show node", Kontena::Cli::Nodes::ShowCommand

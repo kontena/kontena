@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Grids
-  class EnvCommand < Clamp::Command
+  class EnvCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 

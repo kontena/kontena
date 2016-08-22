@@ -1,5 +1,5 @@
 module Kontena::Cli::Vpn
-  class ConfigCommand < Clamp::Command
+  class ConfigCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

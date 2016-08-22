@@ -2,7 +2,7 @@ require_relative 'common'
 require 'pp'
 
 module Kontena::Cli::Apps
-  class ConfigCommand < Clamp::Command
+  class ConfigCommand < Kontena::Command
     include Kontena::Cli::Common    
     include Common
 

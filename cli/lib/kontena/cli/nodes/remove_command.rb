@@ -1,5 +1,5 @@
 module Kontena::Cli::Nodes
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
