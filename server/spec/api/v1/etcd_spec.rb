@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe '/v1/etcd/:grid_name/:etcd_path' do
 
   let(:valid_token) { AccessToken.create!(user: david, scopes: ['user']) }
-  let(:request_headers) { { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}" } }
+  let(:request_headers) { { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}" } }
 
   let(:david) do
     User.create!(email: 'david@domain.com', external_id: '123456')

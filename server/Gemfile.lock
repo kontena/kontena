@@ -17,6 +17,7 @@ GEM
     authority (3.1.0)
       activesupport (>= 3.0.0)
       rake (>= 0.8.7)
+    bcrypt (3.1.11)
     bindata (2.3.1)
     bson (3.2.6)
     builder (3.2.2)
@@ -52,6 +53,8 @@ GEM
       multi_json (>= 1.3)
       securecompare
       url_safe_base64
+    jsonpath (0.5.8)
+      multi_json
     listen (2.8.3)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
@@ -139,11 +142,13 @@ DEPENDENCIES
   acme-client
   activesupport (~> 4.1.14)
   authority
+  bcrypt
   celluloid (~> 0.16.0)
   dotenv
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)
   json-jwt (= 1.5.2)
+  jsonpath
   mongoid (~> 4.0.0)
   mongoid-enum
   mongoid-rspec (~> 2.1.0)

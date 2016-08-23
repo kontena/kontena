@@ -1,7 +1,7 @@
 
 module V1
   class UserApi < Roda
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
 
