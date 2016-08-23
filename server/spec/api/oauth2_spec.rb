@@ -242,8 +242,6 @@ describe 'OAuth2 API' do
       })
       get "/cb?code=foo&state=#{ar.state_plain}"
       expect(response.status).to eq(302)
-      expect(AccessToken.where(refresh_token: 'cdef2345').first.token).to eq 'abcd1234'
-      expect(AccessToken.where(refresh_token: 'cdef2345').first.internal?).to be_falsey
       local_token = david.access_tokens.where(internal: true).first
       location = response.headers['Location']
       code = location[/code\=([a-z0-9]+)/, 1]
