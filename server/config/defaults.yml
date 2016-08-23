@@ -1,0 +1,21 @@
+default: &default
+  root_url: <%= ENV['KONTENA_MASTER_URL'] %>
+  server_name: <%= ENV['KONTENA_SERVER_NAME'] %>
+  oauth2_client_id: <%= ENV['AUTH_CLIENT_ID'] %>
+  oauth2_client_secret: <%= ENV['AUTH_CLIENT_SECRET'] %>
+  oauth2_authorize_endpoint: <%= ENV['AUTH_AUTHORIZE_ENDPOINT'] %>
+  oauth2_token_endpoint: <%= ENV['AUTH_TOKEN_ENDPOINT'] %>
+  oauth2_userinfo_endpoint: <%= ENV['AUTH_USERINFO_ENDPOINT'] %>
+  oauth2_token_method: <%= ENV['AUTH_TOKEN_METHOD'] %>
+  oauth2_token_post_content_type: <%= ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] %>
+  oauth2_code_requires_basic_auth: <%= ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == "true" %>
+  oauth2_userinfo_scope: <%= ENV['AUTH_USERINFO_SCOPE'] %>
+  oauth2_userinfo_jsonpath: <%= ENV['AUTH_USERINFO_JSONPATH'] %>
+  oauth2_username_jsonpath: <%= ENV['AUTH_USERNAME_JSONPATH'] %>
+  oauth2_user_id_jsonpath: <%= ENV['AUTH_USER_ID_JSONPATH'] %>
+development:
+  <<: *default
+production:
+  <<: *default
+test:
+  <<: *default
