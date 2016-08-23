@@ -21,11 +21,14 @@ describe Kontena::Client do
   before(:each) do
     allow(subject).to receive(:http_client)
     if Kontena::Cli.const_defined?('Config')
-      allow(Kontena::Cli::Config).to receive(:find_server).and_return(master)
-      allow(Kontena::Cli::Config).to receive(:current_master).and_return(master)
-      allow(Kontena::Cli::Config).to receive(:account).and_return(Kontena::Cli::Config::Account.new(Kontena::Cli::Config.master_account_data))
-      allow(Kontena::Cli::Config).to receive(:write).and_return(true)
+      config = Kontena::Cli::Config
+    else
+      config = Class.new { include Kontena::Cli::Common}.new
     end
+    allow(config).to receive(:find_server).and_return(master)
+    allow(config).to receive(:current_master).and_return(master)
+    allow(config).to receive(:account).and_return(account_class.new(token_verify_path: '/v1/user', token_endpoint: '/oauth2/token', authorization_endpoint: '/oauth2/authorize'))
+    allow(config).to receive(:write).and_return(true)
   end
 
   context 'token authentication' do
