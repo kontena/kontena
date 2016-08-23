@@ -9,9 +9,9 @@ describe Kontena::Client do
 
   # This trickery is here for making the tests work with or without the new configuration handler.
   # The client itself will work with any kind of token that acts like a hash or ostruct.
-  let(:server_class)   { Kontena::Cli.const_defined?('Config') ? Kontena::Cli::Config::Server  : OpenStruct }
-  let(:token_class)    { Kontena::Cli.const_defined?('Config') ? Kontena::Cli::Config::Token   : OpenStruct }
-  let(:account_class)  { Kontena::Cli.const_defined?('Config') ? Kontena::Cli::Config::Account : OpenStruct }
+  let(:server_class)   { Kontena::Cli.const_defined?('Config', false) ? Kontena::Cli::Config::Server  : OpenStruct }
+  let(:token_class)    { Kontena::Cli.const_defined?('Config', false) ? Kontena::Cli::Config::Token   : OpenStruct }
+  let(:account_class)  { Kontena::Cli.const_defined?('Config', false) ? Kontena::Cli::Config::Account : OpenStruct }
 
   let(:master) { server_class.new(url: 'https://localhost', name: 'master') }
   let(:token) { token_class.new(access_token: '1234', refresh_token: '5678', expires_at: nil, parent_type: :master, parent: master) }
@@ -20,7 +20,7 @@ describe Kontena::Client do
 
   before(:each) do
     allow(subject).to receive(:http_client)
-    if Kontena::Cli.const_defined?('Config')
+    if Kontena::Cli.const_defined?('Config', false)
       config = Kontena::Cli::Config
     else
       config = Class.new { include Kontena::Cli::Common}.new
