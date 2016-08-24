@@ -65,8 +65,6 @@ class TokenAuthentication
         end
         env[CURRENT_USER]    = access_token.user
         env[CURRENT_TOKEN]   = access_token
-      else
-        return access_denied_response
       end
     end
 
