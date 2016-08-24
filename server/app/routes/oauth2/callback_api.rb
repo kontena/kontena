@@ -106,7 +106,7 @@ module OAuth2Api
         if task.success?
           access_token = task.result
           redirect_uri = URI.parse(state.redirect_uri)
-          redirect_uri.query = access_token.to_query
+          redirect_uri.query = access_token.to_query(as_fragment: redirect_uri.host.nil?)
           logger.debug "Callback complete, redirecting to #{state.redirect_uri}"
           request.redirect(redirect_uri.to_s)
         else

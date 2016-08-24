@@ -29,8 +29,8 @@ module OAuth2Api
 
         redirect_uri = URI.parse(params['redirect_uri'])
 
-        # Only allow redirect to client's localhost or back to same server
-        unless redirect_uri.host.nil? || redirect_uri.host == 'localhost'
+        # Only allow redirect to client's localhost or back to same server's /code'
+        unless (redirect_uri.host && redirect_uri.host == 'localhost') || (redirect_uri.host.nil? && redirect_uri.path == '/code')
           mime_halt(400, 'invalid_request', 'Invalid redirect_uri') and return
         end
 

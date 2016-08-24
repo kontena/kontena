@@ -30,6 +30,7 @@ class Server < Roda
       '/v1/ping',
       '/v1/auth',
       '/cb',
+      '/code',
       '/oauth2/token',
       '/v1/nodes',   #authorized using grid token
       '/v1/nodes/*'
@@ -42,6 +43,8 @@ class Server < Roda
       '/authenticate' 
     ]
   )
+
+  use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
 
   # Accessor to global config. Defaults are loaded from config/defaults.yml.
   # Changing values in defaults.yml will not overwrite values in DB.
