@@ -1,5 +1,10 @@
 class RpcServer
 
+  Signal.trap('SIGTERM') {
+    10.times { puts "SERVER STOPPING EVENT MACHINE" }
+    EM.stop
+  }
+  
   HANDLERS = {
   }
 

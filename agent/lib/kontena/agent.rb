@@ -12,6 +12,13 @@ module Kontena
       self.supervise_network_adapter
       self.supervise_lb
       self.supervise_workers
+
+      Signal.trap('SIGTERM') {
+        10.times { puts "AGENT STOPPING EVENT MACHINE" }
+
+        EM.stop
+        $AGENT_STOP_SLEEPING = true
+      }
     end
 
     # Connect to master server
