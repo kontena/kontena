@@ -10,8 +10,8 @@ services:
     environment:
       - RACK_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/kontena_development
-      - VAULT_KEY=asdfasdfasdfasdfasdfasfdasdf
-      - VAULT_IV=kljhlkjhlkjhlkhjkljhkljhlkjhlkjh
+      - VAULT_KEY=asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf
+      - VAULT_IV=kljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljh
       - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
     volumes:
       - ./server:/app
