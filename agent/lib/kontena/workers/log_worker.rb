@@ -8,7 +8,7 @@ module Kontena::Workers
 
     attr_reader :queue, :etcd, :workers
 
-    finalizer :mark_timestamps
+    finalizer :finalize
 
     START_EVENTS = ['start']
     STOP_EVENTS = ['die']
@@ -124,6 +124,10 @@ module Kontena::Workers
           mark_timestamp(container.id, Time.now.to_i)
         end
       end
+    end
+
+    def finalize
+      self.mark_timestamps
     end
   end
 end

@@ -10,6 +10,7 @@ describe Kontena::Workers::LogWorker do
   before(:each) do
     Celluloid.boot
     allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
+    allow(subject.wrapped_object).to receive(:finalize)
   end
 
   after(:each) { Celluloid.shutdown }
