@@ -33,6 +33,4 @@ agent = Kontena::Agent.new(
   api_uri: api_uri,
   api_token: api_token
 )
-agent.connect!
-
-sleep
+agent.run!
