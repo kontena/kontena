@@ -47,7 +47,7 @@ Since we will be using Vagrant, please ensure you have Vagrant installed. For mo
 
 ```
 $ kontena plugin install vagrant
-$ kontena master vagrant create
+$ kontena vagrant master create
 Creating Vagrant machine kontena-master-autumn-waterfall-70 ... done
 Waiting for kontena-master-autumn-waterfall-70 to start ... done
 Kontena Master is now running at http://192.168.66.100:8080
@@ -89,7 +89,7 @@ Just like with Kontena Master, the easiest (and preferred) way to provision Kont
 Since we will be using Vagrant, please ensure you have Vagrant installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
 
 ```
-$ kontena node vagrant create
+$ kontena vagrant node create
 Creating Vagrant machine kontena-node-broken-butterfly-72... done
 Waiting for node kontena-node-broken-butterfly-72 join to grid testing... done
 ```
