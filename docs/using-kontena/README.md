@@ -13,3 +13,5 @@ toc_link: false
 * [Users](users.md)
 * [VPN Access](vpn-access.md)
 * [Certificates](certificates.md)
+* [Statistics](stats.md)
+
