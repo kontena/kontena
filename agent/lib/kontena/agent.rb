@@ -91,6 +91,10 @@ module Kontena
         args: [@client, @queue]
       )
       @supervisor.supervise(
+        type: Kontena::Workers::ImagePullWorker,
+        as: :image_pull_worker
+      )
+      @supervisor.supervise(
         type: Kontena::Workers::LogWorker,
         as: :log_worker,
         args: [@queue]
