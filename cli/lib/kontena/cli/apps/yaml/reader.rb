@@ -2,12 +2,12 @@ require 'yaml'
 require_relative 'service_extender'
 require_relative 'validator'
 require_relative 'validator_v2'
-require_relative 'safe_dig'
+require_relative '../../../util'
 
 module Kontena::Cli::Apps
   module YAML
     class Reader
-      include SafeDig
+      include Kontena::Util
       attr_reader :yaml, :file, :errors, :notifications
 
       def initialize(file, skip_validation = false)

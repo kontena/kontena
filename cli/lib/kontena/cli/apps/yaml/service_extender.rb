@@ -1,10 +1,10 @@
 require 'yaml'
-require_relative 'safe_dig'
+require_relative '../../../util'
 
 module Kontena::Cli::Apps
   module YAML
     class ServiceExtender
-      include SafeDig
+      include Kontena::Util
       attr_reader :service_config
 
       # @param [Hash] service_config
