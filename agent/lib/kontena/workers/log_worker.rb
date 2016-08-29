@@ -8,7 +8,7 @@ module Kontena::Workers
 
     attr_reader :queue, :etcd, :workers
 
-    finalizer :terminate_workers
+    finalizer :finalize
 
     START_EVENTS = ['start']
     STOP_EVENTS = ['die']
@@ -28,7 +28,6 @@ module Kontena::Workers
       info 'initialized'
 
       async.start if autostart
-      Signal.trap('SIGTERM') { self.mark_timestamps }
     end
 
     # @param [String] topic
@@ -59,6 +58,8 @@ module Kontena::Workers
     end
 
     def stop
+      return unless queue_processing?
+
       @workers.keys.dup.each do |id|
         self.stop_streaming_container_logs(id)
         self.mark_timestamp(id, Time.now.to_i)
@@ -104,9 +105,10 @@ module Kontena::Workers
     def stop_streaming_container_logs(container_id)
       worker = workers.delete(container_id)
       if worker
-        # we have to use kill because worker is blocked by log stream
-        Celluloid::Actor.kill(worker) if worker.alive?
+        worker.stop if worker.alive?
       end
+    rescue => exc
+      error exc.message
     end
 
     # @param [String] topic
@@ -122,6 +124,10 @@ module Kontena::Workers
           mark_timestamp(container.id, Time.now.to_i)
         end
       end
+    end
+
+    def finalize
+      self.mark_timestamps
     end
   end
 end

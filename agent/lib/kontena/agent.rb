@@ -1,9 +1,13 @@
+require_relative 'logging'
+
 module Kontena
   class Agent
+    include Logging
 
     VERSION = File.read('./VERSION').strip
 
     def initialize(opts)
+      info "initializing agent (version #{VERSION})"
       @opts = opts
       @queue = Queue.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
@@ -18,6 +22,39 @@ module Kontena
     def connect!
       start_em
       @client.ensure_connect
+    end
+
+    def run!
+      self_read, self_write = IO.pipe
+
+      %w(TERM TTIN).each do |sig|
+        trap sig do
+          self_write.puts(sig)
+        end
+      end
+
+      begin
+        connect!
+
+        while readable_io = IO.select([self_read])
+          signal = readable_io.first[0].gets.strip
+          handle_signal(signal)
+        end
+      rescue Interrupt
+        exit(0)
+      end
+    end
+
+    # @param [String] signal
+    def handle_signal(signal)
+      info "Got signal #{signal}"
+      case signal
+      when 'TERM'
+        info "Shutting down..."
+        EM.stop
+        @supervisor.shutdown
+        raise Interrupt
+      end
     end
 
     def supervise_launchers

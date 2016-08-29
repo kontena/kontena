@@ -10,6 +10,7 @@ describe Kontena::Workers::LogWorker do
   before(:each) do
     Celluloid.boot
     allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
+    allow(subject.wrapped_object).to receive(:finalize)
   end
 
   after(:each) { Celluloid.shutdown }
@@ -68,7 +69,7 @@ describe Kontena::Workers::LogWorker do
     it 'terminates worker if it exist' do
       worker = spy(:worker, :alive? => true)
       subject.workers[container.id] = worker
-      expect(Celluloid::Actor).to receive(:kill).with(worker)
+      expect(worker).to receive(:stop).once
       subject.stop_streaming_container_logs(container.id)
     end
   end

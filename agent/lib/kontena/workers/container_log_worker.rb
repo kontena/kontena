@@ -17,6 +17,13 @@ module Kontena::Workers
 
     # @param [Integer] since unix timestamp
     def start(since = 0)
+      @stream_future = future {
+        start_stream(since)
+      }
+    end
+
+    # @param [Integer] since unix timestamp
+    def start_stream(since = 0)
       if since > 0
         debug "starting to stream logs from %s (since %s)" % [@container.name, since.to_s]
       else
@@ -40,14 +47,21 @@ module Kontena::Workers
           self.on_message(@container.id, stream, chunk)
         }
       rescue Excon::Errors::SocketError => exc
+        since = Time.now.to_f
         error "log socket error: #{@container.id}"
         retry
       rescue Docker::Error::TimeoutError
-        error "log stream timeout: #{@container.id}"
+        since = Time.now.to_f
+        debug "log stream timeout: #{@container.id}"
         retry
       rescue Docker::Error::NotFoundError
-        self.terminate
+        self.stop
       end
+    end
+
+    def stop
+      @stream_future.cancel if @stream_future
+      self.terminate
     end
 
     # @param [String] id
@@ -72,6 +86,7 @@ module Kontena::Workers
 
     def log_exit
       debug "stopped to stream logs from %s" % [@container.name]
+    rescue Docker::Error::NotFoundError
     end
   end
 end
