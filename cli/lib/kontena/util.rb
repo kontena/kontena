@@ -1,6 +1,5 @@
 module Kontena
   module Util
-
     def self.included(base)
         base.extend(ClassMethods)
     end
@@ -28,7 +27,7 @@ module Kontena
     rescue TypeError
       nil
     end
-    
+
     module_function(:which)
 
     module ClassMethods
