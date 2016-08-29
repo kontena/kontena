@@ -61,7 +61,7 @@ module Kontena::Workers
         }
       }
       begin
-        response = Excon.get(url, :connect_timeout => timeout)
+        response = Excon.get(url, :connect_timeout => timeout, :headers => {"User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"})
         debug "got status: #{response.status}"
         msg[:data]['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         msg[:data]['status_code'] = response.status
