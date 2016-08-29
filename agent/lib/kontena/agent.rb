@@ -45,11 +45,12 @@ module Kontena
       end
     end
 
+    # @param [String] signal
     def handle_signal(signal)
       info "Got signal #{signal}"
       case signal
       when 'TERM'
-        info "Shutting down... #{signal}"
+        info "Shutting down..."
         EM.stop
         @supervisor.shutdown
         raise Interrupt
@@ -59,7 +60,7 @@ module Kontena
           if thread.backtrace
             warn thread.backtrace.join("\n")
           else
-            warn "<no backtrace available>"
+            warn "no backtrace available"
           end
         end
       end
