@@ -54,6 +54,15 @@ module Kontena
         EM.stop
         @supervisor.shutdown
         raise Interrupt
+      when 'TTIN'
+        Thread.list.each do |thread|
+          warn "Thread #{thread.object_id.to_s(36)} #{thread['label']}"
+          if thread.backtrace
+            warn thread.backtrace.join("\n")
+          else
+            warn "no backtrace available"
+          end
+        end
       end
     end
 
