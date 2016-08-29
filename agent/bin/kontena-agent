@@ -35,4 +35,5 @@ agent = Kontena::Agent.new(
 )
 agent.connect!
 
-sleep
+sleep 0.1 until $AGENT_STOP_SLEEPING
+puts "exiting.."
