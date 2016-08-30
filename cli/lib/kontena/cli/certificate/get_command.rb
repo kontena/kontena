@@ -6,6 +6,7 @@ module Kontena::Cli::Certificate
 
 
     option '--secret-name', 'SECRET_NAME', 'The name for the secret to store the certificate in'
+    option '--cert-type', 'CERT_TYPE', 'The type of certificate to get: fullchain, chain or cert', default: 'fullchain'
     parameter "DOMAIN ...", "Domain(s) to get certificate for"
 
 
