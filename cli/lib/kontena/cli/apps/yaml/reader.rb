@@ -2,10 +2,12 @@ require 'yaml'
 require_relative 'service_extender'
 require_relative 'validator'
 require_relative 'validator_v2'
+require_relative '../../../util'
 
 module Kontena::Cli::Apps
   module YAML
     class Reader
+      include Kontena::Util
       attr_reader :yaml, :file, :errors, :notifications
 
       def initialize(file, skip_validation = false)
@@ -177,14 +179,12 @@ module Kontena::Cli::Apps
 
       # @param [Hash] options - service config
       def normalize_build_args(options)
-        if v2? && options.dig('build', 'args')
-          if options['build']['args'].is_a?(Array)
-            args = options['build']['args'].dup
-            options['build']['args'] = {}
-            args.each do |arg|
-              k,v = arg.split('=')
-              options['build']['args'][k] = v
-            end
+        if v2? && safe_dig(options, 'build', 'args').is_a?(Array)
+          args = options['build']['args'].dup
+          options['build']['args'] = {}
+          args.each do |arg|
+            k,v = arg.split('=')
+            options['build']['args'][k] = v
           end
         end
       end

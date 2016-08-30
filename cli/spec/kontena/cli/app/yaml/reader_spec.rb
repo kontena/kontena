@@ -330,4 +330,66 @@ describe Kontena::Cli::Apps::YAML::Reader do
       expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
     end
   end
+
+  context 'normalize_build_args' do
+    context 'when build option is string' do
+      it 'skips normalizing' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('kontena.yml'))
+          .and_return(fixture('kontena_build_v2.yml'))
+        allow(subject).to receive(:v2?).and_return(true)
+
+        options = {
+          'build' => '.'
+        }
+        expect {
+          subject.send(:normalize_build_args, options)
+        }.not_to raise_error
+      end
+    end
+
+    context 'when build arguments option is Hash' do
+      it 'does not do anything' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('kontena.yml'))
+          .and_return(fixture('kontena_build_v2.yml'))
+        allow(subject).to receive(:v2?).and_return(true)
+
+        options = {
+          'build' => {
+            'context' => '.',
+            'args' => {
+              'foo' => 'bar'
+            }
+          }
+        }
+
+        subject.send(:normalize_build_args, options)
+        expect(options.dig('build', 'args')).to eq({
+          'foo' => 'bar'
+        })
+      end
+    end
+
+    context 'when build arguments option is Array' do
+      it 'converts it to array' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('kontena.yml'))
+          .and_return(fixture('kontena_build_v2.yml'))
+        allow(subject).to receive(:v2?).and_return(true)
+
+        options = {
+          'build' => {
+            'context' => '.',
+            'args' => ['foo=bar']
+          }
+        }
+
+        subject.send(:normalize_build_args, options)
+        expect(options.dig('build', 'args')).to eq({
+          'foo' => 'bar'
+        })
+      end
+    end
+  end
 end
