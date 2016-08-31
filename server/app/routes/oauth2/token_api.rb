@@ -25,20 +25,12 @@ module OAuth2Api
     GRANT_TYPE         = 'grant_type'.freeze
     AUTH_SHOW          = 'auth/show'.freeze
 
-    RATE_LIMIT_SECONDS = 1.0
-
     route do |r|
       r.is do
 
         params = params_from_anywhere
         if params.nil? || params.empty?
           mime_halt(400, OAuth2Api::INVALID_REQUEST) and return
-        end
-
-        seconds_since_last = AuthProvider.instance.seconds_since_last_request(request.ip)
-        ENV["DEBUG"] && puts("Seconds since last request from #{request.ip} : #{seconds_since_last}")
-        if seconds_since_last < RATE_LIMIT_SECONDS
-          mime_halt(429, 'too_many_requests', 'Rate limit exceeded')
         end
 
         case params[GRANT_TYPE]
