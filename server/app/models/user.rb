@@ -20,9 +20,12 @@ class User
 
   validates :email,
             uniqueness: true,
-            presence: true,
+            presence: true
+  validates :email,
             format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i },
             unless: :is_local_admin?
+
+
 
   index({ email: 1 }, { unique: true })
   index({ external_id: 1 }, { unique: true, sparse: true })
@@ -31,7 +34,7 @@ class User
   # Fake setter. When true, an invite code will be generated
   def with_invite=(boolean)
     if boolean
-      self[:invite_code] = SecureRandom.hex(4)
+      self[:invite_code] = SecureRandom.hex(6)
     end
   end
 

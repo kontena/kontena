@@ -48,6 +48,7 @@ module OAuth2Api
           AuthProvider.authorize_url(
             state: AuthorizationRequest.create(
               redirect_uri: params['redirect_uri'],
+              expires_in: params['expires_in'].to_i,
               user: user
             ).state_plain
           )

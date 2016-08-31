@@ -84,6 +84,8 @@ GEM
     origin (2.1.1)
     puma (3.6.0)
     rack (1.6.4)
+    rack-attack (5.0.1)
+      rack
     rack-test (0.6.2)
       rack (>= 1.0)
     rake (10.4.2)
@@ -156,6 +158,7 @@ DEPENDENCIES
   mutations
   puma
   rack (~> 1.6.4)
+  rack-attack
   rack-test
   random_token
   rerun

@@ -51,6 +51,45 @@ class AuthProvider < OpenStruct
     @table[:userinfo_user_id_jsonpath] = config[:oauth2_userinfo_user_id_jsonpath] || '$..id;$..uid;$..userid,$..user_id'
   end
 
+  # For rate limiting.
+  #
+  # Returns seconds since last time this method was called with the same ip address
+  # or if it's the first request, returns a million.
+  #
+  # @param [String] ip_address_or_other_client_identifier
+  # @return [Fixnum] seconds_since_last_call
+  def seconds_since_last_request(ip_address)
+    # Hacky mutex for thread/multi-instance extra safety
+    # waits 10 times for the auth_mutex to become nil
+    # and then gives up and resets it by force.
+    #
+    # For shared or super busy masters some better
+    # mutex thing is required or better yet, replace
+    # this hacky rate limiter with something better
+    # completely.
+    times = 0
+    until config[:auth_mutex].nil?
+      times += 1
+      sleep 0.1
+      if times > 10
+        config[:auth_mutex] = nil
+      end
+    end
+    config[:auth_mutex] = 'lock'
+    config[:auth_requests] ||= []
+    ars = config[:auth_requests]
+    prev_request = ars.find{ |ar| ar['ip'] == ip_address }
+    ars.delete_if { |ar| ar['ip'] == ip_address || Time.now.utc.to_f - ar['at'] > 10.0 }
+    ars << { 'ip' => ip_address, 'at' => Time.now.utc.to_f }
+    config[:auth_requests] = ars
+    config[:auth_mutex] = nil
+    if prev_request
+      Time.now.utc.to_f - prev_request['at']
+    else
+      1_000_000.00
+    end
+  end
+
   # Saves the values back to configuration
   def save
     each_pair do |key, value|

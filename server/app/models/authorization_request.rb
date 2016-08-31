@@ -24,6 +24,7 @@ class AuthorizationRequest
   field :redirect_uri, type: String
   field :scope, type: String
   field :deleted_at, type: Time, default: nil
+  field :expires_in, type: Fixnum, default: nil
 
   index({ state: 1 })
   index({ created_at: 1 })

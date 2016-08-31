@@ -134,7 +134,7 @@ class AccessToken
     (expires? && expires_at && expires_at < Time.now.utc) || used?
   end
 
-  def generate_code(code_bytes = 4)
+  def generate_code(code_bytes = 6)
     self[:token_type] = 'authorization_code'
     self[:code] = SecureRandom.hex(code_bytes)
   end

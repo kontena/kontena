@@ -99,14 +99,18 @@ module OAuth2Api
         task = AccessTokens::Create.run(
           user: user,
           scope: 'user',
-          expires_in: 7200,
+          expires_in: state.expires_in.to_i > 0 ? state.expires_in : nil,
           with_code: true
         )
 
         if task.success?
           access_token = task.result
           redirect_uri = URI.parse(state.redirect_uri)
-          redirect_uri.query = access_token.to_query(as_fragment: redirect_uri.host.nil?)
+          if redirect_uri.host.nil?
+            redirect_uri.fragment = access_token.to_query
+          else
+            redirect_uri.query = access_token.to_query
+          end
           logger.debug "Callback complete, redirecting to #{state.redirect_uri}"
           request.redirect(redirect_uri.to_s)
         else
