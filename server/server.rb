@@ -40,8 +40,6 @@ class Server < Roda
       '/authenticate'
     ]
 
-  use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
-
   # Accessor to global config. Defaults are loaded from config/defaults.yml.
   # Changing values in defaults.yml will not overwrite values in DB.
   def self.config

@@ -104,10 +104,6 @@ describe 'OAuth2 API' do
 
   context '/oauth2/token' do
 
-    before(:each) do 
-      allow(AuthProvider.instance).to receive(:seconds_since_last_request).and_return(0)
-    end
-
     context 'grant_type = authorization_code' do
       it 'returns a token in exchange when given a valid code' do
         coded_token = AccessToken.create(user: david, with_code: true, scopes: ['user'])
