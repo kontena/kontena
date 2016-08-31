@@ -2,7 +2,6 @@ require 'logger'
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/token_authentication'
-require_relative 'app/middlewares/client_version_restriction'
 require 'bcrypt'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
@@ -21,11 +20,9 @@ class Server < Roda
   end
 
   use Rack::CommonLogger, logger
-  use ClientVersionRestriction, '0.15.0'
-
-  use(
-    TokenAuthentication, 
-    exclude: [
+  use Rack::Attack
+  use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
+  use TokenAuthentication, exclude: [
       '/',
       '/v1/ping',
       '/v1/auth',
@@ -40,9 +37,8 @@ class Server < Roda
       '/authenticate'
     ],
     allow_expired: [
-      '/authenticate' 
+      '/authenticate'
     ]
-  )
 
   use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
 
