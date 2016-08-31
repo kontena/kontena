@@ -111,22 +111,24 @@ $ kontena node list
 First create `kontena.yml` file with the following contents
 
 ```
-wordpress:
-  image: wordpress:4.1
-  stateful: true
-  ports:
-    - 80:80
-  links:
-    - mysql:wordpress-mysql
-  environment:
-    - WORDPRESS_DB_HOST=%{project}-mysql.kontena.local
-    - WORDPRESS_DB_USER=root
-    - WORDPRESS_DB_PASSWORD=secret
-mysql:
-  image: mariadb:5.5
-  stateful: true
-  environment:
-    - MYSQL_ROOT_PASSWORD=secret
+version: '2'
+services:
+  wordpress:
+    image: wordpress:4.1
+    stateful: true
+    ports:
+      - 80:80
+    links:
+      - mysql:wordpress-mysql
+    environment:
+      - WORDPRESS_DB_HOST=%{project}-mysql.kontena.local
+      - WORDPRESS_DB_USER=root
+      - WORDPRESS_DB_PASSWORD=secret
+  mysql:
+    image: mariadb:5.5
+    stateful: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
 ```
 
 After that you can deploy the application with:
