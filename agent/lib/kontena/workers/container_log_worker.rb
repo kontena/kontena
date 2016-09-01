@@ -3,8 +3,6 @@ module Kontena::Workers
     include Celluloid
     include Kontena::Logging
 
-    finalizer :log_exit
-
     CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
     EVENT_NAME = 'container:log'
 
@@ -17,13 +15,6 @@ module Kontena::Workers
 
     # @param [Integer] since unix timestamp
     def start(since = 0)
-      @stream_future = future {
-        start_stream(since)
-      }
-    end
-
-    # @param [Integer] since unix timestamp
-    def start_stream(since = 0)
       if since > 0
         debug "starting to stream logs from %s (since %s)" % [@container.name, since.to_s]
       else
@@ -59,11 +50,6 @@ module Kontena::Workers
       end
     end
 
-    def stop
-      @stream_future.cancel if @stream_future
-      self.terminate
-    end
-
     # @param [String] id
     # @param [String] stream
     # @param [String] chunk
@@ -82,11 +68,6 @@ module Kontena::Workers
           }
       }
       @queue << msg
-    end
-
-    def log_exit
-      debug "stopped to stream logs from %s" % [@container.name]
-    rescue Docker::Error::NotFoundError
     end
   end
 end

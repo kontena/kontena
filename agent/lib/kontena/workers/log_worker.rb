@@ -105,7 +105,8 @@ module Kontena::Workers
     def stop_streaming_container_logs(container_id)
       worker = workers.delete(container_id)
       if worker
-        worker.stop if worker.alive?
+        # we have to use kill because worker is blocked by log stream
+        Celluloid::Actor.kill(worker) if worker.alive?
       end
     rescue => exc
       error exc.message
@@ -127,6 +128,7 @@ module Kontena::Workers
     end
 
     def finalize
+      workers.keys.each{ |id| stop_streaming_container_logs(id) }
       self.mark_timestamps
     end
   end
