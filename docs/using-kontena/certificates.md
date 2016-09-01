@@ -74,6 +74,12 @@ Certificate:
                 DNS:www.example.com, DNS:example.com
 ```
 
+By default Kontena stores the full chain version of the certificate. This is because LE intermediaries are not trusted by all client libraries (some Rubies, Docker, wget, ...). You can control the type of certificate stored by this command line option:
+```
+--cert-type CERT_TYPE    The type of certificate to get: fullchain, chain or cert (default: "fullchain")
+```
+
+
 ## Secrets
 
 Kontena LE integration stores all certificate information securely in [Kontena Vault](vault.md). Upon receiving a certificate from LetsEncrypt Kontena stores three secrets in the vault:
