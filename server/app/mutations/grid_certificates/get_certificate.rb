@@ -17,8 +17,8 @@ module GridCertificates
       array :domains do
         string
       end
+      string :cert_type, matches: /^(cert|chain|fullchain)$/, default: 'fullchain'
     end
-
 
     def validate
       self.domains.each do |domain|
@@ -67,11 +67,20 @@ module GridCertificates
 
       certificate = client.new_certificate(csr)
       cert_priv_key = certificate.request.private_key.to_pem
-      cert = certificate.to_pem
+      cert = nil
+      case self.cert_type
+        when 'fullchain'
+          cert = certificate.fullchain_to_pem
+        when 'chain'
+          cert = certificate.chain_to_pem
+        when 'cert'
+          cert = certificate.to_pem
+      end
+      
 
       secrets = []
       secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
-      secrets << upsert_secret("#{self.secret_name}_CERTIFICATE", cert_priv_key)
+      secrets << upsert_secret("#{self.secret_name}_CERTIFICATE", cert)
       secrets << upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join)
 
       secrets
