@@ -9,16 +9,16 @@ describe Kontena::Workers::ContainerLogWorker do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
 
-  describe '#start_stream' do
+  describe '#start' do
     it 'starts to stream container logs' do
       expect(container).to receive(:streaming_logs).once.with(hash_including('tail' => 0))
-      subject.start_stream
+      subject.start
     end
 
     it 'starts to stream logs from given timestamp' do
       since = (Time.now - 60).to_i
       expect(container).to receive(:streaming_logs).once.with(hash_including('since' => since, 'tail' => 'all'))
-      subject.start_stream(since)
+      subject.start(since)
     end
   end
 

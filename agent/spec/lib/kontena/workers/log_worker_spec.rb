@@ -69,7 +69,7 @@ describe Kontena::Workers::LogWorker do
     it 'terminates worker if it exist' do
       worker = spy(:worker, :alive? => true)
       subject.workers[container.id] = worker
-      expect(worker).to receive(:stop).once
+      expect(Celluloid::Actor).to receive(:kill).with(worker).once
       subject.stop_streaming_container_logs(container.id)
     end
   end
