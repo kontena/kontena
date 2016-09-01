@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "shell-spinner"
   spec.add_runtime_dependency "ruby_dig"
   spec.add_runtime_dependency "dry-validation", "~> 0.8.0"
+  spec.add_runtime_dependency "dry-configurable", "~> 0.1.6"
 end
