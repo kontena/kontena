@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.15.1 (2016-09-01)
+
+**Master & Agent:**
+
+- update httpclient  to 2.8.2.3 (#941)
+- update puma to 3.6.0 (#945)
+- fix custom cadvisor image volume mappings (#944)
+- log thread backtraces on TTIN signal (#938)
+- add user-agent for http healthcheck (#928)
+- allow agent to shutdown gracefully on SIGTERM (#937, #952)
+
+**CLI:**
+
+- default to fullchain certificate with options for cert only or chain (#946)
+- freeze dry-configurable version (#949)
+- fix build arguments normalizing (#921)
+
 ## 0.15.0 (2016-08-11)
 
 **Master & Agent:**
