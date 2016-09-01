@@ -98,12 +98,65 @@ You can repeat this step to provision additional Kontena Nodes to your Grid.
 
 **Note!** While Kontena works ok even with just single Kontena Node, it is recommended to have at least 2 Kontena Nodes provisioned in a Grid.
 
-## Congratulations, Enjoy!
-
 If you followed the steps above, you should now have a working Kontena setup installed. Verify the setup using `kontena node list` command. It should list all the Kontena Nodes in your Grid.
 
 ```
 $ kontena node list
 ```
 
-This completes the quick start guide for setting up Kontena. Learn more about the [architecture](../core-concepts/architecture.md) and usage of Kontena. We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
+## Step 6. Deploy Your First Application
+
+ Now you are ready to deploy your first application. In this section we will show you how to deploy a simple Wordpress application and deploy it to your Kontena grid.
+
+First create `kontena.yml` file with the following contents
+
+```
+version: '2'
+services:
+  wordpress:
+    image: wordpress:4.1
+    stateful: true
+    ports:
+      - 80:80
+    links:
+      - mysql:wordpress-mysql
+    environment:
+      - WORDPRESS_DB_HOST=%{project}-mysql.kontena.local
+      - WORDPRESS_DB_USER=root
+      - WORDPRESS_DB_PASSWORD=secret
+  mysql:
+    image: mariadb:5.5
+    stateful: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+```
+
+After that you can deploy the application with:
+
+```
+$ kontena app deploy
+```
+
+After the deploy is finished you can verify it using
+
+```
+$ kontena app show wordpress
+```
+
+It should show details of the service. You can pick the private ip address of the service and verify in a browser that application is responding.
+
+If you need more complex examples, please see the following examples:
+
+- [Wordpress Cluster](https://github.com/kontena/examples/tree/master/wordpress-cluster)
+- [Jenkins](https://github.com/kontena/examples/tree/master/jenkins)
+- [MongoDB Cluster](https://github.com/kontena/examples/tree/master/mongodb-cluster)
+
+
+## Congratulations, Enjoy!
+
+This completes the quick start guide for setting up Kontena. You can now continue to learn more about:
+
+ - [Kontena Architecture](../core-concepts/architecture.md)
+ - [Using Kontena](../using-kontena/)
+
+We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
