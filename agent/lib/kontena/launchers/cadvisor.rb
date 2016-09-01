@@ -69,13 +69,9 @@ module Kontena::Launchers
           '--storage_duration=2m',
           '--housekeeping_interval=30s'
         ],
-        'Volumes' => {
-          '/host' => {},
-        },
+        'Volumes' => volume_mappings,
         'HostConfig' => {
-          'Binds' => [
-            '/:/host:rw'
-          ],
+          'Binds' => volume_binds,
           'PidMode' => 'host',
           'Privileged' => true,
           'RestartPolicy' => {'Name' => 'always'}
@@ -88,6 +84,41 @@ module Kontena::Launchers
     def log_error(exc)
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
+    end
+
+    # @return [Hash]
+    def volume_mappings
+      if default_image?
+        {
+          '/host' => {}
+        }
+      else
+        {
+          '/rootfs' => {},
+          '/var/run' => {},
+          '/sys' => {},
+          '/var/lib/docker' => {}
+        }
+      end
+    end
+
+    # @return [Array<String>]
+    def volume_binds
+      if default_image?
+        ['/:/host:rw']
+      else
+        [
+          '/:/rootfs:ro',
+          '/var/run:/var/run',
+          '/sys:/sys:ro',
+          '/var/lib/docker:/var/lib/docker:ro'
+        ]
+      end
+    end
+
+    # @return [Boolean]
+    def default_image?
+      CADVISOR_IMAGE == 'kontena/cadvisor'
     end
   end
 end
