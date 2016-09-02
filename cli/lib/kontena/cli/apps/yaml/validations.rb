@@ -4,9 +4,12 @@ module Kontena::Cli::Apps::YAML
    def append_common_validations(base)
      base.optional('image').maybe(:str?)
 
-     base.optional('extends').schema do
-       required('service').filled(:str?)
-       optional('file').value(:str?)
+     base.optional('extends') { str? | type?(Hash) }
+     base.rule(when_extends_is_hash: ['extends']) do |extends|
+       extends.type?(Hash) > extends.schema do
+         required('service').filled(:str?)
+         optional('file').value(:str?)
+       end
      end
 
      base.optional('stateful') { bool? }

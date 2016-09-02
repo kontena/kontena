@@ -126,15 +126,26 @@ module Kontena::Cli::Apps
       # @param [Hash] service_config
       # @return [Hash] updated service config
       def extend_config(service_config)
-        service_name = service_config['extends']['service']
+        extended_service = extended_service(service_config['extends'])
+        return unless extended_service
         filename = service_config['extends']['file']
         if filename
-          parent_service = from_external_file(filename, service_name)
+          parent_config = from_external_file(filename, extended_service)
         else
-          abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
-          parent_service = process_config(services[service_name])
+          abort("Service '#{extended_service}' not found in #{file}".colorize(:red)) unless services.key?(extended_service)
+          parent_config = process_config(services[extended_service])
         end
-        ServiceExtender.new(service_config).extend(parent_service)
+        ServiceExtender.new(service_config).extend(parent_config)
+      end
+
+      def extended_service(extend_config)
+        if extend_config.is_a?(Hash)
+          extend_config['service']
+        elsif extend_config.is_a?(String)
+          extend_config
+        else
+          nil
+        end
       end
 
       def from_external_file(filename, service_name)

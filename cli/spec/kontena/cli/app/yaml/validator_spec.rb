@@ -206,6 +206,26 @@ describe Kontena::Cli::Apps::YAML::Validator do
       end
     end
 
+    context 'validates extends' do
+      it 'accepts string value' do
+        result = subject.validate_options('extends' => 'web')
+        expect(result.messages.key?('extends')).to be_falsey
+      end
+
+      context 'when value is hash' do
+        it 'must contain service' do
+          result = subject.validate_options('extends' => { 'file' => 'docker_compose.yml'})
+          expect(result.messages.key?('extends')).to be_truthy
+        end
+      end
+
+      context 'when value is not string or hash' do
+        it 'returns error' do
+          result = subject.validate_options('extends' => ['array is invalid'])
+          expect(result.messages.key?('extends')).to be_truthy
+        end
+      end
+    end
     context 'validates hooks' do
       context 'validates pre_build' do
         it 'must be array' do
