@@ -14,7 +14,6 @@ describe Container do
   it { should belong_to(:grid) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:host_node) }
-  it { should have_one(:overlay_cidr).with_dependent(:nullify) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
 

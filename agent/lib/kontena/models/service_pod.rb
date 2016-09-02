@@ -149,7 +149,7 @@ module Kontena
           host_config['PortBindings'] = self.build_port_bindings
         end
 
-        host_config['NetworkMode'] = self.net if self.net
+        host_config['NetworkMode'] = 'kontena' if self.net == 'bridge'
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap

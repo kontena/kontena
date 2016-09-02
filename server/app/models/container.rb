@@ -12,6 +12,7 @@ class Container
   field :image_version, type: String
   field :env, type: Array, default: []
   field :network_settings, type: Hash, default: {}
+  field :networks, type: Hash, default: {}
   field :state, type: Hash, default: {}
   field :finished_at, type: Time
   field :started_at, type: Time
@@ -31,7 +32,6 @@ class Container
   belongs_to :host_node
   has_many :container_logs
   has_many :container_stats
-  has_one :overlay_cidr, dependent: :nullify
 
   index({ grid_id: 1 })
   index({ grid_service_id: 1 })
@@ -52,6 +52,15 @@ class Container
     else
       self.name
     end
+  end
+
+  def ip_address
+    ip = nil
+    if self.networks
+      name, network = self.networks.first
+      ip = network.dig('IPAddress') if network
+    end
+    ip
   end
 
   ##
@@ -77,9 +86,6 @@ class Container
 
   def mark_for_delete
     self.set(:deleted_at => Time.now.utc)
-    if self.overlay_cidr
-      self.overlay_cidr.set(:container_id => nil, :reserved_at => nil)
-    end
   end
 
   def running?

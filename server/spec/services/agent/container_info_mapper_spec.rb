@@ -110,12 +110,6 @@ describe Agent::ContainerInfoMapper do
       expect(container.state[:running]).to eq(true)
     end
 
-    it 'sets overlay_cidr' do
-      overlay_cidr = grid.overlay_cidrs.create(ip: '10.81.23.2', subnet: '19')
-      docker_data['Config']['Labels']['io.kontena.container.overlay_cidr'] = overlay_cidr.to_s
-      subject.container_attributes_from_docker(container, docker_data)
-      expect(container.reload.overlay_cidr).to eq(overlay_cidr)
-    end
   end
 
   describe '#parse_docker_network_settings' do

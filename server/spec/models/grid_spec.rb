@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Grid do
   it { should be_timestamped_document }
-  it { should have_fields(:name, :token, :overlay_cidr).of_type(String) }
+  it { should have_fields(:name, :token) }
   it { should have_fields(:initial_size).of_type(Integer) }
   it { should have_fields(:stats).of_type(Hash) }
   it { should have_fields(:trusted_subnets).of_type(Array) }
@@ -31,30 +31,6 @@ describe Grid do
       HostNode.create(grid: grid, node_id: 'bb', node_number: 5)
       available = (1..254).to_a - [1, 5]
       expect(grid.free_node_numbers).to eq(available)
-    end
-  end
-
-  describe '#overlay_network_size' do
-    it 'should return subnet size from cidr' do
-      expect(subject.overlay_network_size).to eq('23')
-    end
-  end
-
-  describe '#overlay_network_ip' do
-    it 'should return overlay network ip' do
-      expect(subject.overlay_network_ip).to eq('10.81.0.0')
-    end
-  end
-
-  describe '#all_overlay_ips' do
-    it 'should not include bridge addresses' do
-      expect(subject.all_overlay_ips).not_to include('10.81.0.1')
-      expect(subject.all_overlay_ips).not_to include('10.81.0.254')
-    end
-
-    it 'should include all ips that are not in bridge subnet' do
-      expect(subject.all_overlay_ips[0]).to eq('10.81.1.0')
-      expect(subject.all_overlay_ips.last).to eq('10.81.1.255')
     end
   end
 

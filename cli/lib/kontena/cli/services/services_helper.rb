@@ -190,7 +190,7 @@ module Kontena
             puts "      service_rev: #{container['service_rev']}"
             puts "      node: #{container['node']['name'] rescue 'unknown'}"
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
-            puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
+            puts "      ip: #{container['ip_address']}"
             puts "      public ip: #{container['node']['public_ip'] rescue 'unknown'}"
             if container['health_status']
               health_time = Time.now - Time.parse(container.dig('health_status', 'updated_at'))

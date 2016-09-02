@@ -75,6 +75,10 @@ module Kontena
         type: Kontena::Launchers::Etcd,
         as: :etcd_launcher
       )
+      @supervisor.supervise(
+        type: Kontena::Launchers::IpamPlugin,
+        as: :ipam_plugin_launcher
+      )
     end
 
     def supervise_network_adapter
