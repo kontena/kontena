@@ -40,6 +40,13 @@ module Docker
     end
 
     # @return [Boolean]
+    def restarting?
+      self.state['Restarting']
+    rescue
+      false
+    end
+
+    # @return [Boolean]
     def service_container?
       self.labels['io.kontena.container.type'] == 'container'
     rescue
@@ -77,6 +84,15 @@ module Docker
       end
 
       @env_hash
+    end
+
+    # @return [Hash]
+    def networks
+      cached_json.dig('NetworkSettings', 'Networks')
+    end
+
+    def has_network?(network)
+      self.networks.has_key?(network)
     end
 
     private

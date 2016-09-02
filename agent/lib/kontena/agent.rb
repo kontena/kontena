@@ -136,6 +136,14 @@ module Kontena
         as: :health_check_worker,
         args: [@queue]
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::ContainerStarterWorker,
+        as: :container_starter_worker
+      )
+      @supervisor.supervise(
+        type: Kontena::Workers::ContainerNetworkMigratorWorker,
+        as: :container_network_migrator
+      )
     end
 
     def supervise_lb
