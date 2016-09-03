@@ -194,38 +194,53 @@ describe Kontena::Cli::Apps::YAML::Reader do
         .and_return(fixture('docker-compose.yml'))
     end
 
-    it 'extends services' do
-      docker_compose_yml = YAML.load(fixture('docker-compose.yml') % { project: 'test' })
-      wordpress_options = {
-        'extends' => {
-          'file' => 'docker-compose.yml',
-          'service' => 'wordpress'
-        },
-        'stateful' => true,
-        'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
-        'instances' => 2,
-        'deploy' => { 'strategy' => 'ha' }
-      }
-      mysql_options = {
-        'extends' => {
-          'file' => 'docker-compose.yml',
-          'service' => 'mysql'
-        },
-        'stateful' => true,
-        'environment' => ['MYSQL_ROOT_PASSWORD=test_secret']
-      }
-      expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
-        .with(wordpress_options)
-        .once
-        .and_return(service_extender)
-      expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
-        .with(mysql_options)
-        .once
-        .and_return(service_extender)
-      expect(service_extender).to receive(:extend).with(docker_compose_yml['wordpress'])
-      expect(service_extender).to receive(:extend).with(docker_compose_yml['mysql'])
+    context 'when extending services' do
+      it 'extends services from external file' do
+        docker_compose_yml = YAML.load(fixture('docker-compose.yml') % { project: 'test' })
+        wordpress_options = {
+          'extends' => {
+            'file' => 'docker-compose.yml',
+            'service' => 'wordpress'
+          },
+          'stateful' => true,
+          'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
+          'instances' => 2,
+          'deploy' => { 'strategy' => 'ha' }
+        }
+        mysql_options = {
+          'extends' => {
+            'file' => 'docker-compose.yml',
+            'service' => 'mysql'
+          },
+          'stateful' => true,
+          'environment' => ['MYSQL_ROOT_PASSWORD=test_secret']
+        }
+        expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
+          .with(wordpress_options)
+          .once
+          .and_return(service_extender)
+        expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
+          .with(mysql_options)
+          .once
+          .and_return(service_extender)
+        expect(service_extender).to receive(:extend).with(docker_compose_yml['wordpress'])
+        expect(service_extender).to receive(:extend).with(docker_compose_yml['mysql'])
 
-      subject.execute
+        subject.execute
+      end
+
+      it 'extends services from the same file' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('kontena.yml'))
+          .and_return(fixture('kontena-internal-extend.yml'))
+        kontena_yml = YAML.load(fixture('kontena-internal-extend.yml') % { project: 'test' })
+        expect(Kontena::Cli::Apps::YAML::ServiceExtender).to receive(:new)
+          .with(kontena_yml['app'])
+          .once
+          .and_return(service_extender)
+        expect(service_extender).to receive(:extend).with(kontena_yml['base'])
+        subject.execute
+      end
     end
 
     context 'environment variables' do
