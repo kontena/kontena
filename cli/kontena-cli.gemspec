@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["info@kontena.io"]
   spec.summary       = %q{Kontena command line tool}
   spec.description   = %q{Kontena command line tool}
-  spec.homepage      = "http://www.kontena.io"
+  spec.homepage      = "https://www.kontena.io"
   spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -23,11 +23,11 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_runtime_dependency "excon", "~> 0.49.0"
-  spec.add_runtime_dependency "colorize"
-  spec.add_runtime_dependency "clamp"
-  spec.add_runtime_dependency "highline"
-  spec.add_runtime_dependency "shell-spinner"
-  spec.add_runtime_dependency "ruby_dig"
+  spec.add_runtime_dependency "colorize", "~> 0.8.1"
+  spec.add_runtime_dependency "clamp", "~> 1.0.0"
+  spec.add_runtime_dependency "highline", "~> 1.7.8"
+  spec.add_runtime_dependency "shell-spinner", "~> 1.0.4"
+  spec.add_runtime_dependency "ruby_dig", "~> 0.0.2"
   spec.add_runtime_dependency "dry-validation", "~> 0.8.0"
   spec.add_runtime_dependency "dry-configurable", "~> 0.1.6"
 end
