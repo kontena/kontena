@@ -13,7 +13,7 @@ You can use environment variables in configuration values with a Bash-like ${VAR
 
 
 ## Service configuration reference
-> **Note:** Kontena supports both Docker Compose file versions respectively. Volumes and networks introduced in version 2 are not supported by Kontena yet. See more details about versioning on [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
+> **Note:** Kontena supports both Docker Compose file versions respectively. See more details about versioning on [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
 
 ### Kontena specific keys
 
@@ -485,7 +485,6 @@ services:
     build: .  
     image: registry.kontena.local/example-app:latest
     instances: 2
-    privileged: true  
     links:
       - loadbalancer
     environment:
