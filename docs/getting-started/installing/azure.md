@@ -72,10 +72,10 @@ Or create a new grid using command:
 $ kontena grid create --initial-size=<initial_node_count> test-grid
 ```
 
-Now you can start provision nodes to DigitalOcean. Issue following command (with right options) as many times as desired:
+Now you can start provision nodes to Azure. Issue following command (with right options) as many times as desired:
 
 ```
-$ kontena azure master create \
+$ kontena azure node create \
   --subscription-id <subscription-id> \
   --subscription-cert <subscription-cert> \
   --ssh-key <path-to-ssh-private-key>
