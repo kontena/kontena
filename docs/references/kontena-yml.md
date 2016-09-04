@@ -13,7 +13,125 @@ You can use environment variables in configuration values with a Bash-like ${VAR
 
 
 ## Service configuration reference
-> **Note:** Kontena supports both Docker Compose file versions respectively. Volumes and networks introduced in version 2 are not supported by Kontena yet. See more details about versioning on [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
+> **Note:** Kontena supports both Docker Compose file versions respectively. See more details about versioning on [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
+
+### Kontena specific keys
+
+#### instances
+
+Number of instences (replicas) to run for the service (default: 1).
+
+```
+instances: 1
+```
+
+#### stateful
+
+Mark service as stateful (default: false). Kontena will create and mount automatically a data volume container for the service. This options also instructs scheduler to bind service instance to scheduled host so that volume can be mapped when service is updated.
+
+```
+stateful: true
+```
+
+#### secrets
+
+A list of secrets to be added from the Kontena Vault to the service on launch.
+
+```
+secrets:
+  - secret: CUSTOMER_DB_PASSWORD
+    name: MYSQL_PASSWORD
+    type: env
+```
+
+#### deploy
+
+These Kontena spefic keys define how Kontena will schedule and orchestrate containers across different nodes. Read more about deployments [here](../using-kontena/deploy.md).
+
+**strategy**
+
+How to deploy service's containers to different host nodes.
+
+```
+deploy:
+    strategy: ha
+```
+
+```
+deploy:
+    strategy: daemon
+```
+
+```
+deploy:
+    strategy: random
+```
+
+**wait_for_port**
+
+Wait the port is responding before service instance is considered as running.
+
+```
+deploy:
+  wait_for_port: 3000
+```
+
+**min_health**
+The minimum percentage (number between 0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying.
+
+```
+deploy:
+  min_health: 0.5
+```
+
+**interval**
+The interval of automatic redeploy of service. Format <number><unit>, where unit = min, h, d.
+```
+deploy:
+  interval: 7d
+```
+
+#### affinity
+
+Affinity conditions of hosts where containers should be launched
+
+```
+affinity:
+  - node==node1.kontena.io
+```
+
+```
+affinity:
+  - label==AWS
+```
+
+#### hooks
+
+**post_start**
+
+```
+hooks:
+  post_start:
+    - name: sleep
+      cmd: sleep 10
+      instances: *
+      oneshot: true
+```
+
+**pre_build**
+
+`pre_build` hooks define executables that are executed before the actual docker image building. If multiple hooks are provided they are executed in the order defined. If any of the commands fail the build is aborted.
+
+```
+hooks:
+  pre_build:
+    - name: npm install
+      cmd: npm install
+    - name: grunt
+      cmd: grunt dist
+```
+
+### Supported Docker Compose keys
 
 #### image
 
@@ -69,25 +187,6 @@ Alternate Dockerfile.
 
 ```
 dockerfile: Dockerfile-alternate
-```
-
-#### affinity
-
-Affinity conditions of hosts where containers should be launched
-
-```
-affinity:
-  - node==node1.kontena.io
-```
-
-```
-affinity:
-  - label==AWS
-```
-
-```
-affinity:
-  - service==wordpress
 ```
 
 #### cap_add, cap_drop
@@ -177,17 +276,6 @@ A reference to file that contains environment variables.
 env_file: production.env
 ```
 
-#### secrets
-
-A list of secrets to be added from vault to the service containers on launch.
-
-```
-secrets:
-  - secret: CUSTOMER_DB_PASSWORD
-    name: MYSQL_PASSWORD
-    type: env
-```
-
 #### extends
 
 Extend another service, in the current file or another, optionally overriding configuration. You can for example extend `docker-compose.yml` services and introduce only Kontena specific fields in `kontena.yml`.
@@ -226,14 +314,6 @@ Link to services in the same grid outside application scope. `external_links` fo
 external_links:
   - loadbalancer
   - common-redis:redis   
-```
-
-#### instances
-
-Number of containers to run for this service (default: 1).
-
-```
-instances: 3
 ```
 
 #### links
@@ -303,14 +383,6 @@ Give extended privileges to service.
 privileged: true
 ```
 
-#### stateful
-
-Mark service as stateful (default: false). Kontena will create and mount automatically a data volume container for the service.
-
-```
-stateful: false
-```
-
 #### user
 
 The default user to run the first process
@@ -342,76 +414,6 @@ volumes_from:
  - wordpress-%%s
 ```
 (`-%%s` will be replaced with container number, eg first service container will get volumes from wordpress-1, second from wordpress-2 etc)
-
-#### deploy
-
-These Kontena spefic keys define how Kontena will schedule and orchestrate containers across different nodes. Read more about deployments [here](../using-kontena/deploy.md).
-
-**strategy**
-
-How to deploy service's containers to different host nodes.
-
-```
-deploy:
-    strategy: ha
-```
-
-```
-deploy:
-    strategy: daemon
-```
-
-```
-deploy:
-    strategy: random
-```
-
-**wait_for_port**
-
-Wait the port is responding before moving to deploy another instance.
-
-```
-instances: 3
-deploy:
-  strategy: ha
-  wait_for_port: 3000
-```
-
-**min_health**
-The minimum percentage (number between 0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying.
-
-```
-instances: 3
-deploy:
-  strategy: ha
-  min_health: 0.5
-```
-
-#### hooks
-
-**post_start**
-
-```
-hooks:
-  post_start:
-    - name: sleep
-      cmd: sleep 10
-      instances: *
-      oneshot: true
-```
-
-**pre_build**
-
-`pre_build` hooks define executables that are executed before the actual docker image building. If multiple hooks are provided they are executed in the order defined. If any of the commands fail the build is aborted.
-
-```
-hooks:
-  pre_build:
-    - name: npm install
-      cmd: npm install
-    - name: grunt
-      cmd: grunt dist
-```
 
 #### log_driver
 > **Note:** Version 1 only. In version 2 use [logging](#logging) options
@@ -471,33 +473,35 @@ db:
 ```
 
 ## Example kontena.yml
+
 ```
-loadbalancer:
-  image: kontena/lb:latest
-  ports:
-    - 80:80
-app:
-  build: .  
-  image: registry.kontena.local/example-app:latest
-  instances: 2
-  privileged: true  
-  links:
-    - loadbalancer
-  environment:
-    - DB_URL=%{project}-db.kontena.local
-    - KONTENA_LB_INTERNAL_PORT=80
-    - KONTENA_LB_VIRTUAL_HOSTS=www.my-app.com
-  deploy:
-    strategy: ha
-    wait_for_port: 80
-  hooks:
-    post_start:
-      - name: sleep
-        cmd: sleep 10
-        instances: *  
-db:
-  image: mysql:5.6
-  stateful: true
-  volumes:
-    - /var/lib/mysql
+version: "2"
+services:
+  loadbalancer:
+    image: kontena/lb:latest
+    ports:
+      - 80:80
+  app:
+    build: .  
+    image: registry.kontena.local/example-app:latest
+    instances: 2
+    links:
+      - loadbalancer
+    environment:
+      - DB_URL=%{project}-db.kontena.local
+      - KONTENA_LB_INTERNAL_PORT=80
+      - KONTENA_LB_VIRTUAL_HOSTS=www.my-app.com
+    deploy:
+      strategy: ha
+      wait_for_port: 80
+    hooks:
+      post_start:
+        - name: sleep
+          cmd: sleep 10
+          instances: *  
+  db:
+    image: mysql:5.6
+    stateful: true
+    volumes:
+      - /var/lib/mysql
 ```
