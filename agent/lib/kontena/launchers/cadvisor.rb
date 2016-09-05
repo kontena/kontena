@@ -72,6 +72,7 @@ module Kontena::Launchers
         'Volumes' => volume_mappings,
         'HostConfig' => {
           'Binds' => volume_binds,
+          'NetworkMode' => 'host',
           'PidMode' => 'host',
           'Privileged' => true,
           'RestartPolicy' => {'Name' => 'always'}
