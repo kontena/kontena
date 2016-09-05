@@ -1,6 +1,9 @@
+require_relative '../helpers/log_helper'
+
 module Kontena::Cli::Grids
   class LogsCommand < Clamp::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::Helpers::LogHelper
 
     option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     option "--lines", "LINES", "Number of lines to show from the end of the logs"
@@ -41,56 +44,27 @@ module Kontena::Cli::Grids
       end
     end
 
+    # @param [String] token
+    # @param [Hash] query_params
     def stream_logs(token, query_params)
+      last_seen = nil
       streamer = lambda do |chunk, remaining_bytes, total_bytes|
-        begin
-          unless @buffer.empty?
-            chunk = @buffer + chunk
-          end
-          unless chunk.empty?
-            log = JSON.parse(chunk)
-          end
-          @buffer = ''
-        rescue => exc
-          @buffer << chunk
-        end
+        log = buffered_log_json(chunk)
         if log
-          @last_seen = log['id']
+          last_seen = log['id']
           color = color_for_container(log['name'])
           puts "#{log['name'].colorize(color)} | #{log['data']}"
         end
       end
 
       begin
-        if @last_seen
-          query_params[:from] = @last_seen
-        end
+        query_params[:from] = last_seen if last_seen
         result = client(token).get_stream(
           "grids/#{current_grid}/container_logs", streamer, query_params
         )
       rescue => exc
-        if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SockerError
-          retry
-        end
+        retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
       end
-
-    end
-
-    def color_for_container(container_id)
-      color_maps[container_id] = colors.shift unless color_maps[container_id]
-      color_maps[container_id].to_sym
-    end
-
-    def color_maps
-      @color_maps ||= {}
-    end
-
-    def colors
-      if(@colors.nil? || @colors.size == 0)
-        @colors = [:green, :yellow, :magenta, :cyan, :red,
-          :light_green, :light_yellow, :ligh_magenta, :light_cyan, :light_red]
-      end
-      @colors
     end
   end
 end
