@@ -86,10 +86,10 @@ module V1
                 else
                   logs = scope.to_a.reverse
                 end
-
                 logs.each do |log|
                   out << render('container_logs/_container_log', {locals: {log: log}})
                 end
+                out << ' ' if logs.size == 0
                 first_run = false
 
                 sleep 0.5 if logs.size == 0
