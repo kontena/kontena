@@ -46,6 +46,10 @@ module Kontena::Cli::Apps
         name = service['id'].split('/').last
         options = {}
         options[:force] = true if force? || force_deploy? # deprecated
+        if force_deploy?
+          print "[WARNING]".colorize(:yellow)
+          puts " --force-deploy will deprecate in the future, use --force"
+        end
         deploy_service(token, name, options)
         print "deploying #{unprefixed_name(name).colorize(:cyan)}"
         unless async?
