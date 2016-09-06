@@ -1,7 +1,9 @@
+#TODO specs
 require 'singleton'
 require 'uri'
 require 'jsonpath'
 require 'httpclient'
+require 'symmetric-encryption'
 
 require_relative '../helpers/config_helper'
 
@@ -38,7 +40,7 @@ class AuthProvider < OpenStruct
     # The table syntax is for initializing an OpenStruct.
     @table = {}
     @table[:client_id] = config[:oauth2_client_id]
-    @table[:client_secret] = config[:oauth2_client_secret]
+    @table[:client_secret] = config[:oauth2_client_secret].nil? ? nil : SymmetricEncryption.decrypt(config[:oauth2_client_secret])
     @table[:authorize_endpoint] = config[:oauth2_authorize_endpoint]
     @table[:code_requires_basic_auth] = config[:oauth2_code_requires_basic_auth] || false
     @table[:token_endpoint] = config[:oauth2_token_endpoint]
@@ -54,7 +56,11 @@ class AuthProvider < OpenStruct
   # Saves the values back to configuration
   def save
     each_pair do |key, value|
-      config[key] = value
+      if key.to_s.eql?('client_secret')
+        config["oauth2_client_secret"] = SymmetricEncryption.encrypt(value, true)
+      else
+        config["oauth2_#{key}"] = value
+      end
     end
   end
 

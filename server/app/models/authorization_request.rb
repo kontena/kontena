@@ -1,5 +1,3 @@
-require 'bcrypt'
-
 # Table for storing temporary random state strings
 #
 # A matching state must be found when receiving authorization
@@ -23,12 +21,12 @@ class AuthorizationRequest
   field :state, type: String
   field :redirect_uri, type: String
   field :scope, type: String
-  field :deleted_at, type: Time, default: nil
+  field :deleted_at, type: BSON::Timestamp, default: nil
   field :expires_in, type: Fixnum, default: nil
 
   index({ state: 1 })
   index({ created_at: 1 })
-  index({ deleted_at: 1 }, { sparse: true })
+  index({ deleted_at: 1 }, { sparse: true, expire_after_seconds: 1 })
 
   attr_accessor :state_plain
 

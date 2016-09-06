@@ -15,9 +15,9 @@ class AccessToken
   field :token_type, type: String, default: 'bearer'
   field :token, type: String
   field :refresh_token, type: String
-  field :expires_at, type: Time
+  field :expires_at, type: DateTime
   field :scopes, type: Array
-  field :deleted_at, type: Time, default: nil
+  field :deleted_at, type: BSON::Timestamp, default: nil
   field :internal, type: Boolean, default: true
   field :code, type: String, default: nil
 
@@ -26,7 +26,7 @@ class AccessToken
   index({ token: 1 }, { unique: true })
   index({ refresh_token: 1 }, { sparse: true })
   index({ expires_at: 1 }, { sparse: true })
-  index({ deleted_at: 1 }, { sparse: true })
+  index({ deleted_at: 1 }, { sparse: true, expire_after_seconds: 1 })
   index({ code: 1 }, { sparse: true, unique: true })
 
   attr_accessor :token_plain

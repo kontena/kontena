@@ -32,7 +32,7 @@ module OAuth2Api
     UNSUPPORTED        = 'unsupported_response_type'.freeze
     UNSUPPORTED_DESC   = 'Unsupported response type. Supported: code, token, invite'.freeze
     SERVER_ERROR       = 'server_error'.freeze
-    NOT_ADMIN          = 'User not admin, denyin access'.freeze
+    NOT_ADMIN          = 'User not admin, denying access'.freeze
 
     route do |r|
       r.post do

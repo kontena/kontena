@@ -121,23 +121,6 @@ class TokenAuthentication
     end
   end
 
-  # Send the user to auth provider's authorization url.
-  # def redirect_response
-  #   if AuthProvider.instance && AuthProvider.instance[:provider]
-  #     [
-  #       302,
-  #       {
-  #         'Location' => AuthProvider.instance.authorization_url(
-  #           SecureRandom.hex(16)
-  #         )
-  #       },
-  #       []
-  #     ]
-  #   else
-  #     [ 500, {}, ['Authentication provider not configured'] ]
-  #   end
-  # end
-
   def self.authenticate_header(error = nil, error_description = nil)
     message_parts = ['Bearer realm="kontena_master"']
     message_parts << "error=\"#{error}\"" if error
