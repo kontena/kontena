@@ -6,6 +6,10 @@ describe Kontena::Cli::Helpers::LogHelper do
   let(:described_class) do
     Class.new do
       include Kontena::Cli::Helpers::LogHelper
+
+      def buffer
+        @buffer
+      end
     end
   end
 
@@ -38,6 +42,12 @@ describe Kontena::Cli::Helpers::LogHelper do
       expect(log).to be_nil
       log = subject.buffered_log_json(chunk3)
       expect(log).to eq(JSON.parse(chunk1 + chunk2 + chunk3))
+    end
+
+    it 'does not append to buffer if buffer is empty and chunk has just whitespace' do
+      log = subject.buffered_log_json(' ')
+      expect(log).to be_nil
+      expect(subject.buffer).to eq('')
     end
 
     it 'returns nil on invalid json' do

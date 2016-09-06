@@ -5,6 +5,7 @@ module Kontena::Cli::Helpers
     # @return [Hash,NilClass]
     def buffered_log_json(chunk)
       @buffer = '' if @buffer.nil?
+      return if @buffer.empty? && chunk.strip.empty?
       begin
         orig_chunk = chunk
         unless @buffer.empty?
