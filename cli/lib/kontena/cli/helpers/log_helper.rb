@@ -16,11 +16,7 @@ module Kontena::Cli::Helpers
         @buffer = ''
         log
       rescue => exc
-        if @buffer.bytesize > 1024 * 10
-          @buffer = ''
-        else
-          @buffer << orig_chunk
-        end
+        @buffer << orig_chunk
         nil
       end
     end
