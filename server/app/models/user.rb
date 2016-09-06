@@ -1,6 +1,3 @@
-require 'digest/md5'
-require 'bcrypt'
-
 class User
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -24,8 +21,6 @@ class User
   validates :email,
             format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i },
             unless: :is_local_admin?
-
-
 
   index({ email: 1 }, { unique: true })
   index({ external_id: 1 }, { unique: true, sparse: true })

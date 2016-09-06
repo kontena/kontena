@@ -1,3 +1,5 @@
+#TODO audit log
+#TODO think about when changing auth provider url(?), should clear users external id's maybe ( <-- clear users says miska)
 module V1
   class AuthProviderApi < Roda
     include RequestHelpers

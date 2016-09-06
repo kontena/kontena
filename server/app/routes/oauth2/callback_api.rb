@@ -23,6 +23,7 @@ module OAuth2Api
           halt_request(400, 'invalid_request') and return
         end
 
+
         token_data = AuthProvider.get_token(params['code'])
 
         if token_data && token_data.kind_of?(Hash) && token_data.has_key?('access_token')
@@ -46,16 +47,6 @@ module OAuth2Api
 
         user = state.user || User.where(external_id: user_data[:id]).first
 
-        # If no existing user is found, create a new local regular user
-        if user.nil? && (User.count == 0 || (User.count == 1 && User.first.email == 'admin'))
-          user = User.create(
-            external_id: user_data[:id],
-            email: user_data[:email],
-            name: user_data[:username]
-          )
-          user.roles << Role.master_admin
-        end
-
         unless user
           halt_request(403, 'Access denid')
         end
@@ -66,27 +57,6 @@ module OAuth2Api
           expires_at = Time.now.utc + token_data['expires_in'].to_i
         else
           expires_at = nil
-        end
-
-        # Storing remote tokens currently serves no purpose as they are not used 
-        # after the authentication, so let's not do it by default.
-        if ENV['AUTH_STORE_REMOTE_TOKENS']
-          task = AccessTokens::Create.run(
-            user: user,
-            token: token_data['access_token'],
-            refresh_token: token_data['refresh_token'],
-            expires_at: expires_at,
-            refreshable: !token_data['refresh_token'].nil?,
-            scope: token_data['scope'] || AuthProvider.instance.userinfo_scope
-          )
-
-          if task.success?
-            external_access_token = task.result
-          else
-            logger.debug "Could not create external access token: #{task.errors.message.inspect}"
-            halt_request(500, 'server_error')
-            return
-          end
         end
 
         # Clean up user's old access tokens

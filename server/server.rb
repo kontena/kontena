@@ -84,7 +84,7 @@ class Server < Roda
 
   # Read the defaults from config/defaults.yml
   def self.config_defaults
-    defaults_file = Server.root.join('config/defaults.yml')
+    defaults_file = Server.root.join('config/seed.yml')
     if defaults_file.exist? && defaults_file.readable?
       logger.debug "Reading configuration defaults from #{defaults_file}"
       YAML.load(ERB.new(defaults_file.read).result)[ENV['RACK_ENV']] || {}

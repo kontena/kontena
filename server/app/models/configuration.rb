@@ -5,6 +5,7 @@ class Configuration
   field :value, type: Hash, default: {}
   index({ 'key' => 1 }, { unique: true })
 
+
   VALUE = 'v'.freeze
 
   class << self
