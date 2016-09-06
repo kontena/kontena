@@ -1,9 +1,11 @@
 require_relative 'services_helper'
+require_relative '../helpers/log_helper'
 
 module Kontena::Cli::Services
   class LogsCommand < Clamp::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::Helpers::LogHelper
     include ServicesHelper
 
     parameter "NAME", "Service name"
@@ -15,7 +17,7 @@ module Kontena::Cli::Services
     def execute
       require_api_url
       token = require_token
-      
+
 
       query_params = {}
       query_params[:limit] = lines if lines
@@ -47,56 +49,29 @@ module Kontena::Cli::Services
       end
     end
 
+    # @param [String] token
+    # @param [Hash] query_params
     def stream_logs(token, query_params)
+      last_seen = nil
       streamer = lambda do |chunk, remaining_bytes, total_bytes|
-        begin
-          unless @buffer.empty?
-            chunk = @buffer + chunk
-          end
-          unless chunk.empty?
-            log = JSON.parse(chunk)
-          end
-          @buffer = ''
-        rescue => exc
-          @buffer << chunk
-        end
+        log = buffered_log_json(chunk)
         if log
-          @last_seen = log['id']
+          last_seen = log['id']
           render_log_line(log)
         end
       end
 
       begin
         query_params[:follow] = true
-        if @last_seen
-          query_params[:from] = @last_seen
+        if last_seen
+          query_params[:from] = last_seen
         end
         result = client(token).get_stream(
           "services/#{current_grid}/#{name}/container_logs", streamer, query_params
         )
       rescue => exc
-        if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SockerError
-          retry
-        end
+        retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
       end
-
-    end
-
-    def color_for_container(container_id)
-      color_maps[container_id] = colors.shift unless color_maps[container_id]
-      color_maps[container_id].to_sym
-    end
-
-    def color_maps
-      @color_maps ||= {}
-    end
-
-    def colors
-      if(@colors.nil? || @colors.size == 0)
-        @colors = [:green, :yellow, :magenta, :cyan, :red,
-          :light_green, :light_yellow, :ligh_magenta, :light_cyan, :light_red]
-      end
-      @colors
     end
   end
 end
