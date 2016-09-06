@@ -48,6 +48,7 @@ V1::GridsApi.route('grid_container_logs') do |r|
           logs.each do |log|
             out << render('container_logs/_container_log', {locals: {log: log}})
           end
+          out << ' ' if logs.size == 0
           first_run = false
           sleep 0.5 if logs.size == 0
           from = logs.last.id if logs.last
