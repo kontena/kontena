@@ -36,7 +36,7 @@ module OAuth2Api
         case params[GRANT_TYPE]
         when AUTHORIZATION_CODE
           unless params[CODE]
-            mime_halt(400, OAuth2Api::INVALID_REQUEST, AUTHCODE) and return
+            mime_halt(400, OAuth2Api::INVALID_REQUEST, AUTHORIZATION_CODE) and return
           end
           @access_token = AccessToken.find_internal_by_code(params[CODE])
         when REFRESH_TOKEN
