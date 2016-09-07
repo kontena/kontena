@@ -67,7 +67,7 @@ describe Kontena::Cli::Apps::LogsCommand do
           service: 'test-mysql',
           grid: 'testgrid',
 
-          'id' => '57cff2e8cfee65c8b6efc8bf',
+          'id' => '57cff2e8cfee65c8b6efc8bd',
           'name' => 'test-mysql-1',
           'created_at' => '2016-09-07T15:19:04.362690',
           'data' => "mysql log message 1",
@@ -76,7 +76,7 @@ describe Kontena::Cli::Apps::LogsCommand do
           service: 'test-wordpress',
           grid: 'testgrid',
 
-          'id' => '57cff2e8cfee65c8b6efc8be',
+          'id' => '57cff2e8cfee65c8b6efc8bf',
           'name' => 'test-wordpress-1',
           'created_at' => '2016-09-07T15:19:05.362690',
           'data' => "wordpress log message 1-1",
@@ -107,6 +107,13 @@ describe Kontena::Cli::Apps::LogsCommand do
 
         { 'logs' => logs.select{|log| log[:grid] == grid && log[:service] == service } }
       }
+
+      # collect show_log() output
+      @logs = []
+
+      allow(subject).to receive(:show_log) do |log|
+        @logs << log
+      end
     end
 
     it "we can get some mock service" do
@@ -117,12 +124,10 @@ describe Kontena::Cli::Apps::LogsCommand do
       expect(client.get('services/testgrid/test-wordpress/container_logs', {'limit' => 100})['logs']).to_not be_empty
     end
 
-    it "shows all service logs in time order" do
-      for log in logs do
-        expect(subject).to receive(:show_log).with(log).ordered
-      end
-
+    it "shows all service logs from the first loop in time order" do
       subject.show_logs services
+
+      expect(@logs).to eq logs
     end
   end
 end
