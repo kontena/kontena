@@ -10,6 +10,9 @@
 #
 # The original scope from auth request can also be
 # stored here.
+#
+require_relative '../helpers/config_helper'
+
 class AuthorizationRequest
   include Mongoid::Document
   include Mongoid::Timestamps
