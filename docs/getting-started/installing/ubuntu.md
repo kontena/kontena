@@ -11,7 +11,7 @@ title: Ubuntu
 ## Prerequisities
 
 - Kontena Account
-- Ubuntu 14.04 with Docker Engine installed
+- Ubuntu 14.04 with Docker Engine 1.11.x installed
 
 ## Installing Kontena Master
 
