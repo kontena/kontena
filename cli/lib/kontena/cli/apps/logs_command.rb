@@ -22,35 +22,47 @@ module Kontena::Cli::Apps
 
       @services = services_from_yaml(filename, service_list, service_prefix)
       if services.size > 0
-        show_logs(services)
+        if tail?
+          tail_logs(services)
+        else
+          show_logs(services)
+        end
       elsif !service_list.empty?
         puts "No such service: #{service_list.join(', ')}".colorize(:red)
       end
+    end
 
+    def tail_logs(services)
+      from = nil
+
+      loop do
+        get_logs(services, from).each do |log|
+          show_log(log)
+          from = log['id']
+        end
+        sleep(2)
+      end
     end
 
     def show_logs(services)
-      last_id = nil
-      loop do
-        query_params = {
-          'limit' => lines,
-        }
-        query_params['from'] = last_id unless last_id.nil?
-        query_params['since'] = since if !since.nil? && last_id.nil?
-        logs = []
-        services.each do |service_name, opts|
-          service = get_service(token, prefixed_name(service_name)) rescue false
-          result = client(token).get("services/#{service['id']}/container_logs", query_params) if service
-          logs = logs + result['logs'] if result && result['logs']
-        end
-        logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
-        logs.each do |log|
-          show_log(log)
-          last_id = log['id']
-        end
-        break unless tail?
-        sleep(2)
+      get_logs(services).each do |log|
+        show_log(log)
       end
+    end
+
+    def get_logs(services, last_id = nil)
+      query_params = {
+        'limit' => lines,
+      }
+      query_params['from'] = last_id unless last_id.nil?
+      query_params['since'] = since if !since.nil? && last_id.nil?
+      logs = []
+      services.each do |service_name, opts|
+        service = get_service(token, prefixed_name(service_name)) rescue false
+        result = client(token).get("services/#{service['id']}/container_logs", query_params) if service
+        logs = logs + result['logs'] if result && result['logs']
+      end
+      logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
     end
 
     def show_log(log)
