@@ -33,12 +33,12 @@ module Kontena::Cli::Apps
     end
 
     def tail_logs(services)
-      from = nil
+      services_from = { }
 
       loop do
-        get_logs(services, from).each do |log|
+        get_logs(services, services_from).each do |log|
           show_log(log)
-          from = log['id']
+          services_from[log[:service]] = log['id']
         end
         sleep(2)
       end
@@ -50,17 +50,26 @@ module Kontena::Cli::Apps
       end
     end
 
-    def get_logs(services, last_id = nil)
-      query_params = {
-        'limit' => lines,
-      }
-      query_params['from'] = last_id unless last_id.nil?
-      query_params['since'] = since if !since.nil? && last_id.nil?
+    def get_logs(services, services_from = nil)
       logs = []
       services.each do |service_name, opts|
         service = get_service(token, prefixed_name(service_name)) rescue false
-        result = client(token).get("services/#{service['id']}/container_logs", query_params) if service
-        logs = logs + result['logs'] if result && result['logs']
+
+        if service
+          from = services_from[service['id']] if services_from
+          query_params = {
+            'limit' => lines,
+          }
+          query_params['since'] = since if !since.nil? && from.nil?
+          query_params['from'] = from if !from.nil?
+
+          result = client(token).get("services/#{service['id']}/container_logs", query_params)
+
+          if result && result['logs']
+            result['logs'].each{|log| log[:service] = service['id']}
+            logs = logs + result['logs']
+          end
+        end
       end
       logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
     end
