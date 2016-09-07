@@ -3,6 +3,7 @@ require_relative 'app/boot'
 require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/token_authentication'
 require 'bcrypt'
+require 'pathname'
 
 Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
 require_relative 'app/routes/oauth2_api'

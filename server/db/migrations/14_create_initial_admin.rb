@@ -6,11 +6,12 @@ class CreateInitialAdmin < Mongodb::Migration
     )
 
     admin.roles << Role.master_admin
-    AccessToken.create!(
+    at = AccessToken.create!(
       user: admin,
       scopes: ['user', 'owner'],
       with_code: ENV['KONTENA_INITIAL_ADMIN_CODE'],
       internal: true
     )
+    puts "Initial Admin Code: #{at.code}"
   end
 end
