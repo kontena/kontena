@@ -1,12 +1,4 @@
 #TODO specs
-require 'singleton'
-require 'uri'
-require 'jsonpath'
-require 'httpclient'
-require 'symmetric-encryption'
-
-require_relative '../helpers/config_helper'
-
 # Authentication provider configuration and helpers.
 #
 # It loads initial values from configuration and can also save them back using .save
@@ -25,6 +17,15 @@ require_relative '../helpers/config_helper'
 #
 # To exchange an authorization_code to a real actual access token, use 
 # AuthProvider.get_token(<auth_code>)
+
+require 'singleton'
+require 'uri'
+require 'jsonpath'
+require 'httpclient'
+require 'symmetric-encryption'
+
+require_relative '../helpers/config_helper'
+
 class AuthProvider < OpenStruct
   include Singleton
   include ConfigHelper # adds a .config method
