@@ -64,6 +64,7 @@ module Kontena::Cli::Grids
         )
       rescue => exc
         retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
+        raise
       end
     end
   end
