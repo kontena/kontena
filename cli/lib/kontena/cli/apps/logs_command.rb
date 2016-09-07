@@ -42,14 +42,18 @@ module Kontena::Cli::Apps
         end
         logs.sort!{|x,y| DateTime.parse(x['created_at']) <=> DateTime.parse(y['created_at'])}
         logs.each do |log|
-          color = color_for_container(log['name'])
-          prefix = "#{log['created_at']} #{log['name']}:".colorize(color)
-          puts "#{prefix} #{log['data']}"
+          show_log(log)
           last_id = log['id']
         end
         break unless tail?
         sleep(2)
       end
+    end
+
+    def show_log(log)
+      color = color_for_container(log['name'])
+      prefix = "#{log['created_at']} #{log['name']}:".colorize(color)
+      puts "#{prefix} #{log['data']}"
     end
 
     def color_for_container(container_id)

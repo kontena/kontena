@@ -97,6 +97,9 @@ describe Kontena::Cli::Apps::LogsCommand do
       expect(client).to receive(:get).with('services/testgrid/test-wordpress/container_logs?limit=100') { { 'logs' => wordpress_logs } }
       expect(client).to receive(:get).with('services/testgrid/test-mysql/container_logs?limit=100') { { 'logs' => mysql_logs } }
 
+      expect(subject).to receive(:show_log).with(mysql_logs[0]).ordered
+      expect(subject).to receive(:show_log).with(wordpress_logs[0]).ordered
+
       subject.show_logs services
     end
   end
