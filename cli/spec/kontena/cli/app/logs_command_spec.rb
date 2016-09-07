@@ -60,6 +60,7 @@ describe Kontena::Cli::Apps::LogsCommand do
       }
     end
 
+    # globally ordered logs across multiple services
     let (:logs) do
       [
         {
@@ -90,12 +91,14 @@ describe Kontena::Cli::Apps::LogsCommand do
       allow(subject).to receive(:get_service).with(token, 'test-mysql') { mysql_service }
 
       # mock container_logs
-      allow(client).to receive(:get) { |url|
+      allow(client).to receive(:get) { |url, params|
+        expect(params).to eq({ 'limit' => 100 })
+
         case url
-        when 'services/testgrid/test-wordpress/container_logs?limit=100'
+        when 'services/testgrid/test-wordpress/container_logs'
             grid = 'testgrid'
             service = 'test-wordpress'
-        when 'services/testgrid/test-mysql/container_logs?limit=100'
+        when 'services/testgrid/test-mysql/container_logs'
             grid = 'testgrid'
             service = 'test-mysql'
         else
@@ -111,7 +114,7 @@ describe Kontena::Cli::Apps::LogsCommand do
     end
 
     it "we can get some mock logs" do
-      expect(client.get('services/testgrid/test-wordpress/container_logs?limit=100')['logs']).to_not be_empty
+      expect(client.get('services/testgrid/test-wordpress/container_logs', {'limit' => 100})['logs']).to_not be_empty
     end
 
     it "shows all service logs in time order" do
