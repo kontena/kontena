@@ -86,6 +86,17 @@ describe Kontena::Cli::Apps::LogsCommand do
         },
 
         # second loop
+        # pretend that the server got a test-mysql-1 log message after returning the test-mysql logs, but before returning the test-wordpress logs
+        {
+          service: 'test-mysql',
+          grid: 'testgrid',
+          loop: 2,
+
+          'id' => '57cff2e8cfee65c8b6efc8be',
+          'name' => 'test-mysql-1',
+          'created_at' => '2016-09-07T15:19:04.500000',
+          'data' => "mysql log message 2",
+        },
         {
           service: 'test-mysql',
           grid: 'testgrid',
