@@ -54,30 +54,31 @@ describe Kontena::Cli::Apps::LogsCommand do
       }
     end
 
-    let (:wordpress_logs) do
-      [
-        {
-          'id' => '57cff2e8cfee65c8b6efc8be',
-          'name' => 'test-wordpress-1',
-          'created_at' => '2016-09-07T15:19:05.362690',
-          'data' => "wordpress log message 1-1",
-        },
-      ]
-    end
-
     let (:mysql_service) do
       {
         'id' => 'testgrid/test-mysql'
       }
     end
 
-    let (:mysql_logs) do
+    let (:logs) do
       [
         {
+          service: 'test-mysql',
+          grid: 'testgrid',
+
           'id' => '57cff2e8cfee65c8b6efc8bf',
           'name' => 'test-mysql-1',
           'created_at' => '2016-09-07T15:19:04.362690',
           'data' => "mysql log message 1",
+        },
+        {
+          service: 'test-wordpress',
+          grid: 'testgrid',
+
+          'id' => '57cff2e8cfee65c8b6efc8be',
+          'name' => 'test-wordpress-1',
+          'created_at' => '2016-09-07T15:19:05.362690',
+          'data' => "wordpress log message 1-1",
         },
       ]
     end
@@ -87,18 +88,36 @@ describe Kontena::Cli::Apps::LogsCommand do
 
       allow(subject).to receive(:get_service).with(token, 'test-wordpress') { wordpress_service }
       allow(subject).to receive(:get_service).with(token, 'test-mysql') { mysql_service }
+
+      # mock container_logs
+      allow(client).to receive(:get) { |url|
+        case url
+        when 'services/testgrid/test-wordpress/container_logs?limit=100'
+            grid = 'testgrid'
+            service = 'test-wordpress'
+        when 'services/testgrid/test-mysql/container_logs?limit=100'
+            grid = 'testgrid'
+            service = 'test-mysql'
+        else
+            fail "unexpected url=#{url}"
+        end
+
+        { 'logs' => logs.select{|log| log[:grid] == grid && log[:service] == service } }
+      }
     end
 
-    it 'we can get some mock service' do
+    it "we can get some mock service" do
       expect(subject.get_service('testtoken', 'test-mysql')).to eq mysql_service
     end
 
-    it 'requests logs for each service' do
-      expect(client).to receive(:get).with('services/testgrid/test-wordpress/container_logs?limit=100') { { 'logs' => wordpress_logs } }
-      expect(client).to receive(:get).with('services/testgrid/test-mysql/container_logs?limit=100') { { 'logs' => mysql_logs } }
+    it "we can get some mock logs" do
+      expect(client.get('services/testgrid/test-wordpress/container_logs?limit=100')['logs']).to_not be_empty
+    end
 
-      expect(subject).to receive(:show_log).with(mysql_logs[0]).ordered
-      expect(subject).to receive(:show_log).with(wordpress_logs[0]).ordered
+    it "shows all service logs in time order" do
+      for log in logs do
+        expect(subject).to receive(:show_log).with(log).ordered
+      end
 
       subject.show_logs services
     end
