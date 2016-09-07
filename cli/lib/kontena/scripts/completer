@@ -55,7 +55,7 @@ class Helper
   end
 
   def yml_services
-    if File.exist?('kontena.yml')      
+    if File.exist?('kontena.yml')
       yaml = YAML.load(File.read('kontena.yml'))
       if yaml['version'] == '2'
         services = yaml['services']
@@ -100,7 +100,7 @@ if words.size > 0
       end
     when 'node'
       completion.clear
-      sub_commands = %w(list show remove vagrant digitalocean azure aws)
+      sub_commands = %w(list show remove)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.nodes
@@ -109,7 +109,7 @@ if words.size > 0
       end
     when 'master'
       completion.clear
-      sub_commands = %w(list use vagrant digitalocean azure aws users)
+      sub_commands = %w(list use)
       if words[1] && words[1] == 'use'
         completion.push helper.master_names
       elsif words[1] && words[1] == 'users'
