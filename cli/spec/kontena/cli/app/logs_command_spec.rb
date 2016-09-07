@@ -63,9 +63,11 @@ describe Kontena::Cli::Apps::LogsCommand do
     # globally ordered logs across multiple services
     let (:logs) do
       [
+        # first loop, in arbitrary order
         {
           service: 'test-mysql',
           grid: 'testgrid',
+          loop: 1,
 
           'id' => '57cff2e8cfee65c8b6efc8bd',
           'name' => 'test-mysql-1',
@@ -75,24 +77,51 @@ describe Kontena::Cli::Apps::LogsCommand do
         {
           service: 'test-wordpress',
           grid: 'testgrid',
+          loop: 1,
 
           'id' => '57cff2e8cfee65c8b6efc8bf',
           'name' => 'test-wordpress-1',
           'created_at' => '2016-09-07T15:19:05.362690',
           'data' => "wordpress log message 1-1",
         },
+
+        # second loop
+        {
+          service: 'test-mysql',
+          grid: 'testgrid',
+          loop: 2,
+
+          'id' => '57cff2e8cfee65c8b6efc8c1',
+          'name' => 'test-mysql-1',
+          'created_at' => '2016-09-07T15:19:06.100000',
+          'data' => "mysql log message 3",
+        },
+        {
+          service: 'test-wordpress',
+          grid: 'testgrid',
+          loop: 2,
+
+          'id' => '57cff2e8cfee65c8b6efc8c2',
+          'name' => 'test-wordpress-1',
+          'created_at' => '2016-09-07T15:19:07.100000',
+          'data' => "wordpress log message 1-2",
+        },
       ]
     end
 
     before (:each) do
+      @loop = 1
+
       allow(subject).to receive(:services_from_yaml) { services }
 
       allow(subject).to receive(:get_service).with(token, 'test-wordpress') { wordpress_service }
       allow(subject).to receive(:get_service).with(token, 'test-mysql') { mysql_service }
 
       # mock container_logs
-      allow(client).to receive(:get) { |url, params|
-        expect(params).to eq({ 'limit' => 100 })
+      allow(client).to receive(:get) do |url, params|
+        expect_params = { 'limit' => 100 }
+        expect_params['from'] = params['from'] if params['from']
+        expect(params).to eq expect_params
 
         case url
         when 'services/testgrid/test-wordpress/container_logs'
@@ -105,8 +134,19 @@ describe Kontena::Cli::Apps::LogsCommand do
             fail "unexpected url=#{url}"
         end
 
-        { 'logs' => logs.select{|log| log[:grid] == grid && log[:service] == service } }
-      }
+        { 'logs' => logs.select{ |log|
+          if log[:grid] != grid || log[:service] != service
+             false
+          elsif log[:loop] != @loop
+            # skip service logs that would not have been seen yet in this loop
+             false
+           elsif params['from'] && log['id'] <= params['from']
+             false
+          else
+            true
+          end
+        } }
+      end
 
       # collect show_log() output
       @logs = []
@@ -126,6 +166,16 @@ describe Kontena::Cli::Apps::LogsCommand do
 
     it "shows all service logs from the first loop in time order" do
       subject.show_logs services
+
+      expect(@logs).to eq logs.select{|log| log[:loop] == 1 }
+    end
+
+    it "tails all service logs across multiple loops" do
+      # mock out sleep to bound the infinite get_logs() Kernel#loop to two iterations
+      expect(subject).to receive(:sleep).exactly(2).times { @loop += 1 }
+      expect(subject).to receive(:sleep) { raise StopIteration }
+
+      subject.tail_logs services
 
       expect(@logs).to eq logs
     end
