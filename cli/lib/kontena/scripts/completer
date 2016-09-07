@@ -1,163 +1,94 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-# resolve bin path, ignoring symlinks
-require 'pathname'
-require 'yaml'
-bin_file = Pathname.new(__FILE__).realpath
-
-# add self to libpath
-$:.unshift File.expand_path('../../lib', bin_file)
-
-require_relative '../client'
-require_relative '../cli/common'
-
-class Helper
-  include Kontena::Cli::Common
-
-  def client
-    token = require_token
-    super(token)
-  end
-
-  def grids
-    client.get("grids")['grids'].map{|grid| grid['id']}
-  rescue
-    []
-  end
-
-  def nodes
-    client.get("grids/#{current_grid}/nodes")['nodes'].map{|node| node['name']}
-  rescue
-    []
-  end
-
-  def services
-    services = client.get("grids/#{current_grid}/services")['services']
-    results = []
-    results.push services.map{|s| s['name']}
-
-    results
-  rescue
-    []
-  end
-
-  def containers
-    results = []
-    client.get("grids/#{current_grid}/services")['services'].each do |service|
-      containers = client.get("services/#{service['id']}/containers")['containers']
-      results.push(containers.map{|c| c['name'] })
-      results.push(containers.map{|c| c['id'] })
-    end
-    results
-  rescue
-    []
-  end
-
-  def yml_services
-    if File.exist?('kontena.yml')
-      yaml = YAML.load(File.read('kontena.yml'))
-      if yaml['version'] == '2'
-        services = yaml['services']
-      else
-        services = yaml
-      end
-      services.keys
-    end
-  rescue
-    []
-  end
-
-  def master_names
-    config_file = File.expand_path('~/.kontena_client.json')
-    if(File.exist?(config_file))
-      config = JSON.parse(File.read(config_file))
-      return config['servers'].map{|s| s['name']}
-    end
-  rescue
-    []
-  end
-
-end
-
-helper = Helper.new
+require File.expand_path('../../../kontena/main_command', __FILE__)
 
 words = ARGV
-words.delete_at(0)
+words.shift
 
-completion = []
-completion.push %w(app deploy forgot-password master node grid service container vpn external-registry registry login logout whoami) if words.size < 2
-if words.size > 0
-  case words[0]
-    when 'grid'
-      completion.clear
-      sub_commands = %w(add-user audit-log create current list user remove show use)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.grids
-      else
-        completion.push sub_commands
-      end
-    when 'node'
-      completion.clear
-      sub_commands = %w(list show remove)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.nodes
-      else
-        completion.push sub_commands
-      end
-    when 'master'
-      completion.clear
-      sub_commands = %w(list use)
-      if words[1] && words[1] == 'use'
-        completion.push helper.master_names
-      elsif words[1] && words[1] == 'users'
-        users_sub_commands = %(invite list role)
-        completion.push users_sub_commands
-      elsif words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push %w(create)
-      else
-        completion.push sub_commands
-      end
-    when 'service'
-      completion.clear
-      sub_commands = %w(containers create delete deploy list logs restart
-                      scale show start stats stop update monitor env
-                      secret link unlink)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.services
-      else
-        completion.push sub_commands
-      end
-    when 'container'
-      completion.clear
-      sub_commands = %w(exec)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.containers
-      else
-        completion.push sub_commands
-      end
-    when 'vpn'
-      completion.clear
-      completion.push %w(config create delete)
-    when 'external-registry'
-      completion.clear
-      completion.push %w(add list delete)
-    when 'app'
-      completion.clear
-      sub_commands = %w(init build config deploy start stop remove rm ps list
-                        logs monitor show)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.yml_services
-      else
-        completion.push sub_commands
-      end
+def recurse_cmd(parent, cmds = [])
+  return [parent, []] if cmds.empty?
+  word = cmds.shift
+  command_class = parent.respond_to?(:recognised_subcommands) ? parent : parent.subcommand_class
+  commands = command_class.recognised_subcommands.select{|command| command.names.any?{|name| name.start_with?(word)}}
+
+  if cmds.empty?
+    if commands.empty?
+      return [parent, nil]
+    else
+      cmds.unshift(word)
+      return [parent, cmds]
+    end
+  elsif commands.size == 1
+    return recurse_cmd(commands.first, cmds)
+  else
+    return [parent, cmds]
   end
 end
 
-puts completion
+if words.size == 0
+  puts Kontena::MainCommand.recognised_subcommands.map(&:names)
+  exit
+else
+  cmd, remaining_words = recurse_cmd(Kontena::MainCommand, words.dup)
+  if cmd
+    command_class = cmd.respond_to?(:recognised_subcommands) ? cmd : cmd.subcommand_class
+  end
+  unless cmd.nil?
+    if command_class.has_subcommands?
+      if remaining_words.first
+        results = command_class.recognised_subcommands.flat_map(&:names).select{|name| name.start_with?(remaining_words.first)}
+      else
+        results = command_class.recognised_subcommands.flat_map(&:names)
+      end
+      if remaining_words.first && results.size == 1 && results.any?{|name| name == remaining_words.first}
+        command_class = command_class.recognised_subcommands.find{|sc| sc.names.include?(remaining_words.first)}.subcommand_class
+        if remaining_words.size > 1
+          word = remaining_words.last
+        end
+        if command_class.has_subcommands?
+          if word.nil?
+            puts command_class.recognised_subcommands.flat_map(&:names).join("\n")
+          else
+            puts command_class.recognised_subcommands.flat_map(&:names).select{|name| name.start_with?(word)}.join("\n")
+          end
+          exit
+        end
+      else
+        puts results.join("\n")
+        exit
+      end
+    end
+  end
+
+  if command_class
+    if words.empty?
+      if command_class.parameters.empty?
+        exit
+      elsif command_class.respond_to?(:complete)
+        puts command_class.complete
+      end
+      exit
+    end
+    if words.last.start_with?('-')
+      opts = command_class.recognised_options.flat_map(&:switches).select{|sw| sw.start_with?(words.last)}
+      if opts.size == 1 && opts.first == words.last
+        opt = command_class.recognised_options.find{|opt| opt.switches.include?(opts.first)}
+        if opt.type == :flag
+          if command_class.respond_to?(:complete)
+            puts command_class.complete
+          end
+        else
+          if command_class.respond_to?(:complete_option)
+            puts command_class.complete_option(opt.switches.first)
+          end
+        end
+      else
+        puts opts.join("\n")
+      end
+      exit
+    elsif command_class.respond_to?(:complete)
+      puts command_class.complete(words.last)
+    end
+  end
+end
