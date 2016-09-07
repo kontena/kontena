@@ -143,7 +143,8 @@ After the deploy is finished you can verify it using
 $ kontena app show wordpress
 ```
 
-It should show details of the service. You can pick the private ip address of the service and verify in a browser that application is responding.
+It should show details of the service. If you view node details (`$ kontena node show <node>`), you can pick the private IP address of the node and verify in a browser that application is responding.
+**Note:** This is only the special case on the Vagrant setup, normally you can just pick the public IP of the service from the application details.
 
 If you need more complex examples, please see the following examples:
 
