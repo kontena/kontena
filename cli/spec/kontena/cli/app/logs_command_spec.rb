@@ -130,9 +130,11 @@ describe Kontena::Cli::Apps::LogsCommand do
 
       # mock container_logs
       allow(client).to receive(:get) do |url, params|
-        expect_params = { 'limit' => 100 }
-        expect_params['from'] = params['from'] if params['from']
-        expect(params).to eq expect_params
+        if params['from']
+          expect(params).to_not include('limit')
+        else
+          expect(params['limit']).to eq 100
+        end
 
         case url
         when 'services/testgrid/test-wordpress/container_logs'

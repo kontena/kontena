@@ -57,9 +57,8 @@ module Kontena::Cli::Apps
 
         if service
           from = services_from[service['id']] if services_from
-          query_params = {
-            'limit' => lines,
-          }
+          query_params = { }
+          query_params['limit'] = lines if from.nil?
           query_params['since'] = since if !since.nil? && from.nil?
           query_params['from'] = from if !from.nil?
 
