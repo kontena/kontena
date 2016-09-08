@@ -89,11 +89,12 @@ describe Kontena::Launchers::Etcd do
 
   describe '#create_container' do
     it 'returns if etcd already running' do
-      container = double
+      container = double(id: 'foo')
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(container).to receive(:running?).and_return(true)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
-      node_info = { 
+      expect(subject.wrapped_object).to receive(:add_dns)
+      node_info = {
         'node_number' => 1,
         'grid' => {
           'initial_size' => 3
@@ -106,12 +107,13 @@ describe Kontena::Launchers::Etcd do
     end
 
     it 'starts if etcd already exists but not running' do
-      container = double
+      container = double(id: 'foo')
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(container).to receive(:running?).and_return(false)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
+      expect(subject.wrapped_object).to receive(:add_dns)
       expect(container).to receive(:start)
-      node_info = { 
+      node_info = {
         'node_number' => 1,
         'grid' => {
           'initial_size' => 3
@@ -124,7 +126,7 @@ describe Kontena::Launchers::Etcd do
     end
 
     it 'deletes and recreates the container' do
-      container = double
+      container = double(id: 'foo')
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
       allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
@@ -159,13 +161,13 @@ describe Kontena::Launchers::Etcd do
         })).and_return(etcd_container)
       expect(etcd_container).to receive(:start)
       allow(etcd_container).to receive(:id).and_return('12345')
-      expect(Celluloid::Notifications).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
+      expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
       subject.create_container('etcd', node_info)
     end
 
     it 'creates new container' do
-      container = double
+      container = double(id: 'foo')
       allow(Docker::Container).to receive(:get).and_return(nil)
       allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
       expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
@@ -199,13 +201,13 @@ describe Kontena::Launchers::Etcd do
         })).and_return(etcd_container)
       expect(etcd_container).to receive(:start)
       allow(etcd_container).to receive(:id).and_return('12345')
-      expect(Celluloid::Notifications).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
+      expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
       subject.create_container('etcd', node_info)
     end
 
     it 'deletes and recreates the container in proxy mode' do
-      container = double
+      container = double(id: 'foo')
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
       allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
@@ -235,11 +237,10 @@ describe Kontena::Launchers::Etcd do
         })).and_return(etcd_container)
       expect(etcd_container).to receive(:start)
       allow(etcd_container).to receive(:id).and_return('12345')
-      expect(Celluloid::Notifications).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.2', name: 'etcd.kontena.local'})
+      expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.2', name: 'etcd.kontena.local'})
 
       subject.create_container('etcd', node_info)
     end
-    
   end
 
   describe '#delete_membership' do
@@ -304,7 +305,7 @@ describe Kontena::Launchers::Etcd do
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
       expect(subject.wrapped_object).to receive(:delete_membership).with(excon, '4e12ae023cc6f88d')
       expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.1:2380')
-      
+
       node_info = {
         'node_number' => 1,
         'grid' => {
@@ -322,7 +323,7 @@ describe Kontena::Launchers::Etcd do
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":[]}]}')
       expect(subject.wrapped_object).not_to receive(:delete_membership)
       expect(subject.wrapped_object).not_to receive(:add_membership)
-      
+
       node_info = {
         'node_number' => 1,
         'grid' => {
