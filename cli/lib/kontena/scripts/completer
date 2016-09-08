@@ -1,7 +1,77 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-require File.expand_path('../../../kontena/completer', __FILE__)
+require 'ruby_dig'
+require 'yaml'
 
-completer = Kontena::Completer.new(ARGV)
-puts completer.run
+class CacheCompleter
+
+  attr_reader :words
+  attr_reader :tree
+
+  def initialize(words = [])
+    @words = words.dup
+    @words.shift
+    @tree  = load_cache_file
+  end
+
+  def recurse_tree(branch, words)
+    return [branch, []] if words.empty?
+    new_words = words.dup
+    next_word = new_words.shift
+    case branch[next_word]
+    when NilClass
+      [branch, words]
+    when Array
+      [branch[next_word], new_words]
+    when Hash
+      recurse_tree(branch[next_word], new_words)
+    else
+      [nil, new_words]
+    end
+  end
+
+  def run
+    result, remaining_words = recurse_tree(tree, words.dup)
+    if remaining_words.empty?
+      if result.kind_of?(Hash)
+        result.keys + ['--help']
+      else
+        result
+      end
+    else
+      if result.kind_of?(Hash)
+        result = result.keys + ['--help']
+      end
+      remaining_words.delete_if{|word| result.include?(word)}
+      if remaining_words.size == 1
+        result.select{|word| word.start_with?(remaining_words.first)}
+      end
+    end
+  end
+
+  def cache_file_path
+    @cache_file_path ||= File.expand_path(File.join(Dir.home, '.tmp.kontena_completer_cache'))
+  end
+
+  def load_cache_file
+    if File.exist?(cache_file_path) && File.readable?(cache_file_path)
+      YAML.load(File.read(cache_file_path)) rescue {}
+    else
+      require File.expand_path('../../../kontena_cli', __FILE__)
+      tree = Kontena::MainCommand.subcommand_tree
+      File.write(cache_file_path, YAML.dump(tree))
+      tree
+    end
+  end
+end
+
+cache_completer = CacheCompleter.new(ARGV)
+results = cache_completer.run
+if results.empty?
+  require File.expand_path('../../../kontena/completer', __FILE__)
+  completer = Kontena::Completer.new(ARGV)
+  puts completer.run
+else
+  puts results
+end
