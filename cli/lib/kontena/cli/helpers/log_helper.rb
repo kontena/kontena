@@ -1,6 +1,28 @@
 module Kontena::Cli::Helpers
   module LogHelper
 
+    # @param [String] url
+    # @param [Hash] query_params
+    def stream_logs(url, query_params)
+      last_seen = nil
+      streamer = lambda do |chunk, remaining_bytes, total_bytes|
+        log = buffered_log_json(chunk)
+        if log
+          yield log
+          last_seen = log['id']
+        end
+      end
+
+      begin
+        query_params[:follow] = 1
+        query_params[:from] = last_seen if last_seen
+        result = client(token).get_stream(url, streamer, query_params)
+      rescue => exc
+        retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
+        raise
+      end
+    end
+
     # @param [String] chunk
     # @return [Hash,NilClass]
     def buffered_log_json(chunk)
