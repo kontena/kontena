@@ -28,7 +28,7 @@ module Kontena::Launchers
     # @param [Hash] info
     def on_overlay_start(topic, info)
       retries = 0
-      begin        
+      begin
         self.start_etcd(info)
       rescue Docker::Error::ServerError => exc
         if retries < 4
@@ -96,18 +96,19 @@ module Kontena::Launchers
       elsif container && container.running?
         info 'etcd is already running'
         @running = true
+        add_dns(container.id, weave_ip)
         return container
       elsif container && !container.running?
         info 'etcd container exists but not running, starting it'
         container.start
         @running = true
+        add_dns(container.id, weave_ip)
         return container
       elsif container.nil? && node_number <= cluster_size
         # No previous container exists, update previous membership info if needed
         cluster_state = update_membership(info)
       end
 
-      
       name = "node-#{info['node_number']}"
       grid_name = info['grid']['name']
       docker_ip = docker_gateway
@@ -144,7 +145,7 @@ module Kontena::Launchers
         }
       )
       container.start
-      Celluloid::Notifications.publish('dns:add', {id: container.id, ip: weave_ip, name: 'etcd.kontena.local'})
+      add_dns(container.id, weave_ip)
       info 'started etcd service'
       @running = true
       container
@@ -156,14 +157,14 @@ module Kontena::Launchers
     # @return [String] the state of the cluster member
     def update_membership(info)
       info 'checking if etcd previous membership needs to be updated'
-      
+
       etcd_connection = find_etcd_node(info)
       return 'new' unless etcd_connection # No etcd hosts available, bootstrapping first node --> new cluster
 
       weave_ip = weave_ip(info['node_number'])
       peer_url = "http://#{weave_ip}:2380"
       client_url = "http://#{weave_ip}:2379"
-      
+
       members = JSON.parse(etcd_connection.get.body)
       members['members'].each do |member|
         if member['peerURLs'].include?(peer_url) && member['clientURLs'].include?(client_url)
@@ -188,9 +189,9 @@ module Kontena::Launchers
 
     ##
     # Finds a working etcd node from set of initial nodes
-    # 
+    #
     # @param [Hash] node info
-    # @return [Hash] The cluster members as given by etcd API 
+    # @return [Hash] The cluster members as given by etcd API
     def find_etcd_node(info)
       tries = info['grid']['initial_size']
       begin
@@ -231,6 +232,12 @@ module Kontena::Launchers
       info "Adding new etcd membership info with peer URL #{peer_url}"
       connection.post(:body => JSON.generate(peerURLs: [peer_url]),
                       :headers => { 'Content-Type' => 'application/json' })
+    end
+
+    # @param [String] container_id
+    # @param [String] weave_ip
+    def add_dns(container_id, weave_ip)
+      publish('dns:add', {id: container_id, ip: weave_ip, name: 'etcd.kontena.local'})
     end
 
     # @param [Integer] cluster_size
