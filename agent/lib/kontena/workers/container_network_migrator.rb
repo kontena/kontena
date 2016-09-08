@@ -9,9 +9,10 @@ module Kontena::Workers
     include Kontena::Logging
     include Kontena::Helpers::WeaveHelper
 
-    def initialize
+    def initialize(autostart = true)
       info 'initialized'
       subscribe('network_adapter:start', :on_weave_start)
+      async.migrate_weavewait if autostart
     end
 
     def on_weave_start(topic, data)
@@ -39,13 +40,55 @@ module Kontena::Workers
     def migrate_network(container)
       info "migrating network for container: #{container.name}"
       @kontena_network ||= Docker::Network.get('kontena') rescue nil
-      Celluloid::Actor[:network_adapter].detach_network(container)
-      endpoint_config = {
-        "IPAMConfig" => {
-          "IPv4Address"  => container.overlay_cidr.split('/')[0]
+      if @kontena_network
+        Celluloid::Actor[:network_adapter].detach_network(container)
+        endpoint_config = {
+          "IPAMConfig" => {
+            "IPv4Address"  => container.overlay_cidr.split('/')[0]
+          }
         }
-      }
-      @kontena_network.connect(container.id, {}, endpoint_config)
+        @kontena_network.connect(container.id, { 'endpoint_config' => endpoint_config})
+      end
+    end
+
+    # Migrate weavewait binary into the no-op version.
+    # This has to be done since the new plugin network model does not create ethwe
+    # interface and old containers with /w/w entrypoint would wait forever.
+    def migrate_weavewait
+      info 'migrating weavewait into no-op binary...'
+      begin
+        container = Docker::Container.create(
+          'Image' => Celluloid::Actor[:network_adapter].weave_exec_image,
+          'Cmd' => ['cp', '/w-noop/w', '/w/w'],
+          'Labels' => {
+            'io.kontena.container.skip_logs' => '1'
+          },
+          'HostConfig' => {
+            'NetworkMode' => 'none',
+            'VolumesFrom' => ["weavewait-#{Celluloid::Actor[:network_adapter].WEAVE_VERSION}"]
+          }
+        )
+        retries = 0
+        response = {}
+        begin
+          response = container.tap(&:start).wait
+        rescue Docker::Error::NotFoundError => exc
+          error exc.message
+          return false
+        rescue => exc
+          retries += 1
+          error exc.message
+          sleep 0.5
+          retry if retries < 10
+
+          error exc.message
+          return false
+        end
+        response
+        info '...done'
+      ensure
+        container.delete(force: true, v: true) if container
+      end
     end
   end
 end

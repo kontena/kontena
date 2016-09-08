@@ -19,7 +19,7 @@ require_relative 'kontena/network_adapters/weave'
 
 require_relative 'kontena/launchers/etcd'
 require_relative 'kontena/launchers/cadvisor'
-require_relative 'kontena/launchers/ipam-plugin'
+require_relative 'kontena/launchers/ipam_plugin'
 
 require_relative 'kontena/workers/queue_worker'
 require_relative 'kontena/workers/log_worker'

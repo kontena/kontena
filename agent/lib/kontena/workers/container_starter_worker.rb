@@ -14,10 +14,10 @@ module Kontena::Workers
 
     def initialize
       info 'initialized'
-      subscribe('network_adapter:start', :on_weave_start)
+      subscribe('network_adapter:start', :on_overlay_start)
     end
 
-    def on_weave_start(topic, data)
+    def on_overlay_start(topic, data)
       info 'weave started, check if some containers need to be started'
       self.start
     end
@@ -30,7 +30,7 @@ module Kontena::Workers
     end
 
     def ensure_container_running(container)
-      unless container.running? && container.restarting?
+      unless container.running? || container.restarting?
         if container.restart_policy.dig('Name') == 'always' && container.service_container?
           info "starting container: #{container.name}"
           container.start
