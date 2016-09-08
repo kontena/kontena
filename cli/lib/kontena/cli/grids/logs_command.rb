@@ -24,9 +24,7 @@ module Kontena::Cli::Grids
       query_params[:since] = since if since
 
       if tail?
-        @buffer = ''
-        query_params[:follow] = 1
-        stream_logs(token, query_params)
+        tail_logs(token, query_params)
       else
         list_logs(token, query_params)
       end
@@ -46,25 +44,10 @@ module Kontena::Cli::Grids
 
     # @param [String] token
     # @param [Hash] query_params
-    def stream_logs(token, query_params)
-      last_seen = nil
-      streamer = lambda do |chunk, remaining_bytes, total_bytes|
-        log = buffered_log_json(chunk)
-        if log
-          last_seen = log['id']
-          color = color_for_container(log['name'])
-          puts "#{log['name'].colorize(color)} | #{log['data']}"
-        end
-      end
-
-      begin
-        query_params[:from] = last_seen if last_seen
-        result = client(token).get_stream(
-          "grids/#{current_grid}/container_logs", streamer, query_params
-        )
-      rescue => exc
-        retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
-        raise
+    def tail_logs(token, query_params)
+      stream_logs("grids/#{current_grid}/container_logs", query_params) do |log|
+        color = color_for_container(log['name'])
+        puts "#{log['name'].colorize(color)} | #{log['data']}"
       end
     end
   end
