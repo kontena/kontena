@@ -1,5 +1,6 @@
 class GridServiceRemoveWorker
   include Celluloid
+  include Logging
 
   def perform(grid_service_id)
     grid_service = GridService.find_by(id: grid_service_id)
@@ -21,6 +22,7 @@ class GridServiceRemoveWorker
 
       grid_service.destroy
     rescue Timeout::Error
+      error "service remove timed out #{grid_service.to_path}"
       grid_service.set_state(prev_state)
     end
   end
