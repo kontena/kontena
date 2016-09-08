@@ -5,6 +5,11 @@ module Mongodb
       if direction == :up
         self.up
       end
+    rescue
+      puts $!
+      puts $!.message
+      puts $!.backtrace
+      raise $!, $!.message
     end
 
     def self.up
