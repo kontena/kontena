@@ -32,5 +32,14 @@ describe GridServiceRemoveWorker do
       expect(Docker::ServiceTerminator).to receive(:new).twice.and_return(spy)
       subject.perform(service.id)
     end
+
+    it 'handles timeout properly' do
+      service # instantiate
+      service.set_state('running')
+      allow(subject.wrapped_object).to receive(:wait_instance_removal).and_raise(Timeout::Error)
+      expect {
+        subject.perform(service.id)
+      }.not_to change{ service.reload.state }
+    end
   end
 end
