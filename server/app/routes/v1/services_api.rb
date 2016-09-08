@@ -4,6 +4,7 @@ module V1
     include CurrentUser
     include RequestHelpers
     include Auditor
+    include LogsHelpers
 
     plugin :multi_route
     plugin :streaming
@@ -26,20 +27,6 @@ module V1
         end
 
         grid_service
-      end
-
-      def build_scope(service, r)
-        scope = @grid_service.container_logs
-
-        scope = scope.where(name: r['container']) unless r['container'].nil?
-        scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
-        if !r['since'].nil? && r['from'].nil?
-          since = DateTime.parse(r['since']) rescue nil
-          scope = scope.where(:created_at.gt => since)
-        end
-        scope = scope.where(:id.gt => r['from'] ) unless r['from'].nil?
-        scope = scope.order(:_id => -1)
-        scope
       end
 
       # /v1/services/:grid_name/:service_name/containers
@@ -71,34 +58,12 @@ module V1
           end
 
           r.on 'container_logs' do
-            follow = r['follow']
-            from = r['from']
-            limit = (r['limit'] || 100).to_i
+            scope = @grid_service.container_logs
 
-            scope = build_scope(@grid_service, r)
+            scope = scope.where(name: r['container']) unless r['container'].nil?
+            scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
 
-            if follow
-              first_run = true
-              stream(loop: true) do |out|
-                scope = scope.where(:id.gt => from ) unless from.nil?
-                if first_run
-                  logs = scope.limit(limit).to_a.reverse
-                else
-                  logs = scope.to_a.reverse
-                end
-                logs.each do |log|
-                  out << render('container_logs/_container_log', {locals: {log: log}})
-                end
-                out << ' ' if logs.size == 0
-                first_run = false
-
-                sleep 0.5 if logs.size == 0
-                from = logs.last.id if logs.last
-              end
-            else
-              @logs = scope.order(:_id => -1).limit(limit).to_a.reverse
-              render('container_logs/index')
-            end
+            render_container_logs(r, scope)
           end
         end
 

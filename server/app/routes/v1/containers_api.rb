@@ -3,6 +3,9 @@ module V1
     include OAuth2TokenVerifier
     include CurrentUser
     include RequestHelpers
+    include LogsHelpers
+
+    plugin :streaming
 
     route do |r|
 
@@ -41,8 +44,9 @@ module V1
           end
 
           r.on 'logs' do
-            @logs = container.container_logs.order(created_at: :desc).limit(500).to_a.reverse
-            render('container_logs/index')
+            logs = container.container_logs
+
+            render_container_logs(r, logs)
           end
 
           r.on 'inspect' do
