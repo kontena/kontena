@@ -216,9 +216,63 @@ describe '/v1/grids' do
     end
 
     describe '/container_logs' do
+      before do
+        @grid = david.grids.first
+
+        node = @grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid)
+
+        foo_service = @grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
+        bar_service = @grid.grid_services.create!(name: 'bar', image_name: 'bar/foo')
+
+        foo_container1 = foo_service.containers.create!(name: 'foo-1', host_node: node, container_id: 'bbb')
+        foo_container1.container_logs.create!(name: "foo-1", data: 'foo-1 1', type: 'stdout', grid: @grid, host_node: node, grid_service: foo_service)
+
+        bar_container1 = bar_service.containers.create!(name: 'bar-1', host_node: node, container_id: 'ccc')
+        bar_container1.container_logs.create!(name: "bar-1", data: 'bar-1 1', type: 'stdout', grid: @grid, host_node: node, grid_service: bar_service)
+      end
+
       it 'returns grid container logs' do
-        grid = david.grids.first
-        get "/v1/grids/#{grid.to_path}/container_logs", nil, request_headers
+        get "/v1/grids/#{@grid.to_path}/container_logs", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
+      end
+
+      it 'returns empty logs for an invalid service' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?services=quux", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(0)
+      end
+
+      it 'returns grid container logs for a service' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?services=foo", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(1)
+        expect(json_response['logs'].first['data']).to eq('foo-1 1')
+      end
+
+      it 'returns grid container logs for multiple services' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?services=foo,bar", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
+        expect(json_response['logs'][0]['data']).to eq('foo-1 1')
+        expect(json_response['logs'][1]['data']).to eq('bar-1 1')
+      end
+
+      it 'returns grid container logs for a container' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?containers=foo-1", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(1)
+        expect(json_response['logs'].first['data']).to eq('foo-1 1')
+      end
+
+      it 'returns grid container logs for a node' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?nodes=node-1", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
+      end
+
+      it 'returns empty logs for an invalid node' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?nodes=node-2", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(0)
       end
