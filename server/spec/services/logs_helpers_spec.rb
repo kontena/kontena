@@ -75,4 +75,96 @@ describe LogsHelpers do
       expect(logs).to eq @logs[-10..-1]
     end
   end
+
+  context 'when following logs' do
+    let(:streamer) do
+      double("streamer")
+    end
+
+    before do
+      stub_const('LogsHelpers::LOGS_LIMIT_DEFAULT', 10)
+      stub_const('LogsHelpers::LOGS_LIMIT_MAX', 20)
+
+      allow(subject).to receive(:sleep)
+    end
+
+    def mock_streamloop
+      @stream = []
+      allow(subject).to receive(:stream).with(loop: true) do |&arg|
+        while (yield) do
+          arg.call streamer
+        end
+      end
+      allow(streamer).to receive(:<<) { |out| @stream << out }
+      allow(subject).to receive(:render).with('container_logs/_container_log', locals: hash_including(:log)) { |template, locals:| locals[:log] }
+    end
+
+    it 'starts with the limit most recent lines' do
+      expect(subject).to receive(:sleep) { }
+
+      container = containers[:bar_container1]
+      @logs = (1..50).map do |i|
+        container.container_logs.create!(
+          data: "log #{i}",
+          type: 'stdout',
+          created_at: (100 - i).seconds.ago,
+          grid: grid,
+          grid_service: container.grid_service,
+        )
+      end
+
+      loops = 0
+      mock_streamloop { (loops += 1) <= 2 }
+
+      subject.render_container_logs({ 'follow' => 1}, grid.container_logs)
+
+      expect(@stream).to eq @logs[-10, 10] + [" "]
+    end
+
+    it 'handles multiple batches of logs' do
+
+      container = containers[:bar_container1]
+      loops = 0
+      stream = []
+
+      mock_streamloop {
+        case loops += 1
+        when 1
+          stream.concat((1..5).map { |i|
+            container.container_logs.create!(
+              data: "log #{i}",
+              type: 'stdout',
+              created_at: (10 - i).seconds.ago,
+              grid: grid,
+              grid_service: container.grid_service,
+            )
+          })
+        when 2
+          stream << " "
+        when 3
+          stream.concat((6..10).map { |i|
+            container.container_logs.create!(
+              data: "log #{i}",
+              type: 'stdout',
+              created_at: (10 - i).seconds.ago,
+              grid: grid,
+              grid_service: container.grid_service,
+            )
+          })
+        when 4
+          stream << " "
+        else
+          false
+        end
+      }
+
+      subject.render_container_logs({ 'follow' => 1}, grid.container_logs)
+
+      expect(@stream[-1]).to eq " "
+      expect(@stream[-2]['data']).to eq "log 10"
+      expect(@stream[0]['data']).to eq "log 1"
+      expect(@stream).to eq stream
+      expect(@stream.size).to eq 12
+    end
+  end
 end
