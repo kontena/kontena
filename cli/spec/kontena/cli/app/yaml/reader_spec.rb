@@ -156,6 +156,28 @@ describe Kontena::Cli::Apps::YAML::Reader do
     end
   end
 
+  context 'when yaml file is malformed' do
+    it 'exits the execution' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena-malformed-yaml.yml'))
+      expect {
+        subject.execute
+      }.to raise_error(SystemExit)
+    end
+  end
+
+  context 'when service config is not hash' do
+    it 'returns error' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena-not-hash-service-config.yml'))
+
+      outcome = subject.execute
+      expect(outcome[:errors].size).to eq(1)
+    end
+  end
+
   describe '#v2?' do
     context 'version 1' do
       it 'returns false' do

@@ -47,7 +47,11 @@ module Kontena::Cli::Apps
         content = content % { project: ENV['project'], grid: ENV['grid'] }
         interpolate(content)
         replace_dollar_dollars(content)
-        @yaml = ::YAML.load(content)
+        begin
+          @yaml = ::YAML.load(content)
+        rescue Psych::SyntaxError => e
+          abort("Error while parsing #{file}".colorize(:red)+ " "+e.message)
+        end
       end
 
       # @return [Array] array of validation errors
@@ -80,16 +84,28 @@ module Kontena::Cli::Apps
       # @return [Hash]
       def parse_services(service_name = nil)
         if service_name.nil?
-          services.each { |name, config| services[name] = process_config(config) }
+          services.each do |name, config|
+            begin
+              services[name] = process_config(config)
+            rescue RuntimeError => e
+              abort_on_malformed_options(file, name)
+            end
+          end
           services
         else
           abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
-          process_config(services[service_name])
+          begin
+            process_config(services[service_name])
+          rescue RuntimeError => e
+            abort_on_malformed_options(file, service_name)
+          end
         end
       end
 
       # @param [Hash] service_config
       def process_config(service_config)
+        raise('Malformed config') unless service_config.is_a?(Hash)
+
         normalize_env_vars(service_config)
         merge_env_vars(service_config)
         expand_build_context(service_config)
@@ -198,6 +214,10 @@ module Kontena::Cli::Apps
             options['build']['args'][k] = v
           end
         end
+      end
+
+      def abort_on_malformed_options(file, service_name)
+        #abort("Service '#{service_name}' contains malformed options #{file}".colorize(:red))
       end
     end
   end
