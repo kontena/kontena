@@ -214,11 +214,7 @@ module Kontena::Cli::Apps
             options['build']['args'][k] = v
           end
         end
-      end
-
-      def abort_on_malformed_options(file, service_name)
-        #abort("Service '#{service_name}' contains malformed options #{file}".colorize(:red))
-      end
+      end      
     end
   end
 end
