@@ -122,7 +122,6 @@ describe LogsHelpers do
     end
 
     it 'handles multiple batches of logs' do
-
       container = containers[:bar_container1]
       loops = 0
       stream = []
@@ -130,11 +129,11 @@ describe LogsHelpers do
       mock_streamloop {
         case loops += 1
         when 1
-          stream.concat((1..5).map { |i|
+          stream.concat((1..10).map { |i|
             container.container_logs.create!(
               data: "log #{i}",
               type: 'stdout',
-              created_at: (10 - i).seconds.ago,
+              created_at: (50 - i).seconds.ago,
               grid: grid,
               grid_service: container.grid_service,
             )
@@ -142,16 +141,19 @@ describe LogsHelpers do
         when 2
           stream << " "
         when 3
-          stream.concat((6..10).map { |i|
+          stream.concat((11..50).map { |i|
             container.container_logs.create!(
               data: "log #{i}",
               type: 'stdout',
-              created_at: (10 - i).seconds.ago,
+              created_at: (50 - i).seconds.ago,
               grid: grid,
               grid_service: container.grid_service,
             )
           })
         when 4
+          # still processing LIMIT_MAX from previous batch
+          true
+        when 5
           stream << " "
         else
           false
@@ -160,11 +162,11 @@ describe LogsHelpers do
 
       subject.render_container_logs({ 'follow' => 1}, grid.container_logs)
 
-      expect(@stream[-1]).to eq " "
-      expect(@stream[-2]['data']).to eq "log 10"
-      expect(@stream[0]['data']).to eq "log 1"
       expect(@stream).to eq stream
-      expect(@stream.size).to eq 12
+      expect(@stream[-1]).to eq " "
+      expect(@stream[-2]['data']).to eq "log 50"
+      expect(@stream[0]['data']).to eq "log 1"
+      expect(@stream.size).to eq 52
     end
   end
 end
