@@ -1,0 +1,9 @@
+version: 2
+name: foo
+
+services:
+  bar:
+    image: konttisample
+    build:
+      context: .
+      dockerfile: Dockerfile

@@ -13,6 +13,10 @@ describe Kontena::Cli::Apps::Common do
     fixture('kontena.yml')
   end
 
+  let(:kontena_numeric_version_yml) do
+    fixture('kontena_numeric_version.yml')
+  end
+
   let(:kontena_v2_yml) do
     fixture('kontena_v2.yml')
   end
@@ -61,7 +65,7 @@ describe Kontena::Cli::Apps::Common do
     end
   end
 
-  describe '#load_from_yaml' do
+  describe '#services_from_yaml' do
     before(:each) do
       allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
       allow(File).to receive(:read).with("#{Dir.getwd}/health.yml").and_return(health_yml)
@@ -95,6 +99,13 @@ describe Kontena::Cli::Apps::Common do
       services = subject.services_from_yaml('health.yml',['web'],'')
       expect(services['web']).not_to be_nil
       expect(services['web']['health_check']).not_to be_nil
+    end
+
+    it 'allows version to be numeric' do
+      allow(File).to receive(:read).with("#{Dir.getwd}/kontena-numeric-version.yml").and_return(kontena_numeric_version_yml)
+      services = subject.services_from_yaml('kontena-numeric-version.yml', [], '')
+      expect(services.dig('bar', 'build', 'context')).to eq(Dir.pwd)
+      expect(services.dig('bar', 'build', 'dockerfile')).to eq('Dockerfile')
     end
   end
 end
