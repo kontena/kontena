@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+
+gem 'dotenv'
+gem 'rspec'
+gem 'kommando'
+gem 'kontena-cli', path: '../cli'
+gem 'kontena-plugin-vagrant', git: 'https://github.com/kontena/kontena-plugin-vagrant.git'
