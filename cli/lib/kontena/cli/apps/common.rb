@@ -33,7 +33,7 @@ module Kontena::Cli::Apps
     # @return [Hash]
     def generate_services(yaml_services, version)
       services = {}
-      if version == '2'
+      if version.to_i == 2
         generator_klass = ServiceGeneratorV2
       else
         generator_klass = ServiceGenerator
@@ -63,7 +63,7 @@ module Kontena::Cli::Apps
     def project_name_from_yaml(file)
       reader = YAML::Reader.new(file, true)
       outcome = reader.execute
-      if outcome[:version] == '2'
+      if outcome[:version].to_i == 2
         outcome[:name]
       else
         nil
