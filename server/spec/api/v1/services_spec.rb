@@ -174,6 +174,42 @@ describe '/v1/services' do
         expect(json_response['logs'].first['data']).to eq('foo2')
       end
     end
+
+    context 'when limit parameter is passed' do
+      before do
+        stub_const('LogsHelpers::LOGS_LIMIT_DEFAULT', 10)
+        stub_const('LogsHelpers::LOGS_LIMIT_MAX', 20)
+
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        (1..100).each do |i|
+          container.container_logs.create!(data: "log #{i}", type: 'stdout', grid_service: redis_service)
+        end
+      end
+
+      it 'accepts a smaller value' do
+        get "/v1/services/#{redis_service.to_path}/container_logs?limit=2", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
+      end
+
+      it 'ignores an invalid value' do
+        get "/v1/services/#{redis_service.to_path}/container_logs?limit=foo", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(10)
+      end
+
+      it 'ignores an zero value' do
+        get "/v1/services/#{redis_service.to_path}/container_logs?limit=0", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(10)
+      end
+
+      it 'limits the maximum value' do
+        get "/v1/services/#{redis_service.to_path}/container_logs?limit=100", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(20)
+      end
+    end
   end
 
   describe 'GET /:id/stats' do

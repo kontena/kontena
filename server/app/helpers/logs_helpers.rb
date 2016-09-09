@@ -1,10 +1,16 @@
 module LogsHelpers
+  LOGS_LIMIT_DEFAULT = 100
+  LOGS_LIMIT_MAX = 10000
+
   # @param r [Roda::RodaRequest]
   # @param scope [Mongoid::CriteriaMongoid::Criteria] of ContainerLog
   def render_container_logs(r, scope)
     follow = r['follow']
     from = r['from']
-    limit = (r['limit'] || 100).to_i
+    limit = r['limit'].to_i
+
+    limit = LOGS_LIMIT_DEFAULT if limit.nil? || limit <= 0
+    limit = LOGS_LIMIT_MAX if limit > LOGS_LIMIT_MAX
 
     if !r['since'].nil? && from.nil?
       since = DateTime.parse(r['since']) rescue nil
@@ -14,8 +20,8 @@ module LogsHelpers
     if follow
       stream(loop: true) do |out|
         if from
-          # all items following a specific item, without limit
-          logs  = scope.where(:id.gt => from).order(:id => 1).to_a
+          # all items following a specific item
+          logs  = scope.where(:id.gt => from).order(:id => 1).limit(LOGS_LIMIT_MAX).to_a
         else
           # limit most recent logs
           logs = scope.order(:id => -1).limit(limit).to_a.reverse
