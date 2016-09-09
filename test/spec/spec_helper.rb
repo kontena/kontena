@@ -58,9 +58,11 @@ RSpec.configure do |config|
   config.include Shell
 
   config.before :suite do
-    set_home
-    setup_master(kontena_version)
-    setup_grid('e2e', 3, kontena_version)
+    unless skip_setup?
+      set_home
+      setup_master(kontena_version)
+      setup_grid('e2e', 3, kontena_version)
+    end
   end
 
   config.before :each do
@@ -69,9 +71,11 @@ RSpec.configure do |config|
   end
 
   config.after :suite do
-    set_home
-    teardown_master
-    teardown_grid("e2e", 3)
+    unless skip_setup?
+      set_home
+      teardown_master
+      teardown_grid("e2e", 3)
+    end
   end
 
 # The settings below are suggested to provide a good initial experience
