@@ -5,17 +5,9 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Kontena::Cli::Helpers::LogHelper
 
-    option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
-    option "--lines", "LINES", "Number of lines to show from the end of the logs"
-    option "--since", "SINCE", "Show logs since given timestamp"
     option "--node", "NODE", "Filter by node name", multivalued: true
     option "--service", "SERVICE", "Filter by service name", multivalued: true
     option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
-
-    # @return [String]
-    def token
-      @token ||= require_token
-    end
 
     def execute
       require_api_url
@@ -24,35 +16,21 @@ module Kontena::Cli::Grids
       query_params[:nodes] = node_list.join(",") unless node_list.empty?
       query_params[:services] = service_list.join(",") unless service_list.empty?
       query_params[:containers] = container_list.join(",") unless container_list.empty?
-      query_params[:limit] = lines if lines
-      query_params[:since] = since if since
 
+      show_logs("grids/#{current_grid}/container_logs", query_params) do |log|
+        show_log(log)
+      end
+    end
+
+    def show_log(log)
+      color = color_for_container(log['name'])
       if tail?
-        tail_logs(query_params)
+        prefix = "#{log['name']} |"
       else
-        list_logs(query_params)
+        prefix = "#{log['created_at']} #{log['name']}:"
       end
-    end
 
-    def list_logs(query_params)
-      result = client(token).get("grids/#{current_grid}/container_logs", query_params)
-      result['logs'].each do |log|
-        color = color_for_container(log['name'])
-        prefix = ""
-        prefix << "#{log['created_at']} "
-        prefix << "#{log['name']}:"
-        prefix = prefix.colorize(color)
-        puts "#{prefix} #{log['data']}"
-      end
-    end
-
-    # @param [String] token
-    # @param [Hash] query_params
-    def tail_logs(query_params)
-      stream_logs("grids/#{current_grid}/container_logs", query_params) do |log|
-        color = color_for_container(log['name'])
-        puts "#{log['name'].colorize(color)} | #{log['data']}"
-      end
+      puts "#{prefix.colorize(color)} #{log['data']}"
     end
   end
 end

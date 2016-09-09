@@ -11,9 +11,6 @@ module Kontena::Cli::Apps
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
-    option ["-l", "--lines"], "LINES", "How many lines to show", default: '100'
-    option "--since", "SINCE", "Show logs since given timestamp"
-    option ["-t", "--tail"], :flag, "Tail (follow) logs", default: false
     parameter "[SERVICE] ...", "Show only specified service logs"
 
     def execute
@@ -30,34 +27,11 @@ module Kontena::Cli::Apps
       query_services = services.map{|service_name, opts| prefixed_name(service_name)}.join ','
       query_params = {
         services: query_services,
-        limit: lines,
       }
-      query_params[:since] = since if since
 
-      if tail?
-        tail_logs(services, query_params)
-      else
-        show_logs(services, query_params)
-      end
-    end
-
-    def tail_logs(services, query_params)
-      stream_logs("grids/#{current_grid}/container_logs", query_params) do |log|
+      show_logs("grids/#{current_grid}/container_logs", query_params) do |log|
         show_log(log)
       end
-    end
-
-    def show_logs(services, query_params)
-      result = client(token).get("grids/#{current_grid}/container_logs", query_params)
-      result['logs'].each do |log|
-        show_log(log)
-      end
-    end
-
-    def show_log(log)
-      color = color_for_container(log['name'])
-      prefix = "#{log['created_at']} #{log['name']}:".colorize(color)
-      puts "#{prefix} #{log['data']}"
     end
   end
 end
