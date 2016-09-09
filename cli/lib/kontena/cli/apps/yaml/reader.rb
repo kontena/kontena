@@ -27,11 +27,15 @@ module Kontena::Cli::Apps
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:version] = yaml['version'] || '1'
           result[:name] = yaml['name']
-          result[:services] = parse_services(service_name)
           result[:errors] = errors
           result[:notifications] = notifications
+          result[:services] = parse_services(service_name) unless errors.count > 0
         end
         result
+      end
+
+      def stack_name
+        yaml['name'] if v2?
       end
 
       ##
@@ -85,27 +89,17 @@ module Kontena::Cli::Apps
       def parse_services(service_name = nil)
         if service_name.nil?
           services.each do |name, config|
-            begin
-              services[name] = process_config(config)
-            rescue RuntimeError => e
-              abort_on_malformed_options(file, name)
-            end
+            services[name] = process_config(config)
           end
           services
         else
           abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
-          begin
-            process_config(services[service_name])
-          rescue RuntimeError => e
-            abort_on_malformed_options(file, service_name)
-          end
+          process_config(services[service_name])
         end
       end
 
       # @param [Hash] service_config
       def process_config(service_config)
-        raise('Malformed config') unless service_config.is_a?(Hash)
-
         normalize_env_vars(service_config)
         merge_env_vars(service_config)
         expand_build_context(service_config)
@@ -214,7 +208,7 @@ module Kontena::Cli::Apps
             options['build']['args'][k] = v
           end
         end
-      end      
+      end
     end
   end
 end

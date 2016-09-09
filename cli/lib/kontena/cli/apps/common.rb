@@ -62,12 +62,7 @@ module Kontena::Cli::Apps
 
     def project_name_from_yaml(file)
       reader = YAML::Reader.new(file, true)
-      outcome = reader.execute
-      if outcome[:version].to_i == 2
-        outcome[:name]
-      else
-        nil
-      end
+      reader.stack_name
     end
 
     # @return [String]

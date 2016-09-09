@@ -53,7 +53,7 @@ module Kontena::Cli::Apps
           notifications: []
         }
         if yaml.key?('services')
-          yaml['services'].each do |service, options|
+          yaml['services'].each do |service, options|            
             unless options.is_a?(Hash)
               result[:errors] << { service => { 'options' => 'must be a mapping not a string'} }
               next

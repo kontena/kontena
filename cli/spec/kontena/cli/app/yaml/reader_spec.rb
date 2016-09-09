@@ -429,4 +429,30 @@ describe Kontena::Cli::Apps::YAML::Reader do
       end
     end
   end
+
+  describe '#stack_name' do
+    it 'returns nil for v1' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena.yml'))
+      name = subject.stack_name
+      expect(name).to be_nil
+    end
+
+    it 'returns name for v2 if defined' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena_v2.yml'))
+      name = subject.stack_name
+      expect(name).to eq('test-project')
+    end
+
+    it 'returns nil for v2 if not defined' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('docker-compose.yml'))
+      name = subject.stack_name
+      expect(name).to be_nil
+    end
+  end
 end
