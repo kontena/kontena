@@ -40,10 +40,13 @@ module LogsHelpers
         end
       end
     else
-      scope = scope.where(:id.gt => from) unless from.nil?
-
-      # limit most recent logs
-      logs = scope.order(:_id => -1).limit(limit).to_a.reverse
+      if from
+        # limit logs after from
+        logs = scope.where(:id.gt => from).order(:id => 1).limit(limit).to_a
+      else
+        # limit most recent logs
+        logs = scope.order(:id => -1).limit(limit).to_a.reverse
+      end
 
       render('container_logs/index', locals: {logs: logs})
     end

@@ -74,6 +74,13 @@ describe LogsHelpers do
       expect(logs).to be_a(Array)
       expect(logs).to eq @logs[-10..-1]
     end
+
+    it 'returns up to limit lines from a given id' do
+      logs = subject.render_container_logs({ 'from' => @logs[-20]['id'], 'limit' => 5}, grid.container_logs)
+
+      expect(logs).to be_a(Array)
+      expect(logs).to eq @logs[-19, 5]
+    end
   end
 
   context 'when following logs' do
