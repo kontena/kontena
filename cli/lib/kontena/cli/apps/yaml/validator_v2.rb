@@ -55,7 +55,7 @@ module Kontena::Cli::Apps
         if yaml.key?('services')
           yaml['services'].each do |service, options|
             unless options.is_a?(Hash)
-              result[:errors] << { service => { 'config' => 'contains malformed options'} }
+              result[:errors] << { service => { 'options' => 'must be a mapping not a string'} }
               next
             end
             key_errors = validate_keys(options)
