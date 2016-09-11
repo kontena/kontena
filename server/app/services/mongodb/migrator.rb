@@ -58,14 +58,10 @@ module Mongodb
     end
 
     def migrate
-      with_dlock('mongodb_migrate', 0) do
+      ensure_indexes
+      with_dlock('mongodb_migrate', 60) do
         migrate_without_lock
       end
-    end
-
-    # @return [Celluloid::Future]
-    def migrate_async
-      Celluloid::Future.new{ self.migrate }
     end
 
     def migrate_without_lock
@@ -88,6 +84,16 @@ module Mongodb
     def save_migration_version(migration)
       unless SchemaMigration.find_by(version: migration.version)
         SchemaMigration.create(version: migration.version)
+      end
+    end
+
+    def ensure_indexes
+      begin
+        DistributedLock.create_indexes
+      rescue Moped::Errors::ConnectionFailure
+        info "cannot connect to database, retrying in 1 second ..."
+        sleep 1
+        retry
       end
     end
   end
