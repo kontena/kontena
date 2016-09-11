@@ -70,6 +70,10 @@ describe HostNode do
     it 'returns false if not initial_member' do
       expect(node_2.initial_member?).to be_falsey
     end
+
+    it 'returns false if node_number is not set' do
+      expect(subject.initial_member?).to be_falsey
+    end
   end
 
   describe '#attributes_from_docker' do
