@@ -11,8 +11,6 @@ module Kontena::Cli::Master
         self.current_master = master['name']
         puts "Using master: #{master['name'].cyan} (#{master['url']})"
         puts "Using grid: #{current_grid.cyan}" if current_grid
-      else
-        puts "Could not resolve master with name: #{name}".colorize(:red)
 
         grids = client(require_token).get('grids')['grids']
         if grids.size > 1
@@ -23,8 +21,8 @@ module Kontena::Cli::Master
             puts "  * #{grid['name']}"
           end
         end
-
-        abort
+      else
+        abort "Could not resolve master with name: #{name}".colorize(:red)
       end
     end
 
