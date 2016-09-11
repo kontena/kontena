@@ -1,0 +1,38 @@
+version: '2'
+
+services:
+  api:
+    build:
+      context: server
+      dockerfile: Dockerfile
+    ports:
+      - 9292:9292
+    environment:
+      - RACK_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/kontena_development
+      - VAULT_KEY=asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf
+      - VAULT_IV=kljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljh
+      - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
+    volumes:
+      - ./server:/app
+    depends_on:
+      - mongodb
+
+  agent:
+    container_name: kontena-agent
+    build:
+      context: agent
+      dockerfile: Dockerfile
+    env_file: agent/.env
+    environment:
+      - KONTENA_URI=ws://localhost:9292
+    network_mode: "host"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./agent:/app
+    depends_on:
+      - api
+
+  mongodb:
+    image: mongo:3.0
+    command: mongod --smallfiles
