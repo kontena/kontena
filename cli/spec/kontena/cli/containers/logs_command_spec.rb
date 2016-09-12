@@ -46,5 +46,9 @@ describe Kontena::Cli::Containers::LogsCommand do
 LOGS
       ).to_stdout
     end
+
+    it "errors for an invalid --lines" do
+      expect { subject.run(["--lines=invalid", "test-mysql-1"]) }.to raise_error(Clamp::UsageError, "option '--lines': invalid value for Integer(): \"invalid\"")
+    end
   end
 end
