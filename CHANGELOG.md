@@ -4,6 +4,8 @@
 
 **Master & Agents:**
 
+- fix HostNode#initial_member? error when node_number is nil (#1000)
+- fix master boot process race conditions (#999)
 - always add etcd dns address (#990)
 - catch service remove timeout error and rollback to prev state (#989)
 - fix cli log stream buffer mem leak (#972)
