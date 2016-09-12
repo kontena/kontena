@@ -4,6 +4,7 @@
 
 **Master & Agents:**
 
+- retry when unknown exception occurs while streaming docker events (#1005)
 - fix HostNode#initial_member? error when node_number is nil (#1000)
 - fix master boot process race conditions (#999)
 - always add etcd dns address (#990)
