@@ -108,6 +108,7 @@ class HostNode
   end
 
   def initial_member?
+    return false if self.node_number.nil?
     return true if self.node_number <= self.grid.initial_size
     false
   end
