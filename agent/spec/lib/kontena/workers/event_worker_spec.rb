@@ -56,6 +56,31 @@ describe Kontena::Workers::EventWorker do
       sleep 0.01
       expect(subject.event_queue.size).to eq(1000)
     end
+
+    it 'retries if unknown exception occurs' do
+      i = 0
+      spy = spy(:spy)
+      allow(Docker::Event).to receive(:stream) {|params, &block|
+        spy.check
+        i += 1
+        raise 'foo' if i == 1
+      }
+      expect(spy).to receive(:check).exactly(2).times
+      subject.async.stream_events
+      sleep 0.01
+    end
+
+    it 'does not retry after exception if processing has stopped' do
+      spy = spy(:spy)
+      allow(Docker::Event).to receive(:stream) {|params, &block|
+        spy.check
+        subject.stop_processing
+        raise 'foo'
+      }
+      expect(spy).to receive(:check).once
+      subject.async.stream_events
+      sleep 0.01
+    end
   end
 
   describe '#publish_event' do

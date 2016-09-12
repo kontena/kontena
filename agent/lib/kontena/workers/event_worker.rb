@@ -49,6 +49,11 @@ module Kontena::Workers
             sleep 0.01
             retry
           end
+        rescue => exc
+          if processing?
+            error "unknown error occurred: #{exc.message}"
+            retry
+          end
         end
       }
     end
