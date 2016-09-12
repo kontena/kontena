@@ -23,7 +23,6 @@ module OAuth2Api
           halt_request(400, 'invalid_request') and return
         end
 
-
         token_data = AuthProvider.get_token(params['code'])
 
         if token_data && token_data.kind_of?(Hash) && token_data.has_key?('access_token')
@@ -35,20 +34,22 @@ module OAuth2Api
         end
 
         unless user_data
-          halt_request(400, 'Authentication failed')
+          halt_request(400, 'Authentication failed') and return
         end
 
         if state.user
           state.user.invite_code = nil
           state.user.external_id = user_data[:id]
           state.user.email = user_data[:email]
-          state.user.save
+          unless state.user.save
+            halt_request(400, "Invalid userdata #{state.user.errors.inspect}") and return
+          end
         end
 
         user = state.user || User.where(external_id: user_data[:id]).first
 
         unless user
-          halt_request(403, 'Access denid')
+          halt_request(403, 'Access denid') and return
         end
 
         if token_data['expires_at']
@@ -85,7 +86,7 @@ module OAuth2Api
           request.redirect(redirect_uri.to_s)
         else
           logger.debug "Could not create internal access token: #{task.errors.message.inspect}"
-          halt_request(500, 'server_error')
+          halt_request(500, 'server_error') and return
         end
       end
     end
