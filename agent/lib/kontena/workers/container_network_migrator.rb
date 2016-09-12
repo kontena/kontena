@@ -65,7 +65,7 @@ module Kontena::Workers
           },
           'HostConfig' => {
             'NetworkMode' => 'none',
-            'VolumesFrom' => ["weavewait-#{Celluloid::Actor[:network_adapter].WEAVE_VERSION}"]
+            'VolumesFrom' => ["weavewait-#{Celluloid::Actor[:network_adapter].weave_version}"]
           }
         )
         retries = 0
@@ -86,6 +86,9 @@ module Kontena::Workers
         end
         response
         info '...done'
+      rescue Docker::Error::NotFoundError => exc
+        error exc.message
+        return false
       ensure
         container.delete(force: true, v: true) if container
       end

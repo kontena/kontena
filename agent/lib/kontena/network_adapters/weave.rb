@@ -23,6 +23,11 @@ module Kontena::NetworkAdapters
     end
 
     # @return [String]
+    def weave_version
+      WEAVE_VERSION
+    end
+
+    # @return [String]
     def weave_image
       "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
     end
