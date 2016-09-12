@@ -2,7 +2,6 @@ module AuditLogs
   class Create < Mutations::Command
     required do
       model :user
-      model :grid
       string :event_name
       string :event_status, default: 'success'
       string :resource_type
@@ -12,6 +11,7 @@ module AuditLogs
 
     optional do
       model :grid_service, nils: true
+      model :grid, nils: true
       string :user_agent
       string :event_description
       string :resource_name, nils: true
