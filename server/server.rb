@@ -130,6 +130,10 @@ class Server < Roda
         r.run V1::PingApi
       end
 
+      r.on 'audit_logs' do
+        r.run V1::AuditLogsApi
+      end
+
       r.on 'auth_provider' do
         r.run V1::AuthProviderApi
       end
