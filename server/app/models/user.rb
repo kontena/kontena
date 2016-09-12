@@ -68,6 +68,6 @@ class User
   end
 
   def grid_admin?(grid)
-    self.in_role?(Role::GRID_ADMIN_ROLE) && self.grids.include?(grid)
+    self.master_admin? || (self.in_role?(Role::GRID_ADMIN_ROLE) && self.grids.include?(grid))
   end
 end
