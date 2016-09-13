@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Perform necessary kontena setup steps
+# after package is installed.
+#
+
+PROGNAME=`basename $0`
+
+error_exit()
+{
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
+cat > /usr/bin/kontena <<EOL
+#!/bin/sh
+
+export PATH=/opt/kontena/embedded/bin:$PATH
+exec /opt/kontena/embedded/bin/kontena $@
+EOL
+chmod +x /usr/bin/kontena
+
+echo "Thank you for installing Kontena!"
+
+exit 0
