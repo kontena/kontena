@@ -12,9 +12,13 @@ module Kontena::Cli::Grids
     option "--service", "SERVICE", "Filter by service name", multivalued: true
     option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
 
+    # @return [String]
+    def token
+      @token ||= require_token
+    end
+
     def execute
       require_api_url
-      token = require_token
 
       query_params = {}
       query_params[:nodes] = node_list.join(",") unless node_list.empty?
@@ -24,13 +28,13 @@ module Kontena::Cli::Grids
       query_params[:since] = since if since
 
       if tail?
-        tail_logs(token, query_params)
+        tail_logs(query_params)
       else
-        list_logs(token, query_params)
+        list_logs(query_params)
       end
     end
 
-    def list_logs(token, query_params)
+    def list_logs(query_params)
       result = client(token).get("grids/#{current_grid}/container_logs", query_params)
       result['logs'].each do |log|
         color = color_for_container(log['name'])
@@ -44,7 +48,7 @@ module Kontena::Cli::Grids
 
     # @param [String] token
     # @param [Hash] query_params
-    def tail_logs(token, query_params)
+    def tail_logs(query_params)
       stream_logs("grids/#{current_grid}/container_logs", query_params) do |log|
         color = color_for_container(log['name'])
         puts "#{log['name'].colorize(color)} | #{log['data']}"
