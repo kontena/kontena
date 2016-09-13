@@ -19,7 +19,7 @@ You can use environment variables in configuration values with a Bash-like ${VAR
 
 #### instances
 
-Number of instences (replicas) to run for the service (default: 1).
+Number of instances (replicas) to run for the service (default: 1).
 
 ```
 instances: 1
