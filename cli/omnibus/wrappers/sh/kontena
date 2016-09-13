@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export PATH=/opt/kontena/embedded/bin:\$PATH
+export GEM_HOME=/opt/kontena/embedded/lib/ruby/gems/2.1.0
+export GEM_PATH=\$GEM_HOME
+exec /opt/kontena/embedded/bin/kontena \$@

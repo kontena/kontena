@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# Perform necessary kontena setup steps
+# after package is installed.
+#
+
+PROGNAME=`basename $0`
+
+error_exit()
+{
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
+chown $USER /opt/kontena/embedded/bin
+chown $USER -R /opt/kontena/embedded/lib/ruby/gems/2.1.0
+
+echo "Thank you for installing Kontena!"
+
+exit 0
