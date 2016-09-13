@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.15.2 (2016-09-10)
+
+**Master & Agents:**
+
+- retry when unknown exception occurs while streaming docker events (#1005)
+- fix HostNode#initial_member? error when node_number is nil (#1000)
+- fix master boot process race conditions (#999)
+- always add etcd dns address (#990)
+- catch service remove timeout error and rollback to prev state (#989)
+- fix cli log stream buffer mem leak (#972)
+- fix server log stream thread leak (#973)
+- use host network in cadvisor container (#954)
+
+**CLI:**
+
+- reimplement app logs, with spec tests (#987, #1007)
+- allow to use numeric version value in kontena.yml (#993)
+- do not silently swallow exceptions in logs commands (#978)
+- remove deprecated provisioning commands from tab-complete (#980)
+- lock all cli runtime dependencies (#966)
+- allow to use strings as value of extends option in kontena.yml (#965)
+
 ## 0.15.1 (2016-09-01)
 
 **Master & Agent:**
