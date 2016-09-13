@@ -15,7 +15,7 @@
 
 **CLI:**
 
-- reimplement app logs, with spec tests (#987)
+- reimplement app logs, with spec tests (#987, #1007)
 - allow to use numeric version value in kontena.yml (#993)
 - do not silently swallow exceptions in logs commands (#978)
 - remove deprecated provisioning commands from tab-complete (#980)
