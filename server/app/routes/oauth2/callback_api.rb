@@ -44,7 +44,6 @@ module OAuth2Api
         # Build an array for an mongodb OR query
         query = []
         query << { external_id: user_data[:id] }       if user_data[:id]
-        query << { name:        user_data[:username] } if user_data[:username]
         if user_data[:email]
           unless user_data[:email] =~ /@/
             halt_request(400, "Invalid email address '#{user_data[:email]}'") and return
