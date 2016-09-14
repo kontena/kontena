@@ -151,6 +151,11 @@ module GridServices
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets([])
       end
+      # Attach to default network
+      if self.net == 'bridge' || self.net.nil?
+        default_net = self.grid.networks.find_by(name: 'kontena')
+        attributes[:networks] = [default_net]
+      end
 
       grid_service = GridService.new(attributes)
       unless grid_service.save
@@ -158,7 +163,6 @@ module GridServices
           add_error(key, :invalid, message)
         end
       end
-
       grid_service
     end
 

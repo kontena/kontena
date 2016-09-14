@@ -5,8 +5,6 @@ class Grid
   include Mongoid::Timestamps
   include Authority::Abilities
 
-  OVERLAY_BRIDGE_NETWORK_SIZE = 24
-
   field :name, type: String
   field :token, type: String
   field :initial_size, type: Integer, default: 1
@@ -24,12 +22,14 @@ class Grid
   has_many :registries, dependent: :delete
   has_many :stacks, dependent: :destroy
   has_many :grid_domain_authorizations, dependent: :delete
+  has_many :networks, dependent: :delete
   has_and_belongs_to_many :users
 
   index({ name: 1 }, { unique: true })
   index({ token: 1 }, { unique: true })
 
   before_create :set_token
+  after_create :create_default_network
 
   # @return [String]
   def to_path
@@ -63,5 +63,14 @@ class Grid
 
   def set_token
     self.token ||= SecureRandom.base64(64)
+  end
+
+  def create_default_network
+    default_network = Network.create!(
+      grid: self,
+      name: 'kontena',
+      subnet: '10.81.0.0/16',
+      multicast: true,
+      internal: false)
   end
 end

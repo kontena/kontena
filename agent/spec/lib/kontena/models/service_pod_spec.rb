@@ -210,6 +210,11 @@ describe Kontena::Models::ServicePod do
     it 'includes HostConfig' do
       expect(service_config['HostConfig']).not_to be_nil
     end
+
+    it 'includes networks' do
+      data['networks'] = [{'name' => 'kontena'}]
+      expect(service_config['NetworkingConfig']['EndpointsConfig']['kontena']).not_to be_nil
+    end
   end
 
   describe '#service_host_config' do

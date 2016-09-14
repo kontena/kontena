@@ -291,7 +291,19 @@ describe GridServices::Create do
       ).run
       expect(outcome.result.revision).to eq(1)
     end
-    
+
+    it 'attaches default network when net mode is bridge' do
+      outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false
+      ).run
+      expect(outcome.result.networks.count).to eq(1)
+      expect(outcome.result.networks.first.name).to eq('kontena')
+    end
+
     it 'saves health_check' do
       outcome = described_class.new(
           current_user: user,

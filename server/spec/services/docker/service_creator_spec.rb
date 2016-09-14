@@ -16,7 +16,8 @@ describe Docker::ServiceCreator do
       grid: grid,
       image_name: 'my/app:latest',
       container_count: 2,
-      env: ['FOO=bar']
+      env: ['FOO=bar'],
+      networks: [grid.networks.first]
     )
   end
 
@@ -111,6 +112,10 @@ describe Docker::ServiceCreator do
 
     it 'includes secrets' do
       expect(service_spec).to include(:secrets => [])
+    end
+
+    it 'includes default network' do
+      expect(service_spec).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
     end
 
     describe '[:env]' do

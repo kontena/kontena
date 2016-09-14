@@ -57,9 +57,11 @@ module Docker
       spec[:secrets] = build_secrets
 
       labels = build_labels
-      
+
       spec[:labels] = labels
       spec[:hooks] = build_hooks(instance_number)
+
+      spec[:networks] = build_networks
 
       spec
     rescue => exc
@@ -148,6 +150,20 @@ module Docker
       hooks
     rescue => exc
       puts exc.message
+    end
+
+    # @return [Array<Hash>]
+    def build_networks
+      networks = []
+      grid_service.networks.each do |network|
+        networks << {
+          name: network.name,
+          subnet: network.subnet,
+          multicast: network.multicast,
+          internal: network.internal
+        }
+      end
+      networks
     end
 
     def service_container
