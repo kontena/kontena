@@ -51,9 +51,9 @@ class AccessToken
   set_callback :save, :before do |doc|
     doc.expires_at = nil unless doc.expires_at.to_i > 0
     if doc.internal?
-      doc.token_plain ||= SecureRandom.hex(16) unless doc.token
+      doc.token_plain ||= SecureRandom.hex(32) unless doc.token
       unless doc.refresh_token || doc.expires_at.nil?
-        doc.refresh_token_plain ||= SecureRandom.hex(32)
+        doc.refresh_token_plain ||= SecureRandom.hex(64)
       end
       doc.token ||= self.digest(doc.token_plain)
       doc.refresh_token ||= self.digest(doc.refresh_token_plain) if doc.refresh_token_plain
