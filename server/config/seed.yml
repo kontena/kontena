@@ -10,9 +10,10 @@ default: &default
   oauth2_token_post_content_type: <%= ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] %>
   oauth2_code_requires_basic_auth: <%= ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == "true" %>
   oauth2_userinfo_scope: <%= ENV['AUTH_USERINFO_SCOPE'] %>
-  oauth2_userinfo_jsonpath: <%= ENV['AUTH_USERINFO_JSONPATH'] %>
-  oauth2_username_jsonpath: <%= ENV['AUTH_USERNAME_JSONPATH'] %>
-  oauth2_user_id_jsonpath: <%= ENV['AUTH_USER_ID_JSONPATH'] %>
+  oauth2_userinfo_username_jsonpath: <%= ENV['AUTH_USERINFO_USERNAME_JSONPATH'] %>
+  oauth2_userinfo_email_jsonpath: <%= ENV['AUTH_USERINFO_EMAIL_JSONPATH'] %>
+  oauth2_userinfo_email_verified_jsonpath: <%= ENV['AUTH_USERINFO_EMAIL_VERIFIED_JSONPATH'] %>
+  oauth2_userinfo_user_id_jsonpath: <%= ENV['AUTH_USERINFO_USER_ID_JSONPATH'] %>
 development:
   <<: *default
 production:

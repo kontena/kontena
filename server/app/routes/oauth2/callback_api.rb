@@ -37,19 +37,38 @@ module OAuth2Api
           halt_request(400, 'Authentication failed') and return
         end
 
-        if state.user
-          state.user.invite_code = nil
-          state.user.external_id = user_data[:id]
-          state.user.email = user_data[:email]
-          unless state.user.save
-            halt_request(400, "Invalid userdata #{state.user.errors.inspect}") and return
-          end
+        if user_data[:error]
+          halt_request(400, "Authentication failed: #{user_data[:error]}") and return
         end
 
-        user = state.user || User.where(external_id: user_data[:id]).first
+        # Build an array for an mongodb OR query
+        query = []
+        query << { external_id: user_data[:id] }       if user_data[:id]
+        query << { name:        user_data[:username] } if user_data[:username]
+        if user_data[:email]
+          unless user_data[:email] =~ /@/
+            halt_request(400, "Invalid email address '#{user_data[:email]}'") and return
+          end
+          query << { email: user_data[:email] }
+        end
+
+        user = state.user
+
+        if user.nil? && !query.empty?
+          user = User.or(*query).first
+        end
 
         unless user
           halt_request(403, 'Access denid') and return
+        end
+
+        user.invite_code = nil
+        user.external_id = user_data[:id]
+        user.email = user_data[:email]
+        user.name = user_data[:username]
+
+        unless user.save
+          halt_request(400, "Invalid userdata #{user.errors.inspect}") and return
         end
 
         if token_data['expires_at']
@@ -58,13 +77,6 @@ module OAuth2Api
           expires_at = Time.now.utc + token_data['expires_in'].to_i
         else
           expires_at = nil
-        end
-
-        # Clean up user's old access tokens
-        user.access_tokens.each do |at|
-          if at.expired? || at.deleted_at || (!at.internal? && at.id != external_access_token.id)
-            at.destroy
-          end
         end
 
         task = AccessTokens::Create.run(
