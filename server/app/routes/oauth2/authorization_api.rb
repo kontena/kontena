@@ -61,7 +61,7 @@ module OAuth2Api
             @access_token = task.result
             render(AUTH_SHOW)
           else
-            mime_halt(400, OAuth2Api::INVALID_REQUEST, task.errors.message.inspect) and return
+            mime_halt(400, OAuth2Api::INVALID_REQUEST, task.errors.symbolic.inspect) and return
           end
         when INVITE
 
@@ -74,7 +74,11 @@ module OAuth2Api
           )
 
           unless task.success?
-            mime_halt(400, Oauth2Api::INVALID_REQUEST, task.errors.message.inspect) and return
+            if task.errors.symbolic[:user] == :forbidden
+              mime_halt(403, ACCESS_DENIED, NO_PERM) and return
+            else
+              mime_halt(400, OAuth2Api::INVALID_REQUEST, task.errors.symbolic.inspect) and return
+            end
           end
 
           @user = task.result
@@ -83,12 +87,11 @@ module OAuth2Api
             response.status = 201
             uri = URI.parse("#{env['rack.url_scheme']}://#{request.host}")
             uri.port = request.port unless [80, 443].include?(request.port)
-            uri.path = "/j/#{user.invite_code}"
+            uri.path = "/j/#{@user.invite_code}"
             @link = uri.to_s
-            @user = user
             render('users/invite')
           else
-            mime_halt(500, SERVER_ERROR, user.errors.inspect) and return
+            mime_halt(500, SERVER_ERROR, @user.errors.inspect) and return
           end
         else
           mime_halt(400, UNSUPPORTED, UNSUPPORTED_DESC) and return
