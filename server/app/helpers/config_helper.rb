@@ -11,8 +11,8 @@ module ConfigHelper
     self.class.salt
   end
 
-  def encrypt(string)
-    self.class.encrypt(string)
+  def digest(string)
+    self.class.digest(string)
   end
 
   def config
@@ -33,7 +33,7 @@ module ConfigHelper
       @salt
     end
 
-    def encrypt(string)
+    def digest(string)
       BCrypt::Engine.hash_secret(string, salt)
     end
 
