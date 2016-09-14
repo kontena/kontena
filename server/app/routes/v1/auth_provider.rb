@@ -44,10 +44,12 @@ module V1
         end
 
         if @auth_provider.save
-          Server.logger.debug "Authentication provider settings changed, clearing all stored access tokens."
+          Server.logger.debug "Authentication provider settings changed, clearing tokens and external id's of users."
 
-          admin = User.where(email: 'admin').first
-          AccessToken.all.reject{|a| a.user.id == admin.id}.map(&:destroy)
+          User.not(email: /^admin$/).each do |user|
+            user.update_attribute(:external_id, nil)
+            user.access_tokens.map(&:destroy)
+          end
 
           response.status = 201
           render('auth_provider/show')
