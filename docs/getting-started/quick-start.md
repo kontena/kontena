@@ -43,7 +43,7 @@ In order to use Kontena, you'll need Kontena Master. If you don't have existing 
 
 The easiest (and preferred) way to provision Kontena Master is to use the built-in Kontena Master provision feature of Kontena CLI. In this guide, we will provision Kontena Master to local development environment using [Vagrant](https://www.vagrantup.com/). If you want to install Kontena Master to some other environment, please see [Installing Kontena Master](installing/master.md) documentation.
 
-Since we will be using Vagrant, please ensure you have Vagrant installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
+Since we will be using Vagrant, please ensure you have Vagrant 1.6 or later installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
 
 ```
 $ kontena plugin install vagrant
