@@ -22,6 +22,7 @@ module OAuth2Api
     SCOPE              = 'scope'.freeze
     EMAIL              = 'email'.freeze
     NAME               = 'name'.freeze
+    USERNAME           = 'username'.freeze
     EXTERNAL_ID        = 'external_id'.freeze
     INVALID_SCOPE      = 'invalid_scope'.freeze
     EMAIL_REGEX        = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i
@@ -68,7 +69,7 @@ module OAuth2Api
           task = Users::Invite.run(
             user: current_user,
             email: params[EMAIL],
-            name: params[NAME] || params[EMAIL],
+            name: params[USERNAME],
             external_id: params[EXTERNAL_ID],
             with_invite: true
           )
