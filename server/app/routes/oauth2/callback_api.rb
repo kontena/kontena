@@ -64,8 +64,8 @@ module OAuth2Api
 
         user.invite_code = nil
         user.external_id = user_data[:id]
-        user.email = user_data[:email]
-        user.name = user_data[:username]
+        user.email ||= user_data[:email]
+        user.name ||= user_data[:username]
 
         unless user.save
           halt_request(400, "Invalid userdata #{user.errors.inspect}") and return

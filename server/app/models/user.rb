@@ -37,10 +37,6 @@ class User
     self[:email] == 'admin'
   end
 
-  def name
-    self[:name] || self[:email]
-  end
-
   def member_of?(org_name)
     return false if self.member_of.nil?
     return false if self.member_of.empty?
