@@ -22,6 +22,7 @@ module OAuth2Api
     SCOPE              = 'scope'.freeze
     EMAIL              = 'email'.freeze
     NAME               = 'name'.freeze
+    EXTERNAL_ID        = 'external_id'.freeze
     INVALID_SCOPE      = 'invalid_scope'.freeze
     EMAIL_REGEX        = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i
     EXPIRES_IN         = 'expires_in'.freeze
@@ -63,23 +64,25 @@ module OAuth2Api
             mime_halt(400, OAuth2Api::INVALID_REQUEST, task.errors.message.inspect) and return
           end
         when INVITE
-          unless current_user_admin?
-            Server.logger.debug NOT_ADMIN
-            mime_halt(403, ACCESS_DENIED, NO_PERM) and return
-          end
 
-          unless params[EMAIL] || !EMAIL_REGEX.match(params[EMAIL])
-            mime_halt(400, OAuth2Api::INVALID_REQUEST, EMAIL) and return
-          end
-
-          user = User.create!(
+          task = Users::Invite.run(
+            user: current_user,
             email: params[EMAIL],
             name: params[NAME] || params[EMAIL],
+            external_id: params[EXTERNAL_ID],
             with_invite: true
           )
-          if user
+
+          unless task.success?
+            mime_halt(400, Oauth2Api::INVALID_REQUEST, task.errors.message.inspect) and return
+          end
+
+          @user = task.result
+
+          if @user
             response.status = 201
-            uri = URI.parse("https://#{request.host}")
+            uri = URI.parse("#{env['rack.url_scheme']}://#{request.host}")
+            uri.port = request.port unless [80, 443].include?(request.port)
             uri.path = "/j/#{user.invite_code}"
             @link = uri.to_s
             @user = user
