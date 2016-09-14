@@ -35,7 +35,7 @@ class AuthorizationRequest
 
   set_callback :save, :before do |doc|
     doc.state_plain = SecureRandom.hex(32)
-    doc.state = encrypt(doc.state_plain)
+    doc.state = digest(doc.state_plain)
   end
 
   set_callback :save, :after do |doc|
@@ -44,7 +44,7 @@ class AuthorizationRequest
 
   class << self
     def find_and_invalidate(state)
-      ar = AuthorizationRequest.where(state: encrypt(state), deleted_at: nil).find_and_modify(
+      ar = AuthorizationRequest.where(state: digest(state), deleted_at: nil).find_and_modify(
         { '$set' => { deleted_at: Time.now.utc } }
       )
       if ar

@@ -55,8 +55,8 @@ class AccessToken
       unless doc.refresh_token || doc.expires_at.nil?
         doc.refresh_token_plain ||= SecureRandom.hex(32)
       end
-      doc.token ||= self.encrypt(doc.token_plain)
-      doc.refresh_token ||= self.encrypt(doc.refresh_token_plain) if doc.refresh_token_plain
+      doc.token ||= self.digest(doc.token_plain)
+      doc.refresh_token ||= self.digest(doc.refresh_token_plain) if doc.refresh_token_plain
     end
   end
 
@@ -73,7 +73,7 @@ class AccessToken
     # @return [AccessToken] access_token
     def find_internal_by_refresh_token(refresh_token)
       old_token = AccessToken.where(
-        refresh_token: self.encrypt(refresh_token),
+        refresh_token: self.digest(refresh_token),
         deleted_at: nil,
         internal: true
       ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
@@ -95,7 +95,7 @@ class AccessToken
 
     def find_internal_by_access_token(access_token)
       AccessToken.where(
-        token: self.encrypt(access_token),
+        token: self.digest(access_token),
         deleted_at: nil,
         internal: true
       ).find_and_modify({ '$set' => { updated_at: Time.now.utc } })
