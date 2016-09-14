@@ -13,7 +13,7 @@ module Users
 
     def validate
       unless self.user.can_create?(User)
-        add_error(:user, :invalid, 'Operation not allowed')
+        add_error(:user, :forbidden, 'Operation not allowed')
       end
     end
 
