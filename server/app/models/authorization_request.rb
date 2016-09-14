@@ -28,7 +28,7 @@ class AuthorizationRequest
   field :expires_in, type: Fixnum, default: nil
 
   index({ state: 1 })
-  index({ created_at: 1 })
+  index({ created_at: 1 }, { expire_after_seconds: 3600 })
   index({ deleted_at: 1 }, { sparse: true, expire_after_seconds: 1 })
 
   attr_accessor :state_plain
@@ -36,10 +36,6 @@ class AuthorizationRequest
   set_callback :save, :before do |doc|
     doc.state_plain = SecureRandom.hex(32)
     doc.state = digest(doc.state_plain)
-  end
-
-  set_callback :save, :after do |doc|
-    AuthorizationRequest.clean_up
   end
 
   class << self
@@ -53,11 +49,6 @@ class AuthorizationRequest
       else
         nil
       end
-    end
-
-    # Clean up auth requests older than 1 hour.
-    def clean_up
-      AuthorizationRequest.where(:created_at.lte => Time.now.utc - 3600).delete
     end
   end
 end
