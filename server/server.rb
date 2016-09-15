@@ -69,20 +69,6 @@ class Server < Roda
     @name ||= config[:server_name]
   end
 
-  # Global logger
-  def self.logger
-    return @logger if @logger
-    if ENV['RACK_ENV'] == 'test'
-      @logger = Logger.new(File.open(File::NULL, "w"))
-      @logger.level = Logger::UNKNOWN
-    else
-      @logger = Logger.new(STDOUT)
-      @logger.progname = 'API'
-      @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
-    end
-    @logger
-  end
-
   # Read the defaults from config/defaults.yml
   def self.config_defaults
     defaults_file = Server.root.join('config/seed.yml')
