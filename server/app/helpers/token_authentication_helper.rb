@@ -2,10 +2,12 @@
 #
 #
 require_relative '../routes/oauth2_api'
+require_relative '../services/logging'
 
 module TokenAuthenticationHelper
 
   include OAuth2Api::Common
+  include Logging
 
   def validate_access_token(*scopes)
     # These only happen when in a "soft exclude" path where
@@ -13,7 +15,7 @@ module TokenAuthenticationHelper
     # by the token authentication middleware.
     
     unless current_user
-      Server.logger.debug "No current user"
+      debug "No current user"
       mime_halt(403, 'access_denied')
     end
 
@@ -24,7 +26,7 @@ module TokenAuthenticationHelper
 
     unless scopes.empty?
       unless current_access_token.has_scope?(*scopes)
-        Server.logger.debug "No valid scope"
+        debug "No valid scope"
         mime_halt(403, 'access_denied')
       end
     end

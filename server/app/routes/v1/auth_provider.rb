@@ -5,6 +5,7 @@ module V1
     include RequestHelpers
     include TokenAuthenticationHelper
     include Auditor
+    include Logging
 
     route do |r|
       r.get do
@@ -44,7 +45,7 @@ module V1
         end
 
         if @auth_provider.save
-          Server.logger.debug "Authentication provider settings changed, clearing tokens and external id's of users."
+          debug "Authentication provider settings changed, clearing tokens and external id's of users."
 
           User.not(email: /^admin$/).each do |user|
             user.update_attribute(:external_id, nil)
