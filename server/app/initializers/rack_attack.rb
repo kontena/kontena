@@ -1,15 +1,17 @@
 require 'rack/attack'
-require_relative '../services/memory_store'
+require 'active_support/cache/memory_store'
 
 class Rack::Attack
   MIN_VERSION     = Gem::Version.new('0.16.0')
   CLI_APPLICATION = 'kontena-cli'.freeze
   LOCALHOSTS      = ['127.0.0.1'.freeze, '::1'.freeze].freeze
 
-  Rack::Attack.cache.store = MemoryStore.new
+  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
-  Rack::Attack.safelist('allow from localhost') do |req|
-    LOCALHOSTS.include?(req.ip)
+  unless ENV["DEBUG_RA"]
+    Rack::Attack.safelist('allow from localhost') do |req|
+      LOCALHOSTS.include?(req.ip)
+    end
   end
 
   Rack::Attack.blocklist('block old kontena CLIs') do |req|
@@ -44,7 +46,7 @@ class Rack::Attack
   # A botnet with 50 000 nodes could do it in a 190 years.
   #
   # Requests to other endpoints are unlimited
-  Rack::Attack.throttle('auth/ip', limit: 60, period: 1.minute) do |req|
+  Rack::Attack.throttle('auth/ip', limit: 60, period: 60) do |req|
     if req.path.start_with?('/oauth2/token') || req.path.start_with?('/authenticate')
       req.ip
     else
