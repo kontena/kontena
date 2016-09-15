@@ -18,7 +18,7 @@ module V1
 
         validate_access_token('master_admin') unless current_user_admin?
 
-        halt_request(403, 'Access denied. You must be the local administrator.') unless current_user.email == 'admin'
+        halt_request(403, 'Access denied. You must be the local administrator.') unless current_user.is_local_admin?
 
         params = parse_json_body
 
@@ -34,7 +34,7 @@ module V1
           event_name: 'modify',
           event_status: 'success',
           event_description: 'Authentication provider settings updated',
-          request_parameters: params.reject{ |key, _| key == 'oauth2_client_secret' }.merge('oauth2_client_secret' => 'hidden'),
+          request_parameters: params,
           request_body: '',
           source_ip: r.ip,
           user_agent: r.user_agent
