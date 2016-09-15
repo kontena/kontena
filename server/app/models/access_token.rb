@@ -18,7 +18,10 @@ class AccessToken
   field :expires_at, type: DateTime
   field :scopes, type: Array
   field :deleted_at, type: BSON::Timestamp, default: nil
+  
+  # set to false when storing tokens to external services
   field :internal, type: Boolean, default: true
+
   field :code, type: String, default: nil
 
   index({ user_id: 1 })
