@@ -3,6 +3,18 @@ require_relative '../../services/auth_provider'
 require_relative '../../helpers/token_authentication_helper'
 
 module OAuth2Api
+
+  # The /authenticate endpoint creates a AuthorizationRequest object which
+  # holds the "state" parameter that is passed along the way during the
+  # browser auth choreography. It also holds the original redirect-uri which
+  # normally points to the CLI's localhost webserver.
+  #
+  # Unless the auth provider config has been set, it will respond with HTTP 501.
+  #
+  # If the redirect uri is valid, the user will be redirected to auth
+  # provider's authorize url.
+  #
+  # You can also pass in invite_code that you will get when creating invites.
   class AuthenticateApi < Roda
 
     include OAuth2Api::Common

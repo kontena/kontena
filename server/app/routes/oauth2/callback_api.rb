@@ -1,4 +1,19 @@
 module OAuth2Api
+  # The /cb endpoint handles authorization callbacks when the browser is
+  # returning from auth provider during the auth process.
+  #
+  # It tries to find a matching AuthorizationRequest by using the state
+  # parameter.
+  #
+  # Normally the auth provider will pass a code in the redirect uri,
+  # this authorization code will be exchanged for an access token
+  # from the AP's token endpoint.
+  #
+  # The access token will then be used to request basic user info from
+  # the AP.
+  #
+  # If the AuthorizationRequest object includes a redirect uri
+  # then the final step will redirect the browser to that uri.
   class CallbackApi < Roda
     include RequestHelpers
 
