@@ -20,7 +20,7 @@ module TokenAuthenticationHelper
     end
 
     unless current_access_token
-      Server.logger.debug "No current token"
+      debug "No current token"
       mime_halt(403, 'access_denied')
     end
 
