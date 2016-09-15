@@ -48,7 +48,7 @@ class Server < Roda
     @config = Configuration
     config_defaults.each do |key, value|
       if @config[key].nil?
-        logger.debug "Setting configuration key '#{key}' using default '#{value}'"
+        Logging.logger.debug "Setting configuration key '#{key}' using default '#{value}'"
         @config[key] = value
       end
     end
@@ -73,10 +73,10 @@ class Server < Roda
   def self.config_defaults
     defaults_file = Server.root.join('config/seed.yml')
     if defaults_file.exist? && defaults_file.readable?
-      logger.debug "Reading configuration defaults from #{defaults_file}"
+      Logging.logger.debug "Reading configuration defaults from #{defaults_file}"
       YAML.load(ERB.new(defaults_file.read).result)[ENV['RACK_ENV']] || {}
     else
-      logger.debug "Configuration defaults #{defaults_file} not available"
+      Logging.logger.debug "Configuration defaults #{defaults_file} not available"
       {}
     end
   end
