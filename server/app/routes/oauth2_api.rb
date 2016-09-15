@@ -17,6 +17,9 @@ module OAuth2Api
   BLANK            = ''.freeze
 
   module Common
+
+    include Logging
+
     def params_from_anywhere
        params =
          case request_content_type
@@ -28,7 +31,7 @@ module OAuth2Api
        params.each { |k,v| params[k] = nil if v.to_s.strip == BLANK}
        params
     rescue
-      Server.logger.debug "Param decoding exception: #{$!} - #{$!.message}"
+      debug "Param decoding exception: #{$!} - #{$!.message}"
       mime_halt(400, INVALID_REQUEST, INVALID_PARAMS)
       nil
     end

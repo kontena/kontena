@@ -30,6 +30,7 @@ require_relative '../helpers/config_helper'
 class AuthProvider < OpenStruct
   include Singleton
   include ConfigHelper # adds a .config method
+  include Logging
 
   # Minimum fields for authentication to work if by luck the defaults are ok
   REQUIRED_FIELDS = [
@@ -145,7 +146,7 @@ class AuthProvider < OpenStruct
       nil
     end
   rescue
-    ENV["DEBUG"] && puts("#{$!} #{$!.message}")
+    debug "#{$!} #{$!.message}"
     nil
   end
 
@@ -175,7 +176,7 @@ class AuthProvider < OpenStruct
 
     result
   rescue
-    ENV["DEBUG"] && puts("#{$!} #{$!.message}")
+    debug "#{$!} #{$!.message}"
     nil
   end
 
@@ -193,7 +194,7 @@ class AuthProvider < OpenStruct
     end
     nil
   rescue
-    ENV["DEBUG"] && puts("#{$!} #{$!.message}")
+    debug "#{$!} #{$!.message}"
     nil
   end
 

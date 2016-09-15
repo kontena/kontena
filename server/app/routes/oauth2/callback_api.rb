@@ -16,10 +16,7 @@ module OAuth2Api
   # then the final step will redirect the browser to that uri.
   class CallbackApi < Roda
     include RequestHelpers
-
-    def logger
-      @logger ||= Server.logger
-    end
+    include Logging
 
     route do |r|
       r.get do
@@ -41,9 +38,9 @@ module OAuth2Api
         token_data = AuthProvider.get_token(params['code'])
 
         if token_data && token_data.kind_of?(Hash) && token_data.has_key?('access_token')
-          logger.debug "Retrieving user data from authentication provider"
+          debug "Retrieving user data from authentication provider"
           user_data = AuthProvider.get_userinfo(token_data['access_token'])
-          logger.debug "Received user data: #{user_data.inspect}"
+          debug "Received user data: #{user_data.inspect}"
         else
           user_data = nil
         end
@@ -108,10 +105,10 @@ module OAuth2Api
           else
             redirect_uri.query = access_token.to_query
           end
-          logger.debug "Callback complete, redirecting to #{state.redirect_uri}"
+          debug "Callback complete, redirecting to #{state.redirect_uri}"
           request.redirect(redirect_uri.to_s)
         else
-          logger.debug "Could not create internal access token: #{task.errors.message.inspect}"
+          debug "Could not create internal access token: #{task.errors.message.inspect}"
           halt_request(500, 'server_error') and return
         end
       end
