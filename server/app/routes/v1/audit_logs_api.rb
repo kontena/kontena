@@ -11,7 +11,7 @@ module V1
       r.get do
         halt(403, 'Access denied') unless current_user.master_admin?
 
-        limit = (1..3000).cover?(request.params['limit'].to_i) ? request.params['limit'].to_i || 500
+        limit = (1..3000).cover?(request.params['limit'].to_i) ? request.params['limit'].to_i : 500
         @logs = AuditLog.all.order(created_at: :desc).limit(limit).to_a.reverse
         render('audit_logs/index')
       end
