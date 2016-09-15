@@ -106,7 +106,7 @@ module V1
           end
 
           r.on 'audit_log' do
-            limit = request.params['limit'] || 500
+            limit = (1..3000).cover?(request.params['limit'].to_i) ? request.params['limit'].to_i || 500
             @logs = @grid.audit_logs.order(created_at: :desc).limit(limit).to_a.reverse
             render('audit_logs/index')
           end
