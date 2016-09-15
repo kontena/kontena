@@ -38,15 +38,7 @@ module ConfigHelper
     end
 
     def config
-      return @config if @config
-      if Object::const_defined?('Server')
-        @config = Server.config
-      elsif Object::const_defined?('Configuration')
-        @config = Configuration
-      else
-        require 'ostruct'
-        @config = OpenStruct.new
-      end
+      @config ||= Configuration
     end
   end
 end
