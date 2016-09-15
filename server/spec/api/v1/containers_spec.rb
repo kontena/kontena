@@ -107,13 +107,4 @@ describe '/v1/containers' do
       post "/v1/containers/#{redis_container.to_path}/exec", {cmd: '/bin/bash'}.to_json, request_headers
     end
   end
-
-  describe 'DELETE /logs' do
-    it 'deletes container logs' do
-      log_entry
-      expect {
-        delete "/v1/containers/#{redis_container.to_path}/logs", {}, request_headers
-      }.to change{ContainerLog.count}.to(0)
-    end
-  end
 end
