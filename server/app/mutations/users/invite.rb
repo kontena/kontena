@@ -5,7 +5,6 @@ module Users
     end
 
     optional do
-      string :grid
       string :email, matches: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i
       string :name
       string :external_id
