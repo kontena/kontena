@@ -1,23 +1,24 @@
-#TODO specs
 # Authentication provider configuration and helpers.
 #
-# It loads initial values from configuration and can also save them back using .save
+# It loads initial values from configuration and can also save them back using
+# the .save method
 #
-# Userinfo parsing in done through jsonpath http://goessner.net/articles/JsonPath/
-# You can define multiple optional paths by adding multiple jsonpath queries separated with
-# a semicolon, for example '$..username;$..login' will run two queries and use the first
-# found value.
+# Userinfo parsing in done through jsonpath :
+#   http://goessner.net/articles/JsonPath/
 #
-# When the user needs to authenticate with the auth provider, send a redirect header
-# with location:
-# AuthProvider.authorize_url(state: <app_generated_state>)
+# You can define multiple optional jsonpaths and separate them with a 
+# semicolon.  For example '$..username;$..login' will run two queries and use
+# the first value it finds.
 #
-# When you want to fetch the userinfo for this user from the auth provider, you can use
-# AuthProvider.get_userinfo(<access_token_of_the_user>)
+# When redirecting a user to auth provider's authorization url, use:
+#   Location: AuthProvider.authorize_url(state: <app_generated_state>)
 #
-# To exchange an authorization_code to a real actual access token, use 
-# AuthProvider.get_token(<auth_code>)
-
+# When you want to fetch the userinfo for this user from the auth provider,
+# use:
+#   AuthProvider.get_userinfo(<access_token_of_the_user>)
+#
+# To exchange an authorization_code to a real actual access token, use
+#   AuthProvider.get_token(<auth_code>)
 require 'singleton'
 require 'uri'
 require 'jsonpath'
