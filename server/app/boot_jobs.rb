@@ -7,5 +7,4 @@ unless ENV['RACK_ENV'] == 'test'
   JobSupervisor.run!
 end
 
-Mongodb::Migrator.new.migrate
 WorkerSupervisor.run!

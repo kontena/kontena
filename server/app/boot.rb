@@ -30,3 +30,5 @@ Dir[__dir__ + '/mutations/**/*.rb'].each {|file| require file }
 Dir[__dir__ + '/jobs/**/*.rb'].each {|file| require file }
 
 Dir[__dir__ + '/services/**/*.rb'].each {|file| require file }
+
+Mongodb::Migrator.new.migrate
