@@ -18,12 +18,12 @@ module DigestHelper
   module ClassMethods
     def salt
       return @salt unless @salt.nil?
-      encrypted_salt = Server.config[:salt]
+      encrypted_salt = Configuration[:salt]
       if encrypted_salt
         @salt = SymmetricEncryption.decrypt(encrypted_salt)
       else
         @salt = BCrypt::Engine.generate_salt
-        Server.config[:salt] = SymmetricEncryption.encrypt(@salt)
+        Configuration[:salt] = SymmetricEncryption.encrypt(@salt)
       end
       @salt
     end
