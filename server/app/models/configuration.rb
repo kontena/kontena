@@ -5,10 +5,22 @@ class Configuration
   field :value, type: Hash, default: {}
   index({ 'key' => 1 }, { unique: true })
 
-
   VALUE = 'v'.freeze
 
   class << self
+    def seed(defaults_file)
+      if File.exist?(defaults_file) && File.readable?(defaults_file)
+        defaults = YAML.load(ERB.new(File.read(defaults_file)).result)[ENV['RACK_ENV']] || {}
+        defaults.each do |key, value|
+          if get(key).nil?
+            put(key, value)
+          end
+        end
+      else
+        debug "Configuration defaults #{defaults_file} not available"
+      end
+    end
+
     def put(key, value)
       if value.nil?
         delete(key)
