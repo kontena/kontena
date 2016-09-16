@@ -1,11 +1,10 @@
 require 'uri'
-require_relative '../helpers/config_helper'
+require_relative '../helpers/digest_helper'
 
 class AccessToken
   include Mongoid::Document
   include Mongoid::Timestamps
-
-  include ConfigHelper
+  include DigestHelper
 
   belongs_to :user
   validates_presence_of :scopes, :user
