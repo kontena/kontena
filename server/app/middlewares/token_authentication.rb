@@ -1,6 +1,9 @@
 require 'uri'
+require_relative '../services/logging'
 
 class TokenAuthentication
+
+  include Logging
 
   # Rack middleware oauth token authentication
   #
@@ -8,7 +11,6 @@ class TokenAuthentication
   #
   # Use the option :soft_exclude to parse the token if it exists, but allow
   # request even without token
-  attr_reader :logger
   attr_reader :opts
   attr_reader :request
   attr_reader :excludes
@@ -23,36 +25,30 @@ class TokenAuthentication
   PATH_INFO                 = 'PATH_INFO'.freeze
   ADMIN                     = 'admin'.freeze
 
-  def initialize(app, options = {})
+  def initialize(app, config_path)
     @app           = app
-    @excludes      = options[:exclude]
-    @soft_excludes = options[:soft_exclude]
-    @allow_expired = options[:allow_expired]
-
-    @logger = Logger.new(STDOUT)
-    @logger.progname = 'AUTH'
-    @logger.level = ENV['DEBUG'] ? Logger::DEBUG : Logger::INFO
+    config         = YAML.load(File.read(config_path))
+    @excludes      = config['exclude']
+    @soft_excludes = config['soft_exclude']
+    @allow_expired = config['allow_expired']
   end
 
   def call(env)
     if excluded_path?(env[PATH_INFO])
-      logger.debug "Path #{env[PATH_INFO]} excluded from authentication"
       return @app.call(env)
     end
-
-    logger.debug "Path #{env[PATH_INFO]} is not excluded from authentication"
 
     @request = Rack::Request.new(env)
 
     auth = http_authorization(env)
 
     if auth[:token_type].nil?
-      logger.debug "No authentication header"
+      debug "No authentication header"
     elsif auth[:token_type] == :bearer
       bearer = auth[:token]
 
       access_token = token_from_db(bearer)
-      logger.debug "Access token #{access_token.nil? ? 'not ' : ''}found"
+      debug "Access token #{access_token.nil? ? 'not ' : ''}found"
 
       if access_token
         # Allow expired tokens if path is soft excluded
@@ -69,15 +65,14 @@ class TokenAuthentication
     end
 
     unless env[CURRENT_USER]
-      logger.debug "Could not find a user"
+      debug "Could not find a user"
       unless soft_excluded_path?(env[PATH_INFO])
-        logger.debug "Path #{env[PATH_INFO]} is not soft excluded"
         return access_denied_response
       end
     end
     @app.call(env)
   rescue
-    logger.debug "Token Authentication exception: #{$!} - #{$!.message} -- #{$!.backtrace}"
+    info "Token Authentication exception: #{$!} - #{$!.message} -- #{$!.backtrace}"
     error_response 'server_error', 'Server has encountered an error'
   end
 
@@ -133,7 +128,7 @@ class TokenAuthentication
   end
 
   def error_response(msg = nil, msg_description = nil)
-    logger.debug "Error response called, msg: #{msg}, msg_description: #{msg_description}"
+    debug "Error response called, msg: #{msg}, msg_description: #{msg_description}"
     message = { error: msg, error_description: msg_description }.to_json
     [
       403,
@@ -170,7 +165,7 @@ class TokenAuthentication
     return nil unless token
     AccessToken.find_internal_by_access_token(token)
   rescue
-    logger.error "Exception while fetching token from db: #{$!} #{$!.message}"
+    info "Exception while fetching token from db: #{$!} #{$!.message}"
     nil
   end
 end
