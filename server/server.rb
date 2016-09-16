@@ -1,59 +1,26 @@
 require 'logger'
+require 'pathname'
+
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/token_authentication'
-require 'bcrypt'
-require 'pathname'
+require_relative 'app/helpers/config_helper'
 
-Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
-require_relative 'app/routes/oauth2_api'
-Dir[__dir__ + '/app/routes/oauth2/*.rb'].each {|file| require file }
+Dir[__dir__ + '/app/routes/*.rb'].each {|file| require file }
+Dir[__dir__ + '/app/routes/**/*.rb'].each {|file| require file }
 
 Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
   VERSION = File.read('./VERSION').strip
 
-  if ENV['RACK_ENV'] == 'test'
-    logger = nil
-  else
-    logger = Logger.new(STDOUT)
-  end
-
-  use Rack::CommonLogger, logger
+  use Rack::CommonLogger, Logging.logger
   use Rack::Attack
   use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
-  use TokenAuthentication, exclude: [
-      '/',
-      '/v1/ping',
-      '/v1/auth',
-      '/cb',
-      '/code',
-      '/oauth2/token',
-      '/v1/nodes',   #authorized using grid token
-      '/v1/nodes/*'
-    ],
-    soft_exclude: [
-      '/oauth2/authorize',
-      '/authenticate'
-    ],
-    allow_expired: [
-      '/authenticate'
-    ]
+  use TokenAuthentication, File.expand_path('../config/authentication.yml', __FILE__)
 
-  # Accessor to global config. Defaults are loaded from config/defaults.yml.
-  # Changing values in defaults.yml will not overwrite values in DB.
-  def self.config
-    return @config if @config
-    @config = Configuration
-    config_defaults.each do |key, value|
-      if @config[key].nil?
-        Logging.logger.debug "Setting configuration key '#{key}' using default '#{value}'"
-        @config[key] = value
-      end
-    end
-    @config
-  end
+  include Logging
+  include ConfigHelper
 
   # Path to server application root
   def self.root
@@ -69,18 +36,6 @@ class Server < Roda
     @name ||= config[:server_name]
   end
 
-  # Read the defaults from config/defaults.yml
-  def self.config_defaults
-    defaults_file = Server.root.join('config/seed.yml')
-    if defaults_file.exist? && defaults_file.readable?
-      Logging.logger.debug "Reading configuration defaults from #{defaults_file}"
-      YAML.load(ERB.new(defaults_file.read).result)[ENV['RACK_ENV']] || {}
-    else
-      Logging.logger.debug "Configuration defaults #{defaults_file} not available"
-      {}
-    end
-  end
-
   plugin :json
 
   route do |r|
@@ -93,84 +48,14 @@ class Server < Roda
       }
     end
 
-    r.on 'authenticate' do
-      r.run OAuth2Api::AuthenticateApi
-    end
+    r.on 'v1', proc { r.run V1::Api }
 
-    r.on 'cb' do
-      r.run OAuth2Api::CallbackApi
-    end
-
+    r.on 'authenticate', proc { r.run OAuth2Api::AuthenticateApi }
+    r.on 'cb', proc { r.run OAuth2Api::CallbackApi }
     r.on 'oauth2' do
-      r.on 'token' do 
-        r.run OAuth2Api::TokenApi
-      end
-
-      r.on 'authorize' do
-        r.run OAuth2Api::AuthorizationApi
-      end
+      r.on 'token', proc { r.run OAuth2Api::TokenApi }
+      r.on 'authorize', proc { r.run OAuth2Api::AuthorizationApi } 
     end
 
-    r.on 'v1' do
-      r.on 'ping' do
-        r.run V1::PingApi
-      end
-
-      r.on 'audit_logs' do
-        r.run V1::AuditLogsApi
-      end
-
-      r.on 'auth_provider' do
-        r.run V1::AuthProviderApi
-      end
-
-      r.post 'auth' do
-        r.run V1::AuthApi
-      end
-
-      r.on('user') do
-        r.run V1::UserApi
-      end
-
-      r.on('users') do
-        r.run V1::UsersApi
-      end
-
-      r.on('grids') do
-        r.run V1::GridsApi
-      end
-
-      r.on('nodes') do
-        r.run V1::NodesApi
-      end
-
-      r.on('services') do
-        r.run V1::ServicesApi
-      end
-
-      r.on('containers') do
-        r.run V1::ContainersApi
-      end
-
-      r.on('external_registries') do
-        r.run V1::ExternalRegistriesApi
-      end
-
-      r.on('etcd') do
-        r.run V1::EtcdApi
-      end
-
-      r.on('secrets') do
-        r.run V1::SecretsApi
-      end
-
-      r.on('stacks') do
-        r.run V1::StacksApi
-      end
-
-      r.on('certificates') do
-        r.run V1::CertificatesApi
-      end
-    end
   end
 end
