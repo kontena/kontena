@@ -10,7 +10,7 @@ RUN apk update && \
   gem install kontena-cli --no-rdoc --no-ri -v ${CLI_VERSION} && \
   adduser kontena -D -h /home/kontena -s /bin/sh && \
   chown -R kontena.kontena /home/kontena && \
-  chmod +x /usr/local/bin/docker
+  chmod +sx /usr/local/bin/docker
 
 VOLUME ["/home/kontena"]
 WORKDIR /home/kontena
