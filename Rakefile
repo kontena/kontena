@@ -95,6 +95,8 @@ namespace :release do
     headline "Starting to push kontena-cli ..."
     Dir.chdir('cli') do
       sh("gem push kontena-cli-#{VERSION}.gem")
+      sh("rake release:build")
+      sh("rake release:push")
     end
   end
 
