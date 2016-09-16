@@ -11,13 +11,13 @@
 # The original scope from auth request can also be
 # stored here.
 #
-require_relative '../helpers/config_helper'
+require_relative '../helpers/digest_helper'
 
 class AuthorizationRequest
   include Mongoid::Document
   include Mongoid::Timestamps
 
-  include ConfigHelper
+  include DigestHelper
 
   belongs_to :user
 
