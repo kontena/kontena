@@ -23,7 +23,7 @@ describe MongoPubsub do
       described_class.publish('channel1', channel1_msg)
       described_class.publish('channel2', channel2_msg)
 
-      Timeout::timeout(1) do
+      Timeout::timeout(5) do
         sleep 0.01 until messages.size == 2
       end
       subs.each(&:terminate)

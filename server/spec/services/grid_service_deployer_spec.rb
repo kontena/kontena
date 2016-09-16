@@ -82,7 +82,7 @@ describe GridServiceDeployer do
       allow(subject).to receive(:deploy_service_instance)
       deploy = Thread.new { subject.deploy }
       MongoPubsub.publish(channel, {'event' => 'ping'})
-      Timeout::timeout(1) do
+      Timeout::timeout(5) do
         sleep 0.05 until events.size > 0
       end
       expect(events.size).to eq(1)
