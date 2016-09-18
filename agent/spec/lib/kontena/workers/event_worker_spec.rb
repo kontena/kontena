@@ -23,10 +23,13 @@ describe Kontena::Workers::EventWorker do
 
     it 'streams and processes events' do
       times = 100
+      subject
       allow(Docker::Event).to receive(:stream) {|params, &block|
         times.times {
           block.call(Docker::Event.new('status', 'id', 'from', 'time'))
         }
+        sleep 0.1
+        subject.stop_processing
       }
       subject.async.start
       sleep 0.1
@@ -47,10 +50,12 @@ describe Kontena::Workers::EventWorker do
 
   describe '#stream_events' do
     it 'streams events from docker' do
+      subject
       allow(Docker::Event).to receive(:stream) {|params, &block|
         1000.times {
           block.call({})
         }
+        subject.stop_processing
       }
       subject.async.stream_events
       sleep 0.01
@@ -58,12 +63,28 @@ describe Kontena::Workers::EventWorker do
     end
 
     it 'retries if unknown exception occurs' do
+      subject
       i = 0
       spy = spy(:spy)
       allow(Docker::Event).to receive(:stream) {|params, &block|
         spy.check
         i += 1
         raise 'foo' if i == 1
+        subject.stop_processing if i == 2
+      }
+      expect(spy).to receive(:check).exactly(2).times
+      subject.async.stream_events
+      sleep 0.01
+    end
+
+    it 'retries if stream finishes' do
+      subject
+      i = 0
+      spy = spy(:spy)
+      allow(Docker::Event).to receive(:stream) {|params, &block|
+        spy.check
+        i += 1
+        subject.stop_processing if i == 2
       }
       expect(spy).to receive(:check).exactly(2).times
       subject.async.stream_events

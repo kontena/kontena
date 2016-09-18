@@ -34,9 +34,11 @@ module Kontena::Workers
       filters = JSON.dump({type: ['container']})
       defer {
         begin
-          Docker::Event.stream({filters: filters}) do |event|
-            raise "stop event stream" unless processing?
-            @event_queue << event
+          while processing?
+            Docker::Event.stream({filters: filters}) do |event|
+              raise "stop event stream" unless processing?
+              @event_queue << event
+            end
           end
         rescue Docker::Error::TimeoutError
           if processing?
