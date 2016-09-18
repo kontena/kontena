@@ -39,15 +39,16 @@ module Kontena::Workers
               raise "stop event stream" unless processing?
               @event_queue << event
             end
+            info "event stream closed... retrying" if processing?
           end
         rescue Docker::Error::TimeoutError
           if processing?
-            error 'connection timeout.. retrying'
+            error 'connection timeout... retrying'
             retry
           end
         rescue Excon::Errors::SocketError => exc
           if processing?
-            error 'connection refused.. retrying'
+            error 'connection refused... retrying'
             sleep 0.01
             retry
           end
