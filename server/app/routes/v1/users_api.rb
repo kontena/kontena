@@ -54,6 +54,14 @@ module V1
         end
 
         r.post do
+          unless AuthProvider.valid?
+            mime_halt(
+              501,
+              'server_error',
+              'Authentication provider not configured, use: kontena master auth-provider config'
+            )
+            return
+          end
           params = parse_json_body
           params[:user] = current_user
           outcome = Users::Invite.run(params)
