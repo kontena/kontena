@@ -30,4 +30,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "ruby_dig", "~> 0.0.2"
   spec.add_runtime_dependency "dry-validation", "~> 0.8.0"
   spec.add_runtime_dependency "dry-configurable", "~> 0.1.6"
+  spec.add_runtime_dependency "dry-monads", "~> 0.1.1"
 end
