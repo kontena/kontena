@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.15.3 (2016-09-20)
+
+**Master & Agents:**
+
+- reconnect event stream always if it stops without error (#1020)
+- set service container restart policy to unless-stopped (#1024)
+
+**CLI:**
+
+- lock cli dry-monads version (#1023)
+
 ## 0.15.2 (2016-09-10)
 
 **Master & Agents:**

@@ -22,7 +22,7 @@ namespace :release do
   end
 
   desc 'Push docker images'
-  task :push_docker => :environment do
+  task :push_docker => :build_docker do
     sh("docker push #{DOCKER_NAME}:#{VERSION}")
     DOCKER_VERSIONS.each do |v|
       sh("docker push #{DOCKER_NAME}:#{v}")
