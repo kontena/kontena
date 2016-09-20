@@ -29,11 +29,11 @@ class Server < Roda
 
   # Service root url
   def self.root_url
-    @url ||= config[:root_url]
+    @url ||= config['server.root_url']
   end
 
   def self.name
-    @name ||= config[:server_name]
+    @name ||= config['server.name']
   end
 
   plugin :json
@@ -48,13 +48,26 @@ class Server < Roda
       }
     end
 
-    r.on 'v1', proc { r.run V1::Api }
+    r.on 'v1' do
+      r.run V1::Api
+    end
 
-    r.on 'authenticate', proc { r.run OAuth2Api::AuthenticateApi }
-    r.on 'cb', proc { r.run OAuth2Api::CallbackApi }
+    r.on 'authenticate' do
+      r.run OAuth2Api::AuthenticateApi
+    end
+
+    r.on 'cb' do
+      r.run OAuth2Api::CallbackApi
+    end
+
     r.on 'oauth2' do
-      r.on 'token', proc { r.run OAuth2Api::TokenApi }
-      r.on 'authorize', proc { r.run OAuth2Api::AuthorizationApi } 
+      r.on 'token' do
+        r.run OAuth2Api::TokenApi
+      end
+
+      r.on 'authorize' do 
+        r.run OAuth2Api::AuthorizationApi
+      end
     end
 
   end

@@ -1,8 +1,5 @@
 # Authentication provider configuration and helpers.
 #
-# It loads initial values from configuration and can also save them back using
-# the .save method
-#
 # Userinfo parsing in done through jsonpath :
 #   http://goessner.net/articles/JsonPath/
 #
@@ -23,7 +20,6 @@ require 'singleton'
 require 'uri'
 require 'jsonpath'
 require 'httpclient'
-require 'symmetric-encryption'
 
 require_relative '../helpers/config_helper'
 
@@ -35,40 +31,75 @@ class AuthProvider < OpenStruct
   # Minimum fields for authentication to work if by luck the defaults are ok
   REQUIRED_FIELDS = [
       :client_id, :client_secret, :authorize_endpoint,
-      :token_endpoint, :userinfo_endpoint, :userinfo_scope
+      :token_endpoint, :userinfo_endpoint, :userinfo_scope,
+      :root_url
   ]
+
+  def self.reset_instance
+    Singleton.send :__init__, self
+    self
+  end
 
   # Initializes a new auth provider instance.
   def initialize
     # The table syntax is for initializing an OpenStruct.
     @table = {}
-    @table[:client_id] = config[:oauth2_client_id]
-    @table[:client_secret] = config[:oauth2_client_secret].nil? ? nil : SymmetricEncryption.decrypt(config[:oauth2_client_secret])
-    @table[:authorize_endpoint] = config[:oauth2_authorize_endpoint]
-    @table[:code_requires_basic_auth] = config[:oauth2_code_requires_basic_auth] || false
-    @table[:token_endpoint] = config[:oauth2_token_endpoint]
-    @table[:token_method] = config[:oauth2_token_method] || 'post'
-    @table[:token_post_content_type] = config[:oauth2_token_post_content_type] || 'application/json'
-    @table[:userinfo_scope] = config[:oauth2_userinfo_scope] || 'user:email'
-    @table[:userinfo_endpoint] = config[:oauth2_userinfo_endpoint]
-    @table[:userinfo_username_jsonpath] = config[:oauth2_userinfo_username_jsonpath] || '$..username;$..login'
-    @table[:userinfo_email_jsonpath] = config[:oauth2_userinfo_email_jsonpath] || '$..email;$..emails;$..primary_email'
-    @table[:userinfo_user_id_jsonpath] = config[:oauth2_userinfo_user_id_jsonpath] || '$..id;$..uid;$..userid,$..user_id'
+    @table[:client_id] = config['oauth2.client_id']
+    @table[:client_secret] = config['oauth2.client_secret']
+    @table[:authorize_endpoint] = config['oauth2.authorize_endpoint']
+    @table[:code_requires_basic_auth] = config['oauth2.code_requires_basic_auth'] || false
+    if @table[:code_requires_basic_auth].kind_of?(String)
+      @table[:code_requires_basic_auth] = @table[:code_requires_basic_auth] == "true"
+    end
+    @table[:token_endpoint] = config['oauth2.token_endpoint']
+    @table[:token_method] = config['oauth2.token_method'] || 'post'
+    @table[:token_post_content_type] = config['oauth2.token_post_content_type'] || 'application/json'
+    @table[:userinfo_scope] = config['oauth2.userinfo_scope'] || 'user:email'
+    @table[:userinfo_endpoint] = config['oauth2.userinfo_endpoint']
+    @table[:userinfo_username_jsonpath] = config['oauth2.userinfo_username_jsonpath'] || '$..username;$..login'
+    @table[:userinfo_email_jsonpath] = config['oauth2.userinfo_email_jsonpath'] || '$..email;$..emails;$..primary_email'
+    @table[:userinfo_user_id_jsonpath] = config['oauth2.userinfo_user_id_jsonpath'] || '$..id;$..uid;$..userid,$..user_id'
+    @table[:root_url] = config['server.root_url']
   end
 
-  # Saves the values back to configuration
-  def save
-    each_pair do |key, value|
-      if key.to_s.eql?('client_secret')
-        config["oauth2_client_secret"] = SymmetricEncryption.encrypt(value, true)
-      else
-        config["oauth2_#{key}"] = value
-      end
-    end
+  def is_kontena?
+    return false unless self[:authorize_endpoint]
+    URI.parse(self[:authorize_endpoint]).host.end_with?('kontena.io')
+  end
+
+  def update_kontena
+    return unless is_kontena?
+    return unless valid?
+
+    uri = URI.parse("https://cloud-api.kontena.io")
+    uri.path = '/master'
+
+    client = HTTPClient.new
+    client.set_auth(nil, self.client_id, self.client_secret)
+    client.force_basic_auth = true
+
+    body = {
+      data: {
+        attributes: {
+          'redirect-uri' => callback_url,
+          'url'          => self.root_url
+        }
+      }
+    }
+
+    response = client.request(
+      :put,
+      uri.to_s,
+      header: {
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json'
+      },
+      body: body.to_json
+    )
   end
 
   def missing_fields
-    REQUIRED_FIELDS.select { |field| self[field].nil? }
+    REQUIRED_FIELDS.select { |field| self[field].nil? || self[field].strip == "" }
   end
 
   # Returns true when all required fields have values. These are the minimum settings that
@@ -78,7 +109,7 @@ class AuthProvider < OpenStruct
   end
 
   def callback_url
-    @callback_url ||= config[:root_url].nil? ? nil : URI.join(config[:root_url], 'cb')
+    @callback_url ||= self.root_url.nil? ? nil : URI.join(self.root_url, 'cb')
   end
 
   # URL to the authentication provider authorization endpoint
@@ -117,6 +148,8 @@ class AuthProvider < OpenStruct
       body = nil
       query = URI.encode_www_form(request_params)
     end
+
+    client = HTTPClient.new
 
     if self.code_requires_basic_auth
       client.set_auth(nil, self.client_id, self.client_secret)
@@ -157,6 +190,7 @@ class AuthProvider < OpenStruct
   def get_userinfo(access_token)
     uri = URI.parse(self.userinfo_endpoint)
     uri.path = uri.path.gsub(/\:access\_token/, access_token)
+    client = HTTPClient.new
     response = client.request(
       :get,
       uri.to_s,
@@ -196,13 +230,6 @@ class AuthProvider < OpenStruct
   rescue
     debug "#{$!} #{$!.message}"
     nil
-  end
-
-  # Instance of HTTPClient
-  #
-  # @return [HTTPClient]
-  def client
-    @client ||= HTTPClient.new
   end
 
   # Defines forwarders for instance methods, so you can call AuthProvider.x instead of AuthProvider.instance.x
