@@ -58,7 +58,7 @@ module V1
             mime_halt(
               501,
               'server_error',
-              'Authentication provider not configured, use: kontena master auth-provider config'
+              'Authentication provider not configured'
             )
             return
           end

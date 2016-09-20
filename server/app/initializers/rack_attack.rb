@@ -23,7 +23,7 @@ class Rack::Attack
   end
 
   Rack::Attack.blocklisted_response = lambda do |env|
-		msg = "{ \"error\": \"Client upgrade required. Minimum version for this server is #{MIN_VERSION.to_s}. Use: gem install kontena-cli - if your server was recently upgraded, you may also need to reconfigure the authentication provider settings. After upgrading your client see kontena master auth-provider config --help\" }"
+		msg = "{ \"error\": \"Client upgrade required. Minimum version for this server is #{MIN_VERSION.to_s}. Use: gem install kontena-cli - if your server was recently upgraded, you may also need to reconfigure the authentication provider settings.\"}"
     [
       400,
       {

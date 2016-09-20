@@ -12,6 +12,6 @@ namespace :kontena do
     puts "Local administrator account has been reset."
     puts
     puts "To authenticate your kontena-cli use this command:"
-    puts "kontena master auth --code #{ENV['KONTENA_INITIAL_ADMIN_CODE']} #{Configuration[:root_url] || "<master_url>"}"
+    puts "kontena master login --code #{ENV['KONTENA_INITIAL_ADMIN_CODE']} #{Configuration['server.root_url'] || "<master_url>"}"
   end
 end
