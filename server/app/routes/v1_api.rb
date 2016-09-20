@@ -6,7 +6,7 @@ module V1
     route do |r|
       r.on 'ping',                proc { r.run PingApi }
       r.on 'audit_logs',          proc { r.run AuditLogsApi }
-      r.on 'auth_provider',       proc { r.run AuthProviderApi }
+      r.on 'config',              proc { r.run ConfigApi }
       r.on 'auth',                proc { r.run AuthApi }
       r.on 'user',                proc { r.run UserApi }
       r.on 'users',               proc { r.run UsersApi }

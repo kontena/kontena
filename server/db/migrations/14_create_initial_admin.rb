@@ -13,5 +13,20 @@ class CreateInitialAdmin < Mongodb::Migration
       internal: true
     )
     puts "Initial Admin Code: #{at.code}"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
+    puts "HELLO"
   end
 end

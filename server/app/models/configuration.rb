@@ -1,3 +1,5 @@
+require 'symmetric-encryption'
+
 class Configuration
   include Mongoid::Document
 
@@ -21,18 +23,40 @@ class Configuration
       end
     end
 
+    def should_encrypt?(key)
+      key.to_s.end_with?('_secret') || key.to_s.eql?('server.salt')
+    end
+
+    def encrypt(key, value)
+      return value unless should_encrypt?(key)
+      SymmetricEncryption.encrypt(value, true)
+    end
+
+    def decrypt(key, value)
+      return value unless should_encrypt?(key)
+      SymmetricEncryption.decrypt(value)
+    end
+
+    def decrypt_all
+      Hash[*all.flat_map{|item| [item.key, decrypt(item.key, item.value[VALUE])]}]
+    end
+
+    def decrypt_where(*args)
+      Hash[*where(*args).flat_map{|item| [item.key, decrypt(item.key, item.value[VALUE])]}]
+    end
+
     def put(key, value)
       if value.nil?
         delete(key)
       else
-        find_or_create_by(key: key.to_s).update_attribute(:value, {VALUE => value})
+        find_or_create_by(key: key.to_s).update_attribute(:value, {VALUE => encrypt(key, value)})
       end
     end
 
     def get(key)
       item = where(key: key.to_s).first
       if item
-        item.value[VALUE]
+        decrypt(key, item.value[VALUE])
       else
         nil
       end
@@ -40,6 +64,14 @@ class Configuration
 
     def delete(key)
       where(key: key.to_s).destroy
+    end
+
+    def increment(key)
+      put(key, get(key.to_s).to_i + 1)
+    end
+
+    def decrement(key)
+      put(key, get(key.to_s).to_i - 1)
     end
 
     def [](key)
@@ -51,7 +83,7 @@ class Configuration
     end
 
     def to_h
-      {}.tap {|hash| all.each{|item| hash[item.key] = item.value[VALUE]}}
+      {}.tap {|hash| all.each{|item| hash[item.key] = decrypt(item.key, item.value[VALUE])}}
     end
   end
 end
