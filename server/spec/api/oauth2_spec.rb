@@ -9,7 +9,6 @@ describe 'OAuth2 API' do
       it 'returns error when AuthProvider is not configured' do
         get '/authenticate'
         expect(response.status).to eq(501)
-        expect(response.body).to match(/kontena master auth-provider/)
       end
 
       it 'returns a redirect when AuthProvider is configured' do
