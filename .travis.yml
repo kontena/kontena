@@ -1,16 +1,20 @@
 language: ruby
+sudo: required
 rvm:
   - 2.0.0-p648
   - 2.1.8
   - 2.2.3
   - 2.3.1
 cache: bundler
-addons:
-  apt:
-    sources:
-      - mongodb-3.0-precise
-    packages:
-      - mongodb-org-server
+services:
+  - docker
+before_install:
+  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
+  - echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.0.list
+  - sudo apt-get update
+  - sudo apt-get remove -y -q --purge mongodb-org*
+  - sudo rm -rf /var/lib/mongodb
+  - sudo apt-get install -y -q -f mongodb-org-server=3.0.12
 env:
   - TEST_DIR=server
   - TEST_DIR=agent
@@ -29,4 +33,11 @@ matrix:
       env: TEST_DIR=agent
     - rvm: 2.2.3
       env: TEST_DIR=agent
-script: CI=true cd $TEST_DIR && bundle install && bundle exec rspec spec/
+script: ./travis.sh
+deploy:
+  provider: script
+  script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/publish.sh"
+  on:
+    tags: true
+    condition: $TEST_DIR = server
+    rvm: 2.3.1

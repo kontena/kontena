@@ -1,10 +1,14 @@
 
 
 namespace :release do
-  VERSION = File.read('VERSION').strip
+  VERSION = Gem::Version.new(File.read('VERSION').strip)
   NAME = 'kontena-agent'
   DOCKER_NAME = 'kontena/agent'
-  DOCKER_VERSIONS = ['latest', VERSION.match(/(\d+\.\d+)/)[1]]
+  if VERSION.prerelease?
+    DOCKER_VERSIONS = ['edge']
+  else
+    DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+  end
 
   desc 'Build all'
   task :build => [:build_docker, :build_ubuntu] do
@@ -23,9 +27,7 @@ namespace :release do
 
   desc 'Build ubuntu packages'
   task :build_ubuntu => :environment do
-    rev = ENV['REV']
-    raise ArgumentError.new('You must define REV') if rev.blank?
-
+    rev = ENV['REV'] || '1'
     sh('mkdir -p build')
     sh('rm -rf build/ubuntu/')
     sh('cp -ar packaging/ubuntu build/')
