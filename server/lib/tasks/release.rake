@@ -1,10 +1,12 @@
-
-
 namespace :release do
-  VERSION = File.read('VERSION').strip
+  VERSION = Gem::Version.new(File.read('VERSION').strip)
   NAME = 'kontena-server'
   DOCKER_NAME = 'kontena/server'
-  DOCKER_VERSIONS = ['latest', VERSION.match(/(\d+\.\d+)/)[1]]
+  if VERSION.prerelease?
+    DOCKER_VERSIONS = ['edge']
+  else
+    DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+  end
   BINTRAY_USER = ENV['BINTRAY_USER']
   BINTRAY_KEY = ENV['BINTRAY_KEY']
 
@@ -38,8 +40,7 @@ namespace :release do
 
   desc 'Upload ubuntu package'
   task :push_ubuntu => :environment do
-    rev = ENV['REV']
-    raise ArgumentError.new('You must define REV') if rev.blank?
+    rev = ENV['REV'] || '1'
     repo = ENV['REPO'] || 'kontena'
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
