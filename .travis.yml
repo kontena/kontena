@@ -40,12 +40,13 @@ script: ./travis.sh
 deploy:
   - provider: rubygems
     gem: kontena-cli
-    gemspec: cli/kontena-cli.gemspec
+    gemspec: kontena-cli.gemspec
     api_key:
       secure: "RJTSWUTDrguT+/GF7lKptOXOlmR73HRzodPVMY8uv95Em+GkNdDB0LzBvkjdfamKP0+/Ey7d1s0C4+5++VpIcuQGhaA9vzs1+y1w6L33wF3jobiGI8OklQOM5E/Q5iLNqMHbmxi+2fiQifW8NHzzP7Jdqh92KijFEHOfUOl3u54="
     before_deploy:
       - cd $TRAVIS_BUILD_DIR
       - "rvm $TRAVIS_RUBY_VERSION do rake release:bump_version"
+      - cd cli/
     on:
       tags: true
       condition: $TEST_DIR = server
