@@ -37,8 +37,7 @@ namespace :release do
   task :build => [
     :setup,
     :build_server,
-    :build_agent,
-    :build_cli
+    :build_agent
   ]
 
   task :build_server do
@@ -77,8 +76,7 @@ namespace :release do
   task :push => [
     :build,
     :push_server,
-    :push_agent,
-    :push_cli
+    :push_agent
   ]
 
   task :push_server do

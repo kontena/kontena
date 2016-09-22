@@ -1,7 +1,11 @@
 namespace :release do
-  VERSION = File.read('VERSION').strip
+  VERSION = Gem::Version.new(File.read('VERSION').strip)
   DOCKER_NAME = 'kontena/cli'
-  DOCKER_VERSIONS = ['latest', VERSION.match(/(\d+\.\d+)/)[1]]
+  if VERSION.prerelease?
+    DOCKER_VERSIONS = ['edge']
+  else
+    DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+  end
 
   desc 'Build all'
   task :build => [:build_docker] do
