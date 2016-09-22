@@ -14,15 +14,19 @@ namespace :release do
     puts text.colorize(:yellow)
   end
 
-  task :setup do
-    headline "Bumping version to #{VERSION}"
+  task :setup => [:bump_version] do
     %w(agent cli server).each do |dir|
-      File.write("./#{dir}/VERSION", VERSION)
       Dir.chdir(dir) do
         sh("bundle install")
       end
     end
+  end
 
+  task :bump_version do
+    headline "Bumping version to #{VERSION}"
+    %w(agent cli server).each do |dir|
+      File.write("./#{dir}/VERSION", VERSION)
+    end
   end
 
   task :setup_ubuntu do
@@ -33,8 +37,7 @@ namespace :release do
   task :build => [
     :setup,
     :build_server,
-    :build_agent,
-    :build_cli
+    :build_agent
   ]
 
   task :build_server do
@@ -53,6 +56,13 @@ namespace :release do
 
   task :build_cli do
     headline "Starting to build kontena-cli ..."
+    Dir.chdir('cli') do
+      sh("rake release:build")
+    end
+  end
+
+  task :build_cli_gem do
+    headline "Starting to build kontena-cli gem ..."
     Dir.chdir('cli') do
       sh("gem build kontena-cli.gemspec")
     end
@@ -94,9 +104,16 @@ namespace :release do
   task :push_cli do
     headline "Starting to push kontena-cli ..."
     Dir.chdir('cli') do
-      sh("gem push kontena-cli-#{VERSION}.gem")
-      sh("rake release:build")
       sh("rake release:push")
+    end
+  end
+
+  task :push_gem => [:build_cli_gem, :push_cli_gem]
+
+  task :push_cli_gem do
+    headline "Starting to push kontena-cli gem..."
+    Dir.chdir('cli') do
+      sh("gem push kontena-cli-#{VERSION}.gem")
     end
   end
 
