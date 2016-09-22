@@ -16,9 +16,12 @@ before_install:
   - sudo rm -rf /var/lib/mongodb
   - sudo apt-get install -y -q -f mongodb-org-server=3.0.12
 env:
-  - TEST_DIR=server
-  - TEST_DIR=agent
-  - TEST_DIR=cli
+  global:
+    - secure: "mM0iv3ooqyqYsbBBNw73/88EURi5PO529E2Sm2ovy5xzL0SadOyCz4uLYmTMiIoP+pXDvmH1/XjoPxVLR2MH4shXe0VtrKFYiTEjan3X05VUyVMnfnm0Z+uMgHsBFZxl941o27N0jFY+0dcAstofprP/PF5SxKvKwcb0rCfdUYs="
+  matrix:
+    - TEST_DIR=server
+    - TEST_DIR=agent
+    - TEST_DIR=cli
 matrix:
   exclude:
     - rvm: 2.0.0-p648
@@ -35,9 +38,20 @@ matrix:
       env: TEST_DIR=agent
 script: ./travis.sh
 deploy:
-  provider: script
-  script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/publish.sh"
-  on:
-    tags: true
-    condition: $TEST_DIR = server
-    rvm: 2.3.1
+  - provider: rubygems
+    api_key: secure: "RJTSWUTDrguT+/GF7lKptOXOlmR73HRzodPVMY8uv95Em+GkNdDB0LzBvkjdfamKP0+/Ey7d1s0C4+5++VpIcuQGhaA9vzs1+y1w6L33wF3jobiGI8OklQOM5E/Q5iLNqMHbmxi+2fiQifW8NHzzP7Jdqh92KijFEHOfUOl3u54="
+    before_deploy:
+      - cd $TRAVIS_BUILD_DIR
+      - "rvm $TRAVIS_RUBY_VERSION do rake release:bump_version"
+    on:
+      tags: true
+      condition: $TEST_DIR = cli
+      rvm: 2.3.1
+  - provider: script
+    before_deploy:
+      - cd $TRAVIS_BUILD_DIR
+    script: "rvm $TRAVIS_RUBY_VERSION do publish.sh"
+    on:
+      tags: true
+      condition: $TEST_DIR = server
+      rvm: 2.3.1
