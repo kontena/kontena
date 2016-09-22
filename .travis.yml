@@ -18,6 +18,7 @@ before_install:
 env:
   global:
     - secure: "mM0iv3ooqyqYsbBBNw73/88EURi5PO529E2Sm2ovy5xzL0SadOyCz4uLYmTMiIoP+pXDvmH1/XjoPxVLR2MH4shXe0VtrKFYiTEjan3X05VUyVMnfnm0Z+uMgHsBFZxl941o27N0jFY+0dcAstofprP/PF5SxKvKwcb0rCfdUYs="
+    - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA="
   matrix:
     - TEST_DIR=agent
     - TEST_DIR=cli
@@ -38,22 +39,6 @@ matrix:
       env: TEST_DIR=agent
 script: ./travis.sh
 deploy:
-  - provider: rubygems
-    gem: kontena-cli
-    gemspec: cli/kontena-cli.gemspec
-    skip_cleanup: true
-    api_key:
-      secure: "RJTSWUTDrguT+/GF7lKptOXOlmR73HRzodPVMY8uv95Em+GkNdDB0LzBvkjdfamKP0+/Ey7d1s0C4+5++VpIcuQGhaA9vzs1+y1w6L33wF3jobiGI8OklQOM5E/Q5iLNqMHbmxi+2fiQifW8NHzzP7Jdqh92KijFEHOfUOl3u54="
-    before_deploy:
-      - cd $TRAVIS_BUILD_DIR
-      - "rvm $TRAVIS_RUBY_VERSION do rake release:bump_version"
-      - ln -s $TRAVIS_BUILD_DIR/kontena-cli-`cat VERSION`.gem $TRAVIS_BUILD_DIR/cli/kontena-cli-`cat VERSION`.gem
-    on:
-      tags: true
-      all_branches: true
-      condition: $TEST_DIR = server
-      rvm: 2.3.1
-      repo: kontena/kontena
   - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/publish.sh"
     on:

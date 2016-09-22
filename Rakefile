@@ -61,6 +61,13 @@ namespace :release do
     end
   end
 
+  task :build_cli_gem do
+    headline "Starting to build kontena-cli gem ..."
+    Dir.chdir('cli') do
+      sh("gem build kontena-cli.gemspec")
+    end
+  end
+
   task :package_ubuntu => [
     :setup, :setup_ubuntu, :package_ubuntu_server, :package_ubuntu_agent
   ]
@@ -76,7 +83,8 @@ namespace :release do
   task :push => [
     :build,
     :push_server,
-    :push_agent
+    :push_agent,
+    :push_cli
   ]
 
   task :push_server do
@@ -97,6 +105,15 @@ namespace :release do
     headline "Starting to push kontena-cli ..."
     Dir.chdir('cli') do
       sh("rake release:push")
+    end
+  end
+
+  task :push_gem => [:build_cli_gem, :push_cli_gem]
+
+  task :push_cli_gem do
+    headline "Starting to push kontena-cli gem..."
+    Dir.chdir('cli') do
+      sh("gem push kontena-cli-#{VERSION}.gem")
     end
   end
 
