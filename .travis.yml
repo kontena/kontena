@@ -47,7 +47,7 @@ deploy:
     before_deploy:
       - cd $TRAVIS_BUILD_DIR
       - "rvm $TRAVIS_RUBY_VERSION do rake release:bump_version"
-      - ln -s $TRAVIS_RUBY_VERSION/kontena-cli-`cat VERSION`.gem $TRAVIS_RUBY_VERSION/cli/kontena-cli-`cat VERSION`.gem
+      - ln -s $TRAVIS_BUILD_DIR/kontena-cli-`cat VERSION`.gem $TRAVIS_BUILD_DIR/cli/kontena-cli-`cat VERSION`.gem
     on:
       tags: true
       all_branches: true
