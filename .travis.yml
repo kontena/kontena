@@ -50,9 +50,7 @@ deploy:
       condition: $TEST_DIR = cli
       rvm: 2.3.1
   - provider: script
-    before_deploy:
-      - cd $TRAVIS_BUILD_DIR
-    script: "rvm $TRAVIS_RUBY_VERSION do publish.sh"
+    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/publish.sh"
     on:
       tags: true
       condition: $TEST_DIR = server
