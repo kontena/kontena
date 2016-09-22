@@ -19,9 +19,9 @@ env:
   global:
     - secure: "mM0iv3ooqyqYsbBBNw73/88EURi5PO529E2Sm2ovy5xzL0SadOyCz4uLYmTMiIoP+pXDvmH1/XjoPxVLR2MH4shXe0VtrKFYiTEjan3X05VUyVMnfnm0Z+uMgHsBFZxl941o27N0jFY+0dcAstofprP/PF5SxKvKwcb0rCfdUYs="
   matrix:
-    - TEST_DIR=server
     - TEST_DIR=agent
     - TEST_DIR=cli
+    - TEST_DIR=server
 matrix:
   exclude:
     - rvm: 2.0.0-p648
@@ -41,6 +41,7 @@ deploy:
   - provider: rubygems
     gem: kontena-cli
     gemspec: cli/kontena-cli.gemspec
+    skip_cleanup: true
     api_key:
       secure: "RJTSWUTDrguT+/GF7lKptOXOlmR73HRzodPVMY8uv95Em+GkNdDB0LzBvkjdfamKP0+/Ey7d1s0C4+5++VpIcuQGhaA9vzs1+y1w6L33wF3jobiGI8OklQOM5E/Q5iLNqMHbmxi+2fiQifW8NHzzP7Jdqh92KijFEHOfUOl3u54="
     before_deploy:
