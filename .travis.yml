@@ -47,10 +47,9 @@ deploy:
     before_deploy:
       - cd $TRAVIS_BUILD_DIR
       - "rvm $TRAVIS_RUBY_VERSION do rake release:bump_version"
-    after_deploy:
-      - gem push kontena-cli-*.gem
     on:
       tags: true
+      all_branches: true
       condition: $TEST_DIR = server
       rvm: 2.3.1
   - provider: script
