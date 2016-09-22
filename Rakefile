@@ -57,7 +57,7 @@ namespace :release do
   task :build_cli do
     headline "Starting to build kontena-cli ..."
     Dir.chdir('cli') do
-      sh("rake release:build")
+      sh("bundle exec rake release:build")
     end
   end
 
@@ -90,21 +90,21 @@ namespace :release do
   task :push_server do
     headline "Starting to push kontena/server ..."
     Dir.chdir('server') do
-      sh("rake release:push_docker")
+      sh("bundle exec rake release:push_docker")
     end
   end
 
   task :push_agent do
     headline "Starting to push kontena/agent ..."
     Dir.chdir('agent') do
-      sh("rake release:push_docker")
+      sh("bundle exec rake release:push_docker")
     end
   end
 
   task :push_cli do
     headline "Starting to push kontena-cli ..."
     Dir.chdir('cli') do
-      sh("rake release:push")
+      sh("bundle exec rake release:push")
     end
   end
 
@@ -125,13 +125,13 @@ namespace :release do
 
   task :push_ubuntu_server do
     Dir.chdir('server') do
-      sh("rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
+      sh("bundle exec rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
     end
   end
 
   task :push_ubuntu_agent do
     Dir.chdir('agent') do
-      sh("rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
+      sh("bundle exec rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
     end
   end
 end

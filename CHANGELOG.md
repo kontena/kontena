@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.4 (2016-09-22)
+
+**CLI:**
+
+- lock dry-gems to exact versions (#1031)
+
 ## 0.15.3 (2016-09-20)
 
 **Master & Agents:**
