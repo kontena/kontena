@@ -67,11 +67,11 @@ module Kontena::Cli::Cloud
       uri.query = URI.encode_www_form(params)
 
       puts "Opening a browser to #{uri.scheme}://#{uri.host}"
-      puts
-      puts "If you are running this command over an ssh connection or it's"
-      puts "otherwise not possible to open a browser from this terminal"
-      puts "then you must use a pregenerated access token using the --token"
-      puts "option : kontena cloud login --token <access_token>"
+      #puts
+      #puts "If you are running this command over an ssh connection or it's"
+      #puts "otherwise not possible to open a browser from this terminal"
+      #puts "then you must use a pregenerated access token using the --token"
+      #puts "option : kontena cloud login --token <access_token>"
       puts
       puts "Once the authentication is complete you can close the browser"
       puts "window or tab and return to this window to continue."

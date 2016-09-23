@@ -1,3 +1,5 @@
+#TODO: Something wrong with picking up wrong server in config using the url,
+#maybe remove that part altogether.
 require 'uri'
 
 module Kontena::Cli::Master
