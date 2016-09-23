@@ -100,18 +100,20 @@ module Kontena
             case answer
             when :kontena_new
               login_to_kontena || abort('You must login to Kontena Cloud')
-              if answer == :kontena_new
-                command.cloud_master_id = create_cloud_master
-              end
+              command.cloud_master_id = create_cloud_master
+              command.skip_auth_provider = false
             when :custom
               puts 'Learn how to configure custom user authentication provider after installation at: www.kontena.io/docs/configuring-custom-auth-provider'
+              command.cloud_master_id = nil
+              command.skip_auth_provider = true
             when :none
               puts "You have selected to use Kontena Master in single user mode. You can configure an authentication provider later. For more information, see here: www.kontena.io/docs/configuring-custom-auth-provider"
+              command.cloud_master_id = nil
+              command.skip_auth_provider = true
             else
               abort 'Should never be here'
             end
           end
-          command.skip_auth_provider = !command.cloud_master_id.nil?
         end
       end
     end
