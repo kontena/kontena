@@ -11,8 +11,9 @@ describe Kontena::Cli::Master::UseCommand do
 
   describe '#use' do
     it 'should update current master' do
-      expect(subject).to receive(:current_master=).with('some_master')
+      expect(subject.config).to receive(:write).and_return(true)
       subject.run(['some_master'])
+      expect(subject.config.current_server).to eq 'some_master'
     end
   end
 end
