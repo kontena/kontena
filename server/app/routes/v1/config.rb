@@ -130,7 +130,7 @@ module V1
           end
           update_auth_if_auth_keys(params)
           response.status = 201
-          nil
+          {}
         end
 
         r.put do
@@ -146,14 +146,14 @@ module V1
           end
           update_auth
           response.status = 201
-          nil
+          {}
         end
 
         r.delete do
           if destroy_all_and_audit(current_user, r)
             update_auth
             response.status = 201
-            nil
+            {}
           else
             halt_request(500, 'Failed to create audit log entry') and return
           end
@@ -176,7 +176,7 @@ module V1
           end
           update_auth_if_auth_keys(key)
           response.status = 201
-          nil
+          {}
         end
       end
     end
