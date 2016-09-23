@@ -2,7 +2,7 @@ require 'rack/attack'
 require 'active_support/cache/memory_store'
 
 class Rack::Attack
-  MIN_VERSION     = Gem::Version.new('0.16.0')
+  MIN_VERSION     = Gem::Version.new('0.16.0.pre1')
   CLI_APPLICATION = 'kontena-cli'.freeze
   LOCALHOSTS      = ['127.0.0.1'.freeze, '::1'.freeze].freeze
 
