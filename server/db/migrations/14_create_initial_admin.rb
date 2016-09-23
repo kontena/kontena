@@ -12,21 +12,8 @@ class CreateInitialAdmin < Mongodb::Migration
       with_code: ENV['KONTENA_INITIAL_ADMIN_CODE'],
       internal: true
     )
+    puts "*********************************************"
     puts "Initial Admin Code: #{at.code}"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
-    puts "HELLO"
+    puts "*********************************************"
   end
 end
