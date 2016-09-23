@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class RestartCommand < Clamp::Command
+  class RestartCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 

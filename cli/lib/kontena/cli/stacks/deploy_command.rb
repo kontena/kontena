@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Stacks
-  class DeployCommand < Clamp::Command
+  class DeployCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common

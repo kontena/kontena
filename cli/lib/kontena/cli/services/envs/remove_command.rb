@@ -1,7 +1,7 @@
 require_relative '../services_helper'
 
 module Kontena::Cli::Services::Envs
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper

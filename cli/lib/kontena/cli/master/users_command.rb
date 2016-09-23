@@ -5,7 +5,7 @@ module Kontena::Cli::Master
   require_relative 'users/list_command'
   require_relative 'users/role_command'
 
-  class UsersCommand < Clamp::Command
+  class UsersCommand < Kontena::Command
     subcommand "invite", "Invite user to Kontena Master", Users::InviteCommand
     subcommand ["remove", "rm"], "Remove user from Kontena Master", Users::RemoveCommand
     subcommand ["list", "ls"], "List users", Users::ListCommand

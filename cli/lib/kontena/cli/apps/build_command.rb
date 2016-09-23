@@ -2,7 +2,7 @@ require_relative 'common'
 require_relative 'docker_helper'
 
 module Kontena::Cli::Apps
-  class BuildCommand < Clamp::Command
+  class BuildCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
     include DockerHelper

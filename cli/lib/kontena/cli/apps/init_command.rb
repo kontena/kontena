@@ -6,7 +6,7 @@ require_relative 'kontena_yml_generator'
 
 
 module Kontena::Cli::Apps
-  class InitCommand < Clamp::Command
+  class InitCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 
@@ -17,8 +17,6 @@ module Kontena::Cli::Apps
 
 
     def execute
-      require 'highline/import'
-
       if File.exist?('Dockerfile')
         puts 'Found Dockerfile'
       elsif create_dockerfile?
@@ -67,7 +65,7 @@ module Kontena::Cli::Apps
     end
 
     def create_dockerfile?
-      ['', 'y', 'yes'].include? ask('Dockerfile not found. Do you want to create it? [Yn]: ').downcase
+      prompt.yes?('Dockerfile not found. Do you want to create it?')
     end
 
     def create_env_file(env)
@@ -85,7 +83,7 @@ module Kontena::Cli::Apps
     end
 
     def create_docker_compose_yml?
-      ['', 'y', 'yes'].include? ask("#{docker_compose_file} not found. Do you want to create it? [Yn]: ").downcase
+      prompt.yes?("#{docker_compose_file} not found. Do you want to create it?")
     end
 
   end
