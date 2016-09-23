@@ -1,6 +1,6 @@
 json.time log.created_at
-json.grid log.grid.name
-json.grid_id log.grid_id.to_s
+json.grid log.grid ? log.grid.name : nil
+json.grid_id log.grid ? log.grid_id.to_s : nil
 json.service log.grid_service_id.to_s
 json.resource_type log.resource_type
 json.resource_name log.resource_name
@@ -13,4 +13,3 @@ json.user_identity do
   json.id log.user_identity['id'].to_s
   json.email log.user_identity['email']
 end
-

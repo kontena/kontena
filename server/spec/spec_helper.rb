@@ -26,6 +26,8 @@ require_relative '../server'
 require 'rack/test'
 require 'mongoid-rspec'
 
+require_relative '../app/services/mongodb/migrator'
+
 Celluloid.logger = nil
 Logging.logger = nil
 
@@ -56,6 +58,7 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
+    Mongodb::Migrator.new.migrate
     MongoPubsub.start!(PubsubChannel.collection)
     sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
     if ENV['CI'] # travis

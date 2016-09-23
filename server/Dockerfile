@@ -17,7 +17,6 @@ RUN chown -R nobody:nogroup /app
 USER nobody
 
 ENV RACK_ENV production
-ENV AUTH_API_URL https://auth.kontena.io
 EXPOSE 9292
 
 WORKDIR /app

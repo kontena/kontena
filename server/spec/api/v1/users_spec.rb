@@ -4,7 +4,7 @@ describe '/v1/users' do
 
   let(:request_headers) do
     {
-        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}"
+        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}"
     }
   end
 
@@ -55,6 +55,7 @@ describe '/v1/users' do
       data = {
         email: 'jane@domain.com',
       }
+      expect(AuthProvider.instance).to receive(:valid?).and_return(true)
       expect{
         post '/v1/users', data.to_json, request_headers
         expect(response.status).to eq(201)
