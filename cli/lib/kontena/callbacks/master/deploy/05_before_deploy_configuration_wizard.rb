@@ -23,8 +23,8 @@ module Kontena
       # Scans config server names and returns default-2 if default exists,
       # default-3 if default-2 exists, etc.
       def next_default_name
-        last_default = config.servers.map(&:name).select{ |n| n =~ /default(?:\-\d+)?$/ }.sort.last
-        return "default" unless last_default
+        last_default = config.servers.map(&:name).select{ |n| n =~ /kontena\-master(?:\-\d+)?$/ }.sort.last
+        return "kontena-master" unless last_default
         unless last_default =~ /\d$/
           last_default << "-1"
         end
