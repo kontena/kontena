@@ -16,15 +16,15 @@ module Kontena
     #    => { "foo" => "bar", "bar" => 123 }  # (it converts integers!)
     attr_accessor :server, :success_response, :error_response, :port
 
-    DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Success</title></head><body><h3>Success!</h3><p>You can now close this browser window and return to the terminal application.</p></body></html>".freeze
     DEFAULT_ERROR_MESSAGE   = "Bad request"
+    SUCCESS_URL             = "https://cloud-beta.kontena.io/terminal-success"
       
     # Get new server instance
     #
     # @param [String] success_response Returned for successful callback
     # @param [String] error_response Returned for unsuccessful callback
     def initialize(success_response: nil, error_response: nil, port: nil)
-      @success_response = success_response || DEFAULT_SUCCESS_MESSAGE
+      @success_response = success_response
       @error_response   = error_response   || DEFAULT_ERROR_MESSAGE
       @server = TCPServer.new('localhost', port || 0)
       @port = @server.addr[1]
@@ -60,14 +60,24 @@ module Kontena
 
       get_request = request[/GET (\/cb.+?) HTTP/, 1]
       if get_request
-        socket.print [
-          'HTTP/1.1 200 OK',
-          'Content-Type: text/html',
-          "Content-Length: #{success_response.bytesize}",
-          "Connection: close",
-          '',
-          success_response
-        ].join("\r\n")
+        if success_response
+          socket.print [
+            'HTTP/1.1 200 OK',
+            'Content-Type: text/html',
+            "Content-Length: #{success_response.bytesize}",
+            "Connection: close",
+            '',
+            success_response
+          ].join("\r\n")
+        else
+          socket.print [
+            'HTTP/1.1 301 Found',
+            "Location: #{SUCCESS_URL}",
+            "Connection: close",
+            ''
+          ].join("\r\n")
+        end
+
         socket.close
         server.close
         uri = URI.parse("http://localhost#{get_request}")
