@@ -8,10 +8,13 @@ module Kontena
   # @return [Fixnum] exit_code
   def self.run(cmdline = "", returning: :status)
     require 'shellwords'
+    ENV["DEBUG"] && puts("Running Kontena.run(#{cmdline.inspect}, returning: #{returning}")
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(cmdline.shellsplit)
+    ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
     return 0 if returning == :status
     return result if returning == :result
   rescue SystemExit
+    ENV["DEBUG"] && puts("Command completed with failure, result: #{result.inspect} status: #{$!.status}")
     returning == :status ? $!.status : nil
   end
 
