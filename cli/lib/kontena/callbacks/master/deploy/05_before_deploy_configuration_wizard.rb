@@ -93,7 +93,7 @@ module Kontena
             command.cloud_master_id ||= create_cloud_master
           elsif command.cloud_master_id.nil?
             answer = prompt.select("Select OAuth2 authentication provider: ") do |menu|
-              menu.choice 'Kontena Cloud', :kontena_new
+              menu.choice 'Kontena Cloud (recommended)', :kontena_new
               menu.choice 'Custom', :custom
               menu.choice 'None (single user mode)', :none
             end
