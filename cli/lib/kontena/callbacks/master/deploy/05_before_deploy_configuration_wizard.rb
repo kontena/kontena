@@ -92,19 +92,16 @@ module Kontena
           if command.no_prompt?
             command.cloud_master_id ||= create_cloud_master
           elsif command.cloud_master_id.nil?
-            answer = prompt.select("Select user authentication provider") do |menu|
-              menu.choice 'Kontena Cloud (add a new master)', :kontena_new
-              menu.choice 'Kontena Cloud (use an existing master)', :kontena_existing
+            answer = prompt.select("Select OAuth2 authentication provider: ") do |menu|
+              menu.choice 'Kontena Cloud', :kontena_new
               menu.choice 'Custom', :custom
               menu.choice 'None (single user mode)', :none
             end
             case answer
-            when :kontena_new, :kontena_existing
+            when :kontena_new
               login_to_kontena || abort('You must login to Kontena Cloud')
               if answer == :kontena_new
                 command.cloud_master_id = create_cloud_master
-              else
-                command.cloud_master_id = select_cloud_master
               end
             when :custom
               puts 'Learn how to configure custom user authentication provider after installation at: www.kontena.io/docs/configuring-custom-auth-provider'
