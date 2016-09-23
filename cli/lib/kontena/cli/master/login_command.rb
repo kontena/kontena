@@ -94,8 +94,8 @@ module Kontena::Cli::Master
     end
 
     def find_server_or_create_new(url)
-      existing_server = config.find_server_by(url: url)
-      if existing_server && (!self.name || existing_server.name == self.name)
+      existing_server = config.find_server_by(url: url, name: self.name)
+      if existing_server
         config.current_server = existing_server.name
         existing_server
       else
