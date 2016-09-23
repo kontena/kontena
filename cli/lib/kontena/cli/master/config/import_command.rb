@@ -10,9 +10,9 @@ module Kontena::Cli::Master::Config
 
     parameter '[PATH]', "Input from file in PATH, default: STDIN", required: false
 
-    option ['--preset'], '[NAME]', 'Load preset'
+    option ['--preset'], '[NAME]', 'Load preset', hidden: true
 
-    option ['--format'], '[FORMAT]', "Specify output format (json, yaml) (default: guess from PATH or json)"
+    option ['--format'], '[FORMAT]', "Specify input format (json, yaml) (default: guess from PATH or json)"
     option ['--full'], :flag, "Perform full update, keys that are not present in the input are cleared"
     option ['-f', '--force'], :flag, "Don't ask for confirmation"
 
