@@ -42,33 +42,13 @@ module Kontena
         cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
       end
 
-      def select_cloud_master
-        masters = []
-        spinner "Retrieving a list of registered masters on your Kontena Cloud account" do
-          masters = cloud_client.get("user/masters")["data"]
-        end
-        if masters.empty?
-          puts
-          puts "You have no registered masters. Adding a new master."
-          puts
-          return create_cloud_master
-        else
-          puts
-          return prompt.select("Select master") do |menu|
-            masters.each do |master|
-              name       = master['attributes']['name']
-              url        = master['attributes']['url']
-              master_id  = master['id']
-              menu.choice "#{master['attributes']['name']} (#{url.nil? ? "setup not done" : url})", master_id
-            end
-          end
-        end
-      end
-
       def create_cloud_master
         master_id = nil
-        spinner "Registering a new cloud master '#{command.name}'" do
-          master_id = Kontena.run("cloud master add --return #{command.name}", returning: :result)
+        begin
+          spinner "Registering a new master '#{command.name}' to Kontena Cloud" do
+            master_id = Kontena.run("cloud master add --return #{command.name}", returning: :result)
+          end
+        rescue SystemExit
         end
         if master_id.to_s =~ /^[0-9a-f]{16,32}$/
           master_id
@@ -103,11 +83,15 @@ module Kontena
               command.cloud_master_id = create_cloud_master
               command.skip_auth_provider = false
             when :custom
+              puts
               puts 'Learn how to configure custom user authentication provider after installation at: www.kontena.io/docs/configuring-custom-auth-provider'
+              puts
               command.cloud_master_id = nil
               command.skip_auth_provider = true
             when :none
+              puts
               puts "You have selected to use Kontena Master in single user mode. You can configure an authentication provider later. For more information, see here: www.kontena.io/docs/configuring-custom-auth-provider"
+              puts
               command.cloud_master_id = nil
               command.skip_auth_provider = true
             else
@@ -115,6 +99,7 @@ module Kontena
             end
           end
         end
+        true
       end
     end
   end
