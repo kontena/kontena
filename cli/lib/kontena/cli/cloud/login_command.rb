@@ -85,7 +85,9 @@ module Kontena::Cli::Cloud
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
       browser_thread = Thread.new { Launchy.open(uri.to_s) }
       
-      server_thread.join
+      vspinner "Waiting for browser authorization response" do
+        server_thread.join
+      end
       browser_thread.join
 
       response = Thread.main['response']
