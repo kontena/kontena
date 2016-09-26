@@ -26,10 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "tty-prompt", "~> 0.7.1"
   spec.add_runtime_dependency "clamp", "~> 1.0.0"
   spec.add_runtime_dependency "ruby_dig", "~> 0.0.2"
-  spec.add_runtime_dependency "dry-validation", "0.8.0"
-  spec.add_runtime_dependency "dry-types", "0.8.0"
-  spec.add_runtime_dependency "dry-configurable", "0.1.6"
-  spec.add_runtime_dependency "dry-monads", "0.1.1"
-  spec.add_runtime_dependency "dry-logic", "0.3.0"
   spec.add_runtime_dependency "launchy", "~> 2.4.3"
+  spec.add_runtime_dependency "hash_validator", "~> 0.7.0"
 end

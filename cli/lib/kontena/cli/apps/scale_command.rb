@@ -16,7 +16,7 @@ module Kontena::Cli::Apps
 
     def execute
       require_config_file(filename)
-      yml_service = services_from_yaml(filename, [service], service_prefix)
+      yml_service = services_from_yaml(filename, [service], service_prefix, true)
       if yml_service[service]
         options = yml_service[service]
         exit_with_error("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['container_count']

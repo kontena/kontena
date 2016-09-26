@@ -10,13 +10,14 @@ module Kontena::Cli::Apps
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false
+    option '--skip-validation', :flag, 'Skip YAML file validation', default: false
     parameter "[SERVICE] ...", "Services to build"
 
     attr_reader :services
 
     def execute
       require_config_file(filename)
-      @services = services_from_yaml(filename, service_list, service_prefix)
+      @services = services_from_yaml(filename, service_list, service_prefix, skip_validation?)
       if services.none?{ |name, service| service['build'] }
         error 'Not found any service with build option'
         abort
