@@ -1,10 +1,5 @@
 module Kontena
   module Callbacks
-    # Runs kontena master auth-provider config after deployment if
-    # auth provider configuration options have been supplied.
-    #
-    # Runs the config command with --preset kontena if the user has
-    # authenticated to Kontena unless --no-auth-config is used.
     class CreateInitialGridAfterDeploy < Kontena::Callback
 
       include Kontena::Cli::Common
@@ -24,7 +19,7 @@ module Kontena
         end
 
         spinner "Selecting 'test' as current grid" do
-          Kontena.run("grid use test")
+          Kontena.run("grid use --silent test")
         end
       end
     end

@@ -14,7 +14,7 @@ module Kontena::Cli::Master
       params << "--name #{self.name.shellescape}" if self.name
       params << "--verbose" if self.verbose?
 
-      Kontena.run("master auth #{params.join(' ')} #{self.url.shellescape}")
+      Kontena.run("master login #{params.join(' ')} #{self.url.shellescape}")
     end
   end
 end

@@ -16,7 +16,6 @@ if ENV["DEV"]
 end
 
 class Kontena::Cli::MasterCommand < Kontena::Command
-
   subcommand ["list", "ls"], "List masters where client has logged in", Kontena::Cli::Master::ListCommand
   subcommand ["config", "cfg"], "Configure master settings", Kontena::Cli::Master::ConfigCommand
   subcommand "use", "Switch to use selected master", Kontena::Cli::Master::UseCommand

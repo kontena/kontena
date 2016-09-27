@@ -4,7 +4,7 @@ module Kontena
 
       include Kontena::Cli::Common
 
-      matches_commands 'master auth'
+      matches_commands 'master login'
 
       def after_load
         command.class_eval do

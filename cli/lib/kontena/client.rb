@@ -300,7 +300,7 @@ module Kontena
       retried ||= false
 
       if auth && token_expired?
-        raise Excon::Errors::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master auth" : "auth"}"
+        raise Excon::Errors::Unauthorized, "Token expired or not valid, you need to login again, use: kontena #{token_is_for_master? ? "master" : "cloud"} login"
       end
 
       request_headers = request_headers(headers, auth)
@@ -329,7 +329,7 @@ module Kontena
 
       parse_response
     rescue Excon::Errors::Unauthorized
-      if token && token_is_for_master?
+      if token
         logger.debug 'Server reports access token expired'
 
         if retried || !token || !token['refresh_token']

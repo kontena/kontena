@@ -74,7 +74,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def self.requires_current_master
-    banner "#{Kontena.pastel.green("Requires current master")}: This command requires that you have selected a current master using 'kontena master auth' or 'kontena master use'. You can also use the environment variable KONTENA_URL to specify the master address or KONTENA_MASTER=master_name to override the current_master setting."
+    banner "#{Kontena.pastel.green("Requires current master")}: This command requires that you have selected a current master using 'kontena master login' or 'kontena master use'. You can also use the environment variable KONTENA_URL to specify the master address or KONTENA_MASTER=master_name to override the current_master setting."
     @requires_current_master = true
   end
 
@@ -135,7 +135,7 @@ class Kontena::Command < Clamp::Command
       retried = true
       retry
     else
-      raise Kontena::Cli::Config::TokenExpiredError, "The access token has expired and refresh failed. Try authenticating again, use: kontena master auth"
+      raise Kontena::Cli::Config::TokenExpiredError, "The access token has expired and refresh failed. Try authenticating again, use: kontena master login"
     end
   end
 

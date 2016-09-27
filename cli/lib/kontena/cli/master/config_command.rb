@@ -8,7 +8,6 @@ module Kontena
   module Cli
     module Master
       class ConfigCommand < Kontena::Command
-
         subcommand "set", "Set a config value", Kontena::Cli::Master::Config::SetCommand
         subcommand "get", "Get a config value", Kontena::Cli::Master::Config::GetCommand
         subcommand "unset", "Clear a config value", Kontena::Cli::Master::Config::UnsetCommand

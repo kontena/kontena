@@ -47,7 +47,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
   subcommand "plugin", "Plugin related commands", Kontena::Cli::PluginCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
-  subcommand "login", "Login to Kontena Master (removed, use kontena master auth)", Kontena::Cli::LoginCommand
+  subcommand "login", "Login to Kontena Master (removed, use kontena master login)", Kontena::Cli::LoginCommand
 
   def execute
   end
