@@ -6,43 +6,60 @@ class Kontena::Command < Clamp::Command
   attr_reader :result
   attr_reader :exit_code
 
-
-  def self.inherited(where)
-    return if where.has_subcommands?
-    return if where.callback_matcher
-
-    name_parts = where.name.split('::')[-2, 2]
-
-    unless name_parts.compact.empty?
-      # 1: Remove trailing 'Command' from for example AuthCommand
-      # 2: Convert the string from CamelCase to under_score
-      # 3: Convert the string into a symbol
-      #
-      # In comes: ['ExternalRegistry', 'UseCommand']
-      # Out goes: [:external_registry, :use]
-      name_parts = name_parts.map { |np|
-        np.gsub(/Command$/, '').
-        gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-        gsub(/([a-z\d])([A-Z])/,'\1_\2').
-        tr("-", "_").
-        downcase.
-        to_sym
-      }
-      where.callback_matcher(*name_parts)
+  module Finalizer
+    def self.extended(obj)
+      # Tracepoint is used to trigger finalize once the command is completely
+      # loaded. If done through def self.inherited the finalizer and
+      # after_load callbacks would run before the options are defined.
+      TracePoint.trace(:end) do |t|
+        if obj == t.self
+          obj.finalize
+          t.disable
+        end
+      end
     end
 
-    # Run all #after_load callbacks for this command.
-    [name_parts.last, :all].compact.uniq.each do |cmd_type|
-      [name_parts.first, :all].compact.uniq.each do |cmd_class|
-        if Kontena::Callback.callbacks.fetch(cmd_class, {}).fetch(cmd_type, nil)
-          Kontena::Callback.callbacks[cmd_class][cmd_type].each do |cb|
-            if cb.instance_methods.include?(:after_load)
-              cb.new(where).after_load
+    def finalize
+      return if self.has_subcommands?
+      return if self.callback_matcher
+
+      name_parts = self.name.split('::')[-2, 2]
+
+      unless name_parts.compact.empty?
+        # 1: Remove trailing 'Command' from for example AuthCommand
+        # 2: Convert the string from CamelCase to under_score
+        # 3: Convert the string into a symbol
+        #
+        # In comes: ['ExternalRegistry', 'UseCommand']
+        # Out goes: [:external_registry, :use]
+        name_parts = name_parts.map { |np|
+          np.gsub(/Command$/, '').
+          gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+          gsub(/([a-z\d])([A-Z])/,'\1_\2').
+          tr("-", "_").
+          downcase.
+          to_sym
+        }
+        self.callback_matcher(*name_parts)
+      end
+
+      # Run all #after_load callbacks for this command.
+      [name_parts.last, :all].compact.uniq.each do |cmd_type|
+        [name_parts.first, :all].compact.uniq.each do |cmd_class|
+          if Kontena::Callback.callbacks.fetch(cmd_class, {}).fetch(cmd_type, nil)
+            Kontena::Callback.callbacks[cmd_class][cmd_type].each do |cb|
+              if cb.instance_methods.include?(:after_load)
+                cb.new(self).after_load
+              end
             end
           end
         end
       end
     end
+  end
+
+  def self.inherited(where)
+    where.extend Finalizer
   end
 
   def self.callback_matcher(cmd_class = nil, cmd_type = nil)
@@ -59,7 +76,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def run_callbacks(state)
-    if self.class.respond_to?(:callback_matcher) && !self.class.callback_matcher.compact.empty?
+    if self.class.respond_to?(:callback_matcher) && !self.class.callback_matcher.nil? && !self.class.callback_matcher.compact.empty?
       Kontena::Callback.run_callbacks(self.class.callback_matcher, state, self)
     end
   end
@@ -146,7 +163,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def run(arguments)
-    ENV["DEBUG"] && puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.map(&:to_s).join(' ')}'")
+    ENV["DEBUG"] && puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
     @arguments = arguments
 
     run_callbacks :before_parse unless help_requested?
