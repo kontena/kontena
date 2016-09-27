@@ -29,13 +29,17 @@ which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 
 ## Step 2. Register Personal User Account
 
-With Kontena, all users are required to have personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs from user actions. Create your own personal user account (if not created already).
+With Kontena, all users are required to have a personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs from user actions. Create your own personal user account (if not created already). You can register an account at [Kontena Cloud](https://cloud.kontena.io/).
+
+By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service or use a 3rd party oauth2 provider.
+
+You can read more about the authentication and configuring authentication providers in the [Authentication](../using-kontena/authentication.md) documentation.
+
+To authenticate your CLI to Kontena Cloud use the command:
 
 ```
-$ kontena register
+$ kontena cloud login
 ```
-
-By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service. In this case, the registration is optional.
 
 ## Step 3. Install Kontena Master
 
@@ -48,33 +52,16 @@ Since we will be using Vagrant, please ensure you have Vagrant installed. For mo
 ```
 $ kontena plugin install vagrant
 $ kontena vagrant master create
-Creating Vagrant machine kontena-master-autumn-waterfall-70 ... done
-Waiting for kontena-master-autumn-waterfall-70 to start ... done
-Kontena Master is now running at http://192.168.66.100:8080
-Use kontena login http://192.168.66.100:8080 to complete Kontena Master setup
-```
 
 ## Step 4. Login and Create a Grid
 
-Before we can provision Kontena Nodes, we need to login to Kontena Master and create a Kontena Grid. Login with your personal user account. For example, if the Kontena Master is running at address `http://192.168.66.100:8080`, the login is done like this:
+Before we can provision Kontena Nodes, you need to be authenticated to Kontena Master. The Master installation will do this automatically for you. Here is how you do it manually:
 
 ```
-$ kontena login http://192.168.66.100:8080
-Email: your.email@domain.com
-Password: *********
- _               _
-| | _ ___  _ __ | |_ ___ _ __   __ _
-| |/ / _ \| '_ \| __/ _ \ '_ \ / _` |
-|   < (_) | | | | ||  __/ | | | (_| |
-|_|\_\___/|_| |_|\__\___|_| |_|\__,_|
--------------------------------------
-Copyright (c)2016 Kontena, Inc.
-
-Logged in as your.email@domain.com
-Welcome! See 'kontena --help' to get started.
+$ kontena master login http://192.168.66.100:8080
 ```
 
-Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. The Grid can be created with command `kontena grid create`. For example, to create a grid named `testing`:
+Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. A Grid called 'test' will be automatically created during Master installation. A new Grid can be created with command `kontena grid create`. For example, to create a grid named `testing`:
 
 ```
 $ kontena grid create testing

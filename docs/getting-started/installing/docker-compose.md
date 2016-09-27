@@ -55,12 +55,7 @@ networks:
 
 **Step 2:** Run command `docker-compose up -d`
 
-
-After Kontena Master is running you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name docker-compose http://localhost:8080/
-```
+After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
