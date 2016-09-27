@@ -32,11 +32,7 @@ $ kontena packet master create \
   --type baremetal_0
 ```
 
-After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name packet-master https://<master_ip>/
-```
+After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
@@ -91,7 +87,6 @@ Options:
     --vault-iv VAULT_IV           Initialization vector for Vault (optional)
     --mongodb-uri URI             External MongoDB uri (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
-    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
 ```
 
 #### Create Node

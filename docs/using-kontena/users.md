@@ -32,18 +32,6 @@ Kontena has built-in role based user management. The first user that logs in to 
 * [Remove User from Grid](users#remove-user-from-grid)
 * [Remove User from Kontena Master](users#remove-user-from-kontena-master)
 
-### Register a New Kontena Account
-
-```
-$ kontena register
-```
-
-**Options:**
-
-```
---auth-provider-url AUTH_PROVIDER_URL Auth provider URL
-```
-
 ### Invite User to Kontena Master
 
 ```

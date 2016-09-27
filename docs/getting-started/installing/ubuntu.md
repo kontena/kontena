@@ -38,11 +38,7 @@ $ sudo start kontena-server-haproxy
 
 ### Login to Kontena Master
 
-After Kontena Master has installed you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name ubuntu-master https://<master_ip>/
-```
+After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
