@@ -131,7 +131,7 @@ describe Docker::ServiceCreator do
         expect(env).to include("KONTENA_SERVICE_NAME=#{service.name.to_s}")
         expect(env).to include("KONTENA_GRID_NAME=#{service.grid.name.to_s}")
         expect(env).to include("KONTENA_NODE_NAME=#{node.name.to_s}")
-        expect(env).to include("KONTENA_SERVICE_INSTANCE=2")
+        expect(env).to include("KONTENA_SERVICE_INSTANCE_NUMBER=2")
       end
     end
 
