@@ -1,4 +1,4 @@
-module Kontena::Cli::Apps::YAML::CustomValidators
+module Kontena::Cli::Apps::YAML::Validations::CustomValidators
   class HooksValidator < HashValidator::Validator::Base
     def initialize
       super('valid_hooks')
@@ -9,36 +9,45 @@ module Kontena::Cli::Apps::YAML::CustomValidators
         errors[key] = 'hooks must be array'
         return
       end
-      hook_names = value.keys - ['pre_build', 'post_start']
+
       if value['pre_build']
-        unless value['pre_build'].is_a?(Array)
-          errors[key] = 'pre_build must be array'
-          return
-        end
-        value['pre_build'].each do |pre_build|
-          pre_build_validation = {
-            'name' => 'string',
-            'cmd' => 'string'
-          }
-          HashValidator.validator_for(pre_build_validation).validate('hooks.pre_build', pre_build, pre_build_validation, errors)
-        end
+        validate_pre_build_hooks(key, value['pre_build'], errors)
       end
 
       if value['post_start']
-        unless value['post_start'].is_a?(Array)
-          errors["#{key}"] = 'post_start must be array'
-          return
-        end
-        value['post_start'].each do |post_start|
+        validate_post_start_hooks(key, value['post_start'], errors)
+      end
+    end
 
-          post_start_validation = {
-            'name' => 'string',
-            'instances' => (-> (value) { value.is_a?(Integer) || value == '*' }),
-            'cmd' => 'string',
-            'oneshot' => HashValidator.optional('boolean')
-          }
-          HashValidator.validator_for(post_start_validation).validate('hooks.post_start', post_start, post_start_validation, errors)
-        end
+    def validate_pre_build_hooks(key, pre_build_hooks, errors)
+      unless pre_build_hooks.is_a?(Array)
+        errors[key] = 'pre_build must be array'
+        return
+      end
+      pre_build_validation = {
+        'name' => 'string',
+        'cmd' => 'string'
+      }
+      validator = HashValidator.validator_for(pre_build_validation)
+      pre_build_hooks.each do |pre_build|
+        validator.validate('hooks.pre_build', pre_build, pre_build_validation, errors)
+      end
+    end
+
+    def validate_post_start_hooks(key, post_start_hooks, errors)
+      unless post_start_hooks.is_a?(Array)
+        errors[key] = 'post_start must be array'
+        return
+      end
+      post_start_validation = {
+        'name' => 'string',
+        'instances' => (-> (value) { value.is_a?(Integer) || value == '*' }),
+        'cmd' => 'string',
+        'oneshot' => HashValidator.optional('boolean')
+      }
+      validator = HashValidator.validator_for(post_start_validation)
+      post_start_hooks.each do |post_start|
+        validator.validate('hooks.post_start', post_start, post_start_validation, errors)
       end
     end
   end

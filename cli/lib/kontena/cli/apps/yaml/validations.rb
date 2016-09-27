@@ -1,20 +1,18 @@
-require_relative 'custom_validators/affinities_validator'
-require_relative 'custom_validators/build_validator'
-require_relative 'custom_validators/extends_validator'
-require_relative 'custom_validators/hooks_validator'
-require_relative 'custom_validators/secrets_validator'
-
 module Kontena::Cli::Apps::YAML
- module CustomValidators
-
- end
  module Validations
-
-   HashValidator.append_validator(CustomValidators::AffinitiesValidator.new)
-   HashValidator.append_validator(CustomValidators::BuildValidator.new)
-   HashValidator.append_validator(CustomValidators::ExtendsValidator.new)
-   HashValidator.append_validator(CustomValidators::SecretsValidator.new)
-   HashValidator.append_validator(CustomValidators::HooksValidator.new)
+   module CustomValidators
+     require_relative 'custom_validators/affinities_validator'
+     require_relative 'custom_validators/build_validator'
+     require_relative 'custom_validators/extends_validator'
+     require_relative 'custom_validators/hooks_validator'
+     require_relative 'custom_validators/secrets_validator'
+     
+     HashValidator.append_validator(AffinitiesValidator.new)
+     HashValidator.append_validator(BuildValidator.new)
+     HashValidator.append_validator(ExtendsValidator.new)
+     HashValidator.append_validator(SecretsValidator.new)
+     HashValidator.append_validator(HooksValidator.new)
+   end
 
    def common_validations
      {

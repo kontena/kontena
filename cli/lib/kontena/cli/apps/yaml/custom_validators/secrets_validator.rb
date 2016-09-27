@@ -1,4 +1,4 @@
-module Kontena::Cli::Apps::YAML::CustomValidators
+module Kontena::Cli::Apps::YAML::Validations::CustomValidators
   class SecretsValidator < HashValidator::Validator::Base
     def initialize
       super('valid_secrets')
