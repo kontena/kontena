@@ -59,8 +59,8 @@ class AccessToken
       unless doc.refresh_token || doc.expires_at.nil?
         doc.refresh_token_plain ||= SecureRandom.hex(64)
       end
-      doc.token ||= self.digest(doc.token_plain)
-      doc.token_last_four ||= doc.token_plain[-4, 4]
+      doc.token ||= self.digest(doc.token_plain) if doc.token_plain
+      doc.token_last_four ||= doc.token_plain[-4, 4] if doc.token_plain
       doc.refresh_token ||= self.digest(doc.refresh_token_plain) if doc.refresh_token_plain
       doc.refresh_token_last_four ||= doc.refresh_token_plain[-4, 4] if doc.refresh_token_plain
     end
