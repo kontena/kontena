@@ -11,7 +11,7 @@ title: Docker Compose
 ## Prerequisities
 
 - Kontena Account
-- Docker Engine & Docker Compose
+- Docker Engine (<= 1.10 ) & Docker Compose
 
 ## Installing Kontena Master
 
@@ -24,37 +24,31 @@ version: '2'
 services:
   haproxy:
     image: kontena/haproxy:latest
+    container_name: kontena-master-haproxy
     environment:
       - SSL_CERT=**None**
       - BACKEND_PORT=9292
     ports:
       - 80:80
-      - 443:443
-    networks:
-      - kontena
-  api:
+      - 443:443    
+  master:
     image: kontena/server:latest
+    container_name: kontena-master
     environment:
       - RACK_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/kontena
-      - VAULT_KEY=somerandomstring
-      - VAULT_IV=somerandomstring
-    networks:
-      kontena:
-        aliases:
-          - kontena-server-api
+      - VAULT_KEY=somerandomverylongstringthathasatleastsixtyfourchars
+      - VAULT_IV=somerandomverylongstringthathasatleastsixtyfourchars
+    depends_on:
+      - mongodb
   mongodb:
     image: mongo:3.0
+    container_name: kontena-master-mongodb
     command: mongod --smallfiles
     volumes:
-      - kontena-server-mongodb:/data/db
-    networks:
-      - kontena
+      - kontena-master-mongodb:/data/db    
 volumes:
-  kontena-server-mongodb:
-networks:
-  kontena:
-    driver: bridge
+  kontena-master-mongodb:
 ```
 
 **Note!** `VAULT_KEY` & `VAULT_IV` should be random strings. They can be generated from bash:
@@ -68,30 +62,36 @@ $ cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 $ awk 1 ORS='\\n' /path/to/cert_file
 ```
 
+If you don't have a SSL certificate you can generate a self-signed certificate and use that:
+```
+$ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey.key -out certificate.crt
+cat certificate.crt privateKey.key > cert.pem
+```
+
 **Step 2:** Run command `docker-compose up -d`
 
 After Kontena Master is running you can connect to it by issuing login command. First user to login will be given master admin rights.
 
 ```
-$ kontena login --name docker-compose http://<master-ip>/
+$ kontena login --name <name_for_the_master> http://<master-ip>/
 ```
 * Use `https://` if you have the SSL certificate
-* You can define the name of the Master. The name is used on the CLI side to identify the Master.
+* You can give any name to Master. The name is used locally on the CLI to identify the Master.
 
 ## Installing Kontena Nodes
 
 Before you can start provision nodes you must first switch cli scope to a grid. Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
 
-Switch to existing grid using following command:
-
-```
-$ kontena grid use <grid_name>
-```
-
-Or create a new grid using command:
+Create a new grid using command:
 
 ```
 $ kontena grid create --initial-size=<initial_size> my-grid
+```
+
+Or switch to existing grid using following command:
+
+```
+$ kontena grid use <grid_name>
 ```
 
 > Recommended minimum initial-size is 3. This means minimum number of nodes in a grid is 3.
@@ -115,6 +115,7 @@ agent:
 
 - `KONTENA_URI` is uri to Kontena Master (use ws:// for non-tls connection)
 - `KONTENA_TOKEN` is grid token, can be acquired from master using `kontena grid show my-grid` command
+- `KONTENA_PEER_INTERFACE` is network interface that is used to connect the other nodes in the grid.
 
 **Step 2:** Run command `docker-compose up -d`
 
