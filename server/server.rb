@@ -65,6 +65,10 @@ class Server < Roda
         r.run OAuth2Api::TokenApi
       end
 
+      r.on 'tokens' do
+        r.run OAuth2Api::TokensApi
+      end
+
       r.on 'authorize' do 
         r.run OAuth2Api::AuthorizationApi
       end
