@@ -28,7 +28,7 @@ module OAuth2Api
     EMAIL_REGEX        = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i
     EXPIRES_IN         = 'expires_in'.freeze
     USER               = 'user'
-    AUTH_SHOW          = 'auth/show'.freeze
+    AUTH_SHOW          = 'access_tokens/show'.freeze
     ACCESS_DENIED      = 'access_denied'.freeze
     NO_PERM            = 'You do not have the permission to create invites'.freeze
     UNSUPPORTED        = 'unsupported_response_type'.freeze

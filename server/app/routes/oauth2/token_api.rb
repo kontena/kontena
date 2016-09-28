@@ -23,7 +23,7 @@ module OAuth2Api
     UNSUPPORTED_GRANT  = 'unsupported_grant_type'.freeze
     INVALID_GRANT      = 'invalid_grant'.freeze
     GRANT_TYPE         = 'grant_type'.freeze
-    AUTH_SHOW          = 'auth/show'.freeze
+    AUTH_SHOW          = 'access_tokens/show'.freeze
 
     route do |r|
       r.is do
