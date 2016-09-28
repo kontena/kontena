@@ -87,6 +87,6 @@ class Grid
   private
 
   def set_token
-    self.token = SecureRandom.base64(64)
+    self.token ||= SecureRandom.base64(64)
   end
 end
