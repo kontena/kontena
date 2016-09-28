@@ -9,6 +9,9 @@ class User
   has_many :audit_logs
   has_and_belongs_to_many :roles
 
+  belongs_to :parent, class_name: "User", inverse_of: :children
+  has_many :children, class_name: "User", inverse_of: :parent
+
   field :email, type: String
   field :name,  type: String
   field :external_id, type: String
@@ -20,7 +23,7 @@ class User
             presence: true
   validates :email,
             format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i },
-            unless: :is_local_admin?
+            unless: :is_local_admin_or_has_parent?
 
   index({ email: 1 }, { unique: true })
   index({ external_id: 1 }, { unique: true, sparse: true })
@@ -31,6 +34,10 @@ class User
     if boolean
       self[:invite_code] = SecureRandom.hex(6)
     end
+  end
+
+  def is_local_admin_or_has_parent?
+    is_local_admin? || !self[:parent].nil?
   end
 
   def is_local_admin?
