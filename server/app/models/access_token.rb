@@ -17,6 +17,8 @@ class AccessToken
   field :expires_at, type: DateTime
   field :scopes, type: Array
   field :deleted_at, type: BSON::Timestamp, default: nil
+  field :token_last_four, type: String
+  field :refresh_token_last_four, type: String
   
   # set to false when storing tokens to external services
   field :internal, type: Boolean, default: true
@@ -49,7 +51,7 @@ class AccessToken
     end
   end
 
-  # Encrypt the plaintext tokens before saving
+  # Encrypt the plaintext tokens before saving, store the last four characters
   set_callback :save, :before do |doc|
     doc.expires_at = nil unless doc.expires_at.to_i > 0
     if doc.internal?
@@ -58,7 +60,9 @@ class AccessToken
         doc.refresh_token_plain ||= SecureRandom.hex(64)
       end
       doc.token ||= self.digest(doc.token_plain)
+      doc.token_last_four ||= doc.token_plain[-4, 4]
       doc.refresh_token ||= self.digest(doc.refresh_token_plain) if doc.refresh_token_plain
+      doc.refresh_token_last_four ||= doc.refresh_token_plain[-4, 4] if doc.refresh_token_plain
     end
   end
 

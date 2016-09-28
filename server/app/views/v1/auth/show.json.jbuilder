@@ -6,6 +6,8 @@ if @access_token.token_type.to_s == 'bearer'
   # only the hashed versions are saved.
   json.set! :access_token, @access_token.token_plain
   json.set! :refresh_token, @access_token.refresh_token_plain
+  json.set! :access_token_last_four, @access_token.token_last_four
+  json.set! :refresh_token_last_four, @access_token.refresh_token_last_four
   json.set! :expires_in, @access_token.expires_in
   json.user do
     json.id @access_token.user.id.to_s
