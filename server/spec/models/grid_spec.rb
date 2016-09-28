@@ -97,9 +97,9 @@ describe Grid do
   end
 
   describe '#token' do
-    let(:grid_with_automatic_token) { Grid.create!(name: 'test', initial_size: 3) }
-    let(:grid_with_manual_token) { Grid.create!(name: 'test', initial_size: 3, token: 'abcd123456') }
-    let(:grid_with_nil_token) { Grid.create!(name: 'test', initial_size: 3, token: nil) }
+    let(:grid_with_automatic_token) { Grid.create!(name: 'test1', initial_size: 3) }
+    let(:grid_with_manual_token) { Grid.create!(name: 'test2', initial_size: 3, token: 'abcd123456') }
+    let(:grid_with_nil_token) { Grid.create!(name: 'test3', initial_size: 3, token: nil) }
 
     it 'creates a token unless one is supplied' do
       expect(grid_with_automatic_token.token).to match /\A[A-Za-z0-9+\/=]*\Z/
