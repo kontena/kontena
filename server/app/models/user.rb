@@ -25,9 +25,12 @@ class User
             format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i },
             unless: :is_local_admin_or_has_parent?
 
+  validates :external_id, uniqueness: { allow_nil: true }
+  validates :invite_code, uniqueness: { allow_nil: true }
+
   index({ email: 1 }, { unique: true })
-  index({ external_id: 1 }, { unique: true, sparse: true })
-  index({ invite_code: 1}, { unique: true, sparse: true })
+  index({ external_id: 1 }, { sparse: true })
+  index({ invite_code: 1}, { sparse: true })
 
   # Fake setter. When true, an invite code will be generated
   def with_invite=(boolean)
