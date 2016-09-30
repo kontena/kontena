@@ -25,6 +25,15 @@ describe DefaultNetwork do
     another_grid
   }
 
+  let(:service_with_host_net) {
+    GridService.create!(
+      name: 'net_app',
+      grid: grid,
+      image_name: 'my/app:latest',
+      net: 'host'
+    )
+  }
+
   it 'creates default network for all grids' do
     grid
     another_grid
@@ -43,5 +52,11 @@ describe DefaultNetwork do
       expect(service.networks.count).to eq(1)
       expect(service.networks.first.name).to eq('kontena')
     end
+  end
+
+  it 'doesn\'t attach overlay to service with host net' do
+    s = service_with_host_net
+    DefaultNetwork.up
+    expect(s.networks.count).to eq(0)
   end
 end
