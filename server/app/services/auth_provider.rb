@@ -64,17 +64,20 @@ class AuthProvider < OpenStruct
 
   def is_kontena?
     return false unless self[:authorize_endpoint]
-    URI.parse(self[:authorize_endpoint]).host.end_with?('kontena.io')
+    config['cloud.provider_is_kontena'].to_s == "true" || URI.parse(self[:authorize_endpoint]).host.end_with?('kontena.io')
   end
 
   def update_kontena
     return unless is_kontena?
     return unless valid?
 
-    uri = URI.parse("https://cloud-api.kontena.io")
+    uri = URI.parse(config['cloud.api_url'] || "https://cloud-api.kontena.io")
     uri.path = '/master'
 
     client = HTTPClient.new
+    if config['cloud.ignore_invalid_ssl'].to_s == 'true'
+      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
     client.set_auth(nil, self.client_id, self.client_secret)
     client.force_basic_auth = true
 
@@ -150,6 +153,9 @@ class AuthProvider < OpenStruct
     end
 
     client = HTTPClient.new
+    if config['oauth2.ignore_invalid_ssl'].to_s == 'true'
+      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
 
     if self.code_requires_basic_auth
       client.set_auth(nil, self.client_id, self.client_secret)
@@ -191,6 +197,9 @@ class AuthProvider < OpenStruct
     uri = URI.parse(self.userinfo_endpoint)
     uri.path = uri.path.gsub(/\:access\_token/, access_token)
     client = HTTPClient.new
+    if config['oauth2.ignore_invalid_ssl'].to_s == 'true'
+      client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
     response = client.request(
       :get,
       uri.to_s,
