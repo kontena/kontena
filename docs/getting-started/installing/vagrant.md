@@ -13,7 +13,7 @@ title: Vagrant
 ## Prerequisities
 
 - Kontena Account
-- Vagrant. Visit [https://www.vagrantup.com/](https://www.vagrantup.com/) to get started
+- Vagrant 1.6 or later. Visit [https://www.vagrantup.com/](https://www.vagrantup.com/) to get started
 
 ## Installing Kontena Vagrant Plugin
 
