@@ -27,13 +27,13 @@ $ sudo apt-get install kontena-server
 ### Setup SSL Certificate
 
 ```
-$ sudo stop kontena-server
+$ sudo stop kontena-server-haproxy
 $ sudo vim /etc/default/kontena-server-haproxy
 
 # HAProxy SSL certificate
 SSL_CERT=/path/to/certificate.pem
 
-$ sudo start kontena-server
+$ sudo start kontena-server-haproxy
 ```
 
 ### Login to Kontena Master
@@ -57,7 +57,7 @@ $ kontena grid use <grid_name>
 Or create a new grid using command:
 
 ```
-$ kontena grid create --initial-size=<initial_size> test-grid
+$ kontena grid create test-grid
 ```
 
 Now you can go ahead and install kontena-agent Ubuntu package:
