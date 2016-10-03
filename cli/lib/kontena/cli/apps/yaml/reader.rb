@@ -27,11 +27,15 @@ module Kontena::Cli::Apps
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:version] = yaml['version'] || '1'
           result[:name] = yaml['name']
-          result[:services] = parse_services(service_name)
           result[:errors] = errors
           result[:notifications] = notifications
+          result[:services] = parse_services(service_name) unless errors.count > 0
         end
         result
+      end
+
+      def stack_name
+        yaml['name'] if v2?
       end
 
       ##
@@ -47,7 +51,11 @@ module Kontena::Cli::Apps
         content = content % { project: ENV['project'], grid: ENV['grid'] }
         interpolate(content)
         replace_dollar_dollars(content)
-        @yaml = ::YAML.load(content)
+        begin
+          @yaml = ::YAML.load(content)
+        rescue Psych::SyntaxError => e
+          abort("Error while parsing #{file}".colorize(:red)+ " "+e.message)
+        end
       end
 
       # @return [Array] array of validation errors
@@ -80,7 +88,9 @@ module Kontena::Cli::Apps
       # @return [Hash]
       def parse_services(service_name = nil)
         if service_name.nil?
-          services.each { |name, config| services[name] = process_config(config) }
+          services.each do |name, config|
+            services[name] = process_config(config)
+          end
           services
         else
           abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)

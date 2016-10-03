@@ -156,6 +156,28 @@ describe Kontena::Cli::Apps::YAML::Reader do
     end
   end
 
+  context 'when yaml file is malformed' do
+    it 'exits the execution' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena-malformed-yaml.yml'))
+      expect {
+        subject.execute
+      }.to raise_error(SystemExit)
+    end
+  end
+
+  context 'when service config is not hash' do
+    it 'returns error' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena-not-hash-service-config.yml'))
+
+      outcome = subject.execute
+      expect(outcome[:errors].size).to eq(1)
+    end
+  end
+
   describe '#v2?' do
     context 'version 1' do
       it 'returns false' do
@@ -405,6 +427,32 @@ describe Kontena::Cli::Apps::YAML::Reader do
           'foo' => 'bar'
         })
       end
+    end
+  end
+
+  describe '#stack_name' do
+    it 'returns nil for v1' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena.yml'))
+      name = subject.stack_name
+      expect(name).to be_nil
+    end
+
+    it 'returns name for v2 if defined' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('kontena_v2.yml'))
+      name = subject.stack_name
+      expect(name).to eq('test-project')
+    end
+
+    it 'returns nil for v2 if not defined' do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena.yml'))
+        .and_return(fixture('docker-compose.yml'))
+      name = subject.stack_name
+      expect(name).to be_nil
     end
   end
 end
