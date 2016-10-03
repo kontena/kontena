@@ -4,6 +4,7 @@
 
 **CLI:**
 
+- allow to install plugins in cli docker image (#1055)
 - handle malformed YAML files in a sane way (#994)
 - do not clip service env output (#1036)
 - handle invalid master name gracefully and improve formatting (#997)
