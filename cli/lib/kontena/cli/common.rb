@@ -1,31 +1,67 @@
 require 'colorize'
 require 'uri'
+require 'io/console'
+
+require_relative 'config'
 
 module Kontena
   module Cli
     module Common
+
+      def logger
+        return @logger if @logger
+        @logger = Logger.new(STDOUT)
+        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
+        @logger.progname = 'COMMON'
+        @logger
+      end
+
+      def config
+        Kontena::Cli::Config.instance
+      end
+
       def require_api_url
-        api_url
+        config.require_current_master.url
       end
 
       def require_token
-        token = ENV['KONTENA_TOKEN'] || current_master['token']
-        unless token
-          raise ArgumentError.new("Please login first using: kontena login")
+        retried ||= false
+        config.require_current_master_token
+      rescue Kontena::Cli::Config::TokenExpiredError
+        if retried
+          raise ArgumentError, "Current master access token has expired and refresh failed."
+        else
+          logger.debug "Access token expired, trying to refresh"
+          retried = true
+          client.refresh_token && retry
         end
-        token
       end
 
-      def client(token = nil)
-        if @client.nil?
-          headers = {}
-          unless token.nil?
-            headers['Authorization'] = "Bearer #{token}"
-          end
+      def require_current_master
+        config.require_current_master
+      end
 
-          @client = Kontena::Client.new(api_url, headers)
+      def require_current_account
+        config.require_current_account
+      end
+
+      def current_account
+        config.current_account
+      end
+
+      def api_url_version
+        client.server_version
+      end
+
+      def client(token = nil, api_url = nil)
+        if token.kind_of?(String)
+          token = Kontena::Cli::Config::Token.new(access_token: token)
         end
-        @client
+
+        @client ||= Kontena::Client.new(
+          api_url || require_api_url,
+          token || require_current_master.token
+        )
       end
 
       def reset_client
@@ -33,39 +69,15 @@ module Kontena
       end
 
       def settings_filename
-        File.join(Dir.home, '/.kontena_client.json')
+        config.config_filename
       end
 
       def settings
-        if @settings.nil?
-          if File.exists?(settings_filename)
-            @settings = JSON.parse(File.read(settings_filename))
-            unless @settings['current_server']
-              # Let's migrate the old settings model to new
-              @settings['server']['name'] = 'default'
-              @settings = {
-                  'current_server' => 'default',
-                  'servers' => [ @settings['server']]
-              }
-              save_settings
-            end
-          else
-            @settings = {
-                'current_server' => 'default',
-                'servers' => [{}]
-            }
-          end
-        end
-        @settings
+        config
       end
 
       def api_url
-        url = ENV['KONTENA_URL'] || current_master['url']
-        unless url
-          raise ArgumentError.new("It seem's that you are not logged into Kontena master, please login with: kontena login")
-        end
-        ensure_custom_ssl_ca(url)
-        url
+        config.require_current_master.url
       end
 
       def ensure_custom_ssl_ca(url)
@@ -79,47 +91,32 @@ module Kontena
       end
 
       def current_grid=(grid)
-        settings['servers'][current_master_index]['grid'] = grid['id']
-        save_settings
+        config.current_grid=(grid)
       end
 
       def require_current_grid
-        if current_grid.nil?
-          raise ArgumentError.new("Please select grid first using: kontena grid use <grid name>")
-        end
+        config.require_current_grid
       end
 
       def clear_current_grid
-        settings['servers'][current_master_index].delete('grid')
-        save_settings
+        current_master.delete_field(:grid) if require_current_master.respond_to?(:grid)
+        config.write
       end
 
       def current_grid
-        if self.respond_to?(:grid)
-          ENV['KONTENA_GRID'] || grid || current_master['grid']
-        else
-          ENV['KONTENA_GRID'] || current_master['grid']
-        end
-      rescue ArgumentError => e
-        nil      
+        config.current_grid || (self.respond_to?(:grid) ? self.grid : nil)
       end
 
       def current_master_index
-        current_server = settings['current_server'] || 'default'
-        settings['servers'].find_index{|m| m['name'] == current_server}
+        config.find_server_index(require_current_master.name)
       end
 
       def current_master
-        index = current_master_index
-        unless index
-          raise ArgumentError.new("It seem's that you are not logged into ANY Kontena master, please login with: kontena login")
-        end
-        settings['servers'][index]
+        config.current_master
       end
 
       def current_master=(master_alias)
-        settings['current_server'] = master_alias
-        save_settings
+        config.current_master = master_alias
       end
 
       def error(message = nil)
@@ -146,30 +143,59 @@ module Kontena
       end
 
       def api_url=(api_url)
-        settings['servers'][current_master_index]['url'] = api_url
-        save_settings
+        config.current_master.url = api_url
+        config.write
       end
 
       def access_token=(token)
-        settings['servers'][current_master_index]['token'] = token
-        save_settings
+        require_current_master.token.access_token = token
+        config.write
       end
 
       def add_master(server_name, master_info)
-        server_name = server_name || 'default'
-        index = settings['servers'].find_index{|m| m['name'] == server_name}
-        if index
-          settings['servers'][index] = master_info
-        else
-          settings['servers'] << master_info
-        end
-        settings['current_server'] = server_name
-        save_settings
+        config.add_server(master_info.merge('name' => server_name))
       end
 
-      def save_settings
-        File.write(settings_filename, JSON.pretty_generate(settings))
+      def any_key_to_continue
+        msg = "Press any key to continue or ctrl-c to cancel.. "
+        print "#{msg}".colorize(:white)
+        char = STDIN.getch
+        print "\r#{' ' * msg.length}\r"
+        if char == "\u0003"
+          puts "Canceled".colorize(:red)
+          exit 1
+        end
       end
+
+      def display_logo
+        logo = <<LOGO
+ _               _
+| | _____  _ __ | |_ ___ _ __   __ _
+| |/ / _ \\| '_ \\| __/ _ \\ '_ \\ / _` |
+|   < (_) | | | | ||  __/ | | | (_| |
+|_|\\_\\___/|_| |_|\\__\\___|_| |_|\\__,_|
+-------------------------------------
+Copyright (c)2016 Kontena, Inc.
+LOGO
+        puts logo
+      end
+
+      def display_login_info
+        server = config.current_master
+        if server
+          puts [
+            'Authenticated to'.colorize(:green),
+            server.name.colorize(:yellow),
+            'at'.colorize(:green),
+            server.url.colorize(:yellow),
+            'as'.colorize(:green),
+            server.username.colorize(:yellow)
+          ].join(' ')
+        else
+          puts "Master not selected".colorize(:red)
+        end
+    end
+
     end
   end
 end

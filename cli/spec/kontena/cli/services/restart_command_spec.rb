@@ -22,7 +22,7 @@ describe Kontena::Cli::Services::RestartCommand do
     end
 
     it 'triggers restart command' do
-      expect(subject).to receive(:restart_service).with(token, 'service')
+      expect(subject).to receive(:restart_service)
       subject.run(['service'])
     end
   end
