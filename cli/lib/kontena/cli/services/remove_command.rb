@@ -13,7 +13,17 @@ module Kontena::Cli::Services
       token = require_token
       confirm_command(name) unless forced?
 
-      result = client(token).delete("services/#{parse_service_id(name)}")
+      ShellSpinner "removing service #{name.colorize(:cyan)} " do
+        client(token).delete("services/#{parse_service_id(name)}")
+        removed = false
+        until removed == true
+          begin
+            client(token).get("services/#{parse_service_id(name)}")
+          rescue Kontena::Errors::StandardError => exc
+            removed = true if exc.status == 404
+          end
+        end
+      end
     end
   end
 end

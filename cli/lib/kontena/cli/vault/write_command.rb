@@ -20,7 +20,9 @@ module Kontena::Cli::Vault
           name: name,
           value: secret
       }
-      client(token).post("grids/#{current_grid}/secrets", data)
+      ShellSpinner "writing #{name.colorize(:cyan)} to the vault " do
+        client(token).post("grids/#{current_grid}/secrets", data)
+      end
     end
   end
 end

@@ -19,11 +19,19 @@ module Kontena::Cli::Grids
         name: name
       }
       payload[:initial_size] = initial_size if initial_size
+      grid = nil
+      if initial_size == 1
+        STDERR.puts pastel.yellow("WARNING: --initial-size=1 is only recommended for test/dev usage")
+      end
+      spinner "creating #{pastel.cyan(name)} grid " do
+        grid = client(token).post('grids', payload)
+      end
       grid = client(token).post('grids', payload)
       if grid && !self.skip_use?
-        config.current_grid = grid['name']
-        config.write
-        puts "Using grid: #{pastel.cyan(grid['name'])}"
+        spinner "switching scope to #{paster.cyan(name)} grid " do
+          config.current_grid = grid['name']
+          config.write
+        end
       end
     end
   end

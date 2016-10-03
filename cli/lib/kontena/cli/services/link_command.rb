@@ -20,7 +20,9 @@ module Kontena::Cli::Services
       links = service['links'].map{|l| {name: l['grid_service_id'].split('/')[1], alias: l['alias']} }
       links << {name: target.to_s, alias: target.to_s}
       data = {links: links}
-      update_service(token, name, data)
+      ShellSpinner "linking #{name.colorize(:cyan)} to #{target.colorize(:cyan)} " do
+        update_service(token, name, data)
+      end
     end
   end
 end

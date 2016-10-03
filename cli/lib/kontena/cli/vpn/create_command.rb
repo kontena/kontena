@@ -2,6 +2,7 @@ module Kontena::Cli::Vpn
   class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::Services::ServicesHelper
 
     option '--node', 'NODE', 'Node name where VPN is deployed'
     option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
@@ -10,7 +11,7 @@ module Kontena::Cli::Vpn
       require_api_url
       token = require_token
       preferred_node = node
-      
+
       vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
       abort('Vpn already exists') if vpn
 
@@ -34,13 +35,28 @@ module Kontena::Cli::Vpn
       }
       client(token).post("grids/#{current_grid}/services", data)
       client(token).post("services/#{current_grid}/vpn/deploy", {})
-      spinner "Deploying vpn service " do
-        sleep 1 until client(token).get("services/#{current_grid}/vpn")['state'] != 'deploying'
+      name = 'vpn'
+      spinner "deploying #{name.colorize(:cyan)} service " do
+        wait_for_deploy_to_finish(token, parse_service_id('vpn'))
       end
-      puts "OpenVPN service is now started (udp://#{vpn_ip}:1194)."
-      puts "Use 'kontena vpn config' to fetch OpenVPN client config to your machine (it takes a while until config is ready)."
+      spinner "generating #{name.colorize(:cyan)} keys (this will take a while) " do
+        wait_for_configuration_to_finish(token)
+      end
+      puts "#{name.colorize(:cyan)} service is now started (udp://#{vpn_ip}:1194)."
+      puts "use 'kontena vpn config' to fetch OpenVPN client config to your machine."
     end
 
+    def wait_for_configuration_to_finish(token)
+      finished = false
+      payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
+      until finished
+        sleep 30
+        stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
+        finished = true if stdout.join('').include?('BEGIN PRIVATE KEY'.freeze)
+      end
+
+      finished
+    end
 
     def find_node(token, preferred_node = nil)
       nodes = client(token).get("grids/#{current_grid}/nodes")
@@ -59,10 +75,10 @@ module Kontena::Cli::Vpn
     # @return [String]
     def node_vpn_ip(node)
       return ip unless ip.nil?
-      
+
       # vagrant
       if node['labels'] && node['labels'].include?('provider=vagrant')
-        node['private_ip'].to_s 
+        node['private_ip'].to_s
       else
         node['public_ip'].to_s.empty? ? node['private_ip'].to_s : node['public_ip'].to_s
       end

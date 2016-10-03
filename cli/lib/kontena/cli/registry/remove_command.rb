@@ -8,11 +8,14 @@ module Kontena::Cli::Registry
       require_api_url
       token = require_token
       confirm unless forced?
+      name = 'registry'
 
-      registry = client(token).get("services/#{current_grid}/registry") rescue nil
-      abort("Docker Registry service does not exist") if registry.nil?
+      registry = client(token).get("services/#{current_grid}/#{name}") rescue nil
+      abort("#{name.colorize(:cyan)} service does not exist") if registry.nil?
 
-      client(token).delete("services/#{current_grid}/registry")
+      ShellSpinner "removing #{name.colorize(:cyan)} service " do
+        client(token).delete("services/#{current_grid}/#{name}")
+      end
     end
   end
 end

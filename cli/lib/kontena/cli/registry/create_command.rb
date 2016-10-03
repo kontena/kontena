@@ -2,6 +2,7 @@ module Kontena::Cli::Registry
   class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::Services::ServicesHelper
 
     REGISTRY_VERSION = '2.2'
 
@@ -96,8 +97,8 @@ module Kontena::Cli::Registry
       }
       client(token).post("grids/#{current_grid}/services", data)
       client(token).post("services/#{current_grid}/registry/deploy", {})
-      spinner "Deploying registry service " do
-        sleep 1 until client(token).get("services/#{current_grid}/registry")['state'] != 'deploying'
+      spinner "deploying #{data[:name].colorize(:cyan)} service " do
+        wait_for_deploy_to_finish(token, parse_service_id(data[:name]))
       end
       puts "\n"
       puts "Docker Registry #{REGISTRY_VERSION} is now running at registry.#{current_grid}.kontena.local."

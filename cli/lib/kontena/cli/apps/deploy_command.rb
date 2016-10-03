@@ -47,15 +47,13 @@ module Kontena::Cli::Apps
         options = {}
         options[:force] = true if force? || force_deploy? # deprecated
         if force_deploy?
-          print "[WARNING]".colorize(:yellow)
-          puts " --force-deploy will deprecate in the future, use --force"
+          warning " --force-deploy will deprecate in the future, use --force"
         end
-        deploy_service(token, name, options)
-        print "deploying #{unprefixed_name(name).colorize(:cyan)}"
-        unless async?
-          wait_for_deploy_to_finish(token, service['id'])
-        else
-          puts ''
+        ShellSpinner "deploying #{unprefixed_name(name).colorize(:cyan)} " do
+          deploy_service(token, name, options)
+          unless async?
+            wait_for_deploy_to_finish(token, service['id'])
+          end
         end
       end
     end
@@ -95,19 +93,25 @@ module Kontena::Cli::Apps
     # @param [String] name
     # @param [Hash] options
     def create(name, options)
-      puts "creating #{name.colorize(:cyan)}"
       name = prefixed_name(name)
       data = { 'name' => name }
       data.merge!(options)
-      create_service(token, current_grid, data)
+      result = nil
+      ShellSpinner "creating #{name.colorize(:cyan)} " do
+        result = create_service(token, current_grid, data)
+      end
+      result
     end
 
-    # @param [String] id
+    # @param [String] name
     # @param [Hash] options
-    def update(id, options)
-      puts "updating #{id.colorize(:cyan)}"
-      id = prefixed_name(id)
-      update_service(token, id, options)
+    def update(name, options)
+      prefixed_name = prefixed_name(name)
+      result = nil
+      ShellSpinner "updating #{name.colorize(:cyan)} " do
+        result = update_service(token, prefixed_name, options)
+      end
+      result
     end
 
     # @param [String] name
