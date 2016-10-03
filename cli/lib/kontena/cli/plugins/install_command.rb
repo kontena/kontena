@@ -1,7 +1,7 @@
 require 'open3'
 
 module Kontena::Cli::Plugins
-  class InstallCommand < Clamp::Command
+  class InstallCommand < Kontena::Command
     include Kontena::Util
 
     parameter 'NAME', 'Plugin name'
@@ -15,7 +15,7 @@ module Kontena::Cli::Plugins
       gem_bin = which('gem')
       install_command = "#{gem_bin} install --no-ri --no-doc #{plugin}"
       success = false
-      ShellSpinner "Installing plugin #{name.colorize(:cyan)}" do
+      spinner "Installing plugin #{name.colorize(:cyan)}" do
         stdout, stderr, status = Open3.capture3(install_command)
         unless stderr.empty?
           raise stderr

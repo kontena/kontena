@@ -1,5 +1,5 @@
 module Kontena::Cli::Nodes
-  class SshCommand < Clamp::Command
+  class SshCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

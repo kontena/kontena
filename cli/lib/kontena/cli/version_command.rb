@@ -1,6 +1,6 @@
 require_relative 'version'
 
-class Kontena::Cli::VersionCommand < Clamp::Command
+class Kontena::Cli::VersionCommand < Kontena::Command
   include Kontena::Cli::Common
 
   def execute

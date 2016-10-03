@@ -2,7 +2,7 @@ require_relative 'certificate/register_command'
 require_relative 'certificate/authorize_command'
 require_relative 'certificate/get_command'
 
-class Kontena::Cli::CertificateCommand < Clamp::Command
+class Kontena::Cli::CertificateCommand < Kontena::Command
 
 
   subcommand "register", "Register to LetsEncrypt", Kontena::Cli::Certificate::RegisterCommand

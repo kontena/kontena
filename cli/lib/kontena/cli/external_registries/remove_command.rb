@@ -1,5 +1,5 @@
 module Kontena::Cli::ExternalRegistries
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "NAME", "External registry name to remove"

@@ -1,5 +1,5 @@
 module Kontena::Cli::Grids::TrustedSubnets
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "NAME", "Grid name"

@@ -1,5 +1,5 @@
 module Kontena::Cli::Vault
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

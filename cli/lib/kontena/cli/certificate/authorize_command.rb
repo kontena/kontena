@@ -1,6 +1,6 @@
 
 module Kontena::Cli::Certificate
-  class AuthorizeCommand < Clamp::Command
+  class AuthorizeCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Grids
-  class CloudConfigCommand < Clamp::Command
+  class CloudConfigCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 

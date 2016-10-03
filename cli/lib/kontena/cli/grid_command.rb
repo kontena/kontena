@@ -12,7 +12,7 @@ require_relative 'grids/user_command'
 require_relative 'grids/cloud_config_command'
 require_relative 'grids/trusted_subnet_command'
 
-class Kontena::Cli::GridCommand < Clamp::Command
+class Kontena::Cli::GridCommand < Kontena::Command
 
   subcommand ["list","ls"], "List all grids", Kontena::Cli::Grids::ListCommand
   subcommand "create", "Create a new grid", Kontena::Cli::Grids::CreateCommand

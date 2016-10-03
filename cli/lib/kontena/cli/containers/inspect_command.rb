@@ -1,5 +1,5 @@
 module Kontena::Cli::Containers
-  class InspectCommand < Clamp::Command
+  class InspectCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

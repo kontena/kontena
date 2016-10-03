@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Stacks
-  class CreateCommand < Clamp::Command
+  class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
