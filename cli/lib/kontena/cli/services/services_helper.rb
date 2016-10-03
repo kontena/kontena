@@ -97,11 +97,7 @@ module Kontena
           if service['env'].to_a.size > 0
             puts "  env: "
             service['env'].to_a.each do |e|
-              if e.length > 50
-                puts "    - #{e[0..50]}..."
-              else
-                puts "    - #{e}"
-              end
+              puts "    - #{e}"
             end
           end
 
