@@ -14,31 +14,33 @@ Sometimes the container will exists but the application running within the conta
 Configuring a custom health check is done by adding the configuration in the kontena.yml file:
 
 ```
-web:
-  image: nginx
-  stateful: false
-  health_check:
-    protocol: http
-    port: 80
-    interval: 20
-    uri: /health
-    initial_delay: 10
-    timeout: 2
+version: '2'
+services:
+  web:
+    image: nginx
+    stateful: false
+    health_check:
+      protocol: http
+      port: 80
+      interval: 20
+      uri: /health
+      initial_delay: 10
+      timeout: 2
 
-mysql:
-  image: mysql
-  stateful: true
-  deploy:
-    strategy: ha
-    wait_for_port: 3306
-  environment:
-    - MYSQL_ALLOW_EMPTY_PASSWORD=true
-  health_check:
-    protocol: tcp
-    port: 3306
-    interval: 10
-    initial_delay: 10
-    timeout: 2
+  mysql:
+    image: mysql
+    stateful: true
+    deploy:
+      strategy: ha
+      wait_for_port: 3306
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    health_check:
+      protocol: tcp
+      port: 3306
+      interval: 10
+      initial_delay: 10
+      timeout: 2
 ```
 Options:
 * `protocol`: protocol to use, either `http` or `tcp`
