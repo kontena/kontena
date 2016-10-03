@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.5 (2016-10-02)
+
+**CLI:**
+
+- handle malformed YAML files in a sane way (#994)
+- do not clip service env output (#1036)
+- handle invalid master name gracefully and improve formatting (#997)
+
 ## 0.15.4 (2016-09-22)
 
 **CLI:**
