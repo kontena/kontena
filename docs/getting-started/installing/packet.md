@@ -36,7 +36,7 @@ After Kontena Master has provisioned you will be automatically authenticated as 
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. A Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
 
 Switch to existing grid using the following command:
 
@@ -50,7 +50,7 @@ Or create a new grid using the command:
 $ kontena grid create --initial-size=<initial_size> test-grid
 ```
 
-Now you can start provision nodes to Packet. Issue the following command (with right options) as many times as desired:
+Now you can start provisioning nodes to Packet. Issue the following command (with right options) as many times as desired:
 
 ```
 $ kontena packet node create \
