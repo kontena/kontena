@@ -13,7 +13,8 @@ module Kontena::Cli::Apps
     option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option '--async', :flag, 'Run deploys async/parallel'
-    option '--force-deploy', :flag, 'Force deploy even if service does not have any changes'
+    option '--force', :flag, 'Force deploy even if service does not have any changes'
+    option '--force-deploy', :flag, '[DEPRECATED: use --force]'
 
     parameter "[SERVICE] ...", "Services to start"
 
@@ -44,7 +45,11 @@ module Kontena::Cli::Apps
       queue.each do |service|
         name = service['id'].split('/').last
         options = {}
-        options[:force] = true if force_deploy?
+        options[:force] = true if force? || force_deploy? # deprecated
+        if force_deploy?
+          print "[WARNING]".colorize(:yellow)
+          puts " --force-deploy will deprecate in the future, use --force"
+        end
         deploy_service(token, name, options)
         print "deploying #{unprefixed_name(name).colorize(:cyan)}"
         unless async?
