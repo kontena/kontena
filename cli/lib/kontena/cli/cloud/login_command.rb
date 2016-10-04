@@ -76,7 +76,7 @@ module Kontena::Cli::Cloud
       puts "Once the authentication is complete you can close the browser"
       puts "window or tab and return to this window to continue."
       puts
-      any_key_to_continue
+      any_key_to_continue(10)
 
       puts "If the browser does not open, try visiting this URL manually:"
       puts "<#{uri.to_s}>"
