@@ -200,6 +200,9 @@ module Kontena
             if container['state']['error'] && container['state']['error'] != ''
               puts "      reason: #{container['state']['error']}"
             end
+            if container['state']['exit_code'] && container['state']['exit_code'] != ''
+              puts "      exit code: #{container['state']['exit_code']}"
+            end
           end
         end
 
