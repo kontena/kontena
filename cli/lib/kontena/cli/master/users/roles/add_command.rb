@@ -1,7 +1,7 @@
 require_relative '../../../common'
 
 module Kontena::Cli::Master::Users::Roles
-  class AddCommand < Clamp::Command
+  class AddCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "ROLE", "Role name"

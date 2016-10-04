@@ -1,7 +1,7 @@
 require 'shell-spinner'
 
 module Kontena::Cli::Vpn
-  class CreateCommand < Clamp::Command
+  class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

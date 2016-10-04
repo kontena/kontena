@@ -4,7 +4,7 @@ require_relative 'vault/read_command'
 require_relative 'vault/remove_command'
 require_relative 'vault/update_command'
 
-class Kontena::Cli::VaultCommand < Clamp::Command
+class Kontena::Cli::VaultCommand < Kontena::Command
 
   subcommand ["list", "ls"], "List secrets", Kontena::Cli::Vault::ListCommand
   subcommand "write", "Write a secret", Kontena::Cli::Vault::WriteCommand

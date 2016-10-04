@@ -1,4 +1,4 @@
-class Kontena::Cli::LoginCommand < Clamp::Command
+class Kontena::Cli::LoginCommand < Kontena::Command
   include Kontena::Cli::Common
 
   parameter "URL", "Kontena Master URI"

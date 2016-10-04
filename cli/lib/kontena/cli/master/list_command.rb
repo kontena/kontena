@@ -1,5 +1,5 @@
 module Kontena::Cli::Master
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
     include Kontena::Cli::Common
 
     def execute

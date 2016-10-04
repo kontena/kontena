@@ -1,4 +1,4 @@
-class Kontena::Cli::RegisterCommand < Clamp::Command
+class Kontena::Cli::RegisterCommand < Kontena::Command
   include Kontena::Cli::Common
 
   option "--auth-provider-url", "AUTH_PROVIDER_URL", "Auth provider URL"

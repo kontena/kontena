@@ -1,5 +1,5 @@
 module Kontena::Cli::ExternalRegistries
-  class AddCommand < Clamp::Command
+  class AddCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

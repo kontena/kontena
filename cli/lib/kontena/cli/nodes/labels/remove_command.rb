@@ -1,5 +1,5 @@
 module Kontena::Cli::Nodes::Labels
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "NODE_ID", "Node id"

@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Grids
-  class AuditLogCommand < Clamp::Command
+  class AuditLogCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 

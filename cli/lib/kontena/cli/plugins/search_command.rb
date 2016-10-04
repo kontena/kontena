@@ -1,5 +1,5 @@
 module Kontena::Cli::Plugins
-  class SearchCommand < Clamp::Command
+  class SearchCommand < Kontena::Command
 
     parameter '[NAME]', 'Search text'
 

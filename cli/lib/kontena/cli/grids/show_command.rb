@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Grids
-  class ShowCommand < Clamp::Command
+  class ShowCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
 

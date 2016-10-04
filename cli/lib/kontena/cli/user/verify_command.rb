@@ -1,5 +1,5 @@
 module Kontena::Cli::User
-  class VerifyCommand < Clamp::Command
+  class VerifyCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "TOKEN", "Kontena verify token"

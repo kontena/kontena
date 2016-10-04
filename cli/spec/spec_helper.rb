@@ -7,6 +7,7 @@
 
 require 'clamp'
 require 'ruby_dig'
+require 'kontena/command'
 require 'kontena/cli/common'
 require 'kontena/cli/grid_options'
 require 'kontena/client'

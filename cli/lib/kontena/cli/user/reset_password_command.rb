@@ -1,5 +1,5 @@
 module Kontena::Cli::User
-  class ResetPasswordCommand < Clamp::Command
+  class ResetPasswordCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "TOKEN", "Password reset token"

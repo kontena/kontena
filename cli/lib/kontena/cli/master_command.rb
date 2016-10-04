@@ -3,7 +3,7 @@ require_relative 'master/list_command'
 require_relative 'master/users_command'
 require_relative 'master/current_command'
 
-class Kontena::Cli::MasterCommand < Clamp::Command
+class Kontena::Cli::MasterCommand < Kontena::Command
 
   subcommand ["list", "ls"], "List masters where client has logged in", Kontena::Cli::Master::ListCommand
   subcommand "use", "Switch to use selected master", Kontena::Cli::Master::UseCommand
