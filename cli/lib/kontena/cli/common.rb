@@ -276,10 +276,28 @@ module Kontena
         end
       end
 
-      def display_login_info(only: nil)
-        unless only == :account
-          server = config.current_master
-          if server
+      def display_account_login_info
+        if kontena_account
+          if kontena_account.token && kontena_account.token.access_token
+            begin
+              puts [
+                pastel.green("Authenticated to Kontena Cloud at"),
+                pastel.yellow(kontena_account.url),
+                pastel.green("as"),
+                pastel.yellow(kontena_account.username)
+              ].join(' ')
+            rescue
+            end
+          else
+            puts pastel.cyan("Not authenticated to Kontena Cloud")
+          end
+        end
+      end
+
+      def display_master_login_info
+        server = config.current_master
+        if server
+          if server.token && server.access_token
             puts [
               pastel.green('Authenticated to Kontena Master'),
               pastel.yellow(server.name),
@@ -289,24 +307,16 @@ module Kontena
               pastel.yellow(server.username)
             ].join(' ')
           else
-            puts pastel.red("master not selected")
+            puts pastel.cyan("Not authenticated to current master #{server.name}")
           end
+        else
+          puts pastel.cyan("Current master not selected")
         end
-        unless only == :master
-          if kontena_account
-            if kontena_account.token && kontena_account.token.access_token
-              begin
-                puts [
-                  pastel.green("Authenticated to Kontena Cloud at"),
-                  pastel.yellow(kontena_account.url),
-                  pastel.green("as"),
-                  pastel.yellow(kontena_account.username)
-                ].join(' ')
-              rescue
-              end
-            end
-          end
-        end
+      end
+
+      def display_login_info(only: nil)
+        display_master_login_info  unless only == :account
+        display_account_login_info unless only == :master
       end
 
       def display_logo
