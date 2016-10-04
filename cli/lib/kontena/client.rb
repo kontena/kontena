@@ -52,7 +52,13 @@ module Kontena
       @options[:default_headers] ||= {}
       Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
 
-      @http_client = Excon.new(api_url, omit_default_port: true)
+      @http_client = Excon.new(
+        api_url,
+        omit_default_port: true,
+        connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] || 5,
+        read_timeout:    ENV["EXCON_READ_TIMEOUT"]    || 5,
+        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   || 5
+      )
 
       @default_headers = {
         ACCEPT => CONTENT_JSON,
