@@ -54,9 +54,9 @@ After Kontena Master has provisioned you will be automatically authenticated as 
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch cli scope to a grid. Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
 
-Switch to existing grid using the following command:
+Switch to an existing grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
@@ -68,7 +68,7 @@ Or create a new grid using the command:
 $ kontena grid create --initial-size=<initial_node_count> test-grid
 ```
 
-Now you can start provision nodes to Azure. Issue the following command (with right options) as many times as desired:
+Now you can start provisioning nodes to Azure. Issue the following command (with the right options) as many times as desired:
 
 ```
 $ kontena azure node create \
