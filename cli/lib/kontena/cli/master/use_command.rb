@@ -1,31 +1,21 @@
 module Kontena::Cli::Master
-  class UseCommand < Clamp::Command
+  class UseCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "NAME", "Master name to use"
 
     def execute
-      master = settings['servers'].find { |s| s['name'] == name }
-
-      if master
-        self.current_master = master['name']
-        puts "Using master: #{master['name'].cyan} (#{master['url']})"
-        puts "Using grid: #{current_grid.cyan}" if current_grid
-
-        grids = client(require_token).get('grids')['grids']
-        if grids.size > 1
-          puts ""
-          puts "You have access to following grids:"
-          puts ""
-          grids.each do |grid|
-            puts "  * #{grid['name']}"
-          end
-        end
+      master = config.find_server(name)
+      if master.nil?
+        abort pastel.red("Could not resolve master by name '#{name}'.") +
+              "\nFor a list of known masters please run: kontena master list"
       else
-        abort "Could not resolve master with name: #{name}".colorize(:red)
+        config.current_master = master['name']
+        config.write
+        puts "Using master: #{pastel.cyan(master['name'])} (#{master['url']})"
+        puts "Using grid: #{current_grid ? pastel.cyan(current_grid) : "<none>"}"
       end
     end
-
   end
 
 end

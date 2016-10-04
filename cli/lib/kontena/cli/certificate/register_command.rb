@@ -1,6 +1,6 @@
 
 module Kontena::Cli::Certificate
-  class RegisterCommand < Clamp::Command
+  class RegisterCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

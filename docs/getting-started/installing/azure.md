@@ -50,11 +50,7 @@ $ kontena azure master create \
   --ssh-key <path-to-ssh-private-key>
 ```
 
-After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name azure-master https://<master_ip>/
-```
+After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
@@ -100,7 +96,6 @@ Options:
     --ssl-cert SSL CERT           SSL certificate file
     --vault-secret VAULT_SECRET   Secret key for Vault
     --vault-iv VAULT_IV           Initialization vector for Vault
-    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
     --version VERSION             Define installed Kontena version (default: "latest")
 ```
 

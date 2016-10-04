@@ -1,0 +1,23 @@
+default: &default
+  server.root_url: <%= ENV['KONTENA_MASTER_URL'] %>
+  server.name: <%= ENV['KONTENA_SERVER_NAME'] %>
+  oauth2.client_id: <%= ENV['AUTH_CLIENT_ID'] %>
+  oauth2.client_secret: <%= ENV['AUTH_CLIENT_SECRET'] %>
+  oauth2.authorize_endpoint: <%= ENV['AUTH_AUTHORIZE_ENDPOINT'] %>
+  oauth2.token_endpoint: <%= ENV['AUTH_TOKEN_ENDPOINT'] %>
+  oauth2.userinfo_endpoint: <%= ENV['AUTH_USERINFO_ENDPOINT'] %>
+  oauth2.token_method: <%= ENV['AUTH_TOKEN_METHOD'] %>
+  oauth2.token_post_content_type: <%= ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] %>
+  oauth2.code_requires_basic_auth: <%= ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == "true" %>
+  oauth2.userinfo_scope: <%= ENV['AUTH_USERINFO_SCOPE'] %>
+  oauth2.userinfo_username_jsonpath: <%= ENV['AUTH_USERINFO_USERNAME_JSONPATH'] %>
+  oauth2.userinfo_email_jsonpath: <%= ENV['AUTH_USERINFO_EMAIL_JSONPATH'] %>
+  oauth2.userinfo_email_verified_jsonpath: <%= ENV['AUTH_USERINFO_EMAIL_VERIFIED_JSONPATH'] %>
+  oauth2.userinfo_user_id_jsonpath: <%= ENV['AUTH_USERINFO_USER_ID_JSONPATH'] %>
+  oauth2.ignore_invalid_ssl: <%= ENV['AUTH_IGNORE_INVALID_SSL'].to_s == "true" %>
+development:
+  <<: *default
+production:
+  <<: *default
+test:
+  <<: *default

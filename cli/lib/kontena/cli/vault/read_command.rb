@@ -1,5 +1,5 @@
 module Kontena::Cli::Vault
-  class ReadCommand < Clamp::Command
+  class ReadCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 

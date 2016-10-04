@@ -38,7 +38,7 @@ module Kontena::Cli::Grids
     end
 
     def grids
-      @grids ||= client(require_token).get('grids')
+      @grids ||= client.get('grids')
     end
 
     # @param [Array<Hash>] nodes

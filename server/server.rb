@@ -1,19 +1,41 @@
 require 'logger'
+require 'pathname'
+
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
+require_relative 'app/middlewares/token_authentication'
+require_relative 'app/helpers/config_helper'
 
-Dir[__dir__ + '/app/routes/v1/*.rb'].each {|file| require file }
+Dir[__dir__ + '/app/routes/*.rb'].each {|file| require file }
+Dir[__dir__ + '/app/routes/**/*.rb'].each {|file| require file }
+
 Logger.class_eval { alias :write :'<<' }
 
 class Server < Roda
   VERSION = File.read('./VERSION').strip
 
-  if ENV['RACK_ENV'] == 'test'
-    logger = nil
-  else
-    logger = Logger.new(STDOUT)
+  use Rack::CommonLogger, Logging.logger
+  use Rack::Attack
+  use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
+  use TokenAuthentication, File.expand_path('../config/authentication.yml', __FILE__)
+
+  include Logging
+  include ConfigHelper
+
+  # Path to server application root
+  def self.root
+    @root ||= Pathname.new(File.dirname(__FILE__))
   end
-  use Rack::CommonLogger, logger
+
+  # Service root url
+  def self.root_url
+    @url ||= config['server.root_url']
+  end
+
+  def self.name
+    @name ||= config['server.name']
+  end
+
   plugin :json
 
   route do |r|
@@ -27,57 +49,30 @@ class Server < Roda
     end
 
     r.on 'v1' do
-      r.on 'ping' do
-        r.run V1::PingApi
+      r.run V1::Api
+    end
+
+    r.on 'authenticate' do
+      r.run OAuth2Api::AuthenticateApi
+    end
+
+    r.on 'cb' do
+      r.run OAuth2Api::CallbackApi
+    end
+
+    r.on 'oauth2' do
+      r.on 'token' do
+        r.run OAuth2Api::TokenApi
       end
 
-      r.post 'auth' do
-        r.run V1::AuthApi
+      r.on 'tokens' do
+        r.run OAuth2Api::TokensApi
       end
 
-      r.on('user') do
-        r.run V1::UserApi
-      end
-
-      r.on('users') do
-        r.run V1::UsersApi
-      end
-
-      r.on('grids') do
-        r.run V1::GridsApi
-      end
-
-      r.on('nodes') do
-        r.run V1::NodesApi
-      end
-
-      r.on('services') do
-        r.run V1::ServicesApi
-      end
-
-      r.on('containers') do
-        r.run V1::ContainersApi
-      end
-
-      r.on('external_registries') do
-        r.run V1::ExternalRegistriesApi
-      end
-
-      r.on('etcd') do
-        r.run V1::EtcdApi
-      end
-
-      r.on('secrets') do
-        r.run V1::SecretsApi
-      end
-
-      r.on('stacks') do
-        r.run V1::StacksApi
-      end
-
-      r.on('certificates') do
-        r.run V1::CertificatesApi
+      r.on 'authorize' do 
+        r.run OAuth2Api::AuthorizationApi
       end
     end
+
   end
 end

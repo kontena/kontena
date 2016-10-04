@@ -1,11 +1,11 @@
 require 'clamp'
-require_relative 'command'
-require_relative 'util'
 require_relative 'cli/common'
+require_relative 'util'
+require_relative 'command'
+require_relative 'callback'
 require_relative 'cli/bytes_helper'
 require_relative 'cli/grid_options'
 require_relative 'cli/app_command'
-require_relative 'cli/register_command'
 require_relative 'cli/login_command'
 require_relative 'cli/logout_command'
 require_relative 'cli/whoami_command'
@@ -20,15 +20,17 @@ require_relative 'cli/external_registry_command'
 require_relative 'cli/app_command'
 require_relative 'cli/etcd_command'
 require_relative 'cli/vault_command'
-require_relative 'cli/user_command'
 require_relative 'cli/plugin_command'
 require_relative 'cli/version_command'
 require_relative 'cli/stack_command'
 require_relative 'cli/certificate_command'
+require_relative 'cli/cloud_command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
 
+  subcommand "cloud", "Kontena Cloud specific commands", Kontena::Cli::CloudCommand
+  subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", Kontena::Cli::LogoutCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
   subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand if experimental?
@@ -42,13 +44,10 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "container", "Container specific commands", Kontena::Cli::ContainerCommand
   subcommand "etcd", "Etcd specific commands", Kontena::Cli::EtcdCommand
   subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
-  subcommand "register", "Register Kontena Account", Kontena::Cli::RegisterCommand
-  subcommand "login", "Login to Kontena Master", Kontena::Cli::LoginCommand
-  subcommand "logout", "Logout from Kontena Master", Kontena::Cli::LogoutCommand
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
-  subcommand "user", "User related commands", Kontena::Cli::UserCommand
   subcommand "plugin", "Plugin related commands", Kontena::Cli::PluginCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
+  subcommand "login", "Login to Kontena Master (removed, use kontena master login)", Kontena::Cli::LoginCommand
 
   def execute
   end

@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe 'secrets' do
 
   let(:request_headers) do
-    { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}" }
+    { 'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}" }
   end
 
   let(:grid) do

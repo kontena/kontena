@@ -4,7 +4,7 @@ module V1
   class UsersApi < Roda
     include RequestHelpers
     include CurrentUser
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
 
     plugin :multi_route
 
@@ -54,6 +54,14 @@ module V1
         end
 
         r.post do
+          unless AuthProvider.valid?
+            mime_halt(
+              501,
+              'server_error',
+              'Authentication provider not configured'
+            )
+            return
+          end
           params = parse_json_body
           params[:user] = current_user
           outcome = Users::Invite.run(params)

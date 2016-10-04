@@ -2,7 +2,7 @@ require_relative '../grid_options'
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class LinkCommand < Clamp::Command
+  class LinkCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper

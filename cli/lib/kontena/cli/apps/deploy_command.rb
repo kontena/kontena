@@ -3,7 +3,7 @@ require_relative 'common'
 require_relative 'docker_helper'
 
 module Kontena::Cli::Apps
-  class DeployCommand < Clamp::Command
+  class DeployCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common

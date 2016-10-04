@@ -29,11 +29,7 @@ Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. In
 $ kontena vagrant master create
 ```
 
-After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name vagrant-master http://<master_ip>:8080/
-```
+After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
@@ -74,7 +70,6 @@ Usage:
 Options:
     --memory MEMORY               How much memory node has (default: "512")
     --version VERSION             Define installed Kontena version (default: "latest")
-    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url
     --vault-secret VAULT_SECRET   Secret key for Vault
     --vault-iv VAULT_IV           Initialization vector for Vault
 ```

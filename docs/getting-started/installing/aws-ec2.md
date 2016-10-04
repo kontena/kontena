@@ -36,11 +36,7 @@ $ kontena aws master create \
   --region eu-west-1
 ```
 
-After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name aws-master https://<master_ip>/
-```
+After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
@@ -94,7 +90,6 @@ Options:
     --vault-iv VAULT_IV           Initialization vector for Vault (default: generate random iv)
     --mongodb-uri URI             External MongoDB uri (optional)
     --version VERSION             Define installed Kontena version (default: "latest")
-    --auth-provider-url AUTH_PROVIDER_URL Define authentication provider url (optional)
     --associate-public-ip-address Whether to associated public IP in case the VPC defaults to not doing it (default: true)
     --security-groups SECURITY_GROUPS Comma separated list of security groups (names) where the new instance will be attached (default: create 'kontena_master' group if not already existing)
 ```
