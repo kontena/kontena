@@ -58,12 +58,9 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    Mongodb::Migrator.new.migrate
     MongoPubsub.start!(PubsubChannel.collection)
     sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
-    if ENV['CI'] # travis
-      Mongoid::Tasks::Database.create_indexes
-    end
+    Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end
 
   config.before(:each) do
