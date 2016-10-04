@@ -83,7 +83,7 @@ Waiting for node kontena-node-broken-butterfly-72 join to grid testing... done
 
 You can repeat this step to provision additional Kontena Nodes to your Grid.
 
-**Note!** While Kontena works ok even with just single Kontena Node, it is recommended to have at least 2 Kontena Nodes provisioned in a Grid.
+**Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 2 Kontena Nodes provisioned in a Grid.
 
 If you followed the steps above, you should now have a working Kontena setup installed. Verify the setup using `kontena node list` command. It should list all the Kontena Nodes in your Grid.
 
@@ -95,7 +95,7 @@ $ kontena node list
 
  Now you are ready to deploy your first application. In this section we will show you how to deploy a simple Wordpress application and deploy it to your Kontena grid.
 
-First create `kontena.yml` file with the following contents
+First create `kontena.yml` file with the following contents:
 
 ```
 version: '2'
@@ -124,7 +124,7 @@ After that you can deploy the application with:
 $ kontena app deploy
 ```
 
-After the deploy is finished you can verify it using
+After the deploy is finished you can verify it using:
 
 ```
 $ kontena app show wordpress
