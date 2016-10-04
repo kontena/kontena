@@ -4,7 +4,7 @@ describe '/v1/containers' do
 
   let(:request_headers) do
     {
-        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}"
+        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}"
     }
   end
 
@@ -105,15 +105,6 @@ describe '/v1/containers' do
       expect(Docker::ContainerExecutor).to receive(:new).with(redis_container).and_return(docker_executor)
       expect(docker_executor).to receive(:exec_in_container).with(command)
       post "/v1/containers/#{redis_container.to_path}/exec", {cmd: '/bin/bash'}.to_json, request_headers
-    end
-  end
-
-  describe 'DELETE /logs' do
-    it 'deletes container logs' do
-      log_entry
-      expect {
-        delete "/v1/containers/#{redis_container.to_path}/logs", {}, request_headers
-      }.to change{ContainerLog.count}.to(0)
     end
   end
 end

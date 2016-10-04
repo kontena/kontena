@@ -20,6 +20,19 @@ module RequestHelpers
     end
   end
 
+  def parse_form_body
+    body = request.body.read
+    if body == ''
+      {}
+    else
+      URI.decode_www_form(body)
+    end
+  rescue
+    response.status = 400
+    response.write("invalid_request")
+    request.halt
+  end
+
   def parse_json_body
     body = request.body.read
     if body == ''
