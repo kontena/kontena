@@ -17,8 +17,7 @@ describe Kontena::Cli::Master::UseCommand do
     end
 
     it 'should abort with error message if master is not configured' do
-      expect { subject.run(['not_existing']) }.to raise_error(
-        SystemExit, /Could not resolve master with name: not_existing/)
+      expect { subject.run(['not_existing']) }.to output(/Could not resolve master with name: 'not_existing'/).to_stderr
     end
   end
 end
