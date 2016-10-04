@@ -68,13 +68,13 @@ $ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey
 cat certificate.crt privateKey.key > cert.pem
 ```
 
-**Step 2:** Run command `docker-compose up -d`
+**Step 2:** Run the command `docker-compose up -d`
 
 After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
 
 Create a new grid using the command:
 
@@ -82,7 +82,7 @@ Create a new grid using the command:
 $ kontena grid create --initial-size=<initial_size> my-grid
 ```
 
-Or switch to existing grid using the following command:
+Or switch to an existing grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
@@ -90,9 +90,9 @@ $ kontena grid use <grid_name>
 
 > The recommended minimum initial-size is 3. This means the minimum number of nodes in a grid is 3.
 
-Now you can start provision nodes to your host machines.
+Now you can start provisioning nodes to your host machines.
 
-**Step 1:** copy following `docker-compose.yml` file to each host:
+**Step 1:** copy the following `docker-compose.yml` file to each host:
 
 ```
 agent:
