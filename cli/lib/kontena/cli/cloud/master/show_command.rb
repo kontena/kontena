@@ -1,5 +1,3 @@
-require 'pp'
-
 module Kontena::Cli::Cloud::Master
   class ShowCommand < Kontena::Command
 
