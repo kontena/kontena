@@ -221,7 +221,7 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def post_start(info)
       if info['node_number']
-        weave_bridge = "10.81.0.#{info['node_number']}/19"
+        weave_bridge = "10.81.0.#{info['node_number']}/16"
         self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
         info "bridge exposed: #{weave_bridge}"
       end
@@ -256,7 +256,10 @@ module Kontena::NetworkAdapters
               {
                 # Need to set the subnet for the default network so we can
                 # later migrate container to it with manually set IP's
-                'Subnet': '10.81.0.0/16'
+                'Subnet': '10.81.0.0/16',
+                # Allocate container addresses on the top part so that
+                # low part is reserved for node addresses
+                'IPRange': '10.81.128.0/17'
               }
             ],
             'Options': {
