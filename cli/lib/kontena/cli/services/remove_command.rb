@@ -20,7 +20,11 @@ module Kontena::Cli::Services
           begin
             client(token).get("services/#{parse_service_id(name)}")
           rescue Kontena::Errors::StandardError => exc
-            removed = true if exc.status == 404
+            if exc.status == 404
+              removed = true
+            else
+              raise exc
+            end
           end
         end
       end
