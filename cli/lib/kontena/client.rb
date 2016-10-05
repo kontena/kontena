@@ -312,7 +312,9 @@ module Kontena
       request_headers = request_headers(headers, auth)
 
       body_content = body.nil? ? '' : encode_body(body, request_headers[CONTENT_TYPE])
-
+      if http_method == :get
+        request_headers.delete('Content-Type')
+      end
       request_headers.merge!('Content-Length' => body_content.bytesize)
 
       host_options = {}
@@ -383,7 +385,7 @@ module Kontena
     end
 
     # Perform refresh token request to auth provider.
-    # Updates the client's Token object and writes changes to 
+    # Updates the client's Token object and writes changes to
     # configuration.
     #
     # @param [Boolean] use_basic_auth? When true, use basic auth authentication header
@@ -405,7 +407,7 @@ module Kontena
         {
           http_method: token_account['token_method'].downcase.to_sym,
           body: refresh_request_params,
-          headers: { 
+          headers: {
             CONTENT_TYPE => token_account['token_post_content_type']
           }.merge(
             token_account['code_requires_basic_auth'] ? basic_auth_header : {}
@@ -422,7 +424,7 @@ module Kontena
         token['expires_at'] = in_to_at(response['expires_in'])
         token.config.write if token.respond_to?(:config)
         true
-      else 
+      else
         logger.debug "Got null or bad response to refresh request: #{last_response.inspect}"
         false
       end
