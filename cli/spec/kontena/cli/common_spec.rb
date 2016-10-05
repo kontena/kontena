@@ -80,7 +80,7 @@ describe Kontena::Cli::Common do
 
   describe '#current_master' do
     it 'return correct master info' do
-      mock_config({ 
+      mock_config({
         'current_server' => 'alias',
         'servers' => [
           {'name' => 'some_master', 'url' => 'some_master'},
@@ -157,6 +157,51 @@ describe Kontena::Cli::Common do
       expect(subject).to receive(:error).with(/Aborted/)
 
       subject.confirm
+    end
+  end
+
+  describe '#use_refresh_token' do
+    let(:server) do
+      spy
+    end
+
+    let(:token) do
+      token = double
+      allow(server).to receive(:token).and_return(token)
+      token
+    end
+
+    let(:client) do
+      spy
+    end
+
+    it 'returns nil if token is nil' do
+      allow(server).to receive(:token).and_return(nil)
+      expect(subject.use_refresh_token(server)).to be_nil
+    end
+
+    it 'returns nil if refresh_token is nil' do
+      expect(token).to receive(:refresh_token).and_return nil
+      expect(subject.use_refresh_token(server)).to be_nil
+    end
+
+    context 'with valid token' do
+      before(:each) do
+        allow(token).to receive(:refresh_token).and_return 'refresh_token'
+        allow(token).to receive(:expired?).and_return false
+      end
+
+      it 'returns nil if token is expired' do
+        expect(token).to receive(:expired?).and_return true
+        expect(subject.use_refresh_token(server)).to be_nil
+      end
+
+      it 'creates refresh_token request to given server' do
+        allow(server).to receive(:url).and_return('http://www.example.org')
+        expect(Kontena::Client).to receive(:new).with('http://www.example.org', token).and_return(client)
+        expect(client).to receive(:refresh_token).once
+        subject.use_refresh_token(server)
+      end
     end
   end
 end
