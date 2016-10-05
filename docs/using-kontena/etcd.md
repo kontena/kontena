@@ -6,7 +6,7 @@ toc_order: 5
 # Etcd
 
 Etcd is a distributed key-value store for shared configuration and service
-discovery. Each Kontena [Grid](grid) comes with preinstalled etcd that is available always from `etcd.kontena.local` address. Kontena CLI provides some helper commands to interact with etcd. In addition to these it's possible to interact with etcd using normal etcdctl or http api through [VPN](vpn-access).
+discovery. Each Kontena [Grid](grid) comes with preinstalled etcd that is always available from `etcd.kontena.local` address. Kontena CLI provides some helper commands to interact with etcd. In addition to these it's possible to interact with etcd using normal etcdctl or http api through [VPN](vpn-access).
 
 ## Set a value
 
