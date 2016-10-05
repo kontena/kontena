@@ -42,15 +42,17 @@ module Kontena::Cli::Apps
 
     def delete(name, options, async = true)
       unless deleted_services.include?(name)
-        spinner "removing #{pastel.cyan(name)}" do
-          service = get_service(token, prefixed_name(name)) rescue nil
-          if(service)
+        service = get_service(token, prefixed_name(name)) rescue nil
+        if(service)
+          spinner "removing #{pastel.cyan(name)}" do
             delete_service(token, prefixed_name(name))
             unless async
               wait_for_delete_to_finish(service)
             end
-            deleted_services << name
           end
+          deleted_services << name
+        else
+          warning "No such service #{name}"
         end
       end
     end
