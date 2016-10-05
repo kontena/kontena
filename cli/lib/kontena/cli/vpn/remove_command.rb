@@ -12,7 +12,7 @@ module Kontena::Cli::Vpn
       vpn = client(token).get("services/#{current_grid}/#{name}") rescue nil
       exit_with_error("#{name} service does not exist") if vpn.nil?
 
-      ShellSpinner "removing #{vpn.colorize(:cyan)} service " do
+      spinner "Removing #{vpn.colorize(:cyan)} service " do
         client(token).delete("services/#{current_grid}/vpn")
       end
     end
