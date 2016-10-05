@@ -25,10 +25,11 @@ rescue Excon::Errors::SocketError => exc
   end
 rescue Kontena::Errors::StandardError => exc
   raise exc if ENV['DEBUG']
-  abort(exc.message)
+  puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+  exit 1
 rescue => exc
   raise exc if ENV['DEBUG']
-  $stderr.puts "Kontena error: #{exc.message}"
-  $stderr.puts "Rerun the command with environment DEBUG=true set to get the full exception"
+  $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+  $stderr.puts "         Rerun the command with environment DEBUG=true set to get the full exception"
   abort
 end
