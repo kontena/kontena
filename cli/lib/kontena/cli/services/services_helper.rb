@@ -220,13 +220,13 @@ module Kontena
         def wait_for_deploy_to_finish(token, name, timeout = 600)
           service = client(token).get("services/#{name}")
           desired_count = service['container_count']
-          updated_at = DateTime.parse(service['updated_at'])
+          updated_at = DateTime.parse(service['updated_at']) rescue DateTime.now
           deployed = false
           Timeout::timeout(timeout) do
             until deployed
               containers = client(token).get("services/#{name}/containers")['containers']
               deployed = containers.size == desired_count && containers.all?{ |c|
-                DateTime.parse(c['created_at']) >= updated_at
+                DateTime.parse(c['created_at']) >= updated_at rescue false
               }
               sleep 1
             end

@@ -89,7 +89,7 @@ describe Kontena::Cli::Apps::DockerHelper do
 
         expect {
           subject.process_docker_images(services_with_invalid_hook)
-        }.to raise_error(SystemExit)
+        }.to raise_error(StandardError)
       end
     end
     context 'when no hook defined' do
@@ -134,7 +134,7 @@ describe Kontena::Cli::Apps::DockerHelper do
 
     it 'builds image' do
       service = {
-        'build' => { 
+        'build' => {
           'context' => '.',
           'args' => {
             'FOO' => 'bar',
