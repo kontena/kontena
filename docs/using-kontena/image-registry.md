@@ -12,7 +12,7 @@ Kontena may be used with any Docker Image Registry. Users looking for a zero mai
 You should use the Kontena's built-in Image Registry if you want to:
 
 * Have total control where your images are being stored
-* Fully own your images distribution pipeline
+* Fully own your images' distribution pipeline
 * Ensure access control and security for your own Docker images
 
 
