@@ -36,4 +36,4 @@ It is completely up to the user to select which systems to use to collect and vi
 
 We at Kontena have been very succesfully using [influxdata](https://influxdata.com/) stack to collect and aggregate statistics.
 
-There is also a ready made plugin in the making to easily create and control the influxdata based statistics collection service with Kontena. We hope to release that in the coming months.
+There is also a ready made plugin in the making to easily create and control influxdata based statistics collection service with Kontena. We hope to release that in the coming months.
