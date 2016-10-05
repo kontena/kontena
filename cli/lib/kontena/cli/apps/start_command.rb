@@ -28,11 +28,11 @@ module Kontena::Cli::Apps
     def start_services(services)
       services.each do |service_name, opts|
         if service_exists?(service_name)
-          ShellSpinner "starting #{service_name.colorize(:cyan)} " do
+          spinner "Starting #{service_name.colorize(:cyan)} " do
             start_service(token, prefixed_name(service_name))
           end
         else
-          STDERR.puts "WARNING: no such service: #{service_name}".colorize(:yellow)
+          warning "No such service: #{service_name}"
         end
       end
     end

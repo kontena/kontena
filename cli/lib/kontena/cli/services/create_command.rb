@@ -50,7 +50,7 @@ module Kontena::Cli::Services
         stateful: stateful?
       }
       data.merge!(parse_service_data_from_options)
-      ShellSpinner "creating #{name.colorize(:cyan)} service " do
+      spinner "Creating #{name.colorize(:cyan)} service " do
         create_service(token, current_grid, data)
       end
     end

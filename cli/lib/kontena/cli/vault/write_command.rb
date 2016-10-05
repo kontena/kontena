@@ -15,7 +15,7 @@ module Kontena::Cli::Vault
       if secret.to_s == ''
         secret = STDIN.read
       end
-      abort('No value provided') if secret.to_s == ''
+      exit_with_error('No value provided') if secret.to_s == ''
       data = {
           name: name,
           value: secret

@@ -28,11 +28,11 @@ module Kontena::Cli::Apps
     def stop_services(services)
       services.each do |service_name, opts|
         if service_exists?(service_name)
-          ShellSpinner "sending stop signal to #{service_name.colorize(:cyan)} " do
+          spinner "Sending stop signal to #{service_name.colorize(:cyan)} " do
             stop_service(token, prefixed_name(service_name))
           end
         else
-          STDERR.puts "WARNING: no such service: #{service_name}".colorize(:yellow)
+          warning "No such service: #{service_name}"
         end
       end
     end

@@ -49,7 +49,7 @@ module Kontena::Cli::Apps
         if force_deploy?
           warning " --force-deploy will deprecate in the future, use --force"
         end
-        ShellSpinner "deploying #{unprefixed_name(name).colorize(:cyan)} " do
+        spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
           deploy_service(token, name, options)
           unless async?
             wait_for_deploy_to_finish(token, service['id'])
@@ -97,7 +97,7 @@ module Kontena::Cli::Apps
       data = { 'name' => name }
       data.merge!(options)
       result = nil
-      ShellSpinner "creating #{name.colorize(:cyan)} " do
+      spinner "Creating #{name.colorize(:cyan)} " do
         result = create_service(token, current_grid, data)
       end
       result
@@ -108,7 +108,7 @@ module Kontena::Cli::Apps
     def update(name, options)
       prefixed_name = prefixed_name(name)
       result = nil
-      ShellSpinner "updating #{name.colorize(:cyan)} " do
+      spinner "Updating #{name.colorize(:cyan)} " do
         result = update_service(token, prefixed_name, options)
       end
       result

@@ -19,10 +19,10 @@ module Kontena::Cli::Master::Config
 
     def input_as_hash
       if self.path && self.preset
-        abort "Options --preset and PATH can not be used together"
+        exit_with_error "Options --preset and PATH can not be used together"
       elsif self.path
         unless File.exist?(self.path) && File.readable?(self.path)
-          abort "Can not read '#{self.path}'"
+          exit_with_error "Can not read '#{self.path}'"
         end
         File.read(self.path)
       elsif self.preset
@@ -43,7 +43,7 @@ module Kontena::Cli::Master::Config
         require 'yaml'
         YAML.load(data)
       else
-        abort "Unknown input format '#{self.format}'"
+        exit_with_error "Unknown input format '#{self.format}'"
       end
     end
 
@@ -66,4 +66,3 @@ module Kontena::Cli::Master::Config
     end
   end
 end
-

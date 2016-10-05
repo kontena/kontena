@@ -9,7 +9,7 @@ module Kontena::Cli::ExternalRegistries
       require_api_url
       token = require_token
       confirm_command(name) unless forced?
-      ShellSpinner "removing #{name.colorize(:cyan)} external-registry from #{current_grid.colorize(:cyan)} grid " do
+      spinner "Removing #{name.colorize(:cyan)} external-registry from #{current_grid.colorize(:cyan)} grid " do
         client(token).delete("external_registries/#{current_grid}/#{name}")
       end
     end

@@ -12,7 +12,7 @@ module Kontena::Cli::Services::Secrets
     def execute
       require_api_url
       token = require_token
-      ShellSpinner "linking #{secret.colorize(:cyan)} from Vault to #{name.colorize(:cyan)} " do
+      spinner "Linking #{secret.colorize(:cyan)} from Vault to #{name.colorize(:cyan)} " do
         result = client(token).get("services/#{parse_service_id(name)}")
         secrets = result['secrets']
         secrets << parse_secrets([secret])[0]

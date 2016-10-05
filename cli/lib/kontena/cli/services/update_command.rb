@@ -43,7 +43,7 @@ module Kontena::Cli::Services
       token = require_token
 
       data = parse_service_data_from_options
-      ShellSpinner "updating #{name.colorize(:cyan)} service " do
+      spinner "Updating #{name.colorize(:cyan)} service " do
         update_service(token, name, data)
       end
     end

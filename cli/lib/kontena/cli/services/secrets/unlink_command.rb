@@ -21,7 +21,7 @@ module Kontena::Cli::Services::Secrets
         }
         client(token).put("services/#{parse_service_id(name)}", data)
       else
-        abort("Secret not found")
+        exit_with_error("Secret not found")
       end
     end
   end

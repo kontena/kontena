@@ -13,7 +13,7 @@ module Kontena::Cli::Services
       token = require_token
       confirm_command(name) unless forced?
 
-      ShellSpinner "removing service #{name.colorize(:cyan)} " do
+      spinner "Removing service #{name.colorize(:cyan)} " do
         client(token).delete("services/#{parse_service_id(name)}")
         removed = false
         until removed == true

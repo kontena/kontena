@@ -11,9 +11,9 @@ module Kontena::Cli::Registry
       name = 'registry'
 
       registry = client(token).get("services/#{current_grid}/#{name}") rescue nil
-      abort("#{name.colorize(:cyan)} service does not exist") if registry.nil?
+      exit_with_error("Service #{name.colorize(:cyan)} does not exist") if registry.nil?
 
-      ShellSpinner "removing #{name.colorize(:cyan)} service " do
+      spinner "Removing #{name.colorize(:cyan)} service " do
         client(token).delete("services/#{current_grid}/#{name}")
       end
     end

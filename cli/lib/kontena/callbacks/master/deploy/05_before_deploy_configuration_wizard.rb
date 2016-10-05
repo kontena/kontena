@@ -53,7 +53,7 @@ module Kontena
         if master_id.to_s =~ /^[0-9a-f]{16,32}$/
           master_id
         else
-          abort 'Cloud Master registration failed'
+          exit_with_error 'Cloud Master registration failed'
         end
       end
 
@@ -104,5 +104,3 @@ module Kontena
     end
   end
 end
-
-

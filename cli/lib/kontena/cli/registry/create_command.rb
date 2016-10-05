@@ -25,13 +25,13 @@ module Kontena::Cli::Registry
       instances = 1
 
       registry = client(token).get("services/#{current_grid}/registry") rescue nil
-      abort('Registry already exists') if registry
+      exit_with_error('Registry already exists') if registry
 
       nodes = client(token).get("grids/#{current_grid}/nodes")
 
       if s3_bucket
         ['REGISTRY_STORAGE_S3_ACCESSKEY', 'REGISTRY_STORAGE_S3_SECRETKEY'].each do |secret|
-          abort("#{secret} secret is missing from the vault") unless vault_secret_exists?(secret)
+          exit_with_error("Secret #{secret} does not exist in the vault") unless vault_secret_exists?(secret)
         end
         env = [
             "REGISTRY_STORAGE=s3",
@@ -48,9 +48,9 @@ module Kontena::Cli::Registry
         stateful = false
         instances = 2 if nodes['nodes'].size > 1
       elsif azure_account_name || azure_container_name
-        abort('--azure-account-name is missing') if azure_account_name.nil?
-        abort('--azure-container-name is missing') if azure_container_name.nil?
-        abort('REGISTRY_STORAGE_AZURE_ACCOUNTKEY is not saved to vault') unless vault_secret_exists?('REGISTRY_STORAGE_AZURE_ACCOUNTKEY')
+        exit_with_error('Option --azure-account-name is missing') if azure_account_name.nil?
+        exit_with_error('Option --azure-container-name is missing') if azure_container_name.nil?
+        exit_with_error('Secret REGISTRY_STORAGE_AZURE_ACCOUNTKEY does not exist in the vault') unless vault_secret_exists?('REGISTRY_STORAGE_AZURE_ACCOUNTKEY')
         env = [
             "REGISTRY_STORAGE=azure",
             "REGISTRY_STORAGE_AZURE_ACCOUNTNAME=#{azure_account_name}",
@@ -67,7 +67,7 @@ module Kontena::Cli::Registry
         ]
         if preferred_node
           node = nodes['nodes'].find{|n| n['connected'] && n['name'] == preferred_node }
-          abort('Node not found') if node.nil?
+          exit_with_error('Node not found') if node.nil?
           affinity << "node==#{node['name']}"
         end
       end

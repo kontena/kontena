@@ -14,7 +14,7 @@ module Kontena::Cli::Nodes
       node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
       data = {}
       data[:labels] = label_list if label_list
-      ShellSpinner "updating #{node_id.colorize(:cyan)} node " do
+      spinner "Updating #{node_id.colorize(:cyan)} node " do
         client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
       end
     end

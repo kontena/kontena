@@ -22,7 +22,7 @@ module Kontena::Cli::Etcd
       response = client(token).delete("etcd/#{current_grid}/#{key}", data)
 
       if response['error']
-        abort response['error']
+        exit_with_error response['error']
       end
     end
   end

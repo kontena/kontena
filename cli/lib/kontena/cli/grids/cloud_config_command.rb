@@ -16,7 +16,7 @@ module Kontena::Cli::Grids
       token = require_token
 
       grid = find_grid_by_name(name)
-      abort("Grid not found".colorize(:red)) unless grid
+      exit_with_error("Grid not found") unless grid
 
       default_dns = docker_bip.split('/')[0]
       if dns_list.size > 0

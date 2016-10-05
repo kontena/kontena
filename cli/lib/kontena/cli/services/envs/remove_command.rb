@@ -12,7 +12,7 @@ module Kontena::Cli::Services::Envs
     def execute
       require_api_url
       token = require_token
-      ShellSpinner "removing env variable #{env.colorize(:cyan)} from #{name.colorize(:cyan)} service " do
+      spinner "Removing env variable #{env.colorize(:cyan)} from #{name.colorize(:cyan)} service " do
         client(token).delete("services/#{parse_service_id(name)}/envs/#{env}")
       end
     end

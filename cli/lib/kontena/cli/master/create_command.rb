@@ -41,7 +41,7 @@ module Kontena::Cli::Master
       tree = master_create_subcommands(subcommand_tree)
 
       if tree.empty?
-        abort "Install platform plugins first, use: kontena plugin"
+        exit_with_error "Install platform plugins first, use: kontena plugin"
       end
       cmd_class = prompt.select("Choose target platform") do |menu|
         tree.each do |cmd_class|
@@ -73,4 +73,3 @@ module Kontena::Cli::Master
   end
 
 end
-

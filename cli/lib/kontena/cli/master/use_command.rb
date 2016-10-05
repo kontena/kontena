@@ -7,7 +7,7 @@ module Kontena::Cli::Master
     def execute
       master = config.find_server(name)
       if master.nil?
-        abort pastel.red("Could not resolve master by name '#{name}'.") +
+        exit_with_error p"Could not resolve master by name '#{name}'." +
               "\nFor a list of known masters please run: kontena master list"
       else
         config.current_master = master['name']

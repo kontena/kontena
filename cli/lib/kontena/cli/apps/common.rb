@@ -9,7 +9,7 @@ module Kontena::Cli::Apps
     include Kontena::Cli::Services::ServicesHelper
 
     def require_config_file(filename)
-      abort("File #{filename} does not exist") unless File.exists?(filename)
+      exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
     end
 
     # @param [String] filename
@@ -39,7 +39,7 @@ module Kontena::Cli::Apps
         generator_klass = ServiceGenerator
       end
       yaml_services.each do |service_name, config|
-        abort("Image is missing for #{service_name}. Aborting.") unless config['image']
+        exit_with_error("Image is missing for #{service_name}. Aborting.") unless config['image']
         services[service_name] = generator_klass.new(config).generate
       end
       services

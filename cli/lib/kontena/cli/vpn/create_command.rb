@@ -13,7 +13,7 @@ module Kontena::Cli::Vpn
       preferred_node = node
 
       vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
-      abort('Vpn already exists') if vpn
+      exit_with_error('Vpn already exists') if vpn
 
       node = find_node(token, preferred_node)
 
@@ -63,10 +63,10 @@ module Kontena::Cli::Vpn
 
       if preferred_node.nil?
         node = nodes['nodes'].find{|n| n['connected'] && !n['public_ip'].to_s.empty?}
-        abort('Cannot find any online nodes with public ip. If you want to connect with private address, please use --node and/or --ip options.') if node.nil?
+        exit_with_error('Cannot find any online nodes with public ip. If you want to connect with private address, please use --node and/or --ip options.') if node.nil?
       else
         node = nodes['nodes'].find{|n| n['connected'] && n['name'] == preferred_node }
-        abort('Node not found') if node.nil?
+        exit_with_error('Node not found') if node.nil?
       end
       node
     end

@@ -14,10 +14,10 @@ module Kontena::Cli::Grids
       name_or_current = name.nil? ? current_grid : name
 
       if name_or_current.nil?
-        abort "No grid selected. Use: kontena grid env <name>, or select a grid with: kontena grid use <name>"
+        exit_with_error "No grid selected. Use: kontena grid env <name>, or select a grid with: kontena grid use <name>"
       else
         grid = find_grid_by_name(name_or_current)
-        abort("Grid not found".colorize(:red)) unless grid
+        exit_with_error("Grid not found") unless grid
 
         prefix = export? ? 'export ' : ''
 
