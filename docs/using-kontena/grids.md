@@ -5,7 +5,7 @@ toc_order: 2
 
 # Grids
 
-The [Grid](../core-concepts/architecture.md#the-grid) is top-level object in Kontena that describes a single cluster of Kontena Nodes.
+The [Grid](../core-concepts/architecture.md#the-grid) is a top-level object in Kontena that describes a single cluster of Kontena Nodes.
 
 * [Manage](grids#manage-grids)
 * [Logs](grids#grid-logs)
@@ -20,9 +20,9 @@ The [Grid](../core-concepts/architecture.md#the-grid) is top-level object in Kon
 $ kontena grid create --initial-size=3 mygrid
 ```
 
-Creates a new grid named `mygrid` with initial size of 3 nodes (grid must have at least 3 nodes that are part of etcd cluster). Etcd member nodes create the actual (data) cluster and rest of the grid nodes act as `proxy` nodes for etcd. Typically you want to spread your grid nodes in different availability zones so that losing majority of the initial nodes becomes virtually impossible. Losing majority impairs the etcd and will cause troubles within the Kontena grid for example in service load balancing.
+Creates a new grid named `mygrid` with initial size of 3 nodes (grid must have at least 3 nodes that are part of etcd cluster). Etcd member nodes create the actual (data) cluster and rest of the grid nodes act as `proxy` nodes for etcd. Typically you want to spread your grid nodes in different availability zones so that losing the majority of the initial nodes becomes virtually impossible. Losing the majority impairs the etcd and will cause troubles within the Kontena grid for example in service load balancing.
 
-Starting from 0.14.0 release Kontena can automatically replace the initial etcd cluster members as long as there has NOT been a majority loss. In practice this means that you can replace the initial members by removing them (while keeping majority) and replacing with new nodes.
+Starting from 0.14.0 release Kontena can automatically replace the initial etcd cluster members as long as there has NOT been a majority loss. In practice this means that you can replace the initial members by removing them (while keeping the majority) and replacing with new nodes.
 
 
 #### List Grids
@@ -37,7 +37,7 @@ $ kontena grid list
 $ kontena grid use another_grid
 ```
 
-Switches cli scope to grid named `another_grid`.
+Switches cli scope to a grid named `another_grid`.
 
 #### Remove a Grid
 
@@ -108,7 +108,7 @@ Removes a user with an email `not@val.id` from the current grid.
 
 ### Grid Trusted Subnets
 
-If some of grid nodes are colocated in a trusted network (for example within the boundary of your own datacenter) you can add subnets to grid trusted subnet list. This disables data plane encryption within trusted subnet and switches overlay to faster (near-native) mode as an optimization.
+If some of the grid nodes are colocated in a trusted network (for example within the boundary of your own datacenter) you can add subnets to a grid trusted subnet list. This disables data plane encryption within a trusted subnet and switches overlay to faster (near-native) mode as an optimization.
 
 #### List Trusted Subnets
 
