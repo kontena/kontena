@@ -1,35 +1,72 @@
 module Kontena
   module Cli
+    class SpinAbort < StandardError; end
+
+    class SpinnerStatus
+      attr_reader :thread, :result
+
+      def initialize(thread)
+        @thread = thread
+        @result = :done
+      end
+
+      def warn?
+        @result == :warn
+      end
+
+      def failed?
+        @result == :fail
+      end
+
+      def fail
+        @result = :fail
+      end
+
+      def fail!
+        @result = :fail
+        thread['abort'] = true
+        raise SpinAbort
+      end
+
+      def warn
+        @result = :warn
+      end
+    end
+    
     class Spinner
-      
       CHARS = ['\\', '|', '/', '-']
       CHARS_LENGTH = CHARS.length
 
-      def self.spin(msg, &block)
-        unless $stdout.tty?
-          Kernel.puts " [....] #{msg}"
-          result = nil
-          status = nil
-          begin
-            result = yield
-          rescue SystemExit => ex
-            status = ex.status
-            if status == 0
-              Kernel.puts " [done] #{msg}"
-            else
-              Kernel.puts " [fail] #{msg}"
-            end
-          rescue Exception => ex
-            Kernel.puts " [fail] #{msg}"
-            if ENV["DEBUG"]
-              Kernel.puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
-            end
-            raise ex
+      def self.spin_no_tty(msg, &block)
+        Kernel.puts "* #{msg}.. "
+        result = nil
+        status = nil
+        begin
+          spin_status = SpinnerStatus.new(Thread.current)
+          result = yield spin_status
+          Kernel.puts "* #{msg}.. #{spin_status.result}"
+        rescue SpinAbort
+          Kernel.puts "* #{msg}.. fail"
+        rescue SystemExit => ex
+          status = ex.status
+          if status == 0
+            Kernel.puts "* #{msg}.. done"
+          else
+            Kernel.puts "* #{msg}.. fail"
           end
-          exit(status) if status
-          Kernel.puts " [done] #{msg}"
-          return result
+        rescue Exception => ex
+          Kernel.puts "* #{msg}.. fail"
+          if ENV["DEBUG"]
+            Kernel.puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
+          end
+          raise ex
         end
+        exit(status) if status
+        result
+      end
+
+      def self.spin(msg, &block)
+        return spin_no_tty(msg, &block) unless $stdout.tty?
 
         Thread.main['spinners'] ||= []
         unless Thread.main['spinners'].empty?
@@ -47,20 +84,24 @@ module Kontena
           curr_index = 0
           loop do
             if Thread.current['pause']
-              sleep 0.1 until !Thread.current['pause']
-              Kernel.print "\r#{message}#{CHARS[curr_index]}"
-            else
-              if Thread.main['spinner_msgs']
-                Kernel.print "\r#{' ' * (message.gsub(/\e.+?m/, '').length + 1)}\r"
-                while Thread.main['spinner_msgs'].size > 0
-                  Kernel.puts "\r#{Thread.main['spinner_msgs'].shift}"
-                end
-                Kernel.print "\r#{message + CHARS[curr_index]}"
+              until !Thread.current['pause'] || Thread.current['abort']
+                sleep 0.1
               end
-              sleep 0.1
-              Kernel.print "\b#{CHARS[curr_index]}"
-              curr_index = curr_index == CHARS_LENGTH - 1 ? 0 : curr_index + 1
+              Kernel.print "\r#{message}#{CHARS[curr_index]}"
             end
+            
+            break if Thread.current['abort']
+
+            if Thread.main['spinner_msgs']
+              Kernel.print "\r#{' ' * (message.gsub(/\e.+?m/, '').length + 1)}\r"
+              while Thread.main['spinner_msgs'].size > 0
+                Kernel.puts "\r#{Thread.main['spinner_msgs'].shift}"
+              end
+              Kernel.print "\r#{message + CHARS[curr_index]}"
+            end
+            sleep 0.1
+            Kernel.print "\b#{CHARS[curr_index]}"
+            curr_index = curr_index == CHARS_LENGTH - 1 ? 0 : curr_index + 1
           end
         end
 
@@ -69,9 +110,17 @@ module Kontena
         status = nil
         result = nil
         begin
-          result = yield
+          spin_status = SpinnerStatus.new(spin_thread)
+          result = yield spin_status
           spin_thread.kill
-          Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}     "
+          case spin_status.result
+          when :warn
+            Kernel.puts "\r [" + "warn".colorize(:yellow) + "] #{msg}     "
+          when :fail
+            Kernel.puts "\r [" + "fail".colorize(:red) + "] #{msg}     "
+          else
+            Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}     "
+          end
         rescue SystemExit => ex
           spin_thread.kill
           if ex.status == 0
@@ -80,6 +129,12 @@ module Kontena
             Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
           end
           status = ex.status
+        rescue SpinAbort
+          spin_thread.kill
+          Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
+          if ENV["DEBUG"]
+            puts "Spin aborted through fail!"
+          end
         rescue Exception => ex
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
@@ -87,7 +142,14 @@ module Kontena
             puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
           end
           raise ex
+        ensure
+          unless Thread.main['spinner_msgs'].empty?
+            while msg = Thread.main['spinner_msgs'].shift
+              Kernel.puts msg
+            end
+          end
         end
+
         exit(status) if status
         Thread.main['spinners'].pop
         unless Thread.main['spinners'].empty?
