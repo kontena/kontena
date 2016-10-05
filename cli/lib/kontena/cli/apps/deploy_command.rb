@@ -93,8 +93,7 @@ module Kontena::Cli::Apps
     # @param [String] name
     # @param [Hash] options
     def create(name, options)
-      name = prefixed_name(name)
-      data = { 'name' => name }
+      data = { 'name' => prefixed_name(name) }
       data.merge!(options)
       result = nil
       spinner "Creating #{name.colorize(:cyan)} " do
