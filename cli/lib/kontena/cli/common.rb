@@ -116,6 +116,19 @@ module Kontena
         end
       end
 
+      ## Invalidate refresh_token
+      # @param [Kontena::Cli::Config::Server] server
+      def use_refresh_token(server)
+        return unless server.token
+        return unless server.token.refresh_token
+        return if server.token.expired?
+        client = Kontena::Client.new(server.url, server.token)
+        ENV["DEBUG"] && puts("Trying to invalidate refresh token on #{server.name}")
+        client.refresh_token
+      rescue
+        ENV["DEBUG"] && puts("Refreshing failed: #{$!} : #{$!.message}")
+      end
+
       def require_current_master
         config.require_current_master
       end
