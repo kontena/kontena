@@ -1,4 +1,5 @@
 require 'clamp'
+require_relative 'cli/subcommand_loader'
 
 class Kontena::Command < Clamp::Command
 
@@ -62,7 +63,14 @@ class Kontena::Command < Clamp::Command
     end
   end
 
+  def self.load_subcommand(path, *class_definition)
+    Kontena::Cli::SubcommandLoader.new(path, *class_definition)
+  end
+
   def self.inherited(where)
+    if ENV["DEBUG"].to_s == "super"
+      puts "Class #{where} inherited from Kontena::Command"
+    end
     where.extend Finalizer
   end
 
