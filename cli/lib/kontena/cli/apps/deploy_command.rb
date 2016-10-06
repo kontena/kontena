@@ -51,9 +51,9 @@ module Kontena::Cli::Apps
           warning " --force-deploy will deprecate in the future, use --force"
         end
         spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
-          deploy_service(token, name, options)
+          deploy_service(name, options)
           unless async?
-            wait_for_deploy_to_finish(token, service['id'])
+            wait_for_deploy_to_finish(service['id'])
           end
         end
       end
@@ -96,33 +96,22 @@ module Kontena::Cli::Apps
     def create(name, options)
       data = { 'name' => prefixed_name(name) }
       data.merge!(options)
-<<<<<<< c458ca1ce3d466c135abb32492859520942e5f4b
       result = nil
       spinner "Creating #{name.colorize(:cyan)} " do
-        result = create_service(token, current_grid, data)
+        result = create_service(current_grid, data)
       end
       result
-=======
-      create_service(current_grid, data)
->>>>>>> Unified the way current master / grid is required
     end
 
     # @param [String] name
     # @param [Hash] options
-<<<<<<< c458ca1ce3d466c135abb32492859520942e5f4b
     def update(name, options)
       prefixed_name = prefixed_name(name)
       result = nil
       spinner "Updating #{name.colorize(:cyan)} " do
-        result = update_service(token, prefixed_name, options)
+        result = update_service(prefixed_name, options)
       end
       result
-=======
-    def update(id, options)
-      puts "updating #{id.colorize(:cyan)}"
-      id = prefixed_name(id)
-      update_service(id, options)
->>>>>>> Unified the way current master / grid is required
     end
 
     # @param [String] name
