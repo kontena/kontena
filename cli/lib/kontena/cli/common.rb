@@ -208,7 +208,9 @@ module Kontena
       end
 
       def require_current_grid
-        config.require_current_grid
+        unless self.respond_to?(:grid) && self.grid
+          config.require_current_grid
+        end
       end
 
       def clear_current_grid

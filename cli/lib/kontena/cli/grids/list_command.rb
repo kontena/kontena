@@ -8,10 +8,10 @@ module Kontena::Cli::Grids
     option ['-u', '--use'], :flag, 'Automatically use first available grid sorted by user count', hidden: true
     option ['-v', '--verbose'], :flag, 'Use a more verbose output', hidden: true
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      require_token
-      vputs
+      vputs # output an empty line when verbose
 
       gridlist = []
 
@@ -20,9 +20,9 @@ module Kontena::Cli::Grids
       end
 
       if gridlist.size == 0
-        self.verbose? && puts
+        vputs
         puts "Kontena Master #{config.current_master.name} doesn't have any grids yet. Create one now using 'kontena grid create' command".colorize(:yellow)
-        self.verbose? && puts
+        vputs
       else
         vputs
         vputs "You have access to the following grids:"
@@ -40,7 +40,7 @@ module Kontena::Cli::Grids
 
         if self.use?
           vputs
-          vspinner "* Selecting '#{gridlist.first['name']}' as the current grid" do
+          vspinner "Selecting '#{gridlist.first['name']}' as the current grid" do
             config.current_master.grid = gridlist.first['name']
             config.write
           end

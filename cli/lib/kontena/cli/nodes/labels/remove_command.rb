@@ -1,16 +1,15 @@
 module Kontena::Cli::Nodes::Labels
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter "NODE_ID", "Node id"
     parameter "LABEL", "Label"
 
-    def execute
-      require_api_url
-      require_current_grid
-      token = require_token
+    requires_current_master_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+    def execute
+      node = client.get("grids/#{current_grid}/nodes/#{node_id}")
       unless node['labels'].include?(label)
         exit_with_error("Node #{node['name']} does not have label #{label}")
       end

@@ -6,11 +6,9 @@ module Kontena::Cli::Vault
     parameter 'NAME', 'Secret name'
     parameter '[VALUE]', 'Secret value'
 
-    def execute
-      require_api_url
-      require_current_grid
+    requires_current_master_token
 
-      token = require_token
+    def execute
       secret = value
       if secret.to_s == ''
         secret = STDIN.read
@@ -21,7 +19,7 @@ module Kontena::Cli::Vault
           value: secret
       }
       spinner "Writing #{name.colorize(:cyan)} to the vault " do
-        client(token).post("grids/#{current_grid}/secrets", data)
+        client.post("grids/#{current_grid}/secrets", data)
       end
     end
   end

@@ -11,10 +11,9 @@ module Kontena::Cli::Grids
     option "--docker-bip", "BIP", "Docker bridge ip", default: "172.17.43.1/16"
     option "--version", "VERSION", "Agent version", default: "latest"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
+    def execute
       grid = find_grid_by_name(name)
       exit_with_error("Grid not found") unless grid
 

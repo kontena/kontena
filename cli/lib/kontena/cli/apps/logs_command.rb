@@ -13,6 +13,8 @@ module Kontena::Cli::Apps
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     parameter "[SERVICE] ...", "Show only specified service logs"
 
+    requires_current_master_token
+
     def execute
       require_config_file(filename)
 
@@ -32,6 +34,19 @@ module Kontena::Cli::Apps
       show_logs("grids/#{current_grid}/container_logs", query_params) do |log|
         show_log(log)
       end
+    end
+
+    def show_logs(services, query_params)
+      result = client.get("grids/#{current_grid}/container_logs", query_params)
+      result['logs'].each do |log|
+        show_log(log)
+      end
+    end
+
+    def show_log(log)
+      color = color_for_container(log['name'])
+      prefix = "#{log['created_at']} #{log['name']}:".colorize(color)
+      puts "#{prefix} #{log['data']}"
     end
   end
 end

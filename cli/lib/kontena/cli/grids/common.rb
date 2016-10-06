@@ -8,7 +8,7 @@ module Kontena::Cli::Grids
       puts "#{grid['name']}:"
       puts "  uri: #{host.sub('http', 'ws')}"
       root_dir = grid['engine_root_dir']
-      nodes = client(require_token).get("grids/#{grid['name']}/nodes")
+      nodes = client.get("grids/#{grid['name']}/nodes")
       nodes = nodes['nodes'].select{|n| n['connected'] == true }
       node_count = nodes.size
       puts "  stats:"

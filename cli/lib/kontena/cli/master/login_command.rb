@@ -18,6 +18,18 @@ module Kontena::Cli::Master
     option ['-s', '--silent'], :flag, 'Reduce output verbosity'
 
     option ['--no-login-info'], :flag, "Don't show login info", hidden: true
+    
+    def default_name
+      if config.find_server('kontena-master')
+        counter = 1
+        until config.find_server("kontena_master-#{counter}").nil?
+          counter += 1
+        end
+        "kontena-master-#{counter}"
+      else
+        "kontena-master"
+      end
+    end
 
     def execute
       # rewrites self.url

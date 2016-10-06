@@ -297,7 +297,7 @@ module Kontena
       def require_current_master_token
         require_current_master
         token = current_master.token
-        if token && token.access_token 
+        if token && token.access_token
           return token unless token.expired?
           raise TokenExpiredError, "The access token has expired and needs to be refreshed."
         end
@@ -355,7 +355,7 @@ module Kontena
       # @raise [ArgumentError] if no grid is selected
       def require_current_grid
         return current_grid if current_grid
-        raise ArgumentError, "You have not selected a grid. Use: kontena grid"
+        raise ArgumentError, "You have not selected a grid. Use: 'kontena grid use' or set KONTENA_GRID environment variable."
       end
 
       # Name of the currently selected grid. Can override using 
@@ -482,7 +482,7 @@ module Kontena
         include ConfigurationInstance
 
         def initialize(*args)
-          super
+          super(*args)
           @table[:account] ||= 'master'
         end
       end

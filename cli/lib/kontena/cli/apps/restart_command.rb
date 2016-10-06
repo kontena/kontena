@@ -12,6 +12,8 @@ module Kontena::Cli::Apps
 
     attr_reader :services
 
+    requires_current_master_token
+
     def execute
       require_config_file(filename)
 
@@ -28,7 +30,7 @@ module Kontena::Cli::Apps
       services.each do |service_name, opts|
         if service_exists?(service_name)
           spinner "Sending restart signal to #{service_name.colorize(:cyan)} " do
-            restart_service(token, prefixed_name(service_name))
+            restart_service(prefixed_name(service_name))
           end
         else
           warning "No such service: #{service_name}"

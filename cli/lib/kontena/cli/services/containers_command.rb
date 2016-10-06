@@ -8,11 +8,10 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
-      result = client(token).get("services/#{current_grid}/#{name}/containers")
+    def execute
+      result = client.get("services/#{current_grid}/#{name}/containers")
       result['containers'].each do |container|
         puts "#{container['id']}:"
         puts "  rev: #{container['deploy_rev']}"

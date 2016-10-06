@@ -3,11 +3,12 @@ module Kontena::Cli::Vpn
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
+    requires_current_master_token
+
     def execute
       require 'rbconfig'
-      require_api_url
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
-      stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
+      stdout, stderr = client.post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
       if linux?
         stdout << "\n"
         stdout << "up /etc/openvpn/update-resolv-conf\n"

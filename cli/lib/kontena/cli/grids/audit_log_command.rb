@@ -3,13 +3,12 @@ require_relative 'common'
 module Kontena::Cli::Grids
   class AuditLogCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
     include Common
 
     option ["-l", "--lines"], "LINES", "Number of lines"
 
-    requires_current_master
     requires_current_master_token
-    requires_current_grid
 
     def execute
       audit_logs = client.get("grids/#{current_grid}/audit_log", {limit: lines})

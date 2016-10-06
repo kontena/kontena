@@ -8,10 +8,9 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Stack name"
 
-    def execute
-      require_api_url
-      require_token
+    requires_current_master_token
 
+    def execute
       deploy_stack(name)
     end
 
@@ -19,7 +18,7 @@ module Kontena::Cli::Stacks
 
 
     def deploy_stack
-      client(token).post("stacks/#{current_grid}/#{name}/deploy", {})
+      client.post("stacks/#{current_grid}/#{name}/deploy", {})
     end
 
   end

@@ -9,12 +9,12 @@ module Kontena::Cli::Grids::Users
     parameter "EMAIL", "Email address"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       confirm_command(email) unless forced?
 
-      result = client(token).delete("grids/#{current_grid}/users/#{email}")
+      result = client.delete("grids/#{current_grid}/users/#{email}")
     end
   end
 end

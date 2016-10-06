@@ -7,16 +7,16 @@ module Kontena::Cli::Grids
 
     parameter "NAME", "Grid name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
+    
+    requires_current_master_token
 
     def execute
-      require_api_url
-      token = require_token
       confirm_command(name) unless forced?
       grid = find_grid_by_name(name)
 
       if !grid.nil?
         spinner "removing #{pastel.cyan(name)} grid " do
-          response = client(token).delete("grids/#{grid['id']}")
+          response = client.delete("grids/#{grid['id']}")
           if response
             clear_current_grid if grid['id'] == current_grid
           end

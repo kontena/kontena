@@ -9,11 +9,12 @@ module Kontena::Cli::Services
     parameter "NAME", "Service name"
     parameter "INSTANCES", "Scales service to given number of instances"
 
+    requires_current_master_token
+
     def execute
-      token = require_token
       spinner "Scaling #{name} " do
-        scale_service(token, name, instances)
-        wait_for_deploy_to_finish(token, parse_service_id(name))
+        scale_service(name, instances)
+        wait_for_deploy_to_finish(parse_service_id(name))
       end
     end
   end

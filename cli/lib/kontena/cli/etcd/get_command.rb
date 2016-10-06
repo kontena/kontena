@@ -8,12 +8,12 @@ module Kontena::Cli::Etcd
 
     parameter "KEY", "Etcd key"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       validate_key
 
-      response = client(token).get("etcd/#{current_grid}/#{key}")
+      response = client.get("etcd/#{current_grid}/#{key}")
       if response['value']
         puts response['value']
       elsif response['children']

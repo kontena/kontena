@@ -13,12 +13,12 @@ describe Kontena::Cli::Services::LinkCommand do
     end
 
     it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
+      expect(subject.class.requires_current_master).to be_truthy
       subject.run(['service-a', 'service-b'])
     end
 
     it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
+      expect(subject.class.requires_current_master_token).to be_truthy
       subject.run(['service-a', 'service-b'])
     end
 

@@ -6,11 +6,10 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
-      grids = client(token).get("grids/#{current_grid}/services")
+    def execute
+      grids = client.get("grids/#{current_grid}/services")
       services = grids['services'].sort_by{|s| s['updated_at'] }.reverse
       titles = ['NAME', 'INSTANCES', 'STATEFUL', 'STATE', 'EXPOSED PORTS']
       puts "%-60s %-10s %-8s %-10s %-50s" % titles

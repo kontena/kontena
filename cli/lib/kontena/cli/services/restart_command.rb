@@ -8,11 +8,11 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       spinner "Sending restart signal to service #{name.colorize(:cyan)} " do
-        restart_service(token, name)
+        restart_service(name)
       end
     end
   end

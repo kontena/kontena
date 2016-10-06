@@ -5,14 +5,13 @@ module Kontena::Cli::Containers
 
     parameter "CONTAINER_ID", "Container id"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
+    def execute
       match = container_id.match(/(.+)-(\d+)/)
       if match
         service_name = match[1]
-        result = client(token).get("containers/#{current_grid}/#{service_name}/#{container_id}/inspect")
+        result = client.get("containers/#{current_grid}/#{service_name}/#{container_id}/inspect")
         puts JSON.pretty_generate(result)
       else
         exit_with_error("Cannot resolve container service")

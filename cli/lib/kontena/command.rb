@@ -96,7 +96,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def self.requires_current_grid
-    banner "#{Kontena.pastel.green("Requires current grid")}: This command requires that you have selected a grid as the current grid using 'kontena grid use' or by setting KONTENA_GRID environment variable."
+    banner "#{Kontena.pastel.green("Requires current grid")}: This command requires that you have selected a grid as the current grid using 'kontena grid use', by setting KONTENA_GRID environment variable or using the --grid option."
     @requires_current_grid = true
   end
 
@@ -119,7 +119,11 @@ class Kontena::Command < Clamp::Command
   end
 
   def verify_current_grid
-    Kontena::Cli::Config.instance.require_current_grid if self.class.requires_current_grid?
+    if self.class.requires_current_grid?
+      unless self.respond_to?(:grid) && self.grid
+        Kontena::Cli::Config.instance.require_current_grid if self.class.requires_current_grid?
+      end
+    end
   end
 
   def self.requires_current_account_token?
@@ -132,6 +136,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def self.requires_current_master_token
+    requires_current_master unless requires_current_master?
     @requires_current_master_token = true
   end
 

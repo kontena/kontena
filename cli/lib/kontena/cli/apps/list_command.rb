@@ -13,6 +13,8 @@ module Kontena::Cli::Apps
 
     attr_reader :services
 
+    requires_current_master_token
+
     def execute
       require_config_file(filename)
 
@@ -30,7 +32,7 @@ module Kontena::Cli::Apps
       puts "%-30.30s %-50.50s %-15s %-10.10s %-15.20s %-50s" % titles
 
       services.each do |service_name, opts|
-        service = get_service(token, prefixed_name(service_name)) rescue false
+        service = get_service(prefixed_name(service_name)) rescue false
         if service
           name = service['name'].sub("#{@service_prefix}-", '')
           state = service['stateful'] ? 'yes' : 'no'

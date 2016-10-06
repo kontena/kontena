@@ -7,12 +7,12 @@ module Kontena::Cli::Certificate
 
     parameter "DOMAIN", "Domain to authorize"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
 
       data = {domain: domain}
-      response = client(token).post("certificates/#{current_grid}/authorize", data)
+      response = client.post("certificates/#{current_grid}/authorize", data)
       puts "Authorization successfully created. Use the following details to create necessary validations:"
       puts "Record name: #{response['record_name']}.#{domain}"
       puts "Record type: #{response['record_type']}"

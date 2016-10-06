@@ -8,9 +8,9 @@ module Kontena::Cli::Grids
     parameter "NAME", "Grid name"
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       payload = {}
       if statsd_server
         server, port = statsd_server.split(':')
@@ -21,7 +21,7 @@ module Kontena::Cli::Grids
           }
         }
       end
-      client(token).put("grids/#{name}", payload)
+      client.put("grids/#{name}", payload)
     end
   end
 end

@@ -117,7 +117,7 @@ describe Kontena::Cli::Apps::DeployCommand do
               'env' => ['MYSQL_ADMIN_PASSWORD=password', 'TEST_ENV_VAR=test', 'TEST_ENV_VAR2=test3'],
           }
 
-          expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
+          expect(subject).to receive(:create_service).with('1', hash_including(data))
           subject.run([])
         end
       end
@@ -137,7 +137,7 @@ describe Kontena::Cli::Apps::DeployCommand do
               'env' => ['MYSQL_ADMIN_PASSWORD=password', 'TEST_ENV_VAR=test']
           }
 
-          expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
+          expect(subject).to receive(:create_service).with('1', hash_including(data))
           subject.run([])
         end
       end
@@ -161,7 +161,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           ]
         }
 
-        expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
+        expect(subject).to receive(:create_service).with('1', hash_including(data))
         subject.run([])
       end
 
@@ -174,7 +174,7 @@ describe Kontena::Cli::Apps::DeployCommand do
             'container_count' => nil,
             'stateful' => true,
         }
-        expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
+        expect(subject).to receive(:create_service).with('1', hash_including(data))
 
         subject.run([])
       end
@@ -192,15 +192,15 @@ describe Kontena::Cli::Apps::DeployCommand do
           'links' => [{ 'name' => 'kontena-test-mysql', 'alias' => 'mysql' }],
           'ports' => [{ 'ip' => '0.0.0.0','container_port' => '80', 'node_port' => '80', 'protocol' => 'tcp' }]
         }
-        expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
+        expect(subject).to receive(:create_service).with('1', hash_including(data))
 
         subject.run([])
       end
 
       it 'deploys services' do
         allow(subject).to receive(:current_dir).and_return('kontena-test')
-        expect(subject).to receive(:deploy_service).with(duck_type(:access_token), 'kontena-test-mysql', {})
-        expect(subject).to receive(:deploy_service).with(duck_type(:access_token), 'kontena-test-wordpress', {})
+        expect(subject).to receive(:deploy_service).with('kontena-test-mysql', {})
+        expect(subject).to receive(:deploy_service).with('kontena-test-wordpress', {})
         subject.run([])
       end
 

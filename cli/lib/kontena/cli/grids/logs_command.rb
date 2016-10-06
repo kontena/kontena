@@ -4,13 +4,15 @@ module Kontena::Cli::Grids
   class LogsCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::Helpers::LogHelper
+    include Kontena::Cli::GridOptions
 
     option "--node", "NODE", "Filter by node name", multivalued: true
     option "--service", "SERVICE", "Filter by service name", multivalued: true
     option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
 
+    requires_current_master_token
+
     def execute
-      require_api_url
 
       query_params = {}
       query_params[:nodes] = node_list.join(",") unless node_list.empty?

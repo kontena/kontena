@@ -6,12 +6,10 @@ module Kontena::Cli::Nodes
 
     parameter "NODE_ID", "Node id"
 
-    def execute
-      require_api_url
-      require_current_grid
-      token = require_token
+    requires_current_master_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+    def execute
+      node = client.get("grids/#{current_grid}/nodes/#{node_id}")
       puts "#{node['name']}:"
       puts "  id: #{node['id']}"
       puts "  agent version: #{node['agent_version']}"

@@ -9,14 +9,13 @@ module Kontena::Cli::Services
     parameter "NAME", "Service name"
     option "--interval", "SECONDS", "How often view is refreshed", default: 2
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
+    def execute
       loop do
         nodes = {}
-        service = client(token).get("services/#{current_grid}/#{name}")
-        result = client(token).get("services/#{current_grid}/#{name}/containers")
+        service = client.get("services/#{current_grid}/#{name}")
+        result = client.get("services/#{current_grid}/#{name}/containers")
         result['containers'].each do |container|
           nodes[container['node']['name']] ||= []
           nodes[container['node']['name']] << container

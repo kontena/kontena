@@ -8,11 +8,10 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
-      show_service(token, name)
+    def execute
+      show_service(name)
     end
   end
 end

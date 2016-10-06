@@ -6,11 +6,9 @@ module Kontena::Cli::Vault
     parameter '[VALUE]', 'Secret value'
     option ['-u', '--upsert'], :flag, 'Create secret unless already exists', default: false
 
-    def execute
-      require_api_url
-      require_current_grid
+    requires_current_master_token
 
-      token = require_token
+    def execute
       secret = value
       if secret.to_s == ''
         secret = STDIN.read
@@ -22,7 +20,7 @@ module Kontena::Cli::Vault
         upsert: upsert?
       }
       spinner "Updating #{name.colorize(:cyan)} value in the vault " do
-        client(token).put("grids/#{current_grid}/secrets/#{name}", data)
+        client.put("grids/#{current_grid}/secrets/#{name}", data)
       end
     end
   end

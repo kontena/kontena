@@ -38,13 +38,12 @@ module Kontena::Cli::Services
     option "--health-check-port", "HEALTH CHECK PORT", "Port for HTTP health check"
     option "--health-check-protocol", "HEALTH CHECK PROTOCOL", "Protocol of health check"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
+    def execute
       data = parse_service_data_from_options
       spinner "Updating #{name.colorize(:cyan)} service " do
-        update_service(token, name, data)
+        update_service(name, data)
       end
     end
 

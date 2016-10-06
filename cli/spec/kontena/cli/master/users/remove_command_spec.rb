@@ -13,7 +13,7 @@ describe Kontena::Cli::Master::Users::RemoveCommand do
     end
 
     it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
+      expect(subject.class.requires_current_master).to be_truthy
       subject.run(['john@domain.com'])
     end
 
@@ -23,7 +23,7 @@ describe Kontena::Cli::Master::Users::RemoveCommand do
     end
 
     it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
+      expect(subject.class.requires_current_master_token).to be_truthy
       subject.run(['john@domain.com'])
     end
 

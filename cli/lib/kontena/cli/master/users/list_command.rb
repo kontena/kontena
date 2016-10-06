@@ -4,10 +4,10 @@ module Kontena::Cli::Master::Users
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
-      response = client(token).get('users')
+      response = client.get('users')
 
       response['users'].each do |user|
         roles = user['roles'].map{|r| r['name']}

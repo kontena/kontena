@@ -17,8 +17,8 @@ module ClientHelpers
       {'current_server' => 'alias',
        'current_account' => 'kontena',
        'servers' => [
-           {'name' => 'some_master', 'url' => 'some_master'},
-           {'name' => 'alias', 'url' => 'someurl', 'token' => token, 'account' => 'master'}
+           {'name' => 'some_master', 'url' => 'some_master', 'grid' => 'some_grid'},
+           {'name' => 'alias', 'url' => 'someurl', 'token' => token, 'grid' => 'alias_grid'}
        ]
       }
     end

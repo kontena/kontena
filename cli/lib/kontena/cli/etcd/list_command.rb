@@ -10,14 +10,14 @@ module Kontena::Cli::Etcd
 
     option "--recursive", :flag, "List keys recursively", default: false
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       validate_key
 
       opts = []
       opts << 'recursive=true' if recursive?
-      response = client(token).get("etcd/#{current_grid}/#{key}?#{opts.join('&')}")
+      response = client.get("etcd/#{current_grid}/#{key}?#{opts.join('&')}")
       if response['children']
         children = response['children'].map{|c| c['key'] }
         puts children.join("\n")
