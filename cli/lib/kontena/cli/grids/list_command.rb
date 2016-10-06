@@ -10,7 +10,7 @@ module Kontena::Cli::Grids
 
     def execute
       require_api_url
-
+      require_token
       vputs
 
       gridlist = []
