@@ -22,7 +22,7 @@ Please see below instructions for custom Kontena installations.
 
 ## Needed open ports:
 
-To operate properly Kontena needs only few ports opened in firewalls. The provisioning plugins should take care of these automatically for you. If making a more custom installation make sure you have following ports open.
+To operate properly Kontena needs only a few ports opened in firewalls. The provisioning plugins should take care of these automatically for you. If making a more custom installation make sure you have the following ports open.
 
 ### On Master:
 
