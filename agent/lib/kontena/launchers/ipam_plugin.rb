@@ -14,17 +14,35 @@ module Kontena::Launchers
 
     def initialize(autostart = true)
       @running = false
+      @image_pulled = false
       @image_name = "#{IPAM_IMAGE}:#{IPAM_VERSION}"
+      subscribe('agent:node_info', :on_node_info)
       info 'initialized'
-      async.start if autostart
+      async.ensure_image if autostart
     end
 
-    def start
+    def ensure_image
       pull_image(@image_name)
-      create_container(@image_name)
+      @image_pulled = true
+      info "ipam image pulled: #{@image_name}"
     end
 
-    def create_container(image)
+    def on_node_info(topic, info)
+      info "node info received, launching ipam..."
+      async.start(info)
+    end
+
+    def start(info)
+      create_container(@image_name, info)
+    end
+
+    def image_exists?
+      @image_pulled
+    end
+
+    def create_container(image, info)
+      sleep 1 until image_exists?
+
       container = Docker::Container.get(IPAM_SERVICE_NAME) rescue nil
       if container && container.info['Config']['Image'] != image
         container.delete(force: true)
@@ -43,6 +61,9 @@ module Kontena::Launchers
         'name' => IPAM_SERVICE_NAME,
         'Image' => image,
         'Volumes' => volume_mappings,
+        'Env' => [
+          "NODE_ID=#{info['node_number']}"
+        ],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -58,14 +79,16 @@ module Kontena::Launchers
     # @return [Hash]
     def volume_mappings
       {
-        '/run/docker/plugins' => {}
+        '/run/docker/plugins' => {},
+        '/var/run/docker.sock' => {}
       }
     end
 
     # @return [Array<String>]
     def volume_binds
       [
-        '/run/docker/plugins/:/run/docker/plugins/'
+        '/run/docker/plugins/:/run/docker/plugins/',
+        '/var/run/docker.sock:/var/run/docker.sock'
       ]
     end
 
