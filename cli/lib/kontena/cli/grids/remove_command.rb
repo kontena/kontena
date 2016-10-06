@@ -15,13 +15,14 @@ module Kontena::Cli::Grids
       grid = find_grid_by_name(name)
 
       if !grid.nil?
-        response = client(token).delete("grids/#{grid['id']}")
-        if response
-          clear_current_grid if grid['id'] == current_grid
-          puts "removed #{pastel.cyan(grid['name'])}"
+        spinner "removing #{pastel.cyan(name)} grid " do
+          response = client(token).delete("grids/#{grid['id']}")
+          if response
+            clear_current_grid if grid['id'] == current_grid
+          end
         end
       else
-        abort "Could not resolve grid by name [#{name}]. For a list of existing grids please run: kontena grid list".colorize(:red)
+        exit_with_error "Could not resolve grid by name [#{name}]. For a list of existing grids please run: kontena grid list"
       end
     end
   end

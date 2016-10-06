@@ -54,7 +54,7 @@ module Kontena::Cli::Apps
         begin
           @yaml = ::YAML.load(content)
         rescue Psych::SyntaxError => e
-          abort("Error while parsing #{file}".colorize(:red)+ " "+e.message)
+          raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
         end
       end
 
@@ -93,7 +93,7 @@ module Kontena::Cli::Apps
           end
           services
         else
-          abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
+          raise ("Service '#{service_name}' not found in #{file}") unless services.key?(service_name)
           process_config(services[service_name])
         end
       end
@@ -142,7 +142,7 @@ module Kontena::Cli::Apps
         if filename
           parent_config = from_external_file(filename, extended_service)
         else
-          abort("Service '#{extended_service}' not found in #{file}".colorize(:red)) unless services.key?(extended_service)
+          raise ("Service '#{extended_service}' not found in #{file}") unless services.key?(extended_service)
           parent_config = process_config(services[extended_service])
         end
         ServiceExtender.new(service_config).extend(parent_config)

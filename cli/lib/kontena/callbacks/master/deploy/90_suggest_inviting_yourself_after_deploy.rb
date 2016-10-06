@@ -15,7 +15,7 @@ module Kontena
         puts "Protip:"
         puts "  You are currently using Kontena Master administrator account."
         puts "  Consider inviting yourself as a regular user. Use: "
-        puts "    kontena master users invite -r master_admin your@email.address.example.com"
+        puts "    kontena master users invite --roles master_admin your@email.address.example.com"
         puts "    kontena master join <master_url> <invite_code>"
         puts
       end

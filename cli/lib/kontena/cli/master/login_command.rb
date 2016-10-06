@@ -53,7 +53,7 @@ module Kontena::Cli::Master
         vspinner "Exchanging authorization code for an access token from Kontena Master" do
           response = client.exchange_code(response['code'])
           unless response && response.kind_of?(Hash) && response['access_token']
-            abort "Code exchange failed"
+            exit_with_error "Code exchange failed"
           end
         end
       end
@@ -78,7 +78,7 @@ module Kontena::Cli::Master
         self.url = config.current_master.url
         true
       else
-        abort "Current master is not set and URL was not provided."
+        exit_with_error "Current master is not set and URL was not provided."
       end
     end
 
@@ -89,7 +89,7 @@ module Kontena::Cli::Master
         self.url = server.url
         true
       else
-        abort "Server '#{self.url}' not found in configuration."
+        exit_with_error "Server '#{self.url}' not found in configuration."
       end
     end
 
@@ -179,11 +179,11 @@ module Kontena::Cli::Master
         when 302
           authorization_url = client.last_response.headers['Location']
         when 501
-          abort "Authentication provider not configured"
+          exit_with_error "Authentication provider not configured"
         when 403
-          abort "Invalid invitation code"
+          exit_with_error "Invalid invitation code"
         else
-          abort "Invalid response to authentication request"
+          exit_with_error "Invalid response to authentication request"
         end
       end
       authorization_url
@@ -195,14 +195,14 @@ module Kontena::Cli::Master
       else
         puts "Visit this URL in a browser:"
         puts "<#{url}>"
-        puts 
+        puts
         puts "Then complete the authentication by using:"
         puts "kontena master login --code <CODE FROM BROWSER>"
         # Using exit code 1 because the operation isn't complete,
         # you can't do something like:
         # kontena master login --remote && echo "yes"
       end
-      exit 1 
+      exit 1
     end
 
     def response_from_web_flow
@@ -230,7 +230,7 @@ module Kontena::Cli::Master
 
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
       browser_thread = Thread.new { Launchy.open(uri.to_s) }
-     
+
       vspinner "Waiting for browser authorization response" do
         server_thread.join
       end
@@ -272,5 +272,3 @@ module Kontena::Cli::Master
 
   end
 end
-
-

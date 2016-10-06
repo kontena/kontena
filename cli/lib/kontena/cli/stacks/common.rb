@@ -12,12 +12,10 @@ module Kontena::Cli::Stacks
       set_env_variables(service_prefix, current_grid)
       outcome = read_yaml(filename)
       if outcome[:version] != '2'
-        STDERR.puts "Stack supported only in v2 YAML! Aborting.".colorize(:red)
-        abort
+        exit_with_error "Stack supported only in v2 YAML! Aborting."
       end
       if outcome[:name].nil?
-        STDERR.puts "Stack MUST have name in YAML! Aborting.".colorize(:red)
-        abort
+        exit_with_error "Stack MUST have name in YAML! Aborting."
       end
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
       abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0

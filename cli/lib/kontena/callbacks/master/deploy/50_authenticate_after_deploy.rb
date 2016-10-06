@@ -33,7 +33,7 @@ module Kontena
           ENV["DEBUG"] && puts("Trying to request / from #{new_master.url}")
           client = Kontena::Client.new(new_master.url, nil, ignore_ssl_errors: true)
           client.get('/')
-        rescue
+        rescue 
           ENV["DEBUG"] && puts("HTTPS test failed: #{$!} #{$!.message}")
           unless retried
             new_master.url = "http://#{command.result[:public_ip]}"

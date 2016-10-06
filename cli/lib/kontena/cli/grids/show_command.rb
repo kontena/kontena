@@ -11,8 +11,8 @@ module Kontena::Cli::Grids
       require_api_url
 
       grid = find_grid_by_name(name)
-      abort("Grid not found".colorize(:red)) unless grid
-      
+      exit_with_error("Grid not found") unless grid
+
       print_grid(grid)
     end
   end

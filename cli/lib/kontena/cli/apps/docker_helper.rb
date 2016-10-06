@@ -8,8 +8,8 @@ module Kontena::Cli::Apps
       services.each do |name, service|
         if service['build'] && (!image_exist?(service['image']) || force_build)
           dockerfile = service['build']['dockerfile'] || 'Dockerfile'
-          abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
-          abort("'#{service['build']['context']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build']['context'], dockerfile)
+          raise ("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
+          raise ("'#{service['build']['context']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build']['context'], dockerfile)
           if service['hooks'] && service['hooks']['pre_build']
             puts "Running pre_build hook".colorize(:cyan)
             run_pre_build_hook(service['hooks']['pre_build'])
@@ -43,7 +43,7 @@ module Kontena::Cli::Apps
       end
       cmd << build_context
       ret = system(cmd.join(' '))
-      abort("Failed to build image #{service['image'].colorize(:cyan)}") unless ret
+      raise ("Failed to build image #{service['image'].colorize(:cyan)}") unless ret
       ret
     end
 
@@ -51,7 +51,7 @@ module Kontena::Cli::Apps
     # @return [Integer]
     def push_docker_image(image)
       ret = system("docker push #{image}")
-      abort("Failed to push image #{image.colorize(:cyan)}") unless ret
+      raise ("Failed to push image #{image.colorize(:cyan)}") unless ret
       ret
     end
 
@@ -73,7 +73,7 @@ module Kontena::Cli::Apps
     def run_pre_build_hook(hook)
       hook.each do |h|
         ret = system(h['cmd'])
-        abort("Failed to run pre_build hook: #{h['name']}!".colorize(:red)) unless ret
+        raise ("Failed to run pre_build hook: #{h['name']}!") unless ret
       end
     end
   end

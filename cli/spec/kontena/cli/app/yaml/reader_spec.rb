@@ -163,7 +163,7 @@ describe Kontena::Cli::Apps::YAML::Reader do
         .and_return(fixture('kontena-malformed-yaml.yml'))
       expect {
         subject.execute
-      }.to raise_error(SystemExit)
+      }.to raise_error(StandardError)
     end
   end
 

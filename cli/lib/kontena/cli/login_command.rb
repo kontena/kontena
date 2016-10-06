@@ -7,6 +7,6 @@ class Kontena::Cli::LoginCommand < Kontena::Command
   banner "or 'kontena master login' to authenticate to a Kontena Master", false
 
   def execute
-    abort("Command removed. Use #{"kontena master login #{self.url}".colorize(:yellow)} to login to a Kontena Master")
+    exit_with_error("Command removed. Use #{"kontena master login #{self.url}".colorize(:yellow)} to login to a Kontena Master")
   end
 end

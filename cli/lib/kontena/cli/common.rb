@@ -95,6 +95,17 @@ module Kontena
         puts " [#{ success ? 'done'.colorize(:green) : 'fail'.colorize(:red)}] #{msg}"
       end
 
+      def warning(msg)
+        warning = pastel.yellow('warn')
+        STDERR.puts " [#{warning}] #{msg}"
+      end
+
+      def exit_with_error(msg, code = 1)
+        error = pastel.red('error')
+        STDERR.puts " [#{error}] #{msg}"
+        exit code
+      end
+
       def config
         Kontena::Cli::Config.instance
       end

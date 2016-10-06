@@ -12,7 +12,7 @@ module Kontena::Cli::Nodes::Labels
 
       node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
       unless node['labels'].include?(label)
-        abort("Node #{node['name']} does not have label #{label}")
+        exit_with_error("Node #{node['name']} does not have label #{label}")
       end
       node['labels'].delete(label)
       data = {}

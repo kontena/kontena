@@ -4,7 +4,7 @@ module Kontena::Cli::Vpn
     include Kontena::Cli::GridOptions
 
     def execute
-       puts "DEPRECATION WARNING: Support for 'kontena vpn delete' will be dropped. Use 'kontena vpn remove' instead.".colorize(:red)
+      warning "Support for 'kontena vpn delete' will be dropped. Use 'kontena vpn remove' instead."
       require_api_url
       token = require_token
 

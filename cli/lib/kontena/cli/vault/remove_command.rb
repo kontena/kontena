@@ -12,7 +12,9 @@ module Kontena::Cli::Vault
       confirm_command(name) unless forced?
 
       token = require_token
-      client(token).delete("secrets/#{current_grid}/#{name}")
+      spinner "Removing #{name.colorize(:cyan)} from the vault " do
+        client(token).delete("secrets/#{current_grid}/#{name}")
+      end
     end
   end
 end

@@ -19,13 +19,15 @@ module Kontena::Cli::Apps
       yml_service = services_from_yaml(filename, [service], service_prefix)
       if yml_service[service]
         options = yml_service[service]
-        abort("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['container_count']
-        scale_service(require_token, prefixed_name(service), instances)
+        exit_with_error("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['container_count']
+        spinner "Scaling #{service.colorize(:cyan)} " do
+          scale_service(require_token, prefixed_name(service), instances)
+          wait_for_deploy_to_finish(token, parse_service_id(prefixed_name(service)))
+        end
+
       else
-        abort("Service not found")
+        exit_with_error("Service not found")
       end
     end
-
-
   end
 end

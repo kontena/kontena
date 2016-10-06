@@ -16,11 +16,13 @@ module Kontena::Cli::Services
 
       service = client(token).get("services/#{parse_service_id(name)}")
       existing_targets = service['links'].map{|l| l['grid_service_id'].split('/')[1]}
-      abort("Service is already linked to #{target.to_s}") if existing_targets.include?(target.to_s)
+      exit_with_error("Service is already linked to #{target.to_s}") if existing_targets.include?(target.to_s)
       links = service['links'].map{|l| {name: l['grid_service_id'].split('/')[1], alias: l['alias']} }
       links << {name: target.to_s, alias: target.to_s}
       data = {links: links}
-      update_service(token, name, data)
+      spinner "Linking #{name.colorize(:cyan)} to #{target.colorize(:cyan)} " do
+        update_service(token, name, data)
+      end
     end
   end
 end

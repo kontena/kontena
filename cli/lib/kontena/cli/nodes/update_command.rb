@@ -11,11 +11,12 @@ module Kontena::Cli::Nodes
       require_current_grid
       token = require_token
 
-
       node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
       data = {}
       data[:labels] = label_list if label_list
-      client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
+      spinner "Updating #{node_id.colorize(:cyan)} node " do
+        client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
+      end
     end
   end
 end

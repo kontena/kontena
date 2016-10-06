@@ -17,9 +17,9 @@ module Kontena::Cli::Etcd
       if response['value']
         puts response['value']
       elsif response['children']
-        abort "Cannot get value from a directory"
+        exit_with_error "Cannot get value from a directory"
       elsif response['error']
-        abort response['error']
+        exit_with_error response['error']
       end
     end
   end

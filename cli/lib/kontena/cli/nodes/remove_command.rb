@@ -12,7 +12,9 @@ module Kontena::Cli::Nodes
       token = require_token
       confirm_command(node_id) unless forced?
 
-      client(token).delete("grids/#{current_grid}/nodes/#{node_id}")
+      spinner "Removing #{node_id.colorize(:cyan)} node from #{current_grid.colorize(:cyan)} grid " do
+        client(token).delete("grids/#{current_grid}/nodes/#{node_id}")
+      end
     end
   end
 end

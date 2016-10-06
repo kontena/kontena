@@ -13,14 +13,7 @@ module Kontena
 
         cmd = "grid create --silent test"
         ENV["DEBUG"] && puts("Running: #{cmd}")
-      
-        spinner "Creating initial grid 'test'" do
-          Kontena.run(cmd)
-        end
-
-        spinner "Selecting 'test' as current grid" do
-          Kontena.run("grid use --silent test")
-        end
+        Kontena.run(cmd)
       end
     end
   end

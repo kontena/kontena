@@ -15,12 +15,14 @@ module Kontena::Cli::Vault
       if secret.to_s == ''
         secret = STDIN.read
       end
-      abort('No value provided') if secret.to_s == ''
+      exit_with_error('No value provided') if secret.to_s == ''
       data = {
           name: name,
           value: secret
       }
-      client(token).post("grids/#{current_grid}/secrets", data)
+      spinner "Writing #{name.colorize(:cyan)} to the vault " do
+        client(token).post("grids/#{current_grid}/secrets", data)
+      end
     end
   end
 end

@@ -22,7 +22,7 @@ module Kontena::Cli::Master::Config
         require 'yaml'
         YAML.dump(data)
       else
-        abort "Unknown output format '#{self.format}'"
+        exit_with_error "Unknown output format '#{self.format}'"
       end
     end
 
@@ -44,4 +44,3 @@ module Kontena::Cli::Master::Config
     end
   end
 end
-

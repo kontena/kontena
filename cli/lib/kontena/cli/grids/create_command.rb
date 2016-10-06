@@ -8,7 +8,6 @@ module Kontena::Cli::Grids
     parameter "NAME", "Grid name"
 
     option "--initial-size", "INITIAL_SIZE", "Initial grid size (number of nodes)", default: 1
-    option "--skip-use", :flag, "Do not switch to the created grid"
     option "--silent", :flag, "Reduce output verbosity"
 
     def execute
@@ -19,11 +18,18 @@ module Kontena::Cli::Grids
         name: name
       }
       payload[:initial_size] = initial_size if initial_size
-      grid = client(token).post('grids', payload)
-      if grid && !self.skip_use?
-        config.current_grid = grid['name']
-        config.write
-        puts "Using grid: #{pastel.cyan(grid['name'])}"
+      grid = nil
+      if initial_size == 1
+        warning "Option --initial-size=1 is only recommended for test/dev usage" unless running_silent?
+      end
+      spinner "Creating #{pastel.cyan(name)} grid " do
+        grid = client(token).post('grids', payload)
+      end
+      if grid
+        spinner "Switching scope to #{pastel.cyan(name)} grid " do
+          config.current_grid = grid['name']
+          config.write
+        end
       end
     end
   end

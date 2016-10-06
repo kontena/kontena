@@ -18,7 +18,8 @@ module Kontena::Cli::Apps
       require_config_file(filename)
       @services = services_from_yaml(filename, service_list, service_prefix)
       if services.none?{ |name, service| service['build'] }
-        abort 'Not found any service with build option'.colorize(:red)
+        error 'Not found any service with build option'
+        abort
       end
       process_docker_images(services, true, no_cache?)
     end
