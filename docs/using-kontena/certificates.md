@@ -18,12 +18,12 @@ kontena certificate register <you@example.com>
 
 By default this creates a new private key to be used with LE to identify the client.
 
-**Note:** If you have already registered with other means and have existing private key you wish to use you can import it into vault using specific name `LE_PRIVATE_KEY`
+**Note:** If you have already registered with other means and have an existing private key you wish to use you can import it into vault using specific name `LE_PRIVATE_KEY`
 ```
 $ kontena vault write LE_PRIVATE_KEY "$(cat priv_key.pem)"
 ```
 
-The email is needed for Let's Encrypt to notify when certificates are about to expire. This registration is neede only once per grid.
+The email is needed for Let's Encrypt to notify when certificates are about to expire. This registration is needed only once per grid.
 
 ## Create domain authorization
 
@@ -40,7 +40,7 @@ To verify that you really control the requested domain, create a DNS TXT record 
 
 ## Get actual certificate
 
-Once you have created the necessary DNS proofs of domain control you can request the actual certificate.
+Once you have created the necessary DNS proof of domain control you can request the actual certificate.
 
 ```
 $ kontena certificate get --secret-name SSL_CERT_LE_TEST api.example.com

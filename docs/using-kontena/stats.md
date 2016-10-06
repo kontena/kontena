@@ -15,11 +15,11 @@ loadbalancer-1                 1.65%           219.86M / N/A        N/A         
 loadbalancer-4                 2.05%           220.73M / N/A        N/A             61.7G/16.42G 
 ```
 
-Statistics are stored in a capped collection so that the database size does not grow to unexpected sizes. Capped collection can be thought of like a fifo buffer, when the collection gets full the oldest entries are removed to accomodate new statistics.
+Statistics are stored in a capped collection so that the database size does not grow to an unexpected size. Capped collection can be thought of like a fifo buffer, when the collection gets full the oldest entries are removed to accomodate new statistics.
 
 ## Exporting stats
 
-While CLI provides a quick look on the current state of service it would be beneficial to also see longer term trends. For that purpose Kontena can export the statistics in [StatsD protocol](https://github.com/b/statsd_spec).
+While CLI provides a quick look at the current state of service it would be beneficial to also see longer term trends. For that purpose Kontena can export the statistics in [StatsD protocol](https://github.com/b/statsd_spec).
 
 Statistics exporting can be activated on a grid by updating it:
 ```
@@ -32,8 +32,8 @@ $ kontena grid update --statsd-server influx.example.com:8125
 
 ## Where to collect stats?
 
-It is completely up to the user to select which systems to use to collect and view the statistics. Only requirement is that it can collect the stats with StatsD protocol.
+It is completely up to the user to select which systems to use to collect and view the statistics. The only requirement is that it can collect the stats with StatsD protocol.
 
-We at Kontena have been using very succesfully [influxdata](https://influxdata.com/) stack to collect and aggregate statistics.
+We at Kontena have been very succesfully using [influxdata](https://influxdata.com/) stack to collect and aggregate statistics.
 
-There is also a ready made plugin in the making to easily create and control influxdata based statistics collection service with Kontena. We hope to release that in coming months.
+There is also a ready made plugin in the making to easily create and control influxdata based statistics collection service with Kontena. We hope to release that in the coming months.

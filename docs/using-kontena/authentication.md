@@ -36,7 +36,7 @@ $ kontena master join https://master_ip invitation_code
 
 ## Configuring Kontena Cloud as the authentication provider
 
-If you are instaling a fresh Kontena Master v0.16.0 or newer this happens automatically unless you select not to use the Kontena Cloud. You can authenticate to Kontena Cloud and register a new account by using the command:
+If you are installing a fresh Kontena Master v0.16.0 or newer this happens automatically unless you select not to use the Kontena Cloud. You can authenticate to Kontena Cloud and register a new account by using the command:
 
 ```
 $ kontena cloud login
@@ -132,7 +132,7 @@ The endpoint must support the `authorization_code` grant_type.
 
 #### `oauth2.userinfo_scope`
 
-Authorization scope that provides read access to basic user information at `oauth2.userinfo_endpoint`.
+An authorization scope that provides read access to basic user information at `oauth2.userinfo_endpoint`.
 
 **Example:** `user:read`
 
@@ -144,7 +144,7 @@ This endpoint must respond in JSON format and have at least values for user id a
 
 **Example:** `https://api.example.com/user`
 
-Some providers may provide user information through a token info endpoint that takes access token in the URL path. The userinfo endpoint URL setting can include the string `:access_token` which will be replaced with the user's access token:
+Some providers may provide user information through a token info endpoint that takes an access token in the URL path. The userinfo endpoint URL setting can include the string `:access_token` which will be replaced with the user's access token:
 
 **Example:** `https://api.example.com/tokeninfo/:access_token`
 
@@ -181,13 +181,13 @@ It's possible to define multiple queries by separating them with a semicolon. Th
 
 #### `oauth2.userinfo_email_jsonpath`
 
-Same as `oauth2.userinfo_username_jsonpath` but for reading user's email address.
+Same as `oauth2.userinfo_username_jsonpath` but for reading a user's email address.
 
 **Example:** `$..email` (will return the value of the first field labeled "email" anywhere in the JSON, or if the result is an array, the first item in that array)
 
 #### `oauth2.userinfo_user_id_jsonpath`
 
-Same as `oauth2.userinfo_username_jsonpath` but for reading user's id.
+Same as `oauth2.userinfo_username_jsonpath` but for reading a user's id.
 
 **Example:** `$..uid`
 
@@ -215,7 +215,7 @@ Same as `oauth2.userinfo_username_jsonpath` but for reading user's id.
 19. The access token is saved to client's `$HOME/.kontena_client.json`
 20. The CLI has now been authenticated to access the Master API.
 
-If the user has already performed an authentication to the master, an invitation code is no longer needed because the external user id for the user is already present. Subsequent authentications will be performed using the same flow without an invitation code and without having to click Agree because the application has already been approved.
+If the user has already performed an authentication to the Master, an invitation code is no longer needed because the external user id for the user is already present. Subsequent authentications will be performed using the same flow without an invitation code and without having to click Agree because the application has already been approved.
 
 ## Authenticating without a local browser
 
@@ -243,7 +243,7 @@ $ kontena master login --token <access_token> <https://master_url>
 
 ## Resetting the local administrator account
 
-If you have lost access to the Master, you will need to reset the local administrator account.
+If you have lost access to the master, you will need to reset the local administrator account.
 
 This can be done by using SSH to connect to the master.
 

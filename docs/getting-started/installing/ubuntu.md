@@ -42,15 +42,15 @@ After Kontena Master has provisioned you will be automatically authenticated as 
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
 
-Switch to existing grid using following command:
+Switch to an existing grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using command:
+Or create a new grid using the command:
 
 ```
 $ kontena grid create test-grid
@@ -65,12 +65,12 @@ $ sudo apt-get update
 $ sudo apt-get install kontena-agent
 ```
 
-At the end of installation process agent will ask couple of configuration parameters:
+At the end of the installation the process agent will ask for a couple of configuration parameters:
 
 * The address of the Kontena master. **Note:** You must use WebSocket protocol: ws or wss for secured connections
-* Grid token from the Kontena master
+* The Grid token from the Kontena master
 
-After installing all the agents, you can verify that they have joined Grid:
+After installing all the agents, you can verify that they have joined a Grid:
 
 ```
 $ kontena node list

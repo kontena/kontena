@@ -15,9 +15,9 @@ title: Docker Compose
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master using Docker Compose can be done with following steps:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master using Docker Compose can be done with the following steps:
 
-**Step 1:** create `docker-compose.yml` file with following contents:
+**Step 1:** create `docker-compose.yml` file with the following contents:
 
 ```
 version: '2'
@@ -68,31 +68,31 @@ $ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey
 cat certificate.crt privateKey.key > cert.pem
 ```
 
-**Step 2:** Run command `docker-compose up -d`
+**Step 2:** Run the command `docker-compose up -d`
 
 After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
 
-Create a new grid using command:
+Create a new grid using the command:
 
 ```
 $ kontena grid create --initial-size=<initial_size> my-grid
 ```
 
-Or switch to existing grid using following command:
+Or switch to an existing grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-> Recommended minimum initial-size is 3. This means minimum number of nodes in a grid is 3.
+> The recommended minimum initial-size is 3. This means the minimum number of nodes in a grid is 3.
 
-Now you can start provision nodes to your host machines.
+Now you can start provisioning nodes to your host machines.
 
-**Step 1:** copy following `docker-compose.yml` file to each host:
+**Step 1:** copy the following `docker-compose.yml` file to each host:
 
 ```
 agent:
@@ -107,17 +107,17 @@ agent:
     - /var/run/docker.sock:/var/run/docker.sock
 ```
 
-- `KONTENA_URI` is uri to Kontena Master (use ws:// for non-tls connection)
-- `KONTENA_TOKEN` is grid token, can be acquired from master using `kontena grid show my-grid` command
-- `KONTENA_PEER_INTERFACE` is network interface that is used to connect the other nodes in the grid.
+- `KONTENA_URI` is the uri to Kontena Master (use ws:// for a non-tls connection)
+- `KONTENA_TOKEN` is the grid token, which can be acquired from master using the `kontena grid show my-grid` command
+- `KONTENA_PEER_INTERFACE` is the network interface that is used to connect the other nodes in the grid.
 
-**Step 2:** Run command `docker-compose up -d`
+**Step 2:** Run the command `docker-compose up -d`
 
 To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine.
 
-**Note!** While Kontena works ok even with just single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
+**Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
 
-After creating nodes, you can verify that they have joined Grid:
+After creating nodes, you can verify that they have joined a Grid:
 
 ```
 $ kontena node list

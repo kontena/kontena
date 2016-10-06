@@ -42,7 +42,7 @@ Some of the rubygems that we rely on:
 
 > MongoDB is an open-source, document database designed for ease of development and scaling.
 
-MongoDB is used as a persistent storage in the master daemon. We did choose MongoDB because of flexibility, tooling and relatively simple scaling.
+MongoDB is used as a persistent storage in the master daemon. We chose to use MongoDB because of its flexibility, tooling and relatively simple scaling.
 
 ## cAdvisor
 

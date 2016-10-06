@@ -7,19 +7,19 @@ toc_order: 1
 
 Kontena is an open-source system for deploying, managing, scaling and monitoring containerized applications across multiple hosts on any cloud infrastructure. It is primarily targeted for running applications composed of multiple containers, such as elastic, distributed micro-services.
 
-With Kontena, user is asking system to run a Service that is composed of one or more containers. The system will then automatically choose the host or number of hosts to run those containers. Kontena's scheduler has been influenced by technologies such as [Docker Swarm](https://docs.docker.com/swarm/) and [Kubernetes](http://kubernetes.io/). While having many similarities and concepts, Kontena's scheduler is designed to:
+With Kontena, the user is asking a system to run a Service that is composed of one or more containers. The system will then automatically choose the host or number of hosts to run those containers. Kontena's scheduler has been influenced by technologies such as [Docker Swarm](https://docs.docker.com/swarm/) and [Kubernetes](http://kubernetes.io/). While having many similarities and concepts, Kontena's scheduler is designed to:
 
 * Work with Services instead of plain containers
 * Support both stateless and stateful applications
 * Have sane defaults and prefer convention over configuration
 
-Once containers are ready to be started on the hosts, Kontena will apply virtual overlay network for containers to make it possible for containers to find and communicate with each other.
+Once the containers are ready to be started on the hosts, Kontena will apply a virtual overlay network for the containers to make it possible for the containers to find and communicate with each other.
 
 ## The Grid
 
 Grid is the top level abstraction in Kontena. It is created by and managed by Master Node.
 
-When a Grid is created, Kontena will automatically create an overlay network (powered by [Weave](http://weave.works/)) with VPN access available. All of a Grid's Nodes are automatically connected to this overlay network. With the overlay network in place, Services may communicate with each other in multi-host environment just like in a local area network. Kontena's built-in VPN solution allows developers to access the overlay network from local development environments with [OpenVPN](https://openvpn.net/).
+When a Grid is created, Kontena will automatically create an overlay network (powered by [Weave](http://weave.works/)) with VPN access available. All of a Grid's Nodes are automatically connected to this overlay network. With the overlay network in place, Services may communicate with each other in multi-host environments just like in a local area network. Kontena's built-in VPN solution allows developers to access the overlay network from local development environments with [OpenVPN](https://openvpn.net/).
 
 ## Master Node
 

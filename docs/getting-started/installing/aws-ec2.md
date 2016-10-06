@@ -24,7 +24,7 @@ $ kontena plugin install aws
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to AWS EC2 can be done by just issuing following command:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to AWS EC2 can be done by just issuing the following command:
 
 ```
 $ kontena aws master create \
@@ -40,21 +40,21 @@ After Kontena Master has provisioned you will be automatically authenticated as 
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch cli scope to a grid. A grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
 
-Switch to existing grid using following command:
+Switch to an existing grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using command:
+Or create a new grid using the command:
 
 ```
 $ kontena grid create --initial-size=<initial_node_count> aws-grid
 ```
 
-Now you can start provision AWS EC2 nodes. Issue following command (with right options) as many times as desired:
+Now you can start provisioning AWS EC2 nodes. Issue the following command (with the right options) as many times as desired:
 
 ```
 $ kontena aws node create \

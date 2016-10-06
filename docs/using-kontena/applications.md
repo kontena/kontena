@@ -5,7 +5,7 @@ toc_order: 1
 
 # Applications
 
-Any kind of applications can be easily deployed to Kontena using the Kontena `app` commands. With these commands, you can use Kontena like many of the popular PaaS platforms. One of the most interesting feature of is the ability to import projects from some of the most famous PaaS platforms.
+Any kind of applications can be easily deployed to Kontena using the Kontena `app` commands. With these commands, you can use Kontena like many of the popular PaaS platforms. One of the most interesting features is the ability to import projects from some of the most famous PaaS platforms.
 
 Kontena app commands include:
 
@@ -142,11 +142,11 @@ Options:
     -h, --help                    print help
 ```
 
-**NOTE**: If you don't have kontena.yml file yet in your project, you can get started with `kontena app init` command.
+**NOTE**: If you don't have the kontena.yml file yet in your project, you can get started with the `kontena app init` command.
 
 ### Using Custom File to Describe Application
 
-By default, Kontena will search for `kontena.yml` file in the current directory. If you want to specify the path to custom file, you can use the `-f` switch.
+By default, Kontena will search for the `kontena.yml` file in the current directory. If you want to specify the path to a custom file, you can use the `-f` switch.
 
 ```
 $ kontena app deploy -f myapp.yml      # application described in myapp.yml file
@@ -195,7 +195,7 @@ mysql:
 
 ## Stopping Application
 
-`kontena app stop` command stops running services without removing them.
+The `kontena app stop` command stops running services without removing them.
 
 ```
 Usage:
@@ -214,7 +214,7 @@ You can start services again with `kontena app start`
 
 ## Starting Application
 
-`kontena app start` command starts existing services.
+The `kontena app start` command starts existing services.
 
 ```
 Usage:
