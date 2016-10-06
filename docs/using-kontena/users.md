@@ -5,7 +5,7 @@ toc_order: 1
 
 # Users
 
-Kontena has built-in role based user management. The first user that logs in to Kontena Master will be assigned to `master_admin` role. Master admin can invite new users to Master server and assign users to `master_admin` or `grid_admin` roles. Master admin and grid admin can add and remove users from grid.
+Kontena has built-in role based user management. The first user that logs in to Kontena Master will be assigned to the  `master_admin` role. Master admin can invite new users to Master server and assign users to `master_admin` or `grid_admin` roles. Master admin and grid admin can add and remove users from a grid.
 
 
 ## Roles

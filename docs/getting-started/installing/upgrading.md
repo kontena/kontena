@@ -5,7 +5,7 @@ title: Upgrading
 # Upgrading Kontena from Previous Versions
 
 Upgrading Kontena is easy. Usually it's enough to just update Kontena Master
-and nodes will follow automatically (if upgrade is required). Cli updates
+and the nodes will follow automatically (if an upgrade is required). Cli updates
 can be installed via rubygems.
 
 ## Versions

@@ -132,7 +132,7 @@ coreos:
 $ cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 ```
 
-The SSL certificate specified is a pem file, containing a public certificate followed by a private key (public certificate must be put before the private key, order matters).
+The SSL certificate specified is a pem file, containing a public certificate followed by a private key (the public certificate must be put before the private key, order matters).
 
 After Kontena Master has provisioned you can connect to it by issuing login command. First user to login will be given master admin rights.
 

@@ -9,7 +9,7 @@ A [Service](../core-concepts/architecture.md#services) is composed of Containers
 
 ## Service Discovery
 
-Each service instance is automatically registered in Kontena Grid distributed DNS service, which makes them discoverable through simple name lookups. For example: if service is named as `nginx` and it has been scaled to two instances, then first instance can be found via `nginx-1.<grid>.kontena.local` dns address, second via `nginx-2.<grid>.kontena.local` etc. It's also possible to query service dns that returns all service instances records. For example, `nginx.<grid>.kontena.local` dns address will return both `nginx-1` and `nginx-2` instance addresses in random order.
+Each service instance is automatically registered in Kontena Grid distributed DNS service, which makes them discoverable through simple name lookups. For example: if a service is named as `nginx` and it has been scaled to two instances, then the first instance can be found via `nginx-1.<grid>.kontena.local` dns address, the second via `nginx-2.<grid>.kontena.local` etc. It's also possible to query service dns that returns all service instances records. For example, the `nginx.<grid>.kontena.local` dns address will return both `nginx-1` and `nginx-2` instance addresses in random order.
 
 ## Service High Availability
 
@@ -67,7 +67,7 @@ $ kontena service create -p 80:80 nginx nginx:latest
 $ kontena service create --stateful redis redis:latest
 ```
 
-**Note:** `kontena service create` command does not automatically deploy service.
+**Note:** The`kontena service create` command does not automatically deploy a service.
 It must be done separately with `kontena service deploy`.
 
 **Options:**
@@ -119,7 +119,7 @@ $ kontena service deploy <name>
 $ kontena service update <name>
 ```
 
-**Note:** `kontena service update` command does not automatically redeploy stateful service.
+**Note:** The `kontena service update` command does not automatically redeploy a stateful service.
 It must be done separately with `kontena service deploy`.
 
 **Options:**

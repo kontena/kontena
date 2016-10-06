@@ -5,9 +5,9 @@ toc_order: 6
 
 # Kontena Load Balancer
 
-Load balancers are used to distribute traffic between services. Therefore, having a fully featured, high performance and reliable load balancer is one of the most essential component for building applications composed of multiple services.
+Load balancers are used to distribute traffic between services. Therefore, having a fully featured, high performance and reliable load balancer is one of the most essential components for building applications composed of multiple services.
 
-With Kontena, developers can enjoy the built-in load balancer that is based on [HAproxy](http://www.haproxy.org/). It is fully managed by Kontena orchestration and enable consistent, portable load balancing on any infrastructure where Kontena Nodes are running.
+With Kontena, developers can enjoy the built-in load balancer that is based on [HAproxy](http://www.haproxy.org/). It is fully managed by Kontena orchestration and enables consistent, portable load balancing on any infrastructure where Kontena Nodes are running.
 
 The Kontena Load Balancer key features:
 
@@ -20,7 +20,7 @@ The Kontena Load Balancer key features:
 
 ## Using Kontena Load Balancer
 
-Kontena Load Balancer is a HAproxy / confd service that is configured to watch changes in etcd. Load Balancers may be described in `kontena.yml` and services are connected automatically by linking services to these load balancer services. If load balanced service is scaled/re-deployed then the load balancer will reload it's configuration on the fly without dropping connections.
+Kontena Load Balancer is a HAproxy / confd service that is configured to watch changes in etcd. Load Balancers may be described in `kontena.yml` and services are connected automatically by linking services to these load balancer services. If a load balanced service is scaled/re-deployed then the load balancer will reload it's configuration on the fly without dropping connections.
 
 An example of Internet facing load balancer:
 
@@ -79,11 +79,11 @@ These environment variables configure the loadbalancer itself.
 
 ## Stats
 
-Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances.
+Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances.
 
 ## SSL Termination
 
-Kontena Load Balancer supports ssl termination on multiple certificates. These certificates can be configured to load balancer by setting `SSL_CERTS` environment variable. Recommended way to do this is by using Kontena Vault.
+Kontena Load Balancer supports ssl termination on multiple certificates. These certificates can be configured to load balancer by setting the `SSL_CERTS` environment variable. The recommended way to do this is by using Kontena Vault.
 
 The certificate specified in Kontena Load Balancer is a pem file, containing a public certificate followed by a private key (public certificate must be put before the private key, order matters).
 
@@ -122,7 +122,7 @@ Write certificates to Kontena Vault:
 $ kontena vault write www_domain_com_cert "$(cat www_domain_com.pem)"
 $ kontena vault write api_domain_com_cert "$(cat api_domain_com.pem)"
 ```
-(pem files must contain both public certificate and private key)
+(pem files must contain both a public certificate and a private key)
 
 Map secrets from Vault to lb service:
 
