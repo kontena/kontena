@@ -7,7 +7,6 @@ module Kontena
   # @param [String] command_line 
   # @return [Fixnum] exit_code
   def self.run(cmdline = "", returning: :status)
-    require 'shellwords'
     ENV["DEBUG"] && puts("Running Kontena.run(#{cmdline.inspect}, returning: #{returning}")
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(cmdline.shellsplit)
     ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
@@ -49,6 +48,7 @@ class String
 end
 
 require 'ruby_dig'
+require 'shellwords'
 require_relative 'kontena/cli/version'
 require_relative 'kontena/cli/common'
 require_relative 'kontena/command'
