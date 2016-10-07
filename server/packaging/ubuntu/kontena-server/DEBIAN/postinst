@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
 /usr/bin/docker pull kontena/server:VERSION
 /usr/bin/docker pull kontena/haproxy:latest
 /usr/bin/docker pull mongo:3.0
@@ -12,6 +15,10 @@ VAULT_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
 VAULT_IV=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
 sed -i -r "s#\#VAULT_KEY=.*#VAULT_KEY=${VAULT_KEY}#" /etc/default/kontena-server-api
 sed -i -r "s#\#VAULT_IV=.*#VAULT_IV=${VAULT_IV}#" /etc/default/kontena-server-api
+
+# Fetching configuration from debconf
+db_get kontena-server/initial_admin_code
+sed -i -r "s#\#INITIAL_ADMIN_CODE=.*#INITIAL_ADMIN_CODE=${RET}#" /etc/default/kontena-server-api
 
 start kontena-server-mongo || true
 start kontena-server-api || true
