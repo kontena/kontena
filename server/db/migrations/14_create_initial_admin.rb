@@ -9,7 +9,7 @@ class CreateInitialAdmin < Mongodb::Migration
     at = AccessToken.create!(
       user: admin,
       scopes: ['user', 'owner'],
-      with_code: ENV['KONTENA_INITIAL_ADMIN_CODE'],
+      with_code: ENV['INITIAL_ADMIN_CODE'],
       internal: true
     )
     puts "*********************************************"

@@ -9,7 +9,7 @@ api:
     - VAULT_KEY=jkfldsjkflsdajfaklsjfklasdjfklas
     - VAULT_IV=kfsdfopweu09fewjlhfksdjifjpoweop
     - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
-    - KONTENA_INITIAL_ADMIN_CODE
+    - INITIAL_ADMIN_CODE=initialadmincode
   links:
    - mongodb
 mongodb:
