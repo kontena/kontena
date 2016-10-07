@@ -24,6 +24,10 @@ $ sudo apt-get update
 $ sudo apt-get install kontena-server
 ```
 
+At the end of the installation the process master will ask for a initial admin code for the master. This is used to authenticate the initial admin connection of Kontena cli to properly configure the master. The code can be any random string.
+
+If using automation the value can be overwritten in file `/etc/default/kontena-server-api`.
+
 ### Setup SSL Certificate
 
 ```
