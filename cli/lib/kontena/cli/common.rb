@@ -76,9 +76,8 @@ module Kontena
 
       # Only show spinner when in verbose mode
       def vspinner(msg, &block)
-        unless block_given?
-          vfakespinner(msg)
-        end
+        return vfakespinner(msg) unless block_given?
+        
         if running_verbose?
           spinner(msg, &block)
         else
