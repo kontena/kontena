@@ -2,8 +2,6 @@ require 'rack/attack'
 require 'active_support/cache/memory_store'
 
 class Rack::Attack
-  MIN_VERSION     = Gem::Version.new('0.16.0.pre1')
-  CLI_APPLICATION = 'kontena-cli'.freeze
   LOCALHOSTS      = ['127.0.0.1'.freeze, '::1'.freeze].freeze
 
   Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
@@ -12,26 +10,6 @@ class Rack::Attack
     Rack::Attack.safelist('allow from localhost') do |req|
       LOCALHOSTS.include?(req.ip)
     end
-  end
-
-  Rack::Attack.blocklist('block old kontena CLIs') do |req|
-    begin
-      application, version = req.user_agent.to_s.split('/'.freeze)
-      application.eql?(CLI_APPLICATION) && Gem::Version.new(version) < MIN_VERSION
-    rescue
-    end
-  end
-
-  Rack::Attack.blocklisted_response = lambda do |env|
-		msg = "{ \"error\": \"Client upgrade required. Minimum version for this server is #{MIN_VERSION.to_s}. Use: gem install kontena-cli - if your server was recently upgraded, you may also need to reconfigure the authentication provider settings.\"}"
-    [
-      400,
-      {
-         'Content-Type'   => 'application/json',
-         'Content-Length' => msg.bytesize.to_s
-      },
-      [msg]
-    ]
   end
 
   # Allow 1 req / second to oauth token endpoint and authenticate endpoint

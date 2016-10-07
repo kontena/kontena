@@ -4,7 +4,7 @@ module V1
 
     route do |r|
       r.post do
-        halt_request(403, 'This version of Kontena Master does not support user credential authentication') and return
+        halt_request(403, 'This version of Kontena Master does not support user credential authentication.')
       end
     end
   end
