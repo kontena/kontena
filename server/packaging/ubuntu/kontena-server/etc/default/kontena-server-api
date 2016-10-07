@@ -3,3 +3,6 @@
 
 # Kontena Vault iv
 #VAULT_IV=
+
+# Kontena initial admin code
+#INITIAL_ADMIN_CODE=
