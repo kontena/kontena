@@ -11,21 +11,20 @@ module Kontena::Cli::Grids
     option "--silent", :flag, "Reduce output verbosity"
     option "--token", "[TOKEN]", "Set grid token"
 
-    def execute
-      require_api_url
+    requires_current_master_token
 
-      token = require_token
+    def execute
       payload = {
         name: name
       }
-      payload[:token] = token if token
+      payload[:token] = self.token if self.token
       payload[:initial_size] = initial_size if initial_size
       grid = nil
       if initial_size == 1
         warning "Option --initial-size=1 is only recommended for test/dev usage" unless running_silent?
       end
       spinner "Creating #{pastel.cyan(name)} grid " do
-        grid = client(token).post('grids', payload)
+        grid = client.post('grids', payload)
       end
       if grid
         spinner "Switching scope to #{pastel.cyan(name)} grid " do
