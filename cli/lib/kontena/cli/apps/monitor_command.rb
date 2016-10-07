@@ -79,8 +79,8 @@ module Kontena::Cli::Apps
     def colors
       if(@colors.nil? || @colors.size == 0)
         @colors = %i(
-          red green yellow blue magenta cyan white bright_red bright_green
-          bright_yellow bright_blue bright_magenta bright_cyan bright_white
+          red green yellow blue magenta cyan bright_red bright_green
+          bright_yellow bright_blue bright_magenta bright_cyan
         )
       end
       @colors
