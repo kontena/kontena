@@ -222,7 +222,7 @@ module Kontena
       end
 
       def current_grid
-        config.current_grid || (self.respond_to?(:grid) ? self.grid : nil)
+        (self.respond_to?(:grid) ? self.grid : nil) || config.current_grid
       end
 
       def current_master_index
