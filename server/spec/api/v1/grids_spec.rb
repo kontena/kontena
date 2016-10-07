@@ -54,6 +54,22 @@ describe '/v1/grids' do
       }.to change{ david.reload.grids.count }.by(1)
     end
 
+    it 'a new grid has a generated token unless supplied' do
+      expect {
+        post '/v1/grids', {name: 'foo'}.to_json, request_headers
+        expect(response.status).to eq(201)
+      }.to change{ david.reload.grids.count }.by(1)
+      expect(Grid.where(name: 'foo').first.token).to match /\A[A-Za-z0-9+\/=]*\Z/
+    end
+
+    it 'creates a new grid with supplied token' do
+      expect {
+        post '/v1/grids', {name: 'foo', token: 'abcd1234'}.to_json, request_headers
+        expect(response.status).to eq(201)
+      }.to change{ david.reload.grids.count }.by(1)
+      expect(Grid.where(name: 'foo').first.token).to eq 'abcd1234'
+    end
+
     it 'requires authorization' do
       request_headers.delete('HTTP_AUTHORIZATION')
       post '/v1/grids', {}.to_json, request_headers

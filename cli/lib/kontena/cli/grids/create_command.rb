@@ -9,6 +9,7 @@ module Kontena::Cli::Grids
 
     option "--initial-size", "INITIAL_SIZE", "Initial grid size (number of nodes)", default: 1
     option "--silent", :flag, "Reduce output verbosity"
+    option "--token", "[TOKEN]", "Set grid token"
 
     def execute
       require_api_url
@@ -17,6 +18,7 @@ module Kontena::Cli::Grids
       payload = {
         name: name
       }
+      payload[:token] = token if token
       payload[:initial_size] = initial_size if initial_size
       grid = nil
       if initial_size == 1

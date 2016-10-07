@@ -65,7 +65,8 @@ module V1
           outcome = Grids::Create.run(
               user: current_user,
               name: data['name'],
-              initial_size: data['initial_size'] || 1
+              initial_size: data['initial_size'] || 1,
+              token: data['token']
           )
 
           if outcome.success?
