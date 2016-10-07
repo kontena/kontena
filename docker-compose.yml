@@ -13,6 +13,7 @@ services:
       - VAULT_KEY=asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf
       - VAULT_IV=kljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljhkljh
       - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
+      - INITIAL_ADMIN_CODE=initialadmincode
     volumes:
       - ./server:/app
     depends_on:

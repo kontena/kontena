@@ -1,7 +1,7 @@
 namespace :kontena do
   desc 'Reset local administrator account'
   task :reset_admin => :environment do
-    ENV['KONTENA_INITIAL_ADMIN_CODE'] = SecureRandom.hex(6)
+    ENV['INITIAL_ADMIN_CODE'] = SecureRandom.hex(6)
     ENV['NO_MONGO_PUBSUB'] = 'true'
     ENV['RACK_ENV']    ||= 'production'
     ENV['MONGODB_URI'] ||= 'mongodb://mongodb:27017/kontena_server'
@@ -12,6 +12,6 @@ namespace :kontena do
     puts "Local administrator account has been reset."
     puts
     puts "To authenticate your kontena-cli use this command:"
-    puts "kontena master login --code #{ENV['KONTENA_INITIAL_ADMIN_CODE']} #{Configuration['server.root_url'] || "<master_url>"}"
+    puts "kontena master login --code #{ENV['INITIAL_ADMIN_CODE']} #{Configuration['server.root_url'] || "<master_url>"}"
   end
 end
