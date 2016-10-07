@@ -299,7 +299,7 @@ module Kontena
         countdown_thread = Thread.new do
           time_left = timeout
           while time_left > 0 && !Thread.main['any_key.stop_prompt']
-            print "\r#{pastel.bright_white("#{msg.sub("?", time_left.to_s)}")} "
+            print "\r#{pastel.bright_cyan("#{msg.sub("?", time_left.to_s)}")} "
             time_left = end_time - Time.now.to_i
             sleep 0.1
           end
@@ -330,7 +330,7 @@ module Kontena
         return nil unless $stdout.tty?
         return any_key_to_continue_with_timeout(timeout) if timeout
         msg = "Press any key to continue or ctrl-c to cancel.. "
-        print pastel.bright_white("#{msg}")
+        print pastel.bright_cyan("#{msg}")
         char = STDIN.getch
         print "\r#{' ' * msg.length}\r"
         if char == "\u0003"
