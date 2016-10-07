@@ -59,8 +59,10 @@ module Kontena::Cli::Helpers
     # @return [Array<Symbol>]
     def colors
       if(@colors.nil? || @colors.size == 0)
-        @colors = [:green, :yellow, :magenta, :cyan, :red,
-          :light_green, :light_yellow, :ligh_magenta, :light_cyan, :light_red]
+        @colors = %i(
+          red green yellow blue magenta cyan bright_red bright_green
+          bright_yellow bright_blue bright_magenta bright_cyan
+        )
       end
       @colors
     end
