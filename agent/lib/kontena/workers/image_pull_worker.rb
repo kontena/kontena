@@ -1,21 +1,27 @@
-require 'docker'
-require_relative 'logging'
 
-module Kontena
-  class ImagePuller
+module Kontena::Workers
+  class ImagePullWorker
+    include Celluloid
     include Kontena::Logging
+
+    attr_reader :image_cache
+
+    def initialize
+      @image_cache = {}
+    end
 
     # @param [String] image
     # @param [String] deploy_rev
     # @param [Hash, NilClass] creds
     def ensure_image(image, deploy_rev, creds = nil)
-      self.class.mutex.synchronize do
-        unless fresh_pull?("#{image}:#{deploy_rev}")
-          self.pull_image(image, deploy_rev, creds)
-        end
+      unless fresh_pull?("#{image}:#{deploy_rev}")
+        pull_image(image, deploy_rev, creds)
       end
     end
 
+    # @param [String] image
+    # @param [String] deploy_rev
+    # @param [Hash, NilClass] creds
     def pull_image(image, deploy_rev, creds)
       if creds.nil?
         info "pulling image: #{image}"
@@ -45,10 +51,12 @@ module Kontena
     # @param [String] image
     # @return [Boolean]
     def fresh_pull?(image)
-      return false unless self.class.image_cache[image]
-      self.class.image_cache[image] >= (Time.now.utc - 600)
+      return false unless image_cache[image]
+      image_cache[image] >= (Time.now.utc - 600)
     end
 
+    # @param [String] image
+    # @return [Boolean]
     def image_exists?(image)
       image = Docker::Image.get(image) rescue nil
       !image.nil?
@@ -56,17 +64,7 @@ module Kontena
 
     # @param [String] image
     def update_image_cache(image)
-      self.class.image_cache[image] = Time.now.utc
-    end
-
-    # @return [Hash]
-    def self.image_cache
-      @image_cache ||= {}
-    end
-
-    # @return [Mutex]
-    def self.mutex
-      @mutex ||= Mutex.new
+      image_cache[image] = Time.now.utc
     end
   end
 end
