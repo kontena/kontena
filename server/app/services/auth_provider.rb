@@ -112,7 +112,7 @@ class AuthProvider < OpenStruct
   end
 
   def callback_url
-    @callback_url ||= self.root_url.nil? ? nil : URI.join(self.root_url, 'cb')
+    self.root_url.nil? ? nil : URI.join(self.root_url, 'cb').to_s
   end
 
   # URL to the authentication provider authorization endpoint
