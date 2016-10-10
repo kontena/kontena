@@ -17,7 +17,7 @@ begin
 rescue Excon::Errors::SocketError => exc
   if exc.message.include?('Unable to verify certificate')
     $stderr.puts "The server uses a certificate signed by an unknown authority.".colorize(:red)
-    $stderr.puts "You can trust this server by copying server CA pem file to: #{"~/.kontena/certs/<hostname>.pem".colorize(:light_black)}"
+    $stderr.puts "You can trust this server by copying server CA pem file to: #{"~/.kontena/certs/<hostname>.pem".colorize(:yellow)}"
     $stderr.puts "Protip: you can bypass the certificate check by setting #{'SSL_IGNORE_ERRORS=true'.colorize(:yellow)} env variable, but any data you send to the server could be intercepted by others."
     exit(1)
   else
