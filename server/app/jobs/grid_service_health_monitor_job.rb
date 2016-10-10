@@ -1,6 +1,7 @@
 class GridServiceHealthMonitorJob
   include Celluloid
   include Logging
+  include CurrentLeader
 
   PUBSUB_KEY = 'service:health_status_events'
 
@@ -15,6 +16,7 @@ class GridServiceHealthMonitorJob
   end
 
   def handle_event(event)
+    return unless leader?
     service = GridService.find_by(id: event['id'])
     if deploy_needed?(service)
       info "service health too low, triggering full deploy for #{service.to_path}"
