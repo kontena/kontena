@@ -6,6 +6,7 @@ describe Agent::MessageHandler do
   let(:queue) { Queue.new }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
   let(:subject) { described_class.new(queue) }
+  let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
 
   describe '#run' do
     it 'performs', :performance => true do
@@ -168,7 +169,7 @@ describe Agent::MessageHandler do
   describe '#on_container_health' do
     it 'updates health status' do
       container_id = SecureRandom.hex(16)
-      container = grid.containers.new(name: 'foo-1')
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
       container.update_attribute(:container_id, container_id)
 
       expect {
