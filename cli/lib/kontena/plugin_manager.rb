@@ -4,7 +4,8 @@ module Kontena
   class PluginManager
     include Singleton
 
-    MIN_CLI_VERSION = '0.16.0.alpha1'.freeze
+    CLI_GEM = 'kontena-cli'.freeze
+    MIN_CLI_VERSION = '0.15.99'.freeze
 
     attr_reader :plugins
 
@@ -19,8 +20,7 @@ module Kontena
           plugin = File.join(spec.gem_dir, require_path, 'kontena_cli_plugin.rb')
           if File.exist?(plugin) && !@plugins.find{ |p| p.name == spec.name }
             begin
-              kontena_cli = spec.runtime_dependencies.find{ |d| d.name == 'kontena-cli' }
-              if !kontena_cli.match?('kontena-cli', MIN_CLI_VERSION)
+              if spec_has_valid_dependency?(spec)
                 load(plugin)
                 @plugins << spec
               else
@@ -42,6 +42,15 @@ module Kontena
       @plugins
     rescue => exc
       STDERR.puts exc.message
+    end
+
+    # @param [Gem::Specification] spec
+    # @return [Boolean]
+    def spec_has_valid_dependency?(spec)
+      kontena_cli = spec.runtime_dependencies.find{ |d| d.name == CLI_GEM }
+      !kontena_cli.match?(CLI_GEM, MIN_CLI_VERSION)
+    rescue
+      false
     end
   end
 end
