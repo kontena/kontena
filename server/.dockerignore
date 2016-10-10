@@ -1,8 +1,10 @@
 .env
 .dockercfg
 .idea
+.bundle
 virtualbox
 packaging
 build
 release
 *.pem
+vendor
