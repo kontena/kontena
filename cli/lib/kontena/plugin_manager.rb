@@ -4,6 +4,8 @@ module Kontena
   class PluginManager
     include Singleton
 
+    MIN_CLI_VERSION = '0.16.0.alpha1'.freeze
+
     attr_reader :plugins
 
     def initialize
@@ -17,8 +19,15 @@ module Kontena
           plugin = File.join(spec.gem_dir, require_path, 'kontena_cli_plugin.rb')
           if File.exist?(plugin) && !@plugins.find{ |p| p.name == spec.name }
             begin
-              load(plugin)
-              @plugins << spec
+              kontena_cli = spec.runtime_dependencies.find{ |d| d.name == 'kontena-cli' }
+              if !kontena_cli.match?('kontena-cli', MIN_CLI_VERSION)
+                load(plugin)
+                @plugins << spec
+              else
+                STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(spec.name)} (#{spec.version}) is not compatible with current cli version."
+                STDERR.puts "         To update plugin, run 'kontena plugin install #{spec.name.sub('kontena-plugin-', '')}'"
+                abort
+              end
             rescue LoadError => exc
               STDERR.puts "failed to load plugin: #{spec.name}"
               if ENV['DEBUG']
