@@ -24,12 +24,12 @@ module Kontena
                 load(plugin)
                 @plugins << spec
               else
-                STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(spec.name)} (#{spec.version}) is not compatible with current cli version."
-                STDERR.puts "         To update plugin, run 'kontena plugin install #{spec.name.sub('kontena-plugin-', '')}'"
-                abort
+                plugin_name = spec.name.sub('kontena-plugin-', '')
+                STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
+                STDERR.puts "         To update plugin, run 'kontena plugin install #{plugin_name}'"
               end
             rescue LoadError => exc
-              STDERR.puts "failed to load plugin: #{spec.name}"
+              STDERR.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"
               if ENV['DEBUG']
                 STDERR.puts exc.message
                 STDERR.puts exc.backtrace.join("\n")
