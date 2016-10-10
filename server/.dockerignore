@@ -6,3 +6,4 @@ packaging
 build
 release
 *.pem
+vendor
