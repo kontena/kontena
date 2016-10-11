@@ -23,6 +23,10 @@ module Kontena::Cli::Apps
           notifications: []
         }
         yaml.each do |service, options|
+          unless options.is_a?(Hash)
+            result[:errors] << { service => { 'options' => 'must be a mapping not a string'}  }
+            next
+          end
           option_errors = validate_options(options)
           result[:errors] << { service => option_errors.errors } unless option_errors.valid?
         end
