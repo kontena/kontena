@@ -39,7 +39,7 @@ module Kontena::Cli::Services
             elsif container['status'] == 'killed'
               color = :red
             elsif container['status'] == 'stopped'
-              color = :gray
+              color = :bright_black
             else
               color = :yellow
             end
