@@ -22,7 +22,17 @@ module Kontena
   end
 
   def self.pastel
-    @pastel ||= Pastel.new(enabled: $stdout.tty?)
+    return @pastel if @pastel
+    enable_color
+    @pastel
+  end
+
+  def self.disable_color
+    @pastel = Pastel.new(enabled: false)
+  end
+
+  def self.enable_color
+    @pastel = Pastel.new(enabled: $stdout.tty?)
   end
 
   def self.prompt

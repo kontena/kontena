@@ -14,6 +14,7 @@ end
 require 'clamp'
 require 'ruby_dig'
 require 'kontena_cli'
+require 'stringio'
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
@@ -35,6 +36,14 @@ RSpec.configure do |config|
     RSpec::Mocks.space.proxy_for(File).reset
     RSpec::Mocks.space.proxy_for(Kontena::Cli::Config).reset
     File.unlink(Kontena::Cli::Config.default_config_filename) if File.exist?(Kontena::Cli::Config.default_config_filename)
+  end
+
+  config.before(:each) do
+    $stdout = StringIO.new
+  end
+
+  config.after(:each) do
+    $stdout = STDOUT
   end
 
   config.around(:each) do |example|
