@@ -29,9 +29,8 @@ describe Kontena::Cli::Containers::LogsCommand do
       ]
     end
 
-    before do
-      # neuter String.colorize
-      String.disable_colorization = true
+    before(:each) do
+      Kontena.pastel.resolver.color.disable!
     end
 
     it "shows all logs" do

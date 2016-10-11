@@ -11,6 +11,7 @@ begin
 rescue LoadError
 end
 
+require 'stringio'
 require 'clamp'
 require 'ruby_dig'
 require 'kontena_cli'
@@ -30,7 +31,7 @@ RSpec.configure do |config|
     allow(ENV).to receive(:[]).with('DEBUG').and_call_original
     Kontena::Cli::Config.reset_instance
   end
-  
+
   config.after(:each) do
     RSpec::Mocks.space.proxy_for(File).reset
     RSpec::Mocks.space.proxy_for(Kontena::Cli::Config).reset
@@ -43,6 +44,14 @@ RSpec.configure do |config|
     rescue SystemExit
       puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
     end
+  end
+
+  config.before(:each) do
+    $stdout = StringIO.new
+  end
+
+  config.after(:each) do
+    $stdout = STDOUT
   end
 end
 
