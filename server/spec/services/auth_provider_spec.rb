@@ -85,8 +85,6 @@ describe AuthProvider do
 
     before(:each) do
       allow(HTTPClient).to receive(:new).and_return(client)
-      allow(client).to receive(:set_auth)
-      allow(client).to receive(:force_basic_auth=)
     end
 
     it "should return true for is_kontena? when authorize endpoint's host ends with kontena.io" do
@@ -111,7 +109,41 @@ describe AuthProvider do
       subject.update_kontena
     end
 
+    it "should not update kontena cloud information when master access token is missing" do
+      subject.client_id = "foo"
+      subject.client_secret = "bar"
+      subject.authorize_endpoint = "https://foo.kontena.io/foo"
+      subject.token_endpoint = "https://foo.kontena.io/token"
+      subject.userinfo_endpoint = "foo"
+      subject.userinfo_scope = "foo"
+      subject.root_url = "https://example.com:8181"
+      allow(subject).to receive(:master_access_token).and_return(nil)
+      expect(client).not_to receive(:request)
+      subject.update_kontena
+    end
+
+    it "should request access_token for master" do
+      subject.client_id = "foo"
+      subject.client_secret = "bar"
+      subject.authorize_endpoint = "https://foo.kontena.io/foo"
+      subject.token_endpoint = "https://foo.kontena.io/token"
+      subject.userinfo_endpoint = "foo"
+      subject.userinfo_scope = "foo"
+      subject.root_url = "https://example.com:8181"
+      expect(client).to receive(:request) do |httpmethod, url, options|
+        expect(httpmethod).to eq :post
+        expect(url).to eq "https://foo.kontena.io/token"
+        expect(options[:header]['Content-Type']).to eq "application/x-www-form-urlencoded"
+        body = options[:body]
+        expect(body[:grant_type]).to eq('client_credentials')
+        expect(body[:client_id]).to eq('foo')
+        expect(body[:client_secret]).to eq('bar')
+      end.and_return(success_response)
+      subject.update_kontena
+    end
+
     it "should update kontena cloud information when valid" do
+      allow(subject).to receive(:master_access_token).and_return('foobar')
       subject.client_id = "foo"
       subject.client_secret = "foo"
       subject.authorize_endpoint = "https://foo.kontena.io/foo"
@@ -123,6 +155,7 @@ describe AuthProvider do
         expect(httpmethod).to eq :put
         expect(url).to eq "https://cloud-api.kontena.io/master"
         expect(options[:header]['Content-Type']).to eq "application/json"
+        expect(options[:header]['Authorization']).to eq "Bearer foobar"
         body = JSON.parse(options[:body])
         expect(body["data"]["attributes"]["redirect-uri"]).to eq "https://example.com:8181/cb"
       end.and_return(success_response)
