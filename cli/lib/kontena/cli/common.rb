@@ -10,10 +10,6 @@ module Kontena
   module Cli
     module Common
 
-      def pastel
-        ::Kontena.pastel
-      end
-
       def logger
         return @logger if @logger
         @logger = Logger.new(STDOUT)
@@ -77,7 +73,7 @@ module Kontena
       # Only show spinner when in verbose mode
       def vspinner(msg, &block)
         return vfakespinner(msg) unless block_given?
-        
+
         if running_verbose?
           spinner(msg, &block)
         else
