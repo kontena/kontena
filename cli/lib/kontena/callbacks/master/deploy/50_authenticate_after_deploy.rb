@@ -45,8 +45,10 @@ module Kontena
 
         require 'shellwords'
         cmd = "master login --no-login-info --skip-grid-auto-select --verbose --name #{command.result[:name].shellescape} --code #{command.result[:code].shellescape} #{new_master.url.shellescape}"
-        ENV["DEBUG"] && puts("Running: #{cmd}")
-        Kontena.run(cmd)
+        Retriable.retriable do
+          ENV["DEBUG"] && puts("Running: #{cmd}")
+          Kontena.run(cmd)
+        end
       end
     end
   end
