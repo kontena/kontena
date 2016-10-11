@@ -16,6 +16,7 @@ module Kontena::Cli::Apps
     option '--force', :flag, 'Force deploy even if service does not have any changes'
     option '--force-deploy', :flag, '[DEPRECATED: use --force]'
 
+    option '--skip-validation', :flag, 'Skip YAML file validation', default: false
     parameter "[SERVICE] ...", "Services to start"
 
     attr_reader :services, :deploy_queue

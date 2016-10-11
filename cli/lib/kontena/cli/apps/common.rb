@@ -15,10 +15,11 @@ module Kontena::Cli::Apps
     # @param [String] filename
     # @param [Array<String>] service_list
     # @param [String] prefix
+    # @param [TrueClass|FalseClass] skip_validation
     # @return [Hash]
-    def services_from_yaml(filename, service_list, prefix)
+    def services_from_yaml(filename, service_list, prefix, skip_validation = false)
       set_env_variables(prefix, current_grid)
-      reader = YAML::Reader.new(filename)
+      reader = YAML::Reader.new(filename, skip_validation)
       outcome = reader.execute
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
       abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0

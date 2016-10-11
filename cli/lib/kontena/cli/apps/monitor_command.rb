@@ -15,8 +15,8 @@ module Kontena::Cli::Apps
 
     def execute
       require_config_file(filename)
-            
-      @services = services_from_yaml(filename, service_list, service_prefix)
+
+      @services = services_from_yaml(filename, service_list, service_prefix, true)
       if services.size > 0
         show_monitor(services)
       elsif !service_list.empty?
