@@ -22,7 +22,17 @@ module Kontena
   end
 
   def self.pastel
-    @pastel ||= Pastel.new(enabled: $stdout.tty?)
+    return @pastel if @pastel
+    enable_color
+    @pastel
+  end
+
+  def self.disable_color
+    @pastel = Pastel.new(enabled: false)
+  end
+
+  def self.enable_color
+    @pastel = Pastel.new(enabled: $stdout.tty?)
   end
 
   def self.prompt
@@ -44,6 +54,14 @@ end
 class String
   def colorize(color_sym)
     ::Kontena.pastel.send(color_sym, self)
+  end
+end
+
+require 'retriable'
+Retriable.configure do |c|
+  c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
+    return true unless ENV["DEBUG"]
+    puts "Retriable retry: #{try} - Exception: #{exception} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
   end
 end
 
