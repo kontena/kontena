@@ -22,10 +22,6 @@ module Kontena
         @logger
       end
 
-      def pastel
-        @pastel ||= Pastel.new(enabled: $stdout.tty?)
-      end
-
       def running_silent?
         self.respond_to?(:silent?) && self.silent?
       end
