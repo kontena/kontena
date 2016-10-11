@@ -1,0 +1,15 @@
+Source: kontena-agent
+Version: VERSION
+Section: base
+Priority: optional
+Build-Depends: debhelper (>= 9)
+Maintainer: info@kontena.io
+
+Package: kontena-agent
+Version: VERSION
+Maintainer: info@kontena.io
+Architecture: all
+Build-Depends: debhelper (>= 9), dh-systemd
+Depends: docker-engine (>> 1.8), docker-engine (<< 1.12), resolvconf
+Description: kontena-agent
+    Kontena Agent

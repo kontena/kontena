@@ -1,0 +1,24 @@
+[Unit]
+Description=kontena-agent
+After=network-online.target
+After=docker.service
+Description=Kontena Agent
+Documentation=http://www.kontena.io/
+Requires=network-online.target
+Requires=docker.service
+
+[Service]
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/kontena-agent.env
+ExecStartPre=-/usr/bin/docker stop kontena-agent
+ExecStartPre=-/usr/bin/docker rm kontena-agent
+ExecStartPre=/usr/bin/docker pull kontena/agent:${KONTENA_VERSION}
+ExecStart=/usr/bin/docker run --name kontena-agent \
+    -e KONTENA_URI=${KONTENA_URI} \
+    -e KONTENA_TOKEN=${KONTENA_TOKEN} \
+    -e KONTENA_PEER_INTERFACE=${KONTENA_PEER_INTERFACE} \
+    -v=/var/run/docker.sock:/var/run/docker.sock \
+    -v=/etc/kontena-agent.env:/etc/kontena.env \
+    --net=host \
+    kontena/agent:${KONTENA_VERSION}

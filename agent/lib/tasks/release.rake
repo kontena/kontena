@@ -40,6 +40,21 @@ namespace :release do
     end
   end
 
+  desc 'Build ubuntu xenial packages'
+  task :build_ubuntu_xenial => :environment do
+    rev = ENV['REV'] || '1'
+    sh('mkdir -p build')
+    sh('rm -rf build/ubuntu_xenial/')
+    sh('cp -ar packaging/ubuntu_xenial build/')
+    sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/control")
+    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/postinst")
+    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/changelog")
+
+    Dir.chdir("build/ubuntu_xenial/kontena-agent") do
+      sh("debuild -b -us -uc")
+    end
+  end
+
   desc 'Push all'
   task :push => [:push_docker, :push_ubuntu] do
   end

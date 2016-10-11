@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Fetching configuration from debconf
+db_get kontena-agent/server_uri || true
+if [ -n "$RET" ]; then
+  URI="KONTENA_URI=${RET}"
+  sed -i -r "s#\#KONTENA_URI=.*#${URI}#" /etc/kontena-agent.env
+fi
+
+db_get kontena-agent/grid_token || true
+if [ -n "$RET" ]; then
+  TOKEN="KONTENA_TOKEN=${RET}"
+  sed -i -r "s#\#KONTENA_TOKEN=.*#${TOKEN}#" /etc/kontena-agent.env
+fi
+
+db_get kontena-agent/version || true
+if [ -n "$RET" ]; then
+  TOKEN="KONTENA_VERSION=${RET}"
+  sed -i -r "s#\#KONTENA_VERSION=.*#${VERSION}#" /etc/kontena-agent.env
+fi
+
+
+/usr/bin/docker pull kontena/agent:VERSION
+systemctl start kontena-agent || true

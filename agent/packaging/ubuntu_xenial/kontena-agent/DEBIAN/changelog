@@ -1,0 +1,5 @@
+kontena-agent (VERSION) unstable; urgency=low
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- root <root@02387e1d1119>  Tue, 11 Oct 2016 08:19:32 +0000

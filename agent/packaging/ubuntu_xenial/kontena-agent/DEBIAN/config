@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_version 2.0
+db_capb backup
+
+db_beginblock
+
+db_input medium kontena-agent/server_uri || true
+db_input medium kontena-agent/grid_token || true
+db_input medium kontena-agent/version || true
+
+db_endblock
+
+db_go || true
