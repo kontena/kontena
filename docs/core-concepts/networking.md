@@ -150,19 +150,19 @@ Consider the resulting DNS namespace for an example Grid named `testgrid`, with 
 Each of the three container would have a pair of container names resolving to an internal Grid IP address:
 
 * `testapp-db-1.testgrid.kontena.local` `testapp-db-1.kontena.local`
- * `10.81.X.A`
+ * `10.81.1.1`
 * `testapp-webservice-1.testgrid.kontena.local` `testapp-webservice-1.kontena.local`
- * `10.81.X.B`
+ * `10.81.1.2`
 * `testapp-webservice-2.testgrid.kontena.local` `testapp-webservice-2.kontena.local`
- * `10.81.X.C`
+ * `10.81.1.3`
 
 Each of the two services would have a pair of service names resolving to multiple IP addresses:
 
 * `testapp-db.testgrid.kontena.local` `testapp-db.kontena.local`
- * `10.81.X.A`
+ * `10.81.1.1`
 * `testapp-webservice.testgrid.kontena.local` `testapp-webservice.kontena.local`
- * `10.81.X.B`
- * `10.81.X.C`
+ * `10.81.1.2`
+ * `10.81.1.3`
 
 The `testapp-webservice` service would be configured with the `testapp-db` DNS name, connecting to the running database service instance.
 Within the Grid, the `testapp-webservice` name could be used to round-robin requests across the two `webservice` instances.
