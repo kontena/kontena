@@ -145,7 +145,7 @@ The `kontena.local` names are deprecated and the `$grid.kontena.local` names sho
 This is related to the use of the Kontena VPN service with multiple grids, and being able to resolve the service names within each such grid.
 The Kontena [Image Registry](/docs/using-kontena/image-registry) also uses image names of the form `registry.$grid.kontena.local/myimage`.
 
-Consider the resulting DNS namespace for an example Grid named `testgrid`, with an `testapp/kontena.yml` with 2 instance of service `webservice` and 1 instances of service `db`.
+Consider the resulting DNS namespace for an example Grid named `testgrid`, with an `testapp/kontena.yml` with 2 instances of service `webservice` and 1 instance of service `db`.
 
 Each of the three container would have a pair of container names resolving to an internal Grid IP address:
 
