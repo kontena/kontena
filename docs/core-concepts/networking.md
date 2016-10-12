@@ -49,9 +49,12 @@ Each host Node has a total of four different network addresses:
 
 * `public_ip`: The external Internal address of the machine.
 
-  The public network address is resolved using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
+  The public network address is resolved at startup using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
 
-  The public addess can be used to connect to network services exposed on the host Node, including the Weave service used for the overlay network, and those Service Containers with published ports.
+  The public addess can be used to connect to network services exposed on the host Node, including the Weave service used for the overlay network.
+  Kontena Services can publish ports, which uses
+
+   Containers with published ports.
   For a node behind NAT, such as a Vagrant node, the public address may not necessarily work for incoming connections.
 
 * `private_ip`: The internal regional address of the machine.
@@ -111,17 +114,17 @@ Using Trusted Subnets and Weave's Fast Datapath provides [improved performance](
 
 The Service Containers are created using the default Docker bridge network, which provides each Container with an isolated network namespace.
 The default Docker bridge network is used to provide the Container with a default route for connecting to external services, using SNAT on the host machine.
-The Docker bridge network is local to each Node, and Containers on different nodes will have overlapping local Docker bridge networks.
+The default Docker bridge network is local to each Node, and Containers on different nodes will use the same default Docker bridge network `172.42.17.X/24` subnet on each Container's default `eth0` interface.
 
 Each Service Container being started is also attached to the Weave network.
 The Container's `ethwe` network interface is used for the internal communication between Grid Services, using the Overlay Network's `10.81.0.0/17` subnet.
-
 In order to avoid any issues with Container services attempting to resolve or connect to other services on the overlay network, the `weavewait` utility is used to delay the Container service execution until the Container's Weave network is ready.
 This uses a modified Docker entrypoint for the Container.
 
+Any exposed ports on any Service Container will automatically be internally accessible from other host Nodes and Service Containers within the Grid overlay network.
+
 ## Publishing Services
 
-Every Service Container will automatically be internally accessible via the Grid from other host Nodes and Service Containers.
 Accessing any Service externally requires the Service's ports to be explicitly published, using a list of published TCP and UDP ports, configured in the `kontena.yml`.
 These are deployed as published container ports on the Docker default bridge network, using DNAT on the host machine to provide external access to the published services.
 
@@ -130,12 +133,17 @@ Only one Service can publish any given port on a given Node.
 The ports used for infrastructure services on the hsot Nodes cannot be used to publish other services.
 
 ### Kontena Load Balancer
-The Kontena Load Balancer can also be used to provide external access to TCP and HTTP services, including dynamic load-balancing of multiple Service Container backends.
 
-See the [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) documentation for configuration details.
+The [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) can also be used to publish services, providing TCP and HTTP load-balancing of multiple Service Container backends with dynamic configuration as services are started, scaled and stopped.
+The Public network address of any Host Node running the load balancer service can be used by external clients to connect to the load-balanced service containers.
 
-The [implementation](https://github.com/kontena/kontena-loadbalancer) of the Kontena Load Balancer is based on [haproxy](http://www.haproxy.org/), using [confd](https://github.com/kelseyhightower/confd) for dynamic configuration.
-The Kontena Agent is responsible for updating running services into etcd.
+Kontena Services can be linked to any [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) service (services using the `kontena/lb` image) within the same Grid.
+The Kontena Master will generate `io.kontena.load_balancer.*` labels for each such linked Service Container.
+The Kontena Agent on each Host Node uses the Docker Events API to register any running containers having such labels into the Grid's etcd database.
+The etcd database used by the `kontena/lb` service for dynamic load balancer configuration.
+
+See the [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) documentation for usage documentation.
+The [implementation](https://github.com/kontena/kontena-loadbalancer) of the Kontena Load Balancer is based on [HAProxy](http://www.haproxy.org/), using [confd](https://github.com/kelseyhightower/confd) for dynamic configuration.
 
 ## DNS (`kontena.local`)
 
