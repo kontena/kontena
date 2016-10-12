@@ -48,10 +48,8 @@ Each host Node has a total of four different network addresses:
 
   The public network address is resolved at startup using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
 
-  The public addess can be used to connect to network services exposed on the host Node, including the Weave service used for the overlay network.
-  Kontena Services can publish ports, which uses
-
-   Containers with published ports.
+  The Node's public addess can be used to connect to network services exposed on that host Node, including the Weave service used for the overlay network.
+  The public address can also be used to connect to the published ports of any Kontena Service Container(including the Kontena Load Balancer) that has be scheduled to run on that Node.
   For a node behind NAT, such as a Vagrant node, the public address may not necessarily work for incoming connections.
 
 * The internal network address of the machine (`private_ip`)
@@ -134,7 +132,9 @@ The ports used for infrastructure services on the hsot Nodes cannot be used to p
 ### Kontena Load Balancer
 
 The [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) can also be used to publish services, providing TCP and HTTP load-balancing of multiple Service Container backends with dynamic configuration as services are started, scaled and stopped.
-The Public network address of any Host Node running the load balancer service can be used by external clients to connect to the load-balanced service containers.
+The public network address of any Host Node running the load balancer service can be used by external clients to connect to the load-balanced service containers.
+The Kontena Load Balancer should be deployed to nodes having known public network addresses, using either `kontena.yml` `affinity` conditions, or using `deploy: strategy: daemon` to deploy the LB on all nodes.
+The public network address of the nodes running the LB service can then be configured within any external services used for request routing, such as a DNS server. 
 
 Kontena Services can be linked to any [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) service (services using the `kontena/lb` image) within the same Grid.
 The Kontena Master will generate `io.kontena.load_balancer.*` labels for each such linked Service Container.
