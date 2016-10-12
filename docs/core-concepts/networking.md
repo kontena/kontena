@@ -62,14 +62,16 @@ Each host Node has a total of four different network addresses:
 
   For two nodes within the same region, the private address is used for node-to-node communication in place of the public address.
 
-* The overlay network address (`10.81.0.x`).
+* The overlay network address (`10.81.0.x/19`).
 
   Each Host Node within a Grid is assigned a sequential Node Number, in the range of `1..254`.
 
   Once the overlay network has been established, the host machine is also configured with a statically allocated overlay network address based on the sequentially assigned Node number.
+  The first `/24` of addresses within the overlay network subnet (`10.81.1.X/19`) is reserved for these statically allocated Node overlay network addresses.
 
+  These Node overlay network addresses can be used by both other Nodes and any Service Containers within the same Grid.
   The Node's overlay network address is used for the Grid's infrastructure services, including Kontena's etcd cluster.
-  Any Kontena Service container can connect to the host Node's overlay network address.
+  Any Kontena Service container can connect to each host Node's overlay network address.
 
 * The Docker gateway address (`172.17.0.1` on `docker0`)
 
