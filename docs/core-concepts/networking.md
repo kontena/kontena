@@ -134,12 +134,12 @@ The ports used for infrastructure services on the hsot Nodes cannot be used to p
 The [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) can also be used to publish services, providing TCP and HTTP load-balancing of multiple Service Container backends with dynamic configuration as services are started, scaled and stopped.
 The public network address of any Host Node running the load balancer service can be used by external clients to connect to the load-balanced service containers.
 The Kontena Load Balancer should be deployed to nodes having known public network addresses, using either `kontena.yml` `affinity` conditions, or using `deploy: strategy: daemon` to deploy the LB on all nodes.
-The public network address of the nodes running the LB service can then be configured within any external services used for request routing, such as a DNS server. 
+The public network address of the nodes running the LB service can then be configured within any external services used for request routing, such as a DNS server.
 
 Kontena Services can be linked to any [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) service (services using the `kontena/lb` image) within the same Grid.
 The Kontena Master will generate `io.kontena.load_balancer.*` labels for each such linked Service Container.
 The Kontena Agent on each Host Node uses the Docker Events API to register any running containers having such labels into the Grid's etcd database.
-The etcd database used by the `kontena/lb` service for dynamic load balancer configuration.
+The etcd database is used by the `kontena/lb` service for dynamic load balancer configuration.
 
 See the [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) documentation for usage documentation.
 The [implementation](https://github.com/kontena/kontena-loadbalancer) of the Kontena Load Balancer is based on [HAProxy](http://www.haproxy.org/), using [confd](https://github.com/kelseyhightower/confd) for dynamic configuration.
