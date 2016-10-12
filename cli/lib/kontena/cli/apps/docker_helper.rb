@@ -34,15 +34,15 @@ module Kontena::Cli::Apps
     def build_docker_image(service, no_cache = false)
       dockerfile = dockerfile = service['build']['dockerfile'] || 'Dockerfile'
       build_context = service['build']['context']
-      cmd = ["docker build -t #{service['image']}"]
-      cmd << "-f #{File.join(File.expand_path(build_context), dockerfile)}" if dockerfile != "Dockerfile"
-      cmd << "--no-cache" if no_cache
+      cmd = ['docker', 'build', '-t', service['image']]
+      cmd << ['-f', File.join(File.expand_path(build_context), dockerfile)] if dockerfile != "Dockerfile"
+      cmd << '--no-cache' if no_cache
       args = service['build']['args'] || {}
       args.each do |k, v|
-        cmd << "--build-arg #{k}=#{v}"
+        cmd << "--build-arg=#{k}=#{v}"
       end
       cmd << build_context
-      ret = system(cmd.join(' '))
+      ret = system(*cmd.flatten)
       raise ("Failed to build image #{service['image'].colorize(:cyan)}") unless ret
       ret
     end
@@ -50,7 +50,7 @@ module Kontena::Cli::Apps
     # @param [String] image
     # @return [Integer]
     def push_docker_image(image)
-      ret = system("docker push #{image}")
+      ret = system('docker', 'push', image)
       raise ("Failed to push image #{image.colorize(:cyan)}") unless ret
       ret
     end
@@ -58,7 +58,7 @@ module Kontena::Cli::Apps
     # @param [String] image
     # @return [Boolean]
     def image_exist?(image)
-      `docker history #{image} 2>&1` ; $?.success?
+      system("docker history '#{image}' >/dev/null 2>/dev/null")
     end
 
     # @param [String] path
