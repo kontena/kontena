@@ -41,13 +41,10 @@ In case of a conflict where the overlay network address has been reallocated for
 A host Node is a (virtual) machine running the Docker Engine and Kontena Agent.
 The Kontena Agent runs as a Docker container, and controls the Docker Engine to manage infrastructure Containers and Service Containers.
 
-Each Node can be be assigned to a Region using a Docker Engine `region=` label.
-The Node Region is string value (provided by the provisioning plugin) that is compared against other Nodes' Regions to determine if they share an internal network.
-
 ### Node Network Addresses
 Each host Node has a total of four different network addresses:
 
-* `public_ip`: The external Internal address of the machine.
+* The external Internet address of the machine (`public_ip`)
 
   The public network address is resolved at startup using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
 
@@ -57,15 +54,17 @@ Each host Node has a total of four different network addresses:
    Containers with published ports.
   For a node behind NAT, such as a Vagrant node, the public address may not necessarily work for incoming connections.
 
-* `private_ip`: The internal regional address of the machine.
+* The internal network address of the machine (`private_ip`)
 
   The private network address is resolved using the interface address configured on the internal interface, or it can be configured using `KONTENA_PRIVATE_IP`.
   The internal interface is `eth1`, or the interface given by `KONTENA_PEER_INTERFACE`.
   If the internal interface does not exist, the address on the `eth0` interface is used.
 
   For two nodes within the same region, the private address is used for node-to-node communication in place of the public address.
+  Nodes are within the same region if they have been configured with the same Docker Engine `region=` label.
+  The `region=` label is a string value provided by the provisioning plugin.
 
-* The overlay network address (`10.81.0.x/19`).
+* The overlay network address (`10.81.0.x/19`)
 
   Each Host Node within a Grid is assigned a sequential Node Number, in the range of `1..254`.
 
