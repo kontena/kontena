@@ -54,7 +54,7 @@ module Kontena::Workers
     def weave_attach(container)
       config = container.info['Config'] || container.json['Config']
       labels = config['Labels'] || {}
-      ip = container.info.dig('NetworkSettings', 'Networks', 'kontena', 'IPAddress')
+      ip = container.overlay_ip
       if ip
         container_name = labels['io.kontena.container.name']
         service_name = labels['io.kontena.service.name']
