@@ -27,7 +27,7 @@ services:
     container_name: kontena-master-haproxy
     environment:
       - SSL_CERT=**None**
-      - BACKEND_PORT=9292
+      - BACKENDS=kontena-master:9292
     ports:
       - 80:80
       - 443:443    
