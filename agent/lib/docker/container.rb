@@ -33,6 +33,11 @@ module Docker
     end
 
     # @return [Boolean]
+    def autostart?
+      return ['always', 'unless-stopped'].include?(self.host_config.dig('RestartPolicy', 'Name'))
+    end
+
+    # @return [Boolean]
     def running?
       self.state['Running']
     rescue

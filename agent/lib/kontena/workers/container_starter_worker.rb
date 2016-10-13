@@ -31,7 +31,7 @@ module Kontena::Workers
 
     def ensure_container_running(container)
       unless container.running? || container.restarting?
-        if container.restart_policy.dig('Name') == 'always' && container.service_container?
+        if container.autostart? && container.service_container?
           info "starting container: #{container.name}"
           container.start
         end
