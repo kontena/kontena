@@ -130,22 +130,12 @@ module Kontena
       return false unless token['access_token']
       return false unless token_verify_path
 
-      uri = URI.parse(token_verify_path)
-      host_options = {}
-      host_options[:host] = uri.host if uri.host
-      host_options[:port] = uri.port if uri.port
-
-      if uri.host
-        client = Kontena::Client.new("#{uri.scheme}://#{uri.host}:#{uri.port}", token)
-      else
-        client = self
-      end
-
-      final_path = uri.path.gsub(/\:access\_token/, token['access_token'])
-      logger.debug "Requesting user info from #{final_path} - #{host_options}"
-      client.request(path: final_path)
+      final_path = token_verify_path.gsub(/\:access\_token/, token['access_token'])
+      logger.debug "Requesting user info from #{final_path}"
+      request(path: final_path)
       true
     rescue
+      ENV["DEBUG"] && puts("Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}")
       false
     end
 
@@ -154,35 +144,20 @@ module Kontena
     def exchange_code(code)
       return nil unless token_account
       return nil unless token_account['token_endpoint']
-      uri = URI.parse(token_account['token_endpoint'])
-      host_options = {}
-      host_options[:host] = uri.host if uri.host
-      host_options[:port] = uri.port if uri.port
 
-      if uri.host
-        client = Kontena::Client.new("#{uri.scheme}://#{uri.host}:#{uri.port}")
-      else
-        client = self
-      end
-
-      client.request(
-        {
-          http_method: token_account['token_method'].downcase.to_sym,
-          path: uri.path,
-          headers: { CONTENT_TYPE => token_account['token_post_content_type'] },
-          body: {
-            'grant_type' => 'authorization_code',
-            'code' => code,
-            'client_id' => Kontena::Client::CLIENT_ID,
-            'client_secret' => Kontena::Client::CLIENT_SECRET
-          },
-          expects: [200,201],
-          auth: false
-        }
+      request(
+        http_method: token_account['token_method'].downcase.to_sym,
+        path: token_account['token_endpoint'],
+        headers: { CONTENT_TYPE => token_account['token_post_content_type'] },
+        body: {
+          'grant_type' => 'authorization_code',
+          'code' => code,
+          'client_id' => Kontena::Client::CLIENT_ID,
+          'client_secret' => Kontena::Client::CLIENT_SECRET
+        },
+        expects: [200,201],
+        auth: false
       )
-    rescue
-      logger.debug "Code exchange exception: #{$!} #{$!.message}\n#{$!.backtrace}"
-      nil
     end
 
     # Return server version from a Kontena master by requesting '/'
@@ -317,14 +292,23 @@ module Kontena
       end
       request_headers.merge!('Content-Length' => body_content.bytesize)
 
+      uri = URI.parse(path)
       host_options = {}
-      host_options[:host] = host if host
-      host_options[:port] = port if port
+
+      if uri.host
+        host_options[:host]   = uri.host
+        host_options[:port]   = uri.port
+        host_options[:scheme] = uri.scheme
+        path                  = uri.request_uri
+      else
+        host_options[:host] = host if host
+        host_options[:port] = port if port
+      end
 
       request_options = {
           method: http_method,
           expects: Array(expects),
-          path: path.start_with?('/') ? path : request_uri(path),
+          path: path_with_prefix(path),
           headers: request_headers,
           body: body_content,
           query: query
@@ -443,12 +427,12 @@ module Kontena
     end
 
 
-    # Get full request uri
+    # Get prefixed request path unless path starts with /
     #
     # @param [String] path
     # @return [String]
-    def request_uri(path)
-      "#{path_prefix}#{path}"
+    def path_with_prefix(path)
+      path.to_s.start_with?('/') ? path : "#{path_prefix}#{path}"
     end
 
 

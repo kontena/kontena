@@ -9,6 +9,7 @@ module Kontena::Cli::Master::Users
 
     option ['-r', '--roles'], '[ROLES]', 'Comma separated list of roles to assign to the invited users'
     option ['-c', '--code'], :flag, 'Only output the invite code'
+    option '--return', :flag, 'Return the code', hidden: true
 
     requires_current_master
     requires_current_master_token
@@ -26,6 +27,8 @@ module Kontena::Cli::Master::Users
           response = client.post('/oauth2/authorize', data)
           if self.code?
             puts response['invite_code']
+          elsif self.return?
+            return response
           else
             puts "Invitation created for #{response['email']}".colorize(:green)
             puts "  * code:    #{response['invite_code']}"
@@ -35,7 +38,7 @@ module Kontena::Cli::Master::Users
             Kontena.run("master users role add #{role.shellescape} #{email.shellescape}")
           end
         rescue
-          puts "Failed to invite #{email}".colorize(:red)
+          STDERR.puts "Failed to invite #{email}".colorize(:red)
           ENV["DEBUG"] && puts("#{$!} - #{$!.message} -- #{$!.backtrace}")
         end
       end

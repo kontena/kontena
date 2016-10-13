@@ -5,6 +5,8 @@ module Kontena::Cli::Cloud::Master
 
     callback_matcher 'cloud-master', 'list'
 
+    option '--return', :flag, 'Return the list', hidden: true
+
     requires_current_account_token
 
     def execute
@@ -15,8 +17,10 @@ module Kontena::Cli::Cloud::Master
       end
 
       if response['data'].empty?
+        return [] if self.return?
         puts "No masters registered"
       else
+        return response['data'] if self.return?
         puts '%-26.26s %-24s %-12s %s' % ['ID', 'NAME', 'OWNER', 'URL']
         response['data'].each do |data|
           attr = data['attributes']
