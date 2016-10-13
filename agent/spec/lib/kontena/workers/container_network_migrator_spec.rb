@@ -12,19 +12,19 @@ describe Kontena::Workers::ContainerNetworkMigratorWorker do
 
   describe '#should_migrate' do
     it 'returns true when container has overlay and no kontena network' do
-      container = double({:service_container? => true, :overlay_cidr => '10.81.0.100/16'})
+      container = double(service_container?: true, labels: { 'io.kontena.container.overlay_cidr' => '10.81.0.100/16'})
       expect(container).to receive(:has_network?).with('kontena').and_return(false)
       expect(subject.should_migrate?(container)).to be_truthy
     end
 
     it 'returns false when container has overlay and kontena network' do
-      container = double({:service_container? => true, :overlay_cidr => '10.81.0.100/16'})
+      container = double(service_container?: true, labels: { 'io.kontena.container.overlay_cidr' => '10.81.0.100/16'})
       expect(container).to receive(:has_network?).with('kontena').and_return(true)
       expect(subject.should_migrate?(container)).to be_falsey
     end
 
     it 'returns false when container has no overlay' do
-      container = double({:service_container? => true, :overlay_cidr => nil})
+      container = double(service_container?: true, labels: { })
       expect(subject.should_migrate?(container)).to be_falsey
     end
   end

@@ -72,11 +72,6 @@ module Docker
       self.labels['io.kontena.service.instance_number'].to_i
     end
 
-    # @return [String, NilClass]
-    def overlay_cidr
-      self.labels['io.kontena.container.overlay_cidr']
-    end
-
     # @return [Hash]
     def env_hash
       if @env_hash.nil?
@@ -93,6 +88,44 @@ module Docker
 
     def has_network?(network)
       self.networks.has_key?(network)
+    end
+
+    # IP address of container within named network, or nil.
+    #
+    # @param network [String] Docker network name
+    # @return [String, nil]
+    def network_ip(network)
+      cached_json.dig('NetworkSettings', 'Networks', network, 'IPAddress')
+    end
+
+    # CIDR address of container within named network, or nil.
+    #
+    # @param network [String] Docker network name
+    # @return [String, nil]
+    def network_cidr(network)
+      if network = cached_json.dig('NetworkSettings', 'Networks', network) && network['IPAddress']
+        return "#{network['IPAddress']}/#{network['IPPrefixLen']}"
+      else
+        return nil
+      end
+    end
+
+    # Container IP address within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # Plain IP address without any CIDR suffix.
+    #
+    # @return [String, NilClass]
+    def overlay_ip
+      network_ip('kontena')
+    end
+
+    # Container CIDR address within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # @return [String, NilClass]
+    def overlay_cidr
+      network_cidr('kontena')
     end
 
     private

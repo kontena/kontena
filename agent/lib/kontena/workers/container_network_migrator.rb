@@ -29,7 +29,7 @@ module Kontena::Workers
     end
 
     def should_migrate?(container)
-      if container.service_container? && container.overlay_cidr
+      if container.service_container? && container.labels['io.kontena.container.overlay_cidr']
         unless container.has_network?('kontena')
           return true
         end
@@ -41,10 +41,11 @@ module Kontena::Workers
       info "migrating network for container: #{container.name}"
       @kontena_network ||= Docker::Network.get('kontena') rescue nil
       if @kontena_network
+        overlay_cidr = container.labels['io.kontena.container.overlay_cidr']
         Celluloid::Actor[:network_adapter].detach_network(container)
         endpoint_config = {
           "IPAMConfig" => {
-            "IPv4Address"  => container.overlay_cidr.split('/')[0]
+            "IPv4Address"  => overlay_cidr.split('/')[0]
           }
         }
         @kontena_network.connect(container.id, { 'endpoint_config' => endpoint_config})
