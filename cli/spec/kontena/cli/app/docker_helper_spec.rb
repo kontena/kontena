@@ -46,6 +46,11 @@ describe Kontena::Cli::Apps::DockerHelper do
     }
   end
 
+  before :each do
+    # image does not exist
+    allow(subject).to receive(:image_exist?).with('test_service').and_return(false)
+  end
+
   describe '#validate_image_name' do
     context 'when image name is valid' do
       it 'returns true' do
@@ -109,7 +114,7 @@ describe Kontena::Cli::Apps::DockerHelper do
         'build' => { 'context' => '.' },
         'image' => 'test_service'
       }
-      expect(subject).to receive(:system).with("docker build -t test_service ."). and_return(true)
+      expect(subject).to receive(:system).with('docker', 'build', '-t', 'test_service', '.'). and_return(true)
       subject.build_docker_image(service)
     end
 
@@ -118,7 +123,7 @@ describe Kontena::Cli::Apps::DockerHelper do
         'build' => { 'context' => '.' },
         'image' => 'test_service'
       }
-      expect(subject).to receive(:system).with("docker build -t test_service --no-cache ."). and_return(true)
+      expect(subject).to receive(:system).with('docker', 'build', '-t', 'test_service', '--no-cache', '.'). and_return(true)
       subject.build_docker_image(service, true)
     end
 
@@ -128,7 +133,7 @@ describe Kontena::Cli::Apps::DockerHelper do
         'image' => 'test_service'
       }
       expected_path = File.join(File.expand_path('.'), 'other_dockerfile')
-      expect(subject).to receive(:system).with("docker build -t test_service -f #{expected_path} ."). and_return(true)
+      expect(subject).to receive(:system).with('docker', 'build', '-t', 'test_service', '-f', expected_path, '.'). and_return(true)
       subject.build_docker_image(service)
     end
 
@@ -143,7 +148,7 @@ describe Kontena::Cli::Apps::DockerHelper do
         },
         'image' => 'test_service'
       }
-      expect(subject).to receive(:system).with("docker build -t test_service --build-arg FOO=bar --build-arg BAR=foo ."). and_return(true)
+      expect(subject).to receive(:system).with('docker', 'build', '-t', 'test_service', '--build-arg=FOO=bar', '--build-arg=BAR=foo', '.'). and_return(true)
       subject.build_docker_image(service)
     end
   end
