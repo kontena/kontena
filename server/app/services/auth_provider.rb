@@ -3,7 +3,7 @@
 # Userinfo parsing in done through jsonpath :
 #   http://goessner.net/articles/JsonPath/
 #
-# You can define multiple optional jsonpaths and separate them with a 
+# You can define multiple optional jsonpaths and separate them with a
 # semicolon.  For example '$..username;$..login' will run two queries and use
 # the first value it finds.
 #
@@ -70,6 +70,7 @@ class AuthProvider < OpenStruct
   def update_kontena
     return unless is_kontena?
     return unless valid?
+    return unless master_access_token
 
     uri = URI.parse(config['cloud.api_url'] || "https://cloud-api.kontena.io")
     uri.path = '/master'
@@ -78,8 +79,6 @@ class AuthProvider < OpenStruct
     if config['cloud.ignore_invalid_ssl'].to_s == 'true'
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
-    client.set_auth(nil, self.client_id, self.client_secret)
-    client.force_basic_auth = true
 
     body = {
       data: {
@@ -89,16 +88,44 @@ class AuthProvider < OpenStruct
         }
       }
     }
-
     response = client.request(
       :put,
       uri.to_s,
       header: {
         'Content-Type' => 'application/json',
-        'Accept' => 'application/json'
+        'Accept' => 'application/json',
+        'Authorization' => "Bearer #{master_access_token}"
       },
       body: body.to_json
     )
+  end
+
+  def master_access_token
+    unless @master_access_token
+      response = request_master_access_token
+      if response.status == 200
+        json_response = JSON.parse(response.body) rescue nil
+        @master_access_token = json_response['access_token'] if json_response
+      end
+    end
+    @master_access_token
+  end
+
+  def request_master_access_token
+    client = HTTPClient.new
+    body = {
+      grant_type: 'client_credentials',
+      client_id: self.client_id,
+      client_secret: self.client_secret
+    }
+    client.request(
+      :post,
+      self.token_endpoint,
+      header: {
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Accept' => 'application/json'
+      },
+      body: body)
   end
 
   def missing_fields
