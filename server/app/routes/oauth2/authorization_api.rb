@@ -35,6 +35,7 @@ module OAuth2Api
     UNSUPPORTED_DESC   = 'Unsupported response type. Supported: code, token, invite'.freeze
     SERVER_ERROR       = 'server_error'.freeze
     NOT_ADMIN          = 'User not admin, denying access'.freeze
+    NOT_FOUND          = 'not_found'.freeze
 
     route do |r|
       r.post do
@@ -50,8 +51,20 @@ module OAuth2Api
             mime_halt(400, INVALID_SCOPE) and return
           end
 
+          if params['user']
+            unless current_user.master_admin?
+              mime_halt(403, ACCESS_DENIED, NO_PERM) and return
+            end
+            user = User.where(email: params['user']).first
+            unless user
+              mime_halt(404, NOT_FOUND) and return
+            end
+          else
+            user = current_user
+          end
+
           task = AccessTokens::Create.run(
-            user: current_user,
+            user: user,
             scope: params[SCOPE],
             refreshable: params[EXPIRES_IN].to_i > 0,
             expires_in: params[EXPIRES_IN],
