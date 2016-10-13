@@ -1,5 +1,5 @@
 module Kontena::Cli::Cloud::Master
-  class DeleteCommand < Kontena::Command
+  class RemoveCommand < Kontena::Command
 
     include Kontena::Cli::Common
 
