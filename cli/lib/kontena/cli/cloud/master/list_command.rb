@@ -12,8 +12,7 @@ module Kontena::Cli::Cloud::Master
     def execute
       response = cloud_client.get('user/masters')
       unless response && response.kind_of?(Hash) && response['data'].kind_of?(Array)
-        puts "Listing masters failed".colorize(:red)
-        exit 1
+        abort "Listing masters failed".colorize(:red)
       end
 
       if response['data'].empty?
