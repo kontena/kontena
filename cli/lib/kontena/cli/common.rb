@@ -289,32 +289,25 @@ module Kontena
         return nil unless $stdout.tty?
         start_time = Time.now.to_i
         end_time   = start_time + timeout
-        Thread.main['any_key.stop_prompt'] = false
         Thread.main['any_key.timed_out']   = false
         msg = "Press any key to continue or ctrl-c to cancel.. (Automatically continuing in ? seconds)"
+
+        reader_thread = Thread.new do
+          Thread.main['any_key.char'] = STDIN.getch
+        end
+
         countdown_thread = Thread.new do
           time_left = timeout
-          while time_left > 0 && !Thread.main['any_key.stop_prompt']
-            print "\r#{pastel.bright_cyan("#{msg.sub("?", time_left.to_s)}")} "
+          while time_left > 0 && Thread.main['any_key.char'].nil?
+            print "\r#{pastel.bright_white("#{msg.sub("?", time_left.to_s)}")} "
             time_left = end_time - Time.now.to_i
             sleep 0.1
           end
           print "\r#{' ' * msg.length}  \r"
-          Thread.main['any_key.timed_out'] = true
-        end
-
-        reader_thread = Thread.new do
-          Thread.main['any_key.char'] = STDIN.getch
-          Thread.main['any_key.stop_prompt'] = true
+          reader_thread.kill if reader_thread.alive?
         end
 
         countdown_thread.join
-
-        until Thread.main['any_key.char'] || Thread.main['any_key.timed_out']
-          sleep 0.1
-        end
-
-        reader_thread.kill if reader_thread.alive?
 
         if Thread.main['any_key.char'] == "\u0003"
           error "Canceled"
