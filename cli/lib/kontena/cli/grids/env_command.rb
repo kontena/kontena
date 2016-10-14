@@ -19,13 +19,13 @@ module Kontena::Cli::Grids
         grid = find_grid_by_name(name_or_current)
         exit_with_error("Grid not found") unless grid
 
+        grid_uri = self.current_master['url'].sub('http', 'ws')
+
+
         prefix = export? ? 'export ' : ''
 
-        server = settings['servers'].find{|s| s['name'] == settings['current_server']}
-        if server
-          puts "#{prefix}KONTENA_URI=#{server['url'].sub('http', 'ws')}"
-          puts "#{prefix}KONTENA_TOKEN=#{server['token']}"
-        end
+        puts "#{prefix}KONTENA_URI=#{grid_uri}"
+        puts "#{prefix}KONTENA_TOKEN=#{grid['token']}"
       end
     end
   end
