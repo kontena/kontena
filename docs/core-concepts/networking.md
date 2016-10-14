@@ -175,11 +175,12 @@ The [implementation](https://github.com/kontena/kontena-loadbalancer) of the Kon
 
 Each Kontena Grid uses Weave DNS for dynamic service discovery of other service containers within the same grid.
 Each Service Container is configured with the `kontena.local` search domain, using the local node's `docker0` IP as the DNS resolver.
-Within the internal `kontena.local` DNS namespace, each Service Container is registered for both the per-container and per-service names under both the `kontena.local` and `$grid.kontena.local` names.
+Within the internal `kontena.local` DNS namespace, each Service Container is registered for both the per-`$container` and per-`$service` names under both the `kontena.local` and `$grid.kontena.local` names.
 
-The `kontena.local` names are deprecated and the `$grid.kontena.local` names should be used instead.
+Applications should be configured using either the short `$service` DNS names resolvable within Service Containers, or using the fully qualified `$service.$grid.kontena.local` names.
 This is related to the use of the Kontena VPN service with multiple grids, and being able to resolve the service names within each such grid.
 The Kontena [Image Registry](/docs/using-kontena/image-registry) also uses image names of the form `registry.$grid.kontena.local/myimage`.
+The older `$service.kontena.local` names are retained for backwards-compatibility with existing configurations.
 
 Consider the resulting DNS namespace for an example Grid named `testgrid`, with an `testapp/kontena.yml` with 2 instances of service `webservice` and 1 instance of service `db`.
 
