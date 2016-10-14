@@ -6,7 +6,7 @@ toc_order: 2
 
 # Network Model
 
-Kontena's network model is based on the [Grid](#grid), spanning a set of [Host Nodes](#host-nodes).
+Kontena's network model is based on the [Grid](#grid), spanning a set of [Host Nodes](#host-node).
 The Grid uses an [Overlay Network](#overlay-network) to provide connectivity between [Service Containers](#service-containers) on different Nodes.
 
 Each host Node is a separate virtual machine, which can have some combination of [Public](#public-network-address) and [Private](#private-network-address) network addresses.
@@ -179,7 +179,7 @@ Within the internal `kontena.local` DNS namespace, each Service Container is reg
 
 Applications should be configured using either the short `$service` DNS names resolvable within Service Containers, or using the fully qualified `$service.$grid.kontena.local` names.
 This is related to the use of the Kontena VPN service with multiple grids, and being able to resolve the service names within each such grid.
-The Kontena [Image Registry](/docs/using-kontena/image-registry) also uses image names of the form `registry.$grid.kontena.local/myimage`.
+The Kontena [Image Registry](https://kontena.io/docs/using-kontena/image-registry) also uses image names of the form `registry.$grid.kontena.local/myimage`.
 The older `$service.kontena.local` names are retained for backwards-compatibility with existing configurations.
 
 Consider the resulting DNS namespace for an example Grid named `testgrid`, with an `testapp/kontena.yml` with 2 instances of service `webservice` and 1 instance of service `db`.
