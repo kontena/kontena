@@ -55,7 +55,7 @@ Each host Node has a total of four different network addresses:
   The public network address is resolved at startup using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
 
   The Node's public addess can be used to connect to network services exposed on that host Node, including ports published by any Kontena Service Container that has been scheduled to run on that Node, including any instance of the Kontena Load Balancer.
-  The Node's public address is also used for Weave control and data plane connections between Nodes.
+  The Node's public address is also used for the Weave control and data plane connections between Nodes.
   The Weave control and data plane ports are the only publically exposed services on a host Node in the default configuration.
 
   For a node behind NAT, such as a Vagrant node, the public address may not necessarily work for incoming connections.
@@ -66,9 +66,12 @@ Each host Node has a total of four different network addresses:
   The internal interface is `eth1`, or the interface given by `KONTENA_PEER_INTERFACE`.
   If the internal interface does not exist, the address on the `eth0` interface is used.
 
-  For two nodes within the same region, the private address is used for node-to-node communication in place of the public address.
+  The private network address is used for the Weave control and data plane communication between nodes within the same region.
   Nodes are within the same region if they have been configured with the same Docker Engine `region=` label.
   The `region=` label is a string value provided by the provisioning plugin.
+
+  The private network address can also be used for connections to published services on internal nodes within a local network.
+  Using the private network address is required for local Vagrant nodes, as the public network address provided by VirtualBox does not allow any incoming connections.
 
 * The overlay network address (`10.81.0.x/19`)
 
@@ -164,7 +167,7 @@ The Kontena [Image Registry](/docs/using-kontena/image-registry) also uses image
 
 Consider the resulting DNS namespace for an example Grid named `testgrid`, with an `testapp/kontena.yml` with 2 instances of service `webservice` and 1 instance of service `db`.
 
-Each of the three container would have a pair of container names resolving to an internal Grid IP address:
+Each of the three containers would have a pair of container names resolving to an internal Grid IP address:
 
 * `testapp-db-1.testgrid.kontena.local` `testapp-db-1.kontena.local`
  * `10.81.1.1`
