@@ -9,7 +9,7 @@ module Kontena::Cli::Cloud
     include Kontena::Cli::Common
 
     subcommand ['list', 'ls'], "List masters in Kontena Cloud", Kontena::Cli::Cloud::Master::ListCommand
-    subcommand ['remove', 'rm'], "Delete a master in Kontena Cloud", Kontena::Cli::Cloud::Master::DeleteCommand
+    subcommand ['remove', 'rm'], "Remove a master registration from Kontena Cloud", Kontena::Cli::Cloud::Master::RemoveCommand
     subcommand "add", "Register a master in Kontena Cloud", Kontena::Cli::Cloud::Master::AddCommand
     subcommand "show", "Show master settings in Kontena Cloud", Kontena::Cli::Cloud::Master::ShowCommand
     subcommand "update", "Update master settings in Kontena Cloud", Kontena::Cli::Cloud::Master::UpdateCommand
