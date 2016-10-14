@@ -27,23 +27,9 @@ To enable tab-completion for bash, add this to your `.bashrc` scripts:
 which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 ```
 
-## Step 2. Register Personal User Account
+## Step 2. Install Kontena Master
 
-With Kontena, all users are required to have a personal user account. Kontena is using user accounts to enforce access control and to generate audit trail logs from user actions. Create your own personal user account (if not created already). You can register an account at [Kontena Cloud](https://cloud.kontena.io/).
-
-By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service or use a 3rd party oauth2 provider.
-
-You can read more about the authentication and configuring authentication providers in the [Authentication](../using-kontena/authentication.md) documentation.
-
-To authenticate your CLI to Kontena Cloud use the command:
-
-```
-$ kontena cloud login
-```
-
-## Step 3. Install Kontena Master
-
-In order to use Kontena, you'll need Kontena Master. If you don't have existing Kontena infrastructure in place, you'll need to install your own. Kontena Master may be provisioned to any cloud platform. It is also possible to run Kontena Master on your own local development environment for testing purposes.
+In order to use Kontena, you'll need a Kontena Master. If you don't have an existing Kontena infrastructure in place, you need to install your own. A Kontena Master can be provisioned to any cloud platform. It' s also possible to run a Kontena Master on your own local development environment for testing purposes.
 
 The easiest (and preferred) way to provision Kontena Master is to use the built-in Kontena Master provision feature of Kontena CLI. In this guide, we will provision Kontena Master to local development environment using [Vagrant](https://www.vagrantup.com/). If you want to install Kontena Master to some other environment, please see [Installing Kontena](installing/) documentation.
 
@@ -52,22 +38,13 @@ Since we will be using Vagrant, please ensure you have Vagrant 1.6 or later inst
 ```
 $ kontena plugin install vagrant
 $ kontena vagrant master create
-
-## Step 4. Login and Create a Grid
-
-Before we can provision Kontena Nodes, you need to be authenticated to Kontena Master. The Master installation will do this automatically for you. Here is how you do it manually:
-
-```
-$ kontena master login http://192.168.66.100:8080
 ```
 
-Once logged in, you'll need to create a Grid that will be used in the next step when installing Kontena Nodes. A Grid called 'test' will be automatically created during Master installation. A new Grid can be created with command `kontena grid create`. For example, to create a grid named `testing`:
+During the installation process you will have the option to select how users will be authenticated with the Kontena Master. It's recommended to select Kontena Cloud as the authentication provider. You can log in or register a new Kontena Cloud account before the Kontena Master installation continues and will be automatically configured to use Kontena Cloud for authentication.
 
-```
-$ kontena grid create testing
-```
+By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service or use a 3rd party OAuth2 provider. You can read more about the authentication and configuring authentication providers in the [Authentication](../using-kontena/authentication.md) documentation.
 
-## Step 5. Install Kontena Nodes
+## Step 3. Install Kontena Nodes
 
 You'll need some Kontena Nodes to run your containerized workloads. If you don't have existing Kontena infrastructure in place, you'll need to install your own.
 
@@ -75,10 +52,20 @@ Just like with Kontena Master, the easiest (and preferred) way to provision Kont
 
 Since we will be using Vagrant, please ensure you have Vagrant installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
 
+Nodes always belong to a Grid. An initial grid called 'test' has been created during Kontena Master installation. If you want to create or switch to another grid, you can do it by using:
+
+```
+$ kontena grid create testing
+# or to switch to an existing grid, use:
+$ kontena grid use testing
+```
+
+Install a node in the currently selected grid:
+
 ```
 $ kontena vagrant node create
 Creating Vagrant machine kontena-node-broken-butterfly-72... done
-Waiting for node kontena-node-broken-butterfly-72 join to grid testing... done
+Waiting for node kontena-node-broken-butterfly-72 join to grid test... done
 ```
 
 You can repeat this step to provision additional Kontena Nodes to your Grid.
@@ -91,7 +78,7 @@ If you followed the steps above, you should now have a working Kontena setup ins
 $ kontena node list
 ```
 
-## Step 6. Deploy Your First Application
+## Step 4. Deploy Your First Application
 
  Now you are ready to deploy your first application. In this section we will show you how to deploy a simple Wordpress application and deploy it to your Kontena grid.
 
@@ -138,7 +125,6 @@ If you need more complex examples, please see the following examples:
 - [Wordpress Cluster](https://github.com/kontena/examples/tree/master/wordpress-cluster)
 - [Jenkins](https://github.com/kontena/examples/tree/master/jenkins)
 - [MongoDB Cluster](https://github.com/kontena/examples/tree/master/mongodb-cluster)
-
 
 ## Congratulations, Enjoy!
 
