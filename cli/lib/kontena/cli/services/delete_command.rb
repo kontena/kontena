@@ -8,12 +8,12 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
 
+    option ['--force'], :flag, 'Do not ask questions'
+
     def execute
       warning "Support for 'kontena service delete' will be dropped. Use 'kontena service remove' instead."
-      require_api_url
-      token = require_token
-
-      result = client(token).delete("services/#{parse_service_id(name)}")
+      confirm unless self.force?
+      client.delete("services/#{parse_service_id(name)}")
     end
   end
 end

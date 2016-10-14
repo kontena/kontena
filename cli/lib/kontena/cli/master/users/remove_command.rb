@@ -7,14 +7,14 @@ module Kontena::Cli::Master::Users
     parameter "EMAIL ...", "List of emails"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       confirm unless forced?
 
       email_list.each do |email|
         begin
-          client(token).delete("users/#{email}")
+          client.delete("users/#{email}")
         rescue => exc
           STDERR.puts "Failed to remove user #{email}".colorize(:red)
           STDERR.puts exc.message

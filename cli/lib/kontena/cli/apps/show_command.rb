@@ -13,10 +13,12 @@ module Kontena::Cli::Apps
 
     attr_reader :services
 
+    requires_current_master_token
+
     def execute
       require_config_file(filename)
 
-      show_service(require_token, prefixed_name(service))
+      show_service(prefixed_name(service))
     end
   end
 end

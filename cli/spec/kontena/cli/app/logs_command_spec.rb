@@ -97,7 +97,7 @@ describe Kontena::Cli::Apps::LogsCommand do
         limit: 100,
       }) { { 'logs' => logs } }
 
-      subject.run([])
+      subject.run(['--grid', 'test-grid'])
 
       expect(@logs).to eq logs
     end
@@ -110,7 +110,7 @@ describe Kontena::Cli::Apps::LogsCommand do
         limit: 100,
       }) { { 'logs' => mysql_logs } }
 
-      subject.run(["mysql"])
+      subject.run(["--grid", "test-grid", "mysql"])
 
       expect(@logs).to eq mysql_logs
     end
@@ -125,7 +125,7 @@ describe Kontena::Cli::Apps::LogsCommand do
         since: since,
       }) { { 'logs' => since_logs } }
 
-      subject.run(["--since=#{since}"])
+      subject.run(["--grid=test-grid", "--since=#{since}"])
 
       expect(@logs).to eq since_logs
     end

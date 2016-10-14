@@ -8,17 +8,16 @@ module Kontena::Cli::Stacks
 
     COLUMNS = "%-30s %-10s %-10s".freeze
 
-    def execute
-      require_api_url
-      require_token
+    requires_current_master_token
 
+    def execute
       list_stacks
     end
 
     private
 
     def list_stacks
-      response = client(token).get("stacks/#{current_grid}")
+      response = client.get("stacks/#{current_grid}")
       
       titles = ['NAME', 'SERVICES', 'STATE']
       puts COLUMNS % titles

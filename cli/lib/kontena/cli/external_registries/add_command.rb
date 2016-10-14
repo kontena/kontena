@@ -9,14 +9,12 @@ module Kontena::Cli::ExternalRegistries
     option ['-e', '--email'], 'EMAIL', 'Email', required: true
     option ['-p', '--password'], 'PASSWORD', 'Password', required: true
 
-    def execute
-      require_api_url
-      require_current_grid
-      token = require_token
+    requires_current_master_token
 
+    def execute
       data = { username: username, password: password, email: email, url: url }
       spinner "Adding #{url.colorize(:cyan)} to external registries " do
-        client(token).post("grids/#{current_grid}/external_registries", data)
+        client.post("grids/#{current_grid}/external_registries", data)
       end
     end
   end

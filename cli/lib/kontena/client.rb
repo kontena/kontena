@@ -360,8 +360,8 @@ module Kontena
         token.account
       elsif token.kind_of?(Hash) && token['account'].kind_of?(String)
         config.find_account(token['account'])
-      else
-        {}
+      elsif token.respond_to(:parent_type) && token.parent_type == :master
+        config.find_account('master')
       end
     rescue
       logger.debug "Access token refresh exception: #{$!} - #{$!.message} #{$!.backtrace}"

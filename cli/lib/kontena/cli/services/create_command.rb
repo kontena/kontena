@@ -41,9 +41,9 @@ module Kontena::Cli::Services
     option "--health-check-port", "HEALTH CHECK PORT", "Port for health check"
     option "--health-check-protocol", "HEALTH CHECK PROTOCOL", "Protocol of health check"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       data = {
         name: name,
         image: image,
@@ -51,7 +51,7 @@ module Kontena::Cli::Services
       }
       data.merge!(parse_service_data_from_options)
       spinner "Creating #{name.colorize(:cyan)} service " do
-        create_service(token, current_grid, data)
+        create_service(current_grid, data)
       end
     end
 

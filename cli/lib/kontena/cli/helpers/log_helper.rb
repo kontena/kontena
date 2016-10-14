@@ -28,7 +28,7 @@ module Kontena::Cli::Helpers
       query_params[:limit] = lines if lines
       query_params[:since] = since if since
 
-      result = client(token).get(url, query_params)
+      result = client.get(url, query_params)
       result['logs'].each do |log|
         yield log
       end
@@ -52,7 +52,7 @@ module Kontena::Cli::Helpers
 
       begin
         query_params[:from] = last_seen if last_seen
-        result = client(token).get_stream(url, streamer, query_params)
+        result = client.get_stream(url, streamer, query_params)
       rescue => exc
         retry if exc.cause.is_a?(EOFError) # Excon wraps the EOFerror into SocketError
         raise

@@ -21,9 +21,9 @@ module Kontena::Cli::Apps
 
     attr_reader :services, :deploy_queue
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      require_token
       require_config_file(filename)
       @deploy_queue = []
       @services = services_from_yaml(filename, service_list, service_prefix)
@@ -51,9 +51,9 @@ module Kontena::Cli::Apps
           warning " --force-deploy will deprecate in the future, use --force"
         end
         spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
-          deploy_service(token, name, options)
+          deploy_service(name, options)
           unless async?
-            wait_for_deploy_to_finish(token, service['id'])
+            wait_for_deploy_to_finish(service['id'])
           end
         end
       end
@@ -88,7 +88,7 @@ module Kontena::Cli::Apps
 
     # @param [String] name
     def find_service_by_name(name)
-      get_service(token, prefixed_name(name)) rescue nil
+      get_service(prefixed_name(name)) rescue nil
     end
 
     # @param [String] name
@@ -98,7 +98,7 @@ module Kontena::Cli::Apps
       data.merge!(options)
       result = nil
       spinner "Creating #{name.colorize(:cyan)} " do
-        result = create_service(token, current_grid, data)
+        result = create_service(current_grid, data)
       end
       result
     end
@@ -109,7 +109,7 @@ module Kontena::Cli::Apps
       prefixed_name = prefixed_name(name)
       result = nil
       spinner "Updating #{name.colorize(:cyan)} " do
-        result = update_service(token, prefixed_name, options)
+        result = update_service(prefixed_name, options)
       end
       result
     end

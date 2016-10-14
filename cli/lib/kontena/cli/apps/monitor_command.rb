@@ -13,6 +13,8 @@ module Kontena::Cli::Apps
 
     attr_reader :services
 
+    requires_current_master_token
+
     def execute
       require_config_file(filename)
 
@@ -25,13 +27,11 @@ module Kontena::Cli::Apps
     end
 
     def show_monitor(services)
-      require_api_url
-      token = require_token
       loop do
         nodes = {}
         services.each do |name, data|
           service = prefixed_name(name)
-          result = client(token).get("services/#{current_grid}/#{service}/containers") rescue nil
+          result = client.get("services/#{current_grid}/#{service}/containers") rescue nil
           if result
             services[name]['instances'] = result['containers'].size
             result['containers'].each do |container|

@@ -9,13 +9,13 @@ module Kontena::Cli::Etcd
     parameter "KEY", "Etcd key"
     parameter "VALUE", "Etcd value"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       validate_key
 
       data = {value: value}
-      response = client(token).post("etcd/#{current_grid}/#{key}", data)
+      response = client.post("etcd/#{current_grid}/#{key}", data)
       if response['error']
         exit_with_error response['error']
       end

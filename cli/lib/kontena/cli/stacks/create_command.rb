@@ -8,9 +8,9 @@ module Kontena::Cli::Stacks
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena stack file', attribute_name: :filename, default: 'kontena.yml'
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      require_token
       require_config_file(filename)
       @stack = stack_from_yaml(filename)
 
@@ -20,7 +20,7 @@ module Kontena::Cli::Stacks
     private
 
     def create_stack
-      client(token).post("stacks/#{current_grid}", @stack)
+      client.post("stacks/#{current_grid}", @stack)
     end
 
   end

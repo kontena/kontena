@@ -9,12 +9,10 @@ module Kontena::Cli::Nodes
     option "--private-ip", :flag, "Connect to node's private IP address"
     option "--internal-ip", :flag, "Connect to node's internal IP address (requires VPN connection)"
 
-    def execute
-      require_api_url
-      require_current_grid
-      token = require_token
+    requires_current_master_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+    def execute
+      node = client.get("grids/#{current_grid}/nodes/#{node_id}")
       cmd = ['ssh']
       cmd << "-i #{identity_file}" if identity_file
       if internal_ip?

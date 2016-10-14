@@ -6,15 +6,13 @@ module Kontena::Cli::Nodes
     parameter "NODE_ID", "Node id"
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
 
-    def execute
-      require_api_url
-      require_current_grid
-      token = require_token
+    requires_current_master_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+    def execute
+      node = client.get("grids/#{current_grid}/nodes/#{node_id}")
       data = {}
       data[:labels] = label_list if label_list
-      spinner "Updating #{node_id.colorize(:cyan)} node " do
+      spinner "Updating #{node_id.colorize(:cyan)} node" do
         client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
       end
     end

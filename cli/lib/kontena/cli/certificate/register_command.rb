@@ -4,15 +4,13 @@ module Kontena::Cli::Certificate
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-
     parameter "EMAIL", "Email to register"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master_token
 
+    def execute
       data = {email: email}
-      response = client(token).post("certificates/#{current_grid}/register", data)
+      response = client.post("certificates/#{current_grid}/register", data)
       puts 'Email registered to LetsEncrypt'
     end
   end

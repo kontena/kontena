@@ -13,11 +13,12 @@ module Kontena::Cli::Master::Config
     option ['-p', '--pair'], :flag, "Print key=value instead of only value"
 
     def execute
-      if self.pair?
-        puts client.get("config/#{self.key}").inspect
-      else
-        puts client.get("config/#{self.key}")[self.key]
+      begin
+        value = client.get("config/#{self.key}")[self.key]
+      rescue Kontena::Errors::StandardError
+        abort "Configuration key '#{self.key}' not found"
       end
+      puts self.pair? ? "#{self.key}=#{value}" : value
     end
   end
 end

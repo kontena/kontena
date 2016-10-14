@@ -14,9 +14,9 @@ module Kontena::Cli::Apps
 
     attr_reader :services
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      require_token
       require_config_file(filename)
       confirm unless forced?
 
@@ -42,10 +42,10 @@ module Kontena::Cli::Apps
 
     def delete(name, options, async = true)
       unless deleted_services.include?(name)
-        service = get_service(token, prefixed_name(name)) rescue nil
+        service = get_service(prefixed_name(name)) rescue nil
         if(service)
           spinner "removing #{pastel.cyan(name)}" do
-            delete_service(token, prefixed_name(name))
+            delete_service(prefixed_name(name))
             unless async
               wait_for_delete_to_finish(service)
             end
@@ -59,7 +59,7 @@ module Kontena::Cli::Apps
 
     def wait_for_delete_to_finish(service)
       until service.nil?
-        service = get_service(token, service['name']) rescue nil
+        service = get_service(service['name']) rescue nil
         sleep 0.5
       end
     end

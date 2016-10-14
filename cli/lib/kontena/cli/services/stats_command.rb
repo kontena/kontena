@@ -13,15 +13,15 @@ module Kontena::Cli::Services
     parameter "NAME", "Service name"
     option ["-t", "--tail"], :flag, "Tail (follow) stats in real time", default: false
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       if tail?
         system('clear')
         render_header
       end
       loop do
-        fetch_stats(token, name, tail?)
+        fetch_stats(name, tail?)
         break unless tail?
         sleep(2)
       end
@@ -29,8 +29,8 @@ module Kontena::Cli::Services
 
     private
 
-    def fetch_stats(token, service_id, follow)
-      result = client(token).get("services/#{current_grid}/#{service_id}/stats")
+    def fetch_stats(service_id, follow)
+      result = client.get("services/#{current_grid}/#{service_id}/stats")
       system('clear') if follow
       render_header
       result['stats'].each do |stat|

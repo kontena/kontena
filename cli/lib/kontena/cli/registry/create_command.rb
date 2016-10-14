@@ -15,19 +15,19 @@ module Kontena::Cli::Registry
     option '--azure-account-name', 'AZURE_ACCOUNT_NAME', 'Azure account name'
     option '--azure-container-name', 'AZURE_CONTAINER_NAME', 'Azure container name'
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       preferred_node = node
       secrets = []
       affinity = []
       stateful = true
       instances = 1
 
-      registry = client(token).get("services/#{current_grid}/registry") rescue nil
+      registry = client.get("services/#{current_grid}/registry") rescue nil
       exit_with_error('Registry already exists') if registry
 
-      nodes = client(token).get("grids/#{current_grid}/nodes")
+      nodes = client.get("grids/#{current_grid}/nodes")
 
       if s3_bucket
         ['REGISTRY_STORAGE_S3_ACCESSKEY', 'REGISTRY_STORAGE_S3_SECRETKEY'].each do |secret|
@@ -95,10 +95,10 @@ module Kontena::Cli::Registry
           secrets: secrets,
           affinity: affinity
       }
-      client(token).post("grids/#{current_grid}/services", data)
-      client(token).post("services/#{current_grid}/registry/deploy", {})
+      client.post("grids/#{current_grid}/services", data)
+      client.post("services/#{current_grid}/registry/deploy", {})
       spinner "deploying #{data[:name].colorize(:cyan)} service " do
-        wait_for_deploy_to_finish(token, parse_service_id(data[:name]))
+        wait_for_deploy_to_finish(parse_service_id(data[:name]))
       end
       puts "\n"
       puts "Docker Registry #{REGISTRY_VERSION} is now running at registry.#{current_grid}.kontena.local."
@@ -110,7 +110,7 @@ module Kontena::Cli::Registry
     # @param [String] name
     # @return [Boolean]
     def vault_secret_exists?(name)
-      client(require_token).get("secrets/#{current_grid}/#{name}")
+      client.get("secrets/#{current_grid}/#{name}")
       true
     rescue
       false
@@ -119,7 +119,7 @@ module Kontena::Cli::Registry
     # @param [String] name
     # @return [String]
     def vault_secret(name)
-      secret = client(require_token).get("secrets/#{current_grid}/#{name}")
+      secret = client.get("secrets/#{current_grid}/#{name}")
       secret['value']
     end
 
@@ -131,7 +131,7 @@ module Kontena::Cli::Registry
         email: 'not@val.id',
         url: "http://registry.#{current_grid}.kontena.local/"
       }
-      client(require_token).post("grids/#{current_grid}/external_registries", data) rescue nil
+      client.post("grids/#{current_grid}/external_registries", data) rescue nil
     end
   end
 end

@@ -6,14 +6,12 @@ module Kontena::Cli::Vault
     parameter "NAME", "Secret name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
-    def execute
-      require_api_url
-      require_current_grid
-      confirm_command(name) unless forced?
+    requires_current_master_token
 
-      token = require_token
+    def execute
+      confirm_command(name) unless forced?
       spinner "Removing #{name.colorize(:cyan)} from the vault " do
-        client(token).delete("secrets/#{current_grid}/#{name}")
+        client.delete("secrets/#{current_grid}/#{name}")
       end
     end
   end

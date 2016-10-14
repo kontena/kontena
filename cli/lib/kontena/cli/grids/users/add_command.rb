@@ -8,11 +8,11 @@ module Kontena::Cli::Grids::Users
 
     parameter "EMAIL", "Email address"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       data = { email: email }
-      client(token).post("grids/#{current_grid}/users", data)
+      client.post("grids/#{current_grid}/users", data)
     end
   end
 end

@@ -10,10 +10,10 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
     option ["-i", "--instance"], "INSTANCE", "Show only given instance specific logs"
-    
-    def execute
-      require_api_url
 
+    requires_current_master_token
+
+    def execute
       query_params = {}
       query_params[:container] = "#{name}-#{instance}" if instance
 

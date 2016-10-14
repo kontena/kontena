@@ -7,15 +7,15 @@ module Kontena::Cli::Vpn
     option '--node', 'NODE', 'Node name where VPN is deployed'
     option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
       preferred_node = node
 
-      vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
+      vpn = client.get("services/#{current_grid}/vpn") rescue nil
       exit_with_error('Vpn already exists') if vpn
 
-      node = find_node(token, preferred_node)
+      node = find_node(preferred_node)
 
       vpn_ip = node_vpn_ip(node)
       data = {
@@ -33,33 +33,33 @@ module Kontena::Cli::Vpn
         env: ["OVPN_SERVER_URL=udp://#{vpn_ip}:1194"],
         affinity: ["node==#{node['name']}"]
       }
-      client(token).post("grids/#{current_grid}/services", data)
-      client(token).post("services/#{current_grid}/vpn/deploy", {})
+      client.post("grids/#{current_grid}/services", data)
+      client.post("services/#{current_grid}/vpn/deploy", {})
       name = 'vpn'
       spinner "deploying #{name.colorize(:cyan)} service " do
-        wait_for_deploy_to_finish(token, parse_service_id('vpn'))
+        wait_for_deploy_to_finish(parse_service_id('vpn'))
       end
       spinner "generating #{name.colorize(:cyan)} keys (this will take a while) " do
-        wait_for_configuration_to_finish(token)
+        wait_for_configuration_to_finish
       end
       puts "#{name.colorize(:cyan)} service is now started (udp://#{vpn_ip}:1194)."
       puts "use 'kontena vpn config' to fetch OpenVPN client config to your machine."
     end
 
-    def wait_for_configuration_to_finish(token)
+    def wait_for_configuration_to_finish
       finished = false
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
       until finished
         sleep 30
-        stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
+        stdout, stderr = client.post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
         finished = true if stdout.join('').include?('BEGIN PRIVATE KEY'.freeze)
       end
 
       finished
     end
 
-    def find_node(token, preferred_node = nil)
-      nodes = client(token).get("grids/#{current_grid}/nodes")
+    def find_node(preferred_node = nil)
+      nodes = client.get("grids/#{current_grid}/nodes")
 
       if preferred_node.nil?
         node = nodes['nodes'].find{|n| n['connected'] && !n['public_ip'].to_s.empty?}

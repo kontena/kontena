@@ -5,17 +5,15 @@ module Kontena::Cli::Nodes
 
     option ["--all"], :flag, "List nodes for all grids", default: false
 
-    def execute
-      require_api_url
-      require_current_grid
-      token = require_token
+    requires_current_master_token
 
+    def execute
       if all?
-        grids = client(token).get("grids")
+        grids = client.get("grids")
         puts "%-70s %-10s %-40s" % [ 'Name', 'Status', 'Labels']
 
         grids['grids'].each do |grid|
-          nodes = client(token).get("grids/#{grid['name']}/nodes")
+          nodes = client.get("grids/#{grid['name']}/nodes")
           nodes['nodes'].each do |node|
             if node['connected']
               status = 'online'
@@ -30,7 +28,8 @@ module Kontena::Cli::Nodes
           end
         end
       else
-        nodes = client(token).get("grids/#{current_grid}/nodes")
+        require_current_grid
+        nodes = client.get("grids/#{current_grid}/nodes")
         puts "%-70s %-10s %-10s %-40s" % ['Name', 'Status', 'Initial', 'Labels']
         nodes = nodes['nodes'].sort_by{|n| n['node_number'] }
         nodes.each do |node|

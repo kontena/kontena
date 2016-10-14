@@ -9,17 +9,17 @@ module Kontena::Cli::Services::Secrets
     parameter "NAME", "Service name"
     parameter "SECRET", "Secret to be removed (format: secret:name:type)"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
-      result = client(token).get("services/#{parse_service_id(name)}")
+      result = client.get("services/#{parse_service_id(name)}")
       secrets = result['secrets']
       remove_secret = parse_secrets([secret])[0]
       if secrets.delete_if{|s| s['name'] == remove_secret[:name] && s['secret'] == remove_secret[:secret]}
         data = {
           secrets: secrets
         }
-        client(token).put("services/#{parse_service_id(name)}", data)
+        client.put("services/#{parse_service_id(name)}", data)
       else
         exit_with_error("Secret not found")
       end

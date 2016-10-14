@@ -8,10 +8,9 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Service name"
 
-    def execute
-      require_api_url
-      require_token
+    requires_current_master_token
 
+    def execute
       remove_stack(name)
     end
 
@@ -19,7 +18,7 @@ module Kontena::Cli::Stacks
 
 
     def remove_stack(name)
-      client(token).delete("stacks/#{current_grid}/#{name}")
+      client.delete("stacks/#{current_grid}/#{name}")
     end
 
   end

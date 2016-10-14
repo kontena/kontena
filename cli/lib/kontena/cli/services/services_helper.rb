@@ -7,40 +7,35 @@ module Kontena
       module ServicesHelper
         include Kontena::Cli::Common
 
-        # @param [String] token
         # @param [String] grid_id
         # @param [Hash] data
-        def create_service(token, grid_id, data)
-          client(token).post("grids/#{grid_id}/services", data)
+        def create_service(grid_id, data)
+          client.post("grids/#{grid_id}/services", data)
         end
 
-        # @param [String] token
         # @param [String] service_id
         # @param [Hash] data
-        def update_service(token, service_id, data)
+        def update_service(service_id, data)
           param = parse_service_id(service_id)
-          client(token).put("services/#{param}", data)
+          client.put("services/#{param}", data)
         end
 
-        # @param [String] token
         # @param [String] service_id
         # @param [Integer] instances
-        def scale_service(token, service_id, instances)
+        def scale_service(service_id, instances)
           param = parse_service_id(service_id)
-          client(token).post("services/#{param}/scale", {instances: instances})
+          client.post("services/#{param}/scale", {instances: instances})
         end
 
-        # @param [String] token
         # @param [String] service_id
-        def get_service(token, service_id)
+        def get_service(service_id)
           param = parse_service_id(service_id)
-          client(token).get("services/#{param}")
+          client.get("services/#{param}")
         end
 
-        # @param [String] token
         # @param [String] service_id
-        def show_service(token, service_id)
-          service = get_service(token, service_id)
+        def show_service(service_id)
+          service = get_service(service_id)
           grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
           puts "  status: #{service['state'] }"
@@ -183,7 +178,7 @@ module Kontena
           end
 
           puts "  instances:"
-          result = client(token).get("services/#{parse_service_id(service_id)}/containers")
+          result = client.get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
             puts "    #{container['name']}:"
             puts "      rev: #{container['deploy_rev']}"
@@ -206,29 +201,27 @@ module Kontena
           end
         end
 
-        # @param [String] token
         # @param [String] service_id
         # @param [Hash] data
-        def deploy_service(token, service_id, data)
+        def deploy_service(service_id, data)
           param = parse_service_id(service_id)
-          client(token).post("services/#{param}/deploy", data)
+          client.post("services/#{param}/deploy", data)
         end
 
-        # @param [String] token
         # @param [String] name
         # @return [Boolean]
-        def wait_for_deploy_to_finish(token, name, timeout = 600)
-          service = client(token).get("services/#{name}")
+        def wait_for_deploy_to_finish(name, timeout = 600)
+          service = client.get("services/#{name}")
           desired_count = service['container_count']
           updated_at = DateTime.parse(service['updated_at']) rescue DateTime.now
           deployed = false
           Timeout::timeout(timeout) do
             until deployed
-              containers = client(token).get("services/#{name}/containers")['containers']
+              containers = client.get("services/#{name}/containers")['containers']
               deployed = containers.size == desired_count && containers.all?{ |c|
                 DateTime.parse(c['created_at']) >= updated_at rescue false
               }
-              sleep 1
+              sleep 0.5
             end
           end
 
@@ -237,32 +230,28 @@ module Kontena
           raise Kontena::Errors::StandardError.new(500, 'deploy timed out')
         end
 
-        # @param [String] token
         # @param [String] service_id
-        def start_service(token, service_id)
+        def start_service(service_id)
           param = parse_service_id(service_id)
-          client(token).post("services/#{param}/start", {})
+          client.post("services/#{param}/start", {})
         end
 
-        # @param [String] token
         # @param [String] service_id
-        def stop_service(token, service_id)
+        def stop_service(service_id)
           param = parse_service_id(service_id)
-          client(token).post("services/#{param}/stop", {})
+          client.post("services/#{param}/stop", {})
         end
 
-        # @param [String] token
         # @param [String] service_id
-        def restart_service(token, service_id)
+        def restart_service(service_id)
           param = parse_service_id(service_id)
-          client(token).post("services/#{param}/restart", {})
+          client.post("services/#{param}/restart", {})
         end
 
-        # @param [String] token
         # @param [String] service_id
-        def delete_service(token, service_id)
+        def delete_service(service_id)
           param = parse_service_id(service_id)
-          client(token).delete("services/#{param}")
+          client.delete("services/#{param}")
         end
 
         # @param [String] service_id

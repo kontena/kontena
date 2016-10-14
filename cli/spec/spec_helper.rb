@@ -43,6 +43,7 @@ RSpec.configure do |config|
       example.run
     rescue SystemExit
       puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
+      puts $!.backtrace.join("\n  ") if ENV["DEBUG"]
     end
   end
 

@@ -3,15 +3,13 @@ module Kontena::Cli::Vpn
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
+    requires_current_master_token
+
     def execute
       warning "Support for 'kontena vpn delete' will be dropped. Use 'kontena vpn remove' instead."
-      require_api_url
-      token = require_token
-
-      vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
+      vpn = client.get("services/#{current_grid}/vpn") rescue nil
       abort("VPN service does not exist") if vpn.nil?
-
-      client(token).delete("services/#{current_grid}/vpn")
+      client.delete("services/#{current_grid}/vpn")
     end
   end
 end

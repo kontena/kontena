@@ -31,7 +31,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
         })
 
       expect {
-        subject.find_node(token, nil)
+        subject.find_node(nil)
       }.to raise_error SystemExit
     end
 
@@ -44,7 +44,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
           ]
         })
 
-      node = subject.find_node(token, nil)
+      node = subject.find_node(nil)
       expect(node['public_ip']).to eq('1.2.3.4')
     end
 
@@ -57,7 +57,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
           ]
         })
 
-      node = subject.find_node(token, 'preferred')
+      node = subject.find_node('preferred')
       expect(node['name']).to eq('preferred')
     end
 
@@ -71,7 +71,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
         })
 
       expect {
-        subject.find_node(token, 'foobar')
+        subject.find_node('foobar')
       }.to raise_error SystemExit
     end
 

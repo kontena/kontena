@@ -18,6 +18,12 @@ module Kontena::Cli::Grids
         name: name
       }
       payload[:token] = self.token if self.token
+      begin
+        if client.get("grids/#{self.name}")
+          abort pastel.red("Grid '#{self.name}' already exists")
+        end
+      rescue Kontena::Errors::StandardError
+      end
       payload[:initial_size] = initial_size if initial_size
       grid = nil
       if initial_size == 1

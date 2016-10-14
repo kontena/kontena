@@ -8,9 +8,9 @@ module Kontena::Cli::Grids
     parameter "[NAME]", "Grid name"
     option ["-e", "--export"], :flag, "Add export", default: false
 
-    def execute
-      require_api_url
+    requires_current_master_token
 
+    def execute
       name_or_current = name.nil? ? current_grid : name
 
       if name_or_current.nil?
@@ -21,10 +21,10 @@ module Kontena::Cli::Grids
 
         prefix = export? ? 'export ' : ''
 
-        server = settings['servers'].find{|s| s['name'] == settings['current_server']}
+        server = current_master
         if server
-          puts "#{prefix}KONTENA_URI=#{server['url'].sub('http', 'ws')}"
-          puts "#{prefix}KONTENA_TOKEN=#{server['token']}"
+          puts "#{prefix}KONTENA_URI=#{server.url.sub('http', 'ws')}"
+          puts "#{prefix}KONTENA_TOKEN=#{server.token.access_token}"
         end
       end
     end

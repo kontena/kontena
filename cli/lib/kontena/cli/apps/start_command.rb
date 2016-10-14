@@ -11,6 +11,8 @@ module Kontena::Cli::Apps
 
     parameter "[SERVICE] ...", "Services to start"
 
+    requires_current_master_token
+
     attr_reader :services
 
     def execute
@@ -29,7 +31,7 @@ module Kontena::Cli::Apps
       services.each do |service_name, opts|
         if service_exists?(service_name)
           spinner "Starting #{service_name.colorize(:cyan)} " do
-            start_service(token, prefixed_name(service_name))
+            start_service(prefixed_name(service_name))
           end
         else
           warning "No such service: #{service_name}"

@@ -8,10 +8,9 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Service name"
 
+    requires_current_master_token
+
     def execute
-      require_api_url
-      require_token
-      
       show_stack(name)
       
     end
@@ -19,7 +18,7 @@ module Kontena::Cli::Stacks
     private
 
     def show_stack(name)
-      stack = client(token).get("stacks/#{current_grid}/#{name}")
+      stack = client.get("stacks/#{current_grid}/#{name}")
 
       puts stack
 
