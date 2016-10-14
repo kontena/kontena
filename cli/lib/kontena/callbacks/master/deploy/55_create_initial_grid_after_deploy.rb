@@ -13,7 +13,9 @@ module Kontena
 
         cmd = "grid create --silent test"
         ENV["DEBUG"] && puts("Running: #{cmd}")
-        Kontena.run(cmd)
+        Retriable.retriable do
+          Kontena.run(cmd)
+        end
       end
     end
   end

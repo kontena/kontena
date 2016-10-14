@@ -19,8 +19,13 @@ module Kontena
       def configure_auth_provider(oauth_config)
         require 'shellwords'
         spinner "Setting Kontena Cloud authentication provider settings to Master config" do
-          Kontena.run("master config import --force --preset kontena_auth_provider")
-          Kontena.run("master config set oauth2.client_id=#{oauth_config['client-id'].shellescape} oauth2.client_secret=#{oauth_config['client-secret'].shellescape} server.root_url=#{config.current_master.url.shellescape}")
+          Retriable.retriable do
+            Kontena.run("master config import --force --preset kontena_auth_provider")
+          end
+
+          Retriable.retriable do
+            Kontena.run("master config set oauth2.client_id=#{oauth_config['client-id'].shellescape} oauth2.client_secret=#{oauth_config['client-secret'].shellescape} server.root_url=#{config.current_master.url.shellescape}")
+          end
         end
       end
 

@@ -51,6 +51,14 @@ class String
   end
 end
 
+require 'retriable'
+Retriable.configure do |c|
+  c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
+    return true unless ENV["DEBUG"]
+    puts "Retriable retry: #{try} - Exception: #{exception} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
+  end
+end
+
 require 'ruby_dig'
 require 'shellwords'
 require_relative 'kontena/cli/version'
