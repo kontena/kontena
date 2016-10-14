@@ -6,17 +6,18 @@ toc_order: 2
 
 # Network Model
 
-Kontena's network model is based on the **Grid**, spanning a set of host **Nodes**.
-The Grid provides connectivity between Service **Containers** on different Nodes.
+Kontena's network model is based on the [Grid](#grid), spanning a set of [Host Nodes](#host-nodes).
+The Grid uses an [Overlay Network](#overlay-network) to provide connectivity between [Service Containers](#service-containers) on different Nodes.
 
-Each host Node is a separate virtual machine, which can have some combination of **Public** and **Private** network addresses.
+Each host Node is a separate virtual machine, which can have some combination of [Public](#public-network-address) and [Private](#private-network-address) network addresses.
 Nodes within the same region can communicate using their Private network address.
 The Public network address can be used to access network services exposed by the Node.
 
-Each Grid has a single **Overlay Network** using private RFC1918 address space.
+Each Grid has a single [Overlay Network](#overlay-network) using private RFC1918 address space.
 The Kontena Agent establishes the Overlay Network mesh between the Nodes.
 Nodes and Containers are connected to the overlay network.
-Nodes and Containers can use their *overlay* network address to communicate within the Grid.
+Each [Node](#overlay-network-address) and [Service Container](#weave-overlay-network) can use their respective overlay network addresess to communicate within the Grid.
+The Grid network also provides [DNS Service Discovery](#dns-service-discovery) for all Services and Service Containers overlay network addresses using the `kontena.local` domain.
 
 Each host Node runs the Kontena **Agent**, which establishes a WebSocket connection to a **Master** node running the Kontena **Server**.
 The host Node's Kontena Agent and the Master node are only used for cluster management. The Master node is not connected to the Grid, and Containers attached to the Grid cannot communicate with the Kontena Master.
@@ -50,7 +51,9 @@ The Kontena Agent runs as a Docker container, and controls the Docker Engine to 
 ### Node Network Addresses
 Each host Node has a total of four different network addresses:
 
-* The external Internet address of the machine (`public_ip`)
+#### Public Network Address
+
+  The external Internet address of the machine (`public_ip`)
 
   The public network address is resolved at startup using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
 
@@ -60,7 +63,9 @@ Each host Node has a total of four different network addresses:
 
   For a node behind NAT, such as a Vagrant node, the public address may not necessarily work for incoming connections.
 
-* The internal network address of the machine (`private_ip`)
+#### Private Network Address
+
+  The internal network address of the machine (`private_ip`)
 
   The private network address is resolved using the interface address configured on the internal interface, or it can be configured using `KONTENA_PRIVATE_IP`.
   The internal interface is `eth1`, or the interface given by `KONTENA_PEER_INTERFACE`.
@@ -73,7 +78,8 @@ Each host Node has a total of four different network addresses:
   The private network address can also be used for connections to published services on internal nodes within a local network.
   Using the private network address is required for local Vagrant nodes, as the public network address provided by VirtualBox does not allow any incoming connections.
 
-* The overlay network address (`10.81.0.x/19`)
+#### Overlay Network Address
+  The overlay network address (`10.81.0.x/19`)
 
   Each Host Node within a Grid is assigned a sequential Node Number, in the range of `1..254`.
 
@@ -84,7 +90,9 @@ Each host Node has a total of four different network addresses:
   The Node's overlay network address is used for the Grid's infrastructure services, including Kontena's etcd cluster.
   Any Kontena Service container can connect to each host Node's overlay network address.
 
-* The Docker gateway address (`172.17.0.1` on `docker0`)
+#### Docker Gateway Address
+
+  The Docker gateway address (`172.17.0.1` on `docker0`)
 
   Each Host Node uses the Docker default bridge network to provide Containers with access to the internal network.
 
@@ -120,16 +128,24 @@ Using Trusted Subnets and Weave's Fast Datapath provides [improved performance](
 
 ## Service Containers
 
+Each Service Container has two
+Any exposed ports on any Service Container will automatically be internally accessible from other host Nodes and Service Containers within the Grid overlay network.
+
+#### Default Docker Network
+
 The Service Containers are created using the default Docker bridge network, which provides each Container with an isolated network namespace.
 The default Docker bridge network is used to provide the Container with a default route for connecting to external services, using SNAT on the host machine.
 The default Docker bridge network is local to each Node, and Containers on different nodes will use the same default Docker bridge network `172.42.17.X/24` subnet on each Container's default `eth0` interface.
+
+The default Docker network provides connectivity to the [Gateway](#docker-gateway-address) address of each host Node, which is used as the [DNS](#dns-service-discovery) resolver.
+
+#### Weave Overlay Network
 
 Each Service Container being started is also attached to the Weave network.
 The Container's `ethwe` network interface is used for the internal communication between Grid Services, using the Overlay Network's `10.81.0.0/17` subnet.
 In order to avoid any issues with Container services attempting to resolve or connect to other services on the overlay network, the `weavewait` utility is used to delay the Container service execution until the Container's Weave network is ready.
 This uses a modified Docker entrypoint for the Container.
 
-Any exposed ports on any Service Container will automatically be internally accessible from other host Nodes and Service Containers within the Grid overlay network.
 
 ## Publishing Services
 
@@ -155,7 +171,7 @@ The etcd database is used by the `kontena/lb` service for dynamic load balancer 
 See the [Kontena Load Balancer](https://kontena.io/docs/using-kontena/loadbalancer) documentation for usage documentation.
 The [implementation](https://github.com/kontena/kontena-loadbalancer) of the Kontena Load Balancer is based on [HAProxy](http://www.haproxy.org/), using [confd](https://github.com/kelseyhightower/confd) for dynamic configuration.
 
-## DNS (`kontena.local`)
+## DNS Service Discovery
 
 Each Kontena Grid uses Weave DNS for dynamic service discovery of other service containers within the same grid.
 Each Service Container is configured with the `kontena.local` search domain, using the local node's `docker0` IP as the DNS resolver.
