@@ -1,6 +1,6 @@
 ---
 title: Technology
-toc_order: 2
+toc_order: 3
 ---
 
 # Technology

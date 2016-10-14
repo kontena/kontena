@@ -1,3 +1,9 @@
+---
+title: Network Model
+toc_order: 2
+---
+
+
 # Network Model
 
 Kontena's network model is based on the **Grid**, spanning a set of host **Nodes**.
