@@ -7,7 +7,7 @@ toc_order: 9
 
 Kontena Master API uses [OAuth2 Bearer token authentication](https://tools.ietf.org/html/rfc6749).
 
-When deploying a new Kontena Master an administrator account with a temporary one time authorization code is created. The initial authorization code is then automatically used to obtain an access token for the CLI to authenticate as the local administrator after the deployment has finished.
+When deploying a new Kontena Master an internal administrator account with a temporary one time authorization code is created. The initial authorization code is then automatically used to obtain an access token for the CLI to authenticate as the internal administrator after the deployment has finished.
 
 ## Adding users
 
@@ -241,9 +241,9 @@ It's also possible to use an access token obtained from another installation and
 $ kontena master login --token <access_token> <https://master_url>
 ```
 
-## Resetting the local administrator account
+## Resetting the internal administrator account
 
-If you have lost access to the master, you will need to reset the local administrator account.
+If you have lost access to the master, you will need to reset the Kontena Master internal administrator account.
 
 This can be done by using SSH to connect to the master.
 
@@ -261,13 +261,13 @@ Then run the following command:
 
 ```
 $ docker exec -t kontena-server-api rake kontena:reset_admin
-Local administrator account has been reset.
+Internal administrator account has been reset.
 
 To authenticate your kontena-cli use this command:
 kontena master login --code <auth_code> <master_url>
 ```
 
-Now you can authenticate from the CLI as the Master's local administrator by using the given command line. Exit the master ssh and enter the command:
+Now you can authenticate from the CLI as the Kontena Master internal administrator by using the given command line. Exit the master ssh and enter the command:
 
 ```
 $ kontena master login --code <auth_code> <master_url>

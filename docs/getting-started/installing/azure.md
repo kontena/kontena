@@ -50,7 +50,7 @@ $ kontena azure master create \
   --ssh-key <path-to-ssh-private-key>
 ```
 
-After Kontena Master has provisioned you will be automatically authenticated as the Master administrator and the default grid 'test' is set as the current grid.
+After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 
