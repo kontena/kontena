@@ -17,6 +17,8 @@ module Kontena::Cli::Master
     option ['-f', '--force'], :flag, 'Force reauthentication'
     option ['-s', '--silent'], :flag, 'Reduce output verbosity'
 
+    option ['--no-login-info'], :flag, "Don't show login info", hidden: true
+
     def execute
       # rewrites self.url
       use_current_master_if_available || use_master_by_name
@@ -28,14 +30,18 @@ module Kontena::Cli::Master
       set_server_token(server)
 
       # set server token by exchanging code if --code given
-      use_authorization_code(server) if self.code
+      use_authorization_code(server, self.code) if self.code
 
       client = Kontena::Client.new(server.url, server.token)
 
       # Unless an invitation code was supplied, check auth and exit
       # if it works already.
       unless self.join || self.force?
-        exit_if_auth_works(server)
+        if auth_works?(server)
+          config.write
+          display_login_info(only: :master) unless self.no_login_info?
+          exit 0
+        end
       end
 
       # no local browser? tell user to launch an external one
@@ -50,22 +56,14 @@ module Kontena::Cli::Master
 
       # If the master responds with a code, then exchange it to a token
       if response['code']
-        vspinner "Exchanging authorization code for an access token from Kontena Master" do
-          response = client.exchange_code(response['code'])
-          unless response && response.kind_of?(Hash) && response['access_token']
-            exit_with_error "Code exchange failed"
-          end
-        end
-      end
-
-      if response['access_token']
+        use_authorization_code(server, response['code'])
+      elsif response['access_token']
         update_server_token(server, response)
         update_server_name(server, response)
         config.current_server = server.name
-        config.write
-        display_login_info(only: :master) unless running_silent?
-        exit 0
       end
+      config.write
+      display_login_info(only: :master) unless (running_silent? || self.no_login_info?)
     end
 
     def master_account
@@ -116,40 +114,41 @@ module Kontena::Cli::Master
       end
     end
 
-    def use_authorization_code(server)
-      vspinner "Exchanging authorization code for an access token from Master" do
+    def use_authorization_code(server, code)
+      vspinner "Exchanging authorization code for an access token from Kontena Master" do
         client = Kontena::Client.new(server.url, server.token)
-        response = client.exchange_code(self.code)
+        response = client.exchange_code(code) rescue nil
 
         if response && response.kind_of?(Hash) && !response.has_key?('error')
-          server.token.access_token = response['access_token']
-          server.token.refresh_token = response['refresh_token']
-          server.token.expires_at = response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil
-          server.token.username = response['user']['name'] || response['user']['email']
-          server.username = server.token.username
           if response['server'] && response['server']['name']
             server.name ||= response['server']['name']
+            server.username = response['user']['name'] || response['user']['email']
             config.current_server = server.name
           end
+
+          server.token = Kontena::Cli::Config::Token.new(
+            access_token: response['access_token'],
+            refresh_token: response['refresh_token'],
+            expires_at: response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil,
+          )
         else
           raise Kontena::Errors::StandardError.new(500, 'Code exchange failed')
         end
       end
+      true
     end
 
-    def exit_if_auth_works(server)
+    def auth_works?(server)
       if server && server.token && server.token.access_token
         # See if the existing or supplied authentication works without reauthenticating
         auth_ok = false
         vspinner "Testing if authentication works using current access token" do
           auth_ok = Kontena::Client.new(server.url, server.token).authentication_ok?(master_account.userinfo_endpoint)
-        end
-        if auth_ok
           config.current_master = server.name
-          config.write
-          display_login_info(only: :master) unless running_silent?
-          exit 0
         end
+        auth_ok
+      else
+        false
       end
     end
 

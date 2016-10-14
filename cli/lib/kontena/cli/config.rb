@@ -25,6 +25,7 @@ module Kontena
       class TokenExpiredError < StandardError;  end
 
       def initialize
+        super
         @logger = Logger.new(STDOUT)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'CONFIG'
@@ -118,7 +119,7 @@ module Kontena
           url: 'https://cloud-api.kontena.io',
           token_endpoint: 'https://auth2.kontena.io/v1/oauth2/token',
           authorization_endpoint: 'https://cloud-beta.kontena.io/login/oauth/authorize',
-          userinfo_endpoint: 'https://auth2.kontena.io/v1/user',
+          userinfo_endpoint: 'https://cloud-api.kontena.io/user',
           token_post_content_type: 'application/x-www-form-urlencoded',
           code_requires_basic_auth: false,
           token_method: 'post',

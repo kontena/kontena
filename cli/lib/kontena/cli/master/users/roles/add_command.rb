@@ -8,6 +8,8 @@ module Kontena::Cli::Master::Users
       parameter "ROLE", "Role name"
       parameter "USER ...", "List of users"
 
+      option '--silent', :flag, 'Reduce output verbosity'
+
       def execute
         require_api_url
         token = require_token
@@ -16,10 +18,9 @@ module Kontena::Cli::Master::Users
         user_list.each do |email|
           begin
             response = client(token).post("users/#{email}/roles", data)
-            puts "Added role #{role} to #{email}"
+            puts "Added role #{role} to #{email}" unless running_silent?
           rescue => exc
-            puts "Failed to add role #{role} to #{email}".colorize(:red)
-            puts exc.message
+            abort "Failed to add role #{role} to #{email} : #{exc.message}".colorize(:red)
           end
         end
       end

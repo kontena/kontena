@@ -151,7 +151,7 @@ module Kontena
         @kontena_account ||= config.find_account(ENV['KONTENA_ACCOUNT'] || 'kontena')
       end
 
-      def kontena_auth?
+      def cloud_auth?
         return false unless kontena_account
         return false unless kontena_account.token
         return false unless kontena_account.token.access_token
@@ -355,7 +355,7 @@ module Kontena
       def display_master_login_info
         server = config.current_master
         if server
-          if server.token && server.access_token
+          if server.token && server.token.access_token
             puts [
               pastel.green('Authenticated to Kontena Master'),
               pastel.yellow(server.name),

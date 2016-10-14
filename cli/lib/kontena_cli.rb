@@ -15,7 +15,11 @@ module Kontena
   rescue SystemExit
     ENV["DEBUG"] && puts("Command completed with failure, result: #{result.inspect} status: #{$!.status}")
     returning == :status ? $!.status : nil
+  rescue
+    ENV["DEBUG"] && puts("Command raised #{$!} with message: #{$!.message}\n  #{$!.backtrace.join("  \n")}")
+    returning == :status ? 1 : nil
   end
+    
 
   def self.version
     "kontena-cli/#{Kontena::Cli::VERSION}"

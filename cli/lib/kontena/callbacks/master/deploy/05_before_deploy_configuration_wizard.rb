@@ -10,6 +10,7 @@ module Kontena
         command.class_eval do
           option ['--no-prompt'], :flag, "Don't ask questions"
           option ['--skip-auth-provider'], :flag, "Skip auth provider configuration (single user mode)"
+          option ['--use-kontena-cloud'], :flag, "Use Kontena Cloud as authentication provider"
           option ['--cloud-master-id'], '[ID]', "Use Kontena Cloud Master ID for auth provider configuration"
         end
       end
@@ -32,7 +33,7 @@ module Kontena
       end
 
       def login_to_kontena
-        if kontena_auth?
+        if cloud_auth?
           return true if cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
         end
         puts
@@ -42,11 +43,40 @@ module Kontena
         cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
       end
 
+      def cloud_masters
+        masters = []
+        begin
+          spinner "Retrieving a list of your registered Kontena Masters in Kontena Cloud" do
+            masters = Kontena.run("cloud master list --return", returning: :result)
+          end
+        rescue SystemExit
+        end
+        masters
+      end
+
+      def new_cloud_master_name
+        return @new_cloud_master_name if @new_cloud_master_name
+        masters = cloud_masters
+        if masters.empty?
+          @new_cloud_master_name = command.name
+        else
+          existing_master = masters.find { |m| m['attributes']['name'] == command.name }
+          if existing_master.nil?
+            @new_cloud_master_name = command.name
+          else
+            new_name = "#{command.name}-2"
+            new_name.succ! until masters.find { |m| m['attributes']['name'] == new_name }.nil?
+            @new_cloud_master_name = new_name
+          end
+        end
+        @new_cloud_master_name
+      end
+
       def create_cloud_master
         master_id = nil
         begin
-          spinner "Registering a new master '#{command.name}' to Kontena Cloud" do
-            master_id = Kontena.run("cloud master add --return #{command.name}", returning: :result)
+          spinner "Registering a new master '#{new_cloud_master_name}' to Kontena Cloud" do
+            master_id = Kontena.run("cloud master add --return #{new_cloud_master_name}", returning: :result)
           end
         rescue SystemExit
         end
@@ -69,7 +99,7 @@ module Kontena
         end
 
         unless_param(:skip_auth_provider) do
-          if command.no_prompt?
+          if command.no_prompt? || command.use_kontena_cloud?
             command.cloud_master_id ||= create_cloud_master
           elsif command.cloud_master_id.nil?
             answer = prompt.select("Select OAuth2 authentication provider: ") do |menu|
