@@ -73,6 +73,9 @@ module Kontena::Cli::Cloud::Master
 
     def execute
       return register_current if self.current?
+
+      exit_with_error 'Master name is required' unless self.name
+
       response = register(self.name, self.url, self.provider, self.redirect_uri, self.version, self.owner)
       if self.return?
         return response['data']['id']
