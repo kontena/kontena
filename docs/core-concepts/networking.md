@@ -123,7 +123,7 @@ Once the overlay network is started, the host Node's overlay network address is 
 
 The overlay network is powered by Weave Net, using [Weave's encrypted `sleeve` tunnels](https://www.weave.works/docs/net/latest/using-weave/security-untrusted-networks/) to form a flat Layer 2 network spanning all Grid Nodes and connected Containers.
 
-Alternatively, [Weave's Fast Datapath](https://www.weave.works/docs/net/latest/using-weave/fastdp/) can be used for traffic between Nodes within the Grid's Trusted Subnets.
+Alternatively, [Weave's Fast Datapath](https://www.weave.works/docs/net/latest/using-weave/fastdp/) can be used for traffic between Nodes within the Kontena Grid's [Trusted Subnets](https://kontena.io/docs/using-kontena/grids#grid-trusted-subnets).
 Using Trusted Subnets and Weave's Fast Datapath provides [improved performance](https://www.weave.works/weave-docker-networking-performance-fast-data-path/) at the cost of a lack of data plane encryption between Nodes.
 
 ## Service Containers
