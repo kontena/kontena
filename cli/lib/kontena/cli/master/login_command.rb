@@ -225,7 +225,7 @@ module Kontena::Cli::Master
       any_key_to_continue(10)
 
       puts "If the browser does not open, try visiting this URL manually:"
-      puts "<#{uri.to_s}>"
+      puts "#{uri.to_s}"
       puts
 
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
