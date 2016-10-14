@@ -38,7 +38,7 @@ In case of a conflict where the overlay network address has been reallocated for
 
 ## Host Node
 
-A host Node is a (virtual) machine running the Docker Engine and Kontena Agent.
+A host Node is a (physical or virtual) machine running the Docker Engine and Kontena Agent.
 The Kontena Agent runs as a Docker container, and controls the Docker Engine to manage infrastructure Containers and Service Containers.
 
 ### Node Network Addresses
@@ -48,8 +48,10 @@ Each host Node has a total of four different network addresses:
 
   The public network address is resolved at startup using the `http://whatismyip.akamai.com` service, or it can be configured using `KONTENA_PUBLIC_IP`.
 
-  The Node's public addess can be used to connect to network services exposed on that host Node, including the Weave service used for the overlay network.
-  The public address can also be used to connect to the published ports of any Kontena Service Container(including the Kontena Load Balancer) that has be scheduled to run on that Node.
+  The Node's public addess can be used to connect to network services exposed on that host Node, including ports published by any Kontena Service Container that has been scheduled to run on that Node, including any instance of the Kontena Load Balancer.
+  The Node's public address is also used for Weave control and data plane connections between Nodes.
+  The Weave control and data plane ports are the only publically exposed services on a host Node in the default configuration.
+
   For a node behind NAT, such as a Vagrant node, the public address may not necessarily work for incoming connections.
 
 * The internal network address of the machine (`private_ip`)
@@ -91,7 +93,7 @@ Each host Node runs a number of infrastructure services as Docker containers, us
 | Weave Net | UDP      | 6783 | `*`                       | Weave Net Data (`sleeve`)
 | Weave Net | UDP      | 6784 | `*`                       | Weave Net Data (`fastdp`)
 
-Only the Weave Net service is externally accessible, which is required for forming the Overlay Network mesh between host Nodes.
+Only the Weave Net service is externally accessible by default, which is required for forming the encrypted Overlay Network mesh between host Nodes.
 
 ## Overlay Network
 
