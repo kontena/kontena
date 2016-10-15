@@ -10,8 +10,27 @@ title: Ubuntu
 
 ## Prerequisities
 
-- Kontena Account
-- Ubuntu 14.04 or 16.04 with Docker Engine 1.11.x installed
+- [Kontena Account](https://cloud.kontena.io/sign-up)
+
+## Installing Docker Engine
+
+Kontena requires [Docker Engine](https://docs.docker.com/engine/) to be installed on every host (master and nodes).
+
+#### Ubuntu Xenial (16.04)
+
+```
+$ sudo apt install docker.io=1.12*
+```
+
+#### Ubuntu Trusty (14.04)
+
+```
+$ sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+$ echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee -a /etc/apt/sources.list.d/docker.list
+$ sudo apt-get update
+$ sudo apt-get install apt-transport-https ca-certificates linux-image-extra-$(uname -r) linux-image-extra-virtual
+$ sudo apt-get install docker-engine=1.12.2-0~trusty
+```
 
 ## Installing Kontena Master
 
@@ -30,7 +49,19 @@ If using automation the value can be overwritten in file `/etc/default/kontena-s
 
 ### Setup SSL Certificate
 
-On Ubuntu Trusty
+
+#### Ubuntu Xenial (16.04)
+
+```
+$ sudo vim /etc/kontena-server.env
+
+# HAProxy SSL certificate
+SSL_CERT=/path/to/certificate.pem
+
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+#### Ubuntu Trusty (14.04)
 
 ```
 $ sudo stop kontena-server-haproxy
@@ -42,23 +73,13 @@ SSL_CERT=/path/to/certificate.pem
 $ sudo start kontena-server-haproxy
 ```
 
-Or on Ubuntu Xenial
-
-```
-$ sudo vim /etc/kontena-server.env
-
-# HAProxy SSL certificate
-SSL_CERT=/path/to/certificate.pem
-
-$ sudo systemctl restart kontena-server-haproxy
-```
-
 
 ### Login to Kontena Master
 
 After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid. Login with the same initial admin code when you setup the master.
+
 ```
-kontena master login --name some-name --code <admin code> https://master_ip
+kontena master login --name some-name --code <admin code> https://master_ip:8443
 ```
 
 ## Installing Kontena Nodes
