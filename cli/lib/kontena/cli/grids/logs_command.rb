@@ -5,6 +5,8 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Kontena::Cli::Helpers::LogHelper
 
+    parameter "[NAME]", "Grid name"
+
     option "--node", "NODE", "Filter by node name", multivalued: true
     option "--service", "SERVICE", "Filter by service name", multivalued: true
     option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
@@ -12,12 +14,14 @@ module Kontena::Cli::Grids
     def execute
       require_api_url
 
+      grid = name || current_grid
+
       query_params = {}
       query_params[:nodes] = node_list.join(",") unless node_list.empty?
       query_params[:services] = service_list.join(",") unless service_list.empty?
       query_params[:containers] = container_list.join(",") unless container_list.empty?
 
-      show_logs("grids/#{current_grid}/container_logs", query_params) do |log|
+      show_logs("grids/#{grid}/container_logs", query_params) do |log|
         show_log(log)
       end
     end

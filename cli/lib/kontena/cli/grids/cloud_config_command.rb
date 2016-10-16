@@ -5,7 +5,7 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
-    parameter "NAME", "Grid name"
+    parameter "[NAME]", "Grid name (default: current grid)"
     option "--dns", "DNS",  "DNS server", multivalued: true
     option "--peer-interface", "IFACE", "Peer (private) network interface", default: "eth1"
     option "--docker-bip", "BIP", "Docker bridge ip", default: "172.17.43.1/16"
@@ -15,7 +15,9 @@ module Kontena::Cli::Grids
       require_api_url
       token = require_token
 
-      grid = find_grid_by_name(name)
+      grid_name = name || current_grid
+
+      grid = find_grid_by_name(grid_name)
       exit_with_error("Grid not found") unless grid
 
       default_dns = docker_bip.split('/')[0]
@@ -25,7 +27,7 @@ module Kontena::Cli::Grids
         dns_servers = [default_dns, '8.8.8.8', '8.8.4.4']
       end
 
-      require 'kontena/machine/cloud_config/node_generator'
+      require_relative '../../machine/cloud_config/node_generator'
       generator = Kontena::Machine::CloudConfig::NodeGenerator.new
       config = generator.generate(
         master_uri: api_url,

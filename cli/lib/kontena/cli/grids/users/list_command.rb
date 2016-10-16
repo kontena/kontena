@@ -5,13 +5,18 @@ module Kontena::Cli::Grids::Users
     include Kontena::Cli::Common
     include Kontena::Cli::Grids::Common
 
+    parameter "[NAME]", "Grid name"
+
     def execute
       require_api_url
       token = require_token
-      result = client(token).get("grids/#{current_grid}/users")
-      puts "%-40s %-40s" % ['Email', 'Name']
+      grid = name || current_grid
+      result = client(token).get("grids/#{grid}/users")
+      puts "%-40s %-30s %s" % ['Email', 'Name', 'Roles']
       result['users'].each { |user|
-        puts "%-40.40s %-40.40s" % [user['email'], user['name']]
+        roles = user['roles'].map{ |r| r['name'] }
+        columns = [user['email'], user['name'], roles.join(", ")]
+        puts "%-40s %-30s %s" % columns
       }
     end
   end
