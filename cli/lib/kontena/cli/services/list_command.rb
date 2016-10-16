@@ -24,13 +24,14 @@ module Kontena::Cli::Services
         }.join(", ")
         health = health_status(service)
         vars = [
-          "#{health_status_icon(health)} #{service['name']}",
+          health_status_icon(health),
+          "#{service['name']}",
           instances,
           stateful,
           service['state'],
           ports
         ]
-        puts "%-74s %-10.10s %-8s %-10s %-50s" % vars
+        puts "%s %-58s %-10.10s %-8s %-10s %-50s" % vars
       end
     end
   end

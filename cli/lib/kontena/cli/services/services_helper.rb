@@ -424,7 +424,7 @@ module Kontena
             icon.colorize(:green)
           else
             icon = '⊝'.freeze
-            icon.colorize(:clear)
+            icon.colorize(:dim)
           end
         end
 
