@@ -50,18 +50,6 @@ describe '/v1/users' do
     before(:each) do
       allow(UserAuthorizer).to receive(:creatable_by?).with(john).and_return(true)
     end
-
-    it 'creates new user' do
-      data = {
-        email: 'jane@domain.com',
-      }
-      expect(AuthProvider.instance).to receive(:valid?).and_return(true)
-      expect{
-        post '/v1/users', data.to_json, request_headers
-        expect(response.status).to eq(201)
-        expect(json_response['email']).not_to be_nil
-      }.to change{User.count}.by(1)
-    end
   end
 
   describe 'POST /:username/roles' do

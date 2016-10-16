@@ -36,6 +36,7 @@ module OAuth2Api
     SERVER_ERROR       = 'server_error'.freeze
     NOT_ADMIN          = 'User not admin, denying access'.freeze
     NOT_FOUND          = 'not_found'.freeze
+    NOT_CONFIGURED     = 'Authentication provider not configured'.freeze
 
     route do |r|
       r.post do
@@ -78,6 +79,10 @@ module OAuth2Api
             mime_halt(400, OAuth2Api::INVALID_REQUEST, task.errors.symbolic.inspect) and return
           end
         when INVITE
+
+          unless AuthProvider.valid?
+            mime_halt(501, SERVER_ERROR, NOT_CONFIGURED) and return
+          end
 
           task = Users::Invite.run(
             user: current_user,

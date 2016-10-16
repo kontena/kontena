@@ -4,16 +4,23 @@ describe 'OAuth2 API' do
   let(:david) { User.create(email: 'david@example.com') }
   let(:json_header) { { 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json' } }
 
-  context '/authenticate' do
+  context '/authenticate when AP not configured' do
     describe 'GET /' do
       it 'returns error when AuthProvider is not configured' do
         get '/authenticate'
         expect(response.status).to eq(501)
       end
+    end
+  end
 
-      it 'returns a redirect when AuthProvider is configured' do
+  context '/authenticate when AP not configured' do
+    describe 'GET /' do
+      before(:each) do
         allow(AuthProvider.instance).to receive(:valid?).and_return(true)
         allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
+      end
+      
+      it 'returns a redirect when AuthProvider is configured' do
         get '/authenticate?redirect_uri=http://localhost:2323'
         expect(response.status).to eq(302)
         expect(response.headers['Location']).to match(/http:\/\/foo/)
@@ -21,8 +28,6 @@ describe 'OAuth2 API' do
 
       it 'accepts invite code and stores it to auth request state storage' do
         user = User.create(email: 'david@example.com', with_invite: true)
-        allow(AuthProvider.instance).to receive(:valid?).and_return(true)
-        allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
         get "/authenticate?redirect_uri=http://localhost:2323&invite_code=#{user.invite_code}"
         expect(AuthorizationRequest.first.user.id).to eq user.id
       end
@@ -32,6 +37,11 @@ describe 'OAuth2 API' do
   context '/oauth2/authorize' do
 
     let(:token) { AccessToken.create(user: david, scopes: ['user']) }
+
+    before(:each) do
+      allow(AuthProvider.instance).to receive(:valid?).and_return(true)
+      allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
+    end
 
     context 'response_type = code' do
       it 'returns an authorization code' do

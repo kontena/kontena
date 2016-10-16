@@ -52,28 +52,6 @@ module V1
             render('users/index')
           end
         end
-
-        r.post do
-          unless AuthProvider.valid?
-            mime_halt(
-              501,
-              'server_error',
-              'Authentication provider not configured'
-            )
-            return
-          end
-          params = parse_json_body
-          params[:user] = current_user
-          outcome = Users::Invite.run(params)
-          if outcome.success?
-            response.status = 201
-            @user = outcome.result
-            render('users/show')
-          else
-            response.status = 422
-            {error: outcome.errors.message}
-          end
-        end
       end
     end
   end
