@@ -1,0 +1,5 @@
+/etc/kontena-server.env
+/opt/bin/kontena-haproxy.sh
+/etc/systemd/system/kontena-server.service
+/etc/systemd/system/kontena-server-haproxy.service
+/etc/systemd/system/kontena-server-mongo.service

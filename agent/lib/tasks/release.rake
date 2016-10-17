@@ -11,7 +11,7 @@ namespace :release do
   end
 
   desc 'Build all'
-  task :build => [:build_docker, :build_ubuntu] do
+  task :build => [:build_docker, :build_ubuntu, :build_ubuntu_xenial] do
 
   end
 
@@ -40,6 +40,20 @@ namespace :release do
     end
   end
 
+  desc 'Build ubuntu Xenial packages'
+  task :build_ubuntu_xenial => :environment do
+    rev = ENV['REV'] || '1'
+    sh('mkdir -p build')
+    sh('rm -rf build/ubuntu_xenial/')
+    sh('cp -ar packaging/ubuntu_xenial build/')
+    sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/control")
+    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/postinst")
+
+    Dir.chdir("build/ubuntu_xenial") do
+      sh("dpkg-deb -b #{NAME} .")
+    end
+  end
+
   desc 'Push all'
   task :push => [:push_docker, :push_ubuntu] do
   end
@@ -63,6 +77,9 @@ namespace :release do
     raise ArgumentError.new('You must define REV') if rev.blank?
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
+    sh('rm -rf release_xebial && mkdir release_xenial')
+    sh('cp build/ubuntu_xenial/*.deb release_xenial/')
     sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release_xenial/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
   end
 end

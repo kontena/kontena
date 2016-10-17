@@ -1,0 +1,25 @@
+[Unit]
+Description=kontena-server-api
+After=network-online.target
+After=docker.service
+After=kontena-server-mongo.service
+Description=Kontena Master
+Documentation=http://www.kontena.io/
+Before=kontena-server-haproxy.service
+Wants=kontena-server-haproxy.service
+Requires=network-online.target
+Requires=docker.service
+Requires=kontena-server-mongo.service
+[Service]
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/kontena-server.env
+ExecStartPre=-/usr/bin/docker stop kontena-server-api
+ExecStartPre=-/usr/bin/docker rm kontena-server-api
+ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
+ExecStart=/usr/bin/docker run --name kontena-server-api \
+    --link kontena-server-mongo:mongodb \
+    -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
+    -e VAULT_KEY=${VAULT_KEY} -e VAULT_IV=${VAULT_IV} \
+    -e INITIAL_ADMIN_CODE=${INITIAL_ADMIN_CODE} \
+    kontena/server:${KONTENA_VERSION}

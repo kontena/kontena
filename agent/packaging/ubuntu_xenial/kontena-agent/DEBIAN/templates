@@ -1,0 +1,9 @@
+Template: kontena-agent/server_uri
+Type: string
+Default: ws://127.0.0.1:8080
+Description: Address of your Kontena server
+
+Template: kontena-agent/grid_token
+Type: string
+Default:
+Description: Grid token from Kontena server

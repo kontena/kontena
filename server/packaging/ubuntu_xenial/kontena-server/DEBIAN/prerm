@@ -1,0 +1,5 @@
+#!/bin/sh
+
+systemctl stop kontena-haproxy || true
+systemctl stop kontena-server || true
+systemctl stop kontena-server-mongo || true

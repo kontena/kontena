@@ -1,0 +1,17 @@
+[Unit]
+Description=kontena-server-haproxy
+After=network-online.target
+After=docker.service
+Description=Kontena Server HAProxy
+Documentation=http://www.kontena.io/
+Requires=network-online.target
+Requires=docker.service
+Requires=kontena-server.service
+[Service]
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/kontena-server.env
+ExecStartPre=-/usr/bin/docker stop kontena-server-haproxy
+ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
+ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
+ExecStart=/opt/bin/kontena-haproxy.sh

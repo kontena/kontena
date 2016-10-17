@@ -1,0 +1,6 @@
+Package: kontena-agent
+Version: VERSION
+Maintainer: info@kontena.io
+Architecture: all
+Depends: docker-engine (>> 1.8), docker-engine (<< 1.12), resolvconf
+Description: Kontena Agent

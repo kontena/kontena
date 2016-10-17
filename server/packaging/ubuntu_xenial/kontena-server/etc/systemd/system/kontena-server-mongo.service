@@ -1,0 +1,18 @@
+[Unit]
+Description=kontena-server-mongo
+After=network-online.target
+After=docker.service
+Description=Kontena Server MongoDB
+Documentation=http://www.mongodb.org/
+Requires=network-online.target
+Requires=docker.service
+[Service]
+Restart=always
+RestartSec=5
+ExecStartPre=/usr/bin/docker pull mongo:3.0
+ExecStartPre=-/usr/bin/docker create --name=kontena-server-mongo-data mongo:3.0
+ExecStartPre=-/usr/bin/docker stop kontena-server-mongo
+ExecStartPre=-/usr/bin/docker rm kontena-server-mongo
+ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
+    --volumes-from=kontena-server-mongo-data \
+    mongo:3.0 mongod --smallfiles
