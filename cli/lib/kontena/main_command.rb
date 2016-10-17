@@ -49,6 +49,24 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
   subcommand "login", "Login to Kontena Master (removed, use kontena master login)", Kontena::Cli::LoginCommand
 
+  def self.subcommand_tree(command = nil)
+    command ||= Kontena::MainCommand
+
+    real_command = command.respond_to?(:subcommand_class) ? command.subcommand_class : command
+
+    tree = {}
+    real_command.recognised_subcommands.each do |sub_command|
+      sub_command.names.each do |command_name|
+        if sub_command.subcommand_class.has_subcommands?
+          tree[command_name] = subcommand_tree(sub_command)
+        else
+          tree[command_name] = sub_command.subcommand_class.recognised_options.flat_map(&:switches)
+        end
+      end
+    end
+    tree
+  end
+
   def execute
   end
 

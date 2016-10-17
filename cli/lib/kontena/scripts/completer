@@ -1,163 +1,77 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-# resolve bin path, ignoring symlinks
-require 'pathname'
+require 'ruby_dig'
 require 'yaml'
-bin_file = Pathname.new(__FILE__).realpath
 
-# add self to libpath
-$:.unshift File.expand_path('../../lib', bin_file)
+class CacheCompleter
 
-require_relative '../client'
-require_relative '../cli/common'
+  attr_reader :words
+  attr_reader :tree
 
-class Helper
-  include Kontena::Cli::Common
-
-  def client
-    token = require_token
-    super(token)
+  def initialize(words = [])
+    @words = words.dup
+    @words.shift
+    @tree  = load_cache_file
   end
 
-  def grids
-    client.get("grids")['grids'].map{|grid| grid['id']}
-  rescue
-    []
-  end
-
-  def nodes
-    client.get("grids/#{current_grid}/nodes")['nodes'].map{|node| node['name']}
-  rescue
-    []
-  end
-
-  def services
-    services = client.get("grids/#{current_grid}/services")['services']
-    results = []
-    results.push services.map{|s| s['name']}
-
-    results
-  rescue
-    []
-  end
-
-  def containers
-    results = []
-    client.get("grids/#{current_grid}/services")['services'].each do |service|
-      containers = client.get("services/#{service['id']}/containers")['containers']
-      results.push(containers.map{|c| c['name'] })
-      results.push(containers.map{|c| c['id'] })
+  def recurse_tree(branch, words)
+    return [branch, []] if words.empty?
+    new_words = words.dup
+    next_word = new_words.shift
+    case branch[next_word]
+    when NilClass
+      [branch, words]
+    when Array
+      [branch[next_word], new_words]
+    when Hash
+      recurse_tree(branch[next_word], new_words)
+    else
+      [nil, new_words]
     end
-    results
-  rescue
-    []
   end
 
-  def yml_services
-    if File.exist?('kontena.yml')
-      yaml = YAML.load(File.read('kontena.yml'))
-      if yaml['version'] == '2'
-        services = yaml['services']
+  def run
+    result, remaining_words = recurse_tree(tree, words.dup)
+    if remaining_words.empty?
+      if result.kind_of?(Hash)
+        result.keys + ['--help']
       else
-        services = yaml
+        result
       end
-      services.keys
+    else
+      if result.kind_of?(Hash)
+        result = result.keys + ['--help']
+      end
+      remaining_words.delete_if{|word| result.include?(word)}
+      if remaining_words.size == 1
+        result.select{|word| word.start_with?(remaining_words.first)}
+      end
     end
-  rescue
-    []
   end
 
-  def master_names
-    config_file = File.expand_path('~/.kontena_client.json')
-    if(File.exist?(config_file))
-      config = JSON.parse(File.read(config_file))
-      return config['servers'].map{|s| s['name']}
+  def cache_file_path
+    @cache_file_path ||= File.expand_path(File.join(Dir.home, '.tmp.kontena_completer_cache'))
+  end
+
+  def load_cache_file
+    if File.exist?(cache_file_path) && File.readable?(cache_file_path)
+      YAML.load(File.read(cache_file_path)) rescue {}
+    else
+      require File.expand_path('../../../kontena_cli', __FILE__)
+      tree = Kontena::MainCommand.subcommand_tree
+      File.write(cache_file_path, YAML.dump(tree))
+      tree
     end
-  rescue
-    []
-  end
-
-end
-
-helper = Helper.new
-
-words = ARGV
-words.delete_at(0)
-
-completion = []
-completion.push %w(app deploy forgot-password master node grid service container vpn external-registry registry login logout whoami) if words.size < 2
-if words.size > 0
-  case words[0]
-    when 'grid'
-      completion.clear
-      sub_commands = %w(add-user audit-log create current list user remove show use)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.grids
-      else
-        completion.push sub_commands
-      end
-    when 'node'
-      completion.clear
-      sub_commands = %w(list show remove)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.nodes
-      else
-        completion.push sub_commands
-      end
-    when 'master'
-      completion.clear
-      sub_commands = %w(list use)
-      if words[1] && words[1] == 'use'
-        completion.push helper.master_names
-      elsif words[1] && words[1] == 'users'
-        users_sub_commands = %(invite list role)
-        completion.push users_sub_commands
-      elsif words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push %w(create)
-      else
-        completion.push sub_commands
-      end
-    when 'service'
-      completion.clear
-      sub_commands = %w(containers create delete deploy list logs restart
-                      scale show start stats stop update monitor env
-                      secret link unlink)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.services
-      else
-        completion.push sub_commands
-      end
-    when 'container'
-      completion.clear
-      sub_commands = %w(exec)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.containers
-      else
-        completion.push sub_commands
-      end
-    when 'vpn'
-      completion.clear
-      completion.push %w(config create delete)
-    when 'external-registry'
-      completion.clear
-      completion.push %w(add list delete)
-    when 'app'
-      completion.clear
-      sub_commands = %w(init build config deploy start stop remove rm ps list
-                        logs monitor show)
-      if words[1]
-        completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push helper.yml_services
-      else
-        completion.push sub_commands
-      end
   end
 end
 
-puts completion
+cache_completer = CacheCompleter.new(ARGV)
+results = cache_completer.run
+if results.empty?
+  require File.expand_path('../../../kontena/completer', __FILE__)
+  completer = Kontena::Completer.new(ARGV)
+  puts completer.run
+else
+  puts results
+end
