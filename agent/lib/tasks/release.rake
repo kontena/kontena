@@ -47,7 +47,7 @@ namespace :release do
     sh('rm -rf build/ubuntu_xenial/')
     sh('cp -ar packaging/ubuntu_xenial build/')
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/control")
-    sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/postinst")
+    sh("sed -i \"s/VERSION$/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/etc/kontena-agent.env")
 
     Dir.chdir("build/ubuntu_xenial") do
       sh("dpkg-deb -b #{NAME} .")
