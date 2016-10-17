@@ -20,6 +20,8 @@ ExecStartPre=/usr/bin/docker pull kontena/server:${KONTENA_VERSION}
 ExecStart=/usr/bin/docker run --name kontena-server-api \
     --link kontena-server-mongo:mongodb \
     -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
-    -e VAULT_KEY=${VAULT_KEY} -e VAULT_IV=${VAULT_IV} \
-    -e INITIAL_ADMIN_CODE=${INITIAL_ADMIN_CODE} \
+    --env-file /etc/kontena-server.env \
     kontena/server:${KONTENA_VERSION}
+
+[Install]
+WantedBy=multi-user.target

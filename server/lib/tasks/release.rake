@@ -30,7 +30,7 @@ namespace :release do
     raise ArgumentError.new('You must define REV') if rev.blank?
 
     sh('mkdir -p build')
-    sh('rm -rf build/ubuntu/')
+    sh('rm -rf build/ubuntu_xenial/')
     sh('cp -ar packaging/ubuntu_xenial build/')
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/control")
     sh("cd build/ubuntu_xenial && dpkg-deb -b #{NAME} .")

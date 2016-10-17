@@ -15,10 +15,11 @@ ExecStartPre=-/usr/bin/docker stop kontena-agent
 ExecStartPre=-/usr/bin/docker rm kontena-agent
 ExecStartPre=/usr/bin/docker pull kontena/agent:${KONTENA_VERSION}
 ExecStart=/usr/bin/docker run --name kontena-agent \
-    -e KONTENA_URI=${KONTENA_URI} \
-    -e KONTENA_TOKEN=${KONTENA_TOKEN} \
-    -e KONTENA_PEER_INTERFACE=${KONTENA_PEER_INTERFACE} \
+    --env-file /etc/kontena-agent.env \
     -v=/var/run/docker.sock:/var/run/docker.sock \
     -v=/etc/kontena-agent.env:/etc/kontena.env \
     --net=host \
     kontena/agent:${KONTENA_VERSION}
+
+[Install]
+WantedBy=multi-user.target
