@@ -62,7 +62,7 @@ describe Kontena::NetworkAdapters::Weave do
         'Image' => valid_image,
         'Cmd' => ['--trusted-subnets', '']
       }
-      weave = spy(:weave, config: weave_config)
+      weave = double(:weave, config: weave_config)
       expect(subject.config_changed?(weave, config)).to be_falsey
     end
 
@@ -77,7 +77,7 @@ describe Kontena::NetworkAdapters::Weave do
         'Cmd' => ['--trusted-subnets', '']
       }
 
-      weave = spy(:weave, config: weave_config)
+      weave = double(:weave, config: weave_config)
       expect(subject.config_changed?(weave, config)).to be_truthy
     end
 
@@ -92,7 +92,7 @@ describe Kontena::NetworkAdapters::Weave do
         'Cmd' => ['--trusted-subnets', '']
       }
 
-      weave = spy(:weave, config: weave_config)
+      weave = double(:weave, config: weave_config)
       expect(subject.config_changed?(weave, config)).to be_truthy
     end
   end
