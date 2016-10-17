@@ -109,6 +109,12 @@ describe Kontena::LoadBalancers::Configurer do
       subject.ensure_config(container)
     end
 
+    it 'removes basic auth' do
+      expect(etcd).to receive(:delete).
+        with("#{etcd_prefix}/lb/services/test-api/basic_auth_secrets")
+      subject.ensure_config(container)
+    end
+
     it 'sets http check uri' do
       container.labels['io.kontena.health_check.uri'] = '/health'
       expect(etcd).to receive(:set).
