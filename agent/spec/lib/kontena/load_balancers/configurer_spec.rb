@@ -102,6 +102,19 @@ describe Kontena::LoadBalancers::Configurer do
       subject.ensure_config(container)
     end
 
+    it 'sets basic auth' do
+      container.env_hash['KONTENA_LB_BASIC_AUTH_SECRETS'] = 'user admin insecure-password passwd'
+      expect(etcd).to receive(:set).
+        with("#{etcd_prefix}/lb/services/test-api/basic_auth_secrets", {value: 'user admin insecure-password passwd'})
+      subject.ensure_config(container)
+    end
+
+    it 'removes basic auth' do
+      expect(etcd).to receive(:delete).
+        with("#{etcd_prefix}/lb/services/test-api/basic_auth_secrets")
+      subject.ensure_config(container)
+    end
+
     it 'sets http check uri' do
       container.labels['io.kontena.health_check.uri'] = '/health'
       expect(etcd).to receive(:set).

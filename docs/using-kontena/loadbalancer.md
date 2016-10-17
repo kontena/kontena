@@ -81,6 +81,50 @@ These environment variables configure the loadbalancer itself.
 
 Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances.
 
+## Basic authentication for services
+
+Kontena loadbalancer supports automatic [basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) for balanced services. To enable basic authentication on a given service, use following configuration:
+```
+version: 2
+services:
+  internet_lb:
+    image: kontena/lb:latest
+    ports:
+      - 80:80
+
+  web:
+    image: nginx:latest
+    environment:
+      - KONTENA_LB_MODE=http
+      - KONTENA_LB_BALANCE=roundrobin
+      - KONTENA_LB_INTERNAL_PORT=80
+      - KONTENA_LB_VIRTUAL_HOSTS=www.kontena.io,kontena.io
+    links:
+      - internet_lb
+    secrets:
+      - secret: BASIC_AUTH_FOR_XYZ
+        name: KONTENA_LB_BASIC_AUTH_SECRETS
+        type: env
+
+```
+
+To write the configuration in the vault, use following:
+```
+$ kontena vault write BASIC_AUTH_FOR_XYZ << EOF
+→ user user1 password <bcrypt_password>
+→ user user2 insecure-password pass1234
+→ EOF
+```
+
+If you want to use encrypted password note that encrypted passwords are evaluated using the crypt(3) function so different algorithms are supported. For example MD5, SHA-256, SHA-512 are supported. To generate an encrypted password you can use following examples:
+```
+mkpasswd -m sha-512 passwd
+```
+Or if your system does not have `mkpasswd` available but you have Docker available, use following:
+```
+docker run -ti --rm alpine mkpasswd -m sha-512 passwd
+```
+
 ## SSL Termination
 
 Kontena Load Balancer supports ssl termination on multiple certificates. These certificates can be configured to load balancer by setting the `SSL_CERTS` environment variable. The recommended way to do this is by using Kontena Vault.
@@ -153,4 +197,3 @@ These options are defined on the services that are balanced through lb.
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings, each line will be appended to either related backend section or listen session in the HAProxy configuration file
 * `KONTENA_LB_COOKIE`: Enables cookie based session stickyness. With empty value defaults to LB set cookie. Can be customized to utilize application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)
-
