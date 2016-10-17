@@ -15,6 +15,7 @@ ExecStartPre=-/usr/bin/docker stop kontena-server-haproxy
 ExecStartPre=-/usr/bin/docker rm kontena-server-haproxy
 ExecStartPre=/usr/bin/docker pull kontena/haproxy:latest
 ExecStart=/opt/bin/kontena-haproxy.sh
+ExecStop=/usr/bin/docker stop kontena-server-haproxy
 
 [Install]
 WantedBy=multi-user.target

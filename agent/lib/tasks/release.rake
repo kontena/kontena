@@ -25,8 +25,12 @@ namespace :release do
     end
   end
 
+  desc 'Build Ubuntu packages'
+  task :build_ubuntu => [:build_ubuntu_trusty, :build_ubuntu_xenial] do
+  end
+
   desc 'Build ubuntu packages'
-  task :build_ubuntu => :environment do
+  task :build_ubuntu_trusty => :environment do
     rev = ENV['REV'] || '1'
     sh('mkdir -p build')
     sh('rm -rf build/ubuntu/')

@@ -16,6 +16,7 @@ ExecStartPre=-/usr/bin/docker rm kontena-server-mongo
 ExecStart=/usr/bin/docker run --name=kontena-server-mongo \
     --volumes-from=kontena-server-mongo-data \
     mongo:3.0 mongod --smallfiles
+ExecStop=/usr/bin/docker stop kontena-server-mongo
 
 [Install]
 WantedBy=multi-user.target

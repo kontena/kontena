@@ -22,6 +22,7 @@ ExecStart=/usr/bin/docker run --name kontena-server-api \
     -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
     --env-file /etc/kontena-server.env \
     kontena/server:${KONTENA_VERSION}
+ExecStop=/usr/bin/docker stop kontena-server-api
 
 [Install]
 WantedBy=multi-user.target

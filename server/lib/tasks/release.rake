@@ -10,8 +10,12 @@ namespace :release do
   BINTRAY_USER = ENV['BINTRAY_USER']
   BINTRAY_KEY = ENV['BINTRAY_KEY']
 
-  desc 'Build ubuntu package'
-  task :build_ubuntu => :environment do
+  desc 'Build Ubuntu packages'
+  task :build_ubuntu => [:build_ubuntu_trusty, :build_ubuntu_xenial] do
+  end
+
+  desc 'Build ubuntu trusty package'
+  task :build_ubuntu_trusty => :environment do
     rev = ENV['REV']
     raise ArgumentError.new('You must define REV') if rev.blank?
 
