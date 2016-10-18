@@ -45,7 +45,7 @@ $ kontena cloud login
 If you have upgraded from a previous version you can configure your Master to use Kontena Cloud by registering the Master to the Kontena Cloud service and configuring the authentication provider settings on the master:
 
 ```
-$ kontena cloud master add --current
+$ kontena master init-cloud
 ```
 
 
