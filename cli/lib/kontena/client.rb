@@ -319,7 +319,7 @@ module Kontena
       # Store the response into client.last_response
       @last_response = http_client.request(request_options)
 
-      parse_response
+      parse_response(@last_response)
     rescue Excon::Errors::Unauthorized
       if token
         logger.debug 'Server reports access token expired'
@@ -332,13 +332,10 @@ module Kontena
         retry if refresh_token
       end
       raise Kontena::Errors::StandardError.new(401, 'Unauthorized')
-    rescue Excon::Errors::NotFound
-      raise Kontena::Errors::StandardError.new(404, 'Not found')
-    rescue Excon::Errors::Forbidden
-      raise Kontena::Errors::StandardError.new(403, 'Access denied')
-    rescue
-      logger.debug "Request exception: #{$!} - #{$!.message}\n#{$!.backtrace.join("\n")}"
-      handle_error_response
+    rescue Excon::Errors::HTTPStatusError => error
+      logger.debug "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}"
+
+      handle_error_response(error.response)
     end
 
     # Build a token refresh request param hash
@@ -469,13 +466,13 @@ module Kontena
     # Parse response. If the respons is JSON, returns a Hash representation.
     # Otherwise returns the raw body.
     #
-    # @param [HTTP::Message]
+    # @param [Excon::Response]
     # @return [Hash,String]
-    def parse_response
-      if last_response.headers[CONTENT_TYPE] =~ JSON_REGEX
-        parse_json(last_response.body)
+    def parse_response(response)
+      if response.headers[CONTENT_TYPE] =~ JSON_REGEX
+        parse_json(response.body)
       else
-        last_response.body
+        response.body
       end
     end
 
@@ -504,9 +501,16 @@ module Kontena
     end
 
     # @param [Excon::Response] response
-    def handle_error_response
-      raise $!, $!.message unless last_response
-      raise Kontena::Errors::StandardError.new(last_response.status, last_response.body)
+    def handle_error_response(response)
+      data = parse_response(response)
+
+      if data.is_a?(Hash) && data.has_key?('error')
+        raise Kontena::Errors::StandardError.new(response.status, data['error'])
+      elsif data.is_a?(String) && !data.empty?
+        raise Kontena::Errors::StandardError.new(response.status, data)
+      else
+        raise Kontena::Errors::StandardError.new(response.status, response.reason_phrase)
+      end
     end
 
     # Convert expires_in into expires_at
