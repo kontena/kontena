@@ -47,6 +47,56 @@ describe Kontena::NetworkAdapters::Weave do
     end
   end
 
+  describe '#config_changed?' do
+    let(:valid_image) do
+      "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:#{Kontena::NetworkAdapters::Weave::WEAVE_VERSION}"
+    end
+
+    it 'returns false if config is the same' do
+      config = {
+        'grid' => {
+          'trusted_subnets' => []
+        }
+      }
+      weave_config = {
+        'Image' => valid_image,
+        'Cmd' => ['--trusted-subnets', '']
+      }
+      weave = double(:weave, config: weave_config)
+      expect(subject.config_changed?(weave, config)).to be_falsey
+    end
+
+    it 'returns true if image version is not same' do
+      config = {
+        'grid' => {
+          'trusted_subnets' => []
+        }
+      }
+      weave_config = {
+        'Image' => "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:1.5.0",
+        'Cmd' => ['--trusted-subnets', '']
+      }
+
+      weave = double(:weave, config: weave_config)
+      expect(subject.config_changed?(weave, config)).to be_truthy
+    end
+
+    it 'returns true if trusted-subnets is not same' do
+      config = {
+        'grid' => {
+          'trusted_subnets' => ['10.1.2.0/16']
+        }
+      }
+      weave_config = {
+        'Image' => valid_image,
+        'Cmd' => ['--trusted-subnets', '']
+      }
+
+      weave = double(:weave, config: weave_config)
+      expect(subject.config_changed?(weave, config)).to be_truthy
+    end
+  end
+
   describe '#modify_host_config' do
 
     let(:weavewait) { "weavewait-#{described_class::WEAVE_VERSION}:ro"}
