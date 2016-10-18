@@ -192,6 +192,10 @@ module Kontena
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
             puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
             puts "      public ip: #{container['node']['public_ip'] rescue 'unknown'}"
+            if container['health_status']
+              puts "      health: #{container['health_status']}"
+              puts "      health updated: #{container['health_status_at']}"
+            end
             if container['status'] == 'unknown'
               puts "      status: #{container['status'].colorize(:yellow)}"
             else
