@@ -37,6 +37,12 @@ module Grids
       user.grids << grid
 
       grid
+    rescue Moped::Errors::OperationFailure => error
+      if error.details['code'] == 11000
+        add_error(:name, :duplicate, "Duplicate Grid name: #{name}")
+      else
+        add_error(:grid, :save, error.details['err'])
+      end
     end
 
     def initialize_subnet(grid)
