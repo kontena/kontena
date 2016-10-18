@@ -46,6 +46,22 @@ module Kontena::Cli::Apps
       services
     end
 
+    # @param [Array<Hash>] services
+    # @return [Array<Hash>  ]
+    def sort_services(services)
+      services.sort{ |a, b|
+        a_links = a['links'] || []
+        b_links = b['links'] || []
+        if a_links.any?{ |l| l['name'] == b['name'] }
+          1
+        elsif b_links.any?{ |l| l['name'] == a['name'] }
+          -1
+        else
+          a_links.size <=> b_links.size
+        end
+      }
+    end
+
     def read_yaml(filename)
       reader = YAML::Reader.new(filename)
       outcome = reader.execute
