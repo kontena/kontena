@@ -57,7 +57,6 @@ module Kontena::Cli::Cloud::Master
 
     def new_cloud_master_name(master_name)
       masters = cloud_masters
-      require 'pry'; binding.pry
       return master_name if masters.empty?
 
       existing_master = masters.find { |m| m['attributes']['name'] == master_name }
