@@ -14,7 +14,7 @@ module Kontena::Cli::Cloud::Master
     def delete_server(id)
       spinner "Deleting server #{id} from Kontena Cloud" do |spin|
         begin
-          cloud_client.delete("user/masters/#{id}", nil, {}, { 'Content-Type' => 'text/plain' })          
+          cloud_client.delete("user/masters/#{id}")
         rescue
           spin.fail
         end

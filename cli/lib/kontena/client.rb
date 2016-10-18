@@ -276,7 +276,7 @@ module Kontena
     # @param expects [Array] raises unless response status code matches this list.
     # @param auth [Boolean] use token authentication default = true
     # @return [Hash, String] response parsed response object
-    def request(http_method: :get, path:'/', body: nil, query: {}, headers: {}, response_block: nil, expects: [200, 201], host: nil, port: nil, auth: true)
+    def request(http_method: :get, path:'/', body: nil, query: {}, headers: {}, response_block: nil, expects: [200, 201, 204], host: nil, port: nil, auth: true)
 
       retried ||= false
 
@@ -286,9 +286,11 @@ module Kontena
 
       request_headers = request_headers(headers, auth)
 
-      body_content = body.nil? ? '' : encode_body(body, request_headers[CONTENT_TYPE])
-      if http_method == :get
-        request_headers.delete('Content-Type')
+      if body.nil?
+        body_content = ''
+        request_headers.delete(CONTENT_TYPE)
+      else
+        body_content =  encode_body(body, request_headers[CONTENT_TYPE])
       end
       request_headers.merge!('Content-Length' => body_content.bytesize)
 
