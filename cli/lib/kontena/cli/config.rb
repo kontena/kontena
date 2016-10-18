@@ -117,8 +117,8 @@ module Kontena
         {
           name: 'kontena',
           url: 'https://cloud-api.kontena.io',
-          token_endpoint: 'https://auth2.kontena.io/v1/oauth2/token',
-          authorization_endpoint: 'https://cloud-beta.kontena.io/login/oauth/authorize',
+          token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
+          authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
           userinfo_endpoint: 'https://cloud-api.kontena.io/user',
           token_post_content_type: 'application/x-www-form-urlencoded',
           code_requires_basic_auth: false,

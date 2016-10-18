@@ -6,27 +6,12 @@ module Kontena
 
       matches_commands 'master create'
 
-      def get_oauth_app_config(master_id)
-        attrs = nil
-        spinner "Retrieving master OAuth2 application settings from Kontena Cloud" do
-          attrs = cloud_client.get("user/masters/#{master_id}")["data"]["attributes"]
-        end
-        attrs
-      rescue
-        nil
+      def configure_auth_provider_using_id(cloud_id)
+        Kontena.run("master init-cloud --force --cloud-master-id #{cloud_id.shellescape}")
       end
 
-      def configure_auth_provider(oauth_config)
-        require 'shellwords'
-        spinner "Setting Kontena Cloud authentication provider settings to Master config" do
-          Retriable.retriable do
-            Kontena.run("master config import --force --preset kontena_auth_provider")
-          end
-
-          Retriable.retriable do
-            Kontena.run("master config set oauth2.client_id=#{oauth_config['client-id'].shellescape} oauth2.client_secret=#{oauth_config['client-secret'].shellescape} server.root_url=#{config.current_master.url.shellescape}")
-          end
-        end
+      def configure_auth_provider
+        Kontena.run("master init-cloud --force")
       end
 
       def after
@@ -40,10 +25,9 @@ module Kontena
         end
 
         if command.respond_to?(:cloud_master_id) && command.cloud_master_id
-          oauth_config = get_oauth_app_config(command.cloud_master_id)
-          if oauth_config
-            configure_auth_provider(oauth_config)
-          end
+          configure_auth_provider_using_id(command.cloud_master_id)
+        else
+          configure_auth_provider
         end
       end
     end

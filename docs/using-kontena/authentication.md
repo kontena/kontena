@@ -45,16 +45,7 @@ $ kontena cloud login
 If you have upgraded from a previous version you can configure your Master to use Kontena Cloud by registering the Master to the Kontena Cloud service and configuring the authentication provider settings on the master:
 
 ```
-$ kontena master config import --preset kontena_auth_provider
-$ kontena cloud master add my-master-name
-Created master.
-ID: 000010000
-Client ID: abcd123456
-Client Secret: defg23456
-
-$ kontena master config set server.url=`kontena master current --url`
-$ kontena master config set oauth2.client_id=abcd123456 
-$ kontena master config set oauth2.client_secret=defg23456
+$ kontena master init-cloud
 ```
 
 

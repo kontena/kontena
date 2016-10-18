@@ -116,7 +116,7 @@ module Kontena::Cli::Cloud
 
       response = client.get(path) rescue nil
       if response && response.kind_of?(Hash)
-        kontena_account.username = response['username']
+        kontena_account.username = response['data']['attributes']['username']
         config.write
         display_logo
         display_login_info(only: :account)
