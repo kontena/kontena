@@ -80,7 +80,8 @@ describe '/v1/containers' do
       expect(response.status).to eq(200)
 
       expect(json_response['id']).to eq(redis_container.to_path)
-      expect(json_response['health_status']).to eq('healthy')
+      expect(json_response['health_status']['status']).to eq('healthy')
+      expect(json_response['health_status']['updated_at']).not_to be_nil
     end
 
     describe '/top' do
