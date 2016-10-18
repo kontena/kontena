@@ -17,6 +17,8 @@ module Grids
 
     def validate
       add_error(:user, :invalid, 'Operation not allowed') unless user.can_create?(Grid)
+      existing = Grid.find_by(name: self.name)
+      add_error(:grid, :already_exists, "Grid with name #{self.name} already exists") if existing
     end
 
     def execute
