@@ -17,11 +17,11 @@ module Kontena::Cli::Cloud::Master
     option ['--owner'],        '[NAME]',     'Set master owner',       hidden: true
 
     option ['--id'],      :flag, 'Just output the ID'
-    option ['--current'], :flag, 'Register and configure current master'
     option ['--return'],  :flag, 'Return the ID', hidden: true
     option ['--force'],   :flag, "Don't ask questions"
 
     option ['--cloud-master-id'], '[ID]', "Use existing cloud master ID", hidden: true
+    option ['--current'], :flag, 'Register and configure current master', hidden: true
 
     def register(name, url = nil, provider = nil, redirect_uri = nil, version = nil, owner = nil)
       attributes = {}
@@ -45,24 +45,25 @@ module Kontena::Cli::Cloud::Master
 
     def cloud_masters
       masters = []
-      begin
-        spinner "Retrieving a list of your registered Kontena Masters in Kontena Cloud" do
+      spinner "Retrieving a list of your registered Kontena Masters in Kontena Cloud" do |spin|
+        begin
           masters = Kontena.run("cloud master list --return", returning: :result)
+        rescue SystemExit
+          spin.fail
         end
-      rescue SystemExit
       end
       masters
     end
 
-
     def new_cloud_master_name(master_name)
       masters = cloud_masters
+      require 'pry'; binding.pry
       return master_name if masters.empty?
 
       existing_master = masters.find { |m| m['attributes']['name'] == master_name }
       return master_name unless existing_master
 
-      new_name = "#{command.name}-2"
+      new_name = "#{master_name}-2"
       new_name.succ! until masters.find { |m| m['attributes']['name'] == new_name }.nil?
       new_name
     end
@@ -95,7 +96,7 @@ module Kontena::Cli::Cloud::Master
           get_existing(self.cloud_master_id)
         end
       else
-        response = spinner "Registering current Kontena Master '#{current_master.name}' #{" as '#{master_name}' " unless new_name == current_master.name}to Kontena Cloud" do
+        response = spinner "Registering current Kontena Master '#{current_master.name}' #{" as '#{new_name}' " unless new_name == current_master.name}to Kontena Cloud" do
           register(new_name, current_master.url)
         end
       end
@@ -110,6 +111,10 @@ module Kontena::Cli::Cloud::Master
     end
 
     def execute
+      unless cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
+        Kontena.run('cloud login')
+      end
+
       return register_current if self.current?
 
       exit_with_error 'Master name is required' unless self.name

@@ -7,11 +7,11 @@ module Kontena
       matches_commands 'master create'
 
       def configure_auth_provider_using_id(cloud_id)
-        Kontena.run("cloud master add --current --force --cloud-master-id #{cloud_id.shellescape}")
+        Kontena.run("master init-cloud --current --force --cloud-master-id #{cloud_id.shellescape}")
       end
 
       def configure_auth_provider
-        Kontena.run("cloud master add --current --force")
+        Kontena.run("master init-cloud --current --force")
       end
 
       def after
