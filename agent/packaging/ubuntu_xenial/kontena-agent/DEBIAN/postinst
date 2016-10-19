@@ -19,4 +19,4 @@ systemctl restart docker
 
 systemctl daemon-reload
 systemctl restart kontena-agent
-systemctl enable kontena-agent
+systemctl is-enabled kontena-agent || systemctl enable kontena-agent

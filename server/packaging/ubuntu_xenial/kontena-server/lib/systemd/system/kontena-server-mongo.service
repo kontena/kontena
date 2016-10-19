@@ -9,7 +9,7 @@ Requires=docker.service
 [Service]
 Restart=always
 RestartSec=5
-ExecStartPre=/usr/bin/docker pull mongo:3.0
+ExecStartPre=-/usr/bin/docker pull mongo:3.0
 ExecStartPre=-/usr/bin/docker create --name=kontena-server-mongo-data mongo:3.0
 ExecStartPre=-/usr/bin/docker stop kontena-server-mongo
 ExecStartPre=-/usr/bin/docker rm kontena-server-mongo

@@ -16,9 +16,9 @@ sed -i -r "s#\#INITIAL_ADMIN_CODE=.*#INITIAL_ADMIN_CODE=${RET}#" /etc/kontena-se
 
 systemctl daemon-reload
 
-systemctl enable kontena-server-mongo
-systemctl enable kontena-server
-systemctl enable kontena-server-haproxy
+systemctl is-enabled kontena-server-mongo || systemctl enable kontena-server-mongo
+systemctl is-enabled kontena-server || systemctl enable kontena-server
+systemctl is-enabled kontena-server-haproxy || systemctl enable kontena-server-haproxy
 
 systemctl start kontena-server-mongo
 systemctl start kontena-server
