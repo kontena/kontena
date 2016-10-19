@@ -216,6 +216,26 @@ describe Kontena::Client do
       Kontena::Client.new('http://localhost', master.token)
     end
 
+    context "for an expected response" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:any, 'http://localhost/v1/test').to_return(
+        status: 200,
+        headers: {
+          'Content-Type' => 'application/json',
+        },
+        body: {'test' => [ "This was a triumph.", "I’m making a note here: HUGE SUCCESS." ]}.to_json,
+      )
+      end
+
+      it "returns the JSON object" do
+        response = subject.get('test')
+
+        expect(subject.get('test')['test'].join(" ")).to eq "This was a triumph. I’m making a note here: HUGE SUCCESS."
+      end
+    end
+
     context "with an empty error response" do
       before :each do
         # workaround https://github.com/bblimke/webmock/issues/653
@@ -258,7 +278,6 @@ describe Kontena::Client do
         expect{subject.post('print', { 'code': "8A/HyA==" })}.to raise_error(Kontena::Errors::StandardError, "lp0 (printer) on fire")
       end
     end
-
 
     context "with a 422 response with JSON error" do
       before :each do
