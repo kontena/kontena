@@ -230,9 +230,7 @@ describe Kontena::Client do
       end
 
       it "returns the JSON object" do
-        response = subject.get('test')
-
-        expect(subject.get('test')['test'].join(" ")).to eq "This was a triumph. I’m making a note here: HUGE SUCCESS."
+        expect(subject.get('test')['test'].join(" / ")).to eq "This was a triumph. / I’m making a note here: HUGE SUCCESS."
       end
     end
 
