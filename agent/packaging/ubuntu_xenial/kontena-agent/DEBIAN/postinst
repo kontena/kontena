@@ -13,6 +13,9 @@ db_get kontena-agent/grid_token
 TOKEN="KONTENA_TOKEN=${RET}"
 sed -i -r "s#\#KONTENA_TOKEN=.*#${TOKEN}#" /etc/kontena-agent.env
 
+# reduce permissions on config File
+chmod 0600 /etc/kontena-agent.env
+
 # reload and restart docker
 systemctl daemon-reload
 systemctl restart docker
