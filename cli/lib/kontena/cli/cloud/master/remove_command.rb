@@ -66,4 +66,3 @@ module Kontena::Cli::Cloud::Master
     end
   end
 end
-
