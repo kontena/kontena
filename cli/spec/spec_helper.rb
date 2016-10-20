@@ -15,6 +15,7 @@ require 'stringio'
 require 'clamp'
 require 'ruby_dig'
 require 'kontena_cli'
+require 'webmock/rspec'
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true

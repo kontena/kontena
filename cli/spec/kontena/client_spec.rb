@@ -38,7 +38,7 @@ describe Kontena::Client do
       client = Kontena::Client.new('https://localhost/v1/', token)
       expect(client.token).to eq token
     end
-    
+
     it 'uses the access token as a bearer token' do
       client = Kontena::Client.new('https://localhost/v1/', token)
       expect(client.http_client).to receive(:request) do |opts|
@@ -208,6 +208,91 @@ describe Kontena::Client do
         hash_including(headers: hash_including('Some-Header' => 'value'), method: :delete)
       ).and_return(spy(:response, status: 200))
       subject.delete('foo', nil, nil, {'Some-Header' => 'value'})
+    end
+  end
+
+  describe '#request' do
+    subject do
+      Kontena::Client.new('http://localhost', master.token)
+    end
+
+    context "for an expected response" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:any, 'http://localhost/v1/test').to_return(
+        status: 200,
+        headers: {
+          'Content-Type' => 'application/json',
+        },
+        body: {'test' => [ "This was a triumph.", "I’m making a note here: HUGE SUCCESS." ]}.to_json,
+      )
+      end
+
+      it "returns the JSON object" do
+        expect(subject.get('test')['test'].join(" / ")).to eq "This was a triumph. / I’m making a note here: HUGE SUCCESS."
+      end
+    end
+
+    context "with an empty error response" do
+      before :each do
+        # workaround https://github.com/bblimke/webmock/issues/653
+        expect(http_client).to receive(:request).with(
+          hash_including(path: '/v1/coffee', method: :brew)
+        ) {
+          raise Excon::Errors::HTTPStatusError.new("I'm a teapot",
+            {
+              method: 'brew',
+              path: '/v1/coffee',
+            },
+            double(:response,
+              status: 418,
+              reason_phrase: "I'm a teapot",
+              headers: {
+                'Content-Type' => 'short/stout',
+              },
+              body: "",
+            )
+          )
+        }
+      end
+
+      it "raises StandardError with the status phrase" do
+        expect{subject.request(http_method: :brew, path: 'coffee')}.to raise_error(Kontena::Errors::StandardError, "I'm a teapot")
+      end
+    end
+
+    context "with an 500 response with text error" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:any, 'http://localhost/v1/print').to_return(
+          status: 500,
+          body: "lp0 (printer) on fire",
+        )
+      end
+
+      it "raises StandardError with the server error message" do
+        expect{subject.post('print', { 'code' => "8A/HyA==" })}.to raise_error(Kontena::Errors::StandardError, "lp0 (printer) on fire")
+      end
+    end
+
+    context "with a 422 response with JSON error" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:any, 'http://localhost/v1/test').to_return(
+          status: 422,
+          headers: {
+            'Content-Type' => 'application/json',
+          },
+          body: {'error' => "You are wrong"}.to_json,
+        )
+      end
+
+      it "raises StandardError with the server error message" do
+        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, "You are wrong")
+      end
     end
   end
 end
