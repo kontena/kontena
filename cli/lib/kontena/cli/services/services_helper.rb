@@ -192,6 +192,10 @@ module Kontena
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
             puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
             puts "      public ip: #{container['node']['public_ip'] rescue 'unknown'}"
+            if container['health_status']
+              health_time = Time.now - Time.parse(container.dig('health_status', 'updated_at'))
+              puts "      health: #{container.dig('health_status', 'status')} (#{health_time.to_i}s ago)"
+            end
             if container['status'] == 'unknown'
               puts "      status: #{container['status'].colorize(:yellow)}"
             else

@@ -5,6 +5,7 @@ require 'base64'
 require 'socket'
 require 'openssl'
 require 'uri'
+require 'time'
 require_relative 'errors'
 require_relative 'cli/version'
 begin

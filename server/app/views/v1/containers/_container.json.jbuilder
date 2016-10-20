@@ -41,3 +41,9 @@ else
   json.overlay_cidr nil
 end
 json.network_settings container.network_settings
+if container.health_status
+  json.health_status do
+    json.status container.health_status
+    json.updated_at container.health_status_at
+  end
+end

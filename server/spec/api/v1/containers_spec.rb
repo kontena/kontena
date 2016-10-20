@@ -71,6 +71,19 @@ describe '/v1/containers' do
       expect(json_response['id']).to eq(redis_container.to_path)
     end
 
+    it 'returns service container with health status' do
+      redis_container.update_attributes(
+        health_status: 'healthy',
+        health_status_at: Time.now
+      )
+      get "/v1/containers/#{redis_container.to_path}", {}, request_headers
+      expect(response.status).to eq(200)
+
+      expect(json_response['id']).to eq(redis_container.to_path)
+      expect(json_response['health_status']['status']).to eq('healthy')
+      expect(json_response['health_status']['updated_at']).not_to be_nil
+    end
+
     describe '/top' do
       it 'makes rpc request to host node' do
         expect(RpcClient).to receive(:new).with(host_node.node_id).and_return(rpc_client)
