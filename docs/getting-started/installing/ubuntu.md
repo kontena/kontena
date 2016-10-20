@@ -11,7 +11,7 @@ title: Ubuntu
 ## Prerequisities
 
 - Kontena Account
-- Ubuntu 14.04 with Docker Engine 1.11.x installed
+- Ubuntu 14.04 or 16.04 with Docker Engine 1.11.x installed
 
 ## Installing Kontena Master
 
@@ -26,9 +26,11 @@ $ sudo apt-get install kontena-server
 
 At the end of the installation the process master will ask for a initial admin code for the master. This is used to authenticate the initial admin connection of Kontena cli to properly configure the master. The code can be any random string.
 
-If using automation the value can be overwritten in file `/etc/default/kontena-server-api`.
+If using automation the value can be overwritten in file `/etc/default/kontena-server-api` on Ubuntu Trusty or `/etc/kontena-server.env` on Ubuntu Xenial.
 
 ### Setup SSL Certificate
+
+On Ubuntu Trusty
 
 ```
 $ sudo stop kontena-server-haproxy
@@ -40,9 +42,24 @@ SSL_CERT=/path/to/certificate.pem
 $ sudo start kontena-server-haproxy
 ```
 
+Or on Ubuntu Xenial
+
+```
+$ sudo vim /etc/kontena-server.env
+
+# HAProxy SSL certificate
+SSL_CERT=/path/to/certificate.pem
+
+$ sudo systemctl restart kontena-server-haproxy
+```
+
+
 ### Login to Kontena Master
 
-After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
+After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid. Login with the same initial admin code when you setup the master.
+```
+kontena master login --name some-name --code <admin code> https://master_ip
+```
 
 ## Installing Kontena Nodes
 
@@ -58,6 +75,12 @@ Or create a new grid using the command:
 
 ```
 $ kontena grid create test-grid
+```
+
+Remember to grab the token for the grid, you'll need it when setting up node(s).
+
+```
+$ kontena grid show --token test-grid
 ```
 
 Now you can go ahead and install kontena-agent Ubuntu package:

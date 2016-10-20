@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+
+VAULT_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+VAULT_IV=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+sed -i -r "s#\#VAULT_KEY=.*#VAULT_KEY=${VAULT_KEY}#" /etc/kontena-server.env
+sed -i -r "s#\#VAULT_IV=.*#VAULT_IV=${VAULT_IV}#" /etc/kontena-server.env
+
+# Fetching configuration from debconf
+db_get kontena-server/initial_admin_code
+sed -i -r "s#\#INITIAL_ADMIN_CODE=.*#INITIAL_ADMIN_CODE=${RET}#" /etc/kontena-server.env
+
+# reduce permissions on config file
+chmod 0600 /etc/kontena-server.env
+
+systemctl daemon-reload
+
+systemctl is-enabled kontena-server-mongo || systemctl enable kontena-server-mongo
+systemctl is-enabled kontena-server || systemctl enable kontena-server
+systemctl is-enabled kontena-server-haproxy || systemctl enable kontena-server-haproxy
+
+systemctl start kontena-server-mongo
+systemctl start kontena-server
+systemctl start kontena-server-haproxy
