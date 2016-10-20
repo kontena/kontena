@@ -18,7 +18,10 @@ module Kontena
         service_container = get_container(self.service_name)
         if service_container.running?
           info "restarting service: #{self.service_name}"
-          service_container.restart
+          service_container.restart('timeout' => 10)
+        else
+          info "starting service: #{self.service_name}"
+          service_container.start
         end
 
         Celluloid::Notifications.publish('service_pod:restart', self.service_name)

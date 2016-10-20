@@ -127,7 +127,7 @@ module Kontena
 
       # @param [Docker::Container] container
       def cleanup_container(container)
-        container.stop
+        container.stop('timeout' => 10)
         container.wait
         container.delete(v: true)
       end
