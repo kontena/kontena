@@ -19,7 +19,7 @@ can be installed via rubygems.
 * [0.9 to 0.10](upgrading#upgrading-from-0-9-to-0-10)
 * [0.8 to 0.9](upgrading#upgrading-from-0-8-to-9)
 
-### Upgrading from 0.14 to 0.15
+### Upgrading from 0.15 to 0.16
 
 ** Official Installation Method**
 
