@@ -291,8 +291,8 @@ module Kontena
         request_headers.delete(CONTENT_TYPE)
       else
         body_content =  encode_body(body, request_headers[CONTENT_TYPE])
+        request_headers.merge!('Content-Length' => body_content.bytesize)
       end
-      request_headers.merge!('Content-Length' => body_content.bytesize)
 
       uri = URI.parse(path)
       host_options = {}
