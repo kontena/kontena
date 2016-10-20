@@ -23,7 +23,7 @@ module Kontena
             remove_from_load_balancer(service_container)
           end
           info "terminating service: #{self.service_name}"
-          service_container.stop
+          service_container.stop('timeout' => 10)
           service_container.wait
           service_container.delete(v: true, force: true)
         end
