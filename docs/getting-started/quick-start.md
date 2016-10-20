@@ -9,7 +9,7 @@ Follow these steps to get started with Kontena quickly.
 
 ## Step 1. Install Kontena CLI (command-line interface)
 
-> Prerequisities: You'll need Ruby version 2.0 or later installed on your system. For more details, see official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
+> Prerequisities: You'll need Ruby version 2.0 or later installed on your system. For more details, see the official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
 
 You can install the Kontena CLI with Rubygems package manager (included in Ruby).
 
@@ -31,9 +31,9 @@ which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 
 In order to use Kontena, you'll need a Kontena Master. If you don't have an existing Kontena infrastructure in place, you need to install your own. A Kontena Master can be provisioned to any cloud platform. It' s also possible to run a Kontena Master on your own local development environment for testing purposes.
 
-The easiest (and preferred) way to provision Kontena Master is to use the built-in Kontena Master provision feature of Kontena CLI. In this guide, we will provision Kontena Master to local development environment using [Vagrant](https://www.vagrantup.com/). If you want to install Kontena Master to some other environment, please see [Installing Kontena](installing/) documentation.
+The easiest (and preferred) way to provision Kontena Master is to use the built-in Kontena Master provision feature of Kontena CLI. In this guide, we will provision Kontena Master to the local development environment using [Vagrant](https://www.vagrantup.com/). If you want to install Kontena Master to some other environment, please see [Installing Kontena](installing/) documentation.
 
-Since we will be using Vagrant, please ensure you have Vagrant 1.6 or later installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
+Since we will be using Vagrant, please ensure you have Vagrant 1.6 or later installed. For more details, see the official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
 
 ```
 $ kontena plugin install vagrant
@@ -42,13 +42,13 @@ $ kontena vagrant master create
 
 During the installation process you will have the option to select how users will be authenticated with the Kontena Master. It's recommended to select Kontena Cloud as the authentication provider. You can log in or register a new Kontena Cloud account before the Kontena Master installation continues and will be automatically configured to use Kontena Cloud for authentication.
 
-By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service or use a 3rd party OAuth2 provider. You can read more about the authentication and configuring authentication providers in the [Authentication](../using-kontena/authentication.md) documentation.
+By default, user authentication is made against Kontena's public authentication service. It is also possible for you to host your own authentication service or use a 3rd party OAuth2 provider. You can read more about the authentication and configuring authentication providers in the the [Authentication](../using-kontena/authentication.md) documentation.
 
 ## Step 3. Install Kontena Nodes
 
 You'll need some Kontena Nodes to run your containerized workloads. If you don't have existing Kontena infrastructure in place, you'll need to install your own.
 
-Just like with Kontena Master, the easiest (and preferred) way to provision Kontena Nodes is to use the built-in Kontena Node provision feature of Kontena CLI. In this guide, we will provision Kontena Nodes to local development environment using [Vagrant](https://www.vagrantup.com/). If you want to install Kontena Nodes to some other environment, please see [Installing Kontena Nodes](installing/nodes.md) documentation.
+Just like with Kontena Master, the easiest (and preferred) way to provision Kontena Nodes is to use the built-in Kontena Node provision feature of Kontena CLI. In this guide, we will provision Kontena Nodes to the local development environment using [Vagrant](https://www.vagrantup.com/). If you want to install Kontena Nodes to some other environment, please see the [Installing Kontena Nodes](installing/nodes.md) documentation.
 
 Since we will be using Vagrant, please ensure you have Vagrant installed. For more details, see official [Vagrant installation docs](https://docs.vagrantup.com/v2/installation/index.html).
 
@@ -72,7 +72,7 @@ You can repeat this step to provision additional Kontena Nodes to your Grid.
 
 **Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 2 Kontena Nodes provisioned in a Grid.
 
-If you followed the steps above, you should now have a working Kontena setup installed. Verify the setup using `kontena node list` command. It should list all the Kontena Nodes in your Grid.
+If you followed the steps above, you should now have a working Kontena setup installed. Verify the setup using the `kontena node list` command. It should list all the Kontena Nodes in your Grid.
 
 ```
 $ kontena node list
@@ -82,7 +82,7 @@ $ kontena node list
 
  Now you are ready to deploy your first application. In this section we will show you how to deploy a simple Wordpress application and deploy it to your Kontena grid.
 
-First create `kontena.yml` file with the following contents:
+First create the `kontena.yml` file with the following contents:
 
 ```
 version: '2'
@@ -111,13 +111,13 @@ After that you can deploy the application with:
 $ kontena app deploy
 ```
 
-After the deploy is finished you can verify it using:
+After the deployment is finished you can verify it using:
 
 ```
 $ kontena app show wordpress
 ```
 
-It should show details of the service. If you view the node details (`$ kontena node show <node>`), you can pick the private IP address of the node and verify in a browser that application is responding.
+It should show details of the service. If you view the node details (`$ kontena node show <node>`), you can pick the private IP address of the node and verify in a browser that the application is responding.
 **Note:** This is only the special case for the Vagrant setup, normally you can just pick the public IP of the service from the application details.
 
 If you need more complex examples, please see the following examples:
@@ -133,4 +133,4 @@ This completes the quick start guide for setting up Kontena. You can now continu
  - [Kontena Architecture](../core-concepts/architecture.md)
  - [Using Kontena](../using-kontena/)
 
-We hope you will find this documentation helpful! If you have any suggestions how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
+We hope you will find this documentation helpful! If you have any suggestions on how to improve our documentation, please [open an issue](https://github.com/kontena/kontena/issues) at GitHub.
