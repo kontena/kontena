@@ -33,6 +33,17 @@ describe Grids::Create do
         }.to change{ Grid.count }.by(1)
       end
 
+      it 'fails to create grid with existing name' do
+        grid = Grid.create!(name: 'test-grid')
+        outcome = described_class.new(
+            user: user,
+            name: "test-grid"
+          ).run
+        expect(outcome.success?).to be_falsey
+        expect(outcome.errors.size).to eq(1)
+        expect(outcome.errors.message.keys).to include('grid')
+      end
+
       it 'initializes subnet' do
         outcome = described_class.new(
             user: user,
