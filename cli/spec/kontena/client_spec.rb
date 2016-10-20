@@ -273,7 +273,7 @@ describe Kontena::Client do
       end
 
       it "raises StandardError with the server error message" do
-        expect{subject.post('print', { 'code': "8A/HyA==" })}.to raise_error(Kontena::Errors::StandardError, "lp0 (printer) on fire")
+        expect{subject.post('print', { 'code' => "8A/HyA==" })}.to raise_error(Kontena::Errors::StandardError, "lp0 (printer) on fire")
       end
     end
 
