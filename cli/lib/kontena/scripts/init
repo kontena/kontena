@@ -2,7 +2,12 @@
 
 _kontena_complete() {
   COMPREPLY=()
-  DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+  local src="${BASH_SOURCE[0]}"
+  if [ "$src" == "" ]
+  then
+    src="${(%):-%x}"
+  fi
+  DIR=$( cd "$( dirname "$src" )" && pwd )
   local word="${COMP_WORDS[COMP_CWORD]}"
   local completions="$(${DIR}/completer ${COMP_WORDS[*]})"
   COMPREPLY=( $(compgen -W "$completions" -- "$word") )

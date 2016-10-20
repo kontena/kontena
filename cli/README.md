@@ -10,11 +10,20 @@ Install it yourself as:
 
     $ gem install kontena-cli
 
-To enable tab-completion for bash, add this to your `.bashrc` scripts:
+To enable tab-completion for bash, add this to your `.bashrc` script:
 
 ```
 which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
 ```
+
+To enable tab-completion for zsh, add this to your `.zshrc` script:
+
+```
+autoload -U +X compinit && compinit
+autoload -U +X bashcompinit && bashcompinit 
+which kontena > /dev/null && . "$( kontena whoami --bash-completion-path )"
+```
+
 
 ## Usage
 
