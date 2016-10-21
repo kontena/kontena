@@ -33,7 +33,7 @@ class TelemetryJob
 
   # @return [Boolean]
   def stats_enabled?
-    config['server.anonymous_stats'].to_s != 'false'
+    config['server.telemetry_enabled'].to_s != 'false'
   end
 
   def check_version

@@ -9,8 +9,8 @@ To continuously improve the Kontena experience, Kontena Master reports anonymous
 
 ## Opt-Out
 
-Telemetry can be disabled by setting `server.anonymous_stats` configuration parameter to `false`. This can be done via Kontena CLI using following command:
+Telemetry can be disabled by setting `server.telemetry_enabled` configuration parameter to `false`. This can be done via Kontena CLI using following command:
 
 ```
-$ kontena master config set server.anonymous_stats=false
+$ kontena master config set server.telemetry_enabled=false
 ```

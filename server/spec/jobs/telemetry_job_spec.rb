@@ -8,13 +8,13 @@ describe TelemetryJob do
 
   describe '#stats_enabled?' do
     it 'returns true by default' do
-      config = {'server.anonymous_stats' => true}
+      config = {'server.telemetry_enabled' => 'true'}
       allow(subject.wrapped_object).to receive(:config).and_return(config)
       expect(subject.stats_enabled?).to be_truthy
     end
 
     it 'returns false if disabled' do
-      config = {'server.anonymous_stats' => 'false'}
+      config = {'server.telemetry_enabled' => 'false'}
       allow(subject.wrapped_object).to receive(:config).and_return(config)
       expect(subject.stats_enabled?).to be_falsey
     end
