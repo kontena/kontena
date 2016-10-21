@@ -94,6 +94,16 @@ module Kontena::Cli::Cloud::Master
         response = spinner "Retrieving Master information from Kontena Cloud using id" do
           get_existing(self.cloud_master_id)
         end
+        if response && response.kind_of?(Hash) && response.has_key?('data') && response['data']['attributes']
+          if (self.provider && response['data']['attributes']['provider'] != self.provider) || (self.version && response['data']['attributes']['version'] != self.version)
+            spinner "Updating provider and version attributes to Kontena Cloud master" do
+              args = []
+              args << "--provider #{self.provider.shellescape}" if self.provider
+              args << "--version #{self.version.shellescape}" if self.version
+              Kontena.run("cloud master update #{args.join(' ')}")
+            end
+          end
+        end
       else
         response = spinner "Registering current Kontena Master '#{current_master.name}' #{" as '#{new_name}' " unless new_name == current_master.name}to Kontena Cloud" do
           register(new_name, current_master.url)
