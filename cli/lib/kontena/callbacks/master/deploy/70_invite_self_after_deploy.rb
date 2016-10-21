@@ -50,6 +50,11 @@ module Kontena
 
         return nil if role_status.to_i > 0
 
+        spinner "Adding #{cloud_user_data[:email]} to grid 'test'" do |spin|
+          grid_add_status = Kontena.run("grid user add --grid test #{cloud_user_data[:email].shellescape}")
+          spin.fail if grid_add_status.to_i > 0
+        end
+
         new_user_token = nil
         spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
           new_user_token = Kontena.run("master token create -e 0 -s user --return -u #{cloud_user_data[:email].shellescape}", returning: :result)
