@@ -26,7 +26,7 @@ module Kontena
               else
                 plugin_name = spec.name.sub('kontena-plugin-', '')
                 STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
-                STDERR.puts "         To update plugin, run 'kontena plugin install #{plugin_name}'"
+                STDERR.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
             rescue LoadError => exc
               STDERR.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"

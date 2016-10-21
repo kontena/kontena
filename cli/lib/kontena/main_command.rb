@@ -28,6 +28,7 @@ require_relative 'cli/cloud_command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
+  include Kontena::Cli::Common
 
   subcommand "cloud", "Kontena Cloud specific commands", Kontena::Cli::CloudCommand
   subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", Kontena::Cli::LogoutCommand
@@ -57,5 +58,17 @@ class Kontena::MainCommand < Kontena::Command
   # @param [Class] klass
   def self.register(command, description, command_class)
     subcommand(command, description, command_class)
+  end
+
+  def subcommand_missing(name)
+    if known_plugin_subcommand?(name)
+      exit_with_error "The '#{name}' plugin has not been installed. Use: kontena plugin install #{name}"
+    else
+      super(name)
+    end
+  end
+
+  def known_plugin_subcommand?(name)
+    ['vagrant', 'packet', 'digitalocean', 'azure', 'upcloud', 'aws'].include?(name)
   end
 end
