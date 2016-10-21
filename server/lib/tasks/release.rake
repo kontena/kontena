@@ -37,7 +37,7 @@ namespace :release do
     sh('rm -rf build/ubuntu_xenial/')
     sh('cp -ar packaging/ubuntu_xenial build/')
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/control")
-    sh("sed -i \"s/VERSION$/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/etc/kontena-server.env")
+    sh("sed -i \"s/{{VERSION}}/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/lib/systemd/system/kontena-server.service.d/kontena-version.conf")
     sh("cd build/ubuntu_xenial && dpkg-deb -b #{NAME} .")
   end
 
