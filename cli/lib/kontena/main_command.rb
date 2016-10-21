@@ -25,6 +25,7 @@ require_relative 'cli/version_command'
 require_relative 'cli/stack_command'
 require_relative 'cli/certificate_command'
 require_relative 'cli/cloud_command'
+require_relative 'cli/register_command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
@@ -48,7 +49,8 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
   subcommand "plugin", "Plugin related commands", Kontena::Cli::PluginCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
-  subcommand "login", "Login to Kontena Master (removed, use kontena master login)", Kontena::Cli::LoginCommand
+  subcommand "login", "[DEPRECATED] Login to Kontena Master", Kontena::Cli::LoginCommand
+  subcommand "register", "[DEPRECATED] Register a Kontena Cloud account", Kontena::Cli::RegisterCommand
 
   def execute
   end
