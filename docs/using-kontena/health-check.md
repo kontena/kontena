@@ -1,6 +1,5 @@
 ---
 title: Health checks
-toc_order: 5
 ---
 
 # Health checks

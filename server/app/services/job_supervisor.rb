@@ -4,5 +4,5 @@ class JobSupervisor < Celluloid::SupervisionGroup
   supervise NodeCleanupJob, as: :node_cleanup_job
   supervise ServiceBalancerJob, as: :service_balancer_job
   supervise LeaderElectorJob, as: :leader_elector_job
-  supervise AutoUpdaterJob, as: :auto_updater_job
+  supervise TelemetryJob, as: :telemetry_job
 end

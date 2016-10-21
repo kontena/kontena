@@ -1,6 +1,5 @@
 ---
 title: Applications
-toc_order: 1
 ---
 
 # Applications

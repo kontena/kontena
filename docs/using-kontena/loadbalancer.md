@@ -1,6 +1,5 @@
 ---
 title: Load Balancer
-toc_order: 6
 ---
 
 # Kontena Load Balancer

@@ -3,7 +3,7 @@ require 'httpclient'
 require 'digest'
 require_relative '../helpers/config_helper'
 
-class AutoUpdaterJob
+class TelemetryJob
   include Celluloid
   include ConfigHelper
   include Logging
@@ -26,14 +26,14 @@ class AutoUpdaterJob
       sleep 30 # just to keep things calm
       check_version
     end
-    every(2.hours.to_i) do
+    every(1.hours.to_i) do
       check_version if stats_enabled? && leader?
     end
   end
 
   # @return [Boolean]
   def stats_enabled?
-    !!config['server.anonymous_stats']
+    config['server.anonymous_stats'].to_s != 'false'
   end
 
   def check_version

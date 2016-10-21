@@ -1,6 +1,5 @@
 ---
 title: Stats
-toc_order: 7
 ---
 # Statistics
 
@@ -12,7 +11,7 @@ loadbalancer-3                 1.67%           208.64M / N/A        N/A         
 loadbalancer-5                 1.73%           213.72M / N/A        N/A             61.7G/16.28G   
 loadbalancer-2                 1.59%           198.91M / N/A        N/A             61.45G/16.1G   
 loadbalancer-1                 1.65%           219.86M / N/A        N/A             61.57G/16.52G  
-loadbalancer-4                 2.05%           220.73M / N/A        N/A             61.7G/16.42G 
+loadbalancer-4                 2.05%           220.73M / N/A        N/A             61.7G/16.42G
 ```
 
 Statistics are stored in a capped collection so that the database size does not grow to an unexpected size. Capped collection can be thought of like a fifo buffer, when the collection gets full the oldest entries are removed to accomodate new statistics.

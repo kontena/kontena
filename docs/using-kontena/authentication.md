@@ -1,6 +1,5 @@
 ---
 title: Authentication
-toc_order: 9
 ---
 
 # Authentication
@@ -53,7 +52,7 @@ $ kontena master init-cloud
 
 Kontena Master uses external OAuth2 providers to authenticate users. The default provider is Kontena Cloud.
 
-If you want to use an external oauth2 provider then the first step will be to create an OAuth2 application on the auth provider. 
+If you want to use an external oauth2 provider then the first step will be to create an OAuth2 application on the auth provider.
 
 The **Callback URL** in the appliacation settings should be set to : `https://master_url/cb`. No other settings should be necessary.
 
@@ -68,7 +67,7 @@ $ kontena master config set setting.name=setting.value setting.name2=setting.val
 Or crafted as a JSON or YAML:
 
 ```
-{ 
+{
   "oauth2.client_id": "abcd1234",
   "oauth2.client_secret": "abcdefg",
 }
@@ -107,7 +106,7 @@ A full URL to the authentication provider's [OAuth2 authorization endpoint](http
 
 This endpoint is used to request authorization for the Master to access the user's profile information.
 
-The endpoint must support the `code` response_type. 
+The endpoint must support the `code` response_type.
 
 **Example:** `https://authprovider.example.com/oauth2/authorize`
 
@@ -150,7 +149,7 @@ The HTTP method to use when requesting access tokens from the token endpoint. No
 Content-Type when performing a `POST` request to the token endpoint.
 
 Possible options are:
- 
+
  - application/json
  - application/x-www-form-urlencoded
 
@@ -185,14 +184,14 @@ Same as `oauth2.userinfo_username_jsonpath` but for reading a user's id.
 
 ## Authentication flow
 
-1. An administrator in the master has created an invitation for a user and has obtained an invitation code. 
+1. An administrator in the master has created an invitation for a user and has obtained an invitation code.
 2. User issues the command `kontena master join <https://master_url> <invitation_code>`. If the email address in the invitation matches the one used on the authentication provider, the user can also use normal master login: `kontena master login <https://master_url>` without an invitation code.
-3. CLI automatically starts a local web server in the background to listen for the OAuth2 callback in a random TCP port. This server is only accessible through the localhost interface and is not exposed to the internet. The final step of the authentication flow will redirect the user to `http://localhost:<port>/cb?code=<auth_code>` and the CLI's local web server then receives the authorization code from the parameters in that request. 
+3. CLI automatically starts a local web server in the background to listen for the OAuth2 callback in a random TCP port. This server is only accessible through the localhost interface and is not exposed to the internet. The final step of the authentication flow will redirect the user to `http://localhost:<port>/cb?code=<auth_code>` and the CLI's local web server then receives the authorization code from the parameters in that request.
 4. CLI requests `https://master_url/authenticate?redirect_uri=http://localhost:<random_port>/cb&invite_code=<invite_code>`
 5. Master validates the parameters and tries to find the user by using the invitation code. If an invitation code was not supplied, then the user matching will be performed in the userinfo step by comparing the email address supplied by the auth provider with one in the local user database.
 6. Master creates an AuthorizationRequest record with a random `state` id, this will be used to match the callback coming from the auth provider with the original authentication request.
 7. Master responds with a redirect to the authentication provider's authorization URL
-8. CLI now receives a response to the request in step 4 and opens a browser to the returned authorization URL. 
+8. CLI now receives a response to the request in step 4 and opens a browser to the returned authorization URL.
 9. The user sees a consent prompt asking for agreement to give the Master access to the user's basic information
 10. User clicks Agree, the authentication provider redirects the user back to `https://master_url/cb?code=<authorization_code>&state=<state>`
 11. Master parses the query parameters and finds the existing authorization request using the state parameter

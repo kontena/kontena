@@ -1,6 +1,5 @@
 ---
 title: Certificate Management
-toc_order: 6
 ---
 
 # Kontena Certificates
