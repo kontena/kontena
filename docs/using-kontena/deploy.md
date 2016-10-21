@@ -1,8 +1,7 @@
 ---
-title: Deploy
-toc_order: 7
+title: Deployments
 ---
-# Deploy
+# Deployments
 
 ## Deployment Strategies
 Kontena can use different scheduling algorithms when deploying services to more than one node. At the moment the following strategies are available:

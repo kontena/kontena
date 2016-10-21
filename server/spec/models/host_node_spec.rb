@@ -194,4 +194,20 @@ describe HostNode do
       expect(subject.availability_zone).to eq('b')
     end
   end
+
+  describe '#host_provider' do
+    it 'returns default if provider is not found from labels' do
+      expect(subject.host_provider).to eq('default')
+    end
+
+    it 'returns default if labels is nil' do
+      allow(subject).to receive(:labels).and_return(nil)
+      expect(subject.host_provider).to eq('default')
+    end
+
+    it 'returns host_provider from labels' do
+      subject.labels = ['foo=bar', 'provider=aws']
+      expect(subject.host_provider).to eq('aws')
+    end
+  end
 end

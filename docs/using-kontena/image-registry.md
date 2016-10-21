@@ -1,6 +1,5 @@
 ---
 title: Image Registry
-toc_order: 5
 ---
 
 # Kontena Image Registry
