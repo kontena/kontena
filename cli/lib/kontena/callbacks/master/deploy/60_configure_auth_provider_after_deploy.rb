@@ -20,7 +20,7 @@ module Kontena
         return unless command.result.has_key?(:name)
         return unless config.current_master
         return unless config.current_master.name == command.result[:name]
-        if command.respond_to?(:skip_auth_provider) && command.skip_auth_provider?
+        if command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
           return
         end
 
