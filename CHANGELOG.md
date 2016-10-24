@@ -1,10 +1,11 @@
 # Changelog
 
-## [0.16.0](https://github.com/kontena/kontena/releases/tag/v0.16.0) (2016-10-21)
+## [0.16.0](https://github.com/kontena/kontena/releases/tag/v0.16.0) (2016-10-24)
 
 **Master & Agents:**
 
 - OAuth2 support (#1035, #1106, #1108, #1120, #1141)
+- refuse start master if incorrect db version (#1187)
 - server telemetry / anon stats (with possibility to opt-out) (#1179)
 - improve grid name validation (#1162)
 - set default timeout to stop/restart docker calls (#1167)
@@ -18,7 +19,9 @@
 
 **CLI:**
 
-- OAuth2 support (#1035, #1082, #1094, #1077, #1097, #1096, #1101, #1103, #1105, #1107, #1133, #1129, #1119, #1080, #1139, #1138, #1176)
+- OAuth2 support (#1035, #1082, #1094, #1077, #1097, #1096, #1101, #1103, #1105, #1107, #1133, #1129, #1119, #1080, #1139, #1138, #1176, #1183)
+- fix vpn remove error (#1185)
+- fix plugin uninstall command (#1184)
 - kontena register with a link to signup page (#1177)
 - known plugin subcommands will now suggest installing plugin if not installed (#1175)
 - remove Content-Type request header if request body is empty (#1157)
@@ -42,7 +45,7 @@
 
 **Packaging:**
 
-- Ubuntu 16.04 packages (#1150, #1169, #1171, #1173)
+- Ubuntu 16.04 packages (#1150, #1169, #1171, #1173, #1186)
 - allow to use docker 1.12 in Ubuntu packages (#1169)
 - ignore vendor files when building docker images (#1113)
 
