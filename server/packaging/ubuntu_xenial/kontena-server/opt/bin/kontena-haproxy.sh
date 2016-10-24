@@ -7,4 +7,4 @@ fi
 /usr/bin/docker run --name=kontena-server-haproxy \
   --link kontena-server-api:kontena-server-api \
   -e SSL_CERT="$SSL_CERT" \
-  -p 80:80 -p 443:443 kontena/haproxy:latest
+  -p ${HTTP_PORT:-8080}:80 -p ${HTTPS_PORT:-8443}:443 kontena/haproxy:latest
