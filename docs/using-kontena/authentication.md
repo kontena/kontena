@@ -6,26 +6,38 @@ title: Authentication
 
 Kontena Master API uses [OAuth2 Bearer token authentication](https://tools.ietf.org/html/rfc6749).
 
-When deploying a new Kontena Master an internal administrator account with a temporary one time authorization code is created. The initial authorization code is then automatically used to obtain an access token for the CLI to authenticate as the internal administrator after the deployment has finished.
+## First user
+
+When a fresh Kontena Master installation starts up, an internal administrator account with a temporary one time authorization code will be created. This initial authorization code is then used to obtain an access token for authenticating as the internal administrator. If you use the Kontena CLI to install the Kontena Master, this will happen automatically. If you install manually, you need to provide the initial authorization code via the environment variable `INTERNAL_ADMIN_CODE`. To login using this code use:
+
+```
+$ kontena master login --code <INTERNAL_ADMIN_CODE> <master_url>
+```
+
+## Configuring Kontena Cloud as the authentication provider
+
+If you are installing a fresh Kontena Master v0.16.0 or newer this happens automatically when using Kontena CLI for provisioining unless you select not to use the Kontena Cloud in the installer. You can authenticate from CLI to Kontena Cloud and register a new account by using the command:
+
+```
+$ kontena cloud login
+```
+
+If you have upgraded your Kontena Master from a previous version you can configure it to use Kontena Cloud by using the command:
+
+```
+$ kontena master init-cloud
+```
 
 ## Adding users
 
-Your Master's authentication provider settings are required to be configured before adding more users.
+To invite more users you first need to configure the Kontena Master to use an authentication provider. If you use the provisioning tools offered by Kontena CLI this will be done automatically during installation unless selected otherwise.
 
 To add new users you use the invite command:
 
 ```
 $ kontena master users invite user@example.com
 * Invite code: abcd123456
-* Command: kontena master join https://master_url abcd123456
 ```
-
-You can also set roles when creating an invite:
-
-```
-$ kontena master users invite -r grid_admin admin@example.com
-```
-
 
 The user can then join the master by using the `kontena master join` command:
 
@@ -33,30 +45,13 @@ The user can then join the master by using the `kontena master join` command:
 $ kontena master join https://master_ip invitation_code
 ```
 
-## Configuring Kontena Cloud as the authentication provider
+## Using an external authentication provider
 
-If you are installing a fresh Kontena Master v0.16.0 or newer this happens automatically unless you select not to use the Kontena Cloud. You can authenticate to Kontena Cloud and register a new account by using the command:
+Kontena Master can use any standard's compliant OAuth2 provider to authenticate users.
 
-```
-$ kontena cloud login
-```
+If you want to use another authentication provider then the first step is to create an OAuth2 application in the authentication provider's user interface. The **Callback URL** in the application settings should be set to : `https://master_url/cb`. No other settings should be necessary. The next step is to configure the `oauth2.*` settings to Kontena Master.
 
-If you have upgraded from a previous version you can configure your Master to use Kontena Cloud by registering the Master to the Kontena Cloud service and configuring the authentication provider settings on the master:
-
-```
-$ kontena master init-cloud
-```
-
-
-## Configuring an external authentication provider
-
-Kontena Master uses external OAuth2 providers to authenticate users. The default provider is Kontena Cloud.
-
-If you want to use an external oauth2 provider then the first step will be to create an OAuth2 application on the auth provider.
-
-The **Callback URL** in the appliacation settings should be set to : `https://master_url/cb`. No other settings should be necessary.
-
-### Master auth provider configuration settings
+### Master authentication provider configuration settings
 
 These settings can be set by using the `kontena master config set` command:
 
@@ -184,6 +179,8 @@ Same as `oauth2.userinfo_username_jsonpath` but for reading a user's id.
 
 ## Authentication flow
 
+This is what happens under the hood during an authentication request to the Kontena Master:
+
 1. An administrator in the master has created an invitation for a user and has obtained an invitation code.
 2. User issues the command `kontena master join <https://master_url> <invitation_code>`. If the email address in the invitation matches the one used on the authentication provider, the user can also use normal master login: `kontena master login <https://master_url>` without an invitation code.
 3. CLI automatically starts a local web server in the background to listen for the OAuth2 callback in a random TCP port. This server is only accessible through the localhost interface and is not exposed to the internet. The final step of the authentication flow will redirect the user to `http://localhost:<port>/cb?code=<auth_code>` and the CLI's local web server then receives the authorization code from the parameters in that request.
@@ -225,10 +222,11 @@ The CLI will output a link that the user can open on some other computer. After 
 $ kontena master login --code <authorization_code> <https://master_url>
 ```
 
-It's also possible to use an access token obtained from another installation and complete the authentication without using a browser at all by using the `--token` parameter:
+It's also possible to use an access token created using another computer and complete the authentication without using a browser at all by using the `--code` parameter:
 
 ```
-$ kontena master login --token <access_token> <https://master_url>
+$ kontena master token create --code
+$ kontena master login --code <code> <https://master_url>
 ```
 
 ## Resetting the internal administrator account
