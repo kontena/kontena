@@ -108,7 +108,7 @@ module Kontena::Cli::Master
       if self.token
         # Use supplied token
         server.token = Kontena::Cli::Config::Token.new(access_token: self.token, parent_type: :master, parent_name: server.name)
-      elsif server.token.nil?
+      elsif server.token.nil? || self.force?
         # Create new empty token if the server does not have one yet
         server.token = Kontena::Cli::Config::Token.new(parent_type: :master, parent_name: server.name)
       end
