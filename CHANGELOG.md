@@ -5,6 +5,8 @@
 **Master & Agents:**
 
 - OAuth2 support (#1035, #1106, #1108, #1120, #1141)
+- optimize service containers api endpoint (#1195)
+- don't use force when removing containers (#1196)
 - refuse start master if incorrect db version (#1187)
 - server telemetry / anon stats (with possibility to opt-out) (#1179)
 - improve grid name validation (#1162)
@@ -20,6 +22,7 @@
 **CLI:**
 
 - OAuth2 support (#1035, #1082, #1094, #1077, #1097, #1096, #1101, #1103, #1105, #1107, #1133, #1129, #1119, #1080, #1139, #1138, #1176, #1183)
+- increase client read_timeout to 30s (#1198)
 - fix vpn remove error (#1185)
 - fix plugin uninstall command (#1184)
 - kontena register with a link to signup page (#1177)
@@ -36,7 +39,7 @@
 - show grid token only with `--token` option (#1109)
 - show error if installed plugin is too old (#1116)
 - allow to set grid token manually in `kontena grid create` (#1046)
-- new spinner (#1035, #1083)
+- new spinner (#1035, #1083, #1181)
 - replace colorize gem with pastel (#1035, #1104, #1114, #1117, #1145)
 - give user better feedback when commands are executed (#1057)
 - do not send Content-Type header with GET requests (#1078)
@@ -45,7 +48,7 @@
 
 **Packaging:**
 
-- Ubuntu 16.04 packages (#1150, #1169, #1171, #1173, #1186)
+- Ubuntu Xenial (16.04) packages (#1150, #1169, #1171, #1173, #1186, #1189)
 - allow to use docker 1.12 in Ubuntu packages (#1169)
 - ignore vendor files when building docker images (#1113)
 
