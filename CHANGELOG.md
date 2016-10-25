@@ -21,7 +21,8 @@
 
 **CLI:**
 
-- OAuth2 support (#1035, #1082, #1094, #1077, #1097, #1096, #1101, #1103, #1105, #1107, #1133, #1129, #1119, #1080, #1139, #1138, #1176, #1183)
+- OAuth2 support (#1035, #1082, #1094, #1077, #1097, #1096, #1101, #1103, #1105, #1107, #1133, #1129, #1119, #1080, #1139, #1138, #1176, #1183, #1203, #1207, #1210)
+- fallback to master account in config parser (#1199)
 - increase client read_timeout to 30s (#1198)
 - fix vpn remove error (#1185)
 - fix plugin uninstall command (#1184)
