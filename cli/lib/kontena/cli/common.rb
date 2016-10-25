@@ -166,6 +166,10 @@ module Kontena
         @cloud_client ||= Kontena::Client.new(kontena_account.url, kontena_account.token, prefix: '/')
       end
 
+      def reset_cloud_client
+        @cloud_client = nil
+      end
+
       def client(token = nil, api_url = nil)
         if token.kind_of?(String)
           token = Kontena::Cli::Config::Token.new(access_token: token)
