@@ -57,7 +57,7 @@ module Kontena
         api_url,
         omit_default_port: true,
         connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] || 5,
-        read_timeout:    ENV["EXCON_READ_TIMEOUT"]    || 5,
+        read_timeout:    ENV["EXCON_READ_TIMEOUT"]    || 30,
         write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   || 5
       )
 
