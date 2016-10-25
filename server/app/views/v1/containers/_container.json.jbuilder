@@ -1,7 +1,11 @@
 json.id container.to_path
 json.name container.name
 json.container_id container.container_id
-json.grid_id container.grid.to_path
+if container.grid
+  json.grid_id container.grid.to_path
+else
+  json.grid_id nil
+end
 json.node do
   if container.host_node
     host_node = container.host_node
