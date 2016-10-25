@@ -120,6 +120,8 @@ module Kontena::Cli::Cloud
         config.write
         display_logo
         display_login_info(only: :account)
+        config.reset_instance
+        reset_cloud_client
         exit 0
       else
         puts "Authentication failed".colorize(:red)

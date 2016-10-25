@@ -112,6 +112,8 @@ module Kontena::Cli::Cloud::Master
     def execute
       unless cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
         Kontena.run('cloud login')
+        config.reset_instance
+        reset_cloud_client
       end
 
       return register_current if self.current?
