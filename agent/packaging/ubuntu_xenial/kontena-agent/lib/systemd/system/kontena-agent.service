@@ -18,6 +18,7 @@ ExecStart=/usr/bin/docker run --name kontena-agent \
     -v=/var/run/docker.sock:/var/run/docker.sock \
     --net=host \
     kontena/agent:${KONTENA_VERSION}
+ExecStartPost=/opt/kontena/kontena-resolvconf.sh start
 ExecStop=/usr/bin/docker stop kontena-agent
 
 [Install]
