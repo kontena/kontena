@@ -1,4 +1,5 @@
 require 'yaml'
+require 'shellwords'
 require_relative '../services/services_helper'
 
 module Kontena::Cli::Apps
@@ -36,7 +37,7 @@ module Kontena::Cli::Apps
       data['cpu_shares'] = options['cpu_shares'] if options['cpu_shares']
       data['volumes'] = options['volumes'] || []
       data['volumes_from'] = options['volumes_from'] || []
-      data['cmd'] = options['command'].split(" ") if options['command']
+      data['cmd'] = Shellwords.split(options['command']) if options['command']
       data['affinity'] = options['affinity'] || []
       data['user'] = options['user'] if options['user']
       data['stateful'] = options['stateful'] == true

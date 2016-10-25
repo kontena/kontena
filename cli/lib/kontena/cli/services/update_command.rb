@@ -1,4 +1,5 @@
 require_relative 'services_helper'
+require 'shellwords'
 
 module Kontena::Cli::Services
   class UpdateCommand < Kontena::Command
@@ -63,7 +64,7 @@ module Kontena::Cli::Services
       data[:env] = env_list unless env_list.empty?
       data[:secrets] = parse_secrets(secret_list) unless secret_list.empty?
       data[:container_count] = instances if instances
-      data[:cmd] = cmd.split(" ") if cmd
+      data[:cmd] = Shellwords.split(cmd) if cmd
       data[:user] = user if user
       data[:image] = parse_image(image) if image
       data[:privileged] = privileged?
