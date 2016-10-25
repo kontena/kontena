@@ -10,7 +10,7 @@ module Kontena::NetworkAdapters
     include Kontena::Helpers::IfaceHelper
     include Kontena::Logging
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.5.2'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
@@ -178,7 +178,7 @@ module Kontena::NetworkAdapters
       sleep 1 until images_exist?
 
       weave = Docker::Container.get('weave') rescue nil
-      if weave && weave.info['Config']['Image'].split(':')[1] != WEAVE_VERSION
+      if weave && config_changed?(weave, info)
         weave.delete(force: true)
       end
 
@@ -231,6 +231,16 @@ module Kontena::NetworkAdapters
         info "bridge exposed: #{weave_bridge}"
       end
       Celluloid::Notifications.publish('network_adapter:start', info)
+    end
+
+    # @param [Docker::Container] weave
+    # @param [Hash] config
+    def config_changed?(weave, config)
+      return true if weave.config['Image'].split(':')[1] != WEAVE_VERSION
+      cmd = Hash[*weave.config['Cmd'].flatten(1)]
+      return true if cmd['--trusted-subnets'] != config.dig('grid', 'trusted_subnets').to_a.join(',')
+
+      false
     end
 
     private

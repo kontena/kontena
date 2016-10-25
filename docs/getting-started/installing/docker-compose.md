@@ -27,7 +27,7 @@ services:
     container_name: kontena-master-haproxy
     environment:
       - SSL_CERT=**None**
-      - BACKEND_PORT=9292
+      - BACKENDS=kontena-master:9292
     ports:
       - 80:80
       - 443:443    
@@ -70,13 +70,7 @@ cat certificate.crt privateKey.key > cert.pem
 
 **Step 2:** Run the command `docker-compose up -d`
 
-After Kontena Master is running you can connect to it by issuing login command. First user to login will be given master admin rights.
-
-```
-$ kontena login --name <name_for_the_master> http://<master-ip>/
-```
-* Use `https://` if you have the SSL certificate
-* You can give any name to Master. The name is used locally on the CLI to identify the Master.
+After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
 
 ## Installing Kontena Nodes
 

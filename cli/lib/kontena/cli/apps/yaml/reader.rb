@@ -27,11 +27,15 @@ module Kontena::Cli::Apps
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:version] = yaml['version'] || '1'
           result[:name] = yaml['name']
-          result[:services] = parse_services(service_name)
           result[:errors] = errors
           result[:notifications] = notifications
+          result[:services] = parse_services(service_name) unless errors.count > 0
         end
         result
+      end
+
+      def stack_name
+        yaml['name'] if v2?
       end
 
       ##
@@ -47,7 +51,11 @@ module Kontena::Cli::Apps
         content = content % { project: ENV['project'], grid: ENV['grid'] }
         interpolate(content)
         replace_dollar_dollars(content)
-        @yaml = ::YAML.load(content)
+        begin
+          @yaml = ::YAML.load(content)
+        rescue Psych::SyntaxError => e
+          raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
+        end
       end
 
       # @return [Array] array of validation errors
@@ -80,10 +88,12 @@ module Kontena::Cli::Apps
       # @return [Hash]
       def parse_services(service_name = nil)
         if service_name.nil?
-          services.each { |name, config| services[name] = process_config(config) }
+          services.each do |name, config|
+            services[name] = process_config(config)
+          end
           services
         else
-          abort("Service '#{service_name}' not found in #{file}".colorize(:red)) unless services.key?(service_name)
+          raise ("Service '#{service_name}' not found in #{file}") unless services.key?(service_name)
           process_config(services[service_name])
         end
       end
@@ -132,7 +142,7 @@ module Kontena::Cli::Apps
         if filename
           parent_config = from_external_file(filename, extended_service)
         else
-          abort("Service '#{extended_service}' not found in #{file}".colorize(:red)) unless services.key?(extended_service)
+          raise ("Service '#{extended_service}' not found in #{file}") unless services.key?(extended_service)
           parent_config = process_config(services[extended_service])
         end
         ServiceExtender.new(service_config).extend(parent_config)

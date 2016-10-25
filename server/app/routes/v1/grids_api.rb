@@ -3,10 +3,11 @@ require_relative '../../mutations/grids/update'
 
 module V1
   class GridsApi < Roda
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
     include Auditor
+    include LogsHelpers
 
     plugin :multi_route
     plugin :streaming
@@ -52,12 +53,6 @@ module V1
         r.route 'external_registries'
       end
 
-      # /v1/grids/:name/container_logs
-      r.on ':name/container_logs' do |name|
-        load_grid(name)
-        r.route 'grid_container_logs'
-      end
-
       # /v1/grids/:name/secrets
       r.on ':name/secrets' do |name|
         load_grid(name)
@@ -70,7 +65,8 @@ module V1
           outcome = Grids::Create.run(
               user: current_user,
               name: data['name'],
-              initial_size: data['initial_size'] || 1
+              initial_size: data['initial_size'] || 1,
+              token: data['token']
           )
 
           if outcome.success?
@@ -101,12 +97,34 @@ module V1
           end
 
           r.on 'container_logs' do
-            @logs = @grid.container_logs.order(created_at: :desc).limit(500).to_a.reverse
-            render('container_logs/index')
+            scope = @grid.container_logs
+
+            unless r['containers'].nil?
+              container_names = r['containers'].split(',')
+
+              scope = scope.where(name: {:$in => container_names})
+            end
+
+            unless r['nodes'].nil?
+              nodes = r['nodes'].split(',').map do |name|
+                @grid.host_nodes.find_by(name: name).try(:id)
+              end.delete_if{|n| n.nil?}
+
+              scope = scope.where(host_node_id: {:$in => nodes})
+            end
+            unless r['services'].nil?
+              services = r['services'].split(',').map do |service|
+                @grid.grid_services.find_by(name: service).try(:id)
+              end.delete_if{|s| s.nil?}
+
+              scope = scope.where(grid_service_id: {:$in => services})
+            end
+
+            render_container_logs(r, scope)
           end
 
           r.on 'audit_log' do
-            limit = request.params['limit'] || 500
+            limit = (1..3000).cover?(request.params['limit'].to_i) ? request.params['limit'].to_i : 500
             @logs = @grid.audit_logs.order(created_at: :desc).limit(limit).to_a.reverse
             render('audit_logs/index')
           end

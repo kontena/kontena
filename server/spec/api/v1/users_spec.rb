@@ -4,7 +4,7 @@ describe '/v1/users' do
 
   let(:request_headers) do
     {
-        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token}"
+        'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}"
     }
   end
 
@@ -49,17 +49,6 @@ describe '/v1/users' do
   describe 'POST /' do
     before(:each) do
       allow(UserAuthorizer).to receive(:creatable_by?).with(john).and_return(true)
-    end
-
-    it 'creates new user' do
-      data = {
-        email: 'jane@domain.com',
-      }
-      expect{
-        post '/v1/users', data.to_json, request_headers
-        expect(response.status).to eq(201)
-        expect(json_response['email']).not_to be_nil
-      }.to change{User.count}.by(1)
     end
   end
 

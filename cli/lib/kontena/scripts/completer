@@ -86,9 +86,33 @@ words = ARGV
 words.delete_at(0)
 
 completion = []
-completion.push %w(app deploy forgot-password master node grid service container vpn external-registry registry login logout whoami) if words.size < 2
+completion.push %w(cloud logout grid app service vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
 if words.size > 0
   case words[0]
+    when 'plugin'
+      completion.clear
+      sub_commands = %w(list ls search install uninstall)
+      if words[1]
+        completion.push(sub_commands) unless sub_commands.include?(words[1])
+      else
+        completion.push sub_commands
+      end
+    when 'etcd'
+      completion.clear
+      sub_commands = %w(get set mkdir mk list ls rm)
+      if words[1]
+        completion.push(sub_commands) unless sub_commands.include?(words[1])
+      else
+        completion.push sub_commands
+      end
+    when 'registry'
+      completion.clear
+      sub_commands = %w(create remove rm)
+      if words[1]
+        completion.push(sub_commands) unless sub_commands.include?(words[1])
+      else
+        completion.push sub_commands
+      end
     when 'grid'
       completion.clear
       sub_commands = %w(add-user audit-log create current list user remove show use)
@@ -109,15 +133,31 @@ if words.size > 0
       end
     when 'master'
       completion.clear
-      sub_commands = %w(list use)
+      sub_commands = %w(list use users current remove rm config cfg login logout token join audit-log init-cloud)
       if words[1] && words[1] == 'use'
         completion.push helper.master_names
       elsif words[1] && words[1] == 'users'
         users_sub_commands = %(invite list role)
         completion.push users_sub_commands
+      elsif words[1] && ['config', 'cfg'].include?(words[1])
+        config_sub_commands = %(set get dump load import export unset)
+        completion.push config_sub_commands
+      elsif words[1] && words[1] == 'token'
+        token_sub_commands = %(list ls rm remove show current create)
+        completion.push token_sub_commands
       elsif words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
-        completion.push %w(create)
+      else
+        completion.push sub_commands
+      end
+    when 'cloud'
+      completion.clear
+      sub_commands = %w(login logout master)
+      if words[1] && words[1] == 'master'
+        cloud_master_sub_commands = %(list ls remove rm add show update)
+        completion.push cloud_master_sub_commands
+      elsif words[1]
+        completion.push(sub_commands) unless sub_commands.include?(words[1])
       else
         completion.push sub_commands
       end
@@ -134,7 +174,7 @@ if words.size > 0
       end
     when 'container'
       completion.clear
-      sub_commands = %w(exec)
+      sub_commands = %w(exec inspect logs)
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.containers

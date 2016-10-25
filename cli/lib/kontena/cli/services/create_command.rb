@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class CreateCommand < Clamp::Command
+  class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper
@@ -50,7 +50,9 @@ module Kontena::Cli::Services
         stateful: stateful?
       }
       data.merge!(parse_service_data_from_options)
-      create_service(token, current_grid, data)
+      spinner "Creating #{name.colorize(:cyan)} service " do
+        create_service(token, current_grid, data)
+      end
     end
 
     ##
@@ -90,11 +92,11 @@ module Kontena::Cli::Services
         data[:deploy_opts][:interval] = parse_relative_time(deploy_interval)
       end
       if health_check_port
-        data[:health_check] = { 
+        data[:health_check] = {
           protocol: health_check_protocol,
-          uri: health_check_uri, 
-          port: health_check_port, 
-          timeout: health_check_timeout, 
+          uri: health_check_uri,
+          port: health_check_port,
+          timeout: health_check_timeout,
           interval: health_check_interval,
           initial_delay: health_check_initial_delay
         }

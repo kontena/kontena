@@ -46,6 +46,7 @@ module Kontena::LoadBalancers
         end
         keep_virtual_path = env_hash['KONTENA_LB_KEEP_VIRTUAL_PATH']
         cookie = env_hash['KONTENA_LB_COOKIE']
+        basic_auth_secrets = env_hash['KONTENA_LB_BASIC_AUTH_SECRETS'].to_s
         set("#{etcd_path}/services/#{service_name}/balance", balance)
         set("#{etcd_path}/services/#{service_name}/health_check_uri", check_uri)
         set("#{etcd_path}/services/#{service_name}/custom_settings", custom_settings)
@@ -53,6 +54,11 @@ module Kontena::LoadBalancers
         set("#{etcd_path}/services/#{service_name}/virtual_path", virtual_path)
         set("#{etcd_path}/services/#{service_name}/keep_virtual_path", keep_virtual_path)
         set("#{etcd_path}/services/#{service_name}/cookie", cookie)
+        if !basic_auth_secrets.empty?
+          set("#{etcd_path}/services/#{service_name}/basic_auth_secrets", basic_auth_secrets) unless basic_auth_secrets.empty?
+        else
+          unset("#{etcd_path}/services/#{service_name}/basic_auth_secrets")
+        end
         rmdir("#{etcd_path}/tcp-services/#{service_name}") rescue nil
       else
         external_port = env_hash['KONTENA_LB_EXTERNAL_PORT'] || '5000'

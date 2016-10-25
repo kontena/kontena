@@ -1,97 +1,67 @@
 module Kontena::Cli::Apps::YAML
  module Validations
-
-   def append_common_validations(base)
-     base.optional('image').maybe(:str?)
-
-     base.optional('extends') { str? | type?(Hash) }
-     base.rule(when_extends_is_hash: ['extends']) do |extends|
-       extends.type?(Hash) > extends.schema do
-         required('service').filled(:str?)
-         optional('file').value(:str?)
-       end
-     end
-
-     base.optional('stateful') { bool? }
-     base.optional('affinity') { array? { each { format?(/(?<=\!|\=)=/) } } }
-     base.optional('cap_add').maybe(:array?)
-     base.optional('cap_drop').maybe(:array?)
-     base.optional('command').maybe(:str?)
-     base.optional('cpu_shares').maybe(:int?)
-     base.optional('external_links') { array? }
-     base.optional('mem_limit') { int? | str? }
-     base.optional('memswap_limit') { int? | str? }
-     base.optional('environment') { array? | type?(Hash) }
-     base.optional('env_file') { str? | array? }
-     base.optional('instances') { int? }
-     base.optional('links') { array? | empty? }
-     base.optional('ports').value(:array?)
-     base.optional('volumes').value(:array?)
-     base.optional('volumes_from').value(:array?)
-
-     base.optional('deploy').schema do
-       optional('strategy').value(included_in?: %w(ha daemon random))
-       optional('wait_for_port').value(:int?)
-       optional('min_health').value(:float?)
-       optional('interval').value(format?: /^\d+(min|h|d|)$/)
-     end
-
-     base.optional('hooks').schema do
-       optional('post_start').each do
-         required('name').filled
-         required('cmd').filled
-         required('instances') { int? | eql?('*') }
-         optional('oneshot').value(:bool?)
-       end
-
-       optional('pre_build').each do
-         required('cmd').filled
-       end
-     end
-
-     base.optional('secrets').each do
-       required('secret').filled
-       required('name').filled
-       required('type').filled
-     end
-     base.optional('health_check').schema do
-      required('protocol').filled(format?: /^(http|tcp)$/)
-      required('port').filled(:int?)
-      optional('uri').value(format?: /\/[\S]*/)
-      optional('timeout').value(:int?)
-      optional('interval').value(:int?)
-      optional('initial_delay').value(:int?)
-     end
+   module CustomValidators
+     require_relative 'custom_validators/affinities_validator'
+     require_relative 'custom_validators/build_validator'
+     require_relative 'custom_validators/extends_validator'
+     require_relative 'custom_validators/hooks_validator'
+     require_relative 'custom_validators/secrets_validator'
+     
+     HashValidator.append_validator(AffinitiesValidator.new)
+     HashValidator.append_validator(BuildValidator.new)
+     HashValidator.append_validator(ExtendsValidator.new)
+     HashValidator.append_validator(SecretsValidator.new)
+     HashValidator.append_validator(HooksValidator.new)
    end
 
-   ##
-   # @param [Hash] service_config
-   def validate_options(service_config)
-     @yaml_schema.call(service_config)
-   end
+   def common_validations
+     {
+        'image' => optional('string'), # it's optional because some base yml file might contain image option
+        'extends' => optional('valid_extends'),
+        'stateful' => optional('boolean'),
+        'affinity' => optional('valid_affinities'),
+        'cap_add' => optional('array'),
+        'cap_drop' => optional('array'),
+        'command' => optional('string'),
+        'cpu_shares' => optional('integer'),
+        'external_links' => optional('array'),
+        'mem_limit' => optional('string'),
+        'mem_swaplimit' => optional('string'),
+        'environment' => optional(-> (value) { value.is_a?(Array) || value.is_a?(Hash) }),
+        'env_file' => optional(-> (value) { value.is_a?(String) || value.is_a?(Array) }),
+        'instances' => optional('integer'),
+        'links' => optional(-> (value) { value.is_a?(Array) || value.nil? }),
+        'ports' => optional('array'),
+        'pid' => optional('string'),
+        'privileged' => optional('boolean'),
+        'user' => optional('string'),
+        'volumes' => optional('array'),
+        'volumes_from' => optional('array'),
+        'secrets' => optional('valid_secrets'),
+        'hooks' => optional('valid_hooks'),
+        'deploy' => optional({
+          'strategy' => optional(%w(ha daemon random)),
+          'wait_for_port' => optional('integer'),
+          'min_health' => optional('float'),
+          'interval' => optional(/^\d+(min|h|d|)$/)
+        }),
+        'health_check' => optional({
+          'protocol' => /^(http|tcp)$/,
+          'port' => 'integer',
+          'uri' => optional(/\/[\S]*/),
+          'timeout' => optional('integer'),
+          'interval' => optional('integer'),
+          'initial_delay' => optional('integer')
+        })
+      }
+    end
 
-   ##
-   # @param [Hash] service_config
-   # @return [Array<String>] errors
-   def validate_keys(service_config)
-     errors = {}
-     service_config.keys.each do |key|
-       error = validate_required(key)
-       errors[key] = error if error
-     end
-     errors
-   end
+    def optional(type)
+      HashValidator.optional(type)
+    end
 
-   ##
-   # @param [String] key
-   def validate_required(key)
-     if self.class::UNSUPPORTED_KEYS.include?(key)
-       ['unsupported option']
-     elsif !self.class::VALID_KEYS.include?(key)
-       ['invalid option']
-     else
-       nil
-     end
-   end
- end
+    def validate_options(service_config)
+      HashValidator.validate(service_config, @schema, true)
+    end
+  end
 end

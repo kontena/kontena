@@ -18,8 +18,8 @@ describe Kontena::Cli::Apps::LogsCommand do
   end
 
   let(:current_grid) do
-  'test-grid'
-end
+    'test-grid'
+  end
 
   let(:service_prefix) do
     'test'
@@ -94,7 +94,7 @@ end
     it "shows all service logs" do
       expect(client).to receive(:get).with('grids/test-grid/container_logs', {
         services: 'test-wordpress,test-mysql',
-        limit: '100',
+        limit: 100,
       }) { { 'logs' => logs } }
 
       subject.run([])
@@ -107,7 +107,7 @@ end
 
       expect(client).to receive(:get).with('grids/test-grid/container_logs', {
         services: 'test-mysql',
-        limit: '100',
+        limit: 100,
       }) { { 'logs' => mysql_logs } }
 
       subject.run(["mysql"])
@@ -121,7 +121,7 @@ end
 
       expect(client).to receive(:get).with('grids/test-grid/container_logs', {
         services: 'test-wordpress,test-mysql',
-        limit: '100',
+        limit: 100,
         since: since,
       }) { { 'logs' => since_logs } }
 

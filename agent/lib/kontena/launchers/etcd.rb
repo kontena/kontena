@@ -8,7 +8,7 @@ module Kontena::Launchers
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
 
-    ETCD_VERSION = ENV['ETCD_VERSION'] || '2.3.3'
+    ETCD_VERSION = ENV['ETCD_VERSION'] || '2.3.7'
     ETCD_IMAGE = ENV['ETCD_IMAGE'] || 'kontena/etcd'
 
     def initialize(autostart = true)

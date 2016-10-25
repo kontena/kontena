@@ -1,6 +1,5 @@
 ---
 title: Private Registries
-toc_order: 5
 ---
 
 # Private Registries

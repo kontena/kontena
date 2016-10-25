@@ -1,6 +1,4 @@
 require 'docker'
-require 'celluloid'
-require_relative '../image_puller'
 require_relative '../logging'
 
 module Kontena
@@ -129,7 +127,7 @@ module Kontena
 
       # @param [Docker::Container] container
       def cleanup_container(container)
-        container.stop
+        container.stop('timeout' => 10)
         container.wait
         container.delete(v: true)
       end
@@ -146,9 +144,9 @@ module Kontena
       end
 
       # Make sure that image exists
+      # @param [String] name
       def ensure_image(name)
-        image_puller = Kontena::ImagePuller.new
-        image_puller.ensure_image(name, service_pod.deploy_rev, image_credentials)
+        Celluloid::Actor[:image_pull_worker].ensure_image(name, service_pod.deploy_rev, image_credentials)
       end
 
       # @param [Docker::Container] service_container

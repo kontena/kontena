@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Etcd
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -22,9 +22,9 @@ module Kontena::Cli::Etcd
         children = response['children'].map{|c| c['key'] }
         puts children.join("\n")
       elsif response['value']
-        abort "Not a directory"
+        exit_with_error "Not a directory"
       elsif response['error']
-        abort response['error']
+        exit_with_error response['error']
       end
     end
   end

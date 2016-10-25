@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class ListCommand < Clamp::Command
+  class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -16,7 +16,7 @@ module Kontena::Cli::Apps
     def execute
       require_config_file(filename)
 
-      @services = services_from_yaml(filename, service_list, service_prefix)
+      @services = services_from_yaml(filename, service_list, service_prefix, true)
       if services.size > 0
         show_services(services)
       elsif !service_list.empty?

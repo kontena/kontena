@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Etcd
-  class MkdirCommand < Clamp::Command
+  class MkdirCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -16,7 +16,7 @@ module Kontena::Cli::Etcd
       data = {}
       response = client(token).post("etcd/#{current_grid}/#{key}", data)
       if response['error']
-        abort response['error']
+        exit_with_error response['error']
       end
     end
   end

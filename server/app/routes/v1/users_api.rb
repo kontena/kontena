@@ -4,7 +4,7 @@ module V1
   class UsersApi < Roda
     include RequestHelpers
     include CurrentUser
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
 
     plugin :multi_route
 
@@ -50,20 +50,6 @@ module V1
             response.status = 200
             @users = User.all
             render('users/index')
-          end
-        end
-
-        r.post do
-          params = parse_json_body
-          params[:user] = current_user
-          outcome = Users::Invite.run(params)
-          if outcome.success?
-            response.status = 201
-            @user = outcome.result
-            render('users/show')
-          else
-            response.status = 422
-            {error: outcome.errors.message}
           end
         end
       end

@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class ScaleCommand < Clamp::Command
+  class ScaleCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper
@@ -11,7 +11,10 @@ module Kontena::Cli::Services
 
     def execute
       token = require_token
-      scale_service(token, name, instances)
+      spinner "Scaling #{name} " do
+        scale_service(token, name, instances)
+        wait_for_deploy_to_finish(token, parse_service_id(name))
+      end
     end
   end
 end

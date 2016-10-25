@@ -1,0 +1,11 @@
+---
+oauth2.authorize_endpoint: https://github.com/login/oauth/authorize
+oauth2.code_requires_basic_auth: false
+oauth2.token_endpoint: https://github.com/login/oauth/access_token
+oauth2.token_method: post
+oauth2.token_post_content_type: application/json
+oauth2.userinfo_scope: user:email
+oauth2.userinfo_endpoint: https://api.github.com/user
+oauth2.userinfo_username_jsonpath: "$..login"
+oauth2.userinfo_email_jsonpath: "$..email"
+oauth2.userinfo_user_id_jsonpath: "$..id"

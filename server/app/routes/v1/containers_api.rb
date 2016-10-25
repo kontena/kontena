@@ -1,8 +1,11 @@
 module V1
   class ContainersApi < Roda
-    include OAuth2TokenVerifier
+    include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
+    include LogsHelpers
+
+    plugin :streaming
 
     route do |r|
 
@@ -41,8 +44,9 @@ module V1
           end
 
           r.on 'logs' do
-            @logs = container.container_logs.order(created_at: :desc).limit(500).to_a.reverse
-            render('container_logs/index')
+            logs = container.container_logs
+
+            render_container_logs(r, logs)
           end
 
           r.on 'inspect' do
@@ -55,13 +59,6 @@ module V1
           r.on 'exec' do
             json = parse_json_body
             Docker::ContainerExecutor.new(container).exec_in_container(json['cmd'])
-          end
-        end
-
-        # DELETE /v1/containers/:grid_name/:name
-        r.delete do
-          r.on('logs') do
-            container.container_logs.delete_all
           end
         end
       end

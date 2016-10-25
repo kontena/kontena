@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -20,7 +20,7 @@ module Kontena::Cli::Apps
       require_config_file(filename)
       confirm unless forced?
 
-      @services = services_from_yaml(filename, service_list, service_prefix)
+      @services = services_from_yaml(filename, service_list, service_prefix, true)
       if services.size > 0
         remove_services(services)
       elsif !service_list.empty?
@@ -29,6 +29,7 @@ module Kontena::Cli::Apps
     end
 
     private
+
     def remove_services(services)
       services.find_all {|service_name, options| options['links'] && options['links'].size > 0 }.each do |service_name, options|
         delete(service_name, options, false)
@@ -41,18 +42,17 @@ module Kontena::Cli::Apps
 
     def delete(name, options, async = true)
       unless deleted_services.include?(name)
-        print "deleting #{name.colorize(:cyan)}"
-        ShellSpinner " " do
-          service = get_service(token, prefixed_name(name)) rescue nil
-          if(service)
+        service = get_service(token, prefixed_name(name)) rescue nil
+        if(service)
+          spinner "removing #{pastel.cyan(name)}" do
             delete_service(token, prefixed_name(name))
             unless async
               wait_for_delete_to_finish(service)
             end
-            deleted_services << name
-          else
-            puts "No such service: #{name}".colorize(:red)
           end
+          deleted_services << name
+        else
+          warning "No such service #{name}"
         end
       end
     end
@@ -63,7 +63,6 @@ module Kontena::Cli::Apps
         sleep 0.5
       end
     end
-
 
     ##
     #

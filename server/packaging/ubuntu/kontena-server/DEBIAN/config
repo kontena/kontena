@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_input high kontena-server/initial_admin_code || true
+db_go || true

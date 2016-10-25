@@ -3,8 +3,14 @@ require 'logger'
 module Logging
 
   def self.initialize_logger(log_target = STDOUT)
-    @logger = Logger.new(log_target)
-    @logger.level = Logger::INFO
+    if ENV['RACK_ENV'] == 'test'
+      @logger = Logger.new(File.open(File::NULL, "w"))
+      @logger.level = Logger::UNKNOWN
+    else
+      @logger = Logger.new(log_target)
+      @logger.progname = 'API'
+      @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    end
     @logger
   end
 

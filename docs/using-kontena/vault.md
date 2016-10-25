@@ -1,6 +1,5 @@
 ---
 title: Secrets Management
-toc_order: 5
 ---
 
 # Kontena Vault

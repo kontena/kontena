@@ -3,7 +3,7 @@ require_relative 'common'
 require_relative 'docker_helper'
 
 module Kontena::Cli::Apps
-  class DeployCommand < Clamp::Command
+  class DeployCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -13,8 +13,10 @@ module Kontena::Cli::Apps
     option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option '--async', :flag, 'Run deploys async/parallel'
-    option '--force-deploy', :flag, 'Force deploy even if service does not have any changes'
+    option '--force', :flag, 'Force deploy even if service does not have any changes'
+    option '--force-deploy', :flag, '[DEPRECATED: use --force]'
 
+    option '--skip-validation', :flag, 'Skip YAML file validation', default: false
     parameter "[SERVICE] ...", "Services to start"
 
     attr_reader :services, :deploy_queue
@@ -44,13 +46,15 @@ module Kontena::Cli::Apps
       queue.each do |service|
         name = service['id'].split('/').last
         options = {}
-        options[:force] = true if force_deploy?
-        deploy_service(token, name, options)
-        print "deploying #{unprefixed_name(name).colorize(:cyan)}"
-        unless async?
-          wait_for_deploy_to_finish(token, service['id'])
-        else
-          puts ''
+        options[:force] = true if force? || force_deploy? # deprecated
+        if force_deploy?
+          warning " --force-deploy will deprecate in the future, use --force"
+        end
+        spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
+          deploy_service(token, name, options)
+          unless async?
+            wait_for_deploy_to_finish(token, service['id'])
+          end
         end
       end
     end
@@ -90,19 +94,24 @@ module Kontena::Cli::Apps
     # @param [String] name
     # @param [Hash] options
     def create(name, options)
-      puts "creating #{name.colorize(:cyan)}"
-      name = prefixed_name(name)
-      data = { 'name' => name }
+      data = { 'name' => prefixed_name(name) }
       data.merge!(options)
-      create_service(token, current_grid, data)
+      result = nil
+      spinner "Creating #{name.colorize(:cyan)} " do
+        result = create_service(token, current_grid, data)
+      end
+      result
     end
 
-    # @param [String] id
+    # @param [String] name
     # @param [Hash] options
-    def update(id, options)
-      puts "updating #{id.colorize(:cyan)}"
-      id = prefixed_name(id)
-      update_service(token, id, options)
+    def update(name, options)
+      prefixed_name = prefixed_name(name)
+      result = nil
+      spinner "Updating #{name.colorize(:cyan)} " do
+        result = update_service(token, prefixed_name, options)
+      end
+      result
     end
 
     # @param [String] name

@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class DeployCommand < Clamp::Command
+  class DeployCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper
@@ -15,7 +15,10 @@ module Kontena::Cli::Services
       service_id = name
       data = {}
       data[:force] = true if force_deploy?
-      deploy_service(token, service_id, data)
+      spinner "Deploying service #{name.colorize(:cyan)} " do
+        deploy_service(token, name, data)
+        wait_for_deploy_to_finish(token, parse_service_id(name))
+      end
     end
   end
 end

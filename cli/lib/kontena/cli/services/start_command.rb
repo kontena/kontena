@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class StartCommand < Clamp::Command
+  class StartCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper
@@ -11,7 +11,9 @@ module Kontena::Cli::Services
     def execute
       require_api_url
       token = require_token
-      start_service(token, name)
+      spinner "Sending start signal to #{name.colorize(:cyan)} service " do
+        start_service(token, name)
+      end
     end
   end
 end

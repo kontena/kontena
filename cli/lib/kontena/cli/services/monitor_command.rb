@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class MonitorCommand < Clamp::Command
+  class MonitorCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper
@@ -39,7 +39,7 @@ module Kontena::Cli::Services
             elsif container['status'] == 'killed'
               color = :red
             elsif container['status'] == 'stopped'
-              color = :gray
+              color = :bright_black
             else
               color = :yellow
             end

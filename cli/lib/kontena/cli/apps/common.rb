@@ -9,16 +9,17 @@ module Kontena::Cli::Apps
     include Kontena::Cli::Services::ServicesHelper
 
     def require_config_file(filename)
-      abort("File #{filename} does not exist") unless File.exists?(filename)
+      exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
     end
 
     # @param [String] filename
     # @param [Array<String>] service_list
     # @param [String] prefix
+    # @param [TrueClass|FalseClass] skip_validation
     # @return [Hash]
-    def services_from_yaml(filename, service_list, prefix)
+    def services_from_yaml(filename, service_list, prefix, skip_validation = false)
       set_env_variables(prefix, current_grid)
-      reader = YAML::Reader.new(filename)
+      reader = YAML::Reader.new(filename, skip_validation)
       outcome = reader.execute
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
       abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
@@ -39,7 +40,7 @@ module Kontena::Cli::Apps
         generator_klass = ServiceGenerator
       end
       yaml_services.each do |service_name, config|
-        abort("Image is missing for #{service_name}. Aborting.") unless config['image']
+        exit_with_error("Image is missing for #{service_name}. Aborting.") unless config['image']
         services[service_name] = generator_klass.new(config).generate
       end
       services
@@ -62,12 +63,7 @@ module Kontena::Cli::Apps
 
     def project_name_from_yaml(file)
       reader = YAML::Reader.new(file, true)
-      outcome = reader.execute
-      if outcome[:version].to_i == 2
-        outcome[:name]
-      else
-        nil
-      end
+      reader.stack_name
     end
 
     # @return [String]

@@ -1,6 +1,5 @@
 ---
 title: Etcd
-toc_order: 5
 ---
 
 # Etcd

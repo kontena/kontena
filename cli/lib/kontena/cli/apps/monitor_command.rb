@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class MonitorCommand < Clamp::Command
+  class MonitorCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -15,8 +15,8 @@ module Kontena::Cli::Apps
 
     def execute
       require_config_file(filename)
-            
-      @services = services_from_yaml(filename, service_list, service_prefix)
+
+      @services = services_from_yaml(filename, service_list, service_prefix, true)
       if services.size > 0
         show_monitor(services)
       elsif !service_list.empty?
@@ -78,8 +78,10 @@ module Kontena::Cli::Apps
 
     def colors
       if(@colors.nil? || @colors.size == 0)
-        @colors = [:green, :magenta, :yellow, :cyan, :red,
-                   :light_green, :light_yellow, :ligh_magenta, :light_cyan, :light_red]
+        @colors = %i(
+          red green yellow blue magenta cyan bright_red bright_green
+          bright_yellow bright_blue bright_magenta bright_cyan
+        )
       end
       @colors
     end

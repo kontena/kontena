@@ -126,6 +126,19 @@ class HostNode
     @availability_zone
   end
 
+  # @return [String]
+  def host_provider
+    if @host_provider.nil?
+      @host_provider = 'default'.freeze
+      self.labels.to_a.each do |label|
+        if match = label.match(/^provider=(.+)/)
+          @host_provider = match[1]
+        end
+      end
+    end
+    @host_provider
+  end
+
   private
 
   def reserve_node_number

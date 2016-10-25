@@ -1,7 +1,8 @@
 require 'open3'
 
 module Kontena::Cli::Plugins
-  class UninstallCommand < Clamp::Command
+  class UninstallCommand < Kontena::Command
+    include Kontena::Util
     include Kontena::Cli::Common
 
     parameter 'NAME', 'Plugin name'
@@ -14,11 +15,11 @@ module Kontena::Cli::Plugins
 
     def uninstall_plugin(name)
       plugin = "kontena-plugin-#{name}"
-      gem_bin = `which gem`.strip
-      install_command = "#{gem_bin} install -q #{plugin}"
+      gem_bin = which('gem')
+      uninstall_command = "#{gem_bin} uninstall -q #{plugin}"
       success = false
-      ShellSpinner "Uninstalling plugin #{name.colorize(:cyan)}" do
-        stdout, stderr, status = Open3.capture3(install_command)
+      spinner "Uninstalling plugin #{name.colorize(:cyan)}" do
+        stdout, stderr, status = Open3.capture3(uninstall_command)
         unless stderr.empty?
           raise stderr
         end

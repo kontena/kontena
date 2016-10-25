@@ -20,7 +20,7 @@ require_relative 'services/secret_command'
 require_relative 'services/link_command'
 require_relative 'services/unlink_command'
 
-class Kontena::Cli::ServiceCommand < Clamp::Command
+class Kontena::Cli::ServiceCommand < Kontena::Command
 
   subcommand ["list","ls"], "List services", Kontena::Cli::Services::ListCommand
   subcommand "create", "Create a new service", Kontena::Cli::Services::CreateCommand

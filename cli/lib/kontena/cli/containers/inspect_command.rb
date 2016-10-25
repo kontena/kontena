@@ -1,5 +1,5 @@
 module Kontena::Cli::Containers
-  class InspectCommand < Clamp::Command
+  class InspectCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
@@ -15,7 +15,7 @@ module Kontena::Cli::Containers
         result = client(token).get("containers/#{current_grid}/#{service_name}/#{container_id}/inspect")
         puts JSON.pretty_generate(result)
       else
-        abort("Cannot resolve container service")
+        exit_with_error("Cannot resolve container service")
       end
     end
   end

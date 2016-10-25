@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Kontena::Cli::Apps
-  class StopCommand < Clamp::Command
+  class StopCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
@@ -16,7 +16,7 @@ module Kontena::Cli::Apps
     def execute
       require_config_file(filename)
 
-      @services = services_from_yaml(filename, service_list, service_prefix)
+      @services = services_from_yaml(filename, service_list, service_prefix, true)
       if services.size > 0
         stop_services(services)
       elsif !service_list.empty?
@@ -28,10 +28,11 @@ module Kontena::Cli::Apps
     def stop_services(services)
       services.each do |service_name, opts|
         if service_exists?(service_name)
-          puts "stopping #{prefixed_name(service_name)}"
-          stop_service(token, prefixed_name(service_name))
+          spinner "Sending stop signal to #{service_name.colorize(:cyan)} " do
+            stop_service(token, prefixed_name(service_name))
+          end
         else
-          puts "No such service: #{service_name}".colorize(:red)
+          warning "No such service: #{service_name}"
         end
       end
     end

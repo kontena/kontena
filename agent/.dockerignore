@@ -3,7 +3,9 @@
 .vagrant
 .dockercfg
 .idea
+.bundle
 virtualbox
 packaging
 build
 release
+vendor

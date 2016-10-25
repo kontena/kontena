@@ -1,11 +1,11 @@
 module Kontena::Cli::Plugins
-  class SearchCommand < Clamp::Command
+  class SearchCommand < Kontena::Command
 
     parameter '[NAME]', 'Search text'
 
     def execute
       results = fetch_plugins(name)
-      abort("Cannot access plugin server") unless results
+      exit_with_error("Cannot access plugin server") unless results
       puts "%-50s %-10s %-60s" % ['NAME', 'VERSION', 'DESCRIPTION']
       results.each do |item|
         name = item['name'].sub('kontena-plugin-', '')

@@ -9,12 +9,12 @@ describe Kontena::Cli::Grids::TrustedSubnets::RemoveCommand do
   describe '#execute' do
     it 'requires api url' do
       expect(subject).to receive(:require_api_url).once
-      subject.run(['grid', 'subnet'])
+      subject.run(['--force', 'grid', 'subnet'])
     end
 
     it 'requires token' do
       expect(subject).to receive(:require_token).and_return(token)
-      subject.run(['grid', 'subnet'])
+      subject.run(['--force', 'grid', 'subnet'])
     end
 
     it 'requires grid as param' do
@@ -32,7 +32,7 @@ describe Kontena::Cli::Grids::TrustedSubnets::RemoveCommand do
           '192.168.12.0/24'
         ]})
       )
-      subject.run(['my-grid', '192.168.50.0/24'])
+      subject.run(['--force', 'my-grid', '192.168.50.0/24'])
     end
   end
 end

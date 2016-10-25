@@ -1,0 +1,4 @@
+Template: kontena-server/initial_admin_code
+Type: string
+Default:
+Description: Initial admin code for Kontena Master, any random string

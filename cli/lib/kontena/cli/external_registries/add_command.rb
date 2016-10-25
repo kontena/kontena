@@ -1,5 +1,5 @@
 module Kontena::Cli::ExternalRegistries
-  class AddCommand < Clamp::Command
+  class AddCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
@@ -15,7 +15,9 @@ module Kontena::Cli::ExternalRegistries
       token = require_token
 
       data = { username: username, password: password, email: email, url: url }
-      client(token).post("grids/#{current_grid}/external_registries", data)
+      spinner "Adding #{url.colorize(:cyan)} to external registries " do
+        client(token).post("grids/#{current_grid}/external_registries", data)
+      end
     end
   end
 end

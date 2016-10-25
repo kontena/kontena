@@ -12,7 +12,7 @@ require_relative 'apps/monitor_command'
 require_relative 'apps/show_command'
 require_relative 'apps/scale_command'
 
-class Kontena::Cli::AppCommand < Clamp::Command
+class Kontena::Cli::AppCommand < Kontena::Command
 
   subcommand "init", "Init Kontena application", Kontena::Cli::Apps::InitCommand
   subcommand "build", "Build Kontena services", Kontena::Cli::Apps::BuildCommand
@@ -27,6 +27,7 @@ class Kontena::Cli::AppCommand < Clamp::Command
   subcommand ["logs"], "Show service logs", Kontena::Cli::Apps::LogsCommand
   subcommand "monitor", "Monitor services", Kontena::Cli::Apps::MonitorCommand
   subcommand ["remove","rm"], "Remove services", Kontena::Cli::Apps::RemoveCommand
+
   def execute
   end
 end

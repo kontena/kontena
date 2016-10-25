@@ -1,7 +1,7 @@
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
-  class RemoveCommand < Clamp::Command
+  class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include ServicesHelper
 
@@ -13,7 +13,21 @@ module Kontena::Cli::Services
       token = require_token
       confirm_command(name) unless forced?
 
-      result = client(token).delete("services/#{parse_service_id(name)}")
+      spinner "Removing service #{name.colorize(:cyan)} " do
+        client(token).delete("services/#{parse_service_id(name)}")
+        removed = false
+        until removed == true
+          begin
+            client(token).get("services/#{parse_service_id(name)}")
+          rescue Kontena::Errors::StandardError => exc
+            if exc.status == 404
+              removed = true
+            else
+              raise exc
+            end
+          end
+        end
+      end
     end
   end
 end

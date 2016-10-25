@@ -1,7 +1,7 @@
 require_relative '../services_helper'
 
 module Kontena::Cli::Services::Envs
-  class AddCommand < Clamp::Command
+  class AddCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
@@ -13,7 +13,9 @@ module Kontena::Cli::Services::Envs
       require_api_url
       token = require_token
       data = {env: env}
-      result = client(token).post("services/#{parse_service_id(name)}/envs", data)
+      spinner "Adding env variable to #{name.colorize(:cyan)} service " do
+        client(token).post("services/#{parse_service_id(name)}/envs", data)
+      end
     end
   end
 end

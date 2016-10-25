@@ -1,3 +1,5 @@
+require 'securerandom'
+
 ENV['RACK_ENV'] = 'test'
 ENV['VAULT_KEY'] = SecureRandom.base64(64)
 ENV['VAULT_IV'] = SecureRandom.base64(64)
@@ -25,6 +27,8 @@ require_relative '../app/boot'
 require_relative '../server'
 require 'rack/test'
 require 'mongoid-rspec'
+
+require_relative '../app/services/mongodb/migrator'
 
 Celluloid.logger = nil
 Logging.logger = nil
@@ -58,9 +62,7 @@ RSpec.configure do |config|
   config.before(:suite) do
     MongoPubsub.start!(PubsubChannel.collection)
     sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
-    if ENV['CI'] # travis
-      Mongoid::Tasks::Database.create_indexes
-    end
+    Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end
 
   config.before(:each) do

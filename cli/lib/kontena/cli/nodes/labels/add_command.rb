@@ -1,5 +1,5 @@
 module Kontena::Cli::Nodes::Labels
-  class AddCommand < Clamp::Command
+  class AddCommand < Kontena::Command
     include Kontena::Cli::Common
 
     parameter "NODE_ID", "Node id"

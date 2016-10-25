@@ -1,6 +1,5 @@
 require 'kontena/client'
 require_relative '../common'
-require 'shell-spinner'
 
 module Kontena
   module Cli
@@ -97,11 +96,7 @@ module Kontena
           if service['env'].to_a.size > 0
             puts "  env: "
             service['env'].to_a.each do |e|
-              if e.length > 50
-                puts "    - #{e[0..50]}..."
-              else
-                puts "    - #{e}"
-              end
+              puts "    - #{e}"
             end
           end
 
@@ -197,6 +192,10 @@ module Kontena
             puts "      dns: #{container['name']}.#{grid}.kontena.local"
             puts "      ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
             puts "      public ip: #{container['node']['public_ip'] rescue 'unknown'}"
+            if container['health_status']
+              health_time = Time.now - Time.parse(container.dig('health_status', 'updated_at'))
+              puts "      health: #{container.dig('health_status', 'status')} (#{health_time.to_i}s ago)"
+            end
             if container['status'] == 'unknown'
               puts "      status: #{container['status'].colorize(:yellow)}"
             else
@@ -204,6 +203,9 @@ module Kontena
             end
             if container['state']['error'] && container['state']['error'] != ''
               puts "      reason: #{container['state']['error']}"
+            end
+            if container['state']['exit_code'] && container['state']['exit_code'] != ''
+              puts "      exit code: #{container['state']['exit_code']}"
             end
           end
         end
@@ -218,13 +220,25 @@ module Kontena
 
         # @param [String] token
         # @param [String] name
-        def wait_for_deploy_to_finish(token, name)
-          ShellSpinner " " do
-            sleep 1 # wait for master to process deploy request and change state to 'deploying'
-            until client(token).get("services/#{name}")['state'] != 'deploying' do
+        # @return [Boolean]
+        def wait_for_deploy_to_finish(token, name, timeout = 600)
+          service = client(token).get("services/#{name}")
+          desired_count = service['container_count']
+          updated_at = DateTime.parse(service['updated_at']) rescue DateTime.now
+          deployed = false
+          Timeout::timeout(timeout) do
+            until deployed
+              containers = client(token).get("services/#{name}/containers")['containers']
+              deployed = containers.size == desired_count && containers.all?{ |c|
+                DateTime.parse(c['created_at']) >= updated_at rescue false
+              }
               sleep 1
             end
           end
+
+          deployed
+        rescue Timeout::Error
+          raise Kontena::Errors::StandardError.new(500, 'deploy timed out')
         end
 
         # @param [String] token
@@ -414,7 +428,7 @@ module Kontena
             icon.colorize(:green)
           else
             icon = '⊝'.freeze
-            icon.colorize(:default)
+            icon.colorize(:dim)
           end
         end
 

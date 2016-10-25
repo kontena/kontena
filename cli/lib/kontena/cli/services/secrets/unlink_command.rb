@@ -1,7 +1,7 @@
 require_relative '../services_helper'
 
 module Kontena::Cli::Services::Secrets
-  class UnlinkCommand < Clamp::Command
+  class UnlinkCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
@@ -21,7 +21,7 @@ module Kontena::Cli::Services::Secrets
         }
         client(token).put("services/#{parse_service_id(name)}", data)
       else
-        abort("Secret not found")
+        exit_with_error("Secret not found")
       end
     end
   end
