@@ -25,12 +25,12 @@ module Kontena
           info "terminating service: #{self.service_name}"
           service_container.stop('timeout' => 10)
           service_container.wait
-          service_container.delete(v: true, force: true)
+          service_container.delete(v: true)
         end
         data_container = get_container("#{self.service_name}-volumes")
         if data_container
           info "cleaning up service volumes: #{self.service_name}"
-          data_container.delete(v: true, force: true)
+          data_container.delete(v: true)
         end
 
         Celluloid::Notifications.publish('service_pod:terminate', self.service_name)

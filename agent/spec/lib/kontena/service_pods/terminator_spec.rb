@@ -13,7 +13,7 @@ describe Kontena::ServicePods::Terminator do
 
       expect(service_container).to receive(:stop).with({'timeout' => 10})
       expect(service_container).to receive(:wait)
-      expect(service_container).to receive(:delete).with({v: true, force: true})
+      expect(service_container).to receive(:delete).with({v: true})
       subject.perform
     end
 
@@ -22,7 +22,7 @@ describe Kontena::ServicePods::Terminator do
       service_container_volumes = double(:service)
       allow(subject).to receive(:get_container).with(service_name).and_return(service_container)
       allow(subject).to receive(:get_container).with("#{service_name}-volumes").and_return(service_container_volumes)
-      expect(service_container_volumes).to receive(:delete).with({v: true, force: true})
+      expect(service_container_volumes).to receive(:delete).with({v: true})
       subject.perform
     end
   end
