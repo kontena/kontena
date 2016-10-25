@@ -1,17 +1,17 @@
-module kontena
-  module callbacks
-    class beforedeployconfigurationwizard < kontena::callback
+module Kontena
+  module Callbacks
+    class BeforeDeployConfigurationWizard < Kontena::Callback
 
-      include kontena::cli::common
+      include Kontena::Cli::Common
 
       matches_commands 'master create'
 
       def after_load
         command.class_eval do
-          option ['--no-prompt'], :flag, "don't ask questions"
-          option ['--skip-auth-provider'], :flag, "skip auth provider configuration (single user mode)"
-          option ['--use-kontena-cloud'], :flag, "use kontena cloud as authentication provider"
-          option ['--cloud-master-id'], '[id]', "use kontena cloud master id for auth provider configuration"
+          option ['--no-prompt'], :flag, "Don't ask questions"
+          option ['--skip-auth-provider'], :flag, "Skip auth provider configuration (single user mode)"
+          option ['--use-kontena-cloud'], :flag, "Use Kontena Cloud as authentication provider"
+          option ['--cloud-master-id'], '[ID]', "Use Kontena Cloud Master ID for auth provider configuration"
         end
       end
 
@@ -21,7 +21,7 @@ module kontena
         yield
       end
 
-      # scans config server names and returns default-2 if default exists,
+      # Scans config server names and returns default-2 if default exists,
       # default-3 if default-2 exists, etc.
       def next_default_name
         last_default = config.servers.map(&:name).select{ |n| n =~ /kontena\-master(?:\-\d+)?$/ }.sort.last
@@ -37,12 +37,12 @@ module kontena
           return true if cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
         end
         puts
-        puts "you don't seem to be logged in to kontena cloud"
+        puts "You don't seem to be logged in to Kontena Cloud"
         puts
-        kontena.run("cloud login --verbose")
-        result = false
+        Kontena.run("cloud login --verbose")
         config.reset_instance
         reset_cloud_client
+        result = false
         Retriable.retriable do
           result = cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
         end
