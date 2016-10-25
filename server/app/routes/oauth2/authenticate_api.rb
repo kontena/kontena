@@ -52,7 +52,7 @@ module OAuth2Api
           unless user
             mime_halt(403, 'access_denied', 'Invalid invite code') and return
           end
-        elsif current_user
+        elsif current_user && !current_user.is_local_admin?
           user = current_user
         end
 
