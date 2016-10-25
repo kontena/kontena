@@ -40,9 +40,11 @@ module Kontena
         puts "You don't seem to be logged in to Kontena Cloud"
         puts
         Kontena.run("cloud login --verbose")
+        result = false
         Retriable.retriable do
-          cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
+          result = cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
         end
+        result
       end
 
       def before
