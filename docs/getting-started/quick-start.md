@@ -82,11 +82,7 @@ $ kontena node list
 
  Now you are ready to deploy your first application. In this section we will show you how to deploy a simple Wordpress application and deploy it to your Kontena grid.
 
-<<<<<<< HEAD
-First create `kontena.yml` file with the following contents:
-=======
 First create the `kontena.yml` file with the following contents:
->>>>>>> master
 
 ```
 version: '2'
