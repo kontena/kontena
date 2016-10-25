@@ -1,7 +1,11 @@
 json.id container.to_path
 json.name container.name
 json.container_id container.container_id
-json.grid_id container.grid_id.to_s
+if container.grid
+  json.grid_id container.grid.to_path
+else
+  json.grid_id nil
+end
 json.node do
   if container.host_node
     host_node = container.host_node
@@ -14,7 +18,7 @@ json.node do
     json.private_ip host_node.private_ip
     json.node_number host_node.node_number
     json.grid do
-      grid = host_node.grid
+      grid = container.grid
       json.id grid.to_path
       json.name grid.name
       json.token grid.token
@@ -22,7 +26,7 @@ json.node do
     end
   end
 end
-json.service_id container.grid_service_id.to_s
+json.service_id container.grid_service.to_path
 json.created_at container.created_at
 json.updated_at container.updated_at
 json.started_at container.started_at
