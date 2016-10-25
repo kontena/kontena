@@ -38,6 +38,11 @@ module Kontena
       CHARS_LENGTH = CHARS.length
 
       def self.spin_no_tty(msg, &block)
+        unless block_given?
+          Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}"
+          return
+        end
+
         Kernel.puts "* #{msg}.. "
         result = nil
         status = nil
@@ -67,6 +72,11 @@ module Kontena
 
       def self.spin(msg, &block)
         return spin_no_tty(msg, &block) unless $stdout.tty?
+
+        unless block_given?
+          Kernel.puts "\r [" + "done".colorize(:green) + "] #{msg}"
+          return
+        end
 
         Thread.main['spinners'] ||= []
         unless Thread.main['spinners'].empty?
