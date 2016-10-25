@@ -511,6 +511,7 @@ module Kontena
 
         def account
           return @account if @account
+          return config.find_account('master') unless parent
           @account = 
             case parent_type
             when :master then config.find_account(parent.account)
