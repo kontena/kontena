@@ -88,8 +88,8 @@ module OAuth2Api
         end
 
         user = state.user || find_user_by_userdata(user_data)
-        unless user
-          halt_request(403, 'Access denid') and return
+        if user.nil? || user.is_local_admin?
+          halt_request(403, 'Access denied') and return
         end
 
         unless update_user_from_userdata(user, user_data)
