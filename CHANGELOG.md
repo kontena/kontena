@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.16.0](https://github.com/kontena/kontena/releases/tag/v0.16.0) (2016-10-24)
+
+**Master & Agents:**
+
+- OAuth2 support (#1035, #1106, #1108, #1120, #1141)
+- optimize service containers api endpoint (#1195)
+- don't use force when removing containers (#1196)
+- refuse start master if incorrect db version (#1187)
+- server telemetry / anon stats (with possibility to opt-out) (#1179)
+- improve grid name validation (#1162)
+- set default timeout to stop/restart docker calls (#1167)
+- restart weave if trusted subnets change (#1147)
+- loadbalancer: basic auth support (#1060)
+- update Weave Net to 1.7.2 (#1146)
+- refactor agent image puller to an actor (#942)
+- update etcd to 2.3.7 (#1085)
+- add instance number to container env (#1042)
+- refactor container_logs api endpoint & fix limit behaviour (#995)
+
+**CLI:**
+
+- OAuth2 support (#1035, #1082, #1094, #1077, #1097, #1096, #1101, #1103, #1105, #1107, #1133, #1129, #1119, #1080, #1139, #1138, #1176, #1183, #1203, #1207, #1210)
+- fallback to master account in config parser (#1199)
+- increase client read_timeout to 30s (#1198)
+- fix vpn remove error (#1185)
+- fix plugin uninstall command (#1184)
+- kontena register with a link to signup page (#1177)
+- known plugin subcommands will now suggest installing plugin if not installed (#1175)
+- remove Content-Type request header if request body is empty (#1157)
+- show service instance health (#1153)
+- improved request error handling (#1155)
+- improved tab-completion script (includes zsh support) (#1168)
+- fix `kontena grid env` to use correct token (#1137)
+- interactive server deletion from config/cloud (#1131)
+- replace dry-validation with hash_validator gem (#1041)
+- fix docker build helpers to not use shell syntax (#1124)
+- add `kontena container logs` command (#1001)
+- show grid token only with `--token` option (#1109)
+- show error if installed plugin is too old (#1116)
+- allow to set grid token manually in `kontena grid create` (#1046)
+- new spinner (#1035, #1083, #1181)
+- replace colorize gem with pastel (#1035, #1104, #1114, #1117, #1145)
+- give user better feedback when commands are executed (#1057)
+- do not send Content-Type header with GET requests (#1078)
+- show container exit code (#927)
+- `app deploy --force` (deprecates `--force-deploy`) (#969)
+
+**Packaging:**
+
+- Ubuntu Xenial (16.04) packages (#1150, #1169, #1171, #1173, #1186, #1189)
+- allow to use docker 1.12 in Ubuntu packages (#1169)
+- ignore vendor files when building docker images (#1113)
+
 ## [0.15.5](https://github.com/kontena/kontena/releases/tag/v0.15.5) (2016-10-02)
 
 **CLI:**
