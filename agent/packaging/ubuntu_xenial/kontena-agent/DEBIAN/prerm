@@ -1,5 +1,7 @@
 #!/bin/sh
 
+/opt/kontena/kontena-resolvconf.sh stop
+
 systemctl stop kontena-agent || true
 
 systemctl disable kontena-agent || true

@@ -20,7 +20,6 @@ ExecStart=/usr/bin/docker run --name kontena-agent \
     kontena/agent:${KONTENA_VERSION}
 ExecStartPost=/opt/kontena/kontena-resolvconf.sh start
 ExecStop=/usr/bin/docker stop kontena-agent
-ExecStopPost=/opt/kontena/kontena-resolvconf.sh stop
 
 [Install]
 WantedBy=multi-user.target
