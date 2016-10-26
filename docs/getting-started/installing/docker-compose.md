@@ -28,7 +28,7 @@ services:
     restart: always
     environment:
       - SSL_CERT=**None**
-      - BACKENDS=kontena-master:9292
+      - BACKENDS=kontena-server-api:9292
     depends_on:
       - master
     ports:
