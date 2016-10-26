@@ -6,6 +6,14 @@ module Kontena::Cli::Nodes
     option ['-a', '--all'], :flag, "List nodes for all grids", default: false
     option ['-w', '--wide'], :flag, "Don't truncate lines"
 
+    def term_width
+      return @width if @width
+      require 'io/console'
+      @width = IO.console.winsize.last
+    rescue
+      80
+    end
+
     def max_node_name_length(nodes)
       if nodes.nil? || nodes.empty?
         10
@@ -37,16 +45,15 @@ module Kontena::Cli::Nodes
       max_length = max_node_name_length(nodes)
       puts "%-#{max_length}s %-7s %-7s %-40s" % [ all? ? 'Grid/Name' : 'Name', 'Status', 'Initial', 'Labels']
       nodes.each do |node|
-        labels = node['labels'].join(',')
-        if !wide? && labels.length > 40
-          labels = labels[0..37] + ".."
-        end
-        puts "%-#{max_length}.#{max_length}s %-7.7s %-7.7s %-40s" % [
-          node['name'],
-          node['connected'] ? 'online' : 'offline',
+        line = sprintf "%-#{max_length}.#{max_length}s %-7.7s %-7.7s %s",
+          node['name'], node['connected'] ? 'online' : 'offline',
           node['initial_member'] ? 'yes' : 'no',
-          labels
-        ]
+          node['labels'].join(',')
+        if !wide? && line.length > term_width - 1
+          puts line[0..term_width-3] + ".."
+        else
+          puts line
+        end
       end
     end
   end
