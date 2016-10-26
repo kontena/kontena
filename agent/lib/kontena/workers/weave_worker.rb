@@ -75,21 +75,15 @@ module Kontena::Workers
 
         Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
       end
-    rescue Docker::Error::NotFoundError
-
-    rescue => exc
-      error "#{exc.class.name}: #{exc.message}"
-      error exc.backtrace.join("\n")
+    rescue Docker::Error::NotFoundError => error
+      warn "ignoring weave attach for missing container: #{error}"
     end
 
     # @param [Docker::Event] event
     def weave_detach(event)
       remove_dns(event.id)
-    rescue Docker::Error::NotFoundError
-
-    rescue => exc
-      error exc.message
-      error exc.backtrace.join("\n")
+    rescue Docker::Error::NotFoundError => error
+      warn "ignoring weave detach for missing container: #{error}"
     end
   end
 end

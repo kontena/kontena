@@ -65,6 +65,16 @@ module Kontena::NetworkAdapters
       !weave.nil? && weave.running?
     end
 
+    # @param timeout [Float] seconds
+    # @return [Boolean]
+    def wait_running?(timeout = 10.0)
+      wait = Time.now.to_f + timeout
+      until running = running? || (wait < Time.now.to_f)
+        sleep 0.5
+      end
+      return running
+    end
+
     # @return [Boolean]
     def images_exist?
       @images_exist == true
@@ -158,7 +168,6 @@ module Kontena::NetworkAdapters
         begin
           response = container.tap(&:start).wait
         rescue Docker::Error::NotFoundError => exc
-          error exc.message
           raise
         rescue => exc
           if retries += 1 >= 10
@@ -195,12 +204,17 @@ module Kontena::NetworkAdapters
 
       weave = Docker::Container.get('weave') rescue nil
       if weave && config_changed?(weave, info)
+        info "reconfiguring weave router..."
+
+        # this causes a brief overlay network drop
         weave.delete(force: true)
       end
 
       peer_ips = info['peer_ips'] || []
       trusted_subnets = info.dig('grid', 'trusted_subnets')
       until running? do
+        info "starting weave router..."
+
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
           '--password', ENV['KONTENA_TOKEN']
@@ -208,10 +222,9 @@ module Kontena::NetworkAdapters
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         self.exec(exec_params)
 
-        wait = Time.now.to_f + 10.0
-        sleep 0.5 until running? || (wait < Time.now.to_f)
+        if !wait_running?
+          warn "reset weave router"
 
-        if !running?
           self.exec(['--local', 'reset'])
         end
       end
