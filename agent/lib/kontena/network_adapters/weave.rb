@@ -188,7 +188,7 @@ module Kontena::NetworkAdapters
           raise "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
         end
       ensure
-        container.delete(v: true)
+        container.delete(force: true, v: true)
       end
     end
 
