@@ -47,7 +47,7 @@ $ kontena master join https://master_ip invitation_code
 
 ## Using an external authentication provider
 
-Kontena Master can use any standard's compliant OAuth2 provider to authenticate users.
+Kontena Master can use any standards compliant OAuth2 provider to authenticate users.
 
 If you want to use another authentication provider then the first step is to create an OAuth2 application in the authentication provider's user interface. The **Callback URL** in the application settings should be set to : `https://master_url/cb`. No other settings should be necessary. The next step is to configure the `oauth2.*` settings to Kontena Master.
 
