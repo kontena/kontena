@@ -12,7 +12,7 @@ title: Azure
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 - Azure Account
 
 ## Installing Kontena Azure Plugin

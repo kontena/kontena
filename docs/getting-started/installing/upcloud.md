@@ -12,7 +12,7 @@ title: UpCloud
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 - UpCloud Account. Visit [https://www.upcloud.com/kontena/](https://www.upcloud.com/kontena/) to get started
 
 ## Installing Kontena UpCloud Plugin

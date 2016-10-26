@@ -12,7 +12,7 @@ title: Packet
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 - Packet.net Account. Visit [https://www.packet.net/promo/kontena/](https://www.packet.net/promo/kontena/) to get started
 
 ## Installing Kontena Packet Plugin
