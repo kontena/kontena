@@ -5,7 +5,7 @@ Dotenv.load
 
 VERSION = File.read('./VERSION').strip
 UBUNTU_IMAGE = 'kontena-ubuntu-build'
-UBUNTU_REPO = ENV['UBUNTU_REPO'] || 'kontena'
+UBUNTU_REPO = ENV['UBUNTU_REPO'] || 'ubuntu'
 PKG_REV = ENV['PKG_REV'] || '1'
 
 namespace :release do

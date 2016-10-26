@@ -12,7 +12,7 @@ title: Vagrant
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 - Vagrant 1.6 or later. Visit [https://www.vagrantup.com/](https://www.vagrantup.com/) to get started
 
 ## Installing Kontena Vagrant Plugin

@@ -49,7 +49,7 @@ class Configuration
       if value.nil?
         delete(key)
       else
-        find_or_create_by(key: key.to_s).update_attribute(:value, {VALUE => encrypt(key, value)})
+        where(key: key).find_and_modify({key: key, value: { VALUE => encrypt(key, value) }}, {upsert: true})
       end
     end
 

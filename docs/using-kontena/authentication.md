@@ -8,10 +8,10 @@ Kontena Master API uses [OAuth2 Bearer token authentication](https://tools.ietf.
 
 ## First user
 
-When a fresh Kontena Master installation starts up, an internal administrator account with a temporary one time authorization code will be created. This initial authorization code is then used to obtain an access token for authenticating as the internal administrator. If you use the Kontena CLI to install the Kontena Master, this will happen automatically. If you install manually, you need to provide the initial authorization code via the environment variable `INTERNAL_ADMIN_CODE`. To login using this code use:
+When a fresh Kontena Master installation starts up, an internal administrator account with a temporary one time authorization code will be created. This initial authorization code is then used to obtain an access token for authenticating as the internal administrator. If you use the Kontena CLI to install the Kontena Master, this will happen automatically. If you install manually, you need to provide the initial authorization code via the environment variable `INITIAL_ADMIN_CODE`. To login using this code use:
 
 ```
-$ kontena master login --code <INTERNAL_ADMIN_CODE> <master_url>
+$ kontena master login --code <INITIAL_ADMIN_CODE> <master_url>
 ```
 
 ## Configuring Kontena Cloud as the authentication provider
@@ -47,7 +47,7 @@ $ kontena master join https://master_ip invitation_code
 
 ## Using an external authentication provider
 
-Kontena Master can use any standard's compliant OAuth2 provider to authenticate users.
+Kontena Master can use any standards compliant OAuth2 provider to authenticate users.
 
 If you want to use another authentication provider then the first step is to create an OAuth2 application in the authentication provider's user interface. The **Callback URL** in the application settings should be set to : `https://master_url/cb`. No other settings should be necessary. The next step is to configure the `oauth2.*` settings to Kontena Master.
 
