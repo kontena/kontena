@@ -4,7 +4,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::GridOptions
 
     option ['-a', '--all'], :flag, "List nodes for all grids", default: false
-    option ['-w', '--wide'], :flag, "Don't truncate lines"
+    option ['-l', '--long'], :flag, "Don't truncate lines"
 
     def term_width
       return @width if @width
@@ -49,7 +49,7 @@ module Kontena::Cli::Nodes
           node['name'], node['connected'] ? 'online' : 'offline',
           node['initial_member'] ? 'yes' : 'no',
           node['labels'].join(',')
-        if !wide? && line.length > term_width - 1
+        if !long? && line.length > term_width - 1
           puts line[0..term_width-3] + ".."
         else
           puts line
