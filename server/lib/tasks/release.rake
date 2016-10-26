@@ -15,7 +15,7 @@ namespace :release do
   end
 
   desc 'Build ubuntu trusty package'
-  task :build_ubuntu_trusty => :environment do
+  task :build_ubuntu_trusty do
     rev = ENV['REV']
     raise ArgumentError.new('You must define REV') if rev.blank?
 
@@ -29,7 +29,7 @@ namespace :release do
   end
 
   desc 'Build ubuntu xenial package'
-  task :build_ubuntu_xenial => :environment do
+  task :build_ubuntu_xenial do
     rev = ENV['REV'] || 1
     raise ArgumentError.new('You must define REV') if rev.blank?
 
@@ -42,7 +42,7 @@ namespace :release do
   end
 
   desc 'Build docker image'
-  task :build_docker => :environment do
+  task :build_docker do
     sh("docker rmi #{DOCKER_NAME}:#{VERSION} || true")
     sh("docker build --no-cache --pull -t #{DOCKER_NAME}:#{VERSION} .")
     DOCKER_VERSIONS.each do |v|
@@ -56,7 +56,7 @@ namespace :release do
   end
 
   desc 'Upload ubuntu packages'
-  task :push_ubuntu => :environment do
+  task :push_ubuntu do
     rev = ENV['REV'] || '1'
     repo = ENV['REPO'] || 'kontena'
     sh('rm -rf release && mkdir release')
