@@ -10,7 +10,7 @@ title: Docker Compose
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 - Docker Engine (<= 1.10 ) & Docker Compose
 
 ## Installing Kontena Master
@@ -39,6 +39,7 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/kontena
       - VAULT_KEY=somerandomverylongstringthathasatleastsixtyfourchars
       - VAULT_IV=somerandomverylongstringthathasatleastsixtyfourchars
+      - INITIAL_ADMIN_CODE=loginwiththiscodetomaster
     depends_on:
       - mongodb
   mongodb:

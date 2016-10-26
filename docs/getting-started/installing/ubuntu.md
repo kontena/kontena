@@ -10,7 +10,7 @@ title: Ubuntu
 
 ## Prerequisities
 
-- [Kontena Account](https://cloud.kontena.io/sign-up)
+- [Kontena CLI](cli)
 
 ## Installing Docker Engine
 

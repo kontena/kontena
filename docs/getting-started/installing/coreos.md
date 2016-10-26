@@ -10,7 +10,7 @@ title: CoreOS
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 
 ## Installing Kontena Master
 
@@ -26,6 +26,7 @@ write_files:
       KONTENA_VERSION=latest
       KONTENA_VAULT_KEY=<your vault_key>
       KONTENA_VAULT_IV=<your vault_iv>
+      KONTENA_INITIAL_ADMIN_CODE=<initial_admin_code>
       SSL_CERT="/etc/kontena-server.pem"
 
   - path: /etc/kontena-server.pem
@@ -99,6 +100,7 @@ coreos:
             --link kontena-server-mongo:mongodb \
             -e MONGODB_URI=mongodb://mongodb:27017/kontena_server \
             -e VAULT_KEY=${KONTENA_VAULT_KEY} -e VAULT_IV=${KONTENA_VAULT_IV} \
+            -e INITIAL_ADMIN_CODE=${KONTENA_INITIAL_ADMIN_CODE} \
             kontena/server:${KONTENA_VERSION}
         ExecStop=/usr/bin/docker stop kontena-server-api
 

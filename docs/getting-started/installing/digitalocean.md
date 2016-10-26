@@ -12,7 +12,7 @@ title: DigitalOcean
 
 ## Prerequisities
 
-- Kontena Account
+- [Kontena CLI](cli)
 - DigitalOcean Account. Visit [https://www.digitalocean.com/](https://www.digitalocean.com/) to get started
 - DigitalOcean API token. Visit [https://cloud.digitalocean.com/settings/api/tokens](https://cloud.digitalocean.com/settings/api/tokens)
 
