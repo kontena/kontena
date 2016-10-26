@@ -72,7 +72,7 @@ namespace :release do
 
   desc 'Push ubuntu packages'
   task :push_ubuntu => :environment do
-    repo = ENV['REPO'] || 'kontena'
+    repo = ENV['REPO'] || 'ubuntu'
     bintray_user = ENV['BINTRAY_USER']
     bintray_key = ENV['BINTRAY_KEY']
     rev = ENV['REV']
@@ -81,9 +81,10 @@ namespace :release do
     raise ArgumentError.new('You must define REV') if rev.blank?
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
-    sh('rm -rf release_xenial && mkdir release_xenial')
-    sh('cp build/ubuntu_xenial/*.deb release_xenial/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
-    sh("curl -T ./release_xenial/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
+
+    sh('rm -rf release && mkdir release')
+    sh('cp build/ubuntu/*.deb release/')
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
   end
 end
