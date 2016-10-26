@@ -117,7 +117,12 @@ module Kontena::Cli::Master
     def use_authorization_code(server, code)
       vspinner "Exchanging authorization code for an access token from Kontena Master" do
         client = Kontena::Client.new(server.url, server.token)
-        response = client.exchange_code(code) rescue nil
+        begin
+          response = client.exchange_code(code)
+        rescue
+          ENV["DEBUG"] && puts("#{$!} : #{$!.message}\n#{$!.backtrace.join("  \n")}")
+          exit_with_error "Code exchange failed: #{$!.message}"
+        end
 
         if response && response.kind_of?(Hash) && !response.has_key?('error')
           if response['server'] && response['server']['name']
