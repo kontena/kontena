@@ -58,14 +58,14 @@ namespace :release do
   desc 'Upload ubuntu packages'
   task :push_ubuntu do
     rev = ENV['REV'] || '1'
-    repo = ENV['REPO'] || 'kontena'
+    repo = ENV['REPO'] || 'ubuntu'
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
 
-    sh('rm -rf release_xenial && mkdir release_xenial')
-    sh('cp build/ubuntu_xenial/*.deb release_xenial/')
-    sh("curl -T ./release_xenial/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/#{NAME}-#{VERSION}-#{rev}_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
+    sh('rm -rf release && mkdir release')
+    sh('cp build/ubuntu_xenial/*.deb release/')
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
   end
 
   desc 'Upload docker image'

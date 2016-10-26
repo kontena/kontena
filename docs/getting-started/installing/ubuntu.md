@@ -36,9 +36,21 @@ $ sudo apt-get install docker-engine=1.12.2-0~trusty
 
 Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Ubuntu can be done by just installing kontena-server package:
 
+
+#### Ubuntu Xenial (16.04)
+
 ```
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-$ echo "deb http://dl.bintray.com/kontena/kontena /" | sudo tee -a /etc/apt/sources.list
+$ echo "deb http://dl.bintray.com/kontena/ubuntu xenial main" | sudo tee -a /etc/apt/sources.list
+$ sudo apt-get update
+$ sudo apt-get install kontena-server
+```
+
+#### Ubuntu Trusty (14.04)
+
+```
+$ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
+$ echo "deb http://dl.bintray.com/kontena/ubuntu trusty main" | sudo tee -a /etc/apt/sources.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-server
 ```
@@ -106,9 +118,20 @@ $ kontena grid show --token test-grid
 
 Now you can go ahead and install kontena-agent Ubuntu package:
 
+#### Ubuntu Xenial (16.04)
+
 ```
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-$ echo "deb http://dl.bintray.com/kontena/kontena /" | sudo tee -a /etc/apt/sources.list
+$ echo "deb http://dl.bintray.com/kontena/ubuntu xenial main" | sudo tee -a /etc/apt/sources.list
+$ sudo apt-get update
+$ sudo apt-get install kontena-agent
+```
+
+#### Ubuntu Trusty (14.04)
+
+```
+$ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
+$ echo "deb http://dl.bintray.com/kontena/ubuntu trusty main" | sudo tee -a /etc/apt/sources.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-agent
 ```
