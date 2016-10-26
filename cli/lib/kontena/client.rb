@@ -56,9 +56,9 @@ module Kontena
       @http_client = Excon.new(
         api_url,
         omit_default_port: true,
-        connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] || 5,
-        read_timeout:    ENV["EXCON_READ_TIMEOUT"]    || 30,
-        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   || 5
+        connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 5,
+        read_timeout:    ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_i    : 30,
+        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5
       )
 
       @default_headers = {
