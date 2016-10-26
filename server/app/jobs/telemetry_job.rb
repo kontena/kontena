@@ -36,9 +36,10 @@ class TelemetryJob
     config['server.telemetry_enabled'].to_s != 'false'
   end
 
-  def check_version
-    data = {
-      id: config['master.uuid'],
+  # @return [Hash]
+  def payload
+    {
+      id: config['server.uuid'],
       version: ::Server::VERSION,
       stats: {
           users: User.count,
@@ -49,9 +50,12 @@ class TelemetryJob
       },
       grids: build_grid_stats
     }
+  end
+
+  def check_version
     options = {
         header: HEADERS,
-        body: JSON.dump(data)
+        body: JSON.dump(payload)
     }
     response = client.post('https://update.kontena.io/v1/master', options)
     handle_response(response)
