@@ -8,10 +8,10 @@ Kontena Master API uses [OAuth2 Bearer token authentication](https://tools.ietf.
 
 ## First user
 
-When a fresh Kontena Master installation starts up, an internal administrator account with a temporary one time authorization code will be created. This initial authorization code is then used to obtain an access token for authenticating as the internal administrator. If you use the Kontena CLI to install the Kontena Master, this will happen automatically. If you install manually, you need to provide the initial authorization code via the environment variable `INTERNAL_ADMIN_CODE`. To login using this code use:
+When a fresh Kontena Master installation starts up, an internal administrator account with a temporary one time authorization code will be created. This initial authorization code is then used to obtain an access token for authenticating as the internal administrator. If you use the Kontena CLI to install the Kontena Master, this will happen automatically. If you install manually, you need to provide the initial authorization code via the environment variable `INITIAL_ADMIN_CODE`. To login using this code use:
 
 ```
-$ kontena master login --code <INTERNAL_ADMIN_CODE> <master_url>
+$ kontena master login --code <INITIAL_ADMIN_CODE> <master_url>
 ```
 
 ## Configuring Kontena Cloud as the authentication provider
