@@ -60,10 +60,9 @@ class GridServiceDeployer
     info "starting to deploy #{self.grid_service.to_path}"
     ping_subscription = self.subscribe_to_ping
     creds = self.creds_for_registry
-    self.grid_service.set_state('deploying')
-    self.grid_service.set(:deployed_at => Time.now.utc)
-
     deploy_rev = Time.now.utc.to_s
+    self.grid_service.set_state('deploying')
+    self.grid_service.set(:deployed_at => deploy_rev)
 
     deploy_futures = []
     total_instances = self.instance_count
