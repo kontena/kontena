@@ -6,12 +6,17 @@ module Kontena
 
       matches_commands 'master create'
 
-      def configure_auth_provider_using_id(cloud_id)
-        Kontena.run("master init-cloud --force --cloud-master-id #{cloud_id.shellescape}")
+      def init_cloud_args
+        args = []
+        args << '--force' 
+        args << "--cloud-master-id #{command.cloud_master_id}" if command.cloud_master_id
+        args << "--provider #{command.result[:provider]}" if command.result[:provider]
+        args << "--version #{command.result[:version]}" if command.result[:version]
+        args.join(' ')
       end
 
       def configure_auth_provider
-        Kontena.run("master init-cloud --force")
+        Kontena.run("master init-cloud #{init_cloud_args}")
       end
 
       def after
@@ -24,11 +29,7 @@ module Kontena
           return
         end
 
-        if command.respond_to?(:cloud_master_id) && command.cloud_master_id
-          configure_auth_provider_using_id(command.cloud_master_id)
-        else
-          configure_auth_provider
-        end
+        configure_auth_provider
       end
     end
   end
