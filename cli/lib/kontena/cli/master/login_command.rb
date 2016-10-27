@@ -39,6 +39,7 @@ module Kontena::Cli::Master
       unless self.join || self.force?
         if auth_works?(server)
           config.write
+          config.reset_instance
           display_login_info(only: :master) unless self.no_login_info?
           exit 0
         end
@@ -169,17 +170,20 @@ module Kontena::Cli::Master
 
     def get_authorization_url(web_server_port = nil)
       authorization_url = nil
+
+      http_client = Kontena::Client.new(self.url)
+
       vspinner "Sending authentication request to receive an authorization URL" do
-        client.request(
+        http_client.request(
           http_method: :get,
           path: build_auth_url_path(web_server_port),
           expects: [501, 400, 302, 403],
           auth: false
         )
 
-        case client.last_response.status
+        case http_client.last_response.status
         when 302
-          authorization_url = client.last_response.headers['Location']
+          authorization_url = http_client.last_response.headers['Location']
         when 501
           exit_with_error "Authentication provider not configured"
         when 403
