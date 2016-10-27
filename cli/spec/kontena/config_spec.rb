@@ -3,9 +3,9 @@ require_relative '../spec_helper'
 # Lots of coverage already in Common spec
 describe Kontena::Cli::Config do
 
-  context 'base' do
-    let(:subject) { described_class.instance }
+  let(:subject) { described_class.instance }
 
+  context 'base' do
     before(:each) do
       allow(File).to receive(:exist?).and_return(false)
       allow(File).to receive(:write).and_return(true)
@@ -49,6 +49,37 @@ describe Kontena::Cli::Config do
       subject.current_grid = 'foo'
       expect(subject.current_master.grid).to eq 'foo'
       expect(subject.current_grid).to eq 'foo'
+    end
+  end
+
+  context 'duplicates' do
+    before(:each) do
+      allow(File).to receive(:exist?).and_return(true)
+      allow(File).to receive(:readable?).and_return(true)
+      allow(File).to receive(:write).and_return(true)
+      allow(File).to receive(:read).and_return <<-EOB
+        {"current_server": "test123",
+          "servers" : [
+            { 
+              "name": "test123",
+              "url": "https://foo.example.com"
+            },
+            { 
+              "name": "test123",
+              "url": "https://foo2.example.com"
+            }
+          ]
+        }
+      EOB
+
+      subject.class.reset_instance
+    end
+
+    it 'renames duplicate entries on load' do
+      puts subject.servers.inspect
+      expect(subject.servers.size).to eq 2
+      expect(subject.servers.first.name).not_to eq subject.servers.last.name
+      expect(subject.servers.last.name).to eq "test123-2"
     end
   end
 
