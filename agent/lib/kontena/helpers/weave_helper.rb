@@ -30,7 +30,7 @@ module Kontena
       # @return [Boolean]
       def wait_running?(timeout = 10.0, &block)
         wait = Time.now.to_f + timeout
-        until running = running? || (wait < Time.now.to_f)
+        until (running = running?) || (wait < Time.now.to_f)
           yield if block # debugging
           sleep 0.5
         end
