@@ -81,6 +81,11 @@ module Kontena
             server = Server.new(server_data)
           end
           server.account ||= 'master'
+          if servers.find { |s| s['name'] == server.name}
+            server.name = "#{server.name}-2"
+            server.name.succ! until servers.find { |s| s['name'] == server.name }.nil?
+            logger.debug "Renamed server to #{server.name} because a duplicate was found in config"
+          end
           servers << server
         end
 
