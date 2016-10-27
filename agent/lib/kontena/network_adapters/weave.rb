@@ -195,11 +195,12 @@ module Kontena::NetworkAdapters
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         self.exec(exec_params)
 
-        if wait_running! { debug "start: waiting for weave to be running..." }
-
-          warn "reset weave router"
+        if !wait_running? { debug "start: waiting for weave to be running..." }
+          warn "reset weave router on unsuccesfull start: #{error}"
 
           self.exec(['--local', 'reset'])
+
+          raise WeaveError, "weave did not start running"
         end
       end
 
