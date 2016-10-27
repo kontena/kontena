@@ -19,4 +19,12 @@ describe TelemetryJob do
       expect(subject.stats_enabled?).to be_falsey
     end
   end
+
+  describe '#payload' do
+    it 'returns correct id' do
+      config = {'server.uuid' => 'daa'}
+      allow(subject.wrapped_object).to receive(:config).and_return(config)
+      expect(subject.payload).to include(:id => 'daa')
+    end
+  end
 end
