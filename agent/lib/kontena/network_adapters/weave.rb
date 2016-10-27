@@ -166,7 +166,7 @@ module Kontena::NetworkAdapters
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
-      # Let the actor crash on errors
+      # Let the actor crash on start errors
       async.start(info)
     end
 
@@ -185,7 +185,7 @@ module Kontena::NetworkAdapters
 
       peer_ips = info['peer_ips'] || []
       trusted_subnets = info.dig('grid', 'trusted_subnets')
-      until running? do
+      if !running?
         info "starting weave router..."
 
         exec_params = [
