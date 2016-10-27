@@ -52,6 +52,8 @@ module Kontena::Workers
 
     # @param [Docker::Container] container
     def weave_attach(container)
+      container.name # preload for rescue case
+
       wait_running! { debug "weave_attach: waiting for weave to be running..." }
 
       config = container.info['Config'] || container.json['Config']
