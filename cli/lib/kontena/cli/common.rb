@@ -359,7 +359,7 @@ module Kontena
               pastel.green('at'),
               pastel.yellow(server.url),
               pastel.green('as'),
-              pastel.yellow(server.username)
+              pastel.yellow(server.token.username || server.username)
             ].join(' ')
           else
             puts pastel.cyan("Not authenticated to current master #{server.name}")
