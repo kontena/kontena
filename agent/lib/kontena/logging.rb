@@ -45,5 +45,12 @@ module Kontena
     def error(string)
       logger.error(self.class.name) { string }
     end
+
+    # Send an error message for an exception
+    # @param [Exception] exception
+    def error_exception(exception, string)
+      logger.error(self.class.name) { string }
+      logger.error(self.class.name) { exception.backtrace.join("\n") }
+    end
   end
 end

@@ -1,13 +1,19 @@
 require_relative '../logging'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
+require_relative '../helpers/weave_helper'
 
 module Kontena::NetworkAdapters
+  class WeaveError < StandardError
+
+  end
+
   class Weave
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
+    include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
@@ -38,41 +44,6 @@ module Kontena::NetworkAdapters
       adapter_image?(container.config['Image'])
     rescue Docker::Error::NotFoundError
       false
-    end
-
-    # @param [String] image
-    # @return [Boolean]
-    def adapter_image?(image)
-      image.to_s.include?(WEAVEEXEC_IMAGE)
-    rescue
-      false
-    end
-
-    def router_image?(image)
-      image.to_s == "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
-    rescue
-      false
-    end
-
-    # @return [Docker::Container]
-    def get_container
-      Docker::Container.get('weave') rescue nil
-    end
-
-    # @return [Boolean]
-    def running?
-      weave = get_container
-      !weave.nil? && weave.running?
-    end
-
-    # @param timeout [Float] seconds
-    # @return [Boolean]
-    def wait_running?(timeout = 10.0)
-      wait = Time.now.to_f + timeout
-      until running = running? || (wait < Time.now.to_f)
-        sleep 0.5
-      end
-      return running
     end
 
     # @return [Boolean]
@@ -133,7 +104,7 @@ module Kontena::NetworkAdapters
     end
 
     # @param [Array<String>] cmd
-    # @raise
+    # @raise [Error]
     def exec(cmd)
       env = [
         'HOST_ROOT=/host',
@@ -163,41 +134,43 @@ module Kontena::NetworkAdapters
         }
       )
 
+      retries = 0
       begin
-        retries = 0
-        begin
-          response = container.tap(&:start).wait
-        rescue Docker::Error::NotFoundError => exc
-          raise
-        rescue => exc
-          if retries += 1 >= 10
-            error "#{exc.class.name}: #{exc.message}"
-            raise
-          else
-            warn "#{exc.class.name}: #{exc.message}"
-            sleep 0.5
-            retry
-          end
-        end
-
-        if (status_code = response["StatusCode"]) == 0
-          debug "weaveexec ok: #{cmd}"
+        debug "weaveexec start: #{cmd}"
+        response = container.tap(&:start).wait
+      rescue Docker::Error::NotFoundError => exc
+        raise Error, "weaveexec AWOL: #{exc}"
+      rescue => exc
+        if retries += 1 >= 10
+          error "#{exc.class.name}: #{exc.message}"
+          raise Error, "weaveexec failed after #{retries} attempts: #{exc}"
         else
-          logs = container.streaming_logs(stdout: true, stderr: true)
-          error "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
-          raise "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
+          warn "weaveexc retry #{exc.class.name}: #{exc.message}"
+          sleep 0.5
+          retry
         end
-      ensure
-        container.delete(force: true, v: true)
       end
+
+      if (status_code = response["StatusCode"]) == 0
+        debug "weaveexec ok: #{cmd}"
+      else
+        logs = container.streaming_logs(stdout: true, stderr: true)
+        error "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
+        raise Error, "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
+      end
+    ensure
+      # keep the force to skip Docker::Error::ServerError on dead containers
+      container.delete(force: true, v: true) if container
     end
 
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
+      # Let the actor crash on errors
       async.start(info)
     end
 
+    # @raise [Error] launching/configuring weave router failed
     # @param [Hash] info
     def start(info)
       sleep 1 until images_exist?
@@ -222,7 +195,8 @@ module Kontena::NetworkAdapters
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         self.exec(exec_params)
 
-        if !wait_running?
+        if wait_running! { debug "start: waiting for weave to be running..." }
+
           warn "reset weave router"
 
           self.exec(['--local', 'reset'])
@@ -266,6 +240,18 @@ module Kontena::NetworkAdapters
       return true if cmd['--trusted-subnets'] != config.dig('grid', 'trusted_subnets').to_a.join(',')
 
       false
+    end
+
+    # Traps errors to not crash the Actor
+    #
+    # @param [Docker::Container] container
+    # @param [String] overlay_cidr IP/mask
+    def attach_container(container, overlay_cidr)
+      info "attaching container #{container.name}@#{overlay_cidr}"
+
+      self.exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
+    rescue => exc
+      error_exception error, "weave attach for container #{container.name}@#{overlay_cidr}: #{error}"
     end
 
     private
