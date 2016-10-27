@@ -49,9 +49,11 @@ module Kontena::Workers
       info 'starting collection'
       begin
         Docker::Container.all.each do |container|
-          data = self.collect_container_stats(container.id)
-          send_container_stats(data) if data
-          sleep 0.5
+          if container.running?
+            data = self.collect_container_stats(container.id)
+            send_container_stats(data) if data
+            sleep 0.5
+          end
         end
       rescue => exc
         error "error on stats fetching: #{exc.message}"

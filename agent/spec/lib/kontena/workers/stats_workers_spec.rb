@@ -22,15 +22,14 @@ describe Kontena::Workers::StatsWorker do
 
   describe '#collect_stats' do
     it 'loops through all containers' do
-      containers = [container, spy(:container, id: 'bar', labels: {})]
+      containers = [container, spy(:container, id: 'bar', labels: {}, running?: false)]
       allow(Docker::Container).to receive(:all).and_return(containers)
-      expect(subject.wrapped_object).to receive(:collect_container_stats).once.ordered.with('foo').and_return({})
-      expect(subject.wrapped_object).to receive(:collect_container_stats).once.ordered.with('bar').and_return({})
-      expect(subject.wrapped_object).to receive(:send_container_stats).twice
+      expect(subject.wrapped_object).to receive(:collect_container_stats).once.with('foo').and_return({})
+      expect(subject.wrapped_object).to receive(:send_container_stats).once
       subject.collect_stats
     end
 
-    it 'does not call send_stats if no container stats found' do 
+    it 'does not call send_stats if no container stats found' do
       allow(Docker::Container).to receive(:all).and_return([container])
       expect(subject.wrapped_object).to receive(:collect_container_stats).once.with('foo').and_return(nil)
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
