@@ -117,23 +117,26 @@ module Kontena::Cli::Master
     def use_authorization_code(server, code)
       vspinner "Exchanging authorization code for an access token from Kontena Master" do
         client = Kontena::Client.new(server.url, server.token)
-        response = client.exchange_code(code) rescue nil
-
-        if response && response.kind_of?(Hash) && !response.has_key?('error')
-          if response['server'] && response['server']['name']
-            server.name ||= response['server']['name']
-            server.username = response['user']['name'] || response['user']['email']
-            config.current_server = server.name
-          end
-
-          server.token = Kontena::Cli::Config::Token.new(
-            access_token: response['access_token'],
-            refresh_token: response['refresh_token'],
-            expires_at: response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil,
-          )
-        else
-          raise Kontena::Errors::StandardError.new(500, 'Code exchange failed')
+        begin
+          response = client.exchange_code(code)
+        rescue StandardError => ex
+          ENV["DEBUG"] && puts("#{ex}\n#{ex.backtrace.join("  \n")}")
+          exit_with_error "Code exchange failed: #{ex}"
         end
+
+        if response['server'] && response['server']['name']
+          server.name ||= response['server']['name']
+          server.username = response['user']['name'] || response['user']['email']
+          config.current_server = server.name
+        else
+          raise Kontena::Errors::StandardError.new(500, 'Code exchange invalid response')
+        end
+
+        server.token = Kontena::Cli::Config::Token.new(
+          access_token: response['access_token'],
+          refresh_token: response['refresh_token'],
+          expires_at: response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil,
+        )
       end
       true
     end
