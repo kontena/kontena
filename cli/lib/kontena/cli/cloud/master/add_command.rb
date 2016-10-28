@@ -106,7 +106,7 @@ module Kontena::Cli::Cloud::Master
         end
       else
         response = spinner "Registering current Kontena Master '#{current_master.name}' #{" as '#{new_name}' " unless new_name == current_master.name}to Kontena Cloud" do
-          register(new_name, current_master.url)
+          register(new_name, current_master.url, self.provider, nil, self.version)
         end
       end
 
