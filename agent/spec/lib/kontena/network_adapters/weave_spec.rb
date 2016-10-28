@@ -149,7 +149,7 @@ describe Kontena::NetworkAdapters::Weave do
 
   describe '#on_container_event' do
     it 'checks weave container on kill' do
-      weave = double(:weave, name: 'weave', running?: true)
+      weave = double(:weave, name: '/weave', running?: true)
       event = double(:event, id: 'weave', status: 'kill')
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.wrapped_object).to receive(:heal_weave).with(weave)
@@ -157,7 +157,7 @@ describe Kontena::NetworkAdapters::Weave do
     end
 
     it 'checks weave container on destroy' do
-      weave = double(:weave, name: 'weave', running?: true)
+      weave = double(:weave, name: '/weave', running?: true)
       event = double(:event, id: 'weave', status: 'destroy')
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.wrapped_object).to receive(:heal_weave).with(weave)
@@ -165,7 +165,7 @@ describe Kontena::NetworkAdapters::Weave do
     end
 
     it 'does not check weave container on start' do
-      weave = double(:weave, name: 'weave', running?: true)
+      weave = double(:weave, name: '/weave', running?: true)
       event = double(:event, id: 'weave', status: 'start')
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.wrapped_object).not_to receive(:heal_weave).with(weave)
@@ -182,15 +182,11 @@ describe Kontena::NetworkAdapters::Weave do
   end
 
   describe '#heal_weave' do
-    it 'calls start if weave is not running' do
+    it 'calls start only if healing is not in progress' do
       weave = double(:weave, name: 'weave', running?: false)
-      expect(subject.wrapped_object).to receive(:start)
+      expect(subject.wrapped_object).to receive(:start).once
       subject.heal_weave(weave)
-    end
-
-    it 'does not call start if weave is running' do
-      weave = double(:weave, name: 'weave', running?: true)
-      expect(subject.wrapped_object).not_to receive(:start)
+      allow(subject.wrapped_object).to receive(:healing?).and_return(true)
       subject.heal_weave(weave)
     end
   end

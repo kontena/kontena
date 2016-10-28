@@ -18,6 +18,8 @@ module Kontena::NetworkAdapters
     def initialize(autostart = true)
       @images_exist = false
       @started = false
+      @node_info = {}
+      @healing = false
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -181,20 +183,29 @@ module Kontena::NetworkAdapters
       container = Docker::Container.get(event.id) rescue nil
       return unless container
 
-      if container.name == 'weave'.freeze && CHECK_EVENTS.include?(event.status)
+      if container.name == '/weave'.freeze && CHECK_EVENTS.include?(event.status)
         heal_weave(container)
       end
     end
 
     # @param [Docker::Container] weave
     def heal_weave(weave)
-      unless weave && weave.running?
-        start
+      unless healing?
+        @healing = true
+        info "weave is not running, restarting"
+        start(@node_info)
+        @healing = false
       end
+    end
+
+    # @return [Boolean]
+    def healing?
+      @healing == true
     end
 
     # @param [Hash] info
     def start(info)
+      @node_info = info
       sleep 1 until images_exist?
 
       weave = Docker::Container.get('weave') rescue nil
@@ -208,7 +219,7 @@ module Kontena::NetworkAdapters
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-          '--password', ENV['KONTENA_TOKEN'], '--disable-restart'
+          '--password', ENV['KONTENA_TOKEN'], '--no-restart'
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         self.exec(exec_params)
@@ -217,6 +228,7 @@ module Kontena::NetworkAdapters
         sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
 
         if weave.nil? || !weave.running?
+          info "resetting weave"
           self.exec(['--local', 'reset'])
         end
       end
