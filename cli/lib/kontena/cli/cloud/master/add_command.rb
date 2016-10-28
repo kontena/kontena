@@ -34,8 +34,8 @@ module Kontena::Cli::Cloud::Master
 
       response = cloud_client.post('user/masters', { data: { attributes: attributes } })
       exit_with_error "Failed (invalid response)" unless response.kind_of?(Hash)
-      exit_with_error "Failed (no data)" unless response['data']
       exit_with_error "Failed: #{response['error']}" if response['error']
+      exit_with_error "Failed (no data)" unless response['data']
       response
     end
 
@@ -100,6 +100,7 @@ module Kontena::Cli::Cloud::Master
               args = []
               args << "--provider #{self.provider.shellescape}" if self.provider
               args << "--version #{self.version.shellescape}" if self.version
+              args << self.cloud_master_id
               Kontena.run("cloud master update #{args.join(' ')}")
             end
           end
