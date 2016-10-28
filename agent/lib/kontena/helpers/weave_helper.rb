@@ -5,11 +5,43 @@ module Kontena
   module Helpers
     module WeaveHelper
 
+      # @param [String] image
       # @return [Boolean]
-      def weave_running?
+      def adapter_image?(image)
+        image.to_s.include?(WEAVEEXEC_IMAGE)
+      rescue
+        false
+      end
+
+      def router_image?(image)
+        image.to_s == "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
+      rescue
+        false
+      end
+
+      # @return [Boolean]
+      def running?
         weave = Docker::Container.get('weave') rescue nil
-        return false if weave.nil?
-        weave.info['State']['Running'] == true
+        !weave.nil? && weave.running?
+      end
+
+      # @yield before sleeping
+      # @param timeout [Float] seconds
+      # @return [Boolean]
+      def wait_running?(timeout = 10.0, &block)
+        wait = Time.now.to_f + timeout
+        until (running = running?) || (wait < Time.now.to_f)
+          yield if block # debugging
+          sleep 0.5
+        end
+        return running
+      end
+
+      # @raise [Kontena::NetworkAdapters::WeaveError] not running
+      def wait_running!(timeout = 30.0, &block)
+        if !wait_running?(timeout, &block)
+          raise Kontena::NetworkAdapters::WeaveError, "timeout waiting for weave to be running"
+        end
       end
 
       # @param [String] container_id

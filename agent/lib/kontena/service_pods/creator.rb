@@ -24,7 +24,9 @@ module Kontena
         end
         service_container = get_container(service_pod.name)
 
-        sleep 1 until Celluloid::Actor[:network_adapter].running?
+        if !Celluloid::Actor[:network_adapter].wait_running? { debug "waiting for weave to be running..." }
+          raise "Timeout waiting for weave to be running"
+        end
 
         if service_container
           if service_uptodate?(service_container)
