@@ -10,6 +10,7 @@ module Kontena::Cli::Vpn
       stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
       if linux?
         stdout << "\n"
+        stdout << "script-security 2 system\n"
         stdout << "up /etc/openvpn/update-resolv-conf\n"
         stdout << "down /etc/openvpn/update-resolv-conf\n"
       end
