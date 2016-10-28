@@ -201,6 +201,7 @@ module Kontena::NetworkAdapters
         end
       end
 
+      attach_router
       connect_peers(peer_ips)
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
 
@@ -211,6 +212,10 @@ module Kontena::NetworkAdapters
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       debug exc.backtrace.join("\n")
+    end
+
+    def attach_router
+      self.exec(['--local', 'attach-router'])
     end
 
     # @param [Array<String>] peer_ips
