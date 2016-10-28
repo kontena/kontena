@@ -71,7 +71,7 @@ cat certificate.crt privateKey.key > cert.pem
 
 **Step 2:** Run the command `docker-compose up -d`
 
-After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
+After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) how to login with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
 
 ## Installing Kontena Nodes
 

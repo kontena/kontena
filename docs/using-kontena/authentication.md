@@ -22,7 +22,7 @@ If you are installing a fresh Kontena Master v0.16.0 or newer this happens autom
 $ kontena cloud login
 ```
 
-If you have upgraded your Kontena Master from a previous version you can configure it to use Kontena Cloud by using the command:
+If you have upgraded your Kontena Master from a previous version or installed Kontena without Kontena CLI plugins you can configure it to use Kontena Cloud by using the command:
 
 ```
 $ kontena master init-cloud
