@@ -62,7 +62,7 @@ describe Kontena::NetworkAdapters::Weave do
         'Image' => valid_image,
         'Cmd' => ['--trusted-subnets', '']
       }
-      weave = double(:weave, config: weave_config)
+      weave = double(:weave, config: weave_config, restart_policy: {'Name' => 'no'})
       expect(subject.config_changed?(weave, config)).to be_falsey
     end
 
@@ -77,7 +77,7 @@ describe Kontena::NetworkAdapters::Weave do
         'Cmd' => ['--trusted-subnets', '']
       }
 
-      weave = double(:weave, config: weave_config)
+      weave = double(:weave, config: weave_config, restart_policy: {'Name' => 'no'})
       expect(subject.config_changed?(weave, config)).to be_truthy
     end
 
@@ -92,7 +92,22 @@ describe Kontena::NetworkAdapters::Weave do
         'Cmd' => ['--trusted-subnets', '']
       }
 
-      weave = double(:weave, config: weave_config)
+      weave = double(:weave, config: weave_config, restart_policy: {'Name' => 'no'})
+      expect(subject.config_changed?(weave, config)).to be_truthy
+    end
+
+    it 'returns true if restart policy does not match' do
+      config = {
+        'grid' => {
+          'trusted_subnets' => []
+        }
+      }
+      weave_config = {
+        'Image' => valid_image,
+        'Cmd' => ['--trusted-subnets', '']
+      }
+
+      weave = double(:weave, config: weave_config, restart_policy: {'Name' => 'always'})
       expect(subject.config_changed?(weave, config)).to be_truthy
     end
   end
@@ -129,6 +144,54 @@ describe Kontena::NetworkAdapters::Weave do
       }
       subject.modify_host_config(opts)
       expect(opts['HostConfig']['Dns']).to be_nil
+    end
+  end
+
+  describe '#on_container_event' do
+    it 'checks weave container on kill' do
+      weave = double(:weave, name: 'weave', running?: true)
+      event = double(:event, id: 'weave', status: 'kill')
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.wrapped_object).to receive(:heal_weave).with(weave)
+      subject.on_container_event('topic', event)
+    end
+
+    it 'checks weave container on destroy' do
+      weave = double(:weave, name: 'weave', running?: true)
+      event = double(:event, id: 'weave', status: 'destroy')
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.wrapped_object).to receive(:heal_weave).with(weave)
+      subject.on_container_event('topic', event)
+    end
+
+    it 'does not check weave container on start' do
+      weave = double(:weave, name: 'weave', running?: true)
+      event = double(:event, id: 'weave', status: 'start')
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.wrapped_object).not_to receive(:heal_weave).with(weave)
+      subject.on_container_event('topic', event)
+    end
+
+    it 'does not check weave when event is from other container' do
+      container = double(:con, name: 'other')
+      event = double(:event, id: 'other', status: 'die')
+      allow(Docker::Container).to receive(:get).with('other').and_return(container)
+      expect(subject.wrapped_object).not_to receive(:heal_weave)
+      subject.on_container_event('topic', event)
+    end
+  end
+
+  describe '#heal_weave' do
+    it 'calls start if weave is not running' do
+      weave = double(:weave, name: 'weave', running?: false)
+      expect(subject.wrapped_object).to receive(:start)
+      subject.heal_weave(weave)
+    end
+
+    it 'does not call start if weave is running' do
+      weave = double(:weave, name: 'weave', running?: true)
+      expect(subject.wrapped_object).not_to receive(:start)
+      subject.heal_weave(weave)
     end
   end
 end

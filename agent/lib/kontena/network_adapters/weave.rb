@@ -13,12 +13,14 @@ module Kontena::NetworkAdapters
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
+    CHECK_EVENTS = ['kill', 'destroy']
 
     def initialize(autostart = true)
       @images_exist = false
       @started = false
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
+      subscribe('container:event', :on_container_event)
       async.ensure_images if autostart
     end
 
@@ -173,6 +175,24 @@ module Kontena::NetworkAdapters
       async.start(info)
     end
 
+    # @param [String] topic
+    # @param [Docker::Event] event
+    def on_container_event(topic, event)
+      container = Docker::Container.get(event.id) rescue nil
+      return unless container
+
+      if container.name == 'weave'.freeze && CHECK_EVENTS.include?(event.status)
+        heal_weave(container)
+      end
+    end
+
+    # @param [Docker::Container] weave
+    def heal_weave(weave)
+      unless weave && weave.running?
+        start
+      end
+    end
+
     # @param [Hash] info
     def start(info)
       sleep 1 until images_exist?
@@ -188,7 +208,7 @@ module Kontena::NetworkAdapters
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-          '--password', ENV['KONTENA_TOKEN']
+          '--password', ENV['KONTENA_TOKEN'], '--disable-restart'
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         self.exec(exec_params)
@@ -237,6 +257,7 @@ module Kontena::NetworkAdapters
     # @param [Hash] config
     def config_changed?(weave, config)
       return true if weave.config['Image'].split(':')[1] != WEAVE_VERSION
+      return true if weave.restart_policy['Name'] == 'always'
       cmd = Hash[*weave.config['Cmd'].flatten(1)]
       return true if cmd['--trusted-subnets'] != config.dig('grid', 'trusted_subnets').to_a.join(',')
 
