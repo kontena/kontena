@@ -4,6 +4,7 @@
 
 **Master & Agents:**
 
+- call attach-router if interface ip does not exist (#1253)
 - collect stats only for running containers (#1239)
 - fix telemetry id (#1215)
 - use upsert in config put (#1221)
@@ -11,6 +12,8 @@
 
 **CLI:**
 
+- login no longer raises when SERVER_NAME is null (#1254)
+- fix master provider save to cloud (#1250)
 - add script security to openVPN config output (#1231)
 - strip possible trailing arguments from remote code display (#1245)
 - set cloud master provider and version if provision plugin returns them (#1180)
