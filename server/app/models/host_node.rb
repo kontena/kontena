@@ -62,7 +62,8 @@ class HostNode
       swap_limit: attrs['SwapLimit'],
       public_ip: attrs['PublicIp'],
       private_ip: attrs['PrivateIp'],
-      agent_version: attrs['AgentVersion']
+      agent_version: attrs['AgentVersion'],
+      docker_version: attrs['ServerVersion']
     }
     if self.name.nil?
       self.name = attrs['Name']
