@@ -24,6 +24,7 @@ class HostNode
   field :private_ip, type: String
   field :last_seen_at, type: Time
   field :agent_version, type: String
+  field :docker_version, type: String
 
   attr_accessor :schedule_counter
 
