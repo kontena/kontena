@@ -109,12 +109,22 @@ agent:
 ```
 
 - `KONTENA_URI` is the uri to Kontena Master (use ws:// for a non-tls connection)
-- `KONTENA_TOKEN` is the grid token, which can be acquired from master using the `kontena grid show my-grid` command
+- `KONTENA_TOKEN` is the grid token, which can be acquired from master using the `kontena grid show --token my-grid` command
 - `KONTENA_PEER_INTERFACE` is the network interface that is used to connect the other nodes in the grid.
 
 **Step 2:** Run the command `docker-compose up -d`
 
-To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine.
+To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine. To make Kontena overlay DNS addresses to work on host side you must add the docker0 bridge IP address into local DNS server list. If your OS is using `resolvconf` you can do it like this:
+```
+echo nameserver 172.17.0.1 | resolvconf -a lo.kontena-docker
+```
+Refer to your OS distribution documentation how to setup DNS servers.
+
+Replace `172.17.0.1` with your local `docker0` bridge IP address. You can find that for example with:
+```
+ip addr show docker0
+```
+
 
 **Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
 
