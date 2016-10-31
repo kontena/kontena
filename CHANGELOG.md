@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.16.1](https://github.com/kontena/kontena/releases/tag/v0.16.1) (2016-10-31)
+
+**Master & Agents:**
+
+- fix Agent IfaceHelper#interface_ip Errno::EADDRNOTAVAIL case (#1256)
+- call attach-router if interface ip does not exist (#1253)
+- collect stats only for running containers (#1239)
+- fix telemetry id (#1215)
+- use upsert in config put (#1221)
+- create indexes before running config seed (#1220)
+
+**CLI:**
+
+- login no longer raises when SERVER_NAME is null (#1254)
+- fix master provider save to cloud (#1250)
+- add script security to openVPN config output (#1231)
+- strip possible trailing arguments from remote code display (#1245)
+- set cloud master provider and version if provision plugin returns them (#1180)
+- don't require current master on first login (#1242)
+- better error messages when auth code exchange fails (#1222)
+- show username when logging in using auth code (#1236)
+- rename duplicate masters during config load (#1238)
+- use shellwords to split commands (#1201)
+- convert excon timeout variables to integers (#1227)
+
 ## [0.16.0](https://github.com/kontena/kontena/releases/tag/v0.16.0) (2016-10-24)
 
 **Master & Agents:**
