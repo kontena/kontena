@@ -43,6 +43,7 @@ module Kontena::Cli::Master
         end
         puts
         puts pastel.green("Response headers:")
+        puts " * #{pastel.yellow('Status')}: #{pastel.blue((response || client.last_response).status)}"
         (response || client.last_response).headers.each do |name, val|
           puts " * #{pastel.yellow(name)}: #{pastel.blue(val)}"
         end
