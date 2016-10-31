@@ -325,7 +325,7 @@ module Kontena
       @last_response = http_client.request(request_options)
 
       parse_response(@last_response)
-    rescue Excon::Errors::Unauthorized
+    rescue Excon::Errors::Unauthorized => error
       @last_response = error.response
       if token
         logger.debug 'Server reports access token expired'
