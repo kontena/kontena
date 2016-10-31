@@ -98,7 +98,7 @@ module Kontena::Cli::Master
         config.current_server = existing_server.name
         existing_server
       else
-        new_server = Kontena::Cli::Config::Server.new(url: self.url, name: self.name)
+        new_server = Kontena::Cli::Config::Server.new(url: url, name: self.name)
         config.servers << new_server
         config.current_server = new_server.name
         new_server
@@ -127,17 +127,19 @@ module Kontena::Cli::Master
 
         if response['server'] && response['server']['name']
           server.name ||= response['server']['name']
+        end
+
+        if response['user']
           server.username = response['user']['name'] || response['user']['email']
-          config.current_server = server.name
-        else
-          raise Kontena::Errors::StandardError.new(500, 'Code exchange invalid response')
         end
 
         server.token = Kontena::Cli::Config::Token.new(
           access_token: response['access_token'],
           refresh_token: response['refresh_token'],
-          expires_at: response['expires_in'].to_i > 0 ? Time.now.utc.to_i + response['expires_in'].to_i : nil,
+          expires_at: in_to_at(response['expires_in']),
         )
+
+        config.current_server = server.name
       end
       true
     end
@@ -200,7 +202,7 @@ module Kontena::Cli::Master
         sputs url
       else
         puts "Visit this URL in a browser:"
-        puts "<#{url}>"
+        puts "#{url}"
         puts
         puts "Then complete the authentication by using:"
         puts "kontena master login --code <CODE FROM BROWSER>"
@@ -269,10 +271,12 @@ module Kontena::Cli::Master
         server.name = self.name
       elsif response['server'] && response['server']['name']
         server.name = response['server']['name']
-      elsif config.find_server('default')
-        server.name = "default-#{SecureRandom.hex(2)}"
+      elsif config.find_server('kontena-master')
+        new_name = "kontena-master-2"
+        new_name.succ! until config.find_server(new_name).nil?
+        server.name = new_name
       else
-        server.name = "default"
+        server.name = "kontena-master"
       end
     end
 
