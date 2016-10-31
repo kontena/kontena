@@ -4,6 +4,7 @@
 
 **Master & Agents:**
 
+- fix Agent IfaceHelper#interface_ip Errno::EADDRNOTAVAIL case (#1256)
 - call attach-router if interface ip does not exist (#1253)
 - collect stats only for running containers (#1239)
 - fix telemetry id (#1215)
