@@ -3,9 +3,13 @@ require_relative 'version'
 class Kontena::Cli::VersionCommand < Kontena::Command
   include Kontena::Cli::Common
 
+  option "--cli", :flag, "Only CLI version"
+
   def execute
-    url = api_url rescue nil
     puts "cli: #{Kontena::Cli::VERSION}"
+    return if cli?
+
+    url = api_url rescue nil
     if url
       resp = JSON.parse(client.http_client.get(path: '/').body) rescue nil
       if resp
