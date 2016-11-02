@@ -6,7 +6,7 @@ module Kontena::Cli::Master
       puts '%-24s %-30s' % ['Name', 'Url']
       current_master = config.current_master
       config.servers.each do |server|
-        if server['name'] == current_master.name
+        if current_master && server['name'] == current_master.name
           name = "* #{server['name']}"
         else
           name = server['name']
