@@ -181,6 +181,8 @@ module Kontena::NetworkAdapters
       attach_router unless interface_ip('weave')
       connect_peers(peer_ips)
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
+      post_start(info)
+
       # Start the weavemesh plugin
       plugin = nil
       until plugin && plugin.running? do
@@ -194,7 +196,8 @@ module Kontena::NetworkAdapters
 
       end
       ensure_kontena_network
-      post_start(info) unless already_started?
+
+      Celluloid::Notifications.publish('network_adapter:start', info) unless already_started?
 
       @started = true
       info
@@ -225,7 +228,6 @@ module Kontena::NetworkAdapters
         self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
         info "bridge exposed: #{weave_bridge}"
       end
-      Celluloid::Notifications.publish('network_adapter:start', info)
     end
 
     # @param [Docker::Container] weave
