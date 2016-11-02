@@ -32,7 +32,8 @@ module Kontena
                   :log_opts,
                   :pid,
                   :hooks,
-                  :secrets
+                  :secrets,
+                  :networks
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -65,6 +66,7 @@ module Kontena
         @pid = attrs['pid']
         @hooks = attrs['hooks'] || []
         @secrets = attrs['secrets'] || []
+        @networks = attrs['networks'] || []
       end
 
       # @return [String, NilClass]
@@ -127,6 +129,7 @@ module Kontena
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
+        docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
         docker_opts
       end
 
@@ -149,7 +152,8 @@ module Kontena
           host_config['PortBindings'] = self.build_port_bindings
         end
 
-        host_config['NetworkMode'] = self.net if self.net
+        host_config['NetworkMode'] = self.net
+
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
@@ -279,6 +283,14 @@ module Kontena
           env << "#{name}=#{value}"
         end
         env
+      end
+
+      def build_networks
+        endpoints = {}
+        self.networks.each do |network|
+          endpoints[network['name']] = {}
+        end
+        {'EndpointsConfig' => endpoints}
       end
     end
   end

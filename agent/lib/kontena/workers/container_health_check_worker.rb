@@ -18,7 +18,7 @@ module Kontena::Workers
       info "starting to watch health of container #{container.name}"
     end
 
-    
+
     def start
       initial_delay = @container.labels['io.kontena.health_check.initial_delay'].to_i
       interval = @container.labels['io.kontena.health_check.interval'].to_i
@@ -30,16 +30,16 @@ module Kontena::Workers
       every(interval) do
         check_status
       end
-      
+
     end
 
     def check_status
-      
+
       uri = @container.labels['io.kontena.health_check.uri']
       timeout = @container.labels['io.kontena.health_check.timeout'].to_i
       port = @container.labels['io.kontena.health_check.port'].to_i
       protocol = @container.labels['io.kontena.health_check.protocol']
-      ip, _ = @container.overlay_cidr.split('/')
+      ip, _ = @container.overlay_ip
 
       if protocol == 'http'
         msg = check_http_status(ip, port, uri, timeout)

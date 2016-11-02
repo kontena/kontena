@@ -68,6 +68,10 @@ module Kontena
 
     def supervise_launchers
       @supervisor.supervise(
+        type: Kontena::Launchers::IpamPlugin,
+        as: :ipam_plugin_launcher
+      )
+      @supervisor.supervise(
         type: Kontena::Launchers::Cadvisor,
         as: :cadvisor_launcher
       )
@@ -131,6 +135,14 @@ module Kontena
         type: Kontena::Workers::HealthCheckWorker,
         as: :health_check_worker,
         args: [@queue]
+      )
+      @supervisor.supervise(
+        type: Kontena::Workers::ContainerStarterWorker,
+        as: :container_starter_worker
+      )
+      @supervisor.supervise(
+        type: Kontena::Workers::ContainerNetworkMigratorWorker,
+        as: :container_network_migrator
       )
     end
 

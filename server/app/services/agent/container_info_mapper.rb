@@ -122,10 +122,10 @@ module Agent
       if info['Volumes']
         attributes[:volumes] = info['Volumes'].map{|k, v| [{container: k, node: v}]}
       end
+
+      attributes['networks'] = info.dig('NetworkSettings', 'Networks')
+
       container.attributes = attributes
-      if labels['io.kontena.container.overlay_cidr'] && container.overlay_cidr.nil?
-        self.update_overlay_cidr_from_labels(container, labels)
-      end
 
       attributes
     end
@@ -138,18 +138,6 @@ module Agent
         env.delete_if { |item| item.split('=').first == secret.name }
       end
       env
-    end
-
-    # @param [Container] container
-    # @param [Hash] labels
-    # @return [OverlayCidr, NilClass]
-    def update_overlay_cidr_from_labels(container, labels)
-      ip, subnet = labels['io.kontena.container.overlay_cidr'].split('/')
-      overlay_cidr = container.grid.overlay_cidrs.where(ip: ip, subnet: subnet).first
-      if overlay_cidr
-        overlay_cidr.set(container_id: container.id, reserved_at: Time.now.utc)
-        overlay_cidr
-      end
     end
 
     ##

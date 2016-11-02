@@ -38,9 +38,9 @@ module Kontena
           end
         end
         service_config = service_pod.service_config
-        if service_pod.overlay_network
-          Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
-        end
+
+        Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
+
         service_container = create_container(service_config)
 
         if service_container.load_balanced? && service_container.instance_number == 1

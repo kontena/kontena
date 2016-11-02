@@ -10,8 +10,8 @@ describe Kontena::LoadBalancers::Registrator do
   after(:each) { Celluloid.shutdown }
 
   let(:subject) { described_class.new(false) }
-  let(:event) { spy(:event, id: 'foobar', status: 'start') }
-  let(:container) { spy(:container, id: '12345', info: {'Name' => 'test'}) }
+  let(:event) { double(:event, id: 'foobar', status: 'start') }
+  let(:container) { double(:container, id: '12345', info: {'Name' => 'test'}) }
 
   describe '#initialize' do
     it 'starts to listen container events' do
@@ -24,6 +24,7 @@ describe Kontena::LoadBalancers::Registrator do
   describe '#on_container_event' do
     it 'calls #register_container on start event' do
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
+      expect(container).to receive(:load_balanced?).and_return(true)
       expect(subject.wrapped_object).to receive(:register_container).once.with(container)
       subject.on_container_event('topic', event)
     end
@@ -60,42 +61,31 @@ describe Kontena::LoadBalancers::Registrator do
 
   describe '#register_container' do
     let(:container) {
-      spy(:container, id: '12345', json: {
-        'Name' => 'test',
-        'Config' => {
-          'Labels' => {}
-        }
-      })
+      double(:container, id: '12345', labels: {}, overlay_ip: nil)
     }
     let(:http_container) {
-      spy(:container, id: '12345', json: {
-        'Name' => 'test',
-        'Config' => {
-          'Labels' => {
-            'io.kontena.load_balancer.name' => 'lb1',
-            'io.kontena.service.name' => 'web',
-            'io.kontena.container.name' => 'web-2',
-            'io.kontena.container.overlay_cidr' => '10.81.3.24/19',
-            'io.kontena.load_balancer.internal_port' => '8080',
-            'io.kontena.load_balancer.mode' => 'http'
-          }
-        }
-      })
+      double(:container, id: '12345',
+        labels: {
+          'io.kontena.load_balancer.name' => 'lb1',
+          'io.kontena.service.name' => 'web',
+          'io.kontena.container.name' => 'web-2',
+          'io.kontena.load_balancer.internal_port' => '8080',
+          'io.kontena.load_balancer.mode' => 'http'
+        },
+        overlay_ip: '10.81.3.24',
+      )
     }
     let(:tcp_container) {
-      spy(:container, id: '12345', json: {
-        'Name' => 'test',
-        'Config' => {
-          'Labels' => {
-            'io.kontena.load_balancer.name' => 'lb1',
-            'io.kontena.service.name' => 'tcp',
-            'io.kontena.container.name' => 'tcp-2',
-            'io.kontena.container.overlay_cidr' => '10.81.3.25/19',
-            'io.kontena.load_balancer.internal_port' => '5000',
-            'io.kontena.load_balancer.mode' => 'tcd'
-          }
-        }
-      })
+      double(:container, id: '12345',
+        labels: {
+          'io.kontena.load_balancer.name' => 'lb1',
+          'io.kontena.service.name' => 'tcp',
+          'io.kontena.container.name' => 'tcp-2',
+          'io.kontena.load_balancer.internal_port' => '5000',
+          'io.kontena.load_balancer.mode' => 'tcd'
+        },
+        overlay_ip: '10.81.3.25',
+      )
     }
 
     it 'registers container ip:port to etcd' do

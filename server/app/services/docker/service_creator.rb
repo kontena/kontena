@@ -1,4 +1,3 @@
-require_relative 'overlay_cidr_allocator'
 
 module Docker
   class ServiceCreator
@@ -56,29 +55,18 @@ module Docker
       }
       spec[:env] = build_env(instance_number)
       spec[:secrets] = build_secrets
-      overlay_cidr = nil
-      if grid_service.overlay_network?
-        overlay_cidr = reserve_overlay_cidr(instance_number)
-      end
+
       labels = build_labels
-      if overlay_cidr
-        labels['io.kontena.container.overlay_cidr'] = overlay_cidr.to_s
-      end
+
       spec[:labels] = labels
       spec[:hooks] = build_hooks(instance_number)
+
+      spec[:networks] = build_networks
 
       spec
     rescue => exc
       puts exc.message
       puts exc.backtrace.join("\n")
-    end
-
-    # @param [Integer] instance_number
-    # @return [OverlayCidr]
-    def reserve_overlay_cidr(instance_number)
-      return unless grid_service.grid
-      allocator = Docker::OverlayCidrAllocator.new(grid_service.grid)
-      allocator.allocate_for_service_instance("#{grid_service.name}-#{instance_number}")
     end
 
     ##
@@ -162,6 +150,20 @@ module Docker
       hooks
     rescue => exc
       puts exc.message
+    end
+
+    # @return [Array<Hash>]
+    def build_networks
+      networks = []
+      grid_service.networks.each do |network|
+        networks << {
+          name: network.name,
+          subnet: network.subnet,
+          multicast: network.multicast,
+          internal: network.internal
+        }
+      end
+      networks
     end
 
     def service_container

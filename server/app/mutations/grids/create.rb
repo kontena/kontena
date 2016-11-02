@@ -33,19 +33,10 @@ module Grids
           add_error(key, :invalid, message)
         end
         return
-      else
-        initialize_subnet(grid)
       end
       user.grids << grid
 
       grid
-    end
-
-    def initialize_subnet(grid)
-      Celluloid::Future.new{
-        overlay_allocator = Docker::OverlayCidrAllocator.new(grid)
-        overlay_allocator.initialize_grid_subnet
-      }
     end
   end
 end

@@ -15,16 +15,9 @@ class ContainerCleanupJob
     sleep 0.1
     loop do
       if leader?
-        cleanup_reserved_overlay_cidrs
         destroy_deleted_containers
       end
       sleep 1.minute.to_i
-    end
-  end
-
-  def cleanup_reserved_overlay_cidrs
-    OverlayCidr.where(:reserved_at.ne => nil, :reserved_at.lt => 20.minutes.ago, :container_id => nil).each do |c|
-      c.set(:reserved_at => nil)
     end
   end
 

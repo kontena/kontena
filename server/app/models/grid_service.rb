@@ -43,6 +43,7 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   has_many :grid_service_deploys, dependent: :destroy
+  has_and_belongs_to_many :networks
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'

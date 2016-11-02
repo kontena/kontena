@@ -23,6 +23,11 @@ module Kontena::NetworkAdapters
     end
 
     # @return [String]
+    def weave_version
+      WEAVE_VERSION
+    end
+
+    # @return [String]
     def weave_image
       "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
     end
@@ -73,33 +78,6 @@ module Kontena::NetworkAdapters
 
     # @param [Hash] opts
     def modify_create_opts(opts)
-      ensure_weave_wait
-
-      image = Docker::Image.get(opts['Image'])
-      image_config = image.info['Config']
-      cmd = []
-      if opts['Entrypoint']
-        if opts['Entrypoint'].is_a?(Array)
-          cmd = cmd + opts['Entrypoint']
-        else
-          cmd = cmd + [opts['Entrypoint']]
-        end
-      end
-      if !opts['Entrypoint'] && image_config['Entrypoint'] && image_config['Entrypoint'].size > 0
-        cmd = cmd + image_config['Entrypoint']
-      end
-      if opts['Cmd'] && opts['Cmd'].size > 0
-        if opts['Cmd'].is_a?(Array)
-          cmd = cmd + opts['Cmd']
-        else
-          cmd = cmd + [opts['Cmd']]
-        end
-      elsif image_config['Cmd'] && image_config['Cmd'].size > 0
-        cmd = cmd + image_config['Cmd']
-      end
-      opts['Entrypoint'] = ['/w/w']
-      opts['Cmd'] = cmd
-
       modify_host_config(opts)
 
       opts
@@ -108,12 +86,11 @@ module Kontena::NetworkAdapters
     # @param [Hash] opts
     def modify_host_config(opts)
       host_config = opts['HostConfig'] || {}
-      host_config['VolumesFrom'] ||= []
-      host_config['VolumesFrom'] << "weavewait-#{WEAVE_VERSION}:ro"
       dns = interface_ip('docker0')
       if dns && host_config['NetworkMode'].to_s != 'host'
         host_config['Dns'] = [dns]
         host_config['DnsSearch'] = ['kontena.local']
+        host_config['DnsOptions'] = ['use-vc'] # tcp mode for dns lookups
       end
       opts['HostConfig'] = host_config
     end
@@ -204,8 +181,23 @@ module Kontena::NetworkAdapters
       attach_router unless interface_ip('weave')
       connect_peers(peer_ips)
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
+      post_start(info)
 
-      post_start(info) unless already_started?
+      # Start the weavemesh plugin
+      plugin = nil
+      until plugin && plugin.running? do
+        exec_params = [
+          '--local', 'launch-plugin'
+        ]
+        self.exec(exec_params)
+        plugin = Docker::Container.get('weaveplugin') rescue nil
+        wait = Time.now.to_f + 10.0
+        sleep 0.5 until (plugin && plugin.running?) || (wait < Time.now.to_f)
+
+      end
+      ensure_kontena_network
+
+      Celluloid::Notifications.publish('network_adapter:start', info) unless already_started?
 
       @started = true
       info
@@ -232,11 +224,10 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def post_start(info)
       if info['node_number']
-        weave_bridge = "10.81.0.#{info['node_number']}/19"
+        weave_bridge = "10.81.0.#{info['node_number']}/16"
         self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
         info "bridge exposed: #{weave_bridge}"
       end
-      Celluloid::Notifications.publish('network_adapter:start', info)
     end
 
     # @param [Docker::Container] weave
@@ -249,7 +240,39 @@ module Kontena::NetworkAdapters
       false
     end
 
+    def detach_network(container)
+      self.exec(['--local', 'detach', container.id])
+    end
+
     private
+
+    def ensure_kontena_network
+      kontena_network = Docker::Network.get('kontena') rescue nil
+      unless kontena_network
+        info "creating default kontena network..."
+        opts = {
+          'Driver': 'weavemesh',
+          'IPAM': {
+            'Driver': 'kontena-ipam',
+            'Config': [
+              {
+                # Need to set the subnet for the default network so we can
+                # later migrate container to it with manually set IP's
+                'Subnet': '10.81.0.0/16',
+                # Allocate container addresses on the top part so that
+                # low part is reserved for node addresses
+                'IPRange': '10.81.128.0/17'
+              }
+            ],
+            'Options': {
+              'network': 'kontena'
+            }
+          }
+        }
+        network = Docker::Network.create('kontena', opts)
+        info "..done. network id: #{network.id}"
+      end
+    end
 
     def ensure_images
       images = [
@@ -267,26 +290,5 @@ module Kontena::NetworkAdapters
       @images_exist = true
     end
 
-    def ensure_weave_wait
-      sleep 1 until images_exist?
-
-      container_name = "weavewait-#{WEAVE_VERSION}"
-      weave_wait = Docker::Container.get(container_name) rescue nil
-      unless weave_wait
-        Docker::Container.create(
-          'name' => container_name,
-          'Image' => weave_exec_image,
-          'Entrypoint' => ['/bin/false'],
-          'Labels' => {
-            'weavevolumes' => ''
-          },
-          'Volumes' => {
-            '/w' => {},
-            '/w-noop' => {},
-            '/w-nomcast' => {}
-          }
-        )
-      end
-    end
   end
 end
