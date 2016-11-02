@@ -114,7 +114,19 @@ agent:
 
 **Step 2:** Run the command `docker-compose up -d`
 
-To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine. To make Kontena overlay DNS addresses to work on host side you must add the docker0 bridge IP address into local DNS server list. If your OS is using `resolvconf` you can do it like this:
+To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine.
+
+**Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
+
+After creating nodes, you can verify that they have joined a Grid:
+
+```
+$ kontena node list
+```
+
+#### DNS setup
+
+To make Kontena overlay DNS addresses to work on host side you must add the docker0 bridge IP address into local DNS server list. If your OS is using `resolvconf` you can do it like this:
 ```
 echo nameserver 172.17.0.1 | resolvconf -a lo.kontena-docker
 ```
@@ -125,11 +137,15 @@ Replace `172.17.0.1` with your local `docker0` bridge IP address. You can find t
 ip addr show docker0
 ```
 
-
-**Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
-
-After creating nodes, you can verify that they have joined a Grid:
-
+If your system is using a local resolver you could add Kontena DNS as a forward zone.  E.g. for 'unbound' use:
 ```
-$ kontena node list
+    cat > /etc/unbound/unbound.conf.d/kontena.conf <<CONF
+server:
+  private-domain: "kontena.local"
+  domain-insecure: "kontena.local"
+
+forward-zone:
+  name: "kontena.local."
+  forward-addr: $DOCKER_GW_IP
+CONF
 ```
