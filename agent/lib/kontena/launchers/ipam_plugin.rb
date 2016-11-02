@@ -40,6 +40,14 @@ module Kontena::Launchers
       @image_pulled
     end
 
+    def running?
+      container = Docker::Container.get(IPAM_SERVICE_NAME) rescue nil
+      if container
+        return container.running?
+      end
+      false
+    end
+
     def create_container(image, info)
       sleep 1 until image_exists?
 
@@ -49,11 +57,13 @@ module Kontena::Launchers
       elsif container && container.running?
         info 'ipam-plugin is already running'
         @running = true
+        Celluloid::Notifications.publish('ipam:start', nil)
         return container
       elsif container && !container.running?
         info 'ipam-plugin container exists but not running, starting it'
         container.start
         @running = true
+        Celluloid::Notifications.publish('ipam:start', nil)
         return container
       end
 
@@ -72,6 +82,7 @@ module Kontena::Launchers
       )
       container.start
       info 'started ipam-plugin service'
+      Celluloid::Notifications.publish('ipam:start', nil)
       @running = true
       container
     end

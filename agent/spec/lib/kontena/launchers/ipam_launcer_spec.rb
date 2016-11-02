@@ -8,6 +8,28 @@ describe Kontena::Launchers::IpamPlugin do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
 
+  describe '#running?' do
+    it 'returns false when ipam container not existing' do
+      expect(Docker::Container).to receive(:get).and_return(nil)
+
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns false when ipam container not running' do
+      expect(container).to receive(:running?).and_return(false)
+      expect(Docker::Container).to receive(:get).and_return(container)
+
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns true when ipam container running' do
+      expect(container).to receive(:running?).and_return(true)
+      expect(Docker::Container).to receive(:get).and_return(container)
+
+      expect(subject.running?).to be_truthy
+    end
+  end
+
   describe '#create_container' do
 
     before do
