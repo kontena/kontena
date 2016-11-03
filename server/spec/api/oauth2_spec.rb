@@ -7,6 +7,7 @@ describe 'OAuth2 API' do
   context '/authenticate when AP not configured' do
     describe 'GET /' do
       it 'returns error when AuthProvider is not configured' do
+        expect(AuthProvider.instance).to receive(:valid?).and_return(false)
         get '/authenticate'
         expect(response.status).to eq(501)
       end
