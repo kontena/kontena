@@ -16,7 +16,7 @@ before_install:
 env:
   global:
     - secure: "mM0iv3ooqyqYsbBBNw73/88EURi5PO529E2Sm2ovy5xzL0SadOyCz4uLYmTMiIoP+pXDvmH1/XjoPxVLR2MH4shXe0VtrKFYiTEjan3X05VUyVMnfnm0Z+uMgHsBFZxl941o27N0jFY+0dcAstofprP/PF5SxKvKwcb0rCfdUYs="
-    - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA="
+    - secure: "VscHll68/TaRqUOPvpUEhxcb4t1eXXpS0GPl+gsC9wQUAkC4Vbgjhl4d3UDCi1YoqYEz5ykvzHzYvFU87Eq9zvkdPn2AHWLkJhOEnEzKh/CpyC+Yk+iWKLt+1E1CyJZLUylroCxERPxlLdZKdv0+3Jh18NviDh86mKzGriUoXNM="
   matrix:
     - TEST_DIR=agent
     - TEST_DIR=cli
