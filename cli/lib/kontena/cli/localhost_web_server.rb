@@ -82,8 +82,9 @@ module Kontena
         server.close
         uri = URI.parse("http://localhost#{get_request}")
         ENV["DEBUG"] && puts("  * Parsing params: \"#{uri.query}\"")
-        params = URI.decode_www_form(uri.query).to_h.reject{|_,v| v.to_s == ''}
-        params.map{|k,v| v = (v =~ /\A\d+\z$/ ? v.to_i : v); [k,v]}.to_h
+        params = Hash[*URI.decode_www_form(uri.query).flatten(1)].reject{|_,v| v.to_s == ''}
+        params.map{|k,v| v = (v =~ /\A\d+\z$/ ? v.to_i : v); [k,v]}
+        params = Hash[*params.flatten(1)]
       else
         # Unless it's a query to /cb, send an error message and keep listening,
         # it might have been something funny like fetching favicon.ico
