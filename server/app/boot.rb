@@ -17,7 +17,7 @@ require 'msgpack'
 require 'tilt/jbuilder.rb'
 require 'mongoid/enum'
 
-Dir[__dir__ + '/initializers/*.rb'].each {|file| require file }
+Dir[__dir__ + '/initializers/*.rb'].sort.each {|file| require file }
 
 Dir[__dir__ + '/authorizers/*.rb'].each {|file| require file }
 
