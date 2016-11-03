@@ -15,18 +15,15 @@ module Kontena::Workers
     end
 
     def network_started(topic, data)
-      debug 'network_started'
       @network_started = true
       ensure_default_network
     end
 
     def ipam_started(topic, data)
-      debug 'ipam_started'
       @ipam_started = true
       ensure_default_network
     end
 
-    
     def create_network(name, driver, ipam_driver, subnet, ip_range = nil)
       opts = {
         'Driver': driver,

@@ -34,6 +34,8 @@ module Kontena::Launchers
 
     def start(info)
       create_container(@image_name, info)
+      sleep 1 until running?
+      Celluloid::Notifications.publish('ipam:start', nil)
     end
 
     def image_exists?
@@ -82,7 +84,6 @@ module Kontena::Launchers
       )
       container.start
       info 'started ipam-plugin service'
-      Celluloid::Notifications.publish('ipam:start', nil)
       @running = true
       container
     end
