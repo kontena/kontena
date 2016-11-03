@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.16.2](https://github.com/kontena/kontena/releases/tag/v0.16.2) (2016-11-03)
+
+**Master & Agents:**
+
+- sort initializers while loading, load symmetric-encryption before seed (#1280, #1277)
+
+**CLI:**
+
+- remove use of to_h for ruby 2.0 compatibility (#1267, #1266)
+- fix master list command if current master not set (#1268)
+
 ## [0.16.1](https://github.com/kontena/kontena/releases/tag/v0.16.1) (2016-10-31)
 
 **Master & Agents:**
