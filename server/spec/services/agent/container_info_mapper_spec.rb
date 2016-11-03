@@ -144,4 +144,39 @@ describe Agent::ContainerInfoMapper do
       )
     end
   end
+
+  describe '#parse_networks' do
+    let(:docker_data) do
+      {
+        "kontena" => {
+            "IPAMConfig" => nil,
+            "Links" => nil,
+            "Aliases" => [
+                "e8c0e459f3b5"
+            ],
+            "NetworkID" => "157e6b330cd70dda02259b166dadba76dfdf9a0ef3da687bfdc5a24c15ae2bd0",
+            "EndpointID" => "6b92a960eb0560545bce26a366fd36ae02e393c588e6cb64299c5a0904a2eb1c",
+            "Gateway" => "",
+            "IPAddress" => "10.81.128.76",
+            "IPPrefixLen" => 16,
+            "IPv6Gateway" => "",
+            "GlobalIPv6Address" => "",
+            "GlobalIPv6PrefixLen" => 0,
+            "MacAddress" => "72:03:d0:8c:6f:fc"
+        }
+      }
+    end
+
+    it 'parses networks correctly' do
+      res = subject.parse_networks(docker_data)
+      expect(res).to eq({
+          "kontena" => {
+              ip_address: "10.81.128.76",
+              ip_prefix_len: 16,
+              mac_address: "72:03:d0:8c:6f:fc"
+          }
+        })
+    end
+
+  end
 end

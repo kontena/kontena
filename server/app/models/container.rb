@@ -58,7 +58,7 @@ class Container
     ip = nil
     if self.networks
       name, network = self.networks.first
-      ip = network.dig('IPAddress') if network
+      ip = network.dig('ip_address') if network
     end
     ip
   end
