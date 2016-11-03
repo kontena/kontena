@@ -17,17 +17,16 @@ require 'msgpack'
 require 'tilt/jbuilder.rb'
 require 'mongoid/enum'
 
-Dir[__dir__ + '/initializers/*.rb'].sort.each {|file| require file }
+def require_glob(glob)
+  Dir.glob(glob).sort.each do |path|
+    require path
+  end
+end
 
-Dir[__dir__ + '/authorizers/*.rb'].each {|file| require file }
-
-Dir[__dir__ + '/models/*.rb'].each {|file| require file }
-
-Dir[__dir__ + '/helpers/*.rb'].each {|file| require file }
-
-Dir[__dir__ + '/mutations/**/*.rb'].each {|file| require file }
-
-Dir[__dir__ + '/jobs/**/*.rb'].each {|file| require file }
-
-Dir[__dir__ + '/services/**/*.rb'].each {|file| require file }
-
+require_glob __dir__ + '/initializers/*.rb'
+require_glob __dir__ + '/authorizers/*.rb'
+require_glob __dir__ + '/models/*.rb'
+require_glob __dir__ + '/helpers/*.rb'
+require_glob __dir__ + '/mutations/**/*.rb'
+require_glob __dir__ + '/jobs/**/*.rb'
+require_glob __dir__ + '/services/**/*.rb'
