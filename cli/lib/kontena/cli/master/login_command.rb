@@ -304,7 +304,7 @@ module Kontena::Cli::Master
         if name_match && name_match.url
           return name_match
         else
-          exit_with_error "Master #{name} was found from config, but it does not have a url and no url was provided on command line"
+          exit_with_error "Master #{name} was found from config, but it does not have an URL and no URL was provided on command line"
         end
       elsif url
         # only url provided
@@ -320,7 +320,7 @@ module Kontena::Cli::Master
           name_match = config.find_server(url)
           if name_match
             unless name_match.url
-              exit_with_error "Master #{url} was found from config, but it does not have a url and no url was provided on command line"
+              exit_with_error "Master #{url} was found from config, but it does not have an URL and no URL was provided on command line"
             end
             return name_match
           else
