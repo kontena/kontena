@@ -138,6 +138,13 @@ module Kontena::NetworkAdapters
           error exc.message
           return false
         end
+
+        if (status_code = response["StatusCode"]) == 0
+          debug "weaveexec ok: #{cmd}"
+        else
+          logs = container.streaming_logs(stdout: true, stderr: true)
+          error "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
+        end
         response
       ensure
         container.delete(force: true, v: true) if container
