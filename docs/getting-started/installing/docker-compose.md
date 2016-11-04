@@ -71,7 +71,7 @@ cat certificate.crt privateKey.key > cert.pem
 
 **Step 2:** Run the command `docker-compose up -d`
 
-After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) how to login with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
+After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) for how to login with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
 
 ## Installing Kontena Nodes
 
@@ -109,7 +109,7 @@ agent:
 ```
 
 - `KONTENA_URI` is the uri to Kontena Master (use ws:// for a non-tls connection)
-- `KONTENA_TOKEN` is the grid token, which can be acquired from master using the `kontena grid show --token my-grid` command
+- `KONTENA_TOKEN` is the grid token, which can be acquired from the master using the `kontena grid show --token my-grid` command
 - `KONTENA_PEER_INTERFACE` is the network interface that is used to connect the other nodes in the grid.
 
 **Step 2:** Run the command `docker-compose up -d`
