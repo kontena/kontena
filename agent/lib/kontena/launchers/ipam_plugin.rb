@@ -16,7 +16,7 @@ module Kontena::Launchers
       @running = false
       @image_pulled = false
       @image_name = "#{IPAM_IMAGE}:#{IPAM_VERSION}"
-      subscribe('agent:node_info', :on_node_info)
+      subscribe('network_adapter:start', :on_network_start)
       info 'initialized'
       async.ensure_image if autostart
     end
@@ -27,14 +27,17 @@ module Kontena::Launchers
       info "ipam image pulled: #{@image_name}"
     end
 
-    def on_node_info(topic, info)
+    def on_network_start(topic, info)
       info "node info received, launching ipam..."
       async.start(info)
     end
 
     def start(info)
       create_container(@image_name, info)
-      sleep 1 until running?
+      loop do
+        sleep 1
+        break if running?
+      end
       Celluloid::Notifications.publish('ipam:start', nil)
     end
 
@@ -59,13 +62,11 @@ module Kontena::Launchers
       elsif container && container.running?
         info 'ipam-plugin is already running'
         @running = true
-        Celluloid::Notifications.publish('ipam:start', nil)
         return container
       elsif container && !container.running?
         info 'ipam-plugin container exists but not running, starting it'
         container.start
         @running = true
-        Celluloid::Notifications.publish('ipam:start', nil)
         return container
       end
 
@@ -73,6 +74,7 @@ module Kontena::Launchers
         'name' => IPAM_SERVICE_NAME,
         'Image' => image,
         'Volumes' => volume_mappings,
+        'StopSignal' => 'SIGTTIN',
         'Env' => [
           "NODE_ID=#{info['node_number']}"
         ],
