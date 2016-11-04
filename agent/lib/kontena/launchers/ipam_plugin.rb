@@ -28,7 +28,7 @@ module Kontena::Launchers
     end
 
     def on_network_start(topic, info)
-      info "node info received, launching ipam..."
+      info "network started, launching ipam..."
       async.start(info)
     end
 

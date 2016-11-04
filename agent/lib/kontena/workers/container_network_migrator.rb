@@ -16,7 +16,7 @@ module Kontena::Workers
     end
 
     def on_weave_start(topic, data)
-      info 'weave started, check if containers need to be migrated'
+      info 'network ready, check if containers need to be migrated'
       self.start
     end
 
