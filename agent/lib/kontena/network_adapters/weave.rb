@@ -110,7 +110,8 @@ module Kontena::NetworkAdapters
           },
           'Env' => [
             'HOST_ROOT=/host',
-            "VERSION=#{WEAVE_VERSION}"
+            "VERSION=#{WEAVE_VERSION}",
+            "WEAVE_DEBUG=#{ENV['WEAVE_DEBUG']}",
           ],
           'HostConfig' => {
             'Privileged' => true,
