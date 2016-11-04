@@ -126,11 +126,11 @@ $ kontena node list
 
 #### DNS setup
 
-To make Kontena overlay DNS addresses to work on host side you must add the docker0 bridge IP address into local DNS server list. If your OS is using `resolvconf` you can do it like this:
+To make Kontena overlay DNS addresses to work on the host side you must add the docker0 bridge IP address into the local DNS server list. If your OS is using `resolvconf` you can do it like this:
 ```
 echo nameserver 172.17.0.1 | resolvconf -a lo.kontena-docker
 ```
-Refer to your OS distribution documentation how to setup DNS servers.
+Refer to your OS distribution documentation on how to setup DNS servers.
 
 Replace `172.17.0.1` with your local `docker0` bridge IP address. You can find that for example with:
 ```
