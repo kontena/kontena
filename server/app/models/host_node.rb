@@ -150,7 +150,7 @@ class HostNode
       node_number = free_numbers.shift
       raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
       self.update_attribute(:node_number, node_number)
-    rescue Moped::Errors::OperationFailure => exc
+    rescue Mongo::Error::OperationFailure => exc
       retry
     end
   end

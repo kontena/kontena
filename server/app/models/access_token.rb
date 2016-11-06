@@ -19,7 +19,7 @@ class AccessToken
   field :deleted_at, type: BSON::Timestamp, default: nil
   field :token_last_four, type: String
   field :refresh_token_last_four, type: String
-  
+
   # set to false when storing tokens to external services
   field :internal, type: Boolean, default: true
 
@@ -73,8 +73,6 @@ class AccessToken
     #
     # Returns the marked access token or nil
     #
-    # TODO find_and_modify is deprecated in mongoid 5
-    #
     # @param [String] refresh_token
     # @return [AccessToken] access_token
     def find_internal_by_refresh_token(refresh_token)
@@ -82,7 +80,7 @@ class AccessToken
         refresh_token: self.digest(refresh_token),
         deleted_at: nil,
         internal: true
-      ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
+      ).find_one_and_update({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless old_token
       return nil if old_token.expired?
@@ -104,14 +102,14 @@ class AccessToken
         token: self.digest(access_token),
         deleted_at: nil,
         internal: true
-      ).find_and_modify({ '$set' => { updated_at: Time.now.utc } })
+      ).find_one_and_update({ '$set' => { updated_at: Time.now.utc } })
     end
-   
+
     # Since we don't know the original saved tokens, we just delete the old one and generate a duplicate with the same scope + user
     #
     # TODO consider hashing codes.
     def find_internal_by_code(code)
-      coded_token = AccessToken.where(code: code, deleted_at: nil).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
+      coded_token = AccessToken.where(code: code, deleted_at: nil).find_one_and_update({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless coded_token
 
@@ -149,7 +147,7 @@ class AccessToken
     !self[:code].nil?
   end
 
-  # Converts the access token to uri encoded format usable in 
+  # Converts the access token to uri encoded format usable in
   # redirects and as a x-www-form-encoded body response.
   #
   # If uri is not defined, just the parameters will be returned,

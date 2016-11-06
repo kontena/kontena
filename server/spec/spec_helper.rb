@@ -61,7 +61,7 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     MongoPubsub.start!(PubsubChannel.collection)
-    sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
+    sleep 0.1 until Mongoid.default_client.database.collection_names.include?(PubsubChannel.collection.name)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end
 
@@ -70,9 +70,9 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do
-    Mongoid.default_session.collections.each do |collection|
+    Mongoid.default_client.database.collections.each do |collection|
       unless collection.name.include?('system.')
-        collection.find.remove_all unless collection.capped?
+        collection.find.delete_many unless collection.capped?
       end
     end
   end

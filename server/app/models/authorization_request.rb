@@ -40,7 +40,7 @@ class AuthorizationRequest
 
   class << self
     def find_and_invalidate(state)
-      ar = AuthorizationRequest.where(state: digest(state), deleted_at: nil).find_and_modify(
+      ar = AuthorizationRequest.where(state: digest(state), deleted_at: nil).find_one_and_update(
         { '$set' => { deleted_at: Time.now.utc } }
       )
       if ar
