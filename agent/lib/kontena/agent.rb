@@ -144,6 +144,10 @@ module Kontena
         type: Kontena::Workers::ContainerNetworkMigratorWorker,
         as: :container_network_migrator
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::NetworkCreateWorker,
+        as: :network_create_worker
+      )
     end
 
     def supervise_lb

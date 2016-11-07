@@ -14,11 +14,11 @@ module Kontena::Workers
 
     def initialize
       info 'initialized'
-      subscribe('network_adapter:start', :on_overlay_start)
+      subscribe('network:ready', :on_overlay_start)
     end
 
     def on_overlay_start(topic, data)
-      info 'weave started, check if some containers need to be started'
+      info 'network ready, check if some containers need to be started'
       self.start
     end
 

@@ -11,7 +11,7 @@ describe Kontena::Workers::ContainerStarterWorker do
   describe '#initialize' do
     it 'subscribes to network_adapter:start event' do
       expect(subject.wrapped_object).to receive(:on_overlay_start)
-      Celluloid::Notifications.publish('network_adapter:start', {})
+      Celluloid::Notifications.publish('network:ready', {})
       sleep 0.1
     end
   end

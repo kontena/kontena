@@ -69,7 +69,7 @@ module Kontena::Workers
           add_dns(container.id, ip, name)
         end
       else
-        warn "did not find ip for container: #{container.name}"
+        debug "did not find ip for container: #{container.name}"
       end
     rescue Docker::Error::NotFoundError
 

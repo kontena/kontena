@@ -195,8 +195,6 @@ module Kontena::NetworkAdapters
         sleep 0.5 until (plugin && plugin.running?) || (wait < Time.now.to_f)
 
       end
-      ensure_kontena_network
-
       Celluloid::Notifications.publish('network_adapter:start', info) unless already_started?
 
       @started = true
@@ -245,34 +243,6 @@ module Kontena::NetworkAdapters
     end
 
     private
-
-    def ensure_kontena_network
-      kontena_network = Docker::Network.get('kontena') rescue nil
-      unless kontena_network
-        info "creating default kontena network..."
-        opts = {
-          'Driver': 'weavemesh',
-          'IPAM': {
-            'Driver': 'kontena-ipam',
-            'Config': [
-              {
-                # Need to set the subnet for the default network so we can
-                # later migrate container to it with manually set IP's
-                'Subnet': '10.81.0.0/16',
-                # Allocate container addresses on the top part so that
-                # low part is reserved for node addresses
-                'IPRange': '10.81.128.0/17'
-              }
-            ],
-            'Options': {
-              'network': 'kontena'
-            }
-          }
-        }
-        network = Docker::Network.create('kontena', opts)
-        info "..done. network id: #{network.id}"
-      end
-    end
 
     def ensure_images
       images = [

@@ -39,7 +39,7 @@ module Docker
 
     # @return [Boolean]
     def running?
-      self.state['Running']
+      self.state['Running'] && !self.state['Restarting']
     rescue
       false
     end
