@@ -39,7 +39,7 @@ module Kontena::Workers
       container = Docker::Container.get(event.id)
       if container
         self.publish_info(container)
-        self.notify_coroner(container) if container.dead?
+        self.notify_coroner(container) if container.suspiously_dead?
       end
     rescue Docker::Error::NotFoundError
       self.publish_destroy_event(event)

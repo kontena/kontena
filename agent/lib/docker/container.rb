@@ -52,6 +52,20 @@ module Docker
     end
 
     # @return [Boolean]
+    def dead?
+      self.state['Dead']
+    rescue
+      false
+    end
+
+    # @return [Boolean]
+    def suspiously_dead?
+      self.state['Dead'] && self.state['ExitCode'].to_i == 137
+    rescue
+      false
+    end
+
+    # @return [Boolean]
     def service_container?
       self.labels['io.kontena.container.type'] == 'container'
     rescue

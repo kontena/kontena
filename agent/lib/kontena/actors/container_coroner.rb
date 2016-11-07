@@ -11,10 +11,17 @@ module Kontena::Actors
     end
 
     def start
+      @started = Time.now.to_i
       info "starting to investigate #{@container.name}"
       every(5) {
-        investigate
+        if @started >= (Time.now.to_i - 300) # 5 minutes
+          investigate
+        else
+          self.terminate
+        end
       }
+    rescue Docker::Error::NotFoundError
+      self.terminate
     end
 
     def investigate
@@ -27,7 +34,7 @@ module Kontena::Actors
     def confirm
       info "container #{@container.name} has gone"
       event = Docker::Event.new(
-        'destroy'.freeze, @container.id, '', Time.now.utc
+        'destroy'.freeze, @container.id, '', Time.now.utc.to_s
       )
       event_worker.publish_event(event)
       self.terminate
