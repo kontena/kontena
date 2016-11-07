@@ -2,11 +2,6 @@ require 'clamp'
 
 class Kontena::Command < Clamp::Command
 
-  option '--version', :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
-    puts Kontena::Cli::VERSION
-    exit 0
-  end
-
   option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
     ENV['DEBUG'] = 'true'
   end
