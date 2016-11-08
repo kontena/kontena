@@ -28,7 +28,7 @@ module Kontena::Workers
       opts = {
         'Driver': driver,
         'IPAM': {
-          'Driver': ipam_driver,
+          #'Driver': ipam_driver,
           'Config': [
             {
               'Subnet': subnet
@@ -48,10 +48,22 @@ module Kontena::Workers
     def ensure_default_network
       if @network_started && @ipam_started
         info 'network and ipam ready, ensuring default network existence'
-        kontena_network = Docker::Network.get('kontena') rescue nil
+        kontena_network = nil
+        retries = 0
+        begin
+          kontena_network = Docker::Network.get('kontena')
+        rescue => exc
+          if retries < 5
+            sleep 1
+            retries -= 1
+            retry
+          end
+          error "error getting default network: #{exc.message}"
+        end
+
         unless kontena_network
           info "creating default kontena network..."
-          network = create_network('kontena', 'weavemesh', 'kontena-ipam', '10.81.0.0/16', '10.81.128.0/17')
+          network = create_network('kontena', 'weave', 'kontena-ipam', '10.81.0.0/16', '10.81.128.0/17')
           info "..done. network id: #{network.id}"
         end
         Celluloid::Notifications.publish('network:ready', nil)
