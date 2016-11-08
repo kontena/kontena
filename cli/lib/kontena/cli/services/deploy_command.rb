@@ -15,7 +15,7 @@ module Kontena::Cli::Services
       token = require_token
       service_id = name
       data = {}
-      data[:force] = true if force_deploy?
+      data[:force] = true if force? || force_deploy? # deprecated
       if force_deploy?
         print "[WARNING]".colorize(:yellow)
         puts "--force-deploy will deprecate in the future, use --force"
