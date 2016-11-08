@@ -7,7 +7,8 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     parameter "NAME", "Service name"
-    option '--force-deploy', :flag, 'Force deploy even if service does not have any changes'
+    option '--force', :flag, 'Force deploy even if service does not have any changes'
+    option '--force-deploy', :flag, '[DEPRECATED: use --force]'
 
     def execute
       require_api_url
