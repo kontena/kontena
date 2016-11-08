@@ -16,6 +16,10 @@ module Kontena::Cli::Services
       service_id = name
       data = {}
       data[:force] = true if force_deploy?
+      if force_deploy?
+        print "[WARNING]".colorize(:yellow)
+        puts "--force-deploy will deprecate in the future, use --force"
+      end
       spinner "Deploying service #{name.colorize(:cyan)} " do
         deploy_service(token, name, data)
         wait_for_deploy_to_finish(token, parse_service_id(name))
