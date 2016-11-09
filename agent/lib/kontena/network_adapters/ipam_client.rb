@@ -1,6 +1,12 @@
 require 'excon'
 
 module Kontena::NetworkAdapters
+
+  class IpamError < StandardError
+
+  end
+
+
   class IpamClient
     include Kontena::Logging
 
@@ -15,9 +21,12 @@ module Kontena::NetworkAdapters
     def activate
       @connection.post(:path => '/Plugin.Activate')
       true
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error.response)
     end
 
     def reserve_pool(name, subnet = nil, iprange = nil)
+      debug "reserving pool #{name} with subnet #{subnet} and iprange #{iprange}"
       data = {
         'Pool' => subnet,
         'SubPool' => iprange,
@@ -27,9 +36,10 @@ module Kontena::NetworkAdapters
         }
       }.to_json
 
-      response = @connection.post(:path => '/IpamDriver.RequestPool', :body => data, :headers => HEADERS)
+      response = @connection.post(:path => '/IpamDriver.RequestPool', :body => data, :headers => HEADERS, :expects => [200, 201])
 
-      # TODO Verify status and raise if needed
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error.response)
     end
 
     def reserve_address(network, address = nil)
@@ -40,9 +50,11 @@ module Kontena::NetworkAdapters
         'Address' => address
       }.to_json
 
-      response = @connection.post(:path => '/IpamDriver.RequestAddress', :body => data, :headers => HEADERS)
+      response = @connection.post(:path => '/IpamDriver.RequestAddress', :body => data, :headers => HEADERS, :expects => [200, 201])
       debug "response: #{response.status}/#{response.body}"
       JSON.parse(response.body)['Address']
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error.response)
     end
 
     def release_address(network, address)
@@ -52,15 +64,35 @@ module Kontena::NetworkAdapters
         'Address' => address
       }.to_json
 
-      response = @connection.post(:path => '/IpamDriver.ReleaseAddress', :body => data, :headers => HEADERS)
+      response = @connection.post(:path => '/IpamDriver.ReleaseAddress', :body => data, :headers => HEADERS, :expects => [200, 201])
       debug "response: #{response.status}/#{response.body}"
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error.response)
     end
 
     def release_pool(network)
+      debug "releasing pool #{network}"
       data = {
         'PoolID' => network
       }
-      response = @connection.post(:path => '/IpamDriver.ReleaseAddress', :body => data, :headers => HEADERS)
+      response = @connection.post(:path => '/IpamDriver.ReleaseAddress', :body => data, :headers => HEADERS, :expects => [200, 201])
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error.response)
+    end
+
+    private
+
+    # @param [Excon::Response] response
+    def handle_error_response(response)
+      data = parse_response(response)
+
+      if data.is_a?(Hash) && data.has_key?('error')
+        raise const_get(:IpamError).new(response.status, data['error'])
+      elsif data.is_a?(String) && !data.empty?
+        raise const_get(:IpamError).new(response.status, data)
+      else
+        raise const_get(:IpamError).new(response.status, response.reason_phrase)
+      end
     end
   end
 
