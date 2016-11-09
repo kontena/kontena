@@ -9,8 +9,8 @@ module Kontena::Workers
     def initialize
       @network_started = false
       @ipam_started = false
-      subscribe('network_adapter:start', :network_started)
-      subscribe('ipam:start', :ipam_started)
+      #subscribe('network_adapter:start', :network_started)
+      #subscribe('ipam:start', :ipam_started)
       info 'initialized'
     end
 
@@ -21,6 +21,7 @@ module Kontena::Workers
 
     def ipam_started(topic, data)
       @ipam_started = true
+      @ipam_client = IpamClient.new
       ensure_default_network
     end
 
@@ -46,16 +47,8 @@ module Kontena::Workers
     private
 
     def ensure_default_network
-      if @network_started && @ipam_started
-        info 'network and ipam ready, ensuring default network existence'
-        kontena_network = Docker::Network.get('kontena') rescue nil
-        unless kontena_network
-          info "creating default kontena network..."
-          network = create_network('kontena', 'weavemesh', 'kontena-ipam', '10.81.0.0/16', '10.81.128.0/17')
-          info "..done. network id: #{network.id}"
-        end
-        Celluloid::Notifications.publish('network:ready', nil)
-      end
+      info 'network and ipam ready, ensuring default network existence'
+      @ipam_client.reserve_pool('kontena', '10.81.0.0/16', '10.81.128.0/17')
     end
   end
 end

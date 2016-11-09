@@ -14,11 +14,15 @@ module Kontena::NetworkAdapters
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
+    DEFAULT_NETWORK = 'kontena'.freeze
+
     def initialize(autostart = true)
       @images_exist = false
       @started = false
+
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
+      subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
     end
 
@@ -78,7 +82,41 @@ module Kontena::NetworkAdapters
 
     # @param [Hash] opts
     def modify_create_opts(opts)
+      ensure_weave_wait
+
+      image = Docker::Image.get(opts['Image'])
+      image_config = image.info['Config']
+      cmd = []
+      if opts['Entrypoint']
+        if opts['Entrypoint'].is_a?(Array)
+          cmd = cmd + opts['Entrypoint']
+        else
+          cmd = cmd + [opts['Entrypoint']]
+        end
+      end
+      if !opts['Entrypoint'] && image_config['Entrypoint'] && image_config['Entrypoint'].size > 0
+        cmd = cmd + image_config['Entrypoint']
+      end
+      if opts['Cmd'] && opts['Cmd'].size > 0
+        if opts['Cmd'].is_a?(Array)
+          cmd = cmd + opts['Cmd']
+        else
+          cmd = cmd + [opts['Cmd']]
+        end
+      elsif image_config['Cmd'] && image_config['Cmd'].size > 0
+        cmd = cmd + image_config['Cmd']
+      end
+      opts['Entrypoint'] = ['/w/w']
+      opts['Cmd'] = cmd
+
       modify_host_config(opts)
+      opts
+    end
+
+    # @param [Hash] opts
+    def modify_network_opts(opts)
+      opts['Labels']['io.kontena.container.overlay_cidr'] = @ipam_client.reserve_address('kontena')
+      opts['Labels']['io.kontena.container.overlay_network'] = 'kontena'
 
       opts
     end
@@ -86,6 +124,8 @@ module Kontena::NetworkAdapters
     # @param [Hash] opts
     def modify_host_config(opts)
       host_config = opts['HostConfig'] || {}
+      host_config['VolumesFrom'] ||= []
+      host_config['VolumesFrom'] << "weavewait-#{WEAVE_VERSION}:ro"
       dns = interface_ip('docker0')
       if dns && host_config['NetworkMode'].to_s != 'host'
         host_config['Dns'] = [dns]
@@ -156,6 +196,18 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def on_node_info(topic, info)
       async.start(info)
+    end
+
+    def on_ipam_start(topic, data)
+      @ipam_client = IpamClient.new
+      sleep 1 until @ipam_client.activate rescue nil
+      ensure_default_pool
+      Celluloid::Notifications.publish('network:ready', nil)
+    end
+
+    def ensure_default_pool()
+      info 'network and ipam ready, ensuring default network existence'
+      @ipam_client.reserve_pool('kontena', '10.81.0.0/16', '10.81.128.0/17')
     end
 
     # @param [Hash] info
@@ -246,8 +298,15 @@ module Kontena::NetworkAdapters
       false
     end
 
-    def detach_network(container)
-      self.exec(['--local', 'detach', container.id])
+    def detach_network(event)
+      debug "detaching weave network for container #{event.id}"
+      debug event.Actor.attributes
+      overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
+      overlay_network = event.Actor.attributes['io.kontena.container.overlay_network']
+      if overlay_cidr
+        self.exec(['--local', 'detach', event.id])
+        @ipam_client.release_address(overlay_network, overlay_cidr)
+      end
     end
 
     private
@@ -266,6 +325,29 @@ module Kontena::NetworkAdapters
         end
       end
       @images_exist = true
+    end
+
+
+    def ensure_weave_wait
+      sleep 1 until images_exist?
+
+      container_name = "weavewait-#{WEAVE_VERSION}"
+      weave_wait = Docker::Container.get(container_name) rescue nil
+      unless weave_wait
+        Docker::Container.create(
+          'name' => container_name,
+          'Image' => weave_exec_image,
+          'Entrypoint' => ['/bin/false'],
+          'Labels' => {
+            'weavevolumes' => ''
+          },
+          'Volumes' => {
+            '/w' => {},
+            '/w-noop' => {},
+            '/w-nomcast' => {}
+          }
+        )
+      end
     end
 
   end

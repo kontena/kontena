@@ -39,7 +39,9 @@ module Kontena
         end
         service_config = service_pod.service_config
 
+        debug service_config
         Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
+        Celluloid::Actor[:network_adapter].modify_network_opts(service_config) unless service_pod.net == 'host'
 
         service_container = create_container(service_config)
 

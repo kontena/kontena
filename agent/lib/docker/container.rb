@@ -138,7 +138,7 @@ module Docker
     #
     # @return [String, NilClass]
     def overlay_ip
-      network_ip('kontena')
+      overlay_cidr.split('/')[0]
     end
 
     # Container CIDR address within the overlay network.
@@ -146,7 +146,7 @@ module Docker
     #
     # @return [String, NilClass]
     def overlay_cidr
-      network_cidr('kontena')
+      self.labels['io.kontena.container.overlay_cidr']
     end
 
     private

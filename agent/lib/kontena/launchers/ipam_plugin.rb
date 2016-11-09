@@ -75,8 +75,10 @@ module Kontena::Launchers
         'Image' => image,
         'Volumes' => volume_mappings,
         'StopSignal' => 'SIGTTIN',
+        'Cmd' => ["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
         'Env' => [
-          "NODE_ID=#{info['node_number']}"
+          "NODE_ID=#{info['node_number']}",
+          "LOG_LEVEL=#{ENV['LOG_LEVEL'] || 1}"
         ],
         'HostConfig' => {
           'NetworkMode' => 'host',

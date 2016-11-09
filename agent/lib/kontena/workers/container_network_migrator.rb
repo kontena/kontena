@@ -11,8 +11,8 @@ module Kontena::Workers
 
     def initialize(autostart = true)
       info 'initialized'
-      subscribe('network:ready', :on_weave_start)
-      async.migrate_weavewait if autostart
+      #subscribe('network:ready', :on_weave_start)
+      #async.migrate_weavewait if autostart
     end
 
     def on_weave_start(topic, data)
