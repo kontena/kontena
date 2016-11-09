@@ -123,11 +123,19 @@ module Agent
         attributes[:volumes] = info['Volumes'].map{|k, v| [{container: k, node: v}]}
       end
 
-      attributes['networks'] = info.dig('NetworkSettings', 'Networks')
+      attributes['networks'] = self.parse_networks(info)
 
       container.attributes = attributes
 
       attributes
+    end
+
+    def parse_networks(info)
+      networks = {}
+      network = info.dig('Config', 'Labels', 'io.kontena.container.overlay_network')
+      overlay_cidr = info.dig('Config', 'Labels', 'io.kontena.container.overlay_cidr')
+      networks[network] = overlay_cidr if network && overlay_cidr
+      networks
     end
 
     # @param [GridService] grid_service
