@@ -298,6 +298,20 @@ describe '/v1/services' do
   end
 
   describe 'DELETE /:id' do
+    it 'returns error hash on error' do
+      outcome = double
+      allow(outcome).to receive(:success?).and_return(false)
+      errors = double
+      allow(errors).to receive(:message).and_return({ service: "Cannot delete service because it's currently being deployed"})
+      allow(outcome).to receive(:errors).and_return(errors)
+      expect(GridServices::Delete).to receive(:run)
+        .with(current_user: david, grid_service: redis_service)
+        .and_return(outcome)
+      delete "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response).to eq({ 'error' => { 'service' => "Cannot delete service because it's currently being deployed" }})
+    end
+
     it 'removes service' do
       expect(GridServices::Delete).to receive(:run)
         .with(current_user: david, grid_service: redis_service)

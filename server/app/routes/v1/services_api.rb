@@ -169,8 +169,7 @@ module V1
               audit_event(r, @grid_service.grid, @grid_service, 'delete', @grid_service)
               {}
             else
-              response.status = 422
-              outcome.errors.message
+              halt_request(422, { error: outcome.errors.message })
             end
           end
         end
