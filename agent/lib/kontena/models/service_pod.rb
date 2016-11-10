@@ -280,13 +280,6 @@ module Kontena
         env
       end
 
-      def build_networks
-        endpoints = {}
-        self.networks.each do |network|
-          endpoints[network['name']] = {}
-        end
-        {'EndpointsConfig' => endpoints}
-      end
     end
   end
 end

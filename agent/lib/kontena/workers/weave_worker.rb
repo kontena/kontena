@@ -84,15 +84,5 @@ module Kontena::Workers
       error exc.backtrace.join("\n")
     end
 
-    # @param [Docker::Event] event
-    def weave_detach(event)
-      remove_dns(event.id)
-      Actor[:network_adapter].detach_network(event)
-    rescue Docker::Error::NotFoundError
-
-    rescue => exc
-      error exc.message
-      error exc.backtrace.join("\n")
-    end
   end
 end

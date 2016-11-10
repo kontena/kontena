@@ -130,6 +130,7 @@ module Kontena::NetworkAdapters
       if dns && host_config['NetworkMode'].to_s != 'host'
         host_config['Dns'] = [dns]
         host_config['DnsSearch'] = ['kontena.local']
+        # TODO Do we still need TCP mode for plain weave networking?
         host_config['DnsOptions'] = ['use-vc'] # tcp mode for dns lookups
       end
       opts['HostConfig'] = host_config

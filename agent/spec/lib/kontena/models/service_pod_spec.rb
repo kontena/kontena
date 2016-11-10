@@ -9,8 +9,7 @@ describe Kontena::Models::ServicePod do
       'deploy_rev' => Time.now.utc.to_s,
       'updated_at' => Time.now.utc.to_s,
       'labels' => {
-        'io.kontena.service.name' => 'redis-cache',
-        'io.kontena.container.overlay_cidr' => '10.81.23.2/19'
+        'io.kontena.service.name' => 'redis-cache'
       },
       'stateful' => true,
       'image_name' => 'redis:3.0',
@@ -40,24 +39,14 @@ describe Kontena::Models::ServicePod do
 
   let(:subject) { described_class.new(data) }
 
-  describe '#overlay_network' do
-    it 'returns overlay network information from labels' do
-      expect(subject.overlay_network).to eq(data['labels']['io.kontena.container.overlay_cidr'])
-    end
-
-    it 'returns nil if overlay network information is not provided' do
-      data['labels'] = {}
-      expect(subject.overlay_network).to be_nil
-    end
-  end
 
   describe '#can_expose_ports?' do
     it 'returns true if overlay network is defined' do
       expect(subject.can_expose_ports?).to be_truthy
     end
 
-    it 'returns false if overlay network is not provided' do
-      data['labels'] = {}
+    it 'returns false if net==host' do
+      data['net'] = 'host'
       expect(subject.can_expose_ports?).to be_falsey
     end
   end
@@ -211,10 +200,6 @@ describe Kontena::Models::ServicePod do
       expect(service_config['HostConfig']).not_to be_nil
     end
 
-    it 'includes networks' do
-      data['networks'] = [{'name' => 'kontena'}]
-      expect(service_config['NetworkingConfig']['EndpointsConfig']['kontena']).not_to be_nil
-    end
   end
 
   describe '#service_host_config' do
