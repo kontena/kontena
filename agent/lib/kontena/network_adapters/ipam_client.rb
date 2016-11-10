@@ -38,7 +38,7 @@ module Kontena::NetworkAdapters
       }.to_json
 
       response = @connection.post(:path => '/IpamDriver.RequestPool', :body => data, :headers => HEADERS, :expects => [200, 201])
-
+      JSON.parse(response.body)
     rescue Excon::Errors::HTTPStatusError => error
       handle_error_response(error.response)
     end

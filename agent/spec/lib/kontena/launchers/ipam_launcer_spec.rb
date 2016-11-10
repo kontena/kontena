@@ -70,7 +70,9 @@ describe Kontena::Launchers::IpamPlugin do
         'name' => 'kontena-ipam-plugin',
         'Image' => 'kontena/docker-ipam-plugin:latest',
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
-        'Env' => ['NODE_ID=1'],
+        "StopSignal"=>"SIGTTIN",
+        "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
+        'Env' => ['NODE_ID=1', "LOG_LEVEL=1"],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -90,7 +92,9 @@ describe Kontena::Launchers::IpamPlugin do
         'name' => 'kontena-ipam-plugin',
         'Image' => 'kontena/docker-ipam-plugin:latest',
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
-        'Env' => ['NODE_ID=1'],
+        "StopSignal"=>"SIGTTIN",
+        "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
+        'Env' => ['NODE_ID=1', "LOG_LEVEL=1"],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},

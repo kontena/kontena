@@ -154,6 +154,8 @@ module Kontena::NetworkAdapters
       opts['HostConfig'] = host_config
     end
 
+    
+
     # @param [Array<String>] cmd
     def exec(cmd)
       begin
@@ -231,7 +233,7 @@ module Kontena::NetworkAdapters
 
     def ensure_default_pool()
       info 'network and ipam ready, ensuring default network existence'
-      @ipam_client.reserve_pool('kontena', '10.81.0.0/16', '10.81.128.0/17')
+      @default_pool = @ipam_client.reserve_pool('kontena', '10.81.0.0/16', '10.81.128.0/17')
     end
 
     # @param [Hash] info
