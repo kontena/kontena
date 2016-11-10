@@ -19,12 +19,13 @@ module Kontena::NetworkAdapters
     def initialize(autostart = true)
       @images_exist = false
       @started = false
+      @ipam_running = false
 
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
       subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
-      async.cleanup_ipam if autostart
+      #async.cleanup_ipam if autostart
     end
 
     # @return [String]
@@ -68,7 +69,11 @@ module Kontena::NetworkAdapters
     def running?
       weave = Docker::Container.get('weave') rescue nil
       return false if weave.nil?
-      weave.running?
+      weave.running? && ipam_running?
+    end
+
+    def ipam_running?
+      @ipam_running
     end
 
     # @return [Boolean]
@@ -154,7 +159,7 @@ module Kontena::NetworkAdapters
       opts['HostConfig'] = host_config
     end
 
-    
+
 
     # @param [Array<String>] cmd
     def exec(cmd)
@@ -229,6 +234,7 @@ module Kontena::NetworkAdapters
       end
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
+      @ipam_running = true
     end
 
     def ensure_default_pool()
@@ -325,11 +331,10 @@ module Kontena::NetworkAdapters
     end
 
     def detach_network(event)
-      debug "detaching weave network for container #{event.id}"
-      debug event.Actor.attributes
       overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
       overlay_network = event.Actor.attributes['io.kontena.container.overlay_network']
       if overlay_cidr
+        debug "detaching weave network for container #{event.id}"
         self.exec(['--local', 'detach', event.id])
         @ipam_client.release_address(overlay_network, overlay_cidr)
       end

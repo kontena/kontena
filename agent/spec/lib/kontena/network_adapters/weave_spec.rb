@@ -26,14 +26,22 @@ describe Kontena::NetworkAdapters::Weave do
   end
 
   describe '#running?' do
-    it 'returns true if weave is running' do
+    it 'returns true if weave and ipam is running' do
       weave = spy(:weave, :running? => true)
+      expect(subject.wrapped_object).to receive(:ipam_running?).and_return(true)
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.running?).to be_truthy
     end
 
     it 'returns false if weave is not running' do
       weave = spy(:weave, :running? => false)
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns false if weave is running but ipam not running' do
+      weave = spy(:weave, :running? => true)
+      expect(subject.wrapped_object).to receive(:ipam_running?).and_return(false)
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.running?).to be_falsey
     end
