@@ -24,6 +24,7 @@ module Kontena::NetworkAdapters
       subscribe('agent:node_info', :on_node_info)
       subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
+      async.cleanup_ipam if autostart
     end
 
     # @return [String]
@@ -78,6 +79,23 @@ module Kontena::NetworkAdapters
     # @return [Boolean]
     def already_started?
       @started == true
+    end
+
+    def cleanup_ipam
+      loop do
+        sleep 60 * 3 # 3mins
+        debug "starting ipam cleanup process"
+        ipam_container = Docker::Container.get('kontena-ipam-plugin') rescue nil
+        if ipam_container
+          local_addresses = []
+          Docker::Container.all(all: true).each do |container|
+            local_addresses << container.overlay_cidr
+          end
+          cmd = ['/app/bin/kontena-ipam-cleanup'] + local_addresses.compact
+          debug "executing cleanup with command: #{cmd}"
+          ipam_container.exec(cmd) { |stream, chunk| debug "#{stream}: #{chunk}" }
+        end
+      end
     end
 
     # @param [Hash] opts
@@ -201,7 +219,12 @@ module Kontena::NetworkAdapters
 
     def on_ipam_start(topic, data)
       @ipam_client = IpamClient.new
-      sleep 1 until @ipam_client.activate rescue nil
+      loop do
+        sleep 1
+        ipam_ready = @ipam_client.activate rescue nil
+        debug "ipam_status: #{ipam_ready}"
+        break if ipam_ready
+      end
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
     end

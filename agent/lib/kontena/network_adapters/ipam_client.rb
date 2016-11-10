@@ -19,9 +19,10 @@ module Kontena::NetworkAdapters
     end
 
     def activate
-      @connection.post(:path => '/Plugin.Activate')
-      true
+      response = @connection.post(:path => '/Plugin.Activate', :headers => HEADERS, :expects => [200])
+      JSON.parse(response.body)
     rescue Excon::Errors::HTTPStatusError => error
+      warn "activate failed: #{error}"
       handle_error_response(error.response)
     end
 
@@ -84,6 +85,7 @@ module Kontena::NetworkAdapters
 
     # @param [Excon::Response] response
     def handle_error_response(response)
+      debug "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}"
       data = parse_response(response)
 
       if data.is_a?(Hash) && data.has_key?('error')
