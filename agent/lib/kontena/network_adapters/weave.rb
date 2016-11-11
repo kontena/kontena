@@ -133,7 +133,8 @@ module Kontena::NetworkAdapters
           },
           'Env' => [
             'HOST_ROOT=/host',
-            "VERSION=#{WEAVE_VERSION}"
+            "VERSION=#{WEAVE_VERSION}",
+            "WEAVE_DEBUG=#{ENV['WEAVE_DEBUG']}",
           ],
           'HostConfig' => {
             'Privileged' => true,
@@ -160,6 +161,13 @@ module Kontena::NetworkAdapters
 
           error exc.message
           return false
+        end
+
+        if (status_code = response["StatusCode"]) == 0
+          debug "weaveexec ok: #{cmd}"
+        else
+          logs = container.streaming_logs(stdout: true, stderr: true)
+          error "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
         end
         response
       ensure
