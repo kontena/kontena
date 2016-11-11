@@ -1,6 +1,6 @@
 module V1
 
-  Dir[File.expand_path('../v1/*.rb', __FILE__)].each { |f| require f }
+  require_glob File.expand_path('../v1/*.rb', __FILE__)
 
   class Api < Roda
     route do |r|

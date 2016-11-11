@@ -86,4 +86,4 @@ RSpec.configure do |config|
   end
 end
 
-Dir[__dir__ + '/support/*.rb'].each {|file| require file }
+require_glob __dir__ + '/support/*.rb'
