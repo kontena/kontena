@@ -8,7 +8,7 @@ module V1
 
     plugin :multi_route
 
-    Dir[File.join(__dir__, '/users/*.rb')].each{|f| require f}
+    require_glob File.join(__dir__, '/users/*.rb')
 
     route do |r|
       r.on ':username' do |username|

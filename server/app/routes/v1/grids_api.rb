@@ -12,7 +12,7 @@ module V1
     plugin :multi_route
     plugin :streaming
 
-    Dir[File.join(__dir__, '/grids/*.rb')].each{|f| require f}
+    require_glob File.join(__dir__, '/grids/*.rb')
 
     route do |r|
 

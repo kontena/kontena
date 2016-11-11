@@ -1,5 +1,5 @@
-Dir[__dir__ + '/scheduler/**/*.rb'].each {|file| require file }
-Dir[__dir__ + '/docker/*.rb'].each {|file| require file }
+require_glob __dir__ + '/scheduler/**/*.rb'
+require_glob __dir__ + '/docker/*.rb'
 
 class GridServiceScheduler
 

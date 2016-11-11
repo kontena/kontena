@@ -6,8 +6,8 @@ require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/token_authentication'
 require_relative 'app/helpers/config_helper'
 
-Dir[__dir__ + '/app/routes/*.rb'].each {|file| require file }
-Dir[__dir__ + '/app/routes/**/*.rb'].each {|file| require file }
+require_glob __dir__ + '/app/routes/*.rb'
+require_glob __dir__ + '/app/routes/**/*.rb'
 
 Logger.class_eval { alias :write :'<<' }
 
