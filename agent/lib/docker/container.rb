@@ -3,6 +3,8 @@ require 'docker'
 module Docker
   class Container
 
+    SUSPICIOUS_EXIT_CODES = [137]
+
     def name
       cached_json['Name']
     end
@@ -59,8 +61,8 @@ module Docker
     end
 
     # @return [Boolean]
-    def suspiously_dead?
-      self.state['Dead'] && self.state['ExitCode'].to_i == 137
+    def suspiciously_dead?
+      self.state['Dead'] && SUSPICIOUS_EXIT_CODES.include?(self.state['ExitCode'].to_i)
     rescue
       false
     end

@@ -3,6 +3,9 @@ module Kontena::Actors
     include Celluloid
     include Kontena::Logging
 
+    INVESTIGATION_TIME = (5 * 60)
+    INVESTIGATION_PERIOD = 5
+
     # @param [Docker::Container]
     # @param [Boolean] autostart
     def initialize(container, autostart = true)
@@ -13,8 +16,8 @@ module Kontena::Actors
     def start
       @started = Time.now.to_i
       info "starting to investigate #{@container.name}"
-      every(5) {
-        if @started >= (Time.now.to_i - 300) # 5 minutes
+      every(INVESTIGATION_PERIOD) {
+        if @started >= (Time.now.to_i - INVESTIGATION_TIME)
           investigate
         else
           self.terminate

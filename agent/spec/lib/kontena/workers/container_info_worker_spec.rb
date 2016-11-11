@@ -56,7 +56,7 @@ describe Kontena::Workers::ContainerInfoWorker do
 
     it 'notifies coroner if container is dead' do
       event = double(:event, status: 'die', id: 'foo')
-      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiously_dead? => true)
+      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => true)
       allow(Docker::Container).to receive(:get).once.and_return(container)
       expect(subject.wrapped_object).to receive(:notify_coroner).with(container)
       subject.on_container_event('topic', event)
@@ -64,7 +64,7 @@ describe Kontena::Workers::ContainerInfoWorker do
 
     it 'does not notify coroner if container is alive' do
       event = double(:event, status: 'start', id: 'foo')
-      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiously_dead? => false)
+      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => false)
       allow(Docker::Container).to receive(:get).once.and_return(container)
       expect(subject.wrapped_object).not_to receive(:notify_coroner).with(container)
       subject.on_container_event('topic', event)
