@@ -17,6 +17,6 @@ task :environment do
   require 'tilt/jbuilder.rb'
 
   Dir[__dir__ + '/../../models/*.rb'].each {|file| require file }
-  require_relative '../../app/initializers/mongoid'
+  require_relative '../../app/initializers/00_mongoid'
 
 end
