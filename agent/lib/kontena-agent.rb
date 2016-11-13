@@ -30,6 +30,8 @@ require_relative 'kontena/workers/image_cleanup_worker'
 require_relative 'kontena/workers/image_pull_worker'
 require_relative 'kontena/workers/health_check_worker'
 
+require_relative 'kontena/actors/container_coroner'
+
 require_relative 'kontena/load_balancers/configurer'
 require_relative 'kontena/load_balancers/registrator'
 
