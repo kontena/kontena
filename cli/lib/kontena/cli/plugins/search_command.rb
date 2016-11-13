@@ -1,5 +1,8 @@
+require_relative 'common'
+
 module Kontena::Cli::Plugins
   class SearchCommand < Kontena::Command
+    include Common
 
     parameter '[NAME]', 'Search text'
 
@@ -8,8 +11,7 @@ module Kontena::Cli::Plugins
       exit_with_error("Cannot access plugin server") unless results
       puts "%-50s %-10s %-60s" % ['NAME', 'VERSION', 'DESCRIPTION']
       results.each do |item|
-        name = item['name'].sub('kontena-plugin-', '')
-        puts "%-50s %-10s %-60s" % [name, item['version'], item['info']]
+        puts "%-50s %-10s %-60s" % [short_name(item['name']), item['version'], item['info']]
       end
     end
 
