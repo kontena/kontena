@@ -123,7 +123,10 @@ module Agent
         attributes[:volumes] = info['Volumes'].map{|k, v| [{container: k, node: v}]}
       end
 
-      attributes['networks'] = info.dig('NetworkSettings', 'Networks')
+      if info.dig('NetworkSettings', 'Networks')
+          attributes['networks'] = self.parse_networks(info.dig('NetworkSettings', 'Networks'))
+      end
+
 
       container.attributes = attributes
 
@@ -138,6 +141,18 @@ module Agent
         env.delete_if { |item| item.split('=').first == secret.name }
       end
       env
+    end
+
+    def parse_networks(networks)
+      nw = {}
+      networks.each { |name, value|
+        nw[name] = {
+            ip_address: value['IPAddress'],
+            ip_prefix_len: value['IPPrefixLen'],
+            mac_address: value['MacAddress']
+        }
+      }
+      nw
     end
 
     ##
