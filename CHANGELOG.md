@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.16.3](https://github.com/kontena/kontena/releases/tag/v0.16.3) (2016-11-15)
+
+**Master & Agents:**
+
+- fix environment rake task (#1311)
+- watch & notify when dead containers are gone (#1289)
+- fix external registry validation (#1310)
+- return correct error json when service remove fails (#1302)
+- log weaveexec errors (#1286)
+- fix all requires to use deterministic ordering across different systems (#1282)
+
 ## [0.16.2](https://github.com/kontena/kontena/releases/tag/v0.16.2) (2016-11-03)
 
 **Master & Agents:**
