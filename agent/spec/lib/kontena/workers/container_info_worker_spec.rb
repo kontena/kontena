@@ -53,6 +53,22 @@ describe Kontena::Workers::ContainerInfoWorker do
       expect(subject.wrapped_object.logger).to receive(:error).twice
       subject.on_container_event('topic', event)
     end
+
+    it 'notifies coroner if container is dead' do
+      event = double(:event, status: 'die', id: 'foo')
+      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => true)
+      allow(Docker::Container).to receive(:get).once.and_return(container)
+      expect(subject.wrapped_object).to receive(:notify_coroner).with(container)
+      subject.on_container_event('topic', event)
+    end
+
+    it 'does not notify coroner if container is alive' do
+      event = double(:event, status: 'start', id: 'foo')
+      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => false)
+      allow(Docker::Container).to receive(:get).once.and_return(container)
+      expect(subject.wrapped_object).not_to receive(:notify_coroner).with(container)
+      subject.on_container_event('topic', event)
+    end
   end
 
   describe '#publish_info' do
@@ -77,6 +93,17 @@ describe Kontena::Workers::ContainerInfoWorker do
       expect(queue.length).to eq(1)
       item = queue.pop
       expect(item).to eq(valid_event)
+    end
+  end
+
+  describe '#notify_coroner' do
+    let(:container) do
+      double(:container, id: 'dead-id', name: '/dead')
+    end
+
+    it 'creates a coroner actor' do
+      coroner = subject.notify_coroner(container)
+      expect(coroner).to be_an_instance_of(Kontena::Actors::ContainerCoroner)
     end
   end
 end

@@ -65,4 +65,25 @@ describe Docker::Container do
       expect(subject.load_balanced?).to be_falsey
     end
   end
+
+  describe '#suspiciously_dead?' do
+    it 'returns false if not dead' do
+      allow(subject).to receive(:state).and_return({'Dead' => false})
+      expect(subject.suspiciously_dead?).to be_falsey
+    end
+
+    it 'returns false if dead but non-suspicious exit code' do
+      allow(subject).to receive(:state).and_return({
+        'Dead' => true, 'ExitCode' => -1
+      })
+      expect(subject.suspiciously_dead?).to be_falsey
+    end
+
+    it 'returns true if suspiciously dead' do
+      allow(subject).to receive(:state).and_return({
+        'Dead' => true, 'ExitCode' => Docker::Container::SUSPICIOUS_EXIT_CODES[0]
+      })
+      expect(subject.suspiciously_dead?).to be_truthy
+    end
+  end
 end
