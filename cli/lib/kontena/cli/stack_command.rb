@@ -7,6 +7,9 @@ require_relative 'stacks/show_command'
 require_relative 'stacks/build_command'
 require_relative 'stacks/monitor_command'
 require_relative 'stacks/logs_command'
+require_relative 'stacks/push_command'
+require_relative 'stacks/pull_command'
+require_relative 'stacks/search_command'
 
 class Kontena::Cli::StackCommand < Kontena::Command
 
@@ -19,8 +22,11 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand "logs", "Show stack logs from stack services", Kontena::Cli::Stacks::LogsCommand
   subcommand "monitor", "Monitor stack", Kontena::Cli::Stacks::MonitorCommand
   subcommand ["remove","rm"], "Remove stack", Kontena::Cli::Stacks::RemoveCommand
-
+  subcommand "push", "Push a stack to stacks repository", Kontena::Cli::Stacks::PushCommand
+  subcommand ["pull", "get"], "Pull a stack from stacks repository", Kontena::Cli::Stacks::PullCommand
+  subcommand "install", "Deploy a stack from a file or repository to Kontena Master", Kontena::Cli::Stacks::InstallCommand
+  subcommand "search", "Search a stack from stacks repository", Kontena::Cli::Stacks::SearchCommand
+  
   def execute
-
   end
 end

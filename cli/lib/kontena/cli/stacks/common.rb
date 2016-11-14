@@ -2,6 +2,7 @@ require 'yaml'
 require_relative 'yaml/reader'
 require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
+require_relative '../../stacks_client'
 
 module Kontena::Cli::Stacks
   module Common
@@ -97,6 +98,46 @@ module Kontena::Cli::Stacks
       STDERR.puts "YAML validation failed! Aborting.".colorize(:red)
       display_notifications(errors, :red)
       abort
+    end
+
+    def valid_addons(prefix=nil)
+      if prefix
+        prefix = "#{prefix}-"
+      end
+
+      {
+          'openredis' => {
+              'image' => 'redis:latest',
+              'environment' => ["REDIS_URL=redis://#{prefix}openredis:6379"]
+          },
+          'redis' => {
+              'image' => 'redis:latest',
+              'environment' => ["REDIS_URL=redis://#{prefix}redis:6379"]
+          },
+          'rediscloud' => {
+              'image' => 'redis:latest',
+              'environment' => ["REDISCLOUD_URL=redis://#{prefix}rediscloud:6379"]
+          },
+          'postgresql' => {
+              'image' => 'postgres:latest',
+              'environment' => ["DATABASE_URL=postgres://#{prefix}postgres:@postgresql:5432/postgres"]
+          },
+          'mongolab' => {
+              'image' => 'mongo:latest',
+              'environment' => ["MONGOLAB_URI=#{prefix}mongolab:27017"]
+          },
+          'memcachedcloud' => {
+              'image' => 'memcached:latest',
+              'environment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
+          }
+      }
+    end
+
+    def stacks_client
+      return @stacks_client if @stacks_client
+      Kontena.run('cloud login') unless cloud_auth?
+      config.reset_instance
+      @stacks_client = Kontena::StacksClient.new(kontena_account.stacks_url, kontena_account.token)
     end
   end
 end

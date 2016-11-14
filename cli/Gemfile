@@ -9,4 +9,5 @@ group :development, :test do
   gem 'pry', require: false
   gem 'pry-byebug', require: false
   gem 'webmock', require: false
+  gem 'opto', github: 'kontena/opto'
 end

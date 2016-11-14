@@ -6,15 +6,14 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master
 
-      list_stacks(token)
+    def execute
+      list_stacks
     end
 
-    def list_stacks(token)
-      response = client(token).get("grids/#{current_grid}/stacks")
+    def list_stacks
+      response = client.get("grids/#{current_grid}/stacks")
 
       titles = ['NAME', 'VERSION', 'SERVICES', 'STATE', 'EXPOSED PORTS']
       puts "%-60s %-10s %-10s %-10s %-50s" % titles
