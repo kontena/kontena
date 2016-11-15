@@ -57,7 +57,7 @@ class Container
   def ip_address
     ip = nil
     unless self.networks.empty?
-      overlay_cidr = self.networks.first[1]
+      overlay_cidr = self.networks.first[1]['overlay_cidr']
       ip = overlay_cidr.split('/')[0] if overlay_cidr
     end
     ip

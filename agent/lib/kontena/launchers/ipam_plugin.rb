@@ -34,9 +34,8 @@ module Kontena::Launchers
 
     def start(info)
       create_container(@image_name, info)
-      loop do
+      while !running?
         sleep 1
-        break if running?
       end
       Celluloid::Notifications.publish('ipam:start', nil)
     end
@@ -48,9 +47,14 @@ module Kontena::Launchers
     def running?
       container = Docker::Container.get(IPAM_SERVICE_NAME) rescue nil
       if container
-        return container.running?
+        return container.running? && api_ready?
       end
       false
+    end
+
+    def api_ready?
+      ipam_client = Kontena::NetworkAdapters::IpamClient.new
+      ipam_client.activate rescue nil
     end
 
     def create_container(image, info)

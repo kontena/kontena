@@ -134,7 +134,7 @@ module Agent
       networks = {}
       network = info.dig('Config', 'Labels', 'io.kontena.container.overlay_network')
       overlay_cidr = info.dig('Config', 'Labels', 'io.kontena.container.overlay_cidr')
-      networks[network] = overlay_cidr if network && overlay_cidr
+      networks[network] = { 'overlay_cidr' => overlay_cidr } if network && overlay_cidr
       networks
     end
 

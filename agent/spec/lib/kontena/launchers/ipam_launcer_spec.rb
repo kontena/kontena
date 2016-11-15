@@ -22,8 +22,17 @@ describe Kontena::Launchers::IpamPlugin do
       expect(subject.running?).to be_falsey
     end
 
-    it 'returns true when ipam container running' do
+    it 'returns false when ipam container running but api not ready' do
       expect(container).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:api_ready?).and_return(false)
+      expect(Docker::Container).to receive(:get).and_return(container)
+
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns true when ipam container and api running' do
+      expect(container).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:api_ready?).and_return(true)
       expect(Docker::Container).to receive(:get).and_return(container)
 
       expect(subject.running?).to be_truthy

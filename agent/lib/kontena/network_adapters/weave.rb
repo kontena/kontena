@@ -224,12 +224,6 @@ module Kontena::NetworkAdapters
 
     def on_ipam_start(topic, data)
       @ipam_client = IpamClient.new
-      loop do
-        sleep 1
-        ipam_ready = @ipam_client.activate rescue nil
-        debug "ipam_status: #{ipam_ready}"
-        break if ipam_ready
-      end
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
       @ipam_running = true
