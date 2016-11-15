@@ -18,7 +18,7 @@ module Kontena::Cli::Nodes
       cmd = ['ssh']
       cmd << "-i #{identity_file}" if identity_file
       if internal_ip?
-        ip = "10.81.0.#{node['node_number']}"
+        ip = node['overlay_ip']
       elsif private_ip?
         ip = node['private_ip']
       else
