@@ -127,7 +127,6 @@ describe Kontena::NetworkAdapters::Weave do
       opts = {}
       subject.modify_host_config(opts)
       expect(opts['HostConfig']['Dns']).to include(bridge_ip)
-      expect(opts['HostConfig']['DnsOptions']).to include('use-vc')
     end
 
     it 'does not add dns settings when NetworkMode=host' do
