@@ -267,18 +267,6 @@ module Kontena::NetworkAdapters
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
       post_start(info)
 
-      # Start the weavemesh plugin
-      plugin = nil
-      until plugin && plugin.running? do
-        exec_params = [
-          '--local', 'launch-plugin'
-        ]
-        self.exec(exec_params)
-        plugin = Docker::Container.get('weaveplugin') rescue nil
-        wait = Time.now.to_f + 10.0
-        sleep 0.5 until (plugin && plugin.running?) || (wait < Time.now.to_f)
-
-      end
       Celluloid::Notifications.publish('network_adapter:start', info) unless already_started?
 
       @started = true
@@ -326,8 +314,7 @@ module Kontena::NetworkAdapters
       overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
       overlay_network = event.Actor.attributes['io.kontena.container.overlay_network']
       if overlay_cidr
-        debug "detaching weave network for container #{event.id}"
-        self.exec(['--local', 'detach', event.id])
+        debug "releasing weave network address for container #{event.id}"
         @ipam_client.release_address(overlay_network, overlay_cidr)
       end
     end
