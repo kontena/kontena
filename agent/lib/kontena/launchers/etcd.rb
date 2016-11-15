@@ -88,7 +88,7 @@ module Kontena::Launchers
       cluster_size = info['grid']['initial_size']
       node_number = info['node_number']
       cluster_state = 'new'
-      weave_ip = weave_ip(info['node_number'])
+      weave_ip = info['overlay_ip']
 
       container = Docker::Container.get('kontena-etcd') rescue nil
       if container && container.info['Config']['Image'] != image
@@ -112,11 +112,12 @@ module Kontena::Launchers
       name = "node-#{info['node_number']}"
       grid_name = info['grid']['name']
       docker_ip = docker_gateway
+      initial_cluster = initial_cluster(info['grid'])
 
       cmd = [
         '--name', name, '--data-dir', '/var/lib/etcd',
         '--listen-client-urls', "http://127.0.0.1:2379,http://#{weave_ip}:2379,http://#{docker_ip}:2379",
-        '--initial-cluster', initial_cluster(cluster_size).join(',')
+        '--initial-cluster', initial_cluster.join(',')
       ]
       if node_number <= cluster_size
         cmd = cmd + [
@@ -132,7 +133,7 @@ module Kontena::Launchers
         cmd = cmd + ['--proxy', 'on']
         info "starting etcd service as a proxy"
       end
-      info "cluster members: #{initial_cluster(cluster_size).join(',')}"
+      info "cluster members: #{initial_cluster.join(',')}"
 
       container = Docker::Container.create(
         'name' => 'kontena-etcd',
@@ -161,7 +162,7 @@ module Kontena::Launchers
       etcd_connection = find_etcd_node(info)
       return 'new' unless etcd_connection # No etcd hosts available, bootstrapping first node --> new cluster
 
-      weave_ip = weave_ip(info['node_number'])
+      weave_ip = info['overlay_ip']
       peer_url = "http://#{weave_ip}:2380"
       client_url = "http://#{weave_ip}:2379"
 
@@ -193,9 +194,10 @@ module Kontena::Launchers
     # @param [Hash] node info
     # @return [Hash] The cluster members as given by etcd API
     def find_etcd_node(info)
+      grid_subnet = IPAddr.new(info['grid']['subnet'])
       tries = info['grid']['initial_size']
       begin
-        etcd_host = "http://10.81.0.#{tries}:2379/v2/members"
+        etcd_host = "http://#{grid_subnet[tries]}:2379/v2/members"
 
         info "connecting to existing etcd at #{etcd_host}"
         connection = Excon.new(etcd_host)
@@ -242,13 +244,11 @@ module Kontena::Launchers
 
     # @param [Integer] cluster_size
     # @return [Array<String>]
-    def initial_cluster(cluster_size)
-      initial_cluster = []
-      cluster_size.times do |i|
-        node = i + 1
-        initial_cluster << "node-#{node}=http://10.81.0.#{node}:2380"
-      end
-      initial_cluster
+    def initial_cluster(grid_info)
+      grid_subnet = IPAddr.new(grid_info['subnet'])
+      (1..grid_info['initial_size']).map { |i|
+        "node-#{i}=http://#{grid_subnet[i]}:2380"
+      }
     end
 
     ##
@@ -257,12 +257,6 @@ module Kontena::Launchers
       interface_ip('docker0')
     end
 
-    ##
-    # @param [Hash] node info
-    # @return [String] weave network ip of the node
-    def weave_ip(node_number)
-      "10.81.0.#{node_number}"
-    end
     # @param [Exception] exc
     def log_error(exc)
       error "#{exc.class.name}: #{exc.message}"
