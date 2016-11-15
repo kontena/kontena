@@ -71,7 +71,8 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     end
 
     it 'restarts container when unhealthy' do
-      expect(Kontena::ServicePods::Restarter).to receive(:perform_async)
+      expect(Kontena::ServicePods::Restarter).to receive(:perform_async).with('foo')
+      expect(container).to receive(:labels).and_return({'io.kontena.container.name' => 'foo'})
       expect {
         subject.handle_action({data: {'status' => 'unhealthy'}})
       }.to change {queue.size}.by (1)
