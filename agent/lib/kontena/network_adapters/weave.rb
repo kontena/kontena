@@ -177,8 +177,8 @@ module Kontena::NetworkAdapters
       start(info)
     end
 
-    def on_ipam_start(topic, data)
-      ensure_default_pool
+    def on_ipam_start(topic, info)
+      ensure_default_pool(info['grid'])
       Celluloid::Notifications.publish('network:ready', nil)
     end
 
@@ -206,9 +206,13 @@ module Kontena::NetworkAdapters
       end
     end
 
-    def ensure_default_pool()
-      info 'network and ipam ready, ensuring default network existence'
-      @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, '10.81.0.0/16', '10.81.128.0/17')
+    def ensure_default_pool(grid_info)
+      grid_subnet = IPAddr.new(grid_info['subnet'])
+
+      lower, upper = grid_subnet.split
+
+      info "network and ipam ready, ensuring default network with subnet=#{grid_subnet.to_cidr} iprange=#{upper.to_cidr}"
+      @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, grid_subnet.to_cidr, upper.to_cidr)
     end
 
     # @param [Hash] info
@@ -275,8 +279,13 @@ module Kontena::NetworkAdapters
 
     # @param [Hash] info
     def post_start(info)
-      if info['node_number']
-        ensure_exposed("10.81.0.#{info['node_number']}/16")
+      grid_subnet = IPAddr.new(info['grid']['subnet'])
+      overlay_ip = info['overlay_ip']
+
+      if grid_subnet && overlay_ip
+        weave_cidr = "#{overlay_ip}/#{grid_subnet.prefixlen}"
+
+        ensure_exposed(weave_cidr)
       end
     end
 

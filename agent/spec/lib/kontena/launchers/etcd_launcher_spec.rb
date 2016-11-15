@@ -133,9 +133,11 @@ describe Kontena::Launchers::Etcd do
       expect(container).to receive(:delete)
       node_info = {
         'node_number' => 1,
+        'overlay_ip' => '10.81.0.1',
         'grid' => {
           'initial_size' => 3,
-          'name' => 'some_grid'
+          'name' => 'some_grid',
+          'subnet' => '10.81.0.0/16',
         }
       }
       expected_cmd = [
@@ -173,9 +175,11 @@ describe Kontena::Launchers::Etcd do
       expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
       node_info = {
         'node_number' => 1,
+        'overlay_ip' => '10.81.0.1',
         'grid' => {
           'initial_size' => 3,
-          'name' => 'some_grid'
+          'name' => 'some_grid',
+          'subnet' => '10.81.0.0/16',
         }
       }
       expected_cmd = [
@@ -214,9 +218,11 @@ describe Kontena::Launchers::Etcd do
       expect(container).to receive(:delete)
       node_info = {
         'node_number' => 2,
+        'overlay_ip' => '10.81.0.2',
         'grid' => {
           'initial_size' => 1,
-          'name' => 'some_grid'
+          'name' => 'some_grid',
+          'subnet' => '10.81.0.0/16',
         }
       }
       expected_cmd = [
@@ -269,8 +275,10 @@ describe Kontena::Launchers::Etcd do
       expect(excon).to receive(:get).exactly(3).times
       node_info = {
         'node_number' => 1,
+        'overlay_ip' => '10.81.0.1',
         'grid' => {
-          'initial_size' => 3
+          'initial_size' => 3,
+          'subnet' => '10.81.0.0/16',
         }
       }
 
@@ -286,8 +294,10 @@ describe Kontena::Launchers::Etcd do
       allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
       node_info = {
         'node_number' => 1,
+        'overlay_ip' => '10.81.0.1',
         'grid' => {
-          'initial_size' => 3
+          'initial_size' => 3,
+          'subnet' => '10.81.0.0/16',
         }
       }
 
@@ -308,8 +318,10 @@ describe Kontena::Launchers::Etcd do
 
       node_info = {
         'node_number' => 1,
+        'overlay_ip' => '10.81.0.1',
         'grid' => {
-          'initial_size' => 3
+          'initial_size' => 3,
+          'subnet' => '10.81.0.0/16',
         }
       }
       expect(subject.update_membership(node_info)).to eq('existing')
@@ -326,8 +338,10 @@ describe Kontena::Launchers::Etcd do
 
       node_info = {
         'node_number' => 1,
+        'overlay_ip' => '10.81.0.1',
         'grid' => {
-          'initial_size' => 3
+          'initial_size' => 3,
+          'subnet' => '10.81.0.0/16',
         }
       }
       expect(subject.update_membership(node_info)).to eq('new')
@@ -343,8 +357,10 @@ describe Kontena::Launchers::Etcd do
       expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.3:2380')
       node_info = {
         'node_number' => 3,
+        'overlay_ip' => '10.81.0.3',
         'grid' => {
-          'initial_size' => 3
+          'initial_size' => 3,
+          'subnet' => '10.81.0.0/16',
         }
       }
       expect(subject.update_membership(node_info)).to eq('new')
