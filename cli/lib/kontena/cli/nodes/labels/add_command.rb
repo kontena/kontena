@@ -3,16 +3,15 @@ module Kontena::Cli::Nodes::Labels
     include Kontena::Cli::Common
 
     parameter "NODE_ID", "Node id"
-    parameter "LABEL", "Label"
+    parameter "LABEL ...", "Labels"
+
+    requires_current_master
+    requires_current_master_token
+    requires_current_grid
 
     def execute
-      require_api_url
-      require_current_grid
-      token = require_token
-
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
-      data = {}
-      data[:labels] = node['labels'].to_a | [label]
+      node = client.get("grids/#{current_grid}/nodes/#{node_id}")
+      data = { labels: (Array(node['labels']) + label_list).uniq }
       client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
     end
   end
