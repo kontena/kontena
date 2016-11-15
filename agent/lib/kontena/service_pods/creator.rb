@@ -42,7 +42,6 @@ module Kontena
         end
         service_config = service_pod.service_config
 
-        debug service_config
         Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
         Celluloid::Actor[:network_adapter].modify_network_opts(service_config) unless service_pod.net == 'host'
         debug "creating container: #{service_pod.name}"
@@ -189,8 +188,8 @@ module Kontena
       # @return [Boolean]
       def recreate_service_container?(service_container)
         state = service_container.state
-        service_container.restart_policy['Name'] == 'unless-stopped' &&
-            state['Running'] == false &&
+        service_container.autostart? &&
+            !service_container.running? &&
             (!state['Error'].empty? || state['ExitCode'].to_i != 0)
       end
 
