@@ -14,9 +14,6 @@ module Kontena::Cli::Stacks
     def stack_from_yaml(filename)
       set_env_variables(service_prefix, current_grid)
       outcome = read_yaml(filename)
-      if outcome[:version] != '2'
-        exit_with_error "Stack supported only in v2 YAML! Aborting."
-      end
       if outcome[:name].nil?
         exit_with_error "Stack MUST have name in YAML! Aborting."
       end
