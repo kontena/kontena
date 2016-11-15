@@ -72,7 +72,9 @@ module V1
               name: data['name'],
               initial_size: data['initial_size'] || 1,
               token: data['token'],
-              default_affinity: data['default_affinity']
+              default_affinity: data['default_affinity'],
+              subnet: data['subnet'],
+              supernet: data['supernet'],
           )
 
           if outcome.success?

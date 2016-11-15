@@ -11,6 +11,8 @@ module Kontena::Cli::Grids
     option "--silent", :flag, "Reduce output verbosity"
     option "--token", "[TOKEN]", "Set grid token"
     option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+    option "--subnet", "[CIDR]", "Configure grid overlay subnet"
+    option "--supernet", "[CIDR]", "Configure grid IPAM supernet"
 
     requires_current_master_token
 
@@ -21,6 +23,9 @@ module Kontena::Cli::Grids
       payload[:token] = self.token if self.token
       payload[:initial_size] = self.initial_size if self.initial_size
       payload[:default_affinity] = self.default_affinity_list unless self.default_affinity_list.empty?
+      payload[:subnet] = subnet if subnet
+      payload[:supernet] = supernet if supernet
+      
       grid = nil
       if initial_size == 1
         warning "Option --initial-size=1 is only recommended for test/dev usage" unless running_silent?
