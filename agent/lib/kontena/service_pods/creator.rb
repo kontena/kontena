@@ -179,7 +179,7 @@ module Kontena
         return true unless image
 
         container_created = DateTime.parse(service_container.info['Created']) rescue nil
-        image_created = DateTime.parse(image.config['Created'])
+        image_created = DateTime.parse(image.info['Created'])
         return true if image_created > container_created
 
         false
@@ -189,7 +189,7 @@ module Kontena
       # @return [Boolean]
       def recreate_service_container?(service_container)
         state = service_container.state
-        service_container.restart_policy['Name'] == 'always' &&
+        service_container.restart_policy['Name'] == 'unless-stopped' &&
             state['Running'] == false &&
             (!state['Error'].empty? || state['ExitCode'].to_i != 0)
       end

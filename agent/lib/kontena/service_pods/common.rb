@@ -14,7 +14,10 @@ module Kontena
               "io.kontena.container.type=#{type}",
           ]
         })
-        Docker::Container.all(all: true, filters: filters)[0]
+        container = Docker::Container.all(all: true, filters: filters)[0]
+        if container
+          Docker::Container.get(container.id) rescue nil
+        end
       end
     end
   end

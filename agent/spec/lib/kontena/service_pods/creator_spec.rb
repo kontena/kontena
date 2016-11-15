@@ -86,7 +86,7 @@ describe Kontena::ServicePods::Creator do
           'Image' => service_pod.image_name
         }
       )
-      allow(Docker::Image).to receive(:get).and_return(spy(:image, config: {
+      allow(Docker::Image).to receive(:get).and_return(spy(:image, info: {
         'Created' => (Time.now.utc + 1).to_s
       }))
       expect(subject.service_uptodate?(service_container)).to be_truthy
@@ -121,7 +121,7 @@ describe Kontena::ServicePods::Creator do
     it 'returns true if RestartPolicy=always and container is stopped with error message' do
       service_container = spy(:service_container,
         state: {'Running' => false, 'Error' => 'oh noes'},
-        restart_policy: {'Name' => 'always'}
+        restart_policy: {'Name' => 'unless-stopped'}
       )
       expect(subject.recreate_service_container?(service_container)).to be_truthy
     end
