@@ -10,3 +10,5 @@ json.node_count grid.host_nodes.count
 json.service_count grid.grid_services.count
 json.container_count grid.containers.count
 json.user_count grid.users.count
+json.subnet grid.subnet
+json.supernet grid.supernet

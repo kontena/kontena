@@ -5,11 +5,16 @@ class Grid
   include Mongoid::Timestamps
   include Authority::Abilities
 
+  SUBNET = '10.81.0.0/16'
+  SUPERNET = '10.80.0.0/12'
+
   field :name, type: String
   field :token, type: String
   field :initial_size, type: Integer, default: 1
   field :trusted_subnets, type: Array, default: []
   field :stats, type: Hash, default: {}
+  field :subnet, type: String, default: SUBNET
+  field :supernet, type: String, default: SUPERNET
 
   has_many :host_nodes, dependent: :destroy
   has_many :host_node_stats
@@ -70,7 +75,7 @@ class Grid
     default_network = Network.create!(
       grid: self,
       name: 'kontena',
-      subnet: '10.81.0.0/16',
+      subnet: self.subnet,
       multicast: true,
       internal: false)
   end
