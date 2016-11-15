@@ -56,9 +56,9 @@ class Container
 
   def ip_address
     ip = nil
-    if self.networks
-      name, network = self.networks.first
-      ip = network.dig('IPAddress') if network
+    unless self.networks.empty?
+      overlay_cidr = self.networks.dig('kontena', 'overlay_cidr')
+      ip = overlay_cidr.split('/')[0] if overlay_cidr
     end
     ip
   end

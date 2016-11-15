@@ -29,14 +29,14 @@ GEM
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
     docile (1.1.5)
-    docker-api (1.26.2)
+    docker-api (1.32.1)
       excon (>= 0.38.0)
       json
     dotenv (1.0.2)
     etcd (0.3.0)
       mixlib-log
     eventmachine (1.0.9.1)
-    excon (0.49.0)
+    excon (0.54.0)
     faye-websocket (0.10.1)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
@@ -85,7 +85,7 @@ PLATFORMS
 DEPENDENCIES
   activesupport (~> 4.2.0)
   celluloid (~> 0.17.3)
-  docker-api
+  docker-api (~> 1.32.0)
   dotenv
   etcd
   eventmachine (~> 1.0.8)
@@ -99,4 +99,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.12.5
+   1.13.6

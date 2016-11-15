@@ -8,14 +8,6 @@ describe Kontena::Workers::ContainerStarterWorker do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
 
-  describe '#initialize' do
-    it 'subscribes to network_adapter:start event' do
-      expect(subject.wrapped_object).to receive(:on_overlay_start)
-      Celluloid::Notifications.publish('network:ready', {})
-      sleep 0.1
-    end
-  end
-
   describe '#ensure_container_running' do
     context 'for a stopped server container' do
       let :container do

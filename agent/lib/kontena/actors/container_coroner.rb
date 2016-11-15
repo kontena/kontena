@@ -37,7 +37,10 @@ module Kontena::Actors
     def confirm
       info "container #{@container.name} has gone"
       event = Docker::Event.new(
-        'destroy'.freeze, @container.id, '', Time.now.utc.to_s
+        'Action' => 'destroy'.freeze,
+        'status' => 'destroy'.freeze,
+        'id' => @container.id,
+        'time' => Time.now.utc.to_s
       )
       event_worker.publish_event(event)
       self.terminate

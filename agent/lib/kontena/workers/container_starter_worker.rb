@@ -14,7 +14,7 @@ module Kontena::Workers
 
     def initialize
       info 'initialized'
-      subscribe('network:ready', :on_overlay_start)
+      #subscribe('network:ready', :on_overlay_start)
     end
 
     def on_overlay_start(topic, data)

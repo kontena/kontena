@@ -26,14 +26,22 @@ describe Kontena::NetworkAdapters::Weave do
   end
 
   describe '#running?' do
-    it 'returns true if weave is running' do
+    it 'returns true if weave and ipam is running' do
       weave = spy(:weave, :running? => true)
+      expect(subject.wrapped_object).to receive(:ipam_running?).and_return(true)
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.running?).to be_truthy
     end
 
     it 'returns false if weave is not running' do
       weave = spy(:weave, :running? => false)
+      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns false if weave is running but ipam not running' do
+      weave = spy(:weave, :running? => true)
+      expect(subject.wrapped_object).to receive(:ipam_running?).and_return(false)
       allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
       expect(subject.running?).to be_falsey
     end
@@ -98,12 +106,27 @@ describe Kontena::NetworkAdapters::Weave do
   end
 
   describe '#modify_host_config' do
-    
+
+    let(:weavewait) { "weavewait-#{described_class::WEAVE_VERSION}:ro"}
+
+    it 'adds weavewait to empty VolumesFrom' do
+      opts = {}
+      subject.modify_host_config(opts)
+      expect(opts['HostConfig']['VolumesFrom']).to include(weavewait)
+    end
+
+    it 'adds weavewait to non-empty VolumesFrom' do
+      opts = {
+       'VolumesFrom' => ['foobar-data']
+      }
+      subject.modify_host_config(opts)
+      expect(opts['HostConfig']['VolumesFrom']).to include(weavewait)
+    end
+
     it 'adds dns settings' do
       opts = {}
       subject.modify_host_config(opts)
       expect(opts['HostConfig']['Dns']).to include(bridge_ip)
-      expect(opts['HostConfig']['DnsOptions']).to include('use-vc')
     end
 
     it 'does not add dns settings when NetworkMode=host' do

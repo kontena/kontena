@@ -39,10 +39,12 @@ module Kontena
         end
         service_config = service_pod.service_config
 
+        debug service_config
         Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
-
+        Celluloid::Actor[:network_adapter].modify_network_opts(service_config) unless service_pod.net == 'host'
+        debug "creating container: #{service_pod.name}"
         service_container = create_container(service_config)
-
+        debug "container created: #{service_pod.name}"
         if service_container.load_balanced? && service_container.instance_number == 1
           Celluloid::Notifications.publish('lb:ensure_config', service_container)
         end

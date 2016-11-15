@@ -26,6 +26,14 @@ describe Kontena::Workers::WeaveWorker do
       subject.on_container_event('topic', event)
     end
 
+    it 'calls #weave_detach on destroy event' do
+      network_adapter = double()
+      allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
+      allow(event).to receive(:status).and_return('destroy')
+      expect(network_adapter).to receive(:detach_network).once.with(event)
+      subject.on_container_event('topic', event)
+    end
+
     it 'calls #start on weave restart event' do
       network_adapter = double(router_image?: true)
       allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)

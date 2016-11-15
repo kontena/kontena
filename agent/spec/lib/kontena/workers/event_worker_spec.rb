@@ -5,6 +5,24 @@ describe Kontena::Workers::EventWorker do
   let(:queue) { Queue.new }
   let(:subject) { described_class.new(queue, false) }
   let(:network_adapter) { spy(:network_adapter) }
+  let(:event) {
+    {
+      'Action' => 'start',
+      'Actor' => {
+        'Attributes' => {
+          'image' => 'tianon/true',
+          'name' => 'true-dat'
+        },
+        'ID' => 'bb2c783a32330b726f18d1eb44d80c899ef45771b4f939326e0fefcfc7e05db8'
+      },
+      'Type' => 'container',
+      'from' => 'tianon/true',
+      'id' => 'bb2c783a32330b726f18d1eb44d80c899ef45771b4f939326e0fefcfc7e05db8',
+      'status' => 'start',
+      'time' => 1461083270,
+      'timeNano' => 1461083270652069004
+    }
+  }
 
   before(:each) {
     Celluloid.boot
@@ -15,6 +33,7 @@ describe Kontena::Workers::EventWorker do
   after(:each) { Celluloid.shutdown }
 
   describe '#start' do
+
     it 'starts processing events' do
       expect(subject.wrapped_object).to receive(:stream_events)
       expect(subject.wrapped_object).to receive(:process_events)
@@ -26,13 +45,13 @@ describe Kontena::Workers::EventWorker do
       subject
       allow(Docker::Event).to receive(:stream) {|params, &block|
         times.times {
-          block.call(Docker::Event.new('status', 'id', 'from', 'time'))
+          block.call(Docker::Event.new(event))
         }
         sleep 0.1
         subject.stop_processing
       }
       subject.async.start
-      sleep 0.1
+      sleep 0.1 #until !subject.instance_variable_get('@processing')
       expect(queue.size).to eq(times)
     end
   end

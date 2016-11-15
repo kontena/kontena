@@ -11,8 +11,11 @@ module Kontena::Workers
 
     def initialize(autostart = true)
       info 'initialized'
-      subscribe('network:ready', :on_weave_start)
-      async.migrate_weavewait if autostart
+      # FIXME Re-enable the migration starting once we know how to do it
+      # The logic is now completely obsolete but left as a placeholder
+      # for new migration logic.
+      #subscribe('network:ready', :on_weave_start)
+      #async.migrate_weavewait if autostart
     end
 
     def on_weave_start(topic, data)

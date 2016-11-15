@@ -47,6 +47,9 @@ module Kontena::Workers
         if Actor[:network_adapter].router_image?(event.from)
           self.start
         end
+
+      elsif event.status == 'destroy'
+        Actor[:network_adapter].detach_network(event)
       end
     end
 
@@ -54,8 +57,8 @@ module Kontena::Workers
     def weave_attach(container)
       config = container.info['Config'] || container.json['Config']
       labels = config['Labels'] || {}
-      ip = container.overlay_ip
-      if ip
+      overlay_cidr = labels['io.kontena.container.overlay_cidr']
+      if overlay_cidr
         container_name = labels['io.kontena.container.name']
         service_name = labels['io.kontena.service.name']
         grid_name = labels['io.kontena.grid.name']
@@ -65,11 +68,14 @@ module Kontena::Workers
           "#{container_name}.#{grid_name}.kontena.local",
           "#{service_name}.#{grid_name}.kontena.local"
         ]
+        ip = overlay_cidr.split('/')[0]
         dns_names.each do |name|
           add_dns(container.id, ip, name)
         end
+
+        Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
       else
-        debug "did not find ip for container: #{container.name}"
+        debug "did not find ip for container: #{container.name}, not attaching to weave"
       end
     rescue Docker::Error::NotFoundError
 
@@ -78,14 +84,5 @@ module Kontena::Workers
       error exc.backtrace.join("\n")
     end
 
-    # @param [Docker::Event] event
-    def weave_detach(event)
-      remove_dns(event.id)
-    rescue Docker::Error::NotFoundError
-
-    rescue => exc
-      error exc.message
-      error exc.backtrace.join("\n")
-    end
   end
 end

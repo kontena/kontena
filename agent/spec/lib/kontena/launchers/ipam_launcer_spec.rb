@@ -22,8 +22,17 @@ describe Kontena::Launchers::IpamPlugin do
       expect(subject.running?).to be_falsey
     end
 
-    it 'returns true when ipam container running' do
+    it 'returns false when ipam container running but api not ready' do
       expect(container).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:api_ready?).and_return(false)
+      expect(Docker::Container).to receive(:get).and_return(container)
+
+      expect(subject.running?).to be_falsey
+    end
+
+    it 'returns true when ipam container and api running' do
+      expect(container).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:api_ready?).and_return(true)
       expect(Docker::Container).to receive(:get).and_return(container)
 
       expect(subject.running?).to be_truthy
@@ -70,7 +79,9 @@ describe Kontena::Launchers::IpamPlugin do
         'name' => 'kontena-ipam-plugin',
         'Image' => 'kontena/docker-ipam-plugin:latest',
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
-        'Env' => ['NODE_ID=1'],
+        "StopSignal"=>"SIGTTIN",
+        "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
+        'Env' => ['NODE_ID=1', "LOG_LEVEL=1"],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -90,7 +101,9 @@ describe Kontena::Launchers::IpamPlugin do
         'name' => 'kontena-ipam-plugin',
         'Image' => 'kontena/docker-ipam-plugin:latest',
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
-        'Env' => ['NODE_ID=1'],
+        "StopSignal"=>"SIGTTIN",
+        "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
+        'Env' => ['NODE_ID=1', "LOG_LEVEL=1"],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},

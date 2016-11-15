@@ -69,14 +69,9 @@ module Kontena
         @networks = attrs['networks'] || []
       end
 
-      # @return [String, NilClass]
-      def overlay_network
-        self.labels['io.kontena.container.overlay_cidr']
-      end
-
       # @return [Boolean]
       def can_expose_ports?
-        !self.overlay_network.nil? && self.net == 'bridge'
+        self.net == 'bridge'
       end
 
       # @return [Boolean]
@@ -129,7 +124,7 @@ module Kontena
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
-        docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
+        #docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
         docker_opts
       end
 
@@ -285,13 +280,6 @@ module Kontena
         env
       end
 
-      def build_networks
-        endpoints = {}
-        self.networks.each do |network|
-          endpoints[network['name']] = {}
-        end
-        {'EndpointsConfig' => endpoints}
-      end
     end
   end
 end
