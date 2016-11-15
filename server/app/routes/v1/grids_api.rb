@@ -71,7 +71,9 @@ module V1
               user: current_user,
               name: data['name'],
               initial_size: data['initial_size'] || 1,
-              token: data['token']
+              token: data['token'],
+              subnet: data['subnet'],
+              supernet: data['supernet'],
           )
 
           if outcome.success?
