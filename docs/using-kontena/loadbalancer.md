@@ -73,12 +73,12 @@ galera:
 These environment variables configure the loadbalancer itself.
 
 * `KONTENA_LB_HEALTH_URI`: uri at which to enable loadbalancer level health check endpoint. Returns `200 OK` when loadbalancer is functional.
-* `STATS_PASSWORD`: the password to access stats
+* `STATS_PASSWORD`: the password to access stats (default if not set: `secret`)
 * `SSL_CERTS`: SSL certificates to be used, see more: [SSL Termination](loadbalancer#ssl-termination)
 
 ## Stats
 
-Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances.
+Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances. The basic auth user is `stats` and password is set with the `STATS_PASSWORD` environment variable (see above).
 
 ## Basic authentication for services
 
