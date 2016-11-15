@@ -51,7 +51,7 @@ module Kontena::Workers
             "IPv4Address"  => overlay_cidr.split('/')[0]
           }
         }
-        @kontena_network.connect(container.id, { 'endpoint_config' => endpoint_config})
+        @kontena_network.connect(container.id, { }, { 'endpointconfig' => endpoint_config })
       end
     end
 
