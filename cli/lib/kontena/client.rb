@@ -51,14 +51,20 @@ module Kontena
       @logger.progname = 'CLIENT'
 
       @options[:default_headers] ||= {}
-      Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
+
+      cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
+      unless File.exist?(cert_file) && File.readable?(cert_file)
+        cert_file = nil
+      end
 
       @http_client = Excon.new(
         api_url,
         omit_default_port: true,
         connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 5,
         read_timeout:    ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_i    : 30,
-        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5
+        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5,
+        ssl_verify_peer: ignore_ssl_errors? ? false : true,
+        ssl_ca_file:     cert_file
       )
 
       @default_headers = {
