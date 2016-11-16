@@ -27,11 +27,13 @@ class Stack
     self.version
   end
 
+  # @return [Symbol]
   def state
-    return :initialized if self.grid_services.all?{ |s| s.initialized? }
-    return :deploying if self.grid_services.any?{ |s| s.deploying? }
-    return :stopped if self.grid_services.all?{ |s| s.stopped? }
-    return :running if self.grid_services.all?{ |s| s.running? }
+    services = self.grid_services.to_a
+    return :initialized if services.all?{ |s| s.initialized? }
+    return :deploying if services.any?{ |s| s.deploying? }
+    return :stopped if services.all?{ |s| s.stopped? }
+    return :running if services.all?{ |s| s.running? }
 
     :partially_running
   end
