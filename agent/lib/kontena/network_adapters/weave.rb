@@ -95,7 +95,6 @@ module Kontena::NetworkAdapters
       @started == true
     end
 
-
     # @param [Hash] opts
     def modify_create_opts(opts)
       ensure_weave_wait

@@ -159,7 +159,7 @@ module Docker
     #
     # @return [String, NilClass]
     def overlay_ip
-      overlay_cidr.split('/')[0]
+      self.overlay_cidr.split('/')[0] if self.overlay_cidr
     end
 
     # Container CIDR address within the overlay network.
