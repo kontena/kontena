@@ -31,3 +31,13 @@ toc_order: 2
 - `WEAVE_IMAGE`: weave net image (default: weaveworks/weave)
 - `WEAVEEXEC_IMAGE`: weave exec image (default: weaveworks/weaveexec)
 - `WEAVE_VERSION`: weave net version
+
+## Kontena CLI
+
+- `KONTENA_URL`: Kontena Master URL
+- `KONTENA_GRID`: Kontena Grid name
+- `KONTENA_TOKEN`: Kontena Master access token
+- `KONTENA_MASTER`: use existing Kontena Master from CLI config file
+- `SSL_IGNORE_ERRORS`: set true to bypass certificate errors
+- `DEBUG`: set true to get verbose messages
+- `EXCON_DEBUG`: set true to get verbose messages from network calls
