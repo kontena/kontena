@@ -72,7 +72,7 @@ module Kontena::Workers
     # @param [String] container_id
     # @param [String] overlay_cidr
     def attach_overlay(container_id, overlay_cidr)
-      Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
+      Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container_id])
     end
 
     # @param [Docker::Container]
