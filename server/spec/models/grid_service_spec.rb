@@ -24,6 +24,10 @@ describe GridService do
   it { should have_many(:audit_logs) }
   it { should have_many(:grid_service_deploys) }
 
+  it { should validate_presence_of(:name) }
+  it { should validate_presence_of(:image_name) }
+  it { should validate_presence_of(:grid_id) }
+  it { should validate_presence_of(:stack_id) }
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_service_ids: 1) }
@@ -80,6 +84,18 @@ describe GridService do
     it 'returns false if service is not running' do
       subject.state = 'stopped'
       expect(subject.running?).to eq(false)
+    end
+  end
+
+  describe '#stopped?' do
+    it 'returns true if service is stopped' do
+      subject.state = 'stopped'
+      expect(subject.stopped?).to eq(true)
+    end
+
+    it 'returns false if service is not stopped' do
+      subject.state = 'running'
+      expect(subject.stopped?).to eq(false)
     end
   end
 
@@ -145,6 +161,31 @@ describe GridService do
     end
   end
 
+  describe '#linked_from_services' do
+    it 'returns Mongoid::Criteria' do
+      expect(grid_service.linked_from_services).to be_instance_of(Mongoid::Criteria)
+    end
+
+    it 'returns services that service has been linked from' do
+      a = GridService.create!(
+        grid: grid, name: 'aaa', image_name: 'aaa:latest',
+        grid_service_links: [
+          GridServiceLink.new(linked_grid_service_id: grid_service.id, alias: 'foo')
+        ]
+      )
+      b = GridService.create!(
+        grid: grid, name: 'bbb', image_name: 'bbb:latest',
+        grid_service_links: [
+          GridServiceLink.new(linked_grid_service_id: a.id, alias: 'a-foo')
+        ]
+      )
+      expect(grid_service.linked_from_services.count).to eq(1)
+      expect(grid_service.linked_from_services.first.id).to eq(a.id)
+      expect(a.linked_from_services.count).to eq(1)
+      expect(a.linked_from_services.first.id).to eq(b.id)
+    end
+  end
+
   describe '#load_balancer?' do
     it 'returns true if official kontena/lb image' do
       subject.image_name = 'kontena/lb:latest'
@@ -174,6 +215,12 @@ describe GridService do
 
     it 'returns nil if container is not found' do
       expect(grid_service.container_by_name('not_found')).to be_nil
+    end
+  end
+
+  describe '#name_with_stack' do
+    it 'returns service name with stack' do
+      expect(grid_service.name_with_stack).to include("#{grid_service.stack.name}-")
     end
   end
 end

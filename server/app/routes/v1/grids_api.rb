@@ -27,6 +27,11 @@ module V1
         halt_request(404, {error: 'Not found'}) unless @grid
       end
 
+      r.on ':name/stacks' do |name|
+        load_grid(name)
+        r.route 'grid_stacks'
+      end
+
       r.on ':name/services' do |name|
         load_grid(name)
         r.route 'grid_services'

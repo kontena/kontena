@@ -5,6 +5,15 @@ describe '/v1/stacks' do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
 
+  let(:david) do
+    user = User.create!(email: 'david@domain.com', external_id: '123456')
+    user
+  end
+
+  let(:valid_token) do
+    AccessToken.create!(user: david, scopes: ['user'])
+  end
+
   let(:request_headers) do
     {
         'HTTP_AUTHORIZATION' => "Bearer #{valid_token.token_plain}"
@@ -13,153 +22,70 @@ describe '/v1/stacks' do
 
   let(:grid) do
     grid = Grid.create!(name: 'terminal-a')
+    grid.users << david
     grid
   end
 
   let(:stack) do
-    stack = Stack.create(name: 'stack', grid: grid)
-    app = GridService.create!(
-      grid: david.grids.first,
-      name: 'app',
-      image_name: 'my/app:latest',
-      stateful: false,
-      stack: stack
+    outcome = Stacks::Create.run(
+      current_user: david,
+      grid: grid,
+      name: 'stack',
+      services: [
+        { name: 'app', image: 'my/app:latest', stateful: false },
+        { name: 'redis', image: 'redis:2.8', stateful: true }
+      ]
     )
-    redis = GridService.create!(
-      grid: david.grids.first,
-      name: 'redis',
-      image_name: 'redis:2.8',
-      stateful: true,
-      stack: stack
-    )
-    grid.stacks << stack
-    stack
+    outcome.result
   end
 
   let(:another_stack) do
-    s = Stack.create(name: 'another-stack', grid: grid)
-    app = GridService.create!(
-      grid: david.grids.first,
-      name: 'app2',
-      image_name: 'my/app:latest',
-      stateful: false,
-      stack: s
+    outcome = Stacks::Create.run(
+      current_user: david,
+      grid: grid,
+      name: 'another-stack',
+      services: [
+        { name: 'app2', image: 'my/app:latest', stateful: false },
+        { name: 'redis', image: 'redis:2.8', stateful: true }
+      ]
     )
-    redis = GridService.create!(
-      grid: david.grids.first,
-      name: 'redis2',
-      image_name: 'redis:2.8',
-      stateful: true,
-      stack: s
-    )
-    grid.stacks << s
-    s
-  end
-
-  let(:david) do
-    user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid.users << user
-
-    user
-  end
-
-  let(:valid_token) do
-    AccessToken.create!(user: david, scopes: ['user'])
+    outcome.result
   end
 
   describe 'GET /:name' do
     it 'returns stack json' do
-      get "/v1/stacks/#{grid.name}/#{stack.name}", nil, request_headers
+      get "/v1/stacks/#{stack.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at name version grid_services state
+        id created_at updated_at name version services state
       ).sort)
-      expect(json_response['grid_services'].size).to eq(2)
-      expect(json_response['grid_services'][0].keys.sort).to eq(%w(
-        id name
-      ).sort)
-      
+      expect(json_response['services'].size).to eq(0)
+    end
+
+    it 'includes deployed services' do
+      Stacks::Deploy.run(stack: stack, current_user: david)
+      get "/v1/stacks/#{stack.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['services'].size).to eq(2)
+      expect(json_response['services'][0].keys).to include('id', 'name')
     end
 
     it 'returns 404 for unknown stack' do
       get "/v1/stacks/#{grid.name}/unknown-stack", nil, request_headers
       expect(response.status).to eq(404)
     end
-
   end
 
   describe 'GET /' do
     it 'returns stacks json' do
       stack
       another_stack
-      get "/v1/stacks/#{grid.name}", nil, request_headers
+      get "/v1/grids/#{grid.name}/stacks", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['stacks'].size).to eq(2)
+      expect(json_response['stacks'].size).to eq(grid.stacks.count)
       expect(json_response['stacks'][0].keys.sort).to eq(%w(
-        id created_at updated_at name version grid_services state
+        id created_at updated_at name version services state
       ).sort)
-      expect(json_response['stacks'][0]['grid_services'].size).to eq(2)
-      expect(json_response['stacks'][0]['grid_services'][0].keys.sort).to eq(%w(
-        id name
-      ).sort)
-    end
-
-  end
-
-  describe 'POST /' do
-    it 'creates new empty stack' do
-      expect {
-        post "/v1/stacks/#{grid.name}", {name: 'test-stack'}.to_json, request_headers
-        expect(response.status).to eq(201)
-        expect(json_response.keys.sort).to eq(%w(
-          id created_at updated_at name version grid_services state
-        ).sort)
-      }.to change{ grid.reload.stacks.count }.by(1)
-    end
-
-    it 'creates audit event' do
-      expect {
-        post "/v1/stacks/#{grid.name}", {name: 'test-stack'}.to_json, request_headers
-        expect(response.status).to eq(201)
-        expect(json_response.keys.sort).to eq(%w(
-          id created_at updated_at name version grid_services state
-        ).sort)
-      }.to change{ AuditLog.count }.by(1)
-    end
-
-    it 'creates new stack with services' do
-      data = {
-        name: 'test-stack',
-        services: [
-          {
-            name: 'app',
-            image: 'my/app:latest',
-            stateful: false
-          }
-        ]
-      }
-      expect {
-        post "/v1/stacks/#{grid.name}", data.to_json, request_headers
-        expect(response.status).to eq(201)
-        expect(json_response['grid_services'].size).to eq(1)
-      }.to change{ grid.reload.stacks.count }.by(1)
-    end
-
-    it 'return 422 for service validation failure' do
-      data = {
-        name: 'test-stack',
-        services: [
-          {
-            name: 'app',
-            image: 'my/app:latest'
-            # stateful parameter missing
-          }
-        ]
-      }
-      expect {
-        post "/v1/stacks/#{grid.name}", data.to_json, request_headers
-        expect(response.status).to eq(422)
-      }.to change{ grid.reload.stacks.count }.by(0)
     end
 
   end
@@ -176,14 +102,10 @@ describe '/v1/stacks' do
           }
         ]
       }
-      outcome = spy
-      allow(outcome).to receive(:success?).and_return(true)
-      allow(outcome).to receive(:result).and_return(stack)
-      expect(Stacks::Update).to receive(:run).and_return(outcome)
       expect {
-        put "/v1/stacks/#{grid.name}/#{stack.name}", data.to_json, request_headers
-        expect(response.status).to eq(200)  
-      }.to change{ AuditLog.count }.by(1)
+        put "/v1/stacks/#{stack.to_path}", data.to_json, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ stack.stack_revisions.count }.by(1)
     end
 
     it 'returns 404 for unknown stack' do
@@ -193,23 +115,12 @@ describe '/v1/stacks' do
   end
 
   describe 'DELETE /:name' do
-
     it 'deletes stack' do
-      outcome = spy
-      allow(outcome).to receive(:success?).and_return(true)
-      allow(Stacks::Delete).to receive(:run).and_return(outcome)
-      
+      stack
       expect {
-        delete "/v1/stacks/#{grid.name}/#{stack.name}", nil, request_headers
-        expect(response.status).to eq(200)  
-      }.to change{ AuditLog.count }.by(1)      
-    end
-
-    it 'return 422 for stack already terminated' do
-      stack.state = :terminated
-      stack.save
-      delete "/v1/stacks/#{grid.name}/#{stack.name}", nil, request_headers
-      expect(response.status).to eq(422)
+        delete "/v1/stacks/#{stack.to_path}", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{ grid.stacks.count }.by(-1)
     end
 
     it 'returns 404 for unknown stack' do
@@ -219,25 +130,22 @@ describe '/v1/stacks' do
   end
 
   describe 'POST /:name/deploy' do
+    before(:each) do
+      allow(GridServices::Deploy).to receive(:run).and_return(spy)
+    end
+
     it 'deploys stack services' do
-      outcome = spy
-      allow(outcome).to receive(:success?).and_return(true)
-      expect(GridServices::Deploy).to receive(:run).exactly(2).times.and_return(outcome)
       expect {
-        post "/v1/stacks/#{grid.name}/#{stack.name}/deploy", nil, request_headers
+        post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
-      }.to change{stack.reload.deployed?}.to(true)
+      }.to change{ stack.grid_services.count }.by(2)
     end
 
     it 'deploy creates audit log' do
-      outcome = spy
-      allow(outcome).to receive(:success?).and_return(true)
-      expect(GridServices::Deploy).to receive(:run).exactly(2).times.and_return(outcome)
       expect {
-        post "/v1/stacks/#{grid.name}/#{stack.name}/deploy", nil, request_headers
+        post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
       }.to change{AuditLog.count}.by(1)
     end
   end
-
 end

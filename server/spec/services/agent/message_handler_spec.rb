@@ -49,7 +49,7 @@ describe Agent::MessageHandler do
     it 'creates new container log entry if container exists' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
       expect {
-        subject.on_container_log(grid, node.id.to_s, {
+        subject.on_container_log(grid, {
           'id' => container.container_id,
           'data' => 'foo',
           'type' => 'stderr'
@@ -60,7 +60,7 @@ describe Agent::MessageHandler do
 
     it 'saves container.name to log' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
-      subject.on_container_log(grid, node.id.to_s, {
+      subject.on_container_log(grid, {
         'id' => container.container_id,
         'data' => 'foo',
         'type' => 'stderr'
@@ -71,7 +71,7 @@ describe Agent::MessageHandler do
 
     it 'does not create entry if container does not exist' do
       expect {
-        subject.on_container_log(grid, node.id.to_s, {
+        subject.on_container_log(grid, {
           'id' => 'does_not_exist',
           'data' => 'foo',
           'type' => 'stderr'
@@ -88,7 +88,7 @@ describe Agent::MessageHandler do
       start_time = Time.now.to_f
       bm = Benchmark.measure do
         1_000.times do
-          subject.on_container_log(grid, node.id.to_s, {
+          subject.on_container_log(grid, {
             'id' => containers[rand(0..9)],
             'data' => 'foo',
             'type' => 'stderr'

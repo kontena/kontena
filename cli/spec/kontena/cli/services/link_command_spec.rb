@@ -35,7 +35,7 @@ describe Kontena::Cli::Services::LinkCommand do
 
     it 'sends link to master' do
       expect(client).to receive(:put).with(
-        'services/test-grid/service-a', {links: [{name: 'service-b', alias: 'service-b'}]}
+        'services/test-grid/default/service-a', {links: [{name: 'service-b', alias: 'service-b'}]}
       )
       subject.run(['service-a', 'service-b'])
     end

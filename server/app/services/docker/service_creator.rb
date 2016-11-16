@@ -27,7 +27,8 @@ module Docker
     # @return [Hash]
     def service_spec(instance_number, deploy_rev, creds = nil)
       spec = {
-        service_name: grid_service.name,
+        service_id: grid_service.id.to_s,
+        service_name: grid_service.name_with_stack,
         service_revision: grid_service.revision,
         updated_at: grid_service.updated_at.to_s,
         instance_number: instance_number,
@@ -49,6 +50,8 @@ module Docker
         volumes: grid_service.volumes,
         volumes_from: grid_service.volumes_from,
         net: grid_service.net,
+        hostname: build_hostname(grid_service, instance_number),
+        domainname: build_domainname(grid_service),
         log_driver: grid_service.log_driver,
         log_opts: grid_service.log_opts,
         pid: grid_service.pid
@@ -88,6 +91,7 @@ module Docker
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
       env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
       env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
+      env << "KONTENA_STACK_NAME=#{grid_service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{host_node.name}"
       env << "KONTENA_SERVICE_INSTANCE_NUMBER=#{instance_number}"
       env
@@ -115,6 +119,7 @@ module Docker
         'io.kontena.container.id' => service_container.id.to_s,
         'io.kontena.service.id' => grid_service.id.to_s,
         'io.kontena.service.name' => grid_service.name.to_s,
+        'io.kontena.stack.name' => grid_service.stack.name.to_s,
         'io.kontena.grid.name' => grid_service.grid.try(:name)
       }
       if grid_service.linked_to_load_balancer?
@@ -164,6 +169,23 @@ module Docker
         }
       end
       networks
+    end
+
+    # @param [GridService] grid_service
+    # @param [Integer] instance_number
+    # @return [String]
+    def build_hostname(grid_service, instance_number)
+      "#{grid_service.name}-#{instance_number}"
+    end
+
+    # @param [GridService] grid_service
+    # @return [String]
+    def build_domainname(grid_service)
+      if grid_service.stack.name == 'default'.freeze
+        "#{grid_service.grid.name}.kontena.local"
+      else
+        "#{grid_service.stack.name}.#{grid_service.grid.name}.kontena.local"
+      end
     end
 
     def service_container

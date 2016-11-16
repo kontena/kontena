@@ -10,8 +10,10 @@ describe Scheduler::Filter::Memory do
     nodes
   end
 
+  let(:grid) { Grid.create(name: 'test') }
+
   let(:test_service) {
-    GridService.create(name: 'test-service', image_name: 'test-service:latest')
+    GridService.create(name: 'test-service', grid: grid, image_name: 'test-service:latest')
   }
 
   describe '#for_service' do
@@ -44,7 +46,7 @@ describe Scheduler::Filter::Memory do
 
     it 'rejects candidate if node does not have enough total memory' do
       reject = subject.reject_candidate?(
-        candidate, 1300.megabytes, 'test-service-1'
+        candidate, 1300.megabytes, test_service, 1
       )
       expect(reject).to be_truthy
     end
@@ -59,7 +61,7 @@ describe Scheduler::Filter::Memory do
         }
       )
       reject = subject.reject_candidate?(
-        candidate, 500.megabytes, 'test-service-1'
+        candidate, 500.megabytes, test_service, 1
       )
       expect(reject).to be_truthy
     end
@@ -74,7 +76,7 @@ describe Scheduler::Filter::Memory do
         }
       )
       reject = subject.reject_candidate?(
-        candidate, 500.megabytes, 'test-service-1'
+        candidate, 500.megabytes, test_service, 1
       )
       expect(reject).to be_falsey
     end
@@ -90,10 +92,14 @@ describe Scheduler::Filter::Memory do
       )
       service_instance = test_service.containers.create!(
         name: 'test-service-1',
-        host_node: candidate
+        host_node: candidate,
+        labels: {
+          'io;kontena;service;id' => test_service.id.to_s,
+          'io;kontena;service;instance_number' => '1'
+        }
       )
       reject = subject.reject_candidate?(
-        candidate, 500.megabytes, 'test-service-1'
+        candidate, 500.megabytes, test_service, 1
       )
       expect(reject).to be_falsey
     end

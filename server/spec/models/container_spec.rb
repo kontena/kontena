@@ -4,9 +4,10 @@ describe Container do
   it { should be_timestamped_document }
   it { should have_fields(
         :container_id, :name, :driver,
-        :exec_driver, :image, :image_version).of_type(String) }
-  it { should have_fields(:env, :volumes).of_type(Array) }
-  it { should have_fields(:network_settings, :state).of_type(Hash) }
+        :exec_driver, :image, :image_version,
+        :hostname, :domainname).of_type(String) }
+  it { should have_fields(:env, :volumes, :cmd).of_type(Array) }
+  it { should have_fields(:network_settings, :state, :labels).of_type(Hash) }
   it { should have_fields(:finished_at, :started_at).of_type(Time) }
 
   it { should validate_uniqueness_of(:container_id).scoped_to(:host_node_id) }
@@ -22,6 +23,7 @@ describe Container do
   it { should have_index_for(host_node_id: 1) }
   it { should have_index_for(container_id: 1) }
   it { should have_index_for(state: 1) }
+  it { should have_index_for(labels: 1) }
 
   let(:grid) do
     Grid.create(name: 'test-grid')
@@ -114,6 +116,50 @@ describe Container do
         expect(subject.up_to_date?).to be_truthy
       end
     end
+  end
 
+  describe '#instance_name' do
+    it 'does not throw error by default' do
+      expect(subject.instance_name).to be_instance_of(String)
+    end
+
+    it 'returns correct name for instance' do
+      subject.labels = {
+        'io;kontena;service;name' => 'redis',
+        'io;kontena;stack;name' => 'default',
+        'io;kontena;service;instance_number' => '3'
+      }
+      expect(subject.instance_name).to eq('default-redis-3')
+    end
+  end
+
+  describe '#label' do
+    it 'returns label value if label exists' do
+      subject.labels = { 'io;kontena;service;name' => 'redis' }
+      expect(subject.label('io.kontena.service.name')).to eq('redis')
+    end
+
+    it 'returns nil if label does not exist' do
+      subject.labels = { 'io;kontena;service;name' => 'redis' }
+      expect(subject.label('io.kontena.service.id')).to be_nil
+    end
+  end
+
+  describe '.service_instance' do
+    it 'returns correct instance' do
+      (1..3).each do |i|
+        grid_service.containers.create!(
+          name: "redis-#{i}",
+          labels: {
+            "io;kontena;service;id" => grid_service.id.to_s,
+            "io;kontena;stack;name" => "default",
+            "io;kontena;service;instance_number" => i.to_s,
+          }
+        )
+      end
+
+      container = described_class.service_instance(grid_service, 2).first
+      expect(container.name).to eq("redis-2")
+    end
   end
 end

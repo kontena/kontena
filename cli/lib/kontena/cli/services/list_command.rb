@@ -7,16 +7,17 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     option ["-q", "--quiet"], :flag, "Show only service names"
+    option '--stack', 'STACK', 'Stack name'
 
     def execute
       require_api_url
       token = require_token
 
-      grids = client(token).get("grids/#{current_grid}/services")
+      grids = client(token).get("grids/#{current_grid}/services?stack=#{stack}")
       services = grids['services'].sort_by{|s| s['updated_at'] }.reverse
       if quiet?
         services.each do |service|
-          puts service['name']
+          puts "#{service.dig('stack', 'id')}/#{service['name']}"
         end
       else
         titles = ['NAME', 'INSTANCES', 'STATEFUL', 'STATE', 'EXPOSED PORTS']
@@ -38,7 +39,7 @@ module Kontena::Cli::Services
       health = health_status(service)
       vars = [
         health_status_icon(health),
-        "#{service['name']}",
+        "#{service.dig('stack', 'id')}/#{service['name']}",
         instances,
         stateful,
         service['state'],

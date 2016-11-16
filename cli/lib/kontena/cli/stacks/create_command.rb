@@ -7,21 +7,21 @@ module Kontena::Cli::Stacks
     include Common
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena stack file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
 
     def execute
       require_api_url
-      require_token
+      token = require_token
       require_config_file(filename)
-      @stack = stack_from_yaml(filename)
-
-      create_stack
+      stack = stack_from_yaml(filename)
+      stack['name'] = name if name
+      spinner "Creating stack #{pastel.cyan(name)} " do
+        create_stack(token, stack)
+      end
     end
 
-    private
-
-    def create_stack
-      client(token).post("stacks/#{current_grid}", @stack)
+    def create_stack(token, stack)
+      client(token).post("grids/#{current_grid}/stacks", stack)
     end
-
   end
 end

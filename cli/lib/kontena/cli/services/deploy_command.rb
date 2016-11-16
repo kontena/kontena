@@ -20,8 +20,8 @@ module Kontena::Cli::Services
         warning "--force-deploy will deprecate in the future, use --force"
       end
       spinner "Deploying service #{name.colorize(:cyan)} " do
-        deploy_service(token, name, data)
-        wait_for_deploy_to_finish(token, parse_service_id(name))
+        deployment = deploy_service(token, name, data)
+        wait_for_deploy_to_finish(token, deployment)
       end
     end
   end

@@ -10,7 +10,7 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
     option ["-i", "--instance"], "INSTANCE", "Show only given instance specific logs"
-    
+
     def execute
       require_api_url
 

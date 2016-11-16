@@ -22,7 +22,12 @@ V1::GridsApi.route('grid_services') do |r|
   # GET /v1/grids/:name/services
   r.get do
     r.is do
-      @grid_services = @grid.grid_services.includes(:grid).order_by(:_id.desc)
+      query = @grid.grid_services.includes(:grid).order_by(:_id.desc)
+      unless r['stack'].to_s.empty?
+        stack = @grid.stacks.find_by(name: r['stack'])
+        query = query.where(stack_id: stack.id)
+      end
+      @grid_services = query.to_a
       render('grid_services/index')
     end
   end

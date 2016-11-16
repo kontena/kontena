@@ -20,24 +20,27 @@ module Kontena::Cli::Vpn
       vpn_ip = node_vpn_ip(node)
       data = {
         name: 'vpn',
-        stateful: true,
-        image: 'kontena/openvpn:ethwe',
-        ports: [
-          {
-            container_port: '1194',
-            node_port: '1194',
-            protocol: 'udp'
-          }
-        ],
-        cap_add: ['NET_ADMIN'],
-        env: ["OVPN_SERVER_URL=udp://#{vpn_ip}:1194"],
-        affinity: ["node==#{node['name']}"]
+        services: [
+          name: 'server',
+          stateful: true,
+          image: 'kontena/openvpn:ethwe',
+          ports: [
+            {
+              container_port: '1194',
+              node_port: '1194',
+              protocol: 'udp'
+            }
+          ],
+          cap_add: ['NET_ADMIN'],
+          env: ["OVPN_SERVER_URL=udp://#{vpn_ip}:1194"],
+          affinity: ["node==#{node['name']}"]
+        ]
       }
-      client(token).post("grids/#{current_grid}/services", data)
-      client(token).post("services/#{current_grid}/vpn/deploy", {})
-      name = 'vpn'
-      spinner "deploying #{name.colorize(:cyan)} service " do
-        wait_for_deploy_to_finish(token, parse_service_id('vpn'))
+      client(token).post("grids/#{current_grid}/stacks", data)
+      client(token).post("stacks/#{current_grid}/vpn/deploy", {})
+      spinner "Deploying vpn service " do
+        sleep 1 while client(token).get("stacks/#{current_grid}/vpn")['state'] == 'deploying'
+        sleep 1 while client(token).get("stacks/#{current_grid}/vpn")['state'] == 'running'
       end
       spinner "generating #{name.colorize(:cyan)} keys (this will take a while) " do
         wait_for_configuration_to_finish(token)

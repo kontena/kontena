@@ -41,8 +41,8 @@ describe Kontena::Cli::Services::Secrets::UnlinkCommand do
           {'secret' => 'BAR', 'name' => 'BAZ', 'type' => 'env'}
         ]
       }
-      allow(client).to receive(:get).with("services/test-grid/mymy").and_return(original)
-      expect(client).to receive(:put).with("services/test-grid/mymy", data)
+      allow(client).to receive(:get).with("services/test-grid/default/mymy").and_return(original)
+      expect(client).to receive(:put).with("services/test-grid/default/mymy", data)
       subject.run(['mymy', 'FOO:BAR:env'])
     end
   end

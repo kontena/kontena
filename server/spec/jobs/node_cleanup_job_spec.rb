@@ -45,7 +45,7 @@ describe NodeCleanupJob do
     end
 
     let(:service) do
-      GridService.create!(name: "test", image_name: "my/test:latest")
+      GridService.create!(name: "test", grid: grid, image_name: "my/test:latest")
     end
 
     it 'does not update node.containers deleted_at if they are already set' do

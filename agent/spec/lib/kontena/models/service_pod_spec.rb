@@ -4,12 +4,14 @@ describe Kontena::Models::ServicePod do
 
   let(:data) do
     {
+      'service_id' => 'aaaaaaa',
       'service_name' => 'redis',
       'instance_number' => 2,
       'deploy_rev' => Time.now.utc.to_s,
       'updated_at' => Time.now.utc.to_s,
       'labels' => {
-        'io.kontena.service.name' => 'redis-cache'
+        'io.kontena.service.name' => 'redis-cache',
+        'io.kontena.stack.name' => 'default'
       },
       'stateful' => true,
       'image_name' => 'redis:3.0',
@@ -33,6 +35,8 @@ describe Kontena::Models::ServicePod do
       'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
+      'hostname' => 'redis-2',
+      'domainname' => 'default.kontena.local',
       'log_driver' => nil
     }
   end
@@ -108,8 +112,12 @@ describe Kontena::Models::ServicePod do
       expect(service_config['Image']).to eq(data['image_name'])
     end
 
-    it 'includes HostName' do
-      expect(service_config['HostName']).not_to be_nil
+    it 'includes Hostname' do
+      expect(service_config['Hostname']).to eq(service_config['Hostname'])
+    end
+
+    it 'includes Domainname' do
+      expect(service_config['Domainname']).to eq(service_config['Domainname'])
     end
 
     it 'does not include HostName if host network' do
@@ -241,6 +249,10 @@ describe Kontena::Models::ServicePod do
     it 'sets NetworkMode' do
       data['net'] = 'host'
       expect(host_config['NetworkMode']).to eq('host')
+    end
+
+    it 'sets DnsSearch' do
+      expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'])
     end
 
     it 'does not include CpuShares if not defined' do

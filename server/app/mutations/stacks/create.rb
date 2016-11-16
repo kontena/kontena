@@ -1,29 +1,31 @@
+require_relative 'common'
+
 module Stacks
   class Create < Mutations::Command
+    include Common
 
     required do
       model :current_user, class: User
       model :grid, class: Grid
       string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
-    end
-
-    optional do
       array :services do
-        model :foo, class: Hash
+        model :object, class: Hash
       end
     end
 
     def validate
-      if self.services
-        self.services.each do |service|
-          
-          service[:current_user] = self.current_user
-          service[:grid] = self.grid
-          
-          outcome = GridServices::Create.validate(service)
-          unless outcome.success?
-            add_error(:services, :invalid, "Service validation failed for service '#{service[:name]}': #{outcome.errors.message}")
-          end
+      if grid.stacks.find_by(name: name)
+        add_error(:name, :exists, "#{name} already exists")
+        return
+      end
+      sort_services(self.services).each do |s|
+        service = s.dup
+        service.delete(:links)
+        service[:current_user] = self.current_user
+        service[:grid] = self.grid
+        outcome = GridServices::Create.validate(service)
+        unless outcome.success?
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
         end
       end
     end
@@ -40,25 +42,8 @@ module Stacks
         end
         return
       end
-
-      if services
-        services.each do |service|
-          service[:current_user] = current_user
-          service[:grid] = attributes[:grid]
-          service[:stack] = stack
-          outcome = GridServices::Create.run(service)
-          if outcome.success?
-            stack.grid_services << outcome.result
-          else
-            add_error(:services, :invalid, "Service creation failed for service '#{service[:name]}': #{outcome.errors.message}")
-          end
-
-        end
-
-      end
-      
+      stack.stack_revisions.create(services: sort_services(services), version: 1)
       stack
     end
-
   end
 end

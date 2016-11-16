@@ -4,11 +4,14 @@ describe Kontena::ServicePods::Creator do
 
   let(:data) do
     {
+      'service_id' => 'aa',
       'service_name' => 'redis',
       'instance_number' => 2,
       'deploy_rev' => Time.now.utc.to_s,
       'updated_at' => Time.now.utc.to_s,
       'labels' => {
+        'io.kontena.service.id' => 'aa',
+        'io.kontena.service.instance_number' => '2',
         'io.kontena.service.name' => 'redis-cache',
         'io.kontena.container.overlay_cidr' => '10.81.23.2/19'
       },
@@ -36,50 +39,53 @@ describe Kontena::ServicePods::Creator do
 
   describe '#get_container' do
     it 'gets container from docker' do
-      name = 'redis-2'
-      expect(Docker::Container).to receive(:get).with(name)
-      subject.get_container(name)
+      expect(Docker::Container).to receive(:all).and_return([])
+      subject.get_container('service_id', 2)
     end
   end
 
   describe '#service_uptodate?' do
     it 'returns false if image name changes' do
-      service_container = spy(:service_container, info: {
-        'Config' => {
-          'Image' => 'foo/bar:latest'
-        }
+      service_container = spy(:service_container, config: {
+        'Image' => 'foo/bar:latest'
       })
       expect(subject.service_uptodate?(service_container)).to be_falsey
     end
 
     it 'returns false if image does not exist' do
-      service_container = spy(:service_container, info: {
-        'Created' => Time.now.utc.to_s,
-        'Config' => {
+      service_container = spy(:service_container,
+        info: {
+          'Created' => Time.now.utc.to_s
+        },
+        config: {
           'Image' => service_pod.image_name
         }
-      })
+      )
       allow(Docker::Image).to receive(:get).and_return(nil)
       expect(subject.service_uptodate?(service_container)).to be_falsey
     end
 
     it 'returns false if container created_at is less than service_pod updated_at' do
-      service_container = spy(:service_container, info: {
-        'Created' => (Time.now.utc - 60).to_s,
-        'Config' => {
+      service_container = spy(:service_container,
+        info: {
+          'Created' => (Time.now.utc - 60).to_s
+        },
+        config: {
           'Image' => service_pod.image_name
         }
-      })
+      )
       expect(subject.service_uptodate?(service_container)).to be_falsey
     end
 
     it 'returns true if container & image are uptodate' do
-      service_container = spy(:service_container, info: {
-        'Created' => (Time.now.utc + 2).to_s,
-        'Config' => {
+      service_container = spy(:service_container,
+        info: {
+          'Created' => (Time.now.utc + 2).to_s
+        },
+        config: {
           'Image' => service_pod.image_name
         }
-      })
+      )
       allow(Docker::Image).to receive(:get).and_return(spy(:image, info: {
         'Created' => (Time.now.utc + 1).to_s
       }))
@@ -114,8 +120,8 @@ describe Kontena::ServicePods::Creator do
 
     it 'returns true if RestartPolicy=always and container is stopped with error message' do
       service_container = spy(:service_container,
-        state: {'Running' => false, 'Error' => 'oh noes'},
-        restart_policy: {'Name' => 'always'}
+        autostart?: true, running?: false,
+        state: {'Running' => false, 'Error' => 'oh noes'}
       )
       expect(subject.recreate_service_container?(service_container)).to be_truthy
     end

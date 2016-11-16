@@ -124,9 +124,12 @@ describe Kontena::NetworkAdapters::Weave do
     end
 
     it 'adds dns settings' do
-      opts = {}
+      opts = {
+        'Domainname' => 'foo.bar.kontena.io'
+      }
       subject.modify_host_config(opts)
       expect(opts['HostConfig']['Dns']).to include(bridge_ip)
+      expect(opts['HostConfig']['DnsSearch']).to include(opts['Domainname'])
     end
 
     it 'does not add dns settings when NetworkMode=host' do

@@ -13,6 +13,7 @@ module Kontena::Cli::Services
       token = require_token
 
       show_service(token, name)
+      show_service_instances(token, name)
     end
   end
 end

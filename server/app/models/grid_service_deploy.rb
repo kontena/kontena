@@ -4,6 +4,7 @@ class GridServiceDeploy
 
   field :started_at, type: DateTime
   field :finished_at, type: DateTime
+  field :reason, type: String
 
   index({ grid_service_id: 1 })
   index({ created_at: 1 })

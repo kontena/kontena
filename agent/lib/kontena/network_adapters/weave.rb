@@ -150,14 +150,12 @@ module Kontena::NetworkAdapters
       host_config['VolumesFrom'] ||= []
       host_config['VolumesFrom'] << "weavewait-#{WEAVE_VERSION}:ro"
       dns = interface_ip('docker0')
-      if dns && host_config['NetworkMode'].to_s != 'host'
+      if dns && host_config['NetworkMode'].to_s != 'host'.freeze
         host_config['Dns'] = [dns]
-        host_config['DnsSearch'] = ['kontena.local']
+        host_config['DnsSearch'] = [opts['Domainname']]
       end
       opts['HostConfig'] = host_config
     end
-
-
 
     # @param [Array<String>] cmd
     def exec(cmd)

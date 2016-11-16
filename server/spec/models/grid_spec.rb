@@ -20,6 +20,15 @@ describe Grid do
 
   it { should have_index_for(token: 1).with_options(unique: true) }
 
+  describe '.after_create' do
+    it 'creates default stack automatically' do
+      expect {
+        grid = described_class.create(name: 'test')
+        expect(grid.stacks.count).to eq(1)
+      }.to change{ Stack.count }.by(1)
+    end
+  end
+
   describe '#free_node_numbers' do
     it 'returns 1-254 if there are no nodes yet' do
       expect(subject.free_node_numbers).to eq((1..254).to_a)
@@ -58,7 +67,7 @@ describe Grid do
     end
   end
 
-  describe '#initial_node``' do
+  describe '#initial_node' do
     let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
 
     it 'returns true if node is initial member' do

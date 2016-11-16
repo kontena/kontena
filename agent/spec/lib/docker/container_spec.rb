@@ -86,4 +86,25 @@ describe Docker::Container do
       expect(subject.suspiciously_dead?).to be_truthy
     end
   end
+
+  describe '#default_stack?' do
+    it 'returns true if container is part of default stack' do
+      allow(subject).to receive(:labels).and_return({
+        'io.kontena.stack.name' => 'default'
+      })
+      expect(subject.default_stack?).to be_truthy
+    end
+
+    it 'returns false if container is not part of default stack' do
+      allow(subject).to receive(:labels).and_return({
+        'io.kontena.stack.name' => 'other'
+      })
+      expect(subject.default_stack?).to be_falsey
+    end
+
+    it 'returns false if container is missing stack info' do
+      allow(subject).to receive(:labels).and_return({})
+      expect(subject.default_stack?).to be_falsey
+    end
+  end
 end

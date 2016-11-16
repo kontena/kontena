@@ -54,14 +54,26 @@ class GridService
   index({ name: 1 })
   index({ grid_service_ids: 1 })
 
-  validates_presence_of :name, :image_name
-  validates_uniqueness_of :name, scope: [:grid_id]
+  validates_presence_of :name, :image_name, :grid_id, :stack_id
+  validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
 
   scope :load_balancer, -> { where(image_name: LB_IMAGE) }
 
+  before_validation :ensure_stack
+
   # @return [String]
   def to_path
-    "#{self.grid.try(:name)}/#{self.name}"
+    "#{self.grid.try(:name)}/#{self.stack.name}/#{self.name}"
+  end
+
+  # @return [String]
+  def name_with_stack
+    "#{self.stack.name}-#{self.name}"
+  end
+
+  # @return [Boolean]
+  def default_stack?
+    self.stack.try(:name).to_s == 'default'.freeze
   end
 
   # @param [String] state
@@ -96,6 +108,11 @@ class GridService
   # @return [Boolean]
   def running?
     self.state == 'running'
+  end
+
+  # @return [Boolean]
+  def stopped?
+    self.state == 'stopped'
   end
 
   def deploy_pending?
@@ -154,7 +171,8 @@ class GridService
     self.containers.unscoped.volumes.find_by(name: name.to_s)
   end
 
-  def linked_to_services
+  # @return [Mongoid::Criteria]
+  def linked_from_services
     self.grid.grid_services.where(:'grid_service_links.linked_grid_service_id' => self.id)
   end
 
@@ -215,5 +233,11 @@ class GridService
     end
 
     {healthy: healthy, total: self.containers.count}
+  end
+
+  def ensure_stack
+    if self.grid_id && self.stack_id.nil?
+      self.stack = self.grid.stacks.find_by(name: 'default')
+    end
   end
 end

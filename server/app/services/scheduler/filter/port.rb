@@ -9,11 +9,10 @@ module Scheduler
       # @return [Array<HostNode>]
       def for_service(service, instance_number, nodes)
         candidates = nodes.dup
-        container_name = "#{service.name}-#{instance_number}"
         ports = service.ports.map{|p| p['node_port']}
         nodes.each do |node|
           containers_for_node(node).each do |container|
-            unless container.name == container_name
+            unless same_instance?(container, service, instance_number)
               container.network_settings['ports'].each do |_, values|
                 if values && values.any?{|v| ports.include?(v['node_port']) }
                   candidates.delete(node)
@@ -24,6 +23,15 @@ module Scheduler
         end
 
         candidates
+      end
+
+      # @param [Container] container
+      # @param [GridService] service
+      # @param [Integer] instance_number
+      # @return [Boolean]
+      def same_instance?(container, service, instance_number)
+        return false unless container.labels['io;kontena;service;id'].to_s == service.id.to_s
+        return false unless container.labels['io;kontena;service;instance_number'].to_s == instance_number.to_s
       end
 
       ##

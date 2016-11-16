@@ -27,7 +27,7 @@ describe Docker::ServiceCreator do
     let(:service_spec) { subject.service_spec(2, 'rev') }
 
     it 'includes service_name' do
-      expect(service_spec).to include(:service_name => 'app')
+      expect(service_spec).to include(:service_name => "#{service.stack.name}-#{service.name}")
     end
 
     it 'includes instance_number' do
@@ -129,6 +129,7 @@ describe Docker::ServiceCreator do
         expect(env).to include("KONTENA_SERVICE_ID=#{service.id.to_s}")
         expect(env).to include("KONTENA_SERVICE_NAME=#{service.name.to_s}")
         expect(env).to include("KONTENA_GRID_NAME=#{service.grid.name.to_s}")
+        expect(env).to include("KONTENA_STACK_NAME=#{service.stack.name.to_s}")
         expect(env).to include("KONTENA_NODE_NAME=#{node.name.to_s}")
         expect(env).to include("KONTENA_SERVICE_INSTANCE_NUMBER=2")
       end
@@ -141,6 +142,7 @@ describe Docker::ServiceCreator do
         expect(labels).to include('io.kontena.container.id' => anything)
         expect(labels).to include('io.kontena.service.id' => service.id.to_s)
         expect(labels).to include('io.kontena.service.name' => service.name)
+        expect(labels).to include('io.kontena.stack.name' => service.stack.name)
         expect(labels).to include('io.kontena.grid.name' => grid.name)
       end
 
