@@ -120,13 +120,13 @@ agent:
 
 **Step 2:** Run the command `docker-compose up -d`
 
-To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine. The most platform-independent way to do this is with the `/etc/docker/daemon.json` config file:
+To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/16"` to Docker daemon options on the host machine. The most platform-independent way to do this is with the `/etc/docker/daemon.json` config file:
 
 ```sh
 $ cat > /etc/docker/daemon.json <<DOCKERCONFIG
 {
   "labels": ["region=<name_here>"],
-  "insecure-registries": ["10.81.0.0/19"]
+  "insecure-registries": ["10.81.0.0/16"]
 }
 DOCKERCONFIG
 ```
