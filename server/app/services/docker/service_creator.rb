@@ -91,7 +91,7 @@ module Docker
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
       env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
       env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
-      env << "KONTENA_GRID_NAME=#{grid_service.stack.try(:name)}"
+      env << "KONTENA_STACK_NAME=#{grid_service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{host_node.name}"
       env << "KONTENA_SERVICE_INSTANCE_NUMBER=#{instance_number}"
       env
