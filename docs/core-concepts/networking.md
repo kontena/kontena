@@ -30,16 +30,16 @@ Nodes and Containers attached to different Grids cannot communicate.
 
 Each grid has a single overlay network. The default overlay network used is `10.81.0.0/16`, and it currently cannot be configured at creation time nor changed later.
 
-The grid's overlay network subnet is divided into two parts: `10.81.0.0/17` and `10.81.128.0/17`. The lower half is used by the Kontena Agent for statically allocated addresses used by infrastructure services such as etcd, and the upper half (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service container addresses managed by the [Kontena IPAM](https://github.com/kontena/kontena-docker-ipam-plugin).
+The grid's overlay network subnet is divided into two parts: `10.81.0.0/17` and `10.81.128.0/17`. The lower half is used by the Kontena Agent for statically allocated addresses used by infrastructure services such as etcd, and the upper half (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service container addresses managed by the [Kontena IPAM](https://github.com/kontena/kontena-ipam).
 
 Each Grid may also include a set of Trusted Subnets, which are used for the Overlay Networking between Host Node public and private IP addresses as described further below.
 
 ### IP Address Management
 
-Overlay network addresses are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-docker-ipam-plugin) service running on each host Node.
+Overlay network addresses are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) service running on each host Node.
 Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 32768 Service Containers.
 
-The [Kontena IPAM](https://github.com/kontena/kontena-docker-ipam-plugin) service uses the Grid's etcd service to track the allocated overlay network address across each of the Grid's Host Nodes.
+The [Kontena IPAM](https://github.com/kontena/kontena-ipam) service uses the Grid's etcd service to track the allocated overlay network address across each of the Grid's Host Nodes.
 The overlay network address of a Service Container is reserved by the Kontena Agent when it is created.
 The overlay network address is released by the Kontena Agent when the Service Container is removed.
 
