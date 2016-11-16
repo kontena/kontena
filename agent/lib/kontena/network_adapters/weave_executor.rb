@@ -16,8 +16,8 @@ module Kontena::NetworkAdapters
     end
 
     # @param [Array<String>] cmd
-    def execute(cmd)
-      sleep 0.5 until @images_exist
+    # @yield [line] Each line of output
+    def execute(cmd, &block)
       begin
         container = Docker::Container.create(
           'Image' => weave_exec_image,
@@ -61,18 +61,67 @@ module Kontena::NetworkAdapters
           return false
         end
 
-        if (status_code = response["StatusCode"]) == 0
-          debug "weaveexec ok: #{cmd}"
+        status_code = response["StatusCode"]
+        output = container.streaming_logs(stdout: true, stderr: true)
+
+        if status_code != 0
+          error "weaveexec exit #{status_code}: #{cmd}\n#{output}"
+          return false
+        elsif block
+          debug "weaveexec stream: #{cmd}"
+          output.each_line &block
+          return true
         else
-          logs = container.streaming_logs(stdout: true, stderr: true)
-          error "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
+          debug "weaveexec ok: #{cmd}\n#{output}"
+          return true
         end
-        response
       ensure
         container.delete(force: true, v: true) if container
       end
     end
 
+    # List network information for container(s)
+    #
+    # @param [Array<String>] what for given Docker IDs, 'weave:expose', or all
+    # @yield [name, mac, *cidrs]
+    # @yieldparam [Array<String>] cidrs
+    def ps(*what)
+      self.execute(['--local', 'ps', *what]) do |line|
+        yield *line.split()
+      end
+    end
+
+    # Configure given address on host weave bridge.
+    # Also configures iptables rules for the subnet
+    #
+    # @param [String] cidr '10.81.0.X/16' host node overlay_cidr
+    def expose(cidr)
+      self.execute(['--local', 'expose', "ip:#{cidr}"])
+    end
+
+    # De-configure given address on host weave bridge.
+    # Aslo removes iptables rules for the subnet
+    #
+    # @param [String] cidr '10.81.0.X/16' host node overlay_cidr
+    def hide(cidr)
+      self.execute(['--local', 'hide', cidr])
+    end
+
+    # Configure ethwe interface with cidr for given container
+    #
+    # @param [String] id Docker ID
+    # @param [String] cidr Overlay '10.81.X.Y/16' CIDR
+    def attach(id, cidr)
+      self.execute(['--local', 'attach', cidr, '--rewrite-hosts', id])
+    end
+
+    # De-configure ethwe interface with cidr for given container
+    #
+    # @param [String] id Docker ID
+    # @param [String] cidr Overlay '10.81.X.Y/16' CIDR
+    def detach(id, cidr)
+      self.execute(['--local', 'detach', cidr, id])
+    end
 
     private
 
