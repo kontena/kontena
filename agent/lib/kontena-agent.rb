@@ -34,7 +34,6 @@ require_relative 'kontena/workers/image_cleanup_worker'
 require_relative 'kontena/workers/image_pull_worker'
 require_relative 'kontena/workers/health_check_worker'
 require_relative 'kontena/workers/container_starter_worker'
-require_relative 'kontena/workers/container_network_migrator'
 
 require_relative 'kontena/actors/container_coroner'
 

@@ -140,10 +140,6 @@ module Kontena
         type: Kontena::Workers::ContainerStarterWorker,
         as: :container_starter_worker
       )
-      @supervisor.supervise(
-        type: Kontena::Workers::ContainerNetworkMigratorWorker,
-        as: :container_network_migrator
-      )
     end
 
     def supervise_lb
