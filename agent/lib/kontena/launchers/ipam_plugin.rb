@@ -7,12 +7,11 @@ module Kontena::Launchers
     include Kontena::Logging
     include Kontena::Helpers::ImageHelper
 
-    CLEANUP_INTERVAL = (3*60) # Run cleanup every 3mins
-    CLEANUP_DELAY = 30
+
 
     IPAM_SERVICE_NAME = 'kontena-ipam-plugin'.freeze
 
-    IPAM_VERSION = ENV['IPAM_VERSION'] || 'latest'
+    IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2'
     IPAM_IMAGE = ENV['IPAM_IMAGE'] || 'kontena/ipam-plugin'
 
     def initialize(autostart = true)
@@ -22,26 +21,7 @@ module Kontena::Launchers
       subscribe('network_adapter:start', :on_network_start)
       info 'initialized'
       async.ensure_image if autostart
-    end
-
-    def cleanup_ipam
-      debug "starting IPAM cleanup loop"
-      loop do
-        sleep CLEANUP_INTERVAL
-        ipam_client = Kontena::NetworkAdapters::IpamClient.new
-        cleanup_index = ipam_client.cleanup_index
-        debug "Got index #{cleanup_index} for IPAM cleanup. Waiting for pending deployments..."
-        sleep CLEANUP_DELAY
-        # Collect locally known addresses
-        debug "starting to collect locally known addresses"
-        local_addresses = []
-        Docker::Container.all(all: true).each do |container|
-          local_addresses << container.overlay_cidr
-        end
-        local_addresses.compact! # remove nils
-        debug "invoking cleanup with #{local_addresses.size} known addresses"
-        ipam_client.cleanup_network('kontena', local_addresses, cleanup_index)
-      end
+      Kontena::NetworkAdapters::IpamCleaner.supervise as: :ipam_cleaner
     end
 
     def ensure_image
@@ -61,7 +41,6 @@ module Kontena::Launchers
         sleep 1
       end
       Celluloid::Notifications.publish('ipam:start', nil)
-      async.cleanup_ipam
     end
 
     def image_exists?
