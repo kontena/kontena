@@ -84,7 +84,7 @@ Each host Node has a total of four different network addresses:
   Each Host Node within a Grid is assigned a sequential Node Number, in the range of `1..254`.
 
   Once the overlay network has been established, the host machine is also configured with a statically allocated overlay network address based on the sequentially assigned Node number.
-  The first `/24` of addresses within the overlay network subnet (`10.81.1.X/16`) is reserved for these statically allocated Node overlay network addresses.
+  The first `/24` of addresses within the overlay network subnet (`10.81.0.X/16`) is reserved for these statically allocated Node overlay network addresses.
 
   These Node overlay network addresses can be used by both other Nodes and any Service Containers within the same Grid.
   The Node's overlay network address is used for the Grid's infrastructure services, including Kontena's etcd cluster.
