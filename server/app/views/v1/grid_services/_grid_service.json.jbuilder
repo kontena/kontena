@@ -30,7 +30,7 @@ json.grid do
   json.id grid_service.grid.name
 end
 json.stack do
-  json.id (grid_service.stack.name || 'default'.freeze)
+  json.id grid_service.stack.to_path
 end
 json.links grid_service.grid_service_links.map{|s|
   { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name }
