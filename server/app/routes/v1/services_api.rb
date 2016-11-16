@@ -35,20 +35,6 @@ module V1
         grid_service
       end
 
-      def build_scope(service, r)
-        scope = @grid_service.container_logs.includes(:grid_service, :host_node)
-
-        scope = scope.where(name: r['container']) unless r['container'].nil?
-        scope = scope.where(:$text => {:$search => r['search']}) unless r['search'].nil?
-        if !r['since'].nil? && r['from'].nil?
-          since = DateTime.parse(r['since']) rescue nil
-          scope = scope.where(:created_at.gt => since)
-        end
-        scope = scope.where(:id.gt => r['from'] ) unless r['from'].nil?
-        scope = scope.order(:_id => -1)
-        scope
-      end
-
       # /v1/services/:grid_name/:stack_name/:service_name
       r.on ':grid_name/:stack_name/:service_name' do |grid_name, stack_name, service_name|
         @grid_service = load_grid_service(grid_name, stack_name, service_name)
