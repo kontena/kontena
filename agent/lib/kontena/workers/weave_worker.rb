@@ -58,7 +58,7 @@ module Kontena::Workers
       overlay_cidr = container.overlay_cidr
       if overlay_cidr
         register_container_dns(container)
-        Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
+        attach_overlay(container.id, overlay_cidr)
       else
         debug "did not find ip for container: #{container.name}, not attaching to weave"
       end
@@ -67,6 +67,12 @@ module Kontena::Workers
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
+    end
+
+    # @param [String] container_id
+    # @param [String] overlay_cidr
+    def attach_overlay(container_id, overlay_cidr)
+      Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
     end
 
     # @param [Docker::Container]
@@ -79,6 +85,7 @@ module Kontena::Workers
         hostname = container.labels['io.kontena.container.name']
         dns_names = default_stack_dns_names(hostname, service_name, domain_name)
         dns_names = dns_names + stack_dns_names(hostname, service_name, domain_name)
+
       else
         hostname = container.config['Hostname']
         dns_names = stack_dns_names(hostname, service_name, domain_name)
