@@ -161,6 +161,30 @@ module Kontena::NetworkAdapters
       @ipam_running = true
     end
 
+    # Ensure that the host weave bridge is exposed using the given CIDR address,
+    # and only the given CIDR address
+    #
+    # @param [String] cidr '10.81.0.X/16'
+    def ensure_exposed(cidr)
+      # configure new address
+      # these will be added alongside any existing addresses
+      if @executor_pool.expose(cidr)
+        info "Exposed host node at cidr=#{cidr}"
+      else
+        error "Failed to expose host node at cidr=#{cidr}"
+      end
+
+      # cleanup any old addresses
+      @executor_pool.ps('weave:expose') do |name, mac, *cidrs|
+        cidrs.each do |exposed_cidr|
+          if exposed_cidr != cidr
+            warn "Migrating host node from cidr=#{exposed_cidr}"
+            @executor_pool.hide(exposed_cidr)
+          end
+        end
+      end
+    end
+
     def ensure_default_pool()
       info 'network and ipam ready, ensuring default network existence'
       @default_pool = @ipam_client.reserve_pool('kontena', '10.81.0.0/16', '10.81.128.0/17')
@@ -226,9 +250,7 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def post_start(info)
       if info['node_number']
-        weave_bridge = "10.81.0.#{info['node_number']}/16"
-        @executor_pool.execute(['--local', 'expose', "ip:#{weave_bridge}"])
-        info "bridge exposed: #{weave_bridge}"
+        ensure_exposed("10.81.0.#{info['node_number']}/16")
       end
     end
 
