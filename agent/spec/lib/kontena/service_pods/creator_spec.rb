@@ -120,8 +120,8 @@ describe Kontena::ServicePods::Creator do
 
     it 'returns true if RestartPolicy=always and container is stopped with error message' do
       service_container = spy(:service_container,
-        state: {'Running' => false, 'Error' => 'oh noes'},
-        restart_policy: {'Name' => 'unless-stopped'}
+        autostart?: true, running?: false,
+        state: {'Running' => false, 'Error' => 'oh noes'}
       )
       expect(subject.recreate_service_container?(service_container)).to be_truthy
     end
