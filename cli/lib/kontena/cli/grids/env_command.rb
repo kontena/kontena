@@ -25,6 +25,7 @@ module Kontena::Cli::Grids
         prefix = export? ? 'export ' : ''
 
         puts "#{prefix}KONTENA_URI=#{grid_uri}"
+        puts "#{prefix}KONTENA_GRID=#{grid['name']}"
         puts "#{prefix}KONTENA_TOKEN=#{grid['token']}"
       end
     end

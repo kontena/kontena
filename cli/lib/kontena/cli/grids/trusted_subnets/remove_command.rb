@@ -2,14 +2,15 @@ module Kontena::Cli::Grids::TrustedSubnets
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "NAME", "Grid name"
     parameter "SUBNET", "Trusted subnet"
+    parameter "[NAME]", "Grid name (default: current grid)"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
       require_api_url
       token = require_token
-      grid = client(token).get("grids/#{name}")
+      grid = name || current_grid
+      grid = client(token).get("grids/#{grid}")
       confirm_command(subnet) unless forced?
       trusted_subnets = grid['trusted_subnets'] || []
       unless trusted_subnets.delete(self.subnet)
