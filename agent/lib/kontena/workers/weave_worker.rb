@@ -53,12 +53,14 @@ module Kontena::Workers
       end
     end
 
+    OVERLAY_SUFFIX = '16'
+
     # @param [Docker::Container] container
     def weave_attach(container)
       overlay_cidr = container.overlay_cidr
       if overlay_cidr
         register_container_dns(container)
-        attach_overlay(container.id, overlay_cidr)
+        attach_overlay(container)
       else
         debug "did not find ip for container: #{container.name}, not attaching to weave"
       end
@@ -71,8 +73,12 @@ module Kontena::Workers
 
     # @param [String] container_id
     # @param [String] overlay_cidr
-    def attach_overlay(container_id, overlay_cidr)
-      network_adapter.attach_network(overlay_cidr, container_id)
+    def attach_overlay(container)
+      if container.overlay_suffix != OVERLAY_SUFFIX
+        network_adapter.migrate_container(container.id, "#{container.overlay_ip}/#{OVERLAY_SUFFIX}")
+      else
+        network_adapter.attach_container(container.id, container.overlay_cidr)
+      end
     end
 
     def network_adapter

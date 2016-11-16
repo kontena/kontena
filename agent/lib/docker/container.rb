@@ -170,6 +170,14 @@ module Docker
       self.labels['io.kontena.container.overlay_cidr']
     end
 
+    # Container CIDR suffix within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # @return [String, NilClass]
+    def overlay_suffix
+      self.overlay_cidr.split('/')[1] if self.overlay_cidr
+    end
+
     private
 
     # @return [Hash]
