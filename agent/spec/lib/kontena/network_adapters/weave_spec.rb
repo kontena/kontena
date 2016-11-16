@@ -13,6 +13,26 @@ describe Kontena::NetworkAdapters::Weave do
 
   after(:each) { Celluloid.shutdown }
 
+  describe '#terminate' do
+    it 'terminates also executor pool if it is still alive' do
+      pool = double
+      expect(Kontena::NetworkAdapters::WeaveExecutor).to receive(:pool).and_return(pool)
+      expect(pool).to receive(:alive?).and_return(true)
+      expect(pool).to receive(:terminate)
+      subject = described_class.new(false)
+      subject.terminate
+    end
+
+    it 'does not attempt to terminate dead pool' do
+      pool = double
+      expect(Kontena::NetworkAdapters::WeaveExecutor).to receive(:pool).and_return(pool)
+      expect(pool).to receive(:alive?).and_return(false)
+      expect(pool).not_to receive(:terminate)
+      subject = described_class.new(false)
+      subject.terminate
+    end
+  end
+
   describe '#adapter_container' do
     it 'returns true if weave exec container' do
       container = spy(:container, :config => {'Image' => 'weaveworks/weaveexec:latest'})

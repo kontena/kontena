@@ -16,6 +16,8 @@ module Kontena::NetworkAdapters
 
     DEFAULT_NETWORK = 'kontena'.freeze
 
+    finalizer :finalizer
+
     def initialize(autostart = true)
       @images_exist = false
       @started = false
@@ -25,6 +27,14 @@ module Kontena::NetworkAdapters
       subscribe('agent:node_info', :on_node_info)
       subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
+      @executor_pool = WeaveExecutor.pool(args: [autostart])
+      # ^ Default size of pool is number of CPU cores, 2 for 1 core machine
+    end
+
+    def finalizer
+      @executor_pool.terminate if @executor_pool.alive?
+    rescue
+      # If Celluloid manages to terminate the pool (through GC or by explicit shutdown) it will raise
     end
 
     # @return [String]
@@ -140,63 +150,6 @@ module Kontena::NetworkAdapters
       opts['HostConfig'] = host_config
     end
 
-    # @param [Array<String>] cmd
-    def exec(cmd)
-      begin
-        container = Docker::Container.create(
-          'Image' => weave_exec_image,
-          'Cmd' => cmd,
-          'Volumes' => {
-            '/var/run/docker.sock' => {},
-            '/host' => {}
-          },
-          'Labels' => {
-            'io.kontena.container.skip_logs' => '1'
-          },
-          'Env' => [
-            'HOST_ROOT=/host',
-            "VERSION=#{WEAVE_VERSION}",
-            "WEAVE_DEBUG=#{ENV['WEAVE_DEBUG']}",
-          ],
-          'HostConfig' => {
-            'Privileged' => true,
-            'NetworkMode' => 'host',
-            'PidMode' => 'host',
-            'Binds' => [
-              '/var/run/docker.sock:/var/run/docker.sock',
-              '/:/host'
-            ]
-          }
-        )
-        retries = 0
-        response = {}
-        begin
-          response = container.tap(&:start).wait
-        rescue Docker::Error::NotFoundError => exc
-          error exc.message
-          return false
-        rescue => exc
-          retries += 1
-          error exc.message
-          sleep 0.5
-          retry if retries < 10
-
-          error exc.message
-          return false
-        end
-
-        if (status_code = response["StatusCode"]) == 0
-          debug "weaveexec ok: #{cmd}"
-        else
-          logs = container.streaming_logs(stdout: true, stderr: true)
-          error "weaveexec exit #{status_code}: #{cmd}\n#{logs}"
-        end
-        response
-      ensure
-        container.delete(force: true, v: true) if container
-      end
-    end
-
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
@@ -233,13 +186,13 @@ module Kontena::NetworkAdapters
           '--password', ENV['KONTENA_TOKEN']
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
-        self.exec(exec_params)
+        @executor_pool.execute(exec_params)
         weave = Docker::Container.get('weave') rescue nil
         wait = Time.now.to_f + 10.0
         sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
 
         if weave.nil? || !weave.running?
-          self.exec(['--local', 'reset'])
+          @executor_pool.execute(['--local', 'reset'])
         end
       end
 
@@ -259,13 +212,13 @@ module Kontena::NetworkAdapters
 
     def attach_router
       info "attaching router"
-      self.exec(['--local', 'attach-router'])
+      @executor_pool.execute(['--local', 'attach-router'])
     end
 
     # @param [Array<String>] peer_ips
     def connect_peers(peer_ips)
       if peer_ips.size > 0
-        self.exec(['--local', 'connect', '--replace'] + peer_ips)
+        @executor_pool.execute(['--local', 'connect', '--replace'] + peer_ips)
         info "router connected to peers #{peer_ips.join(', ')}"
       else
         info "router does not have any known peers"
@@ -276,7 +229,7 @@ module Kontena::NetworkAdapters
     def post_start(info)
       if info['node_number']
         weave_bridge = "10.81.0.#{info['node_number']}/16"
-        self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
+        @executor_pool.execute(['--local', 'expose', "ip:#{weave_bridge}"])
         info "bridge exposed: #{weave_bridge}"
       end
     end
@@ -289,6 +242,10 @@ module Kontena::NetworkAdapters
       return true if cmd['--trusted-subnets'] != config.dig('grid', 'trusted_subnets').to_a.join(',')
 
       false
+    end
+
+    def attach_network(overlay_cidr, container_id)
+      @executor_pool.async.execute(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container_id])
     end
 
     def detach_network(event)
@@ -304,8 +261,7 @@ module Kontena::NetworkAdapters
 
     def ensure_images
       images = [
-        weave_image,
-        weave_exec_image
+        weave_image
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
