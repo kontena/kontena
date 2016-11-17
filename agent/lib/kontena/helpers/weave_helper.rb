@@ -12,6 +12,11 @@ module Kontena
         weave.info['State']['Running'] == true
       end
 
+      def weave_api_ready?
+        response = dns_client.get(path: '/status')
+        response.status == 200
+      end
+
       # @param [String] container_id
       # @param [String] ip
       # @param [String] name

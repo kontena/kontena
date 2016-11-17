@@ -76,11 +76,22 @@ module Kontena::NetworkAdapters
 
     # @return [Boolean]
     def running?
-      weave = Docker::Container.get('weave') rescue nil
-      return false if weave.nil?
-      weave.running? && ipam_running?
+      return false unless weave_container_running?
+      return false unless ipam_running?
+      return false unless weave_api_ready?
+      return false unless interface_ip('weave')
+      true
     end
 
+    # @return [Boolean]
+    def weave_container_running?
+      weave = Docker::Container.get('weave') rescue nil
+      return false if weave.nil?
+      return false unless weave.running?
+      true
+    end
+
+    # @return [Boolean]
     def ipam_running?
       @ipam_running
     end
