@@ -55,36 +55,10 @@ module Kontena::Workers
 
     # @param [Docker::Container] container
     def weave_attach(container)
-      config = container.info['Config'] || container.json['Config']
-      labels = config['Labels'] || {}
-      overlay_cidr = labels['io.kontena.container.overlay_cidr']
+      overlay_cidr = container.overlay_cidr
       if overlay_cidr
-        container_name = labels['io.kontena.container.name']
-        service_name = labels['io.kontena.service.name']
-        instance_number = labels['io.kontena.service.instance_number']
-        stack_name = labels['io.kontena.stack.name'] || 'default'.freeze
-        grid_name = labels['io.kontena.grid.name']
-        domain_name = config['Domainname']
-        ip = overlay_cidr.split('/')[0]
-        if container.default_stack?
-          base_domain = domain_name.split('.', 2)[1]
-          dns_names = [
-            "#{container_name}.#{base_domain}",
-            "#{service_name}.#{base_domain}",
-            "#{container_name}.#{domain_name}",
-            "#{service_name}.#{domain_name}"
-          ]
-        else
-          dns_names = [
-            "#{service_name}.#{domain_name}",
-            "#{service_name}-#{instance_number}.#{domain_name}"
-          ]
-        end
-        dns_names.each do |name|
-          add_dns(container.id, ip, name)
-        end
-
-        Actor[:network_adapter].exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container.id])
+        register_container_dns(container)
+        attach_overlay(container.id, overlay_cidr)
       else
         debug "did not find ip for container: #{container.name}, not attaching to weave"
       end
@@ -95,5 +69,55 @@ module Kontena::Workers
       error exc.backtrace.join("\n")
     end
 
+    # @param [String] container_id
+    # @param [String] overlay_cidr
+    def attach_overlay(container_id, overlay_cidr)
+      network_adapter.exec(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container_id])
+    end
+
+    def network_adapter
+      Actor[:network_adapter]
+    end
+
+    # @param [Docker::Container]
+    def register_container_dns(container)
+      grid_name = container.labels['io.kontena.grid.name']
+      service_name = container.labels['io.kontena.service.name']
+      instance_number = container.labels['io.kontena.service.instance_number']
+      domain_name = container.config['Domainname'] || "#{grid_name}.kontena.local"
+      if container.default_stack?
+        hostname = container.labels['io.kontena.container.name']
+        dns_names = default_stack_dns_names(hostname, service_name, domain_name)
+        dns_names = dns_names + stack_dns_names(hostname, service_name, domain_name)
+
+      else
+        hostname = container.config['Hostname']
+        dns_names = stack_dns_names(hostname, service_name, domain_name)
+      end
+      dns_names.each do |name|
+        add_dns(container.id, container.overlay_ip, name)
+      end
+    end
+
+    # @param [String] hostname
+    # @param [String] service_name
+    # @param [String] domain_name
+    def default_stack_dns_names(hostname, service_name, domain_name)
+      base_domain = domain_name.split('.', 2)[1]
+      [
+        "#{hostname}.#{base_domain}",
+        "#{service_name}.#{base_domain}"
+      ]
+    end
+
+    # @param [String] hostname
+    # @param [String] service_name
+    # @param [String] domain_name
+    def stack_dns_names(hostname, service_name, domain_name)
+      dns_names = [
+        "#{service_name}.#{domain_name}",
+        "#{hostname}.#{domain_name}"
+      ]
+    end
   end
 end

@@ -41,7 +41,6 @@ describe Kontena::Workers::WeaveWorker do
       expect(subject.wrapped_object).to receive(:start).once
       subject.on_container_event('topic', event)
     end
-
   end
 
   describe '#weave_running?' do
@@ -60,6 +59,104 @@ describe Kontena::Workers::WeaveWorker do
     it 'returns false if weave does not exist' do
       allow(Docker::Container).to receive(:get).with('weave').and_raise(Docker::Error::NotFoundError)
       expect(subject.weave_running?).to eq(false)
+    end
+  end
+
+  describe '#weave_attach' do
+    it 'attaches overlay if container has overlay_cidr' do
+      allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
+      allow(subject.wrapped_object).to receive(:register_container_dns)
+      expect(subject.wrapped_object).to receive(:attach_overlay).with(container.id, container.overlay_cidr)
+      subject.weave_attach(container)
+    end
+
+    it 'does not attach overlay if container does not have overlay_cidr' do
+      allow(container).to receive(:overlay_cidr).and_return(nil)
+      allow(subject.wrapped_object).to receive(:register_container_dns)
+      expect(subject.wrapped_object).not_to receive(:attach_overlay)
+      subject.weave_attach(container)
+    end
+
+    it 'registers dns if container has overlay_cidr' do
+      allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
+      allow(subject.wrapped_object).to receive(:attach_overlay)
+      expect(subject.wrapped_object).to receive(:register_container_dns).with(container)
+      subject.weave_attach(container)
+    end
+
+    it 'does not register dns if container does not have overlay_cidr' do
+      allow(container).to receive(:overlay_cidr).and_return(nil)
+      allow(subject.wrapped_object).to receive(:attach_overlay)
+      expect(subject.wrapped_object).not_to receive(:register_container_dns)
+      subject.weave_attach(container)
+    end
+  end
+
+  describe '#attach_overlay' do
+    let(:adapter) do
+      spy(:adapter)
+    end
+
+    before(:each) do
+      allow(subject.wrapped_object).to receive(:network_adapter).and_return(adapter)
+    end
+
+    it 'calls network_adapter' do
+      expect(adapter).to receive(:exec) {|*args|
+        expect(args[0]).to include('aaa', '10.81.1.1/16')
+      }
+      subject.attach_overlay('aaa', '10.81.1.1/16')
+    end
+  end
+
+  describe '#register_container_dns' do
+    before(:each) do
+      allow(container).to receive(:overlay_ip).and_return('10.81.1.1')
+    end
+
+    it 'registers all dns names for default stack' do
+      allow(container).to receive(:config).and_return({
+        'Domainname' => 'foo.kontena.local',
+        'Hostname' => 'redis-2'
+      })
+      allow(container).to receive(:labels).and_return({
+        'io.kontena.stack.name' => 'default',
+        'io.kontena.grid.name' => 'foo',
+        'io.kontena.service.name' => 'redis',
+        'io.kontena.service.instance_number' => 2,
+        'io.kontena.container.name' => 'redis-2'
+      })
+      names = []
+      expect(subject.wrapped_object).to receive(:add_dns).exactly(4).times { |id, ip, name|
+        names << name
+      }
+      subject.register_container_dns(container)
+      expect(names).to include('redis-2.kontena.local')
+      expect(names).to include('redis-2.foo.kontena.local')
+      expect(names).to include('redis.kontena.local')
+      expect(names).to include('redis.foo.kontena.local')
+    end
+
+    it 'registers all dns names for non-default stack' do
+      allow(container).to receive(:default_stack?).and_return(false)
+      allow(container).to receive(:config).and_return({
+        'Domainname' => 'custom.foo.kontena.local',
+        'Hostname' => 'redis-2'
+      })
+      allow(container).to receive(:labels).and_return({
+        'io.kontena.stack.name' => 'custom',
+        'io.kontena.grid.name' => 'foo',
+        'io.kontena.service.name' => 'redis',
+        'io.kontena.service.instance_number' => 2,
+        'io.kontena.container.name' => 'redis-2'
+      })
+      names = []
+      expect(subject.wrapped_object).to receive(:add_dns).exactly(2).times { |id, ip, name|
+        names << name
+      }
+      subject.register_container_dns(container)
+      expect(names).to include('redis-2.custom.foo.kontena.local')
+      expect(names).to include('redis.custom.foo.kontena.local')
     end
   end
 end
