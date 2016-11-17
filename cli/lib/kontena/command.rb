@@ -188,6 +188,16 @@ class Kontena::Command < Clamp::Command
     exit(@exit_code) if @exit_code.to_i > 0
     @result
   end
+
+  def subcommand_missing(name)
+    guesses = self.class.recognised_subcommands.flat_map(&:names).select {|sc_name| sc_name.start_with?(name)}
+    if guesses.size == 1
+      return self.class.find_subcommand(guesses.first).subcommand_class
+    elsif guesses.size > 1
+      puts "Suggestions: #{guesses.join(', ')}"
+    end
+    super(name)
+  end
 end
 
 require_relative 'callback'
