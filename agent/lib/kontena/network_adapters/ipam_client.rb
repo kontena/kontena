@@ -87,6 +87,25 @@ module Kontena::NetworkAdapters
       handle_error_response(error)
     end
 
+    def cleanup_index
+      response = @connection.get(:path => '/KontenaIPAM.Cleanup', :headers => HEADERS, :expects => [200])
+      parse_response(response).dig('EtcdIndex')
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error)
+    end
+
+    def cleanup_network(network, known_addresses, since_index)
+      data = {
+        "EtcdIndex": since_index,
+        "PoolID": network,
+        "Addresses": known_addresses
+      }.to_json
+
+      response = @connection.post(:path => '/KontenaIPAM.Cleanup', :body => data, :headers => HEADERS, :expects => [200])
+    rescue Excon::Errors::HTTPStatusError => error
+      handle_error_response(error)
+    end
+
     private
 
     # @param [Excon::Response] response

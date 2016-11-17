@@ -7,9 +7,11 @@ module Kontena::Launchers
     include Kontena::Logging
     include Kontena::Helpers::ImageHelper
 
+
+
     IPAM_SERVICE_NAME = 'kontena-ipam-plugin'.freeze
 
-    IPAM_VERSION = ENV['IPAM_VERSION'] || 'latest'
+    IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2'
     IPAM_IMAGE = ENV['IPAM_IMAGE'] || 'kontena/ipam-plugin'
 
     def initialize(autostart = true)
@@ -19,6 +21,7 @@ module Kontena::Launchers
       subscribe('network_adapter:start', :on_network_start)
       info 'initialized'
       async.ensure_image if autostart
+      Kontena::NetworkAdapters::IpamCleaner.supervise as: :ipam_cleaner
     end
 
     def ensure_image
