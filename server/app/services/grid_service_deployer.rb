@@ -62,6 +62,7 @@ class GridServiceDeployer
     ping_subscription = self.subscribe_to_ping
     creds = self.creds_for_registry
     self.grid_service.set_state('deploying')
+    self.grid_service_deploy.set(:deploy_state => :ongoing)
     deploy_rev = Time.now.utc.to_s
     self.grid_service.set(:deployed_at => deploy_rev)
 
@@ -79,7 +80,7 @@ class GridServiceDeployer
 
     self.cleanup_deploy(total_instances, deploy_rev)
 
-    self.grid_service_deploy.set(finished_at: Time.now.utc)
+    self.grid_service_deploy.set(finished_at: Time.now.utc, :deploy_state => :success)
     info "service #{self.grid_service.to_path} has been deployed"
     self.grid_service.set_state('running')
 
@@ -87,17 +88,21 @@ class GridServiceDeployer
   rescue NodeMissingError => exc
     error exc.message
     info "service #{self.grid_service.to_path} deploy cancelled"
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message, :finished_at => Time.now.utc)
     false
   rescue DeployError => exc
     error exc.message
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message, :finished_at => Time.now.utc)
     false
   rescue RpcClient::Error => exc
     error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message, :finished_at => Time.now.utc)
     false
   rescue => exc
     error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message, :finished_at => Time.now.utc)
     false
   ensure
     ping_subscription.terminate if ping_subscription

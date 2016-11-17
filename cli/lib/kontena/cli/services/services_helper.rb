@@ -232,6 +232,9 @@ module Kontena
               deployed = true if deployment['finished_at']
               sleep 1
             end
+            if deployment['state'] == 'error'
+              raise Kontena::Errors::StandardError.new(500, deployment['reason'])
+            end
           end
 
           deployed
