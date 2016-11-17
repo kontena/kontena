@@ -135,7 +135,6 @@ module Kontena::NetworkAdapters
       dns = interface_ip('docker0')
       if dns && host_config['NetworkMode'].to_s != 'host'.freeze
         host_config['Dns'] = [dns]
-        host_config['DnsSearch'] = [opts['Domainname']]
       end
       opts['HostConfig'] = host_config
     end

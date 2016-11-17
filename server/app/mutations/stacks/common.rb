@@ -10,6 +10,12 @@ module Stacks
       end
     end
 
+    def validate_expose
+      if self.expose && !self.services.find{ |s| s[:name] == self.expose}
+        add_error(:expose, :not_found, "#{self.expose} is not defined in the services array")
+      end
+    end
+
     def sort_services(services)
       services.sort{ |a, b|
         a_links = a[:links] || []

@@ -52,6 +52,7 @@ module Docker
         net: grid_service.net,
         hostname: build_hostname(grid_service, instance_number),
         domainname: build_domainname(grid_service),
+        exposed: grid_service.stack_exposed?,
         log_driver: grid_service.log_driver,
         log_opts: grid_service.log_opts,
         pid: grid_service.pid

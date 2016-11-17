@@ -115,6 +115,12 @@ class GridService
     self.state == 'stopped'
   end
 
+  # @return [Boolean]
+  def stack_exposed?
+    return false unless self.stack
+    self.stack.exposed_service?(self)
+  end
+
   def deploy_pending?
     self.grid_service_deploys.where(started_at: nil).count > 0
   end

@@ -89,10 +89,12 @@ module Kontena::Workers
         hostname = container.labels['io.kontena.container.name']
         dns_names = default_stack_dns_names(hostname, service_name, domain_name)
         dns_names = dns_names + stack_dns_names(hostname, service_name, domain_name)
-
       else
         hostname = container.config['Hostname']
         dns_names = stack_dns_names(hostname, service_name, domain_name)
+        if container.labels['io.kontena.service.exposed']
+          dns_names = dns_names + exposed_stack_dns_names(instance_number, domain_name)
+        end
       end
       dns_names.each do |name|
         add_dns(container.id, container.overlay_ip, name)
@@ -102,6 +104,7 @@ module Kontena::Workers
     # @param [String] hostname
     # @param [String] service_name
     # @param [String] domain_name
+    # @return [Array<String>]
     def default_stack_dns_names(hostname, service_name, domain_name)
       base_domain = domain_name.split('.', 2)[1]
       [
@@ -113,10 +116,22 @@ module Kontena::Workers
     # @param [String] hostname
     # @param [String] service_name
     # @param [String] domain_name
+    # @return [Array<String>]
     def stack_dns_names(hostname, service_name, domain_name)
-      dns_names = [
+      [
         "#{service_name}.#{domain_name}",
         "#{hostname}.#{domain_name}"
+      ]
+    end
+
+    # @param [String] instance_number
+    # @param [String] domain_name
+    # @return [Array<String>]
+    def exposed_stack_dns_names(instance_number, domain_name)
+      stack, base_domain = domain_name.split('.', 2)
+      [
+        domain_name,
+        "#{stack}-#{instance_number}.#{base_domain}"
       ]
     end
   end

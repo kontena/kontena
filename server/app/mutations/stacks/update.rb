@@ -12,6 +12,10 @@ module Stacks
       end
     end
 
+    optional do
+      string :expose
+    end
+
     def validate
       sort_services(self.services).each do |s|
         service = s.dup
@@ -37,7 +41,11 @@ module Stacks
     end
 
     def execute
-      self.stack.stack_revisions.create(services: sort_services(self.services))
+      self.stack.expose = self.expose
+      self.stack.stack_revisions.create(
+        expose: self.stack.expose,
+        services: sort_services(self.services)
+      )
       self.stack.save
       self.stack.reload
     end
