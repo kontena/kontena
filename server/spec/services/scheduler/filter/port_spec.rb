@@ -38,7 +38,25 @@ describe Scheduler::Filter::Port do
 
   describe '#for_service' do
     it 'returns all nodes if nodes does not have any conflicting containers' do
-      filtered = subject.for_service(service, 'test-1', nodes)
+      filtered = subject.for_service(service, 1, nodes)
+      expect(filtered).to eq(nodes)
+    end
+
+    it 'does not filter out same service instance' do
+      service.containers.create!(
+        name: 'redis-1',
+        host_node: nodes[1],
+        labels: {
+          'io;kontena;service;id' => service.id.to_s,
+          'io;kontena;service;instance_number' => '1'
+        },
+        network_settings: {
+          'ports' => {
+            '6379/tcp' => [{'node_port' => 6379, 'node_ip' => '0.0.0.0'}]
+          }
+        }
+      )
+      filtered = subject.for_service(service, 1, nodes)
       expect(filtered).to eq(nodes)
     end
 
@@ -52,7 +70,7 @@ describe Scheduler::Filter::Port do
           }
         }
       )
-      filtered = subject.for_service(service, "#{service.name}-1", nodes)
+      filtered = subject.for_service(service, 1, nodes)
       expect(filtered.size).to eq(2)
       expect(filtered[0]).to eq(nodes[0])
       expect(filtered[1]).to eq(nodes[2])
@@ -71,7 +89,7 @@ describe Scheduler::Filter::Port do
         )
       end
 
-      filtered = subject.for_service(service, "#{service.name}-1", nodes)
+      filtered = subject.for_service(service, 1, nodes)
       expect(filtered.size).to eq(0)
     end
   end

@@ -32,6 +32,8 @@ module Scheduler
       def same_instance?(container, service, instance_number)
         return false unless container.labels['io;kontena;service;id'].to_s == service.id.to_s
         return false unless container.labels['io;kontena;service;instance_number'].to_s == instance_number.to_s
+
+        true
       end
 
       ##
