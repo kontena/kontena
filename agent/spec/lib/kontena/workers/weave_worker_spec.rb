@@ -92,6 +92,23 @@ describe Kontena::Workers::WeaveWorker do
     end
   end
 
+  describe '#attach_overlay' do
+    let(:adapter) do
+      spy(:adapter)
+    end
+
+    before(:each) do
+      allow(subject.wrapped_object).to receive(:network_adapter).and_return(adapter)
+    end
+
+    it 'calls network_adapter' do
+      expect(adapter).to receive(:exec) {|*args|
+        expect(args[0]).to include('aaa', '10.81.1.1/16')
+      }
+      subject.attach_overlay('aaa', '10.81.1.1/16')
+    end
+  end
+
   describe '#register_container_dns' do
     before(:each) do
       allow(container).to receive(:overlay_ip).and_return('10.81.1.1')
