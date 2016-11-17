@@ -90,6 +90,7 @@ describe Docker::Container do
   describe '#default_stack?' do
     it 'returns true if container is part of default stack' do
       allow(subject).to receive(:labels).and_return({
+        'io.kontena.service.id' => 'aaa',
         'io.kontena.stack.name' => 'default'
       })
       expect(subject.default_stack?).to be_truthy
@@ -97,12 +98,20 @@ describe Docker::Container do
 
     it 'returns false if container is not part of default stack' do
       allow(subject).to receive(:labels).and_return({
+        'io.kontena.service.id' => 'aaa',
         'io.kontena.stack.name' => 'other'
       })
       expect(subject.default_stack?).to be_falsey
     end
 
-    it 'returns false if container is missing stack info' do
+    it 'returns true if container is missing stack info' do
+      allow(subject).to receive(:labels).and_return({
+        'io.kontena.service.id' => 'aaa'
+      })
+      expect(subject.default_stack?).to be_truthy
+    end
+
+    it 'returns false if container is not part of a service' do
       allow(subject).to receive(:labels).and_return({})
       expect(subject.default_stack?).to be_falsey
     end
