@@ -34,8 +34,11 @@ module Docker
       self.host_config['RestartPolicy']
     end
 
+    # @return [Boolean]
     def default_stack?
-      self.labels['io.kontena.stack.name'].to_s == 'default'.freeze
+      return false if self.labels['io.kontena.service.id'].nil?
+
+      self.labels['io.kontena.stack.name'].nil? || self.labels['io.kontena.stack.name'].to_s == 'default'.freeze
     end
 
     # @return [Boolean]
