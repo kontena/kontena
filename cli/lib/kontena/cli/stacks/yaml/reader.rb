@@ -1,7 +1,6 @@
 require 'yaml'
 require_relative 'service_extender'
-require_relative 'validator'
-require_relative 'validator_v2'
+require_relative 'validator_v3'
 require_relative '../../../util'
 
 module Kontena::Cli::Stacks
@@ -26,7 +25,7 @@ module Kontena::Cli::Stacks
         result = {}
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:version] = yaml['version'] || '1'
-          result[:name] = yaml['name']
+          result[:stack] = yaml['stack']
           result[:errors] = errors
           result[:notifications] = notifications
           result[:services] = parse_services(service_name) unless errors.count > 0
@@ -35,13 +34,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        yaml['name'] if v2?
-      end
-
-      ##
-      # @return [true|false]
-      def v2?
-        yaml['version'].to_s == '2'
+        yaml['stack']
       end
 
       private
@@ -74,13 +67,9 @@ module Kontena::Cli::Stacks
         notifications << { file => data[:notifications] } unless data[:notifications].empty?
       end
 
-      # @return [Kontena::Cli::Stacks::YAML::Validator]
+      # @return [Kontena::Cli::Stacks::YAML::ValidatorV3]
       def validator
-        if @validator.nil?
-          validator_klass = v2? ? YAML::ValidatorV2 : YAML::Validator
-          @validator = validator_klass.new
-        end
-        @validator
+        @validator ||= YAML::ValidatorV3.new
       end
 
       ##
@@ -110,11 +99,7 @@ module Kontena::Cli::Stacks
 
       # @return [Hash] - services from YAML file
       def services
-        if v2?
-          yaml['services']
-        else
-          yaml
-        end
+        yaml['services']
       end
 
       ##
@@ -200,7 +185,7 @@ module Kontena::Cli::Stacks
 
       # @param [Hash] options - service config
       def normalize_build_args(options)
-        if v2? && safe_dig(options, 'build', 'args').is_a?(Array)
+        if safe_dig(options, 'build', 'args').is_a?(Array)
           args = options['build']['args'].dup
           options['build']['args'] = {}
           args.each do |arg|
