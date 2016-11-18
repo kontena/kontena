@@ -38,6 +38,8 @@ require_relative 'kontena/workers/container_network_migrator'
 
 require_relative 'kontena/actors/container_coroner'
 
+require_relative 'kontena/actors/container_coroner'
+
 require_relative 'kontena/load_balancers/configurer'
 require_relative 'kontena/load_balancers/registrator'
 
