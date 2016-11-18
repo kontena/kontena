@@ -130,7 +130,7 @@ module Kontena::Cli::Stacks
           raise ("Service '#{extended_service}' not found in #{file}") unless services.key?(extended_service)
           parent_config = process_config(services[extended_service])
         end
-        ServiceExtender.new(service_config).extend(parent_config)
+        ServiceExtender.new(service_config).extend_from(parent_config)
       end
 
       def extended_service(extend_config)

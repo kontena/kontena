@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
       def initialize
         @schema = common_validations
-        @schema['build'] = optional('valid_build')
+        @schema['build'] = optional('stacks_valid_build')
         @schema['depends_on'] = optional('array')
         @schema['network_mode'] = optional(%w(host bridge))
         @schema['logging'] = optional({

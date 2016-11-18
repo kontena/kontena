@@ -14,7 +14,7 @@ module Kontena::Cli::Stacks
 
       # @param [Hash] from
       # @return [Hash]
-      def extend(from)
+      def extend_from(from)
         service_config['environment'] = extend_env_vars(
           from['environment'],
           service_config['environment']

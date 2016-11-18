@@ -4,12 +4,12 @@ require 'kontena/cli/stacks/yaml/reader'
 describe Kontena::Cli::Stacks::YAML::Reader do
   include FixturesHelpers
 
-  def absolute_yaml_path(file = 'kontena.yml')
+  def absolute_yaml_path(file = 'kontena_v3.yml')
     "#{Dir.pwd}/#{file}"
   end
 
   let(:subject) do
-    described_class.new('kontena.yml')
+    described_class.new('kontena_v3.yml')
   end
 
   let(:service_extender) do
@@ -22,37 +22,9 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 ', 'WP_ADMIN_PASSWORD=verysecret']
   end
 
-  let(:valid_result) do
+  let(:valid_v3_result) do
     {
-      'wordpress' => {
-        'extends' => {
-          'file' => 'docker-compose.yml',
-          'service' => 'wordpress'
-        },
-        'image' => 'wordpress:4.1',
-        'ports' => ['80:80'],
-        'links' => ['mysql:mysql'],
-        'stateful' => true,
-        'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
-        'instances' => 2,
-        'deploy' => { 'strategy' => 'ha' },
-        'secrets' => []
-      },
-      'mysql' => {
-        'extends' => {
-          'file' => 'docker-compose.yml',
-          'service' => 'mysql'
-        },
-        'image' => 'mysql:5.6',
-        'stateful' => true,
-        'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'],
-        'secrets' => []
-      }
-    }
-  end
-
-  let(:valid_v2_result) do
-    {
+      'stack' => 'user/stackname',
       'version' => '2',
       'services' => {
         'wordpress' => {
@@ -85,20 +57,20 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     }
   end
 
-  describe '#initialize' do
-    before(:each) do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('kontena.yml'))
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('docker-compose.yml'))
-        .and_return(fixture('docker-compose.yml'))
-    end
+  before(:each) do
+    allow(File).to receive(:read)
+      .with(absolute_yaml_path('docker-compose_v2.yml'))
+      .and_return(fixture('docker-compose_v2.yml'))
+    allow(File).to receive(:read)
+      .with(absolute_yaml_path('kontena_v3.yml'))
+      .and_return(fixture('kontena_v3.yml'))
+  end
 
+  describe '#initialize' do
     it 'reads given file' do
       expect(File).to receive(:read)
         .with(absolute_yaml_path)
-        .and_return(fixture('kontena.yml'))
+        .and_return(fixture('kontena_v3.yml'))
       subject
     end
 
@@ -114,23 +86,23 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       it 'interpolates $VAR variables' do
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
-          .and_return(fixture('kontena-with-variables.yml'))
-        services = subject.yaml
+          .and_return(fixture('stack-with-variables.yml'))
+        services = subject.yaml['services']
         expect(services['wordpress']['image']).to eq('wordpress:4.1')
       end
 
       it 'interpolates ${VAR} variables' do
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
-          .and_return(fixture('kontena-with-variables.yml'))
-        services = subject.yaml
+          .and_return(fixture('stack-with-variables.yml'))
+        services = subject.yaml['services']
         expect(services['mysql']['image']).to eq('mariadb:latest')
       end
 
       it 'warns about empty variables' do
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
-          .and_return(fixture('kontena-with-variables.yml'))
+          .and_return(fixture('stack-with-variables.yml'))
         allow(ENV).to receive(:key?)
           .with('MYSQL_IMAGE')
           .and_return(false)
@@ -150,7 +122,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
       allow(File).to receive(:read)
         .with(absolute_yaml_path)
-        .and_return(fixture('kontena-with-variables.yml'))
+        .and_return(fixture('stack-with-variables.yml'))
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('docker-compose_v2.yml'))
+        .and_return(fixture('docker-compose_v2.yml'))
       services = subject.execute[:services]
       expect(services['mysql']['environment'].first).to eq('INTERNAL_VAR=$INTERNAL_VAR')
     end
@@ -178,50 +153,18 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
   end
 
-  describe '#v2?' do
-    context 'version 1' do
-      it 'returns false' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('docker-compose.yml'))
-          .and_return(fixture('docker-compose.yml'))
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena.yml'))
-        expect(subject.v2?).to be_falsey
-      end
-    end
-    context 'version 2' do
-      it 'returns true' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('docker-compose_v2.yml'))
-          .and_return(fixture('docker-compose_v2.yml'))
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena_v2.yml'))
-        expect(subject.v2?).to be_truthy
-      end
-    end
-  end
-
   describe '#execute' do
     before(:each) do
       allow(ENV).to receive(:[]).with('project').and_return('test')
       allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
-
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('kontena.yml'))
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('docker-compose.yml'))
-        .and_return(fixture('docker-compose.yml'))
     end
 
     context 'when extending services' do
       it 'extends services from external file' do
-        docker_compose_yml = YAML.load(fixture('docker-compose.yml') % { project: 'test' })
+        docker_compose_yml = YAML.load(fixture('docker-compose_v2.yml') % { project: 'test' })
         wordpress_options = {
           'extends' => {
-            'file' => 'docker-compose.yml',
+            'file' => 'docker-compose_v2.yml',
             'service' => 'wordpress'
           },
           'stateful' => true,
@@ -231,7 +174,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         }
         mysql_options = {
           'extends' => {
-            'file' => 'docker-compose.yml',
+            'file' => 'docker-compose_v2.yml',
             'service' => 'mysql'
           },
           'stateful' => true,
@@ -245,22 +188,21 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           .with(mysql_options)
           .once
           .and_return(service_extender)
-        expect(service_extender).to receive(:extend).with(docker_compose_yml['wordpress'])
-        expect(service_extender).to receive(:extend).with(docker_compose_yml['mysql'])
+        expect(service_extender).to receive(:extend_from).with(docker_compose_yml['services'])
 
         subject.execute
       end
 
       it 'extends services from the same file' do
         allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena-internal-extend.yml'))
-        kontena_yml = YAML.load(fixture('kontena-internal-extend.yml') % { project: 'test' })
+          .with(absolute_yaml_path('kontena_v3.yml'))
+          .and_return(fixture('stack-internal-extend.yml'))
+        kontena_yml = YAML.load(fixture('stack-internal-extend.yml') % { project: 'test' })
         expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
           .with(kontena_yml['app'])
           .once
           .and_return(service_extender)
-        expect(service_extender).to receive(:extend).with(kontena_yml['base'])
+        expect(service_extender).to receive(:extend_from).with(kontena_yml['base'])
         subject.execute
       end
     end
@@ -279,8 +221,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       context 'when introduced env_file' do
         before(:each) do
           allow(File).to receive(:read)
-            .with(absolute_yaml_path('kontena.yml'))
-            .and_return(fixture('kontena-with-env-file.yml'))
+            .with(absolute_yaml_path('kontena_v3.yml'))
+            .and_return(fixture('stack-with-env-file.yml'))
           allow(File).to receive(:readlines).with('.env').and_return(env_file)
         end
 
@@ -327,14 +269,15 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
       end
     end
+
     it 'returns result hash' do
       outcome = subject.execute
-      expect(outcome[:services]).to eq(valid_result)
+      expect(outcome[:services]).to eq(valid_v3_result['services'])
     end
 
     it 'returns validation errors' do
       allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
+        .with(absolute_yaml_path('kontena_v3.yml'))
         .and_return(fixture('kontena-invalid.yml'))
       outcome = subject.execute
       expect(outcome[:errors].size).to eq(1)
@@ -344,27 +287,21 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   context 'when build option is string' do
     it 'expands build option to absolute path' do
       allow(File).to receive(:read)
-        .with(absolute_yaml_path('docker-compose.yml'))
-        .and_return(fixture('docker-compose.yml'))
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('kontena-build.yml'))
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
 
-      expect(outcome[:services]['wordpress']['build']).to eq(File.expand_path('.'))
+      expect(outcome['services']['wordpress']['build']).to eq(File.expand_path('.'))
     end
   end
 
   context 'when build option is Hash' do
     it 'expands build context to absolute path' do
       allow(File).to receive(:read)
-        .with(absolute_yaml_path('docker-compose.yml'))
-        .and_return(fixture('docker-compose.yml'))
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('kontena_build_v2.yml'))
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-      expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
+      expect(outcome['services']['webapp']['build']['context']).to eq(File.expand_path('.'))
     end
   end
 
@@ -372,9 +309,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     context 'when build option is string' do
       it 'skips normalizing' do
         allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena_build_v2.yml'))
-        allow(subject).to receive(:v2?).and_return(true)
+          .with(absolute_yaml_path)
+          .and_return(fixture('kontena_build_v3.yml'))
 
         options = {
           'build' => '.'
@@ -388,9 +324,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     context 'when build arguments option is Hash' do
       it 'does not do anything' do
         allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena_build_v2.yml'))
-        allow(subject).to receive(:v2?).and_return(true)
+          .with(absolute_yaml_path)
+          .and_return(fixture('kontena_build_v3.yml'))
 
         options = {
           'build' => {
@@ -411,9 +346,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     context 'when build arguments option is Array' do
       it 'converts it to array' do
         allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena.yml'))
-          .and_return(fixture('kontena_build_v2.yml'))
-        allow(subject).to receive(:v2?).and_return(true)
+          .with(absolute_yaml_path)
+          .and_return(fixture('kontena_build_v3.yml'))
 
         options = {
           'build' => {
@@ -431,28 +365,12 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   end
 
   describe '#stack_name' do
-    it 'returns nil for v1' do
+    it 'returns name for v3' do
       allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('kontena.yml'))
+        .with(absolute_yaml_path)
+        .and_return(fixture('kontena_v3.yml'))
       name = subject.stack_name
-      expect(name).to be_nil
-    end
-
-    it 'returns name for v2 if defined' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('kontena_v2.yml'))
-      name = subject.stack_name
-      expect(name).to eq('test-project')
-    end
-
-    it 'returns nil for v2 if not defined' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena.yml'))
-        .and_return(fixture('docker-compose.yml'))
-      name = subject.stack_name
-      expect(name).to be_nil
+      expect(name).to eq('user/stackname')
     end
   end
 end

@@ -1,7 +1,7 @@
 require_relative '../../../../spec_helper'
-require 'kontena/cli/stacks/yaml/validator_v2'
+require 'kontena/cli/stacks/yaml/validator_v3'
 
-describe Kontena::Cli::Stacks::YAML::ValidatorV2 do
+describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
   describe '#validate_options' do
     context 'build' do
       it 'can be string' do

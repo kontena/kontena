@@ -17,7 +17,7 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
 
   describe '#extend' do
     it 'merges options' do
-      result = described_class.new(options).extend(parent_options)
+      result = described_class.new(options).extend_from(parent_options)
       expected_result = {
         'image' => 'alpine:latest',
         'build' => '.',
@@ -32,21 +32,21 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
       it 'inherites env vars from upper level' do
         from = { 'environment' => ['FOO=bar'] }
         to = {}
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['environment']).to eq(['FOO=bar'])
       end
 
       it 'overrides values' do
         from = { 'environment' => ['FOO=bar'] }
         to = { 'environment' => ['FOO=baz'] }
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['environment']).to eq(['FOO=baz'])
       end
 
       it 'combines variables' do
         from = { 'environment' => ['FOO=bar'] }
         to = { 'environment' => ['BAR=baz'] }
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['environment']).to eq(['BAR=baz', 'FOO=bar'])
       end
     end
@@ -60,7 +60,7 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
         }
         from = { 'secrets' => [secret] }
         to = {}
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['secrets']).to eq([secret])
       end
 
@@ -78,7 +78,7 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
         }
         from = { 'secrets' => [from_secret] }
         to = { 'secrets' => [to_secret] }
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['secrets']).to eq([to_secret])
       end
 
@@ -96,7 +96,7 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
         }
         from = { 'secrets' => [from_secret] }
         to = { 'secrets' => [to_secret] }
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['secrets']).to eq([to_secret, from_secret])
       end
     end
@@ -105,21 +105,21 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
       it 'inherits build args from upper level' do
         from = { 'build' => { 'args' => {'foo' => 'bar'}} }
         to = {}
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['build']['args']).to eq({'foo' => 'bar'})
       end
 
       it 'overrides values' do
         from = { 'build' => { 'args' => {'foo' => 'bar'}} }
         to = { 'build' => { 'args' => {'foo' => 'baz'}} }
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['build']['args']).to eq({'foo' => 'baz'})
       end
 
       it 'combines variables' do
         from = { 'build' => { 'args' => {'foo' => 'bar'}} }
         to = { 'build' => { 'args' => {'baz' => 'baf'}} }
-        result = described_class.new(to).extend(from)
+        result = described_class.new(to).extend_from(from)
         expect(result['build']['args']).to eq({'foo' => 'bar', 'baz' => 'baf'})
       end
     end
