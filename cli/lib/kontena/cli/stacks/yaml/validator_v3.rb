@@ -1,5 +1,4 @@
 require 'hash_validator'
-require_relative 'validator'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -9,7 +8,6 @@ module Kontena::Cli::Stacks
 
       def initialize
         @schema = common_validations
-        @schema['variables'] = optional('valid_variables')
         @schema['build'] = optional('valid_build')
         @schema['depends_on'] = optional('array')
         @schema['network_mode'] = optional(%w(host bridge))
@@ -52,4 +50,3 @@ module Kontena::Cli::Stacks
     end
   end
 end
-
