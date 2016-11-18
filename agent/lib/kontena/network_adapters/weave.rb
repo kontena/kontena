@@ -79,9 +79,14 @@ module Kontena::NetworkAdapters
     # @return [Boolean]
     def running?
       return false unless weave_container_running?
-      return false unless ipam_running?
       return false unless weave_api_ready?
       return false unless interface_ip('weave')
+      true
+    end
+
+    def network_ready?
+      return false unless running?
+      return false unless ipam_running?
       true
     end
 

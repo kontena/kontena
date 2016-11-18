@@ -1,21 +1,27 @@
 require 'docker'
 require_relative 'iface_helper'
+require_relative 'wait_helper'
+
 
 module Kontena
   module Helpers
     module WeaveHelper
+      include WaitHelper
 
       def network_adapter
         Celluloid::Actor[:network_adapter]
       end
 
-      def wait_weave_running?(timeout = 10, &block)
-        wait = Time.now.to_f + timeout
-        until (running = network_adapter.running?) || (wait < Time.now.to_f)
-          yield if block # debugging
-          sleep 0.5
-        end
-        return running
+      def wait_weave_running?
+        wait!(300, "waiting for weave running") {
+          network_adapter.running?
+        }
+      end
+
+      def wait_network_ready?
+        wait!(300, "waiting for all network components running") {
+          network_adapter.network_ready?
+        }
       end
 
       def weave_api_ready?

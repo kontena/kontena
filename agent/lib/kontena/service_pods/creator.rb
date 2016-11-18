@@ -2,12 +2,14 @@ require 'docker'
 require 'celluloid'
 require_relative 'common'
 require_relative '../logging'
+require_relative '../helpers/weave_helper'
 
 module Kontena
   module ServicePods
     class Creator
       include Kontena::Logging
       include Common
+      include Kontena::Helpers::WeaveHelper
 
       attr_reader :service_pod, :image_credentials
 
@@ -27,7 +29,7 @@ module Kontena
         end
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
-        sleep 1 until Celluloid::Actor[:network_adapter].running?
+        wait_network_ready?
 
         if service_container
           if service_uptodate?(service_container)

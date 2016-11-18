@@ -21,7 +21,7 @@ module Kontena::Workers
     end
 
     def start
-      wait_weave_running? { debug "waiting for weave running before attaching network to containers" }
+      wait_weave_running?
       info 'attaching network to existing containers'
       Docker::Container.all(all: false).each do |container|
         self.weave_attach(container)
@@ -29,7 +29,7 @@ module Kontena::Workers
     end
 
     def on_dns_add(topic, event)
-      wait_weave_running? { debug "waiting for weave running?" }
+      wait_weave_running?
       add_dns(event[:id], event[:ip], event[:name])
     end
 
@@ -37,13 +37,12 @@ module Kontena::Workers
     # @param [Docker::Event] event
     def on_container_event(topic, event)
       if event.status == 'start'
-        wait_weave_running? { debug "waiting for weave running before handling start event" }
+        wait_weave_running?
         container = Docker::Container.get(event.id) rescue nil
         if container
           self.weave_attach(container)
         end
       elsif event.status == 'restart'
-        wait_weave_running? { debug "waiting for weave running before handling restart event" }
         if network_adapter.router_image?(event.from)
           self.start
         end
