@@ -17,6 +17,10 @@ module Stacks
     end
 
     def validate
+      if self.services.size == 0
+        add_error(:services, :empty, "stack does not specify any services")
+        return
+      end
       sort_services(self.services).each do |s|
         service = s.dup
         service[:current_user] = self.current_user

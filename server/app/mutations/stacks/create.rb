@@ -19,8 +19,12 @@ module Stacks
     end
 
     def validate
-      if grid.stacks.find_by(name: name)
+      if self.grid.stacks.find_by(name: name)
         add_error(:name, :exists, "#{name} already exists")
+        return
+      end
+      if self.services.size == 0
+        add_error(:services, :empty, "stack does not specify any services")
         return
       end
       validate_expose

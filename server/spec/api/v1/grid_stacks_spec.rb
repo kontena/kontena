@@ -34,7 +34,7 @@ describe '/v1/grids/:grid/stacks' do
         post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
         expect(response.status).to eq(201)
         expect(json_response.keys.sort).to eq(%w(
-          id created_at updated_at name version services state
+          id created_at updated_at name version services state expose
         ).sort)
       }.to change{ grid.reload.stacks.count }.by(1)
     end
