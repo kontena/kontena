@@ -21,8 +21,8 @@ module Kontena::Cli::Apps
         options = yml_service[service]
         exit_with_error("Service has already instances defined in #{filename}. Please update #{filename} and deploy service instead") if options['container_count']
         spinner "Scaling #{service.colorize(:cyan)} " do
-          scale_service(require_token, prefixed_name(service), instances)
-          wait_for_deploy_to_finish(token, parse_service_id(prefixed_name(service)))
+          deployment = scale_service(require_token, prefixed_name(service), instances)
+          wait_for_deploy_to_finish(token, deployment)
         end
 
       else
