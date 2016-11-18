@@ -8,13 +8,15 @@ module Kontena::Cli::Apps
   module YAML
     class Reader
       include Kontena::Util
-      attr_reader :yaml, :file, :errors, :notifications
+      attr_reader :yaml, :file, :errors, :notifications, :variables
 
       def initialize(file, skip_validation = false)
+        require 'opto'
         @file = file
         @errors = []
         @notifications = []
         @skip_validation = skip_validation
+        read_variables
         load_yaml
         validate unless skip_validation?
       end
@@ -56,6 +58,11 @@ module Kontena::Cli::Apps
         rescue Psych::SyntaxError => e
           raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
         end
+      end
+
+      def read_variables(content, variables_key = :variables)
+        vars = ::YAML.load(content.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/, 'filler'))[variables_key]
+        @variables = Opto::Group.new(vars ? vars : [])
       end
 
       # @return [Array] array of validation errors
@@ -122,8 +129,8 @@ module Kontena::Cli::Apps
       def interpolate(text)
         text.gsub!(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
           var = v.tr('${}', '')
-          puts "The #{var} is not set. Substituting an empty string." if !ENV.key?(var) && !skip_validation?
-          ENV[var] # replace with equivalent ENV variables
+          puts "The #{var} is not set. Substituting an empty string." if !variables.option(var) && !ENV.key?(var) && !skip_validation?
+          variables.value_of(var) || ENV[var]
         end
       end
 
@@ -136,11 +143,16 @@ module Kontena::Cli::Apps
       # @param [Hash] service_config
       # @return [Hash] updated service config
       def extend_config(service_config)
-        extended_service = extended_service(service_config['extends'])
+        extends = service_config['extends']
+        return unless extends
+
+        extended_service = extended_service(extends)
         return unless extended_service
-        filename = service_config['extends']['file']
-        if filename
-          parent_config = from_external_file(filename, extended_service)
+
+        if extends['file']
+          parent_config = from_external_file(extends['file'], extended_service)
+        elsif extends['stack']
+          parent_config = from_external_file(Kontena::StackCache.get(extends['stack']))
         else
           raise ("Service '#{extended_service}' not found in #{file}") unless services.key?(extended_service)
           parent_config = process_config(services[extended_service])
