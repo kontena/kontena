@@ -8,16 +8,30 @@ module Stacks
       model :current_user, class: User
       model :grid, class: Grid
       string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+
       array :services do
         model :object, class: Hash
       end
     end
 
+    optional do
+      string :expose
+    end
+
     def validate
-      if grid.stacks.find_by(name: name)
+      if self.grid.stacks.find_by(name: name)
         add_error(:name, :exists, "#{name} already exists")
         return
       end
+      if self.services.size == 0
+        add_error(:services, :empty, "stack does not specify any services")
+        return
+      end
+      validate_expose
+      validate_services
+    end
+
+    def validate_services
       sort_services(self.services).each do |s|
         service = s.dup
         service.delete(:links)
@@ -42,7 +56,11 @@ module Stacks
         end
         return
       end
-      stack.stack_revisions.create(services: sort_services(services), version: 1)
+      stack.stack_revisions.create(
+        expose: stack.expose,
+        services: sort_services(services),
+        version: 1
+      )
       stack
     end
   end

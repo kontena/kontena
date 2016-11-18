@@ -12,7 +12,15 @@ module Stacks
       end
     end
 
+    optional do
+      string :expose
+    end
+
     def validate
+      if self.services.size == 0
+        add_error(:services, :empty, "stack does not specify any services")
+        return
+      end
       sort_services(self.services).each do |s|
         service = s.dup
         service[:current_user] = self.current_user
@@ -37,7 +45,11 @@ module Stacks
     end
 
     def execute
-      self.stack.stack_revisions.create(services: sort_services(self.services))
+      self.stack.expose = self.expose
+      self.stack.stack_revisions.create(
+        expose: self.stack.expose,
+        services: sort_services(self.services)
+      )
       self.stack.save
       self.stack.reload
     end

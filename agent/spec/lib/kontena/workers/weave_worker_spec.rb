@@ -156,5 +156,30 @@ describe Kontena::Workers::WeaveWorker do
       expect(names).to include('redis-2.custom.foo.kontena.local')
       expect(names).to include('redis.custom.foo.kontena.local')
     end
+
+    it 'registers all dns names for non-default exposed stack' do
+      allow(container).to receive(:default_stack?).and_return(false)
+      allow(container).to receive(:config).and_return({
+        'Domainname' => 'custom.foo.kontena.local',
+        'Hostname' => 'redis-2'
+      })
+      allow(container).to receive(:labels).and_return({
+        'io.kontena.stack.name' => 'custom',
+        'io.kontena.grid.name' => 'foo',
+        'io.kontena.service.exposed' => '1',
+        'io.kontena.service.name' => 'redis',
+        'io.kontena.service.instance_number' => 2,
+        'io.kontena.container.name' => 'redis-2'
+      })
+      names = []
+      expect(subject.wrapped_object).to receive(:add_dns).exactly(4).times { |id, ip, name|
+        names << name
+      }
+      subject.register_container_dns(container)
+      expect(names).to include('redis-2.custom.foo.kontena.local')
+      expect(names).to include('redis.custom.foo.kontena.local')
+      expect(names).to include('custom.foo.kontena.local')
+      expect(names).to include('custom-2.foo.kontena.local')
+    end
   end
 end

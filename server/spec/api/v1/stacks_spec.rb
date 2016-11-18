@@ -57,7 +57,7 @@ describe '/v1/stacks' do
       get "/v1/stacks/#{stack.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at name version services state
+        id created_at updated_at name version services state expose
       ).sort)
       expect(json_response['services'].size).to eq(0)
     end
@@ -84,7 +84,7 @@ describe '/v1/stacks' do
       expect(response.status).to eq(200)
       expect(json_response['stacks'].size).to eq(grid.stacks.count)
       expect(json_response['stacks'][0].keys.sort).to eq(%w(
-        id created_at updated_at name version services state
+        id created_at updated_at name version services state expose
       ).sort)
     end
 

@@ -4,6 +4,7 @@ class StackRevision
 
   field :name, type: String
   field :version, type: Integer, default: 1
+  field :expose, type: String
   field :services, type: Array
 
   belongs_to :stack

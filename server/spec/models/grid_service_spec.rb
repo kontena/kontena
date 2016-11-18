@@ -223,4 +223,16 @@ describe GridService do
       expect(grid_service.name_with_stack).to include("#{grid_service.stack.name}-")
     end
   end
+
+  describe '#stack_exposed?' do
+    it 'returns true if service is exposed via stack' do
+      stack = Stack.create!(name: 'redis', expose: 'redis')
+      service = GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
+      expect(service.stack_exposed?).to be_truthy
+    end
+
+    it 'returns false if service is not exposed via stack' do
+      expect(grid_service.stack_exposed?).to be_falsey
+    end
+  end
 end

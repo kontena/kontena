@@ -31,6 +31,7 @@ module Kontena
                   :net,
                   :hostname,
                   :domainname,
+                  :exposed,
                   :log_driver,
                   :log_opts,
                   :pid,
@@ -67,6 +68,7 @@ module Kontena
         @net = attrs['net'] || 'bridge'
         @hostname = attrs['hostname']
         @domainname = attrs['domainname']
+        @exposed = attrs['exposed']
         @log_driver = attrs['log_driver']
         @log_opts = attrs['log_opts']
         @pid = attrs['pid']
@@ -129,6 +131,7 @@ module Kontena
         labels['io.kontena.container.deploy_rev'] = self.deploy_rev.to_s
         labels['io.kontena.container.service_revision'] = self.service_revision.to_s
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
+        labels['io.kontena.service.exposed'] = '1' if self.exposed
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
         #docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
@@ -155,7 +158,7 @@ module Kontena
         end
 
         host_config['NetworkMode'] = self.net
-        host_config['DnsSearch'] = [self.domainname]
+        host_config['DnsSearch'] = [self.domainname, self.domainname.split('.', 2)[1]]
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap

@@ -5,6 +5,7 @@ class Stack
 
   field :name, type: String
   field :version, type: String, default: '1'
+  field :expose, type: String
 
   belongs_to :grid
 
@@ -36,5 +37,10 @@ class Stack
     return :running if services.all?{ |s| s.running? }
 
     :partially_running
+  end
+
+  # @param [GridService] grid_service
+  def exposed_service?(grid_service)
+    self.expose.to_s == grid_service.name
   end
 end

@@ -27,21 +27,16 @@ describe '/v1/grids/:grid/stacks' do
     AccessToken.create!(user: david, scopes: ['user'])
   end
 
-  describe 'POST' do
-    it 'creates new empty stack' do
-      expect {
-        data = { name: 'test-stack', services: [] }
-        post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
-        expect(response.status).to eq(201)
-        expect(json_response.keys.sort).to eq(%w(
-          id created_at updated_at name version services state
-        ).sort)
-      }.to change{ grid.reload.stacks.count }.by(1)
-    end
+  let(:services) do
+    [
+      {name: 'redis', image: 'redis:3', stateful: true}
+    ]
+  end
 
+  describe 'POST' do
     it 'creates audit event' do
       expect {
-        data = { name: 'test-stack', services: [] }
+        data = { name: 'test-stack', services: services }
         post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ AuditLog.count }.by(1)
@@ -50,13 +45,7 @@ describe '/v1/grids/:grid/stacks' do
     it 'creates new stack' do
       data = {
         name: 'test-stack',
-        services: [
-          {
-            name: 'app',
-            image: 'my/app:latest',
-            stateful: false
-          }
-        ]
+        services: services
       }
       expect {
         post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
@@ -79,6 +68,12 @@ describe '/v1/grids/:grid/stacks' do
         post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ StackRevision.count }.by(1)
+    end
+
+    it 'returns 422 error if services is empty' do
+      data = { name: 'test-stack', services: [] }
+      post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
+      expect(response.status).to eq(422)
     end
 
     it 'return 422 for service validation failure' do
