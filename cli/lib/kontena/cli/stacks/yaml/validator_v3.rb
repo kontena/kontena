@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
           'driver' => optional('string'),
           'options' => optional(-> (value) { value.is_a?(Hash) })
           })
+        Validations::CustomValidations.load
       end
 
       ##
