@@ -147,7 +147,6 @@ DEPENDENCIES
   bcrypt
   celluloid (~> 0.16.0)
   dotenv
-  eventmachine (>= 0.12.0)
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)
   json-jwt (= 1.5.2)
