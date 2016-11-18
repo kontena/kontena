@@ -42,7 +42,9 @@ describe Kontena::Cli::Apps::ScaleCommand do
 
     it 'scales given service' do
       allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml_no_instances)
-      expect(subject).to receive(:scale_service).with(duck_type(:access_token),'kontena-test-wordpress',3)
+      allow(subject).to receive(:wait_for_deploy_to_finish).and_return(true)
+      expect(subject).to receive(:scale_service).with(duck_type(:access_token), 'kontena-test-wordpress', 3)
+
       subject.run(['wordpress', 3])
     end
 
