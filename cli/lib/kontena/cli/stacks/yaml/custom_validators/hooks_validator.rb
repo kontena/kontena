@@ -1,7 +1,7 @@
 module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
   class HooksValidator < HashValidator::Validator::Base
     def initialize
-      super('valid_hooks')
+      super('stacks_valid_hooks')
     end
 
     def validate(key, value, validations, errors)

@@ -1,7 +1,7 @@
 module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
   class ExtendsValidator < HashValidator::Validator::Base
     def initialize
-      super('valid_extends')
+      super('stacks_valid_extends')
     end
 
     def validate(key, value, validations, errors)

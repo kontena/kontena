@@ -1,7 +1,7 @@
 module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
   class BuildValidator < HashValidator::Validator::Base
     def initialize
-      super('valid_build')
+      super('stacks_valid_build')
     end
 
     def validate(key, value, validations, errors)

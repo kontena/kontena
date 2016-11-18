@@ -1,7 +1,7 @@
 module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
   class AffinitiesValidator < HashValidator::Validator::Base
     def initialize
-      super('valid_affinities')
+      super('stacks_valid_affinities')
     end
 
     def validate(key, value, validations, errors)

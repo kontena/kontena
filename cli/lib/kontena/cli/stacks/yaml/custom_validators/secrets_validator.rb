@@ -1,7 +1,7 @@
 module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
   class SecretsValidator < HashValidator::Validator::Base
     def initialize
-      super('valid_secrets')
+      super('stacks_valid_secrets')
     end
 
     def validate(key, value, validations, errors)
