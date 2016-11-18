@@ -10,10 +10,9 @@ module Kontena::Cli::Apps::YAML::Validations::CustomValidators
         return
       end
       if value.is_a?(Hash)
-        extends_validation = {
-          'service' => 'string',
-          'file' => HashValidator.optional('string')
-        }
+        extends_validation = { 'service' => 'string' }
+        extends_validation['file']  = HashValidator.optional('string') if value['file']
+        extends_validation['stack'] = HashValidator.optional('string') if value['stack']
         HashValidator.validator_for(extends_validation).validate(key, value, extends_validation, errors)
       end
     end
