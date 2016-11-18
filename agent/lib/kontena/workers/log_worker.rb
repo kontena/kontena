@@ -53,7 +53,11 @@ module Kontena::Workers
     def start
       sleep 1 until Actor[:etcd_launcher].running?
       Docker::Container.all.each do |container|
-        self.stream_container_logs(container)
+        begin
+          self.stream_container_logs(container) unless container.skip_logs?
+        rescue Docker::Error::NotFoundError
+          # Could be thrown since container.skip_logs? actually loads the container details
+        end
       end
     end
 
@@ -119,7 +123,8 @@ module Kontena::Workers
         stop_streaming_container_logs(event.id)
       elsif START_EVENTS.include?(event.status)
         container = Docker::Container.get(event.id) rescue nil
-        if container && queue_processing?
+        debug "#{container.name}/#{container.labels}"
+        if container && queue_processing? && !container.skip_logs?
           stream_container_logs(container)
         elsif container
           mark_timestamp(container.id, Time.now.to_i)

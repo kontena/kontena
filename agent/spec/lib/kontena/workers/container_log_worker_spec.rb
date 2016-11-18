@@ -15,6 +15,12 @@ describe Kontena::Workers::ContainerLogWorker do
       subject.start
     end
 
+    it 'terminates itself if container goes MIA' do
+      expect(container).to receive(:streaming_logs).and_raise(Docker::Error::NotFoundError)
+      expect(subject.wrapped_object).to receive(:terminate)
+      subject.start
+    end
+
     it 'starts to stream logs from given timestamp' do
       since = (Time.now - 60).to_i
       expect(container).to receive(:streaming_logs).once.with(hash_including('since' => since, 'tail' => 'all'))

@@ -15,6 +15,35 @@ describe Kontena::Workers::LogWorker do
 
   after(:each) { Celluloid.shutdown }
 
+  describe '#start' do
+    before(:each) do
+      allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(double(running?: true))
+    end
+    it 'starts log streaming for container' do
+      expect(Docker::Container).to receive(:all).and_return([double(skip_logs?: false)])
+      expect(subject.wrapped_object).to receive(:stream_container_logs)
+
+      subject.start
+    end
+
+    it 'does not start log streaming for container with skip logs set' do
+      expect(Docker::Container).to receive(:all).and_return([double(skip_logs?: true)])
+      expect(subject.wrapped_object).not_to receive(:stream_container_logs)
+
+      subject.start
+    end
+
+    it 'does not start log streaming for MIA container' do
+      c = double
+      expect(c).to receive(:skip_logs?).and_raise(Docker::Error::NotFoundError)
+      expect(Docker::Container).to receive(:all).and_return([c])
+      expect(subject.wrapped_object).not_to receive(:stream_container_logs)
+
+      subject.start
+    end
+
+  end
+
   describe '#on_queue_started' do
     it 'sets #queue_processing? to true' do
       allow(subject.wrapped_object).to receive(:async).and_return(spy)
@@ -84,7 +113,16 @@ describe Kontena::Workers::LogWorker do
     it 'starts streaming on start' do
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
+      expect(container).to receive(:skip_logs?).and_return(false)
       expect(subject.wrapped_object).to receive(:stream_container_logs).once.with(container)
+      subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
+    end
+
+    it 'does not start streaming on start if logs should be skipped' do
+      allow(Docker::Container).to receive(:get).and_return(container)
+      allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
+      expect(container).to receive(:skip_logs?).and_return(true)
+      expect(subject.wrapped_object).not_to receive(:stream_container_logs)
       subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
     end
 
