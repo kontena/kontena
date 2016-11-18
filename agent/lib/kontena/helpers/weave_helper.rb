@@ -6,7 +6,16 @@ module Kontena
     module WeaveHelper
 
       def network_adapter
-        Actor[:network_adapter]
+        Celluloid::Actor[:network_adapter]
+      end
+
+      def wait_weave_running?(timeout = 10, &block)
+        wait = Time.now.to_f + timeout
+        until (running = network_adapter.running?) || (wait < Time.now.to_f)
+          yield if block # debugging
+          sleep 0.5
+        end
+        return running
       end
 
       def weave_api_ready?

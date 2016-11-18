@@ -1,6 +1,7 @@
 require_relative '../logging'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
+require_relative '../helpers/weave_helper'
 
 module Kontena::NetworkAdapters
   class Weave
@@ -8,6 +9,7 @@ module Kontena::NetworkAdapters
     include Celluloid::Notifications
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
+    include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
@@ -81,6 +83,11 @@ module Kontena::NetworkAdapters
       return false unless weave_api_ready?
       return false unless interface_ip('weave')
       true
+    end
+
+    def weave_api_ready?
+      response = dns_client.get(path: '/status')
+      response.status == 200
     end
 
     # @return [Boolean]
