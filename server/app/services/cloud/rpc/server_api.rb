@@ -15,44 +15,43 @@ module Cloud
         token
       end
 
-      def require_user(data)
-        external_user_id = data['user_id']
-        raise RpcServer::Error.new(403, 'Forbidden') unless external_user_id
-        @user = User.find_by(external_id: external_user_id)
+      def require_user(user_id)
+        @user = User.find_by(external_id: user_id)
         raise RpcServer::Error.new(403, 'Forbidden') unless @user
       end
 
 
-      def get(path, options)
-        require_user(options)
+      def get(user_id, path, options)
+        require_user(user_id)
         opts = {
-          method: :get
+          method: :get,
+          params: options
         }
         request(path, opts)
       end
 
-      def post(path, options)
-        require_user(options)
+      def post(user_id, path, options)
+        require_user(user_id)
         opts = {
           method: :post,
-          params: options['params']
+          params: options
         }
         request(path, opts)
       end
 
-      def delete(path, options)
-        require_user(options)
+      def delete(user_id, path, options)
+        require_user(user_id)
         opts = {
           method: :delete
         }
         request(path, opts)
       end
 
-      def put(path, options)
-        require_user(options)
+      def put(user_id, path, options)
+        require_user(user_id)
         opts = {
           method: :put,
-          params: options['params']
+          params: options
         }
         request(path, opts)
       end
@@ -62,12 +61,18 @@ module Cloud
         env['HTTP_CONTENT_TYPE'] = "application/json"
         env['HTTP_AUTHORIZATION'] = "Bearer #{access_token}"
         status, headers, body = ::Server.call(env)
-        @access_token.destroy
-        result = JSON.parse(body[0]) if body.size > 0
+        result = {
+          status: status,
+          headers: headers,
+          body: body.join
+        }
+
         unless [200, 201].include?(status)
           raise RpcServer::Error.new(status, result)
         end
         result
+      ensure
+        @access_token.destroy
       end
     end
   end

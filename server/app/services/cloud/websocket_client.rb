@@ -66,7 +66,6 @@ module Cloud
       return if connecting?
       @connected = false
       @connecting = true
-      info "connecting to cloud at #{api_uri}"
       headers = {
         'Authorization' => "Basic #{Base64.encode64(self.client_id+':'+self.client_secret)}"
       }
@@ -82,7 +81,7 @@ module Cloud
         on_close(event)
       end
       @ws.on :error do |event|
-        error "connection closed with error: #{event.message}"
+        error "cloud connection closed with error: #{event.message}"
       end
 
     end
@@ -104,7 +103,7 @@ module Cloud
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
       ping_timer.cancel if ping_timer
-      info 'connection established'
+      info "cloud connection opened"
       @connected = true
       @connecting = false
     end
@@ -134,7 +133,7 @@ module Cloud
       if event.code == 1002
         handle_invalid_token
       end
-      info "connection closed with code: #{event.code}"
+      info "cloud connection closed with code: #{event.code}"
     rescue => exc
       error exc.message
     end
@@ -163,7 +162,6 @@ module Cloud
         if @connected
           info 'did not receive pong, closing connection'
           ws.close(1000)
-          @connected = false
         end
       end
       ws.ping {

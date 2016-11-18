@@ -3,7 +3,6 @@ require_relative '../services/logging'
 
 class CloudWebsocketConnectJob
   include Celluloid
-  include CurrentLeader
   include Logging
   include ConfigHelper # adds a .config method
 
@@ -26,7 +25,7 @@ class CloudWebsocketConnectJob
   end
 
   def cloud_enabled?
-    config['oauth2.client_id'] && config['oauth2.client_secret']
+    config['cloud.enabled'] && config['oauth2.client_id'] && config['oauth2.client_secret']
   end
 
   def connect
