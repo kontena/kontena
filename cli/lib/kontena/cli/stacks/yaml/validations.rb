@@ -6,12 +6,16 @@ module Kontena::Cli::Stacks::YAML
      require_relative 'custom_validators/extends_validator'
      require_relative 'custom_validators/hooks_validator'
      require_relative 'custom_validators/secrets_validator'
-     
-     HashValidator.append_validator(AffinitiesValidator.new)
-     HashValidator.append_validator(BuildValidator.new)
-     HashValidator.append_validator(ExtendsValidator.new)
-     HashValidator.append_validator(SecretsValidator.new)
-     HashValidator.append_validator(HooksValidator.new)
+
+     def self.load
+       return if @loaded
+       HashValidator.append_validator(AffinitiesValidator.new)
+       HashValidator.append_validator(BuildValidator.new)
+       HashValidator.append_validator(ExtendsValidator.new)
+       HashValidator.append_validator(SecretsValidator.new)
+       HashValidator.append_validator(HooksValidator.new)
+       @loaded = true
+     end
    end
 
    def common_validations
