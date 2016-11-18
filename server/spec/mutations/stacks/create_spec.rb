@@ -17,7 +17,7 @@ describe Stacks::Create do
           current_user: user,
           grid: grid,
           name: 'stack',
-          services: []
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
         ).run
       }.to change{ Stack.count }.by(1)
     end
@@ -27,7 +27,7 @@ describe Stacks::Create do
         current_user: user,
         grid: grid,
         name: 'soome-stack',
-        services: []
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(true)
     end
@@ -37,7 +37,7 @@ describe Stacks::Create do
         current_user: user,
         grid: grid,
         name: 'stack-12',
-        services: []
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(true)
     end
@@ -47,7 +47,7 @@ describe Stacks::Create do
         current_user: user,
         grid: grid,
         name: '-stack',
-        services: []
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(false)
       expect(outcome.errors.message.keys).to include('name')
@@ -58,10 +58,21 @@ describe Stacks::Create do
         current_user: user,
         grid: grid,
         name: 'red&is',
-        services: []
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(false)
       expect(outcome.errors.message.keys).to include('name')
+    end
+
+    it 'does not allow empty services array' do
+      outcome = described_class.new(
+        current_user: user,
+        grid: grid,
+        name: 'redis',
+        services: []
+      ).run
+      expect(outcome.success?).to be(false)
+      expect(outcome.errors.message.keys).to include('services')
     end
 
     it 'creates new service linked to stack' do
@@ -113,6 +124,22 @@ describe Stacks::Create do
           current_user: user,
           grid: grid,
           name: 'soome-stack',
+          services: services
+        ).run
+        expect(outcome.success?).to be(false)
+      }.to change{ grid.stacks.count }.by(0)
+    end
+
+    it 'does not create stack if exposed service does not exist' do
+      services = [
+        {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true }
+      ]
+      expect {
+        outcome = described_class.new(
+          current_user: user,
+          grid: grid,
+          name: 'redis',
+          expose: 'foo',
           services: services
         ).run
         expect(outcome.success?).to be(false)
