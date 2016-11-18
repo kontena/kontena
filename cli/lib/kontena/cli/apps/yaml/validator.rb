@@ -12,7 +12,7 @@ module Kontena::Cli::Apps
         @schema['net'] = optional(%w(host bridge))
         @schema['log_driver'] = optional('string')
         @schema['log_opts'] = optional({})
-        Validations::CustomValidations.load
+        Validations::CustomValidators.load
       end
 
       ##
