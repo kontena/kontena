@@ -8,7 +8,8 @@ module Kontena
       def wait(timeout = 300, message = nil, &block)
         wait_until = Time.now.to_f + timeout
         loop do
-          value = yield if block
+          raise ArgumentError, 'no block given' unless block_given?
+          value = yield
           return value if value || !still_waiting?(wait_until)
           debug message if message
           sleep 0.5

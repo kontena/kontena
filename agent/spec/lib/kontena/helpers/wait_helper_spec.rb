@@ -12,7 +12,7 @@ describe Kontena::Helpers::WaitHelper do
 
   describe 'wait' do
     it 'returns true immediately' do
-      expect(Kernel).not_to receive(:sleep)
+      expect(subject).not_to receive(:sleep)
       value = subject.wait { true }
       expect(value).to be_truthy
     end
@@ -30,6 +30,12 @@ describe Kontena::Helpers::WaitHelper do
       expect(subject).to receive(:sleep).once
       value = subject.wait(2, 'foo') { false }
       expect(value).to be_falsey
+    end
+
+    it 'raises if no block given' do
+      expect {
+        subject.wait
+      }.to raise_error(ArgumentError)
     end
   end
 
