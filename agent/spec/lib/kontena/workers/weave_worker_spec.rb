@@ -102,9 +102,7 @@ describe Kontena::Workers::WeaveWorker do
     end
 
     it 'calls network_adapter' do
-      expect(adapter).to receive(:exec) {|*args|
-        expect(args[0]).to include('aaa', '10.81.1.1/16')
-      }
+      expect(adapter).to receive(:attach_network).with('10.81.1.1/16', 'aaa')
       subject.attach_overlay('aaa', '10.81.1.1/16')
     end
   end
