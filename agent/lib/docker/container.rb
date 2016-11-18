@@ -159,7 +159,7 @@ module Docker
     #
     # @return [String, NilClass]
     def overlay_ip
-      overlay_cidr.split('/')[0]
+      self.overlay_cidr.split('/')[0] if self.overlay_cidr
     end
 
     # Container CIDR address within the overlay network.
@@ -168,6 +168,14 @@ module Docker
     # @return [String, NilClass]
     def overlay_cidr
       self.labels['io.kontena.container.overlay_cidr']
+    end
+
+    # Container CIDR suffix within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # @return [String, NilClass]
+    def overlay_suffix
+      self.overlay_cidr.split('/')[1] if self.overlay_cidr
     end
 
     private

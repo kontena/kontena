@@ -66,14 +66,14 @@ describe Kontena::Workers::WeaveWorker do
     it 'attaches overlay if container has overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
       allow(subject.wrapped_object).to receive(:register_container_dns)
-      expect(subject.wrapped_object).to receive(:attach_overlay).with(container.id, container.overlay_cidr)
+      expect(subject.wrapped_object).to receive(:attach_overlay).with(container)
       subject.weave_attach(container)
     end
 
     it 'does not attach overlay if container does not have overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return(nil)
       allow(subject.wrapped_object).to receive(:register_container_dns)
-      expect(subject.wrapped_object).not_to receive(:attach_overlay)
+      expect(subject.wrapped_object).not_to receive(:attach_overlay).with(container)
       subject.weave_attach(container)
     end
 
@@ -94,16 +94,46 @@ describe Kontena::Workers::WeaveWorker do
 
   describe '#attach_overlay' do
     let(:adapter) do
-      spy(:adapter)
+      instance_double(Kontena::NetworkAdapters::Weave)
     end
 
     before(:each) do
       allow(subject.wrapped_object).to receive(:network_adapter).and_return(adapter)
     end
 
-    it 'calls network_adapter' do
-      expect(adapter).to receive(:attach_network).with('10.81.1.1/16', 'aaa')
-      subject.attach_overlay('aaa', '10.81.1.1/16')
+    context "For a new container" do
+      let(:container) do
+        double(Docker::Container,
+          id: '12345',
+          name: 'test',
+          overlay_cidr: '10.81.128.1/16',
+          overlay_suffix: '16',
+        )
+      end
+
+      it 'calls network_adapter.attach_container' do
+        expect(adapter).to receive(:attach_container).with('12345', '10.81.128.1/16')
+
+        subject.attach_overlay(container)
+      end
+    end
+
+    context "For an old container" do
+      let(:container) do
+        double(Docker::Container,
+          id: '12345',
+          name: 'test',
+          overlay_cidr: '10.81.1.1/19',
+          overlay_ip: '10.81.1.1',
+          overlay_suffix: '19',
+        )
+      end
+
+      it 'calls network_adapter.migrate_container' do
+        expect(adapter).to receive(:migrate_container).with('12345', '10.81.1.1/16')
+
+        subject.attach_overlay(container)
+      end
     end
   end
 

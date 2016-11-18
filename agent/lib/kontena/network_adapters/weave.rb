@@ -95,7 +95,6 @@ module Kontena::NetworkAdapters
       @started == true
     end
 
-
     # @param [Hash] opts
     def modify_create_opts(opts)
       ensure_weave_wait
@@ -160,6 +159,30 @@ module Kontena::NetworkAdapters
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
       @ipam_running = true
+    end
+
+    # Ensure that the host weave bridge is exposed using the given CIDR address,
+    # and only the given CIDR address
+    #
+    # @param [String] cidr '10.81.0.X/16'
+    def ensure_exposed(cidr)
+      # configure new address
+      # these will be added alongside any existing addresses
+      if @executor_pool.expose(cidr)
+        info "Exposed host node at cidr=#{cidr}"
+      else
+        error "Failed to expose host node at cidr=#{cidr}"
+      end
+
+      # cleanup any old addresses
+      @executor_pool.ps('weave:expose') do |name, mac, *cidrs|
+        cidrs.each do |exposed_cidr|
+          if exposed_cidr != cidr
+            warn "Migrating host node from cidr=#{exposed_cidr}"
+            @executor_pool.hide(exposed_cidr)
+          end
+        end
+      end
     end
 
     def ensure_default_pool()
@@ -227,9 +250,7 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def post_start(info)
       if info['node_number']
-        weave_bridge = "10.81.0.#{info['node_number']}/16"
-        @executor_pool.execute(['--local', 'expose', "ip:#{weave_bridge}"])
-        info "bridge exposed: #{weave_bridge}"
+        ensure_exposed("10.81.0.#{info['node_number']}/16")
       end
     end
 
@@ -243,8 +264,38 @@ module Kontena::NetworkAdapters
       false
     end
 
-    def attach_network(overlay_cidr, container_id)
-      @executor_pool.async.execute(['--local', 'attach', overlay_cidr, '--rewrite-hosts', container_id])
+    # Attach container to weave with given CIDR address
+    #
+    # @param [String] container_id
+    # @param [String] overlay_cidr '10.81.X.Y/16'
+    def attach_container(container_id, cidr)
+      info "Attach container=#{container_id} at cidr=#{cidr}"
+
+      @executor_pool.async.attach(container_id, cidr)
+    end
+
+    # Attach container to weave with given CIDR address, first detaching any mismatching addresses
+    #
+    # @param [String] container_id
+    # @param [String] overlay_cidr '10.81.X.Y/16'
+    def migrate_container(container_id, cidr)
+      info "Migrate container=#{container_id} to cidr=#{cidr}"
+
+      # first remove any existing addresses
+      # this is required, since weave will not attach if the address already exists, but with a different netmask
+      @executor_pool.ps(container_id) do |name, mac, *cidrs|
+        debug "Migrate check: name=#{name} with cidrs=#{cidrs}"
+
+        cidrs.each do |attached_cidr|
+          if cidr != attached_cidr
+            warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
+            @executor_pool.detach(container_id, attached_cidr)
+          end
+        end
+      end
+
+      # attach with the correct address
+      self.attach_container(container_id, cidr)
     end
 
     def detach_network(event)

@@ -39,7 +39,7 @@ module Kontena::NetworkAdapters
       debug "starting to collect locally known addresses"
       local_addresses = []
       Docker::Container.all(all: true).each do |container|
-        local_addresses << container.overlay_cidr
+        local_addresses << container.overlay_ip
       end
       local_addresses.compact! # remove nils
       local_addresses
