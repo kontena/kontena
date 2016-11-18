@@ -28,20 +28,20 @@ Nodes and Containers attached to different Grids cannot communicate.
 
 ## Grid
 
-Each grid has a single overlay network. The default overlay network used is `10.81.0.0/19`, and it currently cannot be configured at creation time nor changed later.
+Each grid has a single overlay network. The default overlay network used is `10.81.0.0/16`, and it currently cannot be configured at creation time nor changed later.
 
-Each Grid may also include a set of Trusted Subnets, which are used for the Overlay Networking described further below.
+The grid's overlay network subnet is divided into two parts: `10.81.0.0/17` and `10.81.128.0/17`. The lower half is used by the Kontena Agent for statically allocated addresses used by infrastructure services such as etcd, and the upper half (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service container addresses managed by the [Kontena IPAM](https://github.com/kontena/kontena-ipam).
+
+Each Grid may also include a set of Trusted Subnets, which are used for the Overlay Networking between Host Node public and private IP addresses as described further below.
 
 ### IP Address Management
 
-Overlay network addresses are allocated by the Kontena Master, which tracks each allocated overlay network address.
-Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 8190 Service Containers.
+Overlay network addresses are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) service running on each host Node.
+Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 32768 Service Containers.
 
-When a Host Node's Kontena Agent is disconnected from the Kontena Master, the overlay network addresses used by the Node's Containers are released.
-Released overlay network addresses may be used for new Service Containers being deployed.
-
-If a disconnected host Node reconnects, the overlay network addresses of any returning Service containers are restored.
-In case of a conflict where the overlay network address has been reallocated for a second Service Container after the original Node disconnected, the reallocated overlay network address is released, and the second Service Container is re-deployed.
+The [Kontena IPAM](https://github.com/kontena/kontena-ipam) service uses the Grid's etcd service to track the allocated overlay network address across each of the Grid's Host Nodes.
+The overlay network address of a Service Container is reserved by the Kontena Agent when it is created.
+The overlay network address is released by the Kontena Agent when the Service Container is removed.
 
 ## Host Node
 
@@ -79,12 +79,12 @@ Each host Node has a total of four different network addresses:
   Using the private network address is required for local Vagrant nodes, as the public network address provided by VirtualBox does not allow any incoming connections.
 
 #### Overlay Network Address
-  The overlay network address (`10.81.0.x/19`)
+  The overlay network address (`10.81.0.x/16`)
 
   Each Host Node within a Grid is assigned a sequential Node Number, in the range of `1..254`.
 
   Once the overlay network has been established, the host machine is also configured with a statically allocated overlay network address based on the sequentially assigned Node number.
-  The first `/24` of addresses within the overlay network subnet (`10.81.1.X/19`) is reserved for these statically allocated Node overlay network addresses.
+  The first `/24` of addresses within the overlay network subnet (`10.81.0.X/16`) is reserved for these statically allocated Node overlay network addresses.
 
   These Node overlay network addresses can be used by both other Nodes and any Service Containers within the same Grid.
   The Node's overlay network address is used for the Grid's infrastructure services, including Kontena's etcd cluster.
@@ -142,7 +142,7 @@ The default Docker network provides connectivity to the [Gateway](#docker-gatewa
 #### Weave Overlay Network
 
 Each Service Container being started is also attached to the Weave network.
-The Container's `ethwe` network interface is used for the internal communication between Grid Services, using the Overlay Network's `10.81.0.0/17` subnet.
+The Container's `ethwe` network interface is used for the internal communication between Grid Services, using the Overlay Network's `10.81.0.0/16` subnet.
 In order to avoid any issues with Container services attempting to resolve or connect to other services on the overlay network, the `weavewait` utility is used to delay the Container service execution until the Container's Weave network is ready.
 This uses a modified Docker entrypoint for the Container.
 

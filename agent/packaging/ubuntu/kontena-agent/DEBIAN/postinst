@@ -13,7 +13,7 @@ db_get kontena-agent/grid_token
 TOKEN="KONTENA_TOKEN=${RET}"
 sed -i -r "s#\#KONTENA_TOKEN=.*#${TOKEN}#" /etc/default/kontena-agent
 
-sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--insecure-registry='10.81.0.0/19'\"#" /etc/default/docker
+sed -i -r "s#\#DOCKER_OPTS=.*#DOCKER_OPTS=\"--insecure-registry='10.81.0.0/16'\"#" /etc/default/docker
 
 /usr/bin/docker pull kontena/agent:VERSION
 /sbin/start kontena-agent || true
