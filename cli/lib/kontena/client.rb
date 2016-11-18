@@ -107,20 +107,6 @@ module Kontena
       end
     end
 
-    # OAuth2 client_id from ENV KONTENA_CLIENT_ID or client CLIENT_ID constant
-    #
-    # @return [String]
-    def client_id
-      ENV['KONTENA_CLIENT_ID'] || CLIENT_ID
-    end
-
-    # OAuth2 client_secret from ENV KONTENA_CLIENT_SECRET or client CLIENT_SECRET constant
-    #
-    # @return [String]
-    def client_secret
-      ENV['KONTENA_CLIENT_SECRET'] || CLIENT_SECRET
-    end
-
     # Requests path supplied as argument and returns true if the request was a success.
     # For checking if the current authentication is valid.
     #
@@ -146,7 +132,7 @@ module Kontena
       return nil unless token_account
       return nil unless token_account['token_endpoint']
 
-      request(
+      response = request(
         http_method: token_account['token_method'].downcase.to_sym,
         path: token_account['token_endpoint'],
         headers: { CONTENT_TYPE => token_account['token_post_content_type'] },
@@ -159,6 +145,8 @@ module Kontena
         expects: [200,201],
         auth: false
       )
+      response['expires_at'] ||= in_to_at(response['expires_in'])
+      response
     end
 
     # Return server version from a Kontena master by requesting '/'

@@ -1,5 +1,3 @@
-#TODO: Something wrong with picking up wrong server in config using the url,
-#maybe remove that part altogether.
 require 'uri'
 
 module Kontena::Cli::Master
@@ -8,196 +6,165 @@ module Kontena::Cli::Master
 
     parameter "[URL]", "Kontena Master URL or name"
     option ['-j', '--join'], '[INVITE_CODE]', "Join master using an invitation code"
-    option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token'
-    option ['-n', '--name'], '[NAME]', 'Set server name'
+    option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token', environment_variable: 'KONTENA_TOKEN'
+    option ['-n', '--name'], '[NAME]', 'Set server name', environment_variable: 'KONTENA_MASTER'
     option ['-c', '--code'], '[CODE]', 'Use authorization code generated during master install'
     option ['-r', '--remote'], :flag, 'Do not try to open a browser'
     option ['-e', '--expires-in'], '[SECONDS]', 'Request token with expiration of X seconds. Use 0 to never expire', default: 7200
     option ['-v', '--verbose'], :flag, 'Increase output verbosity'
     option ['-f', '--force'], :flag, 'Force reauthentication'
     option ['-s', '--silent'], :flag, 'Reduce output verbosity'
+    option ['--grid'], '[GRID]', 'Set grid'
 
     option ['--no-login-info'], :flag, "Don't show login info", hidden: true
 
     def execute
-      # rewrites self.url
-      use_current_master_if_available || use_master_by_name
+      if self.code
+        exit_with_error "Can't use --token and --code together" if self.token
+        exit_with_error "Can't use --join and --code together" if self.join
+      end
 
-      # find server by url or create a new one
-      server = find_server_or_create_new(url)
+      if self.force?
+        exit_with_error "Can't use --code and --force together" if self.code
+        exit_with_error "Can't use --token and --force together" if self.token
+      end
 
-      # set server token from self.token or create a new one
-      set_server_token(server)
+      server = select_a_server(self.name, self.url)
+
+      if self.token
+        # If a --token was given create a token with access_token set to --token value
+        server.token = Kontena::Cli::Config::Token.new(access_token: self.token, parent_type: :master, parent_name: server.name)
+      elsif server.token.nil? || self.force?
+        # Force reauth or no existing token, create a token with no access_token
+        server.token = Kontena::Cli::Config::Token.new(parent_type: :master, parent_name: server.name)
+      end
+
+      if self.grid
+        self.skip_grid_auto_select = true if self.respond_to?(:skip_grid_auto_select?)
+        server.grid = self.grid
+      end
 
       # set server token by exchanging code if --code given
-      use_authorization_code(server, self.code) if self.code
+      if self.code
+        use_authorization_code(server, self.code)
+        exit 0
+      end
 
-      client = Kontena::Client.new(server.url, server.token)
-
-      # Unless an invitation code was supplied, check auth and exit
-      # if it works already.
+      # unless an invitation code was supplied, check auth and exit
+      # if existing auth works already.
       unless self.join || self.force?
         if auth_works?(server)
-          config.write
-          config.reset_instance
+          update_server_to_config(server)
           display_login_info(only: :master) unless self.no_login_info?
           exit 0
         end
       end
 
-      # no local browser? tell user to launch an external one
+      auth_params = {
+        remote: self.remote?,
+        invite_code: self.join,
+        expires_in: self.expires_in
+      }
+
       if self.remote?
-        config.current_server = server.name
-        config.write
-        display_remote_message_and_exit(get_authorization_url)
+        # no local browser? tell user to launch an external one
+        display_remote_message(server, auth_params)
+        update_server_to_config(server)
+        exit 1
+      else
+        # local web flow
+        web_flow(server, auth_params)
+        display_login_info(only: :master) unless (running_silent? || self.no_login_info?)
       end
+    end
 
-      # local web flow
-      response = response_from_web_flow
+    def next_default_name
+      next_name('kontena-master')
+    end
 
-      # If the master responds with a code, then exchange it to a token
-      if response['code']
-        use_authorization_code(server, response['code'])
-      elsif response['access_token']
-        update_server_token(server, response)
-        update_server_name(server, response)
-        config.current_server = server.name
+    def next_name(base)
+      if config.find_server(base)
+        new_name = base.dup
+        unless new_name =~ /\-\d+$/
+          new_name += "-2"
+        end
+        new_name.succ! until config.find_server(new_name).nil?
+        new_name
+      else
+        base
       end
-      config.write
-      display_login_info(only: :master) unless (running_silent? || self.no_login_info?)
     end
 
     def master_account
       @master_account ||= config.find_account('master')
     end
 
-    def use_current_master_if_available
-      return nil if self.url
-      if config.current_master
-        self.url = config.current_master.url
-        true
-      else
-        exit_with_error "Current master is not set and URL was not provided."
-      end
-    end
-
-    def use_master_by_name
-      return if self.url =~ /^(?:http|https):\/\//
-      server = config.find_server(self.url)
-      if server && server.url
-        self.url = server.url
-        true
-      else
-        exit_with_error "Server '#{self.url}' not found in configuration."
-      end
-    end
-
-    def find_server_or_create_new(url)
-      existing_server = config.find_server_by(url: url, name: self.name)
-      if existing_server
-        config.current_server = existing_server.name
-        existing_server
-      else
-        new_server = Kontena::Cli::Config::Server.new(url: url, name: self.name)
-        config.servers << new_server
-        config.current_server = new_server.name
-        new_server
-      end
-    end
-
-    def set_server_token(server)
-      if self.token
-        # Use supplied token
-        server.token = Kontena::Cli::Config::Token.new(access_token: self.token, parent_type: :master, parent_name: server.name)
-      elsif server.token.nil? || self.force?
-        # Create new empty token if the server does not have one yet
-        server.token = Kontena::Cli::Config::Token.new(parent_type: :master, parent_name: server.name)
-      end
-    end
-
     def use_authorization_code(server, code)
-      vspinner "Exchanging authorization code for an access token from Kontena Master" do
-        client = Kontena::Client.new(server.url, server.token)
-        begin
-          response = client.exchange_code(code)
-        rescue StandardError => ex
-          ENV["DEBUG"] && puts("#{ex}\n#{ex.backtrace.join("  \n")}")
-          exit_with_error "Code exchange failed: #{ex}"
-        end
-
-        if response['server'] && response['server']['name']
-          server.name ||= response['server']['name']
-        end
-
-        if response['user']
-          server.username = response['user']['name'] || response['user']['email']
-        end
-
-        server.token = Kontena::Cli::Config::Token.new(
-          access_token: response['access_token'],
-          refresh_token: response['refresh_token'],
-          expires_at: in_to_at(response['expires_in']),
-        )
-
-        config.current_server = server.name
+      response = vspinner "Exchanging authorization code for an access token from Kontena Master" do
+        Kontena::Client.new(server.url, server.token).exchange_code(code)
       end
-      true
+      update_server(server, response)
+      update_server_to_config(server)
     end
 
+    # Check if the existing (or --token) authentication works without reauthenticating
     def auth_works?(server)
-      if server && server.token && server.token.access_token
-        # See if the existing or supplied authentication works without reauthenticating
-        auth_ok = false
-        vspinner "Testing if authentication works using current access token" do
-          auth_ok = Kontena::Client.new(server.url, server.token).authentication_ok?(master_account.userinfo_endpoint)
-          config.current_master = server.name
-        end
-        auth_ok
-      else
-        false
+      return false unless (server && server.token && server.token.access_token)
+      vspinner "Testing if authentication works using current access token" do
+        Kontena::Client.new(server.url, server.token).authentication_ok?(master_account.userinfo_endpoint)
       end
     end
 
-    def build_auth_url_path(port = nil)
+    # Build a path for master authentication
+    #
+    # @param local_port [Fixnum] tcp port where localhost webserver is listening
+    # @param invite_code [String] an invitation code generated when user was invited
+    # @param expires_in [Fixnum] expiration time for the requested access token
+    # @param remote [Boolean] true when performing a login where the code is displayed on the web page
+    # @return [String]
+    def authentication_path(local_port: nil, invite_code: nil, expires_in: nil, remote: false)
       auth_url_params = {}
-      if self.remote?
+      if remote
         auth_url_params[:redirect_uri] = "/code"
+      elsif local_port
+        auth_url_params[:redirect_uri] = "http://localhost:#{local_port}/cb"
       else
-        auth_url_params[:redirect_uri] = "http://localhost:#{port}/cb"
+        raise ArgumentError, "Local port not defined and not performing remote login"
       end
-      auth_url_params[:invite_code]  = self.join if self.join
-      auth_url_params[:expires_in]   = self.expires_in if self.expires_in
+      auth_url_params[:invite_code]  = invite_code if invite_code
+      auth_url_params[:expires_in]   = expires_in  if expires_in
       "/authenticate?#{URI.encode_www_form(auth_url_params)}"
     end
 
-    def get_authorization_url(web_server_port = nil)
-      authorization_url = nil
-
-      http_client = Kontena::Client.new(self.url)
-
+    # Request a redirect to the authentication url from master
+    #
+    # @param master_url [String] master root url
+    # @param auth_params [Hash] auth parameters (keyword arguments of #authentication_path)
+    # @return [String] url to begin authentication web flow
+    def authentication_url_from_master(master_url, auth_params)
+      client = Kontena::Client.new(master_url)
       vspinner "Sending authentication request to receive an authorization URL" do
-        http_client.request(
+        response = client.request(
           http_method: :get,
-          path: build_auth_url_path(web_server_port),
+          path: authentication_path(auth_params),
           expects: [501, 400, 302, 403],
           auth: false
         )
 
-        case http_client.last_response.status
-        when 302
-          authorization_url = http_client.last_response.headers['Location']
-        when 501
-          exit_with_error "Authentication provider not configured"
-        when 403
-          exit_with_error "Invalid invitation code"
+        if client.last_response.status == 302
+          client.last_response.headers['Location']
+        elsif response.kind_of?(Hash)
+          exit_with_error [response['error'], response['error_description']].compact.join(' : ')
+        elsif response.kind_of?(String) && response.length > 1
+          exit_with_error response
         else
-          exit_with_error "Invalid response to authentication request"
+          exit_with_error "Invalid response to authentication request : HTTP#{client.last_response.status} #{client.last_response.body if ENV["DEBUG"]}"
         end
       end
-      authorization_url
     end
 
-    def display_remote_message_and_exit(url)
+    def display_remote_message(server, auth_params)
+      url = authentication_url_from_master(server.url, auth_params.merge(remote: true))
       if running_silent?
         sputs url
       else
@@ -205,21 +172,21 @@ module Kontena::Cli::Master
         puts "#{url}"
         puts
         puts "Then complete the authentication by using:"
-        puts "kontena master login --code <CODE FROM BROWSER>"
-        # Using exit code 1 because the operation isn't complete,
-        # you can't do something like:
-        # kontena master login --remote && echo "yes"
+        puts "kontena master login --code <CODE FROM BROWSER> #{server.url}"
       end
-      exit 1
     end
 
-    def response_from_web_flow
+    def web_flow(server, auth_params)
       require_relative '../localhost_web_server'
       require 'launchy'
 
+
       web_server = Kontena::LocalhostWebServer.new
-      uri = URI.parse(get_authorization_url(web_server.port))
-      puts "Opening browser to #{uri.scheme}://#{uri.host}"
+
+      url = authentication_url_from_master(server.url, auth_params.merge(local_port: web_server.port))
+      uri = URI.parse(url)
+
+      puts "Opening a browser to #{uri.scheme}://#{uri.host}"
       puts
       puts "If you are running this command over an ssh connection or it's"
       puts "otherwise not possible to open a browser from this terminal"
@@ -239,44 +206,127 @@ module Kontena::Cli::Master
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
       browser_thread = Thread.new { Launchy.open(uri.to_s) }
 
-      vspinner "Waiting for browser authorization response" do
+      spinner "Waiting for browser authorization response" do
         server_thread.join
       end
       browser_thread.join
 
-      Thread.main['response']
+      update_server(server, Thread.main['response'])
+      update_server_to_config(server)
     end
 
-    def in_to_at(expires_in)
-      if expires_in.to_i > 0
-        Time.now.utc.to_i + expires_in.to_i
-      else
-        nil
-      end
-    end
-
-    def update_server_token(server, response)
-      server.token = Kontena::Cli::Config::Token.new
-      server.token.access_token = response['access_token']
-      server.token.refresh_token = response['refresh_token']
-      server.token.expires_at = in_to_at(response['expires_in'])
-      server.token.username = response.fetch('user', {}).fetch('name', nil) || response.fetch('user', {}).fetch('email', nil)
-      server.username = server.token.username
+    def update_server(server, response)
+      update_server_token(server, response)
+      update_server_name(server, response)
+      update_server_username(server, response)
     end
 
     def update_server_name(server, response)
-      return unless server.name.nil?
-
-      if self.name
-        server.name = self.name
-      elsif response['server'] && response['server']['name']
-        server.name = response['server']['name']
-      elsif config.find_server('kontena-master')
-        new_name = "kontena-master-2"
-        new_name.succ! until config.find_server(new_name).nil?
-        server.name = new_name
+      return nil unless server.name.nil?
+      if response.kind_of?(Hash) && response['server'] && response['server']['name']
+        server.name = next_name(response['server']['name'])
       else
-        server.name = "kontena-master"
+        server.name = next_default_name
+      end
+    end
+
+    def update_server_username(server, response)
+      return nil unless response.kind_of?(Hash)
+      return nil unless response['user']
+      server.token.username = response['user']['name'] || response['user']['email']
+      server.username = server.token.username
+    end
+
+    def update_server_token(server, response)
+      if !response.kind_of?(Hash)
+        raise TypeError, "Response type mismatch - expected Hash, got #{response.class}"
+      elsif response['code']
+        use_authorization_code(server, response['code'])
+      elsif response['error']
+        exit_with_error "Authentication failed: #{response['error']} #{response['error_description']}"
+      else
+        server.token = Kontena::Cli::Config::Token.new
+        server.token.access_token  = response['access_token']
+        server.token.refresh_token = response['refresh_token']
+        server.token.expires_at    = response['expires_at']
+      end
+    end
+
+    def update_server_to_config(server)
+      server.name ||= next_default_name
+      config.servers << server unless config.servers.include?(server)
+      config.current_server = server.name
+      config.write
+      config.reset_instance
+    end
+
+    # Figure out or create a server based on url or name.
+    #
+    # No name or url provided: try to use current_master
+    # A name provided with --name but no url defined: try to find a server by name from config
+    # An URL starting with 'http' provided: try to find a server by url from config
+    # An URL not starting with 'http' provided: try to find a server by name
+    # An URL and a name provided
+    #  - If a server is found by name: use entry and update URL to the provided url
+    #  - Else create a new entry with the url and name
+    #
+    # @param name [String] master name
+    # @param url [String] master url or name
+    # @return [Kontena::Cli::Config::Server]
+    def select_a_server(name, url)
+      # no url, no name, try to use current master
+      if url.nil? && name.nil?
+        if config.current_master
+          return config.current_master
+        else
+          exit_with_error 'URL not specified and current master not selected'
+        end
+      end
+
+      if name && url
+        exact_match = config.find_server_by(url: url, name: name)
+        return exact_match if exact_match # found an exact match, going to use that one.
+
+        name_match = config.find_server(name)
+
+        if name_match 
+          #found a server with the provided name, set the provided url to it and return
+          name_match.url = url
+          return name_match
+        else
+          # nothing found, create new.
+          return Kontena::Cli::Config::Server.new(name: name, url: url)
+        end
+      elsif name
+        # only --name provided, try to find a server with that name
+        name_match = config.find_server(name)
+
+        if name_match && name_match.url
+          return name_match
+        else
+          exit_with_error "Master #{name} was found from config, but it does not have an URL and no URL was provided on command line"
+        end
+      elsif url
+        # only url provided
+        if url =~ /^https?:\/\//
+          # url is actually an url
+          url_match = config.find_server_by(url: url)
+          if url_match
+            return url_match
+          else
+            return Kontena::Cli::Config::Server.new(url: url, name: nil)
+          end
+        else
+          name_match = config.find_server(url)
+          if name_match
+            unless name_match.url
+              exit_with_error "Master #{url} was found from config, but it does not have an URL and no URL was provided on command line"
+            end
+            return name_match
+          else
+            exit_with_error "Can't find a master with name #{name} from configuration"
+          end
+        end
       end
     end
 
