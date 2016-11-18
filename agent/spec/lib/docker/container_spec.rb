@@ -116,4 +116,19 @@ describe Docker::Container do
       expect(subject.default_stack?).to be_falsey
     end
   end
+
+  describe '#skip_logs?' do
+    it 'return true is skip_logs label is set' do
+      allow(subject).to receive(:labels).and_return({
+        'io.kontena.container.skip_logs' => '1'
+      })
+      expect(subject.skip_logs?).to be_truthy
+    end
+
+    it 'return false is skip_logs label is not set' do
+      allow(subject).to receive(:labels).and_return({})
+      expect(subject.skip_logs?).to be_falsey
+    end
+
+  end
 end

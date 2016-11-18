@@ -152,6 +152,13 @@ module Docker
       end
     end
 
+    # Should logs for this container be skipped?
+    #
+    # @return [Boolean]
+    def skip_logs?
+      self.labels['io.kontena.container.skip_logs'] == '1'
+    end
+
     # Container IP address within the overlay network.
     # Will be missing/nil if container is not attached to the overlay network.
     #

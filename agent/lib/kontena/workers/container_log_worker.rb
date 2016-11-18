@@ -20,34 +20,33 @@ module Kontena::Workers
       else
         debug "starting to stream logs from %s" % [@container.name]
       end
-      begin
-        stream_opts = {
-          'stdout' => true,
-          'stderr' => true,
-          'follow' => true,
-          'timestamps' => true,
-          'stack_size'=> 0
-        }
-        if since > 0
-          stream_opts['tail'] = 'all'
-          stream_opts['since'] = since
-        else
-          stream_opts['tail'] = 0
-        end
-        @container.streaming_logs(stream_opts) {|stream, chunk|
-          self.on_message(@container.id, stream, chunk)
-        }
-      rescue Excon::Errors::SocketError => exc
-        since = Time.now.to_f
-        error "log socket error: #{@container.id}"
-        retry
-      rescue Docker::Error::TimeoutError
-        since = Time.now.to_f
-        debug "log stream timeout: #{@container.id}"
-        retry
-      rescue Docker::Error::NotFoundError
-        self.stop
+      stream_opts = {
+        'stdout' => true,
+        'stderr' => true,
+        'follow' => true,
+        'timestamps' => true,
+        'stack_size'=> 0
+      }
+      if since > 0
+        stream_opts['tail'] = 'all'
+        stream_opts['since'] = since
+      else
+        stream_opts['tail'] = 0
       end
+      @container.streaming_logs(stream_opts) {|stream, chunk|
+        self.on_message(@container.id, stream, chunk)
+      }
+    rescue Excon::Errors::SocketError => exc
+      since = Time.now.to_f
+      error "log socket error: #{@container.id}"
+      retry
+    rescue Docker::Error::TimeoutError
+      since = Time.now.to_f
+      debug "log stream timeout: #{@container.id}"
+      retry
+    rescue Docker::Error::NotFoundError
+      self.terminate
+      # LogWorker gets the 'die' event and cleans up the worker cache by itself
     end
 
     # @param [String] id
