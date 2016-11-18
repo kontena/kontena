@@ -174,6 +174,8 @@ module Agent
           health_status: data['status'],
           health_status_at: Time.now
         )
+        MongoPubsub.publish(GridServiceHealthMonitorJob::PUBSUB_KEY, id: container.grid_service.id)
+
       else
         warn "health status update failed, could not find container for id: #{data['id']}"
       end

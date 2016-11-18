@@ -30,6 +30,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
         expect(subject.wrapped_object).to receive(:every).with(30).and_yield
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_http_status).with('1.2.3.4', 8080, '/', 10).twice.and_return({})
+      expect(subject.wrapped_object).to receive(:handle_action).twice
         expect {
           subject.start
         }.to change {queue.size}.by (2) # runs check after initial delay and once within the every block
@@ -55,10 +56,26 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
         expect(subject.wrapped_object).to receive(:every).with(30).and_yield
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_tcp_status).with('1.2.3.4', 1234, 10).twice.and_return({})
+      expect(subject.wrapped_object).to receive(:handle_action).twice
         expect {
           subject.start
         }.to change {queue.size}.by (2) # runs check after initial delay and once within the every block
       end
+    end
+  end
+
+  describe '#handle_action' do
+    it 'does nothing when healthy' do
+      expect(Kontena::ServicePods::Restarter).not_to receive(:perform_async)
+      subject.handle_action({data: {'status' => 'healthy'}})
+    end
+
+    it 'restarts container when unhealthy' do
+      expect(Kontena::ServicePods::Restarter).to receive(:perform_async).with('foo')
+      expect(container).to receive(:labels).and_return({'io.kontena.container.name' => 'foo'})
+      expect {
+        subject.handle_action({data: {'status' => 'unhealthy'}})
+      }.to change {queue.size}.by (1)
     end
   end
 

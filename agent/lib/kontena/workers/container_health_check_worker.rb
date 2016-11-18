@@ -47,6 +47,28 @@ module Kontena::Workers
         msg = check_tcp_status(ip, port, timeout)
       end
       @queue << msg
+
+      handle_action(msg)
+
+    end
+
+    def handle_action(msg)
+      if msg.dig(:data, 'status') == 'unhealthy'
+        name = @container.labels['io.kontena.container.name']
+        # Restart the container, master will handle re-scheduling logic
+        info "About to restart container #{name} as it's reported to be unhealthy"
+        log = {
+            event: 'container:log',
+            data: {
+                id: @container.id,
+                time: Time.now.utc.xmlschema,
+                type: 'stderr',
+                data: "*** [Kontena/Agent] Restarting service as it's reported to be unhealthy."
+            }
+        }
+        @queue << log
+        Kontena::ServicePods::Restarter.perform_async(name)
+      end
     end
 
     def check_http_status(ip, port, uri, timeout)
