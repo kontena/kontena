@@ -253,6 +253,7 @@ describe Kontena::Models::ServicePod do
 
     it 'sets DnsSearch' do
       expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'])
+      expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'].split(".", 2)[1])
     end
 
     it 'does not include CpuShares if not defined' do
