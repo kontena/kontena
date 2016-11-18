@@ -23,7 +23,7 @@ module Kontena::Workers
     end
 
     def start
-      sleep 1 until weave_running?
+      sleep 1 until network_adapter.running?
       Docker::Container.all(all: true).each do |container|
         self.ensure_container_running(container)
       end
@@ -37,5 +37,6 @@ module Kontena::Workers
         end
       end
     end
+    
   end
 end

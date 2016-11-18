@@ -5,11 +5,8 @@ module Kontena
   module Helpers
     module WeaveHelper
 
-      # @return [Boolean]
-      def weave_running?
-        weave = Docker::Container.get('weave') rescue nil
-        return false if weave.nil?
-        weave.info['State']['Running'] == true
+      def network_adapter
+        Actor[:network_adapter]
       end
 
       def weave_api_ready?
