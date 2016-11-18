@@ -197,16 +197,6 @@ module Kontena
         config.require_current_master.url
       end
 
-      def ensure_custom_ssl_ca(url)
-        return if Excon.defaults[:ssl_ca_file]
-
-        uri = URI::parse(url)
-        cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
-        if File.exist?(cert_file)
-          Excon.defaults[:ssl_ca_file] = cert_file
-        end
-      end
-
       def current_grid=(grid)
         config.current_grid=(grid)
       end
