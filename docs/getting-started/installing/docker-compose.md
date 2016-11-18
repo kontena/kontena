@@ -11,7 +11,7 @@ title: Docker Compose
 ## Prerequisities
 
 - [Kontena CLI](cli)
-- Docker Engine (<= 1.10 ) & Docker Compose
+- Docker Engine (<= 1.12 ) & Docker Compose
 
 ## Installing Kontena Master
 
@@ -19,21 +19,25 @@ Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. In
 
 **Step 1:** create `docker-compose.yml` file with the following contents:
 
-```
+```yml
 version: '2'
 services:
   haproxy:
     image: kontena/haproxy:latest
-    container_name: kontena-master-haproxy
+    container_name: kontena-server-haproxy
+    restart: always
     environment:
       - SSL_CERT=**None**
-      - BACKENDS=kontena-master:9292
+      - BACKENDS=kontena-server-api:9292
+    depends_on:
+      - master
     ports:
       - 80:80
       - 443:443    
   master:
     image: kontena/server:latest
-    container_name: kontena-master
+    container_name: kontena-server-api
+    restart: always
     environment:
       - RACK_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/kontena
@@ -44,27 +48,28 @@ services:
       - mongodb
   mongodb:
     image: mongo:3.0
-    container_name: kontena-master-mongodb
+    container_name: kontena-server-mongo
+    restart: always
     command: mongod --smallfiles
     volumes:
-      - kontena-master-mongodb:/data/db    
+      - kontena-server-mongo:/data/db    
 volumes:
-  kontena-master-mongodb:
+  kontena-server-mongo:
 ```
 
 **Note!** `VAULT_KEY` & `VAULT_IV` should be random strings. They can be generated from bash:
 
-```
+```sh
 $ cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 ```
 
 **Note!** If you want to use a SSL certificate you can use the following command to obtain the correct value for `SSL_CERT`:
-```
+```sh
 $ awk 1 ORS='\\n' /path/to/cert_file
 ```
 
 If you don't have a SSL certificate you can generate a self-signed certificate and use that:
-```
+```sh
 $ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey.key -out certificate.crt
 cat certificate.crt privateKey.key > cert.pem
 ```
@@ -79,13 +84,13 @@ Before you can start provisioning nodes you must first switch cli scope to a gri
 
 Create a new grid using the command:
 
-```
+```sh
 $ kontena grid create --initial-size=<initial_size> my-grid
 ```
 
 Or switch to an existing grid using the following command:
 
-```
+```sh
 $ kontena grid use <grid_name>
 ```
 
@@ -95,11 +100,12 @@ Now you can start provisioning nodes to your host machines.
 
 **Step 1:** copy the following `docker-compose.yml` file to each host:
 
-```
+```yml
 agent:
   container_name: kontena-agent
   image: kontena/agent:latest
   net: host
+  restart: always
   environment:
     - KONTENA_URI=wss://<master_ip>/
     - KONTENA_TOKEN=<grid_token>
@@ -114,13 +120,22 @@ agent:
 
 **Step 2:** Run the command `docker-compose up -d`
 
-To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine.
+To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/19"` to Docker daemon options on the host machine. The most platform-independent way to do this is with the `/etc/docker/daemon.json` config file:
+
+```sh
+$ cat > /etc/docker/daemon.json <<DOCKERCONFIG
+{
+  "labels": ["region=<name_here>"],
+  "insecure-registries": ["10.81.0.0/19"]
+}
+DOCKERCONFIG
+```
 
 **Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
 
 After creating nodes, you can verify that they have joined a Grid:
 
-```
+```sh
 $ kontena node list
 ```
 
