@@ -27,6 +27,7 @@ module Kontena::Cli::Stacks
           result[:version] = yaml['version'] || '1'
           result[:stack] = yaml['stack']
           result[:name] = self.stack_name
+          result[:expose] = yaml['expose']
           result[:errors] = errors
           result[:notifications] = notifications
           result[:services] = parse_services(service_name) unless errors.count > 0

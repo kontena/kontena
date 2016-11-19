@@ -10,28 +10,25 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::Stacks::DockerHelper
     include Kontena::Cli::Services::ServicesHelper
 
-    def service_prefix
-      @service_prefix ||= project_name_from_yaml(filename)
+    def stack_name
+      @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def stack_from_yaml(filename)
-      set_env_variables(service_prefix, current_grid)
-      outcome = read_yaml(filename)
-      if outcome[:name].nil?
+    def stack_from_yaml(filename, skip_validation = false)
+      set_env_variables(stack_name, current_grid)
+      outcome = read_yaml(filename, skip_validation)
+      if outcome[:stack].nil?
         exit_with_error "Stack MUST have name in YAML! Aborting."
       end
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
       abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
       kontena_services = generate_services(outcome[:services], outcome[:version])
-      # services now as hash, needs to be array in stacks API
-      services = []
-      kontena_services.each do |name, service|
-        service['name'] = name
-        services << service
-      end
       stack = {
-        'name' => outcome[:name],
-        'services' => services
+        'name' => stack_name,
+        'stack' => outcome[:stack],
+        'expose' => outcome[:expose],
+        'version' => outcome[:version],
+        'services' => kontena_services
       }
       stack
     end
@@ -40,56 +37,36 @@ module Kontena::Cli::Stacks
       exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
     end
 
-    # @param [String] filename
-    # @param [Array<String>] service_list
-    # @param [String] prefix
-    # @param [TrueClass|FalseClass] skip_validation
-    # @return [Hash]
-    def services_from_yaml(filename, service_list, prefix, skip_validation = false)
-      set_env_variables(prefix, current_grid)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_validation)
-      outcome = reader.execute
-      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
-      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
-      kontena_services = generate_services(outcome[:services], outcome[:version])
-      kontena_services.delete_if { |name, service| !service_list.include?(name)} unless service_list.empty?
-      kontena_services
-    end
 
     ##
     # @param [Hash] yaml
     # @param [String] version
     # @return [Hash]
     def generate_services(yaml_services, version)
-      services = {}
-      if version.to_i == 2
-        generator_klass = ServiceGeneratorV2
-      else
-        generator_klass = ServiceGenerator
-      end
+      services = []
+      generator_klass = ServiceGeneratorV2
       yaml_services.each do |service_name, config|
         exit_with_error("Image is missing for #{service_name}. Aborting.") unless config['image']
-        services[service_name] = generator_klass.new(config).generate
+        service = generator_klass.new(config).generate
+        service['name'] = service_name
+        services << service
       end
       services
     end
 
-    def read_yaml(filename)
+    def read_yaml(filename, skip_validation = false)
       reader = Kontena::Cli::Stacks::YAML::Reader.new(filename)
       outcome = reader.execute
       outcome
     end
 
-    def set_env_variables(project, grid)
-      ENV['project'] = project
+    def set_env_variables(stack, grid)
+      ENV['project'] = stack
+      ENV['stack'] = stack
       ENV['grid'] = grid
     end
 
-    def service_prefix
-      @service_prefix ||= project_name || project_name_from_yaml(filename) || current_dir
-    end
-
-    def project_name_from_yaml(file)
+    def stack_name_from_yaml(file)
       reader = Kontena::Cli::Stacks::YAML::Reader.new(file, true)
       reader.stack_name
     end

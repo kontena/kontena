@@ -14,7 +14,8 @@ module Kontena::Cli::Stacks
       token = require_token
       require_config_file(filename)
       stack = stack_from_yaml(filename)
-      stack['name'] = name if name
+      stack['source'] = yaml_content
+      stack['registry'] = "file://#{filename}"      
       spinner "Creating stack #{pastel.cyan(name)} " do
         create_stack(token, stack)
       end
@@ -22,6 +23,10 @@ module Kontena::Cli::Stacks
 
     def create_stack(token, stack)
       client(token).post("grids/#{current_grid}/stacks", stack)
+    end
+
+    def yaml_content
+      File.read(File.expand_path(filename))
     end
   end
 end
