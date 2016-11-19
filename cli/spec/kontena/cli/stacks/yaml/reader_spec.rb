@@ -29,30 +29,22 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       'services' => {
         'wordpress' => {
           'image' => 'wordpress:4.1',
+          'extends' => {"file"=>"docker-compose_v2.yml", "service"=>"wordpress"},
           'ports' => ['80:80'],
           'depends_on' => ['mysql'],
           'stateful' => true,
           'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
           'instances' => 2,
           'deploy' => { 'strategy' => 'ha' },
-          'networks' => ['front-tier', 'back-tier'],
           'secrets' => []
         },
         'mysql' => {
           'image' => 'mysql:5.6',
+          'extends' => {"file"=>"docker-compose_v2.yml", "service"=>"mysql"},
           'stateful' => true,
           'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'],
-          'volumes' => ['mysql-data:/var/lib/mysql'],
-          'networks' => ['back-tier'],
           'secrets' => []
         }
-      },
-      'volumes' => {
-        'mysql-data' => { 'driver' => 'local' }
-      },
-      'networks' => {
-        'front-tier' => { 'driver' => 'bridge' },
-        'back-tier' => { 'driver' => 'bridge' }
       }
     }
   end
@@ -188,7 +180,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           .with(mysql_options)
           .once
           .and_return(service_extender)
-        expect(service_extender).to receive(:extend_from).with(docker_compose_yml['services'])
+        expect(service_extender).to receive(:extend_from).with(docker_compose_yml['services']['wordpress'])
+        expect(service_extender).to receive(:extend_from).with(docker_compose_yml['services']['mysql'])
 
         subject.execute
       end
@@ -198,11 +191,12 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           .with(absolute_yaml_path('kontena_v3.yml'))
           .and_return(fixture('stack-internal-extend.yml'))
         kontena_yml = YAML.load(fixture('stack-internal-extend.yml') % { project: 'test' })
+
         expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
-          .with(kontena_yml['app'])
+          .with(kontena_yml['services']['app'])
           .once
           .and_return(service_extender)
-        expect(service_extender).to receive(:extend_from).with(kontena_yml['base'])
+        expect(service_extender).to receive(:extend_from).with(kontena_yml['services']['base'])
         subject.execute
       end
     end
@@ -290,8 +284,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path)
         .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-
-      expect(outcome['services']['wordpress']['build']).to eq(File.expand_path('.'))
+      puts outcome
+      expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
     end
   end
 
@@ -301,7 +295,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path)
         .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-      expect(outcome['services']['webapp']['build']['context']).to eq(File.expand_path('.'))
+      expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
     end
   end
 
@@ -370,7 +364,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path)
         .and_return(fixture('kontena_v3.yml'))
       name = subject.stack_name
-      expect(name).to eq('user/stackname')
+      expect(name).to eq('stackname')
     end
   end
 end

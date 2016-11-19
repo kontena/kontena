@@ -26,6 +26,7 @@ module Kontena::Cli::Stacks
         Dir.chdir(File.dirname(File.expand_path(file))) do
           result[:version] = yaml['version'] || '1'
           result[:stack] = yaml['stack']
+          result[:name] = self.stack_name
           result[:errors] = errors
           result[:notifications] = notifications
           result[:services] = parse_services(service_name) unless errors.count > 0
@@ -34,14 +35,14 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        yaml['stack']
+        yaml['stack'].split('/').last if yaml['stack']
       end
 
       private
 
       def load_yaml
         content = File.read(File.expand_path(file))
-        content = content % { project: ENV['project'], grid: ENV['grid'] }
+        content = content % { stack: ENV['stack'], project: ENV['project'], grid: ENV['grid'] }
         interpolate(content)
         replace_dollar_dollars(content)
         begin

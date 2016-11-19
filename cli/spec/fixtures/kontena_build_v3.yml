@@ -2,9 +2,6 @@ stack: user/stackname
 version: 0.1.1
 services:
   mysql:
-    extends:
-      file: docker-compose.yml
-      service: mysql
     stateful: true
     environment:
       - MYSQL_ROOT_PASSWORD=%{project}_secret

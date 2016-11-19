@@ -11,9 +11,6 @@ services:
     instances: 2
     deploy:
       strategy: ha
-    networks:
-      - front-tier
-      - back-tier
   mysql:
     extends:
       file: docker-compose_v2.yml
@@ -21,15 +18,3 @@ services:
     stateful: true
     environment:
       - MYSQL_ROOT_PASSWORD=${project}_secret
-    volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - back-tier
-volumes:
-  mysql-data:
-    driver: local
-networks:
-  front-tier:
-    driver: bridge
-  back-tier:
-    driver: bridge

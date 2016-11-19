@@ -20,4 +20,3 @@ services:
     stateful: true
     environment:
       - INTERNAL_VAR=$$INTERNAL_VAR
-
