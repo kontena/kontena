@@ -90,11 +90,6 @@ module Kontena::NetworkAdapters
       true
     end
 
-    def weave_api_ready?
-      response = dns_client.get(path: '/status')
-      response.status == 200
-    end
-
     # @return [Boolean]
     def weave_container_running?
       weave = Docker::Container.get('weave') rescue nil
@@ -233,8 +228,9 @@ module Kontena::NetworkAdapters
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         @executor_pool.execute(exec_params)
         weave = Docker::Container.get('weave') rescue nil
-        wait = Time.now.to_f + 10.0
-        sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
+        wait(timeout: 10, interval: 1, message: 'waiting for weave to start') {
+          weave && weave.running?
+        }
 
         if weave.nil? || !weave.running?
           @executor_pool.execute(['--local', 'reset'])
