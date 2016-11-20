@@ -67,7 +67,7 @@ module Kontena::Workers
             }
         }
         @queue << log
-        Kontena::ServicePods::Restarter.perform_async(name)
+        Kontena::ServicePods::Restarter.perform_async(@container.service_id, @container.instance_number)
       end
     end
 

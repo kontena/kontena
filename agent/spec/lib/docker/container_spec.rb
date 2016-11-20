@@ -129,6 +129,25 @@ describe Docker::Container do
       allow(subject).to receive(:labels).and_return({})
       expect(subject.skip_logs?).to be_falsey
     end
+  end
 
+  describe '#finished?' do
+    it 'returns true if container has finished_at timestamp' do
+      allow(subject).to receive(:state).and_return({
+        'FinishedAt' => Time.now.utc.to_s
+      })
+      expect(subject.finished?).to be_truthy
+    end
+
+    it 'returns false if container is not finished' do
+      allow(subject).to receive(:state).and_return({
+        'FinishedAt' => '0001-01-01T00:00:00Z'
+      })
+      expect(subject.finished?).to be_falsey
+
+      allow(subject).to receive(:state).and_return({
+      })
+      expect(subject.finished?).to be_falsey
+    end
   end
 end
