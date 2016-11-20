@@ -19,7 +19,7 @@ describe Kontena::Cli::Stacks::RemoveCommand do
     end
 
     it 'sends remove command to master' do
-      allow(subject).to receive(:forced?).and_return(true)
+      allow(subject).to receive(:wait_stack_removal)
       expect(client).to receive(:delete).with('stacks/test-grid/test-stack')
       subject.run(['--force', 'test-stack'])
     end
