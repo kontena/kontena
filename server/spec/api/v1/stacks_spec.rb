@@ -101,7 +101,7 @@ describe '/v1/stacks' do
     it 'updates stack' do
       data = {
         name: stack.name,
-        stack: stack.latest_rev.stack,
+        stack: stack.latest_rev.stack_name,
         registry: stack.latest_rev.registry,
         source: stack.latest_rev.source,
         version: stack.latest_rev.version,

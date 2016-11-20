@@ -49,6 +49,7 @@ module Stacks
 
       services = sort_services(attributes.delete(:services))
       attributes[:services] = services
+      attributes[:stack_name] = attributes.delete(:stack)
       stack.stack_revisions.create!(attributes)
 
       create_services(stack, services)

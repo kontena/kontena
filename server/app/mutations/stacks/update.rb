@@ -40,6 +40,7 @@ module Stacks
     def execute
       latest_rev = self.stack_instance.latest_rev || self.stack_instance.stack_revisions.build
       latest_rev.attributes = {
+        stack_name: self.stack,
         expose: self.expose,
         source: self.source,
         version: self.version,

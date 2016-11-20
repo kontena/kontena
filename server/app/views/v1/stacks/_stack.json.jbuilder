@@ -5,7 +5,7 @@ json.created_at stack.created_at
 json.updated_at stack.updated_at
 
 latest_rev = stack.latest_rev || stack.stack_revisions.build
-json.stack latest_rev.stack
+json.stack latest_rev.stack_name
 json.registry latest_rev.registry
 json.version latest_rev.version
 json.expose latest_rev.expose

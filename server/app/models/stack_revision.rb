@@ -3,7 +3,7 @@ class StackRevision
   include Mongoid::Timestamps
 
   field :name, type: String
-  field :stack, type: String
+  field :stack_name, type: String
   field :registry, type: String
   field :source, type: String
   field :version, type: String

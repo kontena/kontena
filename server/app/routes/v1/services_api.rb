@@ -76,7 +76,6 @@ module V1
           # POST /v1/services/:grid_name/:stack_name/:service_name/deploy
           r.on('deploy') do
             data = parse_json_body rescue {}
-            data[:current_user] = current_user
             data[:grid_service] = @grid_service
             outcome = GridServices::Deploy.run(data)
             if outcome.success?
@@ -92,7 +91,6 @@ module V1
           r.on('scale') do
             data = parse_json_body
             outcome = GridServices::Scale.run(
-                current_user: current_user,
                 grid_service: @grid_service,
                 instances: data['instances']
             )
@@ -108,7 +106,6 @@ module V1
           # POST /v1/services/:grid_name/:stack_name/:service_name/restart
           r.on('restart') do
             outcome = GridServices::Restart.run(
-                current_user: current_user,
                 grid_service: @grid_service
             )
             if outcome.success?
@@ -122,7 +119,6 @@ module V1
           # POST /v1/services/:grid_name/:stack_name/:service_name/stop
           r.on('stop') do
             outcome = GridServices::Stop.run(
-                current_user: current_user,
                 grid_service: @grid_service
             )
             if outcome.success?
@@ -136,7 +132,6 @@ module V1
           # POST /v1/services/:grid_name/:stack_name/:service_name/start
           r.on('start') do
             outcome = GridServices::Start.run(
-                current_user: current_user,
                 grid_service: @grid_service
             )
             if outcome.success?
@@ -159,7 +154,6 @@ module V1
         # PUT /v1/services/:grid_name/:stack_name/:service_name
         r.put do
           data = parse_json_body
-          data[:current_user] = current_user
           data[:grid_service] = @grid_service
           outcome = GridServices::Update.run(data)
           if outcome.success?
@@ -175,7 +169,6 @@ module V1
         r.delete do
           r.is do
             outcome = GridServices::Delete.run(
-                current_user: current_user,
                 grid_service: @grid_service
             )
             if outcome.success?
