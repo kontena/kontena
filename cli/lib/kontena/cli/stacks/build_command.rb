@@ -78,5 +78,33 @@ module Kontena::Cli::Stacks
       raise ("Failed to push image #{image.colorize(:cyan)}") unless ret
       ret
     end
+
+    # @param [String] name
+    # @return [Boolean]
+    def validate_image_name(name)
+      !(/^[\w.\/\-:]+:?+[\w+.]+$/ =~ name).nil?
+    end
+
+    # @param [String] image
+    # @return [Boolean]
+    def image_exist?(image)
+      system("docker history '#{image}' >/dev/null 2>/dev/null")
+    end
+
+    # @param [String] path
+    # @param [String] dockerfile
+    # @return [Boolean]
+    def dockerfile_exist?(path, dockerfile)
+      file = File.join(File.expand_path(path), dockerfile)
+      File.exist?(file)
+    end
+
+    # @param [Hash] hook
+    def run_pre_build_hook(hook)
+      hook.each do |h|
+        ret = system(h['cmd'])
+        raise ("Failed to run pre_build hook: #{h['name']}!") unless ret
+      end
+    end
   end
 end

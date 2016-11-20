@@ -14,8 +14,7 @@ module Kontena::Cli::Stacks
         @errors = []
         @notifications = []
         @skip_validation = skip_validation
-        load_yaml
-        validate unless skip_validation?
+        parse_yaml
       end
 
       ##
@@ -35,15 +34,34 @@ module Kontena::Cli::Stacks
         result
       end
 
+      def reload
+        @errors = []
+        @notifications = []
+        parse_yaml
+      end
+
       def stack_name
         yaml['stack'].split('/').last if yaml['stack']
       end
 
+      # @return [String]
+      def raw
+        read_content
+      end
+
       private
 
+      def parse_yaml
+        load_yaml
+        validate unless skip_validation?
+      end
+
+      def read_content
+        @content ||= File.read(File.expand_path(file))
+      end
+
       def load_yaml
-        content = File.read(File.expand_path(file))
-        content = content % { stack: ENV['stack'], project: ENV['project'], grid: ENV['grid'] }
+        content = read_content.dup
         interpolate(content)
         replace_dollar_dollars(content)
         begin

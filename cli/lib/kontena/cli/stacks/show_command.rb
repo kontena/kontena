@@ -18,11 +18,12 @@ module Kontena::Cli::Stacks
     def show_stack(token, name)
       stack = client(token).get("stacks/#{current_grid}/#{name}")
 
-      puts "#{stack['id']}:"
+      puts "#{stack['name']}:"
       puts "  state: #{stack['state']}"
       puts "  created_at: #{stack['created_at']}"
       puts "  updated_at: #{stack['updated_at']}"
       puts "  version: #{stack['version']}"
+      puts "  expose: #{stack['expose'] || '-'}"
       puts "  services:"
       stack['services'].each do |service|
         show_service(token, service['id'])
@@ -33,16 +34,15 @@ module Kontena::Cli::Stacks
     # @param [String] service_id
     def show_service(token, service_id)
       service = get_service(token, service_id)
-      grid = service['id'].split('/')[0]
       pad = '    '.freeze
-      puts "#{pad}#{service['id']}:"
+      puts "#{pad}#{service['name']}:"
+      puts "#{pad}  image: #{service['image']}"
       puts "#{pad}  status: #{service['state'] }"
       if service['health_status']
-        puts "#{pad}  health status:"
+        puts "#{pad}  health_status:"
         puts "#{pad}    healthy: #{service['health_status']['healthy']}"
         puts "#{pad}    total: #{service['health_status']['total']}"
       end
-      puts "#{pad}  image: #{service['image']}"
       puts "#{pad}  revision: #{service['revision']}"
       puts "#{pad}  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
       puts "#{pad}  scaling: #{service['container_count'] }"
@@ -55,7 +55,7 @@ module Kontena::Cli::Stacks
       if service['deploy_opts']['interval']
         puts "#{pad}  interval: #{service['deploy_opts']['interval']}"
       end
-      puts "#{pad}  dns: #{service['name']}.#{service['stack']['id']}.#{grid}.kontena.local"
+      puts "#{pad}  dns: #{service['dns']}"
 
       if service['affinity'].to_a.size > 0
         puts "#{pad}  affinity: "
