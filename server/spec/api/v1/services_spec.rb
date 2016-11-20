@@ -290,7 +290,7 @@ describe '/v1/services' do
   describe 'POST /:id/stop' do
     it 'stops service' do
       expect(GridServices::Stop).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(double.as_null_object)
       post "/v1/services/#{redis_service.to_path}/stop", nil, request_headers
       expect(response.status).to eq(200)
@@ -300,7 +300,7 @@ describe '/v1/services' do
   describe 'POST /:id/start' do
     it 'starts service' do
       expect(GridServices::Start).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(double.as_null_object)
       post "/v1/services/#{redis_service.to_path}/start", nil, request_headers
       expect(response.status).to eq(200)
@@ -310,7 +310,7 @@ describe '/v1/services' do
   describe 'POST /:id/restart' do
     it 'restarts service' do
       expect(GridServices::Restart).to receive(:run)
-       .with(current_user: david, grid_service: redis_service)
+       .with(grid_service: redis_service)
        .and_return(double.as_null_object)
       post "/v1/services/#{redis_service.to_path}/restart", nil, request_headers
       expect(response.status).to eq(200)
@@ -325,7 +325,7 @@ describe '/v1/services' do
       allow(errors).to receive(:message).and_return({ service: "Cannot delete service because it's currently being deployed"})
       allow(outcome).to receive(:errors).and_return(errors)
       expect(GridServices::Delete).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(outcome)
       delete "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(422)
@@ -334,7 +334,7 @@ describe '/v1/services' do
 
     it 'removes service' do
       expect(GridServices::Delete).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(double.as_null_object)
       delete "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
