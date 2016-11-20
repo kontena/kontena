@@ -56,7 +56,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
         expect(subject.wrapped_object).to receive(:every).with(30).and_yield
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_tcp_status).with('1.2.3.4', 1234, 10).twice.and_return({})
-      expect(subject.wrapped_object).to receive(:handle_action).twice
+        expect(subject.wrapped_object).to receive(:handle_action).twice
         expect {
           subject.start
         }.to change {queue.size}.by (2) # runs check after initial delay and once within the every block
@@ -71,8 +71,10 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     end
 
     it 'restarts container when unhealthy' do
-      expect(Kontena::ServicePods::Restarter).to receive(:perform_async).with('foo')
-      expect(container).to receive(:labels).and_return({'io.kontena.container.name' => 'foo'})
+      expect(Kontena::ServicePods::Restarter).to receive(:perform_async).with('foo', '1')
+      expect(container).to receive(:labels).and_return({})
+      expect(container).to receive(:service_id).and_return('foo')
+      expect(container).to receive(:instance_number).and_return('1')
       expect {
         subject.handle_action({data: {'status' => 'unhealthy'}})
       }.to change {queue.size}.by (1)

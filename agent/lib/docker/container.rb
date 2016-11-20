@@ -75,15 +75,8 @@ module Docker
     end
 
     # @return [Boolean]
-    def dead?
-      self.state['Dead']
-    rescue
-      false
-    end
-
-    # @return [Boolean]
-    def suspiciously_dead?
-      self.state['Dead'] && SUSPICIOUS_EXIT_CODES.include?(self.state['ExitCode'].to_i)
+    def finished?
+      DateTime.parse(self.state['FinishedAt']).year > 1
     rescue
       false
     end
@@ -107,6 +100,11 @@ module Docker
       !self.labels['io.kontena.load_balancer.name'].nil?
     rescue
       false
+    end
+
+    # @return [String]
+    def service_id
+      self.labels['io.kontena.service.id'].to_s
     end
 
     # @return [Integer]

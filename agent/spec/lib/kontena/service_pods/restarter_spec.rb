@@ -20,9 +20,9 @@ describe Kontena::ServicePods::Restarter do
       subject.perform
     end
 
-    it 'starts container if not running' do
+    it 'does not start container if not running' do
       allow(container).to receive(:running?).and_return(false)
-      expect(container).to receive(:start)
+      expect(container).not_to receive(:start)
       subject.perform
     end
   end
