@@ -7,7 +7,6 @@ module GridServices
     common_validations
 
     required do
-      model :current_user, class: User
       model :grid_service, class: GridService
     end
 

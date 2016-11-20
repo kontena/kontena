@@ -13,4 +13,5 @@ class GridServiceDeploy
   index({ started_at: 1 })
 
   belongs_to :grid_service
+  belongs_to :stack_deploy
 end

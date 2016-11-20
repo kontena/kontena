@@ -1,13 +1,12 @@
 module GridServices
   class Start < Mutations::Command
     required do
-      model :current_user, class: User
       model :grid_service
     end
 
     def execute
       prev_state = self.grid_service.state
-      Celluloid::Future.new{
+      Celluloid::Future.new {
         begin
           self.grid_service.set_state('starting')
           self.start_service_instances

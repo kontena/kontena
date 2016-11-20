@@ -3,7 +3,6 @@ module GridServices
     include Workers
 
     required do
-      model :current_user, class: User
       model :grid_service
       integer :instances
     end

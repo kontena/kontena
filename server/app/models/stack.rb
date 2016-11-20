@@ -1,15 +1,13 @@
 class Stack
   include Mongoid::Document
   include Mongoid::Timestamps
-  include Mongoid::Enum
 
   field :name, type: String
-  field :version, type: String, default: '1'
-  field :expose, type: String
 
   belongs_to :grid
 
   has_many :stack_revisions, dependent: :destroy
+  has_many :stack_deploys, dependent: :destroy
   has_many :grid_services
 
   index({ grid_id: 1 })
@@ -23,11 +21,6 @@ class Stack
     "#{self.grid.try(:name)}/#{self.name}"
   end
 
-  def increase_version
-    self.set(version: (self.version.to_i + 1))
-    self.version
-  end
-
   # @return [Symbol]
   def state
     services = self.grid_services.to_a
@@ -39,8 +32,15 @@ class Stack
     :partially_running
   end
 
+  # @return [StackRevision,NilClass]
+  def latest_rev
+    self.stack_revisions.order_by(revision: -1).first
+  end
+
   # @param [GridService] grid_service
   def exposed_service?(grid_service)
-    self.expose.to_s == grid_service.name
+    latest_rev = self.latest_rev
+    return false unless latest_rev
+    latest_rev.expose.to_s == grid_service.name
   end
 end

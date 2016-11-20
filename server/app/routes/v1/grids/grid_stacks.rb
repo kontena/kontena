@@ -25,7 +25,7 @@ V1::GridsApi.route('grid_stacks') do |r|
   # GET /v1/grids/:grid/stacks
   r.get do
     r.is do
-      @stacks = @grid.stacks
+      @stacks = @grid.stacks.where(:name.ne => 'default').includes(:grid_services)
       render('stacks/index')
     end
   end

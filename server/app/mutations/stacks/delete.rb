@@ -3,14 +3,14 @@ require_relative 'common'
 module Stacks
   class Delete < Mutations::Command
     include Common
+    include Workers
 
     required do
-      model :current_user, class: User
       model :stack, class: Stack
     end
 
     def validate
-      if stack.name == 'default'
+      if self.stack.name == 'default'
         add_error(:stack, :access_denied, "Cannot delete default stack")
         return
       end
@@ -26,27 +26,7 @@ module Stacks
     end
 
     def execute
-      # Remove all services of the stack
-      services = self.stack.grid_services.to_a
-      services = sort_services(services).reverse
-      services.each do |service|
-        next if has_errors?
-
-        outcome = GridServices::Delete.run(current_user: self.current_user, grid_service: service)
-        unless outcome.success?
-          handle_service_outcome_errors(service.name, outcome.errors.message, :delete)
-          begin
-            Timeout::timeout(10) do
-              sleep 0.5 until GridService.find_by(id: service.id).nil?
-            end
-          rescue Timeout::Error
-            add_error(service.name, :timeout, "Removing of #{service.name} timed out")
-          end
-        end
-      end
-      unless has_errors?
-        self.stack.destroy
-      end
+      worker(:stack_remove).async.perform(self.stack.id)
     end
   end
 end

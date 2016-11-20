@@ -1,37 +1,52 @@
 require_relative '../../spec_helper'
 
 describe Stacks::Update do
-  let(:user) { User.create!(email: 'joe@domain.com')}
-
-  let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid.users << user
-    grid
-  }
+  let(:grid) { Grid.create!(name: 'test-grid') }
 
   let(:stack) {
-    stack = Stack.create!(grid: grid, name: 'stack')
-    redis = GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
-    stack
+    Stacks::Create.run(
+      grid: grid,
+      name: 'stack',
+      stack: 'foo/bar',
+      version: '0.1.0',
+      registry: 'file://',
+      source: '...',
+      services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
+    ).result
   }
 
   describe '#run' do
     it 'updates stack and creates a new revision' do
-      services = [{name: 'redis', image: 'redis:3.0'}]
-      subject = described_class.new(current_user: user, stack: stack, services: services)
+      services = [{name: 'redis', image: 'redis:3.0', stateful: true}]
+      subject = described_class.new(
+        stack_instance: stack,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
       outcome = subject.run
       expect(outcome.success?).to be_truthy
-      expect(outcome.result.stack_revisions.count).to eq(1)
-      expect(stack.reload.grid_services.first.image_name).to eq('redis:2.8')
+      expect(outcome.result.stack_revisions.count).to eq(2)
+      expect(stack.reload.grid_services.first.image_name).to eq('redis:3.0')
     end
 
     it 'does not increase version automatically' do
       services = [{name: 'redis', image: 'redis:3.0'}]
-      subject = described_class.new(current_user: user, stack: stack, services: services)
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
       expect {
         outcome = subject.run
         expect(outcome.success?).to be_truthy
-      }.not_to change{ stack.reload.version }
+      }.not_to change{ stack.latest_rev.version }
     end
 
     it 'updates and creates new services' do
@@ -39,11 +54,18 @@ describe Stacks::Update do
         {name: 'redis', image: 'redis:3.0'},
         {name: 'foo', image: 'redis:3.0', stateful: true}
       ]
-      subject = described_class.new(current_user: user, stack: stack, services: services)
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
       expect {
         outcome = subject.run
         expect(outcome.success?).to be_truthy
-      }.to change{ stack.stack_revisions.count }.by(1)
+      }.to change{ stack.grid_services.count }.by(1)
     end
   end
 end

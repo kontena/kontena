@@ -23,10 +23,11 @@ module V1
         halt_request(404, {error: 'Not found'}) unless @grid
       end
 
+      # @param [Stack] stack
+      # @param [Hash] data
       def update_stack(stack, data)
         data[:grid] = @grid
-        data[:current_user] = current_user
-        data[:stack] = stack
+        data[:stack_instance] = stack
         outcome = Stacks::Update.run(data)
 
         if outcome.success?
@@ -40,9 +41,9 @@ module V1
         end
       end
 
-
+      # @param [Stack] stack
       def delete_stack(stack)
-        outcome = Stacks::Delete.run(stack: stack, current_user: current_user)
+        outcome = Stacks::Delete.run(stack: stack)
 
         if outcome.success?
           audit_event(request, @grid, @stack, 'delete')
@@ -54,13 +55,15 @@ module V1
         end
       end
 
+      # @param [Stack] stack
       def deploy_stack(stack)
-        outcome = Stacks::Deploy.run(stack: stack, current_user: current_user)
+        outcome = Stacks::Deploy.run(stack: stack)
 
         if outcome.success?
           audit_event(request, @grid, @stack, 'deploy')
           response.status = 200
-          {}
+          @stack_deploy = outcome.result
+          render('stack_deploys/show')
         else
           response.status = 422
           {error: outcome.errors.message}
