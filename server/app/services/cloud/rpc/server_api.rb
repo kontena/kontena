@@ -15,12 +15,6 @@ module Cloud
         token
       end
 
-      def require_user(user_id)
-        @user = User.find_by(external_id: user_id)
-        raise RpcServer::Error.new(403, 'Forbidden') unless @user
-      end
-
-
       def get(user_id, path, options)
         require_user(user_id)
         opts = {
@@ -39,7 +33,7 @@ module Cloud
         request(path, opts)
       end
 
-      def delete(user_id, path, options)
+      def delete(user_id, path, options=nil)
         require_user(user_id)
         opts = {
           method: :delete
@@ -56,17 +50,23 @@ module Cloud
         request(path, opts)
       end
 
+      protected
+
+      def require_user(user_id)
+        @user = User.find_by(external_id: user_id)
+        raise RpcServer::Error.new(403, 'Forbidden') unless @user
+      end
+
       def request(path, opts = {})
         env = Rack::MockRequest.env_for(path, opts)
-        env['HTTP_CONTENT_TYPE'] = "application/json"
+        env['CONTENT_TYPE'] = "application/json"
         env['HTTP_AUTHORIZATION'] = "Bearer #{access_token}"
-        status, headers, body = ::Server.call(env)
+        status, headers, body = Server.call(env)
         result = {
           status: status,
           headers: headers,
           body: body.join
         }
-
         unless [200, 201].include?(status)
           raise RpcServer::Error.new(status, result)
         end
