@@ -1,6 +1,8 @@
 require_relative '../../spec_helper'
 
 describe Stacks::Delete do
+  before(:each) { Celluloid.boot }
+  after(:each) { Celluloid.shutdown }
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:stack) {
@@ -13,6 +15,16 @@ describe Stacks::Delete do
   let(:worker_klass) do
     Class.new do
       include Celluloid
+
+      attr_reader :performed
+
+      def initialize
+        @performed = nil
+      end
+
+      def perform(id)
+        @performed = id
+      end
     end
   end
   let(:worker) do
@@ -23,9 +35,11 @@ describe Stacks::Delete do
 
   describe '#run' do
     it 'calls stack remove worker' do
-      expect(worker.wrapped_object).to receive(:perform).once.with(stack.id)
+      worker
       outcome = described_class.run(stack: stack)
       expect(outcome.success?).to be_truthy
+      sleep 0.01 until worker.performed
+      expect(worker.performed).to eq(stack.id)
     end
 
     it 'allows to remove stack that has links within stack' do
@@ -36,13 +50,14 @@ describe Stacks::Delete do
           { name: 'stack/web', alias: 'web' }
         ]
       )
-      expect(worker.wrapped_object).to receive(:perform).once.with(stack.id)
+      worker
       outcome = described_class.run(stack: stack)
       expect(outcome.success?).to be_truthy
+      sleep 0.01 until worker.performed
+      expect(worker.performed).to eq(stack.id)
     end
 
     it 'does not allow to remove default stack' do
-      expect(worker.wrapped_object).not_to receive(:perform)
       mutation = described_class.new(stack: default_stack)
       outcome = mutation.run
       expect(outcome.success?).to be_falsey
@@ -58,7 +73,6 @@ describe Stacks::Delete do
           { name: 'stack/web', alias: 'web' }
         ]
       )
-      expect(worker.wrapped_object).not_to receive(:perform)
       outcome = described_class.run(stack: stack)
       expect(outcome.success?).to be_falsey
     end

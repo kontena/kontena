@@ -12,8 +12,7 @@ describe '/v1/grids/:grid/stacks' do
   end
 
   let(:grid) do
-    grid = Grid.create!(name: 'terminal-a')
-    grid
+    Grid.create!(name: 'terminal-a')
   end
 
   let(:david) do
@@ -33,62 +32,59 @@ describe '/v1/grids/:grid/stacks' do
     ]
   end
 
-  describe 'POST' do
-    it 'creates audit event' do
-      expect {
-        data = { name: 'test-stack', services: services }
-        post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
-        expect(response.status).to eq(201)
-      }.to change{ AuditLog.count }.by(1)
-    end
+  let(:valid_stack) do
+    {
+      name: 'test-stack',
+      stack: 'my/test-stack',
+      version: '0.1.0',
+      registry: 'file://',
+      source: '..',
+      services: services
+    }
+  end
 
+  describe 'POST' do
     it 'creates new stack' do
       data = {
         name: 'test-stack',
         services: services
       }
       expect {
-        post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
+        post "/v1/grids/#{grid.name}/stacks", valid_stack.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ grid.reload.stacks.count }.by(1)
     end
 
-    it 'creates new stack revision' do
-      data = {
-        name: 'test-stack',
-        services: [
-          {
-            name: 'app',
-            image: 'my/app:latest',
-            stateful: false
-          }
-        ]
-      }
+    it 'creates audit event' do
       expect {
-        post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
+        post "/v1/grids/#{grid.name}/stacks", valid_stack.to_json, request_headers
+        expect(response.status).to eq(201)
+      }.to change{ AuditLog.count }.by(1)
+    end
+
+    it 'creates new stack revision' do
+      expect {
+        post "/v1/grids/#{grid.name}/stacks", valid_stack.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ StackRevision.count }.by(1)
     end
 
     it 'returns 422 error if services is empty' do
-      data = { name: 'test-stack', services: [] }
-      post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
+      valid_stack[:services] = []
+      post "/v1/grids/#{grid.name}/stacks", valid_stack.to_json, request_headers
       expect(response.status).to eq(422)
     end
 
     it 'return 422 for service validation failure' do
-      data = {
-        name: 'test-stack',
-        services: [
-          {
-            name: 'app',
-            image: 'my/app:latest'
-            # stateful parameter missing
-          }
-        ]
-      }
+      valid_stack[:services] = [
+        {
+          name: 'app',
+          image: 'my/app:latest'
+          # stateful parameter missing
+        }
+      ]
       expect {
-        post "/v1/grids/#{grid.name}/stacks", data.to_json, request_headers
+        post "/v1/grids/#{grid.name}/stacks", valid_stack.to_json, request_headers
         expect(response.status).to eq(422)
       }.to change{ grid.reload.stacks.count }.by(0)
     end

@@ -226,7 +226,8 @@ describe GridService do
 
   describe '#stack_exposed?' do
     it 'returns true if service is exposed via stack' do
-      stack = Stack.create!(name: 'redis', expose: 'redis')
+      stack = Stack.create!(name: 'redis')
+      stack.stack_revisions.create(expose: 'redis')
       service = GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
       expect(service.stack_exposed?).to be_truthy
     end
