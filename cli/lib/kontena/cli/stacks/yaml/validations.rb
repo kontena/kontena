@@ -1,4 +1,4 @@
-module Kontena::Cli::Apps::YAML
+module Kontena::Cli::Stacks::YAML
  module Validations
    module CustomValidators
      require_relative 'custom_validators/affinities_validator'
@@ -15,15 +15,15 @@ module Kontena::Cli::Apps::YAML
        HashValidator.append_validator(SecretsValidator.new)
        HashValidator.append_validator(HooksValidator.new)
        @loaded = true
-      end
+     end
    end
 
    def common_validations
      {
         'image' => optional('string'), # it's optional because some base yml file might contain image option
-        'extends' => optional('valid_extends'),
+        'extends' => optional('stacks_valid_extends'),
         'stateful' => optional('boolean'),
-        'affinity' => optional('valid_affinities'),
+        'affinity' => optional('stacks_valid_affinities'),
         'cap_add' => optional('array'),
         'cap_drop' => optional('array'),
         'command' => optional('string'),
@@ -41,8 +41,8 @@ module Kontena::Cli::Apps::YAML
         'user' => optional('string'),
         'volumes' => optional('array'),
         'volumes_from' => optional('array'),
-        'secrets' => optional('valid_secrets'),
-        'hooks' => optional('valid_hooks'),
+        'secrets' => optional('stacks_valid_secrets'),
+        'hooks' => optional('stacks_valid_hooks'),
         'deploy' => optional({
           'strategy' => optional(%w(ha daemon random)),
           'wait_for_port' => optional('integer'),

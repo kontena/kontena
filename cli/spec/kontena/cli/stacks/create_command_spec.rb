@@ -9,8 +9,14 @@ describe Kontena::Cli::Stacks::CreateCommand do
     let(:stack) do
       {
         name: 'stack-a',
+        registry: 'file://kontena.yml',
+        source: "YAML content",
         services: []
       }
+    end
+
+    before(:each) do
+      allow(subject).to receive(:yaml_content).and_return("YAML content")
     end
 
     it 'requires api url' do
