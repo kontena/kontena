@@ -11,24 +11,42 @@ describe Kontena::Helpers::WaitHelper do
   }
 
   describe 'wait' do
+    let :time_now do
+      Time.now
+    end
+
     it 'returns true immediately' do
       expect(subject).not_to receive(:sleep)
       value = subject.wait { true }
       expect(value).to be_truthy
     end
 
-    it 'sleeps between retries' do
-      expect(subject).to receive(:__still_waiting?).and_return(true, true, false)
-      expect(subject).to receive(:sleep).twice
-      value = subject.wait(timeout: 2) { false }
-      expect(value).to be_falsey
+    it 'sleeps between retries and logs debug' do
+      expect(Time).to receive(:now).and_return(time_now).once
+      expect(Time).to receive(:now).and_return(time_now + 0.5).once
+      expect(subject).to receive(:sleep).once
+      expect(subject).to receive(:debug).with('foo')
+      expect(subject).to_not receive(:sleep)
+
+      @loop = 0
+      value = subject.wait(timeout: 2, message: 'foo') { (@loop += 1) > 1 }
+
+      expect(value).to be_truthy
     end
 
-    it 'debugs given message' do
-      expect(subject).to receive(:__still_waiting?).and_return(true, false)
-      expect(subject).to receive(:debug).with('foo')
+    it 'sleeps between retries before timing out' do
+      expect(Time).to receive(:now).and_return(time_now).once
+      expect(Time).to receive(:now).and_return(time_now + 0.5).once
       expect(subject).to receive(:sleep).once
-      value = subject.wait(timeout:2, interval:0.5, message: 'foo') { false }
+      expect(Time).to receive(:now).and_return(time_now + 1.0).once
+      expect(subject).to receive(:sleep).once
+      expect(Time).to receive(:now).and_return(time_now + 1.5).once
+      expect(subject).to receive(:sleep).once
+      expect(Time).to receive(:now).and_return(time_now + 2.001).once
+      expect(subject).to_not receive(:sleep)
+
+      value = subject.wait(timeout: 2) { false }
+
       expect(value).to be_falsey
     end
 
@@ -53,17 +71,4 @@ describe Kontena::Helpers::WaitHelper do
       }.to raise_error(Timeout::Error, "Timeout while: foo")
     end
   end
-
-  describe '#__still_waiting?' do
-    it 'return true if more waiting needed' do
-      wait_until = Time.now.to_f - 1.0
-      expect(subject.__still_waiting?(wait_until)).to be_truthy
-    end
-
-    it 'return true if more waiting needed' do
-      wait_until = Time.now.to_f + 1.0
-      expect(subject.__still_waiting?(wait_until)).to be_falsey
-    end
-  end
-
 end

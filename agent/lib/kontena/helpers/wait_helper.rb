@@ -19,7 +19,7 @@ module Kontena
         loop do
           raise ArgumentError, 'no block given' unless block_given?
           value = yield
-          return value if value || !__still_waiting?(wait_until)
+          return value if value || Time.now.to_f > wait_until
           debug message if message
           sleep interval
         end
@@ -40,12 +40,6 @@ module Kontena
         end
         true
       end
-
-
-      def __still_waiting?(wait_until)
-        wait_until < Time.now.to_f
-      end
-
     end
   end
 end
