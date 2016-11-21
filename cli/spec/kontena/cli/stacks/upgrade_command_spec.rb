@@ -27,6 +27,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     end
 
     it 'sends stack to master' do
+      
       allow(subject).to receive(:require_config_file).with('./path/to/kontena.yml').and_return(true)
       allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml').and_return(stack)
       expect(client).to receive(:put).with(

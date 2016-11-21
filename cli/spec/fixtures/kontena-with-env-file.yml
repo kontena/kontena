@@ -5,7 +5,7 @@ wordpress:
   stateful: true
   env_file: .env
   environment:
-    WORDPRESS_DB_PASSWORD: %{project}_secret
+    WORDPRESS_DB_PASSWORD: ${project}_secret
   instances: 2
   deploy:
     strategy: ha
@@ -15,4 +15,4 @@ mysql:
     service: mysql
   stateful: true
   environment:
-    - MYSQL_ROOT_PASSWORD=%{project}_secret
+    - MYSQL_ROOT_PASSWORD=${project}_secret
