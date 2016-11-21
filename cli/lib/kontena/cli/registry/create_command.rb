@@ -87,6 +87,11 @@ module Kontena::Cli::Registry
 
       data = {
         name: 'registry',
+        stack: 'kontena/registry',
+        version: Kontena::Cli::VERSION,
+        source: '---',
+        registry: 'file://',
+        expose: 'api',
         services: [
           {
             name: 'api',
@@ -102,10 +107,11 @@ module Kontena::Cli::Registry
       }
 
       client(token).post("grids/#{current_grid}/stacks", data)
-      client(token).post("stacks/#{current_grid}/registry/deploy", {})
+      deployment = client(token).post("stacks/#{current_grid}/registry/deploy", {})
       spinner "Deploying #{data[:name].colorize(:cyan)} stack " do
-        sleep 1 until client(token).get("stacks/#{current_grid}/registry")['state'] == 'deploying'
-        sleep 1 until client(token).get("stacks/#{current_grid}/registry")['state'] == 'running'
+        deployment['service_deploys'].each do |service_deploy|
+          wait_for_deploy_to_finish(token, service_deploy)
+        end
       end
       puts "\n"
       puts "Docker Registry #{REGISTRY_VERSION} is now running at registry.#{current_grid}.kontena.local."
