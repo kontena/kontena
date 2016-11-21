@@ -1,6 +1,7 @@
 require_relative '../logging'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
+require_relative '../helpers/weave_helper'
 
 module Kontena::NetworkAdapters
   class Weave
@@ -8,6 +9,7 @@ module Kontena::NetworkAdapters
     include Celluloid::Notifications
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
+    include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
@@ -76,11 +78,27 @@ module Kontena::NetworkAdapters
 
     # @return [Boolean]
     def running?
-      weave = Docker::Container.get('weave') rescue nil
-      return false if weave.nil?
-      weave.running? && ipam_running?
+      return false unless weave_container_running?
+      return false unless weave_api_ready?
+      return false unless interface_ip('weave')
+      true
     end
 
+    def network_ready?
+      return false unless running?
+      return false unless ipam_running?
+      true
+    end
+
+    # @return [Boolean]
+    def weave_container_running?
+      weave = Docker::Container.get('weave') rescue nil
+      return false if weave.nil?
+      return false unless weave.running?
+      true
+    end
+
+    # @return [Boolean]
     def ipam_running?
       @ipam_running
     end
@@ -210,8 +228,9 @@ module Kontena::NetworkAdapters
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         @executor_pool.execute(exec_params)
         weave = Docker::Container.get('weave') rescue nil
-        wait = Time.now.to_f + 10.0
-        sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
+        wait(timeout: 10, interval: 1, message: 'waiting for weave to start') {
+          weave && weave.running?
+        }
 
         if weave.nil? || !weave.running?
           @executor_pool.execute(['--local', 'reset'])

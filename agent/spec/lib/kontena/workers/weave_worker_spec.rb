@@ -4,6 +4,7 @@ describe Kontena::Workers::WeaveWorker do
 
   let(:event) { spy(:event, id: 'foobar', status: 'start') }
   let(:container) { spy(:container, id: '12345', info: {'Name' => 'test'}) }
+  let(:network_adapter) {double()}
 
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
@@ -17,7 +18,8 @@ describe Kontena::Workers::WeaveWorker do
 
   describe '#on_container_event' do
     before(:each) do
-      allow(subject.wrapped_object).to receive(:weave_running?).and_return(true)
+      allow(subject.wrapped_object).to receive(:network_adapter).and_return(network_adapter)
+      allow(network_adapter).to receive(:running?).and_return(true)
     end
 
     it 'calls #weave_attach on start event' do
@@ -27,38 +29,17 @@ describe Kontena::Workers::WeaveWorker do
     end
 
     it 'calls #weave_detach on destroy event' do
-      network_adapter = double()
-      allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
       allow(event).to receive(:status).and_return('destroy')
       expect(network_adapter).to receive(:detach_network).once.with(event)
       subject.on_container_event('topic', event)
     end
 
     it 'calls #start on weave restart event' do
-      network_adapter = double(router_image?: true)
-      allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
+      network_adapter = double(router_image?: true, running?: true)
+      allow(subject.wrapped_object).to receive(:network_adapter).and_return(network_adapter)
       event = spy(:event, id: 'foobar', status: 'restart', from: 'weaveworks/weave:1.4.5')
       expect(subject.wrapped_object).to receive(:start).once
       subject.on_container_event('topic', event)
-    end
-  end
-
-  describe '#weave_running?' do
-    it 'returns true if weave is running' do
-      weave = spy(:weave, info: {'State' => {'Running' => true}})
-      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
-      expect(subject.weave_running?).to eq(true)
-    end
-
-    it 'returns false if weave is stopped' do
-      weave = spy(:weave, info: {'State' => {'Running' => false}})
-      allow(Docker::Container).to receive(:get).with('weave').and_return(weave)
-      expect(subject.weave_running?).to eq(false)
-    end
-
-    it 'returns false if weave does not exist' do
-      allow(Docker::Container).to receive(:get).with('weave').and_raise(Docker::Error::NotFoundError)
-      expect(subject.weave_running?).to eq(false)
     end
   end
 
