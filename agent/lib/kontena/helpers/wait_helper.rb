@@ -43,7 +43,7 @@ module Kontena
 
 
       def __still_waiting?(wait_until)
-        wait_until < Time.now.to_f
+        wait_until > Time.now.to_f
       end
 
     end

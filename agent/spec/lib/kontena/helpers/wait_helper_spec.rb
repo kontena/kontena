@@ -55,13 +55,23 @@ describe Kontena::Helpers::WaitHelper do
   end
 
   describe '#__still_waiting?' do
-    it 'return true if more waiting needed' do
-      wait_until = Time.now.to_f - 1.0
+    let :time_now do
+      Time.now
+    end
+
+    it 'return true if still waiting for the wait_until' do
+      wait_until = time_now.to_f + 1.0
+
+      allow(Time).to receive(:now).and_return(time_now + 0.5)
+
       expect(subject.__still_waiting?(wait_until)).to be_truthy
     end
 
-    it 'return true if more waiting needed' do
-      wait_until = Time.now.to_f + 1.0
+    it 'return false if past the wait_until' do
+      wait_until = time_now.to_f + 1.0
+
+      allow(Time).to receive(:now).and_return(time_now + 1.5)
+
       expect(subject.__still_waiting?(wait_until)).to be_falsey
     end
   end
