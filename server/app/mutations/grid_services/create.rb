@@ -7,7 +7,6 @@ module GridServices
     common_validations
 
     required do
-      model :current_user, class: User
       model :grid, class: Grid
       string :image
       string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
@@ -37,7 +36,6 @@ module GridServices
 
     def execute
       attributes = self.inputs.clone
-      attributes.delete(:current_user)
       attributes[:image_name] = attributes.delete(:image)
 
       attributes.delete(:links)

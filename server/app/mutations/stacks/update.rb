@@ -4,37 +4,30 @@ module Stacks
   class Update < Mutations::Command
     include Common
 
-    required do
-      model :current_user, class: User
-      model :stack, class: Stack
-      array :services do
-        model :object, class: Hash
-      end
-    end
+    common_validations
 
-    optional do
-      string :expose
+    required do
+      model :stack_instance, class: Stack
     end
 
     def validate
+      if stack_instance.name == 'default'
+        add_error(:stack, :access_denied, "Cannot update default stack")
+        return
+      end
       if self.services.size == 0
         add_error(:services, :empty, "stack does not specify any services")
         return
       end
       sort_services(self.services).each do |s|
         service = s.dup
-        service[:current_user] = self.current_user
-        service[:grid] = self.stack.grid
-        service[:stack] = self.stack
-
-        existing_service = self.stack.grid_services.where(:name => service[:name]).first
+        existing_service = self.stack_instance.grid_services.where(:name => service[:name]).first
         if existing_service
           service[:grid_service] = existing_service
           outcome = GridServices::Update.validate(service)
         else
-          service[:current_user] = self.current_user
-          service[:grid] = self.stack.grid
-          service[:stack] = self.stack
+          service[:grid] = self.stack_instance.grid
+          service[:stack] = self.stack_instance
           outcome = GridServices::Create.validate(service)
         end
 
@@ -45,13 +38,43 @@ module Stacks
     end
 
     def execute
-      self.stack.expose = self.expose
-      self.stack.stack_revisions.create(
-        expose: self.stack.expose,
+      latest_rev = self.stack_instance.latest_rev || self.stack_instance.stack_revisions.build
+      latest_rev.attributes = {
+        stack_name: self.stack,
+        expose: self.expose,
+        source: self.source,
+        version: self.version,
+        registry: self.registry,
         services: sort_services(self.services)
-      )
-      self.stack.save
-      self.stack.reload
+      }
+      if latest_rev.changed?
+        new_rev = latest_rev.dup
+        new_rev.revision += 1
+        new_rev.save
+        create_or_update_services(self.stack_instance, sort_services(self.services))
+      end
+      self.stack_instance.reload
+    end
+
+    # @param [Stack] stack
+    # @param [Array<Hash>]
+    def create_or_update_services(stack, services)
+      services.each do |s|
+        service = s.dup
+        existing_service = stack.grid_services.where(:name => service[:name]).first
+        if existing_service
+          service[:grid_service] = existing_service
+          outcome = GridServices::Update.run(service)
+        else
+          service[:grid] = stack.grid
+          service[:stack] = stack
+          outcome = GridServices::Create.run(service)
+        end
+
+        unless outcome.success?
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+        end
+      end
     end
   end
 end

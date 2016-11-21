@@ -1,7 +1,6 @@
 module GridServices
   class Restart < Mutations::Command
     required do
-      model :current_user, class: User
       model :grid_service
     end
 

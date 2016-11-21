@@ -29,5 +29,27 @@ module Stacks
         end
       }
     end
+
+    def self.included(base)
+      base.extend(ClassMethods)
+    end
+
+    module ClassMethods
+      def common_validations
+        required do
+          string :stack
+          string :version
+          string :registry
+          string :source
+          array :services do
+            model :object, class: Hash
+          end
+        end
+
+        optional do
+          string :expose
+        end
+      end
+    end
   end
 end

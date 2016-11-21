@@ -3,12 +3,7 @@ require_relative '../../spec_helper'
 describe GridServices::Restart do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
-  let(:user) { User.create!(email: 'joe@domain.com')}
-  let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid.users << user
-    grid
-  }
+  let(:grid) { Grid.create!(name: 'test-grid') }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
   let(:node) { HostNode.create!(name: 'node-1', grid: grid)}
 
@@ -20,14 +15,14 @@ describe GridServices::Restart do
           'io;kontena;service;instance_number' => '1'
         }
       )
-      subject = described_class.new(current_user: user, grid_service: redis_service)
+      subject = described_class.new(grid_service: redis_service)
       expect(subject).to receive(:restart_service_instance).with(node, container.instance_number).once
       subject.run.result.value
     end
 
     it 'sets service state to running' do
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
-      subject = described_class.new(current_user: user, grid_service: redis_service)
+      subject = described_class.new(grid_service: redis_service)
       allow(subject).to receive(:restart_service_instance)
       outcome = subject.run
       outcome.result.value
@@ -37,7 +32,7 @@ describe GridServices::Restart do
     it 'returns service to previous state if exception is raised' do
       prev_state = redis_service.state
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
-      subject = described_class.new(current_user: user, grid_service: redis_service)
+      subject = described_class.new(grid_service: redis_service)
       expect(subject).to receive(:restart_service_instance).and_raise(StandardError.new('error'))
       outcome = subject.run
       expect(outcome.success?).to be_truthy

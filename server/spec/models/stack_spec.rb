@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe Stack do
 
   it { should be_timestamped_document }
-  it { should have_fields(:name, :version, :expose).of_type(String) }
+  it { should have_fields(:name).of_type(String) }
   it { should belong_to(:grid) }
   it { should have_many(:stack_revisions)}
   it { should have_many(:grid_services)}

@@ -3,7 +3,11 @@ class StackRevision
   include Mongoid::Timestamps
 
   field :name, type: String
-  field :version, type: Integer, default: 1
+  field :stack_name, type: String
+  field :registry, type: String
+  field :source, type: String
+  field :version, type: String
+  field :revision, type: Integer, default: 1
   field :expose, type: String
   field :services, type: Array
 
@@ -16,11 +20,11 @@ class StackRevision
   private
 
   def increase_version
-    prev = self.stack.stack_revisions.order_by(version: -1).first
+    prev = self.stack.stack_revisions.order_by(revision: -1).first
     if prev
-      self.version = prev.version + 1
+      self.revision = prev.revision + 1
     else
-      self.version = 1
+      self.revision = 1
     end
   end
 end

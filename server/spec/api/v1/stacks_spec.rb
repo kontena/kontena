@@ -31,6 +31,10 @@ describe '/v1/stacks' do
       current_user: david,
       grid: grid,
       name: 'stack',
+      stack: 'stack',
+      version: '0.1.1',
+      source: '...',
+      registry: 'file',
       services: [
         { name: 'app', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -44,6 +48,10 @@ describe '/v1/stacks' do
       current_user: david,
       grid: grid,
       name: 'another-stack',
+      stack: 'another-stack',
+      version: '0.2.1',
+      source: '...',
+      registry: 'file',
       services: [
         { name: 'app2', image: 'my/app:latest', stateful: false },
         { name: 'redis', image: 'redis:2.8', stateful: true }
@@ -52,14 +60,16 @@ describe '/v1/stacks' do
     outcome.result
   end
 
+  let(:expected_attributes) do
+    %w( id created_at updated_at name stack version services state expose source registry)
+  end
+
   describe 'GET /:name' do
     it 'returns stack json' do
       get "/v1/stacks/#{stack.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at name version services state expose
-      ).sort)
-      expect(json_response['services'].size).to eq(0)
+      expect(json_response.keys.sort).to eq(expected_attributes.sort)
+      expect(json_response['services'].size).to eq(stack.latest_rev.services.size)
     end
 
     it 'includes deployed services' do
@@ -82,18 +92,19 @@ describe '/v1/stacks' do
       another_stack
       get "/v1/grids/#{grid.name}/stacks", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['stacks'].size).to eq(grid.stacks.count)
-      expect(json_response['stacks'][0].keys.sort).to eq(%w(
-        id created_at updated_at name version services state expose
-      ).sort)
+      expect(json_response['stacks'].size).to eq(grid.stacks.count - 1)
+      expect(json_response['stacks'][0].keys.sort).to eq(expected_attributes.sort)
     end
-
   end
 
   describe 'PUT /:name' do
     it 'updates stack' do
       data = {
         name: stack.name,
+        stack: stack.latest_rev.stack_name,
+        registry: stack.latest_rev.registry,
+        source: stack.latest_rev.source,
+        version: stack.latest_rev.version,
         services: [
           {
             name: 'app_xyz',
@@ -115,12 +126,21 @@ describe '/v1/stacks' do
   end
 
   describe 'DELETE /:name' do
+    let(:worker_klass) do
+      Class.new do
+        include Celluloid
+      end
+    end
+
+    let(:worker) do
+      worker = worker_klass.new
+      Celluloid::Actor[:stack_remove_worker] = worker
+    end
+
     it 'deletes stack' do
-      stack
-      expect {
-        delete "/v1/stacks/#{stack.to_path}", nil, request_headers
-        expect(response.status).to eq(200)
-      }.to change{ grid.stacks.count }.by(-1)
+      expect(worker.wrapped_object).to receive(:perform)
+      delete "/v1/stacks/#{stack.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
     end
 
     it 'returns 404 for unknown stack' do
@@ -130,15 +150,17 @@ describe '/v1/stacks' do
   end
 
   describe 'POST /:name/deploy' do
-    before(:each) do
-      allow(GridServices::Deploy).to receive(:run).and_return(spy)
-    end
-
     it 'deploys stack services' do
       expect {
         post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
-      }.to change{ stack.grid_services.count }.by(2)
+      }.to change{ StackDeploy.count }.by(1)
+    end
+
+    it 'returns stack deploy id' do
+      post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(StackDeploy.find(json_response['id'])).not_to be_nil
     end
 
     it 'deploy creates audit log' do

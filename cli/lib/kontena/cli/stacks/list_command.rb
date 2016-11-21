@@ -39,10 +39,10 @@ module Kontena::Cli::Stacks
         vars = [
           icon.colorize(color),
           "#{stack['name']}",
-          "v#{stack['version']}",
+          "#{stack['version']}",
           stack['services'].size,
           stack['state'],
-          ports.join(", ")
+          ports.join(",")
         ]
 
         puts "%s %-58s %-10s %-10s %-10s %-50s" % vars
@@ -55,6 +55,7 @@ module Kontena::Cli::Stacks
       ports = []
       stack['services'].each{|s|
         service_ports = s['ports'].map{|p|
+          p['ip'] = '*' if p['ip'] == '0.0.0.0'
           "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"
         }
         ports = ports + service_ports unless service_ports.empty?

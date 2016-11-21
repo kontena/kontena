@@ -4,18 +4,11 @@ module Stacks
   class Create < Mutations::Command
     include Common
 
+    common_validations
+
     required do
-      model :current_user, class: User
       model :grid, class: Grid
       string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
-
-      array :services do
-        model :object, class: Hash
-      end
-    end
-
-    optional do
-      string :expose
     end
 
     def validate
@@ -35,7 +28,6 @@ module Stacks
       sort_services(self.services).each do |s|
         service = s.dup
         service.delete(:links)
-        service[:current_user] = self.current_user
         service[:grid] = self.grid
         outcome = GridServices::Create.validate(service)
         unless outcome.success?
@@ -46,22 +38,37 @@ module Stacks
 
     def execute
       attributes = self.inputs.clone
-      current_user = attributes.delete(:current_user)
-      services = attributes.delete(:services)
-
-      stack = Stack.create(attributes)
+      grid = attributes.delete(:grid)
+      stack = Stack.create(name: self.name, grid: grid)
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)
         end
         return
       end
-      stack.stack_revisions.create(
-        expose: stack.expose,
-        services: sort_services(services),
-        version: 1
-      )
+
+      services = sort_services(attributes.delete(:services))
+      attributes[:services] = services
+      attributes[:stack_name] = attributes.delete(:stack)
+      stack.stack_revisions.create!(attributes)
+
+      create_services(stack, services)
+
       stack
+    end
+
+    # @param [Stack] stack
+    # @param [Array<Hash>] services
+    def create_services(stack, services)
+      services.each do |s|
+        service = s.dup
+        service[:grid] = stack.grid
+        service[:stack] = stack
+        outcome = GridServices::Create.run(service)
+        unless outcome.success?
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+        end
+      end
     end
   end
 end

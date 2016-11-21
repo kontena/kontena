@@ -27,6 +27,7 @@ module ClientHelpers
       RSpec::Mocks.space.proxy_for(File).reset
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:current_grid).and_return('test-grid')
+      allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena/certs/.pem')).and_return(false)
       allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
       allow(File).to receive(:readable?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
       allow(File).to receive(:read).and_call_original

@@ -18,7 +18,7 @@ describe GridServices::Delete do
 
   describe '#run' do
     it 'calls grid_service_remove worker' do
-      subject = described_class.new(current_user: user, grid_service: redis_service)
+      subject = described_class.new(grid_service: redis_service)
       expect(subject).to receive(:worker).with(:grid_service_remove).and_return(spy)
       subject.run
     end
@@ -29,7 +29,7 @@ describe GridServices::Delete do
 
         service = redis_service
         expect {
-          outcome = described_class.new(current_user: user, grid_service: service).run
+          outcome = described_class.new(grid_service: service).run
           expect(outcome.success?).to be_falsey
           expect(outcome.errors.message["service"]).to eq("Cannot delete service that is linked to another service (web)")
         }.to change{ GridService.count }.by(0)

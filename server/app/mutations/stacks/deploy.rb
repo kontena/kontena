@@ -6,11 +6,14 @@ module Stacks
     include Workers
 
     required do
-      model :current_user, class: User
       model :stack, class: Stack
     end
 
     def validate
+      if stack.name == 'default'
+        add_error(:stack, :access_denied, "Cannot deploy default stack")
+        return
+      end
       self.stack.grid_services.each do |service|
         outcome = GridServices::Deploy.validate(grid_service: service)
         unless outcome.success?
@@ -23,34 +26,38 @@ module Stacks
     end
 
     def execute
-      stack_rev = self.stack.stack_revisions.order_by(version: -1).first
+      stack_rev = self.stack.latest_rev
 
-      create_or_update_services(stack_rev)
-      remove_services(stack_rev)
+      create_or_update_services(self.stack, stack_rev)
+      remove_services(self.stack, stack_rev)
 
       return if has_errors?
 
-      self.stack.set(version: stack_rev.version)
+      stack_deploy = self.stack.stack_deploys.create
       self.stack.grid_services.each do |service|
         outcome = GridServices::Deploy.run(grid_service: service)
         unless outcome.success?
           add_error(:service, :deploy, outcome.errors.message)
+        else
+          service_deploy = outcome.result
+          service_deploy.set(stack_deploy_id: stack_deploy.id)
         end
       end
+
+      stack_deploy
     end
 
+    # @param [Stack] stack
     # @param [StackRevision] stack_rev
-    def create_or_update_services(stack_rev)
+    def create_or_update_services(stack, stack_rev)
       sort_services(stack_rev.services).each do |s|
         service = s.dup
-        service[:current_user] = self.current_user
-
-        if existing_service = self.stack.grid_services.find_by(name: service['name'])
+        if existing_service = stack.grid_services.find_by(name: service['name'])
           service[:grid_service] = existing_service
           outcome = GridServices::Update.run(service)
         else
-          service[:grid] = self.stack.grid
-          service[:stack] = self.stack
+          service[:grid] = stack.grid
+          service[:stack] = stack
           outcome = GridServices::Create.run(service)
         end
         unless outcome.success?
@@ -59,18 +66,22 @@ module Stacks
       end
     end
 
+    # @param [Stack] stack
     # @param [StackRevision] stack_rev
-    def remove_services(stack_rev)
+    def remove_services(stack, stack_rev)
       removed_services = []
-      self.stack.grid_services.each do |s|
+      stack.grid_services.each do |s|
         unless stack_rev.services.find{ |service| s.name == service['name'] }
-          puts "removing #{s.to_path}"
           removed_services << s
         end
       end
       sort_services(removed_services).reverse.each do |s|
-        worker(:grid_service_remove).async.perform(s.id)
+        remove_service(s.id)
       end
+    end
+
+    def remove_service(id)
+      worker(:grid_service_remove).async.perform(id)
     end
   end
 end

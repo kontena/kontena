@@ -12,7 +12,6 @@ module GridServices
     end
 
     optional do
-      model :current_user, class: User
       boolean :force, default: false
     end
 
