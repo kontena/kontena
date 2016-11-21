@@ -186,18 +186,18 @@ module Kontena::NetworkAdapters
     def ensure_exposed(cidr)
       # configure new address
       # these will be added alongside any existing addresses
-      if @executor_pool.expose(cidr)
+      if weaveexec.expose(cidr)
         info "Exposed host node at cidr=#{cidr}"
       else
         error "Failed to expose host node at cidr=#{cidr}"
       end
 
       # cleanup any old addresses
-      @executor_pool.ps('weave:expose') do |name, mac, *cidrs|
+      weaveexec.ps('weave:expose') do |name, mac, *cidrs|
         cidrs.each do |exposed_cidr|
           if exposed_cidr != cidr
             warn "Migrating host node from cidr=#{exposed_cidr}"
-            @executor_pool.hide(exposed_cidr)
+            weaveexec.hide(exposed_cidr)
           end
         end
       end
@@ -226,14 +226,14 @@ module Kontena::NetworkAdapters
           '--password', ENV['KONTENA_TOKEN']
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
-        @executor_pool.execute(exec_params)
+        weaveexec.execute(exec_params)
         weave = Docker::Container.get('weave') rescue nil
         wait(timeout: 10, interval: 1, message: 'waiting for weave to start') {
           weave && weave.running?
         }
 
         if weave.nil? || !weave.running?
-          @executor_pool.execute(['--local', 'reset'])
+          weaveexec.execute(['--local', 'reset'])
         end
       end
 
@@ -253,13 +253,13 @@ module Kontena::NetworkAdapters
 
     def attach_router
       info "attaching router"
-      @executor_pool.execute(['--local', 'attach-router'])
+      weaveexec.execute(['--local', 'attach-router'])
     end
 
     # @param [Array<String>] peer_ips
     def connect_peers(peer_ips)
       if peer_ips.size > 0
-        @executor_pool.execute(['--local', 'connect', '--replace'] + peer_ips)
+        weaveexec.execute(['--local', 'connect', '--replace'] + peer_ips)
         info "router connected to peers #{peer_ips.join(', ')}"
       else
         info "router does not have any known peers"
@@ -290,7 +290,7 @@ module Kontena::NetworkAdapters
     def attach_container(container_id, cidr)
       info "Attach container=#{container_id} at cidr=#{cidr}"
 
-      @executor_pool.async.attach(container_id, cidr)
+      weaveexec.async.attach(container_id, cidr)
     end
 
     # Attach container to weave with given CIDR address, first detaching any mismatching addresses
@@ -302,13 +302,13 @@ module Kontena::NetworkAdapters
 
       # first remove any existing addresses
       # this is required, since weave will not attach if the address already exists, but with a different netmask
-      @executor_pool.ps(container_id) do |name, mac, *cidrs|
+      weaveexec.ps(container_id) do |name, mac, *cidrs|
         debug "Migrate check: name=#{name} with cidrs=#{cidrs}"
 
         cidrs.each do |attached_cidr|
           if cidr != attached_cidr
             warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
-            @executor_pool.detach(container_id, attached_cidr)
+            weaveexec.detach(container_id, attached_cidr)
           end
         end
       end
@@ -366,5 +366,8 @@ module Kontena::NetworkAdapters
       end
     end
 
+    def weaveexec
+      @executor_pool
+    end
   end
 end

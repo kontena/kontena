@@ -200,4 +200,35 @@ describe Kontena::NetworkAdapters::Weave do
       expect(opts['HostConfig']['Dns']).to be_nil
     end
   end
+
+  context do
+    let :weaveexec do
+      instance_double(Kontena::NetworkAdapters::WeaveExecutor)
+    end
+    let :weaveexec_async do
+      instance_double(Kontena::NetworkAdapters::WeaveExecutor)
+    end
+
+    before do
+      allow(subject.wrapped_object).to receive(:weaveexec).and_return(weaveexec)
+      allow(weaveexec).to receive(:async).and_return(weaveexec_async)
+    end
+
+    describe '#ensure_exposed' do
+      it "Only exposes the correct address" do
+        expect(weaveexec).to receive(:expose).with('10.81.0.1/16')
+        expect(weaveexec).to receive(:ps).with('weave:expose')
+
+        subject.ensure_exposed('10.81.0.1/16')
+      end
+
+      it "Also hides any incorrect address" do
+        expect(weaveexec).to receive(:expose).with('10.81.0.1/16')
+        expect(weaveexec).to receive(:ps).with('weave:expose').and_yield('weave:expose', 'aa:bb:cc:dd:ee:ff', '10.81.0.1/19')
+        expect(weaveexec).to receive(:hide).with('10.81.0.1/19')
+
+        subject.ensure_exposed('10.81.0.1/16')
+      end
+    end
+  end
 end
