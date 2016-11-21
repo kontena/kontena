@@ -12,9 +12,7 @@ module Kontena::Cli::Containers
     def execute
       require_api_url
 
-      service_name = container_id.match(/(.+)-(\d+)/)[1] rescue nil
-
-      show_logs("containers/#{current_grid}/#{service_name}/#{container_id}/logs") do |log|
+      show_logs("containers/#{current_grid}/#{container_id}/logs") do |log|
         show_log(log)
       end
     end

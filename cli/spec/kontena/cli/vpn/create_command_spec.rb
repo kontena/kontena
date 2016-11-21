@@ -2,30 +2,27 @@ require_relative "../../../spec_helper"
 require "kontena/cli/vpn/create_command"
 
 describe Kontena::Cli::Vpn::CreateCommand do
-  
+
   include ClientHelpers
 
   let(:subject) { described_class.new(File.basename($0)) }
 
   describe '#execute' do
     it 'should abort if vpn already exists' do
-      expect(client).to receive(:get).with("services/test-grid/vpn").and_return({vpn: true})
+      expect(client).to receive(:get).with("stacks/test-grid/vpn").and_return({})
 
       expect {
         subject.execute
       }.to raise_error SystemExit
     end
-
-    
   end
 
   describe '#find_node' do
-
     it 'should abort if no online nodes exists' do
       expect(client).to receive(:get).with("grids/test-grid/nodes").and_return(
-        { 
+        {
           'nodes' => [
-            {'connected' => false}, 
+            {'connected' => false},
             {'connected' => false, 'public_ip' => '1.2.3.4'}
           ]
         })
@@ -37,9 +34,9 @@ describe Kontena::Cli::Vpn::CreateCommand do
 
     it 'should return first online node with public ip' do
       expect(client).to receive(:get).with("grids/test-grid/nodes").and_return(
-        { 
+        {
           'nodes' => [
-            {'connected' => true}, 
+            {'connected' => true},
             {'connected' => true, 'public_ip' => '1.2.3.4'}
           ]
         })
@@ -50,9 +47,9 @@ describe Kontena::Cli::Vpn::CreateCommand do
 
     it 'should return preferred node' do
       expect(client).to receive(:get).with("grids/test-grid/nodes").and_return(
-        { 
+        {
           'nodes' => [
-            {'connected' => true}, 
+            {'connected' => true},
             {'name' => 'preferred', 'connected' => true, 'public_ip' => '1.2.3.4'}
           ]
         })
@@ -63,9 +60,9 @@ describe Kontena::Cli::Vpn::CreateCommand do
 
     it 'should abort if no online nodes exists' do
       expect(client).to receive(:get).with("grids/test-grid/nodes").and_return(
-        { 
+        {
           'nodes' => [
-            {'connected' => true}, 
+            {'connected' => true},
             {'name' => 'preferred', 'connected' => true, 'public_ip' => '1.2.3.4'}
           ]
         })
@@ -78,7 +75,6 @@ describe Kontena::Cli::Vpn::CreateCommand do
   end
 
   describe '#node_vpn_ip' do
-
     it 'return ip when set' do
       allow(subject).to receive(:ip).and_return('1.2.3.4')
 
@@ -111,6 +107,5 @@ describe Kontena::Cli::Vpn::CreateCommand do
       }
       expect(subject.node_vpn_ip(node)).to eq('10.1.1.2')
     end
-
   end
 end
