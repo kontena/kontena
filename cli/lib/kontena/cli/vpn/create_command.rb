@@ -12,14 +12,20 @@ module Kontena::Cli::Vpn
       token = require_token
       preferred_node = node
 
-      vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
-      exit_with_error('Vpn already exists') if vpn
+      name = 'vpn'
+      vpn = client(token).get("stacks/#{current_grid}/#{name}") rescue nil
+      exit_with_error('Vpn stack already exists') if vpn
 
       node = find_node(token, preferred_node)
 
       vpn_ip = node_vpn_ip(node)
       data = {
-        name: 'vpn',
+        name: name,
+        stack: 'kontena/vpn',
+        version: Kontena::Cli::VERSION,
+        registry: 'file://',
+        source: '---',
+        expose: 'server',
         services: [
           name: 'server',
           stateful: true,
@@ -36,13 +42,15 @@ module Kontena::Cli::Vpn
           affinity: ["node==#{node['name']}"]
         ]
       }
+
       client(token).post("grids/#{current_grid}/stacks", data)
-      client(token).post("stacks/#{current_grid}/vpn/deploy", {})
-      spinner "Deploying vpn service " do
-        sleep 1 while client(token).get("stacks/#{current_grid}/vpn")['state'] == 'deploying'
-        sleep 1 while client(token).get("stacks/#{current_grid}/vpn")['state'] == 'running'
+      deployment = client(token).post("stacks/#{current_grid}/#{name}/deploy", {})
+      spinner "Deploying #{pastel.cyan(name)} service " do
+        deployment['service_deploys'].each do |service_deploy|
+          wait_for_deploy_to_finish(token, service_deploy)
+        end
       end
-      spinner "generating #{name.colorize(:cyan)} keys (this will take a while) " do
+      spinner "Generating #{pastel.cyan(name)} keys (this will take a while) " do
         wait_for_configuration_to_finish(token)
       end
       puts "#{name.colorize(:cyan)} service is now started (udp://#{vpn_ip}:1194)."
@@ -53,8 +61,8 @@ module Kontena::Cli::Vpn
       finished = false
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
       until finished
-        sleep 30
-        stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
+        sleep 3
+        stdout, stderr = client(require_token).post("services/#{current_grid}/vpn/server/containers/1/exec", payload)
         finished = true if stdout.join('').include?('BEGIN PRIVATE KEY'.freeze)
       end
 

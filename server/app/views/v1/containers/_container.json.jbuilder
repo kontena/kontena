@@ -21,12 +21,15 @@ json.node do
       grid = container.grid
       json.id grid.to_path
       json.name grid.name
-      json.token grid.token
       json.initial_size grid.initial_size
     end
   end
 end
-json.service_id container.grid_service.to_path
+if container.grid_service
+  json.service_id container.grid_service.to_path
+else
+  json.service_id nil
+end
 json.created_at container.created_at
 json.updated_at container.updated_at
 json.started_at container.started_at
@@ -36,10 +39,10 @@ json.status container.status
 json.state container.state
 json.deploy_rev container.deploy_rev
 json.service_rev container.service_rev
+json.instance_number container.instance_number
 json.image container.image
 json.cmd container.cmd
 json.env container.env
-json.labels container.labels
 json.volumes container.volumes
 json.ip_address container.ip_address
 json.hostname container.hostname
