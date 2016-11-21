@@ -1,6 +1,9 @@
+require_relative '../mutations/stacks/sort_helper'
+
 class StackRemoveWorker
   include Celluloid
   include Logging
+  include Stacks::SortHelper
 
   def perform(stack_id)
     stack = Stack.find_by(id: stack_id)
@@ -17,7 +20,8 @@ class StackRemoveWorker
   end
 
   def remove_stack(stack)
-    stack.grid_services.order_by(created_at: 1).each do |service|
+    services = sort_services(stack.grid_services.to_a).reverse
+    services.each do |service|
       outcome = GridServices::Delete.run(grid_service: service)
       if outcome.success?
         begin

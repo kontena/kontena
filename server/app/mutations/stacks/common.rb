@@ -1,5 +1,9 @@
+require_relative 'sort_helper'
+
 module Stacks
   module Common
+
+    include SortHelper
 
     # @param [String] service_name
     # @param [Hash] messages
@@ -14,20 +18,6 @@ module Stacks
       if self.expose && !self.services.find{ |s| s[:name] == self.expose}
         add_error(:expose, :not_found, "#{self.expose} is not defined in the services array")
       end
-    end
-
-    def sort_services(services)
-      services.sort{ |a, b|
-        a_links = a[:links] || []
-        b_links = b[:links] || []
-        if a_links.any?{ |l| l[:name] == b[:name] }
-          1
-        elsif b_links.any?{ |l| l[:name] == a[:name] }
-          -1
-        else
-          a_links.size <=> b_links.size
-        end
-      }
     end
 
     def self.included(base)
