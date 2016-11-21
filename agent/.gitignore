@@ -4,6 +4,7 @@ log/*.log
 .idea
 .vagrant
 .env
-.bundle
+/.bundle/
 /build/
 /release/
+/vendor/
