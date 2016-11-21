@@ -3,9 +3,8 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NODE_ID", "Node id"
+    parameter "[NODE_ID]", "SSH to Grid node, or first connected node"
     parameter "[COMMANDS] ...", "Run command on host"
-
     option ["-i", "--identity-file"], "IDENTITY_FILE", "Path to ssh private key"
     option ["-u", "--user"], "USER", "Login as a user", default: "core"
     option "--private-ip", :flag, "Connect to node's private IP address"
@@ -15,7 +14,12 @@ module Kontena::Cli::Nodes
     requires_current_grid
 
     def execute
-      node = client.get("nodes/#{current_grid}/#{node_id}")
+      if node_id
+        node = client.get("grids/#{current_grid}/nodes/#{node_id}")
+      else
+        nodes = client.get("grids/#{current_grid}/nodes")['nodes']
+        node = nodes.select{ |node| node['connected'] }.first
+      end
 
       provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
