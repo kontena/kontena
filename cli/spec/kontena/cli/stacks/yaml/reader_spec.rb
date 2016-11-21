@@ -70,7 +70,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       before(:each) do
         allow(ENV).to receive(:key?).and_return(true)
         allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
-        allow(ENV).to receive(:[]).with('project').and_return('test')
+        allow(ENV).to receive(:[]).with('STACK').and_return('test')
         allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
         allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
       end
@@ -110,7 +110,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       allow(ENV).to receive(:key?).and_return(true)
       allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
       allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
-      allow(ENV).to receive(:[]).with('project').and_return('test')
+      allow(ENV).to receive(:[]).with('STACK').and_return('test')
       allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
       allow(File).to receive(:read)
         .with(absolute_yaml_path)
@@ -147,13 +147,13 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
   describe '#execute' do
     before(:each) do
-      allow(ENV).to receive(:[]).with('project').and_return('test')
+      allow(ENV).to receive(:[]).with('STACK').and_return('test')
       allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
     end
 
     context 'when extending services' do
       it 'extends services from external file' do
-        docker_compose_yml = YAML.load(fixture('docker-compose_v2.yml') % { project: 'test' })
+        docker_compose_yml = YAML.load(fixture('docker-compose_v2.yml'))
         wordpress_options = {
           'extends' => {
             'file' => 'docker-compose_v2.yml',
@@ -190,7 +190,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(File).to receive(:read)
           .with(absolute_yaml_path('kontena_v3.yml'))
           .and_return(fixture('stack-internal-extend.yml'))
-        kontena_yml = YAML.load(fixture('stack-internal-extend.yml') % { project: 'test' })
+        kontena_yml = YAML.load(fixture('stack-internal-extend.yml'))
 
         expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
           .with(kontena_yml['services']['app'])

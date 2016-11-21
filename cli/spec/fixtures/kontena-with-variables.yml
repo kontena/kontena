@@ -5,7 +5,7 @@ wordpress:
   image: wordpress:$TAG
   stateful: true
   environment:
-    - WORDPRESS_DB_PASSWORD=${project}_secret
+    - WORDPRESS_DB_PASSWORD=%{project}_secret
   instances: 2
   deploy:
     strategy: ha
