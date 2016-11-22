@@ -57,6 +57,7 @@ module Kontena::Cli::Stacks
       def reload
         @errors = []
         @notifications = []
+        @variables = nil
         parse_yaml
       end
 
@@ -82,7 +83,7 @@ module Kontena::Cli::Stacks
         @content_variables ||= raw_content.scan(/((?<!\$)\$(?!\$)\{?(\w+)\}?)/m)
       end
 
-      def load_yaml
+      def parse_yaml
         @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
