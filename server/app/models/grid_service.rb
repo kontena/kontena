@@ -63,12 +63,20 @@ class GridService
 
   # @return [String]
   def to_path
-    "#{self.grid.try(:name)}/#{self.stack.name}/#{self.name}"
+    if default_stack?
+      "#{self.grid.try(:name)}/#{self.name}"
+    else
+      "#{self.grid.try(:name)}/#{self.stack.name}/#{self.name}"
+    end
   end
 
   # @return [String]
   def name_with_stack
-    "#{self.stack.name}-#{self.name}"
+    if default_stack?
+      self.name
+    else
+      "#{self.stack.name}-#{self.name}"
+    end
   end
 
   # @return [Boolean]
