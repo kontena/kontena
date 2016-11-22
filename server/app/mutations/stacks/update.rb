@@ -11,10 +11,6 @@ module Stacks
     end
 
     def validate
-      if stack_instance.name == 'default'
-        add_error(:stack, :access_denied, "Cannot update default stack")
-        return
-      end
       if self.services.size == 0
         add_error(:services, :empty, "stack does not specify any services")
         return

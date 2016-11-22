@@ -10,7 +10,7 @@ if log.grid_service
   json.stack do
     json.id service.stack.to_path
     json.name service.stack.name
-  end
+  end if service.stack
   json.grid do
     json.id service.grid.to_path
     json.name service.grid.name

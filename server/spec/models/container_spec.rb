@@ -126,10 +126,9 @@ describe Container do
     it 'returns correct name for instance' do
       subject.labels = {
         'io;kontena;service;name' => 'redis',
-        'io;kontena;stack;name' => 'default',
         'io;kontena;service;instance_number' => '3'
       }
-      expect(subject.instance_name).to eq('default-redis-3')
+      expect(subject.instance_name).to eq('redis-3')
     end
   end
 
@@ -152,7 +151,6 @@ describe Container do
           name: "redis-#{i}",
           labels: {
             "io;kontena;service;id" => grid_service.id.to_s,
-            "io;kontena;stack;name" => "default",
             "io;kontena;service;instance_number" => i.to_s,
           }
         )

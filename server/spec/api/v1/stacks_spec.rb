@@ -92,7 +92,7 @@ describe '/v1/stacks' do
       another_stack
       get "/v1/grids/#{grid.name}/stacks", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['stacks'].size).to eq(grid.stacks.count - 1)
+      expect(json_response['stacks'].size).to eq(grid.stacks.count)
       expect(json_response['stacks'][0].keys.sort).to eq(expected_attributes.sort)
     end
   end

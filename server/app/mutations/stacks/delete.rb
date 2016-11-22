@@ -10,16 +10,12 @@ module Stacks
     end
 
     def validate
-      if self.stack.name == 'default'
-        add_error(:stack, :access_denied, "Cannot delete default stack")
-        return
-      end
       self.stack.grid_services.each do |service|
         linked_from_other_stack_services = service.linked_from_services.select{ |from|
           from.stack_id != service.stack_id
         }
         if linked_from_other_stack_services.size > 0
-          names = linked_from_other_stack_services.map{|s| "#{s.stack.name}/#{s.name}" }.join(', ')
+          names = linked_from_other_stack_services.map{|s| "#{s}" }.join(', ')
           add_error(:service, :invalid, "Cannot delete service that is linked from another stack (#{names})")
         end
       end

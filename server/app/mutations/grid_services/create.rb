@@ -18,8 +18,6 @@ module GridServices
     end
 
     def validate
-      self.stack = self.grid.stacks.find_by(name: 'default') unless self.stack
-
       if self.stateful && self.volumes_from && self.volumes_from.size > 0
         add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
       end

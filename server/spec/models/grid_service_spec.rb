@@ -27,7 +27,6 @@ describe GridService do
   it { should validate_presence_of(:name) }
   it { should validate_presence_of(:image_name) }
   it { should validate_presence_of(:grid_id) }
-  it { should validate_presence_of(:stack_id) }
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_service_ids: 1) }
@@ -220,7 +219,8 @@ describe GridService do
 
   describe '#name_with_stack' do
     it 'returns service name with stack' do
-      expect(grid_service.name_with_stack).to include("#{grid_service.stack.name}-")
+      #TODO second context to test with a stack service
+      expect(grid_service.name_with_stack).to eq(grid_service.name)
     end
   end
 

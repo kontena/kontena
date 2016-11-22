@@ -179,7 +179,7 @@ describe GridServices::Create do
 
     it 'saves links' do
       links = [
-        {name: "#{linked_service.stack.name}/#{linked_service.name}", alias: 'link-alias'}
+        {name: "/#{linked_service.name}", alias: 'link-alias'}
       ]
       outcome = described_class.new(
           grid: grid,
@@ -188,6 +188,7 @@ describe GridServices::Create do
           stateful: true,
           links: links
       ).run
+      expect(outcome).to be_success, outcome.errors.inspect
       expect(outcome.result.grid_service_links.size).to eq(1)
       expect(outcome.result.grid_service_links.first.linked_grid_service).to eq(linked_service)
     end

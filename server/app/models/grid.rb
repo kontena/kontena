@@ -30,7 +30,6 @@ class Grid
 
   before_create :set_token
   after_create :create_default_network
-  after_create :create_default_stack
 
   # @return [String]
   def to_path
@@ -73,9 +72,5 @@ class Grid
       subnet: '10.81.0.0/16',
       multicast: true,
       internal: false)
-  end
-
-  def create_default_stack
-    self.stacks.create(name: 'default')
   end
 end

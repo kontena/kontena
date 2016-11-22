@@ -9,7 +9,7 @@ describe '/v1/stacks/:id/container_logs' do
     Grid.create!(name: 'terminal-a')
   end
 
-  let(:stack) { grid.stacks.first }
+  let(:stack) { Stack.create!(name: 'test', grid: grid) }
 
   let(:node) { HostNode.create(name: 'node', node_id: 'node') }
 

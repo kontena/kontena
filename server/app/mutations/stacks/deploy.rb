@@ -10,10 +10,6 @@ module Stacks
     end
 
     def validate
-      if stack.name == 'default'
-        add_error(:stack, :access_denied, "Cannot deploy default stack")
-        return
-      end
       self.stack.grid_services.each do |service|
         outcome = GridServices::Deploy.validate(grid_service: service)
         unless outcome.success?

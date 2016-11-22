@@ -120,7 +120,7 @@ module Docker
         'io.kontena.container.id' => service_container.id.to_s,
         'io.kontena.service.id' => grid_service.id.to_s,
         'io.kontena.service.name' => grid_service.name.to_s,
-        'io.kontena.stack.name' => grid_service.stack.name.to_s,
+        'io.kontena.stack.name' => grid_service.stack.try(:name),
         'io.kontena.grid.name' => grid_service.grid.try(:name)
       }
       if grid_service.linked_to_load_balancer?
@@ -182,10 +182,10 @@ module Docker
     # @param [GridService] grid_service
     # @return [String]
     def build_domainname(grid_service)
-      if grid_service.stack.name == 'default'.freeze
-        "#{grid_service.grid.name}.kontena.local"
-      else
+      if grid_service.stack
         "#{grid_service.stack.name}.#{grid_service.grid.name}.kontena.local"
+      else
+        "#{grid_service.grid.name}.kontena.local"
       end
     end
 

@@ -58,7 +58,7 @@ describe '/v1/services' do
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at stack image affinity name stateful user
+        id created_at updated_at image affinity name stateful user
         container_count cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instances net dns hooks secrets revision
@@ -89,7 +89,7 @@ describe '/v1/services' do
       redis_service
       data = {
         links: [
-          {name: 'default/redis', alias: 'redis'}
+          {name: '/redis', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers

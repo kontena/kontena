@@ -54,34 +54,35 @@ class GridService
   index({ name: 1 })
   index({ grid_service_ids: 1 })
 
-  validates_presence_of :name, :image_name, :grid_id, :stack_id
+  validates_presence_of :name, :image_name, :grid_id
   validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
 
   scope :load_balancer, -> { where(image_name: LB_IMAGE) }
 
-  before_validation :ensure_stack
-
   # @return [String]
   def to_path
-    if default_stack?
-      "#{self.grid.try(:name)}/#{self.name}"
-    else
+    if stack
       "#{self.grid.try(:name)}/#{self.stack.name}/#{self.name}"
+    else
+      "#{self.grid.try(:name)}/#{self.name}"
+    end
+  end
+
+  def to_s
+    if stack
+      "#{self.stack.name}/#{self.name}"
+    else
+      "#{self.name}"
     end
   end
 
   # @return [String]
   def name_with_stack
-    if default_stack?
-      self.name
-    else
+    if stack
       "#{self.stack.name}-#{self.name}"
+    else
+      self.name
     end
-  end
-
-  # @return [Boolean]
-  def default_stack?
-    self.stack.try(:name).to_s == 'default'.freeze
   end
 
   # @param [String] state
@@ -247,11 +248,5 @@ class GridService
     end
 
     {healthy: healthy, total: self.containers.count}
-  end
-
-  def ensure_stack
-    if self.grid_id && self.stack_id.nil?
-      self.stack = self.grid.stacks.find_by(name: 'default')
-    end
   end
 end
