@@ -76,6 +76,6 @@ class Grid
   end
 
   def create_default_stack
-    self.stacks.create(name: 'default')
+    self.stacks.create(name: Stack::NULL_STACK)
   end
 end

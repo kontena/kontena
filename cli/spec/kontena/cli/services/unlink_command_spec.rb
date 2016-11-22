@@ -35,7 +35,7 @@ describe Kontena::Cli::Services::UnlinkCommand do
 
     it 'sends link to master' do
       expect(client).to receive(:put).with(
-        'services/test-grid/default/service-a', {links: []}
+        'services/test-grid/null/service-a', {links: []}
       )
       subject.run(['service-a', 'service-b'])
     end

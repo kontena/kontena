@@ -17,7 +17,7 @@ module Kontena::Cli::Services
       query_params = {}
       query_params[:container] = "#{name}-#{instance}" if instance
 
-      show_logs("services/#{current_grid}/#{name}/container_logs", query_params) do |log|
+      show_logs("services/#{parse_service_id(name)}/container_logs", query_params) do |log|
         show_log(log)
       end
     end

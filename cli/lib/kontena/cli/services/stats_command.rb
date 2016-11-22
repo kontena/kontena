@@ -30,7 +30,7 @@ module Kontena::Cli::Services
     private
 
     def fetch_stats(token, service_id, follow)
-      result = client(token).get("services/#{current_grid}/#{service_id}/stats")
+      result = client(token).get("services/#{parse_service_id(service_id)}/stats")
       system('clear') if follow
       render_header
       result['stats'].each do |stat|

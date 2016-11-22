@@ -2,6 +2,8 @@ class Stack
   include Mongoid::Document
   include Mongoid::Timestamps
 
+  NULL_STACK = 'null'.freeze
+
   field :name, type: String
 
   belongs_to :grid

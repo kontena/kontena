@@ -11,7 +11,7 @@ describe Kontena::Models::ServicePod do
       'updated_at' => Time.now.utc.to_s,
       'labels' => {
         'io.kontena.service.name' => 'redis-cache',
-        'io.kontena.stack.name' => 'default'
+        'io.kontena.stack.name' => 'null'
       },
       'stateful' => true,
       'image_name' => 'redis:3.0',

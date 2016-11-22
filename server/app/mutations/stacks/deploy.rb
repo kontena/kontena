@@ -10,8 +10,8 @@ module Stacks
     end
 
     def validate
-      if stack.name == 'default'
-        add_error(:stack, :access_denied, "Cannot deploy default stack")
+      if stack.name == Stack::NULL_STACK
+        add_error(:stack, :access_denied, "Cannot deploy null stack")
         return
       end
       self.stack.grid_services.each do |service|

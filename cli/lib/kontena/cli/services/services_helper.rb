@@ -279,7 +279,7 @@ module Kontena
           elsif count == 1
             param = "#{current_grid}/#{service_id}"
           else
-            param = "#{current_grid}/default/#{service_id}"
+            param = "#{current_grid}/null/#{service_id}"
           end
         end
 

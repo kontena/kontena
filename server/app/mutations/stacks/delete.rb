@@ -10,7 +10,7 @@ module Stacks
     end
 
     def validate
-      if self.stack.name == 'default'
+      if self.stack.name == Stack::NULL_STACK
         add_error(:stack, :access_denied, "Cannot delete default stack")
         return
       end

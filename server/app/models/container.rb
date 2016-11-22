@@ -131,7 +131,7 @@ class Container
 
   # @return [String]
   def instance_name
-    stack = self.label('io.kontena.stack.name'.freeze) || 'default'.freeze
+    stack = self.label('io.kontena.stack.name'.freeze) || Stack::NULL_STACK
     service = self.label('io.kontena.service.name'.freeze)
     instance = self.instance_number || '0'.freeze
 

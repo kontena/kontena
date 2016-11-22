@@ -38,7 +38,7 @@ module Docker
     def default_stack?
       return false if self.labels['io.kontena.service.id'].nil?
 
-      self.labels['io.kontena.stack.name'].nil? || self.labels['io.kontena.stack.name'].to_s == 'default'.freeze
+      self.labels['io.kontena.stack.name'].nil? || self.labels['io.kontena.stack.name'].to_s == 'null'.freeze
     end
 
     # @return [Boolean]

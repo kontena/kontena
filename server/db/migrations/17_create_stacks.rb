@@ -4,10 +4,10 @@ class CreateStacks < Mongodb::Migration
     StackRevision.create_indexes
     StackDeploy.create_indexes
     Grid.all.each do |grid|
-      default_stack = grid.stacks.find_by(name: 'default')
+      default_stack = grid.stacks.find_by(name: Stack::NULL_STACK)
       unless default_stack
         default_stack = Stack.create!(
-          name: 'default',
+          name: Stack::NULL_STACK,
           grid: grid
         )
       end

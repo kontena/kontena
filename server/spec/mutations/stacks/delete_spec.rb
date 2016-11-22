@@ -11,7 +11,7 @@ describe Stacks::Delete do
     web = GridService.create(grid: grid, name: 'web', image_name: 'web:latest', stack: stack)
     stack.reload
   }
-  let(:default_stack) { grid.stacks.find_by(name: 'default') }
+  let(:default_stack) { grid.stacks.find_by(name: Stack::NULL_STACK) }
   let(:worker_klass) do
     Class.new do
       include Celluloid
@@ -64,7 +64,7 @@ describe Stacks::Delete do
     end
 
     it 'does not allow to remove stack that has linked from other stacks' do
-      default_stack = grid.stacks.find_by(name: 'default')
+      default_stack = grid.stacks.find_by(name: Stack::NULL_STACK)
       stack
       foo = GridServices::Create.run(
         grid: grid, stateful: false,

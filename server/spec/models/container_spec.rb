@@ -128,9 +128,9 @@ describe Container do
       subject.instance_number = 3
       subject.labels = {
         'io;kontena;service;name' => 'redis',
-        'io;kontena;stack;name' => 'default'
+        'io;kontena;stack;name' => 'null'
       }
-      expect(subject.instance_name).to eq('default-redis-3')
+      expect(subject.instance_name).to eq('null-redis-3')
     end
   end
 

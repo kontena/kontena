@@ -73,7 +73,7 @@ class GridService
 
   # @return [Boolean]
   def default_stack?
-    self.stack.try(:name).to_s == 'default'.freeze
+    self.stack.try(:name).to_s == Stack::NULL_STACK
   end
 
   # @param [String] state
@@ -243,7 +243,7 @@ class GridService
 
   def ensure_stack
     if self.grid_id && self.stack_id.nil?
-      self.stack = self.grid.stacks.find_by(name: 'default')
+      self.stack = self.grid.stacks.find_by(name: Stack::NULL_STACK)
     end
   end
 end
