@@ -6,4 +6,5 @@ class JobSupervisor < Celluloid::SupervisionGroup
   supervise LeaderElectorJob, as: :leader_elector_job
   supervise TelemetryJob, as: :telemetry_job
   supervise GridServiceHealthMonitorJob, as: :service_health_monitor_job
+  supervise CloudWebsocketConnectJob, as: :cloud_websocket_connect_job
 end
