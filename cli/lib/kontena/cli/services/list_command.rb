@@ -17,7 +17,7 @@ module Kontena::Cli::Services
       services = grids['services'].sort_by{|s| s['updated_at'] }.reverse
       if quiet?
         services.each do |service|
-          puts "#{service.dig('stack', 'id')}/#{service['name']}"
+          puts service['id'].split('/', 2)[1]
         end
       else
         titles = ['NAME', 'INSTANCES', 'STATEFUL', 'STATE', 'EXPOSED PORTS']
@@ -39,7 +39,7 @@ module Kontena::Cli::Services
       health = health_status(service)
       vars = [
         health_status_icon(health),
-        "#{service.dig('stack', 'name')}/#{service['name']}",
+        "#{service['id'].split('/', 2)[1]}",
         instances,
         stateful,
         service['state'],

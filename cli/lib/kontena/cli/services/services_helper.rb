@@ -41,9 +41,9 @@ module Kontena
         # @param [String] service_id
         def show_service(token, service_id)
           service = get_service(token, service_id)
-          grid = service['id'].split('/')[0]
+          stack = service['stack']
           puts "#{service['id']}:"
-          puts "  stack: #{service['stack']['id'] }"
+          puts "  stack: #{stack['id'] }" if stack
           puts "  status: #{service['state'] }"
           puts "  image: #{service['image']}"
           puts "  revision: #{service['revision']}"
@@ -279,7 +279,7 @@ module Kontena
           elsif count == 1
             param = "#{current_grid}/#{service_id}"
           else
-            param = "#{current_grid}/default/#{service_id}"
+            param = "#{current_grid}/#{service_id}"
           end
         end
 
