@@ -13,6 +13,7 @@ variables:
     from: 
       vault: WP_ADMIN_PASSWORD # first try to get WP_ADMIN_PASSWORD from vault
       env: WORDPRESS_DB_PASSWORD # then try from local env
+      prompt: Enter a password for your wordpress or leave empty to generate random # then prompt
       random_string: # if prompt returned nil, generate a random string
         length: 10
         charset: ascii_printable
@@ -29,8 +30,6 @@ services:
       service: wordpress
     image: wordpress:$TAG
     stateful: true
-    environment:
-      - WORDPRESS_DB_PASSWORD=${STACK}_secret
     secrets: 
       - *wp_admin_secret # starnard yaml referencing, handled by YAML.load
       - secret: FOO
@@ -52,3 +51,4 @@ services:
     environment:
       - INTERNAL_VAR=$$INTERNAL_VAR
       - RANDOM_VAR=${test_var}
+

@@ -15,63 +15,54 @@ module Kontena::Cli::Stacks
       # @param [Hash] from
       # @return [Hash]
       def extend_from(from)
-        service_config['environment'] = extend_env_vars(
-          from['environment'],
-          service_config['environment']
-        )
-        service_config['secrets'] = extend_secrets(
-          from['secrets'],
-          service_config['secrets']
-        )
-        build_args = extend_build_args(safe_dig(from, 'build', 'args'), safe_dig(service_config, 'build', 'args'))
+        service_config['environment'] = extend_env_vars(from['environment'], service_config['environment'])
+        service_config['secrets']     = extend_secrets( from['secrets'], service_config['secrets'])
+        build_args                    = extend_build_args(safe_dig(from, 'build', 'args'), safe_dig(service_config, 'build', 'args'))
         unless build_args.empty?
-          service_config['build'] = {} unless service_config['build']
+          service_config['build'] ||= {}
           service_config['build']['args'] = build_args
         end
-
         from.merge(service_config)
       end
 
       private
 
+      # Takes two arrays of "key=value" pairs and merges them. Keys in "from"-array
+      # will not overwrite keys that already exist in "to"-array.
+      #
       # @param [Array] from
       # @param [Array] to
       # @return [Array]
       def extend_env_vars(from, to)
-        env_vars = to || []
-        if from
-          from.each do |env|
-            env_vars << env unless to && to.find do |key|
-              key.split('=').first == env.split('=').first
-            end
-          end
-        end
-        env_vars
+        to   ||= []
+        from ||= []
+        to_hash   = Hash[*to.flat_map {|t| t.split('=') }]
+        from_hash = Hash[*from.flat_map {|f| f.split('=') }]
+
+        from_hash.merge(to_hash).map {|k,v| "#{k}=#{v}"}
       end
 
+      # Takes two arrays of hashes containing { 'secret' => 'str', 'type' => 'str', 'name' => 'str' }
+      # and merges them. 'secret' is the primary key, secrets found in "to" are not overwritten.
+      #
       # @param [Array] from
       # @param [Array] to
       # @return [Array]
       def extend_secrets(from, to)
-        secrets = to || []
-        if from
-          from.each do |from_secret|
-            secrets << from_secret unless to && to.any? do |to_secret|
-              to_secret['secret'] == from_secret['secret']
-            end
-          end
+        from ||= []
+        to   ||= []
+        uniq_from = []
+        from.each do |from_hash|
+          uniq_from << from_hash unless to.find {|to_hash| from_hash['secret'] == to_hash['secret'] }
         end
-        secrets
+        to + uniq_from
       end
 
+      # Basic merge of two hashes, "to" is dominant.
       def extend_build_args(from, to)
-        args = to || {}
-        if from
-          from.each do |k,v|
-            args[k] = v unless args.has_key?(k)
-          end
-        end
-        args
+        from ||= {}
+        to   ||= {}
+        from.merge(to)
       end
     end
   end

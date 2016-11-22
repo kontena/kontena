@@ -71,7 +71,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(ENV).to receive(:key?).and_return(true)
         allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
         allow(ENV).to receive(:[]).with('STACK').and_return('test')
-        allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
+        allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
         allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
       end
 
@@ -95,14 +95,13 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
           .and_return(fixture('stack-with-variables.yml'))
-        allow(ENV).to receive(:key?)
+        allow(ENV).to receive(:[])
           .with('MYSQL_IMAGE')
-          .and_return(false)
+          .and_return(nil)
 
         expect {
           subject
-        }.to output('The MYSQL_IMAGE is not set. Substituting an empty string.
-').to_stdout
+        }.to output("Value for MYSQL_IMAGE is not set. Substituting with an empty string.\n").to_stdout
       end
     end
 
@@ -111,7 +110,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
       allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
       allow(ENV).to receive(:[]).with('STACK').and_return('test')
-      allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
+      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
       allow(File).to receive(:read)
         .with(absolute_yaml_path)
         .and_return(fixture('stack-with-variables.yml'))
@@ -148,7 +147,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   describe '#execute' do
     before(:each) do
       allow(ENV).to receive(:[]).with('STACK').and_return('test')
-      allow(ENV).to receive(:[]).with('grid').and_return('test-grid')
+      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
     end
 
     context 'when extending services' do
@@ -272,7 +271,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     it 'returns validation errors' do
       allow(File).to receive(:read)
         .with(absolute_yaml_path('kontena_v3.yml'))
-        .and_return(fixture('kontena-invalid.yml'))
+        .and_return(fixture('stack-invalid.yml'))
       outcome = subject.execute
       expect(outcome[:errors].size).to eq(1)
     end
