@@ -29,43 +29,43 @@ module Kontena::Cli::Services
 
     describe '#update_service' do
       it 'creates PUT services/:id request to Kontena Server' do
-        expect(client).to receive(:put).with('services/test-grid/default/1', {'name' => 'test-service'})
+        expect(client).to receive(:put).with('services/test-grid/null/1', {'name' => 'test-service'})
         subject.update_service(token, '1', {'name' => 'test-service'})
       end
     end
 
     describe '#get_service' do
       it 'creates GET services/:id request to Kontena Server' do
-        expect(client).to receive(:get).with('services/test-grid/default/test-service')
+        expect(client).to receive(:get).with('services/test-grid/null/test-service')
         subject.get_service(token, 'test-service')
       end
     end
 
     describe '#stop_service' do
       it 'creates POST services/:id/stop request to Kontena Server' do
-        expect(client).to receive(:post).with('services/test-grid/default/test-service/stop', {})
+        expect(client).to receive(:post).with('services/test-grid/null/test-service/stop', {})
         subject.stop_service(token, 'test-service')
       end
     end
 
     describe '#start_service' do
       it 'creates POST services/:id/start request to Kontena Server' do
-        expect(client).to receive(:post).with('services/test-grid/default/test-service/start', {})
+        expect(client).to receive(:post).with('services/test-grid/null/test-service/start', {})
         subject.start_service(token, 'test-service')
       end
     end
 
     describe '#restart_service' do
       it 'creates POST services/:id/restart request to Kontena Server' do
-        expect(client).to receive(:post).with('services/test-grid/default/test-service/restart', {})
+        expect(client).to receive(:post).with('services/test-grid/null/test-service/restart', {})
         subject.restart_service(token, 'test-service')
       end
     end
 
     describe '#deploy_service' do
       it 'creates POST services/:id/deploy request to Kontena Server' do
-        allow(client).to receive(:get).with('services/test-grid/default/1').and_return({'state' => 'running'})
-        expect(client).to receive(:post).with('services/test-grid/default/1/deploy', {'strategy' => 'ha'})
+        allow(client).to receive(:get).with('services/test-grid/null/1').and_return({'state' => 'running'})
+        expect(client).to receive(:post).with('services/test-grid/null/1/deploy', {'strategy' => 'ha'})
         subject.deploy_service(token, '1', {'strategy' => 'ha'})
       end
     end
@@ -147,7 +147,7 @@ module Kontena::Cli::Services
 
     describe '#parse_service_id' do
       it 'adds current_grid & stack if service_id is missing prefix' do
-        expect(subject.parse_service_id('mysql')).to eq('test-grid/default/mysql')
+        expect(subject.parse_service_id('mysql')).to eq('test-grid/null/mysql')
       end
 
       it 'adds current grid if service_id has stack & service' do
