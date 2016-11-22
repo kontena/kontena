@@ -89,7 +89,7 @@ describe '/v1/services' do
       redis_service
       data = {
         links: [
-          {name: 'default/redis', alias: 'redis'}
+          {name: 'null/redis', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
@@ -116,7 +116,7 @@ describe '/v1/services' do
     it 'returns error when linked service does not exist' do
       data = {
         links: [
-          {name: 'default/foo', alias: 'redis'}
+          {name: 'null/foo', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
