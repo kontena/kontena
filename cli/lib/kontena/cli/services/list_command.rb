@@ -37,9 +37,14 @@ module Kontena::Cli::Services
         "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"
       }.join(", ")
       health = health_status(service)
+      if service.dig('stack', 'name').to_s == 'null'.freeze
+        name = service['name']
+      else
+        name = "#{service.dig('stack', 'name')}/#{service['name']}"
+      end
       vars = [
         health_status_icon(health),
-        "#{service.dig('stack', 'name')}/#{service['name']}",
+        name,
         instances,
         stateful,
         service['state'],

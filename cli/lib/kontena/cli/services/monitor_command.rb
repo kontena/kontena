@@ -15,8 +15,8 @@ module Kontena::Cli::Services
 
       loop do
         nodes = {}
-        service = client(token).get("services/#{current_grid}/#{name}")
-        result = client(token).get("services/#{current_grid}/#{name}/containers")
+        service = client(token).get("services/#{parse_service_id(name)}")
+        result = client(token).get("services/#{parse_service_id(name)}/containers")
         result['containers'].each do |container|
           nodes[container['node']['name']] ||= []
           nodes[container['node']['name']] << container
