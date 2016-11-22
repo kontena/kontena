@@ -6,9 +6,26 @@ require_relative './rpc_server'
 
 module Cloud
   class WebsocketClient
+    class Config
+      attr_accessor :api_uri
+      def initialize
+        @api_uri = nil
+      end
+    end
+
+    def self.configure(&block)
+      config = Config.new
+      yield config
+      @@api_uri = config.api_uri
+    end
+
+    def self.api_uri
+      @@api_uri
+    end
+
     include Logging
     KEEPALIVE_TIME = 30
-
+    @@api_uri
     attr_reader :api_uri,
                 :client_id,
                 :client_secret,
@@ -23,20 +40,18 @@ module Cloud
     # @param [String] api_uri
     # @param [String] client_id
     # @param [String] client_secret
-    def initialize(api_uri, client_id, client_secret)
-      @api_uri = api_uri
+    def initialize(client_id, client_secret)
+      @api_uri = self.class.api_uri
       @client_id = client_id
       @client_secret = client_secret
       @rpc_server = RpcServer.new
-      @abort = false
-      info "cloud connection initialized with client_id #{@client_id}"
       @connected = false
       @connecting = false
       @ping_timer = nil
     end
 
     def ensure_connect
-      @connect_timer = EM::PeriodicTimer.new(1) {
+      @connect_timer = EM::PeriodicTimer.new(5) {
         connect unless connected?
       }
       @connect_verify_timer = EM::PeriodicTimer.new(KEEPALIVE_TIME) {
@@ -49,7 +64,7 @@ module Cloud
     def disconnect
       @connect_timer.cancel
       @connect_verify_timer.cancel
-      self.ws.close
+      self.ws.close if self.ws
     end
 
     # @return [Boolean]
@@ -64,12 +79,16 @@ module Cloud
 
     def connect
       return if connecting?
+      if self.api_uri.to_s.empty?
+        error "Cloud Socket URI not configured"
+        return
+      end
       @connected = false
       @connecting = true
       headers = {
         'Authorization' => "Basic #{Base64.encode64(self.client_id+':'+self.client_secret)}"
       }
-      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, { headers: headers })
+      @ws = Faye::WebSocket::Client.new("#{self.api_uri}/platform", nil, { headers: headers })
 
       @ws.on :open do |event|
         on_open(event)
@@ -103,7 +122,7 @@ module Cloud
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
       ping_timer.cancel if ping_timer
-      info "cloud connection opened"
+      info "cloud connection opened to #{self.api_uri}"
       @connected = true
       @connecting = false
     end

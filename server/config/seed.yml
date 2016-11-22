@@ -17,6 +17,7 @@ default: &default
   oauth2.userinfo_email_verified_jsonpath: <%= ENV['AUTH_USERINFO_EMAIL_VERIFIED_JSONPATH'] %>
   oauth2.userinfo_user_id_jsonpath: <%= ENV['AUTH_USERINFO_USER_ID_JSONPATH'] %>
   oauth2.ignore_invalid_ssl: <%= ENV['AUTH_IGNORE_INVALID_SSL'].to_s == "true" %>
+  cloud.socket_uri: <%= ENV['CLOUD_SOCKET_URI'] %>
 development:
   <<: *default
 production:

@@ -7,7 +7,6 @@ class CloudWebsocketConnectJob
   include ConfigHelper # adds a .config method
 
   def initialize(perform = true)
-    @root_url = ENV['CLOUD_WS_URL']
     async.perform if perform
   end
 
@@ -25,13 +24,12 @@ class CloudWebsocketConnectJob
   end
 
   def cloud_enabled?
-    config['cloud.enabled'] && config['oauth2.client_id'] && config['oauth2.client_secret']
+    config['cloud.enabled'] && !Cloud::WebsocketClient.api_uri.to_s.empty? && config['oauth2.client_id'] && config['oauth2.client_secret']
   end
 
   def connect
     if @client.nil?
-      info 'opening connection to Kontena Cloud'
-      @client = Cloud::WebsocketClient.new("#{@root_url}/platform", config['oauth2.client_id'], config['oauth2.client_secret'])
+      @client = Cloud::WebsocketClient.new(config['oauth2.client_id'], config['oauth2.client_secret'])
       @client.ensure_connect
     end
     @client
