@@ -29,8 +29,11 @@ module Kontena::NetworkAdapters
       subscribe('agent:node_info', :on_node_info)
       subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
+
+      @ipam_client = IpamClient.new
+
+      # Default size of pool is number of CPU cores, 2 for 1 core machine
       @executor_pool = WeaveExecutor.pool(args: [autostart])
-      # ^ Default size of pool is number of CPU cores, 2 for 1 core machine
     end
 
     def finalizer
@@ -175,7 +178,6 @@ module Kontena::NetworkAdapters
     end
 
     def on_ipam_start(topic, data)
-      @ipam_client = IpamClient.new
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
       @ipam_running = true
