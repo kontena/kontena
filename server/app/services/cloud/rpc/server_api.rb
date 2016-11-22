@@ -2,6 +2,7 @@ require 'securerandom'
 module Cloud
   module Rpc
     class ServerApi
+      include Logging
       def access_token
         token = SecureRandom.hex(32)
         @access_token = AccessToken.create!(
@@ -58,6 +59,7 @@ module Cloud
       end
 
       def request(path, opts = {})
+        start_time = Time.now.to_f
         env = Rack::MockRequest.env_for(path, opts)
         env['CONTENT_TYPE'] = "application/json"
         env['HTTP_AUTHORIZATION'] = "Bearer #{access_token}"
@@ -70,6 +72,8 @@ module Cloud
         unless [200, 201].include?(status)
           raise RpcServer::Error.new(status, result)
         end
+        end_time = Time.now.to_f
+        info "\"#{opts[:method].to_s.upcase} #{path}\" #{status} #{headers['Content-Length']} #{(end_time-start_time).round(4)}"
         result
       ensure
         @access_token.destroy
