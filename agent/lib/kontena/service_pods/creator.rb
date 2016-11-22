@@ -42,10 +42,8 @@ module Kontena
             self.cleanup_container(service_container)
           end
         end
-        service_config = service_pod.service_config
+        service_config = config_container(service_pod)
 
-        Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
-        Celluloid::Actor[:network_adapter].modify_network_opts(service_config) unless service_pod.net == 'host'
         debug "creating container: #{service_pod.name}"
         service_container = create_container(service_config)
         debug "container created: #{service_pod.name}"
@@ -136,6 +134,19 @@ module Kontena
         container.stop('timeout' => 10)
         container.wait
         container.delete(v: true)
+      end
+
+      # Docker create configuration for ServicePod
+      # @param [ServicePod] service_pod
+      # @return [Hash] Docker create API JSON object
+      def config_container(service_pod)
+        service_config = service_pod.service_config
+
+        unless service_pod.net == 'host'
+          network_adapter.modify_create_opts(service_config)
+        end
+
+        service_config
       end
 
       # @param [Hash] opts

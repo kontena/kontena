@@ -143,13 +143,14 @@ module Kontena::NetworkAdapters
       opts['Cmd'] = cmd
 
       modify_host_config(opts)
-      opts
-    end
 
-    # @param [Hash] opts
-    def modify_network_opts(opts)
-      opts['Labels']['io.kontena.container.overlay_cidr'] = @ipam_client.reserve_address('kontena')
-      opts['Labels']['io.kontena.container.overlay_network'] = 'kontena'
+      # IPAM
+      overlay_cidr = @ipam_client.reserve_address(DEFAULT_NETWORK)
+
+      info "Create container=#{opts['name']} in network=#{DEFAULT_NETWORK} with overlay_cidr=#{overlay_cidr}"
+
+      opts['Labels']['io.kontena.container.overlay_cidr'] = overlay_cidr
+      opts['Labels']['io.kontena.container.overlay_network'] = DEFAULT_NETWORK
 
       opts
     end
@@ -163,6 +164,7 @@ module Kontena::NetworkAdapters
       if dns && host_config['NetworkMode'].to_s != 'host'.freeze
         host_config['Dns'] = [dns]
       end
+
       opts['HostConfig'] = host_config
     end
 
