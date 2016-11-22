@@ -129,7 +129,7 @@ describe Kontena::Workers::WeaveWorker do
         'Hostname' => 'redis-2'
       })
       allow(container).to receive(:labels).and_return({
-        'io.kontena.stack.name' => 'default',
+        'io.kontena.stack.name' => 'null',
         'io.kontena.grid.name' => 'foo',
         'io.kontena.service.name' => 'redis',
         'io.kontena.service.instance_number' => 2,

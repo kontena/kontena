@@ -35,10 +35,10 @@ describe Kontena::Cli::Services::Secrets::LinkCommand do
           {secret: 'MY_PASSWORD', name: 'PASSWORD', type: 'env'}
         ]
       }
-      allow(client).to receive(:get).with("services/test-grid/default/foo").and_return({
+      allow(client).to receive(:get).with("services/test-grid/null/foo").and_return({
         'secrets' => []
       })
-      expect(client).to receive(:put).with("services/test-grid/default/foo", data)
+      expect(client).to receive(:put).with("services/test-grid/null/foo", data)
       subject.run(['foo', 'MY_PASSWORD:PASSWORD:env'])
     end
 
@@ -54,8 +54,8 @@ describe Kontena::Cli::Services::Secrets::LinkCommand do
           {secret: 'MY_PASSWORD', name: 'PASSWORD', type: 'env'}
         ]
       }
-      allow(client).to receive(:get).with("services/test-grid/default/foo").and_return(original)
-      expect(client).to receive(:put).with("services/test-grid/default/foo", data)
+      allow(client).to receive(:get).with("services/test-grid/null/foo").and_return(original)
+      expect(client).to receive(:put).with("services/test-grid/null/foo", data)
       subject.run(['foo', 'MY_PASSWORD:PASSWORD:env'])
     end
   end

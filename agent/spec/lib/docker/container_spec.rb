@@ -91,7 +91,7 @@ describe Docker::Container do
     it 'returns true if container is part of default stack' do
       allow(subject).to receive(:labels).and_return({
         'io.kontena.service.id' => 'aaa',
-        'io.kontena.stack.name' => 'default'
+        'io.kontena.stack.name' => 'null'
       })
       expect(subject.default_stack?).to be_truthy
     end

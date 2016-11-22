@@ -11,8 +11,8 @@ module Stacks
     end
 
     def validate
-      if stack_instance.name == 'default'
-        add_error(:stack, :access_denied, "Cannot update default stack")
+      if stack_instance.name == Stack::NULL_STACK
+        add_error(:stack, :access_denied, "Cannot update null stack")
         return
       end
       if self.services.size == 0

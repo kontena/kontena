@@ -182,7 +182,7 @@ module Docker
     # @param [GridService] grid_service
     # @return [String]
     def build_domainname(grid_service)
-      if grid_service.stack.name == 'default'.freeze
+      if grid_service.stack.name == Stack::NULL_STACK
         "#{grid_service.grid.name}.kontena.local"
       else
         "#{grid_service.stack.name}.#{grid_service.grid.name}.kontena.local"
