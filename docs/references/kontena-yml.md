@@ -131,6 +131,10 @@ hooks:
       cmd: grunt dist
 ```
 
+#### health_check
+
+See information about configuring service health checks in [Using Kontena: Health checks](../using-kontena/health-check.md).
+
 ### Supported Docker Compose keys
 
 #### image
