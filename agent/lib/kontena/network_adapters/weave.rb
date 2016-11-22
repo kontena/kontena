@@ -321,13 +321,14 @@ module Kontena::NetworkAdapters
       self.attach_container(container_id, cidr)
     end
 
-    def detach_network(event)
-      overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
-      overlay_network = event.Actor.attributes['io.kontena.container.overlay_network']
-      if overlay_cidr
-        debug "releasing weave network address for container #{event.id}"
-        @ipam_client.release_address(overlay_network, overlay_cidr)
-      end
+    # Remove container from weave network
+    #
+    # @param [String] container_id may not exist anymore
+    # @param [Hash] labels Docker container labels
+    def remove_container(container_id, overlay_network, overlay_cidr)
+      info "Remove container=#{container_id} from network=#{overlay_network} at cidr=#{overlay_cidr}"
+
+      @ipam_client.release_address(overlay_network, overlay_cidr)
     end
 
     private
