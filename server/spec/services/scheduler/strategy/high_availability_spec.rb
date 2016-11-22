@@ -42,9 +42,8 @@ describe Scheduler::Strategy::HighAvailability do
       it 'returns node that has data volume container' do
         stateful_service.containers.create!(
           name: 'test-3-volumes', host_node: nodes[2], container_type: 'volume', container_id: 'aa',
+          instance_number: 3,
           labels: {
-            'io;kontena;service;id' => stateful_service.id.to_s,
-            'io;kontena;service;instance_number' => '3',
             'io;kontena;container;type' => 'volume'
           }
         )
@@ -55,9 +54,8 @@ describe Scheduler::Strategy::HighAvailability do
         node4 = HostNode.create!(node_id: 'node4', name: 'node-4', connected: true, grid: grid)
         stateful_service.containers.create!(
           name: 'test-3-volumes', host_node: node4, container_type: 'volume', container_id: 'aa',
+          instance_number: 3,
           labels: {
-            'io;kontena;service;id' => stateful_service.id.to_s,
-            'io;kontena;service;instance_number' => '3',
             'io;kontena;container;type' => 'volume'
           }
         )
@@ -81,9 +79,8 @@ describe Scheduler::Strategy::HighAvailability do
     it 'returns zero rank if instance is not already scheduled to node' do
       stateless_service.containers.create!(
         name: "#{stateless_service.name}-2", host_node: nodes[2],
+        instance_number: 2,
         labels: {
-          'io;kontena;service;id' => stateless_service.id.to_s,
-          'io;kontena;service;instance_number' => '2',
           'io;kontena;container;type' => 'container'
         }
       )
@@ -93,9 +90,8 @@ describe Scheduler::Strategy::HighAvailability do
     it 'returns negative rank if instance is already scheduled to node' do
       stateless_service.containers.create!(
         name: "#{stateless_service.name}-2", host_node: node,
+        instance_number: 2,
         labels: {
-          'io;kontena;service;id' => stateless_service.id.to_s,
-          'io;kontena;service;instance_number' => '2',
           'io;kontena;container;type' => 'container'
         }
       )

@@ -30,8 +30,8 @@ module Scheduler
       # @param [Integer] instance_number
       # @return [Boolean]
       def same_instance?(container, service, instance_number)
-        return false unless container.labels['io;kontena;service;id'].to_s == service.id.to_s
-        return false unless container.labels['io;kontena;service;instance_number'].to_s == instance_number.to_s
+        return false unless container.grid_service_id.to_s == service.id.to_s
+        return false unless container.instance_number.to_i == instance_number.to_i
 
         true
       end

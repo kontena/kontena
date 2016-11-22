@@ -46,10 +46,7 @@ describe Scheduler::Filter::Port do
       service.containers.create!(
         name: 'redis-1',
         host_node: nodes[1],
-        labels: {
-          'io;kontena;service;id' => service.id.to_s,
-          'io;kontena;service;instance_number' => '1'
-        },
+        instance_number: 1,
         network_settings: {
           'ports' => {
             '6379/tcp' => [{'node_port' => 6379, 'node_ip' => '0.0.0.0'}]

@@ -6,6 +6,7 @@ describe Container do
         :container_id, :name, :driver,
         :exec_driver, :image, :image_version,
         :hostname, :domainname).of_type(String) }
+  it { should have_fields(:instance_number).of_type(Integer) }
   it { should have_fields(:env, :volumes, :cmd).of_type(Array) }
   it { should have_fields(:network_settings, :state, :labels).of_type(Hash) }
   it { should have_fields(:finished_at, :started_at).of_type(Time) }
@@ -23,7 +24,7 @@ describe Container do
   it { should have_index_for(host_node_id: 1) }
   it { should have_index_for(container_id: 1) }
   it { should have_index_for(state: 1) }
-  it { should have_index_for(labels: 1) }
+  it { should have_index_for(instance_number: 1) }
 
   let(:grid) do
     Grid.create(name: 'test-grid')
@@ -124,10 +125,10 @@ describe Container do
     end
 
     it 'returns correct name for instance' do
+      subject.instance_number = 3
       subject.labels = {
         'io;kontena;service;name' => 'redis',
-        'io;kontena;stack;name' => 'default',
-        'io;kontena;service;instance_number' => '3'
+        'io;kontena;stack;name' => 'default'
       }
       expect(subject.instance_name).to eq('default-redis-3')
     end
@@ -150,11 +151,7 @@ describe Container do
       (1..3).each do |i|
         grid_service.containers.create!(
           name: "redis-#{i}",
-          labels: {
-            "io;kontena;service;id" => grid_service.id.to_s,
-            "io;kontena;stack;name" => "default",
-            "io;kontena;service;instance_number" => i.to_s,
-          }
+          instance_number: i
         )
       end
 

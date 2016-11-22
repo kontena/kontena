@@ -93,10 +93,7 @@ describe Scheduler::Filter::Memory do
       service_instance = test_service.containers.create!(
         name: 'test-service-1',
         host_node: candidate,
-        labels: {
-          'io;kontena;service;id' => test_service.id.to_s,
-          'io;kontena;service;instance_number' => '1'
-        }
+        instance_number: 1
       )
       reject = subject.reject_candidate?(
         candidate, 500.megabytes, test_service, 1
