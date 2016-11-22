@@ -70,19 +70,17 @@ describe Scheduler::Filter::Affinity do
 
       before(:each) do
         service.containers.create!(
-          name: 'redis-1', host_node: nodes[0],
+          name: 'redis-1', host_node: nodes[0], instance_number: 1,
           labels: {
             'io;kontena;container;name' => 'redis-1',
-            'io;kontena;service;name' => 'redis',
-            'io;kontena;service;instance_number' => '1'
+            'io;kontena;service;name' => 'redis'
           }
         )
         service.containers.create!(
-          name: 'redis-2', host_node: nodes[1],
+          name: 'redis-2', host_node: nodes[1], instance_number: 2,
           labels: {
             'io;kontena;container;name' => 'redis-2',
-            'io;kontena;service;name' => 'redis',
-            'io;kontena;service;instance_number' => '2'
+            'io;kontena;service;name' => 'redis'
           }
         )
       end
@@ -114,17 +112,15 @@ describe Scheduler::Filter::Affinity do
 
       before(:each) do
         redis_service.containers.create!(
-          name: 'redis-1', host_node: nodes[0],
+          name: 'redis-1', host_node: nodes[0], instance_number: 1,
           labels: {
-            'io;kontena;service;name' => 'redis',
-            'io;kontena;service;instance_number' => '1'
+            'io;kontena;service;name' => 'redis'
           }
         )
         redis_service.containers.create!(
-          name: 'redis-2', host_node: nodes[2],
+          name: 'redis-2', host_node: nodes[2], instance_number: 2,
           labels: {
-            'io;kontena;service;name' => 'redis',
-            'io;kontena;service;instance_number' => '2'
+            'io;kontena;service;name' => 'redis'
           }
         )
       end

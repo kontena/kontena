@@ -96,9 +96,10 @@ module Agent
           image_version: info['Image'],
           cmd: config['Cmd'],
           env: config['Env'],
-          labels: parse_labels(config['Labels']),
+          labels: parse_labels(labels),
           hostname: config['Hostname'],
           domainname: config['Domainname'],
+          instance_number: labels['io.kontena.service.instance_number'],
           state: {
               error: state['Error'],
               exit_code: state['ExitCode'],

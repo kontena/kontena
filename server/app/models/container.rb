@@ -25,6 +25,7 @@ class Container
   field :deploy_rev, type: String
   field :service_rev, type: String
   field :container_type, type: String, default: 'container'
+  field :instance_number, type: Integer
 
   field :health_status, type: String
   field :health_status_at, type: Time
@@ -45,7 +46,7 @@ class Container
   index({ container_id: 1 })
   index({ state: 1 })
   index({ name: 1 })
-  index({ labels: 1 })
+  index({ instance_number: 1 })
 
   default_scope -> { where(deleted_at: nil, container_type: 'container') }
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
@@ -132,7 +133,7 @@ class Container
   def instance_name
     stack = self.label('io.kontena.stack.name'.freeze) || 'default'.freeze
     service = self.label('io.kontena.service.name'.freeze)
-    instance = self.label('io.kontena.service.instance_number'.freeze) || '0'.freeze
+    instance = self.instance_number || '0'.freeze
 
     name = ''
     name << "#{stack}-" if stack
@@ -149,17 +150,12 @@ class Container
     self.labels[key]
   end
 
-  # @return [Integer]
-  def instance_number
-    self.label('io.kontena.service.instance_number'.freeze).to_i
-  end
-
   # @param [GridService] service
   # @param [Integer] instance_number
   def self.service_instance(service, instance_number)
     match = {
-      :'labels.io;kontena;service;id' => service.id.to_s,
-      :'labels.io;kontena;service;instance_number' => instance_number.to_s
+      grid_service_id: service.id,
+      instance_number: instance_number.to_i
     }
     where(match)
   end
