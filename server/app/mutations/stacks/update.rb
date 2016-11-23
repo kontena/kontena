@@ -21,6 +21,7 @@ module Stacks
       end
       sort_services(self.services).each do |s|
         service = s.dup
+        validate_service_links(service)
         existing_service = self.stack_instance.grid_services.where(:name => service[:name]).first
         if existing_service
           service[:grid_service] = existing_service

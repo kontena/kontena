@@ -20,6 +20,19 @@ module Stacks
       end
     end
 
+    # @param [Hash] service
+    def validate_service_links(service)
+      links = service[:links] || []
+      internal_links = links.select{ |l| !l['name'].include?('/') }
+      links = links - internal_links
+      internal_links.each do |l|
+        unless self.services.any?{|s| s[:name] == l['name']}
+          handle_service_outcome_errors(service[:name], ["Linked service #{l['name']} does not exist"], :create)
+        end
+      end
+      service[:links] = links
+    end
+
     def self.included(base)
       base.extend(ClassMethods)
     end
