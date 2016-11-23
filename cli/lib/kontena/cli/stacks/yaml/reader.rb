@@ -7,21 +7,23 @@ module Kontena::Cli::Stacks
 
       attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml
 
-      def initialize(file, skip_validation = false)
+      def initialize(file, skip_validation: false, skip_variables: false, replace_missing: '')
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
         require 'opto'
+        require_relative 'opto/vault_setter'
         require_relative 'opto/vault_resolver'
         require_relative 'opto/prompt_resolver'
-        require_relative 'opto/secret_type'
 
         @file = file
         @raw_content = File.read(File.expand_path(file))
         @errors = []
         @notifications = []
-        @skip_validation = skip_validation
-        parse_variables
+        @skip_validation  = skip_validation
+        @skip_variables   = skip_variables
+        @replace_missing  = replace_missing
+        parse_variables unless skip_variables
         parse_yaml
       end
 
@@ -52,10 +54,10 @@ module Kontena::Cli::Stacks
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
           result[:expose]        = yaml['expose']
-          result[:errors]        = errors
+          result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
           result[:services]      = parse_services(service_name) unless errors.count > 0
-          result[:variables]     = variables.to_h(values_only: true).reject { |k,_| variables.option(k).to.has_key?(:vault) }
+          result[:variables]     = variables.to_h(values_only: true).reject { |k,_| variables.option(k).to.has_key?(:vault) } unless skip_variables?
         end
         result
       end
@@ -64,7 +66,7 @@ module Kontena::Cli::Stacks
         @errors = []
         @notifications = []
         @variables = nil
-        parse_variables
+        parse_variables unless skip_variables?
         parse_yaml
       end
 
@@ -110,6 +112,10 @@ module Kontena::Cli::Stacks
 
       def skip_validation?
         @skip_validation == true
+      end
+
+      def skip_variables?
+        @skip_variables == true
       end
 
       def store_failures(data)
@@ -161,6 +167,8 @@ module Kontena::Cli::Stacks
         text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
           if filler
             filler
+          elsif @replace_missing
+            @replace_missing
           else
             var = v.tr('${}', '')
             val = ENV[var]
@@ -206,7 +214,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename, @skip_validation).execute(service_name)
+        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: @skip_variables, skip_interpolate: @skip_interpolate).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]

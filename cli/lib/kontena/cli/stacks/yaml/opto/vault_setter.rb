@@ -1,6 +1,6 @@
 module Kontena::Cli::Stacks
   module YAML
-    class Vault < Opto::Setter
+    class Opto::Setters::Vault < Opto::Setter
       def set(value)
         require 'shellwords'
         ENV["DEBUG"] && puts("Setting to vault: #{hint}")
