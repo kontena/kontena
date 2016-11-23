@@ -30,7 +30,7 @@ describe Stacks::Update do
       outcome = subject.run
       expect(outcome.success?).to be_truthy
       expect(outcome.result.stack_revisions.count).to eq(2)
-      expect(stack.reload.grid_services.first.image_name).to eq('redis:3.0')
+      expect(stack.reload.grid_services.first.image_name).to eq('redis:2.8')
     end
 
     it 'does not increase version automatically' do
