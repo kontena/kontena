@@ -7,7 +7,7 @@ module Kontena::Cli::Stacks
     include Common
 
     parameter "NAME", "Stack name"
-    parameter "FILE", "Kontena stack file"
+    parameter "[FILE]", "Kontena stack file", default: "kontena.yml"
     option '--deploy', :flag, 'Deploy after upgrade'
 
     def execute
@@ -18,7 +18,7 @@ module Kontena::Cli::Stacks
       spinner "Upgrading stack #{pastel.cyan(name)} " do
         update_stack(token, stack)
       end
-      Kontena.run("stack deploy #{name}")
+      Kontena.run("stack deploy #{name}") if deploy?
     end
 
     def update_stack(token, stack)
