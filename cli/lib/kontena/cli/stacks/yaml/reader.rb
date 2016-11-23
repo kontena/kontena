@@ -21,6 +21,7 @@ module Kontena::Cli::Stacks
         @errors = []
         @notifications = []
         @skip_validation = skip_validation
+        parse_variables
         parse_yaml
       end
 
@@ -29,11 +30,16 @@ module Kontena::Cli::Stacks
         return @variables if @variables
         yaml = ::YAML.load(interpolate(raw_content, 'filler'))
         if yaml && yaml.has_key?('variables')
-          @variables = Opto::Group.new(yaml['variables'])
+          @variables = Opto::Group.new(yaml['variables'], defaults: { from: :env, to: :env })
         else
-          @variables = Opto::Group.new
+          @variables = Opto::Group.new(defaults: { from: :env, to: :env })
         end
         @variables
+      end
+
+      def parse_variables
+        raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
+        variables.run
       end
 
       ##
@@ -49,7 +55,7 @@ module Kontena::Cli::Stacks
           result[:errors]        = errors
           result[:notifications] = notifications
           result[:services]      = parse_services(service_name) unless errors.count > 0
-          result[:variables]     = variables.to_h(values_only: true).reject {|k,_| variables.option(k).type == 'secret'}
+          result[:variables]     = variables.to_h(values_only: true).reject { |k,_| variables.option(k).to.has_key?(:vault) }
         end
         result
       end
@@ -58,6 +64,7 @@ module Kontena::Cli::Stacks
         @errors = []
         @notifications = []
         @variables = nil
+        parse_variables
         parse_yaml
       end
 
@@ -66,7 +73,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_version
-        yaml['version'] || yaml['stack'][/:(.*)/, 1] || '1'
+        yaml['version'] || yaml['stack'].to_s[/:(.*)/, 1] || '1'
       end
 
       # @return [String]
@@ -84,6 +91,11 @@ module Kontena::Cli::Stacks
       end
 
       def parse_yaml
+        load_yaml
+        validate unless skip_validation?
+      end
+
+      def load_yaml
         @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
@@ -151,21 +163,13 @@ module Kontena::Cli::Stacks
             filler
           else
             var = v.tr('${}', '')
-            opt = variables.option(var)
-            if opt
-              if opt.valid?
-                val = opt.value
-              elsif skip_validation?
-                puts "Invalid value for #{var}: #{opt.errors.inspect}"
-              else
-                errors << { file => opt.errors }
-              end
-            elsif ENV[var]
-              val = ENV[var]
+            val = ENV[var]
+            if val
+              val
             else
-              puts "Value for #{var} is not set. Substituting with an empty string."
+              puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+              ''
             end
-            val
           end
         end
       end

@@ -2,26 +2,28 @@ stack: user/stackname
 version: 0.1.1
 variables:
   wp_pass:
-    type: secret # has a callback that writes the value to vault
+    type: string # has a callback that writes the value to vault
     required: true
     min_length: 10
     empty_is_nil: true
-    secret: &wp_admin_secret  # standard yaml anchoring, handled by YAML.load
-      secret: WP_ADMIN_PASSWORD
-      name: WORDPRESS_PASSWORD
-      type: env
     from: 
-      vault: WP_ADMIN_PASSWORD # first try to get WP_ADMIN_PASSWORD from vault
-      env: WORDPRESS_DB_PASSWORD # then try from local env
+      env: WORDPRESS_DB_PASSWORD # first try from local env
       random_string: # if prompt returned nil, generate a random string
         length: 10
         charset: ascii_printable
+    to:
+      env: WP_PASS # put it to WP_PASS env variable
   test_var:
     type: string
     from:
       random_string:
         length: 16
         charset: hex
+    to: 
+      env: test_var
+  TEST_ENV_VAR:      # the default from/to is to set/read env of the option name
+    type: :string
+
 services:
   wordpress:
     extends:
@@ -32,7 +34,9 @@ services:
     environment:
       - WORDPRESS_DB_PASSWORD=${STACK}_secret
     secrets: 
-      - *wp_admin_secret # starnard yaml referencing, handled by YAML.load
+      - secret: WP_ADMIN_PASSWORD
+        name: WORDPRESS_PASSWORD
+        type: env
       - secret: FOO
         name: FOOFOO
         type: env
@@ -52,3 +56,4 @@ services:
     environment:
       - INTERNAL_VAR=$$INTERNAL_VAR
       - RANDOM_VAR=${test_var}
+      - TEST_VAR=$TEST_ENV_VAR

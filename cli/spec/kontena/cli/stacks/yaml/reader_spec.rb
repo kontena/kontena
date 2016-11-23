@@ -29,7 +29,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       'services' => {
         'wordpress' => {
           'image' => 'wordpress:4.1',
-          'extends' => {"file"=>"docker-compose_v2.yml", "service"=>"wordpress"},
           'ports' => ['80:80'],
           'depends_on' => ['mysql'],
           'stateful' => true,
@@ -40,7 +39,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         },
         'mysql' => {
           'image' => 'mysql:5.6',
-          'extends' => {"file"=>"docker-compose_v2.yml", "service"=>"mysql"},
           'stateful' => true,
           'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'],
           'secrets' => []
@@ -107,6 +105,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'replaces $$VAR variables to $VAR format' do
       allow(ENV).to receive(:key?).and_return(true)
+      allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
       allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
       allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
       allow(ENV).to receive(:[]).with('STACK').and_return('test')
