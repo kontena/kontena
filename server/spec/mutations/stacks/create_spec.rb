@@ -158,6 +158,54 @@ describe Stacks::Create do
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
+    it 'does not create a stack if link to another stack is invalid' do
+      services = [
+        {
+          name: 'api',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {name: 'redis/redis', alias: 'redis'}
+          ]
+        }
+      ]
+      outcome = described_class.new(
+        grid: grid,
+        name: 'soome-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      ).run
+      expect(outcome.success?).to be(false)
+      expect(outcome.errors.message.keys).to include('services')
+    end
+
+    it 'does not create a stack if link within a stack is invalid' do
+      services = [
+        {
+          name: 'api',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {name: 'redis', alias: 'redis'}
+          ]
+        }
+      ]
+      outcome = described_class.new(
+        grid: grid,
+        name: 'soome-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      ).run
+      expect(outcome.success?).to be(false)
+      expect(outcome.errors.message.keys).to include('services')
+    end
+
     it 'does not create stack if any service validation fails' do
       services = [
         {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true },
