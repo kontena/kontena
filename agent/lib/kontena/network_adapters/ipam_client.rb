@@ -113,8 +113,8 @@ module Kontena::NetworkAdapters
       debug "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}"
       data = parse_response(error.response)
 
-      if data.is_a?(Hash) && data.has_key?('error')
-        raise IpamError.new(error.response.status, data['error'])
+      if data.is_a?(Hash) && data.has_key?('Error')
+        raise IpamError.new(error.response.status, data['Error'])
       elsif data.is_a?(String) && !data.empty?
         raise IpamError.new(error.response.status, data)
       else
