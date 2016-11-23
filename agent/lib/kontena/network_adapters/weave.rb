@@ -29,8 +29,11 @@ module Kontena::NetworkAdapters
       subscribe('agent:node_info', :on_node_info)
       subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
+
+      @ipam_client = IpamClient.new
+
+      # Default size of pool is number of CPU cores, 2 for 1 core machine
       @executor_pool = WeaveExecutor.pool(args: [autostart])
-      # ^ Default size of pool is number of CPU cores, 2 for 1 core machine
     end
 
     def finalizer
@@ -175,7 +178,6 @@ module Kontena::NetworkAdapters
     end
 
     def on_ipam_start(topic, data)
-      @ipam_client = IpamClient.new
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
       @ipam_running = true
@@ -207,7 +209,7 @@ module Kontena::NetworkAdapters
 
     def ensure_default_pool()
       info 'network and ipam ready, ensuring default network existence'
-      @default_pool = @ipam_client.reserve_pool('kontena', '10.81.0.0/16', '10.81.128.0/17')
+      @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, '10.81.0.0/16', '10.81.128.0/17')
     end
 
     # @param [Hash] info
@@ -319,13 +321,14 @@ module Kontena::NetworkAdapters
       self.attach_container(container_id, cidr)
     end
 
-    def detach_network(event)
-      overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
-      overlay_network = event.Actor.attributes['io.kontena.container.overlay_network']
-      if overlay_cidr
-        debug "releasing weave network address for container #{event.id}"
-        @ipam_client.release_address(overlay_network, overlay_cidr)
-      end
+    # Remove container from weave network
+    #
+    # @param [String] container_id may not exist anymore
+    # @param [Hash] labels Docker container labels
+    def remove_container(container_id, overlay_network, overlay_cidr)
+      info "Remove container=#{container_id} from network=#{overlay_network} at cidr=#{overlay_cidr}"
+
+      @ipam_client.release_address(overlay_network, overlay_cidr)
     end
 
     private

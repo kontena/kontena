@@ -4,10 +4,14 @@ describe Kontena::Workers::WeaveWorker do
 
   let(:event) { spy(:event, id: 'foobar', status: 'start') }
   let(:container) { spy(:container, id: '12345', info: {'Name' => 'test'}) }
-  let(:network_adapter) {double()}
+  let(:network_adapter) { instance_double(Kontena::NetworkAdapters::Weave) }
 
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
+
+  before(:each) do
+    allow(subject.wrapped_object).to receive(:network_adapter).and_return(network_adapter)
+  end
 
   describe '#on_weave_start' do
     it 'calls start' do
@@ -18,70 +22,64 @@ describe Kontena::Workers::WeaveWorker do
 
   describe '#on_container_event' do
     before(:each) do
-      allow(subject.wrapped_object).to receive(:network_adapter).and_return(network_adapter)
       allow(network_adapter).to receive(:running?).and_return(true)
     end
 
     it 'calls #weave_attach on start event' do
       allow(Docker::Container).to receive(:get).with(event.id).and_return(container)
-      expect(subject.wrapped_object).to receive(:weave_attach).once.with(container)
+      expect(subject.wrapped_object).to receive(:start_container).once.with(container)
       subject.on_container_event('topic', event)
     end
 
     it 'calls #weave_detach on destroy event' do
       allow(event).to receive(:status).and_return('destroy')
-      expect(network_adapter).to receive(:detach_network).once.with(event)
+      expect(subject.wrapped_object).to receive(:on_container_destroy).once.with(event)
       subject.on_container_event('topic', event)
     end
 
     it 'calls #start on weave restart event' do
-      network_adapter = double(router_image?: true, running?: true)
-      allow(subject.wrapped_object).to receive(:network_adapter).and_return(network_adapter)
       event = spy(:event, id: 'foobar', status: 'restart', from: 'weaveworks/weave:1.4.5')
+      expect(network_adapter).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
       expect(subject.wrapped_object).to receive(:start).once
       subject.on_container_event('topic', event)
     end
   end
 
-  describe '#weave_attach' do
+  describe '#start_container' do
+    before(:each) do
+      allow(network_adapter).to receive(:running?).and_return(true)
+    end
+
     it 'attaches overlay if container has overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
       allow(subject.wrapped_object).to receive(:register_container_dns)
       expect(subject.wrapped_object).to receive(:attach_overlay).with(container)
-      subject.weave_attach(container)
+      subject.start_container(container)
     end
 
     it 'does not attach overlay if container does not have overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return(nil)
       allow(subject.wrapped_object).to receive(:register_container_dns)
       expect(subject.wrapped_object).not_to receive(:attach_overlay).with(container)
-      subject.weave_attach(container)
+      subject.start_container(container)
     end
 
     it 'registers dns if container has overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
       allow(subject.wrapped_object).to receive(:attach_overlay)
       expect(subject.wrapped_object).to receive(:register_container_dns).with(container)
-      subject.weave_attach(container)
+      subject.start_container(container)
     end
 
     it 'does not register dns if container does not have overlay_cidr' do
       allow(container).to receive(:overlay_cidr).and_return(nil)
       allow(subject.wrapped_object).to receive(:attach_overlay)
       expect(subject.wrapped_object).not_to receive(:register_container_dns)
-      subject.weave_attach(container)
+      subject.start_container(container)
     end
   end
 
   describe '#attach_overlay' do
-    let(:adapter) do
-      instance_double(Kontena::NetworkAdapters::Weave)
-    end
-
-    before(:each) do
-      allow(subject.wrapped_object).to receive(:network_adapter).and_return(adapter)
-    end
-
     context "For a new container" do
       let(:container) do
         double(Docker::Container,
@@ -93,7 +91,7 @@ describe Kontena::Workers::WeaveWorker do
       end
 
       it 'calls network_adapter.attach_container' do
-        expect(adapter).to receive(:attach_container).with('12345', '10.81.128.1/16')
+        expect(network_adapter).to receive(:attach_container).with('12345', '10.81.128.1/16')
 
         subject.attach_overlay(container)
       end
@@ -111,7 +109,7 @@ describe Kontena::Workers::WeaveWorker do
       end
 
       it 'calls network_adapter.migrate_container' do
-        expect(adapter).to receive(:migrate_container).with('12345', '10.81.1.1/16')
+        expect(network_adapter).to receive(:migrate_container).with('12345', '10.81.1.1/16')
 
         subject.attach_overlay(container)
       end

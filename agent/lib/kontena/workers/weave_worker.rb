@@ -24,7 +24,7 @@ module Kontena::Workers
       wait_weave_running?
       info 'attaching network to existing containers'
       Docker::Container.all(all: false).each do |container|
-        self.weave_attach(container)
+        self.start_container(container)
       end
     end
 
@@ -37,38 +37,60 @@ module Kontena::Workers
     # @param [Docker::Event] event
     def on_container_event(topic, event)
       if event.status == 'start'
-        wait_weave_running?
         container = Docker::Container.get(event.id) rescue nil
         if container
-          self.weave_attach(container)
+          self.start_container(container)
+        else
+          warn "skip start event for missing container=#{event.id}"
         end
       elsif event.status == 'restart'
         if network_adapter.router_image?(event.from)
           self.start
         end
-
       elsif event.status == 'destroy'
-        network_adapter.detach_network(event)
+        self.on_container_destroy(event)
       end
     end
 
-    OVERLAY_SUFFIX = '16'
-
+    # Ensure weave network for container
+    #
     # @param [Docker::Container] container
-    def weave_attach(container)
+    def start_container(container)
       overlay_cidr = container.overlay_cidr
+
       if overlay_cidr
+        wait_weave_running?
+
         register_container_dns(container)
         attach_overlay(container)
       else
-        debug "did not find ip for container: #{container.name}, not attaching to weave"
+        debug "skip start for container=#{container.name} without overlay_cidr"
       end
     rescue Docker::Error::NotFoundError
+      debug "skip start for missing container=#{container.name}"
 
     rescue => exc
-      error "#{exc.class.name}: #{exc.message}"
+      error "failed to start container: #{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
     end
+
+    # @param [Docker::Event] event
+    def on_container_destroy(event)
+      container_id = event.id
+      overlay_network = event.Actor.attributes['io.kontena.container.overlay_network']
+      overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
+
+      if overlay_network && overlay_cidr
+        wait_network_ready?
+
+        network_adapter.remove_container(container_id, overlay_network, overlay_cidr)
+      end
+    rescue => exc
+      error "failed to remove container: #{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
+    end
+
+    OVERLAY_SUFFIX = '16'
 
     # @param [String] container_id
     # @param [String] overlay_cidr
