@@ -52,28 +52,24 @@ module Stacks
         new_rev = latest_rev.dup
         new_rev.revision += 1
         new_rev.save
-        create_or_update_services(self.stack_instance, sort_services(self.services))
+        create_new_services(self.stack_instance, sort_services(self.services))
       end
       self.stack_instance.reload
     end
 
     # @param [Stack] stack
     # @param [Array<Hash>]
-    def create_or_update_services(stack, services)
+    def create_new_services(stack, services)
       services.each do |s|
         service = s.dup
         existing_service = stack.grid_services.where(:name => service[:name]).first
-        if existing_service
-          service[:grid_service] = existing_service
-          outcome = GridServices::Update.run(service)
-        else
+        if !existing_service
           service[:grid] = stack.grid
           service[:stack] = stack
           outcome = GridServices::Create.run(service)
-        end
-
-        unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          unless outcome.success?
+            handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          end
         end
       end
     end
