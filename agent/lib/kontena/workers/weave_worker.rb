@@ -22,6 +22,10 @@ module Kontena::Workers
 
     def start
       wait_weave_running?
+
+      @migrate_containers = network_adapter.get_containers
+      debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
+
       info 'attaching network to existing containers'
       Docker::Container.all(all: false).each do |container|
         self.start_container(container)
@@ -95,10 +99,25 @@ module Kontena::Workers
     # @param [String] container_id
     # @param [String] overlay_cidr
     def attach_overlay(container)
-      if container.overlay_suffix != OVERLAY_SUFFIX
-        network_adapter.migrate_container(container.id, "#{container.overlay_ip}/#{OVERLAY_SUFFIX}")
-      else
+      if container.overlay_suffix == OVERLAY_SUFFIX
         network_adapter.attach_container(container.id, container.overlay_cidr)
+      else
+        # override label for existing containers that may need to be migrated
+        overlay_cidr = "#{container.overlay_ip}/#{OVERLAY_SUFFIX}"
+
+        # check for un-migrated containers cached at start
+        if migrate_cidrs = @migrate_containers[container.id[0...12]]
+          debug "Migrate container=#{container.name} with overlay_cidr=#{container.overlay_cidr} from #{migrate_cidrs} to #{overlay_cidr}"
+
+          network_adapter.migrate_container(container.id, overlay_cidr, migrate_cidrs)
+
+          # mark container as migrated
+          @migrate_containers.delete(container.id[0...12])
+        else
+          debug "Migrate container=#{container.name} with overlay_cidr=#{container.overlay_cidr} (not attached) -> #{overlay_cidr}"
+
+          network_adapter.attach_container(container.id, overlay_cidr)
+        end
       end
     end
 

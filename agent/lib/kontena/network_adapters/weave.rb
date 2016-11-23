@@ -280,6 +280,21 @@ module Kontena::NetworkAdapters
       false
     end
 
+    # Inspect current state of attached containers
+    #
+    # @return [Hash<String, String>] container_id[0..12] => [overlay_cidr]
+    def get_containers
+      containers = { }
+
+      @executor_pool.ps() do |id, mac, *cidrs|
+        next if id == 'weave:expose'
+
+        containers[id] = cidrs
+      end
+
+      containers
+    end
+
     # Attach container to weave with given CIDR address
     #
     # @param [String] container_id
@@ -290,23 +305,18 @@ module Kontena::NetworkAdapters
       @executor_pool.async.attach(container_id, cidr)
     end
 
-    # Attach container to weave with given CIDR address, first detaching any mismatching addresses
+    # Attach container to weave with given CIDR address, first detaching any existing mismatching addresses
     #
     # @param [String] container_id
     # @param [String] overlay_cidr '10.81.X.Y/16'
-    def migrate_container(container_id, cidr)
-      info "Migrate container=#{container_id} to cidr=#{cidr}"
-
+    # @param [Array<String>] migrate_cidrs ['10.81.X.Y/19']
+    def migrate_container(container_id, cidr, attached_cidrs)
       # first remove any existing addresses
       # this is required, since weave will not attach if the address already exists, but with a different netmask
-      @executor_pool.ps(container_id) do |name, mac, *cidrs|
-        debug "Migrate check: name=#{name} with cidrs=#{cidrs}"
-
-        cidrs.each do |attached_cidr|
-          if cidr != attached_cidr
-            warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
-            @executor_pool.detach(container_id, attached_cidr)
-          end
+      attached_cidrs.each do |attached_cidr|
+        if cidr != attached_cidr
+          warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
+          @executor_pool.detach(container_id, attached_cidr)
         end
       end
 
