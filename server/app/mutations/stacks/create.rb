@@ -27,7 +27,7 @@ module Stacks
     def validate_services
       sort_services(self.services).each do |s|
         service = s.dup
-        service.delete(:links)
+        validate_service_links(service)
         service[:grid] = self.grid
         outcome = GridServices::Create.validate(service)
         unless outcome.success?
@@ -66,7 +66,7 @@ module Stacks
         service[:stack] = stack
         outcome = GridServices::Create.run(service)
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
         end
       end
     end
