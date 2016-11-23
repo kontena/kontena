@@ -7,7 +7,7 @@ module Kontena::Cli::Stacks
 
       attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml
 
-      def initialize(file, skip_validation: false, skip_variables: false, replace_missing: '')
+      def initialize(file, skip_validation: false, skip_variables: false, replace_missing: nil)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
@@ -214,7 +214,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: @skip_variables, skip_interpolate: @skip_interpolate).execute(service_name)
+        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: @skip_variables, replace_missing: @replace_missing).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
