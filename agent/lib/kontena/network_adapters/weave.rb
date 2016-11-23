@@ -23,7 +23,6 @@ module Kontena::NetworkAdapters
     def initialize(autostart = true)
       @images_exist = false
       @started = false
-      @ipam_running = false
 
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
@@ -89,7 +88,7 @@ module Kontena::NetworkAdapters
 
     def network_ready?
       return false unless running?
-      return false unless ipam_running?
+      return false unless Actor[:ipam_plugin_launcher].running?
       true
     end
 
@@ -99,11 +98,6 @@ module Kontena::NetworkAdapters
       return false if weave.nil?
       return false unless weave.running?
       true
-    end
-
-    # @return [Boolean]
-    def ipam_running?
-      @ipam_running
     end
 
     # @return [Boolean]
@@ -180,7 +174,6 @@ module Kontena::NetworkAdapters
     def on_ipam_start(topic, data)
       ensure_default_pool
       Celluloid::Notifications.publish('network:ready', nil)
-      @ipam_running = true
     end
 
     # Ensure that the host weave bridge is exposed using the given CIDR address,
