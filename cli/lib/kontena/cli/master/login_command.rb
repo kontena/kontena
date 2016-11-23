@@ -255,7 +255,7 @@ module Kontena::Cli::Master
     def update_server_to_config(server)
       server.name ||= next_default_name
       config.servers << server unless config.servers.include?(server)
-      config.current_server = server.name
+      config.current_master = server.name
       config.write
       config.reset_instance
     end
@@ -289,7 +289,7 @@ module Kontena::Cli::Master
 
         name_match = config.find_server(name)
 
-        if name_match 
+        if name_match
           #found a server with the provided name, set the provided url to it and return
           name_match.url = url
           return name_match

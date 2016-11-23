@@ -311,6 +311,50 @@ describe Kontena::Cli::Master::LoginCommand do
     end
   end
 
+  context 'with servers in config' do
+    let(:webserver) { double(:webserver) }
+    before(:each) do
+      allow(File).to receive(:read).and_return('
+        {
+          "current_server": null,
+          "current_account": "kontena",
+          "servers": [
+            {
+              "name": "fooserver",
+              "url": "http://foo.example.com:80",
+              "username": "admin",
+              "grid": "test",
+              "token": "abcd",
+              "token_expires_at": 0,
+              "refresh_token": null
+            }
+          ]
+        }
+      ')
+
+      allow(File).to receive(:write).and_return(true)
+      allow(File).to receive(:exist?).and_return(true)
+      allow(File).to receive(:readable?).and_return(true)
+      allow(Kontena::Client).to receive(:new).and_return(client)
+      allow(Kontena::LocalhostWebServer).to receive(:new).and_return(webserver)
+      allow(webserver).to receive(:port).and_return(12345)
+      allow(webserver).to receive(:serve_one).and_return(
+        { 'code' => 'abcd1234' }
+      )
+    end
+
+    it 'changes current master to created master' do
+      allow(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 302, headers: { 'Location' => 'http://authprovider.example.com/authplz' }))
+      allow(client).to receive(:request).and_return({})
+      allow(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
+      allow(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
+      subject.config.current_master = 'fooserver'
+      subject.config.current_master
+      subject.run(%w(--skip-grid-auto-select http://foobar.example.com))
+      expect(subject.config.current_master.name).to eq 'foobar'
+    end
+  end
+
   describe '#authentication_url_from_master' do
     it 'should exit with error if master returns a json with error' do
       allow(Kontena::Client).to receive(:new).and_return(client)
