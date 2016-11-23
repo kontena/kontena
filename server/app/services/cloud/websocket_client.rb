@@ -86,7 +86,7 @@ module Cloud
       @connected = false
       @connecting = true
       headers = {
-        'Authorization' => "Basic #{Base64.encode64(self.client_id+':'+self.client_secret)}"
+        'Authorization' => "Basic #{Base64.urlsafe_encode64(self.client_id+':'+self.client_secret)}"
       }
       @ws = Faye::WebSocket::Client.new("#{self.api_uri}/platform", nil, { headers: headers })
 
@@ -158,7 +158,7 @@ module Cloud
     end
 
     def handle_invalid_token
-      error 'master does not accept our access token'
+      error 'cloud does not accept our access token'
     end
 
 
