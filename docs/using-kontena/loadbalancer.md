@@ -4,11 +4,11 @@ title: Load Balancer
 
 # Kontena Load Balancer
 
-Load balancers are used to distribute traffic between services. Therefore, having a fully featured, high performance and reliable load balancer is one of the most essential components for building applications composed of multiple services.
+Load balancers are used to distribute traffic between services. Therefore, having a full-featured, high-performance and reliable load balancer is one of the most essential components for building applications composed of multiple services.
 
-With Kontena, developers can enjoy the built-in load balancer that is based on [HAproxy](http://www.haproxy.org/). It is fully managed by Kontena orchestration and enables consistent, portable load balancing on any infrastructure where Kontena Nodes are running.
+With Kontena, developers can enjoy Kontena's built-in load balancer, which is based on [HAproxy](http://www.haproxy.org/). It is fully managed by Kontena orchestration and enables consistent, portable load balancing on any infrastructure where Kontena Nodes are running.
 
-The Kontena Load Balancer key features:
+The Kontena Load Balancer's key features include:
 
 * Zero downtime when load balancer configuration changes
 * Fully automated configuration
@@ -19,9 +19,9 @@ The Kontena Load Balancer key features:
 
 ## Using Kontena Load Balancer
 
-Kontena Load Balancer is a HAproxy / confd service that is configured to watch changes in etcd. Load Balancers may be described in `kontena.yml` and services are connected automatically by linking services to these load balancer services. If a load balanced service is scaled/re-deployed then the load balancer will reload it's configuration on the fly without dropping connections.
+Kontena Load Balancer is a HAproxy / confd service that is configured to watch changes in etcd. Load Balancers may be described in `kontena.yml` and services are connected automatically by linking services to these load balancer services. If a load-balanced service is scaled or redeployed, then the load balancer will reload its configuration on the fly without dropping connections.
 
-An example of Internet facing load balancer:
+Here is an example of an Internet-facing load balancer:
 
 ```
 internet_lb:
@@ -49,9 +49,9 @@ api:
     - internet_lb
 ```
 
-Always remember to link your service to loadbalancer, the linking activates the loadbalancing functionality.
+Always remember to link your service to Kontena Load Balancer, since the linking activates the load balancing functionality.
 
-An example of internal TCP load balancer:
+Here is an example of an internal TCP load balancer:
 
 ```
 galera_lb:
@@ -68,21 +68,21 @@ galera:
     - galera_lb
 ```
 
-## Config Env variables for loadbalancer
+## Config Env Variables for Kontena Load Balancer
 
-These environment variables configure the loadbalancer itself.
+These environment variables configure the load balancer itself.
 
-* `KONTENA_LB_HEALTH_URI`: uri at which to enable loadbalancer level health check endpoint. Returns `200 OK` when loadbalancer is functional.
-* `STATS_PASSWORD`: the password to access stats (default if not set: `secret`)
-* `SSL_CERTS`: SSL certificates to be used, see more: [SSL Termination](loadbalancer#ssl-termination)
+* `KONTENA_LB_HEALTH_URI` - URI at which to enable Kontena Load Balancer level health check endpoint. Returns `200 OK` when Kontena Load Balancer is functional.
+* `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
+* `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer#ssl-termination).
 
 ## Stats
 
-Kontena loadbalancer exposes statistics web UI only on private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 on the loadbalancer instances. The basic auth user is `stats` and password is set with the `STATS_PASSWORD` environment variable (see above).
+Kontena Load Balancer exposes a statistics web UI only on the private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 of the Kontena Load Balancer instances.
 
 ## Basic authentication for services
 
-Kontena loadbalancer supports automatic [basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) for balanced services. To enable basic authentication on a given service, use following configuration:
+Kontena Load Balancer supports automatic [basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) for balanced services. To enable basic authentication on a given service, use the following configuration:
 ```
 version: 2
 services:
@@ -107,7 +107,7 @@ services:
 
 ```
 
-To write the configuration in the vault, use following:
+To write the configuration to the Vault, use the following:
 ```
 $ kontena vault write BASIC_AUTH_FOR_XYZ << EOF
 → user user1 password <bcrypt_password>
@@ -115,20 +115,20 @@ $ kontena vault write BASIC_AUTH_FOR_XYZ << EOF
 → EOF
 ```
 
-If you want to use encrypted password note that encrypted passwords are evaluated using the crypt(3) function so different algorithms are supported. For example MD5, SHA-256, SHA-512 are supported. To generate an encrypted password you can use following examples:
+If you want to use encrypted passwords, note that encrypted passwords are evaluated using the crypt(3) function in order to support different algorithms. For example, MD5, SHA-256 and SHA-512 are supported. To generate an encrypted password you can use the following examples:
 ```
 mkpasswd -m sha-512 passwd
 ```
-Or if your system does not have `mkpasswd` available but you have Docker available, use following:
+Or, if your system does not have `mkpasswd` available but you have Docker available, use the following:
 ```
 docker run -ti --rm alpine mkpasswd -m sha-512 passwd
 ```
 
 ## SSL Termination
 
-Kontena Load Balancer supports ssl termination on multiple certificates. These certificates can be configured to load balancer by setting the `SSL_CERTS` environment variable. The recommended way to do this is by using Kontena Vault.
+Kontena Load Balancer supports ssl termination on multiple certificates. These certificates can be configured for the load balancer by setting the `SSL_CERTS` environment variable. The recommended way to do this is by using Kontena Vault.
 
-The certificate specified in Kontena Load Balancer is a pem file, containing a public certificate followed by a private key (public certificate must be put before the private key, order matters).
+The certificate specified in Kontena Load Balancer is a pem file, which contains a public certificate followed by a private key. (The public certificate must be placed before the private key; order matters.)
 
 You can run the following script to generate a self-signed certificate:
 
@@ -165,9 +165,9 @@ Write certificates to Kontena Vault:
 $ kontena vault write www_domain_com_cert "$(cat www_domain_com.pem)"
 $ kontena vault write api_domain_com_cert "$(cat api_domain_com.pem)"
 ```
-(pem files must contain both a public certificate and a private key)
+(Pem files must contain both a public certificate and a private key.)
 
-Map secrets from Vault to lb service:
+Map secrets from Vault to the Kontena Load Balancer:
 
 ```
 loadbalancer:
@@ -183,16 +183,16 @@ loadbalancer:
       type: env
 ```
 
-## Config Env variables for balanced services
+## Config Env Variables for Load Balanced Services
 
-These options are defined on the services that are balanced through lb.
+These options are defined on the services that are balanced through Kontena Load Balancer.
 
-* `KONTENA_LB_MODE`: mode of load balancing, possible values: http (default), tcp
-* `KONTENA_LB_BALANCE`: load balancing algorithm to use, possible values are: roundrobin (default), source, leastcon
+* `KONTENA_LB_MODE`: mode of load balancing; possible values: http (default), tcp
+* `KONTENA_LB_BALANCE`: load-balancing algorithm to use; possible values: roundrobin (default), source, leastcon
 * `KONTENA_LB_INTERNAL_PORT`: service port that is attached to load balancer
 * `KONTENA_LB_EXTERNAL_PORT`: service port that load balancer starts to listen (only for tcp mode)
-* `KONTENA_LB_VIRTUAL_HOSTS`: comma separated list of virtual hosts (only for http mode)
-* `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request, example "/api" (only for http mode)
+* `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts (only for http mode)
+* `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request; example: "/api" (only for http mode)
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
-* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings, each line will be appended to either related backend section or listen session in the HAProxy configuration file
-* `KONTENA_LB_COOKIE`: Enables cookie based session stickyness. With empty value defaults to LB set cookie. Can be customized to utilize application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)
+* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to either the related backend section or the listen session in the HAProxy configuration file
+* `KONTENA_LB_COOKIE`: Enables cookie-based session stickiness. With empty value, it defaults to the load balancer-set cookie. Can be customized to use application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)

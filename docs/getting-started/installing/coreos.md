@@ -4,11 +4,11 @@ title: CoreOS
 
 # CoreOS Install
 
-- [Prerequisities](coreos#prerequisities)
+- [Prerequisites](coreos#prerequisites)
 - [Installing Kontena Master](coreos#installing-kontena-master)
 - [Installing Kontena Nodes](coreos#installing-kontena-nodes)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
 
@@ -134,14 +134,14 @@ coreos:
 $ cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 ```
 
-The SSL certificate specified is a pem file, containing a public certificate followed by a private key (the public certificate must be put before the private key, order matters).
+The SSL certificate specified is a pem file, containing a public certificate followed by a private key (the public certificate must be placed before the private key; order matters).
 
 
-After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) how to login with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
+After the Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) for information about how to log in with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
 
 ## Installing Kontena Nodes
 
-Example cloud-config that can be used as a basis for CoreOS installation can be generated via kontena cli:
+Example cloud-config that can be used as a basis for a CoreOS installation and can be generated via Kontena CLI:
 
 
 ```

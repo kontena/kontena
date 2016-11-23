@@ -4,13 +4,13 @@ title: DigitalOcean
 
 # Running Kontena on DigitalOcean
 
-- [Prerequisities](digitalocean#prerequisities)
+- [Prerequisites](digitalocean#prerequisites)
 - [Installing DigitalOcean Plugin](digitalocean#installing-kontena-digitalocean-plugin)
 - [Installing Kontena Master](digitalocean#installing-kontena-master)
 - [Installing Kontena Nodes](digitalocean#installing-kontena-nodes)
 - [DigitalOcean Plugin Command Reference](digitalocean#digitalocean-plugin-command-reference)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
 - DigitalOcean Account. Visit [https://www.digitalocean.com/](https://www.digitalocean.com/) to get started
@@ -24,7 +24,7 @@ $ kontena plugin install digitalocean
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to DigitalOcean can be done by just issuing the following command:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Kontena Master can be installed on DigitalOcean by issuing the following command:
 
 ```
 $ kontena digitalocean master create \
@@ -34,25 +34,25 @@ $ kontena digitalocean master create \
   --region am2
 ```
 
-After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
+After the Kontena Master has been provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default Grid 'test' is set as the current Grid.
 
 ## Installing Kontena Nodes
 
-Before you can start provision nodes you must first switch cli scope to a grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning Nodes you must first switch the CLI scope to a Grid. A Grid can be thought of as a cluster of Nodes that can have members from multiple clouds and/or regions.
 
-Switch to an existing grid using the following command:
+Switch to an existing Grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using the command:
+Or create a new Grid using the command:
 
 ```
 $ kontena grid create --initial-size=<initial_size> do-grid
 ```
 
-Now you can start provision nodes to DigitalOcean. Issue the following command (with the right options) as many times as desired:
+Now you can start provisioning nodes on DigitalOcean. Issue the following command (with the proper options) as many times as desired:
 
 ```
 $ kontena digitalocean node create \
@@ -62,9 +62,9 @@ $ kontena digitalocean node create \
   --region am2
 ```
 
-**Note!** While Kontena works ok even with just a single Kontena Node, it is recommended to have at least 3 Kontena Nodes provisioned in a Grid.
+**Note!** While Kontena will work with just a single Kontena Node, it is recommended to have at least three Kontena Nodes provisioned in a Grid.
 
-After creating nodes, you can verify that they have joined a Grid:
+After creating Nodes, you can verify that they have joined a Grid:
 
 ```
 $ kontena node list

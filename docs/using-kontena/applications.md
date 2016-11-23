@@ -4,7 +4,7 @@ title: Applications
 
 # Applications
 
-Any kind of applications can be easily deployed to Kontena using the Kontena `app` commands. With these commands, you can use Kontena like many of the popular PaaS platforms. One of the most interesting features is the ability to import projects from some of the most famous PaaS platforms.
+Any kind of application can be easily deployed to Kontena using the Kontena `app` commands. With these commands, you can use Kontena like any regular PaaS platform. One of the most interesting features of Kontena is the ability to import projects from other common PaaS platforms.
 
 Kontena app commands include:
 
@@ -26,15 +26,15 @@ The `kontena app init` command may be used to prepare your application to be run
 * Create a `docker-compose.yml` file for your project if not already exists.
 * Create a `kontena.yml` file for your project if not already exists.
 
-The initialization will generate `Dockerfile`, `docker-compose.yml` and `kontena.yml` files automatically by inspecting the directory where the `kontena app init` command is executed. In case this directory contains files used by [Heroku](https://www.heroku.com) PaaS platform project, Kontena will try to automatically import those settings.
+The initialization will generate `Dockerfile`, `docker-compose.yml` and `kontena.yml` files automatically by inspecting the directory where the `kontena app init` command is executed. In the event that this directory contains files used by the [Heroku](https://www.heroku.com) PaaS platform, Kontena will automatically import Heroku settings.
 
 ### Importing Heroku PaaS Platform Projects
 
-Heroku is one of the most famous and most widely used PaaS platform out there. Heroku projects are described with `app.json` and `Procfile` files located in the root of the project directory. When Kontena detects these files, it generates corresponding services, add-ons and environment variables for docker-compose.yml and kontena.yml. The functionality is very similar to Heroku's [Build and Deploy with Docker](https://devcenter.heroku.com/articles/docker)
+Heroku is one of the most widely used PaaS platform out there. Heroku projects are described with `app.json` and `Procfile` files located in the root of the project directory. When Kontena detects these files, it generates corresponding services, add-ons and environment variables for docker-compose.yml and kontena.yml. The functionality is very similar to Heroku's [Build and Deploy with Docker](https://devcenter.heroku.com/articles/docker)
 
 **Example**
 
-When having the following files:
+Given the following files:
 
 **app.json**
 
@@ -63,7 +63,7 @@ web: rackup -p $PORT -E production
 worker: RACK_ENV=production ruby ./worker.rb run
 ```
 
-`kontena app init` produces:
+The command `kontena app init` will produce:
 
 **docker-compose.yml**
 
@@ -127,9 +127,9 @@ worker:
 
 ## Deploying Application
 
-Your application can be deployed to Kontena Nodes with a single command: `kontena app deploy`. The deploy process will look for [kontena.yml](../references/kontena-yml.md) file (by default) which is used to describe your application. Then, it will take care of everything needed to run your application; it will schedule services across your nodes, pull required images, link services together, set environment variables, configure overlay network configuration, start the containers and more.
+Your application can be deployed to Kontena Nodes with a single command: `kontena app deploy`. The deploy process will look for the [kontena.yml](../references/kontena-yml.md) file (unless an alternative filename was specified), which is used to describe your application. Then, it will take care of everything needed to run your application. It will schedule services across your Nodes, pull required images, link services together, set environment variables, configure overlay networking, start the containers and more.
 
-The usage of `kontena app deploy` command is as follows:
+The usage of the `kontena app deploy` command is as follows:
 
 ```
 Usage:
@@ -141,7 +141,7 @@ Options:
     -h, --help                    print help
 ```
 
-**NOTE**: If you don't have the kontena.yml file yet in your project, you can get started with the `kontena app init` command.
+**NOTE**: If you don't yet have the kontena.yml file in your project, you can get started with the `kontena app init` command.
 
 ### Using Custom File to Describe Application
 
@@ -153,7 +153,7 @@ $ kontena app deploy -f myapp.yml      # application described in myapp.yml file
 
 ### Project Name
 
-When application is deployed, Kontena will prefix all service names with the name of your application. By default, Kontena is using the name of the current directory. In case you want to use custom project name (prefix your application), you can use the `-p` switch.
+When an application is deployed, Kontena will prefix all service names with the name of your application. By default, Kontena uses the name of the current working directory. If you want to use a custom project name (prefix your application), you can do so via the `-p` switch.
 
 ```
 /foo/bar $ kontena app deploy          # project name is bar, all services are prefixed "bar"
@@ -162,7 +162,7 @@ When application is deployed, Kontena will prefix all service names with the nam
 
 ### Deploying Partial Application
 
-Sometimes you might want to deploy just some parts of your application. If that's the case, you can define the name of those services you want deployed.
+Sometimes you might want to deploy just some parts of your application. If that's the case, you can define the name of those specific services that you want deployed.
 
 ```
 $ kontena app deploy wordpress         # only deploy services named "wordpress" and "lb"
@@ -170,7 +170,7 @@ $ kontena app deploy wordpress         # only deploy services named "wordpress" 
 
 ### Example `kontena.yml`
 
-Here's an example of typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md).
+Here's an example of a typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md).
 
 ```
 wordpress:
@@ -230,7 +230,7 @@ Options:
 
 ## Remove Application
 
-You can remove application's services with `kontena app rm`.
+You can remove an application's services with `kontena app rm`.
 
 ```
 Usage:

@@ -4,17 +4,17 @@ title: Ubuntu
 
 # Running Kontena on Ubuntu
 
-- [Prerequisities](ubuntu#prerequisities)
+- [Prerequisites](ubuntu#prerequisites)
 - [Installing Kontena Master](ubuntu#installing-kontena-master)
 - [Installing Kontena Nodes](ubuntu#installing-kontena-nodes)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
 
 ## Installing Docker Engine
 
-Kontena requires [Docker Engine](https://docs.docker.com/engine/) to be installed on every host (master and nodes).
+Kontena requires [Docker Engine](https://docs.docker.com/engine/) to be installed on every host (Master and Nodes).
 
 #### Ubuntu Xenial (16.04)
 
@@ -34,7 +34,7 @@ $ sudo apt-get install docker-engine=1.12.2-0~trusty
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Ubuntu can be done by just installing kontena-server package:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Ubuntu can be accomplished by installing the kontena-server package using the appropriate commmands for your version of Ubuntu:
 
 
 #### Ubuntu Xenial (16.04)
@@ -55,9 +55,9 @@ $ sudo apt-get update
 $ sudo apt-get install kontena-server
 ```
 
-At the end of the installation the process master will ask for a initial admin code for the master. This is used to authenticate the initial admin connection of Kontena cli to properly configure the master. The code can be any random string.
+At the end of the installation process, you are asked for an initial admin code for the Kontena Master. This is used to authenticate the initial admin connection of Kontena CLI in order to configure the Kontena Master properly. The code can be any random string.
 
-If using automation the value can be overwritten in file `/etc/default/kontena-server-api` on Ubuntu Trusty or `/etc/kontena-server.env` on Ubuntu Xenial.
+If using automation the value can be overwritten in the file `/etc/default/kontena-server-api` on Ubuntu Trusty or `/etc/kontena-server.env` on Ubuntu Xenial.
 
 ### Setup SSL Certificate
 
@@ -89,7 +89,7 @@ $ sudo start kontena-server-haproxy
 ### Login to Kontena Master
 
 
-After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
+After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) for instructions on configuring [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
 
 ```
 kontena master login --name some-name --code <admin code> https://master_ip:8443
@@ -97,27 +97,27 @@ kontena master login --name some-name --code <admin code> https://master_ip:8443
 
 ## Installing Kontena Nodes
 
-Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning Nodes you must first switch the CLI scope to a Grid. A Grid can be thought as a cluster of Nodes that can have members from multiple clouds and/or regions.
 
-Switch to an existing grid using the following command:
+Switch to an existing Grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using the command:
+Or create a new Grid using the command:
 
 ```
 $ kontena grid create test-grid
 ```
 
-Remember to grab the token for the grid, you'll need it when setting up node(s).
+Remember to grab the token for the Grid, you'll need it when setting up Node(s).
 
 ```
 $ kontena grid show --token test-grid
 ```
 
-Now you can go ahead and install kontena-agent Ubuntu package:
+Now you can go ahead and install the `kontena-agent` Ubuntu package using the appropriate commands for your Ubuntu version:
 
 #### Ubuntu Xenial (16.04)
 
@@ -137,12 +137,12 @@ $ sudo apt-get update
 $ sudo apt-get install kontena-agent
 ```
 
-At the end of the installation the process agent will ask for a couple of configuration parameters:
+At the end of the installation the process, you will be asked for a couple of configuration parameters:
 
-* The address of the Kontena master. **Note:** You must use WebSocket protocol: ws or wss for secured connections
-* The Grid token from the Kontena master
+* The address of the Kontena Master. **Note:** You must use WebSocket protocol: ws or wss for secured connections
+* The Grid token from the Kontena Master
 
-After installing all the agents, you can verify that they have joined a Grid:
+After installing all the Kontena Agents, you can verify that they have joined a Kontena Grid using the command:
 
 ```
 $ kontena node list

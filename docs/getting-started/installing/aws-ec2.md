@@ -4,13 +4,13 @@ title: AWS EC2
 
 # Running Kontena on AWS EC2
 
-- [Prerequisities](aws-ec2#prerequisities)
+- [Prerequisites](aws-ec2#prerequisites)
 - [Installing AWS Plugin](aws-ec2#installing-kontena-aws-plugin)
 - [Installing Kontena Master](aws-ec2#installing-kontena-master)
 - [Installing Kontena Nodes](aws-ec2#installing-kontena-nodes)
 - [AWS Plugin Command Reference](aws-ec2#aws-plugin-command-reference)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
 - AWS Account. Visit [http://aws.amazon.com](http://aws.amazon.com) to get started
@@ -24,7 +24,7 @@ $ kontena plugin install aws
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to AWS EC2 can be done by just issuing the following command:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to AWS EC2 can be done by issuing the following command:
 
 ```
 $ kontena aws master create \
@@ -36,25 +36,25 @@ $ kontena aws master create \
   --region eu-west-1
 ```
 
-After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
+After Kontena Master has provisioned, you will be automatically authenticated as the Kontena Master internal administrator and the default Grid 'test' is set as the current Grid.
 
 ## Installing Kontena Nodes
 
-Before you can start provisioning nodes you must first switch cli scope to a grid. A grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning Nodes you must first switch the CLI scope to a Grid. A Grid can be thought of as a cluster of Nodes that can have members from multiple clouds and/or regions.
 
-Switch to an existing grid using the following command:
+Switch to an existing Grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using the command:
+Or create a new Grid using the command:
 
 ```
 $ kontena grid create --initial-size=<initial_node_count> aws-grid
 ```
 
-Now you can start provisioning AWS EC2 nodes. Issue the following command (with the right options) as many times as desired:
+Now you can start provisioning AWS EC2 nodes. Issue the following command (with the proper options) as many times as desired:
 
 ```
 $ kontena aws node create \
@@ -116,7 +116,7 @@ Options:
     --storage STORAGE             Storage size (GiB) (default: "30")
     --version VERSION             Define installed Kontena version (default: "latest")
     --associate-public-ip-address Whether to associated public IP in case the VPC defaults to not doing it (default: true)
-    --security-groups SECURITY GROUPS Comma separated list of security groups (names) where the new instance will be attached (default: create grid specific group if not already existing)
+    --security-groups SECURITY GROUPS Comma-separated list of security groups (names) where the new instance will be attached (default: create grid specific group if not already existing)
 ```
 
 

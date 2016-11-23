@@ -4,9 +4,9 @@ title: Upgrading
 
 # Upgrading Kontena from Previous Versions
 
-Upgrading Kontena is easy. Usually it's enough to just update Kontena Master
-and the nodes will follow automatically (if an upgrade is required). Cli updates
-can be installed via rubygems.
+Upgrading Kontena is easy. In most cases, it is sufficient to update just the Kontena Master
+and the Nodes will be automatically updated. CLI updates
+can be installed via Rubygems.
 
 ## Versions
 
@@ -23,39 +23,39 @@ can be installed via rubygems.
 
 ** Official Installation Method**
 
-- restart master:
+- restart Master:
 
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
 ```
 
-- update cli:
+- update CLI:
 
 ```
 $ gem install kontena-cli
 ```
 
 ** Custom Installs**
-- update master, agent and cli to 0.16
+- update Kontena Master, Kontena Agent and Kontena CLI Tool to 0.16
 
 ** Migration steps **
 
-Kontena Master is using oauth2 based authentication starting from 0.16 release. When migrating to this release the new oauth2 setting have to be created for the master. This can be done with following steps after master is updated:
-- update cli to 0.16
-- login to Kontena Cloud by issuing `kontena cloud login`
+Starting with the Kontena 0.16 release, Kontena Master uses OAuth2-based authentication. When migrating to this release the new OAuth2 setting must be created for the Master. This can be done with the following steps after the Master is updated:
+- update CLI to 0.16
+- log in to Kontena Cloud by issuing `kontena cloud login`
   - For this you need an account in [Kontena Cloud](https://cloud.kontena.io)
-  - Use the same email as you've been using previously with Kontena to allow smooth transition to new oauth2 based authentication.
-- Run `kontena master init-cloud` that will automatically configure your master to use new oauth2 mechanism.
+  - Use the same email address that you have been using previously with Kontena to allow a smooth transition to new OAuth2-based authentication.
+- Run `kontena master init-cloud`. This will automatically configure your Kontena Master to use new OAuth2 mechanism.
   > After this:
   > * Users will not be able to reauthenticate without authorizing the
   > Master to access their Kontena Cloud user information
-  > * Users that have registered a different email address to Kontena
+  > * Users that have registered a different email address on Kontena
   > Cloud than the one they currently have as their username in the
-  > master will not be able to authenticate before an administrator
+  > Master will not be able to authenticate until an administrator
   > of the Kontena Master creates an invitation code for them.
 
-- If you or other users are using different email than previously you have to invite them to use the master:
+- If you or other users are using a different email address than the one you used previously, you have to invite the new address to use the Master:
   `kontena master users invite john.doe@example.com`
 
 
@@ -63,101 +63,101 @@ Kontena Master is using oauth2 based authentication starting from 0.16 release. 
 
 ** Official Installation Method**
 
-- restart master:
+- restart Master:
 
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
 ```
 
-- update cli:
+- update CLI:
 
 ```
 $ gem install kontena-cli
 ```
 
 ** Custom Installs**
-- update master, agent and cli to 0.15
+- update Kontena Master, Kontena Agent and Kontena CLI Tool to 0.15
 
 ### Upgrading from 0.13 to 0.14
 
 ** Official Installation Method**
 
-- restart master:
+- restart Master:
 
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
 ```
 
-- update cli:
+- update CLI:
 
 ```
 $ gem install kontena-cli
 ```
 
 ** Custom Installs**
-- update master, agent and cli to 0.14
+- update Kontena Master, Kontena Agent and Kontena CLI Tool to 0.14
 
 
 ### Upgrading from 0.12 to 0.13
 
 ** Official Installation Method**
 
-- restart master:
+- restart Master:
 
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
 ```
 
-- update cli:
+- update CLI:
 
 ```
 $ gem install kontena-cli
 ```
 
 ** Custom Installs**
-- update master, agent and cli to 0.13
+- update Kontena Master, Kontena Agent and Kontena CLI Tool to 0.13
 
 ### Upgrading from 0.11 to 0.12
 
 ** Official Installation Method**
 
-- restart master:
+- restart Master:
 
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
 ```
 
-- update cli:
+- update CLI:
 
 ```
 $ gem install kontena-cli:0.12
 ```
 
 ** Custom Installs**
-- update master, agent and cli to 0.12
+- update Kontena Master, Kontena Agent and Kontena CLI Tool to 0.12
 
 ### Upgrading from 0.10 to 0.11
 
 ** Official Installation Method**
 
-- restart master:
+- restart Master:
 
 ```
 $ sudo systemctl restart kontena-server-api
 $ sudo systemctl restart kontena-server-haproxy
 ```
 
-- update cli:
+- update CLI:
 
 ```
 $ gem install kontena-cli:0.12
 ```
 
-- to enable Kontena Vault, set `VAULT_KEY` and `VAULT_IV` env variables to master:
+- to enable Kontena Vault, set `VAULT_KEY` and `VAULT_IV` env variables to Master:
 
 ```
 $ sudo vim /etc/systemd/system/kontena-server-api.service.d/vault.conf
@@ -177,26 +177,26 @@ $ cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 ```
 
 ** Custom Installs**
-- update master & agent containers to 0.11
-- to enable Kontena Vault, set `VAULT_KEY` & `VAULT_IV` env variables to master
+- update Kontena Master and Kontena Agent containers to 0.11
+- to enable Kontena Vault, set `VAULT_KEY` & `VAULT_IV` env variables to Master
 
 ### Upgrading from 0.9 to 0.10
 
-- update master & agent containers
+- update Kontena Master and Kontena Agent containers
 
 ### Upgrading from 0.8 to 0.9
 
-- update master & agent containers
+- update Kontena Master and Kontena Agent containers
 
 ### Upgrading from 0.7 to 0.8
 
 #### Ubuntu
 
-**Master Server**
+**Kontena Master Server**
 
 - upgrade package: `sudo apt-get update && sudo apt-get install kontena-server=0.8.0-1`
 
-**Agent (all nodes)**
+**Kontena Agent (all nodes)**
 
 - remove `--bridge=weave` and `--fixed-cidr="10.81.0.0/16"` from `/etc/default/docker`
 - restart docker: `sudo restart docker`
@@ -204,4 +204,4 @@ $ cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 - stop etcd: `sudo stop kontena-etcd`
 - upgrade agent: `sudo apt-get update && sudo apt-get install kontena-agent=0.8.0-1`
 - restart docker: `sudo restart docker`
-- validate that node connects to master (using kontena cli): `kontena node list`
+- validate that node connects to Kontena Master (using kontena cli): `kontena node list`
