@@ -67,7 +67,7 @@ module Kontena::Workers
         debug "skip start for container=#{container.name} without overlay_cidr"
       end
     rescue Docker::Error::NotFoundError
-      debug "skip start for missing container=#{container.name}"
+      debug "skip start for missing container=#{container.id}"
 
     rescue => exc
       error "failed to start container: #{exc.class.name}: #{exc.message}"
