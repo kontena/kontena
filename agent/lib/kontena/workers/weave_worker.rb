@@ -11,8 +11,9 @@ module Kontena::Workers
 
     def initialize
       info 'initialized'
+      @migrate_containers = nil # XXX: also needed for container:event start
+
       subscribe('network_adapter:start', :on_weave_start)
-      subscribe('container:event', :on_container_event)
       subscribe('dns:add', :on_dns_add)
     end
 
@@ -21,10 +22,11 @@ module Kontena::Workers
     end
 
     def start
-      wait_weave_running?
-
       @migrate_containers = network_adapter.get_containers
       debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
+
+      # ready to start handling container events
+      subscribe('container:event', :on_container_event)
 
       info 'attaching network to existing containers'
       Docker::Container.all(all: false).each do |container|
@@ -49,6 +51,8 @@ module Kontena::Workers
         end
       elsif event.status == 'restart'
         if network_adapter.router_image?(event.from)
+          wait_weave_running?
+
           self.start
         end
       elsif event.status == 'destroy'
