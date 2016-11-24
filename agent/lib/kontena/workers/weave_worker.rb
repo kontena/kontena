@@ -107,7 +107,11 @@ module Kontena::Workers
       grid_name = container.labels['io.kontena.grid.name']
       service_name = container.labels['io.kontena.service.name']
       instance_number = container.labels['io.kontena.service.instance_number']
-      domain_name = container.config['Domainname'] || "#{grid_name}.kontena.local"
+      if container.config['Domainname'].to_s.empty?
+        domain_name = "#{grid_name}.kontena.local"
+      else
+        domain_name = container.config['Domainname']
+      end
       if container.default_stack?
         hostname = container.labels['io.kontena.container.name']
         dns_names = default_stack_dns_names(hostname, service_name, domain_name)
