@@ -105,39 +105,6 @@ module Kontena::Cli::Stacks
       abort
     end
 
-    def valid_addons(prefix=nil)
-      if prefix
-        prefix = "#{prefix}-"
-      end
-
-      {
-          'openredis' => {
-              'image' => 'redis:latest',
-              'environment' => ["REDIS_URL=redis://#{prefix}openredis:6379"]
-          },
-          'redis' => {
-              'image' => 'redis:latest',
-              'environment' => ["REDIS_URL=redis://#{prefix}redis:6379"]
-          },
-          'rediscloud' => {
-              'image' => 'redis:latest',
-              'environment' => ["REDISCLOUD_URL=redis://#{prefix}rediscloud:6379"]
-          },
-          'postgresql' => {
-              'image' => 'postgres:latest',
-              'environment' => ["DATABASE_URL=postgres://#{prefix}postgres:@postgresql:5432/postgres"]
-          },
-          'mongolab' => {
-              'image' => 'mongo:latest',
-              'environment' => ["MONGOLAB_URI=#{prefix}mongolab:27017"]
-          },
-          'memcachedcloud' => {
-              'image' => 'memcached:latest',
-              'environment' => ["MEMCACHEDCLOUD_SERVERS=#{prefix}memcachedcloud:11211"]
-          }
-      }
-    end
-
     def stacks_client
       return @stacks_client if @stacks_client
       Kontena.run('cloud login') unless cloud_auth?
