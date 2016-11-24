@@ -3,12 +3,24 @@ module Kontena::Cli::Stacks
     class Prompt < Opto::Resolver
       include Kontena::Cli::Common
 
+      using Opto::Extension::HashStringOrSymbolKey
+
       def enum?
         option.type == 'enum'
       end
 
+      def boolean?
+        option.type == 'boolean'
+      end
+
+      def prompt_word
+        return "Select" if enum?
+        return "Enable" if boolean?
+        "Enter"
+      end
+
       def question_text
-        (!hint.nil? && hint != option.name) ? "#{hint} :" : "#{enum? ? "Select" : "Enter"} #{option.label || option.name} :"
+        (!hint.nil? && hint != option.name) ? "#{hint} :" : "#{prompt_word} #{option.label || option.name} :"
       end
 
       def enum
@@ -19,6 +31,10 @@ module Kontena::Cli::Stacks
         end
       end
 
+      def bool
+        prompt.yes?(question_text)
+      end
+
       def ask
         TTY::Prompt.new.ask(question_text)
       end
@@ -26,7 +42,13 @@ module Kontena::Cli::Stacks
 
       def resolve
         return nil if option.skip?
-        enum? ? enum : ask
+        if enum?
+          enum
+        elsif boolean?
+          bool
+        else
+          ask
+        end
       end
     end
   end
