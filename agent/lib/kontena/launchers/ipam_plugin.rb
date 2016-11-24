@@ -1,4 +1,5 @@
 require_relative '../helpers/image_helper'
+require_relative '../helpers/wait_helper'
 
 module Kontena::Launchers
   class IpamPlugin
@@ -6,8 +7,7 @@ module Kontena::Launchers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::ImageHelper
-
-
+    include Kontena::Helpers::WaitHelper
 
     IPAM_SERVICE_NAME = 'kontena-ipam-plugin'.freeze
 
@@ -37,9 +37,7 @@ module Kontena::Launchers
 
     def start(info)
       create_container(@image_name, info)
-      while !running?
-        sleep 1
-      end
+      wait(message: "IPAM running") { running? }
       Celluloid::Notifications.publish('ipam:start', nil)
     end
 
