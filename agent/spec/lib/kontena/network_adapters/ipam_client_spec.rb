@@ -143,7 +143,7 @@ describe Kontena::NetworkAdapters::IpamClient do
 
     it 'raises IpamError with proper error message from Hash' do
       error = Excon::Errors::HTTPStatusError.new("foo", request, response)
-      expect(response).to receive(:body).twice.and_return('{"error":"You are wrong"}')
+      expect(response).to receive(:body).twice.and_return('{"Error":"You are wrong"}')
       expect(response).to receive(:headers).and_return(headers)
 
       expect {
