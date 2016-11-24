@@ -7,29 +7,28 @@ module Kontena::Cli::Stacks
     include Common
 
     parameter "NAME", "Stack name"
-
-    attr_reader :services
+    parameter "[SERVICES] ...", "Stack services to monitor", attribute_name: 'selected_services'
 
     def execute
       require_api_url
       token = require_token
 
       response = client(token).get("grids/#{current_grid}/services?stack=#{name}")
-      show_monitor(response['services'])
-
-      @services = services_from_yaml(filename, service_list, service_prefix)
-      if services.size > 0
-        show_monitor(services)
-      elsif !service_list.empty?
-        puts "No such service: #{service_list.join(', ')}".colorize(:red)
+      services = response['services']
+      if selected_services
+        services.delete_if{ |s| !selected_services.include?(s['name'])}
       end
+      show_monitor(token, services)
     end
 
-    def show_monitor(services)
+    # @param [String] token
+    # @param [Array<Hash>]
+    def show_monitor(token, services)
       loop do
         nodes = {}
         services.each do |service|
           result = client(token).get("services/#{service['id']}/containers") rescue nil
+          service['instances'] = 0
           if result
             service['instances'] = result['containers'].size
             result['containers'].each do |container|
@@ -78,8 +77,10 @@ module Kontena::Cli::Stacks
 
     def colors
       if(@colors.nil? || @colors.size == 0)
-        @colors = [:green, :magenta, :yellow, :cyan, :red,
-                   :light_green, :light_yellow, :ligh_magenta, :light_cyan, :light_red]
+        @colors = %i(
+          red green yellow blue magenta cyan bright_red bright_green
+          bright_yellow bright_blue bright_magenta bright_cyan
+        )
       end
       @colors
     end
