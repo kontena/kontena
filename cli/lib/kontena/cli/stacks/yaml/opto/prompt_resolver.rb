@@ -1,9 +1,14 @@
+if RUBY_VERSION < '2.1'
+  require 'opto/extensions/hash_string_or_symbol_key'
+  using Opto::Extension::HashStringOrSymbolKey
+end
+
 module Kontena::Cli::Stacks
   module YAML
     class Prompt < Opto::Resolver
       include Kontena::Cli::Common
 
-      using Opto::Extension::HashStringOrSymbolKey
+      using Opto::Extension::HashStringOrSymbolKey unless RUBY_VERSION < '2.1'
 
       def enum?
         option.type == 'enum'
