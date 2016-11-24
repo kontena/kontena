@@ -80,27 +80,38 @@ describe Kontena::Workers::WeaveWorker do
   end
 
   describe '#attach_overlay' do
-    context "For a new container" do
+    before do
+      allow(network_adapter).to receive(:get_containers).and_return(migrate_containers)
+      allow(Docker::Container).to receive(:all).and_return([])
+
+      subject.start
+    end
+
+    context "For a new container that is not yet running" do
       let(:container) do
         double(Docker::Container,
-          id: '12345',
+          id: '123456789ABCDEF',
           name: 'test',
           overlay_cidr: '10.81.128.1/16',
           overlay_suffix: '16',
         )
       end
 
+      let :migrate_containers do
+        { }
+      end
+
       it 'calls network_adapter.attach_container' do
-        expect(network_adapter).to receive(:attach_container).with('12345', '10.81.128.1/16')
+        expect(network_adapter).to receive(:attach_container).with('123456789ABCDEF', '10.81.128.1/16')
 
         subject.attach_overlay(container)
       end
     end
 
-    context "For an old container" do
+    context "For an old container that is still running" do
       let(:container) do
         double(Docker::Container,
-          id: '12345',
+          id: '123456789ABCDEF',
           name: 'test',
           overlay_cidr: '10.81.1.1/19',
           overlay_ip: '10.81.1.1',
@@ -108,8 +119,35 @@ describe Kontena::Workers::WeaveWorker do
         )
       end
 
+      let :migrate_containers do
+        { '123456789ABC' => ['10.81.1.1/19']}
+      end
+
       it 'calls network_adapter.migrate_container' do
-        expect(network_adapter).to receive(:migrate_container).with('12345', '10.81.1.1/16')
+        expect(network_adapter).to receive(:migrate_container).with('123456789ABCDEF', '10.81.1.1/16', ['10.81.1.1/19'])
+
+        subject.attach_overlay(container)
+      end
+    end
+
+    context "For an old container that has already been migrated" do
+      let(:container) do
+        double(Docker::Container,
+          id: '123456789ABCDEF',
+          name: 'test',
+          overlay_cidr: '10.81.1.1/19',
+          overlay_ip: '10.81.1.1',
+          overlay_suffix: '19',
+        )
+      end
+
+      let :migrate_containers do
+        #{ '123456789ABC' => ['10.81.1.1/16']}
+        { }
+      end
+
+      it 'calls network_adapter.attach_container' do
+        expect(network_adapter).to receive(:attach_container).with('123456789ABCDEF', '10.81.1.1/16')
 
         subject.attach_overlay(container)
       end
