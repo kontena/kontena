@@ -19,8 +19,6 @@ module Kontena::NetworkAdapters
       self.async.run
     end
 
-    private
-
     def run
       loop do
         sleep CLEANUP_INTERVAL
