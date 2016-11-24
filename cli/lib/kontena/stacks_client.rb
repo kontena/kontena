@@ -12,7 +12,7 @@ module Kontena
     end
 
     def push(repo_name, version, data)
-      put(path_to(repo_name, version), data, {}, CT_YAML)
+      post('/stack/', data, {}, CT_YAML)
     end
 
     def pull(repo_name, version = nil)

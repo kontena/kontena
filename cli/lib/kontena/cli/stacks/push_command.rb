@@ -10,9 +10,8 @@ module Kontena::Cli::Stacks
     requires_current_account_token
 
     def execute
-      content = File.read(self.filename)
-      yaml = YAML.load(content)
-      stacks_client.push(yaml['stack'], yaml['version'], content)
+      file = YAML::Reader.new(self.filename, skip_variables: true, replace_missing: "filler")
+      stacks_client.push(file.yaml['stack'], file.yaml['version'], file.raw_content)
     end
   end
 end
