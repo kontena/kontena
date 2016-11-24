@@ -5,7 +5,7 @@ toc_order: 2
 
 # Installing Kontena
 
-Please see below instructions for automated installation of Kontena.
+Below are instructions for automated installation of Kontena on various platforms.
 
 * [AWS EC2](aws-ec2.md)
 * [Azure](azure.md)
@@ -14,7 +14,7 @@ Please see below instructions for automated installation of Kontena.
 * [UpCloud](upcloud.md)
 * [Vagrant](vagrant.md)
 
-Please see below instructions for custom Kontena installations.
+Below are instructions for custom Kontena installations.
 
 * [CoreOS](coreos.md)
 * [Docker Compose](docker-compose.md)

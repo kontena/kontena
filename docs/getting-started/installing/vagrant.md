@@ -4,13 +4,13 @@ title: Vagrant
 
 # Running Kontena on Vagrant
 
-- [Prerequisities](vagrant#prerequisities)
+- [Prerequisites](vagrant#prerequisites)
 - [Installing Vagrant Plugin](vagrant#installing-kontena-vagrant-plugin)
 - [Installing Kontena Master](vagrant#installing-kontena-master)
 - [Installing Kontena Nodes](vagrant#installing-kontena-nodes)
 - [Vagrant Plugin Command Reference](vagrant#vagrant-plugin-command-reference)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
 - Vagrant 1.6 or later. Visit [https://www.vagrantup.com/](https://www.vagrantup.com/) to get started
@@ -23,37 +23,37 @@ $ kontena plugin install vagrant
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Vagrant can be done by just issuing the following command:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Vagrant can be accomplished by issuing the following command:
 
 ```
 $ kontena vagrant master create
 ```
 
-After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
+After Kontena Master has been provisioned, you will be automatically authenticated as the Kontena Master internal administrator and the default Grid 'test' is set as the current Grid.
 
 ## Installing Kontena Nodes
 
-Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning Nodes you must first switch the CLI scope to a Grid. A Grid can be thought as a cluster of Nodes that can have members from multiple clouds and/or regions.
 
-Switch to an existing grid using the following command:
+Switch to an existing Grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using the command:
+Or create a new Grid using the command:
 
 ```
 $ kontena grid create --initial-size=<initial_size> test-grid
 ```
 
-Now you can start provisioning nodes to DigitalOcean. Issue the following command (with right options) as many times as desired:
+Now you can start provisioning Nodes to Vagrant. Issue the following command (with the proper options) as many times as desired:
 
 ```
 $ kontena vagrant node create
 ```
 
-After creating nodes, you can verify that they have joined a Grid:
+After creating Nodes, you can verify that they have joined a Grid:
 
 ```
 $ kontena node list

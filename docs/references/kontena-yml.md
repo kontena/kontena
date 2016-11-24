@@ -5,15 +5,15 @@ toc_order: 1
 
 # Kontena.yml reference
 
-Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena application](../using-kontena/applications.md) with one or more [services]((../using-kontena/services.md)). It uses the same syntax and keys as [Docker Compose file](https://docs.docker.com/compose/compose-file/), however not all keys are supported. The default name for this file is kontena.yml, although other filenames are supported.
+Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena application](../using-kontena/applications.md) with one or more [services]((../using-kontena/services.md)). It uses the same syntax and keys as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are supported in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
 
-Each key defined in kontena.yml will create a service with that name prefixed with project name. The image key is mandatory. Other keys are optional.
+Each key defined in kontena.yml will create a service with that name prefixed with the project name. The image key is mandatory. Other keys are optional.
 
-You can use environment variables in configuration values with a Bash-like ${VARIABLE} syntax - see [variable substitution](#variable-substitution) for full details.
+You can use environment variables in configuration values with a bash-like ${VARIABLE} syntax. See [variable substitution](#variable-substitution) for full details.
 
 
 ## Service configuration reference
-> **Note:** Kontena supports both Docker Compose file versions respectively. See more details about versioning on [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
+> **Note:** Kontena supports both Docker Compose file versions 1 and 2. For more details about Docker Compose versioning, see the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
 
 ### Kontena specific keys
 
@@ -27,7 +27,7 @@ instances: 1
 
 #### stateful
 
-Mark service as stateful (default: false). Kontena will create and mount automatically a data volume container for the service. This options also instructs scheduler to bind service instance to scheduled host so that volume can be mapped when service is updated.
+Mark service as stateful (default: false). Kontena will create and automatically mount a data volume container for the service. This option also instructs the scheduler to bind the service instance to the scheduled host so that the volume can be mapped when the service is updated.
 
 ```
 stateful: true
@@ -46,11 +46,11 @@ secrets:
 
 #### deploy
 
-These Kontena spefic keys define how Kontena will schedule and orchestrate containers across different nodes. Read more about deployments [here](../using-kontena/deploy.md).
+These Kontena-specific keys define how Kontena will schedule and orchestrate containers across different Nodes. Read more about deployments [here](../using-kontena/deploy.md).
 
 **strategy**
 
-How to deploy service's containers to different host nodes.
+How to deploy a Service's containers to different host Nodes.
 
 ```
 deploy:
@@ -69,7 +69,7 @@ deploy:
 
 **wait_for_port**
 
-Wait the port is responding before service instance is considered as running.
+Wait until the specified port is responding before considering the service instance to be running.
 
 ```
 deploy:
@@ -77,7 +77,7 @@ deploy:
 ```
 
 **min_health**
-The minimum percentage (number between 0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying.
+The minimum percentage (expressed as a number in the range 0.0 - 1.0) of healthy instances that do not sacrifice overall service availability while deploying.
 
 ```
 deploy:
@@ -85,7 +85,7 @@ deploy:
 ```
 
 **interval**
-The interval of automatic redeploy of service. Format <number><unit>, where unit = min, h, d.
+The interval of automatic redeploy of the service. Format <number><unit>, where unit = min, h, d.
 ```
 deploy:
   interval: 7d
@@ -120,7 +120,7 @@ hooks:
 
 **pre_build**
 
-`pre_build` hooks define executables that are executed before the actual docker image building. If multiple hooks are provided they are executed in the order defined. If any of the commands fail the build is aborted.
+`pre_build` hooks define executables that are executed before the actual Docker image is built. If multiple hooks are provided they are executed in the order defined. If any of the commands fail the build is aborted.
 
 ```
 hooks:
@@ -155,7 +155,7 @@ image: registry.kontena.local/ghost:latest
 
 #### build
 
-Build can be specified either as a string containing a path to the build context, or an object with the path specified under context and optionally dockerfile (version 2 only).
+Build can be specified either as a string containing a path to the build context, or an object with the path specified under context and, optionally, a Dockerfile (version 2 only).
 
 ```
 build: .
@@ -166,7 +166,9 @@ build:
   context: .
   dockerfile: alternate-dockerfile
 ```
-Build arguments are supported in version 2 yaml format. They can be defined either as an array of strings or as hash:
+
+Build arguments are supported in version 2 yaml format. They can be defined either as an array of strings or as a hash:
+
 ```
 build:
   context: .
@@ -269,12 +271,12 @@ environment:
   DB_HOST: ${project}-db.kontena.local
 ```
 
-> **Note:** Kontena will add automatically the following environment variables to running service instances: KONTENA_SERVICE_ID, KONTENA_SERVICE_NAME, KONTENA_GRID_NAME, KONTENA_NODE_NAME
+> **Note:** Kontena will automatically add the following environment variables to running service instances: KONTENA_SERVICE_ID, KONTENA_SERVICE_NAME, KONTENA_GRID_NAME, KONTENA_NODE_NAME
 
 
 #### env_file
 
-A reference to file that contains environment variables.
+A reference to a file that contains environment variables.
 
 ```
 env_file: production.env
@@ -282,7 +284,7 @@ env_file: production.env
 
 #### extends
 
-Extend another service, in the current file or another, optionally overriding configuration. You can for example extend `docker-compose.yml` services and introduce only Kontena specific fields in `kontena.yml`.
+Extend another service, in the current file or another, optionally overriding configuration. You can, for example, extend `docker-compose.yml` services and introduce only Kontena-specific fields in `kontena.yml`.
 
 **docker-compose.yml**
 
@@ -369,7 +371,7 @@ pid: host
 
 #### ports
 
-Expose ports. Specify both ports (HOST:CONTAINER).
+Expose ports. Specify both ports using the format (HOST:CONTAINER).
 
 ```
 ports:
@@ -378,7 +380,7 @@ ports:
   - "1.2.3.4:8443:443"
 ```
 
-**Note:** If you use bind IP in the port exposure definition make sure you use proper affinity rules to bind the service to a node where this address is available.
+**Note:** If you use bind IP in the port exposure definition, be sure to use proper affinity rules to bind the service to a Node where this address is available.
 
 #### privileged
 Give extended privileges to service.
@@ -417,12 +419,12 @@ volumes_from:
 volumes_from:
  - wordpress-%%s
 ```
-(`-%%s` will be replaced with container number, eg first service container will get volumes from wordpress-1, second from wordpress-2 etc)
+(`-%%s` will be replaced with container number; for example, the first service container will get volumes from wordpress-1, the second from wordpress-2, etc.)
 
 #### log_driver
 > **Note:** Version 1 only. In version 2 use [logging](#logging) options
 
-Specify the log driver for docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
+Specify the log driver for Docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
 
 #### log_opts
 > **Note:** Version 1 only. In version 2 use [logging](#logging) options
@@ -465,7 +467,7 @@ web:
     - "${EXTERNAL_PORT}:5000"
 ```
 
-Referencing other services within the same application needs project prefix in the service name. You can use `${project}` variable for that:
+Referencing other services within the same application requires the project prefix in the service name. You can use `${project}` variable for this:
 
 ```
 web:  

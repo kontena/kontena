@@ -4,20 +4,21 @@ title: Docker Compose
 
 # Running Kontena using Docker Compose
 
-- [Prerequisities](docker-compose#prerequisities)
+- [Prerequisites](docker-compose#prerequisites)
 - [Installing Kontena Master](docker-compose#installing-kontena-master)
 - [Installing Kontena Nodes](docker-compose#installing-kontena-nodes)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
-- Docker Engine (<= 1.12 ) & Docker Compose
+- Docker Engine version 1.10 or later
+- Docker Compose
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master using Docker Compose can be done with the following steps:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master using Docker Compose can be accomplished via the following steps:
 
-**Step 1:** create `docker-compose.yml` file with the following contents:
+**Step 1:** create a `docker-compose.yml` file with the following contents:
 
 ```yml
 version: '2'
@@ -52,7 +53,7 @@ services:
     restart: always
     command: mongod --smallfiles
     volumes:
-      - kontena-server-mongo:/data/db    
+      - kontena-server-mongo:/data/db
 volumes:
   kontena-server-mongo:
 ```
@@ -68,7 +69,7 @@ $ cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 $ awk 1 ORS='\\n' /path/to/cert_file
 ```
 
-If you don't have a SSL certificate you can generate a self-signed certificate and use that:
+If you don't have an SSL certificate, you can generate a self-signed certificate with:
 ```sh
 $ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey.key -out certificate.crt
 cat certificate.crt privateKey.key > cert.pem
@@ -76,25 +77,25 @@ cat certificate.crt privateKey.key > cert.pem
 
 **Step 2:** Run the command `docker-compose up -d`
 
-After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) for how to login with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
+After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) for information on logging in with the admin code and how to configure [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
 
 ## Installing Kontena Nodes
 
-Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning nodes you must first switch the CLI scope to a Grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
 
-Create a new grid using the command:
+Create a new Grid using the command:
 
 ```sh
 $ kontena grid create --initial-size=<initial_size> my-grid
 ```
 
-Or switch to an existing grid using the following command:
+Or switch to an existing Grid using the following command:
 
 ```sh
 $ kontena grid use <grid_name>
 ```
 
-> The recommended minimum initial-size is 3. This means the minimum number of nodes in a grid is 3.
+> The recommended minimum initial-size is three. This means the minimum number of Nodes in a Grid is three.
 
 Now you can start provisioning nodes to your host machines.
 
@@ -115,12 +116,12 @@ agent:
 ```
 
 - `KONTENA_URI` is the uri to Kontena Master (use ws:// for a non-tls connection)
-- `KONTENA_TOKEN` is the grid token, which can be acquired from the master using the `kontena grid show --token my-grid` command
+- `KONTENA_TOKEN` is the Kontena Grid token, which can be acquired from Kontena Master using the `kontena grid show my-grid` command
 - `KONTENA_PEER_INTERFACE` is the network interface that is used to connect the other nodes in the grid.
 
 **Step 2:** Run the command `docker-compose up -d`
 
-To allow Kontena agent to pull from Kontena's built-in private image registry you must add `--insecure-registry="10.81.0.0/16"` to Docker daemon options on the host machine. The most platform-independent way to do this is with the `/etc/docker/daemon.json` config file:
+To allow the Kontena Agent to pull from Kontena's built-in private image registry, you must add `--insecure-registry="10.81.0.0/16"` to the Docker daemon options on the host machine. The most platform-independent way to do this is with the `/etc/docker/daemon.json` config file:
 
 ```sh
 $ cat > /etc/docker/daemon.json <<DOCKERCONFIG

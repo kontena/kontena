@@ -4,20 +4,20 @@ title: Certificate Management
 
 # Kontena Certificates
 
-Kontena integrates natively with [LetsEncrypt](letsencrypt.org) to bring easy to use certificate management for your services.
+Kontena integrates natively with [LetsEncrypt](letsencrypt.org) to provide easy-to-use certificate management for your services.
 
-Certificate management is integrated with Kontena [vault](vault.md) to handle certificates with proper security constraints.
+Certificate management is integrated with Kontena [vault](vault.md) to handle certificates with the proper security constraints.
 
 ## Register for LE
 
-To be able to use LetsEncrypt one must first register as user.
+To use LetsEncrypt, you must first register as a user.
 ```
 kontena certificate register <you@example.com>
 ```
 
 By default this creates a new private key to be used with LE to identify the client.
 
-**Note:** If you have already registered with other means and have an existing private key you wish to use you can import it into vault using specific name `LE_PRIVATE_KEY`
+**Note:** If you have already registered with other means and have an existing private key you wish to use you can import it into vault using the specific name `LE_PRIVATE_KEY`
 ```
 $ kontena vault write LE_PRIVATE_KEY "$(cat priv_key.pem)"
 ```
@@ -26,7 +26,7 @@ The email is needed for Let's Encrypt to notify when certificates are about to e
 
 ## Create domain authorization
 
-To be able to request certificates for a domain one must first prove that you are in charge of tht domain. For this Kontena certificate management support DNS based authorization.
+To be able to request certificates for a domain you must first prove that you are in charge of that domain. For this, Kontena certificate management supports DNS-based authorization.
 
 ```
 $ kontena certificate authorize api.example.com
@@ -35,7 +35,7 @@ Record type:TXT
 Record content:5m1FCaNvneLduTN4AcPqAbyuQhBQA4ESisAQfEYvXIE
 ```
 
-To verify that you really control the requested domain, create a DNS TXT record for domain `_acme-challenge.api.example.com` with content specified in the response.
+To verify that you really control the requested domain, create a DNS TXT record for the domain `_acme-challenge.api.example.com` with content specified in the response.
 
 ## Get actual certificate
 
@@ -46,14 +46,14 @@ $ kontena certificate get --secret-name SSL_CERT_LE_TEST api.example.com
 Certificate successfully received and stored into vault with key SSL_CERT_LE_TEST
 ```
 
-Kontena automatically stores the certificate into secure vault in a format where it can be used for SSL termination with our loadbalancer. If you omit the secret-name option Kontena automatically generates the name using the domain name.
+Kontena automatically stores the certificate in a secure vault in a format where it can be used for SSL termination with Kontena Load Balancer. If you omit the secret-name option, Kontena automatically generates the name using the domain name.
 
-LetsEncrypt does NOT support wildcard certificates. In many cases there's a need to server multiple sites behind one certificate and for that LE supports a concept called subject alternative names (SAN). To obtain a certificate for multiple DNS names just specify them in the request:
+LetsEncrypt does NOT support wildcard certificates. In many cases it is necessary to serve multiple sites behind one certificate. For this, LetsEncrypt supports a concept called subject alternative names (SAN). To obtain a certificate for multiple DNS names, simply specify them in the request:
 ```
 $ kontena certificate get --secret-name SSL_CERT_LE_TEST example.com www.example.com
 Certificate successfully received and stored into vault with key SSL_CERT_LE_TEST
 ```
-**Note:** For each of the domains in the certificate request you have to complete the domain authorization first! The first domain in the list becomes the common name and others are used as alternative names:
+**Note:** For each of the domains in the certificate request, it is necessary to complete the domain authorization first! The first domain in the list becomes the common name and others are used as alternative names:
 ```
 Certificate:
     Data:
@@ -73,7 +73,7 @@ Certificate:
                 DNS:www.example.com, DNS:example.com
 ```
 
-By default Kontena stores the full chain version of the certificate. This is because LE intermediaries are not trusted by all client libraries (some Rubies, Docker, wget, ...). You can control the type of certificate stored by this command line option:
+By default Kontena stores the full chain version of the certificate. This is because LetsEncrypt intermediaries are not trusted by all client libraries (such as some libraries associated with Ruby, Docker, and wget, for example). You can control the type of certificate stored with this command line option:
 ```
 --cert-type CERT_TYPE    The type of certificate to get: fullchain, chain or cert (default: "fullchain")
 ```
@@ -81,7 +81,7 @@ By default Kontena stores the full chain version of the certificate. This is bec
 
 ## Secrets
 
-Kontena LE integration stores all certificate information securely in [Kontena Vault](vault.md). Upon receiving a certificate from LetsEncrypt Kontena stores three secrets in the vault:
+Kontena LetsEncrypt integration stores all certificate information securely in [Kontena Vault](vault.md). Upon receiving a certificate from LetsEncrypt Kontena stores three secrets in the vault:
 **LE_CERTIFICATE_`<domain_name>`_PRIVATE_KEY** Private key of the certificate
 **LE_CERTIFICATE_`<domain_name>`_CERTIFICATE** The actual certificate
 **LE_CERTIFICATE_`<domain_name>`_BUNDLE** Bundle of the certificate and private key, suitable to use with [Kontena Loadbalancer](loadbalancer.md).

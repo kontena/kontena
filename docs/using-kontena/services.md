@@ -8,11 +8,11 @@ A [Service](../core-concepts/architecture.md#services) is composed of Containers
 
 ## Service Discovery
 
-Each service instance is automatically registered in Kontena Grid distributed DNS service, which makes them discoverable through simple name lookups. For example: if a service is named as `nginx` and it has been scaled to two instances, then the first instance can be found via `nginx-1.<grid>.kontena.local` dns address, the second via `nginx-2.<grid>.kontena.local` etc. It's also possible to query service dns that returns all service instances records. For example, the `nginx.<grid>.kontena.local` dns address will return both `nginx-1` and `nginx-2` instance addresses in random order.
+Each Service instance is automatically registered in the Kontena Grid distributed DNS service, which makes services discoverable through simple name lookups. For example, if a service is named `nginx` and it has been scaled to two instances, then the first instance can be found via the `nginx-1.<grid>.kontena.local` DNS address, the second via `nginx-2.<grid>.kontena.local`, etc. It is also possible to query a Service DNS to return all service instance records. For example, the `nginx.<grid>.kontena.local` DNS address will return both the `nginx-1` and `nginx-2` instance addresses, in random order.
 
 ## Service High Availability
 
-Kontena monitors the state of each service instance and actively manages to ensure the desired state of the service. This can be triggered when there are fewer healthy instances than the desired scale of your service, a node becomes unavailable or a service instance fails.
+Kontena monitors the state of each Service instance and actively manages it to ensure the desired state of the Service. Action is triggered when there are fewer healthy instances than the desired scale of your Service, when a node becomes unavailable or when a Service instance fails.
 
 ## Using Services
 
@@ -46,7 +46,7 @@ $ kontena service ls
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 
@@ -59,20 +59,20 @@ $ kontena service create <name> <image>
 **Examples:**
 
 ```
-# Stateless service that exposes port 80
+# Stateless Service that exposes port 80
 $ kontena service create -p 80:80 nginx nginx:latest
 
-# Stateful service that does not expose any ports, but can be accessed from other services within same grid
+# Stateful Service that does not expose any ports, but can be accessed from other Services within same grid
 $ kontena service create --stateful redis redis:latest
 ```
 
 **Note:** The`kontena service create` command does not automatically deploy a service.
-It must be done separately with `kontena service deploy`.
+That must be done separately with `kontena service deploy`.
 
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 -p, --ports PORTS             Publish a service's port to the host
 -e, --env ENV                 Set environment variables
 -l, --link LINK               Add link to another service in the form of name:alias
@@ -108,7 +108,7 @@ $ kontena service deploy <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 --force-deploy                Force deploy even if service does not have any changes
 ```
 
@@ -124,7 +124,7 @@ It must be done separately with `kontena service deploy`.
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 --image IMAGE                 Docker image to use
 -p, --ports PORT              Publish a service's port to the host
 -e, --env ENV                 Set environment variables
@@ -158,7 +158,7 @@ $ kontena service scale <name> <number>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Stop Service
@@ -170,7 +170,7 @@ $ kontena service stop <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Start Service
@@ -182,7 +182,7 @@ $ kontena service start <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Restart Service
@@ -194,7 +194,7 @@ $ kontena service restart <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Show Service Details
@@ -206,7 +206,7 @@ $ kontena service show <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Show Service Logs
@@ -218,7 +218,7 @@ $ kontena service logs <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Show Service Statistics
@@ -230,7 +230,7 @@ $ kontena service stats <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 -t, --tail                    Tail (follow) stats in real time (default: false)
 ```
 
@@ -243,7 +243,7 @@ $ kontena service monitor <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 --interval SECONDS            How often view is refreshed (default: 2)
 ```
 
@@ -256,7 +256,7 @@ $ kontena service env list <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Add Environment Variable to Service
@@ -268,7 +268,7 @@ $ kontena service env add <name> <env>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Remove Environment Variable from Service
@@ -280,7 +280,7 @@ $ kontena service env remove <name> <env>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Link Secret to Service
@@ -292,7 +292,7 @@ $ kontena service secret link <name> <secret>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Unlink Secret from Service
@@ -304,7 +304,7 @@ $ kontena service secret unlink <name> <secret>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Link Service
@@ -316,7 +316,7 @@ $ kontena service link <name> <target>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Unlink Service
@@ -328,7 +328,7 @@ $ kontena service unlink <name> <target>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Remove Service
@@ -340,5 +340,5 @@ $ kontena service remove <name>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```

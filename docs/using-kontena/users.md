@@ -4,22 +4,22 @@ title: Users
 
 # Users
 
-Kontena has built-in role based user management. The first user that logs in to Kontena Master will be assigned to the  `master_admin` role. Master admin can invite new users to Master server and assign users to `master_admin` or `grid_admin` roles. Master admin and grid admin can add and remove users from a grid.
+Kontena has built-in role-based user management. The first user that logs in to Kontena Master will be assigned to the  `master_admin` role. The Master admin can invite new users to the Master server and assign users to the `master_admin` or `grid_admin` roles. The Master admin and Grid admin can add and remove users from a Grid.
 
 
 ## Roles
 
 **master_admin**
-  * can invite users to master server
-  * can manage user roles
-  * can manage all grids and their users
+  * can invite users to Kontena Master
+  * can manage user roles
+  * can manage all Grids and their users
 
 **grid_admin**
-  * can manage grid users
+  * can manage Grid users
 
 **user**
-  * can only operate within grids
-  > User role is automatically assigned to any user added to a grid using the [Add User to Grid](users#add-user-to-grid) command and there's no need to specifically add it.
+  * can only operate within Grids
+  > The user role is automatically assigned to any user added to a Grid using the [Add User to Grid](users#add-user-to-grid) command. There is no need to assign the role explicitly in this case. 
 
 ## Managing Users
 
@@ -58,7 +58,7 @@ $ kontena grid user add <email>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Remove User from Grid
@@ -70,7 +70,7 @@ $ kontena grid user remove <email>
 **Options:**
 
 ```
---grid GRID                   Specify grid to use
+--grid GRID                   Specify Grid to use
 ```
 
 ### Remove User from Kontena Master
