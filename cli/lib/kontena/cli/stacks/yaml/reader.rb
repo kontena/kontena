@@ -135,11 +135,62 @@ module Kontena::Cli::Stacks
         if service_name.nil?
           services.each do |name, config|
             services[name] = process_config(config)
+            if process_service?(config)
+              services[name].delete('only_if')
+              services[name].delete('skip_if')
+            else
+              services.delete(name)
+            end
           end
           services
         else
           raise ("Service '#{service_name}' not found in #{file}") unless services.has_key?(service_name)
           process_config(services[service_name])
+        end
+      end
+
+      def process_service?(config)
+        return true unless config['skip_if'] || config['only_if']
+        return true if skip_variables? || variables.empty?
+
+        skip_lambdas = normalize_ifs(config['skip_if'])
+        only_lambdas = normalize_ifs(config['only_if'])
+
+        if skip_lambdas
+          return false if skip_lambdas.any? { |s| s.call }
+        end
+
+        if only_lambdas
+          return false unless only_lambdas.all? { |s| s.call }
+        end
+
+        true
+      end
+
+      # Generates an array of lambdas that return true if a condition is true
+      # Possible syntaxes:
+      # @example
+      #   normalize_ifs( 'wp' )        # lambdas return true if variable wp is not null or false or 'false'
+      #   normalize_ifs( wp: 1 )       # lambdas return true if value of wp is 1
+      #   normalize_ifs( [:wp, :ws] )  # lambdas return true if wp and ws are not not null or false or 'false'
+      #   normalize_ifs( wp: 1, ws: 1) # lambdas return true if wp and ws are 1
+      #   normalize_ifs(nil)           # returns nil
+      def normalize_ifs(ifs)
+        case ifs
+        when NilClass
+          nil
+        when Array
+          ifs.map do |iff|
+            lambda { val = variables.value_of(iff.to_s); !val.nil? && !val.kind_of?(FalseClass) && val != 'false' }
+          end
+        when Hash
+          ifs.each_with_object([]) do |(k, v), arr|
+            arr << lambda { variables.value_of(k.to_s) == v }
+          end
+        when String, Symbol
+          [lambda { val = variables.value_of(ifs.to_s); !val.nil? && !val.kind_of?(FalseClass) && val != 'false' }]
+        else
+          raise TypeError, "Invalid syntax for if: #{ifs.inspect}"
         end
       end
 
@@ -214,7 +265,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: @skip_variables, replace_missing: @replace_missing).execute(service_name)
+        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: true, replace_missing: @replace_missing).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
