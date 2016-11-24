@@ -16,23 +16,32 @@ module Kontena::NetworkAdapters
 
     def on_ipam_start(topic, data)
       debug "ipam signalled ready, starting cleanup loop"
-      self.async.cleanup_ipam
+      self.async.run
     end
 
-    private
-
-    def cleanup_ipam
+    def run
       loop do
         sleep CLEANUP_INTERVAL
-        ipam_client = Kontena::NetworkAdapters::IpamClient.new
-        cleanup_index = ipam_client.cleanup_index
-        debug "got index #{cleanup_index} for IPAM cleanup. Waiting for pending deployments for #{CLEANUP_DELAY} secs..."
-        sleep CLEANUP_DELAY
-        # Collect locally known addresses
-        addresses = collect_local_addresses
-        debug "invoking cleanup with #{addresses.size} known addresses"
-        ipam_client.cleanup_network('kontena', addresses, cleanup_index)
+
+        begin
+          self.cleanup_ipam
+        rescue => exc
+          error "#{exc.class.name}: #{exc.message}"
+          debug exc.backtrace.join("\n")
+        end
       end
+    end
+
+    def cleanup_ipam
+      ipam_client = Kontena::NetworkAdapters::IpamClient.new
+      cleanup_index = ipam_client.cleanup_index
+      debug "got index #{cleanup_index} for IPAM cleanup. Waiting for pending deployments for #{CLEANUP_DELAY} secs..."
+      sleep CLEANUP_DELAY
+
+      # Collect locally known addresses
+      addresses = collect_local_addresses
+      debug "invoking cleanup with #{addresses.size} known addresses"
+      ipam_client.cleanup_network('kontena', addresses, cleanup_index)
     end
 
     def collect_local_addresses
@@ -44,7 +53,5 @@ module Kontena::NetworkAdapters
       local_addresses.compact! # remove nils
       local_addresses
     end
-
   end
-
 end

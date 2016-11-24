@@ -96,6 +96,14 @@ describe Kontena::NetworkAdapters::Weave do
   end
 
   describe '#network_ready?' do
+    let :ipam_plugin_launcher do
+      instance_double(Kontena::Launchers::IpamPlugin)
+    end
+
+    before do
+      allow(Celluloid::Actor).to receive(:[]).with(:ipam_plugin_launcher).and_return(ipam_plugin_launcher)
+    end
+
     it 'return false is weave not running' do
       expect(subject.wrapped_object).to receive(:running?).and_return(false)
       expect(subject.network_ready?).to be_falsey
@@ -103,13 +111,13 @@ describe Kontena::NetworkAdapters::Weave do
 
     it 'return false is weave running but ipam not' do
       expect(subject.wrapped_object).to receive(:running?).and_return(true)
-      expect(subject.wrapped_object).to receive(:ipam_running?).and_return(false)
+      expect(ipam_plugin_launcher).to receive(:running?).and_return(false)
       expect(subject.network_ready?).to be_falsey
     end
 
     it 'return true is weave and ipam running' do
       expect(subject.wrapped_object).to receive(:running?).and_return(true)
-      expect(subject.wrapped_object).to receive(:ipam_running?).and_return(true)
+      expect(ipam_plugin_launcher).to receive(:running?).and_return(true)
       expect(subject.network_ready?).to be_truthy
     end
   end
