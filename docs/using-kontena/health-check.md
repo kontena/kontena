@@ -58,4 +58,8 @@ Configuring a custom healthcheck on a service also ensures that the same health 
 
 ## Using the health status
 
-Currently the health check status is used only to indicate a service health for the user. We are planning to use this information as well for rescheduling services so that any unhealthy instance will be rescheduled or recreated. As explained above, the same configuration is also used by Kontena Load Balancer to decide whether or not an instance should receive traffic.
+Kontena Platform is actively monitoring the health status of all Kontena Services. Kontena Agent will automatically restart any container that is identified as `unhealthy`. Kontena Master will automatically re-deploy any Kontena Service that has too many unhealthy containers. This behaviour can be managed and configured by adjusting `min_health` deployment option (see [deploy](deploy.md)). 
+
+The `min_health` deployment option is used to set the threshold for triggering Kontena Service re-deployment. If you specify `0.8` as the `min_health` option during deployment, Kontena Master will re-deploy your Kontena Service if the number of `unhealthy` containers for that Kontena Service exceeds 80%.
+
+You can inspect the current health status for your Kontena Services using the Kontena CLI tool.

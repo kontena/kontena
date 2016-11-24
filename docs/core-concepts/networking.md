@@ -22,8 +22,7 @@ Each host Node runs the **Kontena Agent**, which establishes a WebSocket connect
 The host Node's Kontena Agent and the Master node are only used for cluster management. The Master node is not connected to the Grid, and Containers attached to the Grid cannot communicate with the Kontena Master.
 The Master Node does not expose any network services other than the HTTP API used by the CLI and Kontena Agent.
 
-While a Kontena Master can manage multiple Grids, each Grid is an isolated overlay network with its own address space.
-Nodes and Containers attached to different Grids cannot communicate with each other.
+While a Kontena Master can manage multiple Grids, each Grid is an isolated overlay network with its own address space. Nodes and Containers attached to different Grids cannot communicate with each other.
 
 ## Grid
 

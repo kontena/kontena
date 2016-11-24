@@ -131,6 +131,10 @@ hooks:
       cmd: grunt dist
 ```
 
+#### health_check
+
+See information about configuring service health checks in [Using Kontena: Health checks](../using-kontena/health-check.md).
+
 ### Supported Docker Compose keys
 
 #### image
@@ -162,7 +166,9 @@ build:
   context: .
   dockerfile: alternate-dockerfile
 ```
+
 Build arguments are supported in version 2 yaml format. They can be defined either as an array of strings or as a hash:
+
 ```
 build:
   context: .
