@@ -122,6 +122,7 @@ module Kontena
         {
           name: 'kontena',
           url: 'https://cloud-api.kontena.io',
+          stacks_url: 'https://stacks.kontena.io',
           token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
           authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
           userinfo_endpoint: 'https://cloud-api.kontena.io/user',

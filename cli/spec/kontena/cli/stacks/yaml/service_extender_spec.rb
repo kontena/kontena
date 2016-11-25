@@ -15,7 +15,7 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
     }
   end
 
-  describe '#extend' do
+  describe '#extend_from' do
     it 'merges options' do
       result = described_class.new(options).extend_from(parent_options)
       expected_result = {
@@ -47,7 +47,9 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
         from = { 'environment' => ['FOO=bar'] }
         to = { 'environment' => ['BAR=baz'] }
         result = described_class.new(to).extend_from(from)
-        expect(result['environment']).to eq(['BAR=baz', 'FOO=bar'])
+        expect(result['environment'].include?('BAR=baz')).to be_truthy
+        expect(result['environment'].include?('FOO=bar')).to be_truthy
+        expect(result['environment'].size).to eq 2
       end
     end
 

@@ -43,6 +43,8 @@ module Kontena::Cli::Stacks::YAML
         'volumes_from' => optional('array'),
         'secrets' => optional('stacks_valid_secrets'),
         'hooks' => optional('stacks_valid_hooks'),
+        'only_if' => optional(-> (value) { value.is_a?(String) || value.is_a?(Hash) || value.is_a?(Array) }),
+        'skip_if' => optional(-> (value) { value.is_a?(String) || value.is_a?(Hash) || value.is_a?(Array) }),
         'deploy' => optional({
           'strategy' => optional(%w(ha daemon random)),
           'wait_for_port' => optional('integer'),

@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "launchy", "~> 2.4.3"
   spec.add_runtime_dependency "hash_validator", "~> 0.7.0"
   spec.add_runtime_dependency "retriable", "~> 2.1.0"
+  spec.add_runtime_dependency "opto", "~> 1.4"
 end

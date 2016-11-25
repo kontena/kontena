@@ -1,6 +1,13 @@
 stack: user/stackname
 version: 0.1.1
 variables:
+  enum_test:
+    type: enum
+    options: 
+      - Foo
+      - Bar
+      - Baz
+    from: prompt
   wp_pass:
     type: string # has a callback that writes the value to vault
     required: true
@@ -8,22 +15,22 @@ variables:
     empty_is_nil: true
     from: 
       env: WORDPRESS_DB_PASSWORD # first try from local env
+      prompt: Enter a password for the wordpress instance  # then try from prompt
       random_string: # if prompt returned nil, generate a random string
         length: 10
         charset: ascii_printable
     to:
-      env: WP_PASS # put it to WP_PASS env variable
+      env: WP_PASS
   test_var:
     type: string
     from:
       random_string:
         length: 16
         charset: hex
-    to: 
+    to:
       env: test_var
   TEST_ENV_VAR:      # the default from/to is to set/read env of the option name
     type: :string
-
 services:
   wordpress:
     extends:

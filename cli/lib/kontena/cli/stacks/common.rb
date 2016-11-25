@@ -2,15 +2,21 @@ require 'yaml'
 require_relative 'yaml/reader'
 require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
+require_relative '../../stacks_client'
 
 module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
-    def stack_from_yaml(filename, skip_validation = false)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_validation)
-      if reader.stack_name.nil?
-        exit_with_error "Stack MUST have name in YAML! Aborting."
+    def stack_name
+      @stack_name ||= self.name || stack_name_from_yaml(filename)
+    end
+
+    def stack_from_yaml(filename)
+      set_env_variables(service_prefix, current_grid)
+      outcome = read_yaml(filename)
+      if outcome[:stack].nil?
+        exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
       set_env_variables(self.name || reader.stack_name, current_grid)
       reader.reload
@@ -97,6 +103,13 @@ module Kontena::Cli::Stacks
       STDERR.puts "YAML validation failed! Aborting.".colorize(:red)
       display_notifications(errors, :red)
       abort
+    end
+
+    def stacks_client
+      return @stacks_client if @stacks_client
+      Kontena.run('cloud login') unless cloud_auth?
+      config.reset_instance
+      @stacks_client = Kontena::StacksClient.new(kontena_account.stacks_url, kontena_account.token)
     end
   end
 end

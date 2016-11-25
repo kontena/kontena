@@ -7,13 +7,11 @@ describe Kontena::Cli::Stacks::ListCommand do
 
   describe '#execute' do
     it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run([])
+      expect(subject.class.requires_current_master).to be_truthy
     end
 
     it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
-      subject.run([])
+      expect(subject.class.requires_current_master_token).to be_truthy
     end
 
     it 'fetches stacks from master' do

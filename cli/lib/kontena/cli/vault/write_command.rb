@@ -6,6 +6,8 @@ module Kontena::Cli::Vault
     parameter 'NAME', 'Secret name'
     parameter '[VALUE]', 'Secret value'
 
+    option '--silent', :flag, "Reduce output verbosity"
+
     def execute
       require_api_url
       require_current_grid
@@ -20,7 +22,7 @@ module Kontena::Cli::Vault
           name: name,
           value: secret
       }
-      spinner "Writing #{name.colorize(:cyan)} to the vault " do
+      vspinner "Writing #{name.colorize(:cyan)} to the vault " do
         client(token).post("grids/#{current_grid}/secrets", data)
       end
     end
