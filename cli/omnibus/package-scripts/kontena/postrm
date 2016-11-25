@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Perform necessary kontena removal steps
+# after package is uninstalled.
+#
+
+echo "Kontena has been uninstalled!"
+
+exit 0
