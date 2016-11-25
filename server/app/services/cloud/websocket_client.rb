@@ -3,9 +3,10 @@ require 'eventmachine'
 require 'base64'
 require_relative '../logging'
 require_relative './rpc_server'
-
+require_relative '../../helpers/current_leader'
 module Cloud
   class WebsocketClient
+    include CurrentLeader
     class Config
       attr_accessor :api_uri
       def initialize
@@ -129,17 +130,21 @@ module Cloud
 
     # @param [Faye::WebSocket::API::Event] event
     def on_message(event)
-      data = MessagePack.unpack(event.data.pack('c*'))
-      if request_message?(data)
-        EM.defer {
-          response = rpc_server.handle_request(data)
-          send_message(MessagePack.dump(response).bytes)
-        }
-      elsif notification_message?(data)
-        EM.defer {
-          rpc_server.handle_notification(data)
-        }
-      end
+        data = MessagePack.unpack(event.data.pack('c*'))
+        if request_message?(data)
+          EM.defer {
+            if leader?
+              response = rpc_server.handle_request(data)
+              send_message(MessagePack.dump(response).bytes)
+            end
+          }
+        elsif notification_message?(data)
+          EM.defer {
+            if leader?
+              rpc_server.handle_notification(data)
+            end
+          }
+        end
     rescue => exc
       error exc.message
     end
