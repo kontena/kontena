@@ -30,8 +30,8 @@ module Kontena::Cli::Services
 
     def print_service_row(service)
       stateful = service['stateful'] ? 'yes' : 'no'
-      running = service['instances']['running']
-      desired = service['container_count']
+      running = service['instance_counts']['running']
+      desired = service['instances']
       instances = "#{running} / #{desired}"
       ports = service['ports'].map{|p|
         "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"

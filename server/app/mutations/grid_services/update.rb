@@ -32,6 +32,7 @@ module GridServices
       attributes[:strategy] = self.strategy if self.strategy
       attributes[:image_name] = self.image if self.image
       attributes[:container_count] = self.container_count if self.container_count
+      attributes[:container_count] = self.instances if self.instances
       attributes[:user] = self.user if self.user
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory

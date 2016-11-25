@@ -37,6 +37,7 @@ module GridServices
     def execute
       attributes = self.inputs.clone
       attributes[:image_name] = attributes.delete(:image)
+      attributes[:container_count] = attributes.delete(:instances) if attributes[:instances]
 
       attributes.delete(:links)
       if self.links

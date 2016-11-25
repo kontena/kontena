@@ -25,10 +25,9 @@ module Kontena::Cli::Apps
     # @return [Hash]
     def parse_data(options)
       data = {}
-      data['container_count'] = options['instances']
+      data['instances'] = options['instances']
       data['image'] = parse_image(options['image'])
       data['env'] = options['environment'] if options['environment']
-      data['container_count'] = options['instances']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
       data['ports'] = parse_stringified_ports(options['ports'] || [])

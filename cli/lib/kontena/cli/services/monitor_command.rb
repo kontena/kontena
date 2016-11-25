@@ -22,7 +22,7 @@ module Kontena::Cli::Services
           nodes[container['node']['name']] << container
         end
         clear_terminal
-        puts "service: #{name} (#{result['containers'].size}/#{service['container_count']} instances)"
+        puts "service: #{name} (#{result['containers'].size}/#{service['instances']} instances)"
         puts "strategy: #{service['strategy']}"
         puts "status: #{service['state']}"
         puts "stateful: #{service['stateful'] == true ? 'yes' : 'no' }"

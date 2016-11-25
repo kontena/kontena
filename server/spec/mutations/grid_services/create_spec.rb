@@ -85,6 +85,17 @@ describe GridServices::Create do
       expect(outcome.result.container_count).to eq(3)
     end
 
+    it 'saves instances to container_count' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: true,
+          instances: 3
+      ).run
+      expect(outcome.result.container_count).to eq(3)
+    end
+
     it 'saves user' do
       outcome = described_class.new(
           grid: grid,

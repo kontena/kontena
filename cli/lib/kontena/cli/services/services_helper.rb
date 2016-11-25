@@ -48,7 +48,7 @@ module Kontena
           puts "  image: #{service['image']}"
           puts "  revision: #{service['revision']}"
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
-          puts "  scaling: #{service['container_count'] }"
+          puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
           puts "  deploy_opts:"
           puts "    min_health: #{service['deploy_opts']['min_health']}"
