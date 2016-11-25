@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
     requires_current_account_token
 
-    option ['-f', '--force'], :flag, "Don't ask questions"
+    option ['-f', '--force'], :flag, "Force delete"
 
     def execute
       unless force?
@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
           puts "About to delete an entire stack and all of its versions from the registry"
           confirm_command(stack_name)
         else
+          puts "About to delete stack #{stack_name} version #{stack_version} from the registry"
           confirm
         end
       end
