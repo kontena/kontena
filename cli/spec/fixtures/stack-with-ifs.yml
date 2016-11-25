@@ -1,0 +1,51 @@
+stack: user/stackname
+version: 0.1.1
+variables:
+  db:
+    type: enum
+    required: true
+    options:
+      - value: mysql
+        label: MySQL
+        description: Regular MySQL
+      - value: galera
+        label: Galera cluster
+        description: A mega super galera cluster
+    from: prompt
+  GALERA_NODES:
+    type: integer
+    min: 1
+    from:
+      prompt: Number of Galera nodes
+    only_if:
+      db: galera
+  no_wp:
+    type: boolean
+    as: boolean # default boolean output is string
+    from:
+      prompt: Skip wordpress?
+services:
+  wordpress:
+    skip_if: no_wp
+    extends:
+      file: docker-compose_v2.yml
+      service: wordpress
+    image: wordpress
+    stateful: true
+    deploy:
+      strategy: ha
+  mysql:
+    only_if:
+      db: mysql
+    extends:
+      file: docker-compose_v2.yml
+      service: mysql
+    image: mysql
+  galera:
+    only_if:
+      db: galera
+    extends:
+      file: docker-compose_v2.yml
+      service: mysql
+    image: galera
+    instances: $GALERA_NODES
