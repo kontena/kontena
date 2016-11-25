@@ -12,6 +12,7 @@ module Kontena::Cli::Stacks
     def execute
       file = YAML::Reader.new(self.filename, skip_variables: true, replace_missing: "filler")
       stacks_client.push(file.yaml['stack'], file.yaml['version'], file.raw_content)
+      puts pastel.green("Successfully pushed #{file.yaml['stack']}:#{file.yaml['version']} to Stacks registry")
     end
   end
 end

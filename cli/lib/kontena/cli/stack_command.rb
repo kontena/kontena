@@ -11,6 +11,8 @@ require_relative 'stacks/push_command'
 require_relative 'stacks/pull_command'
 require_relative 'stacks/search_command'
 require_relative 'stacks/install_command'
+require_relative 'stacks/info_command'
+require_relative 'stacks/delete_command'
 
 class Kontena::Cli::StackCommand < Kontena::Command
 
@@ -23,10 +25,11 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand "logs", "Show logs from stack services", Kontena::Cli::Stacks::LogsCommand
   subcommand "monitor", "Monitor stack services", Kontena::Cli::Stacks::MonitorCommand
   subcommand ["remove","rm"], "Remove a deployed stack", Kontena::Cli::Stacks::RemoveCommand
-  subcommand "push", "Push a stack to stacks registry", Kontena::Cli::Stacks::PushCommand
-  subcommand ["pull", "get"], "Pull a stack from stacks registry", Kontena::Cli::Stacks::PullCommand
-  subcommand "install", "Deploy a stack to Kontena Master", Kontena::Cli::Stacks::InstallCommand
-  subcommand "search", "Search for stacks in stacks repository", Kontena::Cli::Stacks::SearchCommand
+  subcommand "push", "Push a stack into stacks registry", Kontena::Cli::Stacks::PushCommand
+  subcommand "pull", "Pull a stack from stacks registry", Kontena::Cli::Stacks::PullCommand
+  subcommand "search", "Search for stacks in stacks registry", Kontena::Cli::Stacks::SearchCommand
+  subcommand "info", "Show info about a stack in stacks registry", Kontena::Cli::Stacks::InfoCommand
+  subcommand ["del", "delete"], "Delete a stack in stacks registry", Kontena::Cli::Stacks::DeleteCommand
   
   def execute
   end

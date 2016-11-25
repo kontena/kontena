@@ -5,12 +5,14 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::Common
     include Common
 
-    parameter '[QUERY]', "Query string"
-
-    requires_current_account_token
+    parameter "[QUERY]", "Query string"
 
     def execute
-      puts stacks_client.search(query).inspect
+      results = stacks_client.search(query.to_s)
+      exit_with_error 'Nothing found' if results.empty?
+      results.each do |stack|
+        puts stack['name']
+      end
     end
   end
 end

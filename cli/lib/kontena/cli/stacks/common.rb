@@ -7,6 +7,23 @@ module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
+    module StackNameParam
+      attr_accessor :stack_version
+
+      def self.included(where)
+        where.parameter "STACK_NAME", "Stack name, for example user/stackname or user/stackname:version" do |name|
+          if name.include?(':')
+            name, @stack_version = name.split(':',2 )
+          end
+          name
+        end
+      end
+    end
+
+    def stack_name
+      @stack_name ||= self.name || stack_name_from_yaml(filename)
+    end
+
     def stack_from_yaml(filename)
       reader = Kontena::Cli::Stacks::YAML::Reader.new(filename)
       if reader.stack_name.nil?
