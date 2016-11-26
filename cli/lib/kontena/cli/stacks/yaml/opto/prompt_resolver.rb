@@ -41,9 +41,8 @@ module Kontena::Cli::Stacks
       end
 
       def ask
-        TTY::Prompt.new.ask(question_text)
+        TTY::Prompt.new.ask(question_text, default: option.default)
       end
-
 
       def resolve
         return nil if option.skip?
@@ -58,4 +57,3 @@ module Kontena::Cli::Stacks
     end
   end
 end
-
