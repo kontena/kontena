@@ -78,11 +78,6 @@ module Kontena::Cli::Stacks
         yaml['version'] || yaml['stack'].to_s[/:(.*)/, 1] || '1'
       end
 
-      # @return [String]
-      def raw
-        read_content
-      end
-
       private
 
       # A hash such as { "${MYSQL_IMAGE}" => "MYSQL_IMAGE } where the key is the
