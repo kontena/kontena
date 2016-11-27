@@ -22,11 +22,12 @@ module Cloud
     def handle_request(message)
       msg_id = message[1]
       handler, method = message[2].split('/')
-      if klass = HANDLERS[handler]        
+      if klass = HANDLERS[handler]
         begin
           result = klass.new.send(method, *message[3])
           return [1, msg_id, nil, result]
         rescue RpcServer::Error => exc
+          info "Error: #{exc.message} (#{exc.code})"
           return [1, msg_id, {code: exc.code, message: exc.message, backtrace: exc.backtrace}, nil]
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
