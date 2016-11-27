@@ -171,7 +171,7 @@ describe Kontena::Cli::Apps::DeployCommand do
             'name' => 'kontena-test-mysql',
             'image' => 'mysql:5.6',
             'env' => ['MYSQL_ROOT_PASSWORD=kontena-test_secret'],
-            'container_count' => nil,
+            'instances' => nil,
             'stateful' => true,
         }
         expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
@@ -186,7 +186,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           'name' => 'kontena-test-wordpress',
           'image' => 'wordpress:4.1',
           'env' => ['WORDPRESS_DB_PASSWORD=kontena-test_secret'],
-          'container_count' => 2,
+          'instances' => 2,
           'stateful' => true,
           'strategy' => 'ha',
           'links' => [{ 'name' => 'kontena-test-mysql', 'alias' => 'mysql' }],

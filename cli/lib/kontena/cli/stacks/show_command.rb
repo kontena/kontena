@@ -45,7 +45,7 @@ module Kontena::Cli::Stacks
       end
       puts "#{pad}  revision: #{service['revision']}"
       puts "#{pad}  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
-      puts "#{pad}  scaling: #{service['container_count'] }"
+      puts "#{pad}  scaling: #{service['instances'] }"
       puts "#{pad}  strategy: #{service['strategy']}"
       puts "#{pad}  deploy_opts:"
       puts "#{pad}    min_health: #{service['deploy_opts']['min_health']}"

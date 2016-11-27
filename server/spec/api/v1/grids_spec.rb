@@ -183,11 +183,11 @@ describe '/v1/grids' do
         expect(response.status).to eq(200)
         expect(json_response['services'].size).to eq(2)
         instance = json_response['services'][0]
-        expect(instance['instances']['total']).to eq(3)
-        expect(instance['instances']['running']).to eq(0)
+        expect(instance['instance_counts']['total']).to eq(3)
+        expect(instance['instance_counts']['running']).to eq(0)
         instance = json_response['services'][1]
-        expect(instance['instances']['total']).to eq(2)
-        expect(instance['instances']['running']).to eq(2)
+        expect(instance['instance_counts']['total']).to eq(2)
+        expect(instance['instance_counts']['running']).to eq(2)
       end
 
       it 'it returns internal services' do

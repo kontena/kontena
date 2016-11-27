@@ -6,7 +6,7 @@ json.affinity grid_service.affinity
 json.name grid_service.name
 json.stateful grid_service.stateful?
 json.user grid_service.user
-json.container_count grid_service.container_count
+json.instances grid_service.container_count
 json.cmd grid_service.cmd
 json.entrypoint grid_service.entrypoint
 json.net grid_service.net
@@ -41,7 +41,7 @@ json.log_opts grid_service.log_opts
 json.strategy grid_service.strategy
 json.deploy_opts grid_service.deploy_opts
 json.pid grid_service.pid
-json.instances do
+json.instance_counts do
   if defined? instance_counts
     json.total instance_counts[:total]
     json.running instance_counts[:running]

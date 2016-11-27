@@ -104,7 +104,8 @@ module GridServices
       def common_validations
         optional do
           string :strategy
-          integer :container_count
+          integer :instances
+          integer :container_count # @todo: deprecated by instances
           string :user
           array :cmd do
             string
