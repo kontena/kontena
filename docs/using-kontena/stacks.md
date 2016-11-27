@@ -4,7 +4,9 @@ title: Stacks
 
 # Stacks
 
-Kontena YAML stack files can be distributed the Kontena Stack Registry, and installed to the Kontena Master for deployment to the Grid as a collection of services containers running on the Host Nodes.
+Kontena YAML stack files can be distributed the Kontena Stack Registry, and installed to the Kontena Master for deployment to the Grid.
+The Kontena master deploys each stack as a collection of services containers running on the Host Nodes.
+The service containers for each stack run in a separate `$stack.$grid.kontena.local` DNS namespace.
 
 The following Kontena CLI commands operate on stack files and the stack registry:
 
