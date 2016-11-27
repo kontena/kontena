@@ -34,7 +34,7 @@ class CloudWebsocketConnectJob
 
   def cloud_enabled?
     kontena_auth_provider? &&
-      oauth_app_credentials?
+      oauth_app_credentials? &&
       cloud_enabled_in_config? &&
       socket_api_uri?
   end
