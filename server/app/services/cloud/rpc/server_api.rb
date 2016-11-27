@@ -69,9 +69,6 @@ module Cloud
           headers: headers,
           body: body.join
         }
-        unless [200, 201].include?(status)
-          raise RpcServer::Error.new(status, result)
-        end
         end_time = Time.now.to_f
         info "\"#{opts[:method].to_s.upcase} #{path}\" #{status} #{headers['Content-Length']} #{(end_time-start_time).round(4)}"
         result
