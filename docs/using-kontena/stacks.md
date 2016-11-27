@@ -14,6 +14,8 @@ The following Kontena CLI commands operate on stack files and the stack registry
 * `kontena stack push` - Push a stack file to the stack registry
 * `kontena stack pull` - Pull a stack file from the stack registry
 * `kontena stack search` - Search for stack files in the stack registry
+* `kontena stack info` - Show info about a stack in the stack registry
+* `kontena stack delete` - Delete a stack in the stack registry
 
 The following Kontena CLI commands operate on stacks deployed to the grid:
 
