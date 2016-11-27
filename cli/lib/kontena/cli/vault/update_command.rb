@@ -22,7 +22,7 @@ module Kontena::Cli::Vault
         upsert: upsert?
       }
       spinner "Updating #{name.colorize(:cyan)} value in the vault " do
-        client(token).put("grids/#{current_grid}/secrets/#{name}", data)
+        client(token).put("secrets/#{current_grid}/#{name}", data)
       end
     end
   end
