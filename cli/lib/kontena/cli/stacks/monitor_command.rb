@@ -15,7 +15,7 @@ module Kontena::Cli::Stacks
 
       response = client(token).get("grids/#{current_grid}/services?stack=#{name}")
       services = response['services']
-      if selected_services
+      if selected_services.size > 0
         services.delete_if{ |s| !selected_services.include?(s['name'])}
       end
       show_monitor(token, services)
