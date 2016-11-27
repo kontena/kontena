@@ -78,24 +78,23 @@ If you followed the steps above, you should now have a working Kontena setup ins
 $ kontena node list
 ```
 
-## Step 4. Deploy Your First Application
+## Step 4. Deploy Your First Application Stack
 
- Now you are ready to deploy your first application. In this section we will show you how to initiate a simple WordPress application and deploy it to your Kontena Grid.
+ Now you are ready to deploy your first application stack.
+ In this section we will show you how to package a simple WordPress application and deploy it to your Kontena Grid.
 
 First create the `kontena.yml` file with the following contents:
 
 ```
-version: '2'
+stack: examples/wordpress
 services:
   wordpress:
     image: wordpress:4.1
     stateful: true
     ports:
       - 80:80
-    links:
-      - mysql:wordpress-mysql
     environment:
-      - WORDPRESS_DB_HOST=%{project}-mysql.kontena.local
+      - WORDPRESS_DB_HOST=mysql
       - WORDPRESS_DB_USER=root
       - WORDPRESS_DB_PASSWORD=secret
   mysql:
@@ -105,20 +104,113 @@ services:
       - MYSQL_ROOT_PASSWORD=secret
 ```
 
-After that you can deploy the application with:
+You can then install and deploy the `wordpress` stack:
 
 ```
-$ kontena app deploy
+$ kontena stack install --deploy kontena.yml
+ [done] Creating stack wordpress      
+ [done] Deploying stack wordpress     
 ```
 
-After the deployment is finished you can verify it using:
+The intitial stack deployment may take some time while the host nodes pull the necessary Docker images.
+
+After the stack deployment is finished you can verify that the wordpress and mysql services are running:
 
 ```
-$ kontena app show wordpress
+$ kontena stack show wordpress
+wordpress:
+  state: running
+  created_at: 2016-11-27T10:16:03.080Z
+  updated_at: 2016-11-27T10:16:03.080Z
+  version: 1
+  expose: -
+  services:
+    wordpress:
+      image: wordpress:4.1
+      status: running
+      revision: 1
+      stateful: yes
+      scaling: 1
+      strategy: ha
+      deploy_opts:
+        min_health: 0.8
+      dns: wordpress.wordpress.development.kontena.local
+      ports:
+        - 80:80/tcp
+    mysql:
+      image: mariadb:5.5
+      status: running
+      revision: 1
+      stateful: yes
+      scaling: 1
+      strategy: ha
+      deploy_opts:
+        min_health: 0.8
+      dns: mysql.wordpress.development.kontena.local
 ```
 
-It should show details of the service. If you view the node details (`$ kontena node show <node>`), you can pick the private IP address of the node and verify in a browser that the application is responding.
-**Note:** The private IP address applies only in this special case, where we are using Vagrant for the Kontena setup. Under a normal deployment, you can simply choose the public IP of the service from the application details.
+This shows the configuration of each deployed stack service.
+
+To test the wordpress service, you must determine the IP address of the host node publishing the wordpress service on TCP port 80:
+
+```
+$ kontena service show wordpress/wordpress
+development/wordpress/wordpress:
+  stack: development/wordpress
+  status: running
+  image: wordpress:4.1
+  revision: 1
+  stateful: yes
+  scaling: 1
+  strategy: ha
+  deploy_opts:
+    min_health: 0.8
+  dns: wordpress.wordpress.development.kontena.local
+  env:
+    - WORDPRESS_DB_HOST=mysql
+    - WORDPRESS_DB_USER=root
+    - WORDPRESS_DB_PASSWORD=secret
+  net: bridge
+  ports:
+    - 80:80/tcp
+  instances:
+    wordpress-wordpress-1:
+      rev: 2016-11-27 10:16:03 UTC
+      service_rev: 1
+      node: core-01
+      dns: wordpress-1.wordpress.development.kontena.local
+      ip: 10.81.128.30
+      public ip: 192.0.2.1
+      status: running
+      exit code: 0
+```
+
+You use the public IP address and published port numbers associated with any service container to access the service. **Note:** For the special case of using Vagrant for the Kontena setup, you must use the *private* IP address of the node running the `wordpress/wordpress` service:
+
+```
+$ kontena node show core-01
+core-01:
+  id: XI4K:NPOL:EQJ4:S4V7:EN3B:DHC5:KZJD:F3U2:PCAN:46EV:IO4A:63S5
+  agent version: 1.0.0.pre1
+  docker version: 1.11.2
+  connected: yes
+  last connect: 2016-11-27T08:52:43.776Z
+  last seen: 2016-11-27T10:28:59.586Z
+  public ip: 192.0.2.1
+  private ip: 192.168.66.101
+  overlay ip: 10.81.0.1
+  os: CoreOS 1185.3.0 (MoreOS)
+  driver: overlay
+  kernel: 4.7.3-coreos-r2
+  initial node: yes
+  labels:
+  stats:
+    cpus: 1
+    load: 0.43 0.43 0.37
+    memory: 0.7 of 0.97 GB
+    filesystem:
+      - /var/lib/docker: 4.14 of 15.57 GB
+```
 
 For more complex examples of application deployment on Kontena, please see the following examples:
 

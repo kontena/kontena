@@ -48,3 +48,15 @@ A Service is composed of containers based on the same image file. In addition to
 Kontena's built-in support for Service-level statistics and logging is very useful since it is often difficult to get an overview and understand a complex system by just inspecting individual containers. In addition, Kontena's Services make all statistics and log data persistent. This is essential due to the fact that individual containers do not store this information persistently.
 
 As with any container orchestration technology, Kontena supports the creation of stateless Services: web servers, REST API servers and in-memory object caches. In addition, Kontena has support for stateful Services such as traditional and distributed databases and batch and streaming data processing. The support for stateful Services is one of the key differentiators between Kontena and other container orchestration technologies.
+
+## Stacks
+
+An individual service is rarely useful on its own.
+Modern microservice architectures will decompose applications into many smaller services, and even monolithic web applications will typically require some external services such as a database.
+Deploying these applications requires careful management of the different combinations of services, and the ability for those services to communicate amongst themselves.
+Deploying a re-usable application into different environments may require the use of configuration variables to customize the application.
+Kontena Stacks are used to distribute, deploy and run pre-packaged and reusable collections of multiple services with any associated configuration.
+
+Each Kontena Stack can be distributed as a YAML file via the ***Stack Registry***, deployed as a Stack via the ***Kontena Master***, and run as ***Service Containers*** in a per-stack namespace within the ***Grid***.
+The use of a per-stack namespace allows simple communication between the services within a stack, while also allowing multiple instances of the same stack to be run within the same ***Grid***.
+Stacks can also use services exposed by other stacks deployed to the same grid.
