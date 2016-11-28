@@ -15,21 +15,30 @@ The service containers can connect to the bare DNS names of other services in th
 Stacks can also expose a service, allowing other stacks to use the bare DNS name of the exposing stack to connect to the exposed service.
 
 ## Usage
-The following Kontena CLI commands operate on stack files and the stack registry:
 
-* `kontena stack build` - Build Docker images referenced by a stack file
+Kontena Stacks can be distributed as YAML files via the ***Stack Registry***, deployed via the ***Kontena Master*** to run as ***Service Containers*** within the ***Grid***.
+
+### Stack Registry
+The following Kontena CLI commands operate on the Kontena Cloud stack registry:
+
 * `kontena stack pull` - Pull a stack file from the stack registry
 * `kontena stack push` - Push a stack file to the stack registry
 * `kontena stack push -d` - Delete a stack file from the stack registry
 * `kontena stack search` - Search for stack files in the stack registry
 * `kontena stack info` - Show info about a stack in the stack registry
 
+### Stack files
+The following Kontena CLI commands operate on local stack files:
+
+* `kontena stack build` - Build and push Docker images referenced by a stack file
+* `kontena stack install` - Create a stack on the Kontena Master
+* `kontena stack upgrade` - Upgrade a stack within the Grid
+
+### Deployed Stacks
 The following Kontena CLI commands operate on named stacks deployed to the grid:
 
-* `kontena stack list` - List stacks deployed to the Grid
+* `kontena stack list` - List installed stacks
 * `kontena stack show` - Show stack details from the Grid
-* `kontena stack install` - Deploy a stack to the Kontena Master
-* `kontena stack upgrade` - Upgrade a stack within the Grid
 * `kontena stack deploy` - Deploy a stack to the Grid
 * `kontena stack logs` - Show logs from stack services
 * `kontena stack monitor` - Monitor stack services
