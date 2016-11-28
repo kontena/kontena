@@ -6,33 +6,34 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
+    banner "Deploys all services of a stack that has been installed in a grid on Kontena Master"
+
     parameter "NAME", "Stack name"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master
+    requires_current_master_token
 
+    def execute
       deployment = nil
       spinner "Deploying stack #{pastel.cyan(name)}" do
-        deployment = deploy_stack(token, name)
+        deployment = deploy_stack(name)
         deployment['service_deploys'].each do |service_deploy|
-          wait_for_deploy_to_finish(token, service_deploy)
+          wait_for_deploy_to_finish(service_deploy)
         end
       end
     end
 
-    def deploy_stack(token, name)
-      client(token).post("stacks/#{current_grid}/#{name}/deploy", {})
+    def deploy_stack(name)
+      client.post("stacks/#{current_grid}/#{name}/deploy", {})
     end
 
-    # @param [String] token
     # @param [Hash] deployment
     # @return [Boolean]
-    def wait_for_deploy_to_finish(token, deployment, timeout = 600)
+    def wait_for_deploy_to_finish(deployment, timeout = 600)
       deployed = false
       Timeout::timeout(timeout) do
         until deployed
-          deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
+          deployment = client.get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
           deployed = true if deployment['finished_at']
           sleep 1
         end

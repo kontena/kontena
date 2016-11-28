@@ -12,7 +12,8 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
       if value.is_a?(Hash)
         extends_validation = {
           'service' => 'string',
-          'file' => HashValidator.optional('string')
+          'file' => HashValidator.optional('string'),
+          'stack' => HashValidator.optional('string')
         }
         HashValidator.validator_for(extends_validation).validate(key, value, extends_validation, errors)
       end

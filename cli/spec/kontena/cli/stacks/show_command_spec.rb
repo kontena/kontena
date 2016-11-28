@@ -8,13 +8,13 @@ describe Kontena::Cli::Stacks::ShowCommand do
   describe '#execute' do
     it 'requires api url' do
       allow(subject).to receive(:forced?).and_return(true)
-      expect(subject).to receive(:require_api_url).once
+      expect(described_class.requires_current_master?).to be_truthy
       subject.run(['test-stack'])
     end
 
     it 'requires token' do
       allow(subject).to receive(:forced?).and_return(true)
-      expect(subject).to receive(:require_token).and_return(token)
+      expect(described_class.requires_current_master_token?).to be_truthy
       subject.run(['test-stack'])
     end
 

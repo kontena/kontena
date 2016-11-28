@@ -4,10 +4,11 @@ module Kontena::Cli::Stacks
   module YAML
     class Reader
       include Kontena::Util
+      include Kontena::Cli::Common
 
       attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml
 
-      def initialize(file, skip_validation: false, skip_variables: false, replace_missing: nil)
+      def initialize(file, skip_validation: false, skip_variables: false, replace_missing: nil, from_registry: false)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
@@ -17,7 +18,16 @@ module Kontena::Cli::Stacks
         require_relative 'opto/prompt_resolver'
 
         @file = file
-        @raw_content = File.read(File.expand_path(file))
+        @from_registry = from_registry
+
+        if from_registry?
+          require 'shellwords'
+          @raw_content = Kontena::StacksCache.pull(file)
+          @registry    = Kontena::StacksCache::RegistryClientFactory.new.stacks_client.api_url
+        else
+          @raw_content = File.read(File.expand_path(file))
+        end
+
         @errors = []
         @notifications = []
         @skip_validation  = skip_validation
@@ -25,6 +35,10 @@ module Kontena::Cli::Stacks
         @replace_missing  = replace_missing
         parse_variables unless skip_variables
         parse_yaml
+      end
+
+      def from_registry?
+        @from_registry == true
       end
 
       # @return [Opto::Group]
@@ -49,10 +63,11 @@ module Kontena::Cli::Stacks
       # @return [Hash]
       def execute(service_name = nil)
         result = {}
-        Dir.chdir(File.dirname(File.expand_path(file))) do
+        Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
           result[:stack]         = yaml['stack']
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
+          result[:registry]      = @registry if from_registry?
           result[:expose]        = yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
@@ -239,9 +254,12 @@ module Kontena::Cli::Stacks
       def extend_config(service_config)
         extended_service = extended_service(service_config['extends'])
         return unless extended_service
-        filename = service_config['extends']['file']
+        filename  = service_config['extends']['file']
+        stackname = service_config['extends']['stack']
         if filename
           parent_config = from_external_file(filename, extended_service)
+        elsif stackname
+          parent_config = from_external_file(stackname, extended_service, from_registry: true)
         else
           raise ("Service '#{extended_service}' not found in #{file}") unless services.has_key?(extended_service)
           parent_config = process_config(services[extended_service])
@@ -259,8 +277,8 @@ module Kontena::Cli::Stacks
         end
       end
 
-      def from_external_file(filename, service_name)
-        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: true, replace_missing: @replace_missing).execute(service_name)
+      def from_external_file(filename, service_name, from_registry: false)
+        outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: true, replace_missing: @replace_missing, from_registry: from_registry).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]

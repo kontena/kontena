@@ -6,29 +6,31 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
+    banner "Removes a stack in a grid on Kontena Master"
+
     parameter "NAME", "Stack name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master
+    requires_current_master_token
 
+    def execute
       confirm_command(name) unless forced?
       spinner "Removing stack #{pastel.cyan(name)} " do
-        remove_stack(token, name)
-        wait_stack_removal(token, name)
+        remove_stack(name)
+        wait_stack_removal(name)
       end
     end
 
-    def remove_stack(token, name)
-      client(token).delete("stacks/#{current_grid}/#{name}")
+    def remove_stack(name)
+      client.delete("stacks/#{current_grid}/#{name}")
     end
 
-    def wait_stack_removal(token, name)
+    def wait_stack_removal(name)
       removed = false
       until removed == true
         begin
-          client(token).get("stacks/#{current_grid}/#{name}")
+          client.get("stacks/#{current_grid}/#{name}")
           sleep 1
         rescue Kontena::Errors::StandardError => exc
           if exc.status == 404

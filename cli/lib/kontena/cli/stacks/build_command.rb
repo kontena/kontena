@@ -1,9 +1,11 @@
 require_relative 'common'
 
 module Kontena::Cli::Stacks
-  class BuildCommand < Clamp::Command
+  class BuildCommand < Kontena::Command
     include Kontena::Cli::Common
     include Common
+
+    banner "Build images listed in a stack file and push them to your image registry"
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false

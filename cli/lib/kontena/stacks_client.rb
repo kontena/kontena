@@ -7,31 +7,35 @@ module Kontena
     ACCEPT_YAML = { 'Accept' => 'application/yaml' }
     CT_YAML     = { 'Content-Type' => 'application/yaml' }
 
-    def path_to(repo_name, version = nil)
-      version ? "/stack/#{repo_name}/version/#{version}" : "/stack/#{repo_name}"
+    def path_to(stack_name, version = nil)
+      version ? "/stack/#{stack_name}/version/#{version}" : "/stack/#{stack_name}"
     end
 
-    def push(repo_name, version, data)
+    def push(stack_name, version, data)
       post('/stack/', data, {}, CT_YAML)
     end
 
-    def pull(repo_name, version = nil)
-      get(path_to(repo_name, version), {}, ACCEPT_YAML)
+    def show(stack_name)
+      get("#{path_to(stack_name, nil)}", {}, ACCEPT_JSON)
+    end
+
+    def versions(stack_name)
+      get("#{path_to(stack_name, nil)}/versions", {}, ACCEPT_JSON)['versions']
+    end
+
+    def pull(stack_name, version = nil)
+      get(path_to(stack_name, version), {}, ACCEPT_YAML)
     rescue StandardError => ex
-      ex.message << " : #{path_to(repo_name, version)}"
+      ex.message << " : #{path_to(stack_name, version)}"
       raise ex, ex.message
     end
 
     def search(query)
-      get('/search', { q: query }, {}, ACCEPT_JSON)
+      get('/search', { q: query }, {}, ACCEPT_JSON)['stacks']
     end
 
-    def versions(repo_name)
-      get("#{path_to(repo_name)}/versions", {}, ACCEPT_JSON)
-    end
-
-    def destroy(repo_name, version = nil)
-      delete(path_to(repo_name, version))
+    def destroy(stack_name, version = nil)
+      delete(path_to(stack_name, version), {})
     end
   end
 end
