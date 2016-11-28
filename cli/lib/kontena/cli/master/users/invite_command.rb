@@ -21,6 +21,7 @@ module Kontena::Cli::Master::Users
       else
         roles = []
       end
+      external_id = nil
       if email_list.size == 1 && self.external_id
         external_id = self.external_id
       end
