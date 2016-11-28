@@ -34,7 +34,8 @@ module Kontena::Cli::Stacks
 
     # @param [String] service_id
     def show_service(service_id)
-      service = get_service(service_id)
+      token = require_token
+      service = get_service(token, service_id)
       pad = '    '.freeze
       puts "#{pad}#{service['name']}:"
       puts "#{pad}  image: #{service['image']}"
