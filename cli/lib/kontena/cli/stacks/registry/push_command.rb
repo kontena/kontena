@@ -7,35 +7,15 @@ module Kontena::Cli::Stacks::Registry
 
     banner "Pushes (uploads) a stack to the stack registry"
 
-    parameter "[FILENAME]", "Stack file path"
-
-    option ['-d', '--delete'], "[STACK]", "Delete stack or stack version from registry. Use user/stack_name or user/stack_name:version."
-    option ['-f', '--force'], :flag, "Force delete"
+    parameter "FILENAME", "Stack file path"
 
     requires_current_account_token
 
     def execute
-
-      if filename && delete
-        exit_with_error 'Both FILENAME and --delete given'
-      elsif delete
-        unless force?
-          if delete.include?(':')
-            puts "About to delete #{delete} from the registry"
-            confirm
-          else
-            puts "About to delete an entire stack and all of its versions from the registry"
-            confirm_command(delete)
-          end
-        end
-        stacks_client.destroy(delete)
-        puts pastel.green("Stack #{delete} deleted successfully")
-      elsif filename
-        file = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_variables: true, replace_missing: "filler")
+      file = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_variables: true, replace_missing: "filler")
+      name = "#{file.yaml['stack']}:#{file.yaml['version']}"
+      spinner("Pushing #{pastel.cyan(name)} to stacks registry") do
         stacks_client.push(file.yaml['stack'], file.yaml['version'], file.raw_content)
-        puts pastel.green("Successfully pushed #{file.yaml['stack']}:#{file.yaml['version']} to Stacks registry")
-      else
-        exit_with_error 'FILENAME or --delete required'
       end
     end
   end

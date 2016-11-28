@@ -17,15 +17,16 @@ module Kontena::Cli::Stacks::Registry
     def execute
       unless force?
         if stack_name.include?(':')
-          puts "About to delete #{stack_name} from the registry"
+          puts "About to delete #{pastel.cyan(stack_name)} from the stacks registry"
           confirm
         else
-          puts "About to delete an entire stack and all of its versions from the registry"
+          puts "About to delete an entire stack and all of its versions from the stacks registry"
           confirm_command(stack_name)
         end
       end
-      stacks_client.destroy(stack_name)
-      puts pastel.green("Stack #{stack_name} deleted successfully")
+      spinner "Removing #{pastel.cyan(stack_name)} from the registry" do
+        stacks_client.destroy(stack_name)
+      end
     end
   end
 end
