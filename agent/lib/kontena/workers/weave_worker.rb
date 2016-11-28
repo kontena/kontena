@@ -14,13 +14,13 @@ module Kontena::Workers
 
       subscribe('dns:add', :on_dns_add)
 
+      @migrate_containers = nil # initialized by #start
+
       if network_adapter.running?
         self.start
       else
         subscribe('network_adapter:start', :on_weave_start)
       end
-
-      @migrate_containers = nil # initialized by #start
     end
 
     def on_weave_start(topic, data)
