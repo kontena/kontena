@@ -9,6 +9,7 @@ module Kontena::Cli::Master::Users
 
     option ['-r', '--roles'], '[ROLES]', 'Comma separated list of roles to assign to the invited users'
     option ['-c', '--code'], :flag, 'Only output the invite code'
+    option '--external-id', '[EXTERNAL ID]', 'Assign external id to user', hidden: true
     option '--return', :flag, 'Return the code', hidden: true
 
     requires_current_master
@@ -20,10 +21,13 @@ module Kontena::Cli::Master::Users
       else
         roles = []
       end
-
+      external_id = nil
+      if email_list.size == 1 && self.external_id
+        external_id = self.external_id
+      end
       email_list.each do |email|
         begin
-          data = { email: email, response_type: 'invite' }
+          data = { email: email, external_id: external_id, response_type: 'invite' }
           response = client.post('/oauth2/authorize', data)
           if self.code?
             puts response['invite_code']
