@@ -10,7 +10,7 @@ module Kontena::Cli::Stacks
 
     def execute
       unless versions?
-        file = YAML::Reader.new(stack_name, skip_variables: true, replace_missing: "filler", from_registry: true)
+        file = YAML::Reader.new(stack_version ? "#{stack_name}:#{stack_version}" : stack_name, skip_variables: true, replace_missing: "filler", from_registry: true)
         puts "CURRENT VERSION"
         puts "-----------------"
         puts "* Version: #{file.yaml['version']}"

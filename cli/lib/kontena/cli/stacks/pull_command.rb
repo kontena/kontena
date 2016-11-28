@@ -7,10 +7,12 @@ module Kontena::Cli::Stacks
     include Common::StackNameParam
 
     option ['-F', '--file'], '[FILENAME]', "Write to file (default STDOUT)"
+    option '--no-cache', :flag, "Don't use local cache"
     option '--return', :flag, 'Return the result', hidden: true
 
     def execute
-      content = stacks_client.pull(stack_name, stack_version)
+      target = no_cache? ? stacks_client : Kontena::StacksCache
+      content = target.pull(stack_name, stack_version)
       if return?
         return content
       elsif file
