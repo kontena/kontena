@@ -18,9 +18,8 @@ module Kontena::Cli::Stacks
         puts "AVAILABLE VERSIONS"
         puts "-------------------"
       end
-      # registry returns an array of strings now, going to change to [{ "version" => "0.1" }] soon, thats why .map
-      stacks_client.versions(stack_name).sort.reverse.each do |version|
-        puts version.kind_of?(String) ? version : version['version'] 
+      stacks_client.versions(stack_name).map { |s| s['version']}.sort.reverse_each do |version|
+        puts version
       end
     end
   end
