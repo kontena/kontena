@@ -1,10 +1,10 @@
-require_relative 'common'
+require_relative '../common'
 
-module Kontena::Cli::Stacks
+module Kontena::Cli::Stacks::Registry
   class PullCommand < Kontena::Command
     include Kontena::Cli::Common
-    include Common
-    include Common::StackNameParam
+    include Kontena::Cli::Stacks::Common
+    include Kontena::Cli::Stacks::Common::StackNameParam
 
     banner "Pulls / downloads a stack from the stack registry"
 
@@ -26,4 +26,3 @@ module Kontena::Cli::Stacks
     end
   end
 end
-

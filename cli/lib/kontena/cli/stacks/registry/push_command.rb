@@ -1,9 +1,9 @@
-require_relative 'common'
+require_relative '../common'
 
-module Kontena::Cli::Stacks
+module Kontena::Cli::Stacks::Registry
   class PushCommand < Kontena::Command
     include Kontena::Cli::Common
-    include Common
+    include Kontena::Cli::Stacks::Common
 
     banner "Pushes (uploads) a stack to the stack registry"
 
@@ -31,7 +31,7 @@ module Kontena::Cli::Stacks
         stacks_client.destroy(delete)
         puts pastel.green("Stack #{delete} deleted successfully")
       elsif filename
-        file = YAML::Reader.new(filename, skip_variables: true, replace_missing: "filler")
+        file = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_variables: true, replace_missing: "filler")
         stacks_client.push(file.yaml['stack'], file.yaml['version'], file.raw_content)
         puts pastel.green("Successfully pushed #{file.yaml['stack']}:#{file.yaml['version']} to Stacks registry")
       else
