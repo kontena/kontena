@@ -28,20 +28,35 @@ module Kontena::Cli::Stacks
         (!hint.nil? && hint != option.name) ? "#{hint} :" : "#{prompt_word} #{option.label || option.name} :"
       end
 
+      def enum_can_be_other?
+        enum? && option.handler.options[:can_be_other] ? true : false
+      end
+
       def enum
-        prompt.select(question_text) do |menu|
-          option.handler.options[:options].each do |opt| # quite ugly way to access the option's value list definition
+        opts = option.handler.options[:options]
+        opts << { label: '(Other)', value: nil, description: '(Other)' } if enum_can_be_other?
+
+        answer = prompt.select(question_text) do |menu|
+          menu.enum ':' # makes it show numbers before values, you can press the number to select.
+          menu.default(opts.index {|opt| opt[:value] == option.default }.to_i + 1) if option.default
+          opts.each do |opt|
             menu.choice opt[:label], opt[:value]
           end
+        end
+
+        if answer.nil? && enum_can_be_other?
+          ask
+        else
+          answer
         end
       end
 
       def bool
-        prompt.yes?(question_text)
+        prompt.yes?(question_text, default: option.default == false ? false : true)
       end
 
       def ask
-        TTY::Prompt.new.ask(question_text)
+        prompt.ask(question_text, default: option.default)
       end
 
 
