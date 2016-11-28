@@ -11,10 +11,16 @@ module Kontena::Workers
 
     def initialize
       info 'initialized'
-      @migrate_containers = nil # XXX: also needed for container:event start
 
-      subscribe('network_adapter:start', :on_weave_start)
       subscribe('dns:add', :on_dns_add)
+
+      if network_adapter.running?
+        self.start
+      else
+        subscribe('network_adapter:start', :on_weave_start)
+      end
+
+      @migrate_containers = nil # initialized by #start
     end
 
     def on_weave_start(topic, data)
