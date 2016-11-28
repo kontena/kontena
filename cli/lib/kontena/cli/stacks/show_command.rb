@@ -6,17 +6,19 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
+    banner "Show information and status of a stack in a grid on Kontena Master"
+
     parameter "NAME", "Stack name"
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master
+    requires_current_master_token
 
-      show_stack(token, name)
+    def execute
+      show_stack(name)
     end
 
-    def show_stack(token, name)
-      stack = client(token).get("stacks/#{current_grid}/#{name}")
+    def show_stack(name)
+      stack = client.get("stacks/#{current_grid}/#{name}")
 
       puts "#{stack['name']}:"
       puts "  state: #{stack['state']}"
@@ -26,14 +28,13 @@ module Kontena::Cli::Stacks
       puts "  expose: #{stack['expose'] || '-'}"
       puts "  services:"
       stack['services'].each do |service|
-        show_service(token, service['id'])
+        show_service(service['id'])
       end
     end
 
-    # @param [String] token
     # @param [String] service_id
-    def show_service(token, service_id)
-      service = get_service(token, service_id)
+    def show_service(service_id)
+      service = get_service(service_id)
       pad = '    '.freeze
       puts "#{pad}#{service['name']}:"
       puts "#{pad}  image: #{service['image']}"

@@ -6,6 +6,8 @@ module Kontena::Cli::Stacks
     include Common
     include Common::StackNameParam
 
+    banner "Pulls / downloads a stack from the stack registry"
+
     option ['-F', '--file'], '[FILENAME]', "Write to file (default STDOUT)"
     option '--no-cache', :flag, "Don't use local cache"
     option '--return', :flag, 'Return the result', hidden: true

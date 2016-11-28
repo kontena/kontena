@@ -1,33 +1,34 @@
 require_relative 'common'
 
 module Kontena::Cli::Stacks
-  class MonitorCommand < Clamp::Command
+  class MonitorCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Common
 
+    banner "Monitor services in a stack"
+
     parameter "NAME", "Stack name"
     parameter "[SERVICES] ...", "Stack services to monitor", attribute_name: 'selected_services'
 
-    def execute
-      require_api_url
-      token = require_token
+    requires_current_master
+    requires_current_master_token
 
-      response = client(token).get("grids/#{current_grid}/services?stack=#{name}")
+    def execute
+      response = client.get("grids/#{current_grid}/services?stack=#{name}")
       services = response['services']
       if selected_services.size > 0
         services.delete_if{ |s| !selected_services.include?(s['name'])}
       end
-      show_monitor(token, services)
+      show_monitor(services)
     end
 
-    # @param [String] token
     # @param [Array<Hash>]
-    def show_monitor(token, services)
+    def show_monitor(services)
       loop do
         nodes = {}
         services.each do |service|
-          result = client(token).get("services/#{service['id']}/containers") rescue nil
+          result = client.get("services/#{service['id']}/containers") rescue nil
           service['instances'] = 0
           if result
             service['instances'] = result['containers'].size

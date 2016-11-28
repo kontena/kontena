@@ -5,6 +5,8 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::Common
     include Common
 
+    banner "Search for stacks on the stack registry"
+
     parameter "[QUERY]", "Query string"
 
     def execute

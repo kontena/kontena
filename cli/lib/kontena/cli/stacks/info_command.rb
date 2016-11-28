@@ -6,7 +6,11 @@ module Kontena::Cli::Stacks
     include Common
     include Common::StackNameParam
 
+    banner "Shows information about a stack on the stacks registry"
+
     option ['-v', '--versions'], :flag, "Only list available versions"
+
+    requires_current_account_token
 
     def execute
       unless versions?

@@ -5,6 +5,8 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::Common
     include Common
 
+    banner "Pushes (uploads) a stack to the stack registry"
+
     parameter "[FILENAME]", "Stack file path"
 
     option ['-d', '--delete'], "[STACK]", "Delete stack or stack version from registry. Use user/stack_name or user/stack_name:version."

@@ -6,7 +6,10 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Common
 
+    banner "Lists all installed stacks on a grid in Kontena Master"
+
     requires_current_master
+    requires_current_master_token
 
     def execute
       list_stacks

@@ -15,15 +15,15 @@ require_relative 'stacks/info_command'
 
 class Kontena::Cli::StackCommand < Kontena::Command
 
-  subcommand "install", "Install a stack", Kontena::Cli::Stacks::InstallCommand
-  subcommand "build", "Build stack file images", Kontena::Cli::Stacks::BuildCommand
-  subcommand ["ls", "list"], "List stacks", Kontena::Cli::Stacks::ListCommand
-  subcommand "show", "Show stack details", Kontena::Cli::Stacks::ShowCommand
-  subcommand "upgrade", "Upgrade installed stack", Kontena::Cli::Stacks::UpgradeCommand
-  subcommand "deploy", "Deploy stack", Kontena::Cli::Stacks::DeployCommand
-  subcommand "logs", "Show logs from stack services", Kontena::Cli::Stacks::LogsCommand
-  subcommand "monitor", "Monitor stack services", Kontena::Cli::Stacks::MonitorCommand
-  subcommand ["remove","rm"], "Remove a deployed stack", Kontena::Cli::Stacks::RemoveCommand
+  subcommand "install", "Install a stack to a grid", Kontena::Cli::Stacks::InstallCommand
+  subcommand ["ls", "list"], "List installed stacks in a grid", Kontena::Cli::Stacks::ListCommand
+  subcommand ["remove","rm"], "Remove a deployed stack from a grid", Kontena::Cli::Stacks::RemoveCommand
+  subcommand "show", "Show details about a stack in a grid", Kontena::Cli::Stacks::ShowCommand
+  subcommand "upgrade", "Upgrade a stack in a grid", Kontena::Cli::Stacks::UpgradeCommand
+  subcommand ["start", "deploy"], "Deploy an installed stack in a grid", Kontena::Cli::Stacks::DeployCommand
+  subcommand "logs", "Show logs from services in a stack", Kontena::Cli::Stacks::LogsCommand
+  subcommand "monitor", "Monitor services in a stack", Kontena::Cli::Stacks::MonitorCommand
+  subcommand "build", "Build images listed in a stack file and push them to an image registry", Kontena::Cli::Stacks::BuildCommand
   subcommand "push", "Push (or delete) a stack into the stacks registry", Kontena::Cli::Stacks::PushCommand
   subcommand "pull", "Pull a stack from the stacks registry", Kontena::Cli::Stacks::PullCommand
   subcommand "search", "Search for stacks in the stacks registry", Kontena::Cli::Stacks::SearchCommand
