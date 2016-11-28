@@ -16,6 +16,11 @@ module Kontena
         return unless command.result.has_key?(:code)
         return unless command.result.has_key?(:name)
 
+        # If plugins generate self-signed cert, most of the upcoming callbacks will
+        # fail without this. This can be made bit more clever once all the plugins
+        # return the generated self-signed certificate.
+        ENV['SSL_IGNORE_ERRORS'] = 'true'
+
         # In case there already is a server with the same name add random characters to name
         if config.find_server(command.result[:name])
           command.result[:name] = "#{command.result[:name]}-#{SecureRandom.hex(2)}"
@@ -33,7 +38,7 @@ module Kontena
           ENV["DEBUG"] && puts("Trying to request / from #{new_master.url}")
           client = Kontena::Client.new(new_master.url, nil, ignore_ssl_errors: true)
           client.get('/')
-        rescue 
+        rescue
           ENV["DEBUG"] && puts("HTTPS test failed: #{$!} #{$!.message}")
           unless retried
             new_master.url = "http://#{command.result[:public_ip]}"
