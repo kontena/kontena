@@ -14,7 +14,6 @@ module Kontena::Cli::Stacks::Registry
 
     def execute
       stack = ::YAML.load(stacks_client.show(stack_name))
-      #p stack
       puts "#{stack['stack']}:"
       puts "  latest_version: #{stack['version']}"
       puts "  expose: #{stack['expose'] || '-'}"
