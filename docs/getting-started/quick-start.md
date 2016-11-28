@@ -87,21 +87,49 @@ First create the `kontena.yml` file with the following contents:
 
 ```
 stack: examples/wordpress
+version: 0.3.0
+variables:
+  wordpress-mysql-root:
+    type: string
+    from:
+      vault: wordpress-mysql-root
+      random_string: 32
+    to:
+      vault: wordpress-mysql-root
+  wordpress-mysql-password:
+    type: string
+    from:
+      vault: wordpress-mysql-password
+      random_string: 32
+    to:
+      vault: wordpress-mysql-password
 services:
   wordpress:
-    image: wordpress:4.1
+    image: wordpress:4.6
     stateful: true
     ports:
       - 80:80
     environment:
-      - WORDPRESS_DB_HOST=mysql
-      - WORDPRESS_DB_USER=root
-      - WORDPRESS_DB_PASSWORD=secret
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    secrets:
+      - secret: wordpress-mysql-password
+        name: WORDPRESS_DB_PASSWORD
+        type: env
   mysql:
     image: mariadb:5.5
     stateful: true
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+    secrets:
+      - secret: wordpress-mysql-root
+        name: MYSQL_ROOT_PASSWORD
+        type: env
+      - secret: wordpress-mysql-password
+        name: MYSQL_PASSWORD
+        type: env
 ```
 
 You can then install and deploy the `wordpress` stack:
@@ -112,105 +140,57 @@ $ kontena stack install --deploy kontena.yml
  [done] Deploying stack wordpress     
 ```
 
-The intitial stack deployment may take some time while the host nodes pull the necessary Docker images.
+The initial stack deployment may take some time while the host nodes pull the referenced Docker images.
 
 After the stack deployment is finished you can verify that the wordpress and mysql services are running:
 
 ```
-$ kontena stack show wordpress
-wordpress:
-  state: running
-  created_at: 2016-11-27T10:16:03.080Z
-  updated_at: 2016-11-27T10:16:03.080Z
-  version: 1
-  expose: -
-  services:
-    wordpress:
-      image: wordpress:4.1
-      status: running
-      revision: 1
-      stateful: yes
-      scaling: 1
-      strategy: ha
-      deploy_opts:
-        min_health: 0.8
-      dns: wordpress.wordpress.development.kontena.local
-      ports:
-        - 80:80/tcp
-    mysql:
-      image: mariadb:5.5
-      status: running
-      revision: 1
-      stateful: yes
-      scaling: 1
-      strategy: ha
-      deploy_opts:
-        min_health: 0.8
-      dns: mysql.wordpress.development.kontena.local
+$ kontena stack ls
+NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS                                     
+⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp                                      
 ```
 
-This shows the configuration of each deployed stack service.
-
-To test the wordpress service, you must determine the IP address of the host node publishing the wordpress service on TCP port 80:
+You can use the `kontena stack` commands to view the resulting configuration of each deployed stack service:
 
 ```
 $ kontena service show wordpress/wordpress
 development/wordpress/wordpress:
   stack: development/wordpress
   status: running
-  image: wordpress:4.1
-  revision: 1
+  image: wordpress:4.6
+  revision: 2
   stateful: yes
   scaling: 1
   strategy: ha
   deploy_opts:
     min_health: 0.8
   dns: wordpress.wordpress.development.kontena.local
+  secrets:
+    - secret: wordpress-mysql-password
+      name: WORDPRESS_DB_PASSWORD
+      type: env
   env:
     - WORDPRESS_DB_HOST=mysql
-    - WORDPRESS_DB_USER=root
-    - WORDPRESS_DB_PASSWORD=secret
+    - WORDPRESS_DB_USER=wordpress
+    - WORDPRESS_DB_NAME=wordpress
   net: bridge
   ports:
     - 80:80/tcp
   instances:
     wordpress-wordpress-1:
-      rev: 2016-11-27 10:16:03 UTC
-      service_rev: 1
+      rev: 2016-11-28 13:51:02 UTC
+      service_rev: 2
       node: core-01
       dns: wordpress-1.wordpress.development.kontena.local
-      ip: 10.81.128.30
+      ip: 10.81.128.115
       public ip: 192.0.2.1
       status: running
       exit code: 0
 ```
 
-You use the public IP address and published port numbers associated with any service container to access the service. **Note:** For the special case of using Vagrant for the Kontena setup, you must use the *private* IP address of the node running the `wordpress/wordpress` service:
-
-```
-$ kontena node show core-01
-core-01:
-  id: XI4K:NPOL:EQJ4:S4V7:EN3B:DHC5:KZJD:F3U2:PCAN:46EV:IO4A:63S5
-  agent version: 1.0.0.pre1
-  docker version: 1.11.2
-  connected: yes
-  last connect: 2016-11-27T08:52:43.776Z
-  last seen: 2016-11-27T10:28:59.586Z
-  public ip: 192.0.2.1
-  private ip: 192.168.66.101
-  overlay ip: 10.81.0.1
-  os: CoreOS 1185.3.0 (MoreOS)
-  driver: overlay
-  kernel: 4.7.3-coreos-r2
-  initial node: yes
-  labels:
-  stats:
-    cpus: 1
-    load: 0.43 0.43 0.37
-    memory: 0.7 of 0.97 GB
-    filesystem:
-      - /var/lib/docker: 4.14 of 15.57 GB
-```
+To test the wordpress service, you must connect to the IP address of the host node publishing the wordpress service on TCP port 80.
+You can use the public IP address of the host node running the service instance displayed as part of the `kontena service show` output.
+**Note:** For the special case of using Vagrant for the Kontena setup, you must use the *private* IP address of the node running the `wordpress/wordpress` service: `kontena node show ... | grep 'private ip'`.
 
 For more complex examples of application deployment on Kontena, please see the following examples:
 
