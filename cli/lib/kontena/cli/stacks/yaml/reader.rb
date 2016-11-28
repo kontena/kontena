@@ -4,6 +4,7 @@ module Kontena::Cli::Stacks
   module YAML
     class Reader
       include Kontena::Util
+      include Kontena::Cli::Common
 
       attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml
 
@@ -21,7 +22,8 @@ module Kontena::Cli::Stacks
 
         if from_registry?
           require 'shellwords'
-          @raw_content = Kontena.run("stack pull --return #{file.shellescape}", returning: :result)
+          @raw_content = Kontena::StacksCache.pull(file)
+          @registry    = Kontena::StacksCache::RegistryClientFactory.new.stacks_client.api_url
         else
           @raw_content = File.read(File.expand_path(file))
         end
@@ -65,6 +67,7 @@ module Kontena::Cli::Stacks
           result[:stack]         = yaml['stack']
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
+          result[:registry]      = @registry if from_registry?
           result[:expose]        = yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
