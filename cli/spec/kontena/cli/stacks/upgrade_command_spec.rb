@@ -17,26 +17,24 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     it 'requires api url' do
       allow(subject).to receive(:require_config_file).and_return(true)
       allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml').and_return(stack)
-      expect(subject).to receive(:require_api_url).once
+      expect(described_class.requires_current_master?).to be_truthy
       subject.run(['stack-name', './path/to/kontena.yml'])
     end
 
     it 'requires token' do
       allow(subject).to receive(:require_config_file).and_return(true)
       allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml').and_return(stack)
-      expect(subject).to receive(:require_token).and_return(token)
+      expect(described_class.requires_current_master_token?).to be_truthy
       subject.run(['stack-name', './path/to/kontena.yml'])
     end
 
     it 'requires stack file' do
       allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml').and_return(stack)
-      allow(subject).to receive(:require_token).and_return(token)
       expect(subject).to receive(:require_config_file).with('./path/to/kontena.yml').and_return(true)
       subject.run(['stack-name', './path/to/kontena.yml'])
     end
 
     it 'uses kontena.yml as default stack file' do
-      allow(subject).to receive(:require_token).and_return(token)
       expect(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
       expect(subject).to receive(:stack_from_yaml).with('kontena.yml').and_return(stack)
       subject.run(['stack-name'])

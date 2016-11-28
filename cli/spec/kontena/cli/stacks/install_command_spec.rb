@@ -21,13 +21,13 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     it 'requires api url' do
       allow(subject).to receive(:stack_from_yaml).with('kontena.yml').and_return(stack)
-      expect(subject).to receive(:require_api_url).once
+      expect(described_class.requires_current_master?).to be_truthy
       subject.run([])
     end
 
     it 'requires token' do
       allow(subject).to receive(:stack_from_yaml).with('kontena.yml').and_return(stack)
-      expect(subject).to receive(:require_token).and_return(token)
+      expect(described_class.requires_current_master_token?).to be_truthy
       subject.run([])
     end
 
