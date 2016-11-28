@@ -10,7 +10,12 @@ describe Kontena::Workers::WeaveWorker do
   after(:each) { Celluloid.shutdown }
 
   before(:each) do
-    allow(subject.wrapped_object).to receive(:network_adapter).and_return(network_adapter)
+    allow(Celluloid::Actor).to receive(:[]).and_call_original
+    allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
+
+    # initialize without calling start()
+    allow(network_adapter).to receive(:running?).and_return(false).once
+    subject
   end
 
   describe '#on_weave_start' do
