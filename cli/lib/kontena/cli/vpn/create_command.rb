@@ -60,9 +60,10 @@ module Kontena::Cli::Vpn
     def wait_for_configuration_to_finish(token)
       finished = false
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
+      service = client(require_token).get("services/#{current_grid}/vpn/server/containers", payload)['containers'][0]
       until finished
         sleep 3
-        stdout, stderr = client(require_token).post("services/#{current_grid}/vpn/server/containers/1/exec", payload)
+        stdout, stderr = client(require_token).post("containers/#{service['id']}/exec", payload)
         finished = true if stdout.join('').include?('BEGIN PRIVATE KEY'.freeze)
       end
 
