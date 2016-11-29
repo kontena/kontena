@@ -13,15 +13,19 @@ module Kontena::Cli::Stacks::Registry
     requires_current_account_token
 
     def execute
-      stack = ::YAML.load(stacks_client.show(stack_name))
-      puts "#{stack['stack']}:"
-      puts "  latest_version: #{stack['version']}"
-      puts "  expose: #{stack['expose'] || '-'}"
-      puts "  description: #{stack['description'] || '-'}"
+      require 'semantic'
+      unless versions?
+        stack = ::YAML.load(stacks_client.show(stack_name, stack_version))
+        puts "#{stack['stack']}:"
+        puts "  #{"latest_" unless stack_version}version: #{stack['version']}"
+        puts "  expose: #{stack['expose'] || '-'}"
+        puts "  description: #{stack['description'] || '-'}"
 
-      puts "  available_versions:"
-      stacks_client.versions(stack_name).map { |s| s['version']}.sort.reverse_each do |version|
-        puts "    - #{version}"
+        puts "  available_versions:"
+      end
+
+      stacks_client.versions(stack_name).reject {|s| s['version'].nil? || s['version'].empty?}.map { |s| Semantic::Version.new(s['version'])}.sort.reverse_each do |version|
+        puts versions? ? version : "    - #{version}"
       end
     end
   end

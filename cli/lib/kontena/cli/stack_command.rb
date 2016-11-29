@@ -20,7 +20,7 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand "logs", "Show logs from services in a stack", Kontena::Cli::Stacks::LogsCommand
   subcommand "monitor", "Monitor services in a stack", Kontena::Cli::Stacks::MonitorCommand
   subcommand "build", "Build images listed in a stack file and push them to an image registry", Kontena::Cli::Stacks::BuildCommand
-  subcommand "registry", "Stack registry related commands", Kontena::Cli::Stacks::RegistryCommand
+  subcommand ["reg", "registry"], "Stack registry related commands", Kontena::Cli::Stacks::RegistryCommand
 
   def execute
   end
