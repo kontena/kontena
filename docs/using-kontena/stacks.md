@@ -279,6 +279,11 @@ The `wordpress` container in one stack will always use the `mysql` service in th
 
 ## Exposing services between stacks
 
-Each stack can also expose a service for use by other stacks.
+Each stack can also expose a service for use by other stacks using the top-level `expose: ` entry in the YAML stack file.
+Other services in different stacks can use the bare DNS name of the stack itself to connect to the exposed service.
 
-TODO: `exposed: ...`
+For example, the internal Kontena Registry is deployed as a `registry` stack that exposes the internal `api` service.
+The `registry.test.kontena.local` DNS name is an alias for the `api-1.registry.test.kontena.local` service container.
+Other service containers and the host nodes can use the bare `registry` DNS name to connect to the Kontena Registry.
+
+To expose multiple services from a stack, expose a Kontena load-balancer service within the stack, linked to each of the services to expose.
