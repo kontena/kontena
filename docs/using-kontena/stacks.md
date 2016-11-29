@@ -148,6 +148,14 @@ The stack services will now be visible in `kontena service ls`, and the service 
 
 Assuming the new `wordpress-red/wordpress` container is running on the host node at `192.168.66.102`, you can use `http://192.168.66.102:80/` to access the installed wordpress service.
 
+#### `kontena stack install --name wordpress-green --deploy terom/wordpress`
+
+Install and deploy the stack using the latest YAML file from the stack registry.
+
+#### `kontena stack install --name wordpress-green --deploy terom/wordpress:4.6.1+mariadb5.`
+
+Install and deploy the stack using the versioned YAML file from the stack registry.
+
 #### `kontena stack remove wordpress-red`
 
 Removes the installed stack and associated services, including any deployed containers.
