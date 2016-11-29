@@ -137,7 +137,7 @@ The following Kontena CLI commands are used to install local stack files to the 
 #### `kontena stack install --name wordpress-red --deploy wordpress/kontena.yml`
 
 Install the stack from the YAML file to the master, creating a new named stack with associated services.
-Use the `--deploy` flag to simultaneously deploy the stack services to the grid, running the Docker containers.
+Use the `--deploy` flag to simultaneously deploy the stack services to the grid, spinning up the Docker containers.
 
 ```
  [done] Creating stack wordpress-red      
@@ -145,6 +145,7 @@ Use the `--deploy` flag to simultaneously deploy the stack services to the grid,
 ```
 
 The stack services will now be visible in `kontena service ls`, and the service containers will be running on the grid's host nodes.
+If you omit the `kontena stack install --deploy` flag, then you must run `kontena stacl deploy wordpress-red` separately.
 
 Assuming the new `wordpress-red/wordpress` container is running on the host node at `192.168.66.102`, you can use `http://192.168.66.102:80/` to access the installed wordpress service.
 
