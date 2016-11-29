@@ -1,37 +1,37 @@
-require_relative '../../mutations/host_nodes/register'
-
 module V1
   class NodesApi < Roda
+    include TokenAuthenticationHelper
+    include CurrentUser
     include RequestHelpers
 
     route do |r|
 
-      token = r.env['HTTP_KONTENA_GRID_TOKEN']
-      grid = Grid.find_by(token: token.to_s)
-      halt_request(404, {error: 'Not found'}) unless grid
+      validate_access_token
+      require_current_user
 
-      r.post do
-        r.is do
-          data = parse_json_body
-          outcome = HostNodes::Register.run(
-            grid: grid,
-            id: data['id'],
-            private_ip: data['private_ip']
-          )
-          if outcome.success?
-            @node, is_new = outcome.result
-            response.status = 201 if is_new
-          else
-            halt_request(422, {error: outcome.errors.message})
-          end
+      # @param [String] grid_name
+      # @param [String] node_id
+      # @return [HostNode]
+      def load_grid_node(grid_name, node_id)
+        grid = Grid.find_by(name: grid_name)
+        halt_request(404, {error: 'Not found'}) if !grid
 
-          render('host_nodes/show')
+        if node_id.include?(':')
+          node = grid.host_nodes.find_by(node_id: node_id)
+        else
+          node = grid.host_nodes.find_by(name: node_id)
         end
+        halt_request(404, {error: 'Not found'}) if !node
+
+        unless current_user.grid_ids.include?(grid.id)
+          halt_request(403, {error: 'Access denied'})
+        end
+
+        node
       end
 
-      r.on :id do |id|
-        @node = grid.host_nodes.find_by(node_id: id)
-        halt_request(404, {error: 'Node not found'}) if !@node
+      r.on ':grid_name/:node_id' do |grid_name, node_id|
+        @node = load_grid_node(grid_name, node_id)
 
         r.get do
           r.is do
@@ -48,6 +48,18 @@ module V1
             if outcome.success?
               @node = outcome.result
               render('host_nodes/show')
+            else
+              halt_request(422, {error: outcome.errors.message})
+            end
+          end
+        end
+
+        r.delete do
+          r.is do
+            audit_event(r, @grid, @node, 'remove node')
+            outcome = HostNodes::Remove.run(host_node: @node)
+            if outcome.success?
+              {}
             else
               halt_request(422, {error: outcome.errors.message})
             end

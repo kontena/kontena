@@ -10,9 +10,9 @@ module Kontena::Cli::Nodes::Labels
     requires_current_grid
 
     def execute
-      node = client.get("grids/#{current_grid}/nodes/#{node_id}")
+      node = client.get("nodes/#{current_grid}/#{node_id}")
       data = { labels: Array(node['labels']).reject {|label| label_list.include?(label) } }
-      client.put("nodes/#{node['id']}", data, {}, {'Kontena-Grid-Token' => node['grid']['token']})
+      client.put("nodes/#{current_grid}/#{node['id']}", data)
     end
   end
 end
