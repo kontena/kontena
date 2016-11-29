@@ -30,7 +30,7 @@ module Kontena::Workers
       end
     end
 
-    ##
+    # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
       return if event.status == 'destroy'.freeze
@@ -39,6 +39,7 @@ module Kontena::Workers
       container = Docker::Container.get(event.id)
       if container
         self.publish_info(container)
+        self.notify_coroner(container) if container.suspiciously_dead?
       end
     rescue Docker::Error::NotFoundError
       self.publish_destroy_event(event)
@@ -93,6 +94,12 @@ module Kontena::Workers
     # @return [Hash]
     def node_info
       @node_info ||= Docker.info
+    end
+
+    # @param [Docker::Container]
+    # @return [Kontena::Actors::ContainerCoroner]
+    def notify_coroner(container)
+      Kontena::Actors::ContainerCoroner.new(container)
     end
   end
 end

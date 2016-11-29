@@ -51,16 +51,14 @@ module Kontena::LoadBalancers
 
     # @param [Docker::Container] container
     def register_container(container)
-      labels = container.json['Config']['Labels'] || {}
-      lb = labels['io.kontena.load_balancer.name']
-      service_name = labels['io.kontena.service.name']
-      name = labels['io.kontena.container.name']
-      overlay_cidr = labels['io.kontena.container.overlay_cidr']
-      port = labels['io.kontena.load_balancer.internal_port'] || '80'
-      mode = labels['io.kontena.load_balancer.mode'] || 'http'
-      return if lb.nil? || overlay_cidr.nil?
+      lb = container.labels['io.kontena.load_balancer.name']
+      service_name = container.labels['io.kontena.service.name']
+      name = container.labels['io.kontena.container.name']
+      ip = container.overlay_ip
+      port = container.labels['io.kontena.load_balancer.internal_port'] || '80'
+      mode = container.labels['io.kontena.load_balancer.mode'] || 'http'
+      return if lb.nil? || ip.nil?
 
-      ip, subnet = overlay_cidr.split('/')
       cache[container.id] = {lb: lb, service: service_name, container: name, value: "#{ip}:#{port}"}
       if mode == 'http'
         key = "#{ETCD_PREFIX}/#{lb}/services/#{service_name}/upstreams/#{name}"

@@ -38,13 +38,7 @@ module Kontena::Cli::Cloud::Master
 
       response = cloud_client.put(
         "master",
-        { data: { attributes: attrs.reject{ |k, _| ['client-id', 'client-secret'].include?(k) } } },
-        {},
-        cloud_client.basic_auth_header(
-          attrs["client-id"],
-          attrs["client-secret"]
-        ),
-        false
+        { data: { attributes: attrs.reject{ |k, _| ['client-id', 'client-secret'].include?(k) } } }
       )
 
       if response

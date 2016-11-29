@@ -1,4 +1,5 @@
 require 'yaml'
+require 'shellwords'
 require_relative '../services/services_helper'
 
 module Kontena::Cli::Apps
@@ -24,10 +25,9 @@ module Kontena::Cli::Apps
     # @return [Hash]
     def parse_data(options)
       data = {}
-      data['container_count'] = options['instances']
+      data['instances'] = options['instances']
       data['image'] = parse_image(options['image'])
       data['env'] = options['environment'] if options['environment']
-      data['container_count'] = options['instances']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
       data['ports'] = parse_stringified_ports(options['ports'] || [])
@@ -36,7 +36,7 @@ module Kontena::Cli::Apps
       data['cpu_shares'] = options['cpu_shares'] if options['cpu_shares']
       data['volumes'] = options['volumes'] || []
       data['volumes_from'] = options['volumes_from'] || []
-      data['cmd'] = options['command'].split(" ") if options['command']
+      data['cmd'] = Shellwords.split(options['command']) if options['command']
       data['affinity'] = options['affinity'] || []
       data['user'] = options['user'] if options['user']
       data['stateful'] = options['stateful'] == true

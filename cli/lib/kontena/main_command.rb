@@ -35,7 +35,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", Kontena::Cli::LogoutCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
-  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand if experimental?
+  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "vault", "Vault specific commands", Kontena::Cli::VaultCommand
   subcommand "certificate", "LE Certificate specific commands", Kontena::Cli::CertificateCommand

@@ -19,10 +19,8 @@ module Scheduler
         end
 
         return candidates unless memory # we cannot calculate so let's return all candidates
-
-        instance_name = "#{service.name}-#{instance_number}"
         candidates.delete_if{|c|
-          reject_candidate?(c, memory, instance_name)
+          reject_candidate?(c, memory, service, instance_number)
         }
 
         candidates
@@ -30,8 +28,9 @@ module Scheduler
 
       # @param [HostNode] candidate
       # @param [Float] memory
-      # @param [String] instance_name
-      def reject_candidate?(candidate, memory, instance_name)
+      # @param [GridService] service
+      # @param [Integer] instance_number
+      def reject_candidate?(candidate, memory, service, instance_number)
         return true if candidate.mem_total.to_i < memory
 
         node_stat = candidate.host_node_stats.last
@@ -41,7 +40,7 @@ module Scheduler
         mem_used = all_used - (node_stat.memory['cached'] + node_stat.memory['buffers'])
         mem_free = node_stat.memory['total'] - mem_used
 
-        if instance = candidate.containers.find_by(name: instance_name)
+        if instance = candidate.containers.service_instance(service, instance_number).first
           mem_free += memory
         end
 

@@ -1,19 +1,17 @@
 require_relative '../../spec_helper'
 
 describe GridServices::Create do
-  let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid.users << user
-    grid
+    Grid.create!(name: 'test-grid')
   }
-  let(:linked_service) { GridService.create(grid: grid, name: 'linked-service', image_name: 'redis:2.8')}
+  let(:linked_service) {
+    GridService.create!(grid: grid, name: 'linked-service', image_name: 'redis:2.8')
+  }
 
   describe '#run' do
     it 'creates a new grid service' do
       expect {
         described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -24,7 +22,6 @@ describe GridServices::Create do
 
     it 'allows - char in name' do
       outcome = described_class.new(
-        current_user: user,
         grid: grid,
         image: 'redis:2.8',
         name: 'redis-db',
@@ -35,7 +32,6 @@ describe GridServices::Create do
 
     it 'allows numbers in name' do
       outcome = described_class.new(
-        current_user: user,
         grid: grid,
         image: 'redis:2.8',
         name: 'redis-12',
@@ -46,7 +42,6 @@ describe GridServices::Create do
 
     it 'does not allow - as a first char in name' do
       outcome = described_class.new(
-        current_user: user,
         grid: grid,
         image: 'redis:2.8',
         name: '-redis',
@@ -58,7 +53,6 @@ describe GridServices::Create do
 
     it 'does not allow special chars in name' do
       outcome = described_class.new(
-        current_user: user,
         grid: grid,
         image: 'redis:2.8',
         name: 'red&is',
@@ -71,7 +65,6 @@ describe GridServices::Create do
     it 'does not allow duplicate name within a grid' do
       GridService.create!(name: 'redis', image_name: 'redis:latest', grid: grid)
       outcome = described_class.new(
-        current_user: user,
         grid: grid,
         image: 'redis:2.8',
         name: 'redis',
@@ -83,7 +76,6 @@ describe GridServices::Create do
 
     it 'saves container_count' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -93,9 +85,19 @@ describe GridServices::Create do
       expect(outcome.result.container_count).to eq(3)
     end
 
+    it 'saves instances to container_count' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: true,
+          instances: 3
+      ).run
+      expect(outcome.result.container_count).to eq(3)
+    end
+
     it 'saves user' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -107,7 +109,6 @@ describe GridServices::Create do
 
     it 'saves cpu_shares' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -119,7 +120,6 @@ describe GridServices::Create do
 
     it 'saves memory' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -131,7 +131,6 @@ describe GridServices::Create do
 
     it 'saves memory_swap' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -143,7 +142,6 @@ describe GridServices::Create do
 
     it 'saves cmd' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -155,7 +153,6 @@ describe GridServices::Create do
 
     it 'saves entrypoint' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -167,7 +164,6 @@ describe GridServices::Create do
 
     it 'saves env' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -183,7 +179,6 @@ describe GridServices::Create do
           {ip: '10.10.10.10', protocol: 'tcp', node_port: 6379, container_port: 6379}
       ]
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -195,10 +190,9 @@ describe GridServices::Create do
 
     it 'saves links' do
       links = [
-        {name: linked_service.name, alias: 'link-alias'}
+        {name: "#{linked_service.stack.name}/#{linked_service.name}", alias: 'link-alias'}
       ]
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -211,7 +205,6 @@ describe GridServices::Create do
 
     it 'saves volumes' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -223,7 +216,6 @@ describe GridServices::Create do
 
     it 'saves volumes_from' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -235,7 +227,6 @@ describe GridServices::Create do
 
     it 'returns error if service is stateful and volumes_from is specified' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -247,7 +238,6 @@ describe GridServices::Create do
 
     it 'saves privileged' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -259,7 +249,6 @@ describe GridServices::Create do
 
     it 'saves cap_add' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -271,7 +260,6 @@ describe GridServices::Create do
 
     it 'saves cap_drop' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -283,7 +271,6 @@ describe GridServices::Create do
 
     it 'saves revision as 1 by default' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -291,10 +278,20 @@ describe GridServices::Create do
       ).run
       expect(outcome.result.revision).to eq(1)
     end
-    
+
+    it 'attaches default network when net mode is bridge' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false
+      ).run
+      expect(outcome.result.networks.count).to eq(1)
+      expect(outcome.result.networks.first.name).to eq('kontena')
+    end
+
     it 'saves health_check' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -314,7 +311,6 @@ describe GridServices::Create do
 
     it 'fails to save health_check, no port defined' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',
@@ -331,7 +327,6 @@ describe GridServices::Create do
 
     it 'fails to save health_check, interval < timeout' do
       outcome = described_class.new(
-          current_user: user,
           grid: grid,
           image: 'redis:2.8',
           name: 'redis',

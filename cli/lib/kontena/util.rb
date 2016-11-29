@@ -28,6 +28,30 @@ module Kontena
       nil
     end
 
+    def time_ago(time)
+      now = Time.now.to_i
+      time = DateTime.parse(time).to_time.to_i
+      diff = now - time
+      if diff > 60 * 60 * 24
+        "#{diff / 60 / 60 / 24} days"
+      elsif diff > 60 * 60
+        "#{diff / 60 / 60} hours"
+      elsif diff > 60
+        "#{diff / 60} minutes"
+      else
+        "#{diff} seconds"
+      end
+    end
+
+    def longest_string_in_array(array)
+      longest = 0
+      array.each do |item|
+        longest = item.length if item.length > longest
+      end
+
+      longest
+    end
+
     module_function(:which)
 
     module ClassMethods

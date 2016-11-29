@@ -1,4 +1,5 @@
 require_relative 'services_helper'
+require 'shellwords'
 
 module Kontena::Cli::Services
   class UpdateCommand < Kontena::Command
@@ -31,12 +32,12 @@ module Kontena::Cli::Services
     option "--deploy-interval", "TIME", "Auto-deploy with given interval (format: <number><unit>, where unit = min, h, d)"
     option "--pid", "PID", "Pid namespace to use"
     option "--secret", "SECRET", "Import secret from Vault (format: <secret>:<name>:<type>)", multivalued: true
-    option "--health-check-uri", "HEALTH CHECK URI", "URI path for HTTP health check"
-    option "--health-check-timeout", "HEALTH CHECK TIMEOUT", "Timeout for HTTP health check"
-    option "--health-check-interval", "HEALTH CHECK INTERVAL", "Interval for HTTP health check"
-    option "--health-check-initial-delay", "HEALTH CHECK INITIAL DELAY", "Initial for HTTP health check"
-    option "--health-check-port", "HEALTH CHECK PORT", "Port for HTTP health check"
-    option "--health-check-protocol", "HEALTH CHECK PROTOCOL", "Protocol of health check"
+    option "--health-check-uri", "URI", "URI path for HTTP health check"
+    option "--health-check-timeout", "TIMEOUT", "Timeout for HTTP health check"
+    option "--health-check-interval", "INTERVAL", "Interval for HTTP health check"
+    option "--health-check-initial-delay", "DELAY", "Initial for HTTP health check"
+    option "--health-check-port", "PORT", "Port for HTTP health check"
+    option "--health-check-protocol", "PROTOCOL", "Protocol of health check"
 
     def execute
       require_api_url
@@ -63,7 +64,7 @@ module Kontena::Cli::Services
       data[:env] = env_list unless env_list.empty?
       data[:secrets] = parse_secrets(secret_list) unless secret_list.empty?
       data[:container_count] = instances if instances
-      data[:cmd] = cmd.split(" ") if cmd
+      data[:cmd] = Shellwords.split(cmd) if cmd
       data[:user] = user if user
       data[:image] = parse_image(image) if image
       data[:privileged] = privileged?

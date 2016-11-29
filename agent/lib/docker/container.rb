@@ -3,6 +3,8 @@ require 'docker'
 module Docker
   class Container
 
+    SUSPICIOUS_EXIT_CODES = [137]
+
     def name
       cached_json['Name']
     end
@@ -33,8 +35,48 @@ module Docker
     end
 
     # @return [Boolean]
+    def default_stack?
+      return false if self.labels['io.kontena.service.id'].nil?
+
+      self.labels['io.kontena.stack.name'].nil? || self.labels['io.kontena.stack.name'].to_s == 'null'.freeze
+    end
+
+    # @return [Boolean]
+    def autostart?
+      return ['always', 'unless-stopped'].include?(self.host_config.dig('RestartPolicy', 'Name'))
+    end
+
+    # @return [Boolean]
     def running?
-      self.state['Running']
+      self.state['Running'] && !self.state['Restarting']
+    rescue
+      false
+    end
+
+    # @return [Boolean]
+    def restarting?
+      self.state['Restarting']
+    rescue
+      false
+    end
+
+    # @return [Boolean]
+    def dead?
+      self.state['Dead']
+    rescue
+      false
+    end
+
+    # @return [Boolean]
+    def suspiciously_dead?
+      self.state['Dead'] && SUSPICIOUS_EXIT_CODES.include?(self.state['ExitCode'].to_i)
+    rescue
+      false
+    end
+
+    # @return [Boolean]
+    def finished?
+      DateTime.parse(self.state['FinishedAt']).year > 1
     rescue
       false
     end
@@ -60,14 +102,14 @@ module Docker
       false
     end
 
+    # @return [String]
+    def service_id
+      self.labels['io.kontena.service.id'].to_s
+    end
+
     # @return [Integer]
     def instance_number
       self.labels['io.kontena.service.instance_number'].to_i
-    end
-
-    # @return [String, NilClass]
-    def overlay_cidr
-      self.labels['io.kontena.container.overlay_cidr']
     end
 
     # @return [Hash]
@@ -77,6 +119,68 @@ module Docker
       end
 
       @env_hash
+    end
+
+    # @return [Hash]
+    def networks
+      cached_json.dig('NetworkSettings', 'Networks')
+    end
+
+    def has_network?(network)
+      self.networks.has_key?(network)
+    end
+
+    # IP address of container within named network, or nil.
+    #
+    # @param network [String] Docker network name
+    # @return [String, nil]
+    def network_ip(network)
+      cached_json.dig('NetworkSettings', 'Networks', network, 'IPAddress')
+    end
+
+    # CIDR address of container within named network, or nil.
+    #
+    # @param network [String] Docker network name
+    # @return [String, nil]
+    def network_cidr(network)
+      if network = cached_json.dig('NetworkSettings', 'Networks', network) && network['IPAddress']
+        return "#{network['IPAddress']}/#{network['IPPrefixLen']}"
+      else
+        return nil
+      end
+    end
+
+    # Should logs for this container be skipped?
+    #
+    # @return [Boolean]
+    def skip_logs?
+      self.labels['io.kontena.container.skip_logs'] == '1'
+    end
+
+    # Container IP address within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # Plain IP address without any CIDR suffix.
+    #
+    # @return [String, NilClass]
+    def overlay_ip
+      self.overlay_cidr.split('/')[0] if self.overlay_cidr
+    end
+
+    # Container CIDR address within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # @return [String, NilClass]
+    def overlay_cidr
+      self.labels['io.kontena.container.overlay_cidr']
+    end
+
+    # Container CIDR suffix within the overlay network.
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # @return [String, NilClass]
+    def overlay_suffix
+      self.overlay_cidr.split('/')[1] if self.overlay_cidr
     end
 
     private

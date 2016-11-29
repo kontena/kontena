@@ -85,7 +85,6 @@ class AccessToken
       ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless old_token
-      return nil if old_token.expired?
 
       new_token = AccessToken.create!(
         token_type: 'bearer',

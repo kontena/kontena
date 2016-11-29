@@ -37,8 +37,8 @@ module Kontena::Cli::Apps
           ports = service['ports'].map{|p|
             "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"
           }.join(", ")
-          running = service['instances']['running']
-          desired = service['container_count']
+          running = service['instance_counts']['running']
+          desired = service['instances']
           instances = "#{running} / #{desired}"
           vars = [name, service['image'], instances, state, service['state'], ports]
         else

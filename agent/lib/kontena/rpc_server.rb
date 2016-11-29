@@ -1,5 +1,4 @@
 require_relative 'rpc/docker_container_api'
-require_relative 'rpc/docker_image_api'
 require_relative 'rpc/agent_api'
 require_relative 'rpc/etcd_api'
 require_relative 'rpc/service_pods_api'
@@ -12,7 +11,6 @@ module Kontena
     HANDLERS = {
         'containers' => Kontena::Rpc::DockerContainerApi,
         'service_pods' => Kontena::Rpc::ServicePodsApi,
-        'images' => Kontena::Rpc::DockerImageApi,
         'agent' => Kontena::Rpc::AgentApi,
         'etcd' => Kontena::Rpc::EtcdApi
     }

@@ -1,6 +1,7 @@
 require_relative '../logging'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
+require_relative '../helpers/weave_helper'
 
 module Kontena::NetworkAdapters
   class Weave
@@ -8,18 +9,41 @@ module Kontena::NetworkAdapters
     include Celluloid::Notifications
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
+    include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
+    DEFAULT_NETWORK = 'kontena'.freeze
+
+    finalizer :finalizer
+
     def initialize(autostart = true)
       @images_exist = false
       @started = false
+
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
+      subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
+
+      @ipam_client = IpamClient.new
+
+      # Default size of pool is number of CPU cores, 2 for 1 core machine
+      @executor_pool = WeaveExecutor.pool(args: [autostart])
+    end
+
+    def finalizer
+      @executor_pool.terminate if @executor_pool.alive?
+    rescue
+      # If Celluloid manages to terminate the pool (through GC or by explicit shutdown) it will raise
+    end
+
+    # @return [String]
+    def weave_version
+      WEAVE_VERSION
     end
 
     # @return [String]
@@ -56,9 +80,24 @@ module Kontena::NetworkAdapters
 
     # @return [Boolean]
     def running?
+      return false unless weave_container_running?
+      return false unless weave_api_ready?
+      return false unless interface_ip('weave')
+      true
+    end
+
+    def network_ready?
+      return false unless running?
+      return false unless Actor[:ipam_plugin_launcher].running?
+      true
+    end
+
+    # @return [Boolean]
+    def weave_container_running?
       weave = Docker::Container.get('weave') rescue nil
       return false if weave.nil?
-      weave.running?
+      return false unless weave.running?
+      true
     end
 
     # @return [Boolean]
@@ -102,6 +141,14 @@ module Kontena::NetworkAdapters
 
       modify_host_config(opts)
 
+      # IPAM
+      overlay_cidr = @ipam_client.reserve_address(DEFAULT_NETWORK)
+
+      info "Create container=#{opts['name']} in network=#{DEFAULT_NETWORK} with overlay_cidr=#{overlay_cidr}"
+
+      opts['Labels']['io.kontena.container.overlay_cidr'] = overlay_cidr
+      opts['Labels']['io.kontena.container.overlay_network'] = DEFAULT_NETWORK
+
       opts
     end
 
@@ -111,66 +158,51 @@ module Kontena::NetworkAdapters
       host_config['VolumesFrom'] ||= []
       host_config['VolumesFrom'] << "weavewait-#{WEAVE_VERSION}:ro"
       dns = interface_ip('docker0')
-      if dns && host_config['NetworkMode'].to_s != 'host'
+      if dns && host_config['NetworkMode'].to_s != 'host'.freeze
         host_config['Dns'] = [dns]
-        host_config['DnsSearch'] = ['kontena.local']
       end
+
       opts['HostConfig'] = host_config
-    end
-
-    # @param [Array<String>] cmd
-    def exec(cmd)
-      begin
-        container = Docker::Container.create(
-          'Image' => weave_exec_image,
-          'Cmd' => cmd,
-          'Volumes' => {
-            '/var/run/docker.sock' => {},
-            '/host' => {}
-          },
-          'Labels' => {
-            'io.kontena.container.skip_logs' => '1'
-          },
-          'Env' => [
-            'HOST_ROOT=/host',
-            "VERSION=#{WEAVE_VERSION}"
-          ],
-          'HostConfig' => {
-            'Privileged' => true,
-            'NetworkMode' => 'host',
-            'PidMode' => 'host',
-            'Binds' => [
-              '/var/run/docker.sock:/var/run/docker.sock',
-              '/:/host'
-            ]
-          }
-        )
-        retries = 0
-        response = {}
-        begin
-          response = container.tap(&:start).wait
-        rescue Docker::Error::NotFoundError => exc
-          error exc.message
-          return false
-        rescue => exc
-          retries += 1
-          error exc.message
-          sleep 0.5
-          retry if retries < 10
-
-          error exc.message
-          return false
-        end
-        response
-      ensure
-        container.delete(force: true, v: true) if container
-      end
     end
 
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
       async.start(info)
+    end
+
+    def on_ipam_start(topic, data)
+      ensure_default_pool
+      Celluloid::Notifications.publish('network:ready', nil)
+    end
+
+    # Ensure that the host weave bridge is exposed using the given CIDR address,
+    # and only the given CIDR address
+    #
+    # @param [String] cidr '10.81.0.X/16'
+    def ensure_exposed(cidr)
+      # configure new address
+      # these will be added alongside any existing addresses
+      if @executor_pool.expose(cidr)
+        info "Exposed host node at cidr=#{cidr}"
+      else
+        error "Failed to expose host node at cidr=#{cidr}"
+      end
+
+      # cleanup any old addresses
+      @executor_pool.ps('weave:expose') do |name, mac, *cidrs|
+        cidrs.each do |exposed_cidr|
+          if exposed_cidr != cidr
+            warn "Migrating host node from cidr=#{exposed_cidr}"
+            @executor_pool.hide(exposed_cidr)
+          end
+        end
+      end
+    end
+
+    def ensure_default_pool()
+      info 'network and ipam ready, ensuring default network existence'
+      @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, '10.81.0.0/16', '10.81.128.0/17')
     end
 
     # @param [Hash] info
@@ -191,20 +223,23 @@ module Kontena::NetworkAdapters
           '--password', ENV['KONTENA_TOKEN']
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
-        self.exec(exec_params)
+        @executor_pool.execute(exec_params)
         weave = Docker::Container.get('weave') rescue nil
-        wait = Time.now.to_f + 10.0
-        sleep 0.5 until (weave && weave.running?) || (wait < Time.now.to_f)
+        wait(timeout: 10, interval: 1, message: 'waiting for weave to start') {
+          weave && weave.running?
+        }
 
         if weave.nil? || !weave.running?
-          self.exec(['--local', 'reset'])
+          @executor_pool.execute(['--local', 'reset'])
         end
       end
 
+      attach_router unless interface_ip('weave')
       connect_peers(peer_ips)
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
+      post_start(info)
 
-      post_start(info) unless already_started?
+      Celluloid::Notifications.publish('network_adapter:start', info) unless already_started?
 
       @started = true
       info
@@ -213,10 +248,15 @@ module Kontena::NetworkAdapters
       debug exc.backtrace.join("\n")
     end
 
+    def attach_router
+      info "attaching router"
+      @executor_pool.execute(['--local', 'attach-router'])
+    end
+
     # @param [Array<String>] peer_ips
     def connect_peers(peer_ips)
       if peer_ips.size > 0
-        self.exec(['--local', 'connect', '--replace'] + peer_ips)
+        @executor_pool.execute(['--local', 'connect', '--replace'] + peer_ips)
         info "router connected to peers #{peer_ips.join(', ')}"
       else
         info "router does not have any known peers"
@@ -226,11 +266,8 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def post_start(info)
       if info['node_number']
-        weave_bridge = "10.81.0.#{info['node_number']}/19"
-        self.exec(['--local', 'expose', "ip:#{weave_bridge}"])
-        info "bridge exposed: #{weave_bridge}"
+        ensure_exposed("10.81.0.#{info['node_number']}/16")
       end
-      Celluloid::Notifications.publish('network_adapter:start', info)
     end
 
     # @param [Docker::Container] weave
@@ -243,12 +280,65 @@ module Kontena::NetworkAdapters
       false
     end
 
+    # Inspect current state of attached containers
+    #
+    # @return [Hash<String, String>] container_id[0..12] => [overlay_cidr]
+    def get_containers
+      containers = { }
+
+      @executor_pool.ps() do |id, mac, *cidrs|
+        next if id == 'weave:expose'
+
+        containers[id] = cidrs
+      end
+
+      containers
+    end
+
+    # Attach container to weave with given CIDR address
+    #
+    # @param [String] container_id
+    # @param [String] overlay_cidr '10.81.X.Y/16'
+    def attach_container(container_id, cidr)
+      info "Attach container=#{container_id} at cidr=#{cidr}"
+
+      @executor_pool.async.attach(container_id, cidr)
+    end
+
+    # Attach container to weave with given CIDR address, first detaching any existing mismatching addresses
+    #
+    # @param [String] container_id
+    # @param [String] overlay_cidr '10.81.X.Y/16'
+    # @param [Array<String>] migrate_cidrs ['10.81.X.Y/19']
+    def migrate_container(container_id, cidr, attached_cidrs)
+      # first remove any existing addresses
+      # this is required, since weave will not attach if the address already exists, but with a different netmask
+      attached_cidrs.each do |attached_cidr|
+        if cidr != attached_cidr
+          warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
+          @executor_pool.detach(container_id, attached_cidr)
+        end
+      end
+
+      # attach with the correct address
+      self.attach_container(container_id, cidr)
+    end
+
+    # Remove container from weave network
+    #
+    # @param [String] container_id may not exist anymore
+    # @param [Hash] labels Docker container labels
+    def remove_container(container_id, overlay_network, overlay_cidr)
+      info "Remove container=#{container_id} from network=#{overlay_network} at cidr=#{overlay_cidr}"
+
+      @ipam_client.release_address(overlay_network, overlay_cidr)
+    end
+
     private
 
     def ensure_images
       images = [
-        weave_image,
-        weave_exec_image
+        weave_image
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
@@ -260,6 +350,7 @@ module Kontena::NetworkAdapters
       end
       @images_exist = true
     end
+
 
     def ensure_weave_wait
       sleep 1 until images_exist?
@@ -282,5 +373,6 @@ module Kontena::NetworkAdapters
         )
       end
     end
+
   end
 end

@@ -51,9 +51,9 @@ module Kontena::Cli::Apps
           warning " --force-deploy will deprecate in the future, use --force"
         end
         spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
-          deploy_service(token, name, options)
+          deployment = deploy_service(token, name, options)
           unless async?
-            wait_for_deploy_to_finish(token, service['id'])
+            wait_for_deploy_to_finish(token, deployment)
           end
         end
       end

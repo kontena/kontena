@@ -10,6 +10,7 @@ Link a development version of your local cli:
 
 ```
 $ ln -s $(pwd)/cli/bin/kontena /usr/local/bin/dontena
+$ cd cli && bundle install
 $ dontena version
 ```
 

@@ -15,8 +15,9 @@ module Kontena::Cli::Apps
 
     def execute
       require_config_file(filename)
-
-      show_service(require_token, prefixed_name(service))
+      token = require_token
+      show_service(token, prefixed_name(service))
+      show_service_instances(token, prefixed_name(service))
     end
   end
 end

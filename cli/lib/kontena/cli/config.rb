@@ -81,6 +81,11 @@ module Kontena
             server = Server.new(server_data)
           end
           server.account ||= 'master'
+          if servers.find { |s| s['name'] == server.name}
+            server.name = "#{server.name}-2"
+            server.name.succ! until servers.find { |s| s['name'] == server.name }.nil?
+            logger.debug "Renamed server to #{server.name} because a duplicate was found in config"
+          end
           servers << server
         end
 
@@ -117,6 +122,7 @@ module Kontena
         {
           name: 'kontena',
           url: 'https://cloud-api.kontena.io',
+          stacks_url: 'https://stacks.kontena.io',
           token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
           authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
           userinfo_endpoint: 'https://cloud-api.kontena.io/user',

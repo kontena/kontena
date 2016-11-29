@@ -10,8 +10,13 @@ class Container
   field :exec_driver, type: String
   field :image, type: String
   field :image_version, type: String
+  field :cmd, type: Array, default: []
   field :env, type: Array, default: []
+  field :labels, type: Hash, default: {}
+  field :hostname, type: String
+  field :domainname, type: String
   field :network_settings, type: Hash, default: {}
+  field :networks, type: Hash, default: {}
   field :state, type: Hash, default: {}
   field :finished_at, type: Time
   field :started_at, type: Time
@@ -20,6 +25,7 @@ class Container
   field :deploy_rev, type: String
   field :service_rev, type: String
   field :container_type, type: String, default: 'container'
+  field :instance_number, type: Integer
 
   field :health_status, type: String
   field :health_status_at, type: Time
@@ -31,7 +37,6 @@ class Container
   belongs_to :host_node
   has_many :container_logs
   has_many :container_stats
-  has_one :overlay_cidr, dependent: :nullify
 
   index({ grid_id: 1 })
   index({ grid_service_id: 1 })
@@ -41,45 +46,52 @@ class Container
   index({ container_id: 1 })
   index({ state: 1 })
   index({ name: 1 })
+  index({ instance_number: 1 })
 
   default_scope -> { where(deleted_at: nil, container_type: 'container') }
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
   scope :volumes, -> { where(deleted_at: nil, container_type: 'volume') }
 
   def to_path
-    if self.grid_service
-      "#{self.grid_service.to_path}/#{self.name}"
+    if self.host_node
+      "#{self.host_node.to_path}/#{self.name}"
     else
       self.name
     end
   end
 
+  def ip_address
+    ip = nil
+    unless self.networks.empty?
+      overlay_cidr = self.networks.dig('kontena', 'overlay_cidr')
+      ip = overlay_cidr.split('/')[0] if overlay_cidr
+    end
+    ip
+  end
+
   ##
   # @return [String]
   def status
-    return 'deleted' if self.deleted_at
+    return 'deleted'.freeze if self.deleted_at
 
     s = self.state
     if s['paused']
-      'paused'
+      'paused'.freeze
     elsif s['restarting']
-      'restarting'
+      'restarting'.freeze
     elsif s['oom_killed']
-      'oom_killed'
+      'oom_killed'.freeze
     elsif s['dead']
-      'dead'
+      'dead'.freeze
     elsif s['running']
-      'running'
+      'running'.freeze
     else
-      'stopped'
+      'stopped'.freeze
     end
   end
 
   def mark_for_delete
     self.set(:deleted_at => Time.now.utc)
-    if self.overlay_cidr
-      self.overlay_cidr.set(:container_id => nil, :reserved_at => nil)
-    end
   end
 
   def running?
@@ -102,21 +114,6 @@ class Container
     self.status == 'deleted'
   end
 
-  ##
-  # @return [Boolean]
-  def exists_on_node?
-    return false if self.container_id.blank? || !self.host_node
-
-    self.host_node.rpc_client.request('/containers/show', self.container_id.to_s)
-    true
-  rescue RpcClient::Error => e
-    if e.code == 404
-      false
-    else
-      raise e
-    end
-  end
-
   def up_to_date?
     self.image_version == self.grid_service.image.image_id && self.created_at > self.grid_service.updated_at
   end
@@ -130,5 +127,36 @@ class Container
       { :$match => match },
       { :$group => { _id: "$grid_service_id", total: {:$sum => 1} } }
     ])
+  end
+
+  # @return [String]
+  def instance_name
+    stack = self.label('io.kontena.stack.name'.freeze) || Stack::NULL_STACK
+    service = self.label('io.kontena.service.name'.freeze)
+    instance = self.instance_number || '0'.freeze
+
+    name = ''
+    name << "#{stack}-" if stack
+    name << "#{service}-" if service
+    name << "#{instance}"
+
+    name
+  end
+
+  # @param [String] name
+  # @return [String, NilClass]
+  def label(name)
+    key = name.gsub(/\./, ';'.freeze)
+    self.labels[key]
+  end
+
+  # @param [GridService] service
+  # @param [Integer] instance_number
+  def self.service_instance(service, instance_number)
+    match = {
+      grid_service_id: service.id,
+      instance_number: instance_number.to_i
+    }
+    where(match)
   end
 end

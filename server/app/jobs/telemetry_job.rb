@@ -36,9 +36,10 @@ class TelemetryJob
     config['server.telemetry_enabled'].to_s != 'false'
   end
 
-  def check_version
-    data = {
-      id: config['master.uuid'],
+  # @return [Hash]
+  def payload
+    {
+      id: config['server.uuid'],
       version: ::Server::VERSION,
       stats: {
           users: User.count,
@@ -49,20 +50,23 @@ class TelemetryJob
       },
       grids: build_grid_stats
     }
+  end
+
+  def check_version
     options = {
         header: HEADERS,
-        body: JSON.dump(data)
+        body: JSON.dump(payload)
     }
     response = client.post('https://update.kontena.io/v1/master', options)
     handle_response(response)
   rescue => exc
-    error "failed to check updates"
+    warn "failed to check updates"
   end
 
   def handle_response(response)
     if response.status_code == 200
       data = JSON.parse(response.body)
-      if data['version'] && data['version'] != ::Server::VERSION
+      if data['version'] && Gem::Version.new(data['version']) > Gem::Version.new(::Server::VERSION)
         warn "latest version is #{data['version']}, consider upgrading"
       end
     end

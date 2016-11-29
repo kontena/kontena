@@ -12,34 +12,45 @@ module Kontena::Cli::Vpn
       token = require_token
       preferred_node = node
 
-      vpn = client(token).get("services/#{current_grid}/vpn") rescue nil
-      exit_with_error('Vpn already exists') if vpn
+      name = 'vpn'
+      vpn = client(token).get("stacks/#{current_grid}/#{name}") rescue nil
+      exit_with_error('Vpn stack already exists') if vpn
 
       node = find_node(token, preferred_node)
 
       vpn_ip = node_vpn_ip(node)
       data = {
-        name: 'vpn',
-        stateful: true,
-        image: 'kontena/openvpn:ethwe',
-        ports: [
-          {
-            container_port: '1194',
-            node_port: '1194',
-            protocol: 'udp'
-          }
-        ],
-        cap_add: ['NET_ADMIN'],
-        env: ["OVPN_SERVER_URL=udp://#{vpn_ip}:1194"],
-        affinity: ["node==#{node['name']}"]
+        name: name,
+        stack: 'kontena/vpn',
+        version: Kontena::Cli::VERSION,
+        registry: 'file://',
+        source: '---',
+        expose: 'server',
+        services: [
+          name: 'server',
+          stateful: true,
+          image: 'kontena/openvpn:ethwe',
+          ports: [
+            {
+              container_port: '1194',
+              node_port: '1194',
+              protocol: 'udp'
+            }
+          ],
+          cap_add: ['NET_ADMIN'],
+          env: ["OVPN_SERVER_URL=udp://#{vpn_ip}:1194"],
+          affinity: ["node==#{node['name']}"]
+        ]
       }
-      client(token).post("grids/#{current_grid}/services", data)
-      client(token).post("services/#{current_grid}/vpn/deploy", {})
-      name = 'vpn'
-      spinner "deploying #{name.colorize(:cyan)} service " do
-        wait_for_deploy_to_finish(token, parse_service_id('vpn'))
+
+      client(token).post("grids/#{current_grid}/stacks", data)
+      deployment = client(token).post("stacks/#{current_grid}/#{name}/deploy", {})
+      spinner "Deploying #{pastel.cyan(name)} service " do
+        deployment['service_deploys'].each do |service_deploy|
+          wait_for_deploy_to_finish(token, service_deploy)
+        end
       end
-      spinner "generating #{name.colorize(:cyan)} keys (this will take a while) " do
+      spinner "Generating #{pastel.cyan(name)} keys (this will take a while) " do
         wait_for_configuration_to_finish(token)
       end
       puts "#{name.colorize(:cyan)} service is now started (udp://#{vpn_ip}:1194)."
@@ -49,9 +60,10 @@ module Kontena::Cli::Vpn
     def wait_for_configuration_to_finish(token)
       finished = false
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
+      service = client(require_token).get("services/#{current_grid}/vpn/server/containers", payload)['containers'][0]
       until finished
-        sleep 30
-        stdout, stderr = client(require_token).post("containers/#{current_grid}/vpn/vpn-1/exec", payload)
+        sleep 3
+        stdout, stderr = client(require_token).post("containers/#{service['id']}/exec", payload)
         finished = true if stdout.join('').include?('BEGIN PRIVATE KEY'.freeze)
       end
 

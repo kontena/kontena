@@ -4,7 +4,7 @@ title: Secrets Management
 
 # Kontena Vault
 
-When your application requires access to APIs or databases, you'll often need to use secrets such as passwords and access tokens for authenticating the access. Kontena Vault is a secure key/value storage that can be used to manage secrets in Kontena. Vault secrets are shared on a grid level.
+When your application requires access to APIs or databases, you'll often need to use secrets such as passwords and access tokens for authenticating the access. Kontena Vault is a secure key-value storage system that can be used to manage secrets in Kontena. Vault secrets are shared on the Grid level.
 
 A simple way to pass secrets to a Kontena Service is to use environment variables. While you could configure secrets using environment variables in the `kontena.yml` file, this is not recommended. Conceptually, the `kontena.yml` file is a blueprint just like the `Dockerfile` or `docker-compose.yml` that people should be able to share. The proper way to handle secrets is to use Kontena Vault.
 
@@ -36,7 +36,7 @@ $ kontena vault write <name> <value>
 $ kontena vault read <name>
 ```
 
-**Note:** Every read command will be added to Kontena Master audit log
+**Note:** Every read command will be added to the Kontena Master audit log
 
 ### Update Secret
 
@@ -64,4 +64,4 @@ myapi:
       type: env
 ```
 
-In the above example, Kontena will read thesecret `MYSQL_ADMIN_PASSWORD` from Vault and inject it as an environment variable `MYSQL_PASSWORD` to service when it is deployed to nodes using `kontena app deploy`.
+In the above example, Kontena will read the secret `MYSQL_ADMIN_PASSWORD` from Vault and inject it as an environment variable `MYSQL_PASSWORD` to the Service when it is deployed to Nodes using `kontena app deploy`.

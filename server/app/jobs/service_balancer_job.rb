@@ -81,11 +81,6 @@ class ServiceBalancerJob
     return false if pending_deploys?(service)
     return true if !all_instances_exist?(service)
 
-    if missing_cidr?(service)
-      force_service_update(service)
-      return true
-    end
-
     return true if lagging_behind?(service)
 
     if interval_passed?(service)
@@ -99,11 +94,6 @@ class ServiceBalancerJob
   # @param [GridService] service
   # @return [Boolean]
   def should_balance_stateful_service?(service)
-    if missing_cidr?(service)
-      force_service_update(service)
-      return true
-    end
-
     false
   end
 
@@ -132,12 +122,6 @@ class ServiceBalancerJob
     end
 
     false
-  end
-
-  # @param [GridService] service
-  # @return [Boolean]
-  def missing_cidr?(service)
-    service.containers.any? { |c| service.net == 'bridge' && c.overlay_cidr.nil? }
   end
 
   # @param [GridService] service

@@ -24,6 +24,7 @@ class HostNode
   field :private_ip, type: String
   field :last_seen_at, type: Time
   field :agent_version, type: String
+  field :docker_version, type: String
 
   attr_accessor :schedule_counter
 
@@ -62,7 +63,8 @@ class HostNode
       swap_limit: attrs['SwapLimit'],
       public_ip: attrs['PublicIp'],
       private_ip: attrs['PrivateIp'],
-      agent_version: attrs['AgentVersion']
+      agent_version: attrs['AgentVersion'],
+      docker_version: attrs['ServerVersion']
     }
     if self.name.nil?
       self.name = attrs['Name']

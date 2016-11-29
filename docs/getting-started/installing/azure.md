@@ -10,7 +10,7 @@ title: Azure
 - [Installing Kontena Nodes](azure#installing-kontena-nodes)
 - [Azure Plugin Command Reference](azure#azure-plugin-command-reference)
 
-## Prerequisities
+## Prerequisites
 
 - [Kontena CLI](cli)
 - Azure Account
@@ -23,13 +23,13 @@ $ kontena plugin install azure
 
 ## Creating Azure Management Certificate
 
-You can use OpenSSL to create your management certificate. You actually need to create two certificates, one for the server (a .cer file) and one for the client (a .pem file). To create the .pem file, execute this:
+You can use OpenSSL to create your management certificates. Two certificates are necessary: One for the server (a .cer file) and one for the client (a .pem file). To create the .pem file, execute this command:
 
 ```
 openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout mycert.pem -out mycert.pem
 ```
 
-To create the .cer certificate, execute this:
+To create the .cer certificate, execute this command:
 
 ```
 openssl x509 -inform pem -in mycert.pem -outform der -out mycert.cer
@@ -41,7 +41,7 @@ After you have created these files, you will need to upload the .cer file to Azu
 
 ## Installing Kontena Master
 
-Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Azure can be done by just issuing the following command:
+Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. Installing Kontena Master to Azure can be done by issuing the following command:
 
 ```
 $ kontena azure master create \
@@ -50,25 +50,25 @@ $ kontena azure master create \
   --ssh-key <path-to-ssh-private-key>
 ```
 
-After Kontena Master has provisioned you will be automatically authenticated as the Kontena Master internal administrator and the default grid 'test' is set as the current grid.
+After Kontena Master has been provisioned, you will be automatically authenticated as the Kontena Master internal administrator and the default Grid 'test' is set as the current Grid.
 
 ## Installing Kontena Nodes
 
-Before you can start provisioning nodes you must first switch cli scope to a grid. A Grid can be thought of as a cluster of nodes that can have members from multiple clouds and/or regions.
+Before you can start provisioning Nodes you must first switch the CLI scope to a Grid. A Grid can be thought of as a cluster of Nodes that can have members from multiple clouds and/or regions.
 
-Switch to an existing grid using the following command:
+Switch to an existing Grid using the following command:
 
 ```
 $ kontena grid use <grid_name>
 ```
 
-Or create a new grid using the command:
+Or create a new Grid using the command:
 
 ```
 $ kontena grid create --initial-size=<initial_node_count> test-grid
 ```
 
-Now you can start provisioning nodes to Azure. Issue the following command (with the right options) as many times as desired:
+Now you can start provisioning Nodes on Azure. Issue the following command (with the proper options) as many times as desired:
 
 ```
 $ kontena azure node create \

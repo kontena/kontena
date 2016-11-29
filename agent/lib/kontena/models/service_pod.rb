@@ -2,7 +2,8 @@ module Kontena
   module Models
     class ServicePod
 
-      attr_reader :service_name,
+      attr_reader :service_id,
+                  :service_name,
                   :instance_number,
                   :deploy_rev,
                   :service_revision,
@@ -28,14 +29,19 @@ module Kontena
                   :volumes,
                   :volumes_from,
                   :net,
+                  :hostname,
+                  :domainname,
+                  :exposed,
                   :log_driver,
                   :log_opts,
                   :pid,
                   :hooks,
-                  :secrets
+                  :secrets,
+                  :networks
 
       # @param [Hash] attrs
       def initialize(attrs = {})
+        @service_id = attrs['service_id']
         @service_name = attrs['service_name']
         @instance_number = attrs['instance_number'] || 1
         @deploy_rev = attrs['deploy_rev']
@@ -60,21 +66,20 @@ module Kontena
         @volumes = attrs['volumes'] || []
         @volumes_from = attrs['volumes_from'] || []
         @net = attrs['net'] || 'bridge'
+        @hostname = attrs['hostname']
+        @domainname = attrs['domainname']
+        @exposed = attrs['exposed']
         @log_driver = attrs['log_driver']
         @log_opts = attrs['log_opts']
         @pid = attrs['pid']
         @hooks = attrs['hooks'] || []
         @secrets = attrs['secrets'] || []
-      end
-
-      # @return [String, NilClass]
-      def overlay_network
-        self.labels['io.kontena.container.overlay_cidr']
+        @networks = attrs['networks'] || []
       end
 
       # @return [Boolean]
       def can_expose_ports?
-        !self.overlay_network.nil? && self.net == 'bridge'
+        self.net == 'bridge'
       end
 
       # @return [Boolean]
@@ -104,7 +109,8 @@ module Kontena
           'Image' => self.image_name
         }
         if self.net.to_s != 'host'
-          docker_opts['HostName'] = "#{self.name}.kontena.local"
+          docker_opts['Hostname'] = self.hostname
+          docker_opts['Domainname'] = self.domainname
         end
         docker_opts['Env'] = self.build_env
         docker_opts['User'] = self.user if self.user
@@ -125,8 +131,10 @@ module Kontena
         labels['io.kontena.container.deploy_rev'] = self.deploy_rev.to_s
         labels['io.kontena.container.service_revision'] = self.service_revision.to_s
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
+        labels['io.kontena.service.exposed'] = '1' if self.exposed
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
+        #docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
         docker_opts
       end
 
@@ -149,7 +157,8 @@ module Kontena
           host_config['PortBindings'] = self.build_port_bindings
         end
 
-        host_config['NetworkMode'] = self.net if self.net
+        host_config['NetworkMode'] = self.net
+        host_config['DnsSearch'] = [self.domainname, self.domainname.split('.', 2)[1]]
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
@@ -183,6 +192,7 @@ module Kontena
             'io.kontena.service.id' => self.labels['io.kontena.service.id'],
             'io.kontena.service.instance_number' => self.instance_number.to_s,
             'io.kontena.service.name' => self.labels['io.kontena.service.name'],
+            'io.kontena.stack.name' => self.labels['io.kontena.stack.name'],
             'io.kontena.grid.name' => self.labels['io.kontena.grid.name'],
             'io.kontena.container.type' => 'volume'
           }
@@ -280,6 +290,7 @@ module Kontena
         end
         env
       end
+
     end
   end
 end

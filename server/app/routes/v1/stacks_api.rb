@@ -4,8 +4,12 @@ module V1
     include CurrentUser
     include RequestHelpers
     include Auditor
+    include LogsHelpers
 
     plugin :multi_route
+    plugin :streaming
+
+    Dir[File.join(__dir__, '/stacks/*.rb')].each{|f| require f}
 
     route do |r|
       validate_access_token
@@ -19,26 +23,11 @@ module V1
         halt_request(404, {error: 'Not found'}) unless @grid
       end
 
-      def create_stack(data)
-        data[:grid] = @grid
-        data[:current_user] = current_user
-        outcome = Stacks::Create.run(data)
-
-        if outcome.success?
-          @stack = outcome.result
-          audit_event(request, @grid, @stack, 'create')
-          response.status = 201
-          render('stacks/show')
-        else
-          response.status = 422
-          {error: outcome.errors.message}
-        end
-      end
-
+      # @param [Stack] stack
+      # @param [Hash] data
       def update_stack(stack, data)
         data[:grid] = @grid
-        data[:current_user] = current_user
-        data[:stack] = stack
+        data[:stack_instance] = stack
         outcome = Stacks::Update.run(data)
 
         if outcome.success?
@@ -52,9 +41,9 @@ module V1
         end
       end
 
-
+      # @param [Stack] stack
       def delete_stack(stack)
-        outcome = Stacks::Delete.run(stack: stack, current_user: current_user)
+        outcome = Stacks::Delete.run(stack: stack)
 
         if outcome.success?
           audit_event(request, @grid, @stack, 'delete')
@@ -66,13 +55,15 @@ module V1
         end
       end
 
+      # @param [Stack] stack
       def deploy_stack(stack)
-        outcome = Stacks::Deploy.run(stack: stack, current_user: current_user)
+        outcome = Stacks::Deploy.run(stack: stack)
 
         if outcome.success?
           audit_event(request, @grid, @stack, 'deploy')
           response.status = 200
-          {}
+          @stack_deploy = outcome.result
+          render('stack_deploys/show')
         else
           response.status = 422
           {error: outcome.errors.message}
@@ -80,67 +71,44 @@ module V1
       end
 
       # /v1/stacks/:grid/
-      r.on ':grid' do |grid|
-        
+      r.on ':grid/:name' do |grid, name|
+
         load_grid(grid)
+        @stack = @grid.stacks.find_by(name: name)
+        unless @stack
+          halt_request(404)
+        end
 
         r.post do
-          r.is do
-            data = parse_json_body
-            create_stack(data)
-          end
-
-          r.on ':name/deploy' do |name|
-            @stack = @grid.stacks.find_by(name: name)
-            if @stack
-              deploy_stack(@stack)
-            else
-              response.status = 404
-            end
+          r.on ':deploy' do
+            deploy_stack(@stack)
           end
         end
 
         r.put do
           # PUT /v1/stacks/:grid/:name
-          r.on ':name' do |name|
-            @stack = @grid.stacks.find_by(name: name)
+          r.is do
             data = parse_json_body
-            if @stack
-              update_stack(@stack, data)
-            else
-              response.status = 404
-            end
+            update_stack(@stack, data)
           end
         end
 
-        # GET /v1/stacks/:grid/
+        # GET /v1/stacks/:grid/:name
         r.get do
           r.is do
-            @stacks = @grid.stacks
-            render('stacks/index')
+            render('stacks/show')
           end
-          # GET /v1/stacks/:grid/:name
-          r.on ':name' do |name|
-            @stack = @grid.stacks.find_by(name: name)
-            if @stack
-              render('stacks/show')
-            else
-              response.status = 404
-            end
+
+          r.on "container_logs" do
+            r.route 'stack_container_logs'
           end
         end
 
         r.delete do
-          r.on ':name' do |name|
-            @stack = @grid.stacks.find_by(name: name)
-            if @stack
-              delete_stack(@stack)
-            else
-              response.status = 404
-            end
+          r.is do
+            delete_stack(@stack)
           end
         end
-
       end
     end
   end

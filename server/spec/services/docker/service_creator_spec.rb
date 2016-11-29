@@ -1,7 +1,7 @@
 require_relative '../../spec_helper'
 
 describe Docker::ServiceCreator do
-  let(:grid) { Grid.create!(name: 'test-grid', overlay_cidr: '10.81.0.0/23') }
+  let(:grid) { Grid.create!(name: 'test-grid') }
   let(:node) { HostNode.create!(name: 'node-1', node_id: 'a') }
   let(:lb) do
     GridService.create!(
@@ -16,23 +16,18 @@ describe Docker::ServiceCreator do
       grid: grid,
       image_name: 'my/app:latest',
       container_count: 2,
-      env: ['FOO=bar']
+      env: ['FOO=bar'],
+      networks: [grid.networks.first]
     )
   end
 
   let(:subject) { described_class.new(service, node) }
 
-  before(:each) do
-    10.times do |i|
-      grid.overlay_cidrs.create!(ip: "10.81.1.#{i + 1}", subnet: '23')
-    end
-  end
-
   describe '#service_spec' do
     let(:service_spec) { subject.service_spec(2, 'rev') }
 
     it 'includes service_name' do
-      expect(service_spec).to include(:service_name => 'app')
+      expect(service_spec).to include(:service_name => "#{service.stack.name}-#{service.name}")
     end
 
     it 'includes instance_number' do
@@ -119,6 +114,10 @@ describe Docker::ServiceCreator do
       expect(service_spec).to include(:secrets => [])
     end
 
+    it 'includes default network' do
+      expect(service_spec).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
+    end
+
     describe '[:env]' do
       let(:env) { service_spec[:env] }
 
@@ -130,6 +129,7 @@ describe Docker::ServiceCreator do
         expect(env).to include("KONTENA_SERVICE_ID=#{service.id.to_s}")
         expect(env).to include("KONTENA_SERVICE_NAME=#{service.name.to_s}")
         expect(env).to include("KONTENA_GRID_NAME=#{service.grid.name.to_s}")
+        expect(env).to include("KONTENA_STACK_NAME=#{service.stack.name.to_s}")
         expect(env).to include("KONTENA_NODE_NAME=#{node.name.to_s}")
         expect(env).to include("KONTENA_SERVICE_INSTANCE_NUMBER=2")
       end
@@ -142,6 +142,7 @@ describe Docker::ServiceCreator do
         expect(labels).to include('io.kontena.container.id' => anything)
         expect(labels).to include('io.kontena.service.id' => service.id.to_s)
         expect(labels).to include('io.kontena.service.name' => service.name)
+        expect(labels).to include('io.kontena.stack.name' => service.stack.name)
         expect(labels).to include('io.kontena.grid.name' => grid.name)
       end
 

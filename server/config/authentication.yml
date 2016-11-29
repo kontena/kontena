@@ -5,12 +5,12 @@ exclude:
   - /cb
   - /code
   - /oauth2/token
-  - /v1/nodes
-  - /v1/nodes/*
+
 
 soft_exclude:
   - /oauth2/authorize
   - /authenticate
+  - /v1/nodes/*
 
 allow_expired:
   - /authenticate

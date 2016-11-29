@@ -4,8 +4,8 @@ title: Private Registries
 
 # Private Registries
 
-It's possible to use private Docker image registries with Kontena by configuring
-registry credentials to Kontena Master.
+It is possible to use private Docker image registries with Kontena by configuring
+registry credentials on Kontena Master. Following are the relevant commands.
 
 ### Add Private Registry Configuration
 

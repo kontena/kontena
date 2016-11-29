@@ -1,12 +1,7 @@
 require_relative '../../spec_helper'
 
 describe GridServices::Update do
-  let(:user) { User.create!(email: 'joe@domain.com')}
-  let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid.users << user
-    grid
-  }
+  let(:grid) { Grid.create!(name: 'test-grid') }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
 
   describe '#run' do
@@ -15,7 +10,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
@@ -27,7 +21,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
@@ -39,7 +32,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             image: 'redis:3.0'
         ).run
@@ -51,7 +43,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
@@ -63,7 +54,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             affinity: ['az==b1']
         ).run
@@ -72,7 +62,6 @@ describe GridServices::Update do
 
     it 'updates health check' do
       described_class.new(
-          current_user: user,
           grid_service: redis_service,
           health_check: {
             port: 80,
@@ -88,7 +77,6 @@ describe GridServices::Update do
   describe '#build_grid_service_hooks' do
     let(:subject) do
       described_class.new(
-        current_user: user,
         grid_service: redis_service,
         hooks: {
           post_start: [
@@ -140,7 +128,6 @@ describe GridServices::Update do
     end
     let(:subject) do
       described_class.new(
-        current_user: user,
         grid_service: redis_service
       )
     end

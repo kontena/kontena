@@ -1,5 +1,86 @@
 # Changelog
 
+## [1.0.0](https://github.com/kontena/kontena/releases/tag/v1.0.0) (2016-11-29)
+
+**Master & Agents:**
+
+- improve stacks functionality (#864, #1339, #1331, #1338, #1333, #1345, #1347, #1356, #1362, #1358, #1366, #1368, #1372, #1384, #1385, #1386, #1390, #1393, #1378, #1409, #1415, #1425, #1434, #1439)
+- improved network / ipam handling (#955, #1274, #1300, #1324, #1322, #1326, #1332, #1336, #1344, #1380, #1379, #1391, #1392, #1398)
+- cloud integration (#1340, #1389, #1399, #1408, #1407, #1419)
+- rest api docs (#1406)
+- refactor secrets api endpoints to match overall naming (#1405)
+- refactor containers api endpoint (#1363, #1426)
+- refactor nodes api endpoints (#1427, #1441, #1445, #1444, #1447)
+- rename services api container_count attribute to instances (#1404)
+- fix WaitHelper timeout (#1361)
+- do not restart already stopped service instances (#1355)
+- make ContainerLogWorker safer (#1350)
+- add health status actions on agent and master (#1115)
+- enhanced deployment tracking (#1348, #1349)
+- fix TelemetryJob version compare (#1346)
+
+**CLI:**
+
+- stack registry integration (#1403, #1428, #1433, #1429)
+- fix current master selection after master login (#1381)
+- stacks parser (#1351, #1417)
+- install self-signed cert locally (#1337, #1416)
+- refactor login commands and improve coverage (#1283)
+- deprecate service force deploy (#1295)
+- option to check only cli version (#1269)
+- show docker version in node show (#1255)
+- add / Rm multiple node labels. Added label list command. (#1296)
+- add quiet option to service list command (#1312)
+- remove previous version of a plugin on install (#1313)
+
+
+## [0.16.3](https://github.com/kontena/kontena/releases/tag/v0.16.3) (2016-11-15)
+
+**Master & Agents:**
+
+- fix environment rake task (#1311)
+- watch & notify when dead containers are gone (#1289)
+- fix external registry validation (#1310)
+- return correct error json when service remove fails (#1302)
+- log weaveexec errors (#1286)
+- fix all requires to use deterministic ordering across different systems (#1282)
+
+## [0.16.2](https://github.com/kontena/kontena/releases/tag/v0.16.2) (2016-11-03)
+
+**Master & Agents:**
+
+- sort initializers while loading, load symmetric-encryption before seed (#1280, #1277)
+
+**CLI:**
+
+- remove use of to_h for ruby 2.0 compatibility (#1267, #1266)
+- fix master list command if current master not set (#1268)
+
+## [0.16.1](https://github.com/kontena/kontena/releases/tag/v0.16.1) (2016-10-31)
+
+**Master & Agents:**
+
+- fix Agent IfaceHelper#interface_ip Errno::EADDRNOTAVAIL case (#1256)
+- call attach-router if interface ip does not exist (#1253)
+- collect stats only for running containers (#1239)
+- fix telemetry id (#1215)
+- use upsert in config put (#1221)
+- create indexes before running config seed (#1220)
+
+**CLI:**
+
+- login no longer raises when SERVER_NAME is null (#1254)
+- fix master provider save to cloud (#1250)
+- add script security to openVPN config output (#1231)
+- strip possible trailing arguments from remote code display (#1245)
+- set cloud master provider and version if provision plugin returns them (#1180)
+- don't require current master on first login (#1242)
+- better error messages when auth code exchange fails (#1222)
+- show username when logging in using auth code (#1236)
+- rename duplicate masters during config load (#1238)
+- use shellwords to split commands (#1201)
+- convert excon timeout variables to integers (#1227)
+
 ## [0.16.0](https://github.com/kontena/kontena/releases/tag/v0.16.0) (2016-10-24)
 
 **Master & Agents:**

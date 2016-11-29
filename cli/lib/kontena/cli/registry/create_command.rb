@@ -86,19 +86,32 @@ module Kontena::Cli::Registry
       env << "REGISTRY_HTTP_SECRET=#{SecureRandom.hex(24)}"
 
       data = {
-          name: 'registry',
-          stateful: stateful,
-          container_count: instances,
-          image: "kontena/registry:#{REGISTRY_VERSION}",
-          volumes: ['/registry'],
-          env: env,
-          secrets: secrets,
-          affinity: affinity
+        name: 'registry',
+        stack: 'kontena/registry',
+        version: Kontena::Cli::VERSION,
+        source: '---',
+        registry: 'file://',
+        expose: 'api',
+        services: [
+          {
+            name: 'api',
+            stateful: stateful,
+            container_count: instances,
+            image: "kontena/registry:#{REGISTRY_VERSION}",
+            volumes: ['/registry'],
+            env: env,
+            secrets: secrets,
+            affinity: affinity
+          }
+        ]
       }
-      client(token).post("grids/#{current_grid}/services", data)
-      client(token).post("services/#{current_grid}/registry/deploy", {})
-      spinner "deploying #{data[:name].colorize(:cyan)} service " do
-        wait_for_deploy_to_finish(token, parse_service_id(data[:name]))
+
+      client(token).post("grids/#{current_grid}/stacks", data)
+      deployment = client(token).post("stacks/#{current_grid}/registry/deploy", {})
+      spinner "Deploying #{data[:name].colorize(:cyan)} stack " do
+        deployment['service_deploys'].each do |service_deploy|
+          wait_for_deploy_to_finish(token, service_deploy)
+        end
       end
       puts "\n"
       puts "Docker Registry #{REGISTRY_VERSION} is now running at registry.#{current_grid}.kontena.local."

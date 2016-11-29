@@ -94,7 +94,12 @@ module Agent
           exec_driver: info['ExecDriver'],
           image: config['Image'],
           image_version: info['Image'],
+          cmd: config['Cmd'],
           env: config['Env'],
+          labels: parse_labels(labels),
+          hostname: config['Hostname'],
+          domainname: config['Domainname'],
+          instance_number: labels['io.kontena.service.instance_number'],
           state: {
               error: state['Error'],
               exit_code: state['ExitCode'],
@@ -122,12 +127,20 @@ module Agent
       if info['Volumes']
         attributes[:volumes] = info['Volumes'].map{|k, v| [{container: k, node: v}]}
       end
+
+      attributes['networks'] = self.parse_networks(info)
+
       container.attributes = attributes
-      if labels['io.kontena.container.overlay_cidr'] && container.overlay_cidr.nil?
-        self.update_overlay_cidr_from_labels(container, labels)
-      end
 
       attributes
+    end
+
+    def parse_networks(info)
+      networks = {}
+      network = info.dig('Config', 'Labels', 'io.kontena.container.overlay_network')
+      overlay_cidr = info.dig('Config', 'Labels', 'io.kontena.container.overlay_cidr')
+      networks[network] = { 'overlay_cidr' => overlay_cidr } if network && overlay_cidr
+      networks
     end
 
     # @param [GridService] grid_service
@@ -138,18 +151,6 @@ module Agent
         env.delete_if { |item| item.split('=').first == secret.name }
       end
       env
-    end
-
-    # @param [Container] container
-    # @param [Hash] labels
-    # @return [OverlayCidr, NilClass]
-    def update_overlay_cidr_from_labels(container, labels)
-      ip, subnet = labels['io.kontena.container.overlay_cidr'].split('/')
-      overlay_cidr = container.grid.overlay_cidrs.where(ip: ip, subnet: subnet).first
-      if overlay_cidr
-        overlay_cidr.set(container_id: container.id, reserved_at: Time.now.utc)
-        overlay_cidr
-      end
     end
 
     ##
@@ -178,6 +179,17 @@ module Agent
           port_mapping: network['PortMapping'],
           ports: ports
       }
+    end
+
+    # @param [Hash] labels
+    # @return [Hash]
+    def parse_labels(labels)
+      parsed = {}
+      replace = ';'.freeze
+      labels.each{ |k, v|
+        parsed[k.gsub(/\./, replace)] = v
+      }
+      parsed
     end
   end
 end

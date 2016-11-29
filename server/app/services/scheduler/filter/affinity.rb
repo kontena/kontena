@@ -62,7 +62,9 @@ module Scheduler
       # @param [String] compare
       # @param [String] value
       def container_match?(node, compare, value)
-        container_names = node.containers.map{|c| c.name}
+        container_names = node.containers.map{|c|
+          c.labels['io;kontena;container;name'].to_s
+        }
         if compare == '=='
           container_names.any?{|n| n == value}
         elsif compare == '!='

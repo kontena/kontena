@@ -1,0 +1,5 @@
+wordpress:
+  stateful: 'true'
+  environment:
+    WORDPRESS_DB_PASSWORD: ${STACK}_secret
+

@@ -1,39 +1,45 @@
+require_relative 'common'
+
 module Stacks
   class Create < Mutations::Command
+    include Common
+
+    common_validations
 
     required do
-      model :current_user, class: User
       model :grid, class: Grid
       string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
     end
 
-    optional do
-      array :services do
-        model :foo, class: Hash
+    def validate
+      if self.grid.stacks.find_by(name: name)
+        add_error(:name, :exists, "#{name} already exists")
+        return
       end
+      if self.services.size == 0
+        add_error(:services, :empty, "stack does not specify any services")
+        return
+      end
+      validate_expose
+      validate_services
     end
 
-    def validate
-      if self.services
-        self.services.each do |service|
-          
-          service[:current_user] = self.current_user
-          service[:grid] = self.grid
-          
-          outcome = GridServices::Create.validate(service)
-          unless outcome.success?
-            add_error(:services, :invalid, "Service validation failed for service '#{service[:name]}': #{outcome.errors.message}")
-          end
+    def validate_services
+      sort_services(self.services).each do |s|
+        service = s.dup
+        validate_service_links(service)
+        service[:grid] = self.grid
+        outcome = GridServices::Create.validate(service)
+        unless outcome.success?
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
         end
       end
     end
 
     def execute
       attributes = self.inputs.clone
-      current_user = attributes.delete(:current_user)
-      services = attributes.delete(:services)
-
-      stack = Stack.create(attributes)
+      grid = attributes.delete(:grid)
+      stack = Stack.create(name: self.name, grid: grid)
       unless stack.save
         stack.errors.each do |key, message|
           add_error(key, :invalid, message)
@@ -41,24 +47,28 @@ module Stacks
         return
       end
 
-      if services
-        services.each do |service|
-          service[:current_user] = current_user
-          service[:grid] = attributes[:grid]
-          service[:stack] = stack
-          outcome = GridServices::Create.run(service)
-          if outcome.success?
-            stack.grid_services << outcome.result
-          else
-            add_error(:services, :invalid, "Service creation failed for service '#{service[:name]}': #{outcome.errors.message}")
-          end
+      services = sort_services(attributes.delete(:services))
+      attributes[:services] = services
+      attributes[:stack_name] = attributes.delete(:stack)
+      stack.stack_revisions.create!(attributes)
 
-        end
+      create_services(stack, services)
 
-      end
-      
       stack
     end
 
+    # @param [Stack] stack
+    # @param [Array<Hash>] services
+    def create_services(stack, services)
+      services.each do |s|
+        service = s.dup
+        service[:grid] = stack.grid
+        service[:stack] = stack
+        outcome = GridServices::Create.run(service)
+        unless outcome.success?
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
+        end
+      end
+    end
   end
 end
