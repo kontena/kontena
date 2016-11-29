@@ -65,10 +65,10 @@ module Kontena
         end
 
         if params[:body] && !params[:body].empty?
-          str << "Body: "
+          str = "Body: "
           body = params[:body].inspect.strip
-          str << body[0,70]
-          if body.length > 70
+          str << body[0,80]
+          if body.length > 80
             str << "...\""
           end
           result << str
