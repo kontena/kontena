@@ -78,47 +78,119 @@ If you followed the steps above, you should now have a working Kontena setup ins
 $ kontena node list
 ```
 
-## Step 4. Deploy Your First Application
+## Step 4. Deploy Your First Application Stack
 
- Now you are ready to deploy your first application. In this section we will show you how to initiate a simple WordPress application and deploy it to your Kontena Grid.
+ Now you are ready to deploy your first application stack.
+ In this section we will show you how to package a simple WordPress application and deploy it to your Kontena Grid.
 
 First create the `kontena.yml` file with the following contents:
 
 ```
-version: '2'
+stack: examples/wordpress
+version: 0.3.0
+variables:
+  wordpress-mysql-root:
+    type: string
+    from:
+      vault: wordpress-mysql-root
+      random_string: 32
+    to:
+      vault: wordpress-mysql-root
+  wordpress-mysql-password:
+    type: string
+    from:
+      vault: wordpress-mysql-password
+      random_string: 32
+    to:
+      vault: wordpress-mysql-password
 services:
   wordpress:
-    image: wordpress:4.1
+    image: wordpress:4.6
     stateful: true
     ports:
       - 80:80
-    links:
-      - mysql:wordpress-mysql
     environment:
-      - WORDPRESS_DB_HOST=%{project}-mysql.kontena.local
-      - WORDPRESS_DB_USER=root
-      - WORDPRESS_DB_PASSWORD=secret
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    secrets:
+      - secret: wordpress-mysql-password
+        name: WORDPRESS_DB_PASSWORD
+        type: env
   mysql:
     image: mariadb:5.5
     stateful: true
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+    secrets:
+      - secret: wordpress-mysql-root
+        name: MYSQL_ROOT_PASSWORD
+        type: env
+      - secret: wordpress-mysql-password
+        name: MYSQL_PASSWORD
+        type: env
 ```
 
-After that you can deploy the application with:
+You can then install and deploy the `wordpress` stack:
 
 ```
-$ kontena app deploy
+$ kontena stack install --deploy kontena.yml
+ [done] Creating stack wordpress      
+ [done] Deploying stack wordpress     
 ```
 
-After the deployment is finished you can verify it using:
+The initial stack deployment may take some time while the host nodes pull the referenced Docker images.
+
+After the stack deployment is finished you can verify that the wordpress and mysql services are running:
 
 ```
-$ kontena app show wordpress
+$ kontena stack ls
+NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS                                     
+⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp                                      
 ```
 
-It should show details of the service. If you view the node details (`$ kontena node show <node>`), you can pick the private IP address of the node and verify in a browser that the application is responding.
-**Note:** The private IP address applies only in this special case, where we are using Vagrant for the Kontena setup. Under a normal deployment, you can simply choose the public IP of the service from the application details.
+You can use the `kontena stack` commands to view the resulting configuration of each deployed stack service:
+
+```
+$ kontena service show wordpress/wordpress
+test/wordpress/wordpress:
+  stack: test/wordpress
+  status: running
+  image: wordpress:4.6
+  revision: 2
+  stateful: yes
+  scaling: 1
+  strategy: ha
+  deploy_opts:
+    min_health: 0.8
+  dns: wordpress.wordpress.test.kontena.local
+  secrets:
+    - secret: wordpress-mysql-password
+      name: WORDPRESS_DB_PASSWORD
+      type: env
+  env:
+    - WORDPRESS_DB_HOST=mysql
+    - WORDPRESS_DB_USER=wordpress
+    - WORDPRESS_DB_NAME=wordpress
+  net: bridge
+  ports:
+    - 80:80/tcp
+  instances:
+    wordpress-wordpress-1:
+      rev: 2016-11-28 13:51:02 UTC
+      service_rev: 2
+      node: hidden-moon-99
+      dns: wordpress-1.wordpress.test.kontena.local
+      ip: 10.81.128.115
+      public ip: 192.0.2.1
+      status: running
+      exit code: 0
+```
+
+To test the wordpress service, you must connect to the IP address of the host node publishing the wordpress service on TCP port 80.
+You can use the public IP address of the host node running the service instance displayed as part of the `kontena service show` output.
+**Note:** For the special case of using Vagrant for the Kontena setup, you must use the *private* IP address of the node running the `wordpress/wordpress` service: `kontena node show hidden-moon-99 | grep 'private ip'`.
 
 For more complex examples of application deployment on Kontena, please see the following examples:
 
