@@ -15,7 +15,11 @@ module Kontena::Cli::Stacks
 
     def execute
       require_config_file(filename)
-      services = services_from_yaml(filename, service_list, service_prefix)
+      services = Kontena::Cli::Stacks::YAML::Reader.new(filename).execute[:services]
+      unless service_list.empty?
+        services.select! { |name, _| service_list.include?(name) }
+      end
+
       if services.none?{ |name, service| service['build'] }
         abort 'Not found any service with a build option'.colorize(:red)
       end
