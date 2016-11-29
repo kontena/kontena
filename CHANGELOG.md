@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.0.0](https://github.com/kontena/kontena/releases/tag/v1.0.0) (2016-11-29)
+
+**Master & Agents:**
+
+- improve stacks functionality (#864, #1339, #1331, #1338, #1333, #1345, #1347, #1356, #1362, #1358, #1366, #1368, #1372, #1384, #1385, #1386, #1390, #1393, #1378, #1409, #1415, #1425, #1434, #1439)
+- improved network / ipam handling (#955, #1274, #1300, #1324, #1322, #1326, #1332, #1336, #1344, #1380, #1379, #1391, #1392, #1398)
+- cloud integration (#1340, #1389, #1399, #1408, #1407, #1419)
+- rest api docs (#1406)
+- refactor secrets api endpoints to match overall naming (#1405)
+- refactor containers api endpoint (#1363, #1426)
+- refactor nodes api endpoints (#1427, #1441, #1445, #1444, #1447)
+- rename services api container_count attribute to instances (#1404)
+- fix WaitHelper timeout (#1361)
+- do not restart already stopped service instances (#1355)
+- make ContainerLogWorker safer (#1350)
+- add health status actions on agent and master (#1115)
+- enhanced deployment tracking (#1348, #1349)
+- fix TelemetryJob version compare (#1346)
+
+**CLI:**
+
+- stack registry integration (#1403, #1428, #1433, #1429)
+- fix current master selection after master login (#1381)
+- stacks parser (#1351, #1417)
+- install self-signed cert locally (#1337, #1416)
+- refactor login commands and improve coverage (#1283)
+- deprecate service force deploy (#1295)
+- option to check only cli version (#1269)
+- show docker version in node show (#1255)
+- add / Rm multiple node labels. Added label list command. (#1296)
+- add quiet option to service list command (#1312)
+- remove previous version of a plugin on install (#1313)
+
+
 ## [0.16.3](https://github.com/kontena/kontena/releases/tag/v0.16.3) (2016-11-15)
 
 **Master & Agents:**
