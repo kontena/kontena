@@ -14,7 +14,7 @@ module Kontena::Cli::Nodes
       require_current_grid
       token = require_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+      node = client(token).get("nodes/#{current_grid}/#{node_id}")
       cmd = ['ssh']
       cmd << "-i #{identity_file}" if identity_file
       if internal_ip?
