@@ -14,6 +14,11 @@ The service containers for each stack are run within a separate `$stack.$grid.ko
 The service containers can connect to the bare DNS names of other services in the same stack.
 Stacks can also expose a service, allowing other stacks to use the bare DNS name of the exposing stack to connect to the exposed service.
 
+The Kontena Services associated with a stack are shown as `stackname/servicename` in the CLI.
+Traditional Kontena Services created using `kontena service create` are not associated with a stack, and are shown without any `stackname` prefix.
+Like Kontena Services, Kontena Stacks are also Grid-specific.
+The `kontena stack` commands operate on the current grid, unless using the `--grid` option.
+
 ## Usage
 
 Kontena Stacks can be distributed as YAML files via the ***Stack Registry***, deployed via the ***Kontena Master*** to run as ***Service Containers*** within the ***Grid***.
@@ -119,19 +124,105 @@ Destructive command. To proceed, type "terom/redis" or re-run this command with 
 
 A deleted stack file can be re-upload with a newer version number.
 
-### Stack files
-The following Kontena CLI commands operate on local stack files:
+### Deploying Stacks
+The following Kontena CLI commands are used to install local stack files to the Kontena Master, and deploy the stack services running and Grid nodes:
 
 * `kontena stack build` - Build and push Docker images referenced by a stack file
 * `kontena stack install` - Create a stack on the Kontena Master
 * `kontena stack upgrade` - Upgrade a stack within the Grid
+* `kontena stack deploy` - Deploy a stack to the Grid
+* `kontena stack remove` - Remove a deployed stack
 
 ### Deployed Stacks
-The following Kontena CLI commands operate on named stacks deployed to the grid:
+The following Kontena CLI commands can be used to inspect and monitor named stacks deployed to the grid:
 
 * `kontena stack list` - List installed stacks
 * `kontena stack show` - Show stack details from the Grid
-* `kontena stack deploy` - Deploy a stack to the Grid
 * `kontena stack logs` - Show logs from stack services
 * `kontena stack monitor` - Monitor stack services
-* `kontena stack remove` - Remove a deployed stack
+
+#### `kontena stack ls`
+
+List installed stacks for the current Grid, and their deployment state.
+
+```
+NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS                                     
+⊝ registry                                                   0.16.3     1          running                                                      
+⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp                                      
+⊝ wordpress-red                                              0.3.0      2          running    *:80->80/tcp        
+```
+
+#### `kontena stack show wordpress`
+
+Show further details about the deployed stack configuration.
+
+```
+wordpress:
+  state: running
+  created_at: 2016-11-28T10:45:19.105Z
+  updated_at: 2016-11-28T10:45:19.105Z
+  version: 0.3.0
+  expose: -
+  services:
+    wordpress:
+      image: wordpress:4.6
+      status: running
+      revision: 2
+      stateful: yes
+      scaling: 1
+      strategy: ha
+      deploy_opts:
+        min_health: 0.8
+      dns: wordpress.wordpress.development.kontena.local
+      ports:
+        - 80:80/tcp
+    mysql:
+      image: mariadb:5.5
+      status: running
+      revision: 1
+      stateful: yes
+      scaling: 1
+      strategy: ha
+      deploy_opts:
+        min_health: 0.8
+      dns: mysql.wordpress.development.kontena.local
+```
+
+#### `kontena service ls --stack wordpress`
+
+You can use the `kontena service` commands to view further details about the state of the services within a stack:
+
+```
+NAME                                                         INSTANCES  STATEFUL STATE      EXPOSED PORTS                                     
+⊝ wordpress/wordpress                                        1 / 1      yes      running    0.0.0.0:80->80/tcp                                
+⊝ wordpress/mysql                                            1 / 1      yes      running      
+```
+
+The normal `kontena service show wordpress/wordpress` commands can be used to inspect the services within a stack.
+
+#### `kontena stack logs --tail wordpress`
+
+The standard `kontena ... logs` options also work for all services and containers belonging to the stack.
+
+```
+...
+2016-11-28T10:51:04.000Z [wordpress-wordpress-1]: 172.17.0.1 - - [28/Nov/2016:10:51:04 +0000] "GET /2016/11/28/hello-world/ HTTP/1.1" 200 5043 "http://192.168.66.101/2016/11/28/hello-world/" "WordPress/4.6.1; http://192.168.66.101"
+```
+
+You can also use the `kontena service logs wordpress/mysql` commands to access logs for specific services within the stack.
+The `kontena container logs core-01/wordpress-mysql-1` commands can be used to access logs for a specific service container instance.
+
+#### `kontena stack monitor`
+
+Show an overview of the deployed stack state:
+
+```
+grid: development
+stack: wordpress
+services:
+  ■ mysql (1 instances)
+  ■ wordpress (1 instances)
+nodes:
+  core-01 (2 instances)
+  ■■
+```
