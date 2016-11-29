@@ -94,6 +94,10 @@ module Kontena
         stack
       end
 
+      def registry_url
+        client.api_url
+      end
+
       def client
         @client ||= RegistryClientFactory.new.stacks_client
       end
