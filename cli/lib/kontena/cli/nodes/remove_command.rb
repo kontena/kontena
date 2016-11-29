@@ -13,7 +13,7 @@ module Kontena::Cli::Nodes
       confirm_command(node_id) unless forced?
 
       spinner "Removing #{node_id.colorize(:cyan)} node from #{current_grid.colorize(:cyan)} grid " do
-        client(token).delete("grids/#{current_grid}/nodes/#{node_id}")
+        client(token).delete("nodes/#{current_grid}/#{node_id}")
       end
     end
   end

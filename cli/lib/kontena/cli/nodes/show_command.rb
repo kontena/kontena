@@ -11,7 +11,7 @@ module Kontena::Cli::Nodes
       require_current_grid
       token = require_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+      node = client(token).get("nodes/#{current_grid}/#{node_id}")
       puts "#{node['name']}:"
       puts "  id: #{node['id']}"
       puts "  agent version: #{node['agent_version']}"
