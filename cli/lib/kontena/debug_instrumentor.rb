@@ -37,6 +37,16 @@ module Kontena
         result << str
       end
 
+      if params[:status]
+        str = "Status: "
+        if params[:status] < 299
+          str << Kontena.pastel.green(params[:status])
+        else
+          str << Kontena.pastel.red(params[:status])
+        end
+        result << str
+      end
+
       if $stderr.tty?
         if direction == 'Request'
           $stderr.puts(Kontena.pastel.blue("[API Client #{direction}]: #{result.join(" | ")}"))
