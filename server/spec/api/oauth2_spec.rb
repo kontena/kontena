@@ -203,7 +203,7 @@ describe 'OAuth2 API' do
         expect(response.status).to eq(404)
       end
 
-      it 'returns error if refresh token has expired' do
+      it 'does not returns an error if token has expired when refreshing' do
         token = AccessToken.create(user: david, expires_at: Time.now - 7200, scopes: ['user'])
 
         post(
@@ -215,7 +215,7 @@ describe 'OAuth2 API' do
           json_header
         )
 
-        expect(response.status).to eq(404)
+        expect(response.status).to eq(201)
       end
     end
   end
