@@ -15,7 +15,7 @@ module Kontena
       post('/stack/', data, {}, CT_YAML)
     end
 
-    def show(stack_name, stack_version)
+    def show(stack_name, stack_version = nil)
       get("#{path_to(stack_name, stack_version)}", {}, ACCEPT_JSON)
     end
 
