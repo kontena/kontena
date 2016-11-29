@@ -342,7 +342,7 @@ module Kontena
       handle_error_response(error.response)
 
     else
-      logger.debug "#{http_method.upcase} #{path}: #{body.inspect} -> #{@last_response.status} #{@last_response.reason_phrase}: #{ret.inspect}"
+      logger.debug "#{http_method.upcase} #{path}: #{(body || query).inspect} -> #{@last_response.status} #{@last_response.reason_phrase}: #{ret.inspect}"
       return ret
     end
 
