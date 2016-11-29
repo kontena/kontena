@@ -16,8 +16,7 @@ module Kontena::Cli::Stacks::Registry
       columns = "%-40s %-10s %-40s"
       puts columns % titles
       results.each do |stack|
-        stack = ::YAML.load(stacks_client.show(stack['name'])) rescue nil
-        puts columns % [stack['stack'], stack['version'], stack['description'] || '-'] if stack
+        puts columns % [stack['stack'], stack['version'] || '?', stack['description'] || '-'] if stack
       end
     end
   end
