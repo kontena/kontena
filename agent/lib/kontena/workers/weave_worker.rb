@@ -142,7 +142,11 @@ module Kontena::Workers
         domain_name = container.config['Domainname']
       end
       if container.default_stack?
-        hostname = container.labels['io.kontena.container.name']
+        if container.labels['io.kontena.stack.name']
+          hostname = container.config['Hostname']
+        else
+          hostname = container.labels['io.kontena.container.name'] # legacy container
+        end
         dns_names = default_stack_dns_names(hostname, service_name, domain_name)
         dns_names = dns_names + stack_dns_names(hostname, service_name, domain_name)
       else
