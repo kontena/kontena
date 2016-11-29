@@ -262,3 +262,23 @@ nodes:
   core-01 (2 instances)
   ■■
 ```
+
+## details
+
+### Linking services within the same stack
+
+Because each stack is deployed using a separate DNS namespace, services within the same stack can use the bare DNS names of other services in the same stack for communication.
+There is no need to explicitly link services within the same stack.
+
+For the example `wordpress` and `mysql` services in the `wordpress` stack deployed to the `test` grid, Kontena will use the `wordpress.test.kontena.local` DNS domain.
+Each service container will be registered with an instance hostname and service alias within the stack's domain, and configured to resolve hostnames from the stack's domain.
+Any service within the stack can be configured to use the bare `mysql` DNS name to resolve the overlay network IP address of the `mysql-1.wordpress.kontena.local` container via the `mysql.wordpress.kontena.local` service alias.
+
+Each deployed stack will have an separate DNS namespace, including multiple deployed copies of the same stack file.
+The `wordpress` container in one stack will always use the `mysql` service in the same stack.
+
+## Exposing services between stacks
+
+Each stack can also expose a service for use by other stacks.
+
+TODO: `exposed: ...`
