@@ -37,7 +37,6 @@ module Kontena
     attr_reader :host
 
     class DebugInstrumentor
-        require 'pp'
       def self.instrument(name, params = {}, &block)
         result = []
         params = params.dup
