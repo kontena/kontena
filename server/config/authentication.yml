@@ -6,9 +6,11 @@ exclude:
   - /code
   - /oauth2/token
 
+
 soft_exclude:
   - /oauth2/authorize
   - /authenticate
+  - /v1/nodes/*
 
 allow_expired:
   - /authenticate

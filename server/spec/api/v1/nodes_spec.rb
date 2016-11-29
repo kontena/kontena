@@ -19,6 +19,12 @@ describe '/v1/grids' do
     }
   end
 
+  let(:legacy_request_headers) do
+    {
+        'HTTP_KONTENA_GRID_TOKEN' => "#{grid.token}"
+    }
+  end
+
   describe 'GET' do
     it 'returns node with valid id and token' do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
@@ -57,6 +63,27 @@ describe '/v1/grids' do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
       put "/v1/nodes/#{node.to_path}", {labels: []}.to_json, {}
       expect(response.status).to eq(403)
+    end
+  end
+
+  describe 'PUT (legacy)' do
+    it 'saves node labels' do
+      node = grid.host_nodes.create!(node_id: 'abc')
+      labels = ['foo=1', 'bar=2']
+      put '/v1/nodes/abc', {labels: labels}.to_json, legacy_request_headers
+      expect(response.status).to eq(200)
+      expect(node.reload.labels).to eq(labels)
+    end
+
+    it 'returns error with invalid id' do
+      put '/v1/nodes/abc', {labels: []}.to_json, legacy_request_headers
+      expect(response.status).to eq(404)
+    end
+
+    it 'returns error with invalid token' do
+      grid.host_nodes.create!(node_id: 'abc')
+      put '/v1/nodes/abc', {labels: []}.to_json, {}
+      expect(response.status).to eq(404)
     end
   end
 end
