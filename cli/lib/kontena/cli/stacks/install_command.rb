@@ -18,7 +18,7 @@ module Kontena::Cli::Stacks
 
     def execute
 
-      if !File.exist?(filename) && filename =~ /\A\w+\/\w+(?::.*)?\z/
+      if !File.exist?(filename) && filename =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/
         from_registry = true
       else
         from_registry = false
