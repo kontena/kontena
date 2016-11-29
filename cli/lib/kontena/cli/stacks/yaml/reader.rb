@@ -23,7 +23,7 @@ module Kontena::Cli::Stacks
         if from_registry?
           require 'shellwords'
           @raw_content = Kontena::StacksCache.pull(file)
-          @registry    = Kontena::StacksCache::RegistryClientFactory.new.stacks_client.api_url
+          @registry    = Kontena::StacksCache.registry_url
         else
           @raw_content = File.read(File.expand_path(file))
         end

@@ -24,12 +24,12 @@ module Kontena::Cli::Stacks
       @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def stack_from_yaml(filename)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename)
+    def stack_from_yaml(filename, from_registry: false)
+      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, from_registry: from_registry)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
-      set_env_variables(self.name || reader.stack_name, current_grid)
+      set_env_variables(reader.stack_name, current_grid)
       #reader.reload
       outcome = reader.execute
 

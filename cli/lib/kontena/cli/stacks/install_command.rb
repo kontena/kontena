@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
     banner "Installs a stack to a grid on Kontena Master"
 
-    parameter "[FILE]", "Kontena stack file", default: "kontena.yml", attribute_name: :filename
+    parameter "[FILE]", "Kontena stack file or a registry stack name (user/stack or user/stack:version)", default: "kontena.yml", attribute_name: :filename
 
     option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
     option '--deploy', :flag, 'Deploy after installation'
@@ -17,8 +17,15 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      require_config_file(filename)
-      stack = stack_from_yaml(filename)
+
+      if !File.exist?(filename) && filename =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/
+        from_registry = true
+      else
+        from_registry = false
+        require_config_file(filename)
+      end
+
+      stack = stack_from_yaml(filename, from_registry: from_registry)
       stack['name'] = name if name
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         create_stack(stack)
