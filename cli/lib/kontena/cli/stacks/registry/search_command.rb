@@ -12,12 +12,11 @@ module Kontena::Cli::Stacks::Registry
     def execute
       results = stacks_client.search(query.to_s)
       exit_with_error 'Nothing found' if results.empty?
-      titles = ['NAME', 'VERSION', 'DESCRIPTION']
-      columns = "%-40s %-10s %-40s"
+      titles = ['NAME', 'DESCRIPTION']
+      columns = "%-40s %-40s"
       puts columns % titles
       results.each do |stack|
-        stack = ::YAML.load(stacks_client.show(stack['name'])) rescue nil
-        puts columns % [stack['stack'], stack['version'], stack['description'] || '-'] if stack
+        puts columns % [stack['stack'] || stack['name'], stack['description'] || '-'] if stack
       end
     end
   end
