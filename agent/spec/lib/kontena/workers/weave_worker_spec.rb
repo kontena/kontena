@@ -164,6 +164,27 @@ describe Kontena::Workers::WeaveWorker do
       allow(container).to receive(:overlay_ip).and_return('10.81.1.1')
     end
 
+    it 'registers all dns names for legacy container' do
+      allow(container).to receive(:config).and_return({
+        'Hostname' => 'redis-2.kontena.local'
+      })
+      allow(container).to receive(:labels).and_return({
+        'io.kontena.grid.name' => 'foo',
+        'io.kontena.service.name' => 'redis',
+        'io.kontena.service.instance_number' => 2,
+        'io.kontena.container.name' => 'redis-2'
+      })
+      names = []
+      expect(subject.wrapped_object).to receive(:add_dns).exactly(4).times { |id, ip, name|
+        names << name
+      }
+      subject.register_container_dns(container)
+      expect(names).to include('redis-2.kontena.local')
+      expect(names).to include('redis-2.foo.kontena.local')
+      expect(names).to include('redis.kontena.local')
+      expect(names).to include('redis.foo.kontena.local')
+    end
+
     it 'registers all dns names for default stack' do
       allow(container).to receive(:config).and_return({
         'Domainname' => 'foo.kontena.local',
@@ -174,7 +195,7 @@ describe Kontena::Workers::WeaveWorker do
         'io.kontena.grid.name' => 'foo',
         'io.kontena.service.name' => 'redis',
         'io.kontena.service.instance_number' => 2,
-        'io.kontena.container.name' => 'redis-2'
+        'io.kontena.container.name' => 'null-redis-2'
       })
       names = []
       expect(subject.wrapped_object).to receive(:add_dns).exactly(4).times { |id, ip, name|
