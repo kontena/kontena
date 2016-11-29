@@ -1,17 +1,12 @@
 # Errors
 
-<aside class="notice">This error section is stored in a separate file in `includes/_errors.md`. Slate allows you to optionally separate out your docs into many files...just save them to the `includes` folder and add them to the top of your `index.md`'s frontmatter. Files are included in the order listed.</aside>
-
-The Kittn API uses the following error codes:
-
+Kontena Master uses the following HTTP error codes:
 
 Error Code | Meaning
 ---------- | -------
-400 | Bad Request -- Your request sucks
-401 | Unauthorized -- Your API key is wrong
-403 | Forbidden -- The requested is hidden for administrators only
-404 | Not Found -- The specified kitten could not be found
-405 | Method Not Allowed -- You tried to access a kitten with an invalid method
-406 | Not Acceptable -- You requested a format that isn't json
-500 | Internal Server Error -- We had a problem with our server. Try again later.
-503 | Service Unavailable -- We're temporarially offline for maintanance. Please try again later.
+400 | Bad Request -- The request could not be understood by the server due to malformed syntax
+401 | Unauthorized -- The request requires a valid access token
+403 | Forbidden -- Authenticated user does not have rights to requested resource
+404 | Not Found -- Resource not found
+500 | Internal Server Error -- The server encountered an unexpected condition which prevented it from fulfilling the request
+503 | Service Unavailable -- The server is currently unable to handle the request due to a temporary overloading or maintenance of the server.
