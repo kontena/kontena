@@ -6,8 +6,7 @@ module V1
 
     route do |r|
 
-      validate_access_token
-      require_current_user
+
 
       # @param [String] grid_name
       # @param [String] node_id
@@ -31,6 +30,9 @@ module V1
       end
 
       r.on ':grid_name/:node_id' do |grid_name, node_id|
+        validate_access_token
+        require_current_user
+
         @node = load_grid_node(grid_name, node_id)
 
         r.get do
@@ -60,6 +62,38 @@ module V1
             outcome = HostNodes::Remove.run(host_node: @node)
             if outcome.success?
               {}
+            else
+              halt_request(422, {error: outcome.errors.message})
+            end
+          end
+        end
+      end
+
+      # /v1/nodes/:id
+      # @deprecated
+      r.on ':id' do |id|
+        token = r.env['HTTP_KONTENA_GRID_TOKEN']
+        grid = Grid.find_by(token: token.to_s)
+        halt_request(404, {error: 'Not found'}) unless grid
+
+        @node = grid.host_nodes.find_by(node_id: id)
+        halt_request(404, {error: 'Node not found'}) if !@node
+
+        r.get do
+          r.is do
+            render('host_nodes/show')
+          end
+        end
+
+        r.put do
+          r.is do
+            data = parse_json_body
+            params = { host_node: @node }
+            params[:labels] = data['labels'] if data['labels']
+            outcome = HostNodes::Update.run(params)
+            if outcome.success?
+              @node = outcome.result
+              render('host_nodes/show')
             else
               halt_request(422, {error: outcome.errors.message})
             end
