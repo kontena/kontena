@@ -7,7 +7,8 @@ module Kontena::Cli::Vpn
       require 'rbconfig'
       require_api_url
       payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
-      stdout, stderr = client(require_token).post("services/#{current_grid}/vpn/server/containers/1/exec", payload)
+      service = client(require_token).get("services/#{current_grid}/vpn/server/containers")['containers'][0]
+      stdout, stderr = client(require_token).post("containers/#{service['id']}/exec", payload)
       if linux?
         stdout << "\n"
         stdout << "script-security 2 system\n"
