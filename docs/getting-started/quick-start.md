@@ -154,8 +154,8 @@ You can use the `kontena stack` commands to view the resulting configuration of 
 
 ```
 $ kontena service show wordpress/wordpress
-development/wordpress/wordpress:
-  stack: development/wordpress
+test/wordpress/wordpress:
+  stack: test/wordpress
   status: running
   image: wordpress:4.6
   revision: 2
@@ -164,7 +164,7 @@ development/wordpress/wordpress:
   strategy: ha
   deploy_opts:
     min_health: 0.8
-  dns: wordpress.wordpress.development.kontena.local
+  dns: wordpress.wordpress.test.kontena.local
   secrets:
     - secret: wordpress-mysql-password
       name: WORDPRESS_DB_PASSWORD
@@ -180,8 +180,8 @@ development/wordpress/wordpress:
     wordpress-wordpress-1:
       rev: 2016-11-28 13:51:02 UTC
       service_rev: 2
-      node: core-01
-      dns: wordpress-1.wordpress.development.kontena.local
+      node: hidden-moon-99
+      dns: wordpress-1.wordpress.test.kontena.local
       ip: 10.81.128.115
       public ip: 192.0.2.1
       status: running
@@ -190,7 +190,7 @@ development/wordpress/wordpress:
 
 To test the wordpress service, you must connect to the IP address of the host node publishing the wordpress service on TCP port 80.
 You can use the public IP address of the host node running the service instance displayed as part of the `kontena service show` output.
-**Note:** For the special case of using Vagrant for the Kontena setup, you must use the *private* IP address of the node running the `wordpress/wordpress` service: `kontena node show ... | grep 'private ip'`.
+**Note:** For the special case of using Vagrant for the Kontena setup, you must use the *private* IP address of the node running the `wordpress/wordpress` service: `kontena node show hidden-moon-99 | grep 'private ip'`.
 
 For more complex examples of application deployment on Kontena, please see the following examples:
 
