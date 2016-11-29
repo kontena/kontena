@@ -24,7 +24,7 @@ module Kontena::Cli::Stacks::Registry
         puts "  available_versions:"
       end
 
-      stacks_client.versions(stack_name).map { |s| Semantic::Version.new(s['version'])}.sort.reverse_each do |version|
+      stacks_client.versions(stack_name).reject {|s| s['version'].nil? || s['version'].empty?}.map { |s| Semantic::Version.new(s['version'])}.sort.reverse_each do |version|
         puts versions? ? version : "    - #{version}"
       end
     end
