@@ -16,8 +16,9 @@ Stacks can also expose a service, allowing other stacks to use the bare DNS name
 
 The Kontena Services associated with a stack are shown as `stackname/servicename` in the CLI.
 Traditional Kontena Services created using `kontena service create` are not associated with a stack, and are shown without any `stackname` prefix.
-Like Kontena Services, Kontena Stacks are also Grid-specific.
-The `kontena stack` commands operate on the current grid, unless using the `--grid` option.
+
+Like Kontena Services, Kontena Stacks are also grid-specific.
+The `kontena stack` commands operate on the current grid, unless using the `--grid` option to temporarily operate on a different grid.
 
 ## Usage
 
@@ -132,6 +133,32 @@ The following Kontena CLI commands are used to install local stack files to the 
 * `kontena stack upgrade` - Upgrade a stack within the Grid
 * `kontena stack deploy` - Deploy a stack to the Grid
 * `kontena stack remove` - Remove a deployed stack
+
+#### `kontena stack install --name wordpress-red --deploy wordpress/kontena.yml`
+
+Install the stack from the YAML file to the master, creating a new named stack with associated services.
+Use the `--deploy` flag to simultaneously deploy the stack services to the grid, running the Docker containers.
+
+```
+ [done] Creating stack wordpress-red      
+ [done] Deploying stack wordpress-red     
+```
+
+The stack services will now be visible in `kontena service ls`, and the service containers will be running on the grid's host nodes.
+
+Assuming the new `wordpress-red/wordpress` container is running on the host node at `192.168.66.102`, you can use `http://192.168.66.102:80/` to access the installed wordpress service.
+
+#### `kontena stack remove wordpress-red`
+
+Removes the installed stack and associated services, including any deployed containers.
+
+```
+Destructive command. To proceed, type "wordpress-red" or re-run this command with --force option.
+> Enter 'wordpress-red' to confirm:  wordpress-red
+ [done] Removing stack wordpress-red      
+```
+
+This command also removes all data volumes associated with stateful services within the stack.
 
 ### Deployed Stacks
 The following Kontena CLI commands can be used to inspect and monitor named stacks deployed to the grid:
