@@ -3,10 +3,9 @@ module V1
     include TokenAuthenticationHelper
     include CurrentUser
     include RequestHelpers
+    include Auditor
 
     route do |r|
-
-
 
       # @param [String] grid_name
       # @param [String] node_id
