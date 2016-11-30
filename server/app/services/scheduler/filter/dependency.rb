@@ -28,8 +28,12 @@ module Scheduler
         volumes = service.volumes_from.map{|v| v % [instance_number] }
         candidates.dup.each do |node|
           match = node.containers.select { |c|
-            volumes.include?(c.labels['io;kontena;container;name'].to_s) &&
-              c.labels['io;kontena;stack;name'].to_s == service.stack.name
+            if !service.default_stack?
+              volumes.include?(c.labels['io;kontena;container;name'].to_s) &&
+                c.labels['io;kontena;stack;name'].to_s == service.stack.name
+            else
+              volumes.include?(c.labels['io;kontena;container;name'].to_s)
+            end
           }
           if match.empty?
             candidates.delete(node)
@@ -44,8 +48,12 @@ module Scheduler
         net = service.net.sub('container:', '') % [instance_number]
         candidates.dup.each do |node|
           match = node.containers.select { |c|
-            c.labels['io;kontena;container;name'].to_s == net &&
-              c.labels['io;kontena;stack;name'].to_s == service.stack.name
+            if !service.default_stack?
+              c.labels['io;kontena;container;name'].to_s == net &&
+                c.labels['io;kontena;stack;name'].to_s == service.stack.name
+            else
+              c.labels['io;kontena;container;name'].to_s == net
+            end
           }
           if match.empty?
             candidates.delete(node)
