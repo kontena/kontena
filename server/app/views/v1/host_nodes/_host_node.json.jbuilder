@@ -37,6 +37,8 @@ json.grid do
       json.statsd grid.stats['statsd']
     end
     json.trusted_subnets grid.trusted_subnets
+    json.subnet grid.subnet
+    json.supernet grid.supernet
   end
 end
 json.resource_usage do
