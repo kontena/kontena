@@ -82,8 +82,6 @@ describe '/v1/users' do
 
       expect(response.status).to eq(422)
       expect(JSON.parse(response.body)['error']).to eq "Role not found"
-      jane.reload
-      expect(jane.roles.include?(grid_admin)).to be_truthy
     end
   end
 
