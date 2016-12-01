@@ -4,18 +4,23 @@ V1::UsersApi.route('user_roles') do |r|
       params = parse_json_body
 
       role = Role.find_by(name: params['role'])
-      options = {
-        current_user: current_user,
-        user: @user,
-        role: role
-      }
-      outcome = Users::AddRole.run(options)
-      if outcome.success?
-        response.status = 201
-        render('users/show')
+      if role
+        options = {
+          current_user: current_user,
+          user: @user,
+          role: role
+        }
+        outcome = Users::AddRole.run(options)
+        if outcome.success?
+          response.status = 201
+          render('users/show')
+        else
+          response.status = 422
+          {error: outcome.errors.message}
+        end
       else
         response.status = 422
-        {error: outcome.errors.message}
+        {error: 'Role not found'}
       end
     end
   end

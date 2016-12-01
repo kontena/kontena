@@ -70,6 +70,21 @@ describe '/v1/users' do
       jane.reload
       expect(jane.roles.include?(grid_admin)).to be_truthy
     end
+
+    it 'says role not found when role not found' do
+      jane
+      grid_admin
+      data = {
+          email: 'jane@domain.com',
+          role: 'foo_admin'
+      }
+      post '/v1/users/jane@domain.com/roles', data.to_json, request_headers
+
+      expect(response.status).to eq(422)
+      expect(JSON.parse(response.body)['error']).to eq "Role not found"
+      jane.reload
+      expect(jane.roles.include?(grid_admin)).to be_truthy
+    end
   end
 
   describe 'DELETE /:username/roles/:role' do
