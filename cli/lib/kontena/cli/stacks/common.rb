@@ -29,8 +29,7 @@ module Kontena::Cli::Stacks
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
-      set_env_variables(reader.stack_name, current_grid)
-      #reader.reload
+      set_env_variables(reader.stack_name, current_grid)      
       outcome = reader.execute
 
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0

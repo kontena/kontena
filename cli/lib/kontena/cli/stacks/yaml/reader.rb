@@ -34,7 +34,6 @@ module Kontena::Cli::Stacks
         @skip_variables   = skip_variables
         @replace_missing  = replace_missing
         parse_variables unless skip_variables
-        parse_yaml
       end
 
       def from_registry?
@@ -62,6 +61,7 @@ module Kontena::Cli::Stacks
       # @param [String] service_name
       # @return [Hash]
       def execute(service_name = nil)
+        parse_yaml
         result = {}
         Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
           result[:stack]         = yaml['stack']
@@ -80,12 +80,11 @@ module Kontena::Cli::Stacks
       def reload
         @errors = []
         @notifications = []
-        @variables = nil
-        parse_variables unless skip_variables?
         parse_yaml
       end
 
       def stack_name
+        yaml = ::YAML.load(raw_content)
         yaml['stack'].split('/').last.split(':').first if yaml['stack']
       end
 
