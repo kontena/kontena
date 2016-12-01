@@ -27,6 +27,8 @@ services:
     env_file: agent/.env
     environment:
       - KONTENA_URI=ws://localhost:9292
+      - CADVISOR_IMAGE=google/cadvisor
+      - CADVISOR_VERSION=v0.23.2
     network_mode: "host"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
