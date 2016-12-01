@@ -84,7 +84,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        yaml = ::YAML.load(raw_content)
+        yaml = ::YAML.load(interpolate(raw_content, 'filler'))
         yaml['stack'].split('/').last.split(':').first if yaml['stack']
       end
 
