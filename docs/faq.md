@@ -33,6 +33,4 @@ While Kontena works great for all types of businesses and may be used to run con
 
 ## Is Kontena ready for production?
 
-Long answer: We don't claim Kontena is ready for production at the moment in most situations. However, it is one of the most complete and stable systems for running containerized workloads that you'll find. In addition, we are aware of some users who are currently running Kontena for production workloads.
-
-Short answer: No.
+Yes.
