@@ -81,11 +81,16 @@ Make a change to `master` or `agent` and restart `docker-compose up` (with contr
 
 ## Re-creating everything
 
-Run
+First remove all services to clean up docker so that the deploys to the next grid will work:
+
+```
+dontena service ls -q | xargs -L 1 dontena service rm --force
+```
+
+Then run:
 
 ```bash
 docker-compose down
-docker ps -aq -f name=null- | xargs docker rm -f
 docker ps -aq -f name=kontena- | xargs docker rm -f
 docker ps -aq -f name=weave | xargs docker rm -f
 dontena cloud master rm
