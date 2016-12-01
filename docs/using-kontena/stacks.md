@@ -30,7 +30,7 @@ The following Kontena CLI commands operate on the Kontena Cloud stack registry:
 * `kontena stack registry push` - Push a stack into the stacks registry
 * `kontena stack registry pull` - Pull a stack from the stacks registry
 * `kontena stack registry search` - Search for stacks in the stacks registry
-* `kontena stack registry info` - Show info about a stack in the stacks registry
+* `kontena stack registry show` - Show info about a stack in the stacks registry
 * `kontena stack registry remove` - Remove a stack (or version) from the stacks registry
 
 #### `kontena cloud login`
