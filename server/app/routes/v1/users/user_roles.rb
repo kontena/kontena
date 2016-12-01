@@ -20,7 +20,7 @@ V1::UsersApi.route('user_roles') do |r|
         end
       else
         response.status = 422
-        {error: 'Role not found'}
+        {error: { role: 'Role not found'} }
       end
     end
   end

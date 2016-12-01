@@ -81,7 +81,9 @@ describe '/v1/users' do
       post '/v1/users/jane@domain.com/roles', data.to_json, request_headers
 
       expect(response.status).to eq(422)
-      expect(JSON.parse(response.body)['error']).to eq "Role not found"
+      json = JSON.parse(response.body)
+      expect(json.has_key?('error')).to be_truthy
+      expect(json['error']['role']).to eq "Role not found"
     end
   end
 
