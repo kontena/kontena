@@ -236,7 +236,7 @@ module Kontena::Cli::Stacks
             if val
               val
             else
-              puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+              puts "Value for #{var} is not set. Substituting with #{@replace_missing.to_s == '' ? "an empty string" : "'#{@replace_missing}'"}." unless skip_validation?
               @replace_missing.to_s
             end
           end
