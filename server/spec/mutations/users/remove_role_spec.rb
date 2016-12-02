@@ -13,7 +13,7 @@ describe Users::RemoveRole do
       subject = described_class.new(
           current_user: user,
           user: john,
-          role: grid_admin_role
+          role: grid_admin_role.name
       )
       outcome = subject.run
       expect(outcome.errors.size).to eq(1)
@@ -25,7 +25,7 @@ describe Users::RemoveRole do
       subject = described_class.new(
           current_user: user,
           user: nil,
-          role: grid_admin_role
+          role: grid_admin_role.name
       )
       outcome = subject.run
       expect(outcome.errors[:user]).not_to be_nil
@@ -48,7 +48,7 @@ describe Users::RemoveRole do
       subject = described_class.new(
           current_user: user,
           user: user,
-          role: master_admin_role
+          role: master_admin_role.name
       )
       outcome = subject.run
       expect(outcome.errors['role']).not_to be_nil
@@ -60,7 +60,7 @@ describe Users::RemoveRole do
       subject = described_class.new(
           current_user: user,
           user: john,
-          role: grid_admin_role
+          role: grid_admin_role.name
       )
       outcome = subject.run
       john.reload
