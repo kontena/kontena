@@ -61,10 +61,7 @@ describe Scheduler::Filter::Dependency do
         host_node: nodes[1],
         container_id: 'asdadasdssad',
         name: 'null-mysql-2',
-        labels: {
-          'io;kontena;container;name' => 'mysql-2',
-          'io;kontena;stack;name' => 'null'
-        }
+        instance_number: 2
       )
       logstash_service.volumes_from = ['mysql-%s']
       candidates = nodes.dup
@@ -77,9 +74,8 @@ describe Scheduler::Filter::Dependency do
         host_node: nodes[1],
         container_id: 'asdadasdssad',
         name: 'mysql-2',
-        labels: {
-          'io;kontena;container;name' => 'mysql-2'
-        }
+        instance_number: 2,
+        labels: {}
       )
       logstash_service.volumes_from = ['mysql-%s']
       candidates = nodes.dup
@@ -92,8 +88,8 @@ describe Scheduler::Filter::Dependency do
         host_node: nodes[2],
         container_id: 'asdadasdssad',
         name: 'mysql-mysql-3',
+        instance_number: 3,
         labels: {
-          'io;kontena;container;name' => 'mysql-3',
           'io;kontena;stack;name' => 'mysql'
         }
       )
@@ -101,6 +97,22 @@ describe Scheduler::Filter::Dependency do
       candidates = nodes.dup
       subject.filter_candidates_by_volume(candidates, mysql_logstash_service, 3)
       expect(candidates).to eq([nodes[2]])
+    end
+
+    it 'returns no candidates for service has no matching volumes_from' do
+      mysql_mysql_service.containers.create(
+        host_node: nodes[2],
+        container_id: 'asdadasdssad',
+        name: 'mysql-mysql-3',
+        instance_number: 3,
+        labels: {
+          'io;kontena;stack;name' => 'mysql'
+        }
+      )
+      mysql_logstash_service.volumes_from = ['foo-%s']
+      candidates = nodes.dup
+      subject.filter_candidates_by_volume(candidates, mysql_logstash_service, 3)
+      expect(candidates).to eq([])
     end
   end
 
