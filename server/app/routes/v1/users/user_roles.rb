@@ -3,37 +3,29 @@ V1::UsersApi.route('user_roles') do |r|
     r.post do
       params = parse_json_body
 
-      role = Role.find_by(name: params['role'])
-      if role
-        options = {
-          current_user: current_user,
-          user: @user,
-          role: role
-        }
-        outcome = Users::AddRole.run(options)
-        if outcome.success?
-          response.status = 201
-          render('users/show')
-        else
-          response.status = 422
-          {error: outcome.errors.message}
-        end
+      outcome = Users::AddRole.run(
+        current_user: current_user,
+        user: @user,
+        role_name: params['role']
+      )
+
+      if outcome.success?
+        response.status = 201
+        render('users/show')
       else
         response.status = 422
-        {error: { role: 'Role not found'} }
+        {error: outcome.errors.message}
       end
     end
   end
 
   r.on ':role' do |role|
     r.delete do
-      role = Role.find_by(name: role)
-      options = {
+      outcome = Users::RemoveRole.run(
         current_user: current_user,
         user: @user,
         role: role
-      }
-      outcome = Users::RemoveRole.run(options)
+      )
       if outcome.success?
         response.status = 200
         @user = outcome.result
