@@ -6,7 +6,7 @@ V1::UsersApi.route('user_roles') do |r|
       outcome = Users::AddRole.run(
         current_user: current_user,
         user: @user,
-        role_name: params['role']
+        role: params['role']
       )
 
       if outcome.success?
