@@ -33,7 +33,6 @@ module Kontena::Cli::Stacks
         @skip_validation  = skip_validation
         @skip_variables   = skip_variables
         @replace_missing  = replace_missing
-        parse_variables unless skip_variables
       end
 
       def from_registry?
@@ -61,6 +60,7 @@ module Kontena::Cli::Stacks
       # @param [String] service_name
       # @return [Hash]
       def execute(service_name = nil)
+        parse_variables unless skip_variables?
         parse_yaml
         result = {}
         Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
@@ -225,9 +225,7 @@ module Kontena::Cli::Stacks
       # @param [String] text - content of YAML file
       def interpolate(text, filler = nil)
         text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-          if filler
-            filler
-          elsif @replace_missing
+          if @replace_missing
             @replace_missing
           else
             var = v.tr('${}', '')
@@ -235,8 +233,12 @@ module Kontena::Cli::Stacks
             if val
               val
             else
-              puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-              ''
+              if filler
+                filler
+              else
+                puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+                ''
+              end
             end
           end
         end
