@@ -34,12 +34,15 @@ module Kontena::Cli::Stacks
       # @param [Array] to
       # @return [Array]
       def extend_env_vars(from, to)
-        to   ||= []
-        from ||= []
-        to_hash   = Hash[*to.flat_map {|t| t.split('=') }]
-        from_hash = Hash[*from.flat_map {|f| f.split('=') }]
-
-        from_hash.merge(to_hash).map {|k,v| "#{k}=#{v}"}
+        env_vars = to || []
+        if from
+          from.each do |env|
+            env_vars << env unless to && to.find do |key|
+              key.split('=').first == env.split('=').first
+            end
+          end
+        end
+        env_vars
       end
 
       # Takes two arrays of hashes containing { 'secret' => 'str', 'type' => 'str', 'name' => 'str' }

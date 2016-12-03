@@ -42,7 +42,6 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        yaml = ::YAML.load(interpolate(raw_content))
         if yaml && yaml.has_key?('variables')
           @variables = Opto::Group.new(yaml['variables'], defaults: { from: :env, to: :env })
         else
@@ -60,8 +59,9 @@ module Kontena::Cli::Stacks
       # @param [String] service_name
       # @return [Hash]
       def execute(service_name = nil)
+        load_yaml
+        validate unless skip_validation?
         parse_variables unless skip_variables?
-        parse_yaml
         result = {}
         Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
           result[:stack]         = yaml['stack']
@@ -77,14 +77,8 @@ module Kontena::Cli::Stacks
         result
       end
 
-      def reload
-        @errors = []
-        @notifications = []
-        parse_yaml
-      end
-
       def stack_name
-        yaml = ::YAML.load(interpolate(raw_content))
+        yaml = ::YAML.load(raw_content)
         yaml['stack'].split('/').last.split(':').first if yaml['stack']
       end
 
@@ -99,11 +93,6 @@ module Kontena::Cli::Stacks
       # @return [Hash]
       def yaml_substitutables
         @content_variables ||= raw_content.scan(/((?<!\$)\$(?!\$)\{?(\w+)\}?)/m)
-      end
-
-      def parse_yaml
-        load_yaml
-        validate unless skip_validation?
       end
 
       def load_yaml
