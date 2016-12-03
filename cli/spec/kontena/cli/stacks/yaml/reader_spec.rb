@@ -150,6 +150,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(ENV).to receive(:[]).with('STACK').and_return('test')
         allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
         allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
+        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
       end
 
       it 'interpolates $VAR variables' do
@@ -284,7 +285,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path)
         .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-      puts outcome
       expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
     end
   end

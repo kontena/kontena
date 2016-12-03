@@ -43,7 +43,9 @@ module Kontena::Cli::Stacks
       def variables
         return @variables if @variables
         if yaml && yaml.has_key?('variables')
-          @variables = Opto::Group.new(yaml['variables'], defaults: { from: :env, to: :env })
+          variables_yaml = yaml['variables'].to_yaml
+          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml)))
+          @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
         end
@@ -59,9 +61,11 @@ module Kontena::Cli::Stacks
       # @param [String] service_name
       # @return [Hash]
       def execute(service_name = nil)
+        load_yaml(false)
+        parse_variables unless skip_variables?
         load_yaml
         validate unless skip_validation?
-        parse_variables unless skip_variables?
+
         result = {}
         Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
           result[:stack]         = yaml['stack']
@@ -95,8 +99,12 @@ module Kontena::Cli::Stacks
         @content_variables ||= raw_content.scan(/((?<!\$)\$(?!\$)\{?(\w+)\}?)/m)
       end
 
-      def load_yaml
-        @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
+      def load_yaml(interpolate = true)
+        if interpolate
+          @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
+        else
+          @yaml = ::YAML.load(raw_content)
+        end
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
       end
