@@ -13,6 +13,7 @@ module Kontena::Cli::Stacks::Registry
 
     def execute
       file = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_variables: true, replace_missing: "filler")
+      file.execute
       name = "#{file.yaml['stack']}:#{file.yaml['version']}"
       spinner("Pushing #{pastel.cyan(name)} to stacks registry") do
         stacks_client.push(file.yaml['stack'], file.yaml['version'], file.raw_content)
