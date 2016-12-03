@@ -42,7 +42,7 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        yaml = ::YAML.load(interpolate(raw_content, 'filler'))
+        yaml = ::YAML.load(interpolate(raw_content))
         if yaml && yaml.has_key?('variables')
           @variables = Opto::Group.new(yaml['variables'], defaults: { from: :env, to: :env })
         else
@@ -84,7 +84,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        yaml = ::YAML.load(interpolate(raw_content, 'filler'))
+        yaml = ::YAML.load(interpolate(raw_content))
         yaml['stack'].split('/').last.split(':').first if yaml['stack']
       end
 
@@ -223,23 +223,17 @@ module Kontena::Cli::Stacks
 
       ##
       # @param [String] text - content of YAML file
-      def interpolate(text, filler = nil)
+      def interpolate(text)
         text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-          if @replace_missing
+          var = v.tr('${}', '')
+          val = ENV[var]
+          if val
+            val
+          elsif @replace_missing
             @replace_missing
           else
-            var = v.tr('${}', '')
-            val = ENV[var]
-            if val
-              val
-            else
-              if filler
-                filler
-              else
-                puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-                ''
-              end
-            end
+            puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+            ''
           end
         end
       end
