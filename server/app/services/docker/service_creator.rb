@@ -90,7 +90,7 @@ module Docker
     def build_env(instance_number)
       env = grid_service.env.dup || []
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
-      env << "KONTENA_SERVICE_NAME=#{grid_service.name_with_stack(true)}"
+      env << "KONTENA_SERVICE_NAME=#{grid_service.name_with_stack(true, '/')}"
       env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
       env << "KONTENA_STACK_NAME=#{grid_service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{host_node.name}"
@@ -127,7 +127,7 @@ module Docker
         lb = grid_service.linked_to_load_balancers[0]
         internal_port = grid_service.env_hash['KONTENA_LB_INTERNAL_PORT'] || '80'
         mode = grid_service.env_hash['KONTENA_LB_MODE'] || 'http'
-        labels['io.kontena.load_balancer.name'] = lb.name_with_stack(true)
+        labels['io.kontena.load_balancer.name'] = lb.name_with_stack(true, '/')
         labels['io.kontena.load_balancer.internal_port'] = internal_port
         labels['io.kontena.load_balancer.mode'] = mode
       end
