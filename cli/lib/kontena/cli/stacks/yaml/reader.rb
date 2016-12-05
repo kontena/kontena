@@ -226,18 +226,18 @@ module Kontena::Cli::Stacks
       # @param [String] text - content of YAML file
       def interpolate(text, filler = nil)
         text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-          if filler
+          var = v.tr('${}', '')
+          if var == 'STACK' || var == 'GRID'
+            ENV[var]
+          elsif filler
             filler
-          elsif @replace_missing
-            @replace_missing
           else
-            var = v.tr('${}', '')
             val = ENV[var]
             if val
               val
             else
-              puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-              ''
+              puts "Value for #{var} is not set. Substituting with #{@replace_missing.to_s == '' ? "an empty string" : "'#{@replace_missing}'"}." unless skip_validation?
+              @replace_missing.to_s
             end
           end
         end
