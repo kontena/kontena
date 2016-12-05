@@ -73,7 +73,7 @@ describe Kontena::LoadBalancers::Registrator do
           'io.kontena.load_balancer.mode' => 'http'
         },
         overlay_ip: '10.81.3.24',
-        service_name: 'web'
+        service_name_for_lb: 'web'
       )
     }
     let(:tcp_container) {
@@ -86,7 +86,7 @@ describe Kontena::LoadBalancers::Registrator do
           'io.kontena.load_balancer.mode' => 'tcd'
         },
         overlay_ip: '10.81.3.25',
-        service_name: 'tcp'
+        service_name_for_lb: 'tcp'
       )
     }
 
