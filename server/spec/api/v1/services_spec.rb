@@ -8,9 +8,12 @@ describe '/v1/services' do
     }
   end
 
+  let! :grid do
+    grid = Grid.create!(name: 'terminal-a')
+  end
+
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid = Grid.create!(name: 'terminal-a')
     grid.users << user
 
     user
@@ -22,16 +25,31 @@ describe '/v1/services' do
 
   let(:app_service) do
     GridService.create!(
-      grid: david.grids.first,
+      grid: grid,
       name: 'app',
       image_name: 'my/app:latest',
       stateful: false
     )
   end
 
-  let(:redis_service) do
-    GridService.create!(
-      grid: david.grids.first,
+  let! :redis_service do
+    grid.grid_services.create!(
+      name: 'redis',
+      image_name: 'redis:2.8',
+      stateful: true,
+      env: ['FOO=BAR']
+    )
+  end
+
+  let! :stack do
+    grid.stacks.create!(
+      name: 'teststack',
+    )
+  end
+
+  let! :stack_redis_service do
+    stack.grid_services.create!(
+      grid: grid,
       name: 'redis',
       image_name: 'redis:2.8',
       stateful: true,
@@ -54,17 +72,33 @@ describe '/v1/services' do
   end
 
   describe 'GET /:id' do
-    it 'returns service json' do
-      get "/v1/services/#{redis_service.to_path}", nil, request_headers
-      expect(response.status).to eq(200)
+    it 'returns stackless service json' do
+      get "/v1/services/terminal-a/null/redis", nil, request_headers
+      expect(response.status).to eq(200), response.body
       expect(json_response.keys.sort).to eq(%w(
         id created_at updated_at stack image affinity name stateful user
         instances cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
       ).sort)
-      expect(json_response['id']).to eq(redis_service.to_path)
+      expect(json_response['id']).to eq('terminal-a/null/redis')
       expect(json_response['image']).to eq(redis_service.image_name)
+      expect(json_response['dns']).to eq('redis.terminal-a.kontena.local')
+    end
+
+    it 'returns stack service json' do
+      get "/v1/services/terminal-a/teststack/redis", nil, request_headers
+      expect(response.status).to eq(200), response.body
+      expect(json_response.keys.sort).to eq(%w(
+        id created_at updated_at stack image affinity name stateful user
+        instances cmd entrypoint ports env memory memory_swap cpu_shares
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instance_counts net dns hooks secrets revision
+      ).sort)
+      expect(json_response['id']).to eq('terminal-a/teststack/redis')
+      expect(json_response['stack']['name']).to eq('teststack')
+      expect(json_response['image']).to eq(stack_redis_service.image_name)
+      expect(json_response['dns']).to eq('redis.teststack.terminal-a.kontena.local')
     end
 
     it 'returns error without authorization' do
