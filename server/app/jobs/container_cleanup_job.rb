@@ -39,9 +39,19 @@ class ContainerCleanupJob
   def terminate_ghost_container(container)
     if container.host_node
       info "terminating #{container.to_path}"
-      terminator = Docker::ServiceTerminator.new(container.host_node)
+
+      cleanup_lb = true
+      stack_name = container.label('io.kontena.stack.name') || Stack::NULL_STACK
+      stack = container.host_node.grid.stacks.find_by(name: stack_name)
+      if stack
+        service_name = container.label('io.kontena.service.name')
+        replaced_service = stack.grid_services.find_by(name: service_name)
+        cleanup_lb = false if replaced_service
+      end
+
+      terminator = service_terminator(container.host_node)
       terminator.request_terminate_service(
-        container.grid_service_id.to_s, container.instance_number, {lb: true}
+        container.grid_service_id.to_s, container.instance_number, {lb: cleanup_lb}
       )
     else
       info "removing #{container.to_path} because host node not found"
@@ -49,5 +59,9 @@ class ContainerCleanupJob
     end
   rescue => exc
     error "#{exc.class.name}: #{exc.message}"
+  end
+
+  def service_terminator(node)
+    Docker::ServiceTerminator.new(node)
   end
 end
