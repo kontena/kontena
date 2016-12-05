@@ -54,8 +54,8 @@ module Kontena::LoadBalancers
       lb = container.labels['io.kontena.load_balancer.name']
       ip = container.overlay_ip
       return if lb.nil? || ip.nil?
-      
-      service_name = container.service_name
+
+      service_name = container.service_name_for_lb
       name = container.labels['io.kontena.container.name']
       port = container.labels['io.kontena.load_balancer.internal_port'] || '80'
       mode = container.labels['io.kontena.load_balancer.mode'] || 'http'

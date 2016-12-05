@@ -67,11 +67,11 @@ class GridService
   end
 
   # @return [String]
-  def name_with_stack(ignore_default = false, separator = '-')
-    if self.default_stack? && ignore_default
+  def name_with_stack(ignore_default_stack: false, stack_separator: '-')
+    if self.default_stack? && ignore_default_stack
       self.name
     else
-      self.stack.name + separator + self.name
+      self.stack.name + stack_separator + self.name
     end
   end
 

@@ -35,7 +35,7 @@ module Docker
     end
 
     # @return [String] Stack aware name of the containers service
-    def service_name
+    def service_name_for_lb
       return self.labels['io.kontena.service.name'] if self.default_stack?
       "#{self.labels['io.kontena.stack.name']}-#{self.labels['io.kontena.service.name']}"
     end
