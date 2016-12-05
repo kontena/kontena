@@ -33,8 +33,6 @@ module Kontena::Cli::Stacks
         @skip_validation  = skip_validation
         @skip_variables   = skip_variables
         @replace_missing  = replace_missing
-        parse_variables unless skip_variables
-        parse_yaml
       end
 
       def from_registry?
@@ -44,9 +42,10 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        yaml = ::YAML.load(interpolate(raw_content, 'filler'))
         if yaml && yaml.has_key?('variables')
-          @variables = Opto::Group.new(yaml['variables'], defaults: { from: :env, to: :env })
+          variables_yaml = yaml['variables'].to_yaml
+          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml)))
+          @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
         end
@@ -62,6 +61,11 @@ module Kontena::Cli::Stacks
       # @param [String] service_name
       # @return [Hash]
       def execute(service_name = nil)
+        load_yaml(false)
+        parse_variables unless skip_variables?
+        load_yaml
+        validate unless skip_validation?
+
         result = {}
         Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
           result[:stack]         = yaml['stack']
@@ -77,15 +81,8 @@ module Kontena::Cli::Stacks
         result
       end
 
-      def reload
-        @errors = []
-        @notifications = []
-        @variables = nil
-        parse_variables unless skip_variables?
-        parse_yaml
-      end
-
       def stack_name
+        yaml = ::YAML.load(raw_content)
         yaml['stack'].split('/').last.split(':').first if yaml['stack']
       end
 
@@ -102,13 +99,12 @@ module Kontena::Cli::Stacks
         @content_variables ||= raw_content.scan(/((?<!\$)\$(?!\$)\{?(\w+)\}?)/m)
       end
 
-      def parse_yaml
-        load_yaml
-        validate unless skip_validation?
-      end
-
-      def load_yaml
-        @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
+      def load_yaml(interpolate = true)
+        if interpolate
+          @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
+        else
+          @yaml = ::YAML.load(raw_content)
+        end
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
       end
@@ -224,21 +220,17 @@ module Kontena::Cli::Stacks
 
       ##
       # @param [String] text - content of YAML file
-      def interpolate(text, filler = nil)
+      def interpolate(text)
         text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-          if filler
-            filler
+          var = v.tr('${}', '')
+          val = ENV[var]
+          if val
+            val
           elsif @replace_missing
             @replace_missing
           else
-            var = v.tr('${}', '')
-            val = ENV[var]
-            if val
-              val
-            else
-              puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-              ''
-            end
+            puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+            ''
           end
         end
       end
