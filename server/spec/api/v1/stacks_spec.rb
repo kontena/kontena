@@ -61,7 +61,7 @@ describe '/v1/stacks' do
   end
 
   let(:expected_attributes) do
-    %w( id created_at updated_at name stack version services state expose source registry)
+    %w(id created_at updated_at name stack version services state expose source registry)
   end
 
   describe 'GET /:name' do
@@ -73,7 +73,9 @@ describe '/v1/stacks' do
     end
 
     it 'includes deployed services' do
-      Stacks::Deploy.run(stack: stack, current_user: david)
+      mutation = Stacks::Deploy.new(stack: stack, current_user: david)
+      allow(mutation).to receive(:deploy_stack)
+      mutation.run
       get "/v1/stacks/#{stack.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['services'].size).to eq(2)
@@ -150,7 +152,20 @@ describe '/v1/stacks' do
   end
 
   describe 'POST /:name/deploy' do
+
+    let(:deploy_worker_klass) do
+      Class.new do
+        include Celluloid
+      end
+    end
+
+    let(:deploy_worker) do
+      worker = deploy_worker_klass.new
+      Celluloid::Actor[:stack_deploy_worker] = worker
+    end
+
     it 'deploys stack services' do
+      allow(deploy_worker.wrapped_object).to receive(:async)
       expect {
         post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
@@ -158,16 +173,32 @@ describe '/v1/stacks' do
     end
 
     it 'returns stack deploy id' do
+      allow(deploy_worker.wrapped_object).to receive(:async)
       post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
       expect(response.status).to eq(200)
       expect(StackDeploy.find(json_response['id'])).not_to be_nil
     end
 
     it 'deploy creates audit log' do
+      allow(deploy_worker.wrapped_object).to receive(:async)
       expect {
         post "/v1/stacks/#{stack.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
       }.to change{AuditLog.count}.by(1)
+    end
+  end
+
+  describe 'GET /:id/deploys/:deploy_id' do
+    it 'returns deploy object' do
+      deployment = stack.stack_deploys.create
+      get "/v1/stacks/#{stack.to_path}/deploys/#{deployment.id}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['id']).to eq(deployment.id.to_s)
+    end
+
+    it 'returns 404 if deploy not found' do
+      get "/v1/stacks/#{stack.to_path}/deploys/foo", nil, request_headers
+      expect(response.status).to eq(404)
     end
   end
 end

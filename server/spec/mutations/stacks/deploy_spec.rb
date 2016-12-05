@@ -15,6 +15,15 @@ describe Stacks::Deploy do
     ).result
   }
 
+  before(:each) do
+    Celluloid.boot
+    Celluloid::Actor[:stack_deploy_worker] = StackDeployWorker.pool
+  end
+
+  after(:each) do
+    Celluloid.shutdown
+  end
+
   describe '#run' do
     it 'creates a stack deploy' do
       expect {

@@ -34,16 +34,7 @@ module Stacks
       return if has_errors?
 
       stack_deploy = self.stack.stack_deploys.create
-      self.stack.grid_services.each do |service|
-        outcome = GridServices::Deploy.run(grid_service: service)
-        unless outcome.success?
-          add_error(:service, :deploy, outcome.errors.message)
-        else
-          service_deploy = outcome.result
-          service_deploy.set(stack_deploy_id: stack_deploy.id)
-        end
-      end
-
+      deploy_stack(stack_deploy.id)
       stack_deploy
     end
 
@@ -82,6 +73,10 @@ module Stacks
 
     def remove_service(id)
       worker(:grid_service_remove).async.perform(id)
+    end
+
+    def deploy_stack(id)
+      worker(:stack_deploy).async.perform(id)
     end
   end
 end
