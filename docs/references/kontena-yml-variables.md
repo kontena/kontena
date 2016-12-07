@@ -11,9 +11,9 @@ Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/st
 
 ```
 ---
-stack: user/wordpress
+stack: user/mysql
 version: 1.0.0
-description: Wordpress with an optional database
+description: A MySQL server
 variables:
   mysql_root_pw: # variable name
     type: string  # type (string, integer, boolean, uri, enum)
@@ -58,6 +58,15 @@ services:
 ```
 
 End result: A MySQL stack where you can select to use MariaDB, select a version and place the root password into vault on Kontena Master.
+
+The conditional logic can also be used inside services definition:
+
+```
+services:
+  mysql:
+    skip_if: use_external_database
+```
+
 
 ## Anatomy of a variable definition
 
