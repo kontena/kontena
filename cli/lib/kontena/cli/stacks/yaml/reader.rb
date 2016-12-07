@@ -219,24 +219,22 @@ module Kontena::Cli::Stacks
       ##
       # @param [String] text - content of YAML file
       def interpolate(text)
-        text.split(/[\r\n]/).map do |row|
-          row.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-            var = v.tr('${}', '')
-            val = variables.value_of(var) || ENV[var]
-            if val
-              if val.kind_of?(String) && val =~ /[\r\n\"\|]/
-                val.inspect
-              else
-                val
-              end
-            elsif @replace_missing
-              @replace_missing
+        text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
+          var = v.tr('${}', '')
+          val = variables.value_of(var) || ENV[var]
+          if val
+            if val.kind_of?(String) && val =~ /[\r\n\"\|]/
+              val.inspect
             else
-              puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-              ''
+              val
             end
+          elsif @replace_missing
+            @replace_missing
+          else
+            puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+            ''
           end
-        end.join("\n")
+        end
       end
 
       ##
