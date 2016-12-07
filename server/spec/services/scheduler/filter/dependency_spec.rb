@@ -2,18 +2,51 @@ require_relative '../../../spec_helper'
 
 describe Scheduler::Filter::Dependency do
 
+  let(:grid) { Grid.create(name: 'test') }
   let(:nodes) do
     nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', labels: ['az-1', 'ssd'])
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', labels: ['az-1', 'hdd'])
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', labels: ['az-2', 'ssd'])
+    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', labels: ['az-1', 'ssd'], grid: grid)
+    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', labels: ['az-1', 'hdd'], grid: grid)
+    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', labels: ['az-2', 'ssd'], grid: grid)
     nodes
   end
+  let(:default_stack) {
+    grid.stacks.find_by(name: 'null')
+  }
+  let(:mysql_stack) {
+    grid.stacks.create(name: 'mysql')
+  }
   let(:mysql_service) {
-    GridService.create(name: 'mysql', image_name: 'mysql:latest')
+    GridService.create(
+      name: 'mysql',
+      image_name: 'mysql:latest',
+      grid: grid,
+      stack: default_stack
+    )
   }
   let(:logstash_service) {
-    GridService.create(name: 'mysql', image_name: 'mysql:latest')
+    GridService.create!(
+      name: 'logstash',
+      image_name: 'logstash:latest',
+      grid: grid,
+      stack: default_stack
+    )
+  }
+  let(:mysql_mysql_service) {
+    GridService.create(
+      name: 'mysql',
+      image_name: 'mysql:latest',
+      grid: grid,
+      stack: mysql_stack
+    )
+  }
+  let(:mysql_logstash_service) {
+    GridService.create!(
+      name: 'logstash',
+      image_name: 'logstash:latest',
+      grid: grid,
+      stack: mysql_stack
+    )
   }
 
   describe '#filter_candidates_by_volume' do
@@ -21,6 +54,65 @@ describe Scheduler::Filter::Dependency do
       logstash_service.volumes_from = ['mysql-service-%s']
       subject.filter_candidates_by_volume(nodes, logstash_service, 2)
       expect(nodes).to eq([])
+    end
+
+    it 'returns correct candidates for service that belongs to default stack' do
+      mysql_service.containers.create(
+        host_node: nodes[1],
+        container_id: 'asdadasdssad',
+        name: 'null-mysql-2',
+        instance_number: 2
+      )
+      logstash_service.volumes_from = ['mysql-%s']
+      candidates = nodes.dup
+      subject.filter_candidates_by_volume(candidates, logstash_service, 2)
+      expect(candidates).to eq([nodes[1]])
+    end
+
+    it 'returns correct candidates for legacy service that belongs to default stack' do
+      mysql_service.containers.create(
+        host_node: nodes[1],
+        container_id: 'asdadasdssad',
+        name: 'mysql-2',
+        instance_number: 2,
+        labels: {}
+      )
+      logstash_service.volumes_from = ['mysql-%s']
+      candidates = nodes.dup
+      subject.filter_candidates_by_volume(candidates, logstash_service, 2)
+      expect(candidates).to eq([nodes[1]])
+    end
+
+    it 'returns correct candidates for service that belongs to custom stack' do
+      mysql_mysql_service.containers.create(
+        host_node: nodes[2],
+        container_id: 'asdadasdssad',
+        name: 'mysql-mysql-3',
+        instance_number: 3,
+        labels: {
+          'io;kontena;stack;name' => 'mysql'
+        }
+      )
+      mysql_logstash_service.volumes_from = ['mysql-%s']
+      candidates = nodes.dup
+      subject.filter_candidates_by_volume(candidates, mysql_logstash_service, 3)
+      expect(candidates).to eq([nodes[2]])
+    end
+
+    it 'returns no candidates for service has no matching volumes_from' do
+      mysql_mysql_service.containers.create(
+        host_node: nodes[2],
+        container_id: 'asdadasdssad',
+        name: 'mysql-mysql-3',
+        instance_number: 3,
+        labels: {
+          'io;kontena;stack;name' => 'mysql'
+        }
+      )
+      mysql_logstash_service.volumes_from = ['foo-%s']
+      candidates = nodes.dup
+      subject.filter_candidates_by_volume(candidates, mysql_logstash_service, 3)
+      expect(candidates).to eq([])
     end
   end
 
