@@ -40,6 +40,21 @@ describe GridService do
     GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
   end
 
+  let(:stacked_service) do
+    stack = Stack.create!(name: 'stack')
+    GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
+  end
+
+  describe '#qualified_name' do
+    it 'returns full path for stacked service' do
+      expect(stacked_service.qualified_name).to eq("#{stacked_service.stack.name}/#{stacked_service.name}")
+    end
+
+    it 'returns path without stack for stackless service' do
+      expect(grid_service.qualified_name).to eq("#{grid_service.name}")
+    end
+  end
+
   describe '#stateful?' do
     it 'returns true if stateful' do
       subject.stateful = true
