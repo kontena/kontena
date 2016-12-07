@@ -29,12 +29,11 @@ module Stacks
       stack_rev = self.stack.latest_rev
 
       create_or_update_services(self.stack, stack_rev)
-      remove_services(self.stack, stack_rev)
 
       return if has_errors?
 
       stack_deploy = self.stack.stack_deploys.create
-      deploy_stack(stack_deploy.id)
+      deploy_stack(stack_deploy.id, stack_rev.id)
       stack_deploy
     end
 
@@ -57,26 +56,8 @@ module Stacks
       end
     end
 
-    # @param [Stack] stack
-    # @param [StackRevision] stack_rev
-    def remove_services(stack, stack_rev)
-      removed_services = []
-      stack.grid_services.each do |s|
-        unless stack_rev.services.find{ |service| s.name == service['name'] }
-          removed_services << s
-        end
-      end
-      sort_services(removed_services).reverse.each do |s|
-        remove_service(s.id)
-      end
-    end
-
-    def remove_service(id)
-      worker(:grid_service_remove).async.perform(id)
-    end
-
-    def deploy_stack(id)
-      worker(:stack_deploy).async.perform(id)
+    def deploy_stack(stack_deploy_id, stack_rev_id)
+      worker(:stack_deploy).async.perform(stack_deploy_id, stack_rev_id)
     end
   end
 end
