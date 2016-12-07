@@ -1,9 +1,7 @@
 ---
 title: kontena.yml variables
-toc_order: 2
----
 
-# Kontena.yml variables reference
+# Kontena.yml variables
 
 Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/stacks.md) you can define variables to be used to fill in values and to create conditional logic in [kontena.yml](kontena-yml.md) files.
 
@@ -11,9 +9,9 @@ Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/st
 
 ```
 ---
-stack: user/mysql
+stack: user/wordpress
 version: 1.0.0
-description: A MySQL server
+description: Wordpress with an optional database
 variables:
   mysql_root_pw: # variable name
     type: string  # type (string, integer, boolean, uri, enum)
@@ -47,7 +45,8 @@ variables:
     value: mariadb
     to:
       env: db_image # place the value into local env variable "db_image"
-
+    
+  
 services:
   mysql:
     image: ${db_image}:${mysql_version} # use the variables
@@ -59,15 +58,6 @@ services:
 ```
 
 End result: A MySQL stack where you can select to use MariaDB, select a version and place the root password into vault on Kontena Master.
-
-The conditional logic can also be used inside services definition:
-
-```
-services:
-  mysql:
-    skip_if: use_external_database
-```
-
 
 ## Anatomy of a variable definition
 
@@ -112,8 +102,9 @@ Define what to do with the value. The default behavior is to set it to local env
     vault: foo-mysql-user # also send to vault
 ```
 
-### Only_if
+### Conditionals
 
+#### `only_if`
 Sometimes it's necessary to add some conditional logic that determine which variables are used or prompted from the user.
 
 ##### The most basic syntax:
@@ -144,9 +135,9 @@ Sometimes it's necessary to add some conditional logic that determine which vari
   # Require use_mysql to be true and mysql_version to be "5.5"
 ```
 
-### Skip_if
+#### `skip_if`
 
-Works just the same as only_if, but opposite. The processing of this variable will be skipped if the conditions are true.
+Works just the same as `only_if`, but opposite. The processing of this variable will be skipped if the conditions are true.
 
 ```
   skip_if: use_mysql # don't process this variable if use_mysql has a truthy value.
@@ -186,7 +177,7 @@ There's a global validation applicable to all data types:
     - c
 ```
 
-### boolean
+### `boolean`
 
 ```
    truthy: 
@@ -226,7 +217,7 @@ By default, the output will be turned into a string that is either "true" or "fa
 
 Define custom output for the values.
 
-### enum
+### `enum`
 
 An enumerator data type, a list of predefined possible values that the user can select from.
 
@@ -249,7 +240,7 @@ Or to define more readable labels for the values when prompting from the user:
       label: Asia
 ```   
 
-### integer
+### `integer`
 
 ```
   min: 0 # minimum value, can be negative
@@ -257,7 +248,7 @@ Or to define more readable labels for the values when prompting from the user:
   nil_is_zero: false # null value will be turned into zero
 ```
 
-### string
+### `string`
 
 ```
   min_length: nil # minimum length
@@ -274,7 +265,7 @@ Or to define more readable labels for the values when prompting from the user:
 
 ```
 
-### uri
+### `uri`
 
 ```
   schemes: 
@@ -290,10 +281,10 @@ Resolvers are used to obtain a value for the variable from several inputs. If yo
 
 Resolvers can take a "hint", for example the environment variable resolver takes the environment variable name as the hint.
 
-### env
+### `env`
 Hint is the environment variable name to read from. Defaults to the option's name.
 
-### file
+### `file`
 
 ```
 from:
@@ -309,7 +300,7 @@ from:
     ignore_errors: true # if the file does not exist, just return nil. Otherwise it would give a file not found error.
 ```
 
-### random_number
+### `random_number`
 
 Hint must be a hash containing `min: minimum_number, max: maximum_number`
 
@@ -324,7 +315,7 @@ from:
 
 This will generate a random number between 2 and 10.
 
-### random_string
+### `random_string`
 
 Hint can be a number that defines the length for the generated string, the default charset 'alphanumeric' is then used.
 Hint can also be a hash that defines the length and the charset to be used:
@@ -348,12 +339,12 @@ from:
  * ascii_printable (all printable ascii chars)
  * or a set of characters, for example: `length: 8, charset: '01'` will generate something like: **01001100**
 
-### random_uuid
+### `random_uuid`
 Ignores the hint completely.
 
 Output is a 'random' UUID, such as `78b6decf-e312-45a1-ac8c-d562270036ba`
 
-### vault
+### `vault`
 
 Use the Vault on kontena master. The hint is the key in the vault.
 
@@ -364,7 +355,7 @@ from:
 
 You could set this value by using: `kontena vault write wordpress-admin-password p4ssw0rd1234`
 
-### prompt
+### `prompt`
 
 Ask the user interactively. The hint is the question text.
 
@@ -377,7 +368,7 @@ from:
 
 There are currently only two setters. Either send the value to a local environment variable or write it to the Vault on Kontena Master.
 
-### env
+### `env`
 
 ```
 to: 
@@ -386,7 +377,7 @@ to:
 # the container
 ```
 
-### vault
+### `vault`
 
 ```
 to: 
