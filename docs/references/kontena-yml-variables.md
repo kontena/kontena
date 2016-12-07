@@ -1,5 +1,5 @@
 ---
-title: kontena.yml variables
+title: kontena.yml variables reference
 toc_order: 2
 ---
 
@@ -11,9 +11,9 @@ Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/st
 
 ```
 ---
-stack: user/mysql
+stack: user/wordpress
 version: 1.0.0
-description: A MySQL server
+description: Wordpress with an optional database
 variables:
   mysql_root_pw: # variable name
     type: string  # type (string, integer, boolean, uri, enum)
@@ -58,15 +58,6 @@ services:
 ```
 
 End result: A MySQL stack where you can select to use MariaDB, select a version and place the root password into vault on Kontena Master.
-
-The conditional logic can also be used inside services definition:
-
-```
-services:
-  mysql:
-    skip_if: use_external_database
-```
-
 
 ## Anatomy of a variable definition
 
@@ -113,9 +104,11 @@ Define what to do with the value. The default behavior is to set it to local env
 
 ### Conditionals
 
+Sometimes it's necessary to add some conditional logic that determine which variables are used or prompted from the user.
+
 #### `only_if`
 
-Sometimes it's necessary to add some conditional logic that determine which variables are used or prompted from the user.
+Process the variable or service only when provided conditions are true.
 
 ##### The most basic syntax:
 
@@ -141,7 +134,6 @@ Sometimes it's necessary to add some conditional logic that determine which vari
   only_if:
     use_mysql: true
     mysql_version: 5.5
-    
   # Require use_mysql to be true and mysql_version to be "5.5"
 ```
 
@@ -290,7 +282,7 @@ Hint is the environment variable name to read from. Defaults to the option's nam
 
 ### `file`
 
-Read content from a file.
+Read content from a file into a variable.
 
 ```
 from:
@@ -380,7 +372,7 @@ Variable value will be placed into local environment.
 
 ```
 to:
-  env: MYSQL_USERNAME 
+  env: MYSQL_USERNAME
 # sets a local environment variable, not to be confused with setting an environment variable to 
 # the container
 ```
@@ -408,7 +400,7 @@ Contains the current grid. Useful for example when constructing urls, such as: `
 
 The variables are interpolated into the raw YAML before parsing. This can cause the YAML to become invalid. Often you can avoid that by using quotes:
 
-```yaml
+```
 environment:
   - "PASSWORD=${random_password}"
 ```
