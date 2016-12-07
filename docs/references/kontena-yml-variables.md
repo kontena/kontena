@@ -3,7 +3,7 @@ title: kontena.yml variables
 toc_order: 2
 ---
 
-# Kontena.yml variables
+# Kontena.yml variables reference
 
 Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/stacks.md) you can define variables to be used to fill in values and to create conditional logic in [kontena.yml](kontena-yml.md) files.
 
@@ -19,12 +19,12 @@ variables:
     type: string  # type (string, integer, boolean, uri, enum)
     min_length: 8 # require at least 8 characters
     from: # where to obtain a value for this variable
-      vault: wp-mysql-root # try to get a value from the vault on kontena master
+      vault: ${STACK}-wp-mysql-root # try to get a value from the vault on kontena master
       env: MYSQL_ROOT # first try local env variable 
       prompt: Enter a root password for MySQL or leave empty to auto generate # then ask for manual input
       random_string: 16 # still no value, auto generate a random string
     to:
-      vault: wp-mysql-root # send this value to the vault on kontena master
+      vault: ${STACK}-wp-mysql-root # send this value to the vault on kontena master
   mysql_version:
     type: enum # a list of predefined options
     default: latest # default value
@@ -47,7 +47,6 @@ variables:
     value: mariadb
     to:
       env: db_image # place the value into local env variable "db_image"
-
 services:
   mysql:
     image: ${db_image}:${mysql_version} # use the variables
@@ -69,7 +68,7 @@ variables:
   this_is_the_name:
 ```
 
-By default it gets set to local env with the same name, making it possible to use the value later in the YAML:
+By default, a local environment variable with the same name gets populated with the variables value. You can then use it later in the yaml as: `${this_is_the_name}`.
 
 ```
   environment:
@@ -106,6 +105,7 @@ Define what to do with the value. The default behavior is to set it to local env
 ### Conditionals
 
 #### `only_if`
+
 Sometimes it's necessary to add some conditional logic that determine which variables are used or prompted from the user.
 
 ##### The most basic syntax:
@@ -181,13 +181,7 @@ There's a global validation applicable to all data types:
 ### `boolean`
 
 ```
-   truthy: 
-     - "true"
-     - "yes",
-     - "1"
-     - "on"
-     - "enabled"
-     - "enable"
+   truthy: ["true", "yes", "1", "on", "enabled", "enable"]
 ```
 
 If the input value is one of these, set the value of this boolean to **True**. Everything else will be **false**.
@@ -286,6 +280,8 @@ Resolvers can take a "hint", for example the environment variable resolver takes
 Hint is the environment variable name to read from. Defaults to the option's name.
 
 ### `file`
+
+Read content from a file.
 
 ```
 from:
@@ -389,3 +385,21 @@ to:
   vault: wordpress-admin-password
 ```
 
+## Default variables
+
+### `${STACK}`
+
+Contains the current stack name, for example when doing `kontena stack install -n <stack_name> file.yml`. This is useful to namespace vault variables.
+
+### `${GRID}`
+
+Contains the current grid. Useful for example when constructing urls, such as: `db.${STACK}.${GRID}.kontena.local`.
+
+## Notes
+
+The variables are interpolated into the raw YAML before parsing. This can cause the YAML to become invalid. Often you can avoid that by using quotes:
+
+```yaml
+environment:
+  - "PASSWORD=${random_password}"
+```
