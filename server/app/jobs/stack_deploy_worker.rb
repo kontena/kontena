@@ -20,13 +20,15 @@ class StackDeployWorker
     remove_services(stack, stack_rev)
     services = sort_services(stack.grid_services.to_a)
     services.each do |service|
-      deploy_service(service, stack_deploy)
+      service_deploy = deploy_service(service, stack_deploy)
+      raise "service #{service.to_path} deploy failed" if service_deploy.error?
     end
-    stack_deploy.success!
 
     stack_deploy
-  rescue
+  rescue => exc
+    error exc.message
     stack_deploy.error!
+    stack_deploy
   end
 
   # @param [GridService] service
@@ -34,16 +36,16 @@ class StackDeployWorker
   def deploy_service(service, stack_deploy)
     outcome = GridServices::Deploy.run(grid_service: service)
     unless outcome.success?
-      error "failed to deploy #{service.to_path}"
+      raise "cannot deploy #{service.to_path}"
     else
       service_deploy = outcome.result
       service_deploy.set(stack_deploy_id: stack_deploy.id)
 
       finished = false
+      errorer = false
       begin
         timeout(300) do
           while !finished
-            info "waiting for #{service.to_path} deploy to finish..."
             sleep 1
             if service_deploy.reload && (service_deploy.success? || service_deploy.error?)
               finished = true
@@ -51,8 +53,10 @@ class StackDeployWorker
           end
         end
       rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
+        raise "service #{service.to_path} deployment timed out"
       end
+
+      service_deploy
     end
   end
 
