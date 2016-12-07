@@ -296,6 +296,8 @@ describe Kontena::Models::ServicePod do
       [
         {'ip' => '1.2.3.4', 'container_port' => 2379, 'node_port' => 12379, 'protocol' => 'tcp'},
         {'container_port' => 1194, 'node_port' => 1194, 'protocol' => 'udp'},
+        {'ip' => '1.2.3.4', 'container_port' => 53, 'node_port' => 53, 'protocol' => 'udp'},
+        {'ip' => '5.6.7.8', 'container_port' => 53, 'node_port' => 53, 'protocol' => 'udp'}
       ]
     end
 
@@ -308,6 +310,10 @@ describe Kontena::Models::ServicePod do
       port_bindings = subject.build_port_bindings
       expect(port_bindings['2379/tcp']).to eq([{'HostIp' => '1.2.3.4', 'HostPort' => '12379'}])
       expect(port_bindings['1194/udp']).to eq([{'HostIp' => '0.0.0.0', 'HostPort' => '1194'}])
+      expect(port_bindings['53/udp']).to eq([
+        {'HostIp' => '1.2.3.4', 'HostPort' => '53'},
+        {'HostIp' => '5.6.7.8', 'HostPort' => '53'}
+      ])
     end
   end
 

@@ -219,7 +219,8 @@ module Kontena
         bindings = {}
         self.ports.each do |p|
           host_ip = p['ip'] || '0.0.0.0'
-          bindings["#{p['container_port']}/#{p['protocol']}"] = [{'HostIp' => host_ip.to_s, 'HostPort' => p['node_port'].to_s}]
+          bindings["#{p['container_port']}/#{p['protocol']}"] ||= []
+          bindings["#{p['container_port']}/#{p['protocol']}"] << {'HostIp' => host_ip.to_s, 'HostPort' => p['node_port'].to_s}
         end
         bindings
       end
