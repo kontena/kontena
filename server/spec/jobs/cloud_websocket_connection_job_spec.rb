@@ -12,11 +12,6 @@ describe CloudWebsocketConnectJob do
   }
 
   describe '#perform' do
-    it 'starts EventMachine' do
-      allow(subject.wrapped_object).to receive(:running?).and_return(false)
-      expect(subject.wrapped_object).to receive(:start_em).once.and_return(true)
-      subject.perform
-    end
 
     context 'when cloud enabled' do
       before(:each) do
