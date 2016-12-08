@@ -47,8 +47,7 @@ variables:
     value: mariadb
     to:
       env: db_image # place the value into local env variable "db_image"
-    
-  
+
 services:
   mysql:
     image: ${db_image}:${mysql_version} # use the variables
@@ -372,8 +371,10 @@ There are currently only two setters. Either send the value to a local environme
 
 ### `env`
 
+Variable value will be placed into local environment.
+
 ```
-to: 
+to:
   env: MYSQL_USERNAME 
 # sets a local environment variable, not to be confused with setting an environment variable to 
 # the container
@@ -381,8 +382,10 @@ to:
 
 ### `vault`
 
+Variable value will be written to the Vault on Kontena Master
+
 ```
-to: 
+to:
   vault: wordpress-admin-password
 ```
 
