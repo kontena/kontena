@@ -18,8 +18,12 @@ class GridServiceSchedulerWorker
       .find_and_modify({:$set => {started_at: Time.now.utc}}, {new: true})
     if service_deploy && (service_deploy.grid_service.running? || service_deploy.grid_service.initialized?)
       self.perform(service_deploy)
+    elsif service_deploy && service_deploy.grid_service.deploying?
+      service_deploy.reason = "service #{service_deploy.grid_service.to_path} is already being deployed"
+      service_deploy.error!
     elsif service_deploy
-      service_deploy.destroy
+      service_deploy.reason = "service #{service_deploy.grid_service.to_path} is not running"
+      service_deploy.error!
     end
   end
 
