@@ -59,7 +59,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     it 'accepts a stack name as filename' do
       expect(File).to receive(:exist?).with('user/stack:1.0.0').and_return(false)
-      expect(subject).to receive(:stack_from_yaml).with('user/stack:1.0.0', from_registry: true).and_return(stack)
+      expect(subject).to receive(:stack_from_yaml).with('user/stack:1.0.0', from_registry: true, name: nil).and_return(stack)
       expect(client).to receive(:post).with(
         'grids/test-grid/stacks', stack
       )
