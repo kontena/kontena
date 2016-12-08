@@ -89,7 +89,7 @@ $ sudo start kontena-server-haproxy
 ### Login to Kontena Master
 
 
-After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authetication](../../using-kontena/authentication.md) for instructions on configuring [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
+After Kontena Master has started you can authenticate as the Kontena Master internal administrator using the `INITIAL_ADMIN_CODE` you provided. Refer to [authentication](../../using-kontena/authentication.md) for instructions on configuring [Kontena Cloud](https://cloud.kontena.io) as the authentication provider.
 
 ```
 kontena master login --name some-name --code <admin code> https://master_ip:8443
