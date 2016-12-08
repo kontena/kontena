@@ -102,6 +102,10 @@ module V1
           r.on "container_logs" do
             r.route 'stack_container_logs'
           end
+
+          r.on 'deploys' do
+            r.route 'stack_deploys'
+          end
         end
 
         r.delete do
