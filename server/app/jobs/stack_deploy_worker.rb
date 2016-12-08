@@ -24,6 +24,8 @@ class StackDeployWorker
       raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
     end
 
+    stack_deploy.success!
+
     stack_deploy
   rescue => exc
     error exc.message
