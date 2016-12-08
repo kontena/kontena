@@ -1,5 +1,7 @@
 ---
 title: kontena.yml variables
+toc_order: 2
+---
 
 # Kontena.yml variables
 
