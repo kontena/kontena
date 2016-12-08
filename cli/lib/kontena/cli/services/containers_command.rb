@@ -14,7 +14,7 @@ module Kontena::Cli::Services
 
       result = client(token).get("services/#{parse_service_id(name)}/containers")
       result['containers'].each do |container|
-        puts "#{container['id'].split('/')[1..-1].join('/')}:"
+        puts "#{container['name']}:"
         puts "  rev: #{container['deploy_rev']}"
         puts "  node: #{container['node']['name']}"
         puts "  dns: #{container['hostname']}.#{container['domainname']}"
