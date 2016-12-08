@@ -21,13 +21,12 @@ module Kontena::Cli::Plugins
       install_options << "--version #{version}" if version
       install_options << "--pre" if pre?
       install_command = "#{gem_bin} install #{install_options.join(' ')} #{plugin}"
-      success = false
-      spinner "Installing plugin #{name.colorize(:cyan)}" do
+      stderr = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
         stdout, stderr, status = Open3.capture3(install_command)
-        unless stderr.empty?
-          raise stderr
-        end
+        spin.fail unless stderr.empty?
+        stderr
       end
+      raise stderr unless stderr.empty?
     rescue => exc
       puts exc.message
     end
@@ -42,13 +41,12 @@ module Kontena::Cli::Plugins
 
     def uninstall_previous(name)
       uninstall_command = "#{gem_bin} uninstall -q #{name}"
-      success = false
-      spinner "Uninstalling previous version of plugin" do
+      stderr = spinner "Uninstalling previous version of plugin" do |spin|
         stdout, stderr, status = Open3.capture3(uninstall_command)
-        unless stderr.empty?
-          raise stderr
-        end
+        spin.fail unless stderr.empty?
+        stderr
       end
+      raise stderr unless stderr.empty?
     end
   end
 end
