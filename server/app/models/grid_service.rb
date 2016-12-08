@@ -71,6 +71,15 @@ class GridService
     "#{self.stack.name}-#{self.name}"
   end
 
+  # @return [String]
+  def qualified_name
+    parts = []
+    parts << self.stack.name unless self.default_stack?
+    parts << self.name
+
+    parts.join('/')
+  end
+
   # @return [Boolean]
   def default_stack?
     self.stack.try(:name).to_s == Stack::NULL_STACK

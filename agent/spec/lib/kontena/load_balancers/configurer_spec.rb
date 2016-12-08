@@ -18,7 +18,8 @@ describe Kontena::LoadBalancers::Configurer do
       labels: {
         'io.kontena.load_balancer.name' => 'lb',
         'io.kontena.service.name' => 'test-api'
-      }
+      },
+      service_name_for_lb: 'test-api'
     )
   }
   let(:etcd_prefix) { described_class::ETCD_PREFIX }

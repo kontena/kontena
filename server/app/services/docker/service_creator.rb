@@ -127,7 +127,7 @@ module Docker
         lb = grid_service.linked_to_load_balancers[0]
         internal_port = grid_service.env_hash['KONTENA_LB_INTERNAL_PORT'] || '80'
         mode = grid_service.env_hash['KONTENA_LB_MODE'] || 'http'
-        labels['io.kontena.load_balancer.name'] = lb.name
+        labels['io.kontena.load_balancer.name'] = lb.qualified_name
         labels['io.kontena.load_balancer.internal_port'] = internal_port
         labels['io.kontena.load_balancer.mode'] = mode
       end
