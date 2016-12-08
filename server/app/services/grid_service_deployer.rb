@@ -28,21 +28,6 @@ class GridServiceDeployer
     @nodes = nodes
   end
 
-  ##
-  # Is deploy possible?
-  #
-  # @return [Boolean]
-  def can_deploy?
-    self.grid_service.container_count.times do |i|
-      node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes
-      )
-      return false unless node
-    end
-
-    true
-  end
-
   # @return [Array<HostNode>]
   def selected_nodes
     nodes = []
@@ -114,13 +99,11 @@ class GridServiceDeployer
   # @param [Integer] instance_number
   # @param [String] deploy_rev
   # @param [Hash, NilClass] creds
+  # @raise [NodeMissingError]
   def deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, creds)
     node = self.scheduler.select_node(
         self.grid_service, instance_number, self.nodes
     )
-    unless node
-      raise NodeMissingError.new("Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}")
-    end
     info "deploying service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
     deploy_futures << Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(self.grid_service)
@@ -135,6 +118,8 @@ class GridServiceDeployer
     if deploy_futures.any?{|f| f.ready? && f.value == false}
       raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
     end
+  rescue Scheduler::Error => exc
+    raise NodeMissingError.new("Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}: #{exc.message}")
   end
 
   # @param [String] deploy_rev
@@ -185,10 +170,13 @@ class GridServiceDeployer
     max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     nodes = []
     max_instances.times do |i|
-      node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes
-      )
-      nodes << node if node
+      begin
+        nodes << self.scheduler.select_node(
+          self.grid_service, i + 1, self.nodes
+        )
+      rescue Scheduler::Error
+
+      end
     end
     self.nodes.each{|n| n.schedule_counter = 0}
     filtered_count = nodes.uniq.size
