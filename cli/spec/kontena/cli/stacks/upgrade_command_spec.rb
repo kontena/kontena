@@ -29,8 +29,8 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     end
 
     it 'requires stack file' do
-      allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml').and_return(stack)
-      expect(subject).to receive(:require_config_file).with('./path/to/kontena.yml', name: 'stack-name').and_return(true)
+      allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml', name: 'stack-name').and_return(stack)
+      expect(subject).to receive(:require_config_file).with('./path/to/kontena.yml').and_return(true)
       subject.run(['stack-name', './path/to/kontena.yml'])
     end
 
