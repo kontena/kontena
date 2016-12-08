@@ -18,11 +18,22 @@ describe GridServiceSchedulerWorker do
       expect(oldest.reload.started_at).not_to be_nil
     end
 
-    it 'removes deploy from queue if service is stopped' do
+    it 'errors deploy if service is stopped' do
       service.set_state('stopped')
       deploy = service_deploy
       subject.check_deploy_queue
-      expect(GridServiceDeploy.count).to eq(0)
+      deploy.reload
+      expect(deploy.error?).to be_truthy
+      expect(deploy.reason.to_s).not_to be_empty
+    end
+
+    it 'errors deploy if service is already being deployed' do
+      service.set_state('deploying')
+      deploy = service_deploy
+      subject.check_deploy_queue
+      deploy.reload
+      expect(deploy.error?).to be_truthy
+      expect(deploy.reason.to_s).not_to be_empty
     end
 
     it 'triggers perform if service can be deployed' do
