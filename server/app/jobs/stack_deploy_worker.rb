@@ -21,7 +21,7 @@ class StackDeployWorker
     services = sort_services(stack.grid_services.to_a)
     services.each do |service|
       service_deploy = deploy_service(service, stack_deploy)
-      raise "service #{service.to_path} deploy failed" if service_deploy.error?
+      raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
     end
 
     stack_deploy
@@ -33,30 +33,37 @@ class StackDeployWorker
 
   # @param [GridService] service
   # @param [StackDeploy] stack_deploy
+  # @return [GridServiceDeploy, NilClass]
   def deploy_service(service, stack_deploy)
     outcome = GridServices::Deploy.run(grid_service: service)
     unless outcome.success?
-      raise "cannot deploy #{service.to_path}"
+      return
     else
       service_deploy = outcome.result
       service_deploy.set(stack_deploy_id: stack_deploy.id)
 
-      finished = false
-      errorer = false
-      begin
-        timeout(300) do
-          while !finished
-            sleep 1
-            if service_deploy.reload && (service_deploy.success? || service_deploy.error?)
-              finished = true
-            end
-          end
-        end
-      rescue => exc
-        raise "service #{service.to_path} deployment timed out"
+      wait_for_service_deploy_to_finish(service_deploy)
+
+      service_deploy.reload
+    end
+  end
+
+  # @param [GridServiceDeploy] service_deploy
+  def wait_for_service_deploy_to_finish(service_deploy)
+    finished = false
+    start = Time.now
+    while !finished
+      sleep 1
+
+      deploy = GridServiceDeploy.find(service_deploy.id)
+      if deploy.nil? || deploy.success? || deploy.error?
+        finished = true
       end
 
-      service_deploy
+      if start < 10.minutes.ago
+        finished = true
+        warning "waiting for deploy of #{service_deploy.grid_service.to_path} to finish timed out"
+      end
     end
   end
 
