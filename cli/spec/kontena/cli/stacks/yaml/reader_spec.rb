@@ -153,7 +153,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
       end
 
-      it 'escapes variable value when needed' do
+      it 'escapes variable value when there are linefeeds' do
         expect(ENV).to receive(:[]).with('MYSQL_IMAGE').at_least(:once).and_return("foo\nfoo\n")
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
@@ -162,6 +162,17 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         services = subject.yaml['services']
         expect(subject.interpolate(subject.raw_content)).to match(/\"foo\\nfoo\\n\"/)
         expect(services['mysql']['image']).to eq("foo\nfoo\n")
+      end
+
+      it 'escapes variable value when there are quotes' do
+        expect(ENV).to receive(:[]).with('MYSQL_IMAGE').at_least(:once).and_return("foo\"foo")
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path)
+          .and_return(fixture('stack-with-variables.yml'))
+        subject.execute
+        services = subject.yaml['services']
+        expect(subject.interpolate(subject.raw_content)).to match(/foo\\"foo/)
+        expect(services['mysql']['image']).to eq("foo\"foo")
       end
 
       it 'interpolates $VAR variables' do
