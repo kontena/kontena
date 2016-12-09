@@ -42,7 +42,7 @@ module Agent
         container.save
       else
         attributes[:host_node_id] = container.host_node.try(:id)
-        container.with(write: {w: 0, j: false, fsync: false}).set(attributes)
+        container.set(attributes)
       end
     end
 

@@ -15,7 +15,7 @@ class GridServiceSchedulerWorker
   def check_deploy_queue
     service_deploy = GridServiceDeploy.where(started_at: nil)
       .asc(:created_at)
-      .find_and_modify({:$set => {started_at: Time.now.utc}}, {new: true})
+      .find_one_and_update({:$set => {started_at: Time.now.utc}}, {return_document: :after})
     if service_deploy && (service_deploy.grid_service.running? || service_deploy.grid_service.initialized?)
       self.perform(service_deploy)
     elsif service_deploy

@@ -5,9 +5,10 @@ gem 'roda', '~> 2.5.0'
 gem 'celluloid', '~> 0.16.0'
 gem 'tilt-jbuilder'
 gem 'mutations'
-gem 'mongoid', '~> 4.0.0'
+gem 'mongoid', '~> 5.1.0'
+gem 'mongo', '~> 2.3.1'
 gem 'symmetric-encryption'
-gem 'activesupport', '~> 4.1.14'
+gem 'activesupport', '~> 4.2.7'
 gem 'faye-websocket', '~> 0.10.0'
 gem 'websocket-driver', '~> 0.6.2'
 gem 'puma'
@@ -25,8 +26,8 @@ gem 'rack-attack'
 
 group :development, :test do
   gem 'dotenv'
-  gem 'rspec', '~> 3.1.0', require: false
-  gem 'mongoid-rspec', '~> 2.1.0', require: false
+  gem 'rspec', '~> 3.3.0', require: false
+  gem 'mongoid-rspec', '~> 3.0.0', require: false
   gem 'rack-test', require: false
   gem 'rerun', require: false
   gem 'simplecov', require: false

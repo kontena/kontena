@@ -12,7 +12,7 @@ module Agent
       @stats = []
       @cached_grid = nil
       @cached_container = nil
-      @db_session = ContainerLog.collection.session.with(
+      @db_session = ContainerLog.collection.client.with(
         write: {
           w: 0, fsync: false, j: false
         }
@@ -131,7 +131,7 @@ module Agent
     end
 
     def flush_logs
-      db_session[:container_logs].insert(@logs)
+      db_session[:container_logs].insert_many(@logs)
       @logs.clear
     end
 
@@ -156,7 +156,7 @@ module Agent
           network: data['network']
         }
         if @stats.size >= 5
-          db_session[:container_stats].insert(@stats.dup)
+          db_session[:container_stats].insert_many(@stats.dup)
           @stats.clear
         end
       end
@@ -195,7 +195,7 @@ module Agent
         load: data['load'],
         filesystem: data['filesystem']
       }
-      db_session[:host_node_stats].insert(stat)
+      db_session[:host_node_stats].insert_one(stat)
     end
 
     ##
@@ -242,7 +242,7 @@ module Agent
     def grid_container(grid_id, id)
       container = db_session[:containers].find(
           grid_id: grid_id, container_id: id
-        ).limit(1).one
+        ).limit(1).first
     end
 
     # @param [String] id
