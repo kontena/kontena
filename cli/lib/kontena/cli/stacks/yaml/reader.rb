@@ -221,18 +221,25 @@ module Kontena::Cli::Stacks
       ##
       # @param [String] text - content of YAML file
       def interpolate(text)
-        text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-          var = v.tr('${}', '')
-          val = ENV[var]
-          if val
-            val
-          elsif @replace_missing
-            @replace_missing
+        text.split(/[\r\n]/).map do |row|
+          # skip lines that opto is interpolating
+          if row.strip.start_with?('interpolate:') || row.strip.start_with?('evaluate:')
+            row
           else
-            puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-            ''
+            row.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
+              var = v.tr('${}', '')
+              val = variables.value_of(var) || ENV[var]
+              if val
+                val
+              elsif @replace_missing
+                @replace_missing
+              else
+                puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+                ''
+              end
+            end
           end
-        end
+        end.join("\n")
       end
 
       ##
