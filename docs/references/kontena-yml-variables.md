@@ -328,36 +328,6 @@ from:
     charset: hex_upcase
 ```
 
-### `interpolate`
-
-Hint must be a string. Variable references in that string template will be used to build the final value.
-
-```
-name:
-  type: string
-  value: World
-
-greeting:
-  type: string
-  from:
-    interpolate: Hello, ${name}!
-```
-
-### `evaluate`
-
-Hint must be a string. Can be used to perform simple calculations using the values of other variables.
-
-```
-nodes:
-  type: integer
-  value: 3
-
-quorum:
-  type: integer
-  from:
-    evaluate: (${nodes}/2) + 1
-```
-
 ##### Defined charsets:
  * numbers (0-9)
  * letters (a-z + A-Z)
