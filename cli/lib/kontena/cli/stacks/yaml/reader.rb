@@ -44,7 +44,7 @@ module Kontena::Cli::Stacks
         return @variables if @variables
         if yaml && yaml.has_key?('variables')
           variables_yaml = yaml['variables'].to_yaml
-          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml)))
+          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml, use_opto: false)))
           @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
@@ -220,7 +220,7 @@ module Kontena::Cli::Stacks
 
       ##
       # @param [String] text - content of YAML file
-      def interpolate(text)
+      def interpolate(text, use_opto: true)
         text.split(/[\r\n]/).map do |row|
           # skip lines that opto is interpolating
           if row.strip.start_with?('interpolate:') || row.strip.start_with?('evaluate:')
@@ -228,7 +228,13 @@ module Kontena::Cli::Stacks
           else
             row.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
               var = v.tr('${}', '')
-              val = variables.value_of(var) || ENV[var]
+
+              if use_opto
+                val = variables.value_of(var) || ENV[var]
+              else
+                val = ENV[var]
+              end
+
               if val
                 val.to_s =~ /[\r\n\"\'\|]/ ? val.inspect : val
               else
