@@ -28,20 +28,6 @@ describe ServiceBalancerJob do
       it 'returns false by default' do
         expect(subject.should_balance_service?(service)).to be_falsey
       end
-
-      # it 'returns false if all instances have overlay_cidr' do
-      #   container = Container.new
-      #   allow(container).to receive(:overlay_cidr).and_return(spy)
-      #   containers = [container]
-      #   allow(service).to receive(:containers).and_return(containers)
-      #   expect(subject.should_balance_service?(service)).to be_falsey
-      # end
-
-      # it 'returns true if any of the instances are missing overlay_cidr' do
-      #   containers = [Container.new]
-      #   allow(service).to receive(:containers).and_return(containers)
-      #   expect(subject.should_balance_service?(service)).to be_truthy
-      # end
     end
 
     context 'stateless' do
@@ -85,21 +71,6 @@ describe ServiceBalancerJob do
         allow(subject.wrapped_object).to receive(:all_instances_exist?).and_return(true)
         expect(subject.should_balance_service?(service)).to be_falsey
       end
-
-      # it 'returns false if all instances have overlay_cidr' do
-      #   container = service.containers.create!(
-      #     name: 'test-1', state: { running: true }
-      #   )
-      #   allow(container).to receive(:overlay_cidr).and_return(spy)
-      #   expect(subject.should_balance_service?(service)).to be_falsey
-      # end
-      #
-      # it 'returns true if any of the instances are missing overlay_cidr' do
-      #   service.deployed_at = 3.minutes.ago
-      #   service.containers.create!(name: "test-1", state: {running: true})
-      #   allow(service).to receive(:all_instances_exist?).and_return(true)
-      #   expect(subject.should_balance_service?(service)).to be_truthy
-      # end
     end
   end
 
@@ -223,6 +194,48 @@ describe ServiceBalancerJob do
     end
   end
 
+  describe '#active_deploys?' do
+    it 'returns false by default' do
+      expect(subject.active_deploys?(service)).to be_falsey
+    end
+
+    it 'returns true if service has active deploys' do
+      service.grid_service_deploys.create(started_at: 5.minutes.ago)
+      expect(subject.active_deploys?(service)).to be_truthy
+    end
+
+    it 'returns false if service has only finished deploys' do
+      service.grid_service_deploys.create(started_at: 5.minutes.ago, deploy_state: :success)
+      expect(subject.active_deploys?(service)).to be_falsey
+    end
+
+    it 'returns false if service has only stale deploys' do
+      service.grid_service_deploys.create(started_at: 1.hour.ago)
+      expect(subject.active_deploys?(service)).to be_falsey
+    end
+  end
+
+  describe '#active_deploys_within_stack?' do
+    it 'returns false by default' do
+      expect(subject.active_deploys_within_stack?(service)).to be_falsey
+    end
+
+    it 'returns true if service has active deploys' do
+      service.stack.stack_deploys.create
+      expect(subject.active_deploys_within_stack?(service)).to be_truthy
+    end
+
+    it 'returns false if service has only finished deploys' do
+      service.stack.stack_deploys.create(deploy_state: :success)
+      expect(subject.active_deploys_within_stack?(service)).to be_falsey
+    end
+
+    it 'returns false if service has only stale deploys' do
+      service.stack.stack_deploys.create(created_at: 1.hour.ago)
+      expect(subject.active_deploys_within_stack?(service)).to be_falsey
+    end
+  end
+
   describe '#lagging_behind?' do
     it 'returns false by default' do
       expect(subject.lagging_behind?(service)).to be_falsey
@@ -233,9 +246,9 @@ describe ServiceBalancerJob do
       expect(subject.lagging_behind?(service)).to be_truthy
     end
 
-    it 'returns true if deploy has been requested since last deploy' do
-      service.set(deploy_requested_at: Time.now.utc, deployed_at: 5.minutes.ago)
-      expect(subject.lagging_behind?(service)).to be_truthy
+    it 'returns false if service has not been updated since last deploy' do
+      service.set(updated_at: 5.minutes.ago, deployed_at: Time.now.utc)
+      expect(subject.lagging_behind?(service)).to be_falsey
     end
   end
 
