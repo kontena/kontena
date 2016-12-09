@@ -3,24 +3,24 @@
 
 **Master & Agents:**
 
-- Fix possible race condition in GridServiceScheduler, #1532
-- Fix ServiceBalancer greediness, #1522
-- Fix StackDeploy success state
-- Boot em&celluloid with initialisers, #1503
-- Fix binding same port on multi IPs, #1490
-- Fix service show DNS, #1487
-- Garbage collect orphan service containers, #1483
-- Deploy stack service one-by-one, #1482
-- Stack-warare loadbalancer, #1481
-- Resolve volumes-from correctly with < 1.0.0 created services, #1455
+- Fix possible race condition in GridServiceScheduler (#1532)
+- Fix ServiceBalancer greediness (#1522)
+- Fix StackDeploy success state (#1509)
+- Boot em&celluloid with initialisers (#1503)
+- Fix binding same port on multi IPs (#1490)
+- Fix service show DNS (#1487)
+- Garbage collect orphan service containers (#1483)
+- Deploy stack service one-by-one (#1482)
+- Stack-warare loadbalancer (#1481)
+- Resolve volumes-from correctly with < 1.0.0 created services (#1455)
 
 
 **CLI:**
 
-- - Fix service containers command, #1514
-- Use —name when parsing stacks, #1505
-- Fix auth token refreshing, #1479
-- Set GRID and STACK variables for stack files, #1475
+- - Fix service containers command (#1514)
+- Use —name when parsing stacks (#1505)
+- Fix auth token refreshing (#1479)
+- Set GRID and STACK variables for stack files (#1475)
 
 
 
