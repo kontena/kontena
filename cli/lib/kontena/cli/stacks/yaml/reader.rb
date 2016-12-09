@@ -230,12 +230,10 @@ module Kontena::Cli::Stacks
               var = v.tr('${}', '')
               val = variables.value_of(var) || ENV[var]
               if val
-                val
-              elsif @replace_missing
-                @replace_missing
+                val.to_s =~ /[\r\n\"\'\|]/ ? val.inspect : val
               else
                 puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-                ''
+                @replace_missing || ''
               end
             end
           end
