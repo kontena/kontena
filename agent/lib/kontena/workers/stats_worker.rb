@@ -13,7 +13,7 @@ module Kontena::Workers
       @queue = queue
       @statsd = nil
       @node_name = nil
-      info 'initialized'
+      debug 'initialized'
       subscribe('agent:node_info', :on_node_info)
       async.start if autostart
     end
@@ -24,7 +24,7 @@ module Kontena::Workers
       @node_name = info['name']
       statsd_conf = info.dig('grid', 'stats', 'statsd')
       if statsd_conf
-        info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
+        debug "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
         @statsd = Statsd.new(
           statsd_conf['server'], statsd_conf['port'].to_i || 8125
         ).tap{|sd| sd.namespace = info.dig('grid', 'name')}
@@ -34,9 +34,9 @@ module Kontena::Workers
     end
 
     def start
-      info 'waiting for cadvisor'
+      debug 'waiting for cadvisor'
       sleep 1 until cadvisor_running?
-      info 'cadvisor is running, starting stats loop'
+      debug 'cadvisor is running, starting stats loop'
       last_collected = Time.now.to_i
       loop do
         sleep 1 until last_collected < (Time.now.to_i - 60)
@@ -46,7 +46,7 @@ module Kontena::Workers
     end
 
     def collect_stats
-      info 'starting collection'
+      debug 'starting collection'
       begin
         Docker::Container.all.each do |container|
           if container.running?

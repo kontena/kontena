@@ -24,7 +24,7 @@ module Kontena::Workers
       @statsd = nil
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
-      info 'initialized'
+      debug 'initialized'
       async.start if autostart
     end
 
@@ -58,7 +58,7 @@ module Kontena::Workers
     end
 
     def publish_node_info
-      info 'publishing node information'
+      debug 'publishing node information'
       docker_info['PublicIp'] = self.public_ip
       docker_info['PrivateIp'] = self.private_ip
       docker_info['AgentVersion'] = Kontena::Agent::VERSION
