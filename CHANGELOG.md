@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0](https://github.com/kontena/kontena/releases/tag/v1.0.1) (2016-12-09)
+## [1.0.1](https://github.com/kontena/kontena/releases/tag/v1.0.1) (2016-12-09)
 
 **Master & Agents:**
 
