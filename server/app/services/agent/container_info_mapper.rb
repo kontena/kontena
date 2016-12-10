@@ -51,15 +51,12 @@ module Agent
     def create_service_container(node_id, info)
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
-      service_id = labels['io.kontena.service.id']
       node = grid.host_nodes.find_by(node_id: node_id)
-      service = grid.grid_services.find_by(id: service_id)
       container = grid.containers.build(
         container_id: container_id,
         name: labels['io.kontena.container.name'],
         container_type: labels['io.kontena.container.type'] || 'container',
-        grid_service: service,
-        grid_service_id: service_id,
+        grid_service_id: labels['io.kontena.service.id'],
         host_node: node
       )
       if labels['io.kontena.container.id']
