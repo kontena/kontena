@@ -223,7 +223,7 @@ if words.size > 0
         if words[1] == 'registry'
           registry_sub_commands = %(push pull search show rm)
           completion.push registry_sub_commands
-        elsif words[1] == 'install'
+        elsif %w(install upgrade).include?(words[1])
             completion.push helper.yml_files
         else
           completion.push(sub_commands) unless sub_commands.include?(words[1])
