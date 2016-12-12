@@ -65,7 +65,7 @@ class StackDeployWorker
 
       if start < 10.minutes.ago
         finished = true
-        warning "waiting for deploy of #{service_deploy.grid_service.to_path} to finish timed out"
+        warn "waiting for deploy of #{service_deploy.grid_service.to_path} to finish timed out"
       end
     end
   end
