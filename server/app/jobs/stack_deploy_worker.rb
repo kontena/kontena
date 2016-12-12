@@ -19,6 +19,7 @@ class StackDeployWorker
     stack_deploy.ongoing!
 
     remove_services(stack, stack_rev)
+    stack.reload
     services = sort_services(stack.grid_services.to_a)
     services.each do |service|
       service_deploy = deploy_service(service, stack_deploy)
