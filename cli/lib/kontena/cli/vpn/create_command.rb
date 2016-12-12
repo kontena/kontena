@@ -45,25 +45,36 @@ module Kontena::Cli::Vpn
 
       client(token).post("grids/#{current_grid}/stacks", data)
       deployment = client(token).post("stacks/#{current_grid}/#{name}/deploy", {})
+      container = nil
       spinner "Deploying #{pastel.cyan(name)} service " do
         deployment['service_deploys'].each do |service_deploy|
           wait_for_deploy_to_finish(token, service_deploy)
         end
+        container = wait_for_container
       end
       spinner "Generating #{pastel.cyan(name)} keys (this will take a while) " do
-        wait_for_configuration_to_finish(token)
+        wait_for_configuration_to_finish(container)
       end
       puts "#{name.colorize(:cyan)} service is now started (udp://#{vpn_ip}:1194)."
       puts "use 'kontena vpn config' to fetch OpenVPN client config to your machine."
     end
 
-    def wait_for_configuration_to_finish(token)
+    def wait_for_container
+      container = client(require_token).get("services/#{current_grid}/vpn/server/containers")['containers'][0]
+      until container
+        sleep 1
+        container = client(require_token).get("services/#{current_grid}/vpn/server/containers")['containers'][0]
+      end
+      container
+    end
+
+    def wait_for_configuration_to_finish(container)
       finished = false
-      payload = {cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT']}
-      service = client(require_token).get("services/#{current_grid}/vpn/server/containers", payload)['containers'][0]
+      payload = { cmd: ['/usr/local/bin/ovpn_getclient', 'KONTENA_VPN_CLIENT'] }
+
       until finished
         sleep 3
-        stdout, stderr = client(require_token).post("containers/#{service['id']}/exec", payload)
+        stdout, stderr = client(require_token).post("containers/#{container['id']}/exec", payload)
         finished = true if stdout.join('').include?('BEGIN PRIVATE KEY'.freeze)
       end
 
