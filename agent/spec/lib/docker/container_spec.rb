@@ -150,4 +150,21 @@ describe Docker::Container do
       expect(subject.finished?).to be_falsey
     end
   end
+
+  describe '#service_name' do
+    it 'return plain service for default stack' do
+      expect(subject).to receive(:default_stack?).and_return(true)
+      expect(subject).to receive(:labels).and_return({'io.kontena.service.name' => 'service'})
+
+      expect(subject.service_name_for_lb).to eq('service')
+    end
+
+    it 'return stackified service for stack based service' do
+      expect(subject).to receive(:default_stack?).and_return(false)
+      allow(subject).to receive(:labels).and_return({'io.kontena.service.name' => 'service', 'io.kontena.stack.name' => 'stack'})
+
+      expect(subject.service_name_for_lb).to eq('stack-service')
+    end
+
+  end
 end

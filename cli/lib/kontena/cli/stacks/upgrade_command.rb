@@ -17,7 +17,7 @@ module Kontena::Cli::Stacks
 
     def execute
       require_config_file(file)
-      stack = stack_from_yaml(file)
+      stack = stack_from_yaml(file, name: name)
       spinner "Upgrading stack #{pastel.cyan(name)} " do
         update_stack(stack)
       end

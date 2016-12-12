@@ -102,6 +102,11 @@ module Kontena
         "#{self.service_name}-#{self.instance_number}-volumes"
       end
 
+      # @return [String]
+      def stack_name
+        self.labels['io.kontena.stack.name']
+      end
+
       # @return [Hash]
       def service_config
         docker_opts = {
@@ -150,8 +155,7 @@ module Kontena
           host_config['Binds'] = bind_volumes
         end
         if self.volumes_from.size > 0
-          i = self.name.match(/^.+-(\d+)$/)[1]
-          host_config['VolumesFrom'] = self.volumes_from.map{|v| v % [i] }
+          host_config['VolumesFrom'] = self.build_volumes_from
         end
         if self.can_expose_ports? && self.ports
           host_config['PortBindings'] = self.build_port_bindings
@@ -215,7 +219,8 @@ module Kontena
         bindings = {}
         self.ports.each do |p|
           host_ip = p['ip'] || '0.0.0.0'
-          bindings["#{p['container_port']}/#{p['protocol']}"] = [{'HostIp' => host_ip.to_s, 'HostPort' => p['node_port'].to_s}]
+          bindings["#{p['container_port']}/#{p['protocol']}"] ||= []
+          bindings["#{p['container_port']}/#{p['protocol']}"] << {'HostIp' => host_ip.to_s, 'HostPort' => p['node_port'].to_s}
         end
         bindings
       end
@@ -291,6 +296,32 @@ module Kontena
         env
       end
 
+      # @return [Array<String>]
+      def build_volumes_from
+        self.volumes_from.map { |v|
+          volumes_from = nil
+
+          # legacy naming
+          legacy_name = "#{v}" % [self.instance_number]
+          c = Docker::Container.get(legacy_name) rescue nil
+          if c
+            volumes_from = legacy_name
+          end
+
+          unless volumes_from
+            # stack naming
+            stack_name = "#{self.stack_name}-#{legacy_name}"
+            c = Docker::Container.get(stack_name) rescue nil
+            if c
+              volumes_from = stack_name
+            else
+              volumes_from = legacy_name
+            end
+          end
+
+          volumes_from
+        }
+      end
     end
   end
 end

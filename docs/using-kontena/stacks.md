@@ -30,7 +30,7 @@ The following Kontena CLI commands operate on the Kontena Cloud stack registry:
 * `kontena stack registry push` - Push a stack into the stacks registry
 * `kontena stack registry pull` - Pull a stack from the stacks registry
 * `kontena stack registry search` - Search for stacks in the stacks registry
-* `kontena stack registry info` - Show info about a stack in the stacks registry
+* `kontena stack registry show` - Show info about a stack in the stacks registry
 * `kontena stack registry remove` - Remove a stack (or version) from the stacks registry
 
 #### `kontena cloud login`
@@ -145,7 +145,7 @@ Use the `--deploy` flag to simultaneously deploy the stack services to the grid,
 ```
 
 The stack services will now be visible in `kontena service ls`, and the service containers will be running on the grid's host nodes.
-If you omit the `kontena stack install --deploy` flag, then you must run `kontena stacl deploy wordpress-red` separately.
+If you omit the `kontena stack install --deploy` flag, then you must run `kontena stack deploy wordpress-red` separately.
 
 Assuming the new `wordpress-red/wordpress` container is running on the host node at `192.168.66.102`, you can use `http://192.168.66.102:80/` to access the installed wordpress service.
 

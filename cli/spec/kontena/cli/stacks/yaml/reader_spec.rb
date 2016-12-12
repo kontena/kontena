@@ -63,62 +63,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .and_return(fixture('kontena_v3.yml'))
       subject
     end
-
-    context 'variable interpolation' do
-      before(:each) do
-        allow(ENV).to receive(:key?).and_return(true)
-        allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
-        allow(ENV).to receive(:[]).with('STACK').and_return('test')
-        allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
-        allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
-      end
-
-      it 'interpolates $VAR variables' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('stack-with-variables.yml'))
-        services = subject.yaml['services']
-        expect(services['wordpress']['image']).to eq('wordpress:4.1')
-      end
-
-      it 'interpolates ${VAR} variables' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('stack-with-variables.yml'))
-        services = subject.yaml['services']
-        expect(services['mysql']['image']).to eq('mariadb:latest')
-      end
-
-      it 'warns about empty variables' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('stack-with-variables.yml'))
-        allow(ENV).to receive(:[])
-          .with('MYSQL_IMAGE')
-          .and_return(nil)
-
-        expect {
-          subject
-        }.to output("Value for MYSQL_IMAGE is not set. Substituting with an empty string.\n").to_stdout
-      end
-    end
-
-    it 'replaces $$VAR variables to $VAR format' do
-      allow(ENV).to receive(:key?).and_return(true)
-      allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
-      allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
-      allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
-      allow(ENV).to receive(:[]).with('STACK').and_return('test')
-      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('stack-with-variables.yml'))
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('docker-compose_v2.yml'))
-        .and_return(fixture('docker-compose_v2.yml'))
-      services = subject.execute[:services]
-      expect(services['mysql']['environment'].first).to eq('INTERNAL_VAR=$INTERNAL_VAR')
-    end
   end
 
   context 'when yaml file is malformed' do
@@ -197,6 +141,65 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         expect(service_extender).to receive(:extend_from).with(kontena_yml['services']['base'])
         subject.execute
       end
+    end
+
+    context 'variable interpolation' do
+      before(:each) do
+        allow(ENV).to receive(:key?).and_return(true)
+        allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
+        allow(ENV).to receive(:[]).with('STACK').and_return('test')
+        allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
+        allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
+        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+      end
+
+      it 'interpolates $VAR variables' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path)
+          .and_return(fixture('stack-with-variables.yml'))
+        subject.execute
+        services = subject.yaml['services']
+        expect(services['wordpress']['image']).to eq('wordpress:4.1')
+      end
+
+      it 'interpolates ${VAR} variables' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path)
+          .and_return(fixture('stack-with-variables.yml'))
+        subject.execute
+        services = subject.yaml['services']
+        expect(services['mysql']['image']).to eq('mariadb:latest')
+      end
+
+      it 'warns about empty variables' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path)
+          .and_return(fixture('stack-with-variables.yml'))
+        allow(ENV).to receive(:[])
+          .with('MYSQL_IMAGE')
+          .and_return(nil)
+
+        expect {
+          subject.execute
+        }.to output("Value for MYSQL_IMAGE is not set. Substituting with an empty string.\n").to_stdout
+      end
+    end
+
+    it 'replaces $$VAR variables to $VAR format' do
+      allow(ENV).to receive(:key?).and_return(true)
+      allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+      allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
+      allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
+      allow(ENV).to receive(:[]).with('STACK').and_return('test')
+      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path)
+        .and_return(fixture('stack-with-variables.yml'))
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('docker-compose_v2.yml'))
+        .and_return(fixture('docker-compose_v2.yml'))
+      services = subject.execute[:services]
+      expect(services['mysql']['environment'].first).to eq('INTERNAL_VAR=$INTERNAL_VAR')
     end
 
     context 'environment variables' do
@@ -282,7 +285,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path)
         .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-      puts outcome
       expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
     end
   end

@@ -15,17 +15,20 @@ describe Stacks::Deploy do
     ).result
   }
 
+  before(:each) do
+    Celluloid.boot
+    Celluloid::Actor[:stack_deploy_worker] = StackDeployWorker.new
+  end
+
+  after(:each) do
+    Celluloid.shutdown
+  end
+
   describe '#run' do
     it 'creates a stack deploy' do
       expect {
         described_class.run(stack: stack)
       }.to change{ stack.stack_deploys.count }.by(1)
-    end
-
-    it 'creates service deploys' do
-      expect {
-        described_class.run(stack: stack)
-      }.to change{ GridServiceDeploy.count }.by(1)
     end
 
     it 'creates missing services' do
@@ -71,10 +74,12 @@ describe Stacks::Deploy do
           {name: 'nginx', image: 'nginx:latest', stateful: false }
         ]
       )
+      worker = Celluloid::Actor[:stack_deploy_worker]
       redis = stack.grid_services.find_by(name: 'redis')
+      expect(worker.wrapped_object).to receive(:remove_service).once.with(redis.id)
       mutation = described_class.new(stack: stack)
-      expect(mutation).to receive(:remove_service).with(redis.id)
       mutation.run
+      sleep 0.01 until worker.mailbox.size == 0
     end
   end
 end

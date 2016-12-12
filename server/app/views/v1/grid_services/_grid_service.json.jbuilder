@@ -11,7 +11,7 @@ json.cmd grid_service.cmd
 json.entrypoint grid_service.entrypoint
 json.net grid_service.net
 if grid_service.default_stack?
-  json.dns "#{grid_service.name_with_stack}.#{grid_service.grid.name}.kontena.local"
+  json.dns "#{grid_service.name}.#{grid_service.grid.name}.kontena.local"
 else
   json.dns "#{grid_service.name}.#{grid_service.stack.name}.#{grid_service.grid.name}.kontena.local"
 end

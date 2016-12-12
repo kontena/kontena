@@ -25,7 +25,7 @@ module Kontena::Cli::Stacks
         require_config_file(filename)
       end
 
-      stack = stack_from_yaml(filename, from_registry: from_registry)
+      stack = stack_from_yaml(filename, from_registry: from_registry, name: name)
       stack['name'] = name if name
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         create_stack(stack)

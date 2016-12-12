@@ -17,9 +17,7 @@ module Kontena::Cli::Stacks
       deployment = nil
       spinner "Deploying stack #{pastel.cyan(name)}" do
         deployment = deploy_stack(name)
-        deployment['service_deploys'].each do |service_deploy|
-          wait_for_deploy_to_finish(service_deploy)
-        end
+        wait_for_deploy_to_finish(deployment)
       end
     end
 
@@ -31,14 +29,22 @@ module Kontena::Cli::Stacks
     # @return [Boolean]
     def wait_for_deploy_to_finish(deployment, timeout = 600)
       deployed = false
+      progress = []
+      states = %w(success error)
       Timeout::timeout(timeout) do
         until deployed
-          deployment = client.get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
-          deployed = true if deployment['finished_at']
+          deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
+          deployed = true if states.include?(deployment['state'])
           sleep 1
         end
         if deployment['state'] == 'error'
-          raise deployment['reason']
+          deployment['service_deploys'].each do |service_deploy|
+            if service_deploy['state'] == 'error'
+              puts "        #{service_deploy['reason']}"
+            end
+          end
+
+          raise 'deploy failed'
         end
       end
 

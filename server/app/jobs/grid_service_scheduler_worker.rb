@@ -1,5 +1,7 @@
 class GridServiceSchedulerWorker
   include Celluloid
+  include Logging
+  include DistributedLocks
 
   def initialize(autostart = true)
     async.watch if autostart
@@ -16,10 +18,20 @@ class GridServiceSchedulerWorker
     service_deploy = GridServiceDeploy.where(started_at: nil)
       .asc(:created_at)
       .find_and_modify({:$set => {started_at: Time.now.utc}}, {new: true})
-    if service_deploy && (service_deploy.grid_service.running? || service_deploy.grid_service.initialized?)
-      self.perform(service_deploy)
-    elsif service_deploy
-      service_deploy.destroy
+    return unless service_deploy
+
+    with_dlock("check_deploy_queue:#{service_deploy.grid_service_id}", 10) do
+      service_deploy.reload
+      if service_deploy.grid_service.running? || service_deploy.grid_service.initialized?
+        self.perform(service_deploy)
+      elsif service_deploy.grid_service.deploying?
+        info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
+        after(30) {
+          service_deploy.set(:started_at => nil)
+        }
+      else
+        service_deploy.destroy
+      end
     end
   end
 

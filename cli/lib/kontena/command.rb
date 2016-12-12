@@ -151,7 +151,7 @@ class Kontena::Command < Clamp::Command
     Kontena::Cli::Config.instance.require_current_master_token
   rescue Kontena::Cli::Config::TokenExpiredError
     success = Kontena::Client.new(
-      Kontena::Cli::Config.instance.current_master,
+      Kontena::Cli::Config.instance.current_master.url,
       Kontena::Cli::Config.instance.current_master.token
     ).refresh_token
     if success && !retried

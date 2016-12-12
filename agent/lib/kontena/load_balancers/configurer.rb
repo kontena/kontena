@@ -29,7 +29,7 @@ module Kontena::LoadBalancers
     # @param [Docker::Container] container
     def ensure_config(container)
       name = container.labels['io.kontena.load_balancer.name']
-      service_name = container.labels['io.kontena.service.name']
+      service_name = container.service_name_for_lb
       check_uri = container.labels['io.kontena.health_check.uri']
       etcd_path = "#{ETCD_PREFIX}/#{name}"
       env_hash = container.env_hash
@@ -77,7 +77,7 @@ module Kontena::LoadBalancers
     # @param [Docker::Container] container
     def remove_config(container)
       name = container.labels['io.kontena.load_balancer.name']
-      service_name = container.labels['io.kontena.service.name']
+      service_name = container.service_name_for_lb
       mode = container.env_hash['KONTENA_LB_MODE'] || 'http'
       info "un-registering #{service_name} from load balancer #{name} (#{mode})"
       if mode == 'http'

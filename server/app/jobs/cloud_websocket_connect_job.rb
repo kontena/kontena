@@ -13,7 +13,6 @@ class CloudWebsocketConnectJob
 
   def perform
     sleep 0.1
-    start_em
     while running?
       update_connection
       sleep 30
@@ -74,11 +73,6 @@ class CloudWebsocketConnectJob
       @client.disconnect
       @client = nil
     end
-  end
-
-  def start_em
-    Thread.new { EventMachine.run } unless EventMachine.reactor_running?
-    sleep 0.01 until EventMachine.reactor_running?
   end
 
   protected
