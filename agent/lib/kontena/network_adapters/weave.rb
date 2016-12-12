@@ -168,7 +168,9 @@ module Kontena::NetworkAdapters
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
-      async.start(info)
+      exclusive {
+        start(info)
+      }
     end
 
     def on_ipam_start(topic, data)
