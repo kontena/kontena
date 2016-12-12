@@ -174,7 +174,6 @@ module Kontena::NetworkAdapters
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
-      wait { !starting? }
       start(info)
     end
 
@@ -214,8 +213,9 @@ module Kontena::NetworkAdapters
 
     # @param [Hash] info
     def start(info)
+      wait { images_exist? && !starting? }
+      
       @starting = true
-      sleep 1 until images_exist?
 
       weave = Docker::Container.get('weave') rescue nil
       if weave && config_changed?(weave, info)
