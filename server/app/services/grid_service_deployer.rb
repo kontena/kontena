@@ -32,10 +32,13 @@ class GridServiceDeployer
   def selected_nodes
     nodes = []
     self.instance_count.times do |i|
-      node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes
-      )
-      nodes << node if node
+      begin
+        nodes << self.scheduler.select_node(
+          self.grid_service, i + 1, self.nodes
+        )
+      rescue Scheduler::Error
+
+      end
     end
     self.nodes.each{|n| n.schedule_counter = 0}
 
