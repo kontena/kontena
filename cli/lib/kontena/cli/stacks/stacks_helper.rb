@@ -1,12 +1,11 @@
 
 module Kontena::Cli::Stacks
   module StacksHelper
-    
+
     # @param [Hash] deployment
     # @return [Boolean]
     def wait_for_deploy_to_finish(deployment, timeout = 600)
       deployed = false
-      progress = []
       states = %w(success error)
       Timeout::timeout(timeout) do
         until deployed
