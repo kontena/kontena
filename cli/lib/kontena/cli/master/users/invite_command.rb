@@ -43,7 +43,7 @@ module Kontena::Cli::Master::Users
           end
         rescue
           STDERR.puts "Failed to invite #{email}".colorize(:red)
-          ENV["DEBUG"] && puts("#{$!} - #{$!.message} -- #{$!.backtrace}")
+          ENV["DEBUG"] && STDERR.puts("#{$!} - #{$!.message} -- #{$!.backtrace}")
         end
       end
     end

@@ -39,7 +39,7 @@ module Kontena
     #
     # @return [Hash] query_params
     def serve_one
-      ENV["DEBUG"] && puts("Waiting for connection on port #{port}..")
+      ENV["DEBUG"] && STDERR.puts("Waiting for connection on port #{port}..")
       socket = server.accept
 
       content = socket.recvfrom(2048).first.split(/(?:\r)?\n/)
@@ -56,7 +56,7 @@ module Kontena
 
       body = content.join("\n")
 
-      ENV["DEBUG"] && puts("Got request: \"#{request.inspect}\n  Headers: #{headers.inspect}\n  Body: #{body}\"")
+      ENV["DEBUG"] && STDERR.puts("Got request: \"#{request.inspect}\n  Headers: #{headers.inspect}\n  Body: #{body}\"")
 
       get_request = request[/GET (\/cb.+?) HTTP/, 1]
       if get_request
@@ -81,7 +81,7 @@ module Kontena
         socket.close
         server.close
         uri = URI.parse("http://localhost#{get_request}")
-        ENV["DEBUG"] && puts("  * Parsing params: \"#{uri.query}\"")
+        ENV["DEBUG"] && STDERR.puts("  * Parsing params: \"#{uri.query}\"")
         params = {}
         URI.decode_www_form(uri.query).each do |key, value|
           if value.to_s == ''

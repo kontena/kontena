@@ -3,7 +3,7 @@ module Kontena::Cli::Stacks
     class Opto::Setters::Vault < Opto::Setter
       def set(value)
         require 'shellwords'
-        ENV["DEBUG"] && puts("Setting to vault: #{hint}")
+        ENV["DEBUG"] && STDERR.puts("Setting to vault: #{hint}")
         Kontena.run("vault write --silent #{hint} #{value.to_s.shellescape}")
       end
     end

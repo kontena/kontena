@@ -143,13 +143,13 @@ module Kontena
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
           if ENV["DEBUG"]
-            puts "Spin aborted through fail!"
+            STDERR.puts "Spin aborted through fail!"
           end
         rescue Exception => ex
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
           if ENV["DEBUG"]
-            puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
+            STDERR.puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
           end
           raise ex
         ensure

@@ -44,7 +44,7 @@ class Kontena::Callback
           if klass.instance_methods.include?(state)
             cb = klass.new(obj)
             if cb.send(state).kind_of?(FalseClass)
-              ENV["DEBUG"] && puts("Execution aborted by #{klass}")
+              ENV["DEBUG"] && STDERR.puts("Execution aborted by #{klass}")
               exit 1
             end
           end
