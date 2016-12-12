@@ -1,6 +1,7 @@
 class StackDeployWorker
   include Celluloid
   include Logging
+  include Workers
   include Stacks::SortHelper
 
   def perform(stack_deploy_id, stack_rev_id)
