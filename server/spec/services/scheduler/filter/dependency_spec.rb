@@ -52,8 +52,7 @@ describe Scheduler::Filter::Dependency do
   describe '#filter_candidates_by_volume' do
     it 'finds no candidates if no volumes match' do
       logstash_service.volumes_from = ['mysql-service-%s']
-      subject.filter_candidates_by_volume(nodes, logstash_service, 2)
-      expect(nodes).to eq([])
+      expect{subject.filter_candidates_by_volume(nodes, logstash_service, 2)}.to raise_error(Scheduler::Error)
     end
 
     it 'returns correct candidates for service that belongs to default stack' do
@@ -111,8 +110,7 @@ describe Scheduler::Filter::Dependency do
       )
       mysql_logstash_service.volumes_from = ['foo-%s']
       candidates = nodes.dup
-      subject.filter_candidates_by_volume(candidates, mysql_logstash_service, 3)
-      expect(candidates).to eq([])
+      expect{subject.filter_candidates_by_volume(candidates, mysql_logstash_service, 3)}.to raise_error(Scheduler::Error)
     end
   end
 

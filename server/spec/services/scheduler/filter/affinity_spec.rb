@@ -60,8 +60,7 @@ describe Scheduler::Filter::Affinity do
       it 'returns none if node labels are nil' do
         nodes.each{|n| n.labels = nil}
         service = double(:service, affinity: ['label==ssd'])
-        filtered = subject.for_service(service, 1, nodes)
-        expect(filtered.size).to eq(0)
+        expect{subject.for_service(service, 1, nodes)}.to raise_error(Scheduler::Error)
       end
     end
 
@@ -138,6 +137,11 @@ describe Scheduler::Filter::Affinity do
         expect(filtered.size).to eq(1)
         expect(filtered).to eq([nodes[1]])
       end
+    end
+
+    it "raises on unknown affinity filter" do
+      service = double(:service, affinity: ['nodes==test'])
+      expect{subject.for_service(service, 1, nodes)}.to raise_error(StandardError)
     end
   end
 end

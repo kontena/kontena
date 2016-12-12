@@ -31,8 +31,7 @@ describe Scheduler::Filter::Memory do
 
     it 'returns none of the nodes if node memory is not available' do
       test_service.update_attribute(:memory, 512.megabytes)
-      filtered = subject.for_service(test_service, 1, nodes)
-      expect(filtered).to eq([])
+      expect{subject.for_service(test_service, 1, nodes)}.to raise_error(Scheduler::Error)
     end
   end
 

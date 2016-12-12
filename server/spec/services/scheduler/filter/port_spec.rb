@@ -86,8 +86,7 @@ describe Scheduler::Filter::Port do
         )
       end
 
-      filtered = subject.for_service(service, 1, nodes)
-      expect(filtered.size).to eq(0)
+      expect{subject.for_service(service, 1, nodes)}.to raise_error(Scheduler::Error)
     end
   end
 end
