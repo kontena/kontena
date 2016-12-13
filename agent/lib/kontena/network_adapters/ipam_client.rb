@@ -15,7 +15,7 @@ module Kontena::NetworkAdapters
   class IpamClient
     include Kontena::Logging
 
-    IPAM_URL = 'http://localhost:2275'.freeze
+    IPAM_URL = 'http://127.0.0.1:2275'.freeze
 
     HEADERS = { "Content-Type" => "application/json" }
 
