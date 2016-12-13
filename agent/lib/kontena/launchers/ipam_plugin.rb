@@ -83,7 +83,8 @@ module Kontena::Launchers
         'Cmd' => ["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
         'Env' => [
           "NODE_ID=#{info['node_number']}",
-          "LOG_LEVEL=#{ENV['LOG_LEVEL'] || 1}"
+          "LOG_LEVEL=#{ENV['LOG_LEVEL'] || 1}",
+          "ETCD_ENDPOINT=http://127.0.0.1:2379",
         ],
         'HostConfig' => {
           'NetworkMode' => 'host',
