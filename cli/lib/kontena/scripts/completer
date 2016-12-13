@@ -32,11 +32,27 @@ class Helper
     []
   end
 
+  def stacks
+    stacks = client.get("grids/#{current_grid}/stacks")['stacks']
+    results = []
+    results.push stacks.map{|s| s['name']}
+    results.delete('null')
+    results
+  rescue
+    []
+  end
+
   def services
     services = client.get("grids/#{current_grid}/services")['services']
     results = []
-    results.push services.map{|s| s['name']}
-
+    results.push services.map{ |s|
+      stack = s['stack']['id'].split('/').last
+      if stack != 'null'
+        "#{stack}/#{s['name']}"
+      else
+        s['name']
+      end
+    }
     results
   rescue
     []
@@ -57,13 +73,15 @@ class Helper
   def yml_services
     if File.exist?('kontena.yml')
       yaml = YAML.load(File.read('kontena.yml'))
-      if yaml['version'] == '2'
-        services = yaml['services']
-      else
-        services = yaml
-      end
+      services = yaml['services']
       services.keys
     end
+  rescue
+    []
+  end
+
+  def yml_files
+    Dir["./*.yml"].map{|file| file.sub('./', '')}
   rescue
     []
   end
@@ -86,7 +104,7 @@ words = ARGV
 words.delete_at(0)
 
 completion = []
-completion.push %w(cloud logout grid app service vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
+completion.push %w(cloud logout grid app service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
 if words.size > 0
   case words[0]
     when 'plugin'
@@ -194,6 +212,25 @@ if words.size > 0
       if words[1]
         completion.push(sub_commands) unless sub_commands.include?(words[1])
         completion.push helper.yml_services
+      else
+        completion.push sub_commands
+      end
+    when 'stack'
+      completion.clear
+      sub_commands = %w(build install upgrade deploy start stop remove rm ls list
+                        logs monitor show registry)
+      if words[1]
+        if words[1] == 'registry'
+          registry_sub_commands = %(push pull search show rm)
+          completion.push registry_sub_commands
+        elsif %w(install).include?(words[1])
+            completion.push helper.yml_files
+        elsif words[1] == 'upgrade' && words[3]
+          completion.push helper.yml_files
+        else
+          completion.push(sub_commands) unless sub_commands.include?(words[1])
+          completion.push helper.stacks
+        end
       else
         completion.push sub_commands
       end

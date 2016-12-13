@@ -52,12 +52,11 @@ module Agent
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
       node = grid.host_nodes.find_by(node_id: node_id)
-      service = grid.grid_services.find_by(id: labels['io.kontena.service.id'])
       container = grid.containers.build(
         container_id: container_id,
         name: labels['io.kontena.container.name'],
         container_type: labels['io.kontena.container.type'] || 'container',
-        grid_service: service,
+        grid_service_id: labels['io.kontena.service.id'],
         host_node: node
       )
       if labels['io.kontena.container.id']

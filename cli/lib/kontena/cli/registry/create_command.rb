@@ -1,8 +1,10 @@
+require_relative '../stacks/stacks_helper'
+
 module Kontena::Cli::Registry
   class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include Kontena::Cli::Services::ServicesHelper
+    include Kontena::Cli::Stacks::StacksHelper
 
     REGISTRY_VERSION = '2.2'
 
@@ -109,9 +111,7 @@ module Kontena::Cli::Registry
       client(token).post("grids/#{current_grid}/stacks", data)
       deployment = client(token).post("stacks/#{current_grid}/registry/deploy", {})
       spinner "Deploying #{data[:name].colorize(:cyan)} stack " do
-        deployment['service_deploys'].each do |service_deploy|
-          wait_for_deploy_to_finish(token, service_deploy)
-        end
+        wait_for_deploy_to_finish(deployment)
       end
       puts "\n"
       puts "Docker Registry #{REGISTRY_VERSION} is now running at registry.#{current_grid}.kontena.local."
