@@ -22,8 +22,12 @@ class StackDeployWorker
     stack.reload
     services = sort_services(stack.grid_services.to_a)
     services.each do |service|
-      service_deploy = deploy_service(service, stack_deploy)
-      raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
+      unless service.depending_on_other_services?
+        service_deploy = deploy_service(service, stack_deploy)
+        raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
+      else
+        info "skipping deployment of #{service_deploy.to_path} because it will be deployed by dependencies"
+      end
     end
 
     stack_deploy.success!

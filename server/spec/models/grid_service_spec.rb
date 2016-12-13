@@ -251,4 +251,22 @@ describe GridService do
       expect(grid_service.stack_exposed?).to be_falsey
     end
   end
+
+  describe '#depending_on_other_services?' do
+    it 'returns false by default' do
+      expect(subject.depending_on_other_services?).to be_falsey
+    end
+
+    it 'returns true if service affinity' do
+      subject.affinity = ['service==foobar']
+      expect(subject.depending_on_other_services?).to be_truthy
+      subject.affinity = ['service!=foobar']
+      expect(subject.depending_on_other_services?).to be_truthy
+    end
+
+    it 'returns true if volumes_from' do
+      subject.volumes_from = ['foobar-%i']
+      expect(subject.depending_on_other_services?).to be_truthy
+    end
+  end
 end
