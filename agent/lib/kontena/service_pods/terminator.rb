@@ -33,7 +33,7 @@ module Kontena
         end
         data_container = get_container(self.service_id, self.instance_number, 'volume')
         if data_container
-          info "cleaning up service volumes: #{service_container.name}"
+          info "cleaning up service volumes: #{data_container.name}"
           data_container.delete(v: true)
         end
 

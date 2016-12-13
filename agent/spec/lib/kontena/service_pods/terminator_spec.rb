@@ -19,8 +19,16 @@ describe Kontena::ServicePods::Terminator do
 
     it 'removes volumes if exist' do
       service_container = spy(:service)
-      service_container_volumes = double(:service)
+      service_container_volumes = double(:service, name: '/foo-1-volumes')
       allow(subject).to receive(:get_container).with(service_id, 1).and_return(service_container)
+      allow(subject).to receive(:get_container).with(service_id, 1, 'volume').and_return(service_container_volumes)
+      expect(service_container_volumes).to receive(:delete).with({v: true})
+      subject.perform
+    end
+
+    it 'removes volumes if exist and service_container does not exist' do
+      service_container_volumes = double(:service, name: '/foo-volumes')
+      allow(subject).to receive(:get_container).with(service_id, 1).and_return(nil)
       allow(subject).to receive(:get_container).with(service_id, 1, 'volume').and_return(service_container_volumes)
       expect(service_container_volumes).to receive(:delete).with({v: true})
       subject.perform
