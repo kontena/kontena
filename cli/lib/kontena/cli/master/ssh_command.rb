@@ -20,19 +20,22 @@ module Kontena::Cli::Master
     end
 
     def execute
+
+      commands_list.insert('--') unless commands_list.empty?
+
       if master_provider == 'vagrant'
-        cmd = "ssh"
-        cmd << " #{self.commands_list.join(' ')}" unless self.commands_list.empty?
-        Kontena.run("vagrant master #{cmd}")
+        unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
+          exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
+        end
+        cmd = ['vagrant', 'master', 'ssh']
+        cmd += commands_list
+        Kontena.run(cmd)
       else
         cmd = ['ssh']
         cmd << "#{user}@#{master_host}"
-        cmd << "-i #{identity_file}" if identity_file
-        if self.commands_list && !self.commands_list.empty?
-          cmd << '--'
-          cmd += self.commands_list
-        end
-        exec(cmd.join(' '))
+        cmd += ["-i", identity_file] if identity_file
+        cmd += commands_list
+        exec(*cmd)
       end
     end
   end

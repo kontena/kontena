@@ -19,18 +19,17 @@ module Kontena::Cli::Nodes
 
       provider = node["labels"].find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
+      commands_list.insert('--') unless commands_list.empty?
+
       if provider == 'vagrant'
         unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
-        cmd = "ssh #{node['name']}"
-        if self.commands_list && !self.commands_list.empty?
-          cmd << " " << self.commands_list.join(' ')
-        end
-        Kontena.run("vagrant node #{cmd}")
+        cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list
+        Kontena.run(cmd)
       else
         cmd = ['ssh']
-        cmd << "-i #{identity_file}" if identity_file
+        cmd += ["-i", identity_file] if identity_file
         if internal_ip?
           ip = "10.81.0.#{node['node_number']}"
         elsif private_ip?
@@ -39,11 +38,8 @@ module Kontena::Cli::Nodes
           ip = node['public_ip']
         end
         cmd << "#{user}@#{ip}"
-        if self.commands_list && !self.commands_list.empty?
-          cmd << '--'
-          cmd += self.commands_list
-        end
-        exec(cmd.join(' '))
+        cmd += commands_list
+        exec(*cmd)
       end
     end
   end
