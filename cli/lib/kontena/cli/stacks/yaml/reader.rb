@@ -90,8 +90,6 @@ module Kontena::Cli::Stacks
         yaml['version'] || yaml['stack'].to_s[/:(.*)/, 1] || '1'
       end
 
-      private
-
       # A hash such as { "${MYSQL_IMAGE}" => "MYSQL_IMAGE } where the key is the
       # string to be substituted and value is the pure name part
       # @return [Hash]
@@ -223,9 +221,13 @@ module Kontena::Cli::Stacks
       def interpolate(text)
         text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
           var = v.tr('${}', '')
-          val = ENV[var]
+          val = variables.value_of(var) || ENV[var]
           if val
-            val
+            if val.kind_of?(String) && val =~ /[\r\n\"\|]/
+              val.inspect
+            else
+              val
+            end
           elsif @replace_missing
             @replace_missing
           else
