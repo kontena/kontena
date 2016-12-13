@@ -26,7 +26,7 @@ class StackDeployWorker
         service_deploy = deploy_service(service, stack_deploy)
         raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
       else
-        info "skipping deployment of #{service_deploy.to_path} because it will be deployed by dependencies"
+        info "skipping deployment of #{service.to_path} because it will be deployed by dependencies"
       end
     end
 
