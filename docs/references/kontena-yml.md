@@ -5,15 +5,60 @@ toc_order: 1
 
 # Kontena.yml reference
 
-Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena application](../using-kontena/applications.md) with one or more [services]((../using-kontena/services.md)). It uses the same syntax and keys as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are supported in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
+Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena Stack](../using-kontena/stacks.md) with one or more [services]((../using-kontena/services.md)). It uses the similar syntax and keys for services as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are supported in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
 
-Each key defined in kontena.yml will create a service with that name prefixed with the project name. The image key is mandatory. Other keys are optional.
+Each service defined in kontena.yml will create a service with that name within the stack's namespace, shown as stack/service in the CLI. The image key is mandatory. Other keys are optional.
 
-You can use environment variables in configuration values with a bash-like ${VARIABLE} syntax. See [variable substitution](#variable-substitution) for full details.
+Each service is reachable by all other services in the same grid and discoverable by other services in the same stack by using the service name as a DNS hostname. See [networking](#networking) for full details.
 
+You can use environment variables in configuration values with a bash-like `${VARIABLE}` syntax. See [variable substitution](#variable-substitution) for full details.
+
+## Stack configuration reference
+
+#### stack
+Stack identification. Use format `<username>/<stack_name>`.
+```
+stack: kontena/jenkins
+```
+
+#### version
+Version number based on [Semantic Versioning](http://semver.org/).
+
+```
+version: 0.1.0
+```
+
+#### variables
+
+Variables to be used to fill in values and to create conditional logic.
+See the complete [variables reference](kontena-yml-variables.md).
+
+```
+variables:
+  mysql_root_pw:
+    type: string    
+    from:      
+      prompt: Enter a root password for MySQL or leave empty to auto generate
+      random_string: 16
+    to:
+      env: MYSQL_PASSWORD
+```
+
+#### expose
+
+Expose a service from stack for use by other stacks. Read more about exposing services [here](https://kontena.io/docs/using-kontena/stacks#exposing-services-between-stacks).
+
+```
+expose: api
+services:
+  api:
+    image: registry/api:latest
+  db:
+    image: mariadb:latest
+```
 
 ## Service configuration reference
-> **Note:** Kontena supports both Docker Compose file versions 1 and 2. For more details about Docker Compose versioning, see the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
+> **Note:** Kontena supports Docker Compose file version 2. For more details about Docker Compose versioning, see the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
 
 ### Kontena specific keys
 
@@ -155,7 +200,7 @@ image: registry.kontena.local/ghost:latest
 
 #### build
 
-Build can be specified either as a string containing a path to the build context, or an object with the path specified under context and, optionally, a Dockerfile (version 2 only).
+Build can be specified either as a string containing a path to the build context, or an object with the path specified under context and, optionally, a Dockerfile.
 
 ```
 build: .
@@ -167,7 +212,7 @@ build:
   dockerfile: alternate-dockerfile
 ```
 
-Build arguments are supported in version 2 yaml format. They can be defined either as an array of strings or as a hash:
+Build arguments can be defined either as an array of strings or as a hash:
 
 ```
 build:
@@ -185,15 +230,6 @@ build:
     arg3:
 ```
 Build arguments with only a key are resolved to their environment value on the machine the build is running on.
-
-#### dockerfile
-> **Note:** Version 1 only
-
-Alternate Dockerfile.
-
-```
-dockerfile: Dockerfile-alternate
-```
 
 #### cap_add, cap_drop
 
@@ -237,7 +273,6 @@ memswap_limit: 1024m
 ```
 
 #### depends_on
-> **Note:** Version 2 only
 
 Express dependency between services. Kontena will create and deploy services in dependency order.
 
@@ -312,45 +347,22 @@ db:
   image: mysql:5.6
 ```
 
-#### external_links
-
-Link to services in the same grid outside application scope. `external_links` follow semantics similar to links.
-
-```
-external_links:
-  - loadbalancer
-  - common-redis:redis   
-```
-
 #### links
 
-Link to another service. Either specify both the service name and the link alias (SERVICE:ALIAS), or just the service name (which will also be used for the alias).
+Link to another service. Either specify both the service name and the link alias (SERVICE:ALIAS), or just the service name (which will also be used for the alias). Link can also point to a service from other stack. Notation is then (STACK/SERVICE:ALIAS).
 
 ```
 links:
   - mysql:wordpress-mysql
+  - common/loadbalancer  
 ```
 
-With Kontena you can always reach services by their internal DNS (*service_name.grid.kontena.local*) and links are not needed for the service discovery.
-
+With Kontena you can always reach services by their internal DNS (*service_name.stack.grid.kontena.local*) and links are not needed for the service discovery. See [networking](#networking) for full details.
 
 Links also express dependency between services in the same way as `depends_on`, so they determine the order of service startup.
 
-#### net
-> **Note:** Version 1 only. In version 2 use [network_mode](#network_mode).
-
-Network mode.
-
-```
-net: "bridge"
-```
-
-```
-net: "host"
-```
 
 #### network_mode
-> **Note:** Version 2 only.
 
 Network mode.
 
@@ -421,30 +433,7 @@ volumes_from:
 ```
 (`-%%s` will be replaced with container number; for example, the first service container will get volumes from wordpress-1, the second from wordpress-2, etc.)
 
-#### log_driver
-> **Note:** Version 1 only. In version 2 use [logging](#logging) options
-
-Specify the log driver for Docker to use with all containers of this service. For details on available drivers and their configs see [Docker log drivers](https://docs.docker.com/reference/logging/overview/)
-
-#### log_opts
-> **Note:** Version 1 only. In version 2 use [logging](#logging) options
-
-Specify options for log driver
-
-```
-nginx:
-  image: nginx:latest
-  ports:
-    - 80:80
-  log_driver: fluentd
-  log_opt:
-    fluentd-address: 192.168.99.1:24224
-    fluentd-tag: docker.{{.Name}}
-
-```
-
 #### logging
-> **Note** Version 2 file format only. In version 1, use log_driver and log_opt.
 
 Logging configuration for the service.
 
@@ -455,9 +444,38 @@ logging:
     syslog-address: "tcp://192.168.0.42:123"
 ```
 
+```
+ nginx:
+   image: nginx:latest
+   ports:
+     - 80:80
+   logging:
+     driver: fluentd
+     options:
+       fluentd-address: 192.168.99.1:24224
+       fluentd-tag: docker.{{.Name}}
+ ```
+
+## Networking
+Each service within the same stack is both reachable by other services and discoverable by them at a hostname identical to the service name.
+
+Each service can use DNS to resolve the hostname of a service such as `web` or `db` to the IP address of that service's containers. For example, web’s application code could connect to the URL postgres://db:5432 and start using the Postgres database.
+
+```
+web:  
+  image: myapp:latest
+
+db:
+  image: postgres:latest
+  stateful: true
+```
+
+To connect to other services within the same grid please use the complete internal DNS addresses:
+`servicename.stackname.${GRID}.kontena.local`
+
 ## Variable substitution
 
-Your configuration options can contain environment variables. Kontena uses the variable values from the shell environment in which `kontena app` commands are run. For example, suppose the shell contains EXTERNAL_PORT=8000 and you supply this configuration:
+Your configuration options can contain environment variables. Kontena uses the variable values from the shell environment in which `kontena stack` commands are run. For example, suppose the shell contains EXTERNAL_PORT=8000 and you supply this configuration:
 
 ```
 web:
@@ -467,21 +485,21 @@ web:
     - "${EXTERNAL_PORT}:5000"
 ```
 
-Referencing other services within the same application requires the project prefix in the service name. You can use `${project}` variable for this:
+Kontena will automatically define `GRID` and `STACK` environment variables for you and those variables are available for variable substitution.
 
-```
-web:  
-  image: wordpress:latest
-  environment:
-    - WORDPRESS_DB_HOST=${project}-db
-db:
-  image: mariadb:latest
-```
+You can also define variables and use values from those for variable substitution. See the complete [variables reference](kontena-yml-variables.md)
 
 ## Example kontena.yml
 
 ```
-version: "2"
+stack: kontena/example-app
+version: 0.1.0
+variables:
+  mysql_root_pw:
+    type: string    
+    from:      
+      prompt: Enter a root password for MySQL or leave empty to auto generate
+      random_string: 16    
 services:
   loadbalancer:
     image: kontena/lb:latest
@@ -494,7 +512,7 @@ services:
     links:
       - loadbalancer
     environment:
-      - DB_URL=%{project}-db.kontena.local
+      - DB_URL=db
       - KONTENA_LB_INTERNAL_PORT=80
       - KONTENA_LB_VIRTUAL_HOSTS=www.my-app.com
     deploy:
@@ -508,6 +526,8 @@ services:
   db:
     image: mysql:5.6
     stateful: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=${mysql_root_pw}
     volumes:
       - /var/lib/mysql
 ```
