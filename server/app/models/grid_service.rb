@@ -258,10 +258,11 @@ class GridService
 
   # @return [Array<String>]
   def affinity
-    if (self.affinity.nil? || self.affinity.empty?) && self.grid
+    affinity = super
+    if (affinity.nil? || affinity.empty?) && self.grid
       self.grid.default_affinity.to_a
     else
-      self.affinity.to_a
+      affinity.to_a
     end
   end
 end
