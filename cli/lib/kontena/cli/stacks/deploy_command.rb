@@ -1,10 +1,10 @@
-require_relative 'common'
+require_relative 'stacks_helper'
 
 module Kontena::Cli::Stacks
   class DeployCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include Common
+    include StacksHelper
 
     banner "Deploys all services of a stack that has been installed in a grid on Kontena Master"
 
@@ -23,34 +23,6 @@ module Kontena::Cli::Stacks
 
     def deploy_stack(name)
       client.post("stacks/#{current_grid}/#{name}/deploy", {})
-    end
-
-    # @param [Hash] deployment
-    # @return [Boolean]
-    def wait_for_deploy_to_finish(deployment, timeout = 600)
-      deployed = false
-      progress = []
-      states = %w(success error)
-      Timeout::timeout(timeout) do
-        until deployed
-          deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
-          deployed = true if states.include?(deployment['state'])
-          sleep 1
-        end
-        if deployment['state'] == 'error'
-          deployment['service_deploys'].each do |service_deploy|
-            if service_deploy['state'] == 'error'
-              puts "        #{service_deploy['reason']}"
-            end
-          end
-
-          raise 'deploy failed'
-        end
-      end
-
-      deployed
-    rescue Timeout::Error
-      raise 'deploy timed out'
     end
   end
 end

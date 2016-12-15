@@ -44,7 +44,7 @@ module Kontena::Cli::Stacks
         return @variables if @variables
         if yaml && yaml.has_key?('variables')
           variables_yaml = yaml['variables'].to_yaml
-          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml)))
+          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml, use_opto: false)))
           @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
@@ -220,19 +220,30 @@ module Kontena::Cli::Stacks
 
       ##
       # @param [String] text - content of YAML file
-      def interpolate(text)
-        text.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
-          var = v.tr('${}', '')
-          val = ENV[var]
-          if val
-            val
-          elsif @replace_missing
-            @replace_missing
+      def interpolate(text, use_opto: true)
+        text.split(/[\r\n]/).map do |row|
+          # skip lines that opto is interpolating
+          if row.strip.start_with?('interpolate:') || row.strip.start_with?('evaluate:')
+            row
           else
-            puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
-            ''
+            row.gsub(/(?<!\$)\$(?!\$)\{?\w+\}?/) do |v| # searches $VAR and ${VAR} and not $$VAR
+              var = v.tr('${}', '')
+
+              if use_opto
+                val = variables.value_of(var) || ENV[var]
+              else
+                val = ENV[var]
+              end
+
+              if val
+                val.to_s =~ /[\r\n\"\'\|]/ ? val.inspect : val
+              else
+                puts "Value for #{var} is not set. Substituting with an empty string." unless skip_validation?
+                @replace_missing || ''
+              end
+            end
           end
-        end
+        end.join("\n")
       end
 
       ##

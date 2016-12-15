@@ -1,6 +1,7 @@
 class StackDeployWorker
   include Celluloid
   include Logging
+  include Workers
   include Stacks::SortHelper
 
   def perform(stack_deploy_id, stack_rev_id)
@@ -18,10 +19,15 @@ class StackDeployWorker
     stack_deploy.ongoing!
 
     remove_services(stack, stack_rev)
+    stack.reload
     services = sort_services(stack.grid_services.to_a)
     services.each do |service|
-      service_deploy = deploy_service(service, stack_deploy)
-      raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
+      unless service.depending_on_other_services?
+        service_deploy = deploy_service(service, stack_deploy)
+        raise "service #{service.to_path} deploy failed" if service_deploy.nil? || service_deploy.error?
+      else
+        info "skipping deployment of #{service.to_path} because it will be deployed by dependencies"
+      end
     end
 
     stack_deploy.success!
@@ -64,7 +70,7 @@ class StackDeployWorker
 
       if start < 10.minutes.ago
         finished = true
-        warning "waiting for deploy of #{service_deploy.grid_service.to_path} to finish timed out"
+        warn "waiting for deploy of #{service_deploy.grid_service.to_path} to finish timed out"
       end
     end
   end

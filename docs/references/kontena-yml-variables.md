@@ -1,9 +1,9 @@
 ---
-title: kontena.yml variables
+title: kontena.yml variables reference
 toc_order: 2
 ---
 
-# Kontena.yml variables
+# Kontena.yml variables reference
 
 Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/stacks.md) you can define variables to be used to fill in values and to create conditional logic in [kontena.yml](kontena-yml.md) files.
 
@@ -19,12 +19,12 @@ variables:
     type: string  # type (string, integer, boolean, uri, enum)
     min_length: 8 # require at least 8 characters
     from: # where to obtain a value for this variable
-      vault: wp-mysql-root # try to get a value from the vault on kontena master
+      vault: ${STACK}-wp-mysql-root # try to get a value from the vault on kontena master
       env: MYSQL_ROOT # first try local env variable 
       prompt: Enter a root password for MySQL or leave empty to auto generate # then ask for manual input
       random_string: 16 # still no value, auto generate a random string
     to:
-      vault: wp-mysql-root # send this value to the vault on kontena master
+      vault: ${STACK}-wp-mysql-root # send this value to the vault on kontena master
   mysql_version:
     type: enum # a list of predefined options
     default: latest # default value
@@ -47,7 +47,6 @@ variables:
     value: mariadb
     to:
       env: db_image # place the value into local env variable "db_image"
-
 services:
   mysql:
     image: ${db_image}:${mysql_version} # use the variables
@@ -69,7 +68,7 @@ variables:
   this_is_the_name:
 ```
 
-By default it gets set to local env with the same name, making it possible to use the value later in the YAML:
+By default, a local environment variable with the same name gets populated with the variables value. You can then use it later in the yaml as: `${this_is_the_name}`.
 
 ```
   environment:
@@ -105,8 +104,11 @@ Define what to do with the value. The default behavior is to set it to local env
 
 ### Conditionals
 
-#### `only_if`
 Sometimes it's necessary to add some conditional logic that determine which variables are used or prompted from the user.
+
+#### `only_if`
+
+Process the variable or service only when provided conditions are true.
 
 ##### The most basic syntax:
 
@@ -132,7 +134,6 @@ Sometimes it's necessary to add some conditional logic that determine which vari
   only_if:
     use_mysql: true
     mysql_version: 5.5
-    
   # Require use_mysql to be true and mysql_version to be "5.5"
 ```
 
@@ -181,13 +182,7 @@ There's a global validation applicable to all data types:
 ### `boolean`
 
 ```
-   truthy: 
-     - "true"
-     - "yes",
-     - "1"
-     - "on"
-     - "enabled"
-     - "enable"
+   truthy: ["true", "yes", "1", "on", "enabled", "enable"]
 ```
 
 If the input value is one of these, set the value of this boolean to **True**. Everything else will be **false**.
@@ -287,6 +282,8 @@ Hint is the environment variable name to read from. Defaults to the option's nam
 
 ### `file`
 
+Read content from a file into a variable.
+
 ```
 from:
   file: /tmp/password.txt
@@ -326,6 +323,36 @@ from:
   random_string:
     length: 32
     charset: hex_upcase
+```
+
+### `interpolate`
+
+Hint must be a string. Variable references in that string template will be used to build the final value.
+
+```
+name:
+  type: string
+  value: World
+
+greeting:
+  type: string
+  from:
+    interpolate: Hello, ${name}!
+```
+
+### `evaluate`
+
+Hint must be a string. Can be used to perform simple calculations using the values of other variables.
+
+```
+nodes:
+  type: integer
+  value: 3
+
+quorum:
+  type: integer
+  from:
+    evaluate: (${nodes}/2) + 1
 ```
 
 ##### Defined charsets:
@@ -375,7 +402,7 @@ Variable value will be placed into local environment.
 
 ```
 to:
-  env: MYSQL_USERNAME 
+  env: MYSQL_USERNAME
 # sets a local environment variable, not to be confused with setting an environment variable to 
 # the container
 ```
@@ -389,3 +416,21 @@ to:
   vault: wordpress-admin-password
 ```
 
+## Default variables
+
+### `${STACK}`
+
+Contains the current stack name, for example when doing `kontena stack install -n <stack_name> file.yml`. This is useful to namespace vault variables.
+
+### `${GRID}`
+
+Contains the current grid. Useful for example when constructing urls, such as: `db.${STACK}.${GRID}.kontena.local`.
+
+## Notes
+
+The variables are interpolated into the raw YAML before parsing. This can cause the YAML to become invalid. Often you can avoid that by using quotes:
+
+```
+environment:
+  - "PASSWORD=${random_password}"
+```

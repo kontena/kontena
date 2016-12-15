@@ -22,6 +22,7 @@ module Kontena::NetworkAdapters
 
     def initialize(autostart = true)
       @images_exist = false
+      @starting = false
       @started = false
 
       info 'initialized'
@@ -110,6 +111,11 @@ module Kontena::NetworkAdapters
       @started == true
     end
 
+    # @return [Boolean]
+    def starting?
+      @starting == true
+    end
+
     # @param [Hash] opts
     def modify_create_opts(opts)
       ensure_weave_wait
@@ -168,7 +174,7 @@ module Kontena::NetworkAdapters
     # @param [String] topic
     # @param [Hash] info
     def on_node_info(topic, info)
-      async.start(info)
+      start(info)
     end
 
     def on_ipam_start(topic, data)
@@ -207,7 +213,9 @@ module Kontena::NetworkAdapters
 
     # @param [Hash] info
     def start(info)
-      sleep 1 until images_exist?
+      wait { images_exist? && !starting? }
+      
+      @starting = true
 
       weave = Docker::Container.get('weave') rescue nil
       if weave && config_changed?(weave, info)
@@ -246,6 +254,8 @@ module Kontena::NetworkAdapters
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       debug exc.backtrace.join("\n")
+    ensure
+      @starting = false
     end
 
     def attach_router

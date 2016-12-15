@@ -81,7 +81,7 @@ describe Kontena::Launchers::IpamPlugin do
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
         "StopSignal"=>"SIGTTIN",
         "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
-        'Env' => ['NODE_ID=1', "LOG_LEVEL=1"],
+        'Env' => ['NODE_ID=1', "LOG_LEVEL=1", 'ETCD_ENDPOINT=http://127.0.0.1:2379'],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -103,7 +103,7 @@ describe Kontena::Launchers::IpamPlugin do
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
         "StopSignal"=>"SIGTTIN",
         "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
-        'Env' => ['NODE_ID=1', "LOG_LEVEL=1"],
+        'Env' => ['NODE_ID=1', "LOG_LEVEL=1", 'ETCD_ENDPOINT=http://127.0.0.1:2379'],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},

@@ -1,8 +1,10 @@
+require_relative '../stacks/stacks_helper'
+
 module Kontena::Cli::Vpn
   class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-    include Kontena::Cli::Services::ServicesHelper
+    include Kontena::Cli::Stacks::StacksHelper
 
     option '--node', 'NODE', 'Node name where VPN is deployed'
     option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
@@ -46,9 +48,7 @@ module Kontena::Cli::Vpn
       client(token).post("grids/#{current_grid}/stacks", data)
       deployment = client(token).post("stacks/#{current_grid}/#{name}/deploy", {})
       spinner "Deploying #{pastel.cyan(name)} service " do
-        deployment['service_deploys'].each do |service_deploy|
-          wait_for_deploy_to_finish(token, service_deploy)
-        end
+        wait_for_deploy_to_finish(deployment)
       end
       spinner "Generating #{pastel.cyan(name)} keys (this will take a while) " do
         wait_for_configuration_to_finish(token)
