@@ -255,4 +255,13 @@ class GridService
       self.stack = self.grid.stacks.find_by(name: Stack::NULL_STACK)
     end
   end
+
+  # @return [Array<String>]
+  def affinity
+    if (self.affinity.nil? || self.affinity.empty?) && self.grid
+      self.grid.default_affinity.to_a
+    else
+      self.affinity.to_a
+    end
+  end
 end

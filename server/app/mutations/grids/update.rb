@@ -20,6 +20,9 @@ module Grids
       array :trusted_subnets do
         string
       end
+      array :default_affinity do
+        string
+      end
     end
 
     def validate
@@ -42,6 +45,9 @@ module Grids
       end
       if self.trusted_subnets
         attributes[:trusted_subnets] = self.trusted_subnets
+      end
+      if self.default_affinity
+        attributes[:default_affinity] = self.default_affinity
       end
       grid.update_attributes(attributes)
       if grid.errors.size > 0

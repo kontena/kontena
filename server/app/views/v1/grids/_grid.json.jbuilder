@@ -5,6 +5,7 @@ json.initial_size grid.initial_size
 json.stats do
   json.statsd grid.stats['statsd']
 end
+json.default_affinity grid.default_affinity.to_a
 json.trusted_subnets grid.trusted_subnets
 json.node_count grid.host_nodes.count
 json.service_count grid.grid_services.count
