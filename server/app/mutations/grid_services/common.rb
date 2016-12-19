@@ -99,6 +99,18 @@ module GridServices
       end
     end
 
+    # Validates that the defined secrets exist
+    # @param [Grid] grid
+    # @param [Hash] secrets
+    def validate_secrets_exist(grid, secrets)
+      secrets.each do |s|
+        secret = grid.grid_secrets.find_by(name: s[:secret])
+        unless secret
+          add_error(:secrets, :not_found, "Secret #{s[:secret]} does not exist")
+        end
+      end
+    end
+
     module ClassMethods
 
       def common_validations
