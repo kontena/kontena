@@ -25,7 +25,7 @@ module Kontena::Cli::Apps
       end
 
       if File.exist?('Procfile')
-        procfile = ::YAML.safe_load(File.read('Procfile'))
+        procfile = ::YAML.safe_load(File.read('Procfile'), [Symbol])
       else
         procfile = {}
       end

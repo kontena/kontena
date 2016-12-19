@@ -106,7 +106,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
           services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
           services['wordpress']['env_file'] = %w(/path/to/env_file .env)
-          allow(YAML).to receive(:load).and_return(services)
+          allow(YAML).to receive(:safe_load).and_return(services)
 
           expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
           expect(File).to receive(:readlines).with('.env').and_return(dot_env)
@@ -127,7 +127,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
           services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
           services['wordpress']['env_file'] = '/path/to/env_file'
-          allow(YAML).to receive(:load).and_return(services)
+          allow(YAML).to receive(:safe_load).and_return(services)
 
           expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
 
@@ -145,7 +145,7 @@ describe Kontena::Cli::Apps::DeployCommand do
       it 'merges external links to links' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
         services['wordpress']['external_links'] = ['loadbalancer:loadbalancer']
-        allow(YAML).to receive(:load).and_return(services)
+        allow(YAML).to receive(:safe_load).and_return(services)
         data = {
           'name' => 'kontena-test-wordpress',
           'image' => 'wordpress:latest',
