@@ -52,7 +52,7 @@ module Kontena::Cli::Apps
         interpolate(content)
         replace_dollar_dollars(content)
         begin
-          @yaml = ::YAML.load(content)
+          @yaml = ::YAML.safe_load(content)
         rescue Psych::SyntaxError => e
           raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
         end

@@ -25,12 +25,12 @@ module Kontena::Cli::Apps
       end
 
       if File.exist?('Procfile')
-        procfile = ::YAML.load(File.read('Procfile'))
+        procfile = ::YAML.safe_load(File.read('Procfile'))
       else
         procfile = {}
       end
 
-      app_env = create_env_file(app_json['env']) if app_json['env'] 
+      app_env = create_env_file(app_json['env']) if app_json['env']
       addons = app_json['addons'] || []
 
       if File.exist?(docker_compose_file)
