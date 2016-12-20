@@ -24,7 +24,7 @@ module Kontena::Workers
       @statsd = nil
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
-      debug 'initialized'
+      info 'initialized'
       async.start if autostart
     end
 

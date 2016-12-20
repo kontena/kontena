@@ -13,7 +13,7 @@ module Kontena::Workers
       @queue = queue
       @statsd = nil
       @node_name = nil
-      debug 'initialized'
+      info 'initialized'
       subscribe('agent:node_info', :on_node_info)
       async.start if autostart
     end
