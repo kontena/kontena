@@ -1,10 +1,10 @@
 module Kontena
   # Run a kontena command like it was launched from the command line.
-  # 
+  #
   # @example
   #   Kontena.run("grid list --help")
   #
-  # @param [String] command_line 
+  # @param [String] command_line
   # @return [Fixnum] exit_code
   def self.run(cmdline = "", returning: :status)
     ENV["DEBUG"] && puts("Running Kontena.run(#{cmdline.inspect}, returning: #{returning}")
@@ -19,7 +19,7 @@ module Kontena
     ENV["DEBUG"] && puts("Command raised #{$!} with message: #{$!.message}\n  #{$!.backtrace.join("  \n")}")
     returning == :status ? 1 : nil
   end
-    
+
 
   def self.version
     "kontena-cli/#{Kontena::Cli::VERSION}"
@@ -61,6 +61,8 @@ end
 
 require 'ruby_dig'
 require 'shellwords'
+require "safe_yaml"
+SafeYAML::OPTIONS[:default_mode] = :safe
 require_relative 'kontena/cli/version'
 require_relative 'kontena/cli/common'
 require_relative 'kontena/command'

@@ -6,7 +6,7 @@ variables:
     required: true
     min_length: 10
     empty_is_nil: true
-    from: 
+    from:
       env: WORDPRESS_DB_PASSWORD # first try from local env
       random_string: # if prompt returned nil, generate a random string
         length: 10
@@ -19,10 +19,10 @@ variables:
       random_string:
         length: 16
         charset: hex
-    to: 
+    to:
       env: test_var
   TEST_ENV_VAR:      # the default from/to is to set/read env of the option name
-    type: :string
+    type: string
 
 services:
   wordpress:
@@ -33,7 +33,7 @@ services:
     stateful: true
     environment:
       - WORDPRESS_DB_PASSWORD=${STACK}_secret
-    secrets: 
+    secrets:
       - secret: WP_ADMIN_PASSWORD
         name: WORDPRESS_PASSWORD
         type: env
@@ -49,7 +49,7 @@ services:
       service: mysql
     image: ${MYSQL_IMAGE}
     stateful: true
-    secrets: 
+    secrets:
       - secret: WP_MYSQL_ROOT_PW
         name: MYSQL_PASSWORD
         type: env
