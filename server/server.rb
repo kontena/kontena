@@ -41,6 +41,7 @@ class Server < Roda
   route do |r|
 
     r.root do
+      Mongoid.default_session.collection_names # crashes if db is not connected
       {
         name: 'Kontena Master',
         tagline: 'The Container Platform',
@@ -69,7 +70,7 @@ class Server < Roda
         r.run OAuth2Api::TokensApi
       end
 
-      r.on 'authorize' do 
+      r.on 'authorize' do
         r.run OAuth2Api::AuthorizationApi
       end
     end
