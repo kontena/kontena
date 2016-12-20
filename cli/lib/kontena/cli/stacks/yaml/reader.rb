@@ -284,7 +284,7 @@ module Kontena::Cli::Stacks
         outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: true, replace_missing: @replace_missing, from_registry: from_registry).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
-        outcome[:services]
+        outcome[:services] || {}
       end
 
       # @param [Hash] options - service config
