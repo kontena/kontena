@@ -11,6 +11,7 @@ module Kontena::Cli::Plugins
     option '--pre', :flag, 'Allow pre-release of a plugin to be installed', default: false
 
     def execute
+      require 'shellwords'
       install_plugin(name)
     end
 
@@ -20,15 +21,13 @@ module Kontena::Cli::Plugins
       install_options = ['--no-ri', '--no-doc']
       install_options << "--version #{version}" if version
       install_options << "--pre" if pre?
-      install_command = "#{gem_bin} install #{install_options.join(' ')} #{plugin}"
-      stderr = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
+      install_options << plugin
+      install_command = "#{gem_bin} install #{install_options.shelljoin}"
+      ENV["DEBUG"] && STDERR.puts("Running #{install_command}")
+      spinner "Installing plugin #{name.colorize(:cyan)}" do
         stdout, stderr, status = Open3.capture3(install_command)
-        spin.fail unless stderr.empty?
-        stderr
+        raise(RuntimeError, stderr) unless status.success?
       end
-      raise stderr unless stderr.empty?
-    rescue => exc
-      puts exc.message
     end
 
     def plugin_exists?(name)
@@ -40,13 +39,11 @@ module Kontena::Cli::Plugins
     end
 
     def uninstall_previous(name)
-      uninstall_command = "#{gem_bin} uninstall -q #{name}"
-      stderr = spinner "Uninstalling previous version of plugin" do |spin|
+      uninstall_command = "#{gem_bin} uninstall -q #{name.shellescape}"
+      spinner "Uninstalling previous version of plugin" do
         stdout, stderr, status = Open3.capture3(uninstall_command)
-        spin.fail unless stderr.empty?
-        stderr
+        raise(RuntimeError, stderr) unless status.success?
       end
-      raise stderr unless stderr.empty?
     end
   end
 end
