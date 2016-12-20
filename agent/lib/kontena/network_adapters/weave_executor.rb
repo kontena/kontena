@@ -63,16 +63,16 @@ module Kontena::NetworkAdapters
 
         status_code = response["StatusCode"]
         output = container.streaming_logs(stdout: true, stderr: true)
-
+        command = censor_password(cmd)
         if status_code != 0
-          error "weaveexec exit #{status_code}: #{cmd}\n#{output}"
+          error "weaveexec exit #{status_code}: #{command}\n#{output}"
           return false
         elsif block
-          debug "weaveexec stream: #{cmd}"
+          debug "weaveexec stream: #{command}"
           output.each_line &block
           return true
         else
-          debug "weaveexec ok: #{cmd}\n#{output}"
+          debug "weaveexec ok: #{command}\n#{output}"
           return true
         end
       ensure
@@ -136,6 +136,19 @@ module Kontena::NetworkAdapters
     def ensure_images
       pull_image(weave_exec_image)
       @images_exist = true
+    end
+
+    # @param [Array<String>] cmd
+    def censor_password(command)
+      if command.include?('--password')
+        cmd = command.dup
+        passwd_index = cmd.index('--password')
+        cmd[passwd_index + 1] = '<redacted>'
+
+        cmd
+      else
+        command
+      end
     end
 
   end
