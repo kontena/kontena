@@ -13,11 +13,7 @@ module Kontena::Cli::Containers
               ENV["DEBUG"] && STDERR.puts("Invalid response from master: #{containers.inspect}")
               exit_with_error('Invalid response from master')
             end
-            targets = containers['containers'].select do |c|
-              c['name'].end_with?(container_id) ||
-              c['name'].end_with?(container_id + "-1") ||
-              c['name'] =~ /\A\w+\-#{container_id}(?:\-\d+)/
-            end.map { |c| "#{c['node']['name']}/#{c['name']}" }
+            targets = containers['containers'].select {|c| c['name'] == container_id }.map { |c| "#{c['node']['name']}/#{c['name']}" }
             if targets.empty?
               signal_usage_error "Container not found"
             elsif targets.size == 1
