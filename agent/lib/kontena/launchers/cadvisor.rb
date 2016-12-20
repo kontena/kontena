@@ -6,8 +6,8 @@ module Kontena::Launchers
     include Celluloid::Notifications
     include Kontena::Logging
 
-    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || '0.23.2'
-    CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'kontena/cadvisor'
+    CADVISOR_VERSION = ENV['CADVISOR_VERSION'] || 'v0.24.1'
+    CADVISOR_IMAGE = ENV['CADVISOR_IMAGE'] || 'google/cadvisor'
 
     def initialize(autostart = true)
       info 'initialized'
@@ -89,7 +89,7 @@ module Kontena::Launchers
 
     # @return [Hash]
     def volume_mappings
-      if default_image?
+      if kontena_image?
         {
           '/host' => {}
         }
@@ -105,7 +105,7 @@ module Kontena::Launchers
 
     # @return [Array<String>]
     def volume_binds
-      if default_image?
+      if kontena_image?
         ['/:/host:rw']
       else
         [
@@ -118,7 +118,7 @@ module Kontena::Launchers
     end
 
     # @return [Boolean]
-    def default_image?
+    def kontena_image?
       CADVISOR_IMAGE == 'kontena/cadvisor'
     end
   end

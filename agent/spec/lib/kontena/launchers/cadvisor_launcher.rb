@@ -33,25 +33,26 @@ describe Kontena::Launchers::Cadvisor do
   end
 
   describe '#volume_mappings' do
-    it 'returns only one mapping by default (for nsenter)' do
+    it 'returns only one mapping for kontena cadvisor image (for nsenter)' do
+      allow(subject.wrapped_object).to receive(:kontena_image?).and_return(true)
       expect(subject.volume_mappings.keys).to eq(['/host'])
     end
 
-    it 'returns cadvisor default mappings when custom image is used' do
-      allow(subject.wrapped_object).to receive(:default_image?).and_return(false)
+    it 'returns cadvisor default mappings when non-kontena image is used' do
+      allow(subject.wrapped_object).to receive(:kontena_image?).and_return(false)
       expect(subject.volume_mappings.keys).to eq(['/rootfs', '/var/run', '/sys', '/var/lib/docker'])
     end
   end
 
-  describe '#default_image?' do
+  describe '#kontena_image?' do
     it 'returns true when kontena/cadvisor is used' do
       stub_const("#{described_class.name}::CADVISOR_IMAGE", 'kontena/cadvisor')
-      expect(subject.default_image?).to be_truthy
+      expect(subject.kontena_image?).to be_truthy
     end
 
     it 'returns false when custom image is used' do
       stub_const("#{described_class.name}::CADVISOR_IMAGE", 'google/cadvisor')
-      expect(subject.default_image?).to be_falsey
+      expect(subject.kontena_image?).to be_falsey
     end
   end
 end
