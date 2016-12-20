@@ -116,7 +116,7 @@ agent:
 ```
 
 - `KONTENA_URI` is the uri to Kontena Master (use ws:// for a non-tls connection)
-- `KONTENA_TOKEN` is the Kontena Grid token, which can be acquired from Kontena Master using the `kontena grid show my-grid` command
+- `KONTENA_TOKEN` is the Kontena Grid token, which can be acquired from Kontena Master using the `kontena grid show --token my-grid` command
 - `KONTENA_PEER_INTERFACE` is the network interface that is used to connect the other nodes in the grid.
 
 **Step 2:** Run the command `docker-compose up -d`
