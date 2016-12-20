@@ -75,7 +75,7 @@ module Kontena::Cli::Stacks
           result[:expose]        = yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
-          result[:services]      = parse_services(service_name) unless errors.count > 0
+          result[:services]      = errors.count == 0 ? parse_services(service_name) : {}
           result[:variables]     = variables.to_h(values_only: true).reject { |k,_| variables.option(k).to.has_key?(:vault) } unless skip_variables?
         end
         result
@@ -284,7 +284,7 @@ module Kontena::Cli::Stacks
         outcome = Reader.new(filename, skip_validation: @skip_validation, skip_variables: true, replace_missing: @replace_missing, from_registry: from_registry).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
-        outcome[:services] || {}
+        outcome[:services]
       end
 
       # @param [Hash] options - service config
