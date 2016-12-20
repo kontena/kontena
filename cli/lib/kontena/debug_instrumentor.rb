@@ -27,22 +27,27 @@ module Kontena
         result << str
       end
 
-      if params[:body] && !params[:body].empty?
-        str = "Body: "
-        body = params[:body].inspect.strip
-        str << body[0,80]
-        if body.length > 80
-          str << "...\""
-        end
-        result << str
-      end
-
       if params[:status]
         str = "Status: "
         if params[:status] < 299
           str << Kontena.pastel.green(params[:status])
         else
           str << Kontena.pastel.red(params[:status])
+        end
+        result << str
+      end
+
+      if params[:body] && !params[:body].empty?
+        str = "Body: "
+        if ENV["DEBUG"] == "api"
+          str << "\n"
+          str << params[:body]
+        else
+          body = params[:body].inspect.strip
+          str << body[0,80]
+          if body.length > 80
+            str << "...\""
+          end
         end
         result << str
       end
