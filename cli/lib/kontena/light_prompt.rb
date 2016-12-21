@@ -9,10 +9,11 @@ module Kontena
     extend Forwardable
 
     class Menu
-      attr_reader :choices
+      attr_reader :choices, :calls
 
       def initialize
         @choices = []
+        @calls = {}
       end
 
       def choice(text, label)
@@ -30,6 +31,14 @@ module Kontena
       def remove_choices(values)
         values.each { |v| remove_choice(v) }
       end
+
+      def method_missing(meth, *args)
+        calls[meth] = args
+      end
+
+      def respond_to_missing?(meth, privates = false)
+        prompt.respond_to?(meth, privates)
+      end
     end
 
     def initialize(options={})
@@ -42,6 +51,11 @@ module Kontena
       yield choice_collector
 
       prompt.enum_select(*args) do |menu|
+        choice_collector.calls.each do |meth, args|
+          if menu.respond_to?(meth)
+            menu.send(meth, *args)
+          end
+        end
         choice_collector.choices.each do |choice|
           menu.choice choice.first, choice.last
         end
@@ -59,6 +73,11 @@ module Kontena
         choice_collector.remove_choices(selections)
 
         answer = prompt.enum_select(*args) do |menu|
+          choice_collector.calls.each do |meth, args|
+            if menu.respond_to?(meth)
+              menu.send(meth, *args)
+            end
+          end
           choice_collector.choices.each do |choice|
             menu.choice choice.first, choice.last
           end
