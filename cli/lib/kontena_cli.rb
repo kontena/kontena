@@ -26,11 +26,20 @@ module Kontena
   end
 
   def self.pastel
-    @pastel ||= Pastel.new(enabled: $stdout.tty?)
+    @pastel ||= Pastel.new(enabled: (ENV['OS'] != 'Windows_NT' && $stdout.tty?))
   end
 
   def self.prompt
-    @prompt ||= TTY::Prompt.new(
+    return @prompt if @prompt
+    if ENV['OS'] == 'Windows_NT'
+      require_relative 'kontena/light_prompt'
+      klass = Kontena::LightPrompt
+    else
+      require 'tty-prompt'
+      klass = TTY::Prompt
+    end
+
+    @prompt = klass.new(
       active_color: :cyan,
       help_color: :white,
       error_color: :red,
