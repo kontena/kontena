@@ -1,0 +1,12 @@
+version: '2'
+services:
+  wordpress:
+    image: wordpress:4.1
+    ports:
+      - 80:80
+    depends_on:
+      - mysql
+    networks:
+      - front
+  mysql:
+    image: mysql:5.6

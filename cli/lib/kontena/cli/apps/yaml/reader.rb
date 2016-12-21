@@ -29,7 +29,7 @@ module Kontena::Cli::Apps
           result[:name] = yaml['name']
           result[:errors] = errors
           result[:notifications] = notifications
-          result[:services] = parse_services(service_name) unless errors.count > 0
+          result[:services] = errors.count == 0 ? parse_services(service_name) : {}
         end
         result
       end
