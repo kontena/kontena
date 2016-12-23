@@ -102,11 +102,3 @@ module Kontena
     end
   end
 end
-
-
-
-
-
-    
-
-
