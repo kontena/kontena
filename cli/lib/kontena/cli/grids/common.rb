@@ -8,6 +8,10 @@ module Kontena::Cli::Grids
       puts "#{grid['name']}:"
       puts "  uri: #{host.sub('http', 'ws')}"
       puts "  initial_size: #{grid['initial_size']}"
+      puts "  default_affinity: "
+      grid['default_affinity'].to_a.each do |a|
+        puts "    - #{a}"
+      end
       root_dir = grid['engine_root_dir']
       nodes = client(require_token).get("grids/#{grid['name']}/nodes")
       nodes = nodes['nodes'].select{|n| n['connected'] == true }

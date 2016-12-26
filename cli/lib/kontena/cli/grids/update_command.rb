@@ -7,6 +7,7 @@ module Kontena::Cli::Grids
 
     parameter "NAME", "Grid name"
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
+    option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
 
     def execute
       require_api_url
@@ -20,6 +21,9 @@ module Kontena::Cli::Grids
             port: port || 8125
           }
         }
+      end
+      if default_affinity_list
+        payload[:default_affinity] = default_affinity_list
       end
       client(token).put("grids/#{name}", payload)
     end
