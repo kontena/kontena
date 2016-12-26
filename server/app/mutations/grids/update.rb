@@ -68,6 +68,7 @@ module Grids
           plugger = Agent::NodePlugger.new(grid, node)
           plugger.send_node_info
         end
+        GridScheduler.new(grid).reschedule
       }
     end
   end
