@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml
+      attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml, :sections
 
       def initialize(file, skip_validation: false, skip_variables: false, replace_missing: nil, from_registry: false)
         require 'yaml'
@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
         require_relative 'opto/vault_resolver'
         require_relative 'opto/prompt_resolver'
         require_relative 'opto/service_instances_resolver'
+        require 'liquid'
 
         @file = file
         @from_registry = from_registry
@@ -43,9 +44,9 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        if yaml && yaml.has_key?('variables')
-          variables_yaml = yaml['variables'].to_yaml
-          variables_hash = ::YAML.safe_load(replace_dollar_dollars(interpolate(variables_yaml, use_opto: false)))
+        var_sect = yaml_section('variables')
+        if var_sect
+          variables_hash = ::YAML.safe_load(replace_dollar_dollars(interpolate(interpolate_liquid(var_sect, ENV.to_h), use_opto: false)))['variables']
           @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
@@ -56,6 +57,12 @@ module Kontena::Cli::Stacks
       def parse_variables
         raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
         variables.run
+      end
+
+      def interpolate_liquid(content, vars)
+        Liquid::Template.error_mode = :strict
+        template = Liquid::Template.parse(content)
+        template.render(vars, strict_variables: true, strict_filters: true)
       end
 
       ##
@@ -83,12 +90,18 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        yaml = ::YAML.safe_load(raw_content)
-        yaml['stack'].split('/').last.split(':').first if yaml['stack']
+        yaml = ::YAML.safe_load(yaml_section('stack').to_s)
+        if yaml
+          yaml['stack'].split('/').last.split(':').first if yaml['stack']
+        end
       end
 
       def stack_version
         yaml['version'] || yaml['stack'].to_s[/:(.*)/, 1] || '1'
+      end
+
+      def yaml_section(section)
+        raw_content[/^(#{section}:.+?)^\S/m, 1]
       end
 
       private
@@ -102,9 +115,9 @@ module Kontena::Cli::Stacks
 
       def load_yaml(interpolate = true)
         if interpolate
-          @yaml = ::YAML.safe_load(replace_dollar_dollars(interpolate(raw_content)))
+          @yaml = ::YAML.safe_load(replace_dollar_dollars(interpolate(interpolate_liquid(raw_content, variables.to_h(values_only: true)))))
         else
-          @yaml = ::YAML.safe_load(raw_content)
+          @yaml = ::YAML.safe_load(interpolate_liquid(raw_content, ENV.to_h))
         end
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
@@ -332,6 +345,7 @@ module Kontena::Cli::Stacks
           end
         end
       end
+
     end
   end
 end

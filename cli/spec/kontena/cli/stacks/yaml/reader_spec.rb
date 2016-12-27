@@ -384,4 +384,23 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       expect(name).to eq('stackname')
     end
   end
+
+  context 'liquid' do
+    before(:each) do
+      allow(File).to receive(:read)
+        .with(absolute_yaml_path('kontena_v3.yml'))
+        .and_return(fixture('stack-with-liquid.yml'))
+      allow(ENV).to receive(:[]).with('STACK').and_return('test')
+      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
+      allow(ENV).to receive(:to_h).and_return({'GRID' => 'foogrid'})
+    end
+
+    it 'interpolates envs into variables' do
+      expect(subject.variables.value_of('grid_name')).to eq 'foogrid test'
+    end
+
+    it 'interpolates variables into services' do
+      expect(subject.execute[:services].size).to eq 5
+    end
+  end
 end

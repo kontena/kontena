@@ -32,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "opto", "~> 1.5.3"
   spec.add_runtime_dependency "semantic", "~> 1.5"
   spec.add_runtime_dependency "safe_yaml", "~> 1.0"
+  spec.add_runtime_dependency "liquid", "~> 4.0"
 end
