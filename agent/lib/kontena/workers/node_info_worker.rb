@@ -12,7 +12,7 @@ module Kontena::Workers
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
 
-    attr_reader :queue, :statsd
+    attr_reader :queue, :statsd, :stats_since
 
     PUBLISH_INTERVAL = 60
 
@@ -117,7 +117,7 @@ module Kontena::Workers
 
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
-      container_seconds = calculate_containers_time(@stats_since) + container_partial_seconds
+      container_seconds = calculate_containers_time + container_partial_seconds
       @stats_since = Time.now
 
       event = {
@@ -198,10 +198,10 @@ module Kontena::Workers
     end
 
     # @param [Time] since
-    def calculate_containers_time(since)
+    def calculate_containers_time
       seconds = 0
       Docker::Container.all.each do |container|
-        seconds += calculate_container_time(container, since)
+        seconds += calculate_container_time(container)
       end
 
       seconds
@@ -210,22 +210,36 @@ module Kontena::Workers
     end
 
     # @param [Docker::Container] container
-    # @param [Time, NilClass] since
     # @return [Integer]
-    def calculate_container_time(container, since = nil)
+    def calculate_container_time(container)
       state = container.state
+      since = stats_since
       started_at = DateTime.parse(state['StartedAt']) rescue nil
       finished_at = DateTime.parse(state['FinishedAt']) rescue nil
       seconds = 0
-      if since && state['Running'] && started_at && started_at < since
-        seconds = Time.now.to_i - since.to_i
-      elsif since.nil? && started_at && finished_at && started_at < finished_at
-        seconds = finished_at.to_i - started_at.to_i
+      return seconds unless started_at
+      if state['Running']
+        if started_at < since
+          # container has started before last check
+          seconds = Time.now.to_i - since.to_time.to_i
+        elsif started_at >= since
+          # container has started after last check
+          seconds = Time.now.to_i - started_at.to_time.to_i
+        end
+      else
+        if finished_at && started_at < finished_at && started_at > since
+          # container has started before last check
+          seconds = finished_at.to_time.to_i - started_at.to_time.to_i
+        elsif finished_at && started_at < finished_at && started_at <= since
+          # container has started after last check
+          seconds = finished_at.to_time.to_i - since.to_time.to_i
+        end
       end
 
       seconds
     rescue => exc
       debug exc.message
+      0
     end
 
     # @return [Hash]

@@ -116,6 +116,54 @@ describe Kontena::Workers::NodeInfoWorker do
     end
   end
 
+  describe '#calculate_container_time' do
+    context 'container is running' do
+      it 'calculates container time since last check' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 30)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 300).to_s,
+          'Running' => true
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(30)
+      end
+
+      it 'calculates container time since container is started' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 50).to_s,
+          'Running' => true
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(50)
+      end
+    end
+
+    context 'container is not running' do
+      it 'calculates partial container time since last check' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 300).to_s,
+          'FinishedAt' => (Time.now - 2).to_s,
+          'Running' => false
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(58)
+      end
+
+      it 'calculates partial container time since container is started' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 50).to_s,
+          'FinishedAt' => (Time.now - 2).to_s,
+          'Running' => false
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(48)
+      end
+    end
+  end
+
 
   describe '#public_ip' do
     it 'returns ip from env if set' do
