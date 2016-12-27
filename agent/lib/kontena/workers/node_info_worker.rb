@@ -159,6 +159,7 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
+      statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
       event[:filesystem].each do |fs|
         name = fs[:name].split("/")[1..-1].join(".")
         statsd.gauge("#{key_base}.filesystem.#{name}.free", fs[:free])
