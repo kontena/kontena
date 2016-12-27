@@ -115,9 +115,9 @@ module Kontena::Workers
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
 
-      container_partial_seconds = @container_seconds.dup
+      container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
-      container_seconds = calculate_container_hours(0, @stats_since) + container_partial_seconds
+      container_seconds = calculate_containers_time(@stats_since) + container_partial_seconds
       @stats_since = Time.now
 
       event = {
@@ -197,9 +197,9 @@ module Kontena::Workers
       memory
     end
 
-    # @param [Integer] seconds
     # @param [Time] since
-    def calculate_containers_time(seconds, since)
+    def calculate_containers_time(since)
+      seconds = 0
       Docker::Container.all.each do |container|
         seconds += calculate_container_time(container, since)
       end

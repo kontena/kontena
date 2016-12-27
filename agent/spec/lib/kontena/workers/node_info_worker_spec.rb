@@ -13,6 +13,7 @@ describe Kontena::Workers::NodeInfoWorker do
       'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
     })
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
+    allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
   }
   after(:each) { Celluloid.shutdown }
 
