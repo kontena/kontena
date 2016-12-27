@@ -193,7 +193,8 @@ module Agent
         host_node_id: node.id,
         memory: data['memory'],
         load: data['load'],
-        filesystem: data['filesystem']
+        filesystem: data['filesystem'],
+        usage: data['usage']
       }
       db_session[:host_node_stats].insert(stat)
     end
