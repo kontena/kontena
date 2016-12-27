@@ -22,8 +22,10 @@ module Kontena::Workers
     def initialize(queue, autostart = true)
       @queue = queue
       @statsd = nil
+      @stats_since = Time.now
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
+      subscribe('container:event', :on_container_event)
       info 'initialized'
       async.start if autostart
     end
@@ -98,14 +100,34 @@ module Kontena::Workers
       ENV['KONTENA_PEER_INTERFACE'] || 'eth1'
     end
 
+    # @param [String] topic
+    # @param [Docker::Event] event
+    def on_container_event(topic, event)
+      if event.status == 'die'.freeze
+        container = Docker::Container.get(event.id) rescue nil
+        if container
+          @container_seconds += calculate_container_time(container)
+        end
+      end
+    end
+
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
+
+      container_partial_seconds = @container_seconds.dup
+      @container_seconds = 0
+      container_seconds = calculate_container_hours(0, @stats_since) + container_partial_seconds
+      @stats_since = Time.now
+
       event = {
           event: 'node:stats',
           data: {
             id: docker_info['ID'],
             memory: calculate_memory,
+            usage: {
+              container_seconds: container_seconds
+            },
             load: {
               :'1m' => load_avg.one_minute,
               :'5m' => load_avg.five_minutes,
@@ -122,6 +144,7 @@ module Kontena::Workers
             ]
           }
       }
+
       self.queue << event
       send_statsd_metrics(event[:data])
     end
@@ -171,6 +194,37 @@ module Kontena::Workers
       memory[:used] = memory[:total] - memory[:free]
 
       memory
+    end
+
+    # @param [Integer] seconds
+    # @param [Time] since
+    def calculate_containers_time(seconds, since)
+      Docker::Container.all.each do |container|
+        seconds += calculate_container_time(container, since)
+      end
+
+      seconds
+    rescue => exc
+      error exc.message
+    end
+
+    # @param [Docker::Container] container
+    # @param [Time, NilClass] since
+    # @return [Integer]
+    def calculate_container_time(container, since = nil)
+      state = container.state
+      started_at = DateTime.parse(state['StartedAt']) rescue nil
+      finished_at = DateTime.parse(state['FinishedAt']) rescue nil
+      seconds = 0
+      if since && state['Running'] && started_at && started_at < since
+        seconds = Time.now.to_i - since.to_i
+      elsif since.nil? && started_at && finished_at && started_at < finished_at
+        seconds = finished_at.to_i - started_at.to_i
+      end
+
+      seconds
+    rescue => exc
+      debug exc.message
     end
 
     # @return [Hash]

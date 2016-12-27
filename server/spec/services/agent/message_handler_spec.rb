@@ -160,7 +160,10 @@ describe Agent::MessageHandler do
           'node_id' => node.node_id,
           'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
           'memory' => {},
-          'filesystems' => []
+          'filesystems' => [],
+          'usage' => {
+            'container_seconds' => 60*100
+          }
         })
       }.to change{ node.host_node_stats.count }.by(1)
     end

@@ -5,6 +5,7 @@ class HostNodeStat
   field :load, type: Hash
   field :memory, type: Hash
   field :filesystem, type: Array
+  field :usage, type: Hash
 
   belongs_to :grid
   belongs_to :host_node

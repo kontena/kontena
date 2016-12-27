@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe HostNodeStat do
   it { should be_timestamped_document }
-  it { should have_fields(:memory, :load).of_type(Hash)}
+  it { should have_fields(:memory, :load, :usage).of_type(Hash)}
   it { should have_fields(:filesystem).of_type(Array)}
 
   it { should belong_to(:grid) }
