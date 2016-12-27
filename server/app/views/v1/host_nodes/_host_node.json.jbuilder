@@ -44,5 +44,6 @@ json.resource_usage do
     json.memory stats.memory
     json.load stats.load
     json.filesystem stats.filesystem
+    json.usage stats.usage
   end
 end
