@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml, :sections
+      attr_reader :file, :raw_content, :result, :errors, :notifications, :variables, :yaml
 
       def initialize(file, skip_validation: false, skip_variables: false, replace_missing: nil, from_registry: false)
         require 'yaml'
