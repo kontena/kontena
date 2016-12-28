@@ -75,6 +75,7 @@ These environment variables configure the load balancer itself.
 * `KONTENA_LB_HEALTH_URI` - URI at which to enable Kontena Load Balancer level health check endpoint. Returns `200 OK` when Kontena Load Balancer is functional.
 * `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
 * `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer#ssl-termination).
+* `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer#configuringcustomsslciphers)
 
 ## Stats
 
@@ -156,7 +157,6 @@ loadbalancer:
       type: env
 ```
 
-
 #### An example with 2 certificates (www.domain.com and api.domain.com):
 
 Write certificates to Kontena Vault:
@@ -182,6 +182,20 @@ loadbalancer:
       name: SSL_CERTS
       type: env
 ```
+
+### Configuring custom SSL Ciphers
+
+By default Kontena Loadbalancer uses strong SSL cipher suite, see:
+https://github.com/kontena/kontena-loadbalancer/blob/master/confd/templates/haproxy.tmpl#L9
+
+In some cases it is required to have somewhat customized cipher suite to cater specific security requirements or other such needs.
+
+ This can be achieved by using specific environment variable for the loadbalancer service:
+ ```
+ KONTENA_LB_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384
+ ```
+
+
 
 ## Config Env Variables for Load Balanced Services
 
