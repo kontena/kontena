@@ -44,6 +44,7 @@ namespace :release do
     headline "Starting to build kontena-server ..."
     Dir.chdir('server') do
       sh("bundle exec rake release:build_docker")
+      sh("bundle exec rake release:build_docs")
     end
   end
 
@@ -91,6 +92,7 @@ namespace :release do
     headline "Starting to push kontena/server ..."
     Dir.chdir('server') do
       sh("bundle exec rake release:push_docker")
+      sh("bundle exec rake release:push_docs")
     end
   end
 
