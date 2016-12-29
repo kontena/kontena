@@ -57,8 +57,9 @@ class WebsocketBackend
     if !grid.nil?
       node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
       node = grid.host_nodes.find_by(node_id: node_id)
+      labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
       unless node
-        node = grid.host_nodes.create!(node_id: node_id)
+        node = grid.host_nodes.create!(node_id: node_id, labels: labels)
       end
 
       node_plugger = Agent::NodePlugger.new(grid, node)
@@ -79,7 +80,7 @@ class WebsocketBackend
         return
       end
 
-      logger.info "node opened connection: #{node.name || node_id}"
+      logger.info "node opened connection: #{node.name || node_id}, labels: #{labels}"
       node_plugger.plugin!
     else
       logger.error 'invalid grid token, closing connection'
