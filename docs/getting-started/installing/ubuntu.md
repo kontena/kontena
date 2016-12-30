@@ -29,7 +29,7 @@ $ sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 
 $ echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee -a /etc/apt/sources.list.d/docker.list
 $ sudo apt-get update
 $ sudo apt-get install apt-transport-https ca-certificates linux-image-extra-$(uname -r) linux-image-extra-virtual
-$ sudo apt-get install docker-engine=1.12.2-0~trusty
+$ sudo apt-get install docker-engine=1.12.*
 ```
 
 ## Installing Kontena Master
