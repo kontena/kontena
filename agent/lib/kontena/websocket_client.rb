@@ -6,7 +6,13 @@ module Kontena
     include Kontena::Logging
 
     KEEPALIVE_TIME = 30
-    CLOSE_TIMEOUT = 30
+
+    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
+      # use a slightly longer timeout as a fallback
+      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
+    else
+      CLOSE_TIMEOUT = 30
+    end
 
     attr_reader :api_uri,
                 :api_token,
