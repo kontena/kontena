@@ -29,10 +29,10 @@ module Kontena::LoadBalancers
     # @param [Docker::Container] container
     def ensure_config(container)
       name = container.labels['io.kontena.load_balancer.name']
-      service_name = container.service_name_for_lb
+      env_hash = container.env_hash
+      service_name = env_hash['KONTENA_LB_SERVICE_ALIAS'] || container.service_name_for_lb
       check_uri = container.labels['io.kontena.health_check.uri']
       etcd_path = "#{ETCD_PREFIX}/#{name}"
-      env_hash = container.env_hash
 
       mode = env_hash['KONTENA_LB_MODE'] || 'http'
       balance = env_hash['KONTENA_LB_BALANCE'] || 'roundrobin'
@@ -77,8 +77,11 @@ module Kontena::LoadBalancers
     # @param [Docker::Container] container
     def remove_config(container)
       name = container.labels['io.kontena.load_balancer.name']
-      service_name = container.service_name_for_lb
+      service_name = container.env_hash['KONTENA_LB_SERVICE_ALIAS'] || container.service_name_for_lb
+
       mode = container.env_hash['KONTENA_LB_MODE'] || 'http'
+      return if count_upstreams(name, service_name, mode) > 0
+
       info "un-registering #{service_name} from load balancer #{name} (#{mode})"
       if mode == 'http'
         etcd_path = "#{ETCD_PREFIX}/#{name}/services/#{service_name}"
@@ -88,6 +91,21 @@ module Kontena::LoadBalancers
       rmdir(etcd_path)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
+    end
+
+    def count_upstreams(lb_name, service, mode)
+      count = 0
+      path = "#{ETCD_PREFIX}/#{lb_name}/"
+      if mode == 'http'
+        path += "services/"
+      else
+        path += "tcp-services/"
+      end
+      path += service
+      lsdir("#{path}/upstreams").each do |key|
+        count += 1
+      end
+      count
     end
 
     # @param [String] key
@@ -167,5 +185,6 @@ module Kontena::LoadBalancers
     def self.gateway
       interface_ip('docker0')
     end
+
   end
 end

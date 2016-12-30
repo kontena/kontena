@@ -53,6 +53,24 @@ describe Kontena::LoadBalancers::Configurer do
       end
     end
 
+    it 'sets default values to etcd under alias' do
+      storage = {}
+      allow(etcd).to receive(:set) do |key, value|
+        storage[key] = value[:value]
+      end
+      expect(container).to receive(:env_hash).and_return({'KONTENA_LB_SERVICE_ALIAS' => 'alias'})
+      subject.ensure_config(container)
+      expected_values = {
+        "#{etcd_prefix}/lb/services/alias/balance" => 'roundrobin',
+        "#{etcd_prefix}/lb/services/alias/custom_settings" => nil,
+        "#{etcd_prefix}/lb/services/alias/virtual_path" => '/',
+        "#{etcd_prefix}/lb/services/alias/virtual_hosts" => nil,
+      }
+      expected_values.each do |k, v|
+        expect(storage[k]).to eq(v)
+      end
+    end
+
     it 'sets tcp values to etcd' do
       container.env_hash['KONTENA_LB_MODE'] = 'tcp'
       storage = {}

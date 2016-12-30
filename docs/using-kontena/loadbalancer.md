@@ -183,6 +183,40 @@ loadbalancer:
       type: env
 ```
 
+## Canary deployment
+
+[Canary deployments]() is a great way to break new service releases into production by moving traffic incrementally to new release of a given service. Kontena loadbalancer supports this by aliasing two services to use same configuration on loadbalancer level.
+```
+app_version1:
+  image: my-app:1.0
+  environment:
+    - KONTENA_LB_MODE=http
+    - KONTENA_LB_BALANCE=roundrobin
+    - KONTENA_LB_INTERNAL_PORT=80
+    - KONTENA_LB_VIRTUAL_HOSTS=my-app.example.com
+    - KONTENA_LB_SERVICE_ALIAS=my-app
+  links:
+    - internet_lb
+```
+
+Now when you are ready to deploy a new version of your app you can deploy that using following configuration:
+```
+app_version2:
+  image: my-app:2.0
+  environment:
+    - KONTENA_LB_MODE=http
+    - KONTENA_LB_BALANCE=roundrobin
+    - KONTENA_LB_INTERNAL_PORT=80
+    - KONTENA_LB_VIRTUAL_HOSTS=my-app.example.com
+    - KONTENA_LB_SERVICE_ALIAS=my-app
+  links:
+    - internet_lb
+```
+
+This will create another service and configures the load balancer to distribute load across both versions of your application. Once you are happy how the new version of your application works you can start to scale down the instances of the old service and scale up the instances for the new service. This way you can switch users to gradually move to the new version of the application.
+
+**Note:**  Currently the traffic is distributed evenly across the instances of both the new and old version of the app. We are planning to enhance this functionality so that you can provide some weights how the traffic is distributed across the aliased services.
+
 ## Config Env Variables for Load Balanced Services
 
 These options are defined on the services that are balanced through Kontena Load Balancer.
@@ -196,3 +230,4 @@ These options are defined on the services that are balanced through Kontena Load
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to either the related backend section or the listen session in the HAProxy configuration file
 * `KONTENA_LB_COOKIE`: Enables cookie-based session stickiness. With empty value, it defaults to the load balancer-set cookie. Can be customized to use application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)
+* `KONTENA_LB_SERVICE_ALIAS`: Service alias to be used when configuring loadbalancing for services. Can be used for example to create canary deployments. See details at [canary deployments](loadbalancer#canarydeployment).

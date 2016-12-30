@@ -73,7 +73,8 @@ describe Kontena::LoadBalancers::Registrator do
           'io.kontena.load_balancer.mode' => 'http'
         },
         overlay_ip: '10.81.3.24',
-        service_name_for_lb: 'web'
+        service_name_for_lb: 'web',
+        env_hash: {}
       )
     }
     let(:tcp_container) {
@@ -86,7 +87,8 @@ describe Kontena::LoadBalancers::Registrator do
           'io.kontena.load_balancer.mode' => 'tcd'
         },
         overlay_ip: '10.81.3.25',
-        service_name_for_lb: 'tcp'
+        service_name_for_lb: 'tcp',
+        env_hash: {}
       )
     }
 
@@ -95,8 +97,20 @@ describe Kontena::LoadBalancers::Registrator do
       subject.register_container(http_container)
     end
 
+    it 'registers container under alias service ip:port to etcd' do
+      expect(subject.wrapped_object.etcd).to receive(:set).with('/kontena/haproxy/lb1/services/alias/upstreams/web-2', {value: '10.81.3.24:8080'})
+      expect(http_container).to receive(:env_hash).and_return({'KONTENA_LB_SERVICE_ALIAS' => 'alias'})
+      subject.register_container(http_container)
+    end
+
     it 'registers tcp container ip:port to etcd' do
       expect(subject.wrapped_object.etcd).to receive(:set).with('/kontena/haproxy/lb1/tcp-services/tcp/upstreams/tcp-2', {value: '10.81.3.25:5000'})
+      subject.register_container(tcp_container)
+    end
+
+    it 'registers tcp container ip:port to etcd under alias' do
+      expect(subject.wrapped_object.etcd).to receive(:set).with('/kontena/haproxy/lb1/tcp-services/alias/upstreams/tcp-2', {value: '10.81.3.25:5000'})
+      expect(tcp_container).to receive(:env_hash).and_return({'KONTENA_LB_SERVICE_ALIAS' => 'alias'})
       subject.register_container(tcp_container)
     end
 
@@ -104,6 +118,15 @@ describe Kontena::LoadBalancers::Registrator do
       allow(subject.wrapped_object.etcd).to receive(:set)
       expect(subject.wrapped_object.cache).to receive(:[]=).with(
         http_container.id, hash_including(lb: 'lb1', service: 'web', container: 'web-2', value: '10.81.3.24:8080')
+      )
+      subject.register_container(http_container)
+    end
+
+    it 'registers container info to cache with alias' do
+      allow(subject.wrapped_object.etcd).to receive(:set)
+      expect(http_container).to receive(:env_hash).and_return({'KONTENA_LB_SERVICE_ALIAS' => 'alias'})
+      expect(subject.wrapped_object.cache).to receive(:[]=).with(
+        http_container.id, hash_including(lb: 'lb1', service: 'alias', container: 'web-2', value: '10.81.3.24:8080')
       )
       subject.register_container(http_container)
     end

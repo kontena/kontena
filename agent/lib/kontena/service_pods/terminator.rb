@@ -23,13 +23,13 @@ module Kontena
       def perform
         service_container = get_container(self.service_id, self.instance_number)
         if service_container
-          if remove_from_load_balancer?(service_container)
-            remove_from_load_balancer(service_container)
-          end
           info "terminating service: #{service_container.name}"
           service_container.stop('timeout' => 10)
           service_container.wait
           service_container.delete(v: true)
+          if remove_from_load_balancer?(service_container)
+            remove_from_load_balancer(service_container)
+          end
         end
         data_container = get_container(self.service_id, self.instance_number, 'volume')
         if data_container
