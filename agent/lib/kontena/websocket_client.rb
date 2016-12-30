@@ -191,8 +191,12 @@ module Kontena
       ws.close(1000)
 
       @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        # fake it
-        on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
+        if @ws
+          @ws.remove_all_listeners
+          
+          # fake it
+          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
+        end
       end
     end
   end
