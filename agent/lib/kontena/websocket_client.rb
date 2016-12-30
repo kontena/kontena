@@ -165,6 +165,8 @@ module Kontena
       return unless @ping_timer.nil?
 
       @ping_timer = EM::Timer.new(2) do
+        @ping_timer = nil
+
         if @connected
           info 'did not receive pong, closing connection'
           ws.close(1000)
