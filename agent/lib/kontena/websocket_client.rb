@@ -197,6 +197,7 @@ module Kontena
         if @ws
           warn "Hit close timeout, abandoning existing websocket connection"
 
+          # ignore events from the abandoned connection
           @ws.remove_all_listeners
 
           # fake it
