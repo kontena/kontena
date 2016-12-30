@@ -121,6 +121,7 @@ module Kontena
 
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
+      @ping_timer = nil
       @close_timer.cancel if @close_timer
       @close_timer = nil
       @connected = false
@@ -169,8 +170,7 @@ module Kontena
       return unless @ping_timer.nil?
 
       @ping_timer = EM::Timer.new(2) do
-        @ping_timer = nil
-
+        # @ping_timer remains nil until re-connected to prevent further keepalives while closing
         if @connected
           info 'did not receive pong, closing connection'
           close
@@ -193,7 +193,7 @@ module Kontena
       @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
         if @ws
           @ws.remove_all_listeners
-          
+
           # fake it
           on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
         end
