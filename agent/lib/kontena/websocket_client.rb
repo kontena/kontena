@@ -200,11 +200,11 @@ module Kontena
       ws.close(1000)
 
       @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        if @ws
+        if ws
           warn "Hit close timeout, abandoning existing websocket connection"
 
           # ignore events from the abandoned connection
-          @ws.remove_all_listeners
+          ws.remove_all_listeners
 
           # fake it
           on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")

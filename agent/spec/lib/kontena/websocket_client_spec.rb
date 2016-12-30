@@ -100,11 +100,65 @@ describe Kontena::WebsocketClient do
       instance_double(Faye::WebSocket::Client)
     end
 
-    it 'publishes event' do
+    before do
       allow(subject).to receive(:ws).and_return(ws)
+    end
+
+    it 'publishes event' do
       expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
       expect(ws).to receive(:close).with(1000)
       subject.close
+    end
+
+    context "for a connected websocket" do
+      let :open_event do
+        double(:open_event)
+      end
+      let :close_event do
+        double(:close_event, code: 1006)
+      end
+
+      let :close_timer do
+        instance_double(EM::Timer)
+      end
+
+      before do
+        subject.on_open open_event
+
+        expect(subject).to be_connected
+        expect(subject).to_not be_connecting
+      end
+
+      it 'sets connection as disconnected if it immediately emits :close' do
+        expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
+
+        expect(ws).to receive(:close).with(1000) { subject.on_close close_event }
+        subject.close
+
+        expect(subject).to_not be_connected
+        expect(subject).to_not be_connecting
+      end
+
+      it 'sets connection to closed if it blocks' do
+        expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
+
+        expect(ws).to receive(:close).with(1000) { }
+        expect(EM::Timer).to receive(:new) { |timeout, &block| @close_block = block; close_timer }
+
+        subject.close
+
+        expect(subject).to be_connected
+        expect(subject).to_not be_connecting
+
+        expect(ws).to receive(:remove_all_listeners)
+        expect(subject).to receive(:on_close).and_call_original
+        expect(close_timer).to receive(:cancel)
+
+        @close_block.call
+
+        expect(subject).to_not be_connected
+        expect(subject).to_not be_connecting
+      end
     end
   end
 
