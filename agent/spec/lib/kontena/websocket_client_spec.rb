@@ -68,11 +68,6 @@ describe Kontena::WebsocketClient do
   describe '#on_close' do
     let(:event) { Faye::WebSocket::API::CloseEvent.new('close', {}) }
 
-    it 'publishes event' do
-      expect(Celluloid::Notifications).to receive(:publish)
-      subject.on_close(event)
-    end
-
     it 'sets connected to false' do
       subject.on_open(spy)
       expect {
@@ -97,6 +92,19 @@ describe Kontena::WebsocketClient do
       event = Faye::WebSocket::API::CloseEvent.new('close', code: 4010)
       expect(subject).to receive(:handle_invalid_version).once
       subject.on_close(event)
+    end
+  end
+
+  describe '#close' do
+    let :ws do
+      instance_double(Faye::WebSocket::Client)
+    end
+
+    it 'publishes event' do
+      allow(subject).to receive(:ws).and_return(ws)
+      expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
+      expect(ws).to receive(:close).with(1000)
+      subject.close
     end
   end
 
