@@ -75,4 +75,21 @@ namespace :release do
       sh("docker push #{DOCKER_NAME}:#{v}")
     end
   end
+
+  desc 'Build docs image'
+  task :build_docs do
+    Dir.chdir('docs') do
+      sh("bundle install")
+      sh("bundle exec middleman build")
+      sh("docker rmi kontena/master-api-docs:#{VERSION} || true")
+      sh("docker build --no-cache --pull -t kontena/master-api-docs:#{VERSION} .")
+    end
+  end
+
+  desc 'Push docs image'
+  task :push_docs do
+    Dir.chdir('docs') do
+      sh("docker kontena/master-api-docs:#{VERSION} .")
+    end
+  end
 end
