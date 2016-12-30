@@ -6,6 +6,7 @@ module Kontena
     include Kontena::Logging
 
     KEEPALIVE_TIME = 30
+    CLOSE_TIMEOUT = 30
 
     attr_reader :api_uri,
                 :api_token,
@@ -27,6 +28,7 @@ module Kontena
       @connected = false
       @connecting = false
       @ping_timer = nil
+      @close_timer = nil
     end
 
     def ensure_connect
@@ -119,6 +121,8 @@ module Kontena
 
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
+      @close_timer.cancel if @close_timer
+      @close_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -169,7 +173,7 @@ module Kontena
 
         if @connected
           info 'did not receive pong, closing connection'
-          ws.close(1000)
+          close
         end
       end
       ws.ping {
@@ -178,6 +182,18 @@ module Kontena
       }
     rescue => exc
       error exc.message
+    end
+
+    # Abort the connection, closing the websocket, with a timeout
+    def close
+      return if @close_timer
+
+      ws.close(1000)
+
+      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
+        # fake it
+        on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
+      end
     end
   end
 end
