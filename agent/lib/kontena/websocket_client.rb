@@ -132,7 +132,6 @@ module Kontena
       elsif event.code == 4010
         handle_invalid_version
       end
-      Celluloid::Notifications.publish('websocket:disconnect', event)
       info "connection closed with code: #{event.code}"
     rescue => exc
       error exc.message
@@ -188,10 +187,16 @@ module Kontena
     def close
       return if @close_timer
 
+      # stop sending messages, queue them up until reconnected
+      Celluloid::Notifications.publish('websocket:disconnect', nil)
+
+      # send close frame; this will get stuck if the server is not replying
       ws.close(1000)
 
       @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
         if @ws
+          warn "Hit close timeout, abandoning existing websocket connection"
+
           @ws.remove_all_listeners
 
           # fake it
