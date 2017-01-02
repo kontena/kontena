@@ -58,7 +58,8 @@ module Kontena
       headers = {
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
-          'Kontena-Version' => Kontena::Agent::VERSION
+          'Kontena-Version' => Kontena::Agent::VERSION,
+          'Kontena-Node-Labels' => labels
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
@@ -159,6 +160,10 @@ module Kontena
     # @return [String]
     def host_id
       Docker.info['ID']
+    end
+
+    def labels
+      Docker.info['Labels'].to_a.join(',')
     end
 
     def verify_connection

@@ -7,6 +7,7 @@ describe Kontena::WebsocketClient do
   before(:each) {
     Celluloid.boot
     allow(subject).to receive(:host_id).and_return('ABCD')
+    allow(subject).to receive(:labels).and_return(['region=test'])
   }
   after(:each) { Celluloid.shutdown }
 
