@@ -227,12 +227,15 @@ module Kontena
       # @param [Docker::Container] service_container
       # @param [String] deploy_rev
       def notify_master(service_container, deploy_rev)
-        data = {
-          id: service_container.id,
-          status: 'deployed',
-          deploy_rev: deploy_rev
+        msg = {
+          event: 'container:event',
+          data: {
+            id: service_container.id,
+            status: 'deployed',
+            deploy_rev: deploy_rev
+          }
         }
-        Celluloid::Actor[:event_worker].async.send_notification(data)
+        Celluloid::Actor[:queue_worker].send_message(msg)
       end
 
       # @param [Docker::Container] service_container
