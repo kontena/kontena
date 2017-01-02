@@ -14,7 +14,10 @@ describe Kontena::RpcServer do
 
   before(:each) do
     stub_const("Kontena::RpcServer::HANDLERS", {'hello' => HelloWorld})
+    Celluloid.boot
   end
+  
+  after(:each) { Celluloid.shutdown }
 
   describe '#handle_request' do
     it 'calls handler and sends response back to ws_client' do
