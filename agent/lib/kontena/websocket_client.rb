@@ -7,6 +7,13 @@ module Kontena
 
     KEEPALIVE_TIME = 30
 
+    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
+      # use a slightly longer timeout as a fallback
+      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
+    else
+      CLOSE_TIMEOUT = 30
+    end
+
     attr_reader :api_uri,
                 :api_token,
                 :ws,
@@ -27,6 +34,7 @@ module Kontena
       @connected = false
       @connecting = false
       @ping_timer = nil
+      @close_timer = nil
     end
 
     def ensure_connect
@@ -120,6 +128,9 @@ module Kontena
 
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
+      @ping_timer = nil
+      @close_timer.cancel if @close_timer
+      @close_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -128,7 +139,6 @@ module Kontena
       elsif event.code == 4010
         handle_invalid_version
       end
-      Celluloid::Notifications.publish('websocket:disconnect', event)
       info "connection closed with code: #{event.code}"
     rescue => exc
       error exc.message
@@ -170,9 +180,10 @@ module Kontena
       return unless @ping_timer.nil?
 
       @ping_timer = EM::Timer.new(2) do
+        # @ping_timer remains nil until re-connected to prevent further keepalives while closing
         if @connected
           info 'did not receive pong, closing connection'
-          ws.close(1000)
+          close
         end
       end
       ws.ping {
@@ -181,6 +192,29 @@ module Kontena
       }
     rescue => exc
       error exc.message
+    end
+
+    # Abort the connection, closing the websocket, with a timeout
+    def close
+      return if @close_timer
+
+      # stop sending messages, queue them up until reconnected
+      Celluloid::Notifications.publish('websocket:disconnect', nil)
+
+      # send close frame; this will get stuck if the server is not replying
+      ws.close(1000)
+
+      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
+        if ws
+          warn "Hit close timeout, abandoning existing websocket connection"
+
+          # ignore events from the abandoned connection
+          ws.remove_all_listeners
+
+          # fake it
+          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
+        end
+      end
     end
   end
 end

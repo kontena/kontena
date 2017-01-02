@@ -155,7 +155,10 @@ module Kontena
 
     def start_em
       EM.epoll
-      Thread.new { EventMachine.run } unless EventMachine.reactor_running?
+      Thread.new {
+        Thread.current.abort_on_exception = true
+        EventMachine.run
+      } unless EventMachine.reactor_running?
       sleep 0.01 until EventMachine.reactor_running?
     end
   end

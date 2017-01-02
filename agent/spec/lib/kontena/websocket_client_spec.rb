@@ -69,11 +69,6 @@ describe Kontena::WebsocketClient do
   describe '#on_close' do
     let(:event) { Faye::WebSocket::API::CloseEvent.new('close', {}) }
 
-    it 'publishes event' do
-      expect(Celluloid::Notifications).to receive(:publish)
-      subject.on_close(event)
-    end
-
     it 'sets connected to false' do
       subject.on_open(spy)
       expect {
@@ -98,6 +93,73 @@ describe Kontena::WebsocketClient do
       event = Faye::WebSocket::API::CloseEvent.new('close', code: 4010)
       expect(subject).to receive(:handle_invalid_version).once
       subject.on_close(event)
+    end
+  end
+
+  describe '#close' do
+    let :ws do
+      instance_double(Faye::WebSocket::Client)
+    end
+
+    before do
+      allow(subject).to receive(:ws).and_return(ws)
+    end
+
+    it 'publishes event' do
+      expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
+      expect(ws).to receive(:close).with(1000)
+      subject.close
+    end
+
+    context "for a connected websocket" do
+      let :open_event do
+        double(:open_event)
+      end
+      let :close_event do
+        double(:close_event, code: 1006)
+      end
+
+      let :close_timer do
+        instance_double(EM::Timer)
+      end
+
+      before do
+        subject.on_open open_event
+
+        expect(subject).to be_connected
+        expect(subject).to_not be_connecting
+      end
+
+      it 'sets connection as disconnected if it immediately emits :close' do
+        expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
+
+        expect(ws).to receive(:close).with(1000) { subject.on_close close_event }
+        subject.close
+
+        expect(subject).to_not be_connected
+        expect(subject).to_not be_connecting
+      end
+
+      it 'sets connection to closed if it blocks' do
+        expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
+
+        expect(ws).to receive(:close).with(1000) { }
+        expect(EM::Timer).to receive(:new) { |timeout, &block| @close_block = block; close_timer }
+
+        subject.close
+
+        expect(subject).to be_connected
+        expect(subject).to_not be_connecting
+
+        expect(ws).to receive(:remove_all_listeners)
+        expect(subject).to receive(:on_close).and_call_original
+        expect(close_timer).to receive(:cancel)
+
+        @close_block.call
+
+        expect(subject).to_not be_connected
+        expect(subject).to_not be_connecting
+      end
     end
   end
 
