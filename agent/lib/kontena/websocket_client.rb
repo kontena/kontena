@@ -163,7 +163,7 @@ module Kontena
     end
 
     def labels
-      Docker.info['Labels'].join(',')
+      Docker.info['Labels'].to_a.join(',')
     end
 
     def verify_connection
