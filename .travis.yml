@@ -2,9 +2,10 @@ language: ruby
 sudo: required
 rvm:
   - 2.0.0-p648
-  - 2.1.8
-  - 2.2.3
+  - 2.1.10
+  - 2.2.6
   - 2.3.1
+  - 2.4.0
 cache: bundler
 cache:
   directories:
@@ -25,15 +26,19 @@ matrix:
   exclude:
     - rvm: 2.0.0-p648
       env: TEST_DIR=server
-    - rvm: 2.1.8
+    - rvm: 2.1.10
       env: TEST_DIR=server
-    - rvm: 2.2.3
+    - rvm: 2.2.6
+      env: TEST_DIR=server
+    - rvm: 2.4.0
       env: TEST_DIR=server
     - rvm: 2.0.0-p648
       env: TEST_DIR=agent
-    - rvm: 2.1.8
+    - rvm: 2.1.10
       env: TEST_DIR=agent
-    - rvm: 2.2.3
+    - rvm: 2.2.6
+      env: TEST_DIR=agent
+    - rvm: 2.4.0
       env: TEST_DIR=agent
 script: ./build/travis/test.sh
 deploy:
