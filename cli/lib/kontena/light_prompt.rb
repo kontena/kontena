@@ -43,7 +43,6 @@ module Kontena
 
     def initialize(options={})
       @prompt = TTY::Prompt.new(options)
-      @prompt.instance_variable_set :@pastel, Pastel.new(enabled: false)
     end
 
     def select(*args, &block)
