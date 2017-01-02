@@ -413,10 +413,27 @@ user: app_user
 
 Mount paths as volumes, optionally specifying a path on the host machine. (HOST:CONTAINER), or an access mode (HOST:CONTAINER:ro).
 
+Data volume:
+
 ```
 volumes:
  - /var/lib/mysql
 ```
+
+Bind mount host directory as a volume:
+
+```
+volumes:
+ - /data/mysql:/var/lib/mysql
+```
+
+Named volume (if volume does not exist it will be created as a node local volume)
+
+```
+volumes:
+ - mysql:/var/lib/mysql
+```
+
 
 #### volumes_from
 
