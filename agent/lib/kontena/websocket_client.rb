@@ -22,19 +22,18 @@ module Kontena
 
     delegate :on, to: :ws
 
-    ##
     # @param [String] api_uri
     # @param [String] api_token
     def initialize(api_uri, api_token)
       @api_uri = api_uri
-      @api_token = api_token.to_s
-      @rpc_server = Kontena::RpcServer.new
+      @api_token = api_token
+      @rpc_server = Kontena::RpcServer.pool
       @abort = false
-      info "initialized with token #{@api_token[0..10]}..."
       @connected = false
       @connecting = false
       @ping_timer = nil
       @close_timer = nil
+      info "initialized with token #{@api_token[0..10]}..."
     end
 
     def ensure_connect
@@ -101,26 +100,27 @@ module Kontena
       error "failed to send message: #{exc.message}"
     end
 
+    def send_notification(method, params)
+      data = MessagePack.dump([2, method, params]).bytes
+      send_message(data)
+    end
+
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
       ping_timer.cancel if ping_timer
       info 'connection established'
       @connected = true
       @connecting = false
+      Celluloid::Notifications.publish('websocket:connect', event)
     end
 
     # @param [Faye::WebSocket::API::Event] event
     def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        EM.defer {
-          response = rpc_server.handle_request(data)
-          send_message(MessagePack.dump(response).bytes)
-        }
+        rpc_server.async.handle_request(self, data)
       elsif notification_message?(data)
-        EM.defer {
-          rpc_server.handle_notification(data)
-        }
+        rpc_server.handle_notification(data)
       end
     rescue => exc
       error exc.message
