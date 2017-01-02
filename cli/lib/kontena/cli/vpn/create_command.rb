@@ -8,6 +8,7 @@ module Kontena::Cli::Vpn
 
     option '--node', 'NODE', 'Node name where VPN is deployed'
     option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
+    option '--image', 'IMAGE', 'Custom Docker image to use', hidden: true
 
     def execute
       require_api_url
@@ -31,7 +32,7 @@ module Kontena::Cli::Vpn
         services: [
           name: 'server',
           stateful: true,
-          image: 'kontena/openvpn:ethwe',
+          image: image || 'kontena/openvpn:ethwe',
           ports: [
             {
               container_port: '1194',
