@@ -41,7 +41,7 @@ Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. In
 
 ```
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-$ echo "deb http://dl.bintray.com/kontena/ubuntu xenial main" | sudo tee -a /etc/apt/sources.list
+$ echo "deb http://dl.bintray.com/kontena/ubuntu xenial main" | sudo tee /etc/apt/sources.list.d/kontena.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-server
 ```
@@ -50,7 +50,7 @@ $ sudo apt-get install kontena-server
 
 ```
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-$ echo "deb http://dl.bintray.com/kontena/ubuntu trusty main" | sudo tee -a /etc/apt/sources.list
+$ echo "deb http://dl.bintray.com/kontena/ubuntu trusty main" | sudo tee /etc/apt/sources.list.d/kontena.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-server
 ```
@@ -123,7 +123,7 @@ Now you can go ahead and install the `kontena-agent` Ubuntu package using the ap
 
 ```
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-$ echo "deb http://dl.bintray.com/kontena/ubuntu xenial main" | sudo tee -a /etc/apt/sources.list.d/kontena.list
+$ echo "deb http://dl.bintray.com/kontena/ubuntu xenial main" | sudo tee /etc/apt/sources.list.d/kontena.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-agent
 ```
@@ -132,7 +132,7 @@ $ sudo apt-get install kontena-agent
 
 ```
 $ wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-$ echo "deb http://dl.bintray.com/kontena/ubuntu trusty main" | sudo tee -a /etc/apt/sources.list.d/kontena.list
+$ echo "deb http://dl.bintray.com/kontena/ubuntu trusty main" | sudo tee /etc/apt/sources.list.d/kontena.list
 $ sudo apt-get update
 $ sudo apt-get install kontena-agent
 ```
