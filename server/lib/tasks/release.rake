@@ -78,18 +78,20 @@ namespace :release do
 
   desc 'Build docs image'
   task :build_docs do
-    Dir.chdir('docs') do
-      sh("bundle install")
-      sh("bundle exec middleman build")
-      sh("docker rmi kontena/master-api-docs:#{VERSION} || true")
-      sh("docker build --no-cache --pull -t kontena/master-api-docs:#{VERSION} .")
+    Bundler.with_clean_env do
+      Dir.chdir('docs') do
+        sh("bundle install")
+        sh("bundle exec middleman build")
+        sh("docker rmi kontena/master-api-docs:#{VERSION} || true")
+        sh("docker build --no-cache --pull -t kontena/master-api-docs:#{VERSION} .")
+      end
     end
   end
 
   desc 'Push docs image'
   task :push_docs do
     Dir.chdir('docs') do
-      sh("docker kontena/master-api-docs:#{VERSION} .")
+      sh("docker push kontena/master-api-docs:#{VERSION}")
     end
   end
 end
