@@ -76,6 +76,28 @@ These environment variables configure the load balancer itself.
 * `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
 * `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer#ssl-termination).
 * `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer#configuringcustomsslciphers)
+* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file
+
+### Removing <NOSRV> / BADREQ log entries
+
+From HAProxy docs:
+> Recently some browsers started to implement a "pre-connect" feature
+consisting in speculatively connecting to some recently visited web sites
+just in case the user would like to visit them. This results in many
+connections being established to web sites, which end up in 408 Request
+Timeout if the timeout strikes first, or 400 Bad Request when the browser
+decides to close them first. These ones pollute the log and feed the error
+counters.
+
+To remove these polluting lines in the logs use following config for loadbalancer:
+```
+environment:
+    KONTENA_LB_CUSTOM_SETTINGS: |
+      option http-ignore-probes
+```
+
+See HAProxy [docs](http://cbonte.github.io/haproxy-dconv/1.6/configuration.html#option%20http-ignore-probes) for details.
+
 
 ## Stats
 
