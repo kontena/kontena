@@ -6,8 +6,10 @@ namespace :release do
   DOCKER_NAME = 'kontena/agent'
   if VERSION.prerelease?
     DOCKER_VERSIONS = ['edge']
+    DEB_COMPONENT = 'edge'
   else
     DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+    DEB_COMPONENT = 'main'
   end
 
   desc 'Build all'
@@ -81,10 +83,10 @@ namespace :release do
     raise ArgumentError.new('You must define REV') if rev.blank?
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=#{DEB_COMPONENT};deb_architecture=amd64'")
 
     sh('rm -rf release && mkdir release')
     sh('cp build/ubuntu_xenial/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{bintray_user}:#{bintray_key} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=#{DEB_COMPONENT};deb_architecture=amd64'")
   end
 end

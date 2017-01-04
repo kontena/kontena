@@ -11,6 +11,7 @@ cd $TRAVIS_BUILD_DIR
 rake release:setup
 rake release:push_gem
 rake release:push
+rake release:push_ubuntu
 
 # cleanup
 rm ~/.gem/credentials
