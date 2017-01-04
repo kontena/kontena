@@ -7,6 +7,6 @@ dependency "libxslt"
 build do
   gem "install nokogiri -v 1.6.8 --no-ri --no-doc"
   gem "install kontena-cli -v #{default_version} --no-ri --no-doc"
-  copy "wrappers/sh/kontena", "/usr/local/bin/kontena"
+  copy "#{File.absolute_path(".")}/wrappers/sh/kontena", "/usr/local/bin/kontena"
   command "chmod +x /usr/local/bin/kontena"
 end
