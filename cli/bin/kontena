@@ -12,7 +12,7 @@ require 'kontena_cli'
 STDOUT.sync = true
 
 begin
-  Kontena::PluginManager.instance.load_plugins
+  Kontena::PluginManager.instance.init
   Kontena::MainCommand.run
 rescue Excon::Errors::SocketError => exc
   if exc.message.include?('Unable to verify certificate')
