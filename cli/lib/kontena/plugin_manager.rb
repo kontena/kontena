@@ -107,7 +107,7 @@ module Kontena
     def uninstall_plugin(plugin_name)
       require 'rubygems/uninstaller'
       cmd = Gem::Uninstaller.new(
-        "kontena-plugin-#{plugin_name}",
+        prefix(plugin_name),
         all: true,
         executables: true,
         force: true
