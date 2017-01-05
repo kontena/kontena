@@ -20,5 +20,5 @@ github-release upload \
     --user kontena \
     --repo kontena \
     --tag v1.0.4.rc2 \
-    --name "kontena-cli-osx-amd64" \
+    --name "kontena-cli-osx-amd64.pkg" \
     --file pkg/kontena-*.pkg

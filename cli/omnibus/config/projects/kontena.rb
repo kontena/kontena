@@ -29,5 +29,5 @@ exclude "**/.git"
 exclude "**/bundler/git"
 
 package :pkg do
-  identifier "io.kontena.pkg.self"
+  identifier "io.kontena.pkg.cli"
 end
