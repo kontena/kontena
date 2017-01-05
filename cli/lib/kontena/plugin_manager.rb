@@ -14,9 +14,21 @@ module Kontena
     MIN_CLI_VERSION = '0.15.99'.freeze
 
     def init
+      ENV["GEM_HOME"] = install_dir
+      Gem.paths = ENV
       plugins
       use_dummy_ui unless ENV["DEBUG"]
       true
+    end
+
+    def install_dir
+      return @install_dir if @install_dir
+      install_dir = File.join(Dir.home, '.kontena', 'gems', RUBY_VERSION)
+      unless File.directory?(install_dir)
+        require 'fileutils'
+        FileUtils.mkdir_p(install_dir, mode: 0700)
+      end
+      @install_dir = install_dir
     end
 
     def without_safe(&block)
