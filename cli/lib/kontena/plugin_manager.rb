@@ -105,12 +105,16 @@ module Kontena
     end
 
     def uninstall_plugin(plugin_name)
+      installed = installed(plugin_name)
+      raise "Plugin #{plugin_name} not installed" unless installed
+
       require 'rubygems/uninstaller'
       cmd = Gem::Uninstaller.new(
-        prefix(plugin_name),
+        installed.name,
         all: true,
         executables: true,
-        force: true
+        force: true,
+        install_dir: installed.base_dir
       )
       cmd.uninstall
     end
@@ -143,24 +147,23 @@ module Kontena
 
     def latest_version(plugin_name, pre: false)
       return gem_versions(plugin_name).first if pre
-      gem_versions.find { |version| !version.prerelease? }
+      gem_versions(plugin_name).find { |version| !version.prerelease? }
     end
 
-    def installed_version(plugin_name)
+    def installed(plugin_name)
       search = prefix(plugin_name)
-      installed = plugins.find {|plugin| plugin.name == search }
-      installed ? installed.version : nil
+      plugins.find {|plugin| plugin.name == search }
     end
 
     def upgrade_plugin(plugin_name, pre: false)
-      installed = installed_version(plugin_name)
-      if installed.prerelease?
+      installed = installed(plugin_name)
+      if installed.version.prerelease?
         pre = true
       end
 
       if installed
-        latest = latest_version(plugin_name, pre)
-        if latest > installed
+        latest = latest_version(plugin_name, pre: pre)
+        if latest > installed.version
           install_plugin(plugin_name, version: latest.to_s)
         end
       else

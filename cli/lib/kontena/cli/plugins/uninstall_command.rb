@@ -14,7 +14,7 @@ module Kontena::Cli::Plugins
         begin
           Kontena::PluginManager.instance.uninstall_plugin(name)
         rescue => ex
-          puts ex.message
+          puts Kontena.pastel.red(ex.message)
           spin.fail
         end
       end

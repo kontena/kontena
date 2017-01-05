@@ -11,13 +11,27 @@ module Kontena::Cli::Plugins
     option '--pre', :flag, 'Allow pre-release of a plugin to be installed', default: false
 
     def execute
-      ENV["DEBUG"] && STDERR.puts("Running #{install_command}")
-      installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
-        begin
-          Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
-        rescue => ex
-          puts ex.message
-          spin.fail
+      installed_version = Kontena::PluginManager.instance.installed(name)
+
+      if installed_version
+        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do |spin|
+          begin
+            Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
+          rescue => ex
+            puts Kontena.pastel.red(ex.message)
+            ENV["DEBUG"] && puts(ex.backtrace.join("\n  "))
+            spin.fail!
+          end
+        end
+      else
+        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
+          begin
+            Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
+          rescue => ex
+            puts Kontena.pastel.red(ex.message)
+            ENV["DEBUG"] && puts(ex.backtrace.join("\n  "))
+            spin.fail!
+          end
         end
       end
 
