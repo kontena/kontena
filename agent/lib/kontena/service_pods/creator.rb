@@ -49,6 +49,8 @@ module Kontena
         debug "container created: #{service_pod.name}"
         if service_container.load_balanced? && service_container.instance_number == 1
           Celluloid::Notifications.publish('lb:ensure_config', service_container)
+        else
+          Celluloid::Notifications.publish('lb:remove_service', service_container)
         end
 
         service_container.start
