@@ -1,3 +1,4 @@
+require_relative 'vault/export_command'
 require_relative 'vault/write_command'
 require_relative 'vault/list_command'
 require_relative 'vault/read_command'
@@ -11,6 +12,7 @@ class Kontena::Cli::VaultCommand < Kontena::Command
   subcommand "read", "Read secret", Kontena::Cli::Vault::ReadCommand
   subcommand "update", "Update secret", Kontena::Cli::Vault::UpdateCommand
   subcommand ["remove", "rm"], "Remove secret", Kontena::Cli::Vault::RemoveCommand
+  subcommand "export", "Export secrets to STDOUT in yaml format", Kontena::Cli::Vault::ExportCommand
 
   def execute
   end
