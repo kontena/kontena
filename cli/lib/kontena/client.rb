@@ -23,6 +23,7 @@ module Kontena
     CONTENT_JSON       = 'application/json'.freeze
     JSON_REGEX         = /application\/(.+?\+)?json/.freeze
     CONTENT_TYPE       = 'Content-Type'.freeze
+    X_KONTENA_VERSION  = 'X-Kontena-Version'.freeze
     ACCEPT             = 'Accept'.freeze
     AUTHORIZATION      = 'Authorization'.freeze
 
@@ -473,6 +474,17 @@ module Kontena
     # @param [Excon::Response]
     # @return [Hash,String]
     def parse_response(response)
+      server_version = response.headers[X_KONTENA_VERSION]
+      if server_version
+        unless server_version[/^(\d+\.\d+)/, 1] == Kontena::Cli::VERSION[/^(\d+\.\d+)/, 1] # Just compare x.y
+          unless $VERSION_WARNING_ADDED # only do this once
+            at_exit do
+              warn Kontena.pastel.yellow("Server version is #{server_version}. You are using CLI version #{Kontena::Cli::VERSION}.")
+            end
+          end
+          $VERSION_WARNING_ADDED = true
+        end
+      end
       if response.headers[CONTENT_TYPE] =~ JSON_REGEX
         parse_json(response.body)
       else
