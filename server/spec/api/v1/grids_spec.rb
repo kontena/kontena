@@ -38,6 +38,23 @@ describe '/v1/grids' do
     GridService.create!(name: 'db', grid: grid, image_name: 'mysql:5.6')
   end
 
+  let(:stack) do
+    outcome = Stacks::Create.run(
+      current_user: david,
+      grid: david.grids.first,
+      name: 'stack',
+      stack: 'stack',
+      version: '0.1.1',
+      source: '...',
+      registry: 'file',
+      services: [
+        { name: 'app', image: 'my/app:latest', stateful: false },
+        { name: 'redis', image: 'redis:2.8', stateful: true }
+      ]
+    )
+    outcome.result
+  end
+
   let(:valid_token) do
     AccessToken.create!(user: david, scopes: ['user'])
   end
@@ -198,6 +215,24 @@ describe '/v1/grids' do
         get "/v1/grids/#{grid.to_path}/services", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['services'].size).to eq(3)
+      end
+
+      it 'returns 404 with unknown stack' do
+        grid = david.grids.first
+        grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
+        get "/v1/grids/#{grid.to_path}/services?stack=non-existing", nil, request_headers
+        expect(response.status).to eq(404)
+        expect(json_response['error']).to eq('Stack non-existing not found')
+      end
+
+      it 'returns only stacks services' do
+        grid = david.grids.first
+
+        grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
+        get "/v1/grids/#{grid.to_path}/services?stack=#{stack.name}", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['services'].size).to eq(2)
+        expect(json_response['services'].map { |s| s['name'] }).to contain_exactly('app', 'redis')
       end
     end
 
