@@ -23,7 +23,7 @@ module Kontena
       end
 
       def load
-        YAML.load(read)
+        YAML.safe_load(read)
       end
 
       def write(content)
@@ -78,7 +78,7 @@ module Kontena
         else
           dputs "Retrieving #{stack.stack}:#{stack.version} from registry"
           content = client.pull(stack.stack, stack.version)
-          yaml    = ::YAML.load(content)
+          yaml    = ::YAML.safe_load(content)
           new_stack = CachedStack.new(yaml['stack'], yaml['version'])
           if new_stack.cached?
             dputs "Already cached"

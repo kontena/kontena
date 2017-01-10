@@ -159,6 +159,16 @@ module Kontena::Cli::Services
       end
     end
 
+    describe '#parse_container_name' do
+      it 'parses stack services id properly' do
+        expect(subject.parse_container_name('foo/mysql', 1)).to eq('foo-mysql-1')
+      end
+
+      it 'parses stackless services id properly' do
+        expect(subject.parse_container_name('mysql', 1)).to eq('null-mysql-1')
+      end
+    end
+
     describe '#parse_image' do
       it 'adds :default tag if no tag exist' do
         expect(subject.parse_image('nginx')).to eq('nginx:latest')

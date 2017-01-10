@@ -141,6 +141,23 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         expect(service_extender).to receive(:extend_from).with(kontena_yml['services']['base'])
         subject.execute
       end
+
+      it 'merges validation errors' do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('docker-compose_v2.yml'))
+          .and_return(fixture('docker-compose-invalid.yml'))
+        outcome = subject.execute
+        expect(outcome[:errors]).to eq([{
+          'docker-compose_v2.yml' =>[
+            {
+              'wordpress' => {
+                'networks' => 'key not expected'
+              }
+            }
+          ]
+        }])
+      end
+
     end
 
     context 'variable interpolation' do

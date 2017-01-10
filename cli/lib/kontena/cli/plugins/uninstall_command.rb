@@ -9,6 +9,7 @@ module Kontena::Cli::Plugins
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute
+      require 'shellwords'
       confirm unless forced?
       uninstall_plugin(name)
     end
@@ -16,16 +17,11 @@ module Kontena::Cli::Plugins
     def uninstall_plugin(name)
       plugin = "kontena-plugin-#{name}"
       gem_bin = which('gem')
-      uninstall_command = "#{gem_bin} uninstall -q #{plugin}"
-      success = false
-      spinner "Uninstalling plugin #{name.colorize(:cyan)}" do
+      uninstall_command = "#{gem_bin} uninstall -q #{plugin.shellescape}"
+      stderr = spinner "Uninstalling plugin #{name.colorize(:cyan)}" do |spin|
         stdout, stderr, status = Open3.capture3(uninstall_command)
-        unless stderr.empty?
-          raise stderr
-        end
+        raise(RuntimeError, stderr) unless status.success?
       end
-    rescue => exc
-      puts exc.message
     end
   end
 end

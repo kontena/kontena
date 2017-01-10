@@ -45,7 +45,7 @@ module Kontena::Cli::Apps
     end
 
     def yml_services(file)
-      yml = ::YAML.load(file)
+      yml = ::YAML.safe_load(file)
       if yml['version'] == '2'
         yml['services']
       else

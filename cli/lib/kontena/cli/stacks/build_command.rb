@@ -15,12 +15,14 @@ module Kontena::Cli::Stacks
 
     def execute
       require_config_file(filename)
-      services = Kontena::Cli::Stacks::YAML::Reader.new(filename).execute[:services]
+      stack = stack_from_yaml(filename)
+      services = stack['services']
+
       unless service_list.empty?
-        services.select! { |name, _| service_list.include?(name) }
+        services.select! { |service| service_list.include?(service['name']) }
       end
 
-      if services.none?{ |name, service| service['build'] }
+      if services.none?{ |service| service['build'] }
         abort 'Not found any service with a build option'.colorize(:red)
       end
       build_docker_images(services, no_cache?, no_pull?)
@@ -31,7 +33,7 @@ module Kontena::Cli::Stacks
     # @param [Boolean] no_cache
     # @param [Boolean] no_pull
     def build_docker_images(services, no_cache = false, no_pull = false)
-      services.each do |name, service|
+      services.each do |service|
         if service['build']
           dockerfile = service['build']['dockerfile'] || 'Dockerfile'
           abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
@@ -48,7 +50,7 @@ module Kontena::Cli::Stacks
 
     # @param [Hash] services
     def push_docker_images(services)
-      services.each do |name, service|
+      services.each do |service|
         if service['build']
           puts "Pushing image #{service['image'].colorize(:cyan)}"
           push_docker_image(service['image'])

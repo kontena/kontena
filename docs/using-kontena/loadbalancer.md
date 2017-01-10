@@ -75,6 +75,29 @@ These environment variables configure the load balancer itself.
 * `KONTENA_LB_HEALTH_URI` - URI at which to enable Kontena Load Balancer level health check endpoint. Returns `200 OK` when Kontena Load Balancer is functional.
 * `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
 * `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer#ssl-termination).
+* `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer#configuringcustomsslciphers)
+* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file
+
+### Removing <NOSRV> / BADREQ log entries
+
+From HAProxy docs:
+> Recently some browsers started to implement a "pre-connect" feature
+consisting in speculatively connecting to some recently visited web sites
+just in case the user would like to visit them. This results in many
+connections being established to web sites, which end up in 408 Request
+Timeout if the timeout strikes first, or 400 Bad Request when the browser
+decides to close them first. These ones pollute the log and feed the error
+counters.
+
+To remove these polluting lines in the logs use following config for loadbalancer:
+```
+environment:
+    KONTENA_LB_CUSTOM_SETTINGS: |
+      option http-ignore-probes
+```
+
+See HAProxy [docs](http://cbonte.github.io/haproxy-dconv/1.6/configuration.html#option%20http-ignore-probes) for details.
+
 
 ## Stats
 
@@ -156,7 +179,6 @@ loadbalancer:
       type: env
 ```
 
-
 #### An example with 2 certificates (www.domain.com and api.domain.com):
 
 Write certificates to Kontena Vault:
@@ -183,6 +205,20 @@ loadbalancer:
       type: env
 ```
 
+### Configuring custom SSL Ciphers
+
+By default Kontena Loadbalancer uses strong SSL cipher suite, see:
+https://github.com/kontena/kontena-loadbalancer/blob/master/confd/templates/haproxy.tmpl#L9
+
+In some cases it is required to have somewhat customized cipher suite to cater specific security requirements or other such needs.
+
+ This can be achieved by using specific environment variable for the loadbalancer service:
+ ```
+ KONTENA_LB_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384
+ ```
+
+
+
 ## Config Env Variables for Load Balanced Services
 
 These options are defined on the services that are balanced through Kontena Load Balancer.
@@ -191,7 +227,7 @@ These options are defined on the services that are balanced through Kontena Load
 * `KONTENA_LB_BALANCE`: load-balancing algorithm to use; possible values: roundrobin (default), source, leastcon
 * `KONTENA_LB_INTERNAL_PORT`: service port that is attached to load balancer
 * `KONTENA_LB_EXTERNAL_PORT`: service port that load balancer starts to listen (only for tcp mode)
-* `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts (only for http mode)
+* `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts, if you would like to access your service through the vpn, you'll need to add that as a virtual host as well (only for http mode)
 * `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request; example: "/api" (only for http mode)
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to either the related backend section or the listen session in the HAProxy configuration file
