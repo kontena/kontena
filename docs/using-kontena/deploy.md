@@ -74,11 +74,16 @@ When creating services, you can direct the Node(s) to which the containers shoul
 
 An affinity condition happens when Kontena is trying to find a field that matches (`==`) a given value. An anti-affinity condition happens when Kontena is trying to find a field that does not match (`!=`) a given value.
 
-Kontena has the ability to compare values against Node name, labels and Service name.
+Kontena has the ability to compare values against Node name, container, labels and Service name.
 
 ```
 affinity:
     - node==node1.kontena.io
+```
+
+```
+affinity:
+    - container==service-name-1
 ```
 
 ```
