@@ -80,7 +80,7 @@ module Kontena::Launchers
           'Binds' => volume_binds,
           'NetworkMode' => 'host',
           'CpuShares' => 128,
-          'Memory' => (256 * 1024 * 1024)
+          'Memory' => (256 * 1024 * 1024),
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
