@@ -190,14 +190,22 @@ describe '/v1/grids' do
         expect(instance['instance_counts']['running']).to eq(2)
       end
 
-      it 'it returns internal services' do
+      it 'it returns services for stack' do
+        grid = david.grids.first
+        stack = grid.stacks.create(name: 'redis')
+        redis = stack.grid_services.create(name: 'redis', image_name: 'redis:latest', grid: grid)
+        grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
+        get "/v1/grids/#{grid.to_path}/services?stack=redis", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['services'].size).to eq(1)
+        expect(json_response['services'][0]['name']).to eq(redis.name)
+      end
+
+      it 'it returns services for stack' do
         grid = david.grids.first
         grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
-        grid.grid_services.create!(name: 'vpn', image_name: 'kontena/openvpn:latest')
-        grid.grid_services.create!(name: 'registry', image_name: 'registry:2.0')
-        get "/v1/grids/#{grid.to_path}/services", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['services'].size).to eq(3)
+        get "/v1/grids/#{grid.to_path}/services?stack=redis", nil, request_headers
+        expect(response.status).to eq(404)
       end
     end
 
