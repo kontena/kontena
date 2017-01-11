@@ -100,7 +100,7 @@ module Kontena::LoadBalancers
     def remove_service(container)
       service_name = container.service_name_for_lb
       lsdir(ETCD_PREFIX).each do |key|
-        if key_exists?("#{key}/services")
+        if key_exists?("#{key}/services") || key_exists?("#{key}/tcp-services")
           # un-stacked lb
           debug "ensuring service removal from un-stacked lb at: #{key}"
           rmdir("#{key}/services/#{service_name}") rescue nil

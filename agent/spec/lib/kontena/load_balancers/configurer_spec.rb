@@ -186,12 +186,16 @@ describe Kontena::LoadBalancers::Configurer do
 
       expect(subject.wrapped_object).to receive(:key_exists?).
         with('/kontena/haproxy/stack1/services').and_return(false)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack1/tcp-services').and_return(false)
       expect(subject.wrapped_object).to receive(:lsdir).
         with("#{etcd_prefix}/stack1").
         and_return(['/kontena/haproxy/stack1/lb1'])
 
       expect(subject.wrapped_object).to receive(:key_exists?).
         with('/kontena/haproxy/stack2/services').and_return(false)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack2/tcp-services').and_return(false)
       expect(subject.wrapped_object).to receive(:lsdir).
         with("#{etcd_prefix}/stack2").
         and_return(['/kontena/haproxy/stack2/lb2'])
@@ -215,6 +219,8 @@ describe Kontena::LoadBalancers::Configurer do
 
       expect(subject.wrapped_object).to receive(:key_exists?).
         with('/kontena/haproxy/stack1/services').and_return(false)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack1/tcp-services').and_return(false)
       expect(subject.wrapped_object).to receive(:lsdir).
         with("#{etcd_prefix}/stack1").
         and_return(['/kontena/haproxy/stack1/lb1'])
