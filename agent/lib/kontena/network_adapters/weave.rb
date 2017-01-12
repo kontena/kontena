@@ -214,7 +214,7 @@ module Kontena::NetworkAdapters
     # @param [Hash] info
     def start(info)
       wait { images_exist? && !starting? }
-      
+
       @starting = true
 
       weave = Docker::Container.get('weave') rescue nil
@@ -227,8 +227,8 @@ module Kontena::NetworkAdapters
       trusted_subnets = info.dig('grid', 'trusted_subnets')
       until weave && weave.running? do
         exec_params = [
-          '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-          '--password', ENV['KONTENA_TOKEN']
+          '--local', 'launch-router', '--ipalloc-range', '',
+          '--password', ENV['KONTENA_TOKEN'], '--no-dns',
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         @executor_pool.execute(exec_params)
@@ -284,8 +284,11 @@ module Kontena::NetworkAdapters
     # @param [Hash] config
     def config_changed?(weave, config)
       return true if weave.config['Image'].split(':')[1] != WEAVE_VERSION
-      cmd = Hash[*weave.config['Cmd'].flatten(1)]
-      return true if cmd['--trusted-subnets'] != config.dig('grid', 'trusted_subnets').to_a.join(',')
+      cmd = weave.config['Cmd']
+
+      trusted_subnets = (i = cmd.find_index('--trusted-subnets')) ? cmd[i + 1] : ''
+
+      return true if i != config.dig('grid', 'trusted_subnets').to_a.join(',')
 
       false
     end
