@@ -19,27 +19,26 @@ write_files:
       fs.inotify.max_user_instances = 8192
 coreos:
   units:
-    - name: 00-eth.network
-      runtime: true
+    - name: 50-docker.network
+      mask: true
+    - name: 50-docker-veth.network
+      mask: true
+    - name: zz-default.network
       content: |
+        # default should not match virtual Docker/weave bridge/veth network interfaces
         [Match]
-        Name=eth*
+        Name=<%= match_default_network_name %>
+
         [Network]
         DHCP=yes
         <% dns_servers.each do |dns| %>DNS=<%= dns %>
         <% end %>
-        DOMAINS=kontena.local
+        Domains=kontena.local
+
         [DHCP]
+        UseMTU=true
         UseDNS=false
 
-    - name: 10-weave.network
-      runtime: false
-      content: |
-        [Match]
-        Type=bridge
-        Name=weave*
-
-        [Network]
     - name: kontena-agent.service
       command: start
       enable: true
