@@ -19,8 +19,6 @@ write_files:
       fs.inotify.max_user_instances = 8192
 coreos:
   units:
-    - name: 10-weave.network
-      mask: true
     - name: 50-docker.network
       mask: true
     - name: 50-docker-veth.network
