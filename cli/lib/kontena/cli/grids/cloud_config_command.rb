@@ -30,8 +30,9 @@ module Kontena::Cli::Grids
         # use explicit value
       elsif peer_interface =~ /^([a-z]+)(\d+)$/
         default_interface_match = "#{$1}*"
+        warning "Guessing --default-interface-match=#{default_interface_match} from --peer-interface=#{peer_interface}, make sure that this matches the interface names used by the node platform"
       else
-        error "Unable to determine --default-interface-match from --peer-interface=#{peer_interface}, configure --default-interface-match= explicitly"
+        exit_with_error "Unable to determine --default-interface-match from --peer-interface=#{peer_interface}, configure --default-interface-match= explicitly"
       end
 
       require 'kontena/machine/cloud_config/node_generator'
