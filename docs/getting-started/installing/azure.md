@@ -2,7 +2,7 @@
 title: Azure
 ---
 
-# Running Kontena on Azure
+# Running Kontena on Azure (Classic)
 
 - [Prerequisities](azure#prerequisities)
 - [Installing Azure Plugin](azure#installing-kontena-aws-plugin)
