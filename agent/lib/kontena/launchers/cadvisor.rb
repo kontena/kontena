@@ -51,7 +51,9 @@ module Kontena::Launchers
     # @param [String] image
     def create_container(image)
       container = Docker::Container.get('kontena-cadvisor') rescue nil
-      if container && container.info['Config']['Image'] != image
+      if container && config_changed?(container)
+        info "config has been changed, removing cadvisor"
+        container.stop
         container.delete(force: true)
       elsif container && container.running?
         info "cadvisor is already running"
@@ -67,14 +69,18 @@ module Kontena::Launchers
           '--listen_ip=127.0.0.1',
           '--port=8989',
           '--storage_duration=2m',
-          '--housekeeping_interval=30s'
+          '--housekeeping_interval=10s',
+          '--disable_metrics=tcp,disk'
         ],
+        'Labels' => {
+          'io.kontena.agent.version' => Kontena::Agent::VERSION
+        },
         'Volumes' => volume_mappings,
         'HostConfig' => {
           'Binds' => volume_binds,
           'NetworkMode' => 'host',
-          'PidMode' => 'host',
-          'Privileged' => true,
+          'CpuShares' => 128,
+          'Memory' => (256 * 1024 * 1024),
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
@@ -89,37 +95,31 @@ module Kontena::Launchers
 
     # @return [Hash]
     def volume_mappings
-      if kontena_image?
-        {
-          '/host' => {}
-        }
-      else
-        {
-          '/rootfs' => {},
-          '/var/run' => {},
-          '/sys' => {},
-          '/var/lib/docker' => {}
-        }
-      end
+      {
+        '/rootfs' => {},
+        '/var/run' => {},
+        '/sys' => {},
+        '/var/lib/docker' => {}
+      }
     end
 
     # @return [Array<String>]
     def volume_binds
-      if kontena_image?
-        ['/:/host:rw']
-      else
-        [
-          '/:/rootfs:ro',
-          '/var/run:/var/run',
-          '/sys:/sys:ro',
-          '/var/lib/docker:/var/lib/docker:ro'
-        ]
-      end
+      [
+        '/:/rootfs:ro',
+        '/var/run:/var/run',
+        '/sys:/sys:ro',
+        '/var/lib/docker:/var/lib/docker:ro'
+      ]
     end
 
+    # @param [Docker::Container] cadvisor
     # @return [Boolean]
-    def kontena_image?
-      CADVISOR_IMAGE == 'kontena/cadvisor'
+    def config_changed?(cadvisor)
+      return true if cadvisor.config['Image'] != image
+      return true if cadvisor.labels['io.kontena.agent.version'].to_s != Kontena::Agent::VERSION
+
+      false
     end
   end
 end
