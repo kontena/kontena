@@ -9,11 +9,8 @@ RUN echo 'deb http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu trusty main' >> 
     rm -rf /var/lib/apt/lists/* && \
     gem install bundler
 
-COPY server/Gemfile /build/server/Gemfile
-COPY server/Gemfile.lock /build/server/Gemfile.lock
-
-COPY agent/Gemfile /build/agent/Gemfile
-COPY agent/Gemfile.lock /build/agent/Gemfile.lock
+COPY server/Gemfile server/Gemfile.lock /build/server/
+COPY agent/Gemfile agent/Gemfile.lock /build/agent/
 
 
 RUN cd /build/server && bundle install && \
