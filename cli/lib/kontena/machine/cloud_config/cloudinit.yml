@@ -27,7 +27,7 @@ coreos:
       content: |
         # default should not match virtual Docker/weave bridge/veth network interfaces
         [Match]
-        Name=eth*
+        Name=<%= match_default_network_name %>
 
         [Network]
         DHCP=yes
