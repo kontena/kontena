@@ -35,7 +35,6 @@ module Kontena
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
             notify_master(service_container, service_pod.deploy_rev)
-            Celluloid::Notifications.publish('lb:ensure_instance_config', service_container)
             return service_container
           else
             info "removing previous version of service: #{service_pod.name}"
@@ -47,9 +46,6 @@ module Kontena
         debug "creating container: #{service_pod.name}"
         service_container = create_container(service_config)
         debug "container created: #{service_pod.name}"
-        if service_container.load_balanced? && service_container.instance_number == 1
-          Celluloid::Notifications.publish('lb:ensure_config', service_container)
-        end
 
         service_container.start
         info "service started: #{service_pod.name}"

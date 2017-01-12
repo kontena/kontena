@@ -14,7 +14,6 @@ module Kontena
       @supervisor = Celluloid::Supervision::Container.run!
       self.supervise_launchers
       self.supervise_network_adapter
-      self.supervise_lb
       self.supervise_workers
     end
 
@@ -139,17 +138,6 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Workers::ContainerStarterWorker,
         as: :container_starter_worker
-      )
-    end
-
-    def supervise_lb
-      @supervisor.supervise(
-        type: Kontena::LoadBalancers::Configurer,
-        as: :lb_configurer
-      )
-      @supervisor.supervise(
-        type: Kontena::LoadBalancers::Registrator,
-        as: :lb_registrator
       )
     end
 
