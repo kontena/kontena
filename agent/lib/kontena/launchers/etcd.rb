@@ -237,6 +237,7 @@ module Kontena::Launchers
     # @param [String] container_id
     # @param [String] weave_ip
     def add_dns(container_id, weave_ip)
+      # TODO
       publish('dns:add', {id: container_id, ip: weave_ip, name: 'etcd.kontena.local'})
     end
 

@@ -12,8 +12,6 @@ module Kontena::Workers
     def initialize
       info 'initialized'
 
-      subscribe('dns:add', :on_dns_add)
-
       @migrate_containers = nil # initialized by #start
 
       if network_adapter.running?
@@ -75,7 +73,6 @@ module Kontena::Workers
       if overlay_cidr
         wait_weave_running?
 
-        register_container_dns(container)
         attach_overlay(container)
       else
         debug "skip start for container=#{container.name} without overlay_cidr"
@@ -129,70 +126,6 @@ module Kontena::Workers
           network_adapter.attach_container(container.id, overlay_cidr)
         end
       end
-    end
-
-    # @param [Docker::Container]
-    def register_container_dns(container)
-      grid_name = container.labels['io.kontena.grid.name']
-      service_name = container.labels['io.kontena.service.name']
-      instance_number = container.labels['io.kontena.service.instance_number']
-      if container.config['Domainname'].to_s.empty?
-        domain_name = "#{grid_name}.kontena.local"
-      else
-        domain_name = container.config['Domainname']
-      end
-      if container.default_stack?
-        if container.labels['io.kontena.stack.name']
-          hostname = container.config['Hostname']
-        else
-          hostname = container.labels['io.kontena.container.name'] # legacy container
-        end
-        dns_names = default_stack_dns_names(hostname, service_name, domain_name)
-        dns_names = dns_names + stack_dns_names(hostname, service_name, domain_name)
-      else
-        hostname = container.config['Hostname']
-        dns_names = stack_dns_names(hostname, service_name, domain_name)
-        if container.labels['io.kontena.service.exposed']
-          dns_names = dns_names + exposed_stack_dns_names(instance_number, domain_name)
-        end
-      end
-      dns_names.each do |name|
-        add_dns(container.id, container.overlay_ip, name)
-      end
-    end
-
-    # @param [String] hostname
-    # @param [String] service_name
-    # @param [String] domain_name
-    # @return [Array<String>]
-    def default_stack_dns_names(hostname, service_name, domain_name)
-      base_domain = domain_name.split('.', 2)[1]
-      [
-        "#{hostname}.#{base_domain}",
-        "#{service_name}.#{base_domain}"
-      ]
-    end
-
-    # @param [String] hostname
-    # @param [String] service_name
-    # @param [String] domain_name
-    # @return [Array<String>]
-    def stack_dns_names(hostname, service_name, domain_name)
-      [
-        "#{service_name}.#{domain_name}",
-        "#{hostname}.#{domain_name}"
-      ]
-    end
-
-    # @param [String] instance_number
-    # @param [String] domain_name
-    # @return [Array<String>]
-    def exposed_stack_dns_names(instance_number, domain_name)
-      stack, base_domain = domain_name.split('.', 2)
-      [
-        domain_name,
-        "#{stack}-#{instance_number}.#{base_domain}"
-      ]
     end
   end
 end
