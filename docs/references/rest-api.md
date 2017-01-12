@@ -1,9 +1,9 @@
 ---
-title: Rest API
+title: REST API
 toc_order: 3
 ---
 
-# Kontena Master Rest API 
+# Kontena Master REST API
 
 The Kontena Master API allows you to manage all things related to Kontena Master in a simple, programmatic way using conventional HTTP requests. The endpoints are intuitive and powerful, allowing you to easily make calls to retrieve information or to execute actions.
 
