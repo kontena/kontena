@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.5](https://github.com/kontena/kontena/releases/tag/v1.0.5) (2016-01-13)
+
+**Master & Agents:**
+
+-
+- fix loadbalancer link removal (#1623)
+- disable cAdvisor disk metrics & give lower cpu priority (#1629)
+- return 404 if stack not found (#1613)
+- fix EventMachine to abort on exceptions (#1626)
+
+**CLI:**
+
+- fix kontena grid cloud-config network units (#1619)
+
 ## [1.0.4](https://github.com/kontena/kontena/releases/tag/v1.0.4) (2016-01-04)
 
 **Master & Agents:**
