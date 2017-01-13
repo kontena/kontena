@@ -85,13 +85,10 @@ module Kontena::Workers
     ##
     # @param [Hash] container
     def send_container_stats(container)
-      # when single container stats are used cadvisor "prefixes" all the data with some stupid system slice sutff
-      slice_key = container.keys[0]
-
-      prev_stat = container.dig(slice_key, :stats)[-2] if container
+      prev_stat = container.dig(:stats)[-2] if container
       return if prev_stat.nil?
 
-      current_stat = container.dig(slice_key, :stats, -1)
+      current_stat = container.dig(:stats, -1)
       # Need to default to something usable in calculations
       cpu_usages = current_stat.dig(:cpu, :usage, :per_cpu_usage)
       num_cores = cpu_usages ? cpu_usages.count : 1
@@ -101,8 +98,8 @@ module Kontena::Workers
       event = {
         event: 'container:stats'.freeze,
         data: {
-          id: container.dig(slice_key, :aliases, 1),
-          spec: container.dig(slice_key, :spec),
+          id: container.dig(:aliases, 1),
+          spec: container.dig(:spec),
           cpu: {
             usage: raw_cpu_usage,
             usage_pct: (((raw_cpu_usage / interval_in_ns ) / num_cores ) * 100).round(2)
@@ -117,7 +114,7 @@ module Kontena::Workers
         }
       }
       self.queue << event
-      send_statsd_metrics(container.dig(slice_key, :aliases, 0), event[:data])
+      send_statsd_metrics(container.dig(:aliases, 0), event[:data])
     end
 
     def client
