@@ -3,56 +3,78 @@ module Kontena::Cli::Vault
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    option ['-u', '--upsert'], :flag, 'Create secret unless already exists', default: false
-    parameter "FILENAME", "Secret yaml file"
+    banner "Imports secrets to Vault from a YAML file. Secrets with a null value will be deleted from Vault."
+
+    option "--force", :flag, "Force import", default: false, attribute_name: :forced
+    option '--json', :flag, "Input JSON instead of YAML"
+    option '--skip-null', :flag, "Do not remove keys with null values"
+    option '--empty-is-null', :flag, "Treat empty values as null"
+
+    parameter '[PATH]', "Input from file in PATH, default: STDIN"
+
+    requires_current_master
+
+    UPDATE_CMD = 'vault update --upsert --silent %{key} %{value}'
+    DELETE_CMD = 'vault rm --silent --force %{key}'
+
+
+    def parsed_input
+      json? ? JSON.load(input) : YAML.safe_load(input)
+    end
+
+    def input
+      path ? File.read(path) : STDIN.read
+    end
 
     def execute
-      require_api_url
       require_current_grid
-      token = require_token
 
-      # Not sure of a better way to do this for now. Skips the first two ARGF
-      # reads in order to get to the third without raising an error.
-      2.times do
-        begin
-          ARGF.read
-        rescue
+      updates = []
+      deletes = []
+
+      parsed_input.map do |k,v|
+        case v
+        when String, Numeric, TrueClass, FalseClass
+          if empty_is_null? && v.to_s.empty?
+            deletes << k.to_s
+          else
+            updates << [k.to_s, v.to_s]
+          end
+        when NilClass
+          deletes << k.to_s
+        else
+          exit_with_error "Invalid value type #{v.class} for #{k}."
         end
       end
 
-      raw = ARGF.read
-      exit_with_error('No data recieved from yaml file') if raw.to_s == ''
-      begin
-        secrets = YAML.load(raw)
-      rescue
-        exit_with_error('STDIN did not contain valid yaml')
+      if updates.empty? && deletes.empty?
+        exit_with_error "No secrets loaded"
       end
 
-      current_secret_keys =
-        client(token)
-        .get("grids/#{current_grid}/secrets")
-        .fetch('secrets')
-        .map { |entry| entry.fetch('name') }
+      unless forced?
+        puts "About to.."
+        puts "  * #{Kontena.pastel.yellow("IMPORT")} #{updates.size} secret#{"s" if updates.size > 1}" unless updates.empty?
+        puts "  * #{Kontena.pastel.red("DELETE")} #{deletes.size} secret#{"s" if deletes.size > 1}" unless deletes.empty?
+        confirm
+      end
 
-      count = 0 
-      vspinner 'Importing all values into the vault' do
-        secrets.each_pair do |name, secret|
-          data = {
-            name: name,
-            value: secret,
-            upsert: upsert?
-          }
-          if current_secret_keys.include?(name) && upsert?
-            client(token).put("secrets/#{current_grid}/#{name}", data)
-            count = count+1
-          elsif !current_secret_keys.include?(name)
-            client(token).post("grids/#{current_grid}/secrets", data)
-            count = count+1
+      unless updates.empty?
+        spinner "Updating #{updates.size} secrets" do |spin|
+          updates.each do |pair|
+            result = Kontena.run(UPDATE_CMD % { key: pair.first.shellescape, value: pair.last.shellescape })
+            spin.fail! unless result.zero?
           end
         end
       end
-      
-      puts "Imported #{count} secrets."
+
+      unless deletes.empty? || skip_null?
+        spinner "Deleting #{deletes.size} secrets" do |spin|
+          deletes.map(&:shellescape).each do |del|
+            result = Kontena.run(DELETE_CMD % { key: del })
+            spin.fail! unless result.zero?
+          end
+        end
+      end
     end
   end
 end

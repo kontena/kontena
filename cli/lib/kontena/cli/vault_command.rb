@@ -13,8 +13,8 @@ class Kontena::Cli::VaultCommand < Kontena::Command
   subcommand "read", "Read secret", Kontena::Cli::Vault::ReadCommand
   subcommand "update", "Update secret", Kontena::Cli::Vault::UpdateCommand
   subcommand ["remove", "rm"], "Remove secret", Kontena::Cli::Vault::RemoveCommand
-  subcommand "export", "Export secrets to STDOUT in yaml format", Kontena::Cli::Vault::ExportCommand
-  subcommand "import", "Import secrets from a yaml file", Kontena::Cli::Vault::ImportCommand
+  subcommand "export", "Export secrets to STDOUT", Kontena::Cli::Vault::ExportCommand
+  subcommand "import", "Import secrets from a file or STDIN", Kontena::Cli::Vault::ImportCommand
 
   def execute
   end
