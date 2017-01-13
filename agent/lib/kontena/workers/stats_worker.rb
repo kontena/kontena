@@ -65,7 +65,7 @@ module Kontena::Workers
     def collect_container_stats(container_id)
       retries = 3
       begin
-        response = client.get(:path => "/api/v1.2/docker/#{container_id}")
+        response = client.get(:path => "/api/v1.2/containers/docker/#{container_id}")
         if response.status == 200
           JSON.parse(response.body, symbolize_names: true) rescue nil
         else
