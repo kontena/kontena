@@ -49,9 +49,12 @@ module Kontena::Workers
       info 'starting collection'
 
       if response = get("/api/v1.2/subcontainers")
-        response.each do |stat|
-          next unless stat[:namespace] == 'docker'
-          next if stat['name'].ends_with? '.mount'
+        response.each do |data|
+          next unless data[:namespace] == 'docker'
+
+          # Skip systemd mount units that confuse cadvisor
+          # @see https://github.com/kontena/kontena/issues/1656
+          next if data[:name].end_with? '.mount'
 
           send_container_stats(data)
         end
