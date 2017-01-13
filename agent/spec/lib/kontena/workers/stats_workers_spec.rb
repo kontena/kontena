@@ -42,7 +42,7 @@ describe Kontena::Workers::StatsWorker do
       excon = double
       response = double
       allow(subject.wrapped_object).to receive(:client).and_return(excon)
-      expect(excon).to receive(:get).with(:path => '/api/v1.2/docker/foo').and_return(response)
+      expect(excon).to receive(:get).with(:path => '/api/v1.2/containers/docker/foo').and_return(response)
       allow(response).to receive(:status).and_return(200)
       allow(response).to receive(:body).and_return('{"foo":"bar"}')
       expect(subject.collect_container_stats('foo')).to eq({:foo => "bar"})
@@ -51,7 +51,7 @@ describe Kontena::Workers::StatsWorker do
     it 'retries 3 times' do
       excon = double
       allow(subject.wrapped_object).to receive(:client).and_return(excon)
-      allow(excon).to receive(:get).with(:path => '/api/v1.2/docker/foo').and_raise(Excon::Errors::Error)
+      allow(excon).to receive(:get).with(:path => '/api/v1.2/containers/docker/foo').and_raise(Excon::Errors::Error)
       expect(excon).to receive(:get).exactly(3).times
       subject.collect_container_stats('foo')
     end
@@ -61,7 +61,7 @@ describe Kontena::Workers::StatsWorker do
       excon = double
       response = double
       allow(subject.wrapped_object).to receive(:client).and_return(excon)
-      allow(excon).to receive(:get).with(:path => '/api/v1.2/docker/foo').and_return(response)
+      allow(excon).to receive(:get).with(:path => '/api/v1.2/containers/docker/foo').and_return(response)
       allow(response).to receive(:status).and_return(500)
       allow(response).to receive(:body).and_return('{"foo":"bar"}')
       expect(subject.collect_container_stats('foo')).to eq(nil)
@@ -147,9 +147,9 @@ describe '#send_container_stats' do
             usage: 1024,
             working_set: 2048
           },
-          filesystem: event.dig(event.keys[0], :stats, -1, :filesystem),
-          diskio: event.dig(event.keys[0], :stats, -1, :diskio),
-          network: event.dig(event.keys[0], :stats, -1, :network)
+          filesystem: event.dig(:stats, -1, :filesystem),
+          diskio: event.dig(:stats, -1, :diskio),
+          network: event.dig(:stats, -1, :network)
         }
       ))
       expect {
@@ -158,7 +158,7 @@ describe '#send_container_stats' do
     end
 
     it 'does not fail on missing cpu stats' do
-      event[event.keys[0]][:stats][-1][:cpu][:usage][:per_cpu_usage] = nil
+      event[:stats][-1][:cpu][:usage][:per_cpu_usage] = nil
       expect(subject.wrapped_object).to receive(:send_statsd_metrics).with('weave', hash_including({
           id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e',
           spec: 'spec',
@@ -170,9 +170,9 @@ describe '#send_container_stats' do
             usage: 1024,
             working_set: 2048
           },
-          filesystem: event.dig(event.keys[0], :stats, -1, :filesystem),
-          diskio: event.dig(event.keys[0], :stats, -1, :diskio),
-          network: event.dig(event.keys[0], :stats, -1, :network)
+          filesystem: event.dig(:stats, -1, :filesystem),
+          diskio: event.dig(:stats, -1, :diskio),
+          network: event.dig(:stats, -1, :network)
         }
       ))
       expect {
