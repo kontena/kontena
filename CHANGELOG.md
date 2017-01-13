@@ -4,7 +4,6 @@
 
 **Master & Agents:**
 
--
 - fix loadbalancer link removal (#1623)
 - disable cAdvisor disk metrics & give lower cpu priority (#1629)
 - return 404 if stack not found (#1613)
