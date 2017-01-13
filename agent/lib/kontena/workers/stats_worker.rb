@@ -47,25 +47,26 @@ module Kontena::Workers
 
     def collect_stats
       info 'starting collection'
-      begin
-        Docker::Container.all.each do |container|
-          if container.running?
-            data = self.collect_container_stats(container.id)
-            send_container_stats(data) if data
-            sleep 0.5
-          end
+
+      if response = get("/api/v1.2/subcontainers")
+        response.each do |stat|
+          next unless stat[:namespace] == 'docker'
+          next if stat['name'].ends_with? '.mount'
+
+          send_container_stats(data)
         end
-      rescue => exc
-        error "error on stats fetching: #{exc.message}"
-        error exc.backtrace.join("\n")
       end
+
+    rescue => exc
+      error "error on stats fetching: #{exc.message}"
+      error exc.backtrace.join("\n")
     end
 
 
-    def collect_container_stats(container_id)
+    def get(path)
       retries = 3
       begin
-        response = client.get(:path => "/api/v1.2/containers/docker/#{container_id}")
+        response = client.get(:path => path)
         if response.status == 200
           JSON.parse(response.body, symbolize_names: true) rescue nil
         else
@@ -77,7 +78,7 @@ module Kontena::Workers
         if retries > 0
           retry
         end
-        error "error getting container(#{container_id}) stats. #{exc.class.name}: #{exc.message}"
+        error "get #{path}: #{exc.class.name}: #{exc.message}"
         nil
       end
     end
