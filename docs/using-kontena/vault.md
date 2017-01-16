@@ -10,12 +10,12 @@ A simple way to pass secrets to a Kontena Service is to use environment variable
 
 ## Using Vault
 
-* [List Secrets](vault#list-secrets)
-* [Write a Secret](vault#write-a-secret-to-vault)
-* [Read a Secret](vault#read-a-secret)
-* [Update Secret](vault#update-secret)
-* [Remove a Secret](vault#remove-a-secret)
-* [Using Secrets with Applications](vault#using-secrets-with-applications)
+* [List Secrets](vault.md#list-secrets)
+* [Write a Secret](vault.md#write-a-secret-to-vault)
+* [Read a Secret](vault.md#read-a-secret)
+* [Update Secret](vault.md#update-secret)
+* [Remove a Secret](vault.md#remove-a-secret)
+* [Using Secrets with Applications](vault.md#using-secrets-with-applications)
 
 
 ### List Secrets
@@ -53,15 +53,16 @@ $ kontena vault rm <name>
 ### Using Secrets with Applications
 
 ```
-myapi:
-  image: example/myapi:latest
-  environment:
-    - MYSQL_USER=admin
-    - MYSQL_HOST=mysql.kontena.local
-  secrets:
-    - secret: MYSQL_ADMIN_PASSWORD
-      name: MYSQL_PASSWORD
-      type: env
+services:
+  myapi:
+    image: example/myapi:latest
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_HOST=mysql.kontena.local
+    secrets:
+      - secret: MYSQL_ADMIN_PASSWORD
+        name: MYSQL_PASSWORD
+        type: env
 ```
 
 In the above example, Kontena will read the secret `MYSQL_ADMIN_PASSWORD` from Vault and inject it as an environment variable `MYSQL_PASSWORD` to the Service when it is deployed to Nodes using `kontena app deploy`.

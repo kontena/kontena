@@ -11,6 +11,7 @@ Certificate management is integrated with Kontena [vault](vault.md) to handle ce
 ## Register for LE
 
 To use LetsEncrypt, you must first register as a user.
+
 ```
 kontena certificate register <you@example.com>
 ```
@@ -28,7 +29,7 @@ The email is needed for Let's Encrypt to notify when certificates are about to e
 
 To be able to request certificates for a domain you must first prove that you are in charge of that domain. For this, Kontena certificate management supports DNS-based authorization.
 
-```
+```bash
 $ kontena certificate authorize api.example.com
 Record name:_acme-challenge
 Record type:TXT
