@@ -46,7 +46,7 @@ module Kontena::Cli::Stacks
         return @variables if @variables
         var_sect = yaml_section('variables')
         if var_sect
-          variables_hash = ::YAML.safe_load(replace_dollar_dollars(interpolate(interpolate_liquid(var_sect, ENV.to_h), use_opto: false)))['variables']
+          variables_hash = ::YAML.safe_load(replace_dollar_dollars(interpolate(var_sect), use_opto: false))['variables']
           @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
