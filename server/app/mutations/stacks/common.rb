@@ -44,6 +44,7 @@ module Stacks
           string :version
           string :registry
           string :source
+          hash :variables
           array :services do
             model :object, class: Hash
           end
