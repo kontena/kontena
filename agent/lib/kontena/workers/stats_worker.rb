@@ -24,7 +24,7 @@ module Kontena::Workers
       @node_name = info['name']
       statsd_conf = info.dig('grid', 'stats', 'statsd')
       if statsd_conf
-        debug "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
+        info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
         @statsd = Statsd.new(
           statsd_conf['server'], statsd_conf['port'].to_i || 8125
         ).tap{|sd| sd.namespace = info.dig('grid', 'name')}
@@ -34,9 +34,9 @@ module Kontena::Workers
     end
 
     def start
-      debug 'waiting for cadvisor'
+      info 'waiting for cadvisor'
       sleep 1 until cadvisor_running?
-      debug 'cadvisor is running, starting stats loop'
+      info 'cadvisor is running, starting stats loop'
       last_collected = Time.now.to_i
       loop do
         sleep 1 until last_collected < (Time.now.to_i - 60)
