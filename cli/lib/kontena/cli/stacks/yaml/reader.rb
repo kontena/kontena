@@ -46,7 +46,18 @@ module Kontena::Cli::Stacks
         return @variables if @variables
         var_sect = yaml_section('variables')
         if var_sect
-          variables_hash = ::YAML.safe_load(replace_dollar_dollars(interpolate(var_sect), use_opto: false))['variables']
+          variables_hash = ::YAML.safe_load(
+            replace_dollar_dollars(
+              interpolate(
+                var_sect,
+                use_opto: false,
+                substitutions: {
+                  'GRID' => ENV['GRID'],
+                  'STACK' => ENV['STACK']
+                }
+              )
+            )
+          )['variables']
           @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
@@ -234,7 +245,7 @@ module Kontena::Cli::Stacks
 
       ##
       # @param [String] text - content of YAML file
-      def interpolate(text, use_opto: true)
+      def interpolate(text, use_opto: true, substitutions: ENV)
         text.split(/[\r\n]/).map do |row|
           # skip lines that opto is interpolating
           if row.strip.start_with?('interpolate:') || row.strip.start_with?('evaluate:')
@@ -244,9 +255,9 @@ module Kontena::Cli::Stacks
               var = v.tr('${}', '')
 
               if use_opto
-                val = variables.value_of(var) || ENV[var]
+                val = variables.value_of(var) || substitutions[var]
               else
-                val = ENV[var]
+                val = substitutions[var]
               end
 
               if val

@@ -396,8 +396,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(ENV).to receive(:to_h).and_return({'GRID' => 'foogrid'})
       end
 
-      it 'interpolates envs into variables' do
-        expect(subject.variables.value_of('grid_name')).to eq 'foogrid test'
+      it 'does not interpolate unknown envs into variables' do
+        expect(subject.variables.value_of('grid_name')).not_to eq 'foogrid test'
       end
 
       it 'interpolates variables into services' do
