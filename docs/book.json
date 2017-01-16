@@ -1,6 +1,6 @@
 {
   "title": "Kontena",
-  "plugins": ["edit-link", "prism", "-highlight", "github", "anchorjs"],
+  "plugins": ["edit-link", "prism", "-highlight", "github", "anchorjs", "collapsible-menu"],
   "pluginsConfig": {
     "edit-link": {
       "base": "https://github.com/kontena/kontena/tree/master/docs",
