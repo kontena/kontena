@@ -4,7 +4,6 @@ os:
   - osx
 sudo: required
 rvm:
-  - 2.0.0-p648
   - 2.1.10
   - 2.2.6
   - 2.3.1
