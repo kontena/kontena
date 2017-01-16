@@ -1,5 +1,6 @@
 require_relative '../../../../spec_helper'
 require 'kontena/cli/stacks/yaml/reader'
+require 'liquid'
 
 describe Kontena::Cli::Stacks::YAML::Reader do
   include FixturesHelpers
