@@ -31,10 +31,10 @@ describe Kontena::Workers::StatsWorker do
 
     it 'ignores systemd mount cgroups' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return([
-        { namespace: 'docker', id: 'id', name: '/docker/id' },
-        { namespace: 'docker', id: 'id', name: '/system.slice/var-lib-docker-containers-id-shm.mount' },
+        { namespace: 'docker', id: 'id1', name: '/docker/id' },
+        { namespace: 'docker', id: 'id2', name: '/system.slice/var-lib-docker-containers-id-shm.mount' },
       ])
-      expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id' }
+      expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id1' }
       subject.collect_stats
     end
 

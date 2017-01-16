@@ -89,6 +89,9 @@ module Kontena::Workers
     ##
     # @param [Hash] container
     def send_container_stats(container)
+      id = container[:id]
+      name = container[:aliases].select{|a| a != id}.first
+
       prev_stat = container.dig(:stats)[-2] if container
       return if prev_stat.nil?
 
@@ -99,10 +102,11 @@ module Kontena::Workers
       raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
       interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
 
+
       event = {
         event: 'container:stats'.freeze,
         data: {
-          id: container.dig(:aliases, 1),
+          id: id,
           spec: container.dig(:spec),
           cpu: {
             usage: raw_cpu_usage,
@@ -118,7 +122,7 @@ module Kontena::Workers
         }
       }
       self.queue << event
-      send_statsd_metrics(container.dig(:aliases, 0), event[:data])
+      send_statsd_metrics(name, event[:data])
     end
 
     def client
