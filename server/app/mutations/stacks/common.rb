@@ -44,7 +44,6 @@ module Stacks
           string :version
           string :registry
           string :source
-          hash :variables
           array :services do
             model :object, class: Hash
           end
@@ -52,6 +51,7 @@ module Stacks
 
         optional do
           string :expose
+          hash :variables
         end
       end
     end

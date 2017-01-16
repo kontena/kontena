@@ -63,7 +63,7 @@ describe '/v1/stacks' do
   end
 
   let(:expected_attributes) do
-    %w(id created_at updated_at name stack version services state expose source registry)
+    %w(id created_at updated_at name stack version services state expose source variables registry)
   end
 
   describe 'GET /:name' do
