@@ -1,5 +1,4 @@
 {
-	"/system.slice/docker-dcc8a5ef41be9527779a6e81589f5a09d792653fb7f1c3213ee4537381ec1b07.scope": {
 		"id": "a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e",
 		"name": "/system.slice/docker-a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e.scope",
 		"aliases": [
@@ -72,5 +71,4 @@
 				"usage": 18911232
 			}]
 		}]
-	}
 }
