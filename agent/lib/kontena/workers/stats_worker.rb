@@ -46,7 +46,8 @@ module Kontena::Workers
     end
 
     def collect_stats
-      info 'starting collection'
+
+      debug 'starting collection'
 
       if response = get("/api/v1.2/subcontainers")
         response.each do |data|
