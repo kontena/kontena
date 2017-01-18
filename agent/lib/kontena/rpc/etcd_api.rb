@@ -12,6 +12,7 @@ module Kontena
 
       def initialize
         @etcd = Etcd.client(host: gateway, port: 2379)
+        @etcd.extend Etcd::Health
       end
 
       # @param [String] key
@@ -51,6 +52,13 @@ module Kontena
         {error: "Key not found"}
       rescue Etcd::NotFile
         {error: "Cannot delete a directory"}
+      rescue Etcd::Error => exc
+        {error: exc.message}
+      end
+
+      # @return [Hash] {health: true}
+      def health()
+        etcd.health
       rescue Etcd::Error => exc
         {error: exc.message}
       end
