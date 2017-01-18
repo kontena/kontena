@@ -13,9 +13,9 @@ module Kontena::Cli::Etcd
 
       health = true
 
-      if node
-        node = client(token).get("nodes/#{current_grid}/#{node}")
-        node_health = client(token).get("nodes/#{current_grid}/#{node}/health")
+      if self.node
+        node = client(token).get("nodes/#{current_grid}/#{self.node}")
+        node_health = client(token).get("nodes/#{current_grid}/#{self.node}/health")
 
         health = show_node_health node, node_health['etcd']
       else
