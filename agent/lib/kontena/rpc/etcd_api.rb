@@ -56,7 +56,7 @@ module Kontena
         {error: exc.message}
       end
 
-      # @return [Hash] {health: true}
+      # @return [Hash] {'health' => Boolean} or {'error' => String}
       def health()
         etcd.health
       rescue Etcd::Error => exc
