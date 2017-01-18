@@ -25,12 +25,29 @@ module Kontena
     "kontena-cli/#{Kontena::Cli::VERSION}"
   end
 
+  def self.on_windows?
+    ENV['OS'] == 'Windows_NT' && RUBY_PLATFORM !~ /cygwin/
+  end
+
+  def self.simple_terminal?
+    ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
+  end
+
   def self.pastel
-    @pastel ||= Pastel.new(enabled: $stdout.tty?)
+    @pastel ||= Pastel.new(enabled: !simple_terminal?)
   end
 
   def self.prompt
-    @prompt ||= TTY::Prompt.new(
+    return @prompt if @prompt
+    if simple_terminal?
+      require_relative 'kontena/light_prompt'
+      klass = Kontena::LightPrompt
+    else
+      require 'tty-prompt'
+      klass = TTY::Prompt
+    end
+
+    @prompt = klass.new(
       active_color: :cyan,
       help_color: :white,
       error_color: :red,
