@@ -15,29 +15,42 @@ module Kontena::Cli::Etcd
 
       if self.node
         node = client(token).get("nodes/#{current_grid}/#{self.node}")
-        node_health = client(token).get("nodes/#{current_grid}/#{self.node}/health")
 
-        health = show_node_health node, node_health['etcd']
+        health = show_node(node)
       else
         nodes = client(token).get("grids/#{current_grid}/nodes")
 
         nodes['nodes'].each do |node|
-          node_health = client(token).get("nodes/#{current_grid}/#{node['id']}/health")
-
-          health = false unless show_node_health node, node_health['etcd']
+          health &&= show_node(node)
         end
       end
 
       return health
     end
 
+    def show_node(node)
+      token = require_token
+
+      if node['connected']
+        node_health = client(token).get("nodes/#{current_grid}/#{node['id']}/health")
+
+        return show_node_health node, node_health['etcd']
+      else
+        puts "Node #{node['name']} is offline"
+        return false
+      end
+    end
+
     def show_node_health(node, etcd_health)
       if etcd_health['health']
         puts "Node #{node['name']} is healthy"
+        return true
       elsif etcd_health['error']
         puts "Node #{node['name']} is unhealthy: #{etcd_health['error']}"
+        return false
       else
         puts "Node #{node['name']} is unhealthy"
+        return false
       end
     end
   end
