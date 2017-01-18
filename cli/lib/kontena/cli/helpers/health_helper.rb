@@ -44,8 +44,7 @@ module Kontena::Cli::Helpers
     # @return [Symbol] health
     def node_health(node, grid_health)
       if node['initial_member']
-        # an offline initial node determines the grid health
-        return node['connected'] ? :ok : grid_health
+        return node['connected'] ? grid_health : :offline
       else
         return node['connected'] ? :ok : :offline
       end
