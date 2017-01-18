@@ -20,11 +20,10 @@ module Kontena::Cli::Nodes
       (node['labels'] || ['-']).join(",")
     end
 
-    def show_grid_nodes(grid, multi: false)
-      grid_nodes = client(require_token).get("grids/#{grid['id']}/nodes")
-      grid_health = grid_health(grid, grid_nodes['nodes'])
+    def show_grid_nodes(grid, nodes, multi: false)
+      grid_health = grid_health(grid, nodes)
 
-      nodes = grid_nodes['nodes'].sort_by{|n| n['node_number'] }
+      nodes = nodes.sort_by{|n| n['node_number'] }
       nodes.each do |node|
         puts [
           "%s" % health_icon(node_health(node, grid_health)),
@@ -47,12 +46,15 @@ module Kontena::Cli::Nodes
       if all?
         grids = client(token).get("grids")
         grids['grids'].each do |grid|
-          show_grid_nodes(grid, multi: true)
+          nodes = client(require_token).get("grids/#{grid['id']}/nodes")['nodes']
+
+          show_grid_nodes(grid, nodes, multi: true)
         end
       else
         grid = client(token).get("grids/#{current_grid}")
+        nodes = client(require_token).get("grids/#{current_grid}/nodes")['nodes']
 
-        show_grid_nodes(grid)
+        show_grid_nodes(grid, nodes)
       end
     end
   end
