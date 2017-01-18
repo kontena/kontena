@@ -72,6 +72,27 @@ describe GridServices::Update do
       expect(redis_service.health_check.port).to eq(80)
       expect(redis_service.health_check.protocol).to eq('http')
     end
+
+    it 'fails validating secret existence' do
+      outcome = described_class.new(
+          grid_service: redis_service,
+          secrets: [
+            {secret: 'NON_EXISTING_SECRET', name: 'SOME_SECRET'}
+          ]
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
+    it 'validates secret existence' do
+      GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
+      outcome = described_class.new(
+          grid_service: redis_service,
+          secrets: [
+            {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+          ]
+      ).run
+      expect(outcome.success?).to be(true)
+    end
   end
 
   describe '#build_grid_service_hooks' do
