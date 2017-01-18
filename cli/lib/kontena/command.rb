@@ -169,7 +169,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def run(arguments)
-    ENV["DEBUG"] && puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
+    ENV["DEBUG"] && STDERR.puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
     @arguments = arguments
 
     run_callbacks :before_parse unless help_requested?

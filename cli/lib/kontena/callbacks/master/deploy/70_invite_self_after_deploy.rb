@@ -40,7 +40,7 @@ module Kontena
         end
 
         return nil unless invite_response
-        ENV["DEBUG"] && puts("Got invite code: #{invite_response['invite_code']}")
+        ENV["DEBUG"] && STDERR.puts("Got invite code: #{invite_response['invite_code']}")
 
         role_status = nil
 

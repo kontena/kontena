@@ -46,7 +46,7 @@ module Kontena
       uri = URI.parse(@api_url)
       @host = uri.host
 
-      @logger = Logger.new(STDOUT)
+      @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
       @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
       @logger.progname = 'CLIENT'
 
@@ -139,7 +139,7 @@ module Kontena
       request(path: final_path)
       true
     rescue
-      ENV["DEBUG"] && puts("Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}")
+      logger.debug "Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}"
       false
     end
 

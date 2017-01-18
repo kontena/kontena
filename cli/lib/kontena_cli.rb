@@ -7,16 +7,16 @@ module Kontena
   # @param [String] command_line
   # @return [Fixnum] exit_code
   def self.run(cmdline = "", returning: :status)
-    ENV["DEBUG"] && puts("Running Kontena.run(#{cmdline.inspect}, returning: #{returning}")
+    ENV["DEBUG"] && STDERR.puts("Running Kontena.run(#{cmdline.inspect}, returning: #{returning}")
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(cmdline.shellsplit)
-    ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
+    ENV["DEBUG"] && STDERR.puts("Command completed, result: #{result.inspect} status: 0")
     return 0 if returning == :status
     return result if returning == :result
   rescue SystemExit
-    ENV["DEBUG"] && puts("Command completed with failure, result: #{result.inspect} status: #{$!.status}")
+    ENV["DEBUG"] && STDERR.puts("Command completed with failure, result: #{result.inspect} status: #{$!.status}")
     returning == :status ? $!.status : nil
   rescue
-    ENV["DEBUG"] && puts("Command raised #{$!} with message: #{$!.message}\n  #{$!.backtrace.join("  \n")}")
+    ENV["DEBUG"] && STDERR.puts("Command raised #{$!} with message: #{$!.message}\n  #{$!.backtrace.join("  \n")}")
     returning == :status ? 1 : nil
   end
 
