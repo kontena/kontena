@@ -30,9 +30,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns true" do
-        expect{subject.show_node_health(node)}.to return_and_output true, <<~OUT
-          :ok Node is online
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output true,
+          ":ok Node is online"
       end
     end
   end
@@ -59,9 +58,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns false" do
-        expect{subject.show_node_health(node)}.to return_and_output false, <<~OUT
-          :offline Node is offline
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output false,
+          ":offline Node is offline"
       end
     end
   end
@@ -88,9 +86,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns true" do
-        expect{subject.show_node_health(node)}.to return_and_output true, <<~OUT
-          :ok Node is online
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output true,
+          ":ok Node is online"
       end
     end
   end
@@ -117,9 +114,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns true" do
-        expect{subject.show_node_health(node)}.to return_and_output true, <<~OUT
-          :ok Node is online
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output true,
+          ":ok Node is online"
       end
     end
   end
@@ -146,9 +142,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns true" do
-        expect{subject.show_node_health(node)}.to return_and_output true, <<~OUT
-          :ok Node is online
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output true,
+          ":ok Node is online"
       end
     end
   end
@@ -175,9 +170,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns false" do
-        expect{subject.show_node_health(node)}.to return_and_output false, <<~OUT
-          :offline Node is offline
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output false,
+          ":offline Node is offline"
       end
     end
   end
@@ -204,9 +198,8 @@ describe Kontena::Cli::Nodes::HealthCommand do
 
     describe '#show_node_health' do
       it "returns false" do
-        expect{subject.show_node_health(node)}.to return_and_output false, <<~OUT
-          :offline Node is offline
-        OUT
+        expect{subject.show_node_health(node)}.to return_and_output false,
+          ":offline Node is offline"
       end
     end
   end

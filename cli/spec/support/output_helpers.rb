@@ -1,10 +1,12 @@
 module OutputHelpers
   extend RSpec::Matchers::DSL
 
-  matcher :return_and_output do |expected, stdout|
+  matcher :return_and_output do |expected, *lines|
     supports_block_expectations
 
     match do |actual|
+      stdout = lines.flatten.join("\n") + "\n"
+
       begin
         expect{@return = actual.call}.to output(stdout).to_stdout
       rescue Exception => error
