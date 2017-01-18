@@ -17,5 +17,16 @@ module Kontena::Cli::Nodes
 
       return show_node_health(node)
     end
+
+    # @return [Boolean] true if healthy
+    def show_node_health(node)
+      if !node['connected']
+        puts "#{health_icon(:offline)} Node is offline"
+        return false
+      else
+        puts "#{health_icon(:ok)} Node is online"
+        return true
+      end
+    end
   end
 end

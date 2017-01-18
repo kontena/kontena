@@ -8,16 +8,6 @@ module Kontena::Cli::Nodes
 
     option ["--all"], :flag, "List nodes for all grids", default: false
 
-    def node_health(node, grid_health)
-      if !node['connected']
-        return :offline
-      elsif !node['initial_member']
-        return :ok
-      else
-        return grid_health[:health]
-      end
-    end
-
     def node_initial(node, grid)
       if node['initial_member']
         return "#{node['node_number']} / #{grid['initial_size']}"
@@ -32,7 +22,7 @@ module Kontena::Cli::Nodes
 
     def show_grid_nodes(grid, multi: false)
       grid_nodes = client(require_token).get("grids/#{grid['id']}/nodes")
-      grid_health = check_grid_health(grid, grid_nodes['nodes'])
+      grid_health = grid_health(grid, grid_nodes['nodes'])
 
       nodes = grid_nodes['nodes'].sort_by{|n| n['node_number'] }
       nodes.each do |node|
