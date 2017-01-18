@@ -61,3 +61,4 @@ end
 require_relative 'support/client_helpers'
 require_relative 'support/requirements_helper'
 require_relative 'support/fixtures_helpers'
+require_relative 'support/output_helpers'
