@@ -17,7 +17,7 @@ module Kontena::Cli::Nodes
     def execute
       node = client.get("nodes/#{current_grid}/#{node_id}")
 
-      provider = node["labels"].find{ |l| l.start_with?('provider=')}.to_s.split('=').last
+      provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
       commands_list.insert('--') unless commands_list.empty?
 
