@@ -59,6 +59,10 @@ module Kontena
         write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5,
         ssl_verify_peer: ignore_ssl_errors? ? false : true
       }
+      if ENV["DEBUG"]
+        require_relative 'debug_instrumentor'
+        excon_opts[:instrumentor] = Kontena::DebugInstrumentor
+      end
 
       cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
       if File.exist?(cert_file) && File.readable?(cert_file)
