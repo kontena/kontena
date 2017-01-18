@@ -25,11 +25,12 @@ module Kontena::Cli::Grids
       initial_size = grid['initial_size']
       minimum_size = grid['initial_size'] / 2 + 1 # a majority is required for etcd quorum
 
+      grid_health = grid_health(grid, nodes)
       initial_nodes = nodes.select{|node| node['initial_member']}
       online_nodes = initial_nodes.select{|node| node['connected']}
 
       if initial_nodes.length == 0
-        puts "#{health_icon :error} Grid does not have any initial nodes, and requires at least #{minimum-size} of #{initial_size} nodes for operation"
+        puts "#{health_icon :error} Grid does not have any initial nodes, and requires at least #{minimum_size} of #{initial_size} nodes for operation"
       elsif initial_nodes.length < minimum_size
         puts "#{health_icon :error} Grid only has #{initial_nodes.length} of #{minimum_size} initial nodes required for operation"
       elsif initial_nodes.length < initial_size
@@ -50,14 +51,14 @@ module Kontena::Cli::Grids
         if node['connected']
 
         elsif node['initial_member']
-          puts "#{health_icon :warning} Initial node #{node['name']} is offline"
+          puts "#{health_icon grid_health} Initial node #{node['name']} is offline"
         else
           puts "#{health_icon :offline} Grid node #{node['name']} is offline"
         end
       end
 
       # operational if we have etcd quorum
-      return initial_size >= minimum_size
+      return online_nodes.length >= minimum_size
     end
   end
 end

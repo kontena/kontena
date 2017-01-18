@@ -37,19 +37,17 @@ module Kontena::Cli::Helpers
       end
     end
 
-    # Validate grid node configuration based on the grid health
+    # Validate grid node status based on the grid health
     #
     # @param node [Hash] GET /nodes/:grid/:node
     # @param grid_health [Symbol] @see #grid_health
     # @return [Symbol] health
     def node_health(node, grid_health)
-      if !node['connected']
-        return :offline
-      elsif !node['initial_member']
-        return :ok
+      if node['initial_member']
+        # an offline initial node determines the grid health
+        return node['connected'] ? :ok : grid_health
       else
-        # the initial nodes determine the grid health
-        return grid_health
+        return node['connected'] ? :ok : :offline
       end
     end
   end
