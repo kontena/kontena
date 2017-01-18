@@ -1,24 +1,24 @@
 module Kontena::Cli::Helpers
   module HealthHelper
-    HEALTH_SYMBOL = "●"
-
-    def health_symbol(sym)
-      case sym
+    def health_icon(health)
+      case health
       when nil
         " "
       when :ok
-        pastel.green(HEALTH_SYMBOL)
+        pastel.green('⊛')
       when :warning
-        pastel.yellow(HEALTH_SYMBOL)
+        pastel.yellow('⊙')
       when :error
-        pastel.red(HEALTH_SYMBOL)
+        pastel.red('⊗')
+      when :offline
+        pastel.dark('⊝')
       else
-        pastel.dark(HEALTH_SYMBOL)
+        fail "Invalid health=#{health}"
       end
     end
 
     def show_health(health, message)
-      STDOUT.puts "#{health_symbol(health)} #{message}"
+      STDOUT.puts "#{health_icon(health)} #{message}"
     end
 
     # Validate grid nodes configuration and status
@@ -84,7 +84,7 @@ module Kontena::Cli::Helpers
     # @return [Boolean] false if unhealthy
     def show_node_health(node)
       if !node['connected']
-        show_health :error, "Node is not connected"
+        show_health :offline, "Node is not connected"
         return false
       else
         show_health :ok, "Node is connected"
