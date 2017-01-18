@@ -33,7 +33,7 @@ describe Kontena::Cli::Grids::HealthCommand do
         it "returns false" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output false, <<~OUT
               :error Grid does not have any initial nodes, and requires at least 1 of 1 nodes for operation
-              :error Grid only has 0 of 1 initial nodes online, and is not operational
+              :error Grid does not have any initial nodes online of 1 required for operation
           OUT
         end
       end
@@ -60,8 +60,8 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns false" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output false, <<~OUT
-            :warning Grid only has 1 initial nodes, and is not high-availability
-            :error Grid only has 0 of 1 initial nodes online, and is not operational
+            :warning Grid only has 1 initial node, and is not high-availability
+            :error Grid does not have any initial nodes online of 1 required for operation
             :error Initial node node-1 is offline
           OUT
         end
@@ -89,8 +89,8 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns true" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output true, <<~OUT
-            :warning Grid only has 1 initial nodes, and is not high-availability
-            :ok Grid has all 1 of 1 initial nodes connected
+            :warning Grid only has 1 initial node, and is not high-availability
+            :ok Grid has all 1 of 1 initial nodes online
           OUT
         end
       end
@@ -162,7 +162,7 @@ describe Kontena::Cli::Grids::HealthCommand do
         it "returns true" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output true, <<~OUT
             :warning Grid only has 2 initial nodes, and is not high-availability
-            :ok Grid has all 2 of 2 initial nodes connected
+            :ok Grid has all 2 of 2 initial nodes online
           OUT
         end
       end
@@ -200,7 +200,7 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns false" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output false, <<~END
-            :error Grid only has 1 of 2 initial nodes required for operation
+            :error Grid only has 1 initial nodes online of 2 required for operation
           END
         end
       end
@@ -234,7 +234,8 @@ describe Kontena::Cli::Grids::HealthCommand do
         it "returns false" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output false, <<~END
             :warning Grid only has 2 of 3 initial nodes required for high-availability
-            :error Initial node node-2 is disconnected
+            :error Grid only has 1 initial nodes online of 2 required for operation
+            :error Initial node node-2 is offline
           END
         end
       end
@@ -267,7 +268,7 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns true" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output true, <<~END
-            :warning Grid only has 2 of 3 initial nodes required for high-availability
+            :warning Grid only has 2 initial nodes online of 3 required for high-availability
           END
         end
       end
@@ -306,7 +307,8 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns true" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output true, <<~END
-            :warning Initial node node-3 is disconnected
+            :warning Grid only has 2 initial nodes online of 3 required for high-availability
+            :warning Initial node node-3 is offline
           END
         end
       end
@@ -345,7 +347,7 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns true" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output true, <<~END
-            :warning Grid only has 2 of 3 initial nodes required for high-availability
+            :warning Grid only has 2 initial nodes online of 3 required for high-availability
           END
         end
       end
@@ -384,7 +386,7 @@ describe Kontena::Cli::Grids::HealthCommand do
       describe '#show_grid_health' do
         it "returns true" do
           expect{subject.show_grid_health(grid, grid_nodes['nodes'])}.to return_and_output true, <<~END
-            :ok Grid has all 3 of 3 initial nodes connected
+            :ok Grid has all 3 of 3 initial nodes online
           END
         end
       end

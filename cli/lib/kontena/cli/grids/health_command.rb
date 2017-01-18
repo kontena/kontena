@@ -35,14 +35,18 @@ module Kontena::Cli::Grids
         puts "#{health_icon :error} Grid only has #{initial_nodes.length} of #{minimum_size} initial nodes required for operation"
       elsif initial_nodes.length < initial_size
         puts "#{health_icon :warning} Grid only has #{initial_nodes.length} of #{initial_size} initial nodes required for high-availability"
-      elsif initial_nodes.length <= 2
+      elsif initial_nodes.length == 2
+        puts "#{health_icon :warning} Grid only has #{initial_nodes.length} initial nodes, and is not high-availability"
+      elsif initial_nodes.length == 1
         puts "#{health_icon :warning} Grid only has #{initial_nodes.length} initial node, and is not high-availability"
       end
 
-      if online_nodes.length < minimum_size
+      if online_nodes.empty?
+        puts "#{health_icon :error} Grid does not have any initial nodes online of #{minimum_size} required for operation"
+      elsif online_nodes.length < minimum_size
         puts "#{health_icon :error} Grid only has #{online_nodes.length} initial nodes online of #{minimum_size} required for operation"
       elsif online_nodes.length < initial_size
-        puts "#{health_icon :warning} Grid only has #{online_nodes.length} initial nodes online of #{initial_size} fequired for high-availability"
+        puts "#{health_icon :warning} Grid only has #{online_nodes.length} initial nodes online of #{initial_size} required for high-availability"
       else
         puts "#{health_icon :ok} Grid has all #{online_nodes.length} of #{initial_size} initial nodes online"
       end
