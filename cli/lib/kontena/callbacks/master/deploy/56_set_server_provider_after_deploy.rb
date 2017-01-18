@@ -12,10 +12,12 @@ module Kontena
         return unless config.current_master.name == command.result[:name]
         return unless command.result[:provider]
 
-        cmd = ['master', 'config', 'set', "server.provider=#{command.result[:provider]}".shellescape]
+        require 'shellwords'
+
+        cmd = ['master', 'config', 'set', "server.provider=#{command.result[:provider]}"]
         spinner "Setting Master configuration server.provider to '#{command.result[:provider]}'" do
           Retriable.retriable do
-            Kontena.run(*cmd)
+            Kontena.run(cmd.shelljoin)
           end
         end
       end
