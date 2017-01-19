@@ -1,7 +1,7 @@
 module Users
   class AddRole < Mutations::Command
 
-    attr_accessor :role_instance
+    attr_reader :role_instance
 
     required do
       model :current_user, class: User
@@ -9,14 +9,10 @@ module Users
       string :role
     end
 
-    optional do
-      model :role_instance, class: Role
-    end
-
     def validate
-      self.role_instance = Role.find_by(name: role)
+      @role_instance = Role.find_by(name: role)
 
-      unless role_instance
+      if role_instance.nil?
         add_error(:role, :not_found, "Role '#{role}' not found")
         return false
       end

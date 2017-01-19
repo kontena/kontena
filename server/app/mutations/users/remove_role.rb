@@ -1,19 +1,18 @@
 module Users
   class RemoveRole < Mutations::Command
+
+    attr_reader :role_instance
+
     required do
       model :current_user, class: User
       model :user
       string :role
     end
 
-    optional do
-      model :role_instance, class: Role
-    end
-
     def validate
-      self.role_instance = Role.find_by(name: role)
+      @role_instance = Role.find_by(name: role)
 
-      unless role_instance
+      if role_instance.nil?
         add_error(:role, :not_found, "Role '#{role}' not found")
         return false
       end
