@@ -42,7 +42,7 @@ When a service has multiple instances and a `wait_for_port` definition, Kontena'
 ```
 instances: 3
 deploy:
-  wait_for_port: true
+  wait_for_port: 1234
 ```
 
 ### Min health
