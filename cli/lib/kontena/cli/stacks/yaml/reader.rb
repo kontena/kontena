@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
         require_relative 'opto/vault_setter'
         require_relative 'opto/vault_resolver'
         require_relative 'opto/prompt_resolver'
+        require_relative 'opto/service_instances_resolver'
 
         @file = file
         @from_registry = from_registry
