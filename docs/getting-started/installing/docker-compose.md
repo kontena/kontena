@@ -20,7 +20,7 @@ Kontena Master is an orchestrator component that manages Kontena Grids/Nodes. In
 
 **Step 1:** create a `docker-compose.yml` file with the following contents:
 
-```yml
+```yaml
 version: '2'
 services:
   haproxy:
@@ -60,17 +60,17 @@ volumes:
 
 **Note!** `VAULT_KEY` & `VAULT_IV` should be random strings. They can be generated from bash:
 
-```sh
+```
 $ cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 ```
 
 **Note!** If you want to use a SSL certificate you can use the following command to obtain the correct value for `SSL_CERT`:
-```sh
+```
 $ awk 1 ORS='\\n' /path/to/cert_file
 ```
 
 If you don't have an SSL certificate, you can generate a self-signed certificate with:
-```sh
+```
 $ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey.key -out certificate.crt
 cat certificate.crt privateKey.key > cert.pem
 ```
@@ -85,13 +85,13 @@ Before you can start provisioning nodes you must first switch the CLI scope to a
 
 Create a new Grid using the command:
 
-```sh
+```
 $ kontena grid create --initial-size=<initial_size> my-grid
 ```
 
 Or switch to an existing Grid using the following command:
 
-```sh
+```
 $ kontena grid use <grid_name>
 ```
 
@@ -101,7 +101,7 @@ Now you can start provisioning nodes to your host machines.
 
 **Step 1:** copy the following `docker-compose.yml` file to each host:
 
-```yml
+```yaml
 agent:
   container_name: kontena-agent
   image: kontena/agent:latest
@@ -123,7 +123,7 @@ agent:
 
 To allow the Kontena Agent to pull from Kontena's built-in private image registry, you must add `--insecure-registry="10.81.0.0/16"` to the Docker daemon options on the host machine. The most platform-independent way to do this is with the `/etc/docker/daemon.json` config file:
 
-```sh
+```
 $ cat > /etc/docker/daemon.json <<DOCKERCONFIG
 {
   "labels": ["region=<name_here>"],
@@ -136,7 +136,7 @@ DOCKERCONFIG
 
 After creating nodes, you can verify that they have joined a Grid:
 
-```sh
+```
 $ kontena node list
 ```
 

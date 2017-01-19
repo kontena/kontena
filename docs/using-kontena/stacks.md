@@ -263,9 +263,8 @@ nodes:
   ■■
 ```
 
-## details
 
-### Linking services within the same stack
+## Linking services within the same stack
 
 Because each stack is deployed using a separate DNS namespace, services within the same stack can use the bare DNS names of other services in the same stack for communication.
 There is no need to explicitly link services within the same stack.

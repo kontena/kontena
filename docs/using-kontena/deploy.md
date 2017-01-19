@@ -1,16 +1,15 @@
 ---
-title: Deployments
+title: Deployment Strategies
 ---
-# Deployments
+# Deployment Strategies
 
-## Deployment Strategies
 Kontena can use different scheduling algorithms when deploying services to more than one Node. At the moment the following strategies are available:
 
 ### High Availability (HA)
 
 A service with `ha` strategy will deploy its instances to different host nodes. This means that the service instances will be spread across all availability zones/Nodes. Availability zones are resolved from Node labels; for example, `az=a1` means that that Node belongs to availability zone `a1`.
 
-```
+```yaml
 deploy:
   strategy: ha
 ```
@@ -19,7 +18,7 @@ deploy:
 
 A service with `daemon` strategy will deploy the given number of instances to all Nodes.
 
-```
+```yaml
 deploy:
   strategy: daemon
 ```
@@ -28,7 +27,7 @@ deploy:
 
 A service with `random` strategy will deploy service containers to host Nodes randomly.
 
-```
+```yaml
 deploy:
   strategy: random
 ```
@@ -39,7 +38,7 @@ deploy:
 
 When a service has multiple instances and a `wait_for_port` definition, Kontena's scheduler will wait until that container is responding on the given port before starting to deploy another instance. This makes it possible to achieve zero-downtime deploys.
 
-```
+```yaml
 instances: 3
 deploy:
   wait_for_port: 1234
@@ -49,7 +48,7 @@ deploy:
 
 A number (percentage) between 0.0 and 1.0 that is multiplied with the instance count. This is the minimum number of healthy nodes that do not sacrifice overall service availability. Kontena will make sure, during the deploy process, that at any point in time this number of healthy instances are up.
 
-```
+```yaml
 instances: 3
 deploy:
   min_health: 0.5
@@ -61,7 +60,7 @@ The default `min_health` is 1.0, which means no instances can be deployed in par
 
 Deployment interval of service. A service will be automatically scheduled for deployment after this time unless it has been scheduled by other events. This can be used as an "erosion-resistance" mechanism.
 
-```
+```yaml
 deploy:
   interval: 8h
 ```
@@ -76,22 +75,22 @@ An affinity condition happens when Kontena is trying to find a field that matche
 
 Kontena has the ability to compare values against Node name, container, labels and Service name.
 
-```
+```yaml
 affinity:
     - node==node1.kontena.io
 ```
 
-```
+```yaml
 affinity:
     - container==service-name-1
 ```
 
-```
+```yaml
 affinity:
     - label==az=1a
 ```
 
-```
+```yaml
 affinity:
     - service==mysql
 ```

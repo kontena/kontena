@@ -20,6 +20,8 @@ env:
     - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA="
     - secure: "jX1rLCq1KBJ2KR42RSi2EFXYkmzvKMoMSfhMpW9HqnhqIcU8RImPb8ZIKGdN1+ncXisQjSMZ4Byz+GnC5oJooMjBp9oAwG7y4mqtsqE8gdreHzAEe8uBHleUF3M0KVHjsSmtSAPltdhpMr5wepcGvK/nC7t0KkVuyPx7pKaY5p0=" # b-u
     - secure: "MU60vW00synoFhI44RAlGjLJQIB6tRHnFr/lFyn8SM7MgOZo2HX6EF0uu1y1AYWrVhekbHfVLoHTL8xMpKYGyXagtrD1BJVMWRwAVzmczsbyP9AVRenKeXzM2f5xZpnThZA3gxN3ZUq9ZAweYFxhlVOm3EUHWbJdmXlL/ZaQZYQ=" # b-k
+    - DOCS_GA=UA-60024048-1
+    - DOCS_HS=2126125
   matrix:
     - TEST_DIR=agent
     - TEST_DIR=cli

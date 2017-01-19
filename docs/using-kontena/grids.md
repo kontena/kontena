@@ -6,10 +6,10 @@ title: Grids
 
 The [Grid](../core-concepts/architecture.md#the-grid) is a top-level object in Kontena that describes a single cluster of Kontena Nodes.
 
-* [Manage](grids#manage-grids)
-* [Logs](grids#grid-logs)
-* [Users](grids#grid-users)
-* [Trusted Subnets](grids#grid-trusted-subnets)
+* [Manage](grids.md#manage-grids)
+* [Logs](grids.md#grid-logs)
+* [Users](grids.md#grid-users)
+* [Trusted Subnets](grids.md#grid-trusted-subnets)
 
 ### Manage Grids
 

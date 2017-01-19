@@ -19,7 +19,8 @@ Kontena has built-in role-based user management. The first user that logs in to 
 
 **user**
   * can only operate within Grids
-  > The user role is automatically assigned to any user added to a Grid using the [Add User to Grid](users#add-user-to-grid) command. There is no need to assign the role explicitly in this case. 
+
+The user role is automatically assigned to any user added to a Grid using the [Add User to Grid](users#add-user-to-grid) command. There is no need to assign the role explicitly in this case. 
 
 ## Managing Users
 
