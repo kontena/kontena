@@ -77,7 +77,7 @@ These environment variables configure the load balancer itself.
 * `KONTENA_LB_HEALTH_URI` - URI at which to enable Kontena Load Balancer level health check endpoint. Returns `200 OK` when Kontena Load Balancer is functional.
 * `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
 * `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer.md#ssl-termination).
-* `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](.md#configuringcustomsslciphers)
+* `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer.md#configuringcustomsslciphers)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file
 
 ### Removing <NOSRV> / BADREQ log entries
