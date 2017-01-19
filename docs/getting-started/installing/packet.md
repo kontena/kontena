@@ -4,15 +4,15 @@ title: Packet
 
 # Running Kontena on Packet
 
-- [Prerequisites](packet#prerequisites)
-- [Installing Packet Plugin](packet#installing-kontena-packet-plugin)
-- [Installing Kontena Master](packet#installing-kontena-master)
-- [Installing Kontena Nodes](packet#installing-kontena-nodes)
-- [Packet Command Reference](packet#packet-command-reference)
+- [Prerequisites](packet.md#prerequisites)
+- [Installing Packet Plugin](packet.md#installing-kontena-packet-plugin)
+- [Installing Kontena Master](packet.md#installing-kontena-master)
+- [Installing Kontena Nodes](packet.md#installing-kontena-nodes)
+- [Packet Command Reference](packet.md#packet-command-reference)
 
 ## Prerequisites
 
-- [Kontena CLI](cli)
+- [Kontena CLI](cli.md)
 - Packet.net Account. Visit [https://www.packet.net/promo/kontena/](https://www.packet.net/promo/kontena/) to get started
 
 ## Installing Kontena Packet Plugin

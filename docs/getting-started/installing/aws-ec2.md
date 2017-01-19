@@ -4,15 +4,15 @@ title: AWS EC2
 
 # Running Kontena on AWS EC2
 
-- [Prerequisites](aws-ec2#prerequisites)
-- [Installing AWS Plugin](aws-ec2#installing-kontena-aws-plugin)
-- [Installing Kontena Master](aws-ec2#installing-kontena-master)
-- [Installing Kontena Nodes](aws-ec2#installing-kontena-nodes)
-- [AWS Plugin Command Reference](aws-ec2#aws-plugin-command-reference)
+- [Prerequisites](aws-ec2.md#prerequisites)
+- [Installing AWS Plugin](aws-ec2.md#installing-kontena-aws-plugin)
+- [Installing Kontena Master](aws-ec2.md#installing-kontena-master)
+- [Installing Kontena Nodes](aws-ec2.md#installing-kontena-nodes)
+- [AWS Plugin Command Reference](aws-ec2.md#aws-plugin-command-reference)
 
 ## Prerequisites
 
-- [Kontena CLI](cli)
+- [Kontena CLI](cli.md)
 - AWS Account. Visit [http://aws.amazon.com](http://aws.amazon.com) to get started
 - AWS [instance profile and role](http://docs.aws.amazon.com/IAM/latest/UserGuide/instance-profiles.html) with full EC2 access
 
