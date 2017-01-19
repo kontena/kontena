@@ -407,6 +407,18 @@ from:
 
 You could set this value by using: `kontena vault write wordpress-admin-password p4ssw0rd1234`
 
+### `service_instances`
+
+Fetch value (service instances count) from given service instance. The hint is the service name within the stack.
+
+```
+from:
+  service_instances: wordpress
+```
+
+This resolver is handy if you want to change scaling after the stack has been deployed.
+
+
 ### `prompt`
 
 Ask the user interactively. The hint is the question text.

@@ -17,8 +17,12 @@ module Kontena::Cli::Stacks
       show_stack(name)
     end
 
+    def fetch_stack(name)
+      client.get("stacks/#{current_grid}/#{name}")
+    end
+
     def show_stack(name)
-      stack = client.get("stacks/#{current_grid}/#{name}")
+      stack = fetch_stack(name)
 
       puts "#{stack['name']}:"
       puts "  state: #{stack['state']}"
