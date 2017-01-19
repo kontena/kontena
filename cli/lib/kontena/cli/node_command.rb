@@ -4,6 +4,7 @@ require_relative 'nodes/show_command'
 require_relative 'nodes/update_command'
 require_relative 'nodes/ssh_command'
 require_relative 'nodes/label_command'
+require_relative 'nodes/health_command'
 
 class Kontena::Cli::NodeCommand < Kontena::Command
 
@@ -13,6 +14,7 @@ class Kontena::Cli::NodeCommand < Kontena::Command
   subcommand "update", "Update node", Kontena::Cli::Nodes::UpdateCommand
   subcommand ["remove","rm"], "Remove node", Kontena::Cli::Nodes::RemoveCommand
   subcommand "label", "Node label specific commands", Kontena::Cli::Nodes::LabelCommand
+  subcommand "health", "Check node health", Kontena::Cli::Nodes::HealthCommand
 
   def execute
   end

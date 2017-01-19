@@ -48,6 +48,5 @@ module Kontena::Cli::Nodes
         end
       end
     end
-
   end
 end

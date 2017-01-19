@@ -7,6 +7,7 @@ module Kontena::Cli::Grids
       host = ENV['KONTENA_URL'] || self.current_master['url']
       puts "#{grid['name']}:"
       puts "  uri: #{host.sub('http', 'ws')}"
+      puts "  initial_size: #{grid['initial_size']}"
       root_dir = grid['engine_root_dir']
       nodes = client(require_token).get("grids/#{grid['name']}/nodes")
       nodes = nodes['nodes'].select{|n| n['connected'] == true }
@@ -91,6 +92,17 @@ module Kontena::Cli::Grids
     def to_gigabytes(amount)
       return 0.0 if amount.nil?
       (amount.to_f / 1024 / 1024 / 1024).to_f.round(2)
+    end
+
+    # @return [Hash] /v1/grids/:grid JSON { ... }
+    def get_grid(name = nil)
+      if name
+        client(require_token).get("grids/#{name}")
+      elsif current_grid
+        client(require_token).get("grids/#{current_grid}")
+      else
+        exit_with_error "No grid given or selected"
+      end
     end
   end
 end
