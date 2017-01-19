@@ -10,8 +10,8 @@ toc_order: 2
 - `MONGODB_URI`: MongoDB connection uri (required)
 - `VAULT_KEY`: secret key for the Kontena Vault (required)
 - `VAULT_IV`: initialization vector for the Kontena Vault (required)
-- `WEB_CONCURRENCY`: number of forked master api processes (default: 1)
-- `MAX_THREADS`: number of threads inside single master api process (default: 8)
+- `WEB_CONCURRENCY`: number of forked master api worker processes (default: Number of CPU cores available)
+- `MAX_THREADS`: number of threads inside single master api worker process (default: 8)
 - `LOG_LEVEL`: logging level
 - `ACME_ENDPOINT`: acme endpoint for Let's Encrypt
 - `AUTH_API_URL`: specifies authentication server url (default: https://auth.kontena.io)
