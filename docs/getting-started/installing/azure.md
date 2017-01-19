@@ -4,15 +4,15 @@ title: Azure
 
 # Running Kontena on Azure (Classic)
 
-- [Prerequisities](azure#prerequisities)
-- [Installing Azure Plugin](azure#installing-kontena-aws-plugin)
-- [Installing Kontena Master](azure#installing-kontena-master)
-- [Installing Kontena Nodes](azure#installing-kontena-nodes)
-- [Azure Plugin Command Reference](azure#azure-plugin-command-reference)
+- [Prerequisities](azure.md#prerequisities)
+- [Installing Azure Plugin](azure.md#installing-kontena-aws-plugin)
+- [Installing Kontena Master](azure.md#installing-kontena-master)
+- [Installing Kontena Nodes](azure.md#installing-kontena-nodes)
+- [Azure Plugin Command Reference](azure.md#azure-plugin-command-reference)
 
 ## Prerequisites
 
-- [Kontena CLI](cli)
+- [Kontena CLI](cli.md)
 - Azure Account
 
 ## Installing Kontena Azure Plugin

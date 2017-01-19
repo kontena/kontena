@@ -4,13 +4,13 @@ title: Ubuntu
 
 # Running Kontena on Ubuntu
 
-- [Prerequisites](ubuntu#prerequisites)
-- [Installing Kontena Master](ubuntu#installing-kontena-master)
-- [Installing Kontena Nodes](ubuntu#installing-kontena-nodes)
+- [Prerequisites](ubuntu.md#prerequisites)
+- [Installing Kontena Master](ubuntu.md#installing-kontena-master)
+- [Installing Kontena Nodes](ubuntu.md#installing-kontena-nodes)
 
 ## Prerequisites
 
-- [Kontena CLI](cli)
+- [Kontena CLI](cli.md)
 
 ## Installing Docker Engine
 
