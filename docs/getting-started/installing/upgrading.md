@@ -10,14 +10,14 @@ can be installed via Rubygems.
 
 ## Versions
 
-* [0.15 to 0.16 (latest)](upgrading#upgrading-from-0-15-to-0-16)
-* [0.14 to 0.15](upgrading#upgrading-from-0-14-to-0-15)
-* [0.13 to 0.14](upgrading#upgrading-from-0-13-to-0-14)
-* [0.12 to 0.13](upgrading#upgrading-from-0-12-to-0-13)
-* [0.11 to 0.12](upgrading#upgrading-from-0-11-to-0-12)
-* [0.10 to 0.11](upgrading#upgrading-from-0-10-to-0-11)
-* [0.9 to 0.10](upgrading#upgrading-from-0-9-to-0-10)
-* [0.8 to 0.9](upgrading#upgrading-from-0-8-to-9)
+* [0.15 to 0.16 (latest)](upgrading.md#upgrading-from-0-15-to-0-16)
+* [0.14 to 0.15](upgrading.md#upgrading-from-0-14-to-0-15)
+* [0.13 to 0.14](upgrading.md#upgrading-from-0-13-to-0-14)
+* [0.12 to 0.13](upgrading.md#upgrading-from-0-12-to-0-13)
+* [0.11 to 0.12](upgrading.md#upgrading-from-0-11-to-0-12)
+* [0.10 to 0.11](upgrading.md#upgrading-from-0-10-to-0-11)
+* [0.9 to 0.10](upgrading.md#upgrading-from-0-9-to-0-10)
+* [0.8 to 0.9](upgrading.md#upgrading-from-0-8-to-9)
 
 ### Upgrading from 0.15 to 0.16
 
