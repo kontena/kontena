@@ -12,8 +12,7 @@ Sometimes the container will exist but the application running within the contai
 
 Configuring a custom health check is done by adding the configuration in the kontena.yml file:
 
-```
-version: '2'
+```yaml
 services:
   web:
     image: nginx
@@ -41,6 +40,7 @@ services:
       initial_delay: 10
       timeout: 2
 ```
+
 Options:
 * `protocol`: protocol to use, either `http` or `tcp`
 * `port`: port to use for the check. This is the port the application is using within the container.
@@ -58,7 +58,7 @@ Configuring a custom healthcheck on a service also ensures that the same health 
 
 ## Using the health status
 
-Kontena Platform is actively monitoring the health status of all Kontena Services. Kontena Agent will automatically restart any container that is identified as `unhealthy`. Kontena Master will automatically re-deploy any Kontena Service that has too many unhealthy containers. This behaviour can be managed and configured by adjusting `min_health` deployment option (see [deploy](deploy.md)). 
+Kontena Platform is actively monitoring the health status of all Kontena Services. Kontena Agent will automatically restart any container that is identified as `unhealthy`. Kontena Master will automatically re-deploy any Kontena Service that has too many unhealthy containers. This behaviour can be managed and configured by adjusting `min_health` deployment option (see [deploy](deploy.md)).
 
 The `min_health` deployment option is used to set the threshold for triggering Kontena Service re-deployment. If you specify `0.8` as the `min_health` option during deployment, Kontena Master will re-deploy your Kontena Service if the number of `unhealthy` containers for that Kontena Service exceeds 80%.
 

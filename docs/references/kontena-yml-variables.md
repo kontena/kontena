@@ -9,7 +9,7 @@ Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/st
 
 ## Usage example
 
-```
+```yaml
 ---
 stack: user/wordpress
 version: 1.0.0
@@ -208,7 +208,6 @@ By default, the output will be turned into a string that is either "true" or "fa
 ```
      false: "false"
      true: "true"
-}
 ```
 
 Define custom output for the values.
@@ -238,7 +237,7 @@ Or to define more readable labels for the values when prompting from the user:
 
 Complete example:
 
-```
+```yaml
 variables:
   zone:
     type: enum

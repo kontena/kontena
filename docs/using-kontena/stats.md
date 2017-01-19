@@ -4,6 +4,7 @@ title: Stats
 # Statistics
 
 Kontena collects statistics about running Services with the help of [cAdvisor](https://github.com/google/cadvisor). When an instance of a Service is spun up, Kontena starts to collect statistics and stores them on the Master database. The statistics can be viewed with the Kontena CLI tool:
+
 ```
 $ kontena service stats loadbalancer
 CONTAINER                      CPU %           MEM USAGE/LIMIT      MEM %           NET I/O        
@@ -21,6 +22,7 @@ Statistics are stored in a capped collection so that the database size does not 
 While the CLI provides a quick look at the current state of a Service, you may also want to see longer-term trends. For that purpose, Kontena can export the statistics via the [StatsD protocol](https://github.com/b/statsd_spec).
 
 Statistics exporting can be activated on a Grid by updating it:
+
 ```
 $ kontena grid update --statsd-server influx.example.com:8125
 ```
@@ -33,5 +35,3 @@ $ kontena grid update --statsd-server influx.example.com:8125
 It is completely up to the user to select which systems to use to collect and view statistics. The only requirement is that the selected system be able to collect stats via the StatsD protocol.
 
 We at Kontena have been very succesfully using the [influxdata](https://influxdata.com/) stack to collect and aggregate statistics.
-
-We are developing a plugin for easily creating and controlling the influxdata-based statistics collection service with Kontena. We hope to release the plugin in the coming months.
