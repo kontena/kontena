@@ -16,9 +16,7 @@ module Kontena
 
         cmd = ['master', 'config', 'set', "server.provider=#{command.result[:provider]}"]
         spinner "Setting Master configuration server.provider to '#{command.result[:provider]}'" do
-          Retriable.retriable do
-            Kontena.run(cmd.shelljoin)
-          end
+          Kontena.run(cmd.shelljoin)
         end
       end
     end
