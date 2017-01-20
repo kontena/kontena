@@ -3,6 +3,8 @@ title: What is Kontena?
 toc_order: 1
 ---
 
+![logo](images/logo.png)
+
 # What is Kontena?
 
 [Kontena](http://www.kontena.io) is an open source project for orchestrating and running containerized workloads on a cluster. The Kontena system is comprised of a number of **Kontena Nodes** (meaning servers or virtual machines that run containerized workloads) and a **Kontena Master** (which controls and monitors the Nodes).
