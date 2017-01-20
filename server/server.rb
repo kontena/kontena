@@ -5,6 +5,7 @@ require_relative 'app/boot'
 require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/filtered_logger'
 require_relative 'app/middlewares/token_authentication'
+require_relative 'app/middlewares/version_injector'
 require_relative 'app/helpers/config_helper'
 
 require_glob __dir__ + '/app/routes/*.rb'
@@ -19,6 +20,7 @@ class Server < Roda
   use Rack::Attack
   use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
   use TokenAuthentication, File.expand_path('../config/authentication.yml', __FILE__)
+  use VersionInjector, VERSION
 
   include Logging
   include ConfigHelper

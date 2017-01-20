@@ -5,27 +5,19 @@ module Kontena::Cli::Plugins
     include Common
 
     parameter '[NAME]', 'Search text'
+    option '--pre', :flag, 'Include pre-release versions'
 
     def execute
-      results = fetch_plugins(name)
+      results = Kontena::PluginManager.instance.search_plugins(name)
       exit_with_error("Cannot access plugin server") unless results
       puts "%-50s %-10s %-60s" % ['NAME', 'VERSION', 'DESCRIPTION']
       results.each do |item|
+        if pre?
+          latest = Kontena::PluginManager.instance.latest_version(item['name'], pre: true)
+          item['version'] = latest.version.to_s
+        end
         puts "%-50s %-10s %-60s" % [short_name(item['name']), item['version'], item['info']]
       end
-    end
-
-    def fetch_plugins(name)
-      client = Excon.new('https://rubygems.org')
-      response = client.get(
-        path: "/api/v1/search.json?query=kontena-plugin-#{name}",
-        headers: {
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json'
-        }
-      )
-
-      JSON.parse(response.body) rescue nil
     end
   end
 end

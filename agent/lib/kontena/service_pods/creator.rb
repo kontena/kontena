@@ -49,6 +49,8 @@ module Kontena
         debug "container created: #{service_pod.name}"
         if service_container.load_balanced? && service_container.instance_number == 1
           Celluloid::Notifications.publish('lb:ensure_config', service_container)
+        elsif !service_container.load_balanced? && service_container.instance_number == 1
+          Celluloid::Notifications.publish('lb:remove_service', service_container)
         end
 
         service_container.start
@@ -168,6 +170,7 @@ module Kontena
         return false if service_container.config['Image'] != service_pod.image_name
         return false if container_outdated?(service_container)
         return false if image_outdated?(service_pod.image_name, service_container)
+        return false if labels_outdated?(service_pod.labels, service_container)
 
         true
       end
@@ -204,6 +207,14 @@ module Kontena
         service_container.autostart? &&
             !service_container.running? &&
             (!state['Error'].empty? || state['ExitCode'].to_i != 0)
+      end
+
+      # @param [Hash] labels Labels of the service pod
+      # @param [Docker::Container] service_container
+      def labels_outdated?(labels, service_container)
+        return true if labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
+
+        false
       end
 
       # @param [Docker::Container] service_container

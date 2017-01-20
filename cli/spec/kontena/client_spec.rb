@@ -294,5 +294,44 @@ describe Kontena::Client do
         expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, "You are wrong")
       end
     end
+
+    context 'version warning' do
+      let(:client) { double(:client) }
+      let(:response) { double(:response) }
+      let(:cli_version) { Kontena::Cli::VERSION }
+
+      before(:each) do
+        allow(subject).to receive(:http_client).and_return(client)
+        allow(client).to receive(:request).and_return(response)
+        allow(response).to receive(:body).and_return("hello")
+        allow(response).to receive(:headers).and_return({})
+      end
+
+      it 'warns the user once if server version differs enough from master version' do
+        bumped_version = cli_version.split('.')[0] + '.' + (cli_version.split('.')[1].to_i + 1).to_s + '.0' # 1.5.4 --> 1.6.0
+        expect(response).to receive(:headers).at_least(:once).and_return({'X-Kontena-Version' => bumped_version})
+        expect(subject).to receive(:check_version_and_warn).at_least(:once).and_call_original
+        expect(subject).to receive(:add_version_warning).with(bumped_version).once.and_return(true)
+        expect(subject.get("test")).to eq 'hello'
+        expect(subject.get("test")).to eq 'hello'
+      end
+
+      it 'does not warn the user if server version does not differ too much' do
+        bumped_version = cli_version.split('.')[0] + '.' + cli_version.split('.')[1] + '.' + (cli_version.split('.')[2].to_i + 1).to_s # 1.5.4 --> 1.5.5
+        expect(response).to receive(:headers).at_least(:once).and_return({'X-Kontena-Version' => bumped_version})
+        expect(subject).to receive(:check_version_and_warn).at_least(:once).and_call_original
+        expect(subject).not_to receive(:at_exit)
+        expect(subject).not_to receive(:add_version_warning)
+        expect(subject.get("test")).to eq 'hello'
+      end
+
+      it 'does not warn the user if server version is not there at all' do
+        expect(response).to receive(:headers).at_least(:once).and_return({})
+        allow(subject).to receive(:check_version_and_warn).at_least(:once).and_call_original
+        expect(subject).not_to receive(:at_exit)
+        expect(subject).not_to receive(:add_version_warning)
+        expect(subject.get("test")).to eq 'hello'
+      end
+    end
   end
 end

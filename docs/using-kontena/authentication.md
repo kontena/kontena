@@ -61,7 +61,7 @@ $ kontena master config set setting.name=setting.value setting.name2=setting.val
 
 Or crafted as a JSON or YAML file:
 
-```
+```json
 {
   "oauth2.client_id": "abcd1234",
   "oauth2.client_secret": "abcdefg",
@@ -195,7 +195,7 @@ This is what happens under the hood during an authentication request to the Kont
 12. The Master exchanges the authorization code for an access token from the authentication provider's token endpoint.
 13. The Master requests user information using the received access token and updates the user's external id and username/email in the local user database.
 14. The Master creates a local access token with an authorization code.
-15. The Master responds with a redirect to `http://localhost:<random_port>/cb?code=<authorization_code>.
+15. The Master responds with a redirect to `http://localhost:<random_port>/cb?code=<authorization_code>``.
 16. The user's browser follows the redirect to the local web server, which then parses the code from the query parameters.
 17. The local web server is terminated.
 18. The CLI exchanges the authorization code for an access token with the Master.

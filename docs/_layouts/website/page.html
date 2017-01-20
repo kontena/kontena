@@ -1,0 +1,32 @@
+{% extends template.self %}
+{% block style %}
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+  {{ super() }}
+
+{% endblock %}
+{% block body %}
+    {{ super() }}
+
+    {% if book.ga %}
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', '{{ book.ga }}', 'auto');
+        ga('send', 'pageview');
+    </script>
+    {% endif %}
+    {% if book.hubspot %}
+    <!-- HubSpot -->
+    <script type="text/javascript">
+        (function(d,s,i,r) {
+            if (d.getElementById(i)){return;}
+            var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
+            n.id=i;n.src='//js.hs-analytics.net/analytics/'+(Math.ceil(new Date()/r)*r)+'/{{ book.hubspot }}.js';
+            e.parentNode.insertBefore(n, e);
+        })(document,"script","hs-analytics",300000);
+    </script>
+    {% endif %}
+{% endblock %}

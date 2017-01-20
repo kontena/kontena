@@ -84,7 +84,8 @@ describe Kontena::ServicePods::Creator do
         },
         config: {
           'Image' => service_pod.image_name
-        }
+        },
+        labels: {}
       )
       allow(Docker::Image).to receive(:get).and_return(spy(:image, info: {
         'Created' => (Time.now.utc + 1).to_s
@@ -168,6 +169,30 @@ describe Kontena::ServicePods::Creator do
 
         expect(config.dig('HostConfig', 'NetworkMode')).to eq('host')
         expect(config.dig('Entrypoint')).to be_nil
+      end
+    end
+
+    describe '#labels_outdated?' do
+      it 'returns true when labels are outdated' do
+        service_container = spy(:service_container,
+          labels: { 'io.kontena.load_balancer.name' => 'lb'}
+        )
+        expect(subject.labels_outdated?({}, service_container)).to be_truthy
+        expect(subject.labels_outdated?({ 'io.kontena.load_balancer.name' => 'lb2'}, service_container)).to be_truthy
+      end
+
+      it 'returns false with empty labels' do
+        service_container = spy(:service_container,
+          labels: {}
+        )
+        expect(subject.labels_outdated?({}, service_container)).to be_falsey
+      end
+
+      it 'returns false with up-to-date labels' do
+        service_container = spy(:service_container,
+          labels: { 'io.kontena.load_balancer.name' => 'lb'}
+        )
+        expect(subject.labels_outdated?({ 'io.kontena.load_balancer.name' => 'lb'}, service_container)).to be_falsey
       end
     end
 

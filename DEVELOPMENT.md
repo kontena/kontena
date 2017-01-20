@@ -18,62 +18,82 @@ $ dontena version
 
 First you need to create a grid, so start the api (aka server or master) and mongodb from `docker-compose.yml` with
 
-```
-$ docker-compose run --service-ports api
+```bash
+docker-compose run --service-ports api
 ```
 
-Then, in another window login to the master with
+Then, in another window login to the master with the initial admin code (set in `docker-compose.yml`) -- NOTE: wait until the master is healthy (see (the issue about this)[https://github.com/kontena/kontena/issues/1460])
 
+```shell
+dontena master login --name devmaster --code initialadmincode http://localhost:9292
 ```
-$ dontena login http://localhost:9292
-Email: youremail@registered-with-kontena-auth-server.com
-Password: **********
+
+NOTE: If you have an existing master with the same name, you may reuse the id or delete the master, see `dontena cloud master`
+
+Use Kontena Cloud for your master:
+
+```shell
+dontena master init-cloud --force
+```
+
+Invite your account as a `master_admin`:
+
+```shell
+dontena master users invite -r master_admin your.registered@email.at.kontena.cloud.com
+```
+
+Then login:
+
+```shell
+dontena master join --name devmaster http://localhost:9292 invit3c0d3
 ```
 
 Now create the grid:
 
-```
-$ dontena grid create local
-Using grid: local
-
-$ dontena grid show local
-local:
-  uri: ws://localhost:9292
-  token: thisIsTheTokenYouNeedToGiveToTheAgentInTheNextStep==
-  stats:
-    nodes: 0 of 0
-    cpus: 0
-    load: 0.0 0.0 0.0
-    memory: 0.0 of 0.0 GB
-    filesystem: 0.0 of 0.0 GB
-    users: 1
-    services: 0
-    containers: 0
+```shell
+dontena grid create --token devtoken dev
 ```
 
 Set the token to `agent/.env`
 
-```
-$ dontena grid show local | grep token: | sed -e 's/  token: /KONTENA_TOKEN=/' > agent/.env
+```shell
+echo "KONTENA_TOKEN=$(dontena grid show --token dev)" > agent/.env
 ```
 
-Now kill the `docker-compose run`
+Now kill the `docker-compose run` in another window and start everything at once with:
 
+```shell
+docker-compose up
+```
+
+Verify that service creation and scaling works:
+
+```bash
+dontena node ls
+dontena service create redis redis
+dontena service scale redis 3
+dontena service logs redis
+```
 
 ## Development workflow
 
-Start services with
+Make a change to `master` or `agent` and restart `docker-compose up` (with control+c)
+
+## Re-creating everything
+
+First remove all services to clean up docker so that the deploys to the next grid will work:
 
 ```
-$ docker-compose up
+dontena service ls -q | xargs -L 1 dontena service rm --force
 ```
 
-Verfify that for example service creation and scaling works:
+Then run:
 
-```
-$ dontena service create redis redis
-$ dontena service scale redis 3
-$ dontena service logs -t redis
+```bash
+docker-compose down
+docker ps -aq -f name=kontena- | xargs docker rm -f
+docker ps -aq -f name=weave | xargs docker rm -f
+dontena cloud master rm
 ```
 
-Now make a change to api or agent and restart `docker-compose up` (with control+c)
+and start from the beginning.

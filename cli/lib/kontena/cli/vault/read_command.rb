@@ -5,6 +5,7 @@ module Kontena::Cli::Vault
 
     parameter "NAME", "Secret name"
 
+    option '--value', :flag, 'Just output the value'
     option '--return', :flag, 'Return the value', hidden: true
 
     def execute
@@ -14,9 +15,13 @@ module Kontena::Cli::Vault
       token = require_token
       result = client(token).get("secrets/#{current_grid}/#{name}")
       return result['value'] if self.return?
-      puts "#{result['name']}:"
-      puts "  created_at: #{result['created_at']}"
-      puts "  value: #{result['value']}"
+      if self.value?
+        puts result['value']
+      else
+        puts "#{result['name']}:"
+        puts "  created_at: #{result['created_at']}"
+        puts "  value: #{result['value']}"
+      end
     end
   end
 end

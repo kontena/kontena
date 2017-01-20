@@ -15,7 +15,7 @@ The Kontena Load Balancer's key features include:
 * Dynamic routing
 * Support for TCP and HTTP traffic
 * SSL termination on multiple certificates
-* Link certificates from Kontena Vault
+* Link certificates from [Kontena Vault](vault.md)
 
 ## Using Kontena Load Balancer
 
@@ -23,49 +23,51 @@ Kontena Load Balancer is a HAproxy / confd service that is configured to watch c
 
 Here is an example of an Internet-facing load balancer:
 
-```
-internet_lb:
-  image: kontena/lb:latest
-  ports:
-    - 80:80
+```yaml
+services:
+  internet_lb:
+    image: kontena/lb:latest
+    ports:
+      - 80:80
 
-web:
-  image: nginx:latest
-  environment:
-    - KONTENA_LB_MODE=http
-    - KONTENA_LB_BALANCE=roundrobin
-    - KONTENA_LB_INTERNAL_PORT=80
-    - KONTENA_LB_VIRTUAL_HOSTS=www.kontena.io,kontena.io
-  links:
-    - internet_lb
-api:
-  image: registry.kontena.local/restapi:latest
-  environment:
-    - KONTENA_LB_MODE=http
-    - KONTENA_LB_BALANCE=roundrobin
-    - KONTENA_LB_INTERNAL_PORT=8080
-    - KONTENA_LB_VIRTUAL_PATH=/api
-  links:
-    - internet_lb
+  web:
+    image: nginx:latest
+    environment:
+      - KONTENA_LB_MODE=http
+      - KONTENA_LB_BALANCE=roundrobin
+      - KONTENA_LB_INTERNAL_PORT=80
+      - KONTENA_LB_VIRTUAL_HOSTS=www.kontena.io,kontena.io
+    links:
+      - internet_lb
+  api:
+    image: registry.kontena.local/restapi:latest
+    environment:
+      - KONTENA_LB_MODE=http
+      - KONTENA_LB_BALANCE=roundrobin
+      - KONTENA_LB_INTERNAL_PORT=8080
+      - KONTENA_LB_VIRTUAL_PATH=/api
+    links:
+      - internet_lb
 ```
 
 Always remember to link your service to Kontena Load Balancer, since the linking activates the load balancing functionality.
 
 Here is an example of an internal TCP load balancer:
 
-```
-galera_lb:
-  image: kontena/lb:latest
+```yaml
+services:
+  galera_lb:
+    image: kontena/lb:latest
 
-galera:
-  image: registry.kontena.local/galera:latest
-  environment:
-    - KONTENA_LB_MODE=tcp
-    - KONTENA_LB_BALANCE=leastcon
-    - KONTENA_LB_EXTERNAL_PORT=3306
-    - KONTENA_LB_INTERNAL_PORT=3306
-  links:
-    - galera_lb
+  galera:
+    image: registry.kontena.local/galera:latest
+    environment:
+      - KONTENA_LB_MODE=tcp
+      - KONTENA_LB_BALANCE=leastcon
+      - KONTENA_LB_EXTERNAL_PORT=3306
+      - KONTENA_LB_INTERNAL_PORT=3306
+    links:
+      - galera_lb
 ```
 
 ## Config Env Variables for Kontena Load Balancer
@@ -74,17 +76,39 @@ These environment variables configure the load balancer itself.
 
 * `KONTENA_LB_HEALTH_URI` - URI at which to enable Kontena Load Balancer level health check endpoint. Returns `200 OK` when Kontena Load Balancer is functional.
 * `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
-* `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer#ssl-termination).
+* `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer.md#ssl-termination).
+* `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer.md#configuringcustomsslciphers)
+* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file
+
+### Removing <NOSRV> / BADREQ log entries
+
+From HAProxy docs:
+> Recently some browsers started to implement a "pre-connect" feature
+consisting in speculatively connecting to some recently visited web sites
+just in case the user would like to visit them. This results in many
+connections being established to web sites, which end up in 408 Request
+Timeout if the timeout strikes first, or 400 Bad Request when the browser
+decides to close them first. These ones pollute the log and feed the error
+counters.
+
+To remove these polluting lines in the logs use following config for loadbalancer:
+```yaml
+environment:
+    KONTENA_LB_CUSTOM_SETTINGS: |
+      option http-ignore-probes
+```
+
+See HAProxy [docs](http://cbonte.github.io/haproxy-dconv/1.6/configuration.html#option%20http-ignore-probes) for details.
+
 
 ## Stats
 
-Kontena Load Balancer exposes a statistics web UI only on the private overlay network. To access the statistics you must use the [VPN](vpn-access) to access the overlay network. The statistics are exposed on port 1000 of the Kontena Load Balancer instances.
+Kontena Load Balancer exposes a statistics web UI only on the private overlay network. To access the statistics you must use the [VPN](vpn-access.md) to access the overlay network. The statistics are exposed on port 1000 of the Kontena Load Balancer instances.
 
 ## Basic authentication for services
 
 Kontena Load Balancer supports automatic [basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) for balanced services. To enable basic authentication on a given service, use the following configuration:
-```
-version: 2
+```yaml
 services:
   internet_lb:
     image: kontena/lb:latest
@@ -145,17 +169,17 @@ $ kontena vault write my_company_cert "$(cat cert.pem)"
 
 And finally you can link the certificate from Vault to your load balancer:
 
+```yaml
+services:
+  loadbalancer:
+    image: kontena/lb:latest
+    ports:
+      - 443:443
+    secrets:
+      - secret: my_company_cert
+        name: SSL_CERTS
+        type: env
 ```
-loadbalancer:
-  image: kontena/lb:latest
-  ports:
-    - 443:443
-  secrets:
-    - secret: my_company_cert
-      name: SSL_CERTS
-      type: env
-```
-
 
 #### An example with 2 certificates (www.domain.com and api.domain.com):
 
@@ -169,19 +193,34 @@ $ kontena vault write api_domain_com_cert "$(cat api_domain_com.pem)"
 
 Map secrets from Vault to the Kontena Load Balancer:
 
+```yaml
+services:
+  loadbalancer:
+    image: kontena/lb:latest
+    ports:
+      - 443:443
+    secrets:
+      - secret: www_domain_com_cert
+        name: SSL_CERTS
+        type: env
+      - secret: api_domain_com_cert
+        name: SSL_CERTS
+        type: env
 ```
-loadbalancer:
-  image: kontena/lb:latest
-  ports:
-    - 443:443
-  secrets:
-    - secret: www_domain_com_cert
-      name: SSL_CERTS
-      type: env
-    - secret: api_domain_com_cert
-      name: SSL_CERTS
-      type: env
-```
+
+### Configuring custom SSL Ciphers
+
+By default Kontena Loadbalancer uses strong SSL cipher suite, see:
+https://github.com/kontena/kontena-loadbalancer/blob/master/confd/templates/haproxy.tmpl#L9
+
+In some cases it is required to have somewhat customized cipher suite to cater specific security requirements or other such needs.
+
+ This can be achieved by using specific environment variable for the loadbalancer service:
+ ```
+ KONTENA_LB_SSL_CIPHERS=ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384
+ ```
+
+
 
 ## Config Env Variables for Load Balanced Services
 
@@ -191,7 +230,7 @@ These options are defined on the services that are balanced through Kontena Load
 * `KONTENA_LB_BALANCE`: load-balancing algorithm to use; possible values: roundrobin (default), source, leastcon
 * `KONTENA_LB_INTERNAL_PORT`: service port that is attached to load balancer
 * `KONTENA_LB_EXTERNAL_PORT`: service port that load balancer starts to listen (only for tcp mode)
-* `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts (only for http mode)
+* `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts, if you would like to access your service through the vpn, you'll need to add that as a virtual host as well (only for http mode)
 * `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request; example: "/api" (only for http mode)
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to either the related backend section or the listen session in the HAProxy configuration file

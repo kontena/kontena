@@ -16,13 +16,13 @@ You should use Kontena's built-in Image Registry if you want to:
 
 ## Using Image Registry
 
-* [Create Image Registry Service](image-registry#create-image-registry-service)
-  * [Local Storage Backend](image-registry#local-storage-backend)
-  * [Amazon S3 Storage Backend](image-registry#amazon-s3-storage-backend)
-  * [Azure Storage Backend](image-registry#azure-storage-backend)
-* [Accessing Image Registry](image-registry#accessing-image-registry)
-* [TLS/SSL](image-registry#tls-ssl)
-* [Authentication](image-registry#authentication)
+* [Create Image Registry Service](image-registry.md#create-image-registry-service)
+  * [Local Storage Backend](image-registry.md#local-storage-backend)
+  * [Amazon S3 Storage Backend](image-registry.md#amazon-s3-storage-backend)
+  * [Azure Storage Backend](image-registry.md#azure-storage-backend)
+* [Accessing Image Registry](image-registry.md#accessing-image-registry)
+* [TLS/SSL](image-registry.md#tlsssl)
+* [Authentication](image-registry.md#authentication)
 
 ### Create Image Registry Service
 
@@ -97,7 +97,7 @@ $ kontena vault write REGISTRY_HTTP_TLS_CERTIFICATE "$(cat registry_ca.pem)"
 Redeploy Kontena Image Registry:
 
 ```
-$ kontena service deploy --force-deploy registry
+$ kontena service deploy --force registry/api
 ```
 
 Then you have to instruct your local Docker daemon to trust that certificate. This is done by copying the `registry_ca.pem` file to `/etc/docker/certs.d/registry.<grid_name>.kontena.local/ca.crt`.
@@ -114,13 +114,13 @@ $ kontena vault write REGISTRY_AUTH_PASSWORD <password>
 And then updating the service with the auth secret to read it from Vault:
 
 ```
-$ kontena service update --secret REGISTRY_AUTH_PASSWORD:AUTH_PASSWORD:env registry
+$ kontena service update --secret REGISTRY_AUTH_PASSWORD:AUTH_PASSWORD:env registry/api
 ```
 
 After the password has been set you should redeploy the registry service:
 
 ```
-$ kontena service deploy --force-deploy registry
+$ kontena service deploy --force registry/api
 ```
 
 Log in to registry using the Docker CLI:

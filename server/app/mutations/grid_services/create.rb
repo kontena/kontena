@@ -32,6 +32,9 @@ module GridServices
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
+      if self.secrets
+        validate_secrets_exist(self.grid, self.secrets)
+      end
     end
 
     def execute

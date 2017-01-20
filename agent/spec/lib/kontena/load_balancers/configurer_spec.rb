@@ -158,4 +158,86 @@ describe Kontena::LoadBalancers::Configurer do
       subject.remove_config(container)
     end
   end
+
+  describe "#remove_service" do
+    it 'removes service from null stacked lbs' do
+      expect(subject.wrapped_object).to receive(:lsdir).
+        and_return(['/kontena/haproxy/lb1', '/kontena/haproxy/lb2'])
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/lb1/services').and_return(true)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/lb2/services').and_return(true)
+      # service should be removed from all lb's
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/lb1/services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/lb1/tcp-services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/lb2/services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/lb2/tcp-services/test-api")
+      subject.remove_service(container)
+    end
+
+    it 'removes service from stacked lbs' do
+      expect(subject.wrapped_object).to receive(:lsdir).
+        with("#{etcd_prefix}").
+        and_return(['/kontena/haproxy/stack1', '/kontena/haproxy/stack2'])
+
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack1/services').and_return(false)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack1/tcp-services').and_return(false)
+      expect(subject.wrapped_object).to receive(:lsdir).
+        with("#{etcd_prefix}/stack1").
+        and_return(['/kontena/haproxy/stack1/lb1'])
+
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack2/services').and_return(false)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack2/tcp-services').and_return(false)
+      expect(subject.wrapped_object).to receive(:lsdir).
+        with("#{etcd_prefix}/stack2").
+        and_return(['/kontena/haproxy/stack2/lb2'])
+
+      # service should be removed from all lb's
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/stack1/lb1/services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/stack1/lb1/tcp-services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/stack2/lb2/services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/stack2/lb2/tcp-services/test-api")
+      subject.remove_service(container)
+    end
+
+    it 'removes service from stacked and un-stacked lbs' do
+      expect(subject.wrapped_object).to receive(:lsdir).
+        with("#{etcd_prefix}").
+        and_return(['/kontena/haproxy/stack1', '/kontena/haproxy/lb2'])
+
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack1/services').and_return(false)
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/stack1/tcp-services').and_return(false)
+      expect(subject.wrapped_object).to receive(:lsdir).
+        with("#{etcd_prefix}/stack1").
+        and_return(['/kontena/haproxy/stack1/lb1'])
+
+      expect(subject.wrapped_object).to receive(:key_exists?).
+        with('/kontena/haproxy/lb2/services').and_return(true)
+
+      # service should be removed from all lb's
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/stack1/lb1/services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/stack1/lb1/tcp-services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/lb2/services/test-api")
+      expect(subject.wrapped_object).to receive(:rmdir).
+        with("#{etcd_prefix}/lb2/tcp-services/test-api")
+      subject.remove_service(container)
+    end
+  end
 end

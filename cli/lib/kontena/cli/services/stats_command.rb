@@ -39,7 +39,7 @@ module Kontena::Cli::Services
     end
 
     def render_header
-      puts '%-30.30s %-15s %-20s %-15s %-15s' % ['CONTAINER', 'CPU %', 'MEM USAGE/LIMIT', 'MEM %', 'NET I/O']
+      puts '%-30.30s %-15s %-20s %-15s %-15s' % ['INSTANCE', 'CPU %', 'MEM USAGE/LIMIT', 'MEM %', 'NET I/O']
     end
 
     def render_stat_row(stat)
@@ -55,7 +55,9 @@ module Kontena::Cli::Services
       cpu = stat['cpu'].nil? ? 'N/A' : stat['cpu']['usage']
       network_in = stat['network'].nil? ? 'N/A' : filesize_to_human(stat['network']['rx_bytes'])
       network_out = stat['network'].nil? ? 'N/A' : filesize_to_human(stat['network']['tx_bytes'])
-      puts '%-30.30s %-15s %-20s %-15s %-15s' % [ stat['container_id'], "#{cpu}%", "#{memory} / #{memory_limit}", "#{memory_pct}", "#{network_in}/#{network_out}"]
+      prefix = self.name.split('/')[0]
+      instance_name = stat['container_id'].gsub("#{prefix}-", "")
+      puts '%-30.30s %-15s %-20s %-15s %-15s' % [ instance_name, "#{cpu}%", "#{memory} / #{memory_limit}", "#{memory_pct}", "#{network_in}/#{network_out}"]
     end
 
     ##

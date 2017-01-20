@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
         require_relative 'opto/vault_setter'
         require_relative 'opto/vault_resolver'
         require_relative 'opto/prompt_resolver'
+        require_relative 'opto/service_instances_resolver'
 
         @file = file
         @from_registry = from_registry
@@ -44,7 +45,7 @@ module Kontena::Cli::Stacks
         return @variables if @variables
         if yaml && yaml.has_key?('variables')
           variables_yaml = yaml['variables'].to_yaml
-          variables_hash = ::YAML.load(replace_dollar_dollars(interpolate(variables_yaml, use_opto: false)))
+          variables_hash = ::YAML.safe_load(replace_dollar_dollars(interpolate(variables_yaml, use_opto: false)))
           @variables = Opto::Group.new(variables_hash, defaults: { from: :env, to: :env })
         else
           @variables = Opto::Group.new(defaults: { from: :env, to: :env })
@@ -75,14 +76,14 @@ module Kontena::Cli::Stacks
           result[:expose]        = yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
-          result[:services]      = parse_services(service_name) unless errors.count > 0
+          result[:services]      = errors.count == 0 ? parse_services(service_name) : {}
           result[:variables]     = variables.to_h(values_only: true).reject { |k,_| variables.option(k).to.has_key?(:vault) } unless skip_variables?
         end
         result
       end
 
       def stack_name
-        yaml = ::YAML.load(raw_content)
+        yaml = ::YAML.safe_load(raw_content)
         yaml['stack'].split('/').last.split(':').first if yaml['stack']
       end
 
@@ -101,9 +102,9 @@ module Kontena::Cli::Stacks
 
       def load_yaml(interpolate = true)
         if interpolate
-          @yaml = ::YAML.load(replace_dollar_dollars(interpolate(raw_content)))
+          @yaml = ::YAML.safe_load(replace_dollar_dollars(interpolate(raw_content)))
         else
-          @yaml = ::YAML.load(raw_content)
+          @yaml = ::YAML.safe_load(raw_content)
         end
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message

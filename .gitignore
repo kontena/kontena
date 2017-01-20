@@ -1,5 +1,7 @@
 .idea
 .env
 docs/index.toc
+docs/node_modules
+docs/_book
 .*.swo
 .*.swp

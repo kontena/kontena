@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.0.4](https://github.com/kontena/kontena/releases/tag/v1.0.4) (2016-01-04)
+
+**Master & Agents:**
+
+- Send labels with the initial ws connection headers (#1597)
+- Fix WebsocketClient reconnect (#1602)
+
+
+**CLI:**
+- Calm down service status polling interval on service delete (#1596)
+- Tell why plugin install failed (#1510)
+
+**Loadbalancer:**
+
+- Allow to set custom SSL ciphers (#1591)
+- Add custom LB level settings (#1586)
+
+
+## [1.0.3](https://github.com/kontena/kontena/releases/tag/v1.0.3)
+
+**Master & Agents:**
+- Change default cadvisor image to official ([#1569](https://github.com/kontena/kontena/pull/1569))
+- Hide weave password from logs ([#1578](https://github.com/kontena/kontena/pull/1578))
+
+**CLI:**
+- Return validation errors properly when extending services ([#1581](https://github.com/kontena/kontena/pull/1581))
+- Fix stack build command ([#1577](https://github.com/kontena/kontena/pull/1577))
+- Use safe_yaml to load YAML files ([#1573](https://github.com/kontena/kontena/pull/1573))
+- Fix instance parsing in service logs ([#1571](https://github.com/kontena/kontena/pull/1571))
+
+## [1.0.2](https://github.com/kontena/kontena/releases/tag/v1.0.2)
+
+**Master & Agents:**
+
+- Fix error in StackDeployWorker when stack service has been removed ([#1544](https://github.com/kontena/kontena/pull/1544))
+- Fix registry & vpn stack deploy tracking ([#1537](https://github.com/kontena/kontena/pull/1537))
+- Block calls to Weave#start via #on_node_info ([#1545](https://github.com/kontena/kontena/pull/1545))
+- Fix agent to avoid DNS lookups for localhost with a missing /etc/hosts ([#1550](https://github.com/kontena/kontena/pull/1550))
+- Don't re-deploy dependant services on stack deploy ([#1552](https://github.com/kontena/kontena/pull/1552))
+- Fix error when removing orphan service volumes ([#1554](https://github.com/kontena/kontena/pull/1554))
+
+**CLI:**
+
+- Fix VPN create ([#1536](https://github.com/kontena/kontena/pull/1536))
+- Add stack commands to tab completer ([#1540](https://github.com/kontena/kontena/pull/1540))
+- New Stack file resolvers: interpolate and evaluate ([#1528](https://github.com/kontena/kontena/pull/1528))
+
 ## [1.0.1](https://github.com/kontena/kontena/releases/tag/v1.0.1) (2016-12-09)
 
 **Master & Agents:**

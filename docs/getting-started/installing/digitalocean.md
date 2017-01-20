@@ -4,15 +4,15 @@ title: DigitalOcean
 
 # Running Kontena on DigitalOcean
 
-- [Prerequisites](digitalocean#prerequisites)
-- [Installing DigitalOcean Plugin](digitalocean#installing-kontena-digitalocean-plugin)
-- [Installing Kontena Master](digitalocean#installing-kontena-master)
-- [Installing Kontena Nodes](digitalocean#installing-kontena-nodes)
-- [DigitalOcean Plugin Command Reference](digitalocean#digitalocean-plugin-command-reference)
+- [Prerequisites](digitalocean.md#prerequisites)
+- [Installing DigitalOcean Plugin](digitalocean.md#installing-kontena-digitalocean-plugin)
+- [Installing Kontena Master](digitalocean.md#installing-kontena-master)
+- [Installing Kontena Nodes](digitalocean.md#installing-kontena-nodes)
+- [DigitalOcean Plugin Command Reference](digitalocean.md#digitalocean-plugin-command-reference)
 
 ## Prerequisites
 
-- [Kontena CLI](cli)
+- [Kontena CLI](cli.md)
 - DigitalOcean Account. Visit [https://www.digitalocean.com/](https://www.digitalocean.com/) to get started
 - DigitalOcean API token. Visit [https://cloud.digitalocean.com/settings/api/tokens](https://cloud.digitalocean.com/settings/api/tokens)
 

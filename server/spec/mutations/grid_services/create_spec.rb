@@ -341,5 +341,32 @@ describe GridServices::Create do
       ).run
       expect(outcome.success?).to be(false)
     end
+
+    it 'fails validating secret existence' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          secrets: [
+            {secret: 'NON_EXISTING_SECRET', name: 'SOME_SECRET'}
+          ]
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
+    it 'validates secret existence' do
+      secret = GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          secrets: [
+            {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+          ]
+      ).run
+      expect(outcome.success?).to be(true)
+    end
   end
 end

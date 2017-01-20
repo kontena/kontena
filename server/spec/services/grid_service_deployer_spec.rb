@@ -115,8 +115,9 @@ describe GridServiceDeployer do
       subject.deploy
       sleep 0.01
       MongoPubsub.publish(channel, {'event' => 'ping'})
-      sleep 0.05
-      expect(events.size).to eq(0)
+      Timeout::timeout(1) do
+        sleep 0.05 until events.size == 0
+      end
     end
   end
 end

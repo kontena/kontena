@@ -12,7 +12,7 @@ module Kontena
 
       def logger
         return @logger if @logger
-        @logger = Logger.new(STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'COMMON'
         @logger
@@ -129,10 +129,10 @@ module Kontena
         return unless server.token.refresh_token
         return if server.token.expired?
         client = Kontena::Client.new(server.url, server.token)
-        ENV["DEBUG"] && puts("Trying to invalidate refresh token on #{server.name}")
+        logger.debug "Trying to invalidate refresh token on #{server.name}"
         client.refresh_token
       rescue
-        ENV["DEBUG"] && puts("Refreshing failed: #{$!} : #{$!.message}")
+        logger.debug "Refreshing failed: #{$!} : #{$!.message}"
       end
 
       def require_current_master

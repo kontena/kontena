@@ -283,6 +283,17 @@ module Kontena
           end
         end
 
+        # Parses container name based on service name and instance number
+        # @param [String] service_name
+        # @param [Integer] instance_number
+        def parse_container_name(service_name, instance_number)
+          base = service_name.gsub('/', '-')
+          unless service_name.include?('/')
+            base = "null-#{base}"
+          end
+          "#{base}-#{instance_number}"
+        end
+
         # @param [Array<String>] port_options
         # @return [Array<Hash>]
         def parse_ports(port_options)

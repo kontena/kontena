@@ -2,9 +2,10 @@ language: ruby
 sudo: required
 rvm:
   - 2.0.0-p648
-  - 2.1.8
-  - 2.2.3
+  - 2.1.10
+  - 2.2.6
   - 2.3.1
+  - 2.4.0
 cache: bundler
 cache:
   directories:
@@ -17,6 +18,10 @@ env:
   global:
     - secure: "UyygtUDLvV2+14mEG6Pddo/deLazXc2Hit63KlbZ26Pi8cxbr1FeDUBi4WFVWlFh01smKe5mO+kk/4k06aSdolcTC59QUsltRrsINmsxj/BS66L7JbWP8/yPQP1drE6CH5oh6t1JAchuK19bLUOK9Tycn0J2VufW69ckw3D+rqU="
     - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA="
+    - secure: "jX1rLCq1KBJ2KR42RSi2EFXYkmzvKMoMSfhMpW9HqnhqIcU8RImPb8ZIKGdN1+ncXisQjSMZ4Byz+GnC5oJooMjBp9oAwG7y4mqtsqE8gdreHzAEe8uBHleUF3M0KVHjsSmtSAPltdhpMr5wepcGvK/nC7t0KkVuyPx7pKaY5p0=" # b-u
+    - secure: "MU60vW00synoFhI44RAlGjLJQIB6tRHnFr/lFyn8SM7MgOZo2HX6EF0uu1y1AYWrVhekbHfVLoHTL8xMpKYGyXagtrD1BJVMWRwAVzmczsbyP9AVRenKeXzM2f5xZpnThZA3gxN3ZUq9ZAweYFxhlVOm3EUHWbJdmXlL/ZaQZYQ=" # b-k
+    - DOCS_GA=UA-60024048-1
+    - DOCS_HS=2126125
   matrix:
     - TEST_DIR=agent
     - TEST_DIR=cli
@@ -25,15 +30,19 @@ matrix:
   exclude:
     - rvm: 2.0.0-p648
       env: TEST_DIR=server
-    - rvm: 2.1.8
+    - rvm: 2.1.10
       env: TEST_DIR=server
-    - rvm: 2.2.3
+    - rvm: 2.2.6
+      env: TEST_DIR=server
+    - rvm: 2.4.0
       env: TEST_DIR=server
     - rvm: 2.0.0-p648
       env: TEST_DIR=agent
-    - rvm: 2.1.8
+    - rvm: 2.1.10
       env: TEST_DIR=agent
-    - rvm: 2.2.3
+    - rvm: 2.2.6
+      env: TEST_DIR=agent
+    - rvm: 2.4.0
       env: TEST_DIR=agent
 script: ./build/travis/test.sh
 deploy:

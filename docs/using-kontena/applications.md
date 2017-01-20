@@ -4,6 +4,8 @@ title: Applications
 
 # Applications
 
+> Applications has been superceded by [Stacks](stacks.md).
+
 Any kind of application can be easily deployed to Kontena using the Kontena `app` commands. With these commands, you can use Kontena like any regular PaaS platform. One of the most interesting features of Kontena is the ability to import projects from other common PaaS platforms.
 
 Kontena app commands include:
@@ -38,7 +40,7 @@ Given the following files:
 
 **app.json**
 
-```
+```json
 {
   "name": "Small Sharp Tool",
   "description": "This app does one little thing, and does it well.",
@@ -67,7 +69,7 @@ The command `kontena app init` will produce:
 
 **docker-compose.yml**
 
-```
+```yaml
 web:
   build: "."
   command: "/start web"
@@ -103,7 +105,7 @@ WEB_CONCURRENCY=5
 
 **kontena.yml**
 
-```
+```yaml
 ---
 web:
   extends:
@@ -172,7 +174,7 @@ $ kontena app deploy wordpress         # only deploy services named "wordpress" 
 
 Here's an example of a typical WordPress application described in `kontena.yml` file. See the complete kontena.yml reference [here](../references/kontena-yml.md).
 
-```
+```yaml
 wordpress:
   image: wordpress:4.1
   instances: 2

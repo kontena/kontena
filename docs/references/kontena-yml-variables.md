@@ -9,7 +9,7 @@ Since Kontena version 1.0.0 and the introduction of [Stacks](../using-kontena/st
 
 ## Usage example
 
-```
+```yaml
 ---
 stack: user/wordpress
 version: 1.0.0
@@ -20,7 +20,7 @@ variables:
     min_length: 8 # require at least 8 characters
     from: # where to obtain a value for this variable
       vault: ${STACK}-wp-mysql-root # try to get a value from the vault on kontena master
-      env: MYSQL_ROOT # first try local env variable 
+      env: MYSQL_ROOT # first try local env variable
       prompt: Enter a root password for MySQL or leave empty to auto generate # then ask for manual input
       random_string: 16 # still no value, auto generate a random string
     to:
@@ -208,7 +208,6 @@ By default, the output will be turned into a string that is either "true" or "fa
 ```
      false: "false"
      true: "true"
-}
 ```
 
 Define custom output for the values.
@@ -234,7 +233,31 @@ Or to define more readable labels for the values when prompting from the user:
       label: European Union
     - value: asia
       label: Asia
-```   
+```
+
+Complete example:
+
+```yaml
+variables:
+  zone:
+    type: enum
+    default: eu
+    options:
+      - usa
+      - eu
+      - asia
+    from:
+      env: STORAGE_ZONE
+      prompt: Select zone
+
+services:
+  storage:
+    image: storage:latest
+    environment:
+      - "STORAGE_ZONE=${zone}"
+```
+
+With this configuration you can set the storage zone by setting the environment variable `STORAGE_ZONE` before installing the stack. If you don't, the zone will be prompted and the default value in the selector will be "eu".
 
 ### `integer`
 
@@ -264,7 +287,7 @@ Or to define more readable labels for the values when prompting from the user:
 ### `uri`
 
 ```
-  schemes: 
+  schemes:
     - http
     - https
 ```
@@ -377,11 +400,23 @@ Output is a 'random' UUID, such as `78b6decf-e312-45a1-ac8c-d562270036ba`
 Use the Vault on kontena master. The hint is the key in the vault.
 
 ```
-from: 
+from:
   vault: wordpress-admin-password
 ```
 
 You could set this value by using: `kontena vault write wordpress-admin-password p4ssw0rd1234`
+
+### `service_instances`
+
+Fetch value (service instances count) from given service instance. The hint is the service name within the stack.
+
+```
+from:
+  service_instances: wordpress
+```
+
+This resolver is handy if you want to change scaling after the stack has been deployed.
+
 
 ### `prompt`
 
@@ -403,7 +438,7 @@ Variable value will be placed into local environment.
 ```
 to:
   env: MYSQL_USERNAME
-# sets a local environment variable, not to be confused with setting an environment variable to 
+# sets a local environment variable, not to be confused with setting an environment variable to
 # the container
 ```
 

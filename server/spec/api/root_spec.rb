@@ -11,6 +11,11 @@ describe '/' do
     expect(json_response['version']).not_to be_nil
   end
 
+  it 'should add a X-Kontena-Version header' do
+    get '/', nil, {}
+    expect(response.headers['X-Kontena-Version']).to eq Server::VERSION
+  end
+  
   context 'logging' do
     it 'should not log requests with ?health' do
       expect_any_instance_of(Logger).not_to receive(:write)

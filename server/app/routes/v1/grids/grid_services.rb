@@ -25,6 +25,8 @@ V1::GridsApi.route('grid_services') do |r|
       query = @grid.grid_services.includes(:grid).order_by(:_id.desc)
       unless r['stack'].to_s.empty?
         stack = @grid.stacks.find_by(name: r['stack'])
+        halt_request(404, {error: 'Stack not found'}) unless stack
+
         query = query.where(stack_id: stack.id)
       end
       @grid_services = query.to_a

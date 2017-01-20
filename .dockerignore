@@ -8,3 +8,4 @@ docs
 */vendor
 */.bundle
 */coverage
+cli/omnibus/
