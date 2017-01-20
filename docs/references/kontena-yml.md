@@ -5,7 +5,7 @@ toc_order: 1
 
 # Kontena.yml reference
 
-Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena Stack](../using-kontena/stacks.md) with one or more [services]((../using-kontena/services.md)). It uses the similar syntax and keys for services as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are supported in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
+Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena Stack](../using-kontena/stacks.md) with one or more [services](../using-kontena/services.md). It uses the similar syntax and keys for services as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are supported in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
 
 Each service defined in kontena.yml will create a service with that name within the stack's namespace, shown as stack/service in the CLI. The image key is mandatory. Other keys are optional.
 
@@ -508,7 +508,7 @@ You can also define variables and use values from those for variable substitutio
 
 ## Example kontena.yml
 
-```
+```yaml
 stack: kontena/example-app
 version: 0.1.0
 variables:

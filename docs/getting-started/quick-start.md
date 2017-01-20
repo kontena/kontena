@@ -85,7 +85,7 @@ $ kontena node list
 
 First create the `kontena.yml` file with the following contents:
 
-```
+```yaml
 stack: examples/wordpress
 version: 0.3.0
 variables:
@@ -203,6 +203,10 @@ For more complex examples of application deployment on Kontena, please see the f
 This completes the quick start guide for setting up Kontena. For further learning, you can continue by reading the following:
 
  - [Kontena Architecture](../core-concepts/architecture.md)
- - [Using Kontena](../using-kontena/)
+ - [Grids](../using-kontena/grids.md)
+ - [Stacks](../using-kontena/stacks.md)
+ - [Services](../using-kontena/services.md)
+ - [Secrets Management](../using-kontena/vault.md)
+ - [Loadbalancer](../using-kontena/loadbalancer.md)
 
 We hope you will find this documentation helpful! If you have any suggestions on improving our documentation, please [open an issue](https://github.com/kontena/kontena/issues) on GitHub.
