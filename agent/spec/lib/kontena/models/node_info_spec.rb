@@ -36,25 +36,26 @@ describe Kontena::Models::NodeInfo do
     expect(subject.peer_ips).to eq [ '192.168.66.102' ]
   end
 
-  it "is observable" do
-    expect(described_class.observable).to be_a Kontena::Actors::Observable
-  end
+  context "For an observable" do
+    let :observable do
+      Kontena::Actors::Observable.new
+    end
 
-  context "For an observer class" do
     let :observer_class do
       Class.new do
         include Celluloid
+        include Kontena::Actors::Observer
         include Kontena::Logging
 
-        def initialize(cls)
-          cls.observe :on_node_info
+        def initialize(observable)
+          @node_info = observe(observable, :node_info=)
         end
 
-        def on_node_info(node_info)
+        def node_info=(node_info)
           @node_info = node_info
         end
 
-        def poll
+        def node_info
           @node_info
         end
 
@@ -69,22 +70,23 @@ describe Kontena::Models::NodeInfo do
     end
 
     it "does not observe any value if not yet updated", :celluloid => true do
-      expect(observer_class.new(described_class).poll).to be_nil
+      expect(observer_class.new(observable).node_info).to be_nil
     end
 
     it "immediately observes an updated value", :celluloid => true do
-      described_class.observable.update node_info
+      observable.update subject
 
-      expect(observer_class.new(described_class).poll).to be node_info
+      expect(observer_class.new(observable).node_info).to be_a described_class
     end
 
     it "waits for an updated value", :celluloid => true do
-      observer = observer_class.new(described_class)
+      observer = observer_class.new(observable)
+      wait_future = observer.future.wait
 
-      described_class.observable.update node_info
+      observable.update subject
 
       Timeout.timeout(1) do
-        expect(observer.wait).to be node_info
+        expect(wait_future.value).to be_a described_class
       end
     end
   end

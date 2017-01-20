@@ -1,10 +1,6 @@
 require_relative '../../../spec_helper'
 
-describe Kontena::Rpc::AgentApi do
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
+describe Kontena::Rpc::AgentApi, :celluloid => true do
   describe '#port_open?' do
     it 'returns {open: false} if port is not open' do
       expect(subject.port_open?('100.64.2.2', 6379, 0.01)).to eq({open: false})
@@ -42,24 +38,21 @@ describe Kontena::Rpc::AgentApi do
       sleep 0.01
     end
 
-    it 'updates the NodeInfo observable' do
+    it 'updates an agent:node_info observable' do
+      observable = Kontena::Actors::Observable.new(subscribe: 'agent:node_info')
+
       subject.node_info(info)
 
       observer = Class.new {
         include Celluloid
+        include Kontena::Actors::Observer
 
-        def initialize(cls)
-          cls.observe :on_node_info
-        end
+        attr_accessor :node_info
 
-        def on_node_info(node_info)
-          @node_info = node_info
+        def initialize(observable)
+          @node_info = observe observable, :node_info=
         end
-
-        def node_info
-          @node_info
-        end
-      }.new(Kontena::Models::NodeInfo)
+      }.new(observable)
 
       expect(observer.node_info).to_not be_nil
       expect(observer.node_info.version).to eq '1.1.0'

@@ -1,28 +1,13 @@
 require 'ipaddress'
 
 module Kontena::Models
+  # Persistent NodeInfo state, updated via RPC, and shared between multiple actors
+  # Frozen for thread-safety
   class NodeInfo
-    @@observable = Kontena::Actors::Observable.new
-
-    def self.observable
-      @@observable
-    end
-
-    def self.get
-      @@observable.get
-    end
-
-    def self.observe(method)
-      @@observable.observe(Celluloid.current_actor, method)
-    end
-
-    def self.update(json)
-      @@observable.update(NodeInfo.new(json))
-    end
-
     # @param info [Hash] JSON
     def initialize(info)
       @info = info
+      self.freeze
     end
 
     # @return [String]

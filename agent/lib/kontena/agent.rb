@@ -11,7 +11,10 @@ module Kontena
       @opts = opts
       @queue = Queue.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
+      @node_info = Kontena::Actors::Observable.new(subscribe: 'agent:node_info')
+
       @supervisor = Celluloid::Supervision::Container.run!
+      self.supervise_state
       self.supervise_launchers
       self.supervise_network_adapter
       self.supervise_lb
@@ -68,6 +71,11 @@ module Kontena
 
     def supervise_launchers
       @supervisor.supervise(
+        type: Kontena::Launchers::Weave,
+        as: :weave_launcher,
+        args: [@node_info],
+      )
+      @supervisor.supervise(
         type: Kontena::Launchers::IpamPlugin,
         as: :ipam_plugin_launcher
       )
@@ -84,7 +92,7 @@ module Kontena
     def supervise_network_adapter
       @supervisor.supervise(
         type: Kontena::NetworkAdapters::Weave,
-        as: :network_adapter
+        as: :network_adapter,
       )
     end
 

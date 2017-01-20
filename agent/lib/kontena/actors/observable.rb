@@ -4,16 +4,21 @@ module Kontena::Actors
     include Kontena::Helpers::WaitHelper
     include Kontena::Logging
 
-    def initialize(&block)
+    # @param subscribe [String] update from Celluloid notifications
+    def initialize(subscribe: nil)
       @observers = {}
       @value = nil
-      @block = block
+
+      if subscribe
+        self.extend Celluloid::Notifications
+        self.subscribe(subscribe, :update)
+      end
     end
 
     def update(value)
       debug "update: #{value}"
 
-      @value = value.freeze
+      @value = value
 
       notify(@value)
     end
@@ -23,27 +28,35 @@ module Kontena::Actors
     end
 
     # Send to actor async method on update
-
+    # Return if updated
+    #
     # @param actor [celluloid::Actor]
     # @param method [Symbol]
+    # @return [Object, nil] value
     def observe(actor, method)
       debug "observe: #{actor}.#{method}"
 
-      if @value
-        actor.sync method, @value
-      end
-
       @observers[actor] = method
+
+      return @value
     end
 
     def notify(value)
       @observers.each do |actor, method|
         begin
+          debug "notify: #{actor}.#{method}: #{value}"
+
           actor.async method, value
         rescue Celluloid::DeadActorError => error
           @observers.delete(actor)
         end
       end
+    end
+  end
+
+  module Observer
+    def observe(observable, method)
+      observable.observe(Celluloid.current_actor, method)
     end
   end
 end

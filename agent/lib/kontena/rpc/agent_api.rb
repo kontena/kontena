@@ -14,7 +14,6 @@ module Kontena
 
       # @param [Hash] data
       def node_info(data)
-        Kontena::Models::NodeInfo.update(data)
         Celluloid::Notifications.publish('agent:node_info', data)
         {}
       end
