@@ -11,38 +11,36 @@ module Kontena::Cli::Plugins
     option '--pre', :flag, 'Allow pre-release of a plugin to be installed', default: false
 
     def execute
-      require 'shellwords'
-      install_plugin(name)
-    end
+      installed_version = Kontena::PluginManager.instance.installed(name)
 
-    def install_plugin(name)
-      plugin = "kontena-plugin-#{name}"
-      uninstall_previous(plugin) if plugin_exists?(plugin)
-      install_options = ['--no-ri', '--no-doc']
-      install_options << "--version #{version}" if version
-      install_options << "--pre" if pre?
-      install_options << plugin
-      install_command = "#{gem_bin} install #{install_options.shelljoin}"
-      ENV["DEBUG"] && STDERR.puts("Running #{install_command}")
-      spinner "Installing plugin #{name.colorize(:cyan)}" do
-        stdout, stderr, status = Open3.capture3(install_command)
-        raise(RuntimeError, stderr) unless status.success?
+      if installed_version
+        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do |spin|
+          begin
+            Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
+          rescue => ex
+            puts Kontena.pastel.red(ex.message)
+            ENV["DEBUG"] && puts(ex.backtrace.join("\n  "))
+            spin.fail!
+          end
+        end
+      else
+        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
+          begin
+            Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
+          rescue => ex
+            puts Kontena.pastel.red(ex.message)
+            ENV["DEBUG"] && puts(ex.backtrace.join("\n  "))
+            spin.fail!
+          end
+        end
       end
-    end
 
-    def plugin_exists?(name)
-      Kontena::PluginManager.instance.plugins.any? { |p| p.name == name}
-    end
-
-    def gem_bin
-      @gem_bin ||= which('gem')
-    end
-
-    def uninstall_previous(name)
-      uninstall_command = "#{gem_bin} uninstall -q #{name.shellescape}"
-      spinner "Uninstalling previous version of plugin" do
-        stdout, stderr, status = Open3.capture3(uninstall_command)
-        raise(RuntimeError, stderr) unless status.success?
+      Array(installed).each do |gem|
+        if gem.name.start_with?('kontena-plugin-')
+          puts Kontena.pastel.green("Installed plugin #{gem.name.sub('kontena-plugin-', '')} version #{gem.version}")
+        else
+          puts Kontena.pastel.cyan("Installed dependency #{gem.name} version #{gem.version}")
+        end
       end
     end
   end
