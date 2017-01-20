@@ -4,6 +4,7 @@ require 'pathname'
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
 require_relative 'app/middlewares/token_authentication'
+require_relative 'app/middlewares/version_injector'
 require_relative 'app/helpers/config_helper'
 
 require_glob __dir__ + '/app/routes/*.rb'
@@ -18,6 +19,7 @@ class Server < Roda
   use Rack::Attack
   use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
   use TokenAuthentication, File.expand_path('../config/authentication.yml', __FILE__)
+  use VersionInjector, VERSION
 
   include Logging
   include ConfigHelper
@@ -69,7 +71,7 @@ class Server < Roda
         r.run OAuth2Api::TokensApi
       end
 
-      r.on 'authorize' do 
+      r.on 'authorize' do
         r.run OAuth2Api::AuthorizationApi
       end
     end
