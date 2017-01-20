@@ -50,7 +50,10 @@ module Kontena::Actors
   end
 
   module Observer
-    # Observe instance attributes from observables
+    # Set instance attributes from observables
+    # Yields to block once all obsered instance attributes are valid, and when they are updated
+    # @param observables [Hash{Symbol => Observable}]
+    # @yield [] all observable attributes are valid
     def observe(**observables, &block)
       # invoke block when all observables are ready
       update_proc = Proc.new do
