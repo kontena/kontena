@@ -55,8 +55,13 @@ module Kontena::Actors
   end
 
   module Observer
-    def observe(observable, method)
-      observable.observe(Celluloid.current_actor, method)
+    # Observe instance attributes from observables
+    def observe(**observables)
+      observables.each do |sym, observable|
+        if value = observable.observe(Celluloid.current_actor, "#{sym}=")
+          send "#{sym}=", value
+        end
+      end
     end
   end
 end
