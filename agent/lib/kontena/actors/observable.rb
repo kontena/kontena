@@ -1,7 +1,6 @@
 module Kontena::Actors
   class Observable
     include Celluloid
-    include Kontena::Helpers::WaitHelper
     include Kontena::Logging
 
     # @param subscribe [String] update from Celluloid notifications
@@ -21,10 +20,6 @@ module Kontena::Actors
       @value = value
 
       notify(@value)
-    end
-
-    def get
-      wait { @value }
     end
 
     # Send to actor async method on update
