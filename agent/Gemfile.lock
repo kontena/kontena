@@ -42,6 +42,7 @@ GEM
       websocket-driver (>= 0.5.1)
     hitimes (1.2.3)
     i18n (0.7.0)
+    ipaddress (0.8.3)
     json (1.8.3)
     minitest (5.5.0)
     mixlib-log (1.6.0)
@@ -90,6 +91,7 @@ DEPENDENCIES
   etcd
   eventmachine (~> 1.0.8)
   faye-websocket (~> 0.10.1)
+  ipaddress
   msgpack
   rake
   rspec
