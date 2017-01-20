@@ -26,6 +26,10 @@ describe Kontena::Actors::Observable do
         instance_variable_get("@#{sym}")
       end
 
+      def ready?
+        @ready
+      end
+
       def wait
         sleep 0.1 until @ready
       end
@@ -33,17 +37,24 @@ describe Kontena::Actors::Observable do
   end
 
   it "does not observe any value if not yet updated", :celluloid => true do
-    expect(observer_class.new(object: subject)[:object]).to be_nil
+    observer = observer_class.new(object: subject)
+
+    expect(observer[:object]).to be_nil
+    expect(observer).to_not be_ready
   end
 
   it "immediately observes an updated value", :celluloid => true do
     subject.update object
 
-    expect(observer_class.new(object: subject)[:object]).to be object
+    observer = observer_class.new(object: subject)
+
+    expect(observer[:object]).to be object
+    expect(observer).to be_ready
   end
 
   it "waits for an updated value", :celluloid => true do
     observer = observer_class.new(object: subject)
+
     wait_future = observer.future.wait
 
     subject.update object
@@ -52,6 +63,7 @@ describe Kontena::Actors::Observable do
       wait_future.value
 
       expect(observer[:object]).to be object
+      expect(observer).to be_ready
     end
   end
 
@@ -60,6 +72,7 @@ describe Kontena::Actors::Observable do
     subject2 = described_class.new
 
     observer = observer_class.new(object1: subject1, object2: subject2)
+
     wait_future = observer.future.wait
 
     subject1.update object
