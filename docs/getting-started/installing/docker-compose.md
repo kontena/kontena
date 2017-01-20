@@ -108,7 +108,7 @@ agent:
   net: host
   restart: always
   environment:
-    - KONTENA_URI=wss://<master_ip>/
+    - KONTENA_URI=ws://<master_ip>/
     - KONTENA_TOKEN=<grid_token>
     - KONTENA_PEER_INTERFACE=eth1
   volumes:
