@@ -16,7 +16,7 @@ title: CoreOS
 
 Example cloud-config:
 
-```
+```yaml
 #cloud-config
 write_files:
   - path: /etc/kontena-server.env
