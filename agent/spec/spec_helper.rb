@@ -54,7 +54,15 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = false
   end
 
-  config.before(:each) do
+  # Celluloid support
+  config.around :each, :celluloid => true do |example|
+    Celluloid.boot
+
+    begin
+      example.run
+    ensure
+      Celluloid.shutdown
+    end
   end
 
 # The settings below are suggested to provide a good initial experience
