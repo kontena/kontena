@@ -30,11 +30,39 @@ describe Kontena::Rpc::AgentApi do
   end
 
   describe '#node_info' do
+    let :info do
+      {
+        'version' => '1.1.0',
+      }
+    end
+
     it 'sends publishes event' do
-      info = {'version' => '0.10.0'}
       expect(Celluloid::Notifications).to receive(:publish).with('agent:node_info', info)
       subject.node_info(info)
       sleep 0.01
+    end
+
+    it 'updates the NodeInfo observable' do
+      subject.node_info(info)
+
+      observer = Class.new {
+        include Celluloid
+
+        def initialize(cls)
+          cls.observe :on_node_info
+        end
+
+        def on_node_info(node_info)
+          @node_info = node_info
+        end
+
+        def node_info
+          @node_info
+        end
+      }.new(Kontena::Models::NodeInfo)
+
+      expect(observer.node_info).to_not be_nil
+      expect(observer.node_info.version).to eq '1.1.0'
     end
   end
 end

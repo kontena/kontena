@@ -16,6 +16,9 @@ require_relative 'docker/container'
 require_relative 'kontena/logging'
 require_relative 'kontena/websocket_client'
 
+require_relative 'kontena/actors/observable'
+require_relative 'kontena/models/node_info'
+
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/weave_executor'
 require_relative 'kontena/network_adapters/ipam_client'
@@ -36,8 +39,6 @@ require_relative 'kontena/workers/image_cleanup_worker'
 require_relative 'kontena/workers/image_pull_worker'
 require_relative 'kontena/workers/health_check_worker'
 require_relative 'kontena/workers/container_starter_worker'
-
-require_relative 'kontena/actors/container_coroner'
 
 require_relative 'kontena/actors/container_coroner'
 
