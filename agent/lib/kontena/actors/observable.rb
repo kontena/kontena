@@ -56,12 +56,27 @@ module Kontena::Actors
 
   module Observer
     # Observe instance attributes from observables
-    def observe(**observables)
+    def observe(**observables, &block)
+      # invoke block when all observables are ready
+      update_proc = Proc.new do
+        block.call if block unless observables.any? { |sym, observable| instance_variable_get("@#{sym}").nil? }
+      end
+
       observables.each do |sym, observable|
+        # update state for observable, and run update block
+        define_singleton_method("#{sym}=") do |value|
+          instance_variable_set("@#{sym}", value)
+          update_proc.call()
+        end
+
         if value = observable.observe(Celluloid.current_actor, "#{sym}=")
-          send "#{sym}=", value
+          # update initial state; only run update block once at end
+          instance_variable_set("@#{sym}", value)
         end
       end
+
+      # immediately run update block if all observables were ready
+      update_proc.call()
     end
   end
 end
