@@ -26,7 +26,7 @@ services:
   haproxy:
     image: kontena/haproxy:latest
     container_name: kontena-server-haproxy
-    restart: always
+    restart: unless-stopped
     environment:
       - SSL_CERT=**None**
       - BACKENDS=kontena-server-api:9292
@@ -34,11 +34,11 @@ services:
       - master
     ports:
       - 80:80
-      - 443:443    
+      - 443:443
   master:
     image: kontena/server:latest
     container_name: kontena-server-api
-    restart: always
+    restart: unless-stopped
     environment:
       - RACK_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/kontena
@@ -50,7 +50,7 @@ services:
   mongodb:
     image: mongo:3.0
     container_name: kontena-server-mongo
-    restart: always
+    restart: unless-stopped
     command: mongod --smallfiles
     volumes:
       - kontena-server-mongo:/data/db
@@ -106,7 +106,7 @@ agent:
   container_name: kontena-agent
   image: kontena/agent:latest
   net: host
-  restart: always
+  restart: unless-stopped
   environment:
     - KONTENA_URI=ws://<master_ip>/
     - KONTENA_TOKEN=<grid_token>
