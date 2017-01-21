@@ -102,17 +102,19 @@ Now you can start provisioning nodes to your host machines.
 **Step 1:** copy the following `docker-compose.yml` file to each host:
 
 ```yaml
-agent:
-  container_name: kontena-agent
-  image: kontena/agent:latest
-  net: host
-  restart: unless-stopped
-  environment:
-    - KONTENA_URI=ws://<master_ip>/
-    - KONTENA_TOKEN=<grid_token>
-    - KONTENA_PEER_INTERFACE=eth1
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
+version: '2'
+services:
+  agent:
+    container_name: kontena-agent
+    image: kontena/agent:latest
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - KONTENA_URI=ws://<master_ip>/
+      - KONTENA_TOKEN=<grid_token>
+      - KONTENA_PEER_INTERFACE=eth1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 - `KONTENA_URI` is the uri to Kontena Master (use ws:// for a non-tls connection)
