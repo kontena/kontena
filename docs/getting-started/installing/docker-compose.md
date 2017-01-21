@@ -50,7 +50,7 @@ services:
   mongodb:
     image: mongo:3.0
     container_name: kontena-server-mongo
-    restart: always
+    restart: unless-stopped
     command: mongod --smallfiles
     volumes:
       - kontena-server-mongo:/data/db
