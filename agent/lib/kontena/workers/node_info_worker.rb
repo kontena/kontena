@@ -213,26 +213,27 @@ module Kontena::Workers
     # @return [Integer]
     def calculate_container_time(container)
       state = container.state
-      since = stats_since
-      started_at = DateTime.parse(state['StartedAt']) rescue nil
-      finished_at = DateTime.parse(state['FinishedAt']) rescue nil
+      since = stats_since.to_time.utc
+      started_at = DateTime.parse(state['StartedAt']).to_time.utc rescue nil
+      finished_at = DateTime.parse(state['FinishedAt']).to_time.utc rescue nil
       seconds = 0
       return seconds unless started_at
       if state['Running']
+        now = Time.now.utc.to_i
         if started_at < since
           # container has started before last check
-          seconds = Time.now.to_i - since.to_time.to_i
+          seconds = now - since.to_i
         elsif started_at >= since
           # container has started after last check
-          seconds = Time.now.to_i - started_at.to_time.to_i
+          seconds = now - started_at.to_time.to_i
         end
       else
         if finished_at && started_at < finished_at && started_at > since
           # container has started before last check
-          seconds = finished_at.to_time.to_i - started_at.to_time.to_i
+          seconds = finished_at.to_i - started_at.to_i
         elsif finished_at && started_at < finished_at && started_at <= since
           # container has started after last check
-          seconds = finished_at.to_time.to_i - since.to_time.to_i
+          seconds = finished_at.to_i - since.to_i
         end
       end
 
