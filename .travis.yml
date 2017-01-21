@@ -76,7 +76,7 @@ deploy:
   - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/omnibus_osx.sh"
     on:
-      branch: feature/cli-omnibus
+      tags: true
       condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = osx
       rvm: 2.1.10
       repo: kontena/kontena

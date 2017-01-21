@@ -19,6 +19,6 @@ bundle exec omnibus build kontena --log-level info
 github-release upload \
     --user kontena \
     --repo kontena \
-    --tag v1.0.4.rc2 \
-    --name "kontena-cli-osx-amd64.pkg" \
+    --tag $TRAVIS_TAG \
+    --name "kontena-cli-osx-${TRAVIS_TAG}-amd64.pkg" \
     --file pkg/kontena-*.pkg
