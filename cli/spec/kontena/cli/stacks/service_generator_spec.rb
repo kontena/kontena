@@ -335,12 +335,16 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['deploy_opts']['interval']).to eq(60)
       end
 
-      it 'does not return deploy_opts if no deploy options are defined' do
+      it 'returns nil values if no deploy options are defined' do
         data = {
           'image' => 'foo/bar:latest'
         }
         result = subject.send(:parse_data, data)
-        expect(result['deploy_opts']).to be_nil
+        expect(result['deploy_opts']).to eq({
+          'interval' => nil,
+          'min_health' => nil,
+          'wait_for_port' => nil
+          })
       end
     end
 
@@ -381,5 +385,5 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['secrets']).to be_nil
       end
     end
-  end  
+  end
 end
