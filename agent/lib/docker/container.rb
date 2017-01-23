@@ -189,6 +189,11 @@ module Docker
       self.overlay_cidr.split('/')[1] if self.overlay_cidr
     end
 
+    # @return [Array<String>]
+    def cmd
+      config['Cmd']
+    end
+
     private
 
     # @return [Hash]
