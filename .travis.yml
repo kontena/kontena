@@ -1,4 +1,7 @@
 language: ruby
+os:
+  - linux
+  - osx
 sudo: required
 rvm:
   - 2.0.0-p648
@@ -20,6 +23,7 @@ env:
     - secure: "YKHqxWKFfrhJoQ5ptfgnByGNdcRLcQVpI22EGjU5WWzQrUw3Frq8+zsRmSNjzF6qEi5oXfxzxUaOItzY8W8bkWUVHCaVGalfyK+C4ad55n8ZpP2cZkOJtenocPhhUTRFwOuAZsUYCI+hXroMyoBUsnu4AJqpkYVimlNblOdcWoA="
     - secure: "jX1rLCq1KBJ2KR42RSi2EFXYkmzvKMoMSfhMpW9HqnhqIcU8RImPb8ZIKGdN1+ncXisQjSMZ4Byz+GnC5oJooMjBp9oAwG7y4mqtsqE8gdreHzAEe8uBHleUF3M0KVHjsSmtSAPltdhpMr5wepcGvK/nC7t0KkVuyPx7pKaY5p0=" # b-u
     - secure: "MU60vW00synoFhI44RAlGjLJQIB6tRHnFr/lFyn8SM7MgOZo2HX6EF0uu1y1AYWrVhekbHfVLoHTL8xMpKYGyXagtrD1BJVMWRwAVzmczsbyP9AVRenKeXzM2f5xZpnThZA3gxN3ZUq9ZAweYFxhlVOm3EUHWbJdmXlL/ZaQZYQ=" # b-k
+    - secure: "IV/3PBCZ0bVYqLdDUlvqjbXU0a+Vk/seNH57i9X8axENoS0166VXwjwTN8AlSWhKZQVadxG3J6T7V6U1G366gOOmlqtGT7AVNpvn7h4ShE0rE05sdo5GoCPGbs+5YB5qNchA7TUHrXC9pvDwmSz/pt/nA/WLiN1MJ4L8vtxLgKg=" # g
     - DOCS_GA=UA-60024048-1
     - DOCS_HS=2126125
   matrix:
@@ -27,29 +31,52 @@ env:
     - TEST_DIR=cli
     - TEST_DIR=server
 matrix:
-  exclude:
+    exclude:
+    - rvm: 2.0.0-p648
+      env: TEST_DIR=agent
     - rvm: 2.0.0-p648
       env: TEST_DIR=server
     - rvm: 2.1.10
-      env: TEST_DIR=server
-    - rvm: 2.2.6
-      env: TEST_DIR=server
-    - rvm: 2.4.0
-      env: TEST_DIR=server
-    - rvm: 2.0.0-p648
       env: TEST_DIR=agent
     - rvm: 2.1.10
-      env: TEST_DIR=agent
+      env: TEST_DIR=server
     - rvm: 2.2.6
       env: TEST_DIR=agent
+    - rvm: 2.2.6
+      env: TEST_DIR=server
     - rvm: 2.4.0
       env: TEST_DIR=agent
+    - rvm: 2.4.0
+      env: TEST_DIR=server
+    - os: osx
+      rvm: 2.0.0-p648
+      env: TEST_DIR=cli
+    - os: osx
+      rvm: 2.2.6
+      env: TEST_DIR=cli
+    - os: osx
+      rvm: 2.3.1
+      env: TEST_DIR=cli
+    - os: osx
+      rvm: 2.4.0
+      env: TEST_DIR=cli
+    - os: osx
+      env: TEST_DIR=agent
+    - os: osx
+      env: TEST_DIR=server
 script: ./build/travis/test.sh
 deploy:
   - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
     on:
       tags: true
-      condition: $TEST_DIR = server
+      condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
       rvm: 2.3.1
+      repo: kontena/kontena
+  - provider: script
+    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/omnibus_osx.sh"
+    on:
+      tags: true
+      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = osx
+      rvm: 2.1.10
       repo: kontena/kontena
