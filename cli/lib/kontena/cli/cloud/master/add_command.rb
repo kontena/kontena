@@ -25,7 +25,7 @@ module Kontena::Cli::Cloud::Master
 
     def register(name, url = nil, provider = nil, redirect_uri = nil, version = nil, owner = nil)
       attributes = {}
-      attributes['name']         = name 
+      attributes['name']         = name
       attributes['url']          = url if url
       attributes['provider']     = provider if provider
       attributes['redirect-uri'] = redirect_uri if redirect_uri
@@ -107,7 +107,7 @@ module Kontena::Cli::Cloud::Master
         end
       else
         response = spinner "Registering current Kontena Master '#{current_master.name}' #{" as '#{new_name}' " unless new_name == current_master.name}to Kontena Cloud" do
-          register(new_name, current_master.url, self.provider, nil, self.version)
+          register(new_name, current_master.url, self.provider, current_master.url.gsub(/\/$/, '') + "/cb", self.version)
         end
       end
 
