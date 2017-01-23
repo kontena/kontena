@@ -3,6 +3,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Helpers::WeaveHelper
 
     EVENT_NAME = 'container:event'
 
@@ -72,7 +73,7 @@ module Kontena::Workers
 
     # @param [Docker::Event] event
     def publish_event(event)
-      return if Actor[:network_adapter].adapter_image?(event.from)
+      return if weave_exec_image?(event.from)
 
       data = {
         event: EVENT_NAME,
