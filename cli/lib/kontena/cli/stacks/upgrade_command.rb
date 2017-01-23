@@ -31,7 +31,7 @@ module Kontena::Cli::Stacks
 
       if deploy?
         result = Kontena.run(['stack', 'deploy', name])
-        unless result.zero?
+        unless result.to_i.zero?
           msg = "Deploy failed"
           msg << ": #{$!.message}" if $!
           exit_with_error msg
