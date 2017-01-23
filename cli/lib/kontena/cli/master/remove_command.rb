@@ -6,7 +6,7 @@ module Kontena::Cli::Master
 
     banner "Note: This command only removes the master from your local configuration file"
 
-    option '--force', :flag, "Don't ask questions"
+    option '--force', :flag, "Don't ask for confirmation", attribute_name: :forced
 
     def run_interactive
       selections = prompt.multi_select("Select masters to remove from configuration file:") do |menu|
@@ -22,19 +22,15 @@ module Kontena::Cli::Master
     end
 
     def delete_servers(servers)
-      case servers.size
-      when 0
-        abort "Master not found in configuration"
-      when 1
-        config.servers.delete(config.servers.delete(servers.first))
-        puts "Removed Master '#{servers.first.name}'"
-      else
-        unless self.force?
-          abort("Aborted") unless prompt.yes?("Remove #{servers.size} masters from configuration?")
-        end
-        config.servers.delete_if {|s| servers.include?(s) }
-        puts "Removed #{servers.size} masters from configuration"
+      abort "Master not found in configuration" if servers.empty?
+
+      unless forced?
+        puts "Removing #{servers.size} master#{"s" if servers.size > 1} from configuration"
+        confirm
       end
+
+      config.servers.delete_if {|s| servers.include?(s) }
+
       unless config.find_server(config.current_server)
         puts
         puts "Current master was removed, to select a new current master use:"
@@ -43,6 +39,7 @@ module Kontena::Cli::Master
         puts "  " + pastel.green.on_black("  kontena master login <master_url>  ")
         config.current_server = nil
       end
+
       config.write
     end
 
