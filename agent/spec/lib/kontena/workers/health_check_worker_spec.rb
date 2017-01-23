@@ -62,6 +62,12 @@ describe Kontena::Workers::HealthCheckWorker do
   end
 
   describe '#on_container_event' do
+    it 'stops check on kill' do
+      expect(subject.wrapped_object).to receive(:stop_container_check).once.with('foo')
+      subject.on_container_event('topic', double(:event, id: 'foo', status: 'kill'))
+      sleep 0.01
+    end
+
     it 'stops check on die' do
       expect(subject.wrapped_object).to receive(:stop_container_check).once.with('foo')
       subject.on_container_event('topic', double(:event, id: 'foo', status: 'die'))
