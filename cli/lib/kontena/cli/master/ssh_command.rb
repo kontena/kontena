@@ -1,46 +1,43 @@
-module Kontena::Cli::Nodes
+module Kontena::Cli::Master
   class SshCommand < Kontena::Command
-    include Kontena::Cli::Common
-    include Kontena::Cli::GridOptions
 
-    parameter "NODE_ID", "Node id"
+    include Kontena::Cli::Common
+
     parameter "[COMMANDS] ...", "Run command on host"
 
     option ["-i", "--identity-file"], "IDENTITY_FILE", "Path to ssh private key"
     option ["-u", "--user"], "USER", "Login as a user", default: "core"
-    option "--private-ip", :flag, "Connect to node's private IP address"
-    option "--internal-ip", :flag, "Connect to node's internal IP address (requires VPN connection)"
 
     requires_current_master
-    requires_current_grid
+
+    def master_host
+      require 'uri'
+      URI.parse(current_master.url).host
+    end
+
+    def master_provider
+      Kontena.run('master config get --return server.provider', returning: :result)
+    end
 
     def execute
-      node = client.get("nodes/#{current_grid}/#{node_id}")
-
-      provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
       commands_list.insert('--') unless commands_list.empty?
 
-      if provider == 'vagrant'
+      if master_provider == 'vagrant'
         unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
-        cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list
+        cmd = ['vagrant', 'master', 'ssh']
+        cmd += commands_list
         Kontena.run(cmd)
       else
         cmd = ['ssh']
+        cmd << "#{user}@#{master_host}"
         cmd += ["-i", identity_file] if identity_file
-        if internal_ip?
-          ip = "10.81.0.#{node['node_number']}"
-        elsif private_ip?
-          ip = node['private_ip']
-        else
-          ip = node['public_ip']
-        end
-        cmd << "#{user}@#{ip}"
         cmd += commands_list
         exec(*cmd)
       end
     end
   end
 end
+
