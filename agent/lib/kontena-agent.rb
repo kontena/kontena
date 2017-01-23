@@ -19,6 +19,9 @@ require_relative 'kontena/websocket_client'
 require_relative 'kontena/actors/observable'
 require_relative 'kontena/models/node_info'
 
+require_relative 'kontena/helpers/weave_helper'
+require_relative 'kontena/helpers/weaveexec_helper'
+
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/weave_executor'
 require_relative 'kontena/network_adapters/ipam_client'

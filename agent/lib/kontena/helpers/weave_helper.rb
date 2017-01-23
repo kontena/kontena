@@ -1,12 +1,43 @@
 require 'docker'
-require_relative 'iface_helper'
 require_relative 'wait_helper'
-
 
 module Kontena
   module Helpers
     module WeaveHelper
       include WaitHelper
+
+      WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.7.2'
+      WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
+      WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
+
+      def weave_version
+        WEAVE_VERSION
+      end
+
+      def weave_image
+        "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
+      end
+      def weaveexec_image
+        "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
+      end
+
+      # @param [String] image
+      # @return [Boolean]
+      def weave_exec_image?(image)
+        image.to_s.include?(WEAVEEXEC_IMAGE)
+      end
+
+      # @param [Docker::Container] container
+      # @return [Boolean]
+      def weave_exec_container?(container)
+        weave_exec_image?(container.config['Image'])
+      end
+
+      # @param [String] image
+      # @return [Boolean]
+      def weave_router_image?(image)
+        image.to_s == weave_image
+      end
 
       def network_adapter
         Celluloid::Actor[:network_adapter]
