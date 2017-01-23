@@ -12,7 +12,7 @@ module Kontena::Workers
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
 
-    attr_reader :queue, :statsd
+    attr_reader :queue, :statsd, :stats_since
 
     PUBLISH_INTERVAL = 60
 
@@ -22,8 +22,10 @@ module Kontena::Workers
     def initialize(queue, autostart = true)
       @queue = queue
       @statsd = nil
+      @stats_since = Time.now
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
+      subscribe('container:event', :on_container_event)
       info 'initialized'
       async.start if autostart
     end
@@ -98,14 +100,34 @@ module Kontena::Workers
       ENV['KONTENA_PEER_INTERFACE'] || 'eth1'
     end
 
+    # @param [String] topic
+    # @param [Docker::Event] event
+    def on_container_event(topic, event)
+      if event.status == 'die'.freeze
+        container = Docker::Container.get(event.id) rescue nil
+        if container
+          @container_seconds += calculate_container_time(container)
+        end
+      end
+    end
+
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
+
+      container_partial_seconds = @container_seconds.to_i
+      @container_seconds = 0
+      container_seconds = calculate_containers_time + container_partial_seconds
+      @stats_since = Time.now
+
       event = {
           event: 'node:stats',
           data: {
             id: docker_info['ID'],
             memory: calculate_memory,
+            usage: {
+              container_seconds: container_seconds
+            },
             load: {
               :'1m' => load_avg.one_minute,
               :'5m' => load_avg.five_minutes,
@@ -122,6 +144,7 @@ module Kontena::Workers
             ]
           }
       }
+
       self.queue << event
       send_statsd_metrics(event[:data])
     end
@@ -136,6 +159,7 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
+      statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
       event[:filesystem].each do |fs|
         name = fs[:name].split("/")[1..-1].join(".")
         statsd.gauge("#{key_base}.filesystem.#{name}.free", fs[:free])
@@ -171,6 +195,52 @@ module Kontena::Workers
       memory[:used] = memory[:total] - memory[:free]
 
       memory
+    end
+
+    # @param [Time] since
+    def calculate_containers_time
+      seconds = 0
+      Docker::Container.all.each do |container|
+        seconds += calculate_container_time(container)
+      end
+
+      seconds
+    rescue => exc
+      error exc.message
+    end
+
+    # @param [Docker::Container] container
+    # @return [Integer]
+    def calculate_container_time(container)
+      state = container.state
+      since = stats_since.to_time.utc
+      started_at = DateTime.parse(state['StartedAt']).to_time.utc rescue nil
+      finished_at = DateTime.parse(state['FinishedAt']).to_time.utc rescue nil
+      seconds = 0
+      return seconds unless started_at
+      if state['Running']
+        now = Time.now.utc.to_i
+        if started_at < since
+          # container has started before last check
+          seconds = now - since.to_i
+        elsif started_at >= since
+          # container has started after last check
+          seconds = now - started_at.to_time.to_i
+        end
+      else
+        if finished_at && started_at < finished_at && started_at > since
+          # container has started before last check
+          seconds = finished_at.to_i - started_at.to_i
+        elsif finished_at && started_at < finished_at && started_at <= since
+          # container has started after last check
+          seconds = finished_at.to_i - since.to_i
+        end
+      end
+
+      seconds
+    rescue => exc
+      debug exc.message
+      0
     end
 
     # @return [Hash]

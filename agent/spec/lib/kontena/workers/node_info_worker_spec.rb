@@ -13,6 +13,7 @@ describe Kontena::Workers::NodeInfoWorker do
       'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
     })
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
+    allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
   }
   after(:each) { Celluloid.shutdown }
 
@@ -112,6 +113,54 @@ describe Kontena::Workers::NodeInfoWorker do
       expect {
         subject.publish_node_stats
       }.to change{ subject.queue.length }.by(1)
+    end
+  end
+
+  describe '#calculate_container_time' do
+    context 'container is running' do
+      it 'calculates container time since last check' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 30)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 300).to_s,
+          'Running' => true
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(30)
+      end
+
+      it 'calculates container time since container is started' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 50).to_s,
+          'Running' => true
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(50)
+      end
+    end
+
+    context 'container is not running' do
+      it 'calculates partial container time since last check' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 300).to_s,
+          'FinishedAt' => (Time.now - 2).to_s,
+          'Running' => false
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(58)
+      end
+
+      it 'calculates partial container time since container is started' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 50).to_s,
+          'FinishedAt' => (Time.now - 2).to_s,
+          'Running' => false
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(48)
+      end
     end
   end
 

@@ -88,6 +88,9 @@ class TelemetryJob
     stat = { id: grid.id.to_s }
     stat[:nodes] = build_node_stats(grid)
     stat[:services] = build_service_stats(grid)
+    stat[:usage] = {
+      container_hours: stat[:nodes].sum { |n| n[:container_hours] }
+    }
     stat
   end
 
@@ -96,7 +99,7 @@ class TelemetryJob
   def build_node_stats(grid)
     nodes = []
     grid.host_nodes.all.each do |node|
-      nodes << {
+      stats = {
         id: node.id.to_s,
         created_at: node.created_at,
         cpus: node.cpus,
@@ -105,6 +108,11 @@ class TelemetryJob
         kernel: node.kernel_version,
         os: node.os
       }
+      container_seconds = node.host_node_stats.where(
+        :created_at.gt => (Time.now - 1.hour).beginning_of_hour
+      ).sum(:'usage.container_seconds').to_i
+      stats[:container_hours] = container_seconds / 60
+      nodes << stats
     end
 
     nodes

@@ -104,7 +104,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-	"name": "my-grid", 
+	"name": "my-grid",
 	"initial-size": 3
 }
 ```
@@ -239,7 +239,10 @@ Only `master_admin` role can remove a grid.
 			"name": "docker",
 			"used": 0.0,
 			"total": 0.0
-		} 
+		},
+    "usage": {
+      "container_seconds": 0
+    }
 	},
 	"grid": {
 		"id": "my-grid",
@@ -274,7 +277,7 @@ engine_root_dir | Docker engine root directory
 cpus | Number of cpu cores in the node
 mem_total | Total memory in the node
 mem_limit | Memory limit
-public_ip | Public ip address 
+public_ip | Public ip address
 private_ip | Private ip address (used for overlay network communication within a region)
 labels | A list of user defined labels for the node
 peer_ips | A list of peer ip addresses. Used for creating an overlay network between nodes in the sam grid.
@@ -436,10 +439,10 @@ Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"name": "redis", 
-	"stack": "my/redis", 
-	"version": "0.1.0", 
-	"registry": "file://", 
+	"name": "redis",
+	"stack": "my/redis",
+	"version": "0.1.0",
+	"registry": "file://",
 	"services": []
 }
 ```
@@ -458,9 +461,9 @@ Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"stack": "my/redis", 
-	"version": "0.1.1", 
-	"registry": "file://", 
+	"stack": "my/redis",
+	"version": "0.1.1",
+	"registry": "file://",
 	"services": []
 }
 ```
@@ -532,7 +535,7 @@ Get container logs from a stack.
 Parameter | Description
 ---------- | -------
 limit | Limit how many log items are returned
-from | Show log items from log id 
+from | Show log items from log id
 since | Show log items since (timestamp)
 follow | Stream logs
 
@@ -669,7 +672,7 @@ oneshot | Boolean, if enabled hook is executed only once in a service lifetime
 				"cmd": "echo 'hello world'",
 				"instances": "*",
 				"oneshot": false
-			}	
+			}
 		]
 	}
 }
@@ -722,8 +725,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"name": "redis", 
-	"image": "redis:3.0", 
+	"name": "redis",
+	"image": "redis:3.0",
 	"stateful": true
 }
 ```
@@ -911,7 +914,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"name": "SECRET_PWD", 
+	"name": "SECRET_PWD",
 	"value": "T0Ps3crT"
 }
 ```
@@ -932,7 +935,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"value": "T0Ps3crT", 
+	"value": "T0Ps3crT",
 	"upsert": false
 }
 ```
@@ -944,7 +947,7 @@ Update (or upsert) a secret.
 `PUT /v1/secrets/{secret_id}`
 
 
-## Read a secret 
+## Read a secret
 
 ```http
 GET /v1/secrets/my-grid/SECRET_PWD HTTP/1.1
@@ -1009,9 +1012,9 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"url": "https://registry.domain.com/", 
-	"username": "a_bot", 
-	"email": "a_bot@domain.com", 
+	"url": "https://registry.domain.com/",
+	"username": "a_bot",
+	"email": "a_bot@domain.com",
 	"password": "xyz123"
 }
 ```
@@ -1072,7 +1075,7 @@ Content-Type: application/json
 }
 ```
 
-Authorize a domain with Let's Encrypt. 
+Authorize a domain with Let's Encrypt.
 
 
 Returns a dns challenge:
@@ -1087,7 +1090,7 @@ record_content | A record content for the given domain
 
 `POST /v1/certificates/{grid_id}/authorize`
 
-## Create a certificate 
+## Create a certificate
 
 ```http
 POST /v1/certificates/my-grid/certificate HTTP/1.1
@@ -1096,8 +1099,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"secret_name": "FOO_DOMAIN_COM", 
-	"domains": ["foo.domain.com"], 
+	"secret_name": "FOO_DOMAIN_COM",
+	"domains": ["foo.domain.com"],
 	"cert_type": "fullchain"
 }
 ```
@@ -1151,7 +1154,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"foo.bar": "bar", 
+	"foo.bar": "bar",
 	"bar.baz": "baz"
 }
 ```
@@ -1171,7 +1174,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"foo.bar": "bar", 
+	"foo.bar": "bar",
 	"bar.baz": "baz"
 }
 ```
@@ -1199,7 +1202,7 @@ Create an authorization request for an invite code. Redirects to the configured 
 `GET /oauth2/authenticate`
 
 
-## Token 
+## Token
 
 ```http
 POST /oauth2/token HTTP/1.1
