@@ -1,5 +1,3 @@
-require_relative 'weave_helper'
-
 module Kontena::Helpers
   module WeaveExecHelper
     include Kontena::Logging

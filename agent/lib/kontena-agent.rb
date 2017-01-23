@@ -19,6 +19,7 @@ require_relative 'kontena/websocket_client'
 require_relative 'kontena/actors/observable'
 require_relative 'kontena/models/node_info'
 
+require_relative 'kontena/helpers/launcher_helper'
 require_relative 'kontena/helpers/weave_helper'
 require_relative 'kontena/helpers/weaveexec_helper'
 
@@ -30,6 +31,7 @@ require_relative 'kontena/network_adapters/ipam_cleaner'
 require_relative 'kontena/launchers/etcd'
 require_relative 'kontena/launchers/cadvisor'
 require_relative 'kontena/launchers/ipam_plugin'
+require_relative 'kontena/launchers/weave'
 
 require_relative 'kontena/workers/queue_worker'
 require_relative 'kontena/workers/log_worker'
