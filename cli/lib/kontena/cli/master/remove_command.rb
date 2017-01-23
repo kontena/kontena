@@ -6,7 +6,7 @@ module Kontena::Cli::Master
 
     banner "Note: This command only removes the master from your local configuration file"
 
-    option '--force', :flag, "Don't ask for confirmation"
+    option '--force', :flag, "Don't ask for confirmation", attribute_name: :forced
 
     def run_interactive
       selections = prompt.multi_select("Select masters to remove from configuration file:") do |menu|
@@ -24,8 +24,9 @@ module Kontena::Cli::Master
     def delete_servers(servers)
       abort "Master not found in configuration" if servers.empty?
 
-      unless self.force?
-        abort("Aborted") unless prompt.yes?("Remove #{servers.size} master#{"s" if servers.size > 1} from configuration?")
+      unless forced?
+        puts "Removing #{servers.size} master#{"s" if servers.size > 1} from configuration"
+        confirm
       end
 
       config.servers.delete_if {|s| servers.include?(s) }
