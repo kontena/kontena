@@ -4,7 +4,7 @@ title: CLI
 
 ## Installing Kontena CLI
 
-> Prerequisites: You'll need Ruby version 2.0 or later installed on your system. For more details, see the official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
+> Prerequisites: You'll need Ruby version 2.1 or later installed on your system. For more details, see the official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
 
 
 You can install the Kontena CLI using the Rubygems package manager, which is included in Ruby.
