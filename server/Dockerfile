@@ -15,7 +15,7 @@ RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-de
 ADD . /app
 RUN chown -R nobody:nogroup /app
 USER nobody
-
+ENV PATH="/app/bin:${PATH}"
 ENV RACK_ENV production
 EXPOSE 9292
 
