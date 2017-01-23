@@ -3,15 +3,11 @@ module Kontena::Actors
     include Celluloid
     include Kontena::Logging
 
-    # @param subscribe [String] update from Celluloid notifications
-    def initialize(subscribe: nil)
+    def initialize
       @observers = {}
       @value = nil
 
-      if subscribe
-        self.extend Celluloid::Notifications
-        self.subscribe(subscribe, :update)
-      end
+      debug "initialize"
     end
 
     def update(value)

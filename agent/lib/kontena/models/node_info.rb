@@ -4,6 +4,21 @@ module Kontena::Models
   # Persistent NodeInfo state, updated via RPC, and shared between multiple actors
   # Frozen for thread-safety
   class NodeInfo
+    # Glue actor to update node_info observable from celluloid notification with JSON data
+    class Actor < Kontena::Actors::Observable
+      include Celluloid::Notifications
+
+      def initialize
+        super
+
+        subscribe('agent:node_info', :on_notification)
+      end
+
+      def on_notification(topic, data)
+        self.update(NodeInfo.new(data))
+      end
+    end
+
     # @param info [Hash] JSON
     def initialize(info)
       @info = info

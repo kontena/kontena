@@ -37,25 +37,5 @@ describe Kontena::Rpc::AgentApi, :celluloid => true do
       subject.node_info(info)
       sleep 0.01
     end
-
-    it 'updates an agent:node_info observable' do
-      observable = Kontena::Actors::Observable.new(subscribe: 'agent:node_info')
-
-      subject.node_info(info)
-
-      observer = Class.new {
-        include Celluloid
-        include Kontena::Actors::Observer
-
-        attr_accessor :node_info
-
-        def initialize(observable)
-          @node_info = observe observable, :node_info=
-        end
-      }.new(observable)
-
-      expect(observer.node_info).to_not be_nil
-      expect(observer.node_info.version).to eq '1.1.0'
-    end
   end
 end

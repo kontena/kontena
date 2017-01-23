@@ -1,6 +1,7 @@
 describe Kontena::Models::NodeInfo do
   let :node_info do
     {
+      'version' => '1.1-dev',
       'grid' => {
         'subnet' => '10.81.0.0/16',
         'trusted_subnets' => [ '192.168.66.0/24' ],
@@ -12,6 +13,10 @@ describe Kontena::Models::NodeInfo do
 
   subject do
     described_class.new(node_info)
+  end
+
+  it "has a version" do
+    expect(subject.version).to eq '1.1-dev'
   end
 
   it "has a grid_subnet" do
@@ -34,5 +39,32 @@ describe Kontena::Models::NodeInfo do
 
   it "has peer_ips" do
     expect(subject.peer_ips).to eq [ '192.168.66.102' ]
+  end
+
+  describe Kontena::Models::NodeInfo::Actor, :celluloid => true do
+    let :actor do
+      described_class.new
+    end
+
+    it "updates on agent:node_info" do
+      subject = actor.wrapped_object
+
+      Celluloid::Notifications.publish('agent:node_info', node_info)
+
+      observer = Class.new {
+        include Celluloid
+        include Kontena::Actors::Observer
+
+        attr_accessor :node_info
+
+        def initialize(observable)
+          observe node_info: observable
+        end
+      }.new(actor)
+
+      expect(observer.node_info).to_not be_nil
+      expect(observer.node_info.version).to eq '1.1-dev'
+    end
+
   end
 end

@@ -11,10 +11,9 @@ module Kontena
       @opts = opts
       @queue = Queue.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
-      @node_info = Kontena::Actors::Observable.new(subscribe: 'agent:node_info')
+      @node_info = Kontena::Models::NodeInfo::Actor.new
 
       @supervisor = Celluloid::Supervision::Container.run!
-      self.supervise_state
       self.supervise_launchers
       self.supervise_network_adapter
       self.supervise_lb
