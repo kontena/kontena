@@ -2,6 +2,7 @@
 # encoding: UTF-8
 
 ENV['MONGODB_URI'] ||= 'mongodb://mongodb:27017/kontena_server'
+ENV['NO_MONGO_PUBSUB'] = 'true'
 
 require "irb"
 require "irb/completion"
