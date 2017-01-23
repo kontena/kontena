@@ -5,7 +5,7 @@ describe Grid do
   it { should have_fields(:name, :token) }
   it { should have_fields(:initial_size).of_type(Integer) }
   it { should have_fields(:stats).of_type(Hash) }
-  it { should have_fields(:trusted_subnets).of_type(Array) }
+  it { should have_fields(:trusted_subnets, :default_affinity).of_type(Array) }
 
   it { should have_and_belong_to_many(:users) }
   it { should have_many(:host_nodes) }

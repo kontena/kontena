@@ -269,4 +269,22 @@ describe GridService do
       expect(subject.depending_on_other_services?).to be_truthy
     end
   end
+
+  describe '#affinity' do
+    it 'returns empty array by default' do
+      expect(subject.affinity).to eq([])
+    end
+
+    it 'returns service affinity if set' do
+      subject.grid = grid
+      subject.affinity = ['label==foo=bar']
+      expect(subject.affinity).to eq(['label==foo=bar'])
+    end
+
+    it 'returns default affinity from grid if service affinity is not set' do
+      grid.default_affinity = ['label!=type=ssd']
+      subject.grid = grid
+      expect(subject.affinity).to eq(['label!=type=ssd'])
+    end
+  end
 end

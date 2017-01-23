@@ -20,6 +20,9 @@ module Grids
       array :trusted_subnets do
         string
       end
+      array :default_affinity do
+        string
+      end
     end
 
     def validate
@@ -43,6 +46,9 @@ module Grids
       if self.trusted_subnets
         attributes[:trusted_subnets] = self.trusted_subnets
       end
+      if self.default_affinity
+        attributes[:default_affinity] = self.default_affinity
+      end
       grid.update_attributes(attributes)
       if grid.errors.size > 0
         grid.errors.each do |key, message|
@@ -62,6 +68,7 @@ module Grids
           plugger = Agent::NodePlugger.new(grid, node)
           plugger.send_node_info
         end
+        GridScheduler.new(grid).reschedule
       }
     end
   end

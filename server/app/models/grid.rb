@@ -10,6 +10,7 @@ class Grid
   field :initial_size, type: Integer, default: 1
   field :trusted_subnets, type: Array, default: []
   field :stats, type: Hash, default: {}
+  field :default_affinity, type: Array, default: []
 
   has_many :host_nodes, dependent: :destroy
   has_many :host_node_stats

@@ -71,7 +71,8 @@ module V1
               user: current_user,
               name: data['name'],
               initial_size: data['initial_size'] || 1,
-              token: data['token']
+              token: data['token'],
+              default_affinity: data['default_affinity']
           )
 
           if outcome.success?
