@@ -6,7 +6,7 @@ module Kontena::Cli::Registry
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Stacks::StacksHelper
 
-    REGISTRY_VERSION = '2.2'
+    REGISTRY_VERSION = '2.6.0'
 
     option '--node', 'NODE', 'Node name'
     option '--s3-bucket', 'S3_BUCKET', 'S3 bucket'
