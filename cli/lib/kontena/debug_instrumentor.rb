@@ -9,7 +9,7 @@ module Kontena
 
       if direction == 'Request'
         uri = URI.parse("#{params[:scheme]}://#{params[:host]}:#{params[:port]}")
-        uri.path = params[:path]
+        uri.path = params[:path].nil? ? '/' : params[:path].split('?', 2).first
         uri.query = URI.encode_www_form(params[:query]) if params[:query] && !params[:query].empty?
         str = "#{params[:method].to_s.upcase} #{uri}"
         str << " (ssl_verify: #{params[:ssl_verify_peer]}) " if params[:scheme] == 'https'
