@@ -24,7 +24,7 @@ module Scheduler
             elsif key == 'label'
               label_match?(node, comparator, value)
             else
-              raise StandardError, "Unknown affility filter: #{key}"
+              raise StandardError, "Unknown affinity filter: #{key}"
             end
           }
 

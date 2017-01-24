@@ -141,7 +141,7 @@ describe Scheduler::Filter::Affinity do
 
     it "raises on unknown affinity filter" do
       service = double(:service, affinity: ['nodes==test'])
-      expect{subject.for_service(service, 1, nodes)}.to raise_error(StandardError)
+      expect{subject.for_service(service, 1, nodes)}.to raise_error(StandardError, /Unknown affinity filter: nodes/)
     end
   end
 end
