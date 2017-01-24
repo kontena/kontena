@@ -37,10 +37,13 @@ module Scheduler
       end
 
       # @param [String] affinity
-      # @return [String, NilClass]
+      # @raise [Scheduler::Error] invalid filter
+      # @return [Array<(String, String, String)>, NilClass]
       def split_affinity(affinity)
         if match = affinity.match(/^(.+)(==|!=)(.+)/)
           match.to_a[1..-1]
+        else
+          raise Scheduler::Error, "Invalid affinity filter: #{affinity}"
         end
       end
 
