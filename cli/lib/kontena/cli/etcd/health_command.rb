@@ -4,6 +4,7 @@ module Kontena::Cli::Etcd
   class HealthCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::Helpers::HealthHelper
 
     parameter "[NODE]", "Show health for specific node"
 
@@ -32,7 +33,7 @@ module Kontena::Cli::Etcd
       token = require_token
 
       if !node['connected']
-        puts "Node #{node['name']} is offline"
+        puts "#{health_icon :offline} Node #{node['name']} is offline"
         return false
       end
 
@@ -41,7 +42,7 @@ module Kontena::Cli::Etcd
       rescue Kontena::Errors::StandardError => error
         raise unless error.status == 503
 
-        puts "Node #{node['name']} health error: #{error}"
+        puts "#{health_icon :warning} Node #{node['name']} health error: #{error}"
         return false
       end
 
@@ -50,13 +51,13 @@ module Kontena::Cli::Etcd
 
     def show_node_health(node, etcd_health)
       if etcd_health['health']
-        puts "Node #{node['name']} is healthy"
+        puts "#{health_icon :ok} Node #{node['name']} is healthy"
         return true
       elsif etcd_health['error']
-        puts "Node #{node['name']} is unhealthy: #{etcd_health['error']}"
+        puts "#{health_icon :error} Node #{node['name']} is unhealthy: #{etcd_health['error']}"
         return false
       else
-        puts "Node #{node['name']} is unhealthy"
+        puts "#{health_icon :error} Node #{node['name']} is unhealthy"
         return false
       end
     end

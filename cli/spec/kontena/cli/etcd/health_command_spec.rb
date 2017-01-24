@@ -17,7 +17,7 @@ describe Kontena::Cli::Etcd::HealthCommand do
 
       it "shows offline and returns false" do
         expect{subject.show_node(node)}.to return_and_output false, [
-          "Node node-1 is offline",
+          ":offline Node node-1 is offline",
         ]
       end
     end
@@ -37,7 +37,7 @@ describe Kontena::Cli::Etcd::HealthCommand do
 
       it "shows errored and returns false" do
         expect{subject.show_node(node)}.to return_and_output false, [
-          "Node node-1 health error: timeout",
+          ":warning Node node-1 health error: timeout",
         ]
       end
     end
@@ -55,7 +55,7 @@ describe Kontena::Cli::Etcd::HealthCommand do
         expect(client).to receive(:get).with('nodes/test-grid/testnode/health').and_return({'etcd' => {'health' => true}})
 
         expect{subject.show_node(node)}.to return_and_output true, [
-          "Node node-1 is healthy",
+          ":ok Node node-1 is healthy",
         ]
       end
 
@@ -63,7 +63,7 @@ describe Kontena::Cli::Etcd::HealthCommand do
         expect(client).to receive(:get).with('nodes/test-grid/testnode/health').and_return({'etcd' => {'error' => "bad"}})
 
         expect{subject.show_node(node)}.to return_and_output false, [
-          "Node node-1 is unhealthy: bad",
+          ":error Node node-1 is unhealthy: bad",
         ]
       end
     end
