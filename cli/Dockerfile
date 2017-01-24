@@ -10,6 +10,10 @@ RUN apk update && \
   gem install kontena-cli --no-rdoc --no-ri -v ${CLI_VERSION} && \
   adduser kontena -D -h /home/kontena -s /bin/sh && \
   echo "gem: --user-install" > /home/kontena/.gemrc && \
+  chmod a+rx /root && \
+  touch /root/.netrc && \
+  chmod 777 /root/.netrc && \
+  ln -s /root/.netrc /home/kontena/.netrc && \
   chown -R kontena.kontena /home/kontena && \
   chmod +sx /usr/local/bin/docker
 
