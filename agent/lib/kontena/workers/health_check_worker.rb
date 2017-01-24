@@ -11,7 +11,7 @@ module Kontena::Workers
     finalizer :terminate_workers
 
     START_EVENTS = ['start']
-    STOP_EVENTS = ['die']
+    STOP_EVENTS = ['die', 'kill']
     ETCD_PREFIX = '/kontena/log_worker/containers'
 
     ##

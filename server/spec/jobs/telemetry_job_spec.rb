@@ -21,10 +21,16 @@ describe TelemetryJob do
   end
 
   describe '#payload' do
+    before(:each) do
+      grid = Grid.create(name: 'test')
+      grid.host_nodes.create(name: 'a', node_id: 'a')
+    end
+
     it 'returns correct id' do
       config = {'server.uuid' => 'daa'}
       allow(subject.wrapped_object).to receive(:config).and_return(config)
-      expect(subject.payload).to include(:id => 'daa')
+      payload = subject.payload
+      expect(payload).to include(:id => 'daa')
     end
   end
 end

@@ -239,7 +239,10 @@ Only `master_admin` role can remove a grid.
 			"name": "docker",
 			"used": 0.0,
 			"total": 0.0
-		}
+		},
+    "usage": {
+      "container_seconds": 0
+    }
 	},
 	"grid": {
 		"id": "my-grid",
