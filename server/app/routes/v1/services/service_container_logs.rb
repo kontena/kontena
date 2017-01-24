@@ -1,6 +1,6 @@
 V1::ServicesApi.route('service_container_logs') do |r|
 
-  # GET /v1/services/:grid_name/:service_name/containers
+  # GET /v1/services/:grid_name/:service_name/container_logs
   r.get do
     r.is do
       scope = @grid_service.container_logs
