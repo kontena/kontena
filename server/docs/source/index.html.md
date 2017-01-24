@@ -105,7 +105,7 @@ Accept: application/json
 
 {
 	"name": "my-grid",
-	"initial-size": 3
+	"initial_size": 3
 }
 ```
 
@@ -317,7 +317,7 @@ Update a node details.
 
 `PUT /v1/nodes/{node_id}`
 
-## Get a node defails
+## Get a node details
 
 ```http
 GET /v1/nodes/my-grid/misty-sun-87 HTTP/1.1
@@ -325,7 +325,7 @@ Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 ```
 
-Update a node details.
+Get a node details.
 
 ### Endpoint
 
@@ -856,6 +856,20 @@ Removes the service from the grid.
 ### Endpoint
 
 `DELETE /v1/services/{service_id}`
+
+## Get service logs
+
+```http
+GET /v1/services/my-grid/null/redis/container_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get container logs from a service.
+
+### Endpoint
+
+`GET /v1/services/{service_id}/container_logs`
 
 ## Get a service deploy
 
