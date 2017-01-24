@@ -12,7 +12,6 @@ module Kontena
 
       def initialize
         @etcd = Etcd.client(host: gateway, port: 2379)
-        @etcd.extend Etcd::Health
       end
 
       # @param [String] key

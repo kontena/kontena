@@ -12,6 +12,7 @@ require 'active_support/core_ext/module/delegation'
 require_relative 'docker/version'
 require_relative 'docker/container'
 require_relative 'etcd/health'
+require_relative 'etcd/client'
 require_relative 'kontena/logging'
 require_relative 'kontena/websocket_client'
 
