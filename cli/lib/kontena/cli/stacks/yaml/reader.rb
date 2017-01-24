@@ -126,9 +126,18 @@ module Kontena::Cli::Stacks
 
       def load_yaml(interpolate = true)
         if interpolate
-          @yaml = ::YAML.safe_load(replace_dollar_dollars(interpolate(interpolate_liquid(raw_content, variables.to_h(values_only: true)))))
+          @yaml = ::YAML.safe_load(
+            replace_dollar_dollars(
+              interpolate(
+                interpolate_liquid(
+                  raw_content,
+                  variables.to_h(values_only: true)
+                )
+              )
+            )
+          )
         else
-          @yaml = ::YAML.safe_load(interpolate_liquid(raw_content, ENV.to_h))
+          @yaml = ::YAML.safe_load(raw_content, ENV.to_h)
         end
       rescue Psych::SyntaxError => e
         raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
