@@ -244,7 +244,7 @@ describe GridService do
       expect(grid_service.name_with_stack).to eq 'redis'
     end
     it 'returns stack service name with stack' do
-      expect(stack_service.name_with_stack).to eq 'stack-redis'
+      expect(stack_service.name_with_stack).to eq 'stack.redis'
     end
   end
 

@@ -71,7 +71,7 @@ class GridService
     if default_stack?
       self.name
     else
-      "#{self.stack.name}-#{self.name}"
+      "#{self.stack.name}.#{self.name}"
     end
   end
 
