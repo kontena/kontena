@@ -31,14 +31,21 @@ module Kontena::Cli::Etcd
     def show_node(node)
       token = require_token
 
-      if node['connected']
-        node_health = client(token).get("nodes/#{current_grid}/#{node['id']}/health")
-
-        return show_node_health node, node_health['etcd']
-      else
+      if !node['connected']
         puts "Node #{node['name']} is offline"
         return false
       end
+
+      begin
+        node_health = client(token).get("nodes/#{current_grid}/#{node['id']}/health")
+      rescue Kontena::Errors::StandardError => error
+        raise unless error.status == 503
+
+        puts "Node #{node['name']} health error: #{error}"
+        return false
+      end
+
+      return show_node_health node, node_health['etcd']
     end
 
     def show_node_health(node, etcd_health)

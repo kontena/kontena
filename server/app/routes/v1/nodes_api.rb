@@ -42,9 +42,13 @@ module V1
           # GET /v1/nodes/:grid/:node/health
           r.on 'health' do
             rpc_client = @node.rpc_client(10)
-            
-            @etcd_health = rpc_client.request("/etcd/health")
 
+            begin
+              @etcd_health = rpc_client.request("/etcd/health")
+            rescue RpcClient::TimeoutError => error
+              halt_request(error.code, {error: error.message})
+            end
+            
             render('host_nodes/health')
           end
         end
