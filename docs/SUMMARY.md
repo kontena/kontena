@@ -53,6 +53,7 @@
 
 * [kontena.yml](references/kontena-yml.md)
 * [kontena.yml variables reference](references/kontena-yml-variables.md)
+* [Master REST API](references/rest-api.md)
 
 ----
 
