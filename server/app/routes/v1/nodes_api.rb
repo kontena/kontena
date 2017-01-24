@@ -48,7 +48,7 @@ module V1
             rescue RpcClient::TimeoutError => error
               halt_request(error.code, {error: error.message})
             end
-            
+
             render('host_nodes/health')
           end
         end
