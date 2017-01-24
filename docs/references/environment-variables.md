@@ -41,3 +41,14 @@ toc_order: 2
 - `SSL_IGNORE_ERRORS`: set true to bypass certificate errors
 - `DEBUG`: set true to get verbose messages
 - `EXCON_DEBUG`: set true to get verbose messages from network calls
+
+## Kontena services
+
+Each service container deployed by Kontena gets populated by following environment variables in addition to the ones defined in the service configuration and in the container image:
+
+- `KONTENA_SERVICE_ID`: Internal service id of the service
+- `KONTENA_SERVICE_NAME`: Name of the service
+- `KONTENA_GRID_NAME`: Name of the grid service is running in
+- `KONTENA_STACK_NAME`: Name of the stack service belongs to
+- `KONTENA_NODE_NAME`: The name of the node service is deployed into
+- `KONTENA_SERVICE_INSTANCE_NUMBER`: Instance number of the service. 1..n
