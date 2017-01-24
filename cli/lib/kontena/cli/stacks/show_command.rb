@@ -26,9 +26,10 @@ module Kontena::Cli::Stacks
 
       puts "#{stack['name']}:"
       puts "  state: #{stack['state']}"
+      puts "  stack: #{stack['stack']}"
+      puts "  version: #{stack['version']}"
       puts "  created_at: #{stack['created_at']}"
       puts "  updated_at: #{stack['updated_at']}"
-      puts "  version: #{stack['version']}"
       puts "  expose: #{stack['expose'] || '-'}"
       puts "  services:"
       stack['services'].each do |service|

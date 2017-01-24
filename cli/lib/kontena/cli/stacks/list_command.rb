@@ -18,8 +18,8 @@ module Kontena::Cli::Stacks
     def list_stacks
       response = client.get("grids/#{current_grid}/stacks")
 
-      titles = ['NAME', 'VERSION', 'SERVICES', 'STATE', 'EXPOSED PORTS']
-      puts "%-60s %-10s %-10s %-10s %-50s" % titles
+      titles = ['NAME', 'STACK', 'SERVICES', 'STATE', 'EXPOSED PORTS']
+      puts "%-30s %-40s %-10s %-10s %-50s" % titles
 
       response['stacks'].each do |stack|
         ports = stack_ports(stack)
@@ -41,13 +41,13 @@ module Kontena::Cli::Stacks
         vars = [
           icon.colorize(color),
           "#{stack['name']}",
-          "#{stack['version']}",
+          "#{stack['stack']}:#{stack['version']}",
           stack['services'].size,
           stack['state'],
           ports.join(",")
         ]
 
-        puts "%s %-58s %-10s %-10s %-10s %-50s" % vars
+        puts "%s %-28s %-40s %-10s %-10s %-50s" % vars
       end
     end
 
