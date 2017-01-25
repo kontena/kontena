@@ -7,6 +7,7 @@ class Grid
 
   SUBNET = '10.81.0.0/16'
   SUPERNET = '10.80.0.0/12'
+  TOP_LEVEL_DOMAIN = 'kontena.local'
 
   field :name, type: String
   field :token, type: String
@@ -16,6 +17,7 @@ class Grid
   field :default_affinity, type: Array, default: []
   field :subnet, type: String, default: SUBNET
   field :supernet, type: String, default: SUPERNET
+  field :domain, type: String # default from name + TOP_LEVEL_DOMAIN
 
   has_many :host_nodes, dependent: :destroy
   has_many :host_node_stats
@@ -33,8 +35,10 @@ class Grid
 
   index({ name: 1 }, { unique: true })
   index({ token: 1 }, { unique: true })
+  index({ domain: 1 }, { unique: true })
 
   before_create :set_token
+  before_create :set_domain_default
   after_create :create_default_network
   after_create :create_default_stack
 
@@ -64,6 +68,11 @@ class Grid
   # @return [Boolean]
   def initial_node?(node)
     node.node_number <= self.initial_size.to_i
+  end
+
+  # non-private because called from migrations
+  def set_domain_default
+    self.domain ||= self.name + "." + TOP_LEVEL_DOMAIN
   end
 
   private

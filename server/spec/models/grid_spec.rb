@@ -18,6 +18,7 @@ describe Grid do
   it { should have_many(:audit_logs) }
   it { should have_many(:registries) }
 
+  it { should have_index_for(name: 1).with_options(unique: true) }
   it { should have_index_for(token: 1).with_options(unique: true) }
 
   describe '.after_create' do
@@ -90,6 +91,41 @@ describe Grid do
       expect(grid_with_automatic_token.token).to match /\A[A-Za-z0-9+\/=]*\Z/
       expect(grid_with_nil_token.token).to match /\A[A-Za-z0-9+\/=]*\Z/
       expect(grid_with_manual_token.token).to eq 'abcd123456'
+    end
+  end
+
+  describe '#domain' do
+    context "For a grid with a default domain" do
+      let :grid do
+        Grid.create!(name: 'test1', initial_size: 3)
+      end
+
+      it "uses the default TLD" do
+        expect(grid.domain).to eq 'test1.kontena.local'
+      end
+
+      it "uses a different domain for each grid" do
+        expect(grid.domain).to eq 'test1.kontena.local'
+
+        grid2 = nil
+        expect{grid2 = Grid.create!(name: 'test2', initial_size: 3)}.to_not raise_error
+        expect(grid2.domain).to eq 'test2.kontena.local'
+      end
+    end
+
+    context "For a grid with a custom domain" do
+      let :grid do
+        Grid.create!(name: 'test1', initial_size: 3, domain: 'test.kontena.example.com')
+      end
+
+      it "uses the default TLD" do
+        expect(grid.domain).to eq 'test.kontena.example.com'
+      end
+
+      it "rejects a duplicate grid domain" do
+        grid # touch
+        expect{Grid.create!(name: 'test2', initial_size: 3, domain: 'test.kontena.example.com')}.to raise_error(Moped::Errors::OperationFailure, /duplicate key error index: kontena_test.grids.\$domain_1 dup key/)
+      end
     end
   end
 end
