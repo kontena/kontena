@@ -33,7 +33,7 @@ coreos:
         DHCP=yes
         <% dns_servers.each do |dns| %>DNS=<%= dns %>
         <% end %>
-        Domains=kontena.local
+        Domains=<%= domain %>
 
         [DHCP]
         UseMTU=true

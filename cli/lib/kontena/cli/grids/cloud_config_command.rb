@@ -46,6 +46,7 @@ module Kontena::Cli::Grids
         version: version,
         match_default_network_name: default_interface_match,
         grid_subnet: grid['subnet'],
+        domain: grid['domain'],
       )
       puts config
     end
