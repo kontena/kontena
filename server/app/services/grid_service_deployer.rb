@@ -6,7 +6,6 @@ class GridServiceDeployer
   include Logging
   include DistributedLocks
 
-  class NodeMissingError < StandardError; end
   class DeployError < StandardError; end
 
   DEFAULT_REGISTRY = 'index.docker.io'
@@ -28,29 +27,17 @@ class GridServiceDeployer
     @nodes = nodes
   end
 
-  ##
-  # Is deploy possible?
-  #
-  # @return [Boolean]
-  def can_deploy?
-    self.grid_service.container_count.times do |i|
-      node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes
-      )
-      return false unless node
-    end
-
-    true
-  end
-
   # @return [Array<HostNode>]
   def selected_nodes
     nodes = []
     self.instance_count.times do |i|
-      node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes
-      )
-      nodes << node if node
+      begin
+        nodes << self.scheduler.select_node(
+          self.grid_service, i + 1, self.nodes
+        )
+      rescue Scheduler::Error
+
+      end
     end
     self.nodes.each{|n| n.schedule_counter = 0}
 
@@ -85,11 +72,6 @@ class GridServiceDeployer
     self.grid_service.set_state('running')
 
     true
-  rescue NodeMissingError => exc
-    error exc.message
-    info "service #{self.grid_service.to_path} deploy cancelled"
-    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message, :finished_at => Time.now.utc)
-    false
   rescue DeployError => exc
     error exc.message
     self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message, :finished_at => Time.now.utc)
@@ -114,13 +96,16 @@ class GridServiceDeployer
   # @param [Integer] instance_number
   # @param [String] deploy_rev
   # @param [Hash, NilClass] creds
+  # @raise [DeployError]
   def deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev, creds)
-    node = self.scheduler.select_node(
-        self.grid_service, instance_number, self.nodes
-    )
-    unless node
-      raise NodeMissingError.new("Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}")
+    begin
+      node = self.scheduler.select_node(
+          self.grid_service, instance_number, self.nodes
+      )
+    rescue Scheduler::Error => exc
+      raise DeployError, "Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}: #{exc.message}"
     end
+
     info "deploying service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
     deploy_futures << Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(self.grid_service)
@@ -185,10 +170,13 @@ class GridServiceDeployer
     max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     nodes = []
     max_instances.times do |i|
-      node = self.scheduler.select_node(
-        self.grid_service, i + 1, self.nodes
-      )
-      nodes << node if node
+      begin
+        nodes << self.scheduler.select_node(
+          self.grid_service, i + 1, self.nodes
+        )
+      rescue Scheduler::Error
+
+      end
     end
     self.nodes.each{|n| n.schedule_counter = 0}
     filtered_count = nodes.uniq.size

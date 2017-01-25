@@ -23,6 +23,10 @@ module Scheduler
           reject_candidate?(c, memory, service, instance_number)
         }
 
+        if candidates.empty?
+          raise Scheduler::Error, "Did not find any nodes with sufficient free memory: #{memory}"
+        end
+
         candidates
       end
 

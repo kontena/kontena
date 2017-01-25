@@ -37,6 +37,9 @@ module Scheduler
             candidates.delete(node)
           end
         end
+        if candidates.empty?
+          raise Scheduler::Error, "Did not find any nodes for service dependency volumes_from: #{volumes}"
+        end
       end
 
       # @param [Array<HostNode>] candidates
@@ -54,6 +57,9 @@ module Scheduler
           if match.empty?
             candidates.delete(node)
           end
+        end
+        if candidates.empty?
+          raise Scheduler::Error, "Did not find any nodes for service dependency net: #{net}"
         end
       end
 

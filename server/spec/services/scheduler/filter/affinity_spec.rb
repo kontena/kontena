@@ -11,6 +11,19 @@ describe Scheduler::Filter::Affinity do
     nodes
   end
 
+  describe '#split_affinity' do
+    it "raises for an invalid comperator" do
+      expect{subject.split_affinity('foo=bar')}.to raise_error(Scheduler::Error, /Invalid affinity filter: foo=bar/)
+    end
+
+    it "returns three parts for eq" do
+      expect(subject.split_affinity('foo==bar')).to eq ['foo', '==', 'bar']
+    end
+    it "returns three partsfor neq" do
+      expect(subject.split_affinity('foo!=bar')).to eq ['foo', '!=', 'bar']
+    end
+  end
+
   describe '#for_service' do
     it 'returns all nodes if service does not have any affinities defined' do
       service = double(:service, affinity: [])
@@ -60,8 +73,7 @@ describe Scheduler::Filter::Affinity do
       it 'returns none if node labels are nil' do
         nodes.each{|n| n.labels = nil}
         service = double(:service, affinity: ['label==ssd'])
-        filtered = subject.for_service(service, 1, nodes)
-        expect(filtered.size).to eq(0)
+        expect{subject.for_service(service, 1, nodes)}.to raise_error(Scheduler::Error)
       end
     end
 
@@ -138,6 +150,16 @@ describe Scheduler::Filter::Affinity do
         expect(filtered.size).to eq(1)
         expect(filtered).to eq([nodes[1]])
       end
+    end
+
+    it "raises on unknown affinity filter" do
+      service = double(:service, affinity: ['nodes==test'])
+      expect{subject.for_service(service, 1, nodes)}.to raise_error(StandardError, /Unknown affinity filter: nodes/)
+    end
+
+    it "raises on invalid affinity filter" do
+      service = double(:service, affinity: ['foo=bar'])
+      expect{subject.for_service(service, 1, nodes)}.to raise_error(StandardError, /Invalid affinity filter: foo=bar/)
     end
   end
 end

@@ -6,42 +6,44 @@ module Scheduler
       # @param [GridService] service
       # @param [Integer] instance_number
       # @param [Array<HostNode>] nodes
+      # @raise [Scheduler::Error]
       def for_service(service, instance_number, nodes)
         return nodes if service.affinity.nil? || service.affinity.size == 0
 
-        candidates = nodes.dup
-        nodes.each do |node|
-          service.affinity.each do |affinity|
-            affinity = affinity % [instance_number.to_s]
-            key, comparator, value = split_affinity(affinity)
+        service.affinity.each do |affinity|
+          affinity = affinity % [instance_number.to_s]
+          key, comparator, value = split_affinity(affinity)
+
+          nodes = nodes.select { |node|
             if key == 'node'
-              unless node_match?(node, comparator, value)
-                candidates.delete(node)
-              end
+              node_match?(node, comparator, value)
             elsif key == 'service'
-              unless service_match?(node, comparator, value)
-                candidates.delete(node)
-              end
+              service_match?(node, comparator, value)
             elsif key == 'container'
-              unless container_match?(node, comparator, value)
-                candidates.delete(node)
-              end
+              container_match?(node, comparator, value)
             elsif key == 'label'
-              unless label_match?(node, comparator, value)
-                candidates.delete(node)
-              end
+              label_match?(node, comparator, value)
+            else
+              raise StandardError, "Unknown affinity filter: #{key}"
             end
+          }
+
+          if nodes.empty?
+            raise Scheduler::Error, "Did not find any nodes for affinity filter: #{affinity}"
           end
         end
 
-        candidates
+        nodes
       end
 
       # @param [String] affinity
-      # @return [String, NilClass]
+      # @raise [Scheduler::Error] invalid filter
+      # @return [Array<(String, String, String)>, NilClass]
       def split_affinity(affinity)
         if match = affinity.match(/^(.+)(==|!=)(.+)/)
           match.to_a[1..-1]
+        else
+          raise Scheduler::Error, "Invalid affinity filter: #{affinity}"
         end
       end
 

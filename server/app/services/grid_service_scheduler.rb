@@ -35,17 +35,20 @@ class GridServiceScheduler
   # @param [GridService] grid_service
   # @param [Integer] instance_number
   # @param [Array<HostNode>] nodes
-  # @return [HostNode, NilClass]
+  # @raise [Scheduler::Error]
+  # @return HostNode
   def select_node(grid_service, instance_number, nodes)
     selected_node = nil
     @mutex.synchronize {
       filtered_nodes = self.filter_nodes(grid_service, instance_number, nodes)
       selected_node = self.strategy.find_node(grid_service, instance_number, filtered_nodes)
     }
-    if selected_node
-      node = nodes.find{|n| n == selected_node}
-      node.schedule_counter += 1
+    unless selected_node
+      raise Scheduler::Error, "Strategy #{self.strategy.class.to_s} did not find any node"
     end
+
+    node = nodes.find{|n| n == selected_node}
+    node.schedule_counter += 1
 
     selected_node
   end
@@ -54,10 +57,15 @@ class GridServiceScheduler
   # @param [GridService] grid_service
   # @param [Integer] instance_number
   # @param [Array<HostNode>]
+  # @raise [Scheduler::Error]
   # @return [Array<HostNode>]
   def filter_nodes(grid_service, instance_number, nodes)
     self.filters.each do |filter|
       nodes = filter.for_service(grid_service, instance_number, nodes)
+
+      if nodes.empty?
+        raise Scheduler::Error, "Filter #{filter.class.to_s} did not return any nodes"
+      end
     end
 
     nodes

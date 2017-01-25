@@ -22,6 +22,10 @@ module Scheduler
           end
         end
 
+        if candidates.empty?
+          raise Scheduler::Error, "Did not find any nodes with unused ports: #{ports}"
+        end
+
         candidates
       end
 
