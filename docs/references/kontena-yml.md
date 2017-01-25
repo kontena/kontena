@@ -5,7 +5,7 @@ toc_order: 1
 
 # Kontena.yml reference
 
-Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena Stack](../using-kontena/stacks.md) with one or more [services](../using-kontena/services.md). It uses the similar syntax and keys for services as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are supported in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
+Kontena.yml is a file in [YAML](http://yaml.org) format that defines a [Kontena Stack](../using-kontena/stacks.md) with one or more [services](../using-kontena/services.md). It uses the similar syntax and keys for services as a [Docker Compose file](https://docs.docker.com/compose/compose-file/). However, not all Docker Compose keys are [supported](docker-compose-support.md) in Kontena. The default name for this file is kontena.yml, although other filenames are supported.
 
 Each service defined in kontena.yml will create a service with that name within the stack's namespace, shown as stack/service in the CLI. The image key is mandatory. Other keys are optional.
 
@@ -427,7 +427,7 @@ volumes:
  - /data/mysql:/var/lib/mysql
 ```
 
-Named volume (if volume does not exist it will be created as a node local volume)
+Named volumes are supported in the service declaration, but not in the top-level `volumes` key. When defining named volume in the service declaration the default driver configured by the Docker Engine will be used (in most cases, this is the local driver). If volume does not exist it will be created.
 
 ```
 volumes:
