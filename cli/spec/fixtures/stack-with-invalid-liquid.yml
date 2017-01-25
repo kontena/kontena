@@ -12,11 +12,11 @@ variables:
     value: 5
 
 services:
-  {% forx copy in (1..copies) %}
+  # {% forx copy in (1..copies) %}
   service-{{copy}}:
     image: foo:{{copy}}
     environment:
       - TEST_VAR="{{ grid_name }}"
-  {% endfor %}
+  # {% endfor %}
 
 
