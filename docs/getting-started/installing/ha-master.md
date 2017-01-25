@@ -4,7 +4,7 @@ title: Highly available Kontena Master
 
 # Running Kontena master in HA setup
 
-Kontena master can be run in HA setup where multiple instances of the Kontena master for one highly available logical master.
+Kontena master can be run in HA setup where multiple instances of the Kontena master form one highly available logical master.
 
 ## Requirements for HA
 
