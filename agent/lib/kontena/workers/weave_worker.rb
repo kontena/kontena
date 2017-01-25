@@ -109,10 +109,9 @@ module Kontena::Workers
     # @param [String] container_id
     # @param [String] overlay_cidr
     def attach_overlay(container)
-      if container.overlay_suffix == OVERLAY_SUFFIX
-        network_adapter.attach_container(container.id, container.overlay_cidr)
-      else
-        # override label for existing containers that may need to be migrated
+      if container.overlay_network.nil?
+        # overlay network migration for 0.16 compat
+        # override overlay network /19 -> /16 suffix for existing containers that may need to be migrated
         overlay_cidr = "#{container.overlay_ip}/#{OVERLAY_SUFFIX}"
 
         # check for un-migrated containers cached at start
@@ -128,6 +127,8 @@ module Kontena::Workers
 
           network_adapter.attach_container(container.id, overlay_cidr)
         end
+      else
+        network_adapter.attach_container(container.id, container.overlay_cidr)
       end
     end
 
