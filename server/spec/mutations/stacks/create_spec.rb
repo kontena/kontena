@@ -14,6 +14,7 @@ describe Stacks::Create do
           version: '0.1.0',
           registry: 'file://',
           source: '...',
+          variables: {foo: 'bar'},
           services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
         ).run
       }.to change{ Stack.count }.by(1)
@@ -27,6 +28,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+          variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.result.stack_revisions.count).to eq(1)
@@ -40,6 +42,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.result.grid_services.count).to eq(1)
@@ -53,6 +56,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(true)
@@ -66,6 +70,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(true)
@@ -79,6 +84,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(false)
@@ -93,6 +99,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.success?).to be(false)
@@ -107,6 +114,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: []
       ).run
       expect(outcome.success?).to be(false)
@@ -122,6 +130,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: services
       ).run
 
@@ -152,6 +161,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: services
       ).run
       expect(outcome.success?).to be(true)
@@ -176,6 +186,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: services
       ).run
       expect(outcome.success?).to be(false)
@@ -200,6 +211,7 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
+        variables: {foo: 'bar'},
         services: services
       ).run
       expect(outcome.success?).to be(false)
@@ -219,6 +231,7 @@ describe Stacks::Create do
           version: '0.1.0',
           registry: 'file://',
           source: '...',
+          variables: {foo: 'bar'},
           services: services
         ).run
         expect(outcome.success?).to be(false)
@@ -237,6 +250,7 @@ describe Stacks::Create do
           version: '0.1.0',
           registry: 'file://',
           source: '...',
+          variables: {foo: 'bar'},
           expose: 'foo',
           services: services
         ).run

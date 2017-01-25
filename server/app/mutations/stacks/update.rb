@@ -44,6 +44,7 @@ module Stacks
         stack_name: self.stack,
         expose: self.expose,
         source: self.source,
+        variables: self.variables,
         version: self.version,
         registry: self.registry,
         services: sort_services(self.services)

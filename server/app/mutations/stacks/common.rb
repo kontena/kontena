@@ -51,6 +51,7 @@ module Stacks
 
         optional do
           string :expose
+          model :variables, class: Hash
         end
       end
     end

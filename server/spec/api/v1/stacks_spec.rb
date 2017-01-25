@@ -34,6 +34,7 @@ describe '/v1/stacks' do
       stack: 'stack',
       version: '0.1.1',
       source: '...',
+      variables: { foo: 'bar' },
       registry: 'file',
       services: [
         { name: 'app', image: 'my/app:latest', stateful: false },
@@ -51,6 +52,7 @@ describe '/v1/stacks' do
       stack: 'another-stack',
       version: '0.2.1',
       source: '...',
+      variables: { foo: 'bar' },
       registry: 'file',
       services: [
         { name: 'app2', image: 'my/app:latest', stateful: false },
@@ -61,7 +63,7 @@ describe '/v1/stacks' do
   end
 
   let(:expected_attributes) do
-    %w(id created_at updated_at name stack version services state expose source registry)
+    %w(id created_at updated_at name stack version services state expose source variables registry)
   end
 
   describe 'GET /:name' do
@@ -94,6 +96,7 @@ describe '/v1/stacks' do
       another_stack
       get "/v1/grids/#{grid.name}/stacks", nil, request_headers
       expect(response.status).to eq(200)
+      expect(json_response['stacks'][0]['variables']['foo']).to eq 'bar'
       expect(json_response['stacks'].size).to eq(grid.stacks.count - 1)
       expect(json_response['stacks'][0].keys.sort).to eq(expected_attributes.sort)
     end
@@ -106,6 +109,7 @@ describe '/v1/stacks' do
         stack: stack.latest_rev.stack_name,
         registry: stack.latest_rev.registry,
         source: stack.latest_rev.source,
+        variables: stack.latest_rev.variables,
         version: stack.latest_rev.version,
         services: [
           {
