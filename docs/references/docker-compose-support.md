@@ -1,8 +1,3 @@
----
-title: docker-compose.yml comparison
-toc_order: 4
----
-
 # docker_compose.yml support
 
 
