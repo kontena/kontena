@@ -1,10 +1,9 @@
 require_relative '../spec_helper'
 require 'kontena/command'
 
-describe Kontena do
+describe Kontena::Command do
   let(:subject) do
-    class TestCommand < Kontena::Command
-
+    Class.new(Kontena::Command) do
       callback_matcher 'test', 'foo'
 
       parameter 'PARAM', 'Single param'
@@ -19,12 +18,6 @@ describe Kontena do
         plist_list.size
       end
     end
-
-    TestCommand
-  end
-
-  after(:each) do
-    Object.send(:remove_const, :TestCommand) if Object.const_defined?(:TestCommand)
   end
 
   describe '#new' do
