@@ -59,6 +59,13 @@ As both Kontena CLI and agents connect to the Kontena master using http protocol
 
 If using an provided solution is not an option you can setup your own preferred loadbalancer (nginx, caddy, traefik, ...) or use Kontena HAProxy
 
+# Connecting agents to HA masters
+
+Connecting agents to highly available masters should be done through the loadbalancer. For each Kontena agent, configure the loadbalancer as the communication endpoint:
+  ```
+  KONTENA_URI=wss://<lb_address>
+  ```
+
 # Additional details
 
 Kontena master instances will use the provided MongoDB replica-set to elect a leader in the "cluster". Leader is responsible to coordinate some of the tasks including: service re-scheduling decisions and communication to Kontena cloud.
