@@ -64,7 +64,7 @@ describe Kontena::Cli::Cloud::Master::AddCommand do
     let(:success_response) {
         {
           'data' => {
-            'attributes' => { 
+            'attributes' => {
               'client-id' => '123',
               'client-secret' => '345',
               'provider' => 'foo',
@@ -90,7 +90,7 @@ describe Kontena::Cli::Cloud::Master::AddCommand do
         expect(url).to eq current_master.url
         expect(provider).to eq 'provider'
         expect(version).to eq '10.10.10'
-        expect(redirect_uri).to be_nil
+        expect(redirect_uri).to eq (current_master.url + "/cb")
       end.and_return(success_response)
 
       subject.provider = 'provider'
