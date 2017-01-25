@@ -13,3 +13,4 @@ json.container_count grid.containers.count
 json.user_count grid.users.count
 json.subnet grid.subnet
 json.supernet grid.supernet
+json.domain grid.domain

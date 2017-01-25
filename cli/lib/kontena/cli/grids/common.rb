@@ -14,6 +14,7 @@ module Kontena::Cli::Grids
       end
       puts "  subnet: #{grid['subnet']}"
       puts "  supernet: #{grid['supernet']}"
+      puts "  domain: #{grid['domain']}"
       root_dir = grid['engine_root_dir']
       nodes = client(require_token).get("grids/#{grid['name']}/nodes")
       nodes = nodes['nodes'].select{|n| n['connected'] == true }
