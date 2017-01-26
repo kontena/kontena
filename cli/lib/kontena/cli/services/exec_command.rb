@@ -26,21 +26,25 @@ module Kontena::Cli::Services
 
     def execute
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
-      running_containers = service_containers.select{|container| container['state']['running']}
+      running_containers = service_containers.select{|container| container['status'] == 'running' }
 
       if running_containers.empty?
         exit_with_error "Service #{name} does not have any running container instances"
       end
 
       if all?
-        running_containers.each do |container|
-          exec_container(container)
+        service_containers.each do |container|
+          if container['status'] == 'running'
+            exec_container(container)
+          else
+            warning "Service #{name} container #{container['name']} is #{container['status']}, skipping"
+          end
         end
       elsif instance
         if !(container = service_containers.find{|container| container['instance_number'] == instance})
           exit_with_error "Service #{name} does not have container instance #{instance}"
-        elsif !container['state']['running']
-          exit_with_error "Service #{name} container instance #{instance} is not running, it is #{container['status']}"
+        elsif container['status'] != 'running'
+          exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
         else
           exec_container(container)
         end
