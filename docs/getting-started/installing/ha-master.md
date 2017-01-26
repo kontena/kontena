@@ -10,7 +10,7 @@ Kontena master can be run in HA setup where multiple instances of the Kontena ma
 
 - Master nodes:
   - Any modern Linux distribution with support for Docker and docker-compose. CoreOS and Ubuntu are more heavily tested.
-  -
+
 - MongoDB cluster:
   - 3 node MongoDB replica-set is recommended
 
@@ -30,7 +30,7 @@ If you are setting up Kontena master using docker-compose you can use following 
 version: '2'
 services:
   master:
-    image: kontena/server:latest
+    image: kontena/server:1.1
     container_name: kontena-server-api
     restart: unless-stopped
     environment:
@@ -45,6 +45,8 @@ services:
 Make sure all the instances are using same environment configuration values.
 
 Spin up Kontena masters on as many nodes you feel comfortable to make the system highly available. Usually two or three nodes are sufficient.
+
+**Note** The example above uses version 1.1 (which translates to newest patch release on 1.1.x). You can also use tag `latest` but that might cause un-expected upgrades as `latest` always points to latest stable release.
 
 ### Setting up master with Kontena CLI plugins
 
