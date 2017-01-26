@@ -4,6 +4,8 @@ require "kontena/cli/stacks/install_command"
 describe Kontena::Cli::Stacks::InstallCommand do
 
   include ClientHelpers
+  include RequirementsHelper
+  mock_current_master
 
   describe '#execute' do
     let(:stack) do
@@ -16,6 +18,9 @@ describe Kontena::Cli::Stacks::InstallCommand do
         services: []
       }
     end
+
+    expect_to_require_current_master
+    expect_to_require_current_master_token
 
     before(:each) do
       allow(subject).to receive(:yaml_content).and_return("YAML content")
@@ -59,7 +64,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     it 'accepts a stack name as filename' do
       expect(File).to receive(:exist?).with('user/stack:1.0.0').and_return(false)
-      expect(subject).to receive(:stack_from_yaml).with('user/stack:1.0.0', from_registry: true, name: nil).and_return(stack)
+      expect(subject).to receive(:stack_from_yaml).with('user/stack:1.0.0', from_registry: true, name: nil, values: nil).and_return(stack)
       expect(client).to receive(:post).with(
         'grids/test-grid/stacks', stack
       )
