@@ -11,13 +11,20 @@ module Kontena::Cli::Services
 
     option ["-i", "--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
+    option ["--shell"], :flag, "Execute as a shell command"
 
     requires_current_master
     requires_current_grid
 
     # Exits if exec returns with non-zero
     def exec_container(container)
-      stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd_list})
+      if shell?
+        cmd = ['sh', '-c', cmd_list.join(' ')]
+      else
+        cmd = cmd_list
+      end
+
+      stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
 
       STDOUT.puts stdout unless stdout.empty?
       STDERR.puts stderr unless stderr.empty?
