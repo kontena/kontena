@@ -9,16 +9,23 @@ module Kontena::Cli::Stacks
     banner "Build images listed in a stack file and push them to your image registry"
 
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+
     option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false
     option ['--no-push'], :flag, 'Do not push images to registry', default: false
     option ['--no-pull'], :flag, 'Do not attempt to pull a newer version of the image', default: false
     option ['--[no-]sudo'], :flag, 'Run docker using sudo', hidden: Kontena.on_windows?, environment_variable: 'KONTENA_SUDO', default: false
 
+    option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
+    include Common::StackValuesFromOption
+
     parameter "[SERVICE] ...", "Services to build"
+
+    requires_current_master # the stack may use a vault resolver
+    requires_current_master_token
 
     def execute
       require_config_file(filename)
-      stack = stack_from_yaml(filename)
+      stack = stack_from_yaml(filename, name: name, values: values)
       services = stack['services']
 
       unless service_list.empty?

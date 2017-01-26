@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
       attr_reader :file, :raw_content, :errors, :notifications
 
-      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil)
+      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
@@ -30,11 +30,12 @@ module Kontena::Cli::Stacks
           @raw_content = File.read(File.expand_path(file))
         end
 
-        @errors = []
-        @notifications = []
+        @errors           = []
+        @notifications    = []
         @skip_validation  = skip_validation
         @skip_variables   = skip_variables
         @variables        = variables
+        @values           = values
       end
 
       def internals_interpolated_yaml
@@ -74,16 +75,27 @@ module Kontena::Cli::Stacks
         raise "Error while parsing #{file}".colorize(:red)+ " " + e.message
       end
 
+      def raw_yaml
+        @raw_yaml ||= ::YAML.safe_load(raw_content)
+      end
 
       # @return [Opto::Group]
       def variables
-        @variables ||= Opto::Group.new(
+        return @variables if @variables
+        @variables = Opto::Group.new(
           (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}),
           defaults: {
             from: :env,
             to: :env
           }
         )
+        if @values
+          @values.each do |key, val|
+            var = @variables.option(key)
+            var.set(val) if var
+          end
+        end
+        @variables
       end
 
       # @param [String] service_name
@@ -94,15 +106,19 @@ module Kontena::Cli::Stacks
 
         result = {}
         Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
-          result[:stack]         = internals_interpolated_yaml['stack']
+          result[:stack]         = raw_yaml['stack']
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
           result[:registry]      = @registry if from_registry?
-          result[:expose]        = internals_interpolated_yaml['expose']
+          result[:expose]        = fully_interpolated_yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
           result[:services]      = errors.count == 0 ? parse_services(service_name) : {}
-          result[:variables]     = variables.to_h(values_only: true).reject { |k,_| variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault) } unless skip_variables?
+          unless skip_variables?
+            result[:variables]     = variables.to_h(values_only: true).reject do |k,_|
+              k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
+            end
+          end
           result[:vault_keys]    = extract_vault_keys(result[:services])
         end
         result
@@ -121,11 +137,11 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        @stack_name ||= parse_stack_name(internals_interpolated_yaml['stack'].to_s)[:stack]
+        @stack_name ||= parse_stack_name(::YAML.safe_load(raw_content)['stack'].to_s)[:stack]
       end
 
       def stack_version
-        @stack_version ||= internals_interpolated_yaml['version'] || parse_stack_name(internals_interpolated_yaml['stack'].to_s)[:version] || '0.0.1'
+        @stack_version ||= raw_yaml['version'] || parse_stack_name(raw_yaml['stack'].to_s)[:version] || '0.0.1'
       end
 
       # @return [Array] array of validation errors
@@ -214,7 +230,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name, from_registry: false)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry?, variables: variables).execute(service_name)
+        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]

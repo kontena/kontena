@@ -8,6 +8,7 @@ require_relative 'stacks/build_command'
 require_relative 'stacks/monitor_command'
 require_relative 'stacks/logs_command'
 require_relative 'stacks/registry_command'
+require_relative 'stacks/validate_command'
 
 class Kontena::Cli::StackCommand < Kontena::Command
 
@@ -21,6 +22,7 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand "monitor", "Monitor services in a stack", Kontena::Cli::Stacks::MonitorCommand
   subcommand "build", "Build images listed in a stack file and push them to an image registry", Kontena::Cli::Stacks::BuildCommand
   subcommand ["reg", "registry"], "Stack registry related commands", Kontena::Cli::Stacks::RegistryCommand
+  subcommand "validate", "Process and validate a stack file", Kontena::Cli::Stacks::ValidateCommand
 
   def execute
   end
