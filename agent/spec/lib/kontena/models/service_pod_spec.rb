@@ -403,7 +403,15 @@ describe Kontena::Models::ServicePod do
   end
 
   describe '#build_volumes_from' do
-    it 'builds with stack naming' do
+    it 'builds with 0.16 legacy, 1.1 stackless service naming' do
+      volume_container = double(:container)
+      data['volumes_from'] = ['mysql-%i']
+      data['labels']['io.kontena.stack.name'] = 'null'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['mysql-2'])
+    end
+
+    it 'builds with 1.0 stack naming' do
       volume_container = double(:container)
       data['volumes_from'] = ['mysql-%i']
       data['labels']['io.kontena.stack.name'] = 'mystack'
@@ -412,12 +420,23 @@ describe Kontena::Models::ServicePod do
       expect(subject.build_volumes_from).to eq(['mystack-mysql-2'])
     end
 
-    it 'builds with legacy naming' do
+    it 'builds with 1.0 null stack naming' do
       volume_container = double(:container)
       data['volumes_from'] = ['mysql-%i']
-      data['labels']['io.kontena.stack.name']
-      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(volume_container)
-      expect(subject.build_volumes_from).to eq(['mysql-2'])
+      data['labels']['io.kontena.stack.name'] = 'null'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('null-mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['null-mysql-2'])
+    end
+
+    it 'builds with 1.1 stack naming' do
+      volume_container = double(:container)
+      data['volumes_from'] = ['mysql-%i']
+      data['labels']['io.kontena.stack.name'] = 'mystack'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('mystack-mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('mystack.mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['mystack.mysql-2'])
     end
   end
 end
