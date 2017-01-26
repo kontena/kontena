@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'shellwords'
 
 module Kontena::Cli::Stacks
   class BuildCommand < Kontena::Command
@@ -11,6 +12,8 @@ module Kontena::Cli::Stacks
     option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false
     option ['--no-push'], :flag, 'Do not push images to registry', default: false
     option ['--no-pull'], :flag, 'Do not attempt to pull a newer version of the image', default: false
+    option ['--[no-]sudo'], :flag, 'Run docker using sudo', hidden: Kontena.on_windows?, environment_variable: 'KONTENA_SUDO', default: false
+
     parameter "[SERVICE] ...", "Services to build"
 
     def execute
@@ -25,25 +28,23 @@ module Kontena::Cli::Stacks
       if services.none?{ |service| service['build'] }
         abort 'Not found any service with a build option'.colorize(:red)
       end
-      build_docker_images(services, no_cache?, no_pull?)
+      build_docker_images(services)
       push_docker_images(services) unless no_push?
     end
 
     # @param [Hash] services
-    # @param [Boolean] no_cache
-    # @param [Boolean] no_pull
-    def build_docker_images(services, no_cache = false, no_pull = false)
+    def build_docker_images(services)
       services.each do |service|
         if service['build']
           dockerfile = service['build']['dockerfile'] || 'Dockerfile'
-          abort("'#{service['image']}' is not valid Docker image name") unless validate_image_name(service['image'])
+          abort("'#{service['image']}' is not valid Docker image name") unless valid_image_name?(service['image'])
           abort("'#{service['build']['context']}' does not have #{dockerfile}") unless dockerfile_exist?(service['build']['context'], dockerfile)
           if service['hooks'] && service['hooks']['pre_build']
             puts "Running pre_build hook".colorize(:cyan)
             run_pre_build_hook(service['hooks']['pre_build'])
           end
           puts "Building image #{service['image'].colorize(:cyan)}"
-          build_docker_image(service, no_cache, no_pull)
+          build_docker_image(service)
         end
       end
     end
@@ -59,16 +60,16 @@ module Kontena::Cli::Stacks
     end
 
     # @param [Hash] service
-    # @param [Boolean] no_cache
-    # @param [Boolean] no_pull
     # @return [Integer]
-    def build_docker_image(service, no_cache = false, no_pull = false)
+    def build_docker_image(service)
       dockerfile = dockerfile = service['build']['dockerfile'] || 'Dockerfile'
       build_context = service['build']['context']
       cmd = ['docker', 'build', '-t', service['image']]
       cmd << ['-f', File.join(File.expand_path(build_context), dockerfile)] if dockerfile != "Dockerfile"
-      cmd << '--no-cache' if no_cache
-      cmd << '--pull' unless no_pull
+      cmd << '--no-cache' if no_cache?
+      cmd << '--pull' unless no_pull?
+      cmd.unshift('sudo') if sudo?
+
       args = service['build']['args'] || {}
       args.each do |k, v|
         cmd << "--build-arg=#{k}=#{v}"
@@ -82,21 +83,17 @@ module Kontena::Cli::Stacks
     # @param [String] image
     # @return [Integer]
     def push_docker_image(image)
-      ret = system('docker', 'push', image)
+      cmd = ['docker', 'push', image]
+      cmd.unshift('sudo') if sudo?
+      ret = system(*cmd)
       raise ("Failed to push image #{image.colorize(:cyan)}") unless ret
       ret
     end
 
     # @param [String] name
     # @return [Boolean]
-    def validate_image_name(name)
-      !(/^[\w.\/\-:]+:?+[\w+.]+$/ =~ name).nil?
-    end
-
-    # @param [String] image
-    # @return [Boolean]
-    def image_exist?(image)
-      system("docker history '#{image}' >/dev/null 2>/dev/null")
+    def valid_image_name?(name)
+      !(/\A[\w.\/\-:]+:?+[\w+.]+\z/ =~ name).nil?
     end
 
     # @param [String] path

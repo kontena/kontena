@@ -55,6 +55,12 @@ describe Kontena::Cli::Stacks::BuildCommand do
         expect(subject).to receive(:system).with('docker', 'push', 'registry.kontena.local/test:latest')
         subject.run([])
       end
+
+      it 'uses sudo when --sudo given' do
+        expect(subject).to receive(:system).with('sudo', 'docker', 'build', '-t', 'registry.kontena.local/test:latest', '--pull', File.expand_path('.')).and_return(true)
+        expect(subject).to receive(:system).with('sudo', 'docker', 'push', 'registry.kontena.local/test:latest').and_return(true)
+        subject.run(['--sudo'])
+      end
     end
   end
 end
