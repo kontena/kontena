@@ -29,7 +29,7 @@ module Kontena::Cli::Services
       running_containers = service_containers.select{|container| container['status'] == 'running' }
 
       if running_containers.empty?
-        exit_with_error "Service #{name} does not have any running container instances"
+        exit_with_error "Service #{name} does not have any running containers"
       end
 
       if all?
