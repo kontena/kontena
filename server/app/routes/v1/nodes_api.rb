@@ -46,7 +46,8 @@ module V1
             begin
               @etcd_health = rpc_client.request("/etcd/health")
             rescue RpcClient::TimeoutError => error
-              halt_request(error.code, {error: error.message})
+              # overlap with any agent-side errors
+              @etcd_health = {error: error.message}
             end
 
             render('host_nodes/health')
