@@ -12,11 +12,15 @@ module Kontena::Cli::Stacks::Registry
     requires_current_account_token
 
     def execute
-      file = Kontena::Cli::Stacks::YAML::Reader.new(filename, skip_variables: true, replace_missing: "filler")
+      file = Kontena::Cli::Stacks::YAML::Reader.new(
+        filename,
+        skip_variables: true,
+        skip_validation: true
+      )
       file.execute
-      name = "#{file.yaml['stack']}:#{file.yaml['version']}"
+      name = "#{file.stack_name}:#{file.stack_version}"
       spinner("Pushing #{pastel.cyan(name)} to stacks registry") do
-        stacks_client.push(file.yaml['stack'], file.yaml['version'], file.raw_content)
+        stacks_client.push(file.stack_name, file.stack_version, file.raw_content)
       end
     end
   end

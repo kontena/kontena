@@ -3,7 +3,7 @@ version: 0.1.1
 variables:
   enum_test:
     type: enum
-    options: 
+    options:
       - Foo
       - Bar
       - Baz
@@ -13,7 +13,7 @@ variables:
     required: true
     min_length: 10
     empty_is_nil: true
-    from: 
+    from:
       env: WORDPRESS_DB_PASSWORD # first try from local env
       prompt: Enter a password for the wordpress instance  # then try from prompt
       random_string: # if prompt returned nil, generate a random string
@@ -31,16 +31,21 @@ variables:
       env: test_var
   TEST_ENV_VAR:      # the default from/to is to set/read env of the option name
     type: :string
+  TAG:
+    type: string
+  MYSQL_IMAGE:
+    type: string
+    empty_is_nil: false
 services:
   wordpress:
     extends:
       file: docker-compose_v2.yml
       service: wordpress
-    image: wordpress:$TAG
+    image: "wordpress:$TAG"
     stateful: true
     environment:
       - WORDPRESS_DB_PASSWORD=${STACK}_secret
-    secrets: 
+    secrets:
       - secret: WP_ADMIN_PASSWORD
         name: WORDPRESS_PASSWORD
         type: env
@@ -56,7 +61,7 @@ services:
       service: mysql
     image: ${MYSQL_IMAGE}
     stateful: true
-    secrets: 
+    secrets:
       - secret: WP_MYSQL_ROOT_PW
         name: MYSQL_PASSWORD
         type: env

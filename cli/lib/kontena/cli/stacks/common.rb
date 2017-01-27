@@ -20,16 +20,56 @@ module Kontena::Cli::Stacks
       end
     end
 
+    module StackFileOrNameParam
+      attr_accessor :from_registry
+
+      def self.included(where)
+        where.parameter "[FILE]", "Kontena stack file or a registry stack name (user/stack or user/stack:version)", default: "kontena.yml", attribute_name: :filename do |filename|
+          if !File.exist?(filename) && filename =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/
+            @from_registry = true
+          else
+            @from_registry = false
+            require_config_file(filename)
+          end
+          filename
+        end
+      end
+    end
+
+    module StackNameOption
+      def self.included(where)
+        where.option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
+      end
+    end
+
+    module StackValuesFromOption
+      attr_accessor :values
+      def self.included(where)
+        where.option '--values-from', '[FILE]', 'Read variable values from YAML' do |filename|
+          if filename
+            require_config_file(filename)
+            @values = ::YAML.safe_load(File.read(filename))
+          end
+          filename
+        end
+      end
+    end
+
     def stack_name
       @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def stack_from_yaml(filename, from_registry: false, name: nil)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, from_registry: from_registry)
+    def reader_from_yaml(filename, from_registry: false, name: nil, values: nil)
+      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, from_registry: from_registry, values: values)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
       set_env_variables(name || reader.stack_name, current_grid)
+      reader
+    end
+
+    def stack_from_yaml(filename, from_registry: false, name: nil, values: nil)
+      reader = reader_from_yaml(filename, from_registry: from_registry, name: name, values: values)
       outcome = reader.execute
 
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
@@ -42,7 +82,9 @@ module Kontena::Cli::Stacks
         'version' => outcome[:version],
         'source' => reader.raw_content,
         'registry' => 'file://',
-        'services' => kontena_services
+        'services' => kontena_services,
+        'variables' => outcome[:variables],
+        'vault_keys' => outcome[:vault_keys]
       }
       stack
     end

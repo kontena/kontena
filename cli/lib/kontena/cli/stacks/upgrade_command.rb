@@ -9,15 +9,18 @@ module Kontena::Cli::Stacks
     banner "Upgrades a stack in a grid on Kontena Master"
 
     parameter "NAME", "Stack name"
-    parameter "[FILE]", "Kontena stack file", default: "kontena.yml"
+
+    include Common::StackFileOrNameParam
+    include Common::StackValuesFromOption
+
     option '--deploy', :flag, 'Deploy after upgrade'
 
     requires_current_master
     requires_current_master_token
 
     def execute
-      require_config_file(file)
-      stack = stack_from_yaml(file, name: name)
+      require_config_file(filename)
+      stack = stack_from_yaml(filename, name: name, values: values, from_registry: from_registry)
       spinner "Upgrading stack #{pastel.cyan(name)} " do
         update_stack(stack)
       end

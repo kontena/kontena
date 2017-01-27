@@ -23,13 +23,18 @@ variables:
       env: test_var
   TEST_ENV_VAR:      # the default from/to is to set/read env of the option name
     type: string
+  TAG:
+    type: string
+  MYSQL_IMAGE:
+    type: string
+    empty_is_nil: false
 
 services:
   wordpress:
     extends:
       file: docker-compose_v2.yml
       service: wordpress
-    image: wordpress:$TAG
+    image: "wordpress:$TAG"
     stateful: true
     environment:
       - WORDPRESS_DB_PASSWORD=${STACK}_secret

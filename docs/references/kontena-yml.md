@@ -36,8 +36,8 @@ See the complete [variables reference](kontena-yml-variables.md).
 ```
 variables:
   mysql_root_pw:
-    type: string    
-    from:      
+    type: string
+    from:
       prompt: Enter a root password for MySQL or leave empty to auto generate
       random_string: 16
     to:
@@ -319,7 +319,7 @@ env_file: production.env
 
 #### extends
 
-Extend another service, in the current file or another, optionally overriding configuration. You can, for example, extend `docker-compose.yml` services and introduce only Kontena-specific fields in `kontena.yml`.
+Extend another service, in the current file, another file or a stack in the stacks registry, optionally overriding configuration. You can, for example, extend `docker-compose.yml` services and introduce only Kontena-specific fields in `kontena.yml`.
 
 **docker-compose.yml**
 
@@ -338,13 +338,17 @@ db:
 app:
   extends:
     file: docker-compose.yml
-    service: app   
+    service: app
   image: registry.kontena.local/app:latest
 db:
   extends:
     file: docker-compose.yml
     service: app
   image: mysql:5.6
+redis:
+  extends:
+    stack: user/redis:1.0.0
+    service: redis
 ```
 
 #### links
@@ -354,7 +358,7 @@ Link to another service. Either specify both the service name and the link alias
 ```
 links:
   - mysql:wordpress-mysql
-  - common/loadbalancer  
+  - common/loadbalancer
 ```
 
 With Kontena you can always reach services by their internal DNS (*service_name.stack.grid.kontena.local*) and links are not needed for the service discovery. See [networking](#networking) for full details.
@@ -470,7 +474,10 @@ logging:
      driver: fluentd
      options:
        fluentd-address: 192.168.99.1:24224
+       # {% raw %}
+       # raw .. endraw needed to avoid parsing {{ .. }} as a Liquid tag.
        fluentd-tag: docker.{{.Name}}
+       # {% endraw %}
  ```
 
 ## Networking
@@ -479,7 +486,7 @@ Each service within the same stack is both reachable by other services and disco
 Each service can use DNS to resolve the hostname of a service such as `web` or `db` to the IP address of that service's containers. For example, web’s application code could connect to the URL postgres://db:5432 and start using the Postgres database.
 
 ```
-web:  
+web:
   image: myapp:latest
 
 db:
@@ -492,19 +499,47 @@ To connect to other services within the same grid please use the complete intern
 
 ## Variable substitution
 
-Your configuration options can contain environment variables. Kontena uses the variable values from the shell environment in which `kontena stack` commands are run. For example, suppose the shell contains EXTERNAL_PORT=8000 and you supply this configuration:
+**Note:** Since Kontena 1.1.0 you can no longer use environment variables that have not been declared in the `variables` section of the YAML. To use environment variables on your local machine, you have to use the `env` resolver as documented in [variables reference](kontena-yml-variables.md).
 
+
+```yaml
+variables:
+  mysql_root_pw: # variable name
+    type: string
+    from:
+      env: MYSQL_ROOT_PW # read from local environment variable MYSQL_ROOT_PW
+
+services:
+  mysql:
+    image: mysql:latest
+    environment:
+      - "MYSQL_ROOT_PW=${mysql_root_pw}" # Variable value will be substituted when the stack file is parsed
 ```
-web:
-  build: .
-  image: registry.kontena.local/my-app:latest
-  ports:
-    - "${EXTERNAL_PORT}:5000"
+
+Kontena CLI will automatically define `GRID` and `STACK` variables for you and those variables are available for variable substitution also inside the variables section of the YAML.
+
+## Templating
+
+For more advanced templating the kontena.yml can use  [Liquid](https://shopify.github.io/liquid/) template language. The variables are also available inside the template tags.
+
+```yaml
+variables:
+  target:
+    type: enum
+    options:
+      - production
+      - staging
+
+services:
+  app:
+  image: app:latest
+  environment:
+    # {% if target == "staging" %}
+    - "DEBUG=true"
+    # {% endif %}
 ```
 
-Kontena will automatically define `GRID` and `STACK` environment variables for you and those variables are available for variable substitution.
-
-You can also define variables and use values from those for variable substitution. See the complete [variables reference](kontena-yml-variables.md)
+Notice that the file has to be valid YAML before and after template rendering.
 
 ## Example kontena.yml
 
@@ -513,17 +548,17 @@ stack: kontena/example-app
 version: 0.1.0
 variables:
   mysql_root_pw:
-    type: string    
-    from:      
+    type: string
+    from:
       prompt: Enter a root password for MySQL or leave empty to auto generate
-      random_string: 16    
+      random_string: 16
 services:
   loadbalancer:
     image: kontena/lb:latest
     ports:
       - 80:80
   app:
-    build: .  
+    build: .
     image: registry.kontena.local/example-app:latest
     instances: 2
     links:
@@ -539,7 +574,7 @@ services:
       post_start:
         - name: sleep
           cmd: sleep 10
-          instances: *  
+          instances: *
   db:
     image: mysql:5.6
     stateful: true

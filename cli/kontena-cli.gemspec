@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = ">= 2.0.0"
+  spec.required_ruby_version = ">= 2.1.0"
 
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
@@ -29,7 +29,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "launchy", "~> 2.4.3"
   spec.add_runtime_dependency "hash_validator", "~> 0.7.0"
   spec.add_runtime_dependency "retriable", "~> 2.1.0"
-  spec.add_runtime_dependency "opto", "~> 1.5.3"
+  spec.add_runtime_dependency "opto", "~> 1.8.0"
   spec.add_runtime_dependency "semantic", "~> 1.5"
   spec.add_runtime_dependency "safe_yaml", "~> 1.0"
+  spec.add_runtime_dependency "liquid", "~> 4.0.0"
 end

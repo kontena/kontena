@@ -1,0 +1,21 @@
+stack: user/stackname
+version: 0.1.1
+variables:
+  grid_name:
+    type: string
+    required: true
+    min_length: 10
+    empty_is_nil: true
+    value: "{{ GRID }} ${STACK}"
+  copies:
+    type: integer
+    value: 5
+
+services:
+  # {% for copy in (1..copies) %}
+  service-{{copy}}:
+    image: foo:{{copy}}
+    environment:
+      - TEST_VAR="{{ grid_name }}"
+  # {% endfor %}
+

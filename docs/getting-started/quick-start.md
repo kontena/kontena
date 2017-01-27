@@ -9,7 +9,7 @@ Follow these steps to get started with Kontena quickly.
 
 ## Step 1. Install Kontena CLI (command-line interface)
 
-> Prerequisites: You'll need Ruby version 2.0 or later installed on your system. For more details, see the official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
+> Prerequisites: You'll need Ruby version 2.1 or later installed on your system. For more details, see the official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
 
 You can install the Kontena CLI using the Rubygems package manager (which is included in Ruby).
 
@@ -136,8 +136,8 @@ You can then install and deploy the `wordpress` stack:
 
 ```
 $ kontena stack install --deploy kontena.yml
- [done] Creating stack wordpress      
- [done] Deploying stack wordpress     
+ [done] Creating stack wordpress
+ [done] Deploying stack wordpress
 ```
 
 The initial stack deployment may take some time while the host nodes pull the referenced Docker images.
@@ -146,8 +146,8 @@ After the stack deployment is finished you can verify that the wordpress and mys
 
 ```
 $ kontena stack ls
-NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS                                     
-⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp                                      
+NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS
+⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp
 ```
 
 You can use the `kontena stack` commands to view the resulting configuration of each deployed stack service:

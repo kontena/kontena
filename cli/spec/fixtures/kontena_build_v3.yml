@@ -4,7 +4,7 @@ services:
   mysql:
     stateful: true
     environment:
-      - MYSQL_ROOT_PASSWORD=${project}_secret
+      - MYSQL_ROOT_PASSWORD=${STACK}_secret
 
   webapp:
     image: webapp

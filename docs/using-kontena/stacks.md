@@ -63,7 +63,7 @@ Download a specific version of the YAML stack file from the Kontena Stack Regist
 Upload the YAML stack file to the Kontena Cloud Stack Registry:
 
 ```
-[done] Pushing terom/wordpress:0.3.4 to stacks registry    
+[done] Pushing terom/wordpress:0.3.4 to stacks registry
 ```
 
 The `username/stackname` and version information are read from within the given YAML file.
@@ -77,7 +77,7 @@ By default, the `kontena.yml` file in the current directory is uploaded.
 Lists available stacks files having a name suffix matching the given search term.
 
 ```
-NAME                                     VERSION    DESCRIPTION                             
+NAME                                     VERSION    DESCRIPTION
 jussi/wordpress                          0.1.0      Todo-app bundle, all required services within the stack
 terom/wordpress                          0.3.5      Wordpress 4.6 + MariaDB 5.5
 ```
@@ -140,8 +140,8 @@ Install the stack from the YAML file to the master, creating a new named stack w
 Use the `--deploy` flag to simultaneously deploy the stack services to the grid, spinning up the Docker containers.
 
 ```
- [done] Creating stack wordpress-red      
- [done] Deploying stack wordpress-red     
+ [done] Creating stack wordpress-red
+ [done] Deploying stack wordpress-red
 ```
 
 The stack services will now be visible in `kontena service ls`, and the service containers will be running on the grid's host nodes.
@@ -157,6 +157,10 @@ Install and deploy the stack using the latest YAML file from the stack registry.
 
 Install and deploy the stack using the versioned YAML file from the stack registry.
 
+#### `kontena stack install --name wordpress-green --deploy --values-from production.yml terom/wordpress:4.6.1+mariadb5.`
+
+Install and deploy the stack using the versioned YAML file from the stack registry, read variable values from 'production.yml'.
+
 #### `kontena stack remove wordpress-red`
 
 Removes the installed stack and associated services, including any deployed containers.
@@ -164,7 +168,7 @@ Removes the installed stack and associated services, including any deployed cont
 ```
 Destructive command. To proceed, type "wordpress-red" or re-run this command with --force option.
 > Enter 'wordpress-red' to confirm:  wordpress-red
- [done] Removing stack wordpress-red      
+ [done] Removing stack wordpress-red
 ```
 
 This command also removes all data volumes associated with stateful services within the stack.
@@ -182,10 +186,10 @@ The following Kontena CLI commands can be used to inspect and monitor named stac
 List installed stacks for the current Grid, and their deployment state.
 
 ```
-NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS                                     
-⊝ registry                                                   0.16.3     1          running                                                      
-⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp                                      
-⊝ wordpress-red                                              0.3.0      2          running    *:80->80/tcp        
+NAME                                                         VERSION    SERVICES   STATE      EXPOSED PORTS
+⊝ registry                                                   0.16.3     1          running
+⊝ wordpress                                                  0.3.0      2          running    *:80->80/tcp
+⊝ wordpress-red                                              0.3.0      2          running    *:80->80/tcp
 ```
 
 #### `kontena stack show wordpress`
@@ -229,9 +233,9 @@ wordpress:
 You can use the `kontena service` commands to view further details about the state of the services within a stack:
 
 ```
-NAME                                                         INSTANCES  STATEFUL STATE      EXPOSED PORTS                                     
-⊝ wordpress/wordpress                                        1 / 1      yes      running    0.0.0.0:80->80/tcp                                
-⊝ wordpress/mysql                                            1 / 1      yes      running      
+NAME                                                         INSTANCES  STATEFUL STATE      EXPOSED PORTS
+⊝ wordpress/wordpress                                        1 / 1      yes      running    0.0.0.0:80->80/tcp
+⊝ wordpress/mysql                                            1 / 1      yes      running
 ```
 
 The normal `kontena service show wordpress/wordpress` commands can be used to inspect the services within a stack.
@@ -263,6 +267,12 @@ nodes:
   ■■
 ```
 
+#### `kontena stack validate`
+
+Validate stack YAML files, inspect templating and variable substitution outcome or generate variable value files.
+
+* `kontena stack validate file.yml` notifies about invalid syntax or outputs the resulting YAML to STDOUT
+* `kontena stack validate --values-to answers.yml file.yml` generate a YAML from the variable values, to be used with `--values-from` option in some commands
 
 ## Linking services within the same stack
 

@@ -1,5 +1,6 @@
 require_relative '../../../../spec_helper'
 require 'kontena/cli/stacks/yaml/reader'
+require 'liquid'
 
 describe Kontena::Cli::Stacks::YAML::Reader do
   include FixturesHelpers
@@ -54,6 +55,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     allow(File).to receive(:read)
       .with(absolute_yaml_path('kontena_v3.yml'))
       .and_return(fixture('kontena_v3.yml'))
+    allow_any_instance_of(described_class).to receive(:env)
+      .and_return( { 'STACK' => 'test', 'GRID' => 'test-grid' } )
   end
 
   describe '#initialize' do
@@ -88,11 +91,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   end
 
   describe '#execute' do
-    before(:each) do
-      allow(ENV).to receive(:[]).with('STACK').and_return('test')
-      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
-    end
-
     context 'when extending services' do
       it 'extends services from external file' do
         docker_compose_yml = YAML.load(fixture('docker-compose_v2.yml'))
@@ -129,7 +127,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
 
       it 'extends services from the same file' do
-        allow(File).to receive(:read)
+        expect(File).to receive(:read)
           .with(absolute_yaml_path('kontena_v3.yml'))
           .and_return(fixture('stack-internal-extend.yml'))
         kontena_yml = YAML.load(fixture('stack-internal-extend.yml'))
@@ -162,20 +160,23 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     context 'variable interpolation' do
       before(:each) do
-        allow(ENV).to receive(:key?).and_return(true)
-        allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
-        allow(ENV).to receive(:[]).with('STACK').and_return('test')
-        allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
-        allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
+        allow_any_instance_of(described_class).to receive(:env).and_return(
+          {
+            'STACK' => 'test',
+            'GRID' => 'test-grid',
+            'TAG' => '4.1'
+          }
+        )
         allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+        allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
       end
 
       it 'interpolates $VAR variables' do
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
           .and_return(fixture('stack-with-variables.yml'))
-        subject.execute
-        services = subject.yaml['services']
+        result = subject.execute
+        services = result[:services]
         expect(services['wordpress']['image']).to eq('wordpress:4.1')
       end
 
@@ -183,8 +184,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(File).to receive(:read)
           .with(absolute_yaml_path)
           .and_return(fixture('stack-with-variables.yml'))
-        subject.execute
-        services = subject.yaml['services']
+        result = subject.execute
+        services = result[:services]
         expect(services['mysql']['image']).to eq('mariadb:latest')
       end
 
@@ -194,7 +195,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           .and_return(fixture('stack-with-variables.yml'))
         allow(ENV).to receive(:[])
           .with('MYSQL_IMAGE')
-          .and_return(nil)
+          .and_return('')
+        allow(ENV).to receive(:[])
+          .with('TAG')
+          .and_return('4.1')
 
         expect {
           subject.execute
@@ -203,12 +207,15 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     it 'replaces $$VAR variables to $VAR format' do
-      allow(ENV).to receive(:key?).and_return(true)
-      allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+      allow_any_instance_of(described_class).to receive(:env).and_return(
+        {
+          'STACK' => 'test',
+          'GRID' => 'test-grid'
+        }
+      )
       allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
-      allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
-      allow(ENV).to receive(:[]).with('STACK').and_return('test')
-      allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
+      allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+      allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('foo')
       allow(File).to receive(:read)
         .with(absolute_yaml_path)
         .and_return(fixture('stack-with-variables.yml'))
@@ -382,6 +389,54 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .and_return(fixture('kontena_v3.yml'))
       name = subject.stack_name
       expect(name).to eq('stackname')
+    end
+  end
+
+  context 'liquid' do
+    context 'valid' do
+      before(:each) do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('kontena_v3.yml'))
+          .and_return(fixture('stack-with-liquid.yml'))
+        allow_any_instance_of(described_class).to receive(:env).and_return(
+          {
+            'STACK' => 'test',
+            'GRID' => 'test-grid',
+            'TAG' => '4.1',
+            'MYSQL_IMAGE' => 'mariadb:latest'
+          }
+        )
+        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+      end
+
+      it 'does not interpolate liquid into variables' do
+        expect(subject.variables.value_of('grid_name')).to eq '{{ GRID }} test'
+      end
+
+      it 'interpolates variables into services' do
+        expect(subject.execute[:services].size).to eq 5
+      end
+    end
+
+    context 'invalid' do
+      before(:each) do
+        allow(File).to receive(:read)
+          .with(absolute_yaml_path('kontena_v3.yml'))
+          .and_return(fixture('stack-with-invalid-liquid.yml'))
+        allow_any_instance_of(described_class).to receive(:env).and_return(
+          {
+            'STACK' => 'test',
+            'GRID' => 'test-grid',
+            'TAG' => '4.1',
+            'MYSQL_IMAGE' => 'mariadb:latest'
+          }
+        )
+        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+      end
+
+      it 'raises' do
+        expect{subject.execute}.to raise_error(Liquid::SyntaxError)
+      end
     end
   end
 end
