@@ -12,15 +12,17 @@ module Etcd::Health
       response = api_execute('/health', :get)
     rescue Net::HTTPFatalError => error
       response = error.response
-    rescue => error # other errors such as Errno::ECONNREFUSED
+    rescue => error # any other errors such as Errno::ECONNREFUSED
       raise Error, error.message
     end
 
-    if response.header['Content-Type'] != 'application/json'
-      raise Error, response.body
+    # etcd healthHandler does not return any Content-Type
+    begin
+      data = JSON.parse(response.body)
+    rescue => error
+      # invalid response
+      raise Error, error.message
     end
-
-    data = JSON.parse(response.body)
 
     if data.has_key? 'health'
       return data['health']
