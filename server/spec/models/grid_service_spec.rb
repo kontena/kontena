@@ -35,9 +35,15 @@ describe GridService do
   let(:grid) do
     Grid.create(name: 'test-grid')
   end
+  let :stack do
+    Stack.create(grid: grid, name: 'stack')
+  end
 
   let(:grid_service) do
     GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
+  end
+  let(:stack_service) do
+    GridService.create!(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')
   end
 
   let(:stacked_service) do
@@ -234,8 +240,11 @@ describe GridService do
   end
 
   describe '#name_with_stack' do
-    it 'returns service name with stack' do
-      expect(grid_service.name_with_stack).to include("#{grid_service.stack.name}-")
+    it 'returns stackless service name without stack' do
+      expect(grid_service.name_with_stack).to eq 'redis'
+    end
+    it 'returns stack service name with stack' do
+      expect(stack_service.name_with_stack).to eq 'stack.redis'
     end
   end
 

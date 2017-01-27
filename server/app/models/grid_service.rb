@@ -68,7 +68,11 @@ class GridService
 
   # @return [String]
   def name_with_stack
-    "#{self.stack.name}-#{self.name}"
+    if default_stack?
+      self.name
+    else
+      "#{self.stack.name}.#{self.name}"
+    end
   end
 
   # @return [String]

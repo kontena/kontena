@@ -296,26 +296,40 @@ module Kontena
         env
       end
 
+      # Resolve service volumes_from definitions to the actual container names
+      #
+      # volumes_from:
+      #   - wordpress-%s
+      #
+      # The actual container name for a stackless service is:
+      #   Kontena <1.0: wordpress-1
+      #   Kontena  1.0: null-wordpress-1
+      #   Kontena >1.0: wordpress-1
+      #
+      # The actual container name for a stack service is:
+      #   Kontena  1.0: wordpress-wordpress-1
+      #   Kontena >1.0: wordpress.wordpress-1
       # @return [Array<String>]
       def build_volumes_from
-        self.volumes_from.map { |v|
-          volumes_from = nil
+        self.volumes_from.map { |volumes_from|
+          container_name = volumes_from % [self.instance_number]
 
-          # legacy naming
-          legacy_name = "#{v}" % [self.instance_number]
-          c = Docker::Container.get(legacy_name) rescue nil
-          if c
-            volumes_from = legacy_name
-          end
+          # support different naming schemas
+          container_names = [
+            # stackless services, both kontena <1.0 and >=1.1
+            container_name,
 
-          unless volumes_from
-            # stack naming
-            stack_name = "#{self.stack_name}-#{legacy_name}"
-            c = Docker::Container.get(stack_name) rescue nil
-            if c
-              volumes_from = stack_name
-            else
-              volumes_from = legacy_name
+            # kontena 1.0 services, including null- prefix for stackless services
+            "#{self.stack_name}-#{container_name}",
+
+            # kontena 1.1 stack services
+            "#{self.stack_name}.#{container_name}",
+          ]
+
+          container_names.each do |name|
+            if container = Docker::Container.get(name) rescue nil
+              volumes_from = name
+              break
             end
           end
 
