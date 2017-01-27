@@ -10,16 +10,22 @@ module Etcd::Health
   def health
     response = api_execute('/health', :get)
     response = JSON.parse(response.body)
-    response["health"]
+    response['health']
+
   rescue Net::HTTPFatalError => error
-    response = error.response
+    if error.response.header['Content-Type'] != 'application/json'
+      raise Error, error.response.body
+    end
 
-    if response.header['Content-Type'] == 'application/json'
-      response = JSON.parse(response.body)
+    response = JSON.parse(error.response.body)
 
-      raise Error, response['message'] || response
+    if error.response.is_a?(Net::HTTPServiceUnavailable) && !response['health'].nil?
+      return response['health']
+    elsif response['message']
+      raise Error, response['message']
     else
-      raise Error, response.body
+      # not sure what to expect..
+      raise Error, error.response.body
     end
   end
 end
