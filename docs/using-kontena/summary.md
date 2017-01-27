@@ -1,8 +1,3 @@
----
-title: Summary
-toc_order: 1
----
-
 # Summary of Using Kontena
 
 Kontena offers a range of functionality for configuring and managing containerized workloads. When using Kontena, you can do the following:
