@@ -62,21 +62,21 @@ describe '/v1/grids' do
       expect(rpc_client).to receive(:request).with('/etcd/health').and_return({health: true})
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['etcd']).to eq({'health' => true})
+      expect(json_response['etcd_health']).to eq({'health' => true, 'error' => nil})
     end
 
     it "returns etcd error when RPC returns error" do
       expect(rpc_client).to receive(:request).with('/etcd/health').and_return({error: "unhealthy"})
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['etcd']).to eq({'error' => "unhealthy"})
+      expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "unhealthy"})
     end
 
     it "returns HTTP error when RPC fails" do
       expect(rpc_client).to receive(:request).with('/etcd/health').and_raise(RpcClient::TimeoutError.new(503, "timeout"))
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
-      expect(response.status).to eq(503)
-      expect(json_response).to eq({'error' => "timeout"})
+      expect(response.status).to eq(200)
+      expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "timeout"})
     end
   end
 

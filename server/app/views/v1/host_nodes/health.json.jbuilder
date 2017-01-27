@@ -5,6 +5,6 @@ json.initial_member @node.initial_member?
 
 json.connected @node.connected
 json.etcd_health do
-  json.health @etcd_health['health']
-  json.error @etcd_health['error']
+  json.health @etcd_health[:health]
+  json.error @etcd_health[:error]
 end

@@ -24,8 +24,17 @@ module Etcd::Health
       raise Error, error.message
     end
 
-    if data.has_key? 'health'
-      return data['health']
+    if health = data['health']
+      case health
+      when true, false
+        return health
+      when "true"
+        return true
+      when "false"
+        return false
+      else
+        raise Error, health
+      end
     elsif data.has_key? 'message'
       raise Error, data['message']
     else

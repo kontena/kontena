@@ -8,7 +8,7 @@ describe Kontena::Rpc::EtcdApi do
     it "Returns true when healthy" do
       WebMock.stub_request(:get, 'http://127.0.0.1:2379/health').to_return(
         status: 200,
-        body: {'health' => true}.to_json,
+        body: {'health' => "true"}.to_json,
       )
 
       expect(subject.health).to eq health: true
@@ -17,7 +17,7 @@ describe Kontena::Rpc::EtcdApi do
     it "Returns false when unhealthy" do
       WebMock.stub_request(:get, 'http://127.0.0.1:2379/health').to_return(
         status: 503,
-        body: {'health' => false}.to_json,
+        body: {'health' => "false"}.to_json,
       )
 
       expect(subject.health).to eq health: false
