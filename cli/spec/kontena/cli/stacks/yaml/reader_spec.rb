@@ -200,7 +200,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           .with('TAG')
           .and_return('4.1')
 
-        #STDERR.puts(subject.variables.to_h.inspect)
         expect {
           subject.execute
         }.to output("Value for MYSQL_IMAGE is not set. Substituting with an empty string.\n").to_stdout
