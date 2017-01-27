@@ -35,10 +35,16 @@ describe Kontena::Rpc::EtcdApi do
         headers: {
           'Content-Type' => 'application/json',
         },
-        body: {'message' => 'unhealthy'}.to_json,
+        body: {'message' => "unhealthy"}.to_json,
       )
 
-      expect(subject.health).to eq error: 'unhealthy'
+      expect(subject.health).to eq error: "unhealthy"
+    end
+
+    it "Returns error when down" do
+      WebMock.stub_request(:get, 'http://127.0.0.1:2379/health').to_raise(Errno::ECONNREFUSED.new("Failed to open TCP connection to 172.17.0.1:2379"))
+
+      expect(subject.health).to eq error: "Connection refused - Failed to open TCP connection to 172.17.0.1:2379"
     end
   end
 end

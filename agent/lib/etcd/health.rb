@@ -8,24 +8,27 @@ module Etcd::Health
   # @raise [Etcd::Health::Error]
   # @return [Boolean]
   def health
-    response = api_execute('/health', :get)
-    response = JSON.parse(response.body)
-    response['health']
-
-  rescue Net::HTTPFatalError => error
-    if error.response.header['Content-Type'] != 'application/json'
-      raise Error, error.response.body
+    begin
+      response = api_execute('/health', :get)
+    rescue Net::HTTPFatalError => error
+      response = error.response
+    rescue => error # other errors such as Errno::ECONNREFUSED
+      raise Error, error.message
     end
 
-    response = JSON.parse(error.response.body)
+    if response.header['Content-Type'] != 'application/json'
+      raise Error, response.body
+    end
 
-    if error.response.is_a?(Net::HTTPServiceUnavailable) && !response['health'].nil?
-      return response['health']
-    elsif response['message']
-      raise Error, response['message']
+    data = JSON.parse(response.body)
+
+    if data.has_key? 'health'
+      return data['health']
+    elsif data.has_key? 'message'
+      raise Error, data['message']
     else
       # not sure what to expect..
-      raise Error, error.response.body
+      raise Error, response.body
     end
   end
 end
