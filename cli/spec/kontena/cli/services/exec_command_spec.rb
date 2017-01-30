@@ -2,6 +2,12 @@ describe Kontena::Cli::Services::ExecCommand do
   include ClientHelpers
   include OutputHelpers
 
+  subject do
+    subject = described_class.new('.')
+    subject.with_spinner = false
+    subject
+  end
+
   let :container_exec do
     [
       ["stdout\n"],

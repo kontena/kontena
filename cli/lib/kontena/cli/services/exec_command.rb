@@ -12,6 +12,7 @@ module Kontena::Cli::Services
     option ["-i", "--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
     option ["--shell"], :flag, "Execute as a shell command"
+    option ["--[no-]spinner"], :flag, "Execute with interactive output", attribute_name: :with_spinner, default: true
 
     requires_current_master
     requires_current_grid
@@ -24,7 +25,17 @@ module Kontena::Cli::Services
         cmd = cmd_list
       end
 
-      stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
+      stdout = stderr = exit_status = nil
+
+      if with_spinner?
+        spinner "Executing command on #{container['name']}" do
+          stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
+
+          raise Kontena::Cli::SpinAbort if exit_status != 0
+        end
+      else
+        stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
+      end
 
       stdout.each do |chunk| $stdout.write chunk end
       stderr.each do |chunk| $stderr.write chunk end
