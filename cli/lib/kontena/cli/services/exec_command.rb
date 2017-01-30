@@ -12,8 +12,9 @@ module Kontena::Cli::Services
     option ["-i", "--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
     option ["--shell"], :flag, "Execute as a shell command"
-    option ["--[no-]spinner"], :flag, "Execute with interactive output", attribute_name: :with_spinner, default: nil
     option ["--skip"], :flag, "Skip failed instances when executing --all"
+    option ["--silent"], :flag, "Do not show exec status"
+    option ["--verbose"], :flag, "Show exec status"
 
     requires_current_master
     requires_current_grid
@@ -28,7 +29,7 @@ module Kontena::Cli::Services
 
       stdout = stderr = exit_status = nil
 
-      if with_spinner? || (@with_spinner.nil? && all?)
+      if !silent? && (verbose? || all?)
         spinner "Executing command on #{container['name']}" do
           stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
 
