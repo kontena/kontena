@@ -31,7 +31,6 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     end
 
     it 'uses kontena.yml as default stack file' do
-      expect(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
       expect(subject).to receive(:stack_from_yaml).with('kontena.yml', name: 'stack-name', values: nil, from_registry: nil).and_return(stack)
       subject.run(['stack-name'])
     end
