@@ -14,6 +14,10 @@ describe Kontena::Cli::Master::LoginCommand do
 
   let(:client) { double(:client) }
 
+  before(:each) do
+    allow(Kontena).to receive(:browserless?).and_return(false)
+  end
+
   it 'should exit with error if --code and --token both given' do
     expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
     subject.run(%w(--code abcd --token defg))
