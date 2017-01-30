@@ -4,7 +4,7 @@ module Kontena
 
       include Kontena::Cli::Common
 
-      matches_commands 'master create'
+      matches_commands 'master create', 'master init_cloud'
 
       def cloud_user_data
         return @cloud_user_data if @cloud_user_data
@@ -27,8 +27,7 @@ module Kontena
       def after
         return unless current_master
         return unless command.exit_code == 0
-        return unless current_master.username.to_s == 'admin'
-        return nil if command.skip_auth_provider?
+        return nil if command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
         return nil unless cloud_user_data
 
         invite_response = nil
@@ -60,6 +59,8 @@ module Kontena
         spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
           new_user_token = Kontena.run("master token create -e 0 -s user --return -u #{cloud_user_data[:email].shellescape}", returning: :result)
         end
+
+        return unless current_master.username.to_s == 'admin'
 
         master_name = current_master.name.dup
         master_url  = current_master.url
