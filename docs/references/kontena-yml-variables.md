@@ -261,25 +261,25 @@ With this configuration you can set the storage zone by setting the environment 
 ### `integer`
 
 ```
-  min: 0 # minimum value, can be negative
-  max: nil # maximum value
+  min: 0             # minimum value, can be negative
+  max: nil           # maximum value
   nil_is_zero: false # null value will be turned into zero
 ```
 
 ### `string`
 
 ```
-  min_length: nil # minimum length
-  max_length: nil # maximum length
-  hexdigest: nil  # hexdigest output. options: md5, sha1, sha256, sha384 or sha512.
+  min_length: nil     # minimum length
+  max_length: nil     # maximum length
+  hexdigest: nil      # hexdigest output. options: md5, sha1, sha256, sha384 or sha512.
   empty_is_nil: true, # if string contains whitespace only, make value null
-  encode_64: false # encode content to base64
-  decode_64: false # decode content from base64
-  upcase: false # convert to UPPERCASE
-  downcase: false # convert to lowercase
-  strip: false # remove leading/trailing whitespace,
-  chomp: false # remove trailing linefeed
-  capitalize: false # convert to Capital case.
+  encode_64: false    # encode content to base64
+  decode_64: false    # decode content from base64
+  upcase: false       # convert to UPPERCASE
+  downcase: false     # convert to lowercase
+  strip: false        # remove leading/trailing whitespace,
+  chomp: false        # remove trailing linefeed
+  capitalize: false   # convert to Capital case.
 
 ```
 
@@ -296,13 +296,13 @@ Only allow http:// and https:// uris by default.
 ### `array`
 
 ```
-  split: ',', # Use this pattern to split an incoming string into an array
-  join: false, # Set to a pattern such as ',' to output a comma separated string
-  empty_is_nil: false, # When true, an empty array will become nil
-  sort: false, # Sort the array before output
-  uniq: false, # Remove duplicates before output
-  count: false, # Instead of outputting the array, output the array size
-  compact: false # Remove nils before output
+  split: ','          # Use this pattern to split an incoming string into an array
+  join: false         # Set to a pattern such as ',' to output a comma separated string
+  empty_is_nil: false # When true, an empty array will become nil
+  sort: false         # Sort the array before output
+  uniq: false         # Remove duplicates before output
+  count: false        # Instead of outputting the array, output the array size
+  compact: false      # Remove nils before output
 ```
 
 Usage example:
