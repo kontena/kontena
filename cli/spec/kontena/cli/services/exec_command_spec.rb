@@ -4,8 +4,8 @@ describe Kontena::Cli::Services::ExecCommand do
 
   let :container_exec do
     [
-      "stdout",
-      "stderr",
+      ["stdout\n"],
+      ["stderr\n"],
       0, # exit
     ]
   end
