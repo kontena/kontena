@@ -26,9 +26,11 @@ module Kontena::Cli::Services
 
       stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
 
-      STDOUT.puts stdout unless stdout.empty?
-      STDERR.puts stderr unless stderr.empty?
+      $stdout.puts stdout unless stdout.empty?
+      $stderr.puts stderr unless stderr.empty?
       exit exit_status if exit_status != 0
+
+      return true
     end
 
     def execute
