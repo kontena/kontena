@@ -37,7 +37,7 @@ module Kontena
   end
 
   def self.browserless?
-    RUBY_PLATFORM =~ /linux|(?:free|net|open|net)bsd|solaris|aix|hpux/ && ENV['DISPLAY'].to_s.empty?
+    !!(RUBY_PLATFORM =~ /linux|(?:free|net|open)bsd|solaris|aix|hpux/ && ENV['DISPLAY'].to_s.empty?)
   end
 
   def self.simple_terminal?
