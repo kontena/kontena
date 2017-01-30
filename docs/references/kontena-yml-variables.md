@@ -68,7 +68,7 @@ variables:
   this_is_the_name:
 ```
 
-By default, a local environment variable with the same name gets populated with the variables value. You can then use it later in the yaml as: `${this_is_the_name}`.
+You can then use it later in the yaml as: `${this_is_the_name}`.
 
 ```
   environment:
@@ -94,12 +94,11 @@ You can define multiple sources, for example:
 
 ### To
 
-Define what to do with the value. The default behavior is to set it to local environment using the variable name. You can also use another environment variable name or write the value to the Vault on Kontena Master.
+Define what to do with the value.
 
 ```
   to:
-    env: MYSQL_USER # set to local env
-    vault: foo-mysql-user # also send to vault
+    vault: foo-mysql-user # send the value to vault with key name foo-mysql-user
 ```
 
 ### Conditionals
@@ -293,6 +292,32 @@ With this configuration you can set the storage zone by setting the environment 
 ```
 
 Only allow http:// and https:// uris by default.
+
+### `array`
+
+```
+  split: ',', # Use this pattern to split an incoming string into an array
+  join: false, # Set to a pattern such as ',' to output a comma separated string
+  empty_is_nil: false, # When true, an empty array will become nil
+  sort: false, # Sort the array before output
+  uniq: false, # Remove duplicates before output
+  count: false, # Instead of outputting the array, output the array size
+  compact: false # Remove nils before output
+```
+
+Usage example:
+
+```
+arr:
+  type: array
+  join: ","
+  value:
+    - a
+    - b
+    - c
+```
+
+The variable `arr` will have the value `a,b,c`.
 
 ## Resolvers (From:)
 

@@ -11,7 +11,7 @@ Each service defined in kontena.yml will create a service with that name within 
 
 Each service is reachable by all other services in the same grid and discoverable by other services in the same stack by using the service name as a DNS hostname. See [networking](#networking) for full details.
 
-You can use environment variables in configuration values with a bash-like `${VARIABLE}` syntax. See [variable substitution](#variable-substitution) for full details.
+You can use variables to set configuration values with a bash-like `${VARIABLE}` syntax. See [variable substitution](#variable-substitution) for full details.
 
 ## Stack configuration reference
 
@@ -30,7 +30,7 @@ version: 0.1.0
 
 #### variables
 
-Variables to be used to fill in values and to create conditional logic.
+Variables to be used to fill in values and to create conditional logic in the stack file.
 See the complete [variables reference](kontena-yml-variables.md).
 
 ```
@@ -40,8 +40,10 @@ variables:
     from:
       prompt: Enter a root password for MySQL or leave empty to auto generate
       random_string: 16
-    to:
-      env: MYSQL_PASSWORD
+services:
+  mysql:
+    environment:
+      - "MYSQL_PASSWORD=${mysql_root_pw}"
 ```
 
 #### expose
