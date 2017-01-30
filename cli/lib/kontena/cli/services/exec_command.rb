@@ -35,6 +35,7 @@ module Kontena::Cli::Services
 
     def execute
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
+      service_containers.sort_by! { |container| container['instance_number'] }
       running_containers = service_containers.select{|container| container['status'] == 'running' }
 
       if running_containers.empty?
