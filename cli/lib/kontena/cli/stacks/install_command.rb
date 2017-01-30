@@ -11,7 +11,7 @@ module Kontena::Cli::Stacks
     include Common::StackFileOrNameParam
 
     include Common::StackNameOption
-    option '--deploy', :flag, 'Deploy after installation'
+    option '--[no-]deploy', :flag, 'Trigger deploy after installation', default: true
 
     include Common::StackValuesFromOption
 

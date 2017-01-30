@@ -13,7 +13,7 @@ module Kontena::Cli::Stacks
     include Common::StackFileOrNameParam
     include Common::StackValuesFromOption
 
-    option '--deploy', :flag, 'Deploy after upgrade'
+    option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
 
     requires_current_master
     requires_current_master_token
