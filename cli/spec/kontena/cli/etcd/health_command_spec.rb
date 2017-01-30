@@ -6,64 +6,80 @@ describe Kontena::Cli::Etcd::HealthCommand do
     allow(subject).to receive(:health_icon) {|health| health.inspect }
   end
 
-  describe '#show_node' do
+  describe '#show_node_health' do
     context "For an offline node" do
-      let :node do
+      let :node_health do
         {
           "connected" => false,
           "name" => "node-1",
+          'etcd_health' => {
+            'health' => nil,
+            'error' => nil,
+          },
         }
       end
 
       it "shows offline and returns false" do
-        expect{subject.show_node(node)}.to return_and_output false, [
+        expect{subject.show_node_health(node_health)}.to return_and_output false, [
           ":offline Node node-1 is offline",
         ]
       end
     end
 
-    context "For a node that fails to get health" do
-      let :node do
+    context "For a node with health errors" do
+      let :node_health do
         {
           "name" => "node-1",
-          "id" => "testnode",
           "connected" => true,
+          'etcd_health' => {
+            'health' => nil,
+            'error' => "timeout",
+          },
         }
       end
 
-      before do
-        expect(client).to receive(:get).with('nodes/test-grid/testnode/health').and_raise(Kontena::Errors::StandardError.new(503, "timeout"))
-      end
-
       it "shows errored and returns false" do
-        expect{subject.show_node(node)}.to return_and_output false, [
-          ":warning Node node-1 health error: timeout",
+        expect{subject.show_node_health(node_health)}.to return_and_output false, [
+          ":error Node node-1 is unhealthy: timeout",
         ]
       end
     end
 
-    context "For a node that returns health" do
-      let :node do
+    context "For a node that returns health=false" do
+      let :node_health do
         {
           "name" => "node-1",
-          "id" => "testnode",
           "connected" => true,
+          'etcd_health' => {
+            'health' => false,
+            'error' => nil,
+          },
         }
       end
 
-      it "shows healthy and returns true when health" do
-        expect(client).to receive(:get).with('nodes/test-grid/testnode/health').and_return({'etcd' => {'health' => true}})
-
-        expect{subject.show_node(node)}.to return_and_output true, [
-          ":ok Node node-1 is healthy",
+      it "shows unhealthy and returns false" do
+        expect{subject.show_node_health(node_health)}.to return_and_output false, [
+          ":error Node node-1 is unhealthy",
         ]
       end
+    end
 
-      it "shows unhealthy and returns false when error" do
-        expect(client).to receive(:get).with('nodes/test-grid/testnode/health').and_return({'etcd' => {'error' => "bad"}})
+    context "For a healthy node" do
+      let :node_health do
+        {
+          "name" => "node-1",
+          "connected" => true,
+          'etcd_health' => {
+            'health' => true,
+            'error' => nil,
+          },
+        }
+      end
 
-        expect{subject.show_node(node)}.to return_and_output false, [
-          ":error Node node-1 is unhealthy: bad",
+
+      it "shows healthy and returns true" do
+        expect{subject.show_node_health(node_health)}.to return_and_output true, [
+          ":ok Node node-1 is healthy",
         ]
       end
     end
