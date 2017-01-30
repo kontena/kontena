@@ -13,6 +13,7 @@ module Kontena::Cli::Services
     option ["-a", "--all"], :flag, "Exec on all running instances"
     option ["--shell"], :flag, "Execute as a shell command"
     option ["--[no-]spinner"], :flag, "Execute with interactive output", attribute_name: :with_spinner, default: nil
+    option ["--skip"], :flag, "Skip failed instances when executing --all"
 
     requires_current_master
     requires_current_grid
@@ -40,9 +41,9 @@ module Kontena::Cli::Services
       stdout.each do |chunk| $stdout.write chunk end
       stderr.each do |chunk| $stderr.write chunk end
 
-      exit exit_status if exit_status != 0
+      exit exit_status if exit_status != 0 && !skip?
 
-      return true
+      return exit_status == 0
     end
 
     def execute
@@ -55,13 +56,17 @@ module Kontena::Cli::Services
       end
 
       if all?
+        ret = true
         service_containers.each do |container|
           if container['status'] == 'running'
-            exec_container(container)
+            if !exec_container(container)
+              ret = false
+            end
           else
             warning "Service #{name} container #{container['name']} is #{container['status']}, skipping"
           end
         end
+        return ret
       elsif instance
         if !(container = service_containers.find{|container| container['instance_number'] == instance})
           exit_with_error "Service #{name} does not have container instance #{instance}"
