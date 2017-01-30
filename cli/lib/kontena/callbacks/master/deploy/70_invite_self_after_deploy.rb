@@ -55,12 +55,12 @@ module Kontena
           spin.fail if grid_add_status.to_i > 0
         end
 
+        return unless current_master.username.to_s == 'admin'
+
         new_user_token = nil
         spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
           new_user_token = Kontena.run("master token create -e 0 -s user --return -u #{cloud_user_data[:email].shellescape}", returning: :result)
         end
-
-        return unless current_master.username.to_s == 'admin'
 
         master_name = current_master.name.dup
         master_url  = current_master.url
