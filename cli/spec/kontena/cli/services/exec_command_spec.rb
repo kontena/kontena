@@ -70,5 +70,43 @@ describe Kontena::Cli::Services::ExecCommand do
         'stdout',
       ]
     end
+
+    it "Executes on the first running container if given" do
+      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
+      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(container_exec)
+
+      expect{subject.run(['--instance=1', 'test-service', 'test'])}.to return_and_output true, [
+        'stdout',
+      ]
+    end
+
+    it "Executes on the second running container if given" do
+      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
+      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(container_exec)
+
+      expect{subject.run(['--instance=2', 'test-service', 'test'])}.to return_and_output true, [
+        'stdout',
+      ]
+    end
+
+    it "Errors on the third container if given" do
+      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
+
+      expect{subject.run(['--instance=3', 'test-service', 'test'])}.to exit_with_error [
+        " [error] Service test-service does not have container instance 3",
+      ]
+    end
+
+    it "Executes on each running container" do
+      expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
+      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(container_exec)
+      expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(container_exec)
+
+      expect{subject.run(['--all', 'test-service', 'test'])}.to return_and_output a_truthy_value, [
+        'stdout',
+        'stdout',
+      ]
+    end
+
   end
 end
