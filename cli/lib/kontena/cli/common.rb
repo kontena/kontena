@@ -92,12 +92,12 @@ module Kontena
 
       def warning(msg)
         warning = pastel.yellow('warn')
-        STDERR.puts " [#{warning}] #{msg}"
+        $stderr.puts " [#{warning}] #{msg}"
       end
 
       def exit_with_error(msg, code = 1)
         error = pastel.red('error')
-        STDERR.puts " [#{error}] #{msg}"
+        $stderr.puts " [#{error}] #{msg}"
         exit code
       end
 
