@@ -12,18 +12,8 @@ describe Kontena::Cli::Master::Users::RemoveCommand do
       allow(subject).to receive(:confirm).and_return(true)
     end
 
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['john@domain.com'])
-    end
-
     it 'it requires confirmation' do
       expect(subject).to receive(:confirm).once
-      subject.run(['john@domain.com'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
       subject.run(['john@domain.com'])
     end
 

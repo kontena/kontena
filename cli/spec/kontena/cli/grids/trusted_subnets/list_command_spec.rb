@@ -7,16 +7,6 @@ describe Kontena::Cli::Grids::TrustedSubnets::ListCommand do
   include ClientHelpers
 
   describe '#execute' do
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['grid'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
-      subject.run(['grid'])
-    end
-
     it 'requires grid as param' do
       expect {
         subject.run([])

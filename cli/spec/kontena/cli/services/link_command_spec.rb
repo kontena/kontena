@@ -12,16 +12,6 @@ describe Kontena::Cli::Services::LinkCommand do
       })
     end
 
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['service-a', 'service-b'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
-      subject.run(['service-a', 'service-b'])
-    end
-
     it 'aborts if service is already linked' do
       allow(client).to receive(:get).and_return({
         'links' => [
