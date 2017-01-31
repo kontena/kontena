@@ -119,7 +119,6 @@ module Kontena::Cli::Stacks
               k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
             end
           end
-          result[:vault_keys]    = extract_vault_keys(result[:services])
         end
         result
       end
@@ -382,19 +381,6 @@ module Kontena::Cli::Stacks
             options['build']['args'][k] = v
           end
         end
-      end
-
-      # Goes through an array of service hashes and extracts vault secret key names
-      # @param [Hash] services_array
-      # @return [Array] keys
-      def extract_vault_keys(services)
-        keys = []
-        services.each do |_, data|
-          Array(services['secrets']).each do |secret|
-            keys << secret['secret']
-          end
-        end
-        keys.uniq.compact
       end
 
       # Takes a stack name such as user/foo:1.0.0 and breaks it into components
