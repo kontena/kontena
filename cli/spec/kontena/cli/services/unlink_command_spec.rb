@@ -6,16 +6,8 @@ describe Kontena::Cli::Services::UnlinkCommand do
   include ClientHelpers
 
   describe '#execute' do
-    before(:each) do
-      allow(client).to receive(:get).and_return({
-        'links' => [
-          {'alias' => 'service-b', 'grid_service_id' => "grid/service-b"}
-        ]
-      })
-    end
-
     it 'aborts if service is not linked' do
-      allow(client).to receive(:get).and_return({
+      expect(client).to receive(:get).with('services/test-grid/null/service-a').and_return({
         'links' => []
       })
       expect {
@@ -24,6 +16,11 @@ describe Kontena::Cli::Services::UnlinkCommand do
     end
 
     it 'sends link to master' do
+      expect(client).to receive(:get).with('services/test-grid/null/service-a').and_return({
+        'links' => [
+          {'alias' => 'service-b', 'grid_service_id' => "grid/service-b"}
+        ]
+      })
       expect(client).to receive(:put).with(
         'services/test-grid/null/service-a', {links: []}
       )

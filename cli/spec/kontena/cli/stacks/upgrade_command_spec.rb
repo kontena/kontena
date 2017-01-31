@@ -27,12 +27,14 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     it 'requires stack file' do
       allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml', name: 'stack-name', values: nil, from_registry: false).and_return(stack)
       expect(subject).to receive(:require_config_file).with('./path/to/kontena.yml').at_least(:once).and_return(true)
+      expect(client).to receive(:put).with('stacks/test-grid/stack-name', stack)
       subject.run(['stack-name', './path/to/kontena.yml'])
     end
 
     it 'uses kontena.yml as default stack file' do
       expect(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
       expect(subject).to receive(:stack_from_yaml).with('kontena.yml', name: 'stack-name', values: nil, from_registry: nil).and_return(stack)
+      expect(client).to receive(:put).with('stacks/test-grid/stack-name', stack)
       subject.run(['stack-name'])
     end
 

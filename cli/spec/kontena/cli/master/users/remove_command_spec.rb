@@ -14,13 +14,12 @@ describe Kontena::Cli::Master::Users::RemoveCommand do
 
     it 'it requires confirmation' do
       expect(subject).to receive(:confirm).once
+      expect(client).to receive(:delete).with('users/john@domain.com')
       subject.run(['john@domain.com'])
     end
 
     it 'sends email to master' do
-      expect(client).to receive(:delete).with(
-        'users/john@domain.com'
-      )
+      expect(client).to receive(:delete).with('users/john@domain.com')
       subject.run(['john@domain.com'])
     end
   end
