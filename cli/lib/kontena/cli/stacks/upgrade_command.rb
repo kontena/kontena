@@ -19,15 +19,29 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      stack = stack_from_yaml(filename, name: name, values: values, from_registry: from_registry)
-      spinner "Upgrading stack #{pastel.cyan(name)} " do
-        update_stack(stack)
+      master_data = spinner "Reading stack #{pastel.cyan(name)} metadata from Kontena Master" do |spin|
+        read_stack || spin.fail!
       end
+
+      stack = stack_from_yaml(filename, name: name, values: values, from_registry: from_registry, defaults: master_data['variables'])
+
+      spinner "Upgrading stack #{pastel.cyan(name)}" do |spin|
+        update_stack(stack) || spin.fail!
+      end
+
       Kontena.run("stack deploy #{name}") if deploy?
     end
 
     def update_stack(stack)
-      client.put("stacks/#{current_grid}/#{name}", stack)
+      client.put(stack_url, stack)
+    end
+
+    def stack_url
+      @stack_url ||= "stacks/#{current_grid}/#{name}"
+    end
+
+    def read_stack
+      client.get(stack_url)
     end
   end
 end

@@ -6,9 +6,9 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :errors, :notifications
+      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values
 
-      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil)
+      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil, defaults: nil)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
@@ -36,6 +36,7 @@ module Kontena::Cli::Stacks
         @skip_variables   = skip_variables
         @variables        = variables
         @values           = values
+        @defaults         = defaults
       end
 
       def internals_interpolated_yaml
@@ -89,8 +90,15 @@ module Kontena::Cli::Stacks
             to: :env
           }
         )
-        if @values
-          @values.each do |key, val|
+        if defaults
+          defaults.each do |key, val|
+            var = variables.option(key)
+            var.default = val if var
+          end
+        end
+
+        if values
+          values.each do |key, val|
             var = @variables.option(key)
             var.set(val) if var
           end
@@ -229,7 +237,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name, from_registry: false)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables).execute(service_name)
+        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables, defaults: defaults).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
