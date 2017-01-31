@@ -83,8 +83,7 @@ module Kontena::Cli::Stacks
         'source' => reader.raw_content,
         'registry' => 'file://',
         'services' => kontena_services,
-        'variables' => outcome[:variables],
-        'vault_keys' => outcome[:vault_keys]
+        'variables' => outcome[:variables]
       }
       stack
     end
