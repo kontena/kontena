@@ -392,6 +392,28 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
   end
 
+  context 'origins' do
+    it 'can read from a file' do
+      expect(File).to receive(:read)
+        .with(absolute_yaml_path('kontena_v3.yml'))
+        .and_return(fixture('stack-with-liquid.yml'))
+      expect(subject.from_file?).to be_truthy
+    end
+
+    it 'can read from the registry' do
+      expect(Kontena::StacksCache).to receive(:pull)
+        .with('foo/foo')
+        .and_return(fixture('stack-with-liquid.yml'))
+      expect(Kontena::StacksCache).to receive(:registry_url).and_return('foo')
+      expect(described_class.new('foo/foo').from_registry?).to be_truthy
+    end
+
+    it 'can read from an url' do
+     stub_request(:get, "http://foo.example.com/foo").to_return(:status => 200, :body => fixture('stack-with-liquid.yml'), :headers => {})
+      expect(described_class.new('http://foo.example.com/foo').from_url?).to be_truthy
+    end
+  end
+
   context 'liquid' do
     context 'valid' do
       before(:each) do
