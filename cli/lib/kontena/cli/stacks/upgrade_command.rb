@@ -19,7 +19,6 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      require_config_file(filename)
       stack = stack_from_yaml(filename, name: name, values: values, from_registry: from_registry)
       spinner "Upgrading stack #{pastel.cyan(name)} " do
         update_stack(stack)
