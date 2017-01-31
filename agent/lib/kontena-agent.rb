@@ -17,6 +17,7 @@ require_relative 'etcd/health'
 require_relative 'etcd/client_patch'
 require_relative 'kontena/logging'
 require_relative 'kontena/websocket_client'
+require_relative 'faye/websocket/client_patch'
 
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/weave_executor'

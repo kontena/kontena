@@ -143,7 +143,7 @@ module Kontena
       elsif event.code == 4010
         handle_invalid_version
       end
-      info "connection closed with code: #{event.code}"
+      info "connection closed with code #{event.code}: #{event.reason}"
     rescue => exc
       error exc.message
     end
