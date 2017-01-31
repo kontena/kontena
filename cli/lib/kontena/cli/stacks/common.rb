@@ -59,8 +59,8 @@ module Kontena::Cli::Stacks
       @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def reader_from_yaml(filename, from_registry: false, name: nil, values: nil)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, from_registry: from_registry, values: values)
+    def reader_from_yaml(filename, from_registry: false, name: nil, values: nil, defaults: nil)
+      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, from_registry: from_registry, values: values, defaults: defaults)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
@@ -68,8 +68,8 @@ module Kontena::Cli::Stacks
       reader
     end
 
-    def stack_from_yaml(filename, from_registry: false, name: nil, values: nil)
-      reader = reader_from_yaml(filename, from_registry: from_registry, name: name, values: values)
+    def stack_from_yaml(filename, from_registry: false, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, from_registry: from_registry, name: name, values: values, defaults: defaults)
       outcome = reader.execute
 
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
