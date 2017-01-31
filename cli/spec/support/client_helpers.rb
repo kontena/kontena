@@ -6,7 +6,7 @@ module ClientHelpers
     end
 
     base.let(:client) do
-      spy(:client)
+      instance_double(Kontena::Client, :client)
     end
 
     base.let(:token) do
