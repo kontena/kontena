@@ -40,8 +40,6 @@ Found a bug? Suggest a feature? Have a question? Please [submit an issue](https:
 
 Follow us on Twitter: [@KontenaInc](https://twitter.com/KontenaInc).
 
-Gitter: [Join chat](https://gitter.im/kontena/kontena).
-
 Slack: [Join the Kontena Community Slack channel](https://slack.kontena.io/).
 
 ## License
