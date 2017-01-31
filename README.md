@@ -42,6 +42,8 @@ Follow us on Twitter: [@KontenaInc](https://twitter.com/KontenaInc).
 
 Gitter: [Join chat](https://gitter.im/kontena/kontena).
 
+Slack: [Join the Kontena Community Slack channel](https://slack.kontena.io/).
+
 ## License
 
 Kontena software is open source, and you can use it for any purpose, personal or commercial. Kontena is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for full license text.
