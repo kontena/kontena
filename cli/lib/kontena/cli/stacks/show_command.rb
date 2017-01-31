@@ -25,11 +25,12 @@ module Kontena::Cli::Stacks
       stack = fetch_stack(name)
 
       puts "#{stack['name']}:"
+      puts "  created: #{stack['created_at']}"
+      puts "  updated: #{stack['updated_at']}"
       puts "  state: #{stack['state']}"
       puts "  stack: #{stack['stack']}"
       puts "  version: #{stack['version']}"
-      puts "  created_at: #{stack['created_at']}"
-      puts "  updated_at: #{stack['updated_at']}"
+      puts "  revision: #{stack['revision']}"
       puts "  expose: #{stack['expose'] || '-'}"
       puts "  services:"
       stack['services'].each do |service|
@@ -43,14 +44,16 @@ module Kontena::Cli::Stacks
       service = get_service(token, service_id)
       pad = '    '.freeze
       puts "#{pad}#{service['name']}:"
+      puts "#{pad}  created: #{service['created_at']}"
+      puts "#{pad}  updated: #{service['updated_at']}"
       puts "#{pad}  image: #{service['image']}"
-      puts "#{pad}  status: #{service['state'] }"
+      puts "#{pad}  revision: #{service['stack_revision']}"
+      puts "#{pad}  state: #{service['state'] }"
       if service['health_status']
         puts "#{pad}  health_status:"
         puts "#{pad}    healthy: #{service['health_status']['healthy']}"
         puts "#{pad}    total: #{service['health_status']['total']}"
       end
-      puts "#{pad}  revision: #{service['revision']}"
       puts "#{pad}  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
       puts "#{pad}  scaling: #{service['instances'] }"
       puts "#{pad}  strategy: #{service['strategy']}"
@@ -71,6 +74,15 @@ module Kontena::Cli::Stacks
         end
       end
 
+      if service['secrets'].to_a.size > 0
+        puts "#{pad}  secrets: "
+        service['secrets'].to_a.each do |s|
+          puts "#{pad}    - secret: #{s['secret']}"
+          puts "#{pad}      name: #{s['name']}"
+          puts "#{pad}      type: #{s['type']}"
+        end
+      end
+
       unless service['cmd'].to_s.empty?
         if service['cmd']
           puts "#{pad}  cmd: #{service['cmd'].join(' ')}"
@@ -83,6 +95,20 @@ module Kontena::Cli::Stacks
         puts "#{pad}  ports:"
         service['ports'].to_a.each do |p|
           puts "#{pad}    - #{p['node_port']}:#{p['container_port']}/#{p['protocol']}"
+        end
+      end
+
+      if service['volumes'].to_a.size > 0
+        puts "#{pad}  volumes:"
+        service['volumes'].to_a.each do |v|
+          puts "#{pad}    - #{v}"
+        end
+      end
+
+      if service['volumes_from'].to_a.size > 0
+        puts "#{pad}  volumes_from:"
+        service['volumes_from'].to_a.each do |v|
+          puts "#{pad}    - #{v}"
         end
       end
 

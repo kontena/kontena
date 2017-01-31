@@ -43,10 +43,13 @@ module Kontena
           service = get_service(token, service_id)
           grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
+          puts "  created: #{service['created_at']}"
+          puts "  updated: #{service['updated_at']}"
           puts "  stack: #{service['stack']['id'] }"
-          puts "  status: #{service['state'] }"
+          puts "  state: #{service['state'] }"
           puts "  image: #{service['image']}"
           puts "  revision: #{service['revision']}"
+          puts "  stack_revision: #{service['stack_revision']}" if service['stack_revision']
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
           puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
