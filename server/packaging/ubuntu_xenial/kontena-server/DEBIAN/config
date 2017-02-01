@@ -8,7 +8,7 @@ if [ -e /etc/kontena-server.env ]; then
   . /etc/kontena-server.env
 
   db_set kontena-server/initial_admin_code "${INITIAL_ADMIN_CODE:-}"
+else
+  db_input high kontena-server/initial_admin_code || true
+  db_go || true
 fi
-
-db_input high kontena-server/initial_admin_code || true
-db_go || true
