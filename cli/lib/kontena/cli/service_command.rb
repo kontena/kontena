@@ -32,7 +32,6 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
   subcommand "restart", "Restart service", Kontena::Cli::Services::RestartCommand
   subcommand "scale", "Scale service", Kontena::Cli::Services::ScaleCommand
   subcommand ["remove", "rm"], "Remove service", Kontena::Cli::Services::RemoveCommand
-  subcommand "delete", "[DEPRECATED] Delete service", Kontena::Cli::Services::DeleteCommand
   subcommand "containers", "List service containers", Kontena::Cli::Services::ContainersCommand
   subcommand "logs", "Show service logs", Kontena::Cli::Services::LogsCommand
   subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
