@@ -2,6 +2,10 @@ require 'clamp'
 
 class Kontena::Command < Clamp::Command
 
+  option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
+    ENV['DEBUG'] = 'true'
+  end
+
   attr_accessor :arguments
   attr_reader :result
   attr_reader :exit_code
@@ -194,6 +198,7 @@ class Kontena::Command < Clamp::Command
     exit(@exit_code) if @exit_code.to_i > 0
     @result
   end
+
 end
 
 require_relative 'callback'
