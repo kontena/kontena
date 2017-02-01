@@ -72,13 +72,13 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     end
 
     it 'triggers deploy by default' do
-        expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
+      expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
       allow(subject).to receive(:require_config_file).with('./path/to/kontena.yml').and_return(true)
       allow(subject).to receive(:stack_from_yaml).with('./path/to/kontena.yml', name: 'stack-a', values: nil, from_registry: false, defaults: defaults).and_return(stack)
       allow(client).to receive(:put).with(
         'stacks/test-grid/stack-a', anything
       ).and_return({})
-      expect(Kontena).to receive(:run).with("stack deploy stack-a").once
+      expect(Kontena).to receive(:run).with(['stack', 'deploy', 'stack-a']).once
       subject.run(['stack-a', './path/to/kontena.yml'])
     end
 
@@ -90,7 +90,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
         allow(client).to receive(:put).with(
           'stacks/test-grid/stack-a', anything
         ).and_return({})
-        expect(Kontena).not_to receive(:run).with("stack deploy stack-a")
+        expect(Kontena).not_to receive(:run).with(['stack', 'deploy', 'stack-a'])
         subject.run(['--no-deploy', 'stack-a', './path/to/kontena.yml'])
       end
     end
