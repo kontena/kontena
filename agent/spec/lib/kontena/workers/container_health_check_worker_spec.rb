@@ -87,7 +87,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
       {"User-Agent"=>"Kontena-Agent/#{Kontena::Agent::VERSION}"}
     }
 
-    it 'returns healthy status' do
+    it 'returns healthy status on success (2xx)' do
       response = double
       allow(response).to receive(:status).and_return(200)
       expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
@@ -96,13 +96,31 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
       expect(health_status[:data]['status_code']).to eq(200)
     end
 
-    it 'returns unhealthy status when response status not 200' do
+    it 'returns healthy status on redirects (3xx)' do
       response = double
-      allow(response).to receive(:status).and_return(500)
+      allow(response).to receive(:status).and_return(302)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status[:data]['status']).to eq('healthy')
+      expect(health_status[:data]['status_code']).to eq(302)
+    end
+
+    it 'returns unhealthy status on error (4xx ->) ' do
+      response = double
+      allow(response).to receive(:status).and_return(400)
       expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
       health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
       expect(health_status[:data]['status']).to eq('unhealthy')
-      expect(health_status[:data]['status_code']).to eq(500)
+      expect(health_status[:data]['status_code']).to eq(400)
+    end
+
+    it 'returns healthy status when response status is informational (1xx)' do
+      response = double
+      allow(response).to receive(:status).and_return(101)
+      expect(Excon).to receive(:get).with('http://1.2.3.4:8080/health', {:connect_timeout=>10, :headers=>headers}).and_return(response)
+      health_status = subject.check_http_status('1.2.3.4', 8080, '/health', 10)
+      expect(health_status[:data]['status']).to eq('healthy')
+      expect(health_status[:data]['status_code']).to eq(101)
     end
 
     it 'returns unhealthy status when connection timeouts' do
