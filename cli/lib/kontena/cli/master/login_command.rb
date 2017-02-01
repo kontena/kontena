@@ -69,13 +69,14 @@ module Kontena::Cli::Master
       if self.remote?
         # no local browser? tell user to launch an external one
         display_remote_message(server, auth_params)
-        update_server_to_config(server)
-        exit 1
+        auth_code = prompt.ask("Enter code displayed in browser:")
+        use_authorization_code(server, auth_code)
       else
         # local web flow
         web_flow(server, auth_params)
-        display_login_info(only: :master) unless (running_silent? || self.no_login_info?)
       end
+
+      display_login_info(only: :master) unless (running_silent? || self.no_login_info?)
     end
 
     def next_default_name
@@ -170,9 +171,6 @@ module Kontena::Cli::Master
       else
         puts "Visit this URL in a browser:"
         puts "#{url}"
-        puts
-        puts "Then complete the authentication by using:"
-        puts "kontena master login --code <CODE FROM BROWSER> #{server.url}"
       end
     end
 

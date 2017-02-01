@@ -216,11 +216,7 @@ or
 $ kontena master join --remote <https://master_url> <invite_code>
 ```
 
-The CLI will output a link that the user can open in a browser on any other computer. After the flow is completed the browser will display an authorization code, which the user can use to complete the authentication from the CLI:
-
-```
-$ kontena master login --code <authorization_code> <https://master_url>
-```
+The CLI will output a link that the user can open in a browser on any other computer and a prompt that asks for the authorization code that will be displayed in the browser once the authentication flow is completed on the browser.
 
 It is also possible to use an access token created using another computer and complete the authentication without using a browser at all by using the `--code` parameter:
 
