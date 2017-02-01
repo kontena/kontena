@@ -68,7 +68,7 @@ variables:
   this_is_the_name:
 ```
 
-By default, a local environment variable with the same name gets populated with the variables value. You can then use it later in the yaml as: `${this_is_the_name}`.
+You can then use it later in the yaml as: `${this_is_the_name}`.
 
 ```
   environment:
@@ -94,12 +94,11 @@ You can define multiple sources, for example:
 
 ### To
 
-Define what to do with the value. The default behavior is to set it to local environment using the variable name. You can also use another environment variable name or write the value to the Vault on Kontena Master.
+Define what to do with the value.
 
 ```
   to:
-    env: MYSQL_USER # set to local env
-    vault: foo-mysql-user # also send to vault
+    vault: foo-mysql-user # send the value to vault with key name foo-mysql-user
 ```
 
 ### Conditionals
@@ -262,25 +261,25 @@ With this configuration you can set the storage zone by setting the environment 
 ### `integer`
 
 ```
-  min: 0 # minimum value, can be negative
-  max: nil # maximum value
+  min: 0             # minimum value, can be negative
+  max: nil           # maximum value
   nil_is_zero: false # null value will be turned into zero
 ```
 
 ### `string`
 
 ```
-  min_length: nil # minimum length
-  max_length: nil # maximum length
-  hexdigest: nil  # hexdigest output. options: md5, sha1, sha256, sha384 or sha512.
-  empty_is_nil: true, # if string contains whitespace only, make value null
-  encode_64: false # encode content to base64
-  decode_64: false # decode content from base64
-  upcase: false # convert to UPPERCASE
-  downcase: false # convert to lowercase
-  strip: false # remove leading/trailing whitespace,
-  chomp: false # remove trailing linefeed
-  capitalize: false # convert to Capital case.
+  min_length: nil     # minimum length
+  max_length: nil     # maximum length
+  hexdigest: nil      # hexdigest output. options: md5, sha1, sha256, sha384 or sha512.
+  empty_is_nil: true  # if string contains whitespace only, make value null
+  encode_64: false    # encode content to base64
+  decode_64: false    # decode content from base64
+  upcase: false       # convert to UPPERCASE
+  downcase: false     # convert to lowercase
+  strip: false        # remove leading/trailing whitespace,
+  chomp: false        # remove trailing linefeed
+  capitalize: false   # convert to Capital case.
 
 ```
 
@@ -293,6 +292,32 @@ With this configuration you can set the storage zone by setting the environment 
 ```
 
 Only allow http:// and https:// uris by default.
+
+### `array`
+
+```
+  split: ','          # Use this pattern to split an incoming string into an array
+  join: false         # Set to a pattern such as ',' to output a comma separated string
+  empty_is_nil: false # When true, an empty array will become nil
+  sort: false         # Sort the array before output
+  uniq: false         # Remove duplicates before output
+  count: false        # Instead of outputting the array, output the array size
+  compact: false      # Remove nils before output
+```
+
+Usage example:
+
+```
+arr:
+  type: array
+  join: ","
+  value:
+    - a
+    - b
+    - c
+```
+
+The variable `arr` will have the value `a,b,c`.
 
 ## Resolvers (From:)
 
