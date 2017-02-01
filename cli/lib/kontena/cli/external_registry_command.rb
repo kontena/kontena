@@ -1,6 +1,5 @@
 require_relative 'external_registries/add_command'
 require_relative 'external_registries/list_command'
-require_relative 'external_registries/delete_command'
 require_relative 'external_registries/remove_command'
 
 class Kontena::Cli::ExternalRegistryCommand < Kontena::Command
