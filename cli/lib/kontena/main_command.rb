@@ -31,8 +31,8 @@ class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
   include Kontena::Cli::Common
 
-  option '--version', :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
-    puts Kontena::Cli::VERSION
+  option ['-v', '--version'], :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
+    puts ['kontena-cli', Kontena::Cli::VERSION, '[ruby' + RUBY_VERSION + '+' + RUBY_PLATFORM + ']'].join(' ')
     exit 0
   end
 
