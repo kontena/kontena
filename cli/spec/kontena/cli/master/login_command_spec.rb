@@ -7,16 +7,13 @@ require 'ostruct'
 describe Kontena::Cli::Master::LoginCommand do
 
   include ClientHelpers
+  RUBY_PLATFORM = 'linux'
 
   let(:subject) do
     described_class.new(File.basename($0))
   end
 
   let(:client) { double(:client) }
-
-  before(:each) do
-    allow(Kontena).to receive(:browserless?).and_return(false)
-  end
 
   it 'should exit with error if --code and --token both given' do
     expect(subject).to receive(:exit_with_error).and_throw(:exit_with_error)
@@ -236,7 +233,7 @@ describe Kontena::Cli::Master::LoginCommand do
     it 'goes to web flow when the existing token does not work' do
       expect(client).to receive(:authentication_ok?).and_return(false)
       expect(subject).to receive(:web_flow).and_return(true)
-      subject.run(%w(fooserver))
+      subject.run(%w(--no-remote fooserver))
     end
   end
 
@@ -269,7 +266,7 @@ describe Kontena::Cli::Master::LoginCommand do
       end.and_return({})
       expect(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
       expect(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
-      subject.run(%w(--skip-grid-auto-select http://foobar.example.com))
+      subject.run(%w(--no-remote --skip-grid-auto-select http://foobar.example.com))
       expect(subject.config.servers.size).to eq 1
       server = subject.config.servers.first
       expect(server.url).to eq 'http://foobar.example.com'
