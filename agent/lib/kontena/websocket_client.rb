@@ -82,7 +82,7 @@ module Kontena
         on_close(event)
       end
       @ws.on :error do |event|
-        error "connection error: #{event.message}"
+        on_error(event)
       end
     end
 
@@ -128,6 +128,20 @@ module Kontena
       end
     rescue => exc
       error exc.message
+    end
+
+    def on_error(event)
+      debug event.message.inspect
+
+      if event.message == Errno::EINVAL
+        error "invalid URI: #{api_uri}"
+      elsif event.message == Errno::ECONNREFUSED
+        error "connection refused: #{api_uri}"
+      elsif event.message == Errno::EPROTO
+        error "protocol error, check ws/wss: #{api_uri}"
+      else
+        error "connection error: #{event.message}"
+      end
     end
 
     # @param [Faye::WebSocket::API::Event] event
