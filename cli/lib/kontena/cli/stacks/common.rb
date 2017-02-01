@@ -59,7 +59,6 @@ module Kontena::Cli::Stacks
     end
 
     def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
-    def stack_from_yaml(filename, name: nil, values: nil)
       reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       outcome = reader.execute
 
