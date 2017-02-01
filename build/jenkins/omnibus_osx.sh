@@ -1,13 +1,12 @@
 #!/bin/sh
 set -e
 
-sudo mkdir /opt/kontena
-sudo chown travis /opt/kontena /usr/local/bin
+rm -rf /opt/kontena/*
+rm -f /usr/local/bin/kontena || true
 cd cli/omnibus
 
 # faster bundle install
 export USE_SYSTEM_GECODE=1
-brew install gecode github-release
 
 # install omnibus bundle
 bundle install
