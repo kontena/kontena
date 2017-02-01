@@ -53,9 +53,14 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "external-registry", "External registry specific commands", Kontena::Cli::ExternalRegistryCommand
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
   subcommand "plugin", "Plugin related commands", Kontena::Cli::PluginCommand
-  subcommand "version", "Show version", Kontena::Cli::VersionCommand
+  subcommand "version", "Shows CLI and current master version", Kontena::Cli::VersionCommand
   subcommand "login", "[DEPRECATED] Login to Kontena Master", Kontena::Cli::LoginCommand
   subcommand "register", "[DEPRECATED] Register a Kontena Cloud account", Kontena::Cli::RegisterCommand
+
+  option "--version", :flag, "Show CLI version" do
+    puts Kontena::Cli::VERSION
+    exit 0
+  end
 
   def execute
   end
