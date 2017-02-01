@@ -20,7 +20,7 @@ bundle install
 bundle exec omnibus build kontena --log-level info
 
 # upload kontena pkg to github
-github-release upload \
+/usr/local/bin/github-release upload \
     --user kontena \
     --repo kontena \
     --tag $GIT_TAG_NAME \
