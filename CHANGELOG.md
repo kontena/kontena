@@ -6,7 +6,6 @@
 
 - agent: fix cAdvisor stats to ignore systemd Docker container mount cgroups (#1657)
 
-
 ## [1.0.5](https://github.com/kontena/kontena/releases/tag/v1.0.5) (2017-01-13)
 
 **Master & Agents:**
