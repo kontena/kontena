@@ -22,7 +22,7 @@ module Kontena::Cli::Stacks
 
     module StackFileOrNameParam
       def self.included(where)
-        where.parameter "[FILE]", "Kontena stack file or a registry stack name (user/stack or user/stack:version)", default: "kontena.yml", attribute_name: :filename
+        where.parameter "[FILE]", "Kontena stack file, registry stack name (user/stack or user/stack:version) or URL", default: "kontena.yml", attribute_name: :filename
       end
     end
 
