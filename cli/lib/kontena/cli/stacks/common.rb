@@ -21,18 +21,8 @@ module Kontena::Cli::Stacks
     end
 
     module StackFileOrNameParam
-      attr_accessor :from_registry
-
       def self.included(where)
-        where.parameter "[FILE]", "Kontena stack file or a registry stack name (user/stack or user/stack:version)", default: "kontena.yml", attribute_name: :filename do |filename|
-          if !File.exist?(filename) && filename =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/
-            @from_registry = true
-          else
-            @from_registry = false
-            require_config_file(filename)
-          end
-          filename
-        end
+        where.parameter "[FILE]", "Kontena stack file, registry stack name (user/stack or user/stack:version) or URL", default: "kontena.yml", attribute_name: :filename
       end
     end
 
@@ -59,8 +49,8 @@ module Kontena::Cli::Stacks
       @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def reader_from_yaml(filename, from_registry: false, name: nil, values: nil, defaults: nil)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, from_registry: from_registry, values: values, defaults: defaults)
+    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil)
+      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, values: values, defaults: defaults)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
@@ -68,8 +58,8 @@ module Kontena::Cli::Stacks
       reader
     end
 
-    def stack_from_yaml(filename, from_registry: false, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, from_registry: from_registry, name: name, values: values, defaults: defaults)
+    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       outcome = reader.execute
 
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0

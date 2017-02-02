@@ -126,7 +126,7 @@ Destructive command. To proceed, type "terom/redis" or re-run this command with 
 A deleted stack file can be re-upload with a newer version number.
 
 ### Deploying Stacks
-The following Kontena CLI commands are used to install local stack files to the Kontena Master, and deploy the stack services running and Grid nodes:
+The following Kontena CLI commands are used to stack files to the Kontena Master, and deploy the stack services running and Grid nodes:
 
 * `kontena stack build` - Build and push Docker images referenced by a stack file
 * `kontena stack install` - Create a stack on the Kontena Master
@@ -159,6 +159,10 @@ Install and deploy the stack using the versioned YAML file from the stack regist
 #### `kontena stack install --name wordpress-green --values-from production.yml terom/wordpress:4.6.1+mariadb5.`
 
 Install and deploy the stack using the versioned YAML file from the stack registry, read variable values from 'production.yml'.
+
+#### `kontena stack install --name wordpress-green https://stacks.example.com/stack.yml`
+
+Install and deploy a stack from URL
 
 #### `kontena stack remove wordpress-red`
 

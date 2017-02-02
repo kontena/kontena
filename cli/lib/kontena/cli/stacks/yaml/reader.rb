@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
       attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values
 
-      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil, defaults: nil)
+      def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
@@ -22,12 +22,15 @@ module Kontena::Cli::Stacks
         require 'liquid'
 
         @file = file
-        @from_registry = from_registry
 
         if from_registry?
           require 'shellwords'
           @raw_content = Kontena::StacksCache.pull(file)
           @registry    = Kontena::StacksCache.registry_url
+        elsif from_url?
+          require 'open-uri'
+          stream = open(file)
+          @raw_content = stream.read
         else
           @raw_content = File.read(File.expand_path(file))
         end
@@ -115,7 +118,7 @@ module Kontena::Cli::Stacks
         validate unless skip_validation?
 
         result = {}
-        Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
+        Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
           result[:stack]         = raw_yaml['stack']
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
@@ -169,7 +172,15 @@ module Kontena::Cli::Stacks
       end
 
       def from_registry?
-        !!@from_registry
+        file =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/ && !File.exist?(file)
+      end
+
+      def from_url?
+        file =~ /\A(?:http|https|ftp):\/\//
+      end
+
+      def from_file?
+        !from_registry? && !from_url?
       end
 
       # @return [Kontena::Cli::Stacks::YAML::ValidatorV3]
@@ -238,8 +249,8 @@ module Kontena::Cli::Stacks
         @services ||= fully_interpolated_yaml['services']
       end
 
-      def from_external_file(filename, service_name, from_registry: false)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables, defaults: defaults).execute(service_name)
+      def from_external_file(filename, service_name)
+        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, variables: variables, defaults: defaults, values: values).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
@@ -327,7 +338,7 @@ module Kontena::Cli::Stacks
         if filename
           parent_config = from_external_file(filename, extended_service)
         elsif stackname
-          parent_config = from_external_file(stackname, extended_service, from_registry: true)
+          parent_config = from_external_file(stackname, extended_service)
         else
           raise ("Service '#{extended_service}' not found in #{file}") unless services.has_key?(extended_service)
           parent_config = process_config(services[extended_service])

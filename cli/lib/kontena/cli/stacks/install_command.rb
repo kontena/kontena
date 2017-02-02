@@ -20,15 +20,7 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-
-      if !File.exist?(filename) && filename =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/
-        from_registry = true
-      else
-        from_registry = false
-        require_config_file(filename)
-      end
-
-      stack = stack_from_yaml(filename, from_registry: from_registry, name: name, values: values)
+      stack = stack_from_yaml(filename, name: name, values: values)
 
       stack['name'] = name if name
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do

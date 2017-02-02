@@ -23,7 +23,7 @@ module Kontena::Cli::Stacks
         read_stack || spin.fail!
       end
 
-      stack = stack_from_yaml(filename, name: name, values: values, from_registry: from_registry, defaults: master_data['variables'])
+      stack = stack_from_yaml(filename, name: name, values: values, defaults: master_data['variables'])
 
       spinner "Upgrading stack #{pastel.cyan(name)}" do |spin|
         update_stack(stack) || spin.fail!
