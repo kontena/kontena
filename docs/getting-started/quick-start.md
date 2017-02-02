@@ -135,7 +135,7 @@ services:
 You can then install and deploy the `wordpress` stack:
 
 ```
-$ kontena stack install --deploy kontena.yml
+$ kontena stack install kontena.yml
  [done] Creating stack wordpress
  [done] Deploying stack wordpress
 ```
