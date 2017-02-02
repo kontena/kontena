@@ -18,6 +18,7 @@ require_relative 'services/secret_command'
 
 require_relative 'services/link_command'
 require_relative 'services/unlink_command'
+require_relative 'services/exec_command'
 
 class Kontena::Cli::ServiceCommand < Kontena::Command
 
@@ -42,6 +43,7 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
 
   subcommand "link", "Link service to another service", Kontena::Cli::Services::LinkCommand
   subcommand "unlink", "Unlink service from another service", Kontena::Cli::Services::UnlinkCommand
+  subcommand "exec", "Execute commands in service containers", Kontena::Cli::Services::ExecCommand
 
   def execute
   end
