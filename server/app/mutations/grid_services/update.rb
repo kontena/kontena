@@ -18,7 +18,6 @@ module GridServices
       if self.links
         validate_links(self.grid_service.grid, self.grid_service.stack, self.links)
       end
-
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
@@ -27,6 +26,17 @@ module GridServices
       end
       if self.secrets
         validate_secrets_exist(self.grid_service.grid, self.secrets)
+      end
+      if self.grid_service.stateful?
+        if self.volumes_from && self.volumes_from.size > 0
+          add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
+        end
+        if self.volumes
+          changed_volumes = self.volumes.select { |v| !self.grid_service.volumes.include?(v) }
+          if changed_volumes.any? { |v| !v.include?(':') }
+            add_error(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
+          end
+        end
       end
     end
 
@@ -53,6 +63,8 @@ module GridServices
       attributes[:devices] = self.devices if self.devices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
+      attributes[:volumes] = self.volumes if self.volumes
+      attributes[:volumes_from] = self.volumes_from if self.volumes_from
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(

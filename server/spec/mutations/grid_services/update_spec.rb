@@ -93,6 +93,111 @@ describe GridServices::Update do
       ).run
       expect(outcome.success?).to be(true)
     end
+
+    context 'volumes' do
+      context 'stateless service' do
+        it 'allows to add non-named volume' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes: ['/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/foo'])
+        end
+
+        it 'allows to add named volume' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes: ['foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['foo:/foo'])
+        end
+
+        it 'allows to add bind mounted volume' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes: ['/foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/foo:/foo'])
+        end
+      end
+
+      context 'stateful service' do
+        let(:stateful_service) do
+          GridService.create(
+            grid: grid, name: 'redis', image_name: 'redis:2.8', stateful: true,
+            volumes: ['/data']
+          )
+        end
+
+        it 'does not allow to add non-named volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: ['/data', '/foo']
+          ).run
+          expect(outcome.success?).to be_falsey
+        end
+
+        it 'allows to add named volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: ['/data', 'foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/data', 'foo:/foo'])
+        end
+
+        it 'allows to add bind mounted volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: ['/data', '/foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/data', '/foo:/foo'])
+        end
+
+        it 'allows to remove a volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: []
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq([])
+        end
+      end
+    end
+
+    context 'volumes_from' do
+      context 'stateless service' do
+        it 'allows to update volumes_from' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes_from: ['data-1']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes_from).to eq(['data-1'])
+        end
+      end
+
+      context 'stateful service' do
+        let(:stateful_service) do
+          GridService.create(
+            grid: grid, name: 'redis', image_name: 'redis:2.8', stateful: true,
+            volumes: ['/data']
+          )
+        end
+
+        it 'does not allow to update volumes_from' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes_from: ['data-1']
+          ).run
+          expect(outcome.success?).to be_falsey
+        end
+      end
+    end
   end
 
   describe '#build_grid_service_hooks' do
