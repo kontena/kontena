@@ -3,6 +3,7 @@ require_relative 'etcd/set_command'
 require_relative 'etcd/mkdir_command'
 require_relative 'etcd/list_command'
 require_relative 'etcd/remove_command'
+require_relative 'etcd/health_command'
 
 class Kontena::Cli::EtcdCommand < Kontena::Command
 
@@ -11,6 +12,7 @@ class Kontena::Cli::EtcdCommand < Kontena::Command
   subcommand ["mkdir", "mk"], "Create a directory", Kontena::Cli::Etcd::MkdirCommand
   subcommand ["list", "ls"], "List a directory", Kontena::Cli::Etcd::ListCommand
   subcommand "rm", "Remove a key or a directory", Kontena::Cli::Etcd::RemoveCommand
+  subcommand "health", "Check etcd health", Kontena::Cli::Etcd::HealthCommand
 
   def execute
   end

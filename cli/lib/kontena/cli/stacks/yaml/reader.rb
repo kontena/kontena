@@ -6,9 +6,9 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :errors, :notifications
+      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values
 
-      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil)
+      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil, defaults: nil)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
@@ -18,6 +18,7 @@ module Kontena::Cli::Stacks
         require_relative 'opto/prompt_resolver'
         require_relative 'opto/service_instances_resolver'
         require_relative 'opto/vault_cert_prompt_resolver'
+        require_relative 'opto/service_link_resolver'
         require 'liquid'
 
         @file = file
@@ -37,6 +38,7 @@ module Kontena::Cli::Stacks
         @skip_variables   = skip_variables
         @variables        = variables
         @values           = values
+        @defaults         = defaults
       end
 
       def internals_interpolated_yaml
@@ -90,8 +92,15 @@ module Kontena::Cli::Stacks
             to: :env
           }
         )
-        if @values
-          @values.each do |key, val|
+        if defaults
+          defaults.each do |key, val|
+            var = variables.option(key)
+            var.default = val if var
+          end
+        end
+
+        if values
+          values.each do |key, val|
             var = @variables.option(key)
             var.set(val) if var
           end
@@ -120,7 +129,6 @@ module Kontena::Cli::Stacks
               k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
             end
           end
-          result[:vault_keys]    = extract_vault_keys(result[:services])
         end
         result
       end
@@ -231,7 +239,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name, from_registry: false)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables).execute(service_name)
+        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables, defaults: defaults).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
@@ -253,8 +261,11 @@ module Kontena::Cli::Stacks
               if use_opto
                 opt = variables.option(var)
                 if opt.nil?
-                  raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
-                  val = nil
+                  if variables.find { |opt| opt.to[:env][var] }
+                    val = env[var]
+                  else
+                    raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
+                  end
                 else
                   val = opt.value
                 end
@@ -383,19 +394,6 @@ module Kontena::Cli::Stacks
             options['build']['args'][k] = v
           end
         end
-      end
-
-      # Goes through an array of service hashes and extracts vault secret key names
-      # @param [Hash] services_array
-      # @return [Array] keys
-      def extract_vault_keys(services)
-        keys = []
-        services.each do |_, data|
-          Array(services['secrets']).each do |secret|
-            keys << secret['secret']
-          end
-        end
-        keys.uniq.compact
       end
 
       # Takes a stack name such as user/foo:1.0.0 and breaks it into components

@@ -31,6 +31,11 @@ class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
   include Kontena::Cli::Common
 
+  option ['-v', '--version'], :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
+    puts ['kontena-cli', Kontena::Cli::VERSION, '[ruby' + RUBY_VERSION + '+' + RUBY_PLATFORM + ']'].join(' ')
+    exit 0
+  end
+
   subcommand "cloud", "Kontena Cloud specific commands", Kontena::Cli::CloudCommand
   subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", Kontena::Cli::LogoutCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand

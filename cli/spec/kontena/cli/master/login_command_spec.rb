@@ -289,25 +289,15 @@ describe Kontena::Cli::Master::LoginCommand do
       expect(server.token.expires_at).to be_nil
     end
 
-    it 'creates an entry when using --remote' do
+    it 'asks for code when using --remote' do
       expect(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 302, headers: { 'Location' => 'http//authprovider.example.com/authplz' }))
       expect(client).to receive(:request) do |opts|
         expect(opts[:path]).to eq "/authenticate?redirect_uri=%2Fcode&expires_in=7200"
         expect(opts[:http_method]).to eq :get
       end.and_return({})
-      expect(subject.config).to receive(:find_server).with('kontena-master').and_return(true)
-      expect(subject.config).to receive(:find_server).with('kontena-master-2').at_least(:once).and_return(nil)
-      expect{subject.run(%w(--remote http://foobar.example.com))}.to raise_error(SystemExit) do |ex|
-        expect(ex.status).to eq 1
-      end
-      expect(subject.config.servers.size).to eq 1
-      server = subject.config.servers.first
-      expect(server.url).to eq 'http://foobar.example.com'
-      expect(server.name).to eq 'kontena-master-2'
-      expect(server.username).to be_nil
-      expect(server.token.access_token).to be_nil
-      expect(server.token.refresh_token).to be_nil
-      expect(server.token.expires_at).to be_nil
+      expect(Kontena.prompt).to receive(:ask).and_return("abcd")
+      expect(subject).to receive(:use_authorization_code).and_return('true')
+      subject.run(%w(--remote http://foobar.example.com))
     end
   end
 

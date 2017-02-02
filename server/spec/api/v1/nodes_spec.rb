@@ -45,6 +45,41 @@ describe '/v1/grids' do
     end
   end
 
+  describe 'GET /health' do
+    let :node do
+      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+    end
+
+    let :rpc_client do
+      instance_double(RpcClient)
+    end
+
+    before do
+      allow_any_instance_of(HostNode).to receive(:rpc_client).and_return(rpc_client)
+    end
+
+    it "returns etcd health when RPC returns health" do
+      expect(rpc_client).to receive(:request).with('/etcd/health').and_return({health: true})
+      get "/v1/nodes/#{node.to_path}/health", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['etcd_health']).to eq({'health' => true, 'error' => nil})
+    end
+
+    it "returns etcd error when RPC returns error" do
+      expect(rpc_client).to receive(:request).with('/etcd/health').and_return({error: "unhealthy"})
+      get "/v1/nodes/#{node.to_path}/health", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "unhealthy"})
+    end
+
+    it "returns HTTP error when RPC fails" do
+      expect(rpc_client).to receive(:request).with('/etcd/health').and_raise(RpcClient::TimeoutError.new(503, "timeout"))
+      get "/v1/nodes/#{node.to_path}/health", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "timeout"})
+    end
+  end
+
   describe 'PUT' do
     it 'saves node labels' do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
