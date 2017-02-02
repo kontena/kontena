@@ -80,6 +80,7 @@ describe '/v1/services' do
         instances cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
       ).sort)
       expect(json_response['id']).to eq('terminal-a/null/redis')
       expect(json_response['image']).to eq(redis_service.image_name)
@@ -94,6 +95,7 @@ describe '/v1/services' do
         instances cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
       ).sort)
       expect(json_response['id']).to eq('terminal-a/teststack/redis')
       expect(json_response['stack']['name']).to eq('teststack')
