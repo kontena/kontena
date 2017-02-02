@@ -7,7 +7,6 @@ require 'ostruct'
 describe Kontena::Cli::Master::LoginCommand do
 
   include ClientHelpers
-  RUBY_PLATFORM = 'linux'
 
   let(:subject) do
     described_class.new(File.basename($0))
@@ -328,6 +327,7 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(File).to receive(:readable?).and_return(true)
       allow(Kontena::Client).to receive(:new).and_return(client)
       allow(Kontena::LocalhostWebServer).to receive(:new).and_return(webserver)
+      allow(Kontena).to receive(:browserless?).and_return(false)
       allow(webserver).to receive(:port).and_return(12345)
       allow(webserver).to receive(:serve_one).and_return(
         { 'code' => 'abcd1234' }
@@ -341,7 +341,7 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
       subject.config.current_master = 'fooserver'
       subject.config.current_master
-      subject.run(%w(--skip-grid-auto-select http://foobar.example.com))
+      subject.run(%w(--no-remote --skip-grid-auto-select http://foobar.example.com))
       expect(subject.config.current_master.name).to eq 'foobar'
     end
   end
