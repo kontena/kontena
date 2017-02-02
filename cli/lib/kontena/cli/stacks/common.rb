@@ -50,7 +50,7 @@ module Kontena::Cli::Stacks
     end
 
     def reader_from_yaml(filename, name: nil, values: nil, defaults: nil)
-      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, values: values)
+      reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, values: values, defaults: defaults)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
