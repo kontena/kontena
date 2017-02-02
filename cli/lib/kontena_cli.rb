@@ -36,6 +36,10 @@ module Kontena
     ENV['OS'] == 'Windows_NT' && RUBY_PLATFORM !~ /cygwin/
   end
 
+  def self.browserless?
+    !!(RUBY_PLATFORM =~ /linux|(?:free|net|open)bsd|solaris|aix|hpux/ && ENV['DISPLAY'].to_s.empty?)
+  end
+
   def self.simple_terminal?
     ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
   end

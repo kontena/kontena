@@ -9,7 +9,7 @@ module Kontena::Cli::Master
     option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token', environment_variable: 'KONTENA_TOKEN'
     option ['-n', '--name'], '[NAME]', 'Set server name', environment_variable: 'KONTENA_MASTER'
     option ['-c', '--code'], '[CODE]', 'Use authorization code generated during master install'
-    option ['-r', '--remote'], :flag, 'Do not try to open a browser'
+    option ['-r', '--[no-]remote'], :flag, 'Login using a browser on another device', default: Kontena.browserless?
     option ['-e', '--expires-in'], '[SECONDS]', 'Request token with expiration of X seconds. Use 0 to never expire', default: 7200
     option ['-v', '--verbose'], :flag, 'Increase output verbosity'
     option ['-f', '--force'], :flag, 'Force reauthentication'

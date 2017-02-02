@@ -17,6 +17,7 @@ describe Kontena::Cli::Cloud::LoginCommand do
   before(:each) do
     allow(subject).to receive(:config).and_return(config)
     allow(Kontena::Client).to receive(:new).and_return(client)
+    allow(Kontena).to receive(:browserless?).and_return(false)
   end
 
   it 'should give error if trying to use --code and --force' do
