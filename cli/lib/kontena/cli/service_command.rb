@@ -7,7 +7,6 @@ require_relative 'services/start_command'
 require_relative 'services/restart_command'
 require_relative 'services/create_command'
 require_relative 'services/scale_command'
-require_relative 'services/delete_command'
 require_relative 'services/remove_command'
 require_relative 'services/containers_command'
 require_relative 'services/logs_command'
@@ -32,7 +31,6 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
   subcommand "restart", "Restart service", Kontena::Cli::Services::RestartCommand
   subcommand "scale", "Scale service", Kontena::Cli::Services::ScaleCommand
   subcommand ["remove", "rm"], "Remove service", Kontena::Cli::Services::RemoveCommand
-  subcommand "delete", "[DEPRECATED] Delete service", Kontena::Cli::Services::DeleteCommand
   subcommand "containers", "List service containers", Kontena::Cli::Services::ContainersCommand
   subcommand "logs", "Show service logs", Kontena::Cli::Services::LogsCommand
   subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
