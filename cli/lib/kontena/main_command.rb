@@ -24,7 +24,6 @@ require_relative 'cli/version_command'
 require_relative 'cli/stack_command'
 require_relative 'cli/certificate_command'
 require_relative 'cli/cloud_command'
-require_relative 'cli/register_command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
