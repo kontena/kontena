@@ -13,7 +13,7 @@ module Kontena::Cli::Stacks
     include Common::StackFileOrNameParam
     include Common::StackValuesFromOption
 
-    option '--deploy', :flag, 'Deploy after upgrade'
+    option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
 
     requires_current_master
     requires_current_master_token
@@ -29,7 +29,7 @@ module Kontena::Cli::Stacks
         update_stack(stack) || spin.fail!
       end
 
-      Kontena.run("stack deploy #{name}") if deploy?
+      Kontena.run(['stack', 'deploy', name]) if deploy?
     end
 
     def update_stack(stack)

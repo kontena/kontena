@@ -164,6 +164,25 @@ describe Kontena::Workers::NodeInfoWorker do
     end
   end
 
+  describe '#on_container_event' do
+    context 'die' do
+      it 'calculates container time if container is found' do
+        event = double(:event, status: 'die', id: 'aaa')
+        container = double(:container, id: 'aaa')
+        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).to receive(:calculate_container_time).and_return(1)
+        subject.on_container_event('on_container_event', event)
+      end
+
+      it 'does not calculate container time if container does not exist' do
+        event = double(:event, status: 'die', id: 'aaa')
+        allow(Docker::Container).to receive(:get).and_return(nil)
+        expect(subject.wrapped_object).not_to receive(:calculate_container_time)
+        subject.on_container_event('on_container_event', event)
+      end
+    end
+  end
+
 
   describe '#public_ip' do
     it 'returns ip from env if set' do

@@ -14,7 +14,6 @@ module Kontena::Cli::Apps
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option '--async', :flag, 'Run deploys async/parallel'
     option '--force', :flag, 'Force deploy even if service does not have any changes'
-    option '--force-deploy', :flag, '[DEPRECATED: use --force]'
 
     option '--skip-validation', :flag, 'Skip YAML file validation', default: false
     parameter "[SERVICE] ...", "Services to start"
@@ -46,10 +45,7 @@ module Kontena::Cli::Apps
       queue.each do |service|
         name = service['id'].split('/').last
         options = {}
-        options[:force] = true if force? || force_deploy? # deprecated
-        if force_deploy?
-          warning " --force-deploy will deprecate in the future, use --force"
-        end
+        options[:force] = true if force?
         spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
           deployment = deploy_service(token, name, options)
           unless async?
