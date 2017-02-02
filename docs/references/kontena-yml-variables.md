@@ -442,6 +442,17 @@ from:
 
 This resolver is handy if you want to change scaling after the stack has been deployed.
 
+### `vault_cert_prompt`
+
+Prompt (multiselect) Kontena vault keys that contain `ssl` or `cert` words.
+
+```
+from:
+  vault_cert_prompt: Select SSL Certificates
+```
+
+This resolver is handy if you want to link certificates from Kontena Vault to a stack.
+
 
 ### `service_link`
 

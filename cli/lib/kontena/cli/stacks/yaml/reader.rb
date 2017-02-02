@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
         require_relative 'opto/vault_resolver'
         require_relative 'opto/prompt_resolver'
         require_relative 'opto/service_instances_resolver'
+        require_relative 'opto/vault_cert_prompt_resolver'
         require_relative 'opto/service_link_resolver'
         require 'liquid'
 
