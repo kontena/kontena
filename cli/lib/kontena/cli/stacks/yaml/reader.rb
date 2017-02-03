@@ -149,7 +149,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        @stack_name ||= parse_stack_name(::YAML.safe_load(raw_content)['stack'].to_s)[:stack]
+        @stack_name ||= parse_stack_name(raw_yaml['stack'].to_s)[:stack]
       end
 
       def stack_version
