@@ -17,7 +17,6 @@ module Kontena::Cli::Stacks::Registry
         skip_variables: true,
         skip_validation: true
       )
-      file.execute
       name = "#{file.stack_name}:#{file.stack_version}"
       spinner("Pushing #{pastel.cyan(name)} to stacks registry") do
         stacks_client.push(file.stack_name, file.stack_version, file.raw_content)
