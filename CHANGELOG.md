@@ -1,5 +1,64 @@
 # Changelog
 
+## [1.1.0](https://github.com/kontena/kontena/releases/tag/v1.1.0) (2017-02-03)
+
+**Master & Agents:**
+
+- Initialize container_seconds properly (#1764)
+- Fix service volume update (#1742)
+- Set puma workers based on available CPU cores (#1683)
+- Switch to use Alpine 3.5 (#1621)
+- Add container hours telemetry data (#1589)
+- Validate that secrets exist during service create and update (#1570)
+- Set grid default affinity (#1564)
+- Update Weave Net to 1.8.2 (#1562)
+- Changed log level of some messages to debug level in agent (#1519)
+- Better deployment errors for "Cannot find applicable node for service instance ..." (#1512)
+- Fix service container names to drop null- prefix, and use stack.service-N (#1494)
+- Say role not found instead of role can not be nil in role add (#1458)
+- Added kontena-console command to master for debugging (#903)
+- Stop container health check also on kill event (#1699)
+- Update image registry to 2.6.0 [enhancement] #1704
+
+**CLI:**
+
+- Remove deprecated commands and options (#1759)
+- Stack service link (prompt) resolver (#1756)
+- Read variable defaults from master when running stack upgrade (#1662 + #1751)
+- Stacks can now be installed/upgraded/validated from files, registry or URLs (#1748 #1736)
+- Vault ssl cert resolver for stacks (#1745)
+- Improve service stack revision visibility (#1744)
+- One step master --remote login (#1739)
+- Detect if environment supports running a graphical browser (#1738)
+- Deploy stack by default on install/upgrade (#1737)
+- Support liquid templating language in stack YAMLs (#1560 #1734)
+- Better error message when vault key nil/empty in vault resolver (#1728)
+- Add kontena service exec command (#1726)
+- Switch cli docker image to use root user (#1717)
+- Show origin of installed stack (#1711)
+- Improve stack deploy progress output (#1710)
+- Make --force more predictable in master rm (#1703)
+- Use the master url to build the redirect uri in init-cloud (#1701)
+- Rescue from broken pipe (#1684)
+- Update spinner message while spinning (#1679)
+- Stack service_instances resolver (#1678)
+- Show etcd health status (#1677)
+- Set master config server.provider during deploy (#1675)
+- Optionally use sudo when running docker build/push (#1673)
+- Show instance name in service stats (#1669)
+- Vault import/export (#1655)
+- Master/CLI version difference warning (#1636)
+- Add kontena vault import/export commands (#1634)
+- Install plugins under $HOME/.kontena/gems and without shell exec (#1628)
+- Improve interactive prompts on Windows (#1585)
+- Move debug output to STDERR (#1543)
+- Add kontena node/grid health commands (#1468)
+- Custom instrumentor for debugging http client requests when DEBUG=true (#1436)
+- Add kontena --version and global --debug (#1291)
+- Enable sending commands to hosts via kontena master/node ssh (#1205)
+- OSX CLI installer and automated build (#1112)
+- Display agent version in node list (#996)
+
 ## [1.0.6](https://github.com/kontena/kontena/releases/tag/v1.0.6) (2017-01-18)
 
 **Master & Agents:**
