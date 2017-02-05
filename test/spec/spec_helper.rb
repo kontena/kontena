@@ -54,28 +54,10 @@ RSpec.configure do |config|
   # triggering implicit auto-inclusion in groups with matching metadata.
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
-  include Setup
-  config.include Shell
-
-  config.before :suite do
-    unless skip_setup?
-      set_home
-      setup_master(kontena_version)
-      setup_grid('e2e', 3, kontena_version)
-    end
-  end
+  include Shell
 
   config.before :each do
-    set_home
     Kommando.run "kontena grid use e2e"
-  end
-
-  config.after :suite do
-    unless skip_setup?
-      set_home
-      teardown_grid("e2e", 3)
-      teardown_master
-    end
   end
 
 # The settings below are suggested to provide a good initial experience
