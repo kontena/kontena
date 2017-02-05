@@ -13,16 +13,14 @@ namespace :vagrant  do
   end
 
   desc "setup vagrant grid"
-  task :setup_grid => :setup_master do
+  task :setup_grid do
     sh "kontena grid create --initial-size #{initial_size} e2e"
-    initial_size.times do |i|
-      sh "kontena vagrant node create --instances 1 --memory 1024 --version #{version} node-#{i + 1}"
-    end
+    sh "kontena vagrant node create --memory 1024 --version #{version} --instances #{initial_size} node"
+    sh "kontena node ls"
   end
 
-  task :teardown => [:teardown_grid, :teardown_master] do
-
-  end
+  desc "teardown vagrant"
+  task :teardown => [:teardown_grid, :teardown_master]
 
   task :teardown_master do
     sh "kontena vagrant master terminate --force"
@@ -32,5 +30,6 @@ namespace :vagrant  do
     initial_size.times do |i|
       sh "kontena vagrant node terminate --force node-#{i + 1}"
     end
+    sh "kontena grid rm --force e2e"
   end
 end

@@ -57,7 +57,8 @@ RSpec.configure do |config|
   include Shell
 
   config.before :each do
-    Kommando.run "kontena grid use e2e"
+    k = Kommando.run "kontena grid use e2e"
+    abort "e2e grid does not exist" unless k.code == 0
   end
 
 # The settings below are suggested to provide a good initial experience
