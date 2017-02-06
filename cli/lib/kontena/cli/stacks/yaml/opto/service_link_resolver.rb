@@ -12,6 +12,7 @@ module Kontena::Cli::Stacks
         services = client.get("grids/#{current_grid}/services")['services']
         services = filter_by_image(services, image_filter) if image_filter
         services = filter_by_name(services, name_filter) if name_filter
+        raise "No service matched the given filter(s)" if services.size == 0
         prompt.select(message) do |menu|
           menu.choice "<none>", nil unless option.required?
           services.each do |s|
