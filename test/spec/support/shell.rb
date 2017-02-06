@@ -17,7 +17,7 @@ module Shell
   end
 
   def debug?
-    ENV.has_key?('DEBUG')
+    ENV.has_key?('DEBUG_KOMMANDO')
   end
 
   def ctrl_c
