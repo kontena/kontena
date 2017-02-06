@@ -51,7 +51,7 @@ module Kontena::Cli::Stacks
       end
 
       def ask
-        prompt.ask(question_text, default: option.default)
+        prompt.ask(question_text, default: option.default, echo: option.handler.options[:echo].nil? ? true : option.handler.options[:echo])
       end
 
 
