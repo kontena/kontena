@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'app deploy' do
-  it 'deploys a simple stack' do
+  it 'deploys a simple app' do
     with_fixture_dir('app/simple') do
       k = run('kontena app deploy')
       k.wait

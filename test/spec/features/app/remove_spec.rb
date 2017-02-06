@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'app remove' do
-  it 'removes a deployed stack' do
+  it 'removes a deployed app' do
     with_fixture_dir('app/simple') do
       k = run('kontena app deploy')
       k = run('kontena app rm --force')
