@@ -8,22 +8,35 @@ module Kontena::Cli::Stacks
         name_filter = hint['name']
         image_filter = hint['image']
         raise "prompt missing" unless message
-
-        services = client.get("grids/#{current_grid}/services")['services']
+        services = get_services
         services = filter_by_image(services, image_filter) if image_filter
         services = filter_by_name(services, name_filter) if name_filter
-        raise "No service matched the given filter(s)" if services.size == 0
-        prompt.select(message) do |menu|
-          menu.choice "<none>", nil unless option.required?
-          services.each do |s|
-            if s.dig('stack', 'name') == 'null'
-              name = s['name']
-            else
-              name = "#{s.dig('stack', 'name')}/#{s['name']}"
-            end
-            menu.choice name, "#{s.dig('stack', 'name')}/#{s['name']}"
-          end
+        if services.size == 0
+           raise "No service matched the given filter(s)" if option.required?
+           return nil
         end
+
+        opts = Hash[services.collect { |s|
+          if s.dig('stack', 'name') == 'null'
+            name = s['name']
+          else
+            name = "#{s.dig('stack', 'name')}/#{s['name']}"
+          end
+          [name, "#{s.dig('stack', 'name')}/#{s['name']}"]
+        }]
+        # Merge used to get <none> to top of the prompt list
+        opts = {'<none>' => nil}.merge(opts) unless option.required?
+
+        prompt.select(message) do |menu|
+          opts.each_with_index { |(k, v), index|
+            menu.choice k, v
+            menu.default index + 1 if option.default && v == option.default
+          }
+        end
+      end
+
+      def get_services
+        client.get("grids/#{current_grid}/services")['services']
       end
 
       def filter_by_image(services, image)
@@ -41,6 +54,7 @@ module Kontena::Cli::Stacks
       def stack
         ENV['STACK']
       end
+
     end
   end
 end
