@@ -50,10 +50,16 @@ module Kontena::Cli::Stacks
         prompt.yes?(question_text, default: option.default == false ? false : true)
       end
 
-      def ask
-        prompt.ask(question_text, default: option.default, echo: option.handler.options[:echo].nil? ? true : option.handler.options[:echo])
+      def echo?
+        return true if option.handler.nil?
+        return true if option.handler.options.nil?
+        return true if option.handler.options[:echo].nil?
+        option.handler.options[:echo]
       end
 
+      def ask
+        prompt.ask(question_text, default: option.default, echo: echo?)
+      end
 
       def resolve
         return nil if option.skip?
