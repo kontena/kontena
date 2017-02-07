@@ -43,7 +43,7 @@ class HostNode
   scope :connected, -> { where(connected: true) }
 
   after_destroy do |node|
-    node.containers.unscoped.delete_all
+    node.containers.unscoped.destroy
   end
 
   def to_path
