@@ -50,9 +50,11 @@ module Kontena
 
         return nil if role_status.to_i > 0
 
-        spinner "Adding #{cloud_user_data[:email]} to grid 'test'" do |spin|
-          grid_add_status = Kontena.run("grid user add --grid test #{cloud_user_data[:email].shellescape}")
-          spin.fail if grid_add_status.to_i > 0
+        if current_master.grid
+          spinner "Adding #{cloud_user_data[:email]} to grid '#{current_master.grid}'" do |spin|
+            grid_add_status = Kontena.run("grid user add --grid #{current_master.grid} #{cloud_user_data[:email].shellescape}")
+            spin.fail if grid_add_status.to_i > 0
+          end
         end
 
         return unless current_master.username.to_s == 'admin'
