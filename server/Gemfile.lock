@@ -67,7 +67,7 @@ GEM
       tzinfo (>= 0.3.37)
     mongoid-enum (0.3.0)
       mongoid (~> 4.0)
-    mongoid-rspec (2.1.0)
+    mongoid-rspec (2.2.0)
       mongoid (~> 4.0.0)
       rake
       rspec (~> 3.1)
@@ -153,7 +153,7 @@ DEPENDENCIES
   jsonpath
   mongoid (~> 4.0.0)
   mongoid-enum
-  mongoid-rspec (~> 2.1.0)
+  mongoid-rspec (~> 2.2.0)
   msgpack
   mutations
   puma
@@ -172,4 +172,4 @@ DEPENDENCIES
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.12.5
+   1.14.3
