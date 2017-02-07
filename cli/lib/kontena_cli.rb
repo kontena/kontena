@@ -41,7 +41,7 @@ module Kontena
   end
 
   def self.simple_terminal?
-    ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
+    on_windows? || ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
   end
 
   def self.pastel
