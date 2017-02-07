@@ -1,6 +1,5 @@
-module Kontena::Cli::Stacks
-  module YAML
-    class Opto::Resolvers::ServiceLink < Opto::Resolver
+module Kontena::Cli::Stacks::YAML::Opto
+    class ServiceLink < Opto::Resolver
       include Kontena::Cli::Common
 
       def resolve
