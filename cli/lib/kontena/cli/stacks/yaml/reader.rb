@@ -88,7 +88,7 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        @variables = Opto::Group.new(
+        @variables = ::Opto::Group.new(
           (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}),
           defaults: {
             from: :env,
