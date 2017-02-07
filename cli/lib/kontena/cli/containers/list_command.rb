@@ -7,14 +7,15 @@ module Kontena::Cli::Containers
     include Kontena::Cli::GridOptions
 
     option ['--all', '-a'], :flag, 'Show all containers'
+    option '--return', :flag, "Return results", hidden: true
+
+    requires_current_master
+    requires_current_master_token
 
     def execute
-      require_api_url
-      token = require_token
-
-      params = '?'
-      params << 'all=1' if all?
-      result = client(token).get("containers/#{current_grid}#{params}")
+      params = all? ? '?all=1' : ''
+      result = client.get("containers/#{current_grid}#{params}")
+      return result if return?
       containers = result['containers']
       id_column = longest_string_in_array(containers.map {|c| "#{c['node']['name']}/#{c['name']}"})
       image_column = longest_string_in_array(containers.map {|c| c['image'] })
