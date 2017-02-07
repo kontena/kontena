@@ -1,9 +1,9 @@
 module Kontena::Cli::Stacks
   module YAML
-    class Prompt < Opto::Resolver
+    class Prompt < ::Opto::Resolver
       include Kontena::Cli::Common
 
-      using Opto::Extension::HashStringOrSymbolKey
+      using ::Opto::Extension::HashStringOrSymbolKey
 
       def enum?
         option.type == 'enum'
@@ -68,4 +68,3 @@ module Kontena::Cli::Stacks
     end
   end
 end
-

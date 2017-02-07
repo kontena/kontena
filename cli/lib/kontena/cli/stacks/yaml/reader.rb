@@ -2,6 +2,11 @@ require_relative '../../../util'
 
 module Kontena::Cli::Stacks
   module YAML
+    module Opto
+      module Resolvers; end
+      module Setters; end
+    end
+
     class Reader
       include Kontena::Util
       include Kontena::Cli::Common
@@ -12,13 +17,7 @@ module Kontena::Cli::Stacks
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
-        require 'opto'
-        require_relative 'opto/vault_setter'
-        require_relative 'opto/vault_resolver'
-        require_relative 'opto/prompt_resolver'
-        require_relative 'opto/service_instances_resolver'
-        require_relative 'opto/vault_cert_prompt_resolver'
-        require_relative 'opto/service_link_resolver'
+        require_relative 'opto'
         require 'liquid'
 
         @file = file
@@ -88,7 +87,7 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        @variables = Opto::Group.new(
+        @variables = ::Opto::Group.new(
           (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}),
           defaults: {
             from: :env,
