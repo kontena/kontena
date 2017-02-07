@@ -1,5 +1,5 @@
-module Kontena::Cli::Stacks::YAML::Opto
-  class ServiceLink < Opto::Resolver
+module Kontena::Cli::Stacks::YAML::Opto::Resolvers
+  class ServiceLink < ::Opto::Resolver
     include Kontena::Cli::Common
 
     def resolve
@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks::YAML::Opto
       image_filter = hint['image']
       raise "prompt missing" unless message
 
-      services = client.get("grids/#{current_grid}/services")['services']
+      services = get_services
       services = filter_by_image(services, image_filter) if image_filter
       services = filter_by_name(services, name_filter) if name_filter
       return nil if services.size == 0
@@ -16,25 +16,45 @@ module Kontena::Cli::Stacks::YAML::Opto
         menu.default(default_index(services)) if option.default
         menu.choice "<none>", nil unless option.required?
         services.each do |s|
-          if s.dig('stack', 'name') == 'null'
-            name = s['name']
-          else
-            name = "#{s.dig('stack', 'name')}/#{s['name']}"
-          end
-          menu.choice name, "#{s.dig('stack', 'name')}/#{s['name']}"
+          menu.choice service_name(s), service_link(s)
         end
       end
+    end
+
+    # @return [Array<Hash>]
+    def get_services
+      client.get("grids/#{current_grid}/services")['services']
+    rescue
+      []
     end
 
     # @param [Array<Hash>] services
     # @return [Integer]
     def default_index(services)
-      services.index {|s| service_link(s) == option.default }.to_i + 1
+      index = services.index {|s| service_link(s) == option.default }
+      if index
+        index.to_i + 1
+      else
+        0
+      end
     end
 
     # @param [Hash] service
+    # @return [String]
     def service_link(service)
-      "#{service.dig('stack', 'name')}/#{service['name']}"
+      grid, stack, service = service['id'].split('/')
+      "#{stack}/#{service}"
+    end
+
+    # @param [Hash] service
+    # @return [String]
+    def service_name(service)
+      grid, stack, service = service['id'].split('/')
+      if stack == 'null'.freeze
+        service
+      else
+        "#{stack}/#{service}"
+      end
     end
 
     def filter_by_image(services, image)

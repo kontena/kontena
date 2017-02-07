@@ -1,7 +1,7 @@
 require 'opto'
 require 'kontena/cli/stacks/yaml/opto/vault_cert_prompt_resolver'
 
-describe Kontena::Cli::Stacks::YAML::Opto::VaultCertPrompt do
+describe Kontena::Cli::Stacks::YAML::Opto::Resolvers::VaultCertPrompt do
   describe '#resolve' do
     it 'returns nil if no matching secrets' do
       expect(subject).to receive(:get_secrets).and_return([])

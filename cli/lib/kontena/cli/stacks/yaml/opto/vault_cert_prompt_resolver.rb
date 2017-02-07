@@ -1,4 +1,4 @@
-module Kontena::Cli::Stacks::YAML::Opto
+module Kontena::Cli::Stacks::YAML::Opto::Resolvers
   class VaultCertPrompt < ::Opto::Resolver
     include Kontena::Cli::Common
 
