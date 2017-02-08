@@ -4,7 +4,7 @@ module Kontena
 
       include Kontena::Cli::Common
 
-      matches_commands 'master create'
+      matches_commands 'master create', 'master init_cloud'
 
       def cloud_user_data
         return @cloud_user_data if @cloud_user_data
@@ -27,8 +27,7 @@ module Kontena
       def after
         return unless current_master
         return unless command.exit_code == 0
-        return unless current_master.username.to_s == 'admin'
-        return nil if command.skip_auth_provider?
+        return nil if command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
         return nil unless cloud_user_data
 
         invite_response = nil
@@ -51,10 +50,14 @@ module Kontena
 
         return nil if role_status.to_i > 0
 
-        spinner "Adding #{cloud_user_data[:email]} to grid 'test'" do |spin|
-          grid_add_status = Kontena.run("grid user add --grid test #{cloud_user_data[:email].shellescape}")
-          spin.fail if grid_add_status.to_i > 0
+        if current_master.grid
+          spinner "Adding #{cloud_user_data[:email]} to grid '#{current_master.grid}'" do |spin|
+            grid_add_status = Kontena.run("grid user add --grid #{current_master.grid} #{cloud_user_data[:email].shellescape}")
+            spin.fail if grid_add_status.to_i > 0
+          end
         end
+
+        return unless current_master.username.to_s == 'admin'
 
         new_user_token = nil
         spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
