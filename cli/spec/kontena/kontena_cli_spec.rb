@@ -4,8 +4,7 @@ require 'kontena_cli'
 describe Kontena do
   context 'prompt' do
     it 'uses light prompt on windows' do
-      allow(ENV).to receive(:[]).and_call_original
-      expect(ENV).to receive(:[]).with('OS').and_return('Windows_NT')
+      allow(ENV).to receive(:[]).with('OS').and_return('Windows_NT')
       expect(Kontena.prompt).to be_kind_of(Kontena::LightPrompt)
     end
   end
