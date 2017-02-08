@@ -157,9 +157,9 @@ module GridServices
           end
           hash :deploy_opts do
             optional do
-              integer :wait_for_port
-              float :min_health
-              integer :interval
+              integer :wait_for_port, nils: true
+              float :min_health, nils: true
+              integer :interval, nils: true
             end
           end
           array :volumes do

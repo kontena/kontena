@@ -60,6 +60,30 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.affinity }.to(['az==b1'])
     end
 
+    it 'updates wait_for_port' do
+      described_class.new(
+          grid_service: redis_service,
+          deploy_opts: {
+            wait_for_port: 6379
+          }
+      ).run
+      redis_service.reload
+      expect(redis_service.deploy_opts.wait_for_port).to eq(6379)
+    end
+
+    it 'allows to delete wait_for_port' do
+      redis_service.deploy_opts.wait_for_port = 6379
+      redis_service.save
+      described_class.new(
+          grid_service: redis_service,
+          deploy_opts: {
+            wait_for_port: nil
+          }
+      ).run
+      redis_service.reload
+      expect(redis_service.deploy_opts.wait_for_port).to be_nil
+    end
+
     it 'updates health check' do
       described_class.new(
           grid_service: redis_service,

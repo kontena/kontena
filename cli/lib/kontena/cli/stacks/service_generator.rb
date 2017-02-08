@@ -49,13 +49,16 @@ module Kontena::Cli::Stacks
       data['log_opts'] = options['log_opt'] if options['log_opt'] && !options['log_opt'].empty?
       deploy_opts = options['deploy'] || {}
       data['strategy'] = deploy_opts['strategy'] if deploy_opts['strategy']
-      deploy = {}
-      deploy['wait_for_port'] = deploy_opts['wait_for_port'] if deploy_opts.has_key?('wait_for_port')
-      deploy['min_health'] = deploy_opts['min_health'] if deploy_opts.has_key?('min_health')
-      deploy['interval'] = parse_relative_time(deploy_opts['interval']) if deploy_opts.has_key?('interval')
-      unless deploy.empty?
-        data['deploy_opts'] = deploy
-      end
+      deploy = {
+        'wait_for_port' => deploy_opts['wait_for_port'],
+        'min_health' => deploy_opts['min_health']
+      }
+      if deploy_opts.has_key?('interval')
+        deploy['interval'] = parse_relative_time(deploy_opts['interval'])
+      else
+        deploy['interval'] = nil
+      end      
+      data['deploy_opts'] = deploy
       data['hooks'] = options['hooks'] || {}
       data['secrets'] = options['secrets'] if options['secrets']
       data['build'] = parse_build_options(options) if options['build']
