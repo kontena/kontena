@@ -2,27 +2,35 @@ require_relative '../spec_helper'
 require 'kontena_cli'
 
 describe Kontena do
-  let(:subject) { described_class }
+  context 'prompt' do
+    it 'uses light prompt on windows' do
+      allow(ENV).to receive(:[]).with('OS').and_return('Windows_NT')
+      expect(Kontena.prompt).to be_kind_of(Kontena::LightPrompt)
+    end
+  end
 
   describe '#run' do
-    let(:whoami) { double(:whoami_command) }
+    let(:whoami) { double(:whoami) }
 
     before(:each) do
-      expect(Kontena::MainCommand).to receive(:new).and_call_original
       expect(Kontena::Cli::WhoamiCommand).to receive(:new).and_return(whoami)
       expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
     end
 
     it 'accepts a command line as string' do
-      subject.run('whoami --bash-completion-path')
+
+      Kontena.run('whoami --bash-completion-path')
     end
 
     it 'accepts a command line as a list of parameters' do
-      subject.run('whoami', '--bash-completion-path')
+      Kontena.run('whoami', '--bash-completion-path')
     end
 
     it 'accepts a command line as an array' do
-      subject.run(['whoami', '--bash-completion-path'])
+      Kontena.run(['whoami', '--bash-completion-path'])
     end
   end
 end
+
+
+
