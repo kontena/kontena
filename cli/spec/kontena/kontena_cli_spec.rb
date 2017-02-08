@@ -5,6 +5,7 @@ describe Kontena do
   context 'prompt' do
     it 'uses light prompt on windows' do
       expect(ENV).to receive(:[]).with('OS').and_return('Windows_NT')
+      allow(ENV).to receive(:[]).with(anything).and_call_original
       expect(Kontena.prompt).to be_kind_of(Kontena::LightPrompt)
     end
   end
