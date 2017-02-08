@@ -1,10 +1,15 @@
 require 'docker'
+require 'celluloid'
+require_relative 'common'
 require_relative '../logging'
+require_relative '../helpers/weave_helper'
 
 module Kontena
   module ServicePods
     class Creator
       include Kontena::Logging
+      include Common
+      include Kontena::Helpers::WeaveHelper
 
       attr_reader :service_pod, :image_credentials
 
@@ -22,9 +27,9 @@ module Kontena
           data_container = self.ensure_data_container(service_pod)
           service_pod.volumes_from << data_container.id
         end
-        service_container = get_container(service_pod.name)
+        service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
-        sleep 1 until Celluloid::Actor[:network_adapter].running?
+        wait_network_ready?
 
         if service_container
           if service_uptodate?(service_container)
@@ -37,14 +42,15 @@ module Kontena
             self.cleanup_container(service_container)
           end
         end
-        service_config = service_pod.service_config
-        if service_pod.overlay_network
-          Celluloid::Actor[:network_adapter].modify_create_opts(service_config)
-        end
-        service_container = create_container(service_config)
+        service_config = config_container(service_pod)
 
+        debug "creating container: #{service_pod.name}"
+        service_container = create_container(service_config)
+        debug "container created: #{service_pod.name}"
         if service_container.load_balanced? && service_container.instance_number == 1
           Celluloid::Notifications.publish('lb:ensure_config', service_container)
+        elsif !service_container.load_balanced? && service_container.instance_number == 1
+          Celluloid::Notifications.publish('lb:remove_service', service_container)
         end
 
         service_container.start
@@ -116,7 +122,7 @@ module Kontena
       # @param [ServicePod] service_pod
       # @return [Container]
       def ensure_data_container(service_pod)
-        data_container = get_container(service_pod.data_volume_name)
+        data_container = get_container(service_pod.service_id, service_pod.instance_number, 'volume')
         unless data_container
           info "creating data volumes for service: #{service_pod.name}"
           data_container = create_container(service_pod.data_volume_config)
@@ -132,9 +138,17 @@ module Kontena
         container.delete(v: true)
       end
 
-      # @return [Docker::Container, NilClass]
-      def get_container(name)
-        Docker::Container.get(name) rescue nil
+      # Docker create configuration for ServicePod
+      # @param [ServicePod] service_pod
+      # @return [Hash] Docker create API JSON object
+      def config_container(service_pod)
+        service_config = service_pod.service_config
+
+        unless service_pod.net == 'host'
+          network_adapter.modify_create_opts(service_config)
+        end
+
+        service_config
       end
 
       # @param [Hash] opts
@@ -153,9 +167,10 @@ module Kontena
       # @return [Boolean]
       def service_uptodate?(service_container)
         return false if recreate_service_container?(service_container)
-        return false if service_container.info['Config']['Image'] != service_pod.image_name
+        return false if service_container.config['Image'] != service_pod.image_name
         return false if container_outdated?(service_container)
         return false if image_outdated?(service_pod.image_name, service_container)
+        return false if labels_outdated?(service_pod.labels, service_container)
 
         true
       end
@@ -189,9 +204,17 @@ module Kontena
       # @return [Boolean]
       def recreate_service_container?(service_container)
         state = service_container.state
-        service_container.restart_policy['Name'] == 'always' &&
-            state['Running'] == false &&
+        service_container.autostart? &&
+            !service_container.running? &&
             (!state['Error'].empty? || state['ExitCode'].to_i != 0)
+      end
+
+      # @param [Hash] labels Labels of the service pod
+      # @param [Docker::Container] service_container
+      def labels_outdated?(labels, service_container)
+        return true if labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
+
+        false
       end
 
       # @param [Docker::Container] service_container

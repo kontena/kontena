@@ -10,22 +10,14 @@ module Kontena::Cli::Plugins
 
     def execute
       confirm unless forced?
-      uninstall_plugin(name)
-    end
-
-    def uninstall_plugin(name)
-      plugin = "kontena-plugin-#{name}"
-      gem_bin = which('gem')
-      uninstall_command = "#{gem_bin} uninstall -q #{plugin}"
-      success = false
-      spinner "Uninstalling plugin #{name.colorize(:cyan)}" do
-        stdout, stderr, status = Open3.capture3(uninstall_command)
-        unless stderr.empty?
-          raise stderr
+      spinner "Uninstalling plugin #{name.colorize(:cyan)}" do |spin|
+        begin
+          Kontena::PluginManager.instance.uninstall_plugin(name)
+        rescue => ex
+          puts Kontena.pastel.red(ex.message)
+          spin.fail
         end
       end
-    rescue => exc
-      puts exc.message
     end
   end
 end

@@ -4,6 +4,10 @@ module Kontena
   module Machine
     module CertHelper
 
+      def certificate_public_key(cert)
+        cert[/(-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----)/m, 1]
+      end
+
       def generate_self_signed_cert
         key = OpenSSL::PKey::RSA.new(2048)
         public_key = key.public_key

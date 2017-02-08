@@ -10,11 +10,11 @@ module Kontena::Cli::Registry
       confirm unless forced?
       name = 'registry'
 
-      registry = client(token).get("services/#{current_grid}/#{name}") rescue nil
-      exit_with_error("Service #{name.colorize(:cyan)} does not exist") if registry.nil?
+      registry = client(token).get("stacks/#{current_grid}/#{name}") rescue nil
+      exit_with_error("Stack #{name.colorize(:cyan)} does not exist") if registry.nil?
 
-      spinner "Removing #{name.colorize(:cyan)} service " do
-        client(token).delete("services/#{current_grid}/#{name}")
+      spinner "Removing #{name.colorize(:cyan)} stack " do
+        client(token).delete("stacks/#{current_grid}/#{name}")
       end
     end
   end

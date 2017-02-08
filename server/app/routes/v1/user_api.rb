@@ -1,4 +1,3 @@
-
 module V1
   class UserApi < Roda
     include TokenAuthenticationHelper
@@ -7,7 +6,7 @@ module V1
 
     plugin :multi_route
 
-    Dir[File.join(__dir__, '/user/*.rb')].each{|f| require f}
+    require_glob File.join(__dir__, '/user/*.rb')
 
     # Route: /v1/user
     route do |r|

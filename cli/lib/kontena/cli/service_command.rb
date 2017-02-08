@@ -7,7 +7,6 @@ require_relative 'services/start_command'
 require_relative 'services/restart_command'
 require_relative 'services/create_command'
 require_relative 'services/scale_command'
-require_relative 'services/delete_command'
 require_relative 'services/remove_command'
 require_relative 'services/containers_command'
 require_relative 'services/logs_command'
@@ -19,6 +18,7 @@ require_relative 'services/secret_command'
 
 require_relative 'services/link_command'
 require_relative 'services/unlink_command'
+require_relative 'services/exec_command'
 
 class Kontena::Cli::ServiceCommand < Kontena::Command
 
@@ -32,7 +32,6 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
   subcommand "restart", "Restart service", Kontena::Cli::Services::RestartCommand
   subcommand "scale", "Scale service", Kontena::Cli::Services::ScaleCommand
   subcommand ["remove", "rm"], "Remove service", Kontena::Cli::Services::RemoveCommand
-  subcommand "delete", "[DEPRECATED] Delete service", Kontena::Cli::Services::DeleteCommand
   subcommand "containers", "List service containers", Kontena::Cli::Services::ContainersCommand
   subcommand "logs", "Show service logs", Kontena::Cli::Services::LogsCommand
   subcommand "stats", "Show service statistics", Kontena::Cli::Services::StatsCommand
@@ -44,6 +43,7 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
 
   subcommand "link", "Link service to another service", Kontena::Cli::Services::LinkCommand
   subcommand "unlink", "Unlink service from another service", Kontena::Cli::Services::UnlinkCommand
+  subcommand "exec", "Execute commands in service containers", Kontena::Cli::Services::ExecCommand
 
   def execute
   end

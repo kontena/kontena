@@ -106,7 +106,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
           services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
           services['wordpress']['env_file'] = %w(/path/to/env_file .env)
-          allow(YAML).to receive(:load).and_return(services)
+          allow(YAML).to receive(:safe_load).and_return(services)
 
           expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
           expect(File).to receive(:readlines).with('.env').and_return(dot_env)
@@ -127,7 +127,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           allow(subject).to receive(:current_dir).and_return("kontena-test")
           services['wordpress']['environment'] = ['MYSQL_ADMIN_PASSWORD=password']
           services['wordpress']['env_file'] = '/path/to/env_file'
-          allow(YAML).to receive(:load).and_return(services)
+          allow(YAML).to receive(:safe_load).and_return(services)
 
           expect(File).to receive(:readlines).with('/path/to/env_file').and_return(env_vars)
 
@@ -145,7 +145,7 @@ describe Kontena::Cli::Apps::DeployCommand do
       it 'merges external links to links' do
         allow(subject).to receive(:current_dir).and_return("kontena-test")
         services['wordpress']['external_links'] = ['loadbalancer:loadbalancer']
-        allow(YAML).to receive(:load).and_return(services)
+        allow(YAML).to receive(:safe_load).and_return(services)
         data = {
           'name' => 'kontena-test-wordpress',
           'image' => 'wordpress:latest',
@@ -171,7 +171,7 @@ describe Kontena::Cli::Apps::DeployCommand do
             'name' => 'kontena-test-mysql',
             'image' => 'mysql:5.6',
             'env' => ['MYSQL_ROOT_PASSWORD=kontena-test_secret'],
-            'container_count' => nil,
+            'instances' => nil,
             'stateful' => true,
         }
         expect(subject).to receive(:create_service).with(duck_type(:access_token), '1', hash_including(data))
@@ -186,7 +186,7 @@ describe Kontena::Cli::Apps::DeployCommand do
           'name' => 'kontena-test-wordpress',
           'image' => 'wordpress:4.1',
           'env' => ['WORDPRESS_DB_PASSWORD=kontena-test_secret'],
-          'container_count' => 2,
+          'instances' => 2,
           'stateful' => true,
           'strategy' => 'ha',
           'links' => [{ 'name' => 'kontena-test-mysql', 'alias' => 'mysql' }],

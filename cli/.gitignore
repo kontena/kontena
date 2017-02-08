@@ -13,3 +13,5 @@
 *.a
 mkmf.log
 .idea
+*.gem
+/vendor/

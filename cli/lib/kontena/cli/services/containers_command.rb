@@ -12,13 +12,13 @@ module Kontena::Cli::Services
       require_api_url
       token = require_token
 
-      result = client(token).get("services/#{current_grid}/#{name}/containers")
+      result = client(token).get("services/#{parse_service_id(name)}/containers")
       result['containers'].each do |container|
-        puts "#{container['id']}:"
+        puts "#{container['name']}:"
         puts "  rev: #{container['deploy_rev']}"
         puts "  node: #{container['node']['name']}"
-        puts "  dns: #{container['name']}.#{current_grid}.kontena.local"
-        puts "  ip: #{container['overlay_cidr'].to_s.split('/')[0]}"
+        puts "  dns: #{container['hostname']}.#{container['domainname']}"
+        puts "  ip: #{container['ip_address']}"
         puts "  public ip: #{container['node']['public_ip']}"
         if container['status'] == 'unknown'
           puts "  status: #{container['status'].colorize(:yellow)}"

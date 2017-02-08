@@ -1,24 +1,30 @@
 module Users
   class AddRole < Mutations::Command
+
+    attr_reader :role_instance
+
     required do
       model :current_user, class: User
       model :user
-      model :role
+      string :role
     end
 
     def validate
-      if role && !current_user.can_assign?(role)
-        add_error(:current_user, :invalid, 'Operation not allowed')
+      @role_instance = Role.find_by(name: role)
+
+      if role_instance.nil?
+        add_error(:role, :not_found, "Role '#{role}' not found")
+        return false
       end
-      if role.nil?
-        add_error(:role, :invalid, 'Invalid role')
+
+      unless current_user.can_assign?(role_instance)
+        add_error(:current_user, :invalid, 'Operation not allowed')
       end
     end
 
     def execute
-      user.roles << role
+      user.roles << role_instance
       user
     end
-
   end
 end

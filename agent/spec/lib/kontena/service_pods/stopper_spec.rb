@@ -2,13 +2,13 @@ require_relative '../../../spec_helper'
 
 describe Kontena::ServicePods::Stopper do
 
-  let(:service_name) { 'service-1' }
-  let(:subject) { described_class.new(service_name) }
+  let(:service_id) { 'service-id' }
+  let(:subject) { described_class.new(service_id, 1) }
 
   describe '#perform' do
 
     let(:container) do
-      double(:container, :running? => true)
+      double(:container, :running? => true, :name => '/foo')
     end
 
     before(:each) do

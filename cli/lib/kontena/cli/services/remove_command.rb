@@ -17,6 +17,7 @@ module Kontena::Cli::Services
         client(token).delete("services/#{parse_service_id(name)}")
         removed = false
         until removed == true
+          sleep 1
           begin
             client(token).get("services/#{parse_service_id(name)}")
           rescue Kontena::Errors::StandardError => exc

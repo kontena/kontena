@@ -6,6 +6,7 @@ describe Agent::MessageHandler do
   let(:queue) { Queue.new }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
   let(:subject) { described_class.new(queue) }
+  let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
 
   describe '#run' do
     it 'performs', :performance => true do
@@ -49,7 +50,7 @@ describe Agent::MessageHandler do
     it 'creates new container log entry if container exists' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
       expect {
-        subject.on_container_log(grid, node.id.to_s, {
+        subject.on_container_log(grid, {
           'id' => container.container_id,
           'data' => 'foo',
           'type' => 'stderr'
@@ -60,7 +61,7 @@ describe Agent::MessageHandler do
 
     it 'saves container.name to log' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
-      subject.on_container_log(grid, node.id.to_s, {
+      subject.on_container_log(grid, {
         'id' => container.container_id,
         'data' => 'foo',
         'type' => 'stderr'
@@ -71,7 +72,7 @@ describe Agent::MessageHandler do
 
     it 'does not create entry if container does not exist' do
       expect {
-        subject.on_container_log(grid, node.id.to_s, {
+        subject.on_container_log(grid, {
           'id' => 'does_not_exist',
           'data' => 'foo',
           'type' => 'stderr'
@@ -88,7 +89,7 @@ describe Agent::MessageHandler do
       start_time = Time.now.to_f
       bm = Benchmark.measure do
         1_000.times do
-          subject.on_container_log(grid, node.id.to_s, {
+          subject.on_container_log(grid, {
             'id' => containers[rand(0..9)],
             'data' => 'foo',
             'type' => 'stderr'
@@ -159,7 +160,10 @@ describe Agent::MessageHandler do
           'node_id' => node.node_id,
           'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
           'memory' => {},
-          'filesystems' => []
+          'filesystems' => [],
+          'usage' => {
+            'container_seconds' => 60*100
+          }
         })
       }.to change{ node.host_node_stats.count }.by(1)
     end
@@ -168,7 +172,7 @@ describe Agent::MessageHandler do
   describe '#on_container_health' do
     it 'updates health status' do
       container_id = SecureRandom.hex(16)
-      container = grid.containers.new(name: 'foo-1')
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
       container.update_attribute(:container_id, container_id)
 
       expect {

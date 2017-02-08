@@ -12,7 +12,7 @@ module Kontena
 
       def logger
         return @logger if @logger
-        @logger = Logger.new(STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'COMMON'
         @logger
@@ -92,12 +92,12 @@ module Kontena
 
       def warning(msg)
         warning = pastel.yellow('warn')
-        STDERR.puts " [#{warning}] #{msg}"
+        $stderr.puts " [#{warning}] #{msg}"
       end
 
       def exit_with_error(msg, code = 1)
         error = pastel.red('error')
-        STDERR.puts " [#{error}] #{msg}"
+        $stderr.puts " [#{error}] #{msg}"
         exit code
       end
 
@@ -129,10 +129,10 @@ module Kontena
         return unless server.token.refresh_token
         return if server.token.expired?
         client = Kontena::Client.new(server.url, server.token)
-        ENV["DEBUG"] && puts("Trying to invalidate refresh token on #{server.name}")
+        logger.debug "Trying to invalidate refresh token on #{server.name}"
         client.refresh_token
       rescue
-        ENV["DEBUG"] && puts("Refreshing failed: #{$!} : #{$!.message}")
+        logger.debug "Refreshing failed: #{$!} : #{$!.message}"
       end
 
       def require_current_master
@@ -197,16 +197,6 @@ module Kontena
         config.require_current_master.url
       end
 
-      def ensure_custom_ssl_ca(url)
-        return if Excon.defaults[:ssl_ca_file]
-
-        uri = URI::parse(url)
-        cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
-        if File.exist?(cert_file)
-          Excon.defaults[:ssl_ca_file] = cert_file
-        end
-      end
-
       def current_grid=(grid)
         config.current_grid=(grid)
       end
@@ -257,6 +247,7 @@ module Kontena
         if self.respond_to?(:force?) && self.force?
           return
         end
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts message if message
         puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
@@ -267,6 +258,7 @@ module Kontena
         if self.respond_to?(:force?) && self.force?
           return
         end
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         prompt.yes?(message) || error('Aborted command.')
       end
 

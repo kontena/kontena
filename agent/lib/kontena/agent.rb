@@ -68,6 +68,10 @@ module Kontena
 
     def supervise_launchers
       @supervisor.supervise(
+        type: Kontena::Launchers::IpamPlugin,
+        as: :ipam_plugin_launcher
+      )
+      @supervisor.supervise(
         type: Kontena::Launchers::Cadvisor,
         as: :cadvisor_launcher
       )
@@ -132,6 +136,10 @@ module Kontena
         as: :health_check_worker,
         args: [@queue]
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::ContainerStarterWorker,
+        as: :container_starter_worker
+      )
     end
 
     def supervise_lb
@@ -147,7 +155,10 @@ module Kontena
 
     def start_em
       EM.epoll
-      Thread.new { EventMachine.run } unless EventMachine.reactor_running?
+      Thread.new {
+        Thread.current.abort_on_exception = true
+        EventMachine.run
+      } unless EventMachine.reactor_running?
       sleep 0.01 until EventMachine.reactor_running?
     end
   end

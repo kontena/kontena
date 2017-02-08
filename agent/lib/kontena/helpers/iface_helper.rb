@@ -21,6 +21,9 @@ module Kontena
           sock.ioctl(SIOCGIFADDR, buf);
           sock.close
           buf[20..24].unpack("CCCC").join(".")
+        rescue Errno::EADDRNOTAVAIL
+          # interface is up, but does not have any address configured
+          nil
         rescue Errno::ENODEV
           nil
         end

@@ -4,7 +4,7 @@ describe GridServiceRemoveWorker do
   before(:each) { Celluloid.boot }
   after(:each) { Celluloid.shutdown }
 
-  let(:grid) { Grid.create(name: 'test')}
+  let(:grid) { Grid.create(name: 'test') }
   let(:service) do
     GridService.create(
       name: 'test',

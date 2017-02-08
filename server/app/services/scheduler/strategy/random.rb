@@ -16,9 +16,7 @@ module Scheduler
         if grid_service.stateless?
           nodes.sample
         else
-          prev_container = grid_service.containers.volumes.find_by(
-            name: "#{grid_service.name}-#{instance_number}-volumes"
-          )
+          prev_container = grid_service.containers.volumes.service_instance(grid_service, instance_number)
           if prev_container
             prev_container.host_node
           else

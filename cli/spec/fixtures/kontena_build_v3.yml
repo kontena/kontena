@@ -1,0 +1,23 @@
+stack: user/stackname
+version: 0.1.1
+services:
+  mysql:
+    stateful: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=${STACK}_secret
+
+  webapp:
+    image: webapp
+    build:
+      context: .
+      args:
+        - foo=bar
+        - baz=baf
+
+  some_app:
+    image: some_app
+    build:
+      context: .
+      args:
+        foo: bar
+        baz:

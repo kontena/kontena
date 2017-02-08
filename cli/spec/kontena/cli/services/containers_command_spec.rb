@@ -31,7 +31,7 @@ describe Kontena::Cli::Services::ContainersCommand do
       })
       expect {
         subject.run(['service-a'])
-      }.to_not raise_error(NoMethodError)
+      }.to_not raise_error
     end
 
     it 'to not throw on nil "overlay_cidr" property' do
@@ -42,7 +42,7 @@ describe Kontena::Cli::Services::ContainersCommand do
       })
       expect {
         subject.run(['service-a'])
-      }.to_not raise_error(NoMethodError)
+      }.to_not raise_error
     end
   end
 end

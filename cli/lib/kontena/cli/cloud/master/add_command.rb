@@ -25,7 +25,7 @@ module Kontena::Cli::Cloud::Master
 
     def register(name, url = nil, provider = nil, redirect_uri = nil, version = nil, owner = nil)
       attributes = {}
-      attributes['name']         = name 
+      attributes['name']         = name
       attributes['url']          = url if url
       attributes['provider']     = provider if provider
       attributes['redirect-uri'] = redirect_uri if redirect_uri
@@ -34,8 +34,8 @@ module Kontena::Cli::Cloud::Master
 
       response = cloud_client.post('user/masters', { data: { attributes: attributes } })
       exit_with_error "Failed (invalid response)" unless response.kind_of?(Hash)
-      exit_with_error "Failed (no data)" unless response['data']
       exit_with_error "Failed: #{response['error']}" if response['error']
+      exit_with_error "Failed (no data)" unless response['data']
       response
     end
 
@@ -100,13 +100,14 @@ module Kontena::Cli::Cloud::Master
               args = []
               args << "--provider #{self.provider.shellescape}" if self.provider
               args << "--version #{self.version.shellescape}" if self.version
+              args << self.cloud_master_id
               Kontena.run("cloud master update #{args.join(' ')}")
             end
           end
         end
       else
         response = spinner "Registering current Kontena Master '#{current_master.name}' #{" as '#{new_name}' " unless new_name == current_master.name}to Kontena Cloud" do
-          register(new_name, current_master.url)
+          register(new_name, current_master.url, self.provider, current_master.url.gsub(/\/$/, '') + "/cb", self.version)
         end
       end
 

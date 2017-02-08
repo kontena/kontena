@@ -23,6 +23,7 @@ module Kontena
     CONTENT_JSON       = 'application/json'.freeze
     JSON_REGEX         = /application\/(.+?\+)?json/.freeze
     CONTENT_TYPE       = 'Content-Type'.freeze
+    X_KONTENA_VERSION  = 'X-Kontena-Version'.freeze
     ACCEPT             = 'Accept'.freeze
     AUTHORIZATION      = 'Authorization'.freeze
 
@@ -47,20 +48,37 @@ module Kontena
       uri = URI.parse(@api_url)
       @host = uri.host
 
-      @logger = Logger.new(STDOUT)
+      @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
       @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
       @logger.progname = 'CLIENT'
 
       @options[:default_headers] ||= {}
-      Excon.defaults[:ssl_verify_peer] = false if ignore_ssl_errors?
 
-      @http_client = Excon.new(
-        api_url,
+      excon_opts = {
         omit_default_port: true,
         connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_i : 5,
         read_timeout:    ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_i    : 30,
-        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5
-      )
+        write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_i   : 5,
+        ssl_verify_peer: ignore_ssl_errors? ? false : true
+      }
+      if ENV["DEBUG"]
+        require_relative 'debug_instrumentor'
+        excon_opts[:instrumentor] = Kontena::DebugInstrumentor
+      end
+
+      cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
+      if File.exist?(cert_file) && File.readable?(cert_file)
+        excon_opts[:ssl_ca_file] = cert_file
+        key = OpenSSL::X509::Certificate.new(File.read(cert_file))
+        if key.issuer.to_s == "/C=FI/O=Test/OU=Test/CN=Test"
+          logger.debug "Key looks like a self-signed cert made by Kontena CLI, setting verify_peer_host to 'Test'"
+          excon_opts[:ssl_verify_peer_host] = 'Test'
+        end
+      end
+
+      logger.debug "Excon opts: #{excon_opts.inspect}"
+
+      @http_client = Excon.new(api_url, excon_opts)
 
       @default_headers = {
         ACCEPT => CONTENT_JSON,
@@ -108,20 +126,6 @@ module Kontena
       end
     end
 
-    # OAuth2 client_id from ENV KONTENA_CLIENT_ID or client CLIENT_ID constant
-    #
-    # @return [String]
-    def client_id
-      ENV['KONTENA_CLIENT_ID'] || CLIENT_ID
-    end
-
-    # OAuth2 client_secret from ENV KONTENA_CLIENT_SECRET or client CLIENT_SECRET constant
-    #
-    # @return [String]
-    def client_secret
-      ENV['KONTENA_CLIENT_SECRET'] || CLIENT_SECRET
-    end
-
     # Requests path supplied as argument and returns true if the request was a success.
     # For checking if the current authentication is valid.
     #
@@ -137,7 +141,7 @@ module Kontena
       request(path: final_path)
       true
     rescue
-      ENV["DEBUG"] && puts("Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}")
+      logger.debug "Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}"
       false
     end
 
@@ -147,7 +151,7 @@ module Kontena
       return nil unless token_account
       return nil unless token_account['token_endpoint']
 
-      request(
+      response = request(
         http_method: token_account['token_method'].downcase.to_sym,
         path: token_account['token_endpoint'],
         headers: { CONTENT_TYPE => token_account['token_post_content_type'] },
@@ -160,6 +164,8 @@ module Kontena
         expects: [200,201],
         auth: false
       )
+      response['expires_at'] ||= in_to_at(response['expires_in'])
+      response
     end
 
     # Return server version from a Kontena master by requesting '/'
@@ -478,10 +484,28 @@ module Kontena
     # @param [Excon::Response]
     # @return [Hash,String]
     def parse_response(response)
+      check_version_and_warn(response.headers[X_KONTENA_VERSION])
+
       if response.headers[CONTENT_TYPE] =~ JSON_REGEX
         parse_json(response.body)
       else
         response.body
+      end
+    end
+
+    def check_version_and_warn(server_version)
+      return nil if $VERSION_WARNING_ADDED
+      return nil unless server_version.to_s =~ /^\d+\.\d+\.\d+/
+
+      unless server_version[/^(\d+\.\d+)/, 1] == Kontena::Cli::VERSION[/^(\d+\.\d+)/, 1] # Just compare x.y
+        add_version_warning(server_version)
+        $VERSION_WARNING_ADDED = true
+      end
+    end
+
+    def add_version_warning(server_version)
+      at_exit do
+        warn Kontena.pastel.yellow("Warning: Server version is #{server_version}. You are using CLI version #{Kontena::Cli::VERSION}.")
       end
     end
 

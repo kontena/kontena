@@ -91,6 +91,12 @@ describe Agent::ContainerInfoMapper do
       expect(container.image_version).to eq('image_id')
     end
 
+    it 'sets image_version' do
+      docker_data['Config']['Cmd'] = ['npm', 'start']
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.cmd).to eq(['npm', 'start'])
+    end
+
     it 'sets env' do
       docker_data['Config']['Env'] = ['FOO=bar']
       subject.container_attributes_from_docker(container, docker_data)
@@ -104,18 +110,34 @@ describe Agent::ContainerInfoMapper do
       expect(container.env).to eq(['BAR=baz'])
     end
 
+    it 'sets labels' do
+      docker_data['Config']['Labels'] = {
+        'io.kontena.service.name' => 'test',
+        'io.kontena.grid.name' => 'first-grid',
+      }
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.labels['io;kontena;service;name']).to eq('test')
+      expect(container.labels['io;kontena;grid;name']).to eq('first-grid')
+    end
+
+    it 'sets hostname' do
+      docker_data['Config']['Hostname'] = 'test-1'
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.hostname).to eq('test-1')
+    end
+
+    it 'sets domainname' do
+      docker_data['Config']['Domainname'] = 'mygrid.kontena.local'
+      subject.container_attributes_from_docker(container, docker_data)
+      expect(container.domainname).to eq('mygrid.kontena.local')
+    end
+
     it 'sets running state' do
       docker_data['State']['Running'] = true
       subject.container_attributes_from_docker(container, docker_data)
       expect(container.state[:running]).to eq(true)
     end
 
-    it 'sets overlay_cidr' do
-      overlay_cidr = grid.overlay_cidrs.create(ip: '10.81.23.2', subnet: '19')
-      docker_data['Config']['Labels']['io.kontena.container.overlay_cidr'] = overlay_cidr.to_s
-      subject.container_attributes_from_docker(container, docker_data)
-      expect(container.reload.overlay_cidr).to eq(overlay_cidr)
-    end
   end
 
   describe '#parse_docker_network_settings' do
@@ -148,6 +170,20 @@ describe Agent::ContainerInfoMapper do
           }
         ]
       )
+    end
+  end
+
+  describe 'parse_labels' do
+    let(:labels) {
+      {
+        'io.kontena.service.name' => 'foobar',
+        'io.kontena.grid.name' => 'test'
+      }
+    }
+
+    it 'parses labels correctly' do
+      parsed_labels = subject.parse_labels(labels)
+      expect(parsed_labels['io;kontena;service;name']).to eq('foobar')
     end
   end
 end

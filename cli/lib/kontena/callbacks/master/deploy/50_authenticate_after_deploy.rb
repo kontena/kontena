@@ -8,13 +8,18 @@ module Kontena
       matches_commands 'master create'
 
       def after
-        ENV["DEBUG"] && puts("Command result: #{command.result.inspect}")
-        ENV["DEBUG"] && puts("Command exit code: #{command.exit_code.inspect}")
+        ENV["DEBUG"] && STDERR.puts("Command result: #{command.result.inspect}")
+        ENV["DEBUG"] && STDERR.puts("Command exit code: #{command.exit_code.inspect}")
         return unless command.exit_code == 0
         return unless command.result.kind_of?(Hash)
         return unless command.result.has_key?(:public_ip)
         return unless command.result.has_key?(:code)
         return unless command.result.has_key?(:name)
+
+        # If plugins generate self-signed cert, most of the upcoming callbacks will
+        # fail without this. This can be made bit more clever once all the plugins
+        # return the generated self-signed certificate.
+        ENV['SSL_IGNORE_ERRORS'] = 'true'
 
         # In case there already is a server with the same name add random characters to name
         if config.find_server(command.result[:name])
@@ -30,11 +35,11 @@ module Kontena
 
         # Figure out if HTTPS works, if not, try HTTP
         begin
-          ENV["DEBUG"] && puts("Trying to request / from #{new_master.url}")
+          ENV["DEBUG"] && STDERR.puts("Trying to request / from #{new_master.url}")
           client = Kontena::Client.new(new_master.url, nil, ignore_ssl_errors: true)
           client.get('/')
-        rescue 
-          ENV["DEBUG"] && puts("HTTPS test failed: #{$!} #{$!.message}")
+        rescue
+          ENV["DEBUG"] && STDERR.puts("HTTPS test failed: #{$!} #{$!.message}")
           unless retried
             new_master.url = "http://#{command.result[:public_ip]}"
             retried = true
@@ -46,7 +51,7 @@ module Kontena
         require 'shellwords'
         cmd = "master login --no-login-info --skip-grid-auto-select --verbose --name #{command.result[:name].shellescape} --code #{command.result[:code].shellescape} #{new_master.url.shellescape}"
         Retriable.retriable do
-          ENV["DEBUG"] && puts("Running: #{cmd}")
+          ENV["DEBUG"] && STDERR.puts("Running: #{cmd}")
           Kontena.run(cmd)
         end
       end

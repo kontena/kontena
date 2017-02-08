@@ -1,4 +1,3 @@
-require_relative 'overlay_cidr_allocator'
 
 module Docker
   class ServiceCreator
@@ -28,7 +27,8 @@ module Docker
     # @return [Hash]
     def service_spec(instance_number, deploy_rev, creds = nil)
       spec = {
-        service_name: grid_service.name,
+        service_id: grid_service.id.to_s,
+        service_name: grid_service.name_with_stack,
         service_revision: grid_service.revision,
         updated_at: grid_service.updated_at.to_s,
         instance_number: instance_number,
@@ -50,35 +50,27 @@ module Docker
         volumes: grid_service.volumes,
         volumes_from: grid_service.volumes_from,
         net: grid_service.net,
+        hostname: build_hostname(grid_service, instance_number),
+        domainname: build_domainname(grid_service),
+        exposed: grid_service.stack_exposed?,
         log_driver: grid_service.log_driver,
         log_opts: grid_service.log_opts,
         pid: grid_service.pid
       }
       spec[:env] = build_env(instance_number)
       spec[:secrets] = build_secrets
-      overlay_cidr = nil
-      if grid_service.overlay_network?
-        overlay_cidr = reserve_overlay_cidr(instance_number)
-      end
+
       labels = build_labels
-      if overlay_cidr
-        labels['io.kontena.container.overlay_cidr'] = overlay_cidr.to_s
-      end
+
       spec[:labels] = labels
       spec[:hooks] = build_hooks(instance_number)
+
+      spec[:networks] = build_networks
 
       spec
     rescue => exc
       puts exc.message
       puts exc.backtrace.join("\n")
-    end
-
-    # @param [Integer] instance_number
-    # @return [OverlayCidr]
-    def reserve_overlay_cidr(instance_number)
-      return unless grid_service.grid
-      allocator = Docker::OverlayCidrAllocator.new(grid_service.grid)
-      allocator.allocate_for_service_instance("#{grid_service.name}-#{instance_number}")
     end
 
     ##
@@ -100,6 +92,7 @@ module Docker
       env << "KONTENA_SERVICE_ID=#{grid_service.id.to_s}"
       env << "KONTENA_SERVICE_NAME=#{grid_service.name}"
       env << "KONTENA_GRID_NAME=#{grid_service.grid.try(:name)}"
+      env << "KONTENA_STACK_NAME=#{grid_service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{host_node.name}"
       env << "KONTENA_SERVICE_INSTANCE_NUMBER=#{instance_number}"
       env
@@ -127,13 +120,14 @@ module Docker
         'io.kontena.container.id' => service_container.id.to_s,
         'io.kontena.service.id' => grid_service.id.to_s,
         'io.kontena.service.name' => grid_service.name.to_s,
+        'io.kontena.stack.name' => grid_service.stack.name.to_s,
         'io.kontena.grid.name' => grid_service.grid.try(:name)
       }
       if grid_service.linked_to_load_balancer?
         lb = grid_service.linked_to_load_balancers[0]
         internal_port = grid_service.env_hash['KONTENA_LB_INTERNAL_PORT'] || '80'
         mode = grid_service.env_hash['KONTENA_LB_MODE'] || 'http'
-        labels['io.kontena.load_balancer.name'] = lb.name
+        labels['io.kontena.load_balancer.name'] = lb.qualified_name
         labels['io.kontena.load_balancer.internal_port'] = internal_port
         labels['io.kontena.load_balancer.mode'] = mode
       end
@@ -162,6 +156,37 @@ module Docker
       hooks
     rescue => exc
       puts exc.message
+    end
+
+    # @return [Array<Hash>]
+    def build_networks
+      networks = []
+      grid_service.networks.each do |network|
+        networks << {
+          name: network.name,
+          subnet: network.subnet,
+          multicast: network.multicast,
+          internal: network.internal
+        }
+      end
+      networks
+    end
+
+    # @param [GridService] grid_service
+    # @param [Integer] instance_number
+    # @return [String]
+    def build_hostname(grid_service, instance_number)
+      "#{grid_service.name}-#{instance_number}"
+    end
+
+    # @param [GridService] grid_service
+    # @return [String]
+    def build_domainname(grid_service)
+      if grid_service.stack.name == Stack::NULL_STACK
+        "#{grid_service.grid.name}.kontena.local"
+      else
+        "#{grid_service.stack.name}.#{grid_service.grid.name}.kontena.local"
+      end
     end
 
     def service_container

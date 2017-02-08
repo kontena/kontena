@@ -12,7 +12,7 @@ module V1
     plugin :multi_route
     plugin :streaming
 
-    Dir[File.join(__dir__, '/grids/*.rb')].each{|f| require f}
+    require_glob File.join(__dir__, '/grids/*.rb')
 
     route do |r|
 
@@ -25,6 +25,11 @@ module V1
       def load_grid(name)
         @grid = current_user.accessible_grids.find_by(name: name)
         halt_request(404, {error: 'Not found'}) unless @grid
+      end
+
+      r.on ':name/stacks' do |name|
+        load_grid(name)
+        r.route 'grid_stacks'
       end
 
       r.on ':name/services' do |name|
@@ -66,7 +71,8 @@ module V1
               user: current_user,
               name: data['name'],
               initial_size: data['initial_size'] || 1,
-              token: data['token']
+              token: data['token'],
+              default_affinity: data['default_affinity']
           )
 
           if outcome.success?

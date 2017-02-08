@@ -24,11 +24,12 @@ class HostNode
   field :private_ip, type: String
   field :last_seen_at, type: Time
   field :agent_version, type: String
+  field :docker_version, type: String
 
   attr_accessor :schedule_counter
 
   belongs_to :grid
-  has_many :containers, dependent: :destroy
+  has_many :containers
   has_many :host_node_stats
   has_and_belongs_to_many :images
 
@@ -40,6 +41,10 @@ class HostNode
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
+
+  after_destroy do |node|
+    node.containers.unscoped.destroy
+  end
 
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
@@ -62,7 +67,8 @@ class HostNode
       swap_limit: attrs['SwapLimit'],
       public_ip: attrs['PublicIp'],
       private_ip: attrs['PrivateIp'],
-      agent_version: attrs['AgentVersion']
+      agent_version: attrs['AgentVersion'],
+      docker_version: attrs['ServerVersion']
     }
     if self.name.nil?
       self.name = attrs['Name']

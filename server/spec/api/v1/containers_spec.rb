@@ -37,7 +37,7 @@ describe '/v1/containers' do
   end
 
   let(:host_node) do
-    david.grids.first.host_nodes.create!(node_id: 'abc')
+    david.grids.first.host_nodes.create!(node_id: 'abc', name: 'node-a')
   end
 
   let(:redis_service) do
@@ -55,12 +55,23 @@ describe '/v1/containers' do
         grid_service: redis_service,
         name: 'redis-1',
         image: 'redis:2.8',
-        host_node: host_node
+        host_node: host_node,
+        state: {
+          running: true
+        }
     )
   end
 
   let(:log_entry) do
     ContainerLog.create!(container: redis_container, grid_service: redis_service, grid: redis_service.grid, type: 'info', data: 'log entry', name: 'log name')
+  end
+
+  describe 'GET /' do
+    it 'returns list of containers' do
+      get "/v1/containers/#{redis_container.grid.to_path}", {}, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['containers'].size).to eq(1)
+    end
   end
 
   describe 'GET /:name' do

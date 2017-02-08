@@ -3,7 +3,6 @@ module GridServices
     include Workers
 
     required do
-      model :current_user, class: User
       model :grid_service
       integer :instances
     end
@@ -11,7 +10,6 @@ module GridServices
     def execute
       self.grid_service.set(:container_count => self.instances)
       GridServiceDeploy.create(grid_service: self.grid_service)
-      self.grid_service
     end
   end
 end

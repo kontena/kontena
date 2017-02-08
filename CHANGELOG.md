@@ -1,5 +1,236 @@
 # Changelog
 
+## [1.1.0](https://github.com/kontena/kontena/releases/tag/v1.1.0) (2017-02-03)
+
+**Master & Agents:**
+
+- Initialize container_seconds properly (#1764)
+- Fix service volume update (#1742)
+- Set puma workers based on available CPU cores (#1683)
+- Switch to use Alpine 3.5 (#1621)
+- Add container hours telemetry data (#1589)
+- Validate that secrets exist during service create and update (#1570)
+- Set grid default affinity (#1564)
+- Update Weave Net to 1.8.2 (#1562)
+- Changed log level of some messages to debug level in agent (#1519)
+- Better deployment errors for "Cannot find applicable node for service instance ..." (#1512)
+- Fix service container names to drop null- prefix, and use stack.service-N (#1494)
+- Say role not found instead of role can not be nil in role add (#1458)
+- Added kontena-console command to master for debugging (#903)
+- Stop container health check also on kill event (#1699)
+- Update image registry to 2.6.0 [enhancement] #1704
+
+**CLI:**
+
+- Remove deprecated commands and options (#1759)
+- Stack service link (prompt) resolver (#1756)
+- Read variable defaults from master when running stack upgrade (#1662 + #1751)
+- Stacks can now be installed/upgraded/validated from files, registry or URLs (#1748 #1736)
+- Vault ssl cert resolver for stacks (#1745)
+- Improve service stack revision visibility (#1744)
+- One step master --remote login (#1739)
+- Detect if environment supports running a graphical browser (#1738)
+- Deploy stack by default on install/upgrade (#1737)
+- Support liquid templating language in stack YAMLs (#1560 #1734)
+- Better error message when vault key nil/empty in vault resolver (#1728)
+- Add kontena service exec command (#1726)
+- Switch cli docker image to use root user (#1717)
+- Show origin of installed stack (#1711)
+- Improve stack deploy progress output (#1710)
+- Make --force more predictable in master rm (#1703)
+- Use the master url to build the redirect uri in init-cloud (#1701)
+- Rescue from broken pipe (#1684)
+- Update spinner message while spinning (#1679)
+- Stack service_instances resolver (#1678)
+- Show etcd health status (#1677)
+- Set master config server.provider during deploy (#1675)
+- Optionally use sudo when running docker build/push (#1673)
+- Show instance name in service stats (#1669)
+- Vault import/export (#1655)
+- Master/CLI version difference warning (#1636)
+- Add kontena vault import/export commands (#1634)
+- Install plugins under $HOME/.kontena/gems and without shell exec (#1628)
+- Improve interactive prompts on Windows (#1585)
+- Move debug output to STDERR (#1543)
+- Add kontena node/grid health commands (#1468)
+- Custom instrumentor for debugging http client requests when DEBUG=true (#1436)
+- Add kontena --version and global --debug (#1291)
+- Enable sending commands to hosts via kontena master/node ssh (#1205)
+- OSX CLI installer and automated build (#1112)
+- Display agent version in node list (#996)
+
+## [1.0.6](https://github.com/kontena/kontena/releases/tag/v1.0.6) (2017-01-18)
+
+**Master & Agents:**
+
+- agent: fix cAdvisor stats to ignore systemd Docker container mount cgroups (#1657)
+
+## [1.0.5](https://github.com/kontena/kontena/releases/tag/v1.0.5) (2017-01-13)
+
+**Master & Agents:**
+
+- fix loadbalancer link removal (#1623)
+- disable cAdvisor disk metrics & give lower cpu priority (#1629)
+- return 404 if stack not found (#1613)
+- fix EventMachine to abort on exceptions (#1626)
+
+**CLI:**
+
+- fix kontena grid cloud-config network units (#1619)
+
+## [1.0.4](https://github.com/kontena/kontena/releases/tag/v1.0.4) (2017-01-04)
+
+**Master & Agents:**
+
+- Send labels with the initial ws connection headers (#1597)
+- Fix WebsocketClient reconnect (#1602)
+
+
+**CLI:**
+- Calm down service status polling interval on service delete (#1596)
+- Tell why plugin install failed (#1510)
+
+**Loadbalancer:**
+
+- Allow to set custom SSL ciphers (#1591)
+- Add custom LB level settings (#1586)
+
+
+## [1.0.3](https://github.com/kontena/kontena/releases/tag/v1.0.3)
+
+**Master & Agents:**
+- Change default cadvisor image to official ([#1569](https://github.com/kontena/kontena/pull/1569))
+- Hide weave password from logs ([#1578](https://github.com/kontena/kontena/pull/1578))
+
+**CLI:**
+- Return validation errors properly when extending services ([#1581](https://github.com/kontena/kontena/pull/1581))
+- Fix stack build command ([#1577](https://github.com/kontena/kontena/pull/1577))
+- Use safe_yaml to load YAML files ([#1573](https://github.com/kontena/kontena/pull/1573))
+- Fix instance parsing in service logs ([#1571](https://github.com/kontena/kontena/pull/1571))
+
+## [1.0.2](https://github.com/kontena/kontena/releases/tag/v1.0.2)
+
+**Master & Agents:**
+
+- Fix error in StackDeployWorker when stack service has been removed ([#1544](https://github.com/kontena/kontena/pull/1544))
+- Fix registry & vpn stack deploy tracking ([#1537](https://github.com/kontena/kontena/pull/1537))
+- Block calls to Weave#start via #on_node_info ([#1545](https://github.com/kontena/kontena/pull/1545))
+- Fix agent to avoid DNS lookups for localhost with a missing /etc/hosts ([#1550](https://github.com/kontena/kontena/pull/1550))
+- Don't re-deploy dependant services on stack deploy ([#1552](https://github.com/kontena/kontena/pull/1552))
+- Fix error when removing orphan service volumes ([#1554](https://github.com/kontena/kontena/pull/1554))
+
+**CLI:**
+
+- Fix VPN create ([#1536](https://github.com/kontena/kontena/pull/1536))
+- Add stack commands to tab completer ([#1540](https://github.com/kontena/kontena/pull/1540))
+- New Stack file resolvers: interpolate and evaluate ([#1528](https://github.com/kontena/kontena/pull/1528))
+
+## [1.0.1](https://github.com/kontena/kontena/releases/tag/v1.0.1) (2016-12-09)
+
+**Master & Agents:**
+
+- Fix possible race condition in GridServiceScheduler (#1532)
+- Fix ServiceBalancer greediness (#1522)
+- Fix StackDeploy success state (#1509)
+- Boot em&celluloid with initialisers (#1503)
+- Fix binding same port on multi IPs (#1490)
+- Fix service show DNS (#1487)
+- Garbage collect orphan service containers (#1483)
+- Deploy stack service one-by-one (#1482)
+- Stack-warare loadbalancer (#1481)
+- Resolve volumes-from correctly with < 1.0.0 created services (#1455)
+
+
+**CLI:**
+
+- - Fix service containers command (#1514)
+- Use —name when parsing stacks (#1505)
+- Fix auth token refreshing (#1479)
+- Set GRID and STACK variables for stack files (#1475)
+
+
+
+## [1.0.0](https://github.com/kontena/kontena/releases/tag/v1.0.0) (2016-11-29)
+
+**Master & Agents:**
+
+- improve stacks functionality (#864, #1339, #1331, #1338, #1333, #1345, #1347, #1356, #1362, #1358, #1366, #1368, #1372, #1384, #1385, #1386, #1390, #1393, #1378, #1409, #1415, #1425, #1434, #1439)
+- improved network / ipam handling (#955, #1274, #1300, #1324, #1322, #1326, #1332, #1336, #1344, #1380, #1379, #1391, #1392, #1398)
+- cloud integration (#1340, #1389, #1399, #1408, #1407, #1419)
+- rest api docs (#1406)
+- refactor secrets api endpoints to match overall naming (#1405)
+- refactor containers api endpoint (#1363, #1426)
+- refactor nodes api endpoints (#1427, #1441, #1445, #1444, #1447)
+- rename services api container_count attribute to instances (#1404)
+- fix WaitHelper timeout (#1361)
+- do not restart already stopped service instances (#1355)
+- make ContainerLogWorker safer (#1350)
+- add health status actions on agent and master (#1115)
+- enhanced deployment tracking (#1348, #1349)
+- fix TelemetryJob version compare (#1346)
+
+**CLI:**
+
+- stack registry integration (#1403, #1428, #1433, #1429)
+- fix current master selection after master login (#1381)
+- stacks parser (#1351, #1417)
+- install self-signed cert locally (#1337, #1416)
+- refactor login commands and improve coverage (#1283)
+- deprecate service force deploy (#1295)
+- option to check only cli version (#1269)
+- show docker version in node show (#1255)
+- add / Rm multiple node labels. Added label list command. (#1296)
+- add quiet option to service list command (#1312)
+- remove previous version of a plugin on install (#1313)
+
+
+## [0.16.3](https://github.com/kontena/kontena/releases/tag/v0.16.3) (2016-11-15)
+
+**Master & Agents:**
+
+- fix environment rake task (#1311)
+- watch & notify when dead containers are gone (#1289)
+- fix external registry validation (#1310)
+- return correct error json when service remove fails (#1302)
+- log weaveexec errors (#1286)
+- fix all requires to use deterministic ordering across different systems (#1282)
+
+## [0.16.2](https://github.com/kontena/kontena/releases/tag/v0.16.2) (2016-11-03)
+
+**Master & Agents:**
+
+- sort initializers while loading, load symmetric-encryption before seed (#1280, #1277)
+
+**CLI:**
+
+- remove use of to_h for ruby 2.0 compatibility (#1267, #1266)
+- fix master list command if current master not set (#1268)
+
+## [0.16.1](https://github.com/kontena/kontena/releases/tag/v0.16.1) (2016-10-31)
+
+**Master & Agents:**
+
+- fix Agent IfaceHelper#interface_ip Errno::EADDRNOTAVAIL case (#1256)
+- call attach-router if interface ip does not exist (#1253)
+- collect stats only for running containers (#1239)
+- fix telemetry id (#1215)
+- use upsert in config put (#1221)
+- create indexes before running config seed (#1220)
+
+**CLI:**
+
+- login no longer raises when SERVER_NAME is null (#1254)
+- fix master provider save to cloud (#1250)
+- add script security to openVPN config output (#1231)
+- strip possible trailing arguments from remote code display (#1245)
+- set cloud master provider and version if provision plugin returns them (#1180)
+- don't require current master on first login (#1242)
+- better error messages when auth code exchange fails (#1222)
+- show username when logging in using auth code (#1236)
+- rename duplicate masters during config load (#1238)
+- use shellwords to split commands (#1201)
+- convert excon timeout variables to integers (#1227)
+
 ## [0.16.0](https://github.com/kontena/kontena/releases/tag/v0.16.0) (2016-10-24)
 
 **Master & Agents:**

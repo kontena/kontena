@@ -10,6 +10,14 @@ module Kontena
         @result = :done
       end
 
+      def set_title(message)
+        if $stdout.tty?
+          thread['update_msg'] = message
+        else
+          Kernel.puts "- #{message}"
+        end
+      end
+
       def warn?
         @result == :warn
       end
@@ -32,7 +40,7 @@ module Kontena
         @result = :warn
       end
     end
-    
+
     class Spinner
       CHARS = ['\\', '|', '/', '-']
       CHARS_LENGTH = CHARS.length
@@ -99,7 +107,15 @@ module Kontena
               end
               Kernel.print "\r#{message}#{CHARS[curr_index]}"
             end
-            
+
+            if Thread.current['update_msg']
+              msg = Thread.current['update_msg']
+              Thread.current['update_msg'] = nil
+              Thread.current['msg'] = msg
+              message = "    *   #{msg} .. "
+              Kernel.print "\r#{message}#{CHARS[curr_index]}"
+            end
+
             break if Thread.current['abort']
 
             if Thread.main['spinner_msgs']
@@ -143,13 +159,13 @@ module Kontena
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
           if ENV["DEBUG"]
-            puts "Spin aborted through fail!"
+            STDERR.puts "Spin aborted through fail!"
           end
         rescue Exception => ex
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
           if ENV["DEBUG"]
-            puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
+            STDERR.puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
           end
           raise ex
         ensure

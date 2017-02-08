@@ -4,13 +4,14 @@ describe Kontena::Models::ServicePod do
 
   let(:data) do
     {
+      'service_id' => 'aaaaaaa',
       'service_name' => 'redis',
       'instance_number' => 2,
       'deploy_rev' => Time.now.utc.to_s,
       'updated_at' => Time.now.utc.to_s,
       'labels' => {
         'io.kontena.service.name' => 'redis-cache',
-        'io.kontena.container.overlay_cidr' => '10.81.23.2/19'
+        'io.kontena.stack.name' => 'null'
       },
       'stateful' => true,
       'image_name' => 'redis:3.0',
@@ -34,30 +35,22 @@ describe Kontena::Models::ServicePod do
       'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
+      'hostname' => 'redis-2',
+      'domainname' => 'default.kontena.local',
       'log_driver' => nil
     }
   end
 
   let(:subject) { described_class.new(data) }
 
-  describe '#overlay_network' do
-    it 'returns overlay network information from labels' do
-      expect(subject.overlay_network).to eq(data['labels']['io.kontena.container.overlay_cidr'])
-    end
-
-    it 'returns nil if overlay network information is not provided' do
-      data['labels'] = {}
-      expect(subject.overlay_network).to be_nil
-    end
-  end
 
   describe '#can_expose_ports?' do
     it 'returns true if overlay network is defined' do
       expect(subject.can_expose_ports?).to be_truthy
     end
 
-    it 'returns false if overlay network is not provided' do
-      data['labels'] = {}
+    it 'returns false if net==host' do
+      data['net'] = 'host'
       expect(subject.can_expose_ports?).to be_falsey
     end
   end
@@ -119,8 +112,12 @@ describe Kontena::Models::ServicePod do
       expect(service_config['Image']).to eq(data['image_name'])
     end
 
-    it 'includes HostName' do
-      expect(service_config['HostName']).not_to be_nil
+    it 'includes Hostname' do
+      expect(service_config['Hostname']).to eq(service_config['Hostname'])
+    end
+
+    it 'includes Domainname' do
+      expect(service_config['Domainname']).to eq(service_config['Domainname'])
     end
 
     it 'does not include HostName if host network' do
@@ -210,6 +207,7 @@ describe Kontena::Models::ServicePod do
     it 'includes HostConfig' do
       expect(service_config['HostConfig']).not_to be_nil
     end
+
   end
 
   describe '#service_host_config' do
@@ -253,6 +251,11 @@ describe Kontena::Models::ServicePod do
       expect(host_config['NetworkMode']).to eq('host')
     end
 
+    it 'sets DnsSearch' do
+      expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'])
+      expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'].split(".", 2)[1])
+    end
+
     it 'does not include CpuShares if not defined' do
       expect(host_config['CpuShares']).to be_nil
     end
@@ -293,6 +296,8 @@ describe Kontena::Models::ServicePod do
       [
         {'ip' => '1.2.3.4', 'container_port' => 2379, 'node_port' => 12379, 'protocol' => 'tcp'},
         {'container_port' => 1194, 'node_port' => 1194, 'protocol' => 'udp'},
+        {'ip' => '1.2.3.4', 'container_port' => 53, 'node_port' => 53, 'protocol' => 'udp'},
+        {'ip' => '5.6.7.8', 'container_port' => 53, 'node_port' => 53, 'protocol' => 'udp'}
       ]
     end
 
@@ -305,6 +310,10 @@ describe Kontena::Models::ServicePod do
       port_bindings = subject.build_port_bindings
       expect(port_bindings['2379/tcp']).to eq([{'HostIp' => '1.2.3.4', 'HostPort' => '12379'}])
       expect(port_bindings['1194/udp']).to eq([{'HostIp' => '0.0.0.0', 'HostPort' => '1194'}])
+      expect(port_bindings['53/udp']).to eq([
+        {'HostIp' => '1.2.3.4', 'HostPort' => '53'},
+        {'HostIp' => '5.6.7.8', 'HostPort' => '53'}
+      ])
     end
   end
 
@@ -390,6 +399,44 @@ describe Kontena::Models::ServicePod do
           'foo' => 'bar'
         }
       })
+    end
+  end
+
+  describe '#build_volumes_from' do
+    it 'builds with 0.16 legacy, 1.1 stackless service naming' do
+      volume_container = double(:container)
+      data['volumes_from'] = ['mysql-%i']
+      data['labels']['io.kontena.stack.name'] = 'null'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['mysql-2'])
+    end
+
+    it 'builds with 1.0 stack naming' do
+      volume_container = double(:container)
+      data['volumes_from'] = ['mysql-%i']
+      data['labels']['io.kontena.stack.name'] = 'mystack'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('mystack-mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['mystack-mysql-2'])
+    end
+
+    it 'builds with 1.0 null stack naming' do
+      volume_container = double(:container)
+      data['volumes_from'] = ['mysql-%i']
+      data['labels']['io.kontena.stack.name'] = 'null'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('null-mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['null-mysql-2'])
+    end
+
+    it 'builds with 1.1 stack naming' do
+      volume_container = double(:container)
+      data['volumes_from'] = ['mysql-%i']
+      data['labels']['io.kontena.stack.name'] = 'mystack'
+      allow(Docker::Container).to receive(:get).with('mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('mystack-mysql-2').and_return(nil)
+      allow(Docker::Container).to receive(:get).with('mystack.mysql-2').and_return(volume_container)
+      expect(subject.build_volumes_from).to eq(['mystack.mysql-2'])
     end
   end
 end

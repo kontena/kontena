@@ -12,6 +12,7 @@ require_relative 'master/audit_log_command'
 require_relative 'master/token_command'
 require_relative 'master/init_cloud_command'
 require_relative 'master/api_command'
+require_relative 'master/ssh_command'
 
 class Kontena::Cli::MasterCommand < Kontena::Command
   include Kontena::Util
@@ -29,6 +30,8 @@ class Kontena::Cli::MasterCommand < Kontena::Command
   subcommand "audit-log", "Show master audit logs", Kontena::Cli::Master::AuditLogCommand
   subcommand "init-cloud", "Configure current master to use Kontena Cloud services", Kontena::Cli::Master::InitCloudCommand
   subcommand "api", "Perform raw API requests", Kontena::Cli::Master::ApiCommand
+  subcommand "ssh", "Connect to the master via SSH", Kontena::Cli::Master::SshCommand
+
   if experimental?
     require_relative 'master/create_command'
     subcommand "create", "Install a new Kontena Master", Kontena::Cli::Master::CreateCommand

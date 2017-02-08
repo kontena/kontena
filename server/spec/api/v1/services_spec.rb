@@ -8,9 +8,12 @@ describe '/v1/services' do
     }
   end
 
+  let! :grid do
+    grid = Grid.create!(name: 'terminal-a')
+  end
+
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid = Grid.create!(name: 'terminal-a')
     grid.users << user
 
     user
@@ -22,16 +25,31 @@ describe '/v1/services' do
 
   let(:app_service) do
     GridService.create!(
-      grid: david.grids.first,
+      grid: grid,
       name: 'app',
       image_name: 'my/app:latest',
       stateful: false
     )
   end
 
-  let(:redis_service) do
-    GridService.create!(
-      grid: david.grids.first,
+  let! :redis_service do
+    grid.grid_services.create!(
+      name: 'redis',
+      image_name: 'redis:2.8',
+      stateful: true,
+      env: ['FOO=BAR']
+    )
+  end
+
+  let! :stack do
+    grid.stacks.create!(
+      name: 'teststack',
+    )
+  end
+
+  let! :stack_redis_service do
+    stack.grid_services.create!(
+      grid: grid,
       name: 'redis',
       image_name: 'redis:2.8',
       stateful: true,
@@ -54,17 +72,35 @@ describe '/v1/services' do
   end
 
   describe 'GET /:id' do
-    it 'returns service json' do
-      get "/v1/services/#{redis_service.to_path}", nil, request_headers
-      expect(response.status).to eq(200)
+    it 'returns stackless service json' do
+      get "/v1/services/terminal-a/null/redis", nil, request_headers
+      expect(response.status).to eq(200), response.body
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at image affinity name stateful user
-        container_count cmd entrypoint ports env memory memory_swap cpu_shares
-        volumes volumes_from cap_add cap_drop state grid_id links log_driver log_opts
-        strategy deploy_opts pid instances net hooks secrets revision
+        id created_at updated_at stack image affinity name stateful user
+        instances cmd entrypoint ports env memory memory_swap cpu_shares
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
       ).sort)
-      expect(json_response['id']).to eq(redis_service.to_path)
+      expect(json_response['id']).to eq('terminal-a/null/redis')
       expect(json_response['image']).to eq(redis_service.image_name)
+      expect(json_response['dns']).to eq('redis.terminal-a.kontena.local')
+    end
+
+    it 'returns stack service json' do
+      get "/v1/services/terminal-a/teststack/redis", nil, request_headers
+      expect(response.status).to eq(200), response.body
+      expect(json_response.keys.sort).to eq(%w(
+        id created_at updated_at stack image affinity name stateful user
+        instances cmd entrypoint ports env memory memory_swap cpu_shares
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
+      ).sort)
+      expect(json_response['id']).to eq('terminal-a/teststack/redis')
+      expect(json_response['stack']['name']).to eq('teststack')
+      expect(json_response['image']).to eq(stack_redis_service.image_name)
+      expect(json_response['dns']).to eq('redis.teststack.terminal-a.kontena.local')
     end
 
     it 'returns error without authorization' do
@@ -89,13 +125,13 @@ describe '/v1/services' do
       redis_service
       data = {
         links: [
-          {name: 'redis', alias: 'redis'}
+          {name: 'null/redis', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
       expect(response.status).to eq(200)
       expect(json_response['links']).to include({
-        'alias' => 'redis', 'grid_service_id' => redis_service.to_path
+        'alias' => 'redis', 'id' => redis_service.to_path, 'name' => redis_service.name
       })
     end
 
@@ -116,7 +152,7 @@ describe '/v1/services' do
     it 'returns error when linked service does not exist' do
       data = {
         links: [
-          {name: 'foo', alias: 'redis'}
+          {name: 'null/foo', alias: 'redis'}
         ]
       }
       put "/v1/services/#{app_service.to_path}", data.to_json, request_headers
@@ -237,12 +273,32 @@ describe '/v1/services' do
     end
   end
 
+  describe 'GET /:id/deploys/:deploy_id' do
+    it 'returns deploy object' do
+      deployment = redis_service.grid_service_deploys.create
+      get "/v1/services/#{redis_service.to_path}/deploys/#{deployment.id}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['id']).to eq(deployment.id.to_s)
+    end
+
+    it 'returns 404 if deploy not found' do
+      get "/v1/services/#{redis_service.to_path}/deploys/foo", nil, request_headers
+      expect(response.status).to eq(404)
+    end
+  end
+
   describe 'POST /:id/deploy' do
     it 'deploys service' do
       expect {
         post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
         expect(response.status).to eq(200)
       }.to change{ redis_service.grid_service_deploys.count }.by(1)
+    end
+
+    it 'returns deploy object' do
+      post "/v1/services/#{redis_service.to_path}/deploy", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(GridServiceDeploy.find(json_response['id'])).not_to be_nil
     end
 
     it 'changes state to deploy_pending' do
@@ -270,7 +326,7 @@ describe '/v1/services' do
   describe 'POST /:id/stop' do
     it 'stops service' do
       expect(GridServices::Stop).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(double.as_null_object)
       post "/v1/services/#{redis_service.to_path}/stop", nil, request_headers
       expect(response.status).to eq(200)
@@ -280,7 +336,7 @@ describe '/v1/services' do
   describe 'POST /:id/start' do
     it 'starts service' do
       expect(GridServices::Start).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(double.as_null_object)
       post "/v1/services/#{redis_service.to_path}/start", nil, request_headers
       expect(response.status).to eq(200)
@@ -290,7 +346,7 @@ describe '/v1/services' do
   describe 'POST /:id/restart' do
     it 'restarts service' do
       expect(GridServices::Restart).to receive(:run)
-       .with(current_user: david, grid_service: redis_service)
+       .with(grid_service: redis_service)
        .and_return(double.as_null_object)
       post "/v1/services/#{redis_service.to_path}/restart", nil, request_headers
       expect(response.status).to eq(200)
@@ -298,9 +354,23 @@ describe '/v1/services' do
   end
 
   describe 'DELETE /:id' do
+    it 'returns error hash on error' do
+      outcome = double
+      allow(outcome).to receive(:success?).and_return(false)
+      errors = double
+      allow(errors).to receive(:message).and_return({ service: "Cannot delete service because it's currently being deployed"})
+      allow(outcome).to receive(:errors).and_return(errors)
+      expect(GridServices::Delete).to receive(:run)
+        .with(grid_service: redis_service)
+        .and_return(outcome)
+      delete "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response).to eq({ 'error' => { 'service' => "Cannot delete service because it's currently being deployed" }})
+    end
+
     it 'removes service' do
       expect(GridServices::Delete).to receive(:run)
-        .with(current_user: david, grid_service: redis_service)
+        .with(grid_service: redis_service)
         .and_return(double.as_null_object)
       delete "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)

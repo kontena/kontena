@@ -70,6 +70,21 @@ describe '/v1/users' do
       jane.reload
       expect(jane.roles.include?(grid_admin)).to be_truthy
     end
+
+    it 'says role not found when role not found' do
+      jane
+      grid_admin
+      data = {
+          email: 'jane@domain.com',
+          role: 'foo_admin'
+      }
+      post '/v1/users/jane@domain.com/roles', data.to_json, request_headers
+
+      expect(response.status).to eq(422)
+      json = JSON.parse(response.body)
+      expect(json.has_key?('error')).to be_truthy
+      expect(json['error']['role']).to eq "Role 'foo_admin' not found"
+    end
   end
 
   describe 'DELETE /:username/roles/:role' do
@@ -83,6 +98,15 @@ describe '/v1/users' do
       expect(response.status).to eq(200)
       jane.reload
       expect(jane.roles.include?(grid_admin)).to be_falsey
+    end
+
+    it 'returns an error if role is not found' do
+      jane.roles << grid_admin
+      delete '/v1/users/jane@domain.com/roles/foo_admin', nil, request_headers
+      expect(response.status).to eq(422)
+      json = JSON.parse(response.body)
+      expect(json.has_key?('error')).to be_truthy
+      expect(json['error']['role']).to eq "Role 'foo_admin' not found"
     end
   end
 

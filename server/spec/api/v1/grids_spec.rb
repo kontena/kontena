@@ -113,13 +113,13 @@ describe '/v1/grids' do
             image: 'wordpress',
             stateful: false,
             name: 'wordpress',
-            links: [{'name' => "#{db_service.name}", 'alias' => 'mysql'}]
+            links: [{'name' => "null/#{db_service.name}", 'alias' => 'mysql'}]
         }
 
         post "/v1/grids/#{grid.to_path}/services", payload.to_json, request_headers
 
         expect(json_response['links'].size).to eq(1)
-        expect(json_response['links'].first['grid_service_id']).to eq(db_service.to_path)
+        expect(json_response['links'].first['id']).to eq(db_service.to_path)
         expect(json_response['links'].first['alias']).to eq('mysql')
       end
     end
@@ -183,21 +183,29 @@ describe '/v1/grids' do
         expect(response.status).to eq(200)
         expect(json_response['services'].size).to eq(2)
         instance = json_response['services'][0]
-        expect(instance['instances']['total']).to eq(3)
-        expect(instance['instances']['running']).to eq(0)
+        expect(instance['instance_counts']['total']).to eq(3)
+        expect(instance['instance_counts']['running']).to eq(0)
         instance = json_response['services'][1]
-        expect(instance['instances']['total']).to eq(2)
-        expect(instance['instances']['running']).to eq(2)
+        expect(instance['instance_counts']['total']).to eq(2)
+        expect(instance['instance_counts']['running']).to eq(2)
       end
 
-      it 'it returns internal services' do
+      it 'it returns services for stack' do
+        grid = david.grids.first
+        stack = grid.stacks.create(name: 'redis')
+        redis = stack.grid_services.create(name: 'redis', image_name: 'redis:latest', grid: grid)
+        grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
+        get "/v1/grids/#{grid.to_path}/services?stack=redis", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['services'].size).to eq(1)
+        expect(json_response['services'][0]['name']).to eq(redis.name)
+      end
+
+      it 'it returns services for stack' do
         grid = david.grids.first
         grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
-        grid.grid_services.create!(name: 'vpn', image_name: 'kontena/openvpn:latest')
-        grid.grid_services.create!(name: 'registry', image_name: 'registry:2.0')
-        get "/v1/grids/#{grid.to_path}/services", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['services'].size).to eq(3)
+        get "/v1/grids/#{grid.to_path}/services?stack=redis", nil, request_headers
+        expect(response.status).to eq(404)
       end
     end
 
@@ -209,16 +217,6 @@ describe '/v1/grids' do
         get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)
-      end
-    end
-
-    describe '/nodes/:name' do
-      it 'returns grid node' do
-        grid = david.grids.first
-        node = grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid)
-        get "/v1/grids/#{grid.to_path}/nodes/#{node.name}", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['name']).to eq(node.name)
       end
     end
 

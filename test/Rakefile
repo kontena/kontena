@@ -1,0 +1,35 @@
+
+version = ENV['VERSION'] || 'edge'
+initial_size = (ENV['INITIAL_SIZE'] || 3).to_i
+
+namespace :vagrant  do
+
+  desc "setup vagrant"
+  task :setup => [:setup_master, :setup_grid]
+
+  desc "setup vagrant master"
+  task :setup_master do
+    sh "kontena vagrant master create --skip-auth-provider --name e2e --memory 512 --version #{version}"
+  end
+
+  desc "setup vagrant grid"
+  task :setup_grid do
+    sh "kontena grid create --initial-size #{initial_size} e2e"
+    sh "kontena vagrant node create --memory 1024 --version #{version} --instances #{initial_size} node"
+    sh "kontena node ls"
+  end
+
+  desc "teardown vagrant"
+  task :teardown => [:teardown_grid, :teardown_master]
+
+  task :teardown_master do
+    sh "kontena vagrant master terminate --force"
+  end
+
+  task :teardown_grid do
+    initial_size.times do |i|
+      sh "kontena vagrant node terminate --force node-#{i + 1}"
+    end
+    sh "kontena grid rm --force e2e"
+  end
+end

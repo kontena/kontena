@@ -40,10 +40,12 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    begin
-      example.run
-    rescue SystemExit
-      puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
+    catch :exit_with_error do
+      begin
+        example.run
+      rescue SystemExit
+        puts "Got SystemExit: #{$!.message} - Exit code: #{$!.status}"
+      end
     end
   end
 
@@ -59,3 +61,4 @@ end
 require_relative 'support/client_helpers'
 require_relative 'support/requirements_helper'
 require_relative 'support/fixtures_helpers'
+require_relative 'support/output_helpers'

@@ -26,7 +26,7 @@ module Kontena
 
       def initialize
         super
-        @logger = Logger.new(STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'CONFIG'
         load_settings_from_env || load_settings_from_config_file
@@ -122,6 +122,7 @@ module Kontena
         {
           name: 'kontena',
           url: 'https://cloud-api.kontena.io',
+          stacks_url: 'https://stacks.kontena.io',
           token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
           authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
           userinfo_endpoint: 'https://cloud-api.kontena.io/user',

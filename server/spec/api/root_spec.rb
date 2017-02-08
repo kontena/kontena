@@ -10,4 +10,9 @@ describe '/' do
     get '/', nil, {}
     expect(json_response['version']).not_to be_nil
   end
+
+  it 'should add a X-Kontena-Version header' do
+    get '/', nil, {}
+    expect(response.headers['X-Kontena-Version']).to eq Server::VERSION
+  end
 end

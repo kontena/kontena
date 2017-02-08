@@ -27,7 +27,7 @@ describe GridServiceScheduler do
   describe '#filter_nodes' do
     it 'filters every node' do
       subject.filters.each do |filter|
-        expect(filter).to receive(:for_service).once.with(grid_service, 'foo-1', anything)
+        expect(filter).to receive(:for_service).once.with(grid_service, 'foo-1', anything).and_call_original
       end
       subject.filter_nodes(grid_service, 'foo-1', nodes)
     end

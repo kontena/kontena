@@ -11,6 +11,7 @@ require_relative 'grids/audit_log_command'
 require_relative 'grids/user_command'
 require_relative 'grids/cloud_config_command'
 require_relative 'grids/trusted_subnet_command'
+require_relative 'grids/health_command'
 
 class Kontena::Cli::GridCommand < Kontena::Command
 
@@ -27,6 +28,7 @@ class Kontena::Cli::GridCommand < Kontena::Command
   subcommand "user", "User specific commands", Kontena::Cli::Grids::UserCommand
   subcommand "cloud-config", "Generate cloud-config", Kontena::Cli::Grids::CloudConfigCommand
   subcommand "trusted-subnet", "Trusted subnet related commands", Kontena::Cli::Grids::TrustedSubnetCommand
+  subcommand "health", "Check grid health", Kontena::Cli::Grids::HealthCommand
 
   def execute
   end

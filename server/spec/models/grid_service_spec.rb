@@ -5,7 +5,8 @@ describe GridService do
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
                           :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
-                          :memory_swap, :cpu_shares).of_type(Fixnum) }
+                          :memory_swap, :cpu_shares,
+                          :revision, :stack_revision).of_type(Fixnum) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
                           :cap_add, :cap_drop, :volumes).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
@@ -24,6 +25,10 @@ describe GridService do
   it { should have_many(:audit_logs) }
   it { should have_many(:grid_service_deploys) }
 
+  it { should validate_presence_of(:name) }
+  it { should validate_presence_of(:image_name) }
+  it { should validate_presence_of(:grid_id) }
+  it { should validate_presence_of(:stack_id) }
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_service_ids: 1) }
@@ -31,9 +36,30 @@ describe GridService do
   let(:grid) do
     Grid.create(name: 'test-grid')
   end
+  let :stack do
+    Stack.create(grid: grid, name: 'stack')
+  end
 
   let(:grid_service) do
     GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
+  end
+  let(:stack_service) do
+    GridService.create!(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')
+  end
+
+  let(:stacked_service) do
+    stack = Stack.create!(name: 'stack')
+    GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
+  end
+
+  describe '#qualified_name' do
+    it 'returns full path for stacked service' do
+      expect(stacked_service.qualified_name).to eq("#{stacked_service.stack.name}/#{stacked_service.name}")
+    end
+
+    it 'returns path without stack for stackless service' do
+      expect(grid_service.qualified_name).to eq("#{grid_service.name}")
+    end
   end
 
   describe '#stateful?' do
@@ -80,6 +106,18 @@ describe GridService do
     it 'returns false if service is not running' do
       subject.state = 'stopped'
       expect(subject.running?).to eq(false)
+    end
+  end
+
+  describe '#stopped?' do
+    it 'returns true if service is stopped' do
+      subject.state = 'stopped'
+      expect(subject.stopped?).to eq(true)
+    end
+
+    it 'returns false if service is not stopped' do
+      subject.state = 'running'
+      expect(subject.stopped?).to eq(false)
     end
   end
 
@@ -145,6 +183,31 @@ describe GridService do
     end
   end
 
+  describe '#linked_from_services' do
+    it 'returns Mongoid::Criteria' do
+      expect(grid_service.linked_from_services).to be_instance_of(Mongoid::Criteria)
+    end
+
+    it 'returns services that service has been linked from' do
+      a = GridService.create!(
+        grid: grid, name: 'aaa', image_name: 'aaa:latest',
+        grid_service_links: [
+          GridServiceLink.new(linked_grid_service_id: grid_service.id, alias: 'foo')
+        ]
+      )
+      b = GridService.create!(
+        grid: grid, name: 'bbb', image_name: 'bbb:latest',
+        grid_service_links: [
+          GridServiceLink.new(linked_grid_service_id: a.id, alias: 'a-foo')
+        ]
+      )
+      expect(grid_service.linked_from_services.count).to eq(1)
+      expect(grid_service.linked_from_services.first.id).to eq(a.id)
+      expect(a.linked_from_services.count).to eq(1)
+      expect(a.linked_from_services.first.id).to eq(b.id)
+    end
+  end
+
   describe '#load_balancer?' do
     it 'returns true if official kontena/lb image' do
       subject.image_name = 'kontena/lb:latest'
@@ -174,6 +237,64 @@ describe GridService do
 
     it 'returns nil if container is not found' do
       expect(grid_service.container_by_name('not_found')).to be_nil
+    end
+  end
+
+  describe '#name_with_stack' do
+    it 'returns stackless service name without stack' do
+      expect(grid_service.name_with_stack).to eq 'redis'
+    end
+    it 'returns stack service name with stack' do
+      expect(stack_service.name_with_stack).to eq 'stack.redis'
+    end
+  end
+
+  describe '#stack_exposed?' do
+    it 'returns true if service is exposed via stack' do
+      stack = Stack.create!(name: 'redis')
+      stack.stack_revisions.create(expose: 'redis')
+      service = GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8', stack: stack)
+      expect(service.stack_exposed?).to be_truthy
+    end
+
+    it 'returns false if service is not exposed via stack' do
+      expect(grid_service.stack_exposed?).to be_falsey
+    end
+  end
+
+  describe '#depending_on_other_services?' do
+    it 'returns false by default' do
+      expect(subject.depending_on_other_services?).to be_falsey
+    end
+
+    it 'returns true if service affinity' do
+      subject.affinity = ['service==foobar']
+      expect(subject.depending_on_other_services?).to be_truthy
+      subject.affinity = ['service!=foobar']
+      expect(subject.depending_on_other_services?).to be_truthy
+    end
+
+    it 'returns true if volumes_from' do
+      subject.volumes_from = ['foobar-%i']
+      expect(subject.depending_on_other_services?).to be_truthy
+    end
+  end
+
+  describe '#affinity' do
+    it 'returns empty array by default' do
+      expect(subject.affinity).to eq([])
+    end
+
+    it 'returns service affinity if set' do
+      subject.grid = grid
+      subject.affinity = ['label==foo=bar']
+      expect(subject.affinity).to eq(['label==foo=bar'])
+    end
+
+    it 'returns default affinity from grid if service affinity is not set' do
+      grid.default_affinity = ['label!=type=ssd']
+      subject.grid = grid
+      expect(subject.affinity).to eq(['label!=type=ssd'])
     end
   end
 end

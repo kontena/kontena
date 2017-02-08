@@ -79,13 +79,10 @@ class ServiceBalancerJob
   # @return [Boolean]
   def should_balance_stateless_service?(service)
     return false if pending_deploys?(service)
+    return false if active_deploys?(service)
+    return false if active_deploys_within_stack?(service)
+
     return true if !all_instances_exist?(service)
-
-    if missing_cidr?(service)
-      force_service_update(service)
-      return true
-    end
-
     return true if lagging_behind?(service)
 
     if interval_passed?(service)
@@ -99,11 +96,6 @@ class ServiceBalancerJob
   # @param [GridService] service
   # @return [Boolean]
   def should_balance_stateful_service?(service)
-    if missing_cidr?(service)
-      force_service_update(service)
-      return true
-    end
-
     false
   end
 
@@ -115,9 +107,20 @@ class ServiceBalancerJob
 
   # @param [GridService] service
   # @return [Boolean]
+  def active_deploys?(service)
+    service.grid_service_deploys.where(:started_at.gt => 30.minutes.ago, :deploy_state.in => [:created, :ongoing]).count > 0
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def active_deploys_within_stack?(service)
+    service.stack.stack_deploys.where(:created_at.gt => 30.minutes.ago, :deploy_state.in => [:created, :ongoing]).count > 0
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
   def lagging_behind?(service)
     return true if service.deployed_at && service.updated_at > service.deployed_at
-    return true if service.deployed_at && service.deploy_requested_at && service.deploy_requested_at > service.deployed_at
 
     false
   end
@@ -132,12 +135,6 @@ class ServiceBalancerJob
     end
 
     false
-  end
-
-  # @param [GridService] service
-  # @return [Boolean]
-  def missing_cidr?(service)
-    service.containers.any? { |c| service.net == 'bridge' && c.overlay_cidr.nil? }
   end
 
   # @param [GridService] service

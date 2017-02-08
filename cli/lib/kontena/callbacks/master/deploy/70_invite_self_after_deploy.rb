@@ -17,6 +17,7 @@ module Kontena
         if response && response.kind_of?(Hash) && response.has_key?('data') && response['data'].has_key?('attributes')
           user_data[:email] = response['data']['attributes']['email']
           user_data[:username] = response['data']['attributes']['username']
+          user_data[:id] = response['data']['id']
           user_data[:verified] = response['data']['attributes']['verified']
           @cloud_user_data = user_data
         end
@@ -32,14 +33,14 @@ module Kontena
 
         invite_response = nil
         spinner "Creating user #{cloud_user_data[:email]} into Kontena Master" do |spin|
-          invite_response = Kontena.run("master users invite --return #{cloud_user_data[:email].shellescape}", returning: :result)
+          invite_response = Kontena.run("master users invite --external-id #{cloud_user_data[:id]} --return #{cloud_user_data[:email].shellescape}", returning: :result)
           unless invite_response.kind_of?(Hash) && invite_response.has_key?('invite_code')
             spin.fail
           end
         end
 
         return nil unless invite_response
-        ENV["DEBUG"] && puts("Got invite code: #{invite_response['invite_code']}")
+        ENV["DEBUG"] && STDERR.puts("Got invite code: #{invite_response['invite_code']}")
 
         role_status = nil
 

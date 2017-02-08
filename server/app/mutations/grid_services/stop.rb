@@ -1,7 +1,6 @@
 module GridServices
   class Stop < Mutations::Command
     required do
-      model :current_user, class: User
       model :grid_service
     end
 
@@ -22,7 +21,9 @@ module GridServices
     def stop_service_instances
       self.grid_service.containers.each do |container|
         if container.running?
-          Docker::ServiceStopper.new(container.host_node).stop_service_instance(container.name)
+          Docker::ServiceStopper.new(container.host_node).stop_service_instance(
+            self.grid_service, container.instance_number
+          )
         end
       end
     end

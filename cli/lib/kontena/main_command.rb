@@ -6,7 +6,6 @@ require_relative 'callback'
 require_relative 'cli/bytes_helper'
 require_relative 'cli/grid_options'
 require_relative 'cli/app_command'
-require_relative 'cli/login_command'
 require_relative 'cli/logout_command'
 require_relative 'cli/whoami_command'
 require_relative 'cli/container_command'
@@ -25,17 +24,21 @@ require_relative 'cli/version_command'
 require_relative 'cli/stack_command'
 require_relative 'cli/certificate_command'
 require_relative 'cli/cloud_command'
-require_relative 'cli/register_command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
   include Kontena::Cli::Common
 
+  option ['-v', '--version'], :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
+    puts ['kontena-cli', Kontena::Cli::VERSION, '[ruby' + RUBY_VERSION + '+' + RUBY_PLATFORM + ']'].join(' ')
+    exit 0
+  end
+
   subcommand "cloud", "Kontena Cloud specific commands", Kontena::Cli::CloudCommand
   subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", Kontena::Cli::LogoutCommand
   subcommand "grid", "Grid specific commands", Kontena::Cli::GridCommand
   subcommand "app", "App specific commands", Kontena::Cli::AppCommand
-  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand if experimental?
+  subcommand "stack", "Stack specific commands", Kontena::Cli::StackCommand
   subcommand "service", "Service specific commands", Kontena::Cli::ServiceCommand
   subcommand "vault", "Vault specific commands", Kontena::Cli::VaultCommand
   subcommand "certificate", "LE Certificate specific commands", Kontena::Cli::CertificateCommand
@@ -49,8 +52,6 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "whoami", "Shows current logged in user", Kontena::Cli::WhoamiCommand
   subcommand "plugin", "Plugin related commands", Kontena::Cli::PluginCommand
   subcommand "version", "Show version", Kontena::Cli::VersionCommand
-  subcommand "login", "[DEPRECATED] Login to Kontena Master", Kontena::Cli::LoginCommand
-  subcommand "register", "[DEPRECATED] Register a Kontena Cloud account", Kontena::Cli::RegisterCommand
 
   def execute
   end

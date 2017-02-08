@@ -4,8 +4,10 @@ namespace :release do
   DOCKER_NAME = 'kontena/server'
   if VERSION.prerelease?
     DOCKER_VERSIONS = ['edge']
+    DEB_COMPONENT = 'edge'
   else
     DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
+    DEB_COMPONENT = 'main'
   end
   BINTRAY_USER = ENV['BINTRAY_USER']
   BINTRAY_KEY = ENV['BINTRAY_KEY']
@@ -25,7 +27,11 @@ namespace :release do
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu/#{NAME}/DEBIAN/control")
     sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/DEBIAN/postinst")
     sh("sed -i \"s/VERSION/#{VERSION}/g\" build/ubuntu/#{NAME}/etc/init/kontena-server-api.conf")
-    sh("cd build/ubuntu && dpkg-deb -b #{NAME} .")
+    Dir.chdir("build/ubuntu") do
+      sh("dpkg-deb -b #{NAME} .")
+    end
+    sh('rm -rf release/trusty && mkdir -p release/trusty')
+    sh('cp build/ubuntu/*.deb release/trusty')
   end
 
   desc 'Build ubuntu xenial package'
@@ -38,7 +44,11 @@ namespace :release do
     sh('cp -ar packaging/ubuntu_xenial build/')
     sh("sed -i \"s/VERSION/#{VERSION}-#{rev}/g\" build/ubuntu_xenial/#{NAME}/DEBIAN/control")
     sh("sed -i \"s/{{VERSION}}/#{VERSION}/g\" build/ubuntu_xenial/#{NAME}/lib/systemd/system/kontena-server.service.d/kontena-version.conf")
-    sh("cd build/ubuntu_xenial && dpkg-deb -b #{NAME} .")
+    Dir.chdir("build/ubuntu_xenial") do
+      sh("dpkg-deb -b #{NAME} .")
+    end
+    sh('rm -rf release/xenial && mkdir -p release/xenial')
+    sh('cp build/ubuntu_xenial/*.deb release/xenial')
   end
 
   desc 'Build docker image'
@@ -59,13 +69,8 @@ namespace :release do
   task :push_ubuntu do
     rev = ENV['REV'] || '1'
     repo = ENV['REPO'] || 'ubuntu'
-    sh('rm -rf release && mkdir release')
-    sh('cp build/ubuntu/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=main;deb_architecture=amd64'")
-
-    sh('rm -rf release && mkdir release')
-    sh('cp build/ubuntu_xenial/*.deb release/')
-    sh("curl -T ./release/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/main/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=main;deb_architecture=amd64'")
+    sh("curl -T ./release/trusty/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=#{DEB_COMPONENT};deb_architecture=amd64'")
+    sh("curl -T ./release/xenial/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=#{DEB_COMPONENT};deb_architecture=amd64'")
   end
 
   desc 'Upload docker image'
@@ -73,6 +78,25 @@ namespace :release do
     sh("docker push #{DOCKER_NAME}:#{VERSION}")
     DOCKER_VERSIONS.each do |v|
       sh("docker push #{DOCKER_NAME}:#{v}")
+    end
+  end
+
+  desc 'Build docs image'
+  task :build_docs do
+    Bundler.with_clean_env do
+      Dir.chdir('docs') do
+        sh("bundle install")
+        sh("bundle exec middleman build")
+        sh("docker rmi kontena/master-api-docs:#{VERSION} || true")
+        sh("docker build --no-cache --pull -t kontena/master-api-docs:#{VERSION} .")
+      end
+    end
+  end
+
+  desc 'Push docs image'
+  task :push_docs do
+    Dir.chdir('docs') do
+      sh("docker push kontena/master-api-docs:#{VERSION}")
     end
   end
 end

@@ -10,6 +10,7 @@ module Kontena::Cli::Grids
     option "--initial-size", "INITIAL_SIZE", "Initial grid size (number of nodes)", default: 1
     option "--silent", :flag, "Reduce output verbosity"
     option "--token", "[TOKEN]", "Set grid token"
+    option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
 
     requires_current_master_token
 
@@ -18,7 +19,8 @@ module Kontena::Cli::Grids
         name: name
       }
       payload[:token] = self.token if self.token
-      payload[:initial_size] = initial_size if initial_size
+      payload[:initial_size] = self.initial_size if self.initial_size
+      payload[:default_affinity] = self.default_affinity_list unless self.default_affinity_list.empty?
       grid = nil
       if initial_size == 1
         warning "Option --initial-size=1 is only recommended for test/dev usage" unless running_silent?

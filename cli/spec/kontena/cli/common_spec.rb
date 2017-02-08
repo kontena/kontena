@@ -128,35 +128,42 @@ describe Kontena::Cli::Common do
     end
   end
 
-  describe '#confirm_command' do
-    it 'returns true if input matches' do
-      allow(subject).to receive(:ask).and_return('name-to-confirm')
-
-      expect(subject.confirm_command('name-to-confirm')).to be_truthy
-      expect{subject.confirm_command('name-to-confirm')}.to_not raise_error
+  context 'confirm' do
+    before(:each) do
+      expect($stdout).to receive(:tty?).at_least(:once).and_return(true)
+      expect($stdin).to receive(:tty?).at_least(:once).and_return(true)
     end
 
-    it 'raises error unless input matches' do
-      expect(subject).to receive(:ask).and_return('wrong-name')
-      expect(subject).to receive(:error).with(/did not match/)
+    describe '#confirm_command' do
+      it 'returns true if input matches' do
+        allow(subject).to receive(:ask).and_return('name-to-confirm')
 
-      subject.confirm_command('name-to-confirm')
+        expect(subject.confirm_command('name-to-confirm')).to be_truthy
+        expect{subject.confirm_command('name-to-confirm')}.to_not raise_error
+      end
+
+      it 'raises error unless input matches' do
+        expect(subject).to receive(:ask).and_return('wrong-name')
+        expect(subject).to receive(:error).with(/did not match/)
+
+        subject.confirm_command('name-to-confirm')
+      end
     end
-  end
 
-  describe '#confirm' do
-    it 'returns true if confirmed' do
-      allow(subject.prompt).to receive(:yes?).and_return(true)
+    describe '#confirm' do
+      it 'returns true if confirmed' do
+        allow(subject.prompt).to receive(:yes?).and_return(true)
 
-      expect(subject.confirm).to be_truthy
-      expect{subject.confirm}.to_not raise_error
-    end
+        expect(subject.confirm).to be_truthy
+        expect{subject.confirm}.to_not raise_error
+      end
 
-    it 'raises error unless confirmed' do
-      expect(subject.prompt).to receive(:yes?).and_return(false)
-      expect(subject).to receive(:error).with(/Aborted/)
+      it 'raises error unless confirmed' do
+        expect(subject.prompt).to receive(:yes?).and_return(false)
+        expect(subject).to receive(:error).with(/Aborted/)
 
-      subject.confirm
+        subject.confirm
+      end
     end
   end
 

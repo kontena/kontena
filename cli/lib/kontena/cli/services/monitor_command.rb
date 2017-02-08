@@ -15,14 +15,14 @@ module Kontena::Cli::Services
 
       loop do
         nodes = {}
-        service = client(token).get("services/#{current_grid}/#{name}")
-        result = client(token).get("services/#{current_grid}/#{name}/containers")
+        service = client(token).get("services/#{parse_service_id(name)}")
+        result = client(token).get("services/#{parse_service_id(name)}/containers")
         result['containers'].each do |container|
           nodes[container['node']['name']] ||= []
           nodes[container['node']['name']] << container
         end
         clear_terminal
-        puts "service: #{name} (#{result['containers'].size}/#{service['container_count']} instances)"
+        puts "service: #{name} (#{result['containers'].size}/#{service['instances']} instances)"
         puts "strategy: #{service['strategy']}"
         puts "status: #{service['state']}"
         puts "stateful: #{service['stateful'] == true ? 'yes' : 'no' }"

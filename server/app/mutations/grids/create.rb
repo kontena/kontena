@@ -13,6 +13,10 @@ module Grids
 
     optional do
       string :token
+
+      array :default_affinity do
+        string
+      end
     end
 
     def validate
@@ -26,26 +30,18 @@ module Grids
       grid = Grid.new(
         name: self.name,
         initial_size: self.initial_size,
-        token: self.token
+        token: self.token,
+        default_affinity: self.default_affinity.to_a
       )
       unless grid.save
         grid.errors.each do |key, message|
           add_error(key, :invalid, message)
         end
         return
-      else
-        initialize_subnet(grid)
       end
       user.grids << grid
 
       grid
-    end
-
-    def initialize_subnet(grid)
-      Celluloid::Future.new{
-        overlay_allocator = Docker::OverlayCidrAllocator.new(grid)
-        overlay_allocator.initialize_grid_subnet
-      }
     end
   end
 end

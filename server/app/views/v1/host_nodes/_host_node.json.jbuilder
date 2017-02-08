@@ -15,6 +15,7 @@ json.cpus node.cpus
 json.public_ip node.public_ip
 json.private_ip node.private_ip
 json.agent_version node.agent_version
+json.docker_version node.docker_version
 json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|n|
   if n.region == node.region
     n.private_ip
@@ -25,7 +26,17 @@ json.peer_ips node.grid.host_nodes.ne(id: node.id).map{|n|
 json.node_number node.node_number
 json.initial_member node.initial_member?
 json.grid do
-  json.partial!("app/views/v1/grids/grid", grid: node.grid) if node.grid
+  grid = node.grid
+  if grid
+    json.id grid.to_path
+    json.name grid.name
+    json.initial_size grid.initial_size
+    json.token grid.token
+    json.stats do
+      json.statsd grid.stats['statsd']
+    end
+    json.trusted_subnets grid.trusted_subnets
+  end
 end
 json.resource_usage do
   stats = node.host_node_stats.last
@@ -33,5 +44,6 @@ json.resource_usage do
     json.memory stats.memory
     json.load stats.load
     json.filesystem stats.filesystem
+    json.usage stats.usage
   end
 end

@@ -1,12 +1,7 @@
 require_relative '../../spec_helper'
 
 describe GridServices::Update do
-  let(:user) { User.create!(email: 'joe@domain.com')}
-  let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid.users << user
-    grid
-  }
+  let(:grid) { Grid.create!(name: 'test-grid') }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
 
   describe '#run' do
@@ -15,7 +10,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
@@ -27,7 +21,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
@@ -39,7 +32,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             image: 'redis:3.0'
         ).run
@@ -51,7 +43,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             env: ['FOO=bar']
         ).run
@@ -63,7 +54,6 @@ describe GridServices::Update do
       redis_service.save
       expect {
         described_class.new(
-            current_user: user,
             grid_service: redis_service,
             affinity: ['az==b1']
         ).run
@@ -72,7 +62,6 @@ describe GridServices::Update do
 
     it 'updates health check' do
       described_class.new(
-          current_user: user,
           grid_service: redis_service,
           health_check: {
             port: 80,
@@ -83,12 +72,137 @@ describe GridServices::Update do
       expect(redis_service.health_check.port).to eq(80)
       expect(redis_service.health_check.protocol).to eq('http')
     end
+
+    it 'fails validating secret existence' do
+      outcome = described_class.new(
+          grid_service: redis_service,
+          secrets: [
+            {secret: 'NON_EXISTING_SECRET', name: 'SOME_SECRET'}
+          ]
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
+    it 'validates secret existence' do
+      GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
+      outcome = described_class.new(
+          grid_service: redis_service,
+          secrets: [
+            {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+          ]
+      ).run
+      expect(outcome.success?).to be(true)
+    end
+
+    context 'volumes' do
+      context 'stateless service' do
+        it 'allows to add non-named volume' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes: ['/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/foo'])
+        end
+
+        it 'allows to add named volume' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes: ['foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['foo:/foo'])
+        end
+
+        it 'allows to add bind mounted volume' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes: ['/foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/foo:/foo'])
+        end
+      end
+
+      context 'stateful service' do
+        let(:stateful_service) do
+          GridService.create(
+            grid: grid, name: 'redis', image_name: 'redis:2.8', stateful: true,
+            volumes: ['/data']
+          )
+        end
+
+        it 'does not allow to add non-named volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: ['/data', '/foo']
+          ).run
+          expect(outcome.success?).to be_falsey
+        end
+
+        it 'allows to add named volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: ['/data', 'foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/data', 'foo:/foo'])
+        end
+
+        it 'allows to add bind mounted volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: ['/data', '/foo:/foo']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq(['/data', '/foo:/foo'])
+        end
+
+        it 'allows to remove a volume' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes: []
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes).to eq([])
+        end
+      end
+    end
+
+    context 'volumes_from' do
+      context 'stateless service' do
+        it 'allows to update volumes_from' do
+          outcome = described_class.new(
+            grid_service: redis_service,
+            volumes_from: ['data-1']
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes_from).to eq(['data-1'])
+        end
+      end
+
+      context 'stateful service' do
+        let(:stateful_service) do
+          GridService.create(
+            grid: grid, name: 'redis', image_name: 'redis:2.8', stateful: true,
+            volumes: ['/data']
+          )
+        end
+
+        it 'does not allow to update volumes_from' do
+          outcome = described_class.new(
+            grid_service: stateful_service,
+            volumes_from: ['data-1']
+          ).run
+          expect(outcome.success?).to be_falsey
+        end
+      end
+    end
   end
 
   describe '#build_grid_service_hooks' do
     let(:subject) do
       described_class.new(
-        current_user: user,
         grid_service: redis_service,
         hooks: {
           post_start: [
@@ -140,7 +254,6 @@ describe GridServices::Update do
     end
     let(:subject) do
       described_class.new(
-        current_user: user,
         grid_service: redis_service
       )
     end

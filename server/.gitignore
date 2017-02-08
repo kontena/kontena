@@ -17,3 +17,5 @@
 /.vagrant/
 /build/
 /release/
+/vendor/
+/.bundle/

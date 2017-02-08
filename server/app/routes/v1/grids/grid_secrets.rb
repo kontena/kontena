@@ -44,6 +44,7 @@ V1::GridsApi.route('grid_secrets') do |r|
     create_secret(data)
   end
 
+  # @todo: deprecated
   r.put do
     # PUT /v1/grids/:grid/secrets/:name
     r.on ':name' do |name|

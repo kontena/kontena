@@ -11,10 +11,11 @@ module Kontena::Cli::Nodes
       require_current_grid
       token = require_token
 
-      node = client(token).get("grids/#{current_grid}/nodes/#{node_id}")
+      node = client(token).get("nodes/#{current_grid}/#{node_id}")
       puts "#{node['name']}:"
       puts "  id: #{node['id']}"
       puts "  agent version: #{node['agent_version']}"
+      puts "  docker version: #{node['docker_version']}"
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"
       puts "  last connect: #{node['updated_at']}"
       puts "  last seen: #{node['last_seen_at']}"
@@ -47,6 +48,5 @@ module Kontena::Cli::Nodes
         end
       end
     end
-
   end
 end

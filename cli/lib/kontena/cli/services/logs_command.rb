@@ -10,14 +10,14 @@ module Kontena::Cli::Services
 
     parameter "NAME", "Service name"
     option ["-i", "--instance"], "INSTANCE", "Show only given instance specific logs"
-    
+
     def execute
       require_api_url
 
       query_params = {}
-      query_params[:container] = "#{name}-#{instance}" if instance
+      query_params[:container] = parse_container_name(name, instance) if instance
 
-      show_logs("services/#{current_grid}/#{name}/container_logs", query_params) do |log|
+      show_logs("services/#{parse_service_id(name)}/container_logs", query_params) do |log|
         show_log(log)
       end
     end

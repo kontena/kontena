@@ -2,6 +2,10 @@ require 'clamp'
 
 class Kontena::Command < Clamp::Command
 
+  option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
+    ENV['DEBUG'] = 'true'
+  end
+
   attr_accessor :arguments
   attr_reader :result
   attr_reader :exit_code
@@ -91,17 +95,23 @@ class Kontena::Command < Clamp::Command
   end
 
   def self.requires_current_master
-    banner "#{Kontena.pastel.green("Requires current master")}: This command requires that you have selected a current master using 'kontena master login' or 'kontena master use'. You can also use the environment variable KONTENA_URL to specify the master address or KONTENA_MASTER=master_name to override the current_master setting."
+    unless Kontena::Cli::Config.current_master
+      banner "#{Kontena.pastel.green("Requires current master")}: This command requires that you have selected a current master using 'kontena master login' or 'kontena master use'. You can also use the environment variable KONTENA_URL to specify the master address or KONTENA_MASTER=master_name to override the current_master setting."
+    end
     @requires_current_master = true
   end
 
   def self.requires_current_grid
-    banner "#{Kontena.pastel.green("Requires current grid")}: This command requires that you have selected a grid as the current grid using 'kontena grid use' or by setting KONTENA_GRID environment variable."
+    unless Kontena::Cli::Config.current_grid
+      banner "#{Kontena.pastel.green("Requires current grid")}: This command requires that you have selected a grid as the current grid using 'kontena grid use' or by setting KONTENA_GRID environment variable."
+    end
     @requires_current_grid = true
   end
 
   def self.requires_current_account_token
-    banner "#{Kontena.pastel.green("Requires account authentication")}: This command requires that you have authenticated to Kontena Cloud using 'kontena cloud auth'"
+    unless Kontena::Cli::Config.current_account && Kontena::Cli::Config.current_account.token && Kontena::Cli::Config.current_account.token.access_token
+      banner "#{Kontena.pastel.green("Requires account authentication")}: This command requires that you have authenticated to Kontena Cloud using 'kontena cloud auth'"
+    end
     @requires_current_account_token = true
   end
 
@@ -145,7 +155,7 @@ class Kontena::Command < Clamp::Command
     Kontena::Cli::Config.instance.require_current_master_token
   rescue Kontena::Cli::Config::TokenExpiredError
     success = Kontena::Client.new(
-      Kontena::Cli::Config.instance.current_master,
+      Kontena::Cli::Config.instance.current_master.url,
       Kontena::Cli::Config.instance.current_master.token
     ).refresh_token
     if success && !retried
@@ -163,7 +173,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def run(arguments)
-    ENV["DEBUG"] && puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
+    ENV["DEBUG"] && STDERR.puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
     @arguments = arguments
 
     run_callbacks :before_parse unless help_requested?
@@ -188,6 +198,7 @@ class Kontena::Command < Clamp::Command
     exit(@exit_code) if @exit_code.to_i > 0
     @result
   end
+
 end
 
 require_relative 'callback'
