@@ -19,6 +19,7 @@
 - Allow "echo: false" in stack string variables for prompting passwords (#1796)
 - Fix stack conditionals short syntax for booleans (#1795)
 - Invite self and add the created user as master_admin during 'kontena master init-cloud' (#1735)
+- Fix the new --debug flag breaking DEBUG=api full body inspection (#1821)
 
 ## [1.1.0](https://github.com/kontena/kontena/releases/tag/v1.1.0) (2017-02-03)
 
