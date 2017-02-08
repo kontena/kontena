@@ -1,3 +1,6 @@
+require 'kontena/cli/stacks/yaml/opto'
+require 'kontena/cli/common'
+
 module Kontena::Cli::Stacks
   module YAML
     class Prompt < ::Opto::Resolver
