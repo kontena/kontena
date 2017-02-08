@@ -33,7 +33,6 @@ module Kontena
       )
       plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
       without_safe { cmd.install(prefix(plugin_name), plugin_version) }
-      cleanup_plugin(plugin_name)
       cmd.installed_gems
     end
 
@@ -123,7 +122,7 @@ module Kontena
     def cleanup_plugin(plugin_name)
       require 'rubygems/commands/cleanup_command'
       cmd = Gem::Commands::CleanupCommand.new
-      options = ['--norc']
+      options = []
       options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
       cmd.handle_options options
       without_safe { cmd.execute }

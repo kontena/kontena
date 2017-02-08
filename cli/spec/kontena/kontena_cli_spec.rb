@@ -1,5 +1,6 @@
 require_relative '../spec_helper'
 require 'kontena_cli'
+require 'kontena/light_prompt'
 
 describe Kontena do
   context 'prompt' do
