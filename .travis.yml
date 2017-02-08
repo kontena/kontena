@@ -28,10 +28,6 @@ env:
     - TEST_DIR=server
 matrix:
     exclude:
-    - rvm: 2.0.0-p648
-      env: TEST_DIR=agent
-    - rvm: 2.0.0-p648
-      env: TEST_DIR=server
     - rvm: 2.1.10
       env: TEST_DIR=agent
     - rvm: 2.1.10
@@ -47,9 +43,23 @@ matrix:
 script: ./build/travis/test.sh
 deploy:
   - provider: script
+    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_gem.sh"
+    on:
+      tags: true
+      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
+      rvm: 2.3.3
+      repo: kontena/kontena
+  - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
     on:
       tags: true
       condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
       rvm: 2.3.3
+      repo: kontena/kontena
+  - provider: script
+    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_docs.sh"
+    on:
+      tags: true
+      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
+      rvm: 2.2.6
       repo: kontena/kontena
