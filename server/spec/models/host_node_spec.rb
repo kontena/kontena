@@ -37,7 +37,7 @@ describe HostNode do
       GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true)
     }
     let(:stateless_service) {
-      GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false) 
+      GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false)
     }
     let(:node) { HostNode.create(name: 'node-1', grid: grid)}
 
@@ -213,5 +213,37 @@ describe HostNode do
       subject.labels = ['foo=bar', 'provider=aws']
       expect(subject.host_provider).to eq('aws')
     end
+  end
+
+  describe '#destroy' do
+    let(:grid) { Grid.create!(name: 'test') }
+    let(:stateful_service) {
+      GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true)
+    }
+    let(:stateless_service) {
+      GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false)
+    }
+    let(:node) { HostNode.create(name: 'node-1', grid: grid)}
+    let(:another_node) { HostNode.create(name: 'node-1', grid: grid)}
+
+    it 'destroys all containers from a node' do
+
+      stateful_service.containers.create!(
+        name: 'redis-1', host_node: node, instance_number: 1
+      )
+      stateful_service.containers.create!(
+        name: 'redis-1-volumes', host_node: node, instance_number: 1, container_type: 'volume'
+      )
+      stateful_service.containers.create!(
+        name: 'redis-2', host_node: another_node, instance_number: 2
+      )
+      stateful_service.containers.create!(
+        name: 'redis-2-volumes', host_node: another_node, instance_number: 2, container_type: 'volume'
+      )
+      expect {
+        node.destroy
+      }.to change{Container.unscoped.count}.by (-2)
+    end
+
   end
 end
