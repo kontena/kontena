@@ -14,8 +14,13 @@ describe Kontena do
     let(:whoami) { double(:whoami) }
 
     before(:each) do
+      Kontena.reset_prompt
       expect(Kontena::Cli::WhoamiCommand).to receive(:new).and_return(whoami)
       expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
+    end
+
+    after(:each) do
+      Kontena.reset_prompt
     end
 
     it 'accepts a command line as string' do

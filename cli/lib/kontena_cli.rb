@@ -58,6 +58,10 @@ module Kontena
       klass = TTY::Prompt
     end
 
+    def self.reset_prompt
+      @prompt = nil
+    end
+
     @prompt = klass.new(
       active_color: :cyan,
       help_color: :white,
