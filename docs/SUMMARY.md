@@ -20,6 +20,7 @@
   * [Docker Compose](getting-started/installing/docker-compose.md)
   * [CoreOS](getting-started/installing/coreos.md)
   * [Ubuntu](getting-started/installing/ubuntu.md)
+  * [HA Master](getting-started/installing/ha-master.md)
 * [Upgrading](getting-started/installing/upgrading.md)
 * [System Requirements](getting-started/system-requirements.md)
 
