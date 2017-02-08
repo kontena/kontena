@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.1](https://github.com/kontena/kontena/releases/tag/v1.1.1) (2017-02-08)
+
+**Master & Agents:**
+
+- Remove volume containers when removing nodes (#1805)
+- Document master HA setup (#1721)
+- Allow to clear deploy options after stack install (#1698)
+
+**CLI:**
+
+- Fix service link/unlink errors (#1814)
+- Fix plugin cleanup and run it only when plugins are upgraded (#1813)
+- Exit with error when piping to/from a command that requires --force and it's not set (#1804)
+- Simple menus were not enabled on windows by default as intended in 1.1.0 (#1802)
+- Fix for stack variable prompt asking the same question multiple times when no value given (#1801)
+- Fix stack vault ssl certificate selection and service link prompts not using given default values (#1800)
+- Allow "echo: false" in stack string variables for prompting passwords (#1796)
+- Fix stack conditionals short syntax for booleans (#1795)
+- Invite self and add the created user as master_admin during 'kontena master init-cloud' (#1735)
+
 ## [1.1.0](https://github.com/kontena/kontena/releases/tag/v1.1.0) (2017-02-03)
 
 **Master & Agents:**
