@@ -25,7 +25,7 @@ describe Kontena::Cli::Services::LinkCommand do
     it 'aborts if service is already linked' do
       allow(client).to receive(:get).and_return({
         'links' => [
-          {'alias' => 'service-b', 'grid_service_id' => "grid/service-b"}
+          {'alias' => 'service-b', 'id' => "grid/null/service-b"}
         ]
       })
       expect {
@@ -35,7 +35,7 @@ describe Kontena::Cli::Services::LinkCommand do
 
     it 'sends link to master' do
       expect(client).to receive(:put).with(
-        'services/test-grid/null/service-a', {links: [{name: 'service-b', alias: 'service-b'}]}
+        'services/test-grid/null/service-a', {links: [{name: 'null/service-b', alias: 'service-b'}]}
       )
       subject.run(['service-a', 'service-b'])
     end

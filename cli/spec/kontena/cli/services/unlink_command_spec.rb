@@ -9,7 +9,7 @@ describe Kontena::Cli::Services::UnlinkCommand do
     before(:each) do
       allow(client).to receive(:get).and_return({
         'links' => [
-          {'alias' => 'service-b', 'grid_service_id' => "grid/service-b"}
+          {'alias' => 'service-b', 'id' => "test-grid/null/service-b", 'name' => 'service-b'}
         ]
       })
     end
