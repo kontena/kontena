@@ -60,41 +60,77 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.affinity }.to(['az==b1'])
     end
 
-    it 'updates wait_for_port' do
-      described_class.new(
-          grid_service: redis_service,
-          deploy_opts: {
-            wait_for_port: 6379
-          }
-      ).run
-      redis_service.reload
-      expect(redis_service.deploy_opts.wait_for_port).to eq(6379)
+    context 'deploy_opts' do
+      it 'updates wait_for_port' do
+        described_class.new(
+            grid_service: redis_service,
+            deploy_opts: {
+              wait_for_port: 6379
+            }
+        ).run
+        redis_service.reload
+        expect(redis_service.deploy_opts.wait_for_port).to eq(6379)
+      end
+
+      it 'allows to delete wait_for_port' do
+        redis_service.deploy_opts.wait_for_port = 6379
+        redis_service.save
+        described_class.new(
+            grid_service: redis_service,
+            deploy_opts: {
+              wait_for_port: nil
+            }
+        ).run
+        redis_service.reload
+        expect(redis_service.deploy_opts.wait_for_port).to be_nil
+      end
     end
 
-    it 'allows to delete wait_for_port' do
-      redis_service.deploy_opts.wait_for_port = 6379
-      redis_service.save
-      described_class.new(
-          grid_service: redis_service,
-          deploy_opts: {
-            wait_for_port: nil
-          }
-      ).run
-      redis_service.reload
-      expect(redis_service.deploy_opts.wait_for_port).to be_nil
-    end
+    context 'health_check' do
+      it 'updates health check port & protocol' do
+        described_class.new(
+            grid_service: redis_service,
+            health_check: {
+              port: 80,
+              protocol: 'http'
+            }
+        ).run
+        redis_service.reload
+        expect(redis_service.health_check.port).to eq(80)
+        expect(redis_service.health_check.protocol).to eq('http')
+      end
 
-    it 'updates health check' do
-      described_class.new(
-          grid_service: redis_service,
-          health_check: {
-            port: 80,
-            protocol: 'http'
-          }
-      ).run
-      redis_service.reload
-      expect(redis_service.health_check.port).to eq(80)
-      expect(redis_service.health_check.protocol).to eq('http')
+      it 'allows to update health check partially' do
+        redis_service.health_check = {
+          port: 80, protocol: 'http'
+        }
+        redis_service.save
+        described_class.new(
+            grid_service: redis_service,
+            health_check: {
+              port: 80,
+              protocol: 'http',
+              uri: '/health'
+            }
+        ).run
+        redis_service.reload
+        expect(redis_service.health_check.port).to eq(80)
+        expect(redis_service.health_check.protocol).to eq('http')
+        expect(redis_service.health_check.uri).to eq('/health')
+      end
+
+      it 'removes health check if port & protocol are nils' do
+        described_class.new(
+            grid_service: redis_service,
+            health_check: {
+              port: nil,
+              protocol: nil
+            }
+        ).run
+        redis_service.reload
+        expect(redis_service.health_check.port).to be_nil
+        expect(redis_service.health_check.protocol).to be_nil
+      end
     end
 
     it 'fails validating secret existence' do
