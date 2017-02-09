@@ -447,8 +447,12 @@ module Kontena
         # @return [Hash]
         def parse_health_check
           health_check = {}
-          health_check[:port] = health_check_port if health_check_port
-          health_check[:protocol] = health_check_protocol if health_check_protocol
+          if health_check_port
+            health_check[:port] = health_check_port == 'none' ? nil : health_check_port
+          end
+          if health_check_protocol
+            health_check[:protocol] = health_check_protocol == 'none' ? nil : health_check_protocol
+          end
           health_check[:uri] = health_check_uri if health_check_uri
           health_check[:timeout] = health_check_timeout if health_check_timeout
           health_check[:interval] = health_check_interval if health_check_interval

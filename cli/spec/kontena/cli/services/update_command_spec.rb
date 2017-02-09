@@ -65,6 +65,17 @@ describe Kontena::Cli::Services::UpdateCommand do
         ])
       end
 
+      it 'sends --health-check-port as nil if none given' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            port: nil
+          })
+        )
+        subject.run([
+          '--health-check-port', 'none', 'service'
+        ])
+      end
+
       it 'sends --health-check-protocol' do
         expect(subject).to receive(:update_service).with(
           duck_type(:access_token), 'service', hash_including(health_check: {
@@ -73,6 +84,17 @@ describe Kontena::Cli::Services::UpdateCommand do
         )
         subject.run([
           '--health-check-protocol', 'tcp', 'service'
+        ])
+      end
+
+      it 'sends --health-check-protocol as nil if none given' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            protocol: nil
+          })
+        )
+        subject.run([
+          '--health-check-protocol', 'none', 'service'
         ])
       end
 
