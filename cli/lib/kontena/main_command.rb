@@ -5,6 +5,7 @@ require_relative 'command'
 require_relative 'callback'
 require_relative 'cli/bytes_helper'
 require_relative 'cli/grid_options'
+require_relative 'cli/volume_command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
@@ -36,6 +37,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
   subcommand "plugin", "Plugin related commands", load_subcommand('plugin_command')
   subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
+  subcommand "volume", "Volume specific commands", Kontena::Cli::VolumeCommand
 
   def execute
   end
