@@ -22,6 +22,9 @@ class Volume
   end
 
   def stacked_name
+    if default_stack?
+      return self.name
+    end
     "#{stack.name}.#{self.name}"
   end
 
@@ -34,6 +37,11 @@ class Volume
     when 'instance-shared'
       "#{self.stacked_name}-#{instance_number}"
     end
+  end
+
+  # @return [Boolean]
+  def default_stack?
+    self.stack.try(:name).to_s == Stack::NULL_STACK
   end
 
 end

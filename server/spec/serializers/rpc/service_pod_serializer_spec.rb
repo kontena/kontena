@@ -130,7 +130,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes volume specs' do
-      expect(service_spec).to include(:volume_specs => [{name: 'null.volA', scope: 'node', driver: 'local', driver_opts: {}}])
+      expect(service_spec).to include(:volume_specs => [{name: 'volA', scope: 'node', driver: 'local', driver_opts: {}}])
     end
 
     describe '[:env]' do
@@ -206,7 +206,7 @@ describe Rpc::ServicePodSerializer do
   describe '#build_volumes' do
 
     it 'adds volume specs' do
-      expect(subject.build_volumes(1)).to eq([{:name=>"null.volA", :driver=>"local", :scope=>"node", :driver_opts=>{}}])
+      expect(subject.build_volumes(1)).to eq([{:name=>"volA", :driver=>"local", :scope=>"node", :driver_opts=>{}}])
     end
 
     it 'doesn\'t add volumes when bind mounts used' do

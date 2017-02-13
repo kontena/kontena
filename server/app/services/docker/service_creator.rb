@@ -187,12 +187,14 @@ module Docker
         container_path = elements[-2]
         volume = grid_service.stack.volumes.find_by(name: host_path_or_vol)
         if volume
+          volume_name = volume.name_for_service(grid_service, instance_number)
           volume_specs << {
-              name: volume.name_for_service(grid_service, instance_number),
+              name: volume_name,
               driver: volume.driver,
               scope: volume.scope,
               driver_opts: volume.driver_opts
           }
+          vol.sub!(host_path_or_vol, volume_name)
         end
       end
       volume_specs

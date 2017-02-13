@@ -25,6 +25,11 @@ describe Volume do
     it 'return dot separated stacked name' do
       expect(volume.stacked_name).to eq('stack.a-volume')
     end
+
+    it 'return unstacked name for null stack' do
+      vol = Volume.create!(grid: grid, stack: Stack.default_stack, name: 'a-volume', scope: 'node')
+      expect(vol.stacked_name).to eq('a-volume')
+    end
   end
 
   describe '#name_for_service' do

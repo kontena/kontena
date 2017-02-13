@@ -38,7 +38,8 @@ describe Kontena::Models::ServicePod do
       'net' => 'bridge',
       'hostname' => 'redis-2',
       'domainname' => 'default.kontena.local',
-      'log_driver' => nil
+      'log_driver' => nil,
+      'volume_specs' => [{'name' => 'someVolume', 'driver' => 'local', 'driver_opts' => {'foo' => 'bar'}}]
     }
   end
 

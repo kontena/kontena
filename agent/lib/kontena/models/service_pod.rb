@@ -40,7 +40,8 @@ module Kontena
                   :hooks,
                   :secrets,
                   :networks,
-                  :wait_for_port
+                  :wait_for_port,
+                  :volume_specs
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -81,6 +82,7 @@ module Kontena
         @secrets = attrs['secrets'] || []
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
+        @volume_specs = attrs['volume_specs'] || []
       end
 
       # @return [Boolean]
