@@ -1,13 +1,13 @@
 PATH
   remote: ../cli
   specs:
-    kontena-cli (1.1.0.rc1)
+    kontena-cli (1.1.1)
       clamp (~> 1.1.0)
       excon (~> 0.49.0)
       hash_validator (~> 0.7.0)
       launchy (~> 2.4.3)
       liquid (~> 4.0.0)
-      opto (~> 1.8.0)
+      opto (= 1.8.3)
       retriable (~> 2.1.0)
       ruby_dig (~> 0.0.2)
       safe_yaml (~> 1.0)
@@ -30,7 +30,7 @@ GEM
       addressable (~> 2.3)
     liquid (4.0.0)
     necromancer (0.3.0)
-    opto (1.8.0)
+    opto (1.8.3)
     pastel (0.7.1)
       equatable (~> 0.5.0)
       tty-color (~> 0.4.0)
@@ -52,9 +52,9 @@ GEM
     ruby_dig (0.0.2)
     safe_yaml (1.0.4)
     semantic (1.6.0)
-    tty-color (0.4.1)
+    tty-color (0.4.2)
     tty-cursor (0.3.0)
-    tty-prompt (0.10.0)
+    tty-prompt (0.10.1)
       necromancer (~> 0.3.0)
       pastel (~> 0.7.0)
       tty-cursor (~> 0.3.0)
@@ -71,4 +71,4 @@ DEPENDENCIES
   rspec
 
 BUNDLED WITH
-   1.13.6
+   1.14.3
