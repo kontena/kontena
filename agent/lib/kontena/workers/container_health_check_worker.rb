@@ -110,10 +110,13 @@ module Kontena::Workers
         data['status'] = 'unhealthy'
       end
       data
+<<<<<<< 822939a96818996084bfc7b1fd436f4c2573444b
     end
 
     def restart_container
       Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
+=======
+>>>>>>> refactor all agent->server comms to msgpack-rpc
     end
 
     def log_exit

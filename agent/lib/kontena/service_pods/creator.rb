@@ -213,13 +213,10 @@ module Kontena
       # @param [Docker::Container] service_container
       # @param [String] deploy_rev
       def notify_master(service_container, deploy_rev)
-        msg = {
-          event: 'container:event',
-          data: {
-            id: service_container.id,
-            status: 'deployed',
-            deploy_rev: deploy_rev
-          }
+        data = {
+          id: service_container.id,
+          status: 'deployed',
+          deploy_rev: deploy_rev
         }
         rpc_client.async.notification('/containers/event', [data])
       end
