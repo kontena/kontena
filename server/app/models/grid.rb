@@ -14,6 +14,7 @@ class Grid
   field :trusted_subnets, type: Array, default: []
   field :stats, type: Hash, default: {}
   field :default_affinity, type: Array, default: []
+  field :logs, type: Hash, default: {}
   field :subnet, type: String, default: SUBNET
   field :supernet, type: String, default: SUPERNET
 

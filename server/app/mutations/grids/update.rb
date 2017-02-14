@@ -23,6 +23,12 @@ module Grids
       array :default_affinity do
         string
       end
+      hash :logs do
+        required do
+          string :driver, matches: /^(fluentd)$/ # Only fluentd now supported
+          model :opts, class: Hash
+        end
+      end
     end
 
     def validate
@@ -48,6 +54,9 @@ module Grids
       end
       if self.default_affinity
         attributes[:default_affinity] = self.default_affinity
+      end
+      if self.logs
+        attributes[:logs] = self.logs
       end
       grid.update_attributes(attributes)
       if grid.errors.size > 0

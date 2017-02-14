@@ -426,6 +426,28 @@ describe '/v1/grids', celluloid: true do
       expect(statsd['port']).to eq(port)
     end
 
+    it 'updates logs' do
+      grid = david.grids.first
+      server = '192.168.89.12'
+      port = 8125
+      data = {
+        logs: {
+          driver: 'fluentd',
+          opts: {
+            server: server,
+            port: port
+          }
+        }
+      }
+      put "/v1/grids/#{grid.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      logs = grid.reload.logs
+      expect(logs['driver']).to eq('fluentd')
+      expect(logs['opts']['server']).to eq(server)
+      expect(json_response['logs']['driver']).to eq('fluentd')
+      expect(json_response['logs']['opts']['server']).to eq(server)
+    end
+
     it 'updates trusted_subnets' do
       grid = david.grids.first
       data = {
