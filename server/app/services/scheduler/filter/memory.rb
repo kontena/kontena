@@ -35,6 +35,7 @@ module Scheduler
       # @param [GridService] service
       # @param [Integer] instance_number
       def reject_candidate?(candidate, memory, service, instance_number)
+        return false if candidate.containers.service_instance(service, instance_number).first
         return true if candidate.mem_total.to_i < memory
 
         node_stat = candidate.host_node_stats.last
@@ -43,10 +44,6 @@ module Scheduler
         all_used = node_stat.memory['total'] - node_stat.memory['free']
         mem_used = all_used - (node_stat.memory['cached'] + node_stat.memory['buffers'])
         mem_free = node_stat.memory['total'] - mem_used
-
-        if instance = candidate.containers.service_instance(service, instance_number).first
-          mem_free += memory
-        end
 
         return true if mem_free < memory
 
