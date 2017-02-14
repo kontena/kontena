@@ -1,6 +1,7 @@
 require 'faye/websocket'
 require 'thread'
 require_relative '../services/agent/message_handler'
+require_relative '../services/rpc_server'
 require_relative '../services/agent/node_plugger'
 require_relative '../services/agent/node_unplugger'
 
@@ -18,6 +19,7 @@ class WebsocketBackend
     @logger.progname = 'WebsocketBackend'
     @incoming_queue = Queue.new
 
+    @rpc_server = RpcServer.new
     Agent::MessageHandler.new(@incoming_queue).run
     subscribe_to_rpc_channel
     watch_connections
@@ -95,14 +97,12 @@ class WebsocketBackend
   # @param [Faye::WebSocket::Event] event
   def on_message(ws, event)
     data = MessagePack.unpack(event.data.pack('c*'))
-    if agent_message?(data)
-      EM.next_tick {
-        handle_agent_message(ws, data)
-      }
+    if rpc_notification?(data)
+      handle_rpc_notification(ws, data)
+    elsif rpc_request?(data)
+      handle_rpc_request(ws, data)
     elsif rpc_response?(data)
-      EM.next_tick {
-        handle_rpc_response(data)
-      }
+      handle_rpc_response(data)
     end
   rescue => exc
     logger.error "Cannot unpack message, reason #{exc.message}"
@@ -111,8 +111,8 @@ class WebsocketBackend
   ##
   # @param [Object] data
   # @return [Boolean]
-  def agent_message?(data)
-    data.is_a?(Hash) && data['event'] && data['data']
+  def rpc_request?(data)
+    data.is_a?(Array) && data.size == 4 && data[0] == 0
   end
 
   ##
@@ -123,23 +123,34 @@ class WebsocketBackend
   end
 
   ##
-  # @param [Faye::WebSocket::Event] ws
-  # @param [Hash] data
-  def handle_agent_message(ws, data)
-    client = client_for_ws(ws)
-    if client
-      @incoming_queue << {
-          'grid_id' => client[:grid_id].to_s,
-          'node_id' => client[:node_id].to_s,
-          'data' => data
-      }
-    end
+  # @param [Object] data
+  # @return [Boolean]
+  def rpc_notification?(data)
+    data.is_a?(Array) && data.size == 3 && data[0] == 2
   end
 
   ##
   # @param [Array] data
   def handle_rpc_response(data)
     MongoPubsub.publish_async("rpc_client:#{data[1]}", {message: data})
+  end
+
+  # @param [Faye::WebSocket::Event] ws
+  # @param [Array] data
+  def handle_rpc_request(ws, data)
+    client = client_for_ws(ws)
+    if client
+      @rpc_server.async.handle_request(ws, client[:grid_id].to_s, data)
+    end
+  end
+
+  # @param [Faye::WebSocket::Event] ws
+  # @param [Array] data
+  def handle_rpc_notification(ws, data)
+    client = client_for_ws(ws)
+    if client
+      @rpc_server.async.handle_notification(client[:grid_id].to_s, data)
+    end
   end
 
   ##

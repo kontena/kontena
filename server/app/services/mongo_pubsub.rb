@@ -121,7 +121,7 @@ class MongoPubsub
   end
 
   def self.start!(collection)
-    @supervisor = self.supervise(collection)
+    @supervisor = Celluloid.supervise(as: :mongo_pubsub, type: MongoPubsub, args: [collection])
   end
 
   def self.clear!

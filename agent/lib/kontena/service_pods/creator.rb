@@ -4,6 +4,7 @@ require_relative 'common'
 require_relative '../logging'
 require_relative '../helpers/weave_helper'
 require_relative '../helpers/port_helper'
+require_relative '../helpers/rpc_helper'
 
 module Kontena
   module ServicePods
@@ -12,6 +13,7 @@ module Kontena
       include Common
       include Kontena::Helpers::WeaveHelper
       include Kontena::Helpers::PortHelper
+      include Kontena::Helpers::RpcHelper
 
       attr_reader :service_pod, :image_credentials
 
@@ -99,16 +101,13 @@ module Kontena
       # @param [String] type
       def log_hook_output(id, lines, type)
         lines.each do |chunk|
-          msg = {
-              event: 'container:log',
-              data: {
-                  id: id,
-                  time: Time.now.utc.xmlschema,
-                  type: type,
-                  data: chunk
-              }
+          data = {
+              id: id,
+              time: Time.now.utc.xmlschema,
+              type: type,
+              data: chunk
           }
-          Celluloid::Actor[:queue_worker].send_message(msg)
+          rpc_client.async.notification('/containers/log', [data])
         end
       end
 
@@ -214,15 +213,12 @@ module Kontena
       # @param [Docker::Container] service_container
       # @param [String] deploy_rev
       def notify_master(service_container, deploy_rev)
-        msg = {
-          event: 'container:event',
-          data: {
-            id: service_container.id,
-            status: 'deployed',
-            deploy_rev: deploy_rev
-          }
+        data = {
+          id: service_container.id,
+          status: 'deployed',
+          deploy_rev: deploy_rev
         }
-        Celluloid::Actor[:queue_worker].send_message(msg)
+        rpc_client.async.notification('/containers/event', [data])
       end
 
       # @param [Docker::Container] service_container
