@@ -46,7 +46,7 @@ module Kontena
           send_message(ws_client, [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}", backtrace: exc.backtrace}, nil])
         end
       else
-        send_message(ws_client, [1, msg_id, {error: 'service not implemented'}, nil])
+        send_message(ws_client, [1, msg_id, {code: 501, error: 'service not implemented'}, nil])
       end
     end
 
