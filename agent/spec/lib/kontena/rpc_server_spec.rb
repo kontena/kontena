@@ -16,7 +16,7 @@ describe Kontena::RpcServer do
     stub_const("Kontena::RpcServer::HANDLERS", {'hello' => HelloWorld})
     Celluloid.boot
   end
-  
+
   after(:each) { Celluloid.shutdown }
 
   describe '#handle_request' do
@@ -27,7 +27,7 @@ describe Kontena::RpcServer do
 
     it 'responses with error if handler not found' do
       expect(subject.wrapped_object).to receive(:send_message).with(
-        ws_client, [1, 99, {:error=>"service not implemented"}, nil]
+        ws_client, [1, 99, {code: 501, error: "service not implemented"}, nil]
       )
       subject.handle_request(ws_client, [1, 99, '/foo/bar', ['world']])
     end
