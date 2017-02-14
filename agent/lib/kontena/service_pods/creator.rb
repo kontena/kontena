@@ -69,19 +69,6 @@ module Kontena
         self.run_hooks(service_container, 'post_start')
 
         service_container
-      rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
-        error "#{exc.backtrace.join("\n")}" if exc.backtrace
-      end
-
-      # @return [Celluloid::Future]
-      def perform_async
-        Celluloid::Future.new { self.perform }
-      end
-
-      # @param [ServicePod] service_pod
-      def self.perform_async(service_pod)
-        self.new(service_pod).perform_async
       end
 
       # @param [Docker::Container] service_container

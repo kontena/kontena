@@ -38,9 +38,6 @@ module Kontena
         end
 
         service_container
-      rescue => exc
-        error exc.message
-        error exc.backtrace.join("\n")
       end
 
       # @param [Docker::Container] service_container
