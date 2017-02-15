@@ -8,7 +8,8 @@ class RpcServer
 
   HANDLERS = {
     'containers' => Rpc::ContainerHandler,
-    'nodes' => Rpc::NodeHandler
+    'nodes' => Rpc::NodeHandler,
+    'node_services' => Rpc::NodeServiceHandler
   }
 
   class Error < StandardError
@@ -31,13 +32,13 @@ class RpcServer
   # @return [Array]
   def handle_request(ws_client, grid_id, message)
     msg_id = message[1]
-
+    p message
     handler = message[2].split('/')[1]
     method = message[2].split('/')[2]
     if actor = handling_actor(grid_id, handler)
       begin
         result = actor.send(method, *message[3])
-        return [1, msg_id, nil, result]
+        send_message(ws_client, [1, msg_id, nil, result])
       rescue Celluloid::DeadActorError
         error "actor for handler #{handler} is dead, removing it from cache"
         @handlers[grid_id].delete(handler)

@@ -21,7 +21,7 @@ module Rpc
 
     # @param [Hash] data
     def save(data)
-      info_mapper = Agent::ContainerInfoMapper.new(@grid)
+      info_mapper = ContainerInfoMapper.new(@grid)
       info_mapper.from_agent(data)
     end
 

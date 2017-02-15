@@ -1,6 +1,4 @@
 require 'faye/websocket'
-require 'thread'
-require_relative '../services/agent/message_handler'
 require_relative '../services/rpc_server'
 require_relative '../services/agent/node_plugger'
 require_relative '../services/agent/node_unplugger'
@@ -18,9 +16,7 @@ class WebsocketBackend
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
     @incoming_queue = Queue.new
-
     @rpc_server = RpcServer.new
-    Agent::MessageHandler.new(@incoming_queue).run
     subscribe_to_rpc_channel
     watch_connections
   end
