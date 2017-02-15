@@ -203,8 +203,8 @@ module GridServices
           end
           hash :health_check do
             required do
-              integer :port
-              string :protocol, matches: /^(http|tcp)$/
+              integer :port, nils: true
+              string :protocol, matches: /^(http|tcp)$/, nils: true
             end
             optional do
               string :uri
