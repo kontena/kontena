@@ -78,42 +78,46 @@ describe Kontena::Workers::NodeInfoWorker do
       allow(subject.wrapped_object).to receive(:interface_ip).with('eth1').and_return('192.168.66.2')
     end
 
-    it 'adds node info to queue' do
-      expect {
-        subject.publish_node_info
-      }.to change{ subject.queue.length }.by(1)
+    it 'sends node info via rpc' do
+      expect(rpc_client).to receive(:notification).once
+      subject.publish_node_info
     end
 
     it 'contains docker id' do
+      expect(rpc_client).to receive(:notification).once.with(
+        '/nodes/update', [hash_including('ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
+      )
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['ID']).to eq('U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')
     end
 
     it 'contains public ip' do
+      expect(rpc_client).to receive(:notification).once.with(
+        '/nodes/update', [hash_including('PublicIp' => '8.8.8.8')]
+      )
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['PublicIp']).to eq('8.8.8.8')
     end
 
     it 'contains private ip' do
+      expect(rpc_client).to receive(:notification).once.with(
+        '/nodes/update', [hash_including('PrivateIp' => '192.168.66.2')]
+      )
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['PrivateIp']).to eq('192.168.66.2')
     end
 
     it 'contains agent_version' do
+      expect(rpc_client).to receive(:notification).once do |key, msg|
+        expect(msg['AgentVersion']).to match(/\d+\.\d+\.\d+/)
+      end
       subject.publish_node_info
-      info = subject.queue.pop
-      expect(info[:data]['AgentVersion']).to match(/\d+\.\d+\.\d+/)
     end
   end
 
   describe '#publish_node_stats' do
-    it 'adds node stats to queue' do
-      expect {
-        subject.publish_node_stats
-      }.to change{ subject.queue.length }.by(1)
+    it 'sends node stats via rpc' do
+      expect(rpc_client).to receive(:notification).once.with(
+        '/nodes/stats', [hash_including(id: 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
+      )
+      subject.publish_node_stats
     end
   end
 

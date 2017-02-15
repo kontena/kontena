@@ -3,13 +3,16 @@ require_relative '../../helpers/fixtures_helpers'
 
 describe Kontena::Workers::StatsWorker do
   include FixturesHelpers
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
+  let(:subject) { described_class.new(false) }
 
   let(:container) { spy(:container, id: 'foo', labels: {}) }
 
-  before(:each) { Celluloid.boot }
+  before(:each) do
+    Celluloid.boot
+    mock_rpc_client
+  end
   after(:each) { Celluloid.shutdown }
 
   describe '#initialize' do
@@ -144,7 +147,7 @@ describe Kontena::Workers::StatsWorker do
     end
   end
 
-describe '#send_container_stats' do
+  describe '#send_container_stats' do
     let(:event) do
       JSON.parse(fixture('container_stats.json'), symbolize_names: true)
     end
@@ -166,9 +169,10 @@ describe '#send_container_stats' do
           network: event.dig(:stats, -1, :network)
         }
       ))
-      expect {
-        subject.send_container_stats(event)
-      }.to change{ queue.length }.by(1)
+      expect(rpc_client).to receive(:notification).with(
+        '/containers/stat', [hash_including(id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e')]
+      )
+      subject.send_container_stats(event)
     end
 
     it 'does not fail on missing cpu stats' do
@@ -189,10 +193,10 @@ describe '#send_container_stats' do
           network: event.dig(:stats, -1, :network)
         }
       ))
-      expect {
-        subject.send_container_stats(event)
-      }.to change{ queue.length }.by(1)
+      expect(rpc_client).to receive(:notification).with(
+        '/containers/stat', [hash_including(id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e')]
+      )
+      subject.send_container_stats(event)
     end
   end
-
 end
