@@ -40,6 +40,19 @@ describe Grids::Update, celluloid: true do
       expect(grid.reload.logs['opts']['fluentd_address']).to eq('192.168.0.42:24224')
     end
 
+    it 'removes log settings' do
+      logs = {
+        driver: 'fluentd',
+        opts: {
+          fluentd_address: '192.168.0.42:24224'
+        }
+      }
+      grid.update_attributes({:logs => logs})
+      outcome = described_class.new(user: user, grid: grid, logs: { driver: 'none'}).run
+      expect(outcome.success?).to be_truthy, outcome.errors
+      expect(grid.reload.logs).to eq({})
+    end
+
     it 'fails update log settings with unsupported driver' do
       logs = {
         driver: 'foobar',

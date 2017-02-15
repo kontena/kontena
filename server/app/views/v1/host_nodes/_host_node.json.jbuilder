@@ -36,6 +36,10 @@ json.grid do
     json.stats do
       json.statsd grid.stats['statsd']
     end
+    json.logs do
+      json.driver grid.logs['driver']
+      json.opts grid.logs['opts']
+    end
     json.trusted_subnets grid.trusted_subnets
     json.subnet grid.subnet
     json.supernet grid.supernet

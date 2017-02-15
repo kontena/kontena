@@ -38,7 +38,9 @@ module Kontena::Workers
       }
     rescue Excon::Errors::SocketError => exc
       since = Time.now.to_f
-      error "log socket error: #{@container.id}"
+      error "log socket error for container: #{@container.id}"
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
       retry
     rescue Docker::Error::TimeoutError
       since = Time.now.to_f
@@ -57,12 +59,21 @@ module Kontena::Workers
       return unless match
       time = DateTime.parse(match[1])
       data = match[2]
-      @queue << {
-          id: id,
-          time: time.utc.xmlschema,
-          type: stream,
-          data: data
+      msg = {
+          event: EVENT_NAME,
+          data: {
+              id: id,
+              time: time.utc.xmlschema,
+              type: stream,
+              data: data
+          }
       }
+      @queue << msg
+      publish_log(msg)
+    end
+
+    def publish_log(log)
+      Celluloid:: Notifications.publish(EVENT_NAME, log)
     end
   end
 end

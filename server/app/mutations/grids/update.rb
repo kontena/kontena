@@ -25,7 +25,9 @@ module Grids
       end
       hash :logs do
         required do
-          string :driver, matches: /^(fluentd)$/ # Only fluentd now supported
+          string :driver, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
+        end
+        optional do
           model :opts, class: Hash
         end
       end
@@ -55,8 +57,13 @@ module Grids
       if self.default_affinity
         attributes[:default_affinity] = self.default_affinity
       end
+
       if self.logs
-        attributes[:logs] = self.logs
+        if self.logs[:driver] == 'none'
+          attributes[:logs] = {}
+        else
+          attributes[:logs] = self.logs
+        end
       end
       grid.update_attributes(attributes)
       if grid.errors.size > 0
