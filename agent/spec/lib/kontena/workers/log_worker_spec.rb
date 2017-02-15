@@ -1,14 +1,15 @@
 require_relative '../../../spec_helper'
 
 describe Kontena::Workers::LogWorker do
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
+  let(:subject) { described_class.new(false) }
   let(:container) { spy(:container, id: 'foo', labels: {}) }
   let(:etcd) { spy(:etcd) }
 
   before(:each) do
     Celluloid.boot
+    mock_rpc_client
     allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
     allow(subject.wrapped_object).to receive(:finalize)
   end
@@ -41,21 +42,20 @@ describe Kontena::Workers::LogWorker do
 
       subject.start
     end
-
   end
 
-  describe '#on_queue_started' do
+  describe '#on_connect' do
     it 'sets #queue_processing? to true' do
       allow(subject.wrapped_object).to receive(:async).and_return(spy)
-      subject.on_queue_started('topic', {})
+      subject.on_connect('topic', {})
       expect(subject.queue_processing?).to be_truthy
     end
   end
 
-  describe '#on_queue_stopped' do
+  describe '#on_disconnect' do
     it 'sets #queue_processing? to false' do
       allow(subject.wrapped_object).to receive(:async).and_return(spy)
-      subject.on_queue_stopped('topic', {})
+      subject.on_disconnect('topic', {})
       expect(subject.queue_processing?).to be_falsey
     end
   end

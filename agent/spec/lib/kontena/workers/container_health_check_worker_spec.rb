@@ -1,15 +1,14 @@
 require_relative '../../../spec_helper'
 
 describe Kontena::Workers::ContainerHealthCheckWorker do
+  include RpcClientMocks
 
   let(:container) { double(:container, id: '1234', name: 'test') }
-  let(:rpc_client) { double(:rpc_client) }
   subject { described_class.new(container) }
 
   before(:each) do
     Celluloid.boot
-    allow(subject.wrapped_object).to receive(:rpc_client).and_return(rpc_client)
-    allow(rpc_client).to receive(:async).and_return(rpc_client)
+    mock_rpc_client
   end
   after(:each) { Celluloid.shutdown }
 

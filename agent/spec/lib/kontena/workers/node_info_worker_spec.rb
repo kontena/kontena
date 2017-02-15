@@ -1,12 +1,13 @@
 require_relative '../../../spec_helper'
 
 describe Kontena::Workers::NodeInfoWorker do
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
+  let(:subject) { described_class.new(false) }
 
   before(:each) {
     Celluloid.boot
+    mock_rpc_client
     allow(Docker).to receive(:info).and_return({
       'Name' => 'node-1',
       'Labels' => nil,
