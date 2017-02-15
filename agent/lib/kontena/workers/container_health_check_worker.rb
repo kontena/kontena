@@ -61,7 +61,7 @@ module Kontena::Workers
         }
         rpc_client.async.notification('/containers/log', [log])
         defer {
-          Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
+          restart_container
         }
       end
     end
@@ -110,6 +110,10 @@ module Kontena::Workers
         data['status'] = 'unhealthy'
       end
       data
+    end
+
+    def restart_container
+      Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
     end
 
     def log_exit
