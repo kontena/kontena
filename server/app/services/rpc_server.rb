@@ -32,7 +32,6 @@ class RpcServer
   # @return [Array]
   def handle_request(ws_client, grid_id, message)
     msg_id = message[1]
-    p message
     handler = message[2].split('/')[1]
     method = message[2].split('/')[2]
     if actor = handling_actor(grid_id, handler)
