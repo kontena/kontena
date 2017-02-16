@@ -1,12 +1,9 @@
 require_relative '../../spec_helper'
 
-describe Rpc::NodeHandler do
+describe Rpc::NodeHandler, celluloid: true do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
 
   describe '#stats' do
     it 'saves host_node_stat item' do

@@ -1,12 +1,9 @@
 require_relative '../../spec_helper'
 
-describe Rpc::ContainerHandler do
+describe Rpc::ContainerHandler, celluloid: true do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
 
   describe '#save' do
     it 'updates container info if container is found by container_id' do

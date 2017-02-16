@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe RpcServer do
+describe RpcServer, celluloid: true do
 
   class HelloWorld
 
@@ -20,10 +20,7 @@ describe RpcServer do
 
   before(:each) do
     stub_const("RpcServer::HANDLERS", {'hello' => HelloWorld})
-    Celluloid.boot
   end
-
-  after(:each) { Celluloid.shutdown }
 
   describe '#handle_request' do
     it 'calls handler and sends response back to ws_client' do
