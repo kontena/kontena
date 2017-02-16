@@ -15,7 +15,6 @@ class WebsocketBackend
     @logger = Logger.new(STDOUT)
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
-    @incoming_queue = Queue.new
     @rpc_server = RpcServer.new
     subscribe_to_rpc_channel
     watch_connections

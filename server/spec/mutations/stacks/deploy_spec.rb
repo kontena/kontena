@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Stacks::Deploy do
+describe Stacks::Deploy, celluloid: true do
   let(:grid) { Grid.create!(name: 'test-grid') }
 
   let(:stack) {
@@ -16,12 +16,7 @@ describe Stacks::Deploy do
   }
 
   before(:each) do
-    Celluloid.boot
     Celluloid::Actor[:stack_deploy_worker] = StackDeployWorker.new
-  end
-
-  after(:each) do
-    Celluloid.shutdown
   end
 
   describe '#run' do
