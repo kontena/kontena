@@ -32,7 +32,8 @@ module Kontena::Workers
         @fluentd = Fluent::Logger::FluentLogger
           .new("#{node_name}.#{info.dig('grid' 'name')}",
               :host => host,
-              :port => port || 24224)
+              :port => port || 24224,
+              :logger => Kontena::Logging.logger)
         @forwarding = true
       else
         info "stopping fluentd log streaming"
