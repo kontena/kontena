@@ -43,6 +43,7 @@
 * [Etcd](using-kontena/etcd.md)
 * [Applications](using-kontena/applications.md)
 * [Telemetry](using-kontena/telemetry.md)
+* [Logs](using-kontena/logs.md)
 
 ### Core Concepts
 
