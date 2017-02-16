@@ -63,13 +63,16 @@ module Kontena::Workers
           event: EVENT_NAME,
           data: {
               id: id,
+              service: @container.service_name,
+              stack: @container.stack_name,
+              instance: @container.instance_number,
               time: time.utc.xmlschema,
               type: stream,
               data: data
           }
       }
       @queue << msg
-      publish_log(msg)
+      publish_log(msg.dig('data', 'data'))
     end
 
     def publish_log(log)

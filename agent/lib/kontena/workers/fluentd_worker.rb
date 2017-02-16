@@ -27,7 +27,7 @@ module Kontena::Workers
       driver = info.dig('grid', 'logs', 'driver')
       if driver == 'fluentd'
         fluentd_address = info.dig('grid', 'logs', 'opts', 'fluentd-address')
-        puts "starting fluentd log streaming to #{fluentd_address}"
+        info "starting fluentd log streaming to #{fluentd_address}"
         host, port = fluentd_address.split(':')
         @fluentd = Fluent::Logger::FluentLogger
           .new("#{node_name}.#{info.dig('grid' 'name')}",
@@ -45,7 +45,15 @@ module Kontena::Workers
     def on_log_event(topic, log)
       # TODO Get more tags
       # maybe stack.service.instance
-      @fluentd.post(nil, log) if @forwarding && @fluentd
+      #puts "forwarding: #{@forwarding}, fluentd: #{@fluentd}"
+      if @forwarding && @fluentd
+        tag = [log[:stack], log[:service], log[:instance]].join('.')
+        record = {
+          event: log[:data], # the actual log event
+          source: log[:type] # stdout/stderr
+        }
+        @fluentd.post(tag, record)
+      end
     end
   end
 end
