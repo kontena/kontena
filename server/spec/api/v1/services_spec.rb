@@ -110,7 +110,7 @@ describe '/v1/services' do
     end
 
     it 'returns health status' do
-      redis_service.health_check = GridServiceHealthCheck.new(port: 5000)
+      redis_service.health_check = GridServiceHealthCheck.new(port: 5000, protocol: 'tcp')
       redis_service.save
       container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', health_status: 'healthy')
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
