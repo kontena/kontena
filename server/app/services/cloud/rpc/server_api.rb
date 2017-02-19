@@ -55,7 +55,7 @@ module Cloud
 
       def require_user(user_id)
         @user = User.find_by(external_id: user_id)
-        raise RpcServer::Error.new(403, 'Forbidden') unless @user
+        raise RpcServer::Error.new(403, 'Cloud user not found. Please try re-login to master with CLI: kontena master login --force') unless @user
       end
 
       def request(path, opts = {})
