@@ -452,9 +452,10 @@ volumes_from:
 
 ```
 volumes_from:
- - wordpress-%%s
+ - wordpress-%s
 ```
-(`-%%s` will be replaced with container number; for example, the first service container will get volumes from wordpress-1, the second from wordpress-2, etc.)
+
+(The `-%s` will be replaced with the service instance number; for example, the first service container will get volumes from wordpress-1, the second from wordpress-2, etc.)
 
 #### logging
 
