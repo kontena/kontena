@@ -398,7 +398,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path('kontena_v3.yml'))
         .and_return(fixture('stack-with-liquid.yml'))
       expect(subject.from_file?).to be_truthy
-      expect(subject.execute[:registry]).to eq 'file://kontena_v3.yml'
+      expect(subject.execute[:registry]).to be_nil
     end
 
     it 'can read from the registry' do
@@ -408,7 +408,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       expect(stack_double).to receive(:read).and_return(fixture('kontena_v3.yml'))
       instance = described_class.new('foo/foo')
       expect(instance.from_registry?).to be_truthy
-      expect(instance.execute[:registry]).to eq 'kontena'
+      expect(instance.execute[:registry]).to eq instance.current_account.stacks_url
     end
 
     it 'can read from an url' do
@@ -416,7 +416,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       allow_any_instance_of(described_class).to receive(:load_from_url).and_return(fixture('stack-with-liquid.yml'))
       instance = described_class.new('http://foo.example.com/foo')
       expect(instance.from_url?).to be_truthy
-      expect(instance.execute[:registry]).to eq 'http://foo.example.com/foo'
+      expect(instance.execute[:registry]).to be_nil
     end
   end
 

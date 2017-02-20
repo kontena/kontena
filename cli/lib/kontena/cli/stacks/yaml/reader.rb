@@ -25,13 +25,13 @@ module Kontena::Cli::Stacks
         if from_registry?
           require 'shellwords'
           @raw_content = Kontena::StacksCache.pull(file)
-          @registry    = current_account.name
+          @registry    = current_account.stacks_url
         elsif from_url?
           @raw_content = load_from_url(file)
-          @registry = file
+          @registry = nil
         else
           @raw_content = File.read(File.expand_path(file))
-          @registry = "file://#{File.basename(file)}"
+          @registry = nil
         end
 
         @errors           = []
