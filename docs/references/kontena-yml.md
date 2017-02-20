@@ -452,6 +452,8 @@ volumes_from:
 
 (The `-%s` will be replaced with the service instance number; for example, the first service container will get volumes from wordpress-1, the second from wordpress-2, etc.)
 
+You can only use `volumes_from` between services within the same stack. Use the plain name of the service without any stack prefix.
+
 #### logging
 
 Logging configuration for the service.
