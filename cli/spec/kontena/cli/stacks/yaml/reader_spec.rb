@@ -409,7 +409,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     it 'can read from an url' do
-     stub_request(:get, "http://foo.example.com/foo").to_return(:status => 200, :body => fixture('stack-with-liquid.yml'), :headers => {})
+      stub_request(:get, "http://foo.example.com/foo").to_return(:status => 200, :body => fixture('stack-with-liquid.yml'), :headers => {})
+      allow_any_instance_of(described_class).to receive(:load_from_url).and_return(fixture('stack-with-liquid.yml'))
       expect(described_class.new('http://foo.example.com/foo').from_url?).to be_truthy
     end
   end

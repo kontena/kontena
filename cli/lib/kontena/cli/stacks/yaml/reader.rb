@@ -11,7 +11,7 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values
+      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values, :registry
 
       def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
         require 'yaml'
@@ -27,11 +27,11 @@ module Kontena::Cli::Stacks
           @raw_content = Kontena::StacksCache.pull(file)
           @registry    = Kontena::StacksCache.registry_url
         elsif from_url?
-          require 'open-uri'
-          stream = open(file)
-          @raw_content = stream.read
+          @raw_content = load_from_url(file)
+          @registry = file
         else
           @raw_content = File.read(File.expand_path(file))
+          @registry = "file:///#{File.basename(file)}"
         end
 
         @errors           = []
@@ -41,6 +41,12 @@ module Kontena::Cli::Stacks
         @variables        = variables
         @values           = values
         @defaults         = defaults
+      end
+
+      def load_from_url(url)
+        require 'open-uri'
+        stream = open(url)
+        stream.read
       end
 
       def internals_interpolated_yaml
@@ -121,7 +127,7 @@ module Kontena::Cli::Stacks
           result[:stack]         = raw_yaml['stack']
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
-          result[:registry]      = @registry if from_registry?
+          result[:registry]      = registry
           result[:expose]        = fully_interpolated_yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
