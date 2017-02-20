@@ -447,11 +447,6 @@ Mount all of the volumes from another service by specifying a service unique nam
 
 ```
 volumes_from:
- - wordpress
-```
-
-```
-volumes_from:
  - wordpress-%s
 ```
 
