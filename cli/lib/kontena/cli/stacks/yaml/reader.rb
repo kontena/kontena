@@ -31,7 +31,7 @@ module Kontena::Cli::Stacks
           @registry = file
         else
           @raw_content = File.read(File.expand_path(file))
-          @registry = "file:///#{File.basename(file)}"
+          @registry = "file://#{File.basename(file)}"
         end
 
         @errors           = []
