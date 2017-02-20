@@ -408,7 +408,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       expect(stack_double).to receive(:read).and_return(fixture('kontena_v3.yml'))
       instance = described_class.new('foo/foo')
       expect(instance.from_registry?).to be_truthy
-      expect(instance.execute[:registry]).to eq 'https://stacks.kontena.io/stack/foo/foo'
+      expect(instance.execute[:registry]).to eq 'foo/foo'
     end
 
     it 'can read from an url' do
