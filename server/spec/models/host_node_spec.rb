@@ -11,6 +11,7 @@ describe HostNode do
   it { should have_fields(:last_seen_at).of_type(Time) }
 
   it { should belong_to(:grid) }
+  it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
   it { should have_many(:host_node_stats) }
 

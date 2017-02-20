@@ -84,12 +84,9 @@ class StackDeployWorker
         removed_services << s
       end
     end
-    sort_services(removed_services).reverse.each do |s|
-      remove_service(s.id)
+    info "removing following services: #{removed_services.map{ |s| s.name}.join(', ')}"
+    removed_services.each do |s|
+      s.destroy
     end
-  end
-
-  def remove_service(id)
-    worker(:grid_service_remove).perform(id)
   end
 end

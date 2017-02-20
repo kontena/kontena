@@ -22,8 +22,7 @@ module GridServices
     end
 
     def execute
-      attrs = { deploy_requested_at: Time.now.utc }
-      attrs[:state] = 'running' unless grid_service.deploying?
+      attrs = { deploy_requested_at: Time.now.utc, state: 'running' }
       attrs[:updated_at] = Time.now.utc if force
       grid_service.set(attrs)
       GridServiceDeploy.create(grid_service: grid_service)

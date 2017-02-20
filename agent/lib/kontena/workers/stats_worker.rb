@@ -17,15 +17,15 @@ module Kontena::Workers
     end
 
     # @param [String] topic
-    # @param [Hash] info
-    def on_node_info(topic, info)
-      @node_name = info['name']
-      statsd_conf = info.dig('grid', 'stats', 'statsd')
+    # @param [Node] node
+    def on_node_info(topic, node)
+      @node_name = node.name
+      statsd_conf = node.grid.dig('stats', 'statsd')
       if statsd_conf
         info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
         @statsd = Statsd.new(
           statsd_conf['server'], statsd_conf['port'].to_i || 8125
-        ).tap{|sd| sd.namespace = info.dig('grid', 'name')}
+        ).tap{ |sd| sd.namespace = node.grid['name'] }
       else
         @statsd = nil
       end

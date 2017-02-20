@@ -23,11 +23,11 @@ describe GridServiceSchedulerWorker, celluloid: true do
     end
 
     it 'does not trigger deploy if service is already deploying' do
-      service.set_state('deploying')
+      service.grid_service_deploys.create!(started_at: Time.now)
       deploy = service_deploy
-      expect(subject.wrapped_object).not_to receive(:perform)
+      expect(subject.wrapped_object).not_to receive(:deploy)
       subject.check_deploy_queue
-      expect(GridServiceDeploy.count).to eq(1)
+      expect(GridServiceDeploy.count).to eq(2)
       expect(deploy.reload.started_at).not_to be_nil
     end
 

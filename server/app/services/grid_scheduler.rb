@@ -19,8 +19,8 @@ class GridScheduler
 
   def reschedule_services
     grid.grid_services.each do |service|
-      if can_reschedule_service?(service)
-        reschedule_stateless_service(service)
+      if should_reschedule_service?(service)
+        reschedule_service(service)
       end
     end
   rescue => exc
@@ -28,40 +28,105 @@ class GridScheduler
     debug exc.backtrace.join("\n") if exc.backtrace
   end
 
-  # @param [GridService] service
-  # @return [Boolean]
-  def can_reschedule_service?(service)
-    service.stateless? && service.running? && !service.dependant_services?
-  end
-
-  # @param [GridService] service
-  def reschedule_stateless_service(service)
+  def check_service(service)
     if should_reschedule_service?(service)
-      GridServiceDeploy.create(grid_service: service)
-    else
-      info "seems that re-scheduling does not change anything for #{service.to_path}... skipping"
+      reschedule_service(service)
     end
   end
 
   # @param [GridService] service
   # @return [Boolean]
   def should_reschedule_service?(service)
-    return false if service.grid_service_deploys.where(started_at: nil).count > 0
-    
-    current_nodes = service.containers.map{|c| c.host_node}.delete_if{|n| n.nil?}.uniq.sort
-    available_nodes = service.grid.host_nodes.connected.to_a
-    return false if available_nodes.size == 0
+    return false unless service.running?
+    return false if pending_deploys?(service)
+    return false if active_deploys?(service)
+    return false if active_deploys_within_stack?(service)
 
+    if !all_instances_exist?(service)
+      info "service #{service.to_path} has wrong number of instances (or they are not distributed correctly)"
+      return true
+    end
+    if lagging_behind?(service)
+      info "service #{service.to_path} does have older versions running"
+      return true
+    end
+
+    if interval_passed?(service)
+      info "service #{service.to_path} interval has passed"
+      force_service_update(service)
+      return true
+    end
+
+    false
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def pending_deploys?(service)
+    service.grid_service_deploys.where(started_at: nil).count > 0
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def active_deploys?(service)
+    service.grid_service_deploys.where(:started_at.gt => 30.minutes.ago, :deploy_state.in => [:created, :ongoing]).count > 0
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def active_deploys_within_stack?(service)
+    service.stack.stack_deploys.where(:created_at.gt => 30.minutes.ago, :deploy_state.in => [:created, :ongoing]).count > 0
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def lagging_behind?(service)
+    return true if service.deployed_at && service.updated_at > service.deployed_at
+
+    false
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def interval_passed?(service)
+    if deploy_interval = service.deploy_opts.interval
+      if (service.deployed_at.to_i + deploy_interval.to_i) < Time.now.to_i
+        return true
+      end
+    end
+
+    false
+  end
+
+  # @param [GridService] service
+  def force_service_update(service)
+    service.set(updated_at: Time.now)
+  end
+
+  # @param [GridService] service
+  # @return [Boolean]
+  def all_instances_exist?(service)
+    available_nodes = service.grid.host_nodes.connected.to_a
+    return true if available_nodes.size == 0
+
+    current_nodes = service.grid_service_instances.map{ |c| c.host_node }.delete_if { |n| n.nil? }.uniq.sort
     service_deploy = GridServiceDeploy.new(grid_service: service)
     service_deployer = GridServiceDeployer.new(
       self.strategy(service.strategy), service_deploy, available_nodes
     )
-    if service_deployer.instance_count != service.containers.count
-      return true
-    end
+    if service.stateless?
+      return false if service_deployer.instance_count != service.grid_service_instances.count
 
-    selected_nodes = service_deployer.selected_nodes.uniq.sort
-    selected_nodes != current_nodes
+      selected_nodes = service_deployer.selected_nodes.uniq.sort
+      selected_nodes == current_nodes
+    else
+      service_deployer.instance_count == service.grid_service_instances.count
+    end
+  end
+
+  # @param [GridService] service
+  def reschedule_service(service)
+    GridServiceDeploy.create(grid_service: service)
   end
 
   # @param [String] name

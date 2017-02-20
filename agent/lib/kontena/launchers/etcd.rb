@@ -25,11 +25,11 @@ module Kontena::Launchers
     end
 
     # @param [String] topic
-    # @param [Hash] info
-    def on_overlay_start(topic, info)
+    # @param [Node] node
+    def on_overlay_start(topic, node)
       retries = 0
       begin
-        self.start_etcd(info)
+        self.start_etcd(node)
       rescue Docker::Error::ServerError => exc
         if retries < 4
           retries += 1
@@ -42,12 +42,12 @@ module Kontena::Launchers
       end
     end
 
-    # @param [Hash] node_info
-    def start_etcd(node_info)
+    # @param [Node] node
+    def start_etcd(node)
       sleep 1 until image_pulled?
 
       create_data_container(@image_name)
-      create_container(@image_name, node_info)
+      create_container(@image_name, node)
     end
 
     # @param [String] image
@@ -83,12 +83,12 @@ module Kontena::Launchers
     end
 
     # @param [String] image
-    # @param [Hash] info
-    def create_container(image, info)
-      cluster_size = info['grid']['initial_size']
-      node_number = info['node_number']
+    # @param [Node] node
+    def create_container(image, node)
+      cluster_size = node.grid['initial_size']
+      node_number = node.node_number
       cluster_state = 'new'
-      weave_ip = info['overlay_ip']
+      weave_ip = node.overlay_ip
 
       container = Docker::Container.get('kontena-etcd') rescue nil
       if container && container.info['Config']['Image'] != image
@@ -106,13 +106,13 @@ module Kontena::Launchers
         return container
       elsif container.nil? && node_number <= cluster_size
         # No previous container exists, update previous membership info if needed
-        cluster_state = update_membership(info)
+        cluster_state = update_membership(node)
       end
 
-      name = "node-#{info['node_number']}"
-      grid_name = info['grid']['name']
+      name = "node-#{node.node_number}"
+      grid_name = node.grid['name']
       docker_ip = docker_gateway
-      initial_cluster = initial_cluster(info['grid'])
+      initial_cluster = initial_cluster(node.grid)
 
       cmd = [
         '--name', name, '--data-dir', '/var/lib/etcd',
@@ -154,15 +154,15 @@ module Kontena::Launchers
 
     # Removes possible previous member with the same IP
     #
-    # @param [String] node weave ip
+    # @param [Node] node
     # @return [String] the state of the cluster member
-    def update_membership(info)
+    def update_membership(node)
       info 'checking if etcd previous membership needs to be updated'
 
-      etcd_connection = find_etcd_node(info)
+      etcd_connection = find_etcd_node(node)
       return 'new' unless etcd_connection # No etcd hosts available, bootstrapping first node --> new cluster
 
-      weave_ip = info['overlay_ip']
+      weave_ip = node.overlay_ip
       peer_url = "http://#{weave_ip}:2380"
       client_url = "http://#{weave_ip}:2379"
 
@@ -191,11 +191,11 @@ module Kontena::Launchers
     ##
     # Finds a working etcd node from set of initial nodes
     #
-    # @param [Hash] node info
+    # @param [Node] node
     # @return [Hash] The cluster members as given by etcd API
-    def find_etcd_node(info)
-      grid_subnet = IPAddr.new(info['grid']['subnet'])
-      tries = info['grid']['initial_size']
+    def find_etcd_node(node)
+      grid_subnet = IPAddr.new(node.grid['subnet'])
+      tries = node.grid['initial_size']
       begin
         etcd_host = "http://#{grid_subnet[tries]}:2379/v2/members"
 

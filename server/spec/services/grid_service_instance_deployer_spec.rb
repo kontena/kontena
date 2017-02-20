@@ -6,49 +6,33 @@ describe GridServiceInstanceDeployer do
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(grid_service) }
 
-  describe '#service_exists_on_node?' do
-    it 'returns true if service exists on node' do
-      grid_service.containers.create!(
-        name: 'redis-2', host_node: node, instance_number: 2
-      )
-      expect(subject.service_exists_on_node?(node, 2)).to be_truthy
+  describe '#create_service_instance' do
+    it 'creates a new instance if not exist' do
+      grid_service
+      instance_number = 2
+      deploy_rev = Time.now.utc.to_s
+      expect {
+        subject.create_service_instance(node, instance_number, deploy_rev)
+      }.to change { grid_service.grid_service_instances.count }.by(1)
+      instance = grid_service.grid_service_instances.first
+      expect(instance.instance_number).to eq(instance_number)
+      expect(instance.deploy_rev).to eq(deploy_rev)
+      expect(instance.host_node).to eq(node)
     end
 
-    it 'returns false if service does not exists on node' do
-      grid_service.containers.create!(
-        name: 'redis-2', host_node: node, instance_number: 2
+    it 'updates existing instance if exist' do
+      instance_number = 2
+      grid_service.grid_service_instances.create!(
+        instance_number: instance_number, deploy_rev: Time.now.utc.to_s, host_node: node
       )
-      expect(subject.service_exists_on_node?(node, 1)).to be_falsey
-    end
-  end
-
-  describe '#deployed_service_container_exists?' do
-    it 'returns true if service exists' do
-      grid_service.containers.create!(
-        name: 'redis-2', host_node: node, deploy_rev: 'rev-a', container_id: 'aaa', instance_number: 2
-      )
-      expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_truthy
-    end
-
-    it 'returns false if service does not have container_id' do
-      grid_service.containers.create!(
-        name: 'redis-2', host_node: node, deploy_rev: 'rev-a', instance_number: 2
-      )
-      expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_falsey
-    end
-
-    it 'returns false if service does not have same rev' do
-      grid_service.containers.create!(
-        name: 'redis-2', host_node: node, deploy_rev: 'rev-b', instance_number: 2
-      )
-      expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_falsey
-    end
-
-    it 'returns false if service instance does not exist' do
-      grid_service.containers.create!(
-        name: 'redis-1', host_node: node, deploy_rev: 'rev-a', container_id: 'aaa', instance_number: 1
-      )
-      expect(subject.deployed_service_container_exists?(2, 'rev-a')).to be_falsey
+      deploy_rev = Time.now.utc.to_s
+      expect {
+        subject.create_service_instance(node, instance_number, deploy_rev)
+      }.to change { grid_service.grid_service_instances.count }.by(0)
+      instance = grid_service.grid_service_instances.first
+      expect(instance.instance_number).to eq(instance_number)
+      expect(instance.deploy_rev).to eq(deploy_rev)
+      expect(instance.host_node).to eq(node)
     end
   end
 end

@@ -18,6 +18,7 @@ describe GridService do
   it { should embed_many(:secrets) }
   it { should embed_many(:hooks) }
   it { should embed_one(:deploy_opts) }
+  it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }

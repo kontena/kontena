@@ -35,11 +35,11 @@ module Scheduler
       # @param [Array<HostNode>] nodes
       # @return [HostNode,NilClass]
       def find_stateful_node(grid_service, instance_number, nodes)
-        prev_container = grid_service.containers.volumes.service_instance(
-          grid_service, instance_number
-        ).first
-        if prev_container
-          nodes.find{|n| n == prev_container.host_node }
+        prev_instance = grid_service.grid_service_instances.find_by(
+          instance_number: instance_number
+        )
+        if prev_instance
+          nodes.find{ |n| n == prev_instance.host_node }
         else
           candidates = self.sort_candidates(nodes, grid_service, instance_number)
           candidates.first
@@ -65,8 +65,10 @@ module Scheduler
       # @param [Fixnum] instance_number
       # @return [Float]
       def instance_rank(node, grid_service, instance_number)
-        container = node.containers.service_instance(grid_service, instance_number).first
-        if container
+        prev_instance = node.grid_service_instances.find_by(
+          grid_service_id: grid_service.id, instance_number: instance_number
+        )
+        if prev_instance
           -5.0
         else
           0.0

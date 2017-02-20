@@ -39,6 +39,8 @@ require_relative 'kontena/workers/health_check_worker'
 require_relative 'kontena/workers/container_starter_worker'
 require_relative 'kontena/workers/fluentd_worker'
 
+require_relative 'kontena/workers/service_pod_manager'
+
 require_relative 'kontena/actors/container_coroner'
 
 require_relative 'kontena/load_balancers/configurer'
