@@ -25,7 +25,7 @@ module Kontena::Cli::Stacks
         if from_registry?
           require 'shellwords'
           @raw_content = Kontena::StacksCache.pull(file)
-          @registry    = file
+          @registry    = current_account.name
         elsif from_url?
           @raw_content = load_from_url(file)
           @registry = file
