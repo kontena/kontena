@@ -1,6 +1,13 @@
 version: '2'
 
 services:
+  test:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile.test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   api:
     build:
       context: ../server
