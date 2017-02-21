@@ -10,7 +10,7 @@ module Stacks
     # @param [String] type
     def handle_service_outcome_errors(service_name, messages, type)
       messages.each do |key, msg|
-        add_error(:services, :key, "Service #{type} failed for service '#{service_name}': #{msg}")
+        add_error(:services, key.to_sym, "Service #{type} failed for service '#{service_name}': #{msg}")
       end
     end
 
