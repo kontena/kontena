@@ -15,8 +15,3 @@ DOCKER_COMPOSE_VERSION=1.11.1
 )
 
 sudo ln -sf /opt/docker-compose_$DOCKER_COMPOSE_VERSION/bin/docker-compose /opt/bin/docker-compose
-
-## setup
-cd ~/kontena/test
-
-docker-compose build test && docker-compose run test rake compose:setup

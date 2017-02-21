@@ -15,7 +15,6 @@ or
 $ bundle exec rspec spec/
 ```
 
-
 ## Local test environment using Docker Compose
 
 This environment is built from sources.
@@ -46,4 +45,32 @@ Teardown:
 
 ```
 $ rake vagrant:teardown
+```
+
+## Vagrant test environment using Docker Compose
+
+This environment is built from sources with CoreOS running in Virtualbox.
+
+Setup:
+
+```
+test $ vagrant up
+test $ vagrant ssh
+core@localhost $ cd ~/kontena/test
+core@localhost ~/kontena/test $ docker-compose run test rake compose:setup
+```
+
+Specs:
+
+```
+test $ vagrant ssh
+core@localhost ~/kontena/test $ docker-compose run test rake
+```
+
+Teardown:
+
+```
+test $ vagrant ssh
+core@localhost ~/kontena/test $ docker-compose run test rake compose:teardown
+test $ vagrant destroy
 ```
