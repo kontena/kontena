@@ -64,6 +64,7 @@ namespace :compose do
   task :teardown_master do
     sh "docker-compose stop api mongodb"
     sh "docker-compose rm --force api mongodb"
+    sh "kontena master remove --force compose-e2e"
   end
 
   task :teardown_grid do
