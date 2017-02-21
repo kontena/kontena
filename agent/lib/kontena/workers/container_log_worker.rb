@@ -76,7 +76,7 @@ module Kontena::Workers
     end
 
     def publish_log(log)
-      Celluloid:: Notifications.publish(EVENT_NAME, log)
+      Celluloid::Notifications.publish(EVENT_NAME, log)
     end
   end
 end
