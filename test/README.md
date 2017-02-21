@@ -56,21 +56,19 @@ Setup:
 ```
 test $ vagrant up
 test $ vagrant ssh
-core@localhost $ cd ~/kontena/test
-core@localhost ~/kontena/test $ docker-compose run --rm test rake compose:setup
+core@localhost $ cd /kontena/test
+core@localhost /kontena/test $ docker-compose run --rm test rake compose:setup
 ```
 
 Specs:
 
 ```
-test $ vagrant ssh
-core@localhost ~/kontena/test $ docker-compose run --rm test rake
+core@localhost /kontena/test $ docker-compose run --rm test rspec
 ```
 
 Teardown:
 
 ```
-test $ vagrant ssh
-core@localhost ~/kontena/test $ docker-compose run --rm test rake compose:teardown
+core@localhost /kontena/test $ docker-compose run --rm test rake compose:teardown
 test $ vagrant destroy
 ```
