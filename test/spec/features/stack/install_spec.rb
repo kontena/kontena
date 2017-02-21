@@ -41,4 +41,14 @@ describe 'stack install' do
       end
     end
   end
+
+  context 'For a stack with a broken link' do
+    it 'Returns an error' do
+      with_fixture_dir("stack/links-broken") do
+        k = run 'kontena stack install kontena.yml'
+        expect(k.code).to eq(1)
+        expect(k.out).to match /Service validate failed for service 'a': Linked service 'nope' does not exist/
+      end
+    end
+  end
 end
