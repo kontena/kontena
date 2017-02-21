@@ -27,7 +27,7 @@ module Stacks
       links = links - internal_links
       internal_links.each do |l|
         unless self.services.any?{|s| s[:name] == l['name']}
-          handle_service_outcome_errors(service[:name], ["Linked service #{l['name']} does not exist"], :create)
+          handle_service_outcome_errors(service[:name], { links: "Linked service '#{l['name']}' does not exist" }, :validate)
         end
       end
       service[:links] = links
