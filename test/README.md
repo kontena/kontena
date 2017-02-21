@@ -63,7 +63,13 @@ core@localhost /kontena/test $ docker-compose run --rm test rake compose:setup
 Specs:
 
 ```
-core@localhost /kontena/test $ docker-compose run --rm test rspec
+core@localhost /kontena/test $ docker-compose run --rm test rake
+```
+
+or
+
+```
+core@localhost /kontena/test $ docker-compose run --rm test rspec spec/
 ```
 
 Teardown:
@@ -71,4 +77,10 @@ Teardown:
 ```
 core@localhost /kontena/test $ docker-compose run --rm test rake compose:teardown
 test $ vagrant destroy
+```
+
+Oneliner:
+
+```
+vagrant up && vagrant ssh -c 'cd /kontena/test && docker-compose up test'
 ```

@@ -10,6 +10,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ..:/kontena
       - ./.kontena_client.json:/root/.kontena_client.json
+    command: rake compose:setup spec compose:teardown
 
   api:
     build:
