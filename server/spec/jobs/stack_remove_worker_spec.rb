@@ -1,6 +1,14 @@
 require_relative '../spec_helper'
 
 describe StackRemoveWorker do
+  before(:each) do
+    Celluloid.boot
+  end
+
+  after(:each) do
+    Celluloid.shutdown
+  end
+
   let :grid do
     Grid.create(name: 'test')
   end
