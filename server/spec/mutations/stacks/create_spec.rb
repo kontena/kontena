@@ -190,7 +190,7 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome.success?).to be(false)
-      expect(outcome.errors.message.keys).to include('services')
+      expect(outcome.errors.message).to eq 'services' => "Service validate failed for service 'api': Link redis/redis points to non-existing stack"
     end
 
     it 'does not create a stack if link within a stack is invalid' do
@@ -215,7 +215,7 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome.success?).to be(false)
-      expect(outcome.errors.message.keys).to include('services')
+      expect(outcome.errors.message).to eq 'services' => "Service validate failed for service 'api': Linked service 'redis' does not exist"
     end
 
     it 'does not create stack if any service validation fails' do
