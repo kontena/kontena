@@ -147,10 +147,11 @@ module Kontena::Cli::Stacks
         raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
       end
 
+      # @raise [Liquid::Error]
       def interpolate_liquid(content, vars)
         Liquid::Template.error_mode = :strict
         template = Liquid::Template.parse(content)
-        template.render(vars, strict_variables: true, strict_filters: true)
+        template.render!(vars, strict_variables: true, strict_filters: true)
       end
 
       def stack_name
