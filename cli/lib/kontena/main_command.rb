@@ -30,7 +30,10 @@ class Kontena::MainCommand < Kontena::Command
   include Kontena::Cli::Common
 
   option ['-v', '--version'], :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
-    puts ['kontena-cli', Kontena::Cli::VERSION, '[ruby' + RUBY_VERSION + '+' + RUBY_PLATFORM + ENV["_HOMEBREW_TAG"].to_s + ']'].join(' ')
+    build_tags = [ 'ruby' + RUBY_VERSION ]
+    build_tags << RUBY_PLATFORM
+    build_tags << 'homebrew' if ENV["_KONTENA_HOMEBREW"]
+    puts ['kontena-cli', Kontena::Cli::VERSION, "[#{build_tags.join('+')}]"].join(' ')
     exit 0
   end
 
