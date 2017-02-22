@@ -11,7 +11,7 @@ if libexec.exist?
   ENV['GEM_PATH'] = libexec.to_s
   ENV['_HOMEBREW_TAG'] = "+homebrew"
   head = libexec.to_s.split(File::SEPARATOR).detect { |component| component.start_with?('HEAD') }
-  ENV['_HOMEBREW_HEAD'] = head.nil? ? nil : ".pre.#{head.gsub("-", '').downcase}"
+  ENV['_HOMEBREW_HEAD'] = head.nil? ? nil : ".pre.#{head.gsub("-", '_').downcase}"
   Gem.paths = ENV
 else
   # add self to libpath
