@@ -121,6 +121,7 @@ module Agent
           container_id: container['_id'],
           created_at: created_at,
           name: container['name'],
+          instance_number: container['instance_number'],
           type: data['type'],
           data: data['data']
         }

@@ -5,6 +5,7 @@ class ContainerLog
   field :type, type: String
   field :data, type: String
   field :name, type: String
+  field :instance_number, type: Integer
 
   belongs_to :grid
   belongs_to :host_node
@@ -16,5 +17,6 @@ class ContainerLog
   index({ grid_service_id: 1 })
   index({ container_id: 1 })
   index({ name: 1 })
+  index({ instance_number: 1 })
   index({ created_at: 1 })
 end
