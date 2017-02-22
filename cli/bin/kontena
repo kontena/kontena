@@ -9,10 +9,9 @@ libexec = bin_file.join('../../libexec')
 if libexec.exist?
   # add libexec to gem path for homebrew installations
   ENV['GEM_PATH'] = libexec.to_s
-  ENV['_HOMEBREW_TAG'] = "+homebrew"
-  head = libexec.to_s.split(File::SEPARATOR).detect { |component| component.start_with?('HEAD') }
-  ENV['_HOMEBREW_HEAD'] = head.nil? ? nil : ".pre.#{head.gsub("-", '_').downcase}"
+  ENV['_KONTENA_HOMEBREW'] = "true"
   Gem.paths = ENV
+  $:.unshift Dir[libexec.join('gems/kontena-cli-*.*.*/lib')].first
 else
   # add self to libpath
   $:.unshift File.expand_path('../../lib', bin_file)
@@ -20,7 +19,10 @@ end
 
 STDOUT.sync = true
 
-require 'kontena_cli'
-
-Kontena::PluginManager.instance.init
-Kontena::MainCommand.run
+if ARGV[0] == 'complete'
+  require 'kontena/scripts/completer'
+else
+  require 'kontena_cli'
+  Kontena::PluginManager.instance.init
+  Kontena::MainCommand.run
+end
