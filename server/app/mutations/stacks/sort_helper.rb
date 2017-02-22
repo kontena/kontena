@@ -21,7 +21,7 @@ module Stacks
     # @return [Array<Hash>]
     def __links_for_service(service)
       if service.is_a?(GridService)
-        service.grid_service_links.map{ |l| { name: l.grid_service.name } }
+        service.grid_service_links.map{ |l| { name: l.linked_grid_service.name } }
       else
         service[:links] || []
       end
