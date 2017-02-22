@@ -184,8 +184,8 @@ describe '/v1/services' do
       it 'returns service container logs for related instance' do
         container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
         container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
-        log1 = container.container_logs.create!(name: 'redis-1', data: 'foo', type: 'stdout', grid_service: redis_service)
-        log2 = container2.container_logs.create!(name: 'redis-2', data: 'foo2', type: 'stdout', grid_service: redis_service)
+        log1 = container.container_logs.create!(name: 'redis-1', instance_number: 1, data: 'foo', type: 'stdout', grid_service: redis_service)
+        log2 = container2.container_logs.create!(name: 'redis-2', instance_number: 2, data: 'foo2', type: 'stdout', grid_service: redis_service)
         get "/v1/services/#{redis_service.to_path}/container_logs?instance=1", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(1)
