@@ -37,7 +37,7 @@ GEM
       mixlib-log
     eventmachine (1.0.9.1)
     excon (0.54.0)
-    faye-websocket (0.10.1)
+    faye-websocket (0.10.7)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
     hitimes (1.2.3)
@@ -75,7 +75,7 @@ GEM
     webmock (1.21.0)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
-    websocket-driver (0.6.3)
+    websocket-driver (0.6.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.2)
 
@@ -89,7 +89,7 @@ DEPENDENCIES
   dotenv
   etcd
   eventmachine (~> 1.0.8)
-  faye-websocket (~> 0.10.1)
+  faye-websocket (~> 0.10.7)
   msgpack
   rake
   rspec
