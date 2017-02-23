@@ -34,11 +34,11 @@ module Kontena::Cli::Stacks::YAML::Opto::Resolvers
       index = services.index {|s| service_link(s) == option.default }
 
       if index && !option.required?
-        index + 2
+        index + 2 # extra offset for the initial <none> option
       elsif index
-        index + 1
+        index + 1 # menu index starts from 1
       else
-        0
+        0 # XXX: this just explodes?
       end
     end
 
