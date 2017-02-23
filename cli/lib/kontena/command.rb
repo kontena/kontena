@@ -213,7 +213,7 @@ class Kontena::Command < Clamp::Command
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
     abort
-  rescue Clamp::HelpWanted
+  rescue Clamp::HelpWanted, Clamp::UsageError
     raise
   rescue => exc
     raise exc if ENV['DEBUG']

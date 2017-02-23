@@ -30,7 +30,7 @@ describe Kontena::Cli::Services::LinkCommand do
       })
       expect {
         subject.run(['service-a', 'service-b'])
-      }.to raise_error(SystemExit)
+      }.to exit_with_error
     end
 
     it 'sends link to master' do

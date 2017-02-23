@@ -59,7 +59,7 @@ describe Kontena::Cli::Apps::DeployCommand do
         allow(subject.config).to receive(:current_master).and_return(
           Kontena::Cli::Config::Server.new
         )
-        expect{subject.run([])}.to raise_error(ArgumentError)
+        expect{subject.run([])}.to exit_with_error
       end
     end
 
@@ -68,7 +68,7 @@ describe Kontena::Cli::Apps::DeployCommand do
         allow(subject.config).to receive(:current_master).and_return(
           Kontena::Cli::Config::Server.new(url: 'http://foo.com')
         )
-        expect{subject.run([])}.to raise_error(ArgumentError)
+        expect{subject.run([])}.to exit_with_error
       end
     end
 

@@ -86,7 +86,7 @@ describe Kontena::Cli::Apps::Common do
     it 'aborts on validation failure' do
       allow_any_instance_of(Kontena::Cli::Apps::YAML::Validator).to receive(:validate)
         .and_return({ :errors => [{ 'wordress' => [] }], :notifications => [] })
-      expect { subject.services_from_yaml('kontena.yml',[],'') }.to raise_error(SystemExit)
+      expect { subject.services_from_yaml('kontena.yml',[],'') }.to exit_with_error
     end
 
     it 'returns given service from given YAML file' do
