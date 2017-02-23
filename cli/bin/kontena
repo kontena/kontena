@@ -1,21 +1,10 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-# resolve bin path, ignoring symlinks
+# add lib to libpath (only needed when running from the sources)
 require 'pathname'
-bin_file = Pathname.new(__FILE__).realpath
-
-# Homebrew formula installs gems to libexec
-libexec = bin_file.join('../../libexec')
-if libexec.exist?
-  ENV['GEM_PATH'] = libexec.to_s
-  ENV['_KONTENA_HOMEBREW'] = "true"
-  Gem.paths = ENV
-  $:.unshift Dir[libexec.join('gems/kontena-cli-*.*.*/lib')].first
-else
-  # add self to libpath
-  $:.unshift File.expand_path('../../lib', bin_file)
-end
+lib_path = File.expand_path('../../lib', Pathname.new(__FILE__).realpath)
+$:.unshift lib_path unless $:.include?(lib_path)
 
 STDOUT.sync = true
 
