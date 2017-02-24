@@ -17,8 +17,8 @@ module Kontena
     attr_accessor :server, :success_response, :error_response, :port
 
     DEFAULT_ERROR_MESSAGE   = "Bad request"
-    SUCCESS_URL             = "https://cloud.kontena.io/terminal-success"
-      
+    SUCCESS_URL             = "http://cloud.kontena.io/terminal-success"
+
     # Get new server instance
     #
     # @param [String] success_response Returned for successful callback
