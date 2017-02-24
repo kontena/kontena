@@ -16,6 +16,7 @@
 
 - Fix stack service_link resolver default when value optional (#1891)
 - Update year to 2017 in CLI logo (#1840)
+- Avoid leaking CLI auth codes to cloud in referer header (#1896)
 
 **Other:**
 
