@@ -73,7 +73,7 @@ module Kontena
           socket.print [
             'HTTP/1.1 301 Found',
             "Location: #{SUCCESS_URL}",
-            "Referrer-Policy: no-referrer"
+            "Referrer-Policy: no-referrer",
             "Connection: close",
             ''
           ].join("\r\n")
