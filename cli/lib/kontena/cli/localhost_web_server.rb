@@ -17,7 +17,7 @@ module Kontena
     attr_accessor :server, :success_response, :error_response, :port
 
     DEFAULT_ERROR_MESSAGE   = "Bad request"
-    SUCCESS_URL             = "http://cloud.kontena.io/terminal-success"
+    SUCCESS_URL             = "https://cloud.kontena.io/terminal-success"
 
     # Get new server instance
     #
@@ -73,6 +73,7 @@ module Kontena
           socket.print [
             'HTTP/1.1 301 Found',
             "Location: #{SUCCESS_URL}",
+            "Referrer-Policy: no-referrer"
             "Connection: close",
             ''
           ].join("\r\n")
