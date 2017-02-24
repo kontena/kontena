@@ -1,19 +1,27 @@
 # Changelog
 
-## [1.1.2](https://github.com/kontena/kontena/releases/tag/v1.1.2) (2017-02-22)
+## [1.1.2](https://github.com/kontena/kontena/releases/tag/v1.1.2) (2017-02-24)
 
 **Master & Agents:**
 
 - Fix stack service link validation errors (#1876)
 - Do not start health check if no protocol specified (#1863)
-- Do not filter out a node that already has the service instance when replacing a container (#1837)
+- Do not filter out a node that already has the service instance when replacing a container (#1823)
 - Ubuntu xenial packaging dpkg-reconfigure support (#1754)
 - Fix stack service reverse-dependency sorting on links when removing (#1887)
+- Fix clearing health check attributes on stack upgrade (#1837)
+- Registry url was not saved correctly in stack metadata (#1870)
 
 **CLI:**
 
 - Fix stack service_link resolver default when value optional (#1891)
 - Update year to 2017 in CLI logo (#1840)
+- Avoid leaking CLI auth codes to cloud in referer header (#1896)
+
+**Other:**
+
+- Docs: fix volumes_from examples and syntax (#1872)
+- Dev: Docker compose based local e2e test env (#1838)
 
 ## [1.1.1](https://github.com/kontena/kontena/releases/tag/v1.1.1) (2017-02-08)
 
