@@ -185,7 +185,10 @@ module Docker
           next
         end
         container_path = elements[-2]
-        volume = grid_service.stack.volumes.find_by(name: host_path_or_vol)
+        volume =
+          grid_service.stack.volumes.find_by(name: host_path_or_vol) ||
+          grid_service.stack.external_volumes.find_by(name: host_path_or_vol).volume
+          # TODO Need o handle nils? Should not be possible since the stack is invalid if no volumes found
         if volume
           volume_name = volume.name_for_service(grid_service, instance_number)
           volume_specs << {
@@ -197,6 +200,7 @@ module Docker
           vol.sub!(host_path_or_vol, volume_name)
         end
       end
+
       volume_specs
     end
 

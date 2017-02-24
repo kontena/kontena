@@ -39,38 +39,58 @@ describe '/v1/volumes' do
     )
   end
 
+  let! :external_volume do
+    Volume.create!(
+      grid: grid,
+      name: 'external-vol',
+      driver: 'some-driver',
+      scope: 'node'
+    )
+  end
+
   describe 'GET /' do
     it 'returns all volumes' do
       get "/v1/volumes/#{grid.name}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['volumes'].size).to eq(1)
+      expect(json_response['volumes'].size).to eq(2)
     end
   end
 
   describe 'GET /:id' do
-    it 'returns volume json' do
+    it 'returns stack volume json' do
       get "/v1/volumes/#{grid.name}/#{stack.name}/#{volume.name}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
         id created_at updated_at driver driver_opts name scope stack
       ).sort)
-      expect(json_response['id']).to eq("#{grid.name}/#{stack.name}/#{volume.name}")
+      expect(json_response['id']).to eq("#{stack.name}/#{volume.name}")
       expect(json_response['driver']).to eq(volume.driver)
       expect(json_response['scope']).to eq(volume.scope)
     end
 
+    it 'returns external volume json' do
+      get "/v1/volumes/#{grid.name}/#{external_volume.name}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response.keys.sort).to eq(%w(
+        id created_at updated_at driver driver_opts name scope
+      ).sort)
+      expect(json_response['id']).to eq("#{external_volume.name}")
+      expect(json_response['driver']).to eq(external_volume.driver)
+      expect(json_response['scope']).to eq(external_volume.scope)
+    end
+
     it 'return 404 for non existing volume' do
-      get "/v1/volumes/#{grid.name}/#{stack.name}/foo", nil, request_headers
+      get "/v1/volumes/#{grid.name}/foo", nil, request_headers
       expect(response.status).to eq(404)
     end
 
     it 'return 404 for non existing stack' do
-      get "/v1/volumes/#{grid.name}/foo/foo", nil, request_headers
+      get "/v1/volumes/#{grid.name}/foo/test-vol", nil, request_headers
       expect(response.status).to eq(404)
     end
 
     it 'return 404 for non existing grid' do
-      get "/v1/volumes/foo/#{stack.name}/#{volume.name}", nil, request_headers
+      get "/v1/volumes/foo/#{volume.name}", nil, request_headers
       expect(response.status).to eq(404)
     end
   end
@@ -83,16 +103,16 @@ describe '/v1/volumes' do
         scope: 'node'
       }
       expect {
-        post "/v1/volumes/#{grid.name}/#{stack.name}", data.to_json, request_headers
+        post "/v1/volumes/#{grid.name}", data.to_json, request_headers
         expect(response.status).to eq(201)
-      }.to change{ stack.volumes.count }.by(1)
+      }.to change{ Volume.count }.by(1)
     end
   end
 
   describe 'DELETE' do
     it 'deletes volume' do
       expect {
-        delete "/v1/volumes/#{grid.name}/#{stack.name}/#{volume.name}", nil, request_headers
+        delete "/v1/volumes/#{grid.name}/#{volume.name}", nil, request_headers
         expect(response.status).to eq(200)
       }.to change{stack.volumes.count}. by (-1)
 

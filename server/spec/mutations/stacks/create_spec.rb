@@ -256,5 +256,63 @@ describe Stacks::Create do
         expect(outcome.success?).to be(false)
       }.to change{ grid.stacks.count }.by(0)
     end
+
+    context 'volumes' do
+      it 'creates stack scoped volumes' do
+        grid
+        expect {
+          outcome = described_class.new(
+            grid: grid,
+            name: 'stack',
+            stack: 'foo/bar',
+            version: '0.1.0',
+            registry: 'file://',
+            source: '...',
+            variables: {foo: 'bar'},
+            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+            volumes: [{name: 'vol1', scope: 'node', external: false}]
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.volumes.count).to eq(1)
+        }.to change{ Volume.count }.by(1)
+      end
+
+      it 'creates stack with external volumes' do
+        volume = Volume.create(name: 'vol1', grid: grid, stack: nil, scope: 'node')
+        expect {
+          outcome = described_class.new(
+            grid: grid,
+            name: 'stack',
+            stack: 'foo/bar',
+            version: '0.1.0',
+            registry: 'file://',
+            source: '...',
+            variables: {foo: 'bar'},
+            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+            volumes: [{name: 'vol1', external: true}]
+          ).run
+          expect(outcome.success?).to be_truthy
+          expect(outcome.result.external_volumes.count).to eq(1)
+          expect(outcome.result.external_volumes.first.volume).to eq(volume)
+        }.to change{ Volume.count }.by(0)
+      end
+    end
+
+    it 'fails to create stack when external volume does not exist' do
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+          volumes: [{name: 'vol1', external: true}]
+        ).run
+        expect(outcome.success?).to be_falsey
+      }.to change{ Volume.count }.by(0)
+    end
   end
 end

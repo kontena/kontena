@@ -5,7 +5,9 @@ json.name volume.name
 json.scope volume.scope
 json.driver volume.driver
 json.driver_opts volume.driver_opts
-json.stack do
-  json.id volume.stack.to_path
-  json.name volume.stack.name
+if volume.stack
+  json.stack do
+    json.id volume.stack.to_path
+    json.name volume.stack.name
+  end
 end

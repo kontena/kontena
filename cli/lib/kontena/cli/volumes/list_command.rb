@@ -13,7 +13,7 @@ module Kontena::Cli::Volume
       columns = '%-25.25s %-25.25s %-25.25s %-25.25s'
       puts columns % ['NAME', 'SCOPE', 'DRIVER', 'CREATED AT']
       volumes.each do |volume|
-        id = "#{volume.dig('stack', 'name')}/#{volume['name']}"
+        id = "#{volume['id']}"
         puts columns % [id, volume['scope'], volume['driver'], volume['created_at']]
       end
     end

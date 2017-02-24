@@ -6,7 +6,6 @@ module Kontena::Cli::Volume
 
 
     banner "Creates a volume"
-    parameter 'STACK', 'Stack'
     parameter 'NAME', 'Volume name'
 
     option '--driver', 'DRIVER', 'Volume driver to be used', default: 'local'
@@ -23,7 +22,7 @@ module Kontena::Cli::Volume
         driver: driver,
         driver_opts: parse_driver_opts
       }
-      spinner "Creating volume #{pastel.cyan(stack+ '/' +name)} " do
+      spinner "Creating volume #{pastel.cyan(name)} " do
         create_volume(volume)
       end
     end
@@ -37,7 +36,7 @@ module Kontena::Cli::Volume
     end
 
     def create_volume(volume)
-      client.post("volumes/#{current_grid}/#{stack}", volume)
+      client.post("volumes/#{current_grid}", volume)
     end
   end
 end

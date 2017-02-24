@@ -3,12 +3,12 @@ module Volumes
 
     required do
       model :grid, class: Grid
-      model :stack, class: Stack
       string :scope # TODO Match the predefined scopes
       string :name  # TODO Force same rules for naming as docker
     end
 
     optional do
+      model :stack, class: Stack, nils: true
       string :driver
       hash :driver_opts
     end

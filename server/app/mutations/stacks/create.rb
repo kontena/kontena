@@ -21,6 +21,7 @@ module Stacks
         return
       end
       validate_expose
+      validate_volumes
       validate_services
     end
 
@@ -36,6 +37,19 @@ module Stacks
       end
     end
 
+    def validate_volumes
+      if self.volumes
+        self.volumes.each do |volume|
+          if volume['external']
+            vol = Volume.where(name: volume['name'], grid: grid, stack: nil).first
+            unless vol
+              add_error(:volumes, :not_found, "External volume #{volume['name']} not found")
+            end
+          end
+        end
+      end
+    end
+
     def execute
       attributes = self.inputs.clone
       grid = attributes.delete(:grid)
@@ -45,6 +59,26 @@ module Stacks
           add_error(key, :invalid, message)
         end
         return
+      end
+
+      if self.volumes
+        # TODO Separate into own method
+        attributes.delete(:volumes)
+        self.volumes.each do |volume|
+          if volume[:external]
+            vol = Volume.where(name: volume['name'], grid: grid, stack: nil).first
+            if vol
+              stack.external_volumes.create!(volume: vol)
+            end
+          else
+            outcome = Volumes::Create.run(grid: grid, stack: stack, **volume.symbolize_keys)
+            unless outcome.success?
+              outcome.errors.message.each do |key, msg|
+                add_error(:volumes, :key, "Volume create failed for '#{volume[:name]}': #{msg}")
+              end
+            end
+          end
+        end
       end
 
       services = sort_services(attributes.delete(:services))

@@ -13,7 +13,7 @@ describe Volumes::Create do
   end
 
   describe '#run' do
-    it 'creates new volume' do
+    it 'creates new volume in a stack' do
       expect {
         outcome = Volumes::Create.run(
           grid: grid,
@@ -23,6 +23,18 @@ describe Volumes::Create do
         )
         expect(outcome.success?).to be_truthy
       }.to change {stack.volumes.count}. by 1
+    end
+
+    it 'creates new grid volume' do
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          stack: nil,
+          name: 'foo',
+          scope: 'node'
+        )
+        expect(outcome.success?).to be_truthy
+      }.to change {stack.volumes.count}. by 0
     end
 
 
