@@ -46,15 +46,15 @@ module V1
         volume
       end
 
-      # Roda puts also fills unmathced paths.
-      # So GET .../volumes/my-grid/stack/vol, yields with 'stack', 'vol'
-      # GET .../volumes/my-grid/ext-vol, yields with 'ext-vol', ':volume'
-      def parse_params(stack, volume)
-        if volume == ':volume'
-          volume = stack
-          stack = nil
+      # Parse stack/vol out of path
+      # @param [String] volume path
+      # @return [Array] [stack, volume]
+      def parse_params(path)
+        if path.include?('/')
+          stack, volume = path.split('/')
+        else
+          [nil, path]
         end
-        return stack, volume
       end
 
       r.on ':grid_name' do |grid_name|
@@ -64,14 +64,13 @@ module V1
             @volumes = @grid.volumes
             render('volumes/index')
           end
-          r.is [':volume', ':stack/:volume'] do |s, v|
-            stack, volume = parse_params(s, v)
+          r.is /(.*)/ do |path|
+            stack, volume = parse_params(path)
             @volume = load_volume(grid_name, stack, volume)
             render('volumes/show')
           end
         end
         r.post do
-
           r.is do
             grid = find_grid(grid_name)
             data = parse_json_body rescue {}
@@ -92,8 +91,8 @@ module V1
 
         end
         r.delete do
-          r.is [':volume', ':stack/:volume'] do |s, v|
-            stack, volume = parse_params(s, v)
+          r.is /(.*)/ do |path|
+            stack, volume = parse_params(path)
             @volume = load_volume(grid_name, stack, volume)
             outcome = Volumes::Delete.run(volume: @volume)
             if outcome.success?
