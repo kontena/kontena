@@ -7,6 +7,12 @@ module Kontena::Cli::Stacks
       module Setters; end
     end
 
+    class LiquidNull
+      def to_liquid
+        nil
+      end
+    end
+
     class Reader
       include Kontena::Util
       include Kontena::Cli::Common
@@ -151,6 +157,14 @@ module Kontena::Cli::Stacks
       def interpolate_liquid(content, vars)
         Liquid::Template.error_mode = :strict
         template = Liquid::Template.parse(content)
+
+        # Liquid skips any values given as nil
+        # Use an explicit value that gets translated to nil for optional variables
+        vars = vars.clone
+        vars.each do |key, value|
+          vars[key] = LiquidNull.new if value.nil?
+        end
+
         template.render!(vars, strict_variables: true, strict_filters: true)
       end
 
