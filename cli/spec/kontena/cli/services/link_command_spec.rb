@@ -6,24 +6,8 @@ describe Kontena::Cli::Services::LinkCommand do
   include ClientHelpers
 
   describe '#execute' do
-    before(:each) do
-      allow(client).to receive(:get).and_return({
-        'links' => []
-      })
-    end
-
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['service-a', 'service-b'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
-      subject.run(['service-a', 'service-b'])
-    end
-
     it 'aborts if service is already linked' do
-      allow(client).to receive(:get).and_return({
+      expect(client).to receive(:get).with('services/test-grid/null/service-a').and_return({
         'links' => [
           {'alias' => 'service-b', 'id' => "grid/null/service-b"}
         ]
@@ -34,6 +18,9 @@ describe Kontena::Cli::Services::LinkCommand do
     end
 
     it 'sends link to master' do
+      expect(client).to receive(:get).with('services/test-grid/null/service-a').and_return({
+        'links' => []
+      })
       expect(client).to receive(:put).with(
         'services/test-grid/null/service-a', {links: [{name: 'null/service-b', alias: 'service-b'}]}
       )
