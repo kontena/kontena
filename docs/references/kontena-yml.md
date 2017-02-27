@@ -178,6 +178,16 @@ hooks:
       cmd: grunt dist
 ```
 
+**post_install**
+
+Display a message in the CLI after the service has been installed.
+
+```
+hooks:
+  post_install:
+    - message: You must manually configure Foo to use Bar, visit http://foo.${STACK}.${GRID}.kontena.local/configure
+```
+
 #### health_check
 
 See information about configuring service health checks in [Using Kontena: Health checks](../using-kontena/health-check.md).
