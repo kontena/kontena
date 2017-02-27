@@ -55,7 +55,8 @@ module Docker
         exposed: grid_service.stack_exposed?,
         log_driver: grid_service.log_driver,
         log_opts: grid_service.log_opts,
-        pid: grid_service.pid
+        pid: grid_service.pid,
+        wait_for_port: grid_service.deploy_opts.wait_for_port
       }
       spec[:env] = build_env(instance_number)
       spec[:secrets] = build_secrets
@@ -82,7 +83,7 @@ module Docker
     ##
     # @return [RpcClient]
     def client
-      RpcClient.new(host_node.node_id, 5)
+      RpcClient.new(host_node.node_id, 300)
     end
 
     ##

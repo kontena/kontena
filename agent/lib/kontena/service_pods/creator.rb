@@ -3,6 +3,7 @@ require 'celluloid'
 require_relative 'common'
 require_relative '../logging'
 require_relative '../helpers/weave_helper'
+require_relative '../helpers/port_helper'
 
 module Kontena
   module ServicePods
@@ -10,6 +11,7 @@ module Kontena
       include Kontena::Logging
       include Common
       include Kontena::Helpers::WeaveHelper
+      include Kontena::Helpers::PortHelper
 
       attr_reader :service_pod, :image_credentials
 
@@ -59,22 +61,14 @@ module Kontena
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
+        if service_pod.wait_for_port
+          info "waiting for port #{service_pod.name}:#{service_pod.wait_for_port} to respond"
+          wait_for_port(service_container, service_pod.wait_for_port)
+          info "port #{service_pod.name}:#{service_pod.wait_for_port} is responding"
+        end
         self.run_hooks(service_container, 'post_start')
 
         service_container
-      rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
-        error "#{exc.backtrace.join("\n")}" if exc.backtrace
-      end
-
-      # @return [Celluloid::Future]
-      def perform_async
-        Celluloid::Future.new { self.perform }
-      end
-
-      # @param [ServicePod] service_pod
-      def self.perform_async(service_pod)
-        self.new(service_pod).perform_async
       end
 
       # @param [Docker::Container] service_container
@@ -229,6 +223,16 @@ module Kontena
           }
         }
         Celluloid::Actor[:queue_worker].send_message(msg)
+      end
+
+      # @param [Docker::Container] service_container
+      # @param [Integer] port
+      def wait_for_port(service_container, port)
+        ip = service_container.overlay_ip
+        ip = '127.0.0.1' unless ip
+        Timeout.timeout(300) do
+          sleep 1 until container_port_open?(ip, port)
+        end
       end
     end
   end
