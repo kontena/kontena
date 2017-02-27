@@ -37,18 +37,8 @@ describe Kontena::Cli::Stacks::InstallCommand do
     expect_to_require_current_master
     expect_to_require_current_master_token
 
-    it 'requires api url' do
-      allow(File).to receive(:exist?).with('kontena.yml').and_return(true)
-      allow(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(name: nil, values: nil)).and_return(stack)
-      expect(described_class.requires_current_master?).to be_truthy
-      subject.run([])
-    end
-
-    it 'requires token' do
-      allow(File).to receive(:exist?).with('kontena.yml').and_return(true)
-      allow(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(name: nil, values: nil)).and_return(stack)
-      expect(described_class.requires_current_master_token?).to be_truthy
-      subject.run([])
+    before(:each) do
+      allow(subject).to receive(:yaml_content).and_return("YAML content")
     end
 
     it 'sends stack to master' do

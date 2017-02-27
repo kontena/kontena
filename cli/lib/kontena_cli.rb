@@ -67,6 +67,10 @@ module Kontena
     )
   end
 
+  def self.reset_prompt
+    @prompt = nil
+  end
+
   def self.root
     File.dirname(__dir__)
   end

@@ -1,13 +1,14 @@
----
-title: Quick Start
-toc_order: 1
----
-
 # Quick Start
 
 Follow these steps to get started with Kontena quickly.
 
 ## Step 1. Install Kontena CLI (command-line interface)
+
+### MacOS (OSX)
+
+You can install Kontena CLI using our [official installer](https://github.com/kontena/kontena/releases/latest).
+
+### Linux / Windows
 
 > Prerequisites: You'll need Ruby version 2.1 or later installed on your system. For more details, see the official [Ruby installation docs](https://www.ruby-lang.org/en/documentation/installation/).
 

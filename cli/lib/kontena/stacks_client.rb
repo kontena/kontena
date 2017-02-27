@@ -7,6 +7,10 @@ module Kontena
     ACCEPT_YAML = { 'Accept' => 'application/yaml' }
     CT_YAML     = { 'Content-Type' => 'application/yaml' }
 
+    def full_uri(stack_name, version = nil)
+      URI.join(api_url, path_to(stack_name, version)).to_s
+    end
+
     def path_to(stack_name, version = nil)
       version ? "/stack/#{stack_name}/version/#{version}" : "/stack/#{stack_name}"
     end

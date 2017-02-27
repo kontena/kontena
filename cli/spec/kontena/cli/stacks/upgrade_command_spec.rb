@@ -39,6 +39,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
     it 'uses kontena.yml as default stack file' do
       expect(client).to receive(:get).with('stacks/test-grid/stack-name').and_return(stack_response)
       expect(subject).to receive(:stack_from_yaml).with('kontena.yml', name: 'stack-name', values: nil, defaults: defaults).and_return(stack)
+      expect(client).to receive(:put).with('stacks/test-grid/stack-name', stack)
       subject.run(['stack-name'])
     end
 

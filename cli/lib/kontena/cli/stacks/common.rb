@@ -71,7 +71,7 @@ module Kontena::Cli::Stacks
         'expose' => outcome[:expose],
         'version' => outcome[:version],
         'source' => reader.raw_content,
-        'registry' => 'file://',
+        'registry' => outcome[:registry],
         'services' => kontena_services,
         'variables' => outcome[:variables]
       }

@@ -4,7 +4,7 @@ title: Stacks
 
 # Stacks
 
-Kontena Stacks are pre-packaged and reusable collections of Kontena services with associated configuration in the form of a YAML file.
+Kontena Stacks are pre-packaged and reusable collections of Kontena services with associated configuration in the form of a [YAML file](../references/kontena-yml.md).
 These Kontena Stack files can be distributed via the Kontena Stack Registry, and installed to the Kontena Master for deployment to the Grid.
 The Kontena Master deploys each stack as a set of Kontena Services, running as Docker containers on the host nodes.
 The service containers run the Docker images referenced in the stack file.

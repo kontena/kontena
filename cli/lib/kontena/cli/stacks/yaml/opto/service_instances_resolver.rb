@@ -1,6 +1,6 @@
 module Kontena::Cli::Stacks
   module YAML
-    class Opto::Resolvers::ServiceInstances < Opto::Resolver
+    class Opto::Resolvers::ServiceInstances < ::Opto::Resolver
       def resolve
         read_command = Kontena::Cli::Stacks::ShowCommand.new([self.stack])
         stack = read_command.fetch_stack(self.stack)

@@ -1,9 +1,6 @@
-require_relative '../helpers/port_helper'
-
 module Kontena
   module Rpc
     class AgentApi
-      include Kontena::Helpers::PortHelper
 
       # @param [Hash] data
       def master_info(data)
@@ -16,15 +13,6 @@ module Kontena
       def node_info(data)
         Celluloid::Notifications.publish('agent:node_info', data)
         {}
-      end
-
-      ##
-      # @param [String] ip
-      # @param [String] port
-      # @param [Float] timeout
-      # @return [Hash]
-      def port_open?(ip, port, timeout = 2.0)
-        {open: container_port_open?(ip, port, timeout)}
       end
 
       private

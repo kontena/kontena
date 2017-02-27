@@ -20,6 +20,10 @@ Below are instructions for custom Kontena installations.
 * [Docker Compose](docker-compose.md)
 * [Ubuntu 14.04](ubuntu.md)
 
+## Master high-availability
+
+Kontena master can be setup as highly available. See [high-availability](ha-master.md) for details.
+
 ## Needed open ports:
 
 To operate properly Kontena needs only a few ports opened in firewalls. The provisioning plugins should take care of these automatically for you. If making a more custom installation make sure you have the following ports open.

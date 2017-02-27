@@ -75,7 +75,7 @@ services:
 These environment variables configure the load balancer itself.
 
 * `KONTENA_LB_HEALTH_URI` - URI at which to enable Kontena Load Balancer level health check endpoint. Returns `200 OK` when Kontena Load Balancer is functional.
-* `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics.
+* `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics using HTTP Basic authentication. The default username is `stats` and the default password is 'secret'.
 * `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer.md#ssl-termination).
 * `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer.md#configuringcustomsslciphers)
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file
@@ -103,7 +103,7 @@ See HAProxy [docs](http://cbonte.github.io/haproxy-dconv/1.6/configuration.html#
 
 ## Stats
 
-Kontena Load Balancer exposes a statistics web UI only on the private overlay network. To access the statistics you must use the [VPN](vpn-access.md) to access the overlay network. The statistics are exposed on port 1000 of the Kontena Load Balancer instances.
+Kontena Load Balancer exposes a statistics web UI only on the private overlay network. To access the statistics you must use the [VPN](vpn-access.md) to access the overlay network. The statistics are exposed on port 1000 of the Kontena Load Balancer instances. You can also expose the port 1000 using the ports option in `kontena.yml`, but remember to overwrite the default password.
 
 ## Basic authentication for services
 
@@ -231,7 +231,7 @@ These options are defined on the services that are balanced through Kontena Load
 * `KONTENA_LB_INTERNAL_PORT`: service port that is attached to load balancer
 * `KONTENA_LB_EXTERNAL_PORT`: service port that load balancer starts to listen (only for tcp mode)
 * `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts, if you would like to access your service through the vpn, you'll need to add that as a virtual host as well (only for http mode)
-* `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request; example: "/api" (only for http mode)
-* `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode)
+* `KONTENA_LB_VIRTUAL_PATH`: path that is used to match request; example: "/api" (only for http mode). By default, a request to e.g. `/api/foo` is proxied to e.g. `/foo`
+* `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode). This is false by default.
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to either the related backend section or the listen session in the HAProxy configuration file
 * `KONTENA_LB_COOKIE`: Enables cookie-based session stickiness. With empty value, it defaults to the load balancer-set cookie. Can be customized to use application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)

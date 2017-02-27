@@ -55,7 +55,8 @@ module Docker
         exposed: grid_service.stack_exposed?,
         log_driver: grid_service.log_driver,
         log_opts: grid_service.log_opts,
-        pid: grid_service.pid
+        pid: grid_service.pid,
+        wait_for_port: grid_service.deploy_opts.wait_for_port
       }
       spec[:env] = build_env(instance_number)
       spec[:secrets] = build_secrets
@@ -82,7 +83,7 @@ module Docker
     ##
     # @return [RpcClient]
     def client
-      RpcClient.new(host_node.node_id, 5)
+      RpcClient.new(host_node.node_id, 300)
     end
 
     ##
@@ -131,7 +132,7 @@ module Docker
         labels['io.kontena.load_balancer.internal_port'] = internal_port
         labels['io.kontena.load_balancer.mode'] = mode
       end
-      if grid_service.health_check
+      if grid_service.health_check && grid_service.health_check.is_valid?
         labels['io.kontena.health_check.uri'] = grid_service.health_check.uri
         labels['io.kontena.health_check.protocol'] = grid_service.health_check.protocol
         labels['io.kontena.health_check.interval'] = grid_service.health_check.interval.to_s

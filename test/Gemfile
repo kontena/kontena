@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+
+gem 'dotenv'
+gem 'rspec'
+gem 'kommando'
+gem 'kontena-cli', path: '../cli'
