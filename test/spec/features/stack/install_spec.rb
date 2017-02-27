@@ -1,11 +1,12 @@
 require 'spec_helper'
 
 describe 'stack install' do
-  after(:each) do
-    run 'kontena stack rm --force simple'
-  end
 
   context 'from file' do
+    after(:each) do
+      run 'kontena stack rm --force simple'
+    end
+
     it 'installs a stack' do
       with_fixture_dir("stack/simple") do
         run 'kontena stack install'
