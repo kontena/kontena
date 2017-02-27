@@ -432,6 +432,35 @@ module Kontena
           build_args
         end
 
+        # @return [Hash]
+        def parse_deploy_opts
+          deploy_opts = {}
+          deploy_opts[:min_health] = deploy_min_health.to_f if deploy_min_health
+          deploy_opts[:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
+          if deploy_interval
+            deploy_opts[:interval] = parse_relative_time(deploy_interval)
+          end
+
+          deploy_opts
+        end
+
+        # @return [Hash]
+        def parse_health_check
+          health_check = {}
+          if health_check_port
+            health_check[:port] = health_check_port == 'none' ? nil : health_check_port
+          end
+          if health_check_protocol
+            health_check[:protocol] = health_check_protocol == 'none' ? nil : health_check_protocol
+          end
+          health_check[:uri] = health_check_uri if health_check_uri
+          health_check[:timeout] = health_check_timeout if health_check_timeout
+          health_check[:interval] = health_check_interval if health_check_interval
+          health_check[:initial_delay] = health_check_initial_delay if health_check_initial_delay
+
+          health_check
+        end
+
         # @param [Symbol] health
         # @return [String]
         def health_status_icon(health)

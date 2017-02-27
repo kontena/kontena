@@ -10,4 +10,11 @@ class GridServiceHealthCheck
 
   embedded_in :grid_service
 
+  def is_valid?
+    return false if protocol.nil?
+    return false if protocol.empty?
+    return false if port.nil?
+    true
+  end
+
 end

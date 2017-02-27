@@ -22,19 +22,18 @@ module Kontena
 
     delegate :on, to: :ws
 
-    ##
     # @param [String] api_uri
     # @param [String] api_token
     def initialize(api_uri, api_token)
       @api_uri = api_uri
-      @api_token = api_token.to_s
-      @rpc_server = Kontena::RpcServer.new
+      @api_token = api_token
+      @rpc_server = Kontena::RpcServer.pool
       @abort = false
-      info "initialized with token #{@api_token[0..10]}..."
       @connected = false
       @connecting = false
       @ping_timer = nil
       @close_timer = nil
+      info "initialized with token #{@api_token[0..10]}..."
     end
 
     def ensure_connect
@@ -71,7 +70,7 @@ module Kontena
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
-      Celluloid::Notifications.publish('websocket:connect', self)
+      notify_actors('websocket:connect', self)
 
       @ws.on :open do |event|
         on_open(event)
@@ -101,26 +100,31 @@ module Kontena
       error "failed to send message: #{exc.message}"
     end
 
+    # @param [String] method
+    # @param [Array] params
+    def send_notification(method, params)
+      data = MessagePack.dump([2, method, params]).bytes
+      send_message(data)
+    rescue => exc
+      error "failed to send notification: #{exc.message}"
+    end
+
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
       ping_timer.cancel if ping_timer
       info 'connection established'
       @connected = true
       @connecting = false
+      notify_actors('websocket:open', event)
     end
 
     # @param [Faye::WebSocket::API::Event] event
     def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        EM.defer {
-          response = rpc_server.handle_request(data)
-          send_message(MessagePack.dump(response).bytes)
-        }
+        rpc_server.async.handle_request(self, data)
       elsif notification_message?(data)
-        EM.defer {
-          rpc_server.handle_notification(data)
-        }
+        rpc_server.async.handle_notification(data)
       end
     rescue => exc
       error exc.message
@@ -172,6 +176,7 @@ module Kontena
       Docker.info['ID']
     end
 
+    # @return [Array<String>]
     def labels
       Docker.info['Labels'].to_a.join(',')
     end
@@ -199,7 +204,7 @@ module Kontena
       return if @close_timer
 
       # stop sending messages, queue them up until reconnected
-      Celluloid::Notifications.publish('websocket:disconnect', nil)
+      notify_actors('websocket:disconnect', nil)
 
       # send close frame; this will get stuck if the server is not replying
       ws.close(1000)
@@ -215,6 +220,10 @@ module Kontena
           on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
         end
       end
+    end
+
+    def notify_actors(event, value)
+      Celluloid::Notifications.publish(event, value)
     end
   end
 end

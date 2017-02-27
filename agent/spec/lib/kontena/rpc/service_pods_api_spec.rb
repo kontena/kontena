@@ -36,30 +36,38 @@ describe Kontena::Rpc::ServicePodsApi do
     }
   end
 
+  let(:executor) do
+    double(:executor)
+  end
+
   describe '#create' do
     it 'calls service pod creator' do
-      expect(Kontena::ServicePods::Creator).to receive(:perform_async)
+      expect(Kontena::ServicePods::Creator).to receive(:new).and_return(executor)
+      expect(executor).to receive(:perform)
       subject.create(data)
     end
   end
 
   describe '#start' do
     it 'calls service pod starter' do
-      expect(Kontena::ServicePods::Starter).to receive(:perform_async)
+      expect(Kontena::ServicePods::Starter).to receive(:new).and_return(executor)
+      expect(executor).to receive(:perform)
       subject.start('service_id', 2)
     end
   end
 
   describe '#stop' do
     it 'calls service pod stopper' do
-      expect(Kontena::ServicePods::Stopper).to receive(:perform_async)
+      expect(Kontena::ServicePods::Stopper).to receive(:new).and_return(executor)
+      expect(executor).to receive(:perform)
       subject.stop('service_id', 2)
     end
   end
 
   describe '#restart' do
     it 'calls service pod restarter' do
-      expect(Kontena::ServicePods::Restarter).to receive(:perform_async)
+      expect(Kontena::ServicePods::Restarter).to receive(:new).and_return(executor)
+      expect(executor).to receive(:perform)
       subject.restart('service_id', 2)
     end
   end

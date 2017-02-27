@@ -24,31 +24,54 @@ describe Kontena::Cli::Stacks::YAML::Opto::Resolvers::ServiceLink do
     end
   end
 
-  describe '#default_index' do
+  context "For a required option with a default value" do
     let(:option) do
-      ::Opto::Option.new(default: 'foo/bar')
+      ::Opto::Option.new(type: 'string', name: 'link', default: 'foo/bar')
     end
     let(:subject) do
       described_class.new({'prompt' => 'foo'}, option)
     end
 
-    it 'returns matching index' do
-      services = [
-        {'id' => 'test/foo/foo'},
-        {'id' => 'test/foo/bar'},
-        {'id' => 'test/asd/asd'}
-      ]
-      index = subject.default_index(services)
-      expect(index).to eq(2)
+    describe '#default_index' do
+      it 'returns matching index' do
+        services = [
+          {'id' => 'test/foo/foo'},
+          {'id' => 'test/foo/bar'},
+          {'id' => 'test/asd/asd'}
+        ]
+        index = subject.default_index(services)
+        expect(index).to eq(2)
+      end
+
+      it 'returns 0 if no matches' do
+        services = [
+          {'id' => 'test/foo/foo'},
+          {'id' => 'test/asd/asd'}
+        ]
+        index = subject.default_index(services)
+        expect(index).to eq(0)
+      end
+    end
+  end
+
+  context "For an optional option with a default value" do
+    let(:option) do
+      ::Opto::Option.new(type: 'string', name: 'link', default: 'foo/bar', required: false)
+    end
+    let(:subject) do
+      described_class.new({'prompt' => 'foo'}, option)
     end
 
-    it 'returns 0 if no matches' do
-      services = [
-        {'id' => 'test/foo/foo'},
-        {'id' => 'test/asd/asd'}
-      ]
-      index = subject.default_index(services)
-      expect(index).to eq(0)
+    describe '#default_index' do
+      it 'returns matching index' do
+        services = [
+          {'id' => 'test/foo/foo'},
+          {'id' => 'test/foo/bar'},
+          {'id' => 'test/asd/asd'}
+        ]
+        index = subject.default_index(services)
+        expect(index).to eq(3)
+      end
     end
   end
 end

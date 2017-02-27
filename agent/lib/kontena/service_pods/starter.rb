@@ -29,17 +29,6 @@ module Kontena
 
         service_container
       end
-
-      # @return [Celluloid::Future]
-      def perform_async
-        Celluloid::Future.new { self.perform }
-      end
-
-      # @param [String] service_id
-      # @param [Integer] instance_number
-      def self.perform_async(service_id, instance_number)
-        self.new(service_id, instance_number).perform_async
-      end
     end
   end
 end

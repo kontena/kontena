@@ -398,19 +398,25 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         .with(absolute_yaml_path('kontena_v3.yml'))
         .and_return(fixture('stack-with-liquid.yml'))
       expect(subject.from_file?).to be_truthy
+      expect(subject.execute[:registry]).to be_nil
     end
 
     it 'can read from the registry' do
-      expect(Kontena::StacksCache).to receive(:pull)
-        .with('foo/foo')
-        .and_return(fixture('stack-with-liquid.yml'))
-      expect(Kontena::StacksCache).to receive(:registry_url).and_return('foo')
-      expect(described_class.new('foo/foo').from_registry?).to be_truthy
+      stack_double = double
+      allow_any_instance_of(Kontena::StacksCache::RegistryClientFactory).to receive(:cloud_auth?).and_return(true)
+      expect(Kontena::StacksCache).to receive(:cache).with('foo/foo', nil).and_return(stack_double)
+      expect(stack_double).to receive(:read).and_return(fixture('kontena_v3.yml'))
+      instance = described_class.new('foo/foo')
+      expect(instance.from_registry?).to be_truthy
+      expect(instance.execute[:registry]).to eq instance.current_account.stacks_url
     end
 
     it 'can read from an url' do
-     stub_request(:get, "http://foo.example.com/foo").to_return(:status => 200, :body => fixture('stack-with-liquid.yml'), :headers => {})
-      expect(described_class.new('http://foo.example.com/foo').from_url?).to be_truthy
+      stub_request(:get, "http://foo.example.com/foo").to_return(:status => 200, :body => fixture('stack-with-liquid.yml'), :headers => {})
+      allow_any_instance_of(described_class).to receive(:load_from_url).and_return(fixture('stack-with-liquid.yml'))
+      instance = described_class.new('http://foo.example.com/foo')
+      expect(instance.from_url?).to be_truthy
+      expect(instance.execute[:registry]).to be_nil
     end
   end
 

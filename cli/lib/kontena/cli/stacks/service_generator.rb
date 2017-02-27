@@ -57,22 +57,12 @@ module Kontena::Cli::Stacks
         deploy['interval'] = parse_relative_time(deploy_opts['interval'])
       else
         deploy['interval'] = nil
-      end      
+      end
       data['deploy_opts'] = deploy
       data['hooks'] = options['hooks'] || {}
       data['secrets'] = options['secrets'] if options['secrets']
       data['build'] = parse_build_options(options) if options['build']
-      health_check = {}
-      health_opts = options['health_check'] || {}
-      health_check['protocol'] = health_opts['protocol'] if health_opts.has_key?('protocol')
-      health_check['uri'] = health_opts['uri'] if health_opts.has_key?('uri')
-      health_check['port'] = health_opts['port'] if health_opts.has_key?('port')
-      health_check['timeout'] = health_opts['timeout'] if health_opts.has_key?('timeout')
-      health_check['interval'] = health_opts['interval'] if health_opts.has_key?('interval')
-      health_check['initial_delay'] = health_opts['initial_delay'] if health_opts.has_key?('initial_delay')
-      unless health_check.empty?
-        data['health_check'] = health_check
-      end
+      data['health_check'] = parse_health_check(options)
       data
     end
 
@@ -112,6 +102,16 @@ module Kontena::Cli::Stacks
       build['context'] = options['build'] if options['build']
       build['dockerfile'] = options['dockerfile'] if options['dockerfile']
       build
+    end
+
+    # @param [Hash] options
+    # @return [Hash]
+    def parse_health_check(options)
+      health_check = {}
+      %w(port protocol uri timeout interval initial_delay).each do |k|
+        health_check[k] = options.dig('health_check', k)
+      end
+      health_check
     end
   end
 end

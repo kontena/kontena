@@ -385,5 +385,54 @@ describe Kontena::Cli::Stacks::ServiceGenerator do
         expect(result['secrets']).to be_nil
       end
     end
+
+    context 'health_check' do
+      it 'returns health_check with nils by default' do
+        data = {
+          'image' => 'foo/bar:latest'
+        }
+        result = subject.send(:parse_data, data)
+        health_check = result['health_check']
+        expect(health_check['port']).to be_nil
+        expect(health_check['protocol']).to be_nil
+      end
+
+      it 'returns health_check with port & protocol' do
+        data = {
+          'image' => 'foo/bar:latest',
+          'health_check' => {
+            'port' => 8080,
+            'protocol' => 'tcp'
+          }
+        }
+        result = subject.send(:parse_data, data)
+        health_check = result['health_check']
+        expect(health_check['port']).to eq(8080)
+        expect(health_check['protocol']).to eq('tcp')
+        expect(health_check['uri']).to be_nil
+      end
+
+      it 'returns health_check with all values' do
+        data = {
+          'image' => 'foo/bar:latest',
+          'health_check' => {
+            'port' => 8080,
+            'protocol' => 'http',
+            'uri' => '/health',
+            'interval' => 60,
+            'timeout' => 5,
+            'initial_delay' => 30
+          }
+        }
+        result = subject.send(:parse_data, data)
+        health_check = result['health_check']
+        expect(health_check['port']).to eq(8080)
+        expect(health_check['protocol']).to eq('http')
+        expect(health_check['uri']).to eq('/health')
+        expect(health_check['interval']).to eq(60)
+        expect(health_check['timeout']).to eq(5)
+        expect(health_check['initial_delay']).to eq(30)
+      end
+    end
   end
 end

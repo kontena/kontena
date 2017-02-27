@@ -53,7 +53,7 @@ end
 json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
 json.revision grid_service.revision
 json.stack_revision grid_service.stack_revision
-if grid_service.health_check
+if grid_service.health_check && grid_service.health_check.protocol
 	json.health_check do
 		json.protocol grid_service.health_check.protocol
 		json.uri grid_service.health_check.uri

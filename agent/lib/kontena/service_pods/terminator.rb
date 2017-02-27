@@ -38,9 +38,6 @@ module Kontena
         end
 
         service_container
-      rescue => exc
-        error exc.message
-        error exc.backtrace.join("\n")
       end
 
       # @param [Docker::Container] service_container
@@ -54,18 +51,6 @@ module Kontena
         service_container.load_balanced? &&
           service_container.instance_number == 1 &&
           @opts['lb'] == true
-      end
-
-      # @return [Celluloid::Future]
-      def perform_async
-        Celluloid::Future.new { self.perform }
-      end
-
-      # @param [String] service_id
-      # @param [Integer] instance_number
-      # @param [Hash] opts
-      def self.perform_async(service_id, instance_number, opts = {})
-        self.new(service_id, instance_number, opts).perform_async
       end
     end
   end

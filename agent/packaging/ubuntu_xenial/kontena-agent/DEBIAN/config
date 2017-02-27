@@ -4,6 +4,13 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
+if [ -e /etc/kontena-agent.env ]; then
+  . /etc/kontena-agent.env
+
+  db_set kontena-agent/server_uri "${KONTENA_URI:-}"
+  db_set kontena-agent/grid_token "${KONTENA_TOKEN:-}"
+fi
+
 db_input high kontena-agent/server_uri || true
 db_input high kontena-agent/grid_token || true
 db_go || true

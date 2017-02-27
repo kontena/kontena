@@ -31,7 +31,7 @@ module Stacks
         service[:grid] = self.grid
         outcome = GridServices::Create.validate(service)
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
+          handle_service_outcome_errors(service[:name], outcome.errors.message, :validate)
         end
       end
     end
