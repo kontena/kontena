@@ -194,7 +194,9 @@ module Agent
         memory: data['memory'],
         load: data['load'],
         filesystem: data['filesystem'],
-        usage: data['usage']
+        usage: data['usage'],
+        created_at: Time.now.utc,
+        updated_at: Time.now.utc
       }
       db_session[:host_node_stats].insert(stat)
     end

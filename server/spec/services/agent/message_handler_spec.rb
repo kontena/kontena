@@ -167,6 +167,21 @@ describe Agent::MessageHandler do
         })
       }.to change{ node.host_node_stats.count }.by(1)
     end
+
+    it 'sets timestamp fields' do
+      node
+      subject.on_node_stat(grid, {
+          'node_id' => node.node_id,
+          'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
+          'memory' => {},
+          'filesystems' => [],
+          'usage' => {
+              'container_seconds' => 60*100
+          }
+      })
+      expect(node.host_node_stats[0].created_at).to be_a(Time)
+      expect(node.host_node_stats[0].updated_at).to be_a(Time)
+    end
   end
 
   describe '#on_container_health' do
