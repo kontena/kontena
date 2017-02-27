@@ -2,6 +2,7 @@ require_relative 'stacks_client'
 require_relative 'cli/common'
 require_relative 'cli/stacks/common'
 require 'yaml'
+require 'uri'
 
 module Kontena
   class StacksCache
@@ -94,8 +95,8 @@ module Kontena
         stack
       end
 
-      def registry_url
-        client.api_url
+      def registry_url(stack, version = nil)
+        client.full_uri(stack, version)
       end
 
       def client

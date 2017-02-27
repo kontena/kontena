@@ -5,7 +5,8 @@ describe GridService do
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
                           :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
-                          :memory_swap, :cpu_shares).of_type(Fixnum) }
+                          :memory_swap, :cpu_shares,
+                          :revision, :stack_revision).of_type(Fixnum) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
                           :cap_add, :cap_drop, :volumes).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }

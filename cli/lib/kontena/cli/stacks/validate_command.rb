@@ -19,15 +19,7 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-
-      if !File.exist?(filename) && filename =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/
-        from_registry = true
-      else
-        from_registry = false
-        require_config_file(filename)
-      end
-
-      reader = reader_from_yaml(filename, from_registry: from_registry, name: name, values: values)
+      reader = reader_from_yaml(filename, name: name, values: values)
       outcome = reader.execute
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
       abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0

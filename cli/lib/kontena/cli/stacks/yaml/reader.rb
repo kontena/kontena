@@ -2,32 +2,36 @@ require_relative '../../../util'
 
 module Kontena::Cli::Stacks
   module YAML
+    module Opto
+      module Resolvers; end
+      module Setters; end
+    end
+
     class Reader
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :errors, :notifications
+      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values, :registry
 
-      def initialize(file, skip_validation: false, skip_variables: false, from_registry: false, variables: nil, values: nil)
+      def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
         require 'yaml'
         require_relative 'service_extender'
         require_relative 'validator_v3'
-        require 'opto'
-        require_relative 'opto/vault_setter'
-        require_relative 'opto/vault_resolver'
-        require_relative 'opto/prompt_resolver'
-        require_relative 'opto/service_instances_resolver'
+        require_relative 'opto'
         require 'liquid'
 
         @file = file
-        @from_registry = from_registry
 
         if from_registry?
           require 'shellwords'
           @raw_content = Kontena::StacksCache.pull(file)
-          @registry    = Kontena::StacksCache.registry_url
+          @registry    = current_account.stacks_url
+        elsif from_url?
+          @raw_content = load_from_url(file)
+          @registry = nil
         else
           @raw_content = File.read(File.expand_path(file))
+          @registry = nil
         end
 
         @errors           = []
@@ -36,6 +40,13 @@ module Kontena::Cli::Stacks
         @skip_variables   = skip_variables
         @variables        = variables
         @values           = values
+        @defaults         = defaults
+      end
+
+      def load_from_url(url)
+        require 'open-uri'
+        stream = open(url)
+        stream.read
       end
 
       def internals_interpolated_yaml
@@ -82,15 +93,22 @@ module Kontena::Cli::Stacks
       # @return [Opto::Group]
       def variables
         return @variables if @variables
-        @variables = Opto::Group.new(
+        @variables = ::Opto::Group.new(
           (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}),
           defaults: {
             from: :env,
             to: :env
           }
         )
-        if @values
-          @values.each do |key, val|
+        if defaults
+          defaults.each do |key, val|
+            var = variables.option(key)
+            var.default = val if var
+          end
+        end
+
+        if values
+          values.each do |key, val|
             var = @variables.option(key)
             var.set(val) if var
           end
@@ -105,11 +123,11 @@ module Kontena::Cli::Stacks
         validate unless skip_validation?
 
         result = {}
-        Dir.chdir(from_registry? ? Dir.pwd : File.dirname(File.expand_path(file))) do
+        Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
           result[:stack]         = raw_yaml['stack']
           result[:version]       = self.stack_version
           result[:name]          = self.stack_name
-          result[:registry]      = @registry if from_registry?
+          result[:registry]      = registry
           result[:expose]        = fully_interpolated_yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
@@ -119,7 +137,6 @@ module Kontena::Cli::Stacks
               k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
             end
           end
-          result[:vault_keys]    = extract_vault_keys(result[:services])
         end
         result
       end
@@ -137,7 +154,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        @stack_name ||= parse_stack_name(::YAML.safe_load(raw_content)['stack'].to_s)[:stack]
+        @stack_name ||= parse_stack_name(raw_yaml['stack'].to_s)[:stack]
       end
 
       def stack_version
@@ -160,7 +177,15 @@ module Kontena::Cli::Stacks
       end
 
       def from_registry?
-        !!@from_registry
+        file =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/ && !File.exist?(file)
+      end
+
+      def from_url?
+        file =~ /\A(?:http|https|ftp):\/\//
+      end
+
+      def from_file?
+        !from_registry? && !from_url?
       end
 
       # @return [Kontena::Cli::Stacks::YAML::ValidatorV3]
@@ -229,8 +254,8 @@ module Kontena::Cli::Stacks
         @services ||= fully_interpolated_yaml['services']
       end
 
-      def from_external_file(filename, service_name, from_registry: false)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, from_registry: from_registry, variables: variables).execute(service_name)
+      def from_external_file(filename, service_name)
+        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, variables: variables, defaults: defaults, values: values).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
@@ -252,8 +277,11 @@ module Kontena::Cli::Stacks
               if use_opto
                 opt = variables.option(var)
                 if opt.nil?
-                  raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
-                  val = nil
+                  if variables.find { |opt| opt.to[:env][var] }
+                    val = env[var]
+                  else
+                    raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
+                  end
                 else
                   val = opt.value
                 end
@@ -315,7 +343,7 @@ module Kontena::Cli::Stacks
         if filename
           parent_config = from_external_file(filename, extended_service)
         elsif stackname
-          parent_config = from_external_file(stackname, extended_service, from_registry: true)
+          parent_config = from_external_file(stackname, extended_service)
         else
           raise ("Service '#{extended_service}' not found in #{file}") unless services.has_key?(extended_service)
           parent_config = process_config(services[extended_service])
@@ -382,19 +410,6 @@ module Kontena::Cli::Stacks
             options['build']['args'][k] = v
           end
         end
-      end
-
-      # Goes through an array of service hashes and extracts vault secret key names
-      # @param [Hash] services_array
-      # @return [Array] keys
-      def extract_vault_keys(services)
-        keys = []
-        services.each do |_, data|
-          Array(services['secrets']).each do |secret|
-            keys << secret['secret']
-          end
-        end
-        keys.uniq.compact
       end
 
       # Takes a stack name such as user/foo:1.0.0 and breaks it into components

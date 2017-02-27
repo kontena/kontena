@@ -105,7 +105,7 @@ module Kontena
       # @param [String] id
       # @param [String] cmd
       # @param [Hash] opts
-      # @return [Array]
+      # @return [Array<(Array<String>, Array<String>, Integer)>] stdout, stderr, exit_status
       def exec(id, cmd, opts = {})
         container = Docker::Container.get(id)
         container.exec(cmd, opts)

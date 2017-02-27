@@ -4,7 +4,7 @@ title: Stacks
 
 # Stacks
 
-Kontena Stacks are pre-packaged and reusable collections of Kontena services with associated configuration in the form of a YAML file.
+Kontena Stacks are pre-packaged and reusable collections of Kontena services with associated configuration in the form of a [YAML file](../references/kontena-yml.md).
 These Kontena Stack files can be distributed via the Kontena Stack Registry, and installed to the Kontena Master for deployment to the Grid.
 The Kontena Master deploys each stack as a set of Kontena Services, running as Docker containers on the host nodes.
 The service containers run the Docker images referenced in the stack file.
@@ -126,7 +126,7 @@ Destructive command. To proceed, type "terom/redis" or re-run this command with 
 A deleted stack file can be re-upload with a newer version number.
 
 ### Deploying Stacks
-The following Kontena CLI commands are used to install local stack files to the Kontena Master, and deploy the stack services running and Grid nodes:
+The following Kontena CLI commands are used to stack files to the Kontena Master, and deploy the stack services running and Grid nodes:
 
 * `kontena stack build` - Build and push Docker images referenced by a stack file
 * `kontena stack install` - Create a stack on the Kontena Master
@@ -134,10 +134,9 @@ The following Kontena CLI commands are used to install local stack files to the 
 * `kontena stack deploy` - Deploy a stack to the Grid
 * `kontena stack remove` - Remove a deployed stack
 
-#### `kontena stack install --name wordpress-red --deploy wordpress/kontena.yml`
+#### `kontena stack install --name wordpress-red wordpress/kontena.yml`
 
 Install the stack from the YAML file to the master, creating a new named stack with associated services.
-Use the `--deploy` flag to simultaneously deploy the stack services to the grid, spinning up the Docker containers.
 
 ```
  [done] Creating stack wordpress-red
@@ -145,21 +144,25 @@ Use the `--deploy` flag to simultaneously deploy the stack services to the grid,
 ```
 
 The stack services will now be visible in `kontena service ls`, and the service containers will be running on the grid's host nodes.
-If you omit the `kontena stack install --deploy` flag, then you must run `kontena stack deploy wordpress-red` separately.
+If you add the `kontena stack install --no-deploy` flag, then you must run `kontena stack deploy wordpress-red` separately.
 
 Assuming the new `wordpress-red/wordpress` container is running on the host node at `192.168.66.102`, you can use `http://192.168.66.102:80/` to access the installed wordpress service.
 
-#### `kontena stack install --name wordpress-green --deploy terom/wordpress`
+#### `kontena stack install --name wordpress-green terom/wordpress`
 
 Install and deploy the stack using the latest YAML file from the stack registry.
 
-#### `kontena stack install --name wordpress-green --deploy terom/wordpress:4.6.1+mariadb5.`
+#### `kontena stack install --name wordpress-green terom/wordpress:4.6.1+mariadb5.`
 
 Install and deploy the stack using the versioned YAML file from the stack registry.
 
-#### `kontena stack install --name wordpress-green --deploy --values-from production.yml terom/wordpress:4.6.1+mariadb5.`
+#### `kontena stack install --name wordpress-green --values-from production.yml terom/wordpress:4.6.1+mariadb5.`
 
 Install and deploy the stack using the versioned YAML file from the stack registry, read variable values from 'production.yml'.
+
+#### `kontena stack install --name wordpress-green https://stacks.example.com/stack.yml`
+
+Install and deploy a stack from URL
 
 #### `kontena stack remove wordpress-red`
 

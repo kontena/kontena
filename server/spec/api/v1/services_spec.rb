@@ -80,6 +80,7 @@ describe '/v1/services' do
         instances cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
       ).sort)
       expect(json_response['id']).to eq('terminal-a/null/redis')
       expect(json_response['image']).to eq(redis_service.image_name)
@@ -94,6 +95,7 @@ describe '/v1/services' do
         instances cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
       ).sort)
       expect(json_response['id']).to eq('terminal-a/teststack/redis')
       expect(json_response['stack']['name']).to eq('teststack')
@@ -108,13 +110,22 @@ describe '/v1/services' do
     end
 
     it 'returns health status' do
-      redis_service.health_check = GridServiceHealthCheck.new(port: 5000)
+      redis_service.health_check = GridServiceHealthCheck.new(port: 5000, protocol: 'tcp')
       redis_service.save
       container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', health_status: 'healthy')
       get "/v1/services/#{redis_service.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['health_status']['total']).to eq(1)
       expect(json_response['health_status']['healthy']).to eq(1)
+    end
+
+    it 'returns no health check or status if protocol nil' do
+      redis_service.health_check = GridServiceHealthCheck.new(port: 5000)
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['health_status']).to be_nil
+      expect(json_response['health_check']).to be_nil
     end
   end
 

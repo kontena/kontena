@@ -232,7 +232,7 @@ describe Kontena::Cli::Master::LoginCommand do
     it 'goes to web flow when the existing token does not work' do
       expect(client).to receive(:authentication_ok?).and_return(false)
       expect(subject).to receive(:web_flow).and_return(true)
-      subject.run(%w(fooserver))
+      subject.run(%w(--no-remote fooserver))
     end
   end
 
@@ -265,7 +265,7 @@ describe Kontena::Cli::Master::LoginCommand do
       end.and_return({})
       expect(Launchy).to receive(:open).with('http://authprovider.example.com/authplz').and_return(true)
       expect(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
-      subject.run(%w(--skip-grid-auto-select http://foobar.example.com))
+      subject.run(%w(--no-remote --skip-grid-auto-select http://foobar.example.com))
       expect(subject.config.servers.size).to eq 1
       server = subject.config.servers.first
       expect(server.url).to eq 'http://foobar.example.com'
@@ -289,25 +289,15 @@ describe Kontena::Cli::Master::LoginCommand do
       expect(server.token.expires_at).to be_nil
     end
 
-    it 'creates an entry when using --remote' do
+    it 'asks for code when using --remote' do
       expect(client).to receive(:last_response).at_least(:once).and_return(OpenStruct.new(status: 302, headers: { 'Location' => 'http//authprovider.example.com/authplz' }))
       expect(client).to receive(:request) do |opts|
         expect(opts[:path]).to eq "/authenticate?redirect_uri=%2Fcode&expires_in=7200"
         expect(opts[:http_method]).to eq :get
       end.and_return({})
-      expect(subject.config).to receive(:find_server).with('kontena-master').and_return(true)
-      expect(subject.config).to receive(:find_server).with('kontena-master-2').at_least(:once).and_return(nil)
-      expect{subject.run(%w(--remote http://foobar.example.com))}.to raise_error(SystemExit) do |ex|
-        expect(ex.status).to eq 1
-      end
-      expect(subject.config.servers.size).to eq 1
-      server = subject.config.servers.first
-      expect(server.url).to eq 'http://foobar.example.com'
-      expect(server.name).to eq 'kontena-master-2'
-      expect(server.username).to be_nil
-      expect(server.token.access_token).to be_nil
-      expect(server.token.refresh_token).to be_nil
-      expect(server.token.expires_at).to be_nil
+      expect(Kontena.prompt).to receive(:ask).and_return("abcd")
+      expect(subject).to receive(:use_authorization_code).and_return('true')
+      subject.run(%w(--remote http://foobar.example.com))
     end
   end
 
@@ -337,6 +327,7 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(File).to receive(:readable?).and_return(true)
       allow(Kontena::Client).to receive(:new).and_return(client)
       allow(Kontena::LocalhostWebServer).to receive(:new).and_return(webserver)
+      allow(Kontena).to receive(:browserless?).and_return(false)
       allow(webserver).to receive(:port).and_return(12345)
       allow(webserver).to receive(:serve_one).and_return(
         { 'code' => 'abcd1234' }
@@ -350,7 +341,7 @@ describe Kontena::Cli::Master::LoginCommand do
       allow(client).to receive(:exchange_code).with('abcd1234').and_return('access_token' => 'defg456', 'server' => { 'name' => 'foobar' }, 'user' => { 'name' => 'testuser' })
       subject.config.current_master = 'fooserver'
       subject.config.current_master
-      subject.run(%w(--skip-grid-auto-select http://foobar.example.com))
+      subject.run(%w(--no-remote --skip-grid-auto-select http://foobar.example.com))
       expect(subject.config.current_master.name).to eq 'foobar'
     end
   end

@@ -52,6 +52,8 @@ module Stacks
         end
         unless outcome.success?
           handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+        else
+          outcome.result.set(:stack_revision => stack_rev.revision)
         end
       end
     end

@@ -23,6 +23,10 @@ module Kontena::Cli::Plugins
             spin.fail!
           end
         end
+
+        spinner "Running cleanup" do |spin|
+          Kontena::PluginManager.instance.cleanup_plugin(name)
+        end
       else
         installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
           begin

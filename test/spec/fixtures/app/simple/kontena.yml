@@ -1,0 +1,15 @@
+version: 2
+name: simple
+services:
+  redis:
+    image: redis:3.0
+
+  nginx:
+    image: nginx:1-alpine
+    links:
+      - lb
+
+  lb:
+    image: kontena/lb:latest
+    ports:
+      - 80:80

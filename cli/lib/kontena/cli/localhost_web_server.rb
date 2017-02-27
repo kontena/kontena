@@ -18,7 +18,7 @@ module Kontena
 
     DEFAULT_ERROR_MESSAGE   = "Bad request"
     SUCCESS_URL             = "https://cloud.kontena.io/terminal-success"
-      
+
     # Get new server instance
     #
     # @param [String] success_response Returned for successful callback
@@ -71,8 +71,9 @@ module Kontena
           ].join("\r\n")
         else
           socket.print [
-            'HTTP/1.1 301 Found',
+            'HTTP/1.1 302 Found',
             "Location: #{SUCCESS_URL}",
+            "Referrer-Policy: no-referrer",
             "Connection: close",
             ''
           ].join("\r\n")

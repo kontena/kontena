@@ -18,7 +18,7 @@ describe Kontena::Cli::Services::UnlinkCommand do
     it 'sends link to master' do
       expect(client).to receive(:get).with('services/test-grid/null/service-a').and_return({
         'links' => [
-          {'alias' => 'service-b', 'grid_service_id' => "grid/service-b"}
+          {'alias' => 'service-b', 'id' => "test-grid/null/service-b", 'name' => 'service-b'}
         ]
       })
       expect(client).to receive(:put).with(

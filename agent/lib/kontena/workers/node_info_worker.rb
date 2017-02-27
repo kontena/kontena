@@ -23,6 +23,7 @@ module Kontena::Workers
       @queue = queue
       @statsd = nil
       @stats_since = Time.now
+      @container_seconds = 0
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)

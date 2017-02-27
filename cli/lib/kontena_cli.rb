@@ -36,8 +36,12 @@ module Kontena
     ENV['OS'] == 'Windows_NT' && RUBY_PLATFORM !~ /cygwin/
   end
 
+  def self.browserless?
+    !!(RUBY_PLATFORM =~ /linux|(?:free|net|open)bsd|solaris|aix|hpux/ && ENV['DISPLAY'].to_s.empty?)
+  end
+
   def self.simple_terminal?
-    ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
+    on_windows? || ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
   end
 
   def self.pastel
@@ -61,6 +65,10 @@ module Kontena
       interrupt: :exit,
       prefix: pastel.green('> ')
     )
+  end
+
+  def self.reset_prompt
+    @prompt = nil
   end
 
   def self.root

@@ -18,6 +18,7 @@ Here are some ideas of how you can engage with the community and help us to grow
 * Follow all the latest news and tutorials at the [Kontena Blog](http://blog.kontena.io). Be active -- comments and questions are welcome!
 * Mention and follow [@KontenaInc](https://twitter.com/KontenaInc) on Twitter. Use the `#kontena` hashtag on social networks.
 * Stay up to date on development by [following](https://github.com/kontena/kontena/watchers) and [starring](https://github.com/kontena/kontena/stargazers) our GitHub repository.
+* Join the [Kontena Community Slack channel](https://slack.kontena.io/) to chat with other like-minded devops and Kontena users, and get answers to technical questions of any level. 
 
 ## Contact Kontena, Inc. for Support
 

@@ -64,6 +64,8 @@ volumes:
 $ cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1
 ```
 
+`KONTENA_INITIAL_ADMIN_CODE` can be any user generated string.
+
 **Note!** If you want to use a SSL certificate you can use the following command to obtain the correct value for `SSL_CERT`:
 ```
 $ awk 1 ORS='\\n' /path/to/cert_file

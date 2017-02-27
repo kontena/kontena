@@ -38,6 +38,20 @@ module V1
           r.is do
             render('host_nodes/show')
           end
+
+          # GET /v1/nodes/:grid/:node/health
+          r.on 'health' do
+            rpc_client = @node.rpc_client(10)
+
+            begin
+              @etcd_health = rpc_client.request("/etcd/health")
+            rescue RpcClient::TimeoutError => error
+              # overlap with any agent-side errors
+              @etcd_health = {error: error.message}
+            end
+
+            render('host_nodes/health')
+          end
         end
 
         r.put do

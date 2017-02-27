@@ -92,12 +92,12 @@ module Kontena
 
       def warning(msg)
         warning = pastel.yellow('warn')
-        STDERR.puts " [#{warning}] #{msg}"
+        $stderr.puts " [#{warning}] #{msg}"
       end
 
       def exit_with_error(msg, code = 1)
         error = pastel.red('error')
-        STDERR.puts " [#{error}] #{msg}"
+        $stderr.puts " [#{error}] #{msg}"
         exit code
       end
 
@@ -247,6 +247,7 @@ module Kontena
         if self.respond_to?(:force?) && self.force?
           return
         end
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts message if message
         puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
@@ -257,6 +258,7 @@ module Kontena
         if self.respond_to?(:force?) && self.force?
           return
         end
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         prompt.yes?(message) || error('Aborted command.')
       end
 

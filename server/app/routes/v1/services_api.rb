@@ -141,14 +141,6 @@ module V1
               halt_request(422, { error: outcome.errors.message })
             end
           end
-
-          # POST /v1/services/:grid_name/:stack_name/:service_name/exec
-          r.on 'exec' do
-            data = parse_json_body
-            container = @grid_service.containers.where(name: "#{@grid_service.name}-#{data['instance']}")
-            halt_request(404) unless container
-            Docker::ContainerExecutor.new(container).exec_in_container(data['cmd'])
-          end
         end
 
         # PUT /v1/services/:grid_name/:stack_name/:service_name

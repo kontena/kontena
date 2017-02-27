@@ -1,0 +1,75 @@
+require 'rspec/core/rake_task'
+
+RSpec::Core::RakeTask.new(:spec)
+
+task :default  => :spec
+
+namespace :vagrant  do
+
+  version = ENV['VERSION'] || 'edge'
+  initial_size = (ENV['INITIAL_SIZE'] || 3).to_i
+
+  desc "setup vagrant"
+  task :setup => [:setup_master, :setup_grid]
+
+  desc "setup vagrant master"
+  task :setup_master do
+    sh "kontena vagrant master create --skip-auth-provider --name e2e --memory 512 --version #{version}"
+  end
+
+  desc "setup vagrant grid"
+  task :setup_grid do
+    sh "kontena grid create --initial-size #{initial_size} e2e"
+    sh "kontena vagrant node create --memory 1024 --version #{version} --instances #{initial_size} node"
+    sh "kontena node ls"
+  end
+
+  desc "teardown vagrant"
+  task :teardown => [:teardown_grid, :teardown_master]
+
+  task :teardown_master do
+    sh "kontena vagrant master terminate --force"
+  end
+
+  task :teardown_grid do
+    initial_size.times do |i|
+      sh "kontena vagrant node terminate --force node-#{i + 1}"
+    end
+    sh "kontena grid rm --force e2e"
+  end
+end
+
+namespace :compose do
+  desc "setup compose"
+  task :setup => [:setup_master, :setup_grid]
+
+  desc "setup vagrant master"
+  task :setup_master do
+    sh "docker-compose up --build -d api"
+    sleep 20
+    sh "kontena master login --code initialadmincode --name compose-e2e http://localhost:9292"
+  end
+
+  desc "setup vagrant grid"
+  task :setup_grid do
+    sh "kontena grid create --token e2etoken e2e"
+    sh "docker-compose up --build -d agent"
+    sleep 30
+    sh "kontena node ls"
+  end
+
+  desc "teardown compose"
+  task :teardown => [:teardown_grid, :teardown_master]
+
+  task :teardown_master do
+    sh "docker-compose stop api mongodb"
+    sh "docker-compose rm --force api mongodb"
+  end
+
+  task :teardown_grid do
+    sh "docker-compose stop agent"
+    sh "docker-compose rm --force agent"
+    sh "kontena node rm --force moby"
+    sh "kontena grid rm --force e2e"
+  end
+end

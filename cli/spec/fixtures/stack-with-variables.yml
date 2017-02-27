@@ -23,8 +23,12 @@ variables:
       env: test_var
   TEST_ENV_VAR:      # the default from/to is to set/read env of the option name
     type: string
-  TAG:
+  tag:
     type: string
+    from:
+      env: TAG
+    to:
+      env: TAG
   MYSQL_IMAGE:
     type: string
     empty_is_nil: false

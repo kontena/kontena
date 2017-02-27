@@ -51,6 +51,14 @@ module Kontena::Cli::Cloud
     end
 
     def web_flow
+      if Kontena.browserless? && !force?
+        STDERR.puts "Your current environment does not seem to support opening a local graphical WWW browser."
+        STDERR.puts
+        STDERR.puts "You can perorm a login on another computer, copy the token and use it with 'kontena cloud login --token <token>'."
+        STDERR.puts "There will be an easier way to log in from a browserless environment soon."
+        exit_with_error 'Unable to launch a web browser'
+      end
+
       require_relative '../localhost_web_server'
       require 'launchy'
 
@@ -85,7 +93,7 @@ module Kontena::Cli::Cloud
 
       server_thread  = Thread.new { Thread.main['response'] = web_server.serve_one }
       browser_thread = Thread.new { Launchy.open(uri.to_s) }
-      
+
       spinner "Waiting for browser authorization response" do
         server_thread.join
       end

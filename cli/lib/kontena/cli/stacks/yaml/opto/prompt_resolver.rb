@@ -1,9 +1,12 @@
+require 'kontena/cli/stacks/yaml/opto'
+require 'kontena/cli/common'
+
 module Kontena::Cli::Stacks
   module YAML
-    class Prompt < Opto::Resolver
+    class Prompt < ::Opto::Resolver
       include Kontena::Cli::Common
 
-      using Opto::Extension::HashStringOrSymbolKey
+      using ::Opto::Extension::HashStringOrSymbolKey
 
       def enum?
         option.type == 'enum'
@@ -50,10 +53,16 @@ module Kontena::Cli::Stacks
         prompt.yes?(question_text, default: option.default == false ? false : true)
       end
 
-      def ask
-        prompt.ask(question_text, default: option.default)
+      def echo?
+        return true if option.handler.nil?
+        return true if option.handler.options.nil?
+        return true if option.handler.options[:echo].nil?
+        option.handler.options[:echo]
       end
 
+      def ask
+        prompt.ask(question_text, default: option.default, echo: echo?)
+      end
 
       def resolve
         return nil if option.skip?
@@ -68,4 +77,3 @@ module Kontena::Cli::Stacks
     end
   end
 end
-
