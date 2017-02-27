@@ -180,7 +180,7 @@ hooks:
 
 **post_install**
 
-Display a message in the CLI after the service has been installed.
+Display a message in the CLI after the service has been installed as part of a stack using `kontena stack install`.
 
 ```
 hooks:
