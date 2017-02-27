@@ -108,7 +108,7 @@ module Kontena::Cli::Stacks
         )
         if defaults
           defaults.each do |key, val|
-            var = variables.option(key)
+            var = @variables.option(key)
             var.default = val if var
           end
         end
