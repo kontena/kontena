@@ -457,4 +457,48 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
     end
   end
+
+  context "for an undefined variable" do
+    subject do
+      described_class.new(fixture_path('stack-with-liquid-undefined.yml'))
+    end
+
+    it "raises an undefined variable error" do
+      expect{subject.execute}.to raise_error(Liquid::UndefinedVariable, /undefined variable asdflol/)
+    end
+  end
+
+  context "for an optional variable that is not defined" do
+    subject do
+      described_class.new(fixture_path('stack-with-liquid-optional.yml'))
+    end
+
+    before do
+      ENV.delete('asdf')
+    end
+
+    it "omits the env" do
+      outcome = subject.execute
+
+      expect(outcome[:variables]).to eq('asdf' => nil), subject.variables.inspect
+      expect(outcome[:services]['test']['environment']).to eq nil
+    end
+  end
+
+  context "for an optional variable that is defined" do
+    subject do
+      described_class.new(fixture_path('stack-with-liquid-optional.yml'))
+    end
+
+    before do
+      ENV['asdf'] = 'test'
+    end
+
+    it "defines the env" do
+      outcome = subject.execute
+
+      expect(outcome[:variables]).to eq 'asdf' => 'test'
+      expect(outcome[:services]['test']['environment']).to eq ['ASDF=test']
+    end
+  end
 end
