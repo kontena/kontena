@@ -28,6 +28,10 @@ class HostNodeSerializer < KontenaJsonSerializer
     object.node_id
   end
 
+  def last_seen_at
+    object.last_seen_at.try(:iso8601)
+  end
+
   def engine_root_dir
     object.docker_root_dir
   end

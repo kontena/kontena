@@ -55,6 +55,15 @@ class GridServiceSerializer < KontenaJsonSerializer
     object.image_name
   end
 
+  def deploy_opts
+    deploy_opts = object.deploy_opts
+    {
+      wait_for_port: deploy_opts.wait_for_port,
+      min_healt: deploy_opts.min_health,
+      interval: deploy_opts.interval
+    }
+  end
+
   def dns
     if object.default_stack?
       "#{object.name}.#{object.grid.name}.kontena.local"
@@ -94,7 +103,7 @@ class GridServiceSerializer < KontenaJsonSerializer
     end
   end
 
-  def instance_counts    
+  def instance_counts
     if options[:counts]
       instance_counts = {
         total: options[:counts].dig(object.id, :total) || 0,

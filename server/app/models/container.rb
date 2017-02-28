@@ -180,7 +180,7 @@ class Container
     event = {
       event: 'update',
       type: 'GridService',
-      object: GridServiceSerializer.new(self.grid_service).to_json
+      object: GridServiceSerializer.new(self.grid_service).to_hash
     }
     publish_async(event)
   end
@@ -191,7 +191,7 @@ class Container
     event = {
       event: 'update',
       type: 'GridService',
-      object: GridServiceSerializer.new(self.grid_service).to_json
+      object: GridServiceSerializer.new(self.grid_service).to_hash
     }
     publish_async(event)
   end
@@ -202,7 +202,7 @@ class Container
     event = {
       event: 'update',
       type: 'GridService',
-      object: GridServiceSerializer.new(self.grid_service).to_json
+      object: GridServiceSerializer.new(self.grid_service).to_hash
     }
     publish_async(event)
   end

@@ -155,7 +155,7 @@ describe Cloud::WebsocketClient do
       message = {
         type: 'GridService',
         event: 'create',
-        object: '{"name": "test-service", "grid": {"id": "test"}}'
+        object: { name: "test-service", grid: { id: "test"} }
       }
       expect(ws).to receive(:send).once do
           EM.stop
@@ -173,7 +173,7 @@ describe Cloud::WebsocketClient do
         message = {
           type: 'GridService',
           event: 'create',
-          object: '{"name": "test-service", "grid": {"id": "test"}}'
+          object: {"name": "test-service", "grid": {"id": "test"}}
         }
 
         expect(ws).to receive(:send).once do |param|
@@ -197,7 +197,7 @@ describe Cloud::WebsocketClient do
           message = {
             type: 'GridService',
             event: 'create',
-            object: '{"name": "test-service", "grid": {"id": "test"}}'
+            object: { "name" => "test-service", "grid" => { "id" => "test" }}
           }
 
           expect(ws).to receive(:send).once do |param|
@@ -218,7 +218,7 @@ describe Cloud::WebsocketClient do
           message = {
             type: 'GridService',
             event: 'create',
-            object: '{"name": "test-service", "grid": {"id": "test"}}'
+            object: { "name" => "test-service", "grid" => { "id" => "test" }}
           }
 
           expect(ws).to receive(:send).once do |param|
@@ -240,13 +240,13 @@ describe Cloud::WebsocketClient do
           message = {
             type: 'GridService',
             event: 'create',
-            object: '{"name": "test-service", "grid": {"id": "test"}}'
+            object: { "name" => "test-service", "grid" => { "id" => "test" }}
           }
 
           expect(ws).to receive(:send).once do |param|
               message = MessagePack.unpack(param.pack('c*'))
               expect(message).to be_instance_of(Array)
-              expect(message[2][2]).to eq('{"name": "test-service", "grid": {"id": "test"}}')
+              expect(message[2][2]).to eq({"name" => "test-service", "grid" => {"id" => "test"}})
               EM.stop
           end
 

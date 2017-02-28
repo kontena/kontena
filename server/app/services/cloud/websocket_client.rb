@@ -182,7 +182,7 @@ module Cloud
     def send_notification_message(msg)
       invalidate_users_cache if msg[:type] == 'User' # clear cache if users are modified
       grid_id = resolve_grid_id(msg)
-      users = resolve_users(grid_id)      
+      users = resolve_users(grid_id)
       params = [grid_id, users, msg[:object]]
       message = [2, "#{msg[:type]}##{msg[:event]}", params]
       debug "Sending notification message: #{message}"
@@ -192,8 +192,8 @@ module Cloud
     end
 
     def resolve_grid_id(msg)
-      object = JSON.parse(msg[:object])
-      if msg['type'] == "Grid"
+      object = msg[:object]
+      if msg[:type] == "Grid"
         object['id']
       else
         object.dig('grid', 'id')
@@ -215,7 +215,6 @@ module Cloud
     def subscribe_events(channel)
       @subscription = MongoPubsub.subscribe(channel) do |message|
         if leader?
-          puts message
           send_notification_message(message)
         end
       end

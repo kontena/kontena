@@ -12,11 +12,11 @@ module EventStream
     CHANNEL
   end
 
-  def publish_create_event    
+  def publish_create_event
     event = {
       event: 'create',
       type: self.class.name,
-      object: find_serializer.to_json
+      object: find_serializer.to_hash
     }
     publish_async(event)
   end
@@ -25,7 +25,7 @@ module EventStream
     event = {
       event: 'update',
       type: self.class.name,
-      object: find_serializer.to_json
+      object: find_serializer.to_hash
     }
     publish_async(event)
   end
@@ -34,7 +34,7 @@ module EventStream
     event = {
       event: 'delete',
       type: self.class.name,
-      object: find_serializer.to_json
+      object: find_serializer.to_hash
     }
     publish_async(event)
   end

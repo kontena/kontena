@@ -9,4 +9,16 @@ class KontenaJsonSerializer < JsonSerializer
       to_hash
     end
   end
+
+  def created_at
+    object.created_at.try(:iso8601)
+  end
+
+  def updated_at
+    object.created_at.try(:iso8601)
+  end
+
+  def to_hash
+    super
+  end
 end

@@ -6,7 +6,7 @@ describe EventStream do
   let(:subject) { klass.new }
   let(:serializer) do
     serializer = double
-    allow(serializer).to receive(:to_json).and_return('{}')
+    allow(serializer).to receive(:to_hash).and_return({})
     serializer
   end
 
@@ -17,7 +17,7 @@ describe EventStream do
       allow(subject).to receive(:publish_async)
 
       expect(serializer_class).to receive(:new).with(subject).and_return(serializer)
-      expect(serializer).to receive(:to_json).once
+      expect(serializer).to receive(:to_hash).once
       subject.publish_create_event
     end
 
@@ -26,7 +26,7 @@ describe EventStream do
       event = {
         event: 'create',
         type: klass.name,
-        object: '{}'
+        object: {}
       }
       expect(subject).to receive(:publish_async).with(event).once
       subject.publish_create_event
@@ -34,22 +34,22 @@ describe EventStream do
   end
 
   describe '#publish_update_event' do
-    it 'serializes object to json' do
+    it 'serializes object to hash' do
       serializer_class = double
       allow(subject).to receive(:find_serializer_class).and_return(serializer_class)
       allow(subject).to receive(:publish_async)
 
       expect(serializer_class).to receive(:new).with(subject).and_return(serializer)
-      expect(serializer).to receive(:to_json).once
+      expect(serializer).to receive(:to_hash).once
       subject.publish_create_event
     end
 
-    it 'calls publish_async with create event' do
+    it 'calls publish_async with update event' do
       allow(subject).to receive(:find_serializer).and_return(serializer)
       event = {
         event: 'update',
         type: klass.name,
-        object: '{}'
+        object: {}
       }
       expect(subject).to receive(:publish_async).with(event).once
       subject.publish_update_event
@@ -57,13 +57,13 @@ describe EventStream do
   end
 
   describe '#publish_destroy_event' do
-    it 'serializes object to json' do
+    it 'serializes object to hash' do
       serializer_class = double
       allow(subject).to receive(:find_serializer_class).and_return(serializer_class)
       allow(subject).to receive(:publish_async)
 
       expect(serializer_class).to receive(:new).with(subject).and_return(serializer)
-      expect(serializer).to receive(:to_json).once
+      expect(serializer).to receive(:to_hash).once
       subject.publish_create_event
     end
 
@@ -72,7 +72,7 @@ describe EventStream do
       event = {
         event: 'delete',
         type: klass.name,
-        object: '{}'
+        object: {}
       }
       expect(subject).to receive(:publish_async).with(event).once
       subject.publish_destroy_event
