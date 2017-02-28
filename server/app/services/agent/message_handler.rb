@@ -3,6 +3,7 @@ module Agent
     include Logging
 
     attr_reader :db_session
+    attr_accessor :container_stats_buffer_size
 
     ##
     # @param [Queue] queue
@@ -12,6 +13,7 @@ module Agent
       @stats = []
       @cached_grid = nil
       @cached_container = nil
+      @container_stats_buffer_size = 5
       @db_session = ContainerLog.collection.session.with(
         write: {
           w: 0, fsync: false, j: false
@@ -144,6 +146,8 @@ module Agent
       container = grid_container(grid.id, data['id'])
       if container
         data = fixnums_to_float(data)
+        time = data['time'] ? Time.parse(data['time']) : Time.now.utc
+
         @stats << {
           grid_id: grid.id,
           grid_service_id: container['grid_service_id'],
@@ -153,9 +157,11 @@ module Agent
           memory: data['memory'],
           filesystem: data['filesystem'],
           diskio: data['diskio'],
-          network: data['network']
+          network: data['network'],
+          created_at: time,
+          updated_at: time
         }
-        if @stats.size >= 5
+        if @stats.size >= @container_stats_buffer_size
           db_session[:container_stats].insert(@stats.dup)
           @stats.clear
         end
@@ -188,6 +194,8 @@ module Agent
       node = grid.host_nodes.find_by(node_id: data['id'])
       return unless node
       data = fixnums_to_float(data)
+      time = data['time'] ? Time.parse(data['time']) : Time.now.utc
+
       stat = {
         grid_id: grid.id,
         host_node_id: node.id,
@@ -195,8 +203,8 @@ module Agent
         load: data['load'],
         filesystem: data['filesystem'],
         usage: data['usage'],
-        created_at: Time.now.utc,
-        updated_at: Time.now.utc
+        created_at: time,
+        updated_at: time
       }
       db_session[:host_node_stats].insert(stat)
     end

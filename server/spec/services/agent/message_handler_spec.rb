@@ -199,4 +199,64 @@ describe Agent::MessageHandler do
       }.to change {container.reload.health_status}.to eq('healthy')
     end
   end
+
+  describe '#on_container_stat' do
+    it 'saves container_stat items' do
+      subject.container_stats_buffer_size = 1
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+
+      expect {
+        subject.on_container_stat(grid, {
+          'id' => container_id,
+          'spec' => {},
+          'cpu' => {},
+          'memory' => {},
+          'filesystems' => [],
+          'diskio' => {},
+          'network' => {}
+        })
+      }.to change{ container.container_stats.count }.by 1
+    end
+
+    it 'buffers and saves container_stat items' do
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+
+      expect {
+        6.times {
+          subject.on_container_stat(grid, {
+            'id' => container_id,
+            'spec' => {},
+            'cpu' => {},
+            'memory' => {},
+            'filesystems' => [],
+            'diskio' => {},
+            'network' => {}
+          })
+        }
+      }.to change{ container.container_stats.count }.by 5
+    end
+
+    it 'sets timestamp fields' do
+      subject.container_stats_buffer_size = 1
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+
+      subject.on_container_stat(grid, {
+          'id' => container_id,
+          'spec' => {},
+          'cpu' => {},
+          'memory' => {},
+          'filesystems' => [],
+          'diskio' => {},
+          'network' => {}
+      })
+      expect(container.container_stats[0].created_at).to be_a(Time)
+      expect(container.container_stats[0].updated_at).to be_a(Time)
+    end
+  end
 end
