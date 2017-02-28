@@ -7,6 +7,10 @@ module Kontena::Cli::Stacks
       module Setters; end
     end
 
+    # Workaround for nil-valued variables in Liquid templates:
+    #   https://github.com/Shopify/liquid/issues/749
+    # This is something that we can pass in to `Liquid::Template.render` that gets evaluated as nil.
+    # If we pass in a nil value directly, then Liquid ignores it and considers the variable to be undefined.
     class LiquidNull
       def to_liquid
         nil
@@ -158,8 +162,7 @@ module Kontena::Cli::Stacks
         Liquid::Template.error_mode = :strict
         template = Liquid::Template.parse(content)
 
-        # Liquid skips any values given as nil
-        # Use an explicit value that gets translated to nil for optional variables
+        # Wrap nil values in LiquidNull to not have Liquid consider them as undefined
         vars = vars.clone
         vars.each do |key, value|
           vars[key] = LiquidNull.new if value.nil?
