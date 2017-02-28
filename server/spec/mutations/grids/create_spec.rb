@@ -84,6 +84,39 @@ describe Grids::Create do
         expect(outcome.result.is_a?(Grid)).to be_truthy
         expect(outcome.result.name).to eq('test-grid')
       end
+
+      context "when subnet is provided" do
+        it "creates grid with the given subnet" do
+          outcome = described_class.new(
+              user: user,
+              name: "test-grid",
+              subnet: "10.80.0.0/16",
+            ).run
+          expect(outcome).to be_success
+          expect(outcome.result.subnet).to eq('10.80.0.0/16')
+        end
+
+        it "creates grid with the given subnet, even if it's different" do
+          outcome = described_class.new(
+              user: user,
+              name: "test-grid",
+              subnet: "192.168.42.0/24",
+            ).run
+            expect(outcome).to be_success
+            expect(outcome.result.subnet).to eq('192.168.42.0/24')
+        end
+      end
+
+      context "when subnet is not provided" do
+        it "creates grid with the default subnet" do
+          outcome = described_class.new(
+              user: user,
+              name: "test-grid",
+            ).run
+          expect(outcome).to be_success
+          expect(outcome.result.subnet).to eq('10.81.0.0/16')
+        end
+      end
     end
   end
 end

@@ -13,16 +13,25 @@ module Grids
 
     optional do
       string :token
-
       array :default_affinity do
         string
       end
+      string :subnet
+      string :supernet
     end
 
     def validate
       add_error(:user, :invalid, 'Operation not allowed') unless user.can_create?(Grid)
       existing = Grid.find_by(name: self.name)
       add_error(:grid, :already_exists, "Grid with name #{self.name} already exists") if existing
+
+      if self.subnet
+        @subnet = IPAddr.new(self.subnet) rescue add_error(:subnet, :invalid, $!.message)
+      end
+
+      if self.supernet
+        @supernet = IPAddr.new(self.supernet) rescue add_error(:supernet, :invalid, $!.message)
+      end
     end
 
     def execute
@@ -33,6 +42,8 @@ module Grids
         token: self.token,
         default_affinity: self.default_affinity.to_a
       )
+      grid.subnet = self.subnet if self.subnet
+      grid.supernet = self.supernet if self.supernet
       unless grid.save
         grid.errors.each do |key, message|
           add_error(key, :invalid, message)

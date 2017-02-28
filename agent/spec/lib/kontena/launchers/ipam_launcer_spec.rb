@@ -81,7 +81,12 @@ describe Kontena::Launchers::IpamPlugin do
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
         "StopSignal"=>"SIGTTIN",
         "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
-        'Env' => ['NODE_ID=1', "LOG_LEVEL=1", 'ETCD_ENDPOINT=http://127.0.0.1:2379'],
+        'Env' => [
+          'NODE_ID=1',
+          "LOG_LEVEL=1",
+          'ETCD_ENDPOINT=http://127.0.0.1:2379',
+          'KONTENA_IPAM_SUPERNET=10.80.0.0/12',
+        ],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -90,7 +95,12 @@ describe Kontena::Launchers::IpamPlugin do
       expect(ipam_container).to receive(:start)
       allow(ipam_container).to receive(:id).and_return('12345')
 
-      subject.create_container('kontena/docker-ipam-plugin:latest', {'node_number' => '1'})
+      subject.create_container('kontena/docker-ipam-plugin:latest', {
+        'node_number' => '1',
+        'grid' => {
+          'supernet' => '10.80.0.0/12',
+        },
+      })
     end
 
     it 'creates new container' do
@@ -103,7 +113,12 @@ describe Kontena::Launchers::IpamPlugin do
         "Volumes" => {"/run/docker/plugins"=>{}, "/var/run/docker.sock"=>{}},
         "StopSignal"=>"SIGTTIN",
         "Cmd"=>["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
-        'Env' => ['NODE_ID=1', "LOG_LEVEL=1", 'ETCD_ENDPOINT=http://127.0.0.1:2379'],
+        'Env' => [
+          'NODE_ID=1',
+          "LOG_LEVEL=1",
+          'ETCD_ENDPOINT=http://127.0.0.1:2379',
+          'KONTENA_IPAM_SUPERNET=10.80.0.0/12',
+        ],
         'HostConfig' => {
           'NetworkMode' => 'host',
           'RestartPolicy' => {'Name' => 'always'},
@@ -111,7 +126,12 @@ describe Kontena::Launchers::IpamPlugin do
         })).and_return(ipam_container)
       expect(ipam_container).to receive(:start)
       allow(ipam_container).to receive(:id).and_return('12345')
-      subject.create_container('kontena/docker-ipam-plugin:latest', {'node_number' => '1'})
+      subject.create_container('kontena/docker-ipam-plugin:latest', {
+        'node_number' => '1',
+        'grid' => {
+          'supernet' => '10.80.0.0/12',
+        },
+      })
     end
 
   end
