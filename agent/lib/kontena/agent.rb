@@ -1,5 +1,16 @@
 require_relative 'logging'
 
+if trace_env = ENV['TRACE']
+  require 'tracer'
+
+  trace_targets = trace_env.split
+
+  Tracer.add_filter { |event, file, line, id, binding, klass, *rest|
+    trace_targets.any? { |s| klass.to_s.include? s }
+  }
+  Tracer.on
+end
+
 module Kontena
   class Agent
     include Logging
