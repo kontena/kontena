@@ -1,3 +1,6 @@
+require_relative "../../../spec_helper"
+require 'kontena/cli/services/exec_command'
+
 describe Kontena::Cli::Services::ExecCommand do
   include ClientHelpers
   include OutputHelpers
@@ -98,7 +101,7 @@ describe Kontena::Cli::Services::ExecCommand do
     it "Errors on a nonexistant container if given" do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
 
-      expect{subject.run(['--instance=4', 'test-service', 'test'])}.to output(/Service test-service does not have container instance 4/).to_stderr.and raise_error(SystemExit)
+      expect{subject.run(['--instance=4', 'test-service', 'test'])}.to exit_with_error.and output(/Service test-service does not have container instance 4/).to_stderr
     end
 
     it "Executes on each running container" do
@@ -114,7 +117,7 @@ describe Kontena::Cli::Services::ExecCommand do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
       expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_fail)
 
-      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to output("error\n").to_stderr.and raise_error(SystemExit)
+      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to exit_with_error.and output("error\n").to_stderr
     end
 
     it "Stops if the second container fails" do
@@ -122,7 +125,7 @@ describe Kontena::Cli::Services::ExecCommand do
       expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-1/exec', { cmd: ['test'] }).and_return(exec_ok)
       expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(exec_fail)
 
-      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to output("ok\n").to_stdout.and output("error\n").to_stderr.and raise_error(SystemExit)
+      expect{subject.run(['--silent', '--all', 'test-service', 'test'])}.to exit_with_error.and output("ok\n").to_stdout.and output("error\n").to_stderr
     end
 
     it "Keeps going if the second container fails when using --skip" do
@@ -131,7 +134,7 @@ describe Kontena::Cli::Services::ExecCommand do
       expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-2/exec', { cmd: ['test'] }).and_return(exec_fail)
       expect(client).to receive(:post).with('containers/test-grid/host/test-service.container-3/exec', { cmd: ['test'] }).and_return(exec_ok)
 
-      expect{subject.run(['--silent', '--all', '--skip', 'test-service', 'test'])}.to output("ok\nok\n").to_stdout.and output("error\n").to_stderr.and raise_error(SystemExit)
+      expect{subject.run(['--silent', '--all', '--skip', 'test-service', 'test'])}.to exit_with_error.and output("ok\nok\n").to_stdout.and output("error\n").to_stderr
     end
   end
 end

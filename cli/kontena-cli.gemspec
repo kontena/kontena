@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Kontena, Inc"]
   spec.email         = ["info@kontena.io"]
   spec.summary       = %q{Kontena command line tool}
-  spec.description   = %q{Kontena command line tool}
+  spec.description   = %q{Command-line client for the Kontena container and microservices platform}
   spec.homepage      = "https://www.kontena.io"
   spec.license       = "Apache-2.0"
 

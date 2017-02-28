@@ -12,7 +12,7 @@ describe Kontena::Cli::Services::UnlinkCommand do
       })
       expect {
         subject.run(['service-a', 'service-b'])
-      }.to raise_error(SystemExit)
+      }.to exit_with_error
     end
 
     it 'sends link to master' do
