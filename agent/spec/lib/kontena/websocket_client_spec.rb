@@ -168,6 +168,65 @@ describe Kontena::WebsocketClient do
     end
   end
 
+  context "connecting to a localhost websocket server" do
+    let :server_class do
+      require 'thin'
+
+      Class.new do
+        def call(env)
+          ws = Faye::WebSocket.new(env)
+
+          STDERR.puts "WebSocket server: #{ws}"
+
+          ws.rack_response
+        end
+
+        def self.run
+          Faye::WebSocket.load_adapter('thin')
+
+          fail unless EventMachine.reactor_running?
+
+          server = Thin::Server.new('127.0.0.1', 0, new)
+          server.start
+          server
+        end
+      end
+    end
+
+    let :server do
+      server_class.run
+    end
+
+    let :server_port do
+      server.backend.port
+    end
+
+    subject do
+      described_class.new("ws://127.0.0.1:#{server_port}", 'test-token')
+    end
+
+    around :each do |example|
+      Timeout::timeout(1) do
+        EM.run {
+          example.run
+        }
+      end
+    end
+
+    it "is able to connect" do
+      STDERR.puts "expect(subject=#{subject.inspect}).to receive(:on_open)"
+
+      expect(subject).to receive(:on_open) { EM.stop }
+      expect(subject).not_to receive(:on_error) { fail }
+
+      server = self.server
+
+      STDERR.puts "connecting with subject=#{subject.inspect}"
+
+      subject.connect
+    end
+  end
+
   describe '#request_message?' do
     it 'returns trus on request message' do
       msg = [0, 1, 1, 1]

@@ -103,6 +103,7 @@ module Kontena
 
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
+      STDERR.puts "#{self.class}#on_open with self=#{self.inspect}"
       ping_timer.cancel if ping_timer
       info 'connection established'
       @connected = true
