@@ -83,8 +83,6 @@ describe Kontena::WebsocketClient do
           subject.connect
         }
       end
-
-
     end
   end
 
@@ -129,7 +127,7 @@ describe Kontena::WebsocketClient do
 
     it 'publishes event', :em => true do
       expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
-      expect(ws).to receive(:close).with(1000)
+      expect(ws).to receive(:close)
       subject.close
     end
 
@@ -155,7 +153,7 @@ describe Kontena::WebsocketClient do
       it 'sets connection as disconnected if it immediately emits :close' do
         expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
 
-        expect(ws).to receive(:close).with(1000) { subject.on_close close_event }
+        expect(ws).to receive(:close) { subject.on_close close_event }
         subject.close
 
         expect(subject).to_not be_connected
@@ -165,19 +163,14 @@ describe Kontena::WebsocketClient do
       it 'sets connection to closed if it blocks' do
         expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
 
-        expect(ws).to receive(:close).with(1000) { }
-        expect(EM::Timer).to receive(:new) { |timeout, &block| @close_block = block; close_timer }
+        expect(ws).to receive(:close) { }
 
         subject.close
 
         expect(subject).to be_connected
         expect(subject).to_not be_connecting
 
-        expect(ws).to receive(:remove_all_listeners)
-        expect(subject).to receive(:on_close).and_call_original
-        expect(close_timer).to receive(:cancel)
-
-        @close_block.call
+        subject.on_close close_event
 
         expect(subject).to_not be_connected
         expect(subject).to_not be_connecting

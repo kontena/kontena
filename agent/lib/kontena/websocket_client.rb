@@ -208,7 +208,7 @@ module Kontena
       # stop sending messages, queue them up until reconnected
       notify_actors('websocket:disconnect', nil)
 
-      # send close frame; this will get stuck if the server is not replying
+      # send close frame; this has a 30s timeout
       ws.close
     end
 
