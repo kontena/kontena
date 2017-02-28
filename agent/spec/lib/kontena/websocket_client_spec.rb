@@ -150,17 +150,7 @@ describe Kontena::WebsocketClient do
         expect(subject).to_not be_connecting
       end
 
-      it 'sets connection as disconnected if it immediately emits :close' do
-        expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
-
-        expect(ws).to receive(:close) { subject.on_close close_event }
-        subject.close
-
-        expect(subject).to_not be_connected
-        expect(subject).to_not be_connecting
-      end
-
-      it 'sets connection to closed if it blocks' do
+      it 'eventually sets connection to closed ' do
         expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
 
         expect(ws).to receive(:close) { }
