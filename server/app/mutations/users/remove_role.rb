@@ -28,6 +28,7 @@ module Users
 
     def execute
       user.roles.delete(role_instance)
+      user.save # relation callback has bug so we have to explicitly call update here
       user
     end
   end
