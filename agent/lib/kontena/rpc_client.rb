@@ -17,6 +17,8 @@ module Kontena
 
     class TimeoutError < Error; end
 
+    attr_reader :requests
+
     # @param [Kontena::WebsocketClient] client
     def initialize(client)
       @requests = {}
@@ -61,8 +63,13 @@ module Kontena
       @requests[msgid] = [result, error]
     end
 
+    # @return [Fixnum]
     def request_id
-      rand(2_147_483_647)
+      id = -1
+      until id != -1 && !@requests[id]
+        id = rand(2_147_483_647)
+      end
+      id
     end
   end
 end
