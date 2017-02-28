@@ -96,4 +96,10 @@ docker ps -aq -f name=weave | xargs docker rm -f
 dontena cloud master rm
 ```
 
+You may also want to remove the cli config file to prevent previous state from causing issues:
+
+```bash
+rm $HOME/.kontena_client.json 
+```
+
 and start from the beginning.
