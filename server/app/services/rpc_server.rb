@@ -22,6 +22,8 @@ class RpcServer
     end
   end
 
+  attr_reader :handlers
+
   def initialize
     @handlers = {}
   end
@@ -43,10 +45,12 @@ class RpcServer
         @handlers[grid_id].delete(handler)
       rescue RpcServer::Error => exc
         send_message(ws_client, [1, msg_id, {code: exc.code, message: exc.message, backtrace: exc.backtrace}, nil])
+        @handlers[grid_id].delete(handler)
       rescue => exc
         error "#{exc.class.name}: #{exc.message}"
         debug exc.backtrace.join("\n")
         send_message(ws_client, [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}", backtrace: exc.backtrace}, nil])
+        @handlers[grid_id].delete(handler)
       end
     else
       warn "handler #{handler} not implemented"
@@ -69,6 +73,7 @@ class RpcServer
       rescue => exc
         error "#{exc.class.name}: #{exc.message}"
         error exc.backtrace.join("\n")
+        @handlers[grid_id].delete(handler)
       end
     else
       warn "handler #{handler} not implemented"
