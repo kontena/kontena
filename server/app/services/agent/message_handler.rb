@@ -170,10 +170,7 @@ module Agent
         grid_id: grid.id, container_id: data['id']
       )
       if container
-        container.update_attributes(
-          health_status: data['status'],
-          health_status_at: Time.now
-        )
+        container.set_health_status(data['status'])
         MongoPubsub.publish(GridServiceHealthMonitorJob::PUBSUB_KEY, id: container.grid_service.id)
 
       else
