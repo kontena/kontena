@@ -221,12 +221,13 @@ describe Agent::MessageHandler do
     end
 
     it 'buffers and saves container_stat items' do
+      buffer_size = subject.container_stats_buffer_size
       container_id = SecureRandom.hex(16)
       container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
       container.update_attribute(:container_id, container_id)
 
       expect {
-        6.times {
+        (buffer_size + 1).times {
           subject.on_container_stat(grid, {
             'id' => container_id,
             'spec' => {},
@@ -237,7 +238,7 @@ describe Agent::MessageHandler do
             'network' => {}
           })
         }
-      }.to change{ container.container_stats.count }.by 5
+      }.to change{ container.container_stats.count }.by buffer_size
     end
 
     it 'sets timestamp fields' do
