@@ -12,7 +12,7 @@ module Agent
     def unplug!
       begin
         self.update_node
-        publish_update_event
+        self.publish_update_event
       rescue => exc
         error exc.message
       end
@@ -26,7 +26,7 @@ module Agent
       end
     end
 
-    def publish_update_event
+    def publish_update_event     
       node.publish_update_event
     end
   end
