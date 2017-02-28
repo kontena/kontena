@@ -7,13 +7,6 @@ module Kontena
 
     KEEPALIVE_TIME = 30
 
-    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
-      # use a slightly longer timeout as a fallback
-      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
-    else
-      CLOSE_TIMEOUT = 30
-    end
-
     attr_reader :api_uri,
                 :api_token,
                 :ws,
@@ -32,7 +25,6 @@ module Kontena
       @connected = false
       @connecting = false
       @ping_timer = nil
-      @close_timer = nil
       info "initialized with token #{@api_token[0..10]}..."
     end
 
@@ -147,8 +139,6 @@ module Kontena
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
       @ping_timer = nil
-      @close_timer.cancel if @close_timer
-      @close_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -215,25 +205,11 @@ module Kontena
 
     # Abort the connection, closing the websocket, with a timeout
     def close
-      return if @close_timer
-
       # stop sending messages, queue them up until reconnected
       notify_actors('websocket:disconnect', nil)
 
       # send close frame; this will get stuck if the server is not replying
-      ws.close(1000)
-
-      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        if ws
-          warn "Hit close timeout, abandoning existing websocket connection"
-
-          # ignore events from the abandoned connection
-          ws.remove_all_listeners
-
-          # fake it
-          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
-        end
-      end
+      ws.close
     end
 
     def notify_actors(event, value)
