@@ -7,11 +7,11 @@ set -e
 # Fetching configuration from debconf
 db_get kontena-agent/server_uri
 URI="KONTENA_URI=${RET}"
-sed -i -r "s#\#KONTENA_URI=.*#${URI}#" /etc/kontena-agent.env
+sed -i -r "s#\#?KONTENA_URI=.*#${URI}#" /etc/kontena-agent.env
 
 db_get kontena-agent/grid_token
 TOKEN="KONTENA_TOKEN=${RET}"
-sed -i -r "s#\#KONTENA_TOKEN=.*#${TOKEN}#" /etc/kontena-agent.env
+sed -i -r "s#\#?KONTENA_TOKEN=.*#${TOKEN}#" /etc/kontena-agent.env
 
 # reduce permissions on config File
 chmod 0600 /etc/kontena-agent.env

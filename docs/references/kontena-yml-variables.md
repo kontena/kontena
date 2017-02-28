@@ -280,6 +280,7 @@ With this configuration you can set the storage zone by setting the environment 
   strip: false        # remove leading/trailing whitespace,
   chomp: false        # remove trailing linefeed
   capitalize: false   # convert to Capital case.
+  echo: true          # when false, prompt will not echo keypresses, useful for password inputs
 
 ```
 
@@ -460,7 +461,7 @@ Ask a link target from the user. List of service links can be filtered by image 
 
 ```
 from:
-  service_link: 
+  service_link:
   	hint: Choose a loadbalancer
   	image: kontena/lb
   	name: loadbalancer

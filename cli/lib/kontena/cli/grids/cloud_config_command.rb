@@ -45,6 +45,7 @@ module Kontena::Cli::Grids
         docker_bip: docker_bip,
         version: version,
         match_default_network_name: default_interface_match,
+        grid_subnet: grid['subnet'],
       )
       puts config
     end

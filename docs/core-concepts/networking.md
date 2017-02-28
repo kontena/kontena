@@ -26,20 +26,38 @@ While a Kontena Master can manage multiple Grids, each Grid is an isolated overl
 
 ## Grid
 
-Each grid has a single overlay network. The default overlay network used is `10.81.0.0/16`, and it currently cannot be configured at creation time nor changed later.
-
-The grid's overlay network subnet is divided into two parts: `10.81.0.0/17` and `10.81.128.0/17`. The lower half is used by the Kontena Agent for statically allocated addresses used by infrastructure services such as etcd, and the upper half (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service container addresses managed by the [Kontena IPAM](https://github.com/kontena/kontena-ipam).
+Each grid has a single overlay network used for both host nodes and service containers.
+The default overlay network for a Kontena grid is `10.81.0.0/16`, but this can be customized using `kontena grid create --subnet=`.
+The grid subnet cannot be changed afterwards.
+The grid host nodes must not have any local routes that overlap with the grid subnet, or the Kontena grid infrastructure services on the host nodes may not work.
 
 Each Grid may also include a set of Trusted Subnets, which are used for the Overlay Networking between Host Node public and private IP addresses as described further below.
 
+### Subnet and Supernet
+
+Each grid is configured with a single subnet (default `10.81.0.0/16`) and supernet (default `10.80.0.0/12`).
+Both of these private RFC1918 IP address spaces are used for internal overlay networking within each grid.
+These overlay network addresses are only unique within a grid; different grids can (and will) use the same overlay network IP addresses.
+
+The grid subnet (`10.81.0.0/16`) is used to provide overlay networking addresses for both host nodes and service containers.
+The grid subnet is split into two parts: `10.81.0.0/17` and `10.81.128.0/17`.
+The lower half is used for the `10.81.0.X` host node overlay network addresses allocated by the Kontena server, and used to bootstrap the grid infrastructure services such as etcd.
+
+The upper half of the grid subnet (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service containers, managed by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) using etcd.
+Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 32k Service Containers.
+
+The grid supernet (`10.80.0.0/12`) is reserved for future multi-network support, and will be used to dynamically allocate isolated subnets to provide network separation between grid services.
+
 ### IP Address Management
 
-Overlay network addresses are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) service running on each host Node.
-Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 32768 Service Containers.
+The dynamic overlay network addresses used by service containers are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) service running on each host Node.
+The [Kontena IPAM](https://github.com/kontena/kontena-ipam) service uses the Grid's etcd infrstructure service, and will stop working if the Grid loses its etcd majority.
 
-The [Kontena IPAM](https://github.com/kontena/kontena-ipam) service uses the Grid's etcd service to track the allocated overlay network address across each of the Grid's Host Nodes.
-The overlay network address of a Service Container is reserved by the Kontena Agent when it is created.
-The overlay network address is released by the Kontena Agent when the Service Container is removed.
+The overlay network address of a Service Container is reserved by the Kontena Agent when it is created, and released by the Kontena Agent when the Service Container is removed.
+The Kontena Agent will also periodically cleanup any unused IPAM addresses that the agent was unable to release, which may happen when host nodes shut down.
+
+The service container's overlay network address will remain the same if the service container is restarted, such as when the service crashes.
+The service container's overlay network address will change when the service is re-deployed, either to the same or a different host node.
 
 ## Host Node
 

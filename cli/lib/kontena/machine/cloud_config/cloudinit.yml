@@ -11,7 +11,7 @@ write_files:
   - path: /etc/systemd/system/docker.service.d/50-kontena.conf
     content: |
         [Service]
-        Environment='DOCKER_OPTS=--insecure-registry="10.81.0.0/16" --bip="<%= docker_bip %>"'
+        Environment='DOCKER_OPTS=--insecure-registry="<%= grid_subnet %>" --bip="<%= docker_bip %>"'
   - path: /etc/sysctl.d/99-inotify.conf
     owner: root
     permissions: 0644

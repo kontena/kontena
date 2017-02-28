@@ -176,9 +176,22 @@ module Docker
     # Container CIDR address within the overlay network.
     # Will be missing/nil if container is not attached to the overlay network.
     #
+    # For kontena 0.16 containers, this will be 10.81.X.Y/19, and gets translated to 10.81.X.Y/16.
+    #
     # @return [String, NilClass]
     def overlay_cidr
       self.labels['io.kontena.container.overlay_cidr']
+    end
+
+    # Container overlay network IPAM pool
+    # Will be missing/nil if container is not attached to the overlay network.
+    #
+    # For kontena 0.16 containers, this will be nil.
+    # For kontena 1.0 containers, this will always be 'kontena'.
+    #
+    # @return [String, NilClass]
+    def overlay_network
+      self.labels['io.kontena.container.overlay_network']
     end
 
     # Container CIDR suffix within the overlay network.

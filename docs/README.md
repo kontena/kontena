@@ -3,7 +3,7 @@ title: What is Kontena?
 toc_order: 1
 ---
 
-![logo](images/logo.png)
+<img src="images/logo.png" width="400" alt="Kontena" />
 
 # What is Kontena?
 

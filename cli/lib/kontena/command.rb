@@ -3,7 +3,7 @@ require 'clamp'
 class Kontena::Command < Clamp::Command
 
   option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
-    ENV['DEBUG'] = 'true'
+    ENV['DEBUG'] ||= 'true'
   end
 
   attr_accessor :arguments
@@ -85,7 +85,7 @@ class Kontena::Command < Clamp::Command
     end
   end
 
-  # Overwrite Clamp's banner command. Calling banner multiple times 
+  # Overwrite Clamp's banner command. Calling banner multiple times
   # will now add lines to the banner message instead of overwriting
   # the whole message. This is useful if callbacks add banner messages.
   #

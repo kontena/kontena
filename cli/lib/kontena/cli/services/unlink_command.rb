@@ -13,13 +13,19 @@ module Kontena::Cli::Services
     def execute
       require_api_url
       token = require_token
-
+      target_service = target
+      target_service = "null/#{target_service}" unless target_service.include?('/')
+      target_id = "#{current_grid}/#{target_service}"
       service = client(token).get("services/#{parse_service_id(name)}")
-      links = service['links'].map{|l| {name: l['grid_service_id'].split('/')[1], alias: l['alias']} }
-      exit_with_error("Service is not linked to #{target.to_s}") unless links.find{|l| l[:name] == target.to_s}
-      links.delete_if{|l| l[:name] == target.to_s}
+      links = service['links']
+      unless links.find { |l| l['id'] == target_id }
+        exit_with_error("Service is not linked to #{target.to_s}")
+      end
+      links.delete_if { |l| l['id'] == target_id }
       data = {links: links}
-      update_service(token, name, data)
+      spinner "Unlinking #{name.colorize(:cyan)} from #{target.colorize(:cyan)} " do
+        update_service(token, name, data)
+      end
     end
   end
 end

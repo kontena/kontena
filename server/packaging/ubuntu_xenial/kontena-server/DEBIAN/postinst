@@ -12,7 +12,7 @@ sed -i -r "s#\#VAULT_IV=.*#VAULT_IV=${VAULT_IV}#" /etc/kontena-server.env
 
 # Fetching configuration from debconf
 db_get kontena-server/initial_admin_code
-sed -i -r "s#\#INITIAL_ADMIN_CODE=.*#INITIAL_ADMIN_CODE=${RET}#" /etc/kontena-server.env
+sed -i -r "s#\#?INITIAL_ADMIN_CODE=.*#INITIAL_ADMIN_CODE=${RET}#" /etc/kontena-server.env
 
 # reduce permissions on config file
 chmod 0600 /etc/kontena-server.env
