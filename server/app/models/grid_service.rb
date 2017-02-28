@@ -94,10 +94,9 @@ class GridService
 
   # @param [String] state
   def set_state(state)
-    if self.state != state
-      self.set(:state => state)
-      publish_update_event
-    end
+    state_changed = self.state != state
+    self.set(:state => state)
+    publish_update_event if state_changed    
   end
 
   # @return [Boolean]
