@@ -69,6 +69,7 @@ describe Users::RemoveRole do
 
     it 'publishes update event for user' do
       allow(RoleAuthorizer).to receive(:unassignable_by?).with(user).and_return(true)
+      john.roles << grid_admin_role
       expect(john).to receive(:publish_update_event).once
       outcome = described_class.new(
           current_user: user,

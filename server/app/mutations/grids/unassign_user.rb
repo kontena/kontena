@@ -24,7 +24,7 @@ module Grids
 
     def execute
       user.grids.delete(grid)
-      user.save # relation callback has bug so we have to explicitly call update here
+      user.publish_update_event
       grid.reload.users
     end
   end

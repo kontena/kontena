@@ -33,7 +33,8 @@ describe Grids::UnassignUser do
     end
 
     it 'publishes update event for user' do
-      expect(current_user).to receive(:publish_update_event).once
+      grid.users << user
+      expect(grid).to receive(:publish_update_event).once      
       outcome = described_class.new(
           current_user: current_user,
           user: user,
