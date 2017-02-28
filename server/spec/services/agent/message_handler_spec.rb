@@ -200,6 +200,12 @@ describe Agent::MessageHandler do
     end
   end
 
+  describe '#container_stats_buffer_size' do
+    it 'has a default buffer size greater than 1' do
+      expect(subject.container_stats_buffer_size).to be > 1
+    end
+  end
+
   describe '#on_container_stat' do
     it 'saves container_stat items' do
       subject.container_stats_buffer_size = 1
