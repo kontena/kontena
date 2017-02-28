@@ -1,6 +1,8 @@
+require_relative 'event_stream'
 class GridService
   include Mongoid::Document
   include Mongoid::Timestamps
+  include EventStream
 
   LB_IMAGE = 'kontena/lb:latest'
 
@@ -64,7 +66,7 @@ class GridService
 
   # @return [String]
   def to_path
-    "#{self.grid.try(:name)}/#{self.stack.name}/#{self.name}"
+    "#{self.grid.try(:name)}/#{self.stack.try(:name)}/#{self.name}"
   end
 
   # @return [String]
@@ -92,7 +94,10 @@ class GridService
 
   # @param [String] state
   def set_state(state)
-    self.set(:state => state)
+    if self.state != state
+      self.set(:state => state)
+      publish_update_event
+    end
   end
 
   # @return [Boolean]

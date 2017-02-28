@@ -6,6 +6,7 @@ describe HostNode do
   end
 
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:node_id, :name, :os, :driver, :public_ip).of_type(String) }
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
@@ -37,7 +38,7 @@ describe HostNode do
       GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true)
     }
     let(:stateless_service) {
-      GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false) 
+      GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false)
     }
     let(:node) { HostNode.create(name: 'node-1', grid: grid)}
 
@@ -127,7 +128,7 @@ describe HostNode do
   end
 
   describe '#save!' do
-    let(:grid) { double(:grid, free_node_numbers: (1..254).to_a )}
+    let(:grid) { Grid.create!(name: 'test') }
 
     it 'reserves node number' do |variable|
       allow(subject).to receive(:grid).and_return(grid)
@@ -145,7 +146,6 @@ describe HostNode do
     end
 
     it 'appends node_number to name if name is not unique' do
-      grid = Grid.create!(name: 'test')
       node1 = HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
 
       subject.attributes = {name: 'node', grid: grid}

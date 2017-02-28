@@ -1,9 +1,11 @@
 require 'ipaddr'
+require_relative 'event_stream'
 
 class Grid
   include Mongoid::Document
   include Mongoid::Timestamps
   include Authority::Abilities
+  include EventStream
 
   field :name, type: String
   field :token, type: String
