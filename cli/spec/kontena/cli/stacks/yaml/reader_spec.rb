@@ -474,7 +474,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     before do
-      ENV.delete('asdf')
+      allow(ENV).to receive(:[]).with('asdf').and_return(nil)
     end
 
     it "omits the env" do
@@ -491,7 +491,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     before do
-      ENV['asdf'] = 'test'
+      allow(ENV).to receive(:[]).with('asdf').and_return('test')
     end
 
     it "defines the env" do
