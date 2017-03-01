@@ -7,6 +7,16 @@ module Kontena::Cli::Stacks
       module Setters; end
     end
 
+    # Workaround for nil-valued variables in Liquid templates:
+    #   https://github.com/Shopify/liquid/issues/749
+    # This is something that we can pass in to `Liquid::Template.render` that gets evaluated as nil.
+    # If we pass in a nil value directly, then Liquid ignores it and considers the variable to be undefined.
+    class LiquidNull
+      def to_liquid
+        nil
+      end
+    end
+
     class Reader
       include Kontena::Util
       include Kontena::Cli::Common
@@ -102,7 +112,7 @@ module Kontena::Cli::Stacks
         )
         if defaults
           defaults.each do |key, val|
-            var = variables.option(key)
+            var = @variables.option(key)
             var.default = val if var
           end
         end
@@ -147,10 +157,15 @@ module Kontena::Cli::Stacks
         raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
       end
 
+      # @raise [Liquid::Error]
       def interpolate_liquid(content, vars)
         Liquid::Template.error_mode = :strict
         template = Liquid::Template.parse(content)
-        template.render(vars, strict_variables: true, strict_filters: true)
+
+        # Wrap nil values in LiquidNull to not have Liquid consider them as undefined
+        vars = Hash[vars.map {|key, value| [key, value.nil? ? LiquidNull.new : value]}]
+
+        template.render!(vars, strict_variables: true, strict_filters: true)
       end
 
       def stack_name
