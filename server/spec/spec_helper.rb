@@ -80,7 +80,7 @@ RSpec.configure do |config|
   config.around :each, celluloid: true do |ex|
     Celluloid.boot
     ex.run
-    Celluloid.actor_system.group.group.each { |t| t.join if t.role == :future }
+    Celluloid.actor_system.group.group.each { |t| t.kill if t.role == :future }
     Celluloid.shutdown
   end
 
