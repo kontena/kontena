@@ -3,7 +3,7 @@ describe Grid do
   it { should be_timestamped_document }
   it { should have_fields(:name, :token) }
   it { should have_fields(:initial_size).of_type(Integer) }
-  it { should have_fields(:stats, :logs).of_type(Hash) }
+  it { should have_fields(:stats).of_type(Hash) }
   it { should have_fields(:trusted_subnets, :default_affinity).of_type(Array) }
 
   it { should have_and_belong_to_many(:users) }
@@ -16,6 +16,8 @@ describe Grid do
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
   it { should have_many(:registries) }
+
+  it { should embed_one(:grid_logs_opts) }
 
   it { should have_index_for(token: 1).with_options(unique: true) }
 

@@ -36,8 +36,9 @@ describe Grids::Update, celluloid: true do
         }
       }
       described_class.new(user: user, grid: grid, logs: logs).run
-      expect(grid.reload.logs['driver']).to eq('fluentd')
-      expect(grid.reload.logs['opts']['fluentd_address']).to eq('192.168.0.42:24224')
+      grid.reload
+      expect(grid.grid_logs_opts.driver).to eq('fluentd')
+      expect(grid.grid_logs_opts.opts['fluentd_address']).to eq('192.168.0.42:24224')
     end
 
     it 'removes log settings' do
@@ -47,10 +48,10 @@ describe Grids::Update, celluloid: true do
           fluentd_address: '192.168.0.42:24224'
         }
       }
-      grid.update_attributes({:logs => logs})
+      grid.grid_logs_opts = GridLogsOpts.new(**logs)
       outcome = described_class.new(user: user, grid: grid, logs: { driver: 'none'}).run
       expect(outcome.success?).to be_truthy, outcome.errors
-      expect(grid.reload.logs).to eq({})
+      expect(grid.reload.grid_logs_opts).to be_nil
     end
 
     it 'fails update log settings with unsupported driver' do
@@ -62,7 +63,7 @@ describe Grids::Update, celluloid: true do
       }
       outcome = described_class.new(user: user, grid: grid, logs: logs).run
       expect(outcome.success?).to be_falsey
-      expect(grid.reload.logs).to eq({})
+      expect(grid.reload.grid_logs_opts).to be_nil
     end
   end
 end

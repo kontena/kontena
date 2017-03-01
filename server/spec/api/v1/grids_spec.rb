@@ -441,9 +441,9 @@ describe '/v1/grids', celluloid: true do
       }
       put "/v1/grids/#{grid.to_path}", data.to_json, request_headers
       expect(response.status).to eq(200)
-      logs = grid.reload.logs
-      expect(logs['driver']).to eq('fluentd')
-      expect(logs['opts']['server']).to eq(server)
+      logs = grid.reload.grid_logs_opts
+      expect(logs.driver).to eq('fluentd')
+      expect(logs.opts['server']).to eq(server)
       expect(json_response['logs']['driver']).to eq('fluentd')
       expect(json_response['logs']['opts']['server']).to eq(server)
     end

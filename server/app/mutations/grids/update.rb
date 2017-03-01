@@ -60,9 +60,9 @@ module Grids
 
       if self.logs
         if self.logs[:driver] == 'none'
-          attributes[:logs] = {}
+          self.grid.grid_logs_opts = nil
         else
-          attributes[:logs] = self.logs
+          self.grid.grid_logs_opts = GridLogsOpts.new(driver: self.logs[:driver], opts: self.logs[:opts])
         end
       end
       grid.update_attributes(attributes)

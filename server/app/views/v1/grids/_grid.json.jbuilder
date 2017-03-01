@@ -13,7 +13,9 @@ json.container_count grid.containers.count
 json.user_count grid.users.count
 json.subnet grid.subnet
 json.supernet grid.supernet
-json.logs do
-  json.driver grid.logs['driver']
-  json.opts grid.logs['opts']
+if grid.grid_logs_opts
+  json.logs do
+    json.driver grid.grid_logs_opts.driver
+    json.opts grid.grid_logs_opts.opts
+  end
 end
