@@ -6,6 +6,15 @@ class Kontena::Command < Clamp::Command
     ENV['DEBUG'] ||= 'true'
   end
 
+  option ['-M', '--master-url'], '[URL]', 'Set master url (default: config or $KONTENA_URL)' do |master_url|
+    Kontena::Cli::Config.reset_instance
+    ENV['KONTENA_URL'] = master_url
+  end
+
+  option ['-T', '--master-token'], '[TOKEN]', 'Set master token (default: config or $KONTENA_TOKEN)' do |master_token|
+    ENV['KONTENA_TOKEN'] = master_token
+  end
+
   attr_accessor :arguments
   attr_reader :result
   attr_reader :exit_code
