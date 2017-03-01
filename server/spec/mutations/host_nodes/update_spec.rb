@@ -1,9 +1,6 @@
 require_relative '../../spec_helper'
 
-describe HostNodes::Update do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
+describe HostNodes::Update, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
   let(:node) { HostNode.create!(name: 'node-1', grid: grid, node_id: 'AA') }
 

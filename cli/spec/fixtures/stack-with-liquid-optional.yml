@@ -1,0 +1,14 @@
+stack: user/stackname
+version: 0.1.1
+variables:
+  asdf:
+    type: string
+    required: false
+
+services:
+  test:
+    image: foo
+    environment:
+    # {% if asdf %}
+      - ASDF={{asdf}}
+    # {% endif %}

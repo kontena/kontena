@@ -1,0 +1,48 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$coreos_channel = "stable"
+$image_version = "current"
+
+$vm_memory = 1024
+$vm_cpus = 2
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://atlas.hashicorp.com/search.
+  config.vm.box = "coreos-%s" % $coreos_channel
+  if $image_version != "current"
+      config.vm.box_version = $image_version
+  end
+  config.vm.box_url = "http://%s.release.core-os.net/amd64-usr/%s/coreos_production_vagrant.json" % [$coreos_channel, $image_version]
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  config.vm.provider :virtualbox do |v|
+    v.gui = false
+
+    v.memory = $vm_memory
+    v.cpus = $vm_cpus
+
+    # On VirtualBox, we don't have guest additions or a functional vboxsf
+    # in CoreOS, so tell Vagrant that so it can be smarter.
+    v.check_guest_additions = false
+    v.functional_vboxsf     = false
+  end
+
+  config.vm.network :private_network, ip: "172.17.8.100"
+  config.vm.synced_folder "..", "/kontena", id: "core", :nfs => true,  :mount_options   => ['nolock,vers=3,udp']
+
+  config.vm.provision :shell, :path => 'vagrant-provision.sh'
+end

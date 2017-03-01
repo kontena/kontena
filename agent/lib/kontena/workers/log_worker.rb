@@ -1,10 +1,12 @@
 require_relative 'container_log_worker'
+require_relative '../helpers/rpc_helper'
 
 module Kontena::Workers
   class LogWorker
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Helpers::RpcHelper
 
     attr_reader :queue, :etcd, :workers
 
@@ -14,17 +16,14 @@ module Kontena::Workers
     STOP_EVENTS = ['die']
     ETCD_PREFIX = '/kontena/log_worker/containers'
 
-    ##
-    # @param [Queue] queue
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
-      @queue_processing = false
+    def initialize(autostart = true)
+      @queue = Queue.new
       @workers = {}
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
       subscribe('container:event', :on_container_event)
-      subscribe('queue_worker:start', :on_queue_started)
-      subscribe('queue_worker:stop', :on_queue_stopped)
+      subscribe('websocket:connected', :on_connect)
+      subscribe('websocket:disconnect', :on_disconnect)
       info 'initialized'
 
       async.start if autostart
@@ -32,7 +31,7 @@ module Kontena::Workers
 
     # @param [String] topic
     # @param [Object] data
-    def on_queue_started(topic, data)
+    def on_connect(topic, data)
       @queue_processing = true
       async.start
       info 'started log streaming'
@@ -40,7 +39,7 @@ module Kontena::Workers
 
     # @param [String] topic
     # @param [Object] data
-    def on_queue_stopped(topic, data)
+    def on_disconnect(topic, data)
       @queue_processing = false
       async.stop
       info 'stopped log streaming'
@@ -59,6 +58,21 @@ module Kontena::Workers
           # Could be thrown since container.skip_logs? actually loads the container details
         end
       end
+
+      async.process_queue
+    end
+
+    def process_queue
+      defer {
+        while queue_processing? && data = @queue.pop
+          rpc_client.async.notification('/containers/log', [data])
+          if @queue.size > 100
+            sleep 0.001
+          else
+            sleep 0.05
+          end
+        end
+      }
     end
 
     def stop

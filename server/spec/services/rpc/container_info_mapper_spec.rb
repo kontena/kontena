@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Agent::ContainerInfoMapper do
+describe Rpc::ContainerInfoMapper do
   let(:grid) { Grid.create! }
   let(:node) { HostNode.create!(name: 'node-1', node_id: 'aaa', grid: grid) }
   let(:node2) { HostNode.create!(name: 'node-2', node_id: 'bbb', grid: grid) }

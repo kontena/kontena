@@ -1,5 +1,7 @@
+require 'msgpack'
 require_relative 'logging'
 require_relative 'rpc_server'
+require_relative 'rpc_client'
 
 module Kontena
   class WebsocketClient
@@ -28,6 +30,7 @@ module Kontena
       @api_uri = api_uri
       @api_token = api_token
       @rpc_server = Kontena::RpcServer.pool
+      @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
       @abort = false
       @connected = false
       @connecting = false
@@ -109,6 +112,16 @@ module Kontena
       error "failed to send notification: #{exc.message}"
     end
 
+    # @param [Integer] id
+    # @param [String] method
+    # @param [Array] params
+    def send_request(id, method, params)
+      data = MessagePack.dump([0, id, method, params]).bytes
+      send_message(data)
+    rescue => exc
+      error "failed to send request: #{exc.message}"
+    end
+
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
       ping_timer.cancel if ping_timer
@@ -123,6 +136,8 @@ module Kontena
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
         rpc_server.async.handle_request(self, data)
+      elsif response_message?(data)
+        Celluloid::Actor[:rpc_client].async.handle_response(data)
       elsif notification_message?(data)
         rpc_server.async.handle_notification(data)
       end
@@ -169,6 +184,12 @@ module Kontena
     # @return [Boolean]
     def notification_message?(msg)
       msg.is_a?(Array) && msg.size == 3 && msg[0] == 2
+    end
+
+    # @param [Array] msg
+    # @return [Boolean]
+    def response_message?(msg)
+      msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
     end
 
     # @return [String]

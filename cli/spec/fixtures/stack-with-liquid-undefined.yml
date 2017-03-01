@@ -1,0 +1,12 @@
+stack: user/stackname
+version: 0.1.1
+variables:
+  asdf:
+    type: string
+    default: asdfasdf
+
+services:
+  test:
+    image: foo
+    environment:
+      - ASDF={{asdflol}}

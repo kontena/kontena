@@ -1,8 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Grids::Create do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe Grids::Create, celluloid: true do
   let(:user) { User.create!(email: 'joe@domain.com')}
 
   describe '#run' do
