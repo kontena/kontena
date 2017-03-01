@@ -15,6 +15,7 @@ describe Kontena::Workers::NodeInfoWorker do
     })
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
     allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
+    allow(rpc_client).to receive(:notification)
   }
   after(:each) { Celluloid.shutdown }
 
@@ -28,7 +29,7 @@ describe Kontena::Workers::NodeInfoWorker do
 
   describe '#start' do
     before(:each) { allow(rpc_client).to receive(:notification) }
-    
+
     it 'calls #publish_node_info' do
       stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
       expect(subject.wrapped_object).to receive(:publish_node_info).at_least(:once)
