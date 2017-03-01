@@ -17,7 +17,7 @@ module Kontena::Workers
       @forwarding = false
       info 'initialized'
       subscribe('agent:node_info', :on_node_info)
-      subscribe(Kontena::Workers::ContainerLogWorker::EVENT_NAME, :on_log_event)
+      subscribe('container:log', :on_log_event)
     end
 
     # @param [String] topic

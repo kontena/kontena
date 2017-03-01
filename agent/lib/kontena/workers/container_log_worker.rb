@@ -4,7 +4,6 @@ module Kontena::Workers
     include Kontena::Logging
 
     CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
-    EVENT_NAME = 'container:log'
 
     # @param [Docker::Container] container
     # @param [Queue] queue
@@ -60,7 +59,7 @@ module Kontena::Workers
       time = DateTime.parse(match[1])
       data = match[2]
       msg = {
-          event: EVENT_NAME,
+          event: 'container:log',
           data: {
               id: id,
               service: @container.service_name,
@@ -76,7 +75,7 @@ module Kontena::Workers
     end
 
     def publish_log(log)
-      Celluloid::Notifications.publish(EVENT_NAME, log)
+      Celluloid::Notifications.publish('container:log', log)
     end
   end
 end
