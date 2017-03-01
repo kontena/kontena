@@ -213,7 +213,7 @@ describe Rpc::ContainerHandler, celluloid: true do
       }.to change{ container.container_stats.count }.by buffer_size
     end
 
-    it 'sets timestamp fields' do
+    it 'creates timestamps' do
       subject.stats_buffer_size = 1
       container_id = SecureRandom.hex(16)
       container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
@@ -230,6 +230,27 @@ describe Rpc::ContainerHandler, celluloid: true do
       })
       expect(container.container_stats[0].created_at).to be_a(Time)
       expect(container.container_stats[0].updated_at).to be_a(Time)
+    end
+
+    it 'sets timestamps passed in' do
+      subject.stats_buffer_size = 1
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+      time = '2017-02-28 00:00:00 -0500'
+
+      subject.stat({
+          'id' => container_id,
+          'spec' => {},
+          'cpu' => {},
+          'memory' => {},
+          'filesystems' => [],
+          'diskio' => {},
+          'network' => {},
+          'time' => time
+      })
+      expect(container.container_stats[0].created_at).to eq Time.parse(time)
+      expect(container.container_stats[0].updated_at).to eq Time.parse(time)
     end
   end
 end
