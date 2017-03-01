@@ -6,7 +6,7 @@ module Kontena::Workers
     include Kontena::Logging
     include Kontena::Helpers::PortHelper
 
-    HEALTHY_STATUSES = [200]
+    HEALTHY_THRESHOLD = 400
 
     finalizer :log_exit
 
@@ -85,7 +85,7 @@ module Kontena::Workers
       begin
         response = Excon.get(url, :connect_timeout => timeout, :headers => {"User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"})
         debug "got status: #{response.status}"
-        msg[:data]['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
+        msg[:data]['status'] = response.status < HEALTHY_THRESHOLD ? 'healthy' : 'unhealthy'
         msg[:data]['status_code'] = response.status
       rescue => exc
         msg[:data]['status'] = 'unhealthy'
