@@ -1,6 +1,14 @@
 require_relative 'logging'
 require_relative 'rpc_server'
 
+module Faye::WebSocket::Client::Connection
+  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
+  # force connection to close without waiting if the send buffer is full
+  def close_connection_after_writing
+    close_connection
+  end
+end
+
 module Kontena
   class WebsocketClient
     include Kontena::Logging
