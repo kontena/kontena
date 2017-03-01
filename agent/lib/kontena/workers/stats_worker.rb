@@ -3,14 +3,12 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Helpers::RpcHelper
 
-    attr_reader :queue, :statsd, :node_name
+    attr_reader :statsd, :node_name
 
-    ##
-    # @param [Queue] queue
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
+    def initialize(autostart = true)
       @statsd = nil
       @node_name = nil
       info 'initialized'
@@ -46,7 +44,6 @@ module Kontena::Workers
     end
 
     def collect_stats
-
       debug 'starting collection'
 
       if response = get("/api/v1.2/subcontainers")
@@ -65,7 +62,6 @@ module Kontena::Workers
       error "error on stats fetching: #{exc.message}"
       error exc.backtrace.join("\n")
     end
-
 
     def get(path)
       retries = 3
@@ -87,7 +83,6 @@ module Kontena::Workers
       end
     end
 
-    ##
     # @param [Hash] container
     def send_container_stats(container)
       id = container[:id]
@@ -103,27 +98,23 @@ module Kontena::Workers
       raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
       interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
 
-
-      event = {
-        event: 'container:stats'.freeze,
-        data: {
-          id: id,
-          spec: container.dig(:spec),
-          cpu: {
-            usage: raw_cpu_usage,
-            usage_pct: (((raw_cpu_usage / interval_in_ns ) / num_cores ) * 100).round(2)
-          },
-          memory: {
-            usage: current_stat.dig(:memory, :usage),
-            working_set: current_stat.dig(:memory, :working_set)
-          },
-          filesystem: current_stat[:filesystem],
-          diskio: current_stat[:diskio],
-          network: current_stat[:network]
-        }
+      data = {
+        id: id,
+        spec: container.dig(:spec),
+        cpu: {
+          usage: raw_cpu_usage,
+          usage_pct: (((raw_cpu_usage / interval_in_ns ) / num_cores ) * 100).round(2)
+        },
+        memory: {
+          usage: current_stat.dig(:memory, :usage),
+          working_set: current_stat.dig(:memory, :working_set)
+        },
+        filesystem: current_stat[:filesystem],
+        diskio: current_stat[:diskio],
+        network: current_stat[:network]
       }
-      self.queue << event
-      send_statsd_metrics(name, event[:data])
+      rpc_client.async.notification('/containers/stat', [data])
+      send_statsd_metrics(name, data)
     end
 
     def client

@@ -3,6 +3,7 @@ require 'vmstat'
 
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
+require_relative '../helpers/rpc_helper'
 
 module Kontena::Workers
   class NodeInfoWorker
@@ -11,16 +12,14 @@ module Kontena::Workers
     include Kontena::Logging
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
+    include Kontena::Helpers::RpcHelper
 
-    attr_reader :queue, :statsd, :stats_since
+    attr_reader :statsd, :stats_since
 
     PUBLISH_INTERVAL = 60
 
-    ##
-    # @param [Queue] queue
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
+    def initialize(autostart = true)
       @statsd = nil
       @stats_since = Time.now
       @container_seconds = 0
@@ -65,11 +64,7 @@ module Kontena::Workers
       docker_info['PublicIp'] = self.public_ip
       docker_info['PrivateIp'] = self.private_ip
       docker_info['AgentVersion'] = Kontena::Agent::VERSION
-      event = {
-          event: 'node:info',
-          data: docker_info
-      }
-      self.queue << event
+      rpc_client.async.notification('/nodes/update', [docker_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end
@@ -121,33 +116,29 @@ module Kontena::Workers
       container_seconds = calculate_containers_time + container_partial_seconds
       @stats_since = Time.now
 
-      event = {
-          event: 'node:stats',
-          data: {
-            id: docker_info['ID'],
-            memory: calculate_memory,
-            usage: {
-              container_seconds: container_seconds
-            },
-            load: {
-              :'1m' => load_avg.one_minute,
-              :'5m' => load_avg.five_minutes,
-              :'15m' => load_avg.fifteen_minutes
-            },
-            filesystem: [
-              {
-                name: docker_info['DockerRootDir'],
-                free: disk.free_bytes,
-                available: disk.available_bytes,
-                used: disk.used_bytes,
-                total: disk.total_bytes
-              }
-            ]
+      data = {
+        id: docker_info['ID'],
+        memory: calculate_memory,
+        usage: {
+          container_seconds: container_seconds
+        },
+        load: {
+          :'1m' => load_avg.one_minute,
+          :'5m' => load_avg.five_minutes,
+          :'15m' => load_avg.fifteen_minutes
+        },
+        filesystem: [
+          {
+            name: docker_info['DockerRootDir'],
+            free: disk.free_bytes,
+            available: disk.available_bytes,
+            used: disk.used_bytes,
+            total: disk.total_bytes
           }
+        ]
       }
-
-      self.queue << event
-      send_statsd_metrics(event[:data])
+      rpc_client.async.notification('/nodes/stats', [data])
+      send_statsd_metrics(data)
     end
 
     # @param [Hash] event

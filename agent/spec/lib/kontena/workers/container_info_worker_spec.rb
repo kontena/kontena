@@ -1,9 +1,9 @@
 require_relative '../../../spec_helper'
 
 describe Kontena::Workers::ContainerInfoWorker do
+  include RpcClientMocks
 
-  let(:queue) { Queue.new }
-  let(:subject) { described_class.new(queue, false) }
+  let(:subject) { described_class.new(false) }
 
   before(:each) do
     Celluloid.boot
@@ -12,6 +12,7 @@ describe Kontena::Workers::ContainerInfoWorker do
       'Labels' => nil,
       'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
     })
+    mock_rpc_client
   end
 
   after(:each) do
@@ -73,26 +74,17 @@ describe Kontena::Workers::ContainerInfoWorker do
 
   describe '#publish_info' do
     it 'publishes event to queue' do
+      expect(rpc_client).to receive(:notification).once
       subject.publish_info(spy(:container, json: {'Config' => {}}))
-      expect(queue.length).to eq(1)
     end
 
     it 'publishes valid message' do
       container = double(:container, json: {'Config' => {}})
+      expect(rpc_client).to receive(:notification).once.with(
+        '/containers/save', [hash_including(node: 'host_id')]
+      )
       allow(subject.wrapped_object).to receive(:node_info).and_return({'ID' => 'host_id'})
       subject.publish_info(container)
-      valid_event = {
-          event: 'container:info',
-          data: {
-              node: 'host_id',
-              container: {
-                  'Config' => {}
-              }
-          }
-      }
-      expect(queue.length).to eq(1)
-      item = queue.pop
-      expect(item).to eq(valid_event)
     end
   end
 

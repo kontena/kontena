@@ -1,23 +1,22 @@
 require_relative '../helpers/port_helper'
+require_relative '../helpers/rpc_helper'
 
 module Kontena::Workers
   class ContainerHealthCheckWorker
     include Celluloid
     include Kontena::Logging
     include Kontena::Helpers::PortHelper
+    include Kontena::Helpers::RpcHelper
 
     HEALTHY_STATUSES = [200]
 
     finalizer :log_exit
 
     # @param [Docker::Container] container
-    # @param [Queue] queue
-    def initialize(container, queue)
+    def initialize(container)
       @container = container
-      @queue = queue
       info "starting to watch health of container #{container.name}"
     end
-
 
     def start
       initial_delay = @container.labels['io.kontena.health_check.initial_delay'].to_i
@@ -30,11 +29,9 @@ module Kontena::Workers
       every(interval) do
         check_status
       end
-
     end
 
     def check_status
-
       uri = @container.labels['io.kontena.health_check.uri']
       timeout = @container.labels['io.kontena.health_check.timeout'].to_i
       port = @container.labels['io.kontena.health_check.port'].to_i
@@ -46,72 +43,77 @@ module Kontena::Workers
       else
         msg = check_tcp_status(ip, port, timeout)
       end
-      @queue << msg
+      rpc_client.async.notification('/containers/health', [msg])
 
       handle_action(msg)
-
     end
 
     def handle_action(msg)
-      if msg.dig(:data, 'status') == 'unhealthy'
+      if msg['status'] == 'unhealthy'
         name = @container.labels['io.kontena.container.name']
         # Restart the container, master will handle re-scheduling logic
         info "About to restart container #{name} as it's reported to be unhealthy"
         log = {
-            event: 'container:log',
-            data: {
-                id: @container.id,
-                time: Time.now.utc.xmlschema,
-                type: 'stderr',
-                data: "*** [Kontena/Agent] Restarting service as it's reported to be unhealthy."
-            }
+          id: @container.id,
+          time: Time.now.utc.xmlschema,
+          type: 'stderr',
+          data: "*** [Kontena/Agent] Restarting service as it's reported to be unhealthy."
         }
-        @queue << log
-        Kontena::ServicePods::Restarter.perform_async(@container.service_id, @container.instance_number)
+        rpc_client.async.notification('/containers/log', [log])
+        defer {
+          restart_container
+        }
       end
     end
 
+    # @param [String] ip
+    # @param [Integer] port
+    # @param [String] uri
+    # @param [Integer] timeout
+    # @return [Hash]
     def check_http_status(ip, port, uri, timeout)
       url = "http://#{ip}:#{port}#{uri}"
       debug "checking health for container: #{@container.name} using url: #{url}"
-      msg = {
-        event: 'container:health'.freeze,
-        data: {
-          'status' => 'unhealthy',
-          'status_code' => '',
-          'id' => @container.id
-        }
+      data = {
+        'status' => 'unhealthy',
+        'status_code' => '',
+        'id' => @container.id
       }
       begin
         response = Excon.get(url, :connect_timeout => timeout, :headers => {"User-Agent" => "Kontena-Agent/#{Kontena::Agent::VERSION}"})
         debug "got status: #{response.status}"
-        msg[:data]['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
-        msg[:data]['status_code'] = response.status
+        data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
+        data['status_code'] = response.status
       rescue => exc
-        msg[:data]['status'] = 'unhealthy'
+        data['status'] = 'unhealthy'
       end
-      msg
+      data
     end
 
+    # @param [String] ip
+    # @param [Integer] port
+    # @param [Integer] timeout
+    # @return [Hash]
     def check_tcp_status(ip, port, timeout)
       debug "checking health for container: #{@container.name} using tcp ip and port: #{ip}:#{port}"
-      msg = {
-        event: 'container:health'.freeze,
-        data: {
-          'status' => 'unhealthy',
-          'status_code' => '',
-          'id' => @container.id
-        }
+      data = {
+        'status' => 'unhealthy',
+        'status_code' => '',
+        'id' => @container.id
       }
       begin
         response = container_port_open?(ip, port, timeout)
         debug "got status: #{response}"
-        msg[:data]['status'] = response ? 'healthy' : 'unhealthy'
-        msg[:data]['status_code'] = response ? 'open' : 'closed'
+        data['status'] = response ? 'healthy' : 'unhealthy'
+        data['status_code'] = response ? 'open' : 'closed'
       rescue => exc
-        msg[:data]['status'] = 'unhealthy'
+        data['status'] = 'unhealthy'
       end
-      msg
+      data
+    end
+
+    def restart_container
+      Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
     end
 
     def log_exit

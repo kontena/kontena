@@ -1,8 +1,6 @@
 require_relative '../spec_helper'
 
-describe GridServiceHealthMonitorJob do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe GridServiceHealthMonitorJob, celluloid: true do
 
   let(:grid) { Grid.create(name: 'test')}
   let(:service) { GridService.create(name: 'test', image_name: 'foo/bar:latest', grid: grid)}

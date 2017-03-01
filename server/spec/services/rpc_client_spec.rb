@@ -1,8 +1,6 @@
 require_relative '../spec_helper'
 
-describe RpcClient do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe RpcClient, celluloid: true do
   let(:node_id) { SecureRandom.hex(32) }
   let(:subject) { RpcClient.new(node_id, 1) }
   let(:channel) { RpcClient::RPC_CHANNEL }

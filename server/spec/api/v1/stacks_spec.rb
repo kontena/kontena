@@ -1,9 +1,6 @@
 require_relative '../../spec_helper'
 
-describe '/v1/stacks' do
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe '/v1/stacks', celluloid: true do
 
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')

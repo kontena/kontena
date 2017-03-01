@@ -35,7 +35,7 @@ GEM
     dotenv (1.0.2)
     etcd (0.3.0)
       mixlib-log
-    eventmachine (1.0.9.1)
+    eventmachine (1.2.2)
     excon (0.54.0)
     faye-websocket (0.10.1)
       eventmachine (>= 0.12.0)
@@ -45,7 +45,7 @@ GEM
     json (1.8.3)
     minitest (5.5.0)
     mixlib-log (1.6.0)
-    msgpack (0.7.4)
+    msgpack (1.0.3)
     rake (10.4.2)
     rspec (3.1.0)
       rspec-core (~> 3.1.0)
@@ -88,7 +88,7 @@ DEPENDENCIES
   docker-api (~> 1.32.0)
   dotenv
   etcd
-  eventmachine (~> 1.0.8)
+  eventmachine (~> 1.2.2)
   faye-websocket (~> 0.10.1)
   msgpack
   rake
@@ -99,4 +99,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.13.6
+   1.14.3
