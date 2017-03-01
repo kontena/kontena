@@ -5,7 +5,7 @@ $coreos_channel = "stable"
 $image_version = "current"
 
 $vm_memory = 1024
-$vm_cpus = 1
+$vm_cpus = 2
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
