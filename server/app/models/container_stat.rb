@@ -1,6 +1,6 @@
 class ContainerStat
   include Mongoid::Document
-  include Mongoid::Timestamps
+  include Mongoid::Timestamps::Created
 
   field :spec, type: Hash
   field :cpu, type: Hash

@@ -92,8 +92,7 @@ module Rpc
           filesystem: data['filesystem'],
           diskio: data['diskio'],
           network: data['network'],
-          created_at: time,
-          updated_at: time
+          created_at: time
         }
         if @stats.size >= @stats_buffer_size
           flush_stats

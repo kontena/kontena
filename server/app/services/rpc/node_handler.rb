@@ -48,8 +48,7 @@ module Rpc
         load: data['load'],
         filesystem: data['filesystem'],
         usage: data['usage'],
-        created_at: time,
-        updated_at: time
+        created_at: time
       }
       @db_session[:host_node_stats].insert(stat)
     end

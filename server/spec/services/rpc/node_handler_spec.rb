@@ -35,7 +35,6 @@ describe Rpc::NodeHandler, celluloid: true do
       })
 
       expect(node.host_node_stats[0].created_at).to be_a(Time)
-      expect(node.host_node_stats[0].updated_at).to be_a(Time)
     end
 
     it 'sets timestamps passed in' do
@@ -55,7 +54,6 @@ describe Rpc::NodeHandler, celluloid: true do
       })
 
       expect(node.host_node_stats[0].created_at).to eq Time.parse(time)
-      expect(node.host_node_stats[0].updated_at).to eq Time.parse(time)
     end
   end
 end

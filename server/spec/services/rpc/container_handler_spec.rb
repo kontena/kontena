@@ -229,7 +229,6 @@ describe Rpc::ContainerHandler, celluloid: true do
           'network' => {}
       })
       expect(container.container_stats[0].created_at).to be_a(Time)
-      expect(container.container_stats[0].updated_at).to be_a(Time)
     end
 
     it 'sets timestamps passed in' do
@@ -250,7 +249,6 @@ describe Rpc::ContainerHandler, celluloid: true do
           'time' => time
       })
       expect(container.container_stats[0].created_at).to eq Time.parse(time)
-      expect(container.container_stats[0].updated_at).to eq Time.parse(time)
     end
   end
 end
