@@ -31,6 +31,7 @@ module Kontena
     attr_accessor :path_prefix
     attr_reader :http_client
     attr_reader :last_response
+    attr_reader :last_request
     attr_reader :options
     attr_reader :token
     attr_reader :logger
@@ -324,12 +325,14 @@ module Kontena
       }.merge(host_options)
 
       request_options.merge!(response_block: response_block) if response_block
+      @last_request = request_options
 
       # Store the response into client.last_response
       @last_response = http_client.request(request_options)
 
       parse_response(@last_response)
-    rescue Excon::Errors::Unauthorized
+    rescue Excon::Errors::Unauthorized => error
+      @last_response = error.response
       if token
         logger.debug 'Server reports access token expired'
 
@@ -342,6 +345,7 @@ module Kontena
       end
       raise Kontena::Errors::StandardError.new(401, 'Unauthorized')
     rescue Excon::Errors::HTTPStatusError => error
+      @last_response = error.response
       logger.debug "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}"
 
       handle_error_response(error.response)
@@ -462,10 +466,12 @@ module Kontena
     # @param [String] content_type
     # @return [String] encoded_content
     def encode_body(body, content_type)
-      if content_type =~ JSON_REGEX # vnd.api+json should pass as json
-        dump_json(body)
-      elsif content_type == CONTENT_URLENCODED && body.kind_of?(Hash)
-        URI.encode_www_form(body)
+      if body.kind_of?(Hash)
+        if content_type =~ JSON_REGEX # vnd.api+json should pass as json
+          dump_json(body)
+        elsif content_type == CONTENT_URLENCODED
+          URI.encode_www_form(body)
+        end
       else
         body
       end
