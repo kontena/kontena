@@ -13,7 +13,7 @@ RUN gem install --no-ri --no-rdoc bundler rake
 RUN pip install docker-compose==$DOCKER_COMPOSE_VERSION
 
 ADD test/Gemfile test/Gemfile.lock /kontena/test/
-ADD cli/Gemfile cli/Gemfile.lock cli/kontena-cli.gemspec /kontena/cli/
+ADD cli/Gemfile cli/kontena-cli.gemspec /kontena/cli/
 
 # required for the gemspec
 ADD cli/lib/kontena/cli/version.rb /kontena/cli/lib/kontena/cli/version.rb
