@@ -18,6 +18,8 @@ module OAuth2Api
     include RequestHelpers
     include Logging
 
+    include OAuth2Api::Common
+
     def find_user_by_userdata(user_data)
       query = []
       query << { external_id: user_data[:id] }       if user_data[:id]
