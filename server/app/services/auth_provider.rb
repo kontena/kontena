@@ -36,8 +36,18 @@ class AuthProvider < OpenStruct
   ]
 
   def self.reset_instance
+    @last_update = Configuration.last_update
     Singleton.send :__init__, self
     self
+  end
+
+  def self.last_update
+    @last_update
+  end
+
+  def self.valid?
+    reset_instance if last_update < Configuration.last_update
+    instance.valid?
   end
 
   # Initializes a new auth provider instance.
@@ -288,6 +298,6 @@ class AuthProvider < OpenStruct
   # Defines forwarders for instance methods, so you can call AuthProvider.x instead of AuthProvider.instance.x
   class << self
     extend Forwardable
-    def_delegators :instance, *AuthProvider.instance_methods(false)
+    def_delegators :instance, *(AuthProvider.instance_methods(false) - [:valid?])
   end
 end
