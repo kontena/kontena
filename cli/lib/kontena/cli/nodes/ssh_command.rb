@@ -15,6 +15,8 @@ module Kontena::Cli::Nodes
     requires_current_grid
 
     def execute
+      exit_with_error "Cannot combine --any with a node name" if node_id && any?
+
       if node_id
         node = client.get("grids/#{current_grid}/nodes/#{node_id}")
       elsif any?
