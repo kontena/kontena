@@ -114,6 +114,7 @@ GEM
       rack
     rollbar (2.11.3)
       multi_json
+    rounding (1.0.1)
     rspec (3.1.0)
       rspec-core (~> 3.1.0)
       rspec-expectations (~> 3.1.0)
@@ -179,6 +180,7 @@ DEPENDENCIES
   rerun
   roda (~> 2.5.0)
   rollbar
+  rounding
   rspec (~> 3.1.0)
   simplecov
   symmetric-encryption
@@ -187,4 +189,4 @@ DEPENDENCIES
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.14.3
+   1.14.5

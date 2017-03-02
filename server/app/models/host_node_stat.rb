@@ -13,4 +13,5 @@ class HostNodeStat
 
   index({ grid_id: 1 })
   index({ host_node_id: 1 })
+  index({ created_at: 1 })
 end
