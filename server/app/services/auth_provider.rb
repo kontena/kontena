@@ -44,27 +44,42 @@ class AuthProvider < OpenStruct
   def initialize
     # The table syntax is for initializing an OpenStruct.
     @table = {}
-    @table[:client_id] = config['oauth2.client_id']
-    @table[:client_secret] = config['oauth2.client_secret']
-    @table[:authorize_endpoint] = config['oauth2.authorize_endpoint']
-    @table[:code_requires_basic_auth] = config['oauth2.code_requires_basic_auth'] || false
+    cfg = config.decrypt_all
+    @table[:client_id] = cfg['oauth2.client_id']
+    @table[:client_secret] = cfg['oauth2.client_secret']
+    @table[:authorize_endpoint] = cfg['oauth2.authorize_endpoint']
+    @table[:code_requires_basic_auth] = cfg['oauth2.code_requires_basic_auth'] || false
     if @table[:code_requires_basic_auth].kind_of?(String)
       @table[:code_requires_basic_auth] = @table[:code_requires_basic_auth] == "true"
     end
-    @table[:token_endpoint] = config['oauth2.token_endpoint']
-    @table[:token_method] = config['oauth2.token_method'] || 'post'
-    @table[:token_post_content_type] = config['oauth2.token_post_content_type'] || 'application/json'
-    @table[:userinfo_scope] = config['oauth2.userinfo_scope'] || 'user:email'
-    @table[:userinfo_endpoint] = config['oauth2.userinfo_endpoint']
-    @table[:userinfo_username_jsonpath] = config['oauth2.userinfo_username_jsonpath'] || '$..username;$..login'
-    @table[:userinfo_email_jsonpath] = config['oauth2.userinfo_email_jsonpath'] || '$..email;$..emails;$..primary_email'
-    @table[:userinfo_user_id_jsonpath] = config['oauth2.userinfo_user_id_jsonpath'] || '$..id;$..uid;$..userid,$..user_id'
-    @table[:root_url] = config['server.root_url']
+    @table[:token_endpoint] = cfg['oauth2.token_endpoint']
+    @table[:token_method] = cfg['oauth2.token_method'] || 'post'
+    @table[:token_post_content_type] = cfg['oauth2.token_post_content_type'] || 'application/json'
+    @table[:userinfo_scope] = cfg['oauth2.userinfo_scope'] || 'user:email'
+    @table[:userinfo_endpoint] = cfg['oauth2.userinfo_endpoint']
+    @table[:userinfo_username_jsonpath] = cfg['oauth2.userinfo_username_jsonpath'] || '$..username;$..login'
+    @table[:userinfo_email_jsonpath] = cfg['oauth2.userinfo_email_jsonpath'] || '$..email;$..emails;$..primary_email'
+    @table[:userinfo_user_id_jsonpath] = cfg['oauth2.userinfo_user_id_jsonpath'] || '$..id;$..uid;$..userid,$..user_id'
+    @table[:root_url] = cfg['server.root_url']
+    @table[:cloud_api_url] = cfg['cloud.api_url'] || 'https://cloud-api.kontena.io'
+    @table[:ignore_invalid_ssl] = cfg['cloud.ignore_invalid_ssl'].to_s == 'true'
+
+    if @table['cloud.provider_is_kontena'].to_s == "true"
+      @is_kontena = true
+    elsif @table[:authorize_endpoint]
+      uri = URI.parse(@table[:authorize_endpoint]) rescue nil
+      if uri && uri.host.end_with?('kontena.io')
+        @is_kontena = true
+      else
+        @is_kontena = false
+      end
+    else
+      @is_kontena = false
+    end
   end
 
   def is_kontena?
-    return false unless self[:authorize_endpoint]
-    config['cloud.provider_is_kontena'].to_s == "true" || URI.parse(self[:authorize_endpoint]).host.end_with?('kontena.io')
+    @is_kontena
   end
 
   def update_kontena
@@ -72,11 +87,13 @@ class AuthProvider < OpenStruct
     return unless valid?
     return unless master_access_token
 
-    uri = URI.parse(config['cloud.api_url'] || "https://cloud-api.kontena.io")
+    uri = URI.parse(self.cloud_api_url) rescue nil
+    return unless uri
+
     uri.path = '/master'
 
     client = HTTPClient.new
-    if config['cloud.ignore_invalid_ssl'].to_s == 'true'
+    if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
 
@@ -224,7 +241,7 @@ class AuthProvider < OpenStruct
     uri = URI.parse(self.userinfo_endpoint)
     uri.path = uri.path.gsub(/\:access\_token/, access_token)
     client = HTTPClient.new
-    if config['oauth2.ignore_invalid_ssl'].to_s == 'true'
+    if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
     response = client.request(
