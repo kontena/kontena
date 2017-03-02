@@ -2,14 +2,20 @@ require 'symmetric-encryption'
 
 class Configuration
   include Mongoid::Document
+  include Mongoid::Timestamps
 
   field :key, type: String
   field :value, type: Hash, default: {}
   index({ 'key' => 1 }, { unique: true })
+  index({ 'updated_at' => 1 }, { unique: false })
 
   VALUE = 'v'.freeze
 
   class << self
+    def last_update
+      order_by(updated_at: :desc).pluck(:updated_at).first
+    end
+
     def seed(defaults_file)
       if File.exist?(defaults_file) && File.readable?(defaults_file)
         defaults = YAML.load(ERB.new(File.read(defaults_file)).result)[ENV['RACK_ENV']] || {}
