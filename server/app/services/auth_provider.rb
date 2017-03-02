@@ -79,23 +79,13 @@ class AuthProvider < OpenStruct
     @table[:root_url] = cfg['server.root_url']
     @table[:cloud_api_url] = cfg['cloud.api_url'] || 'https://cloud-api.kontena.io'
     @table[:ignore_invalid_ssl] = cfg['cloud.ignore_invalid_ssl'].to_s == 'true'
-
-    if @table['cloud.provider_is_kontena'].to_s == "true"
-      @is_kontena = true
-    elsif @table[:authorize_endpoint]
-      uri = URI.parse(@table[:authorize_endpoint]) rescue nil
-      if uri && uri.host.end_with?('kontena.io')
-        @is_kontena = true
-      else
-        @is_kontena = false
-      end
-    else
-      @is_kontena = false
-    end
+    @table[:provider_is_kontena] = cfg['cloud.provider_is_kontena'].to_s == "true"
   end
 
   def is_kontena?
-    @is_kontena
+    return true if self.provider_is_kontena
+    uri = URI.parse(self.authorize_endpoint) rescue nil
+    uri && uri.host.end_with?('kontena.io')
   end
 
   def update_kontena
