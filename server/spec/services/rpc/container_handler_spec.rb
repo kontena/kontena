@@ -107,23 +107,99 @@ describe Rpc::ContainerHandler, celluloid: true do
       #puts bm
       total_time = Time.now.to_f - start_time
       expect(grid.container_logs.count).to eq(1_000)
-      expect(total_time < 0.5).to be_truthy
+      expect(total_time).to be < 0.5
     end
   end
 
-  describe '#on_container_health' do
-    it 'updates health status' do
+  describe '#stats_buffer_size' do
+    it 'has a default buffer size greater than 1' do
+      expect(subject.stats_buffer_size).to be > 1
+    end
+  end
+
+  describe '#logs_buffer_size' do
+    it 'has a default buffer size greater than 1' do
+      expect(subject.logs_buffer_size).to be > 1
+    end
+  end
+
+  describe '#on_stat' do
+    it 'saves container_stat items' do
+      subject.stats_buffer_size = 1
       container_id = SecureRandom.hex(16)
       container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
       container.update_attribute(:container_id, container_id)
 
       expect {
-        subject.health({
+        subject.stat({
+          'id' => container_id,
+          'spec' => {},
+          'cpu' => {},
+          'memory' => {},
+          'filesystems' => [],
+          'diskio' => {},
+          'network' => {}
+        })
+      }.to change{ container.container_stats.count }.by 1
+    end
+
+    it 'buffers and saves container_stat items' do
+      buffer_size = subject.stats_buffer_size
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+
+      expect {
+        (buffer_size + 1).times {
+          subject.stat({
             'id' => container_id,
-            'status' => 'healthy'
-          }
-        )
-      }.to change {container.reload.health_status}.to eq('healthy')
+            'spec' => {},
+            'cpu' => {},
+            'memory' => {},
+            'filesystems' => [],
+            'diskio' => {},
+            'network' => {}
+          })
+        }
+      }.to change{ container.container_stats.count }.by buffer_size
+    end
+
+    it 'creates timestamps' do
+      subject.stats_buffer_size = 1
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+
+      subject.stat({
+          'id' => container_id,
+          'spec' => {},
+          'cpu' => {},
+          'memory' => {},
+          'filesystems' => [],
+          'diskio' => {},
+          'network' => {}
+      })
+      expect(container.container_stats[0].created_at).to be_a(Time)
+    end
+
+    it 'sets timestamps passed in' do
+      subject.stats_buffer_size = 1
+      container_id = SecureRandom.hex(16)
+      container = grid.containers.new(name: 'foo-1', grid_service: grid_service)
+      container.update_attribute(:container_id, container_id)
+      time = '2017-02-28 00:00:00 -0500'
+
+      subject.stat({
+          'id' => container_id,
+          'spec' => {},
+          'cpu' => {},
+          'memory' => {},
+          'filesystems' => [],
+          'diskio' => {},
+          'network' => {},
+          'time' => time
+      })
+      expect(container.container_stats[0].created_at).to eq Time.parse(time)
     end
   end
 end

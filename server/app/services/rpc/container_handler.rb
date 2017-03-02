@@ -7,11 +7,16 @@ module Rpc
     include FixnumHelper
     include Logging
 
+    attr_accessor :logs_buffer_size
+    attr_accessor :stats_buffer_size
+
     def initialize(grid)
       @grid = grid
       @logs = []
       @stats = []
       @cached_container = nil
+      @logs_buffer_size = 5
+      @stats_buffer_size = 5
       @db_session = ContainerLog.collection.session.with(
         write: {
           w: 0, fsync: false, j: false
@@ -44,7 +49,7 @@ module Rpc
           type: data['type'],
           data: data['data']
         }
-        if @logs.size >= 5
+        if @logs.size >= @logs_buffer_size
           flush_logs
         end
       end
@@ -76,6 +81,7 @@ module Rpc
       container = cached_container(data['id'])
       if container
         data = fixnums_to_float(data)
+        time = data['time'] ? Time.parse(data['time']) : Time.now.utc
         @stats << {
           grid_id: @grid.id,
           grid_service_id: container['grid_service_id'],
@@ -85,13 +91,18 @@ module Rpc
           memory: data['memory'],
           filesystem: data['filesystem'],
           diskio: data['diskio'],
-          network: data['network']
+          network: data['network'],
+          created_at: time
         }
-        if @stats.size >= 5
-          @db_session[:container_stats].insert(@stats.dup)
-          @stats.clear
+        if @stats.size >= @stats_buffer_size
+          flush_stats
         end
       end
+    end
+
+    def flush_stats
+      @db_session[:container_stats].insert(@stats.dup)
+      @stats.clear
     end
 
     # @param [Hash] data

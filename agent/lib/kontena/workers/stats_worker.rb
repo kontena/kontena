@@ -93,6 +93,7 @@ module Kontena::Workers
 
       current_stat = container.dig(:stats, -1)
       # Need to default to something usable in calculations
+
       cpu_usages = current_stat.dig(:cpu, :usage, :per_cpu_usage)
       num_cores = cpu_usages ? cpu_usages.count : 1
       raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
@@ -111,7 +112,8 @@ module Kontena::Workers
         },
         filesystem: current_stat[:filesystem],
         diskio: current_stat[:diskio],
-        network: current_stat[:network]
+        network: current_stat[:network],
+        time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/containers/stat', [data])
       send_statsd_metrics(name, data)
