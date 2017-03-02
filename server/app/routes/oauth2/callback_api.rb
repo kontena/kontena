@@ -75,6 +75,15 @@ module OAuth2Api
           halt_request(400, 'invalid_request') and return
         end
 
+        unless AuthProvider.valid?
+          mime_halt(
+            501,
+            'server_error',
+            'Authentication provider not configured'
+          )
+          return
+        end
+
         token_data = AuthProvider.get_token(params['code']) rescue nil
         if token_data.nil? || !token_data.kind_of?(Hash) || !token_data.has_key?('access_token')
           halt_request(400, 'Authentication failed') and return
