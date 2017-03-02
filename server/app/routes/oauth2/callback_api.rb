@@ -77,7 +77,9 @@ module OAuth2Api
           halt_request(400, 'invalid_request') and return
         end
 
-        unless AuthProvider.valid?
+        auth_provider = AuthProvider.instance
+
+        unless auth_provider.valid?
           mime_halt(
             501,
             'server_error',
@@ -86,12 +88,12 @@ module OAuth2Api
           return
         end
 
-        token_data = AuthProvider.get_token(params['code']) rescue nil
+        token_data = auth_provider.get_token(params['code']) rescue nil
         if token_data.nil? || !token_data.kind_of?(Hash) || !token_data.has_key?('access_token')
           halt_request(400, 'Authentication failed') and return
         end
 
-        user_data = AuthProvider.get_userinfo(token_data['access_token']) rescue nil
+        user_data = auth_provider.get_userinfo(token_data['access_token']) rescue nil
         if user_data.nil? || !user_data.kind_of?(Hash)
           halt_request(400, 'Authentication failed') and return
         elsif user_data[:error]
