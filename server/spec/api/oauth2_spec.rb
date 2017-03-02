@@ -7,7 +7,7 @@ describe 'OAuth2 API' do
   context '/authenticate when AP not configured' do
     describe 'GET /' do
       it 'returns error when AuthProvider is not configured' do
-        expect(AuthProvider.instance).to receive(:valid?).and_return(false)
+        expect(AuthProvider).to receive(:valid?).and_return(false)
         get '/authenticate'
         expect(response.status).to eq(501)
       end
@@ -17,10 +17,10 @@ describe 'OAuth2 API' do
   context '/authenticate when AP not configured' do
     describe 'GET /' do
       before(:each) do
-        allow(AuthProvider.instance).to receive(:valid?).and_return(true)
+        allow(AuthProvider).to receive(:valid?).and_return(true)
         allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
       end
-      
+
       it 'returns a redirect when AuthProvider is configured' do
         get '/authenticate?redirect_uri=http://localhost:2323'
         expect(response.status).to eq(302)
@@ -40,7 +40,7 @@ describe 'OAuth2 API' do
     let(:token) { AccessToken.create(user: david, scopes: ['user']) }
 
     before(:each) do
-      allow(AuthProvider.instance).to receive(:valid?).and_return(true)
+      allow(AuthProvider).to receive(:valid?).and_return(true)
       allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
     end
 
@@ -158,7 +158,7 @@ describe 'OAuth2 API' do
         expect(response.status).to eq(404)
       end
     end
-    
+
     context 'grant_type = refresh_token' do
       it 'returns a token in exchange when given a valid refresh token' do
         token = AccessToken.create(user: david, expires_at: Time.now + 7200, scopes: ['user'])
@@ -233,6 +233,7 @@ describe 'OAuth2 API' do
 
     it 'returns error if code can not be exchanged' do
       ar = AuthorizationRequest.create(user: david)
+      allow(AuthProvider).to receive(:valid?).and_return(true)
       allow(AuthProvider).to receive(:get_token).and_return(nil)
       get "/cb?code=foo&state=#{ar.state_plain}"
       expect(response.status).to eq(400)
@@ -240,6 +241,7 @@ describe 'OAuth2 API' do
 
     it 'stores the received token, creates a local access token and redirects when everything is fine' do
       ar = AuthorizationRequest.create(user: david, redirect_uri: 'http://localhost:1234/cb')
+      allow(AuthProvider).to receive(:valid?).and_return(true)
       allow(AuthProvider).to receive(:get_token).and_return({
         'access_token' => 'abcd1234',
         'refresh_token' => 'cdef2345',

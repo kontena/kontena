@@ -11,7 +11,7 @@ describe AuthProvider do
 
   it "should configure itself from the Configuration" do
     Configuration['server.root_url'] = "https://example.com"
-    expect(Configuration).to receive(:[]).at_least(:once).and_call_original
+    expect(Configuration).to receive(:decrypt_all).and_call_original
     expect(subject.root_url).to eq "https://example.com"
   end
 
@@ -93,13 +93,15 @@ describe AuthProvider do
     end
 
     it "should return true for is_kontena? when config cloud.provider_is_kontena is true" do
-      subject.authorize_endpoint = "https://example.com:1234/foofoo"
+      Configuration['oauth2.authorize_endpoint'] = "https://example.com:1234/foofoo"
       Configuration['cloud.provider_is_kontena'] = true
+      AuthProvider.reset_instance
       expect(subject.is_kontena?).to be_truthy
     end
 
     it "should return false for is_kontena? when authorize endpoint is not kontena" do
-      subject.authorize_endpoint = "https://example.com:1234/foofoo"
+      Configuration['oauth2.authorize_endpoint'] = "https://example.com:1234/foofoo"
+      AuthProvider.reset_instance
       expect(subject.is_kontena?).to be_falsey
     end
 
