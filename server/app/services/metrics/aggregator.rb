@@ -11,6 +11,10 @@ module Metrics
       total_metrics = 0
       total_value = 0.0
 
+      # TODO: The current time slices method does not take into account records
+      #       that may not fall into specific time slices between the beginning and_return
+      #       end of the stream.
+      #       Ideally, these values should be interpolated.
       metrics.each do |metric|
         total_metrics += 1
         total_value += metric.value
