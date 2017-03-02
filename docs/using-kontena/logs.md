@@ -12,7 +12,7 @@ There are various methods to access this log information.
 - `kontena service logs xyz` for individual service logs
 - `kontena stack logs xyz` for stacks service logs
 
-The logs are stored in capped collection which ensures that old events gets automatically removed and do not consume disk space on master database.
+The logs are stored in a capacity-bounded MongoDB collection, which limits the disk space consumed on the master by automatically removing old logs.
 
 ## Sending logs for further processing
 
@@ -24,7 +24,7 @@ Kontena supports fluentd log shipping that can be configured on each grid. When 
 
 You can enable fluentd forwarding using:
 ```
-kontena grid update --log-driver fluentd --log_opt fluentd-address=server:port my-grid
+kontena grid update --log-driver fluentd --log-opt fluentd-address=server:port my-grid
 ```
 
 Each event sent to fluentd is tagged with following notation:

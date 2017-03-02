@@ -41,14 +41,15 @@ module Kontena::Cli::Grids
 
     def validate_log_opts
       if !log_opt_list.empty? && log_driver.nil?
-        raise "Need to specify --log-driver when using --log-opt"
+        raise Kontena::Errors::StandardError.new(1, "Need to specify --log-driver when using --log-opt")
       end
     end
 
     def parse_log_opts
       opts = {}
       log_opt_list.each do |opt|
-        opts.merge!(Hash[*opt.split('=')])
+        key, value = opt.split('=')
+        opts[key.to_sym] = value
       end
       opts
     end

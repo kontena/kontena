@@ -59,19 +59,16 @@ module Kontena::Workers
       time = DateTime.parse(match[1])
       data = match[2]
       msg = {
-          event: 'container:log',
-          data: {
-              id: id,
-              service: @container.service_name,
-              stack: @container.stack_name,
-              instance: @container.instance_number,
-              time: time.utc.xmlschema,
-              type: stream,
-              data: data
-          }
+        id: id,
+        service: @container.service_name,
+        stack: @container.stack_name,
+        instance: @container.instance_number,
+        time: time.utc.xmlschema,
+        type: stream,
+        data: data
       }
       @queue << msg
-      publish_log(msg.dig('data', 'data'))
+      publish_log(msg)
     end
 
     def publish_log(log)

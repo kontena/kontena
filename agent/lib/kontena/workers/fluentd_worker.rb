@@ -35,7 +35,7 @@ module Kontena::Workers
               :port => port || 24224,
               :logger => Kontena::Logging.logger)
         @forwarding = true
-      else
+      elsif @forwarding
         info "stopping fluentd log streaming"
         @fluentd.close if @fluentd
         @forwarding = false
@@ -44,13 +44,10 @@ module Kontena::Workers
     end
 
     def on_log_event(topic, log)
-      # TODO Get more tags
-      # maybe stack.service.instance
-      #puts "forwarding: #{@forwarding}, fluentd: #{@fluentd}"
       if @forwarding && @fluentd
         tag = [log[:stack], log[:service], log[:instance]].join('.')
         record = {
-          event: log[:data], # the actual log event
+          log: log[:data], # the actual log event
           source: log[:type] # stdout/stderr
         }
         @fluentd.post(tag, record)
