@@ -31,10 +31,10 @@ describe Kontena::Cli::Grids::UpdateCommand do
       it 'should send valid options to server' do
         expect(client).to receive(:put).with(
           'grids/test', hash_including({
-            'logs': {
-              'driver': 'fluentd',
-              'opts': {
-                'foo': 'bar'
+            logs: {
+              driver: 'fluentd',
+              opts: {
+                foo: 'bar'
               }
             }
           })
