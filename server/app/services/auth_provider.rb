@@ -36,9 +36,12 @@ class AuthProvider < OpenStruct
   ]
 
   def self.reset_instance
-    @last_update = Configuration.last_update
     Singleton.send :__init__, self
     self
+  end
+
+  def self.set_updated
+    @last_update = Configuration.last_update
   end
 
   def self.last_update
@@ -46,7 +49,9 @@ class AuthProvider < OpenStruct
   end
 
   def self.valid?
-    reset_instance if last_update < Configuration.last_update
+    if last_update.nil? || last_update < Configuration.last_update
+      reset_instance
+    end
     instance.valid?
   end
 
@@ -54,6 +59,7 @@ class AuthProvider < OpenStruct
   def initialize
     # The table syntax is for initializing an OpenStruct.
     @table = {}
+    AuthProvider.set_updated
     cfg = config.decrypt_all
     @table[:client_id] = cfg['oauth2.client_id']
     @table[:client_secret] = cfg['oauth2.client_secret']
