@@ -1,8 +1,6 @@
 require_relative '../spec_helper'
 
-describe CloudWebsocketConnectJob do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe CloudWebsocketConnectJob, celluloid: true do
 
   let(:subject) { described_class.new(false) }
   let(:config) { spy }

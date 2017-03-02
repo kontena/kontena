@@ -1,8 +1,6 @@
 require_relative '../spec_helper'
 
-describe GridSchedulerWorker do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe GridSchedulerWorker, celluloid: true do
 
   let(:grid) { Grid.create(name: 'test')}
 

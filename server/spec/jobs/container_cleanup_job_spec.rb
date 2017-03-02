@@ -1,8 +1,6 @@
 require_relative '../spec_helper'
 
-describe ContainerCleanupJob do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe ContainerCleanupJob, celluloid: true do
 
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:node1) { HostNode.create!(name: "node-1", connected: false, last_seen_at: 2.hours.ago, grid: grid) }

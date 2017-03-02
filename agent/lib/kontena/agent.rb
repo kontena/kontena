@@ -90,38 +90,28 @@ module Kontena
 
     def supervise_workers
       @supervisor.supervise(
-        type: Kontena::Workers::QueueWorker,
-        as: :queue_worker,
-        args: [@client, @queue]
-      )
-      @supervisor.supervise(
         type: Kontena::Workers::ImagePullWorker,
         as: :image_pull_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::LogWorker,
-        as: :log_worker,
-        args: [@queue]
+        as: :log_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
-        as: :node_info_worker,
-        args: [@queue]
+        as: :node_info_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerInfoWorker,
-        as: :container_info_worker,
-        args: [@queue]
+        as: :container_info_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::EventWorker,
-        as: :event_worker,
-        args: [@queue]
+        as: :event_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::StatsWorker,
-        as: :stats_worker,
-        args: [@queue]
+        as: :stats_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::WeaveWorker,
@@ -133,8 +123,7 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::HealthCheckWorker,
-        as: :health_check_worker,
-        args: [@queue]
+        as: :health_check_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerStarterWorker,

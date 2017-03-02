@@ -1,11 +1,7 @@
 require_relative '../spec_helper'
 
-describe ServiceBalancerJob do
-  before(:each) {
-    Celluloid.boot
-    DistributedLock.delete_all
-  }
-  after(:each) { Celluloid.shutdown }
+describe ServiceBalancerJob, celluloid: true do
+  before(:each) { DistributedLock.delete_all }
 
   let(:grid) { Grid.create(name: 'test')}
   let(:service) do

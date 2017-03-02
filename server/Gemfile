@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rack', '~> 1.6.4'
 gem 'roda', '~> 2.5.0'
-gem 'celluloid', '~> 0.16.0'
+gem 'celluloid', '~> 0.17.3'
 gem 'tilt-jbuilder'
 gem 'mutations'
 gem 'mongoid', '~> 4.0.0'

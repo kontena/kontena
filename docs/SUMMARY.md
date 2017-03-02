@@ -52,9 +52,10 @@
 
 ### References
 
-* [kontena.yml](references/kontena-yml.md)
-* [kontena.yml variables reference](references/kontena-yml-variables.md)
-* [docker-compose.yml support](references/docker-compose-support.md)
+* [Kontena.yml](references/kontena-yml.md)
+* [Kontena.yml Variables Reference](references/kontena-yml-variables.md)
+* [Docker-compose.yml Support](references/docker-compose-support.md)
+* [Environment Variables](references/environment-variables.md)
 * [Master REST API](references/rest-api.md)
 
 

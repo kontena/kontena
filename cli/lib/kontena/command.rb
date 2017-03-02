@@ -197,8 +197,30 @@ class Kontena::Command < Clamp::Command
     run_callbacks :after unless help_requested?
     exit(@exit_code) if @exit_code.to_i > 0
     @result
+  rescue Excon::Errors::SocketError => exc
+    if exc.message.include?('Unable to verify certificate')
+      $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
+      $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"
+      $stderr.puts "         Protip: you can bypass the certificate check by setting #{Kontena.pastel.yellow('SSL_IGNORE_ERRORS=true')} env variable, but any data you send to the server could be intercepted by others."
+      abort
+    else
+      abort(exc.message)
+    end
+  rescue Kontena::Errors::StandardError => exc
+    raise exc if ENV['DEBUG']
+    puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+    abort
+  rescue Errno::EPIPE
+    # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
+    abort
+  rescue Clamp::HelpWanted, Clamp::UsageError
+    raise
+  rescue => exc
+    raise exc if ENV['DEBUG']
+    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+    $stderr.puts "         Rerun the command with environment DEBUG=true set to get the full exception"
+    abort
   end
-
 end
 
 require_relative 'callback'
