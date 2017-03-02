@@ -202,10 +202,7 @@ describe Kontena::Workers::StatsWorker do
 
   describe '#send_container_stats' do
     it 'sends stats via rpc' do
-      expect(rpc_client).to receive(:notification).once do |key, msg|
-        expect(key).to eq '/containers/stat'
-        expect(msg[0][:time]).to be_a String
-      end
+      expect(rpc_client).to receive(:notification).once.with('/containers/stat', [hash_including(time: String)])
 
       container = {
         aliases: [],
