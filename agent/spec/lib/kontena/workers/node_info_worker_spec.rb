@@ -217,8 +217,27 @@ describe Kontena::Workers::NodeInfoWorker do
 
   describe '#publish_node_stats' do
     it 'sends stats via rpc with timestamps' do
-      expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [hash_including(time: String)])
+      expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [hash_including(time: String, cpu_average: Hash)])
       subject.publish_node_stats
+    end
+  end
+
+  describe '#calculate_average_cpu' do
+    it 'calculates proper averages' do
+      prev = [
+        # cpu-num, user ticks, system ticks, nice ticks, idle ticks
+        Vmstat::Cpu.new(0, 926444, 1715744, 0, 8413871),
+        Vmstat::Cpu.new(1, 67122, 93965, 0, 10891139)
+      ]
+      cur = [
+        Vmstat::Cpu.new(0, 926482, 1715820, 0, 8414258),
+        Vmstat::Cpu.new(1, 67123, 93967, 0, 10891637)
+      ]
+
+      result = subject.calculate_average_cpu(prev, cur)
+      expect(result[:system]).to be 7.78
+      expect(result[:user]).to be 3.89
+      expect(result[:idle]).to be 88.32
     end
   end
 end

@@ -23,6 +23,7 @@ module Kontena::Workers
       @statsd = nil
       @stats_since = Time.now
       @container_seconds = 0
+      @previous_cpu = Vmstat.cpu
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -110,6 +111,9 @@ module Kontena::Workers
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
+      current_cpu = Vmstat.cpu
+      average_cpu = calculate_average_cpu(@previous_cpu, current_cpu)
+      @previous_cpu = current_cpu
 
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
@@ -136,6 +140,7 @@ module Kontena::Workers
             total: disk.total_bytes
           }
         ],
+        cpu_average: average_cpu,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
@@ -149,6 +154,9 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
       statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])
       statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
+      statsd.gauge("#{key_base}.cpu_average.system", event[:cpu_average][:system])
+      statsd.gauge("#{key_base}.cpu_average.user", event[:cpu_average][:user])
+      statsd.gauge("#{key_base}.cpu_average.idle", event[:cpu_average][:idle])
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
@@ -234,6 +242,36 @@ module Kontena::Workers
     rescue => exc
       debug exc.message
       0
+    end
+
+    # @param [Array<Vmstat::Cpu>] prev_cpu_stats
+    # @param [Array<Vmstat::Cpu>] current_cpu_stats
+    # @return [Hash]
+    def calculate_average_cpu(prev_cpu_stats, current_cpu_stats)
+      all = prev_cpu_stats.zip(current_cpu_stats).map do |prev, current|
+        system_ticks = current.system - prev.system
+        user_ticks = current.user - prev.user
+        idle_ticks = current.idle - prev.idle
+
+        total_ticks = system_ticks + user_ticks + idle_ticks
+
+        [system_ticks, user_ticks, idle_ticks].map do |ticks|
+          (ticks / total_ticks.to_f) * 100.0
+        end
+      end
+
+      averages = all.transpose.map do |stats|
+        total = stats.reduce :+
+        total / stats.size.to_f
+      end
+
+      result = {
+        system: averages[0].round(2),
+        user: averages[1].round(2),
+        idle: averages[2].round(2)
+      }
+
+      result
     end
 
     # @return [Hash]

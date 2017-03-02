@@ -36,6 +36,7 @@ class RpcServer
     msg_id = message[1]
     handler = message[2].split('/')[1]
     method = message[2].split('/')[2]
+    puts "RPC: handle_request > #{msg_id} #{handler} #{method}"
     if actor = handling_actor(grid_id, handler)
       begin
         result = actor.send(method, *message[3])
