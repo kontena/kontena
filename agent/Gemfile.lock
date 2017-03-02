@@ -45,7 +45,7 @@ GEM
     json (1.8.3)
     minitest (5.5.0)
     mixlib-log (1.6.0)
-    msgpack (0.7.4)
+    msgpack (1.0.3)
     rake (10.4.2)
     rspec (3.1.0)
       rspec-core (~> 3.1.0)
@@ -90,7 +90,7 @@ DEPENDENCIES
   etcd
   eventmachine (~> 1.2.3)
   faye-websocket (~> 0.10.7)
-  msgpack
+  msgpack (~> 1.0.3)
   rake
   rspec
   simplecov
