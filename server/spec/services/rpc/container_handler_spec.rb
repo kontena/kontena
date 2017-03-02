@@ -111,55 +111,6 @@ describe Rpc::ContainerHandler, celluloid: true do
     end
   end
 
-  describe '#save' do
-    it 'updates container info if container is found by container_id' do
-      container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
-      expect(container.running?).to eq(false)
-      subject.save({
-        'container' => {
-          'Id' => container.container_id,
-          'NetworkSettings' => {},
-          'State' => {
-            'Running' => true
-          },
-          'Config' => {
-            'Labels' => {
-              'io.kontena.container.name' => 'foo-1'
-            }
-          },
-
-          'Volumes' => []
-        }
-      })
-      expect(container.reload.running?).to eq(true)
-    end
-
-    it 'updates container if container is found by internal id' do
-      container_id = SecureRandom.hex(16)
-      container = grid.containers.new(name: 'foo-1')
-      expect(container.running?).to eq(false)
-      subject.save({
-        'container' => {
-          'Id' => container_id,
-          'NetworkSettings' => {},
-          'State' => {
-            'Running' => true
-          },
-          'Config' => {
-            'Labels' => {
-              'io.kontena.container.id' => container.id.to_s,
-              'io.kontena.service.id' => 'foobarbaz'
-            }
-          },
-
-          'Volumes' => []
-        }
-      })
-      expect(container.reload.running?).to eq(true)
-      expect(container.container_id).to eq(container_id)
-    end
-  end
-
   describe '#stats_buffer_size' do
     it 'has a default buffer size greater than 1' do
       expect(subject.stats_buffer_size).to be > 1

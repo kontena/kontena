@@ -7,7 +7,7 @@ module Rpc
 
     def initialize(grid)
       @grid = grid
-      @db_session = ContainerLog.collection.session.with(
+      @db_session = HostNode.collection.session.with(
         write: {
           w: 0, fsync: false, j: false
         }
