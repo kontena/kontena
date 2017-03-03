@@ -29,7 +29,14 @@ module Kontena::Cli::Stacks
         update_stack(stack) || spin.fail!
       end
 
-      Kontena.run(['stack', 'deploy', name]) if deploy?
+      if deploy?
+        result = Kontena.run(['stack', 'deploy', name])
+        unless result.to_i.zero?
+          msg = "Deploy failed"
+          msg << ": #{$!.message}" if $!
+          exit_with_error msg
+        end
+      end
     end
 
     def update_stack(stack)
