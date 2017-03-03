@@ -35,7 +35,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "external-registry", "External registry specific commands", load_subcommand('external_registry_command')
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
   subcommand "plugin", "Plugin related commands", load_subcommand('plugin_command')
-  subcommand "version", "Show version #{Kontena::Cli::VERSION}", load_subcommand('version_command')
+  subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
 
   def execute
   end
