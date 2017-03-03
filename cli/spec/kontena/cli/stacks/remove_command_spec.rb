@@ -25,7 +25,7 @@ describe Kontena::Cli::Stacks::RemoveCommand do
         .and_raise(Kontena::Errors::StandardError.new(500, 'internal error'))
       expect{
         subject.run(['--force', 'test-stack'])
-      }.to raise_error(Kontena::Errors::StandardError)
+      }.to exit_with_error
     end
   end
 end

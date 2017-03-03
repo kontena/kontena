@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative '../../helpers/random_name_helper'
 
 module Grids

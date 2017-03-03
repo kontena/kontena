@@ -58,7 +58,7 @@ module Agent
 
     # @return [RpcClient]
     def rpc_client
-      RpcClient.new(node.node_id, 5)
+      RpcClient.new(node.node_id, 30)
     end
   end
 end

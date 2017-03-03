@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative '../services/logging'
 require_relative '../services/auth_provider'
 

@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative 'migration'
 require_relative 'migration_proxy'
 require_relative '../logging'

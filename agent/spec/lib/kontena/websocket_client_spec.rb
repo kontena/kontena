@@ -11,7 +11,7 @@ describe Kontena::WebsocketClient do
   }
   after(:each) { Celluloid.shutdown }
 
-  around(:each) do |example|
+  around(:each, :em => true) do |example|
     EM.run {
       example.run
       EM.stop
@@ -66,6 +66,26 @@ describe Kontena::WebsocketClient do
     end
   end
 
+  describe '#on_error' do
+    context "For a server that is ECONNREFUSED" do
+      subject do
+        described_class.new('ws://127.0.0.1:1337', 'test-token')
+      end
+
+      it "logs an error", :em => false do
+        expect(subject).to receive(:error).with(/connection refused/) do |event|
+          EM.stop
+        end
+
+        # XXX: EM will segfault if the mock raises
+        # =>   https://github.com/eventmachine/eventmachine/issues/765
+        EM.run {
+          subject.connect
+        }
+      end
+    end
+  end
+
   describe '#on_close' do
     let(:event) { Faye::WebSocket::API::CloseEvent.new('close', {}) }
 
@@ -105,13 +125,13 @@ describe Kontena::WebsocketClient do
       allow(subject).to receive(:ws).and_return(ws)
     end
 
-    it 'publishes event' do
+    it 'publishes event', :em => true do
       expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
-      expect(ws).to receive(:close).with(1000)
+      expect(ws).to receive(:close)
       subject.close
     end
 
-    context "for a connected websocket" do
+    context "for a connected websocket", :em => true do
       let :open_event do
         double(:open_event)
       end
@@ -130,32 +150,17 @@ describe Kontena::WebsocketClient do
         expect(subject).to_not be_connecting
       end
 
-      it 'sets connection as disconnected if it immediately emits :close' do
+      it 'eventually sets connection to closed ' do
         expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
 
-        expect(ws).to receive(:close).with(1000) { subject.on_close close_event }
-        subject.close
-
-        expect(subject).to_not be_connected
-        expect(subject).to_not be_connecting
-      end
-
-      it 'sets connection to closed if it blocks' do
-        expect(Celluloid::Notifications).to receive(:publish).with('websocket:disconnect', nil)
-
-        expect(ws).to receive(:close).with(1000) { }
-        expect(EM::Timer).to receive(:new) { |timeout, &block| @close_block = block; close_timer }
+        expect(ws).to receive(:close) { }
 
         subject.close
 
         expect(subject).to be_connected
         expect(subject).to_not be_connecting
 
-        expect(ws).to receive(:remove_all_listeners)
-        expect(subject).to receive(:on_close).and_call_original
-        expect(close_timer).to receive(:cancel)
-
-        @close_block.call
+        subject.on_close close_event
 
         expect(subject).to_not be_connected
         expect(subject).to_not be_connecting

@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 
+# This file exists mostly for backwards dependency to
+# allow the old "which kontena && . foofoo/init"
+# completion loading
 _kontena_complete() {
   COMPREPLY=()
-  if [ "$ZSH_VERSION" == "" ]; then
-    local src="${BASH_SOURCE[0]}"
-  else
-    local src="${(%):-%x}"
-  fi
-  DIR=$( cd "$( dirname "$src" )" && pwd )
   local word="${COMP_WORDS[COMP_CWORD]}"
-  local completions="$(${DIR}/completer ${COMP_WORDS[*]})"
+  local completions="$(kontena complete ${COMP_WORDS[*]})"
   COMPREPLY=( $(compgen -W "$completions" -- "$word") )
 }
 
@@ -18,4 +15,4 @@ if [ "$ZSH_VERSION" != "" ]; then
   autoload -U +X bashcompinit && bashcompinit
 fi
 
-complete -F _kontena_complete kontena
+which kontena > /dev/null && complete -F _kontena_complete kontena

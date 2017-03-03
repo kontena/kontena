@@ -18,15 +18,15 @@ describe Kontena::Cli::Vault::ImportCommand do
   expect_to_require_current_master
 
   it 'asks for confirmation' do
-    expect(subject).to receive(:confirm).and_raise(RuntimeError, 'confirm')
+    expect(subject).to receive(:confirm).and_return(false)
     expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\n")
-    expect{subject.run(['foo.yml'])}.to raise_error(RuntimeError, 'confirm')
+    subject.run(['foo.yml'])
   end
 
   it 'dies if the yml contains something odd' do
     expect(File).to receive(:read).with('foo.yml').and_return({foo: 'bar', bar: { foo: ["bar"] }}.to_yaml)
-    expect(subject).to receive(:exit_with_error).with(/Invalid value/).and_raise(RuntimeError, 'invalid')
-    expect{subject.run(['foo.yml'])}.to raise_error(RuntimeError, 'invalid')
+    expect(subject).to receive(:exit_with_error).with(/Invalid value/).and_call_original
+    expect{subject.run(['--force', 'foo.yml'])}.to exit_with_error
   end
 
   it 'runs vault write for kv-pairs in yaml' do

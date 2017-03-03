@@ -1,7 +1,7 @@
 require_relative '../spec_helper'
 require_relative '../../app/middlewares/websocket_backend'
 
-describe WebsocketBackend do
+describe WebsocketBackend, celluloid: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
 

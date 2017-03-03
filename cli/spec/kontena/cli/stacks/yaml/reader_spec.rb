@@ -5,14 +5,6 @@ require 'liquid'
 describe Kontena::Cli::Stacks::YAML::Reader do
   include FixturesHelpers
 
-  def absolute_yaml_path(file = 'kontena_v3.yml')
-    "#{Dir.pwd}/#{file}"
-  end
-
-  let(:subject) do
-    described_class.new('kontena_v3.yml')
-  end
-
   let(:service_extender) do
     spy
   end
@@ -49,30 +41,30 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   end
 
   before(:each) do
-    allow(File).to receive(:read)
-      .with(absolute_yaml_path('docker-compose_v2.yml'))
-      .and_return(fixture('docker-compose_v2.yml'))
-    allow(File).to receive(:read)
-      .with(absolute_yaml_path('kontena_v3.yml'))
-      .and_return(fixture('kontena_v3.yml'))
     allow_any_instance_of(described_class).to receive(:env)
       .and_return( { 'STACK' => 'test', 'GRID' => 'test-grid' } )
   end
 
   describe '#initialize' do
+    subject do
+      described_class.new(fixture_path('kontena_v3.yml'))
+    end
+
     it 'reads given file' do
       expect(File).to receive(:read)
-        .with(absolute_yaml_path)
+        .with(fixture_path('kontena_v3.yml'))
         .and_return(fixture('kontena_v3.yml'))
+
       subject
     end
   end
 
   context 'when yaml file is malformed' do
+    subject do
+      described_class.new(fixture_path('kontena-malformed-yaml.yml'))
+    end
+
     it 'exits the execution' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('kontena-malformed-yaml.yml'))
       expect {
         subject.execute
       }.to raise_error(StandardError)
@@ -80,17 +72,21 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   end
 
   context 'when service config is not hash' do
-    it 'returns error' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('kontena-not-hash-service-config.yml'))
+    subject do
+      described_class.new(fixture_path('kontena-not-hash-service-config.yml'))
+    end
 
+    it 'returns error' do
       outcome = subject.execute
       expect(outcome[:errors].size).to eq(1)
     end
   end
 
   describe '#execute' do
+    subject do
+      described_class.new(fixture_path('kontena_v3.yml'))
+    end
+
     context 'when extending services' do
       it 'extends services from external file' do
         docker_compose_yml = YAML.load(fixture('docker-compose_v2.yml'))
@@ -127,9 +123,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
 
       it 'extends services from the same file' do
-        expect(File).to receive(:read)
-          .with(absolute_yaml_path('kontena_v3.yml'))
-          .and_return(fixture('stack-internal-extend.yml'))
+        subject = described_class.new(fixture_path('stack-internal-extend.yml'))
+
         kontena_yml = YAML.load(fixture('stack-internal-extend.yml'))
 
         expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
@@ -142,7 +137,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
       it 'merges validation errors' do
         allow(File).to receive(:read)
-          .with(absolute_yaml_path('docker-compose_v2.yml'))
+          .with(fixture_path('kontena_v3.yml'))
+          .and_return(fixture('kontena_v3.yml'))
+        allow(File).to receive(:read)
+          .with(fixture_path('docker-compose_v2.yml'))
           .and_return(fixture('docker-compose-invalid.yml'))
         outcome = subject.execute
         expect(outcome[:errors]).to eq([{
@@ -159,7 +157,18 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     context 'variable interpolation' do
+      subject do
+        described_class.new(fixture_path('stack-with-variables.yml'))
+      end
+
       before(:each) do
+        allow(File).to receive(:read)
+          .with(fixture_path('docker-compose_v2.yml'))
+          .and_return(fixture('docker-compose_v2.yml'))
+        allow(File).to receive(:read)
+          .with(fixture_path('stack-with-variables.yml'))
+          .and_return(fixture('stack-with-variables.yml'))
+
         allow_any_instance_of(described_class).to receive(:env).and_return(
           {
             'STACK' => 'test',
@@ -167,32 +176,24 @@ describe Kontena::Cli::Stacks::YAML::Reader do
             'TAG' => '4.1'
           }
         )
+        allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
         allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
         allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('mariadb:latest')
       end
 
       it 'interpolates $VAR variables' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('stack-with-variables.yml'))
         result = subject.execute
         services = result[:services]
         expect(services['wordpress']['image']).to eq('wordpress:4.1')
       end
 
       it 'interpolates ${VAR} variables' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('stack-with-variables.yml'))
         result = subject.execute
         services = result[:services]
         expect(services['mysql']['image']).to eq('mariadb:latest')
       end
 
       it 'warns about empty variables' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('stack-with-variables.yml'))
         allow(ENV).to receive(:[])
           .with('MYSQL_IMAGE')
           .and_return('')
@@ -204,50 +205,46 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           subject.execute
         }.to output("Value for MYSQL_IMAGE is not set. Substituting with an empty string.\n").to_stdout
       end
-    end
 
-    it 'replaces $$VAR variables to $VAR format' do
-      allow_any_instance_of(described_class).to receive(:env).and_return(
-        {
-          'STACK' => 'test',
-          'GRID' => 'test-grid'
-        }
-      )
-      allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
-      allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
-      allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('foo')
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('stack-with-variables.yml'))
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('docker-compose_v2.yml'))
-        .and_return(fixture('docker-compose_v2.yml'))
-      services = subject.execute[:services]
-      expect(services['mysql']['environment'].first).to eq('INTERNAL_VAR=$INTERNAL_VAR')
+      it 'replaces $$VAR variables to $VAR format' do
+        allow_any_instance_of(described_class).to receive(:env).and_return(
+          {
+            'STACK' => 'test',
+            'GRID' => 'test-grid'
+          }
+        )
+        allow(ENV).to receive(:[]).with('TAG').and_return('4.1')
+        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+        allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('foo')
+        services = subject.execute[:services]
+        expect(services['mysql']['environment'].first).to eq('INTERNAL_VAR=$INTERNAL_VAR')
+      end
     end
 
     context 'environment variables' do
-      it 'converts env hash to array' do
-        result = subject.execute[:services]
-        expect(result['wordpress']['environment']).to eq(['WORDPRESS_DB_PASSWORD=test_secret'])
+      subject do
+        described_class.new(fixture_path('stack-with-env-file.yml'))
       end
 
-      it 'does nothing to env array' do
-        result = subject.execute[:services]
-        expect(result['mysql']['environment']).to eq(['MYSQL_ROOT_PASSWORD=test_secret'])
+      context "with an empty env file" do
+        before(:each) do
+          allow(File).to receive(:readlines).with('.env').and_return([])
+        end
+
+        it 'converts env hash to array' do
+          result = subject.execute[:services]
+          expect(result['wordpress']['environment']).to eq(['WORDPRESS_DB_PASSWORD=test_secret'])
+        end
+
+        it 'does nothing to env array' do
+          result = subject.execute[:services]
+          expect(result['mysql']['environment']).to eq(['MYSQL_ROOT_PASSWORD=test_secret'])
+        end
       end
 
       context 'when introduced env_file' do
         before(:each) do
-          allow(File).to receive(:read)
-            .with(absolute_yaml_path('kontena_v3.yml'))
-            .and_return(fixture('stack-with-env-file.yml'))
           allow(File).to receive(:readlines).with('.env').and_return(env_file)
-        end
-
-        it 'reads given file' do
-          expect(File).to receive(:readlines).with('.env').and_return(env_file)
-          subject.send(:read_env_file, '.env')
         end
 
         it 'discards comment lines' do
@@ -294,42 +291,47 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       expect(outcome[:services]).to eq(valid_v3_result['services'])
     end
 
-    it 'returns validation errors' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path('kontena_v3.yml'))
-        .and_return(fixture('stack-invalid.yml'))
-      outcome = subject.execute
-      expect(outcome[:errors].size).to eq(1)
+    context "For an invalid stack file" do
+      subject do
+        described_class.new(fixture_path('stack-invalid.yml'))
+      end
+
+      it 'returns validation errors' do
+        outcome = subject.execute
+        expect(outcome[:errors].size).to eq(1)
+      end
     end
   end
 
   context 'when build option is string' do
+    subject do
+      described_class.new(fixture_path('kontena_build_v3.yml'))
+    end
+
     it 'expands build option to absolute path' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-      expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
+      expect(outcome[:services]['webapp']['build']['context']).to eq(fixture_path(''))
     end
   end
 
   context 'when build option is Hash' do
+    subject do
+      described_class.new(fixture_path('kontena_build_v3.yml'))
+    end
+
     it 'expands build context to absolute path' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('kontena_build_v3.yml'))
       outcome = subject.execute
-      expect(outcome[:services]['webapp']['build']['context']).to eq(File.expand_path('.'))
+      expect(outcome[:services]['webapp']['build']['context']).to eq(fixture_path(''))
     end
   end
 
   context 'normalize_build_args' do
+    subject do
+      described_class.new(fixture_path('kontena_build_v3.yml'))
+    end
+
     context 'when build option is string' do
       it 'skips normalizing' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('kontena_build_v3.yml'))
-
         options = {
           'build' => '.'
         }
@@ -341,10 +343,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     context 'when build arguments option is Hash' do
       it 'does not do anything' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('kontena_build_v3.yml'))
-
         options = {
           'build' => {
             'context' => '.',
@@ -363,10 +361,6 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     context 'when build arguments option is Array' do
       it 'converts it to array' do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path)
-          .and_return(fixture('kontena_build_v3.yml'))
-
         options = {
           'build' => {
             'context' => '.',
@@ -383,25 +377,39 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   end
 
   describe '#stack_name' do
+    subject do
+      described_class.new(fixture_path('kontena_v3.yml'))
+    end
+
     it 'returns name for v3' do
-      allow(File).to receive(:read)
-        .with(absolute_yaml_path)
-        .and_return(fixture('kontena_v3.yml'))
       name = subject.stack_name
       expect(name).to eq('stackname')
     end
   end
 
   context 'origins' do
+    before do
+      allow(File).to receive(:read)
+        .with(fixture_path('kontena_v3.yml'))
+        .and_return(fixture('kontena_v3.yml'))
+    end
+
     it 'can read from a file' do
-      expect(File).to receive(:read)
-        .with(absolute_yaml_path('kontena_v3.yml'))
-        .and_return(fixture('stack-with-liquid.yml'))
+      allow(File).to receive(:read)
+        .with(fixture_path('docker-compose_v2.yml'))
+        .and_return(fixture('docker-compose-invalid.yml'))
+
+      subject = described_class.new(fixture_path('kontena_v3.yml'))
+
       expect(subject.from_file?).to be_truthy
       expect(subject.execute[:registry]).to be_nil
     end
 
     it 'can read from the registry' do
+      allow(File).to receive(:read)
+        .with(File.expand_path('docker-compose_v2.yml'))
+        .and_return(fixture('docker-compose-invalid.yml'))
+
       stack_double = double
       allow_any_instance_of(Kontena::StacksCache::RegistryClientFactory).to receive(:cloud_auth?).and_return(true)
       expect(Kontena::StacksCache).to receive(:cache).with('foo/foo', nil).and_return(stack_double)
@@ -412,6 +420,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     it 'can read from an url' do
+      allow(File).to receive(:read)
+        .with(File.expand_path('docker-compose_v2.yml'))
+        .and_return(fixture('docker-compose-invalid.yml'))
+
       stub_request(:get, "http://foo.example.com/foo").to_return(:status => 200, :body => fixture('stack-with-liquid.yml'), :headers => {})
       allow_any_instance_of(described_class).to receive(:load_from_url).and_return(fixture('stack-with-liquid.yml'))
       instance = described_class.new('http://foo.example.com/foo')
@@ -420,21 +432,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
   end
 
-  context 'liquid' do
-    context 'valid' do
-      before(:each) do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena_v3.yml'))
-          .and_return(fixture('stack-with-liquid.yml'))
-        allow_any_instance_of(described_class).to receive(:env).and_return(
-          {
-            'STACK' => 'test',
-            'GRID' => 'test-grid',
-            'TAG' => '4.1',
-            'MYSQL_IMAGE' => 'mariadb:latest'
-          }
-        )
-        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+  context "using Liquid templates" do
+    context "for a valid stack file" do
+      subject do
+        described_class.new(fixture_path('stack-with-liquid.yml'))
       end
 
       it 'does not interpolate liquid into variables' do
@@ -446,25 +447,58 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
     end
 
-    context 'invalid' do
-      before(:each) do
-        allow(File).to receive(:read)
-          .with(absolute_yaml_path('kontena_v3.yml'))
-          .and_return(fixture('stack-with-invalid-liquid.yml'))
-        allow_any_instance_of(described_class).to receive(:env).and_return(
-          {
-            'STACK' => 'test',
-            'GRID' => 'test-grid',
-            'TAG' => '4.1',
-            'MYSQL_IMAGE' => 'mariadb:latest'
-          }
-        )
-        allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
+    context "for invalid Liquid syntax" do
+      subject do
+        described_class.new(fixture_path('stack-with-invalid-liquid.yml'))
       end
 
       it 'raises' do
         expect{subject.execute}.to raise_error(Liquid::SyntaxError)
       end
+    end
+  end
+
+  context "for an undefined variable" do
+    subject do
+      described_class.new(fixture_path('stack-with-liquid-undefined.yml'))
+    end
+
+    it "raises an undefined variable error" do
+      expect{subject.execute}.to raise_error(Liquid::UndefinedVariable, /undefined variable asdflol/)
+    end
+  end
+
+  context "for an optional variable that is not defined" do
+    subject do
+      described_class.new(fixture_path('stack-with-liquid-optional.yml'))
+    end
+
+    before do
+      allow(ENV).to receive(:[]).with('asdf').and_return(nil)
+    end
+
+    it "omits the env" do
+      outcome = subject.execute
+
+      expect(outcome[:variables]).to eq('asdf' => nil), subject.variables.inspect
+      expect(outcome[:services]['test']['environment']).to eq nil
+    end
+  end
+
+  context "for an optional variable that is defined" do
+    subject do
+      described_class.new(fixture_path('stack-with-liquid-optional.yml'))
+    end
+
+    before do
+      allow(ENV).to receive(:[]).with('asdf').and_return('test')
+    end
+
+    it "defines the env" do
+      outcome = subject.execute
+
+      expect(outcome[:variables]).to eq 'asdf' => 'test'
+      expect(outcome[:services]['test']['environment']).to eq ['ASDF=test']
     end
   end
 end

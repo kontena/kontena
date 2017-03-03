@@ -1,4 +1,4 @@
-module Agent
+module Rpc
   class ContainerInfoMapper
 
     attr_reader :grid

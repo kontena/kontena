@@ -1,11 +1,7 @@
 require_relative '../spec_helper'
 
-describe LeaderElectorJob do
-  before(:each) {
-    Celluloid.boot
-    DistributedLock.delete_all
-  }
-  after(:each) { Celluloid.shutdown }
+describe LeaderElectorJob, celluloid: true do
+  before(:each) { DistributedLock.delete_all }
 
   describe '#elect' do
     it 'elects only one candidate' do

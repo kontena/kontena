@@ -6,7 +6,7 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
 
-    attr_reader :queue, :etcd, :workers
+    attr_reader :etcd, :workers
 
     finalizer :terminate_workers
 
@@ -14,11 +14,8 @@ module Kontena::Workers
     STOP_EVENTS = ['die', 'kill']
     ETCD_PREFIX = '/kontena/log_worker/containers'
 
-    ##
-    # @param [Queue] queue
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
+    def initialize(autostart = true)
       @queue_processing = false
       @workers = {}
       subscribe('container:event', :on_container_event)
@@ -47,7 +44,7 @@ module Kontena::Workers
 
       exclusive {
         unless workers[container.id]
-          workers[container.id] = ContainerHealthCheckWorker.new(container, queue)
+          workers[container.id] = ContainerHealthCheckWorker.new(container)
           workers[container.id].async.start
         end
       }
