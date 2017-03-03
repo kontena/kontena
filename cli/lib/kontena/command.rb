@@ -68,9 +68,6 @@ class Kontena::Command < Clamp::Command
   end
 
   def self.inherited(where)
-    if ENV["DEBUG"].to_s == "super"
-      puts "Class #{where} inherited from Kontena::Command"
-    end
     where.extend Finalizer
   end
 
