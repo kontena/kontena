@@ -41,6 +41,7 @@ module EventStream
 
   def publish_async(event)
     MongoPubsub.publish_async(CHANNEL, event)
+  rescue MongoPubsub::NotStartedError => e    
   end
 
   def find_serializer_class
