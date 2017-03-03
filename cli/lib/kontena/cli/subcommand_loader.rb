@@ -2,7 +2,7 @@ module Kontena::Cli
   class SubcommandLoader
     attr_reader :path, :class_definition
 
-    # Create a subcommand loader instnace
+    # Create a subcommand loader instance
     #
     # @param [String] path path to command definition
     # @param [Symbol|String|Array] class_definition example: :Kontena, :Cli, :Master, :UseCommand.
