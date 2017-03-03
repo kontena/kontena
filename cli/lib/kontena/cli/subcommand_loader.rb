@@ -38,15 +38,21 @@ module Kontena::Cli
       raise ArgumentError, "Can't figure out command class name from path #{path} - tried #{tree}"
     end
 
+    # Tries to require a file, returns false instead of raising LoadError unless succesful
+    #
+    # @param path [String]
+    # @return [TrueClass,FalseClass]
+    def safe_require(path)
+      require path
+      true
+    rescue LoadError
+      false
+    end
+
     def klass
       return @subcommand_class if @subcommand_class
-      real_path = path + '.rb' unless path.end_with?('.rb')
-      if File.exist?(real_path)
-        require(real_path)
-      elsif File.exist?(Kontena.cli_root(real_path))
-        require(Kontena.cli_root(real_path))
-      else
-        raise ArgumentError, "Can not load #{real_path} or #{Kontena.cli_root(real_path)}"
+      unless safe_require(path) || safe_require(Kontena.cli_root(path))
+        raise ArgumentError, "Can't load #{path} or #{Kontena.cli_root(path)}"
       end
       @subcommand_class = const_get_tree(prepend_kontena_cli(symbolize_path(path)))
     end
