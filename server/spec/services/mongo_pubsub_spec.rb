@@ -93,23 +93,5 @@ describe MongoPubsub do
       expect(responses.size).to eq(rounds)
       expect(duration <= 2.0).to be_truthy
     end
-
-    context 'when MongoPubsub is not started' do
-      before do
-        described_class.instance_variable_set(:@supervisor, nil)
-      end
-
-      after do
-        described_class.start!(PubsubChannel.collection)
-      end
-
-      it 'raises MongoPubsub::NotStartedError' do
-        channel1_msg = {'hello' => 'world'}
-        expect{
-          described_class.publish('channel1', channel1_msg)
-        }.to raise_error(MongoPubsub::NotStartedError)
-      end
-    end
-
   end
 end
