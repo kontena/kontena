@@ -214,4 +214,11 @@ describe Kontena::Workers::NodeInfoWorker do
       expect(subject.private_ip).to eq('192.168.2.10')
     end
   end
+
+  describe '#publish_node_stats' do
+    it 'sends stats via rpc with timestamps' do
+      expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [hash_including(time: String)])
+      subject.publish_node_stats
+    end
+  end
 end

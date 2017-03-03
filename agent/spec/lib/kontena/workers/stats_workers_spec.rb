@@ -199,4 +199,33 @@ describe Kontena::Workers::StatsWorker do
       subject.send_container_stats(event)
     end
   end
+
+  describe '#send_container_stats' do
+    it 'sends stats via rpc' do
+      expect(rpc_client).to receive(:notification).once.with('/containers/stat', [hash_including(time: String)])
+
+      container = {
+        aliases: [],
+        stats: [
+          {
+            timestamp: "2017-03-01 00:00:00",
+            cpu: {
+              usage: {
+                total: 1
+              }
+            }
+          },
+          {
+            timestamp: "2017-03-01 00:00:01",
+            cpu: {
+              usage: {
+                total: 1
+              }
+            }
+          }
+        ]
+      }
+      subject.send_container_stats(container)
+    end
+  end
 end

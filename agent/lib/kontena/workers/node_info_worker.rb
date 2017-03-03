@@ -135,7 +135,8 @@ module Kontena::Workers
             used: disk.used_bytes,
             total: disk.total_bytes
           }
-        ]
+        ],
+        time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
       send_statsd_metrics(data)

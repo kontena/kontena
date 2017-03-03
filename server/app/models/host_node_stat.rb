@@ -1,6 +1,6 @@
 class HostNodeStat
   include Mongoid::Document
-  include Mongoid::Timestamps
+  include Mongoid::Timestamps::Created
 
   field :load, type: Hash
   field :memory, type: Hash

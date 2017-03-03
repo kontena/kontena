@@ -7,6 +7,11 @@ module Rpc
 
     def initialize(grid)
       @grid = grid
+      @db_session = HostNode.collection.session.with(
+        write: {
+          w: 0, fsync: false, j: false
+        }
+      )
     end
 
     def get(id)
@@ -34,12 +39,18 @@ module Rpc
       node = @grid.host_nodes.find_by(node_id: data['id'])
       return unless node
       data = fixnums_to_float(data)
-      node.host_node_stats.create(
+      time = data['time'] ? Time.parse(data['time']) : Time.now.utc
+
+      stat = {
         grid_id: @grid.id,
+        host_node_id: node.id,
         memory: data['memory'],
         load: data['load'],
-        filesystem: data['filesystem']
-      )
+        filesystem: data['filesystem'],
+        usage: data['usage'],
+        created_at: time
+      }
+      @db_session[:host_node_stats].insert(stat)
     end
   end
 end
