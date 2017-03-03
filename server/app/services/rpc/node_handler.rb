@@ -48,6 +48,7 @@ module Rpc
         load: data['load'],
         filesystem: data['filesystem'],
         usage: data['usage'],
+        cpu_average: data['cpu_average'],
         created_at: time
       }
       @db_session[:host_node_stats].insert(stat)
