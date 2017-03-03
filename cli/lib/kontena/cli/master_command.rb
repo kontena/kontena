@@ -2,6 +2,7 @@ class Kontena::Cli::MasterCommand < Kontena::Command
   include Kontena::Util
 
   subcommand ["list", "ls"], "List masters where client has logged in", load_subcommand('master/list_command')
+  subcommand ["remove", "rm"], "Remove a master from configuration", load_subcommand('master/remove_command')
   subcommand ["config", "cfg"], "Configure master settings", load_subcommand('master/config_command')
   subcommand "use", "Switch to use selected master", load_subcommand('master/use_command')
   subcommand "users", "Users specific commands", load_subcommand('master/users_command')
