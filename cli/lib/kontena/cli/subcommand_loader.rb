@@ -1,59 +1,54 @@
 module Kontena::Cli
   class SubcommandLoader
-    attr_reader :path, :class_definition
+    attr_reader :path
 
     # Create a subcommand loader instance
     #
     # @param [String] path path to command definition
-    # @param [Symbol|String|Array] class_definition example: :Kontena, :Cli, :Master, :UseCommand.
-    #   if left empty, tries to guess from path: 'master/use_command' will become :Master, :UseCommand
-    def initialize(path, *class_definition)
+    def initialize(path)
       @path = path
-      if class_definition.empty?
-        @class_definition = path.gsub(/.*\/cli\//, '').split('/').map do |path_part|
-          path_part.split('_').map{ |e| e.capitalize }.join
-        end.map(&:to_sym)
-      elsif class_definition.first.kind_of?(String) && class_definition.size == 1
-        @class_definition = class_definition.split('::').map(&:to_sym)
-      else
-        @class_definition = class_definition.map(&:to_sym)
-      end
     end
 
-    def get_class
-      retried = false
-      begin
-        definition = class_definition.dup
-        base = Object.const_get(definition.shift)
-        if definition.empty?
-          subcommand_class = base
-        else
-          subcommand_class = class_definition.inject(base) { |new_base, part| new_base.const_get(part) }
-        end
-      rescue
-        unless retried
-          @class_definition.delete_if {|v| v == :Kontena || v == :Cli}
-          @class_definition = [:Kontena, :Cli] + @class_definition
-          retried = true
-          retry
-        end
-        raise ArgumentError, "Can not figure out command class name: #{@class_definition.inspect} (#{@path.inspect})"
-      end
+    # Takes something like /foo/bar/cli/master/foo_coimmand and returns [:Master, :FooCommand]
+    #
+    # @param path [String]
+    # @return [Array<Symbol>]
+    def constantize(path)
+      path.gsub(/.*\/cli\//, '').split('/').map do |path_part|
+        path_part.split('_').map{ |e| e.capitalize }.join
+      end.map(&:to_sym)
+    end
 
-      subcommand_class
+    # Takes an array such as [:Foo] or [:Cli, :Foo] and returns [:Kontena, :Cli, :Foo]
+    def kontenaize(tree)
+      [:Kontena, :Cli] + (tree - [:Cli])
+    end
+
+    # Takes an array such as [:Master, :FooCommand] and returns Master::FooCommand or if not defined, Kontena::Cli::Master::FooCommand
+    #
+    # @param tree [Array<Symbol]
+    # @return [Class]
+    def get_class(tree)
+      if tree.size == 1
+        Object.const_get(tree.first)
+      else
+        tree[1..-1].inject(Object.const_get(tree.first)) { |new_base, part| new_base.const_get(part) }
+      end
+    rescue
+      raise ArgumentError, "Can't figure out command class name from path #{path} - tried #{tree}"
     end
 
     def klass
       return @subcommand_class if @subcommand_class
-      path = @path + '.rb' unless @path.end_with?('.rb')
-      if File.exist?(path)
-        require(path)
-      elsif File.exist?(Kontena.cli_root(path))
-        require(Kontena.cli_root(path))
+      real_path = path + '.rb' unless path.end_with?('.rb')
+      if File.exist?(real_path)
+        require(real_path)
+      elsif File.exist?(Kontena.cli_root(real_path))
+        require(Kontena.cli_root(real_path))
       else
-        raise ArgumentError, "Can not load #{path} or #{Kontena.cli_root(path)}"
+        raise ArgumentError, "Can not load #{real_path} or #{Kontena.cli_root(real_path)}"
       end
-      @subcommand_class = get_class
+      @subcommand_class = get_class(kontenaize(constantize(path)))
     end
 
     def new(*args)
