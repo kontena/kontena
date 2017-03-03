@@ -4,6 +4,15 @@ require 'base64'
 require_relative '../logging'
 require_relative './rpc_server'
 require_relative '../../helpers/current_leader'
+
+module Faye::WebSocket::Client::Connection
+  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
+  # force connection to close without waiting if the send buffer is full
+  def close_connection_after_writing
+    close_connection
+  end
+end
+
 module Cloud
   class WebsocketClient
     include CurrentLeader
@@ -27,12 +36,6 @@ module Cloud
     include Logging
     KEEPALIVE_TIME = 30
 
-    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
-      # use a slightly longer timeout as a fallback
-      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
-    else
-      CLOSE_TIMEOUT = 30
-    end
 
     @@api_uri
     attr_reader :api_uri,
@@ -164,8 +167,6 @@ module Cloud
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
       @ping_timer = nil
-      @close_timer.cancel if @close_timer
-      @close_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -263,21 +264,8 @@ module Cloud
       error exc.message
     end
 
-    # Abort the connection, closing the websocket, with a timeout
     def close
-      return if @close_timer
-
-      # send close frame; this will get stuck if the server is not replying
-      ws.close(1000)
-      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        if ws
-          warn "Hit close timeout, abandoning existing websocket connection"
-          # ignore events from the abandoned connection
-          ws.remove_all_listeners
-          # fake it
-          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
-        end
-      end
+      ws.close
     end
   end
 end
