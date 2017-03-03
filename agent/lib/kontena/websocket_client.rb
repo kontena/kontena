@@ -3,18 +3,19 @@ require_relative 'logging'
 require_relative 'rpc_server'
 require_relative 'rpc_client'
 
+module Faye::WebSocket::Client::Connection
+  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
+  # force connection to close without waiting if the send buffer is full
+  def close_connection_after_writing
+    close_connection
+  end
+end
+
 module Kontena
   class WebsocketClient
     include Kontena::Logging
 
     KEEPALIVE_TIME = 30
-
-    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
-      # use a slightly longer timeout as a fallback
-      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
-    else
-      CLOSE_TIMEOUT = 30
-    end
 
     attr_reader :api_uri,
                 :api_token,
@@ -35,7 +36,6 @@ module Kontena
       @connected = false
       @connecting = false
       @ping_timer = nil
-      @close_timer = nil
       info "initialized with token #{@api_token[0..10]}..."
     end
 
@@ -85,7 +85,7 @@ module Kontena
         on_close(event)
       end
       @ws.on :error do |event|
-        error "connection closed with error: #{event.message}"
+        on_error(event)
       end
     end
 
@@ -145,11 +145,23 @@ module Kontena
       error exc.message
     end
 
+    def on_error(event)
+      debug event.message.inspect
+
+      if event.message == Errno::EINVAL
+        error "invalid URI: #{api_uri}"
+      elsif event.message == Errno::ECONNREFUSED
+        error "connection refused: #{api_uri}"
+      elsif event.message == Errno::EPROTO
+        error "protocol error, check ws/wss: #{api_uri}"
+      else
+        error "connection error: #{event.message}"
+      end
+    end
+
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
       @ping_timer = nil
-      @close_timer.cancel if @close_timer
-      @close_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -158,7 +170,7 @@ module Kontena
       elsif event.code == 4010
         handle_invalid_version
       end
-      info "connection closed with code: #{event.code}"
+      info "connection closed with code #{event.code}"
     rescue => exc
       error exc.message
     end
@@ -222,25 +234,11 @@ module Kontena
 
     # Abort the connection, closing the websocket, with a timeout
     def close
-      return if @close_timer
-
       # stop sending messages, queue them up until reconnected
       notify_actors('websocket:disconnect', nil)
 
-      # send close frame; this will get stuck if the server is not replying
-      ws.close(1000)
-
-      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        if ws
-          warn "Hit close timeout, abandoning existing websocket connection"
-
-          # ignore events from the abandoned connection
-          ws.remove_all_listeners
-
-          # fake it
-          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
-        end
-      end
+      # send close frame; this has a 30s timeout
+      ws.close
     end
 
     def notify_actors(event, value)
