@@ -13,22 +13,22 @@ module Kontena::Cli
     #
     # @param path [String]
     # @return [Array<Symbol>]
-    def constantize(path)
+    def symbolize_path(path)
       path.gsub(/.*\/cli\//, '').split('/').map do |path_part|
         path_part.split('_').map{ |e| e.capitalize }.join
       end.map(&:to_sym)
     end
 
     # Takes an array such as [:Foo] or [:Cli, :Foo] and returns [:Kontena, :Cli, :Foo]
-    def kontenaize(tree)
+    def prepend_kontena_cli(tree)
       [:Kontena, :Cli] + (tree - [:Cli])
     end
 
-    # Takes an array such as [:Master, :FooCommand] and returns Master::FooCommand or if not defined, Kontena::Cli::Master::FooCommand
+    # Takes an array such as [:Master, :FooCommand] and returns Master::FooCommand
     #
     # @param tree [Array<Symbol]
     # @return [Class]
-    def get_class(tree)
+    def const_get_tree(tree)
       if tree.size == 1
         Object.const_get(tree.first)
       else
@@ -48,7 +48,7 @@ module Kontena::Cli
       else
         raise ArgumentError, "Can not load #{real_path} or #{Kontena.cli_root(real_path)}"
       end
-      @subcommand_class = get_class(kontenaize(constantize(path)))
+      @subcommand_class = const_get_tree(prepend_kontena_cli(symbolize_path(path)))
     end
 
     def new(*args)
