@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require "kontena/cli/services/restart_command"
 
 describe Kontena::Cli::Services::RestartCommand do

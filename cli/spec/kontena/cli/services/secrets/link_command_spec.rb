@@ -1,4 +1,4 @@
-require_relative "../../../../spec_helper"
+require 'spec_helper'
 require "kontena/cli/grid_options"
 require "kontena/cli/services/secrets/link_command"
 

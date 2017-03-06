@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require "kontena/cli/stacks/upgrade_command"
 
 describe Kontena::Cli::Stacks::UpgradeCommand do

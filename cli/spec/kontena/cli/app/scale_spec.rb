@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require "kontena/cli/apps/scale_command"
 
 describe Kontena::Cli::Apps::ScaleCommand do

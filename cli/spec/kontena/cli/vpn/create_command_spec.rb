@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require "kontena/cli/vpn/create_command"
 
 describe Kontena::Cli::Vpn::CreateCommand do

@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require 'kontena/cli/cloud/logout_command'
 
 describe Kontena::Cli::Cloud::LogoutCommand do

@@ -1,4 +1,4 @@
-require_relative '../../../../spec_helper'
+require 'spec_helper'
 require 'kontena/cli/stacks/yaml/service_extender'
 
 describe Kontena::Cli::Stacks::YAML::ServiceExtender do

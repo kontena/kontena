@@ -1,4 +1,4 @@
-require_relative '../../../../spec_helper'
+require 'spec_helper'
 require 'kontena/cli/apps/yaml/validator'
 
 describe Kontena::Cli::Apps::YAML::Validator do

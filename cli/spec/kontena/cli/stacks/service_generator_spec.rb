@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require "kontena/cli/stacks/service_generator"
 
 describe Kontena::Cli::Stacks::ServiceGenerator do

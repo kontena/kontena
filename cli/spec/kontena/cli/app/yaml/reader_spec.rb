@@ -1,4 +1,4 @@
-require_relative '../../../../spec_helper'
+require 'spec_helper'
 require 'kontena/cli/apps/yaml/reader'
 
 describe Kontena::Cli::Apps::YAML::Reader do

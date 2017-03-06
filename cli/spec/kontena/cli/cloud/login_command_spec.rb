@@ -1,4 +1,4 @@
-require_relative "../../../spec_helper"
+require 'spec_helper'
 require 'kontena/cli/cloud/login_command'
 require 'kontena/cli/localhost_web_server'
 require 'launchy'
