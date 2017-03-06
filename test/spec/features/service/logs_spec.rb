@@ -4,6 +4,7 @@ describe 'service logs' do
   before(:each) do
     run("kontena service create --instances 2 test-1 redis:3.0")
     run("kontena service deploy test-1")
+    sleep 1
   end
 
   after(:each) do
