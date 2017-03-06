@@ -24,7 +24,7 @@ module Kontena::Workers
       @stats_since = Time.now
       @container_seconds = 0
       @previous_cpu = Vmstat.cpu
-      @previous_network_interface = get_network_interface
+      @previous_iface = get_network_interface
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -116,9 +116,10 @@ module Kontena::Workers
       average_cpu = calculate_average_cpu(@previous_cpu, current_cpu)
       @previous_cpu = current_cpu
 
-      current_network_interface = find_network_interface
-      network_traffic = calculate_network_traffic(@previous_network_interface, current_network_interface)
-      @previous_network_interface = current_network_interface
+      interval = [ 1, (Time.now - @stats_since).round ].max
+      current_iface = Vmstat.network_interfaces.select { |x| x.name == @previous_iface.name }.first
+      network_traffic = calculate_network_traffic(@previous_iface, current_iface, interval)
+      @previous_iface = current_iface
 
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
@@ -280,9 +281,13 @@ module Kontena::Workers
       }
     end
 
-    def calculate_network_traffic(previous_iface, current_iface)
-      in_bytes_per_second = (current_iface.in_bytes - previous_iface.in_bytes) / PUBLISH_INTERVAL
-      out_bytes_per_second = (current_iface.out_bytes - previous_iface.out_bytes) / PUBLISH_INTERVAL
+    # @param [Vmstat::NewtworkInterface] previous_iface
+    # @param [Vmstat::NetworkInterface] current_iface
+    # @param [Number] interval
+    # @return [Hash]
+    def calculate_network_traffic(previous_iface, current_iface, interval)
+      in_bytes_per_second = (current_iface.in_bytes - previous_iface.in_bytes) / interval
+      out_bytes_per_second = (current_iface.out_bytes - previous_iface.out_bytes) / interval
 
       return {
         in_bytes_per_second: in_bytes_per_second,
@@ -293,15 +298,6 @@ module Kontena::Workers
     def get_network_interface()
       Vmstat.network_interfaces.select { |x| x.ethernet? and x.in_bytes > 0 and x.out_bytes > 0 }
                                .sort { |l,r| r.out_bytes <=> l.out_bytes }
-                               .first
-    end
-
-    def find_network_interface()
-      if @previous_network_interface == nil
-        return nil
-      end
-
-      Vmstat.network_interfaces.select { |x| x.name == @previous_network_interface.name }
                                .first
     end
 

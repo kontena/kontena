@@ -7,6 +7,7 @@ class HostNodeStat
   field :filesystem, type: Array
   field :usage, type: Hash
   field :cpu_average, type: Hash
+  field :network, type: Hash
 
   belongs_to :grid
   belongs_to :host_node
