@@ -40,7 +40,6 @@ module EventStream
   end
 
   def publish_async(event)
-    puts "publish #{event}"
     MongoPubsub.publish_async(CHANNEL, event)
   end
 
