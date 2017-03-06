@@ -20,7 +20,9 @@ module Metrics
         memory_used_percent: 0.0,
         filesystem_used_bytes: 0,
         filesystem_total_bytes: 0,
-        filesystem_used_percent: 0.0
+        filesystem_used_percent: 0.0,
+        network_in_bytes_per_second: 0,
+        network_out_bytes_per_second: 0
       }
 
       self.fetch_aggregates_from_mongo(node_id, from_time, to_time).each do |doc|
@@ -34,6 +36,8 @@ module Metrics
         result[:filesystem_used_bytes] += doc[:filesystem_used_bytes]
         result[:filesystem_total_bytes] += doc[:filesystem_total_bytes]
         result[:filesystem_used_percent] += doc[:filesystem_used_percent]
+        result[:network_in_bytes_per_second] += doc[:network_in_bytes_per_second]
+        result[:network_out_bytes_per_second] += doc[:network_out_bytes_per_second]
         result[:metrics] << {
           data_points: doc[:data_points],
           cpu_usage_percent: doc[:cpu_usage_percent].round(2),
@@ -43,6 +47,8 @@ module Metrics
           filesystem_used_bytes: doc[:filesystem_used_bytes],
           filesystem_total_bytes: doc[:filesystem_total_bytes],
           filesystem_used_percent: doc[:filesystem_used_percent].round(2),
+          network_in_bytes_per_second: doc[:network_in_bytes_per_second],
+          network_out_bytes_per_second: doc[:network_out_bytes_per_second],
           timestamp: Time.new(ts[:year], ts[:month], ts[:day], ts[:hour], ts[:minute], 0, "+00:00")
         }
       end
@@ -55,6 +61,8 @@ module Metrics
         result[:filesystem_used_bytes] /= count
         result[:filesystem_total_bytes] /= count
         result[:filesystem_used_percent] = (result[:filesystem_used_percent] / count.to_f).round(2)
+        result[:network_in_bytes_per_second] /= count
+        result[:network_out_bytes_per_second] /= count
       end
 
       result
@@ -96,6 +104,10 @@ module Metrics
           filesystem: {
             total: 1,
             used: 1
+          },
+          network: {
+            in_bytes_per_second: 1,
+            out_bytes_per_second: 1
           }
         }
       },
@@ -129,6 +141,12 @@ module Metrics
           filesystem_used_percent: {
             '$avg': { '$divide': ['$filesystem.used', '$filesystem.total'] }
           },
+          network_in_bytes_per_second: {
+            '$avg': '$network.in_bytes_per_second'
+          },
+          network_out_bytes_per_second: {
+            '$avg': '$network.out_bytes_per_second'
+          },
           max_timestamp: {
             '$max': '$created_at'
           },
@@ -149,6 +167,8 @@ module Metrics
           filesystem_used_bytes: 1,
           filesystem_total_bytes: 1,
           filesystem_used_percent: 1,
+          network_in_bytes_per_second: 1,
+          network_out_bytes_per_second: 1,
           data_points: 1
         }
       }

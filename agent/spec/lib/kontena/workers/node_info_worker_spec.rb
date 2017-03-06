@@ -246,7 +246,7 @@ describe Kontena::Workers::NodeInfoWorker do
       prev = Vmstat::NetworkInterface.new(:test, 2000, 0, 0, 3000, 0, 6)
       cur = Vmstat::NetworkInterface.new(:test, 5000, 0, 0, 4500, 0, 6)
 
-      result = subject.calculate_network_traffic(prev, cur)
+      result = subject.calculate_network_traffic(prev, cur, 60)
       expect(result[:in_bytes_per_second]).to eq 50
       expect(result[:out_bytes_per_second]).to be 25
     end

@@ -20,6 +20,10 @@ describe Metrics::HostNodeStatMetrics do
           total: 1000,
           used: 100
         }],
+        network: {
+          in_bytes_per_second: 100,
+          out_bytes_per_second: 100,
+        },
         created_at: Time.parse('2017-03-01 11:15:30 +00:00')
       },
       { # This is included in first metric
@@ -40,6 +44,10 @@ describe Metrics::HostNodeStatMetrics do
           total: 1000
           # .2 used
         }],
+        network: {
+          in_bytes_per_second: 100,
+          out_bytes_per_second: 100,
+        },
         created_at: Time.parse('2017-03-01 12:15:30 +00:00')
       },
       { # This is included in first metric
@@ -60,6 +68,10 @@ describe Metrics::HostNodeStatMetrics do
           total: 2000
           # .4 used
         }],
+        network: {
+          in_bytes_per_second: 200,
+          out_bytes_per_second: 300,
+        },
         created_at: Time.parse('2017-03-01 12:15:45 +00:00')
       },
       { # This is included in second metric
@@ -80,6 +92,10 @@ describe Metrics::HostNodeStatMetrics do
           total: 1000
           # .5 used
         }],
+        network: {
+          in_bytes_per_second: 400,
+          out_bytes_per_second: 500,
+        },
         created_at: Time.parse('2017-03-01 12:16:45 +00:00')
       },
       { # this record should be skipped
@@ -97,6 +113,10 @@ describe Metrics::HostNodeStatMetrics do
           used: 100,
           total: 1000
         }],
+        network: {
+          in_bytes_per_second: 200,
+          out_bytes_per_second: 300,
+        },
         created_at: Time.parse('2017-03-01 13:15:30 +00:00')
       }
     ])
@@ -119,6 +139,8 @@ describe Metrics::HostNodeStatMetrics do
         filesystem_used_bytes: 500.0,
         filesystem_total_bytes: 1250.0,
         filesystem_used_percent: 0.4,
+        network_in_bytes_per_second: 275,
+        network_out_bytes_per_second: 350,
         from_time: Time.parse('2017-03-01 12:00:00 +0000'),
         to_time: Time.parse('2017-03-01 13:00:00 +0000'),
         metrics: [
@@ -131,6 +153,8 @@ describe Metrics::HostNodeStatMetrics do
             filesystem_used_bytes: 500.0,
             filesystem_total_bytes: 1500.0,
             filesystem_used_percent: 0.3,
+            network_in_bytes_per_second: 150,
+            network_out_bytes_per_second: 200,
             timestamp: Time.parse('2017-03-01 12:15:00 +0000')
           },
           {
@@ -142,6 +166,8 @@ describe Metrics::HostNodeStatMetrics do
             filesystem_used_bytes: 500.0,
             filesystem_total_bytes: 1000.0,
             filesystem_used_percent: 0.5,
+            network_in_bytes_per_second: 400,
+            network_out_bytes_per_second: 500,
             timestamp: Time.parse('2017-03-01 12:16:00 +0000')
           }]
         })
