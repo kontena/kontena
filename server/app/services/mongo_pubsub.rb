@@ -4,12 +4,6 @@ class MongoPubsub
   include Celluloid
   include Logging
 
-  class Error < StandardError
-  end
-
-  class NotStartedError < Error
-  end
-
   class Subscription
     attr_reader :channel
 
@@ -106,28 +100,28 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def self.publish(channel, data)
-    raise NotStartedError.new("Could not publish the message because MongoPubsub is not started") unless @supervisor
-    @supervisor.actors.first.publish(channel, data)
+    @supervisor.actors.first.publish(channel, data) if self.started?
   end
 
   # @param [String] channel
   # @param [Hash] data
   def self.publish_async(channel, data)
-    raise NotStartedError.new("Could not publish the message because MongoPubsub is not started") unless @supervisor
-    @supervisor.actors.first.async.publish(channel, data)
+    @supervisor.actors.first.async.publish(channel, data) if self.started?
   end
 
   # @param [String] channel
   # @return [Subscription]
   def self.subscribe(channel, &block)
-    raise NotStartedError.new("Could not subscribe to the channel because MongoPubsub is not started") unless @supervisor
-    @supervisor.actors.first.subscribe(channel, block)
+    @supervisor.actors.first.subscribe(channel, block) if self.started?
   end
 
   # @param [Subscription] subscription
   def self.unsubscribe(subscription)
-    raise NotStartedError.new("Could not unsubscribe from the channel because MongoPubsub is not started") unless @supervisor
-    @supervisor.actors.first.unsubscribe(subscription)
+    @supervisor.actors.first.unsubscribe(subscription) if self.started?
+  end
+
+  def self.started?
+    !@supervisor.nil?
   end
 
   def self.start!(collection)
