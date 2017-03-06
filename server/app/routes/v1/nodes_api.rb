@@ -55,7 +55,13 @@ module V1
 
           # GET /v1/nodes/:grid/:node/stats
           r.on 'stats' do
-            # TODO
+            now = Time.now
+            from = (r.params["from"] ? Time.parse(r.params["from"]) : (now - 3600)).utc
+            to = (r.params["to"] ? Time.parse(r.params["to"]) : now).utc
+
+            @node_stats = Metrics::HostNodeStatMetrics.fetch(@node.id, from, to)
+
+            render('host_nodes/stats')
           end
         end
 
