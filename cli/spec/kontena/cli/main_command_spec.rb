@@ -7,8 +7,8 @@ describe Kontena::MainCommand do
   describe '#subcommand_missing' do
     it 'suggests plugin install for known plugin commands' do
       expect(subject).to receive(:known_plugin_subcommand?).with('testplugin').and_return(true)
-      expect(subject).to receive(:exit_with_error).with(/plugin has not been installed/).and_raise(StandardError)
-      expect{subject.run(['testplugin', 'master', 'create'])}.to raise_error(StandardError)
+      expect(subject).to receive(:exit_with_error).with(/plugin has not been installed/).and_call_original
+      expect{subject.run(['testplugin', 'master', 'create'])}.to exit_with_error
     end
 
     it 'runs normal error handling for unknown sub commands' do

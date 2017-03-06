@@ -12,6 +12,8 @@ module Kontena::Cli::Grids
       grid['default_affinity'].to_a.each do |a|
         puts "    - #{a}"
       end
+      puts "  subnet: #{grid['subnet']}"
+      puts "  supernet: #{grid['supernet']}"
       root_dir = grid['engine_root_dir']
       nodes = client(require_token).get("grids/#{grid['name']}/nodes")
       nodes = nodes['nodes'].select{|n| n['connected'] == true }

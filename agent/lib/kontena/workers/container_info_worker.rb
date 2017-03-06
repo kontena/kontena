@@ -1,16 +1,16 @@
+require_relative '../helpers/rpc_helper'
+
 module Kontena::Workers
   class ContainerInfoWorker
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Helpers::RpcHelper
 
     attr_reader :queue
 
-    ##
-    # @param [Queue] queue
     # @param [Boolean] autostart
-    def initialize(queue, autostart = true)
-      @queue = queue
+    def initialize(autostart = true)
       subscribe('container:event', :on_container_event)
       subscribe('container:publish_info', :on_container_publish_info)
       subscribe('websocket:connected', :on_websocket_connected)
@@ -63,14 +63,11 @@ module Kontena::Workers
       labels = data['Config']['Labels'] || {}
       return if labels['io.kontena.container.skip_logs']
 
-      event = {
-        event: 'container:info'.freeze,
-        data: {
-          node: self.node_info['ID'],
-          container: data
-        }
+      data = {
+        node: self.node_info['ID'],
+        container: data
       }
-      self.queue << event
+      rpc_client.async.notification('/containers/save', [data])
     rescue Docker::Error::NotFoundError
     rescue => exc
       error exc.message
@@ -80,15 +77,12 @@ module Kontena::Workers
     # @param [Docker::Event] event
     def publish_destroy_event(event)
       data = {
-          event: 'container:event'.freeze,
-          data: {
-              id: event.id,
-              status: 'destroy'.freeze,
-              from: event.from,
-              time: event.time
-          }
+        id: event.id,
+        status: 'destroy'.freeze,
+        from: event.from,
+        time: event.time
       }
-      self.queue << data
+      rpc_client.async.notification('/containers/event', [data])
     end
 
     # @return [Hash]

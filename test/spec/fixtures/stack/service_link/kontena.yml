@@ -1,0 +1,14 @@
+stack: test/test
+version: 0.1.0
+variables:
+  lb:
+    type: string
+    from:
+      service_link:
+        prompt: Select link
+        image: redis
+services:
+  nginx:
+    image: nginx:1-alpine
+    links:
+      - {{ lb }}

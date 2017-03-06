@@ -6,20 +6,6 @@ describe Kontena::Cli::Stacks::RemoveCommand do
   include ClientHelpers
 
   describe '#execute' do
-    it 'requires api url' do
-      allow(subject).to receive(:forced?).and_return(true)
-      allow(subject).to receive(:wait_stack_removal)
-      expect(described_class.requires_current_master?).to be_truthy
-      subject.run(['test-stack'])
-    end
-
-    it 'requires token' do
-      allow(subject).to receive(:forced?).and_return(true)
-      allow(subject).to receive(:wait_stack_removal)
-      expect(described_class.requires_current_master_token?).to be_truthy
-      subject.run(['test-stack'])
-    end
-
     it 'sends remove command to master' do
       allow(subject).to receive(:wait_stack_removal)
       expect(client).to receive(:delete).with('stacks/test-grid/test-stack')
@@ -39,7 +25,7 @@ describe Kontena::Cli::Stacks::RemoveCommand do
         .and_raise(Kontena::Errors::StandardError.new(500, 'internal error'))
       expect{
         subject.run(['--force', 'test-stack'])
-      }.to raise_error(Kontena::Errors::StandardError)
+      }.to exit_with_error
     end
   end
 end

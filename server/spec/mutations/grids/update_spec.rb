@@ -1,15 +1,12 @@
 require_relative '../../spec_helper'
 
-describe Grids::Update do
+describe Grids::Update, celluloid: true do
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid.users << user
     grid
   }
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
 
   describe '#run' do
     before(:each) do

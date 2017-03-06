@@ -37,7 +37,8 @@ module Kontena
                   :pid,
                   :hooks,
                   :secrets,
-                  :networks
+                  :networks,
+                  :wait_for_port
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -75,6 +76,7 @@ module Kontena
         @hooks = attrs['hooks'] || []
         @secrets = attrs['secrets'] || []
         @networks = attrs['networks'] || []
+        @wait_for_port = attrs['wait_for_port']
       end
 
       # @return [Boolean]

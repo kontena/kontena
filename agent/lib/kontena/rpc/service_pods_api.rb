@@ -13,15 +13,19 @@ module Kontena
       # @return [Hash]
       def create(service)
         service_spec = Kontena::Models::ServicePod.new(service)
-        Kontena::ServicePods::Creator.perform_async(service_spec)
-        {}
+        service_container = Kontena::ServicePods::Creator.new(service_spec).perform
+        if service_container
+          { id: service_container.id }
+        else
+          { id: nil }
+        end
       end
 
       # @param [String] service_id
       # @param [Integer] instance_number
       # @return [Hash]
       def start(service_id, instance_number)
-        Kontena::ServicePods::Starter.perform_async(service_id, instance_number)
+        Kontena::ServicePods::Starter.new(service_id, instance_number).perform
         {}
       end
 
@@ -29,7 +33,7 @@ module Kontena
       # @param [Integer] instance_number
       # @return [Hash]
       def stop(service_id, instance_number)
-        Kontena::ServicePods::Stopper.perform_async(service_id, instance_number)
+        Kontena::ServicePods::Stopper.new(service_id, instance_number).perform
         {}
       end
 
@@ -37,7 +41,7 @@ module Kontena
       # @param [Integer] instance_number
       # @return [Hash]
       def restart(service_id, instance_number)
-        Kontena::ServicePods::Restarter.perform_async(service_id, instance_number)
+        Kontena::ServicePods::Restarter.new(service_id, instance_number).perform
         {}
       end
 
@@ -46,7 +50,7 @@ module Kontena
       # @param [Hash] opts
       # @return [Hash]
       def terminate(service_id, instance_number, opts = {})
-        Kontena::ServicePods::Terminator.perform_async(service_id, instance_number, opts)
+        Kontena::ServicePods::Terminator.new(service_id, instance_number, opts).perform
         {}
       end
     end

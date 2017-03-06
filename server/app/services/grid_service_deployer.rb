@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative 'logging'
 require_relative 'grid_service_scheduler'
 

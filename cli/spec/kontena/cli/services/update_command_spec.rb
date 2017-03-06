@@ -8,20 +8,6 @@ describe Kontena::Cli::Services::UpdateCommand do
 
   describe '#execute' do
 
-    before(:each) do
-      allow(subject).to receive(:update_service).and_return({})
-    end
-
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['service'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).once
-      subject.run(['service'])
-    end
-
     it 'sends update command' do
       expect(subject).to receive(:update_service).with(duck_type(:access_token), 'service', {privileged: false})
       subject.run(['service'])
@@ -51,6 +37,74 @@ describe Kontena::Cli::Services::UpdateCommand do
       subject.run([
         '--log-opt', 'gelf-address=udp://log_forwarder-logstash_internal:12201', 'service'
       ])
+    end
+
+    context 'health check' do
+      it 'sends --health-check-port' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            port: '8080'
+          })
+        )
+        subject.run([
+          '--health-check-port', '8080', 'service'
+        ])
+      end
+
+      it 'sends --health-check-port as nil if none given' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            port: nil
+          })
+        )
+        subject.run([
+          '--health-check-port', 'none', 'service'
+        ])
+      end
+
+      it 'sends --health-check-protocol' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            protocol: 'tcp'
+          })
+        )
+        subject.run([
+          '--health-check-protocol', 'tcp', 'service'
+        ])
+      end
+
+      it 'sends --health-check-protocol as nil if none given' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            protocol: nil
+          })
+        )
+        subject.run([
+          '--health-check-protocol', 'none', 'service'
+        ])
+      end
+
+      it 'sends --health-check-timeout' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            timeout: '30'
+          })
+        )
+        subject.run([
+          '--health-check-timeout', '30', 'service'
+        ])
+      end
+
+      it 'sends --health-check-uri' do
+        expect(subject).to receive(:update_service).with(
+          duck_type(:access_token), 'service', hash_including(health_check: {
+            uri: '/health'
+          })
+        )
+        subject.run([
+          '--health-check-uri', '/health', 'service'
+        ])
+      end
     end
   end
 end

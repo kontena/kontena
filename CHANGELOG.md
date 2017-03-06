@@ -1,5 +1,49 @@
 # Changelog
 
+## [1.1.2](https://github.com/kontena/kontena/releases/tag/v1.1.2) (2017-02-24)
+
+**Master & Agents:**
+
+- Fix stack service link validation errors (#1876)
+- Do not start health check if no protocol specified (#1863)
+- Do not filter out a node that already has the service instance when replacing a container (#1823)
+- Ubuntu xenial packaging dpkg-reconfigure support (#1754)
+- Fix stack service reverse-dependency sorting on links when removing (#1887)
+- Fix clearing health check attributes on stack upgrade (#1837)
+- Registry url was not saved correctly in stack metadata (#1870)
+
+**CLI:**
+
+- Fix stack service_link resolver default when value optional (#1891)
+- Update year to 2017 in CLI logo (#1840)
+- Avoid leaking CLI auth codes to cloud in referer header (#1896)
+
+**Other:**
+
+- Docs: fix volumes_from examples and syntax (#1872)
+- Dev: Docker compose based local e2e test env (#1838)
+
+## [1.1.1](https://github.com/kontena/kontena/releases/tag/v1.1.1) (2017-02-08)
+
+**Master & Agents:**
+
+- Remove volume containers when removing nodes (#1805)
+- Document master HA setup (#1721)
+- Allow to clear deploy options after stack install (#1698)
+
+**CLI:**
+
+- Fix service link/unlink errors (#1814)
+- Fix plugin cleanup and run it only when plugins are upgraded (#1813)
+- Exit with error when piping to/from a command that requires --force and it's not set (#1804)
+- Simple menus were not enabled on windows by default as intended in 1.1.0 (#1802)
+- Fix for stack variable prompt asking the same question multiple times when no value given (#1801)
+- Fix stack vault ssl certificate selection and service link prompts not using given default values (#1800)
+- Allow "echo: false" in stack string variables for prompting passwords (#1796)
+- Fix stack conditionals short syntax for booleans (#1795)
+- Invite self and add the created user as master_admin during 'kontena master init-cloud' (#1735)
+- Fix the new --debug flag breaking DEBUG=api full body inspection (#1821)
+
 ## [1.1.0](https://github.com/kontena/kontena/releases/tag/v1.1.0) (2017-02-03)
 
 **Master & Agents:**

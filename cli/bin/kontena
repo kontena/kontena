@@ -1,38 +1,18 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-# resolve bin path, ignoring symlinks
+# add lib to libpath (only needed when running from the sources)
 require 'pathname'
-bin_file = Pathname.new(__FILE__).realpath
+lib_path = File.expand_path('../../lib', Pathname.new(__FILE__).realpath)
+$:.unshift lib_path unless $:.include?(lib_path)
 
-# add self to libpath
-$:.unshift File.expand_path('../../lib', bin_file)
-
-require 'kontena_cli'
 STDOUT.sync = true
 
-begin
+if ARGV[0] == 'complete'
+  ARGV.delete_at(0)
+  require 'kontena/scripts/completer'
+else
+  require 'kontena_cli'
   Kontena::PluginManager.instance.init
   Kontena::MainCommand.run
-rescue Excon::Errors::SocketError => exc
-  if exc.message.include?('Unable to verify certificate')
-    $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
-    $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"
-    $stderr.puts "         Protip: you can bypass the certificate check by setting #{Kontena.pastel.yellow('SSL_IGNORE_ERRORS=true')} env variable, but any data you send to the server could be intercepted by others."
-    abort
-  else
-    abort(exc.message)
-  end
-rescue Kontena::Errors::StandardError => exc
-  raise exc if ENV['DEBUG']
-  puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
-  abort
-rescue Errno::EPIPE
-  # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
-  abort
-rescue => exc
-  raise exc if ENV['DEBUG']
-  $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
-  $stderr.puts "         Rerun the command with environment DEBUG=true set to get the full exception"
-  abort
 end

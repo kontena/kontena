@@ -115,7 +115,6 @@ describe Kontena::Cli::Cloud::Master::AddCommand do
 
       subject.register_current
     end
-
   end
 end
 

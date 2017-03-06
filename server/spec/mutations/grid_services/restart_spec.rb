@@ -1,8 +1,6 @@
 require_relative '../../spec_helper'
 
-describe GridServices::Restart do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe GridServices::Restart, celluloid: true do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
   let(:node) { HostNode.create!(name: 'node-1', grid: grid)}

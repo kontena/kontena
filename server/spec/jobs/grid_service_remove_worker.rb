@@ -1,8 +1,6 @@
 require_relative '../spec_helper'
 
-describe GridServiceRemoveWorker do
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe GridServiceRemoveWorker, celluloid: true do
 
   let(:grid) { Grid.create(name: 'test') }
   let(:service) do

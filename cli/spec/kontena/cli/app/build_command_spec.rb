@@ -62,7 +62,7 @@ describe Kontena::Cli::Apps::BuildCommand do
       expect(subject).not_to receive(:process_docker_images)
       expect {
         subject.run([])
-      }.to raise_error SystemExit
+      }.to exit_with_error
     end
   end
 end

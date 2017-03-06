@@ -99,5 +99,25 @@ describe Scheduler::Filter::Memory do
       )
       expect(reject).to be_falsey
     end
+
+    it 'accepts candidate if it is a replacement and stats are missing' do
+      candidate.host_node_stats.create!(
+        memory: {
+          'total' => 0,
+          'free' => 0,
+          'cached' => 0,
+          'buffers' => 0
+        }
+      )
+      service_instance = test_service.containers.create!(
+        name: 'test-service-1',
+        host_node: candidate,
+        instance_number: 1
+      )
+      reject = subject.reject_candidate?(
+        candidate, 500.megabytes, test_service, 1
+      )
+      expect(reject).to be_falsey
+    end
   end
 end

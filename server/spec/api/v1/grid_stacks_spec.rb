@@ -1,9 +1,6 @@
 require_relative '../../spec_helper'
 
-describe '/v1/grids/:grid/stacks' do
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe '/v1/grids/:grid/stacks', celluloid: true do
 
   let(:request_headers) do
     {

@@ -1,9 +1,10 @@
 require 'clamp'
+require_relative 'cli/subcommand_loader'
 
 class Kontena::Command < Clamp::Command
 
   option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
-    ENV['DEBUG'] = 'true'
+    ENV['DEBUG'] ||= 'true'
   end
 
   attr_accessor :arguments
@@ -62,6 +63,10 @@ class Kontena::Command < Clamp::Command
     end
   end
 
+  def self.load_subcommand(path)
+    Kontena::Cli::SubcommandLoader.new(path)
+  end
+
   def self.inherited(where)
     where.extend Finalizer
   end
@@ -85,7 +90,7 @@ class Kontena::Command < Clamp::Command
     end
   end
 
-  # Overwrite Clamp's banner command. Calling banner multiple times 
+  # Overwrite Clamp's banner command. Calling banner multiple times
   # will now add lines to the banner message instead of overwriting
   # the whole message. This is useful if callbacks add banner messages.
   #
@@ -197,8 +202,30 @@ class Kontena::Command < Clamp::Command
     run_callbacks :after unless help_requested?
     exit(@exit_code) if @exit_code.to_i > 0
     @result
+  rescue Excon::Errors::SocketError => exc
+    if exc.message.include?('Unable to verify certificate')
+      $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
+      $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"
+      $stderr.puts "         Protip: you can bypass the certificate check by setting #{Kontena.pastel.yellow('SSL_IGNORE_ERRORS=true')} env variable, but any data you send to the server could be intercepted by others."
+      abort
+    else
+      abort(exc.message)
+    end
+  rescue Kontena::Errors::StandardError => exc
+    raise exc if ENV['DEBUG']
+    puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+    abort
+  rescue Errno::EPIPE
+    # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
+    abort
+  rescue Clamp::HelpWanted, Clamp::UsageError
+    raise
+  rescue => exc
+    raise exc if ENV['DEBUG']
+    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+    $stderr.puts "         Rerun the command with environment DEBUG=true set to get the full exception"
+    abort
   end
-
 end
 
 require_relative 'callback'

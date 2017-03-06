@@ -73,23 +73,10 @@ module Kontena::Cli::Services
       data[:net] = net if net
       data[:log_driver] = log_driver if log_driver
       data[:log_opts] = parse_log_opts(log_opt_list) if log_opt_list
-      data[:deploy_opts] = {}
-      data[:deploy_opts][:min_health] = deploy_min_health.to_f if deploy_min_health
-      data[:deploy_opts][:wait_for_port] = deploy_wait_for_port.to_i if deploy_wait_for_port
-      if deploy_interval
-        data[:deploy_opts][:interval] = parse_relative_time(deploy_interval)
-      end
-      if health_check_port
-        data[:health_check] = {
-          protocol: health_check_protocol,
-          uri: health_check_uri,
-          port: health_check_port,
-          timeout: health_check_timeout,
-          interval: health_check_interval,
-          initial_delay: health_check_initial_delay
-        }
-      end
-      data.delete(:deploy_opts) if data[:deploy_opts].empty?
+      deploy_opts = parse_deploy_opts
+      data[:deploy_opts] = deploy_opts unless deploy_opts.empty?
+      health_check = parse_health_check
+      data[:health_check] = health_check unless health_check.empty?
       data[:pid] = pid if pid
       data
     end

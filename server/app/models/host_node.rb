@@ -1,3 +1,5 @@
+require 'ipaddr'
+
 class HostNode
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -29,7 +31,7 @@ class HostNode
   attr_accessor :schedule_counter
 
   belongs_to :grid
-  has_many :containers, dependent: :destroy
+  has_many :containers
   has_many :host_node_stats
   has_and_belongs_to_many :images
 
@@ -41,6 +43,10 @@ class HostNode
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
+
+  after_destroy do |node|
+    node.containers.unscoped.destroy
+  end
 
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
@@ -139,6 +145,11 @@ class HostNode
       end
     end
     @host_provider
+  end
+
+  # @return [String] Overlay IP, without subnet mask
+  def overlay_ip
+    (IPAddr.new(self.grid.subnet) | self.node_number).to_s
   end
 
   private
