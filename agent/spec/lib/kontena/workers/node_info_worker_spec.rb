@@ -216,7 +216,8 @@ describe Kontena::Workers::NodeInfoWorker do
 
   describe '#publish_node_stats' do
     it 'sends stats via rpc with timestamps' do
-      expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [hash_including(time: String, cpu_average: Hash)])
+      expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
+        [hash_including(time: String, cpu_average: Hash, network: Hash)])
       subject.publish_node_stats
     end
   end
@@ -237,6 +238,17 @@ describe Kontena::Workers::NodeInfoWorker do
       expect(result[:system]).to be 7.784431137724551
       expect(result[:user]).to be 3.8922155688622757
       expect(result[:idle]).to be 88.32335329341316
+    end
+  end
+
+  describe '#calculate_network_traffic' do
+    it 'calculates network traffic' do
+      prev = Vmstat::NetworkInterface.new(:test, 2000, 0, 0, 3000, 0, 6)
+      cur = Vmstat::NetworkInterface.new(:test, 5000, 0, 0, 4500, 0, 6)
+
+      result = subject.calculate_network_traffic(prev, cur)
+      expect(result[:in_bytes_per_second]).to eq 50
+      expect(result[:out_bytes_per_second]).to be 25
     end
   end
 end
