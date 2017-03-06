@@ -52,6 +52,11 @@ module V1
 
             render('host_nodes/health')
           end
+
+          # GET /v1/nodes/:grid/:node/stats
+          r.on 'stats' do
+            # TODO
+          end
         end
 
         r.put do

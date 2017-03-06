@@ -1,9 +1,15 @@
 module Metrics
   class HostNodeStatMetrics
-    def self.fetch(from_time, to_time)
+
+    # @param [String] node_id
+    # @param [Time] from_time
+    # @param [Time] to_time
+    # @return [Hash] the aggregation results
+    def self.fetch(node_id, from_time, to_time)
       count = 0
 
       result = {
+        node_id: node_id,
         from_time: from_time,
         to_time: to_time,
         metrics: [],
@@ -17,7 +23,7 @@ module Metrics
         filesystem_used_percent: 0.0
       }
 
-      self.fetch_aggregates_from_mongo(from_time, to_time).each do |doc|
+      self.fetch_aggregates_from_mongo(node_id, from_time, to_time).each do |doc|
         count += 1
         ts = doc[:timestamp]
         result[:data_points] += doc[:data_points]
@@ -54,10 +60,13 @@ module Metrics
       result
     end
 
-    def self.fetch_aggregates_from_mongo(from_time, to_time)
+    private
+
+    def self.fetch_aggregates_from_mongo(node_id, from_time, to_time)
       HostNodeStat.collection.aggregate([
       {
         '$match': {
+          host_node_id: node_id,
           created_at: {
             '$gte': from_time,
             '$lt': to_time
@@ -66,7 +75,7 @@ module Metrics
       },
       {
         '$sort': {
-          created_at: -1
+          created_at: 1
         }
       },
       {

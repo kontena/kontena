@@ -107,9 +107,10 @@ describe Metrics::HostNodeStatMetrics do
       stats
       from = Time.parse('2017-03-01 12:00:00 +00:00')
       to = Time.parse('2017-03-01 13:00:00 +00:00')
-      results = Metrics::HostNodeStatMetrics.fetch(from, to)
+      results = Metrics::HostNodeStatMetrics.fetch(node.id, from, to)
 
       expect(results).to eq({
+        node_id: node.id,
         data_points: 3,
         cpu_usage_percent: 0.45,
         memory_used_bytes: 450.0,
