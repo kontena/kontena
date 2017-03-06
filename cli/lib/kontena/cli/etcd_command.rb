@@ -1,18 +1,11 @@
-require_relative 'etcd/get_command'
-require_relative 'etcd/set_command'
-require_relative 'etcd/mkdir_command'
-require_relative 'etcd/list_command'
-require_relative 'etcd/remove_command'
-require_relative 'etcd/health_command'
-
 class Kontena::Cli::EtcdCommand < Kontena::Command
 
-  subcommand "get", "Get the current value for a single key", Kontena::Cli::Etcd::GetCommand
-  subcommand "set", "Set a value on the specified key", Kontena::Cli::Etcd::SetCommand
-  subcommand ["mkdir", "mk"], "Create a directory", Kontena::Cli::Etcd::MkdirCommand
-  subcommand ["list", "ls"], "List a directory", Kontena::Cli::Etcd::ListCommand
-  subcommand "rm", "Remove a key or a directory", Kontena::Cli::Etcd::RemoveCommand
-  subcommand "health", "Check etcd health", Kontena::Cli::Etcd::HealthCommand
+  subcommand "get", "Get the current value for a single key", load_subcommand('etcd/get_command')
+  subcommand "set", "Set a value on the specified key", load_subcommand('etcd/set_command')
+  subcommand ["mkdir", "mk"], "Create a directory", load_subcommand('etcd/mkdir_command')
+  subcommand ["list", "ls"], "List a directory", load_subcommand('etcd/list_command')
+  subcommand "rm", "Remove a key or a directory", load_subcommand('etcd/remove_command')
+  subcommand "health", "Check etcd health", load_subcommand('etcd/health_command')
 
   def execute
   end
