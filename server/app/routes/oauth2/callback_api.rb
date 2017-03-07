@@ -18,6 +18,8 @@ module OAuth2Api
     include RequestHelpers
     include Logging
 
+    include OAuth2Api::Common
+
     def find_user_by_userdata(user_data)
       query = []
       query << { external_id: user_data[:id] }       if user_data[:id]
@@ -75,12 +77,23 @@ module OAuth2Api
           halt_request(400, 'invalid_request') and return
         end
 
-        token_data = AuthProvider.get_token(params['code']) rescue nil
+        auth_provider = AuthProvider.instance
+
+        unless auth_provider.valid?
+          mime_halt(
+            501,
+            'server_error',
+            'Authentication provider not configured'
+          )
+          return
+        end
+
+        token_data = auth_provider.get_token(params['code']) rescue nil
         if token_data.nil? || !token_data.kind_of?(Hash) || !token_data.has_key?('access_token')
           halt_request(400, 'Authentication failed') and return
         end
 
-        user_data = AuthProvider.get_userinfo(token_data['access_token']) rescue nil
+        user_data = auth_provider.get_userinfo(token_data['access_token']) rescue nil
         if user_data.nil? || !user_data.kind_of?(Hash)
           halt_request(400, 'Authentication failed') and return
         elsif user_data[:error]
