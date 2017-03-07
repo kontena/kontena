@@ -2,7 +2,9 @@ require_relative '../../spec_helper'
 
 describe Metrics::HostNodeStatMetrics do
   let(:grid) { Grid.create!(name: 'test-grid') }
+  let(:other_grid) { Grid.create!(name: 'other-grid') }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
+  let(:other_node) { HostNode.create!(grid: other_grid, name: 'other-node') }
   let(:stats) {
     HostNodeStat.create([
       { # this record should be skipped
@@ -26,7 +28,7 @@ describe Metrics::HostNodeStatMetrics do
         },
         created_at: Time.parse('2017-03-01 11:15:30 +00:00')
       },
-      { # This is included in first metric
+      { # This is included in first metric for grid
         grid: grid,
         host_node: node,
         cpu_average: {
@@ -50,7 +52,31 @@ describe Metrics::HostNodeStatMetrics do
         },
         created_at: Time.parse('2017-03-01 12:15:30 +00:00')
       },
-      { # This is included in first metric
+      { # This is included in first metric for other_grid
+        grid: other_grid,
+        host_node: other_node,
+        cpu_average: {
+          system: 0.05,
+          user: 0.05
+          # .1 used
+        },
+        memory: {
+          used: 500,
+          total: 1000
+          # .5 used
+        },
+        filesystem: [{
+          used: 200,
+          total: 1000
+          # .2 used
+        }],
+        network: {
+          in_bytes_per_second: 100,
+          out_bytes_per_second: 100,
+        },
+        created_at: Time.parse('2017-03-01 12:15:30 +00:00')
+      },
+      { # This is included in first metric for grid
         grid: grid,
         host_node: node,
         cpu_average: {
@@ -74,7 +100,7 @@ describe Metrics::HostNodeStatMetrics do
         },
         created_at: Time.parse('2017-03-01 12:15:45 +00:00')
       },
-      { # This is included in second metric
+      { # This is included in second metric for grid
         grid: grid,
         host_node: node,
         cpu_average: {
@@ -127,7 +153,7 @@ describe Metrics::HostNodeStatMetrics do
       stats
       from = Time.parse('2017-03-01 12:00:00 +00:00')
       to = Time.parse('2017-03-01 13:00:00 +00:00')
-      results = Metrics::HostNodeStatMetrics.fetch(node.id, from, to)
+      results = Metrics::HostNodeStatMetrics.fetch_for_node(node.id, from, to)
 
       expect(results).to eq({
         node_id: node.id,
