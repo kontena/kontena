@@ -29,8 +29,10 @@ module Kontena::Cli::Master::Config
         self.format = 'yaml'
         path = File.join(Kontena.root, 'lib/kontena/presets', "#{self.preset}.yml")
         File.read(path)
+      elsif !$stdin.tty? && !$stdin.closed?
+        $stdin.read
       else
-        STDIN.read
+        exit_with_error "Missing input"
       end
     end
 
