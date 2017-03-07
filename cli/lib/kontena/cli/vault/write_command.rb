@@ -8,22 +8,19 @@ module Kontena::Cli::Vault
 
     option '--silent', :flag, "Reduce output verbosity"
 
-    def execute
-      require_api_url
-      require_current_grid
+    requires_current_master
+    requires_current_master_token
 
-      token = require_token
-      secret = value
-      if secret.to_s == ''
-        secret = STDIN.read
+    def execute
+      unless value
+        if !$stdin.tty? && $stdin.closed?
+          exit_with_error('No value provided')
+        end
+        STDERR.puts("Enter a value for #{Kontena.pastel.cyan(name)}, press #{Kontena.pastel.yellow("ctrl-d")} when finished:") if $stdin.tty?
+        value = $stdin.read
       end
-      exit_with_error('No value provided') if secret.to_s == ''
-      data = {
-          name: name,
-          value: secret
-      }
       vspinner "Writing #{name.colorize(:cyan)} to the vault " do
-        client(token).post("grids/#{current_grid}/secrets", data)
+        client.post("grids/#{current_grid}/secrets", { name: name, value: value })
       end
     end
   end
