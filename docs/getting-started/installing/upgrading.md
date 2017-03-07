@@ -6,12 +6,12 @@ title: Upgrading
 
 Depending on how you installed Kontena, your upgrade steps may vary:
 
-* [Kontena via official plugins](upgrading.md#official-plugins)
-* [Kontena via Ubuntu packages](upgrading.md#ubuntu-packages)
-* [Kontena via Docker Compose](upgrading.md#docker-compose)
+* [Kontena via official plugins](#provision-plugins)
+* [Kontena via Ubuntu packages](#ubuntu-packages)
+* [Kontena via Docker Compose](#docker-compose)
 
 
-## Upgrading Kontena - Provision Plugins
+## Provision Plugins
 
 ### Kontena Master
 
@@ -29,7 +29,7 @@ Agents nodes will auto-update to same version as Kontena Master immediately if `
 $ sudo systemctl restart kontena-agent
 ```
 
-## Upgrading Kontena - Ubuntu Packages
+## Ubuntu Packages
 
 Kontena Master & Agent can be updated via `apt-get`:
 
@@ -40,6 +40,6 @@ $ sudo apt-get upgrade
 
 Kontena Master and Agent versions must match at least on `major.major` versions, although it's recommended to keep versions exactly in sync.
 
-## Upgrading Kontena - Docker Compose
+## Docker Compose
 
 Kontena Master & Agent can be updated just by changing image tag and restarting services. Kontena Master and Agent versions must match at least on `major.major` versions, although it's recommended to keep versions exactly in sync.
