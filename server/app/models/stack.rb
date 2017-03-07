@@ -11,8 +11,6 @@ class Stack
   has_many :stack_revisions, dependent: :destroy
   has_many :stack_deploys, dependent: :destroy
   has_many :grid_services
-  has_many :volumes
-  embeds_many :external_volumes
 
   index({ grid_id: 1 })
   index({ name: 1 })

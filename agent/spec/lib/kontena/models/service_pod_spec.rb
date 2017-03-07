@@ -33,13 +33,12 @@ describe Kontena::Models::ServicePod do
       'secrets' => [
           {'name' => 'PASSWD', 'value' => 'secret123', 'type' => 'env'}
       ],
-      'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
       'hostname' => 'redis-2',
       'domainname' => 'default.kontena.local',
-      'log_driver' => nil,
-      'volume_specs' => [{'name' => 'someVolume', 'driver' => 'local', 'driver_opts' => {'foo' => 'bar'}}]
+      'log_driver' => nil
+      #'volumes' => [{'name' => 'someVolume', 'driver' => 'local', 'driver_opts' => {'foo' => 'bar'}}]
     }
   end
 
@@ -280,7 +279,7 @@ describe Kontena::Models::ServicePod do
     end
 
     it 'does include Binds if binded volumes are defined' do
-      data['volumes'] = ['/data:/data']
+      data['volumes'] = [{'bind_mount' => '/data', 'path' => '/data'}]
       expect(host_config['Binds']).not_to be_nil
     end
 
@@ -377,7 +376,11 @@ describe Kontena::Models::ServicePod do
 
   describe '#build_volumes' do
     let(:volumes) do
-      ['/proc:/host/proc:ro', '/data']
+      [
+        {'name' => 'app.someVol', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}},
+        {'bind_mount' => '/proc', 'path' => '/host/proc', 'flags' => 'ro'},
+        {'name' => nil, 'bind_mount' => nil, 'path' => '/data'}
+      ]
     end
 
     it 'returns empty hash when no volumes are defined' do
@@ -394,7 +397,11 @@ describe Kontena::Models::ServicePod do
 
   describe '#build_bind_volumes' do
     let(:volumes) do
-      ['/proc:/host/proc:ro', '/data']
+      [
+        {'name' => 'app.someVol', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}},
+        {'bind_mount' => '/proc', 'path' => '/host/proc', 'flags' => 'ro'},
+        {'name' => nil, 'bind_mount' => nil, 'path' => '/data'}
+      ]
     end
 
     it 'returns empty array when no volumes are defined' do
@@ -404,8 +411,9 @@ describe Kontena::Models::ServicePod do
     it 'returns correct array when volumes are defined' do
       data['volumes'] = volumes
       bind_vols = subject.build_bind_volumes
-      expect(bind_vols.size).to eq(1)
-      expect(bind_vols[0]).to eq('/proc:/host/proc:ro')
+      expect(bind_vols.size).to eq(2)
+      expect(bind_vols[0]).to eq('app.someVol:/data:')
+      expect(bind_vols[1]).to eq('/proc:/host/proc:ro')
     end
   end
 

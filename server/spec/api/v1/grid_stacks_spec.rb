@@ -81,7 +81,7 @@ describe '/v1/grids/:grid/stacks', celluloid: true do
     end
 
     it 'creates new stack with volumes' do
-      volume = Volume.create(name: 'vol1', grid: grid, stack: nil, scope: 'node')
+      volume = Volume.create(name: 'vol1', grid: grid, scope: 'node')
       expect {
         post "/v1/grids/#{grid.name}/stacks", stack_with_volumes.to_json, request_headers
         expect(response.status).to eq(201)

@@ -65,16 +65,12 @@ module Stacks
         # TODO Separate into own method
         attributes.delete(:volumes)
         self.volumes.each do |volume|
-          if volume[:external]
-            vol = Volume.where(name: volume['name'], grid: grid, stack: nil).first
-            if vol
-              stack.external_volumes.create!(volume: vol)
-            end
-          else
-            outcome = Volumes::Create.run(grid: grid, stack: stack, **volume.symbolize_keys)
+          unless volume[:external]
+            outcome = Volumes::Create.run(grid: grid, **volume.symbolize_keys)
             unless outcome.success?
               outcome.errors.message.each do |key, msg|
                 add_error(:volumes, :key, "Volume create failed for '#{volume[:name]}': #{msg}")
+                return
               end
             end
           end

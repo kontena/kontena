@@ -12,6 +12,7 @@ module GridServices
 
     optional do
       string :image
+      model :grid, class: Grid
     end
 
     def validate
@@ -32,7 +33,12 @@ module GridServices
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
         end
         if self.volumes
-          changed_volumes = self.volumes.select { |v| !self.grid_service.volumes.include?(v) }
+          changed_volumes = self.volumes.select { |v|
+            vols = self.grid_service.service_volumes.map {
+              |sv| sv.to_s
+            }
+            !vols.include?(v)
+          }
           if changed_volumes.any? { |v| !v.include?(':') }
             add_error(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
           end
@@ -41,6 +47,7 @@ module GridServices
     end
 
     def execute
+      self.grid = self.grid_service.grid
       attributes = {}
       attributes[:strategy] = self.strategy if self.strategy
       attributes[:image_name] = self.image if self.image
@@ -63,7 +70,7 @@ module GridServices
       attributes[:devices] = self.devices if self.devices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
-      attributes[:volumes] = self.volumes if self.volumes
+      #attributes[:volumes] = self.volumes if self.volumes
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
 
       if self.links
@@ -78,6 +85,9 @@ module GridServices
 
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
+      end
+      if self.volumes
+        attributes[:service_volumes] = self.build_service_volumes
       end
       grid_service.attributes = attributes
       if grid_service.changed?

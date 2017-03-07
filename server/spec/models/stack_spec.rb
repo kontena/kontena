@@ -6,8 +6,6 @@ describe Stack do
   it { should belong_to(:grid) }
   it { should have_many(:stack_revisions)}
   it { should have_many(:grid_services)}
-  it { should have_many(:volumes)}
-  it { should embed_many(:external_volumes)}
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(name: 1) }
@@ -46,21 +44,4 @@ describe Stack do
     end
   end
 
-  context 'volumes' do
-    let(:grid) do
-      Grid.create(name: 'test-grid')
-    end
-    let :stack do
-      Stack.create(grid: grid, name: 'stack')
-    end
-
-    describe 'external volumes and volumes should not interfere' do
-      it 'creates external volume and does not alter volumes references' do
-        expect {
-          stack.volumes.create!(grid: grid, name: 'b-volume', scope: 'node')
-          expect(stack.external_volumes.count).to eq(0)
-        }.to change {stack.volumes.count}.by(1)
-      end
-    end
-  end
 end

@@ -62,6 +62,11 @@ module GridServices
         attributes[:networks] = [default_net]
       end
 
+      attributes.delete(:volumes)
+      if self.volumes
+        attributes[:service_volumes] = self.build_service_volumes()
+      end
+
       grid_service = GridService.new(attributes)
       unless grid_service.save
         grid_service.errors.each do |key, message|

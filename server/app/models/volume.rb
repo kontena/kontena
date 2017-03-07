@@ -9,8 +9,6 @@ class Volume
   field :external, type: Boolean
 
   belongs_to :grid
-  belongs_to :stack, inverse_of: :volumes
-  belongs_to :external_volume
 
   index({ grid_id: 1 })
   index({ name: 1 })
@@ -20,30 +18,18 @@ class Volume
   validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
 
   def to_path
-    return "#{stack.name}/#{name}" if stack
-    "#{name}"
-  end
-
-  def stacked_name
-    if default_stack?
-      return self.name
-    end
-    "#{stack.name}.#{self.name}"
+    "#{self.grid.try(:name)}/#{self.name}"
   end
 
   def name_for_service(service, instance_number)
-    if stack
-      case self.scope
-      when 'node'
-        self.stacked_name
-      when 'instance-private'
-        "#{self.stacked_name}-#{service.name}-#{instance_number}"
-      when 'instance-shared'
-        "#{self.stacked_name}-#{instance_number}"
-      end
-    else
-      name
+
+    case self.scope
+    when 'container'
+      "#{service.name_with_stack}.#{self.name}-#{instance_number}"
+    when 'service'
+      "#{service.name_with_stack}.#{self.name}"
     end
+
   end
 
   # @return [Boolean]

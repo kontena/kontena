@@ -258,7 +258,7 @@ describe Stacks::Create do
     end
 
     context 'volumes' do
-      it 'creates stack scoped volumes' do
+      it 'creates volumes' do
         grid
         expect {
           outcome = described_class.new(
@@ -273,12 +273,11 @@ describe Stacks::Create do
             volumes: [{name: 'vol1', scope: 'node', external: false}]
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes.count).to eq(1)
         }.to change{ Volume.count }.by(1)
       end
 
       it 'creates stack with external volumes' do
-        volume = Volume.create(name: 'vol1', grid: grid, stack: nil, scope: 'node')
+        volume = Volume.create(name: 'vol1', grid: grid, scope: 'node')
         expect {
           outcome = described_class.new(
             grid: grid,
@@ -292,8 +291,6 @@ describe Stacks::Create do
             volumes: [{name: 'vol1', external: true}]
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.external_volumes.count).to eq(1)
-          expect(outcome.result.external_volumes.first.volume).to eq(volume)
         }.to change{ Volume.count }.by(0)
       end
     end

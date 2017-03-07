@@ -1,5 +1,6 @@
 require_relative '../../spec_helper'
 
+
 describe '/v1/volumes' do
 
   let(:request_headers) do
@@ -19,6 +20,18 @@ describe '/v1/volumes' do
     user
   end
 
+  let(:john) do
+    user = User.create!(email: 'david@domain.com', external_id: '123456')
+    grid.users << user
+
+    user
+  end
+
+  let(:johns_token) do
+    AccessToken.create!(user: john, scopes: ['user'])
+  end
+
+
   let(:valid_token) do
     AccessToken.create!(user: david, scopes: ['user'])
   end
@@ -29,20 +42,19 @@ describe '/v1/volumes' do
     )
   end
 
-
   let! :volume do
-    stack.volumes.create!(
+    Volume.create!(
       grid: grid,
-      name: 'test-vol',
+      name: 'external-vol',
       driver: 'some-driver',
       scope: 'node'
     )
   end
 
-  let! :external_volume do
+  let! :other_volume do
     Volume.create!(
       grid: grid,
-      name: 'external-vol',
+      name: 'other-volume',
       driver: 'some-driver',
       scope: 'node'
     )
@@ -57,26 +69,15 @@ describe '/v1/volumes' do
   end
 
   describe 'GET /:id' do
-    it 'returns stack volume json' do
-      get "/v1/volumes/#{grid.name}/#{stack.name}/#{volume.name}", nil, request_headers
-      expect(response.status).to eq(200)
-      expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at driver driver_opts name scope stack
-      ).sort)
-      expect(json_response['id']).to eq("#{stack.name}/#{volume.name}")
-      expect(json_response['driver']).to eq(volume.driver)
-      expect(json_response['scope']).to eq(volume.scope)
-    end
-
-    it 'returns external volume json' do
-      get "/v1/volumes/#{grid.name}/#{external_volume.name}", nil, request_headers
+    it 'returns volume json' do
+      get "/v1/volumes/#{grid.name}/#{volume.name}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
         id created_at updated_at driver driver_opts name scope
       ).sort)
-      expect(json_response['id']).to eq("#{external_volume.name}")
-      expect(json_response['driver']).to eq(external_volume.driver)
-      expect(json_response['scope']).to eq(external_volume.scope)
+      expect(json_response['id']).to eq("#{grid.name}/#{volume.name}")
+      expect(json_response['driver']).to eq(volume.driver)
+      expect(json_response['scope']).to eq(volume.scope)
     end
 
     it 'return 404 for non existing volume' do
@@ -84,14 +85,19 @@ describe '/v1/volumes' do
       expect(response.status).to eq(404)
     end
 
-    it 'return 404 for non existing stack' do
-      get "/v1/volumes/#{grid.name}/foo/test-vol", nil, request_headers
-      expect(response.status).to eq(404)
-    end
-
     it 'return 404 for non existing grid' do
       get "/v1/volumes/foo/#{volume.name}", nil, request_headers
       expect(response.status).to eq(404)
+    end
+
+    it 'requires auth' do
+      get "/v1/volumes/#{grid.name}/#{volume.name}", nil#, { 'HTTP_AUTHORIZATION' => "Bearer #{johns_token.token_plain}"}
+      expect(response.status).to eq(403)
+    end
+
+    it 'returns 403 without grid access' do
+      get "/v1/volumes/#{grid.name}/#{volume.name}", nil#, { 'HTTP_AUTHORIZATION' => "Bearer #{johns_token.token_plain}"}
+      expect(response.status).to eq(403)
     end
   end
 
@@ -114,22 +120,25 @@ describe '/v1/volumes' do
       expect {
         delete "/v1/volumes/#{grid.name}/#{volume.name}", nil, request_headers
         expect(response.status).to eq(200)
-      }.to change{stack.volumes.count}. by (-1)
+      }.to change{Volume.count}. by (-1)
 
     end
 
     it 'returns 422 when volume still used by some service' do
-      redis = stack.grid_services.create!(
-        grid: grid,
-        name: 'redis',
-        image_name: 'redis:2.8',
-        volumes: ['test-vol:/data']
+      outcome = GridServices::Create.run(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          volumes: [
+            "#{volume.name}:/data:ro"
+          ]
       )
 
       expect {
-        delete "/v1/volumes/#{grid.name}/#{stack.name}/#{volume.name}", nil, request_headers
+        delete "/v1/volumes/#{grid.name}/#{volume.name}", nil, request_headers
         expect(response.status).to eq(422)
-      }.not_to change{stack.volumes.count}
+      }.not_to change{Volume.count}
     end
   end
 

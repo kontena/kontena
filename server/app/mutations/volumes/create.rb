@@ -8,7 +8,6 @@ module Volumes
     end
 
     optional do
-      model :stack, class: Stack, nils: true
       string :driver
       hash :driver_opts
     end
@@ -20,7 +19,6 @@ module Volumes
     def execute
       volume = Volume.create(
         grid: self.grid,
-        stack: self.stack,
         name: self.name,
         scope: self.scope,
         driver: self.driver,

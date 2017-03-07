@@ -21,7 +21,9 @@ json.secrets grid_service.secrets.as_json(only: [:secret, :name, :type])
 json.memory grid_service.memory
 json.memory_swap grid_service.memory_swap
 json.cpu_shares grid_service.cpu_shares
-json.volumes grid_service.volumes
+json.volumes grid_service.service_volumes do |sv|
+    sv.to_s
+end
 json.volumes_from grid_service.volumes_from
 json.cap_add grid_service.cap_add
 json.cap_drop grid_service.cap_drop

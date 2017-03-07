@@ -16,6 +16,7 @@ module V1
       def find_grid(grid_name)
         grid = Grid.find_by(name: grid_name)
         halt_request(404, {error: "Grid #{grid_name} not found"}) if !grid
+
         grid
       end
 
@@ -29,32 +30,18 @@ module V1
       # @param [String] stack_name
       # @param [String] volume_name
       # @return [GridService]
-      def load_volume(grid_name, stack_name, volume_name)
+      def load_volume(grid_name, volume_name)
         grid = find_grid(grid_name)
-        if stack_name
-          stack = find_stack(stack_name, grid)
-          volume = stack.volumes.find_by(name: volume_name)
-        else
-          volume = grid.volumes.find_by(name: volume_name)
-        end
-        halt_request(404, {error: "Volume #{volume_name} not found"}) if !volume
-
-        unless current_user.grid_ids.include?(volume.grid_id)
+        unless current_user.accessible_grids.include?(grid)
           halt_request(403, {error: 'Access denied'})
         end
+        volume = grid.volumes.find_by(name: volume_name)
+
+        halt_request(404, {error: "Volume #{volume_name} not found"}) if !volume
+
+
 
         volume
-      end
-
-      # Parse stack/vol out of path
-      # @param [String] volume path
-      # @return [Array] [stack, volume]
-      def parse_params(path)
-        if path.include?('/')
-          stack, volume = path.split('/')
-        else
-          [nil, path]
-        end
       end
 
       r.on ':grid_name' do |grid_name|
@@ -64,9 +51,8 @@ module V1
             @volumes = @grid.volumes
             render('volumes/index')
           end
-          r.is /(.*)/ do |path|
-            stack, volume = parse_params(path)
-            @volume = load_volume(grid_name, stack, volume)
+          r.is ':volume' do |volume|
+            @volume = load_volume(grid_name, volume)
             render('volumes/show')
           end
         end
@@ -91,9 +77,8 @@ module V1
 
         end
         r.delete do
-          r.is /(.*)/ do |path|
-            stack, volume = parse_params(path)
-            @volume = load_volume(grid_name, stack, volume)
+          r.is ':volume' do |volume|
+            @volume = load_volume(grid_name, volume)
             outcome = Volumes::Delete.run(volume: @volume)
             if outcome.success?
               audit_event(r, @volume.grid, @volume, 'delete', @volume)

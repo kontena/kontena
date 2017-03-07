@@ -47,7 +47,6 @@ module Docker
         cap_drop: grid_service.cap_drop,
         devices: grid_service.devices,
         ports: grid_service.ports,
-        volumes: grid_service.volumes,
         volumes_from: grid_service.volumes_from,
         net: grid_service.net,
         hostname: build_hostname(grid_service, instance_number),
@@ -68,7 +67,7 @@ module Docker
 
       spec[:networks] = build_networks
 
-      spec[:volume_specs] = build_volumes(instance_number)
+      spec[:volumes] = build_volumes(instance_number)
 
       spec
     rescue => exc
@@ -177,42 +176,26 @@ module Docker
 
     def build_volumes(instance_number)
       volume_specs = []
-      grid_service.volumes.each do |vol|
-        vol_string = remove_volume_flags(vol.dup)
-        elements = vol_string.split(':')
-        host_path_or_vol = elements[-2]
-        if host_path_or_vol.nil? || host_path_or_vol.start_with?('/')
-          next
-        end
-        container_path = elements[-2]
-        volume =
-          grid_service.stack.volumes.find_by(name: host_path_or_vol) ||
-          grid_service.stack.external_volumes.find_by(name: host_path_or_vol).volume
-          # TODO Need o handle nils? Should not be possible since the stack is invalid if no volumes found
-        if volume
-          volume_name = volume.name_for_service(grid_service, instance_number)
+      grid_service.service_volumes.each do |sv|
+        if sv.volume
+          volume_name = sv.volume.name_for_service(grid_service, instance_number)
           volume_specs << {
               name: volume_name,
-              driver: volume.driver,
-              scope: volume.scope,
-              driver_opts: volume.driver_opts
+              path: sv.path,
+              flags: sv.flags,
+              driver: sv.volume.driver,
+              driver_opts: sv.volume.driver_opts
           }
-          vol.sub!(host_path_or_vol, volume_name)
+        elsif
+          volume_specs << {
+              bind_mount: sv.bind_mount,
+              path: sv.path,
+              flags: sv.flags,
+          }
         end
       end
 
       volume_specs
-    end
-
-    VOLUME_FLAGS = [':ro', ':rw', ':z', ':Z', ':rshared', ':shared', ':rslave', ':slave', ':rprivate', ':private', ':nocopy']
-    # Removes known mount flags from the volume specification to make it parseable
-    # @param [String]
-    # @return [String]
-    def remove_volume_flags(volume)
-      VOLUME_FLAGS.each do |flag|
-        volume.slice!(flag)
-      end
-      volume
     end
 
     # @param [GridService] grid_service

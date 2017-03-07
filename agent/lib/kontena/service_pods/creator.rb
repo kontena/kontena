@@ -125,15 +125,17 @@ module Kontena
       end
 
       def ensure_volumes(service_pod)
-        service_pod.volume_specs.each do |volume_spec|
+        service_pod.volumes.each do |volume_spec|
           debug "ensuring volume: #{volume_spec}"
-          volume = Docker::Volume.get(volume_spec['name']) rescue nil
-          unless volume
-            info "creating volume: volume_spec['name']"
-            Docker::Volume.create(volume_spec['name'], {
-                'Driver' => volume_spec['driver'],
-                'DriverOpts' => volume_spec['driver_opts']
-              })
+          if volume_spec['name']
+            volume = Docker::Volume.get(volume_spec['name']) rescue nil
+            unless volume
+              info "creating volume: volume_spec['name']"
+              Docker::Volume.create(volume_spec['name'], {
+                  'Driver' => volume_spec['driver'],
+                  'DriverOpts' => volume_spec['driver_opts']
+                })
+            end
           end
         end
       end

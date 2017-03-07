@@ -22,7 +22,9 @@ describe Kontena::ServicePods::Creator do
         'KONTENA_SERVICE_NAME=redis-cache'
       ],
       'net' => 'bridge',
-      'volume_specs' => [{'name' => 'someVolume', 'driver' => 'local', 'driver_opts' => {'foo' => 'bar'}}]
+      'volumes' => [
+        {'name' => 'someVolume', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}}
+      ]
     }
   end
 

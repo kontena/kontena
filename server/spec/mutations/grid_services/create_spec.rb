@@ -210,7 +210,7 @@ describe GridServices::Create do
           stateful: true,
           volumes: ['/data1', '/data2']
       ).run
-      expect(outcome.result.volumes).to eq(['/data1', '/data2'])
+      expect(outcome.result.service_volumes.count).to eq(2)
     end
 
     it 'saves volumes_from' do
@@ -366,6 +366,71 @@ describe GridServices::Create do
           ]
       ).run
       expect(outcome.success?).to be(true)
+    end
+
+    context 'volumes' do
+      let(:volume) do
+        Volume.create!(grid: grid, name: 'foo', scope: 'node')
+      end
+
+      it 'creates service with a real volume' do
+        volume
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            volumes: [
+              'foo:/data:ro'
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.service_volumes.first.volume).to eq(volume)
+      end
+
+      it 'creates service with a bind mount' do
+        volume
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            volumes: [
+              '/foo:/data:ro:nocopy:rslave'
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.service_volumes.first.volume).to be_nil
+        expect(outcome.result.service_volumes.first.bind_mount).to eq('/foo')
+        expect(outcome.result.service_volumes.first.path).to eq('/data')
+        expect(outcome.result.service_volumes.first.flags).to eq('ro:nocopy:rslave')
+      end
+
+      it 'creates service with a anon volumes' do
+        volume
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            volumes: [
+              '/foo',
+              '/bar'
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.service_volumes.count).to eq(2)
+        expect(outcome.result.service_volumes.first.volume).to be_nil
+        expect(outcome.result.service_volumes.first.bind_mount).to eq(nil)
+        expect(outcome.result.service_volumes.first.path).to eq('/foo')
+        expect(outcome.result.service_volumes.first.flags).to eq(nil)
+
+        expect(outcome.result.service_volumes[1].volume).to be_nil
+        expect(outcome.result.service_volumes[1].bind_mount).to eq(nil)
+        expect(outcome.result.service_volumes[1].path).to eq('/bar')
+        expect(outcome.result.service_volumes[1].flags).to eq(nil)
+      end
+
     end
   end
 end

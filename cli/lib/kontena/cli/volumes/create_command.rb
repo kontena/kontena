@@ -10,7 +10,7 @@ module Kontena::Cli::Volume
 
     option '--driver', 'DRIVER', 'Volume driver to be used', default: 'local'
     option '--driver-opt', 'DRIVER_OPT', 'Volume driver options', multivalued: true
-    option '--scope', 'SCOPE', 'Volume scope', default: 'instance-private'
+    option '--scope', 'SCOPE', 'Volume scope', default: 'container'
 
     requires_current_master
     requires_current_master_token
