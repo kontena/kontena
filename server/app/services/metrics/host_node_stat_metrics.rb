@@ -22,35 +22,32 @@ module Metrics
       count = 0
 
       result = {
-        node_id: node_id,
-        from_time: from_time,
-        to_time: to_time,
         metrics: [],
-        data_points: 0,
-        cpu_usage_percent: 0.0,
-        memory_used_bytes: 0,
-        memory_total_bytes: 0,
-        memory_used_percent: 0.0,
-        filesystem_used_bytes: 0,
-        filesystem_total_bytes: 0,
-        filesystem_used_percent: 0.0,
-        network_in_bytes_per_second: 0,
-        network_out_bytes_per_second: 0
+        total_data_points: 0,
+        average_cpu_usage_percent: 0.0,
+        average_memory_used_bytes: 0,
+        average_memory_total_bytes: 0,
+        average_memory_used_percent: 0.0,
+        average_filesystem_used_bytes: 0,
+        average_filesystem_total_bytes: 0,
+        average_filesystem_used_percent: 0.0,
+        average_network_in_bytes_per_second: 0,
+        average_network_out_bytes_per_second: 0
       }
-
+      
       self.fetch_aggregates_from_mongo(node_id, grid_id, from_time, to_time).each do |doc|
         count += 1
         ts = doc[:timestamp]
-        result[:data_points] += doc[:data_points]
-        result[:cpu_usage_percent] += doc[:cpu_usage_percent]
-        result[:memory_used_bytes] += doc[:memory_used_bytes]
-        result[:memory_total_bytes] += doc[:memory_total_bytes]
-        result[:memory_used_percent] += doc[:memory_used_percent]
-        result[:filesystem_used_bytes] += doc[:filesystem_used_bytes]
-        result[:filesystem_total_bytes] += doc[:filesystem_total_bytes]
-        result[:filesystem_used_percent] += doc[:filesystem_used_percent]
-        result[:network_in_bytes_per_second] += doc[:network_in_bytes_per_second]
-        result[:network_out_bytes_per_second] += doc[:network_out_bytes_per_second]
+        result[:total_data_points] += doc[:data_points]
+        result[:average_cpu_usage_percent] += doc[:cpu_usage_percent]
+        result[:average_memory_used_bytes] += doc[:memory_used_bytes]
+        result[:average_memory_total_bytes] += doc[:memory_total_bytes]
+        result[:average_memory_used_percent] += doc[:memory_used_percent]
+        result[:average_filesystem_used_bytes] += doc[:filesystem_used_bytes]
+        result[:average_filesystem_total_bytes] += doc[:filesystem_total_bytes]
+        result[:average_filesystem_used_percent] += doc[:filesystem_used_percent]
+        result[:average_network_in_bytes_per_second] += doc[:network_in_bytes_per_second]
+        result[:average_network_out_bytes_per_second] += doc[:network_out_bytes_per_second]
         result[:metrics] << {
           data_points: doc[:data_points],
           cpu_usage_percent: doc[:cpu_usage_percent].round(2),
@@ -67,15 +64,15 @@ module Metrics
       end
 
       if (count > 1)
-        result[:cpu_usage_percent] = (result[:cpu_usage_percent] / count.to_f).round(2)
-        result[:memory_used_bytes] /= count
-        result[:memory_total_bytes] /= count
-        result[:memory_used_percent] = (result[:memory_used_percent] / count.to_f).round(2)
-        result[:filesystem_used_bytes] /= count
-        result[:filesystem_total_bytes] /= count
-        result[:filesystem_used_percent] = (result[:filesystem_used_percent] / count.to_f).round(2)
-        result[:network_in_bytes_per_second] /= count
-        result[:network_out_bytes_per_second] /= count
+        result[:average_cpu_usage_percent] = (result[:average_cpu_usage_percent] / count.to_f).round(2)
+        result[:average_memory_used_bytes] /= count
+        result[:average_memory_total_bytes] /= count
+        result[:average_memory_used_percent] = (result[:average_memory_used_percent] / count.to_f).round(2)
+        result[:average_filesystem_used_bytes] /= count
+        result[:average_filesystem_total_bytes] /= count
+        result[:average_filesystem_used_percent] = (result[:average_filesystem_used_percent] / count.to_f).round(2)
+        result[:average_network_in_bytes_per_second] /= count
+        result[:average_network_out_bytes_per_second] /= count
       end
 
       result

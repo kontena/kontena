@@ -149,26 +149,23 @@ describe Metrics::HostNodeStatMetrics do
   }
 
   describe '#fetch' do
-    it 'returns aggregated data' do
+    it 'returns aggregated data by node_id' do
       stats
       from = Time.parse('2017-03-01 12:00:00 +00:00')
       to = Time.parse('2017-03-01 13:00:00 +00:00')
       results = Metrics::HostNodeStatMetrics.fetch_for_node(node.id, from, to)
 
       expect(results).to eq({
-        node_id: node.id,
-        data_points: 3,
-        cpu_usage_percent: 0.45,
-        memory_used_bytes: 450.0,
-        memory_total_bytes: 1500.0,
-        memory_used_percent: 0.3,
-        filesystem_used_bytes: 500.0,
-        filesystem_total_bytes: 1250.0,
-        filesystem_used_percent: 0.4,
-        network_in_bytes_per_second: 275,
-        network_out_bytes_per_second: 350,
-        from_time: Time.parse('2017-03-01 12:00:00 +0000'),
-        to_time: Time.parse('2017-03-01 13:00:00 +0000'),
+        total_data_points: 3,
+        average_cpu_usage_percent: 0.45,
+        average_memory_used_bytes: 450.0,
+        average_memory_total_bytes: 1500.0,
+        average_memory_used_percent: 0.3,
+        average_filesystem_used_bytes: 500.0,
+        average_filesystem_total_bytes: 1250.0,
+        average_filesystem_used_percent: 0.4,
+        average_network_in_bytes_per_second: 275,
+        average_network_out_bytes_per_second: 350,
         metrics: [
           {
             data_points: 2,
@@ -195,6 +192,40 @@ describe Metrics::HostNodeStatMetrics do
             network_in_bytes_per_second: 400,
             network_out_bytes_per_second: 500,
             timestamp: Time.parse('2017-03-01 12:16:00 +0000')
+          }]
+        })
+    end
+
+    it 'returns aggregated data by grid_id' do
+      stats
+      from = Time.parse('2017-03-01 12:00:00 +00:00')
+      to = Time.parse('2017-03-01 13:00:00 +00:00')
+      results = Metrics::HostNodeStatMetrics.fetch_for_grid(other_grid.id, from, to)
+
+      expect(results).to eq({
+        total_data_points: 1,
+        average_cpu_usage_percent: 0.1,
+        average_memory_used_bytes: 500.0,
+        average_memory_total_bytes: 1000.0,
+        average_memory_used_percent: 0.5,
+        average_filesystem_used_bytes: 200.0,
+        average_filesystem_total_bytes: 1000.0,
+        average_filesystem_used_percent: 0.2,
+        average_network_in_bytes_per_second: 100.0,
+        average_network_out_bytes_per_second: 100.0,
+        metrics: [
+          {
+            data_points: 1,
+            cpu_usage_percent: 0.1,
+            memory_used_bytes: 500.0,
+            memory_total_bytes: 1000.0,
+            memory_used_percent: 0.5,
+            filesystem_used_bytes: 200.0,
+            filesystem_total_bytes: 1000.0,
+            filesystem_used_percent: 0.2,
+            network_in_bytes_per_second: 100.0,
+            network_out_bytes_per_second: 100.0,
+            timestamp: Time.parse('2017-03-01 12:15:00 +0000')
           }]
         })
 
