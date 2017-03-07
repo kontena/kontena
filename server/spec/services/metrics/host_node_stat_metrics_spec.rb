@@ -156,6 +156,8 @@ describe Metrics::HostNodeStatMetrics do
       results = Metrics::HostNodeStatMetrics.fetch_for_node(node.id, from, to)
 
       expect(results).to eq({
+        from_time: Time.parse('2017-03-01 12:00:00 +00:00'),
+        to_time: Time.parse('2017-03-01 13:00:00 +00:00'),
         total_data_points: 3,
         average_cpu_usage_percent: 0.45,
         average_memory_used_bytes: 450.0,
@@ -203,6 +205,8 @@ describe Metrics::HostNodeStatMetrics do
       results = Metrics::HostNodeStatMetrics.fetch_for_grid(other_grid.id, from, to)
 
       expect(results).to eq({
+        from_time: Time.parse('2017-03-01 12:00:00 +00:00'),
+        to_time: Time.parse('2017-03-01 13:00:00 +00:00'),
         total_data_points: 1,
         average_cpu_usage_percent: 0.1,
         average_memory_used_bytes: 500.0,
