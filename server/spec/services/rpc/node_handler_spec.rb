@@ -7,8 +7,8 @@ describe Rpc::NodeHandler, celluloid: true do
 
   describe '#stats' do
     it 'saves host_node_stat item' do
-      puts 'save:'
-      puts node.node_id
+      node
+      
       expect {
         subject.stats({
           'id' => node.node_id,
