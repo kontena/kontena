@@ -38,7 +38,8 @@ class CloudWebsocketConnectJob
   end
 
   def kontena_auth_provider?
-    AuthProvider.instance.is_kontena?
+    ap = AuthProvider.instance
+    ap.valid? && ap.is_kontena?
   end
 
   def cloud_enabled_in_config?
