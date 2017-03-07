@@ -15,7 +15,7 @@ describe Rpc::NodeHandler, celluloid: true do
         private_ip: '10.12.1.3', public_ip: '80.240.128.4'
       )
       HostNode.create!(
-        node_id: 'b', grid: grid, name: 'test-node-3', labels: ['region=ams3'],
+        node_id: 'c', grid: grid, name: 'test-node-3', labels: ['region=ams3'],
         private_ip: '10.23.1.4', public_ip: '146.185.176.0'
       )
       json = subject.get(node.node_id)

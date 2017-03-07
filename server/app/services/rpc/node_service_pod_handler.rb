@@ -12,12 +12,16 @@ module Rpc
       node = @grid.host_nodes.find_by(node_id: id)
       return { error: 'Node not found' } unless node
       service_pods = node.grid_service_instances.includes(:grid_service).map { |i|
-        ServicePodSerializer.new(i).to_hash
-      }
+        ServicePodSerializer.new(i).to_hash if i.grid_service
+      }.compact
 
       { service_pods: service_pods }
+    rescue
+      { error: 'Internal server error' }
     end
 
+    # @param [String] id
+    # @param [Hash] pod
     def set_state(id, pod)
       node = @grid.host_nodes.find_by(node_id: id)
       return unless node

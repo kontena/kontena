@@ -4,7 +4,11 @@ describe GridScheduler do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:nodes) do
     nodes = []
-    3.times { nodes << HostNode.create!(node_id: SecureRandom.uuid, grid: grid, connected: true) }
+    3.times {
+      nodes << HostNode.create!(
+        node_id: SecureRandom.uuid, grid: grid, connected: true
+      )
+    }
     nodes
   end
   let(:service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid, container_count: 2) }
@@ -37,11 +41,12 @@ describe GridScheduler do
       end
 
       it 'returns true if all instances exist' do
+        deploy_rev = Time.now.to_s
         2.times do |i|
           service.grid_service_instances.create!(
             host_node: nodes[i],
-            instance_number: i,
-            deploy_rev: Time.now.to_s
+            instance_number: i + 1,
+            deploy_rev: deploy_rev
           )
         end
         expect(subject.all_instances_exist?(service)).to be_truthy
