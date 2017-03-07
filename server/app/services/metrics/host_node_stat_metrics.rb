@@ -1,11 +1,24 @@
 module Metrics
   class HostNodeStatMetrics
+      # @param [String] node_id
+      # @param [Time] from_time
+      # @param [Time] to_time
+      # @return [Hash] the aggregation results
+    def self.fetch_for_node(node_id, from_time, to_time)
+      self.fetch_aggregates(node_id, nil, from_time, to_time)
+    end
 
-    # @param [String] node_id
+    # @param [String] grid_id
     # @param [Time] from_time
     # @param [Time] to_time
     # @return [Hash] the aggregation results
-    def self.fetch(node_id, from_time, to_time)
+    def self.fetch_for_grid(grid_id, from_time, to_time)
+      self.fetch_aggregates(nil, grid_id, from_time, to_time)
+    end
+
+    private
+
+    def self.fetch_aggregates(node_id, grid_id, from_time, to_time)
       count = 0
 
       result = {
@@ -25,7 +38,7 @@ module Metrics
         network_out_bytes_per_second: 0
       }
 
-      self.fetch_aggregates_from_mongo(node_id, from_time, to_time).each do |doc|
+      self.fetch_aggregates_from_mongo(node_id, grid_id, from_time, to_time).each do |doc|
         count += 1
         ts = doc[:timestamp]
         result[:data_points] += doc[:data_points]
@@ -68,18 +81,23 @@ module Metrics
       result
     end
 
-    private
+    def self.fetch_aggregates_from_mongo(node_id, grid_id, from_time, to_time)
+      match = {
+        created_at: {
+          '$gte': from_time,
+          '$lt': to_time
+        }
+      }
 
-    def self.fetch_aggregates_from_mongo(node_id, from_time, to_time)
+      if (node_id)
+        match[:host_node_id] = node_id
+      else
+        match[:grid_id] = grid_id
+      end
+
       HostNodeStat.collection.aggregate([
       {
-        '$match': {
-          host_node_id: node_id,
-          created_at: {
-            '$gte': from_time,
-            '$lt': to_time
-          }
-        }
+        '$match': match
       },
       {
         '$sort': {
