@@ -15,3 +15,4 @@ mkmf.log
 .idea
 *.gem
 /vendor/
+/.rspec-local
