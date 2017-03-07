@@ -23,6 +23,8 @@ module Metrics
 
       result = {
         metrics: [],
+        from_time: from_time,
+        to_time: to_time,
         total_data_points: 0,
         average_cpu_usage_percent: 0.0,
         average_memory_used_bytes: 0,
@@ -34,7 +36,7 @@ module Metrics
         average_network_in_bytes_per_second: 0,
         average_network_out_bytes_per_second: 0
       }
-      
+
       self.fetch_aggregates_from_mongo(node_id, grid_id, from_time, to_time).each do |doc|
         count += 1
         ts = doc[:timestamp]
