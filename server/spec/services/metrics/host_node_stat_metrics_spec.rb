@@ -197,42 +197,5 @@ describe Metrics::HostNodeStatMetrics do
           }]
         })
     end
-
-    it 'returns aggregated data by grid_id' do
-      stats
-      from = Time.parse('2017-03-01 12:00:00 +00:00')
-      to = Time.parse('2017-03-01 13:00:00 +00:00')
-      results = Metrics::HostNodeStatMetrics.fetch_for_grid(other_grid.id, from, to)
-
-      expect(results).to eq({
-        from_time: Time.parse('2017-03-01 12:00:00 +00:00'),
-        to_time: Time.parse('2017-03-01 13:00:00 +00:00'),
-        total_data_points: 1,
-        average_cpu_usage_percent: 0.1,
-        average_memory_used_bytes: 500.0,
-        average_memory_total_bytes: 1000.0,
-        average_memory_used_percent: 0.5,
-        average_filesystem_used_bytes: 200.0,
-        average_filesystem_total_bytes: 1000.0,
-        average_filesystem_used_percent: 0.2,
-        average_network_in_bytes_per_second: 100.0,
-        average_network_out_bytes_per_second: 100.0,
-        metrics: [
-          {
-            data_points: 1,
-            cpu_usage_percent: 0.1,
-            memory_used_bytes: 500.0,
-            memory_total_bytes: 1000.0,
-            memory_used_percent: 0.5,
-            filesystem_used_bytes: 200.0,
-            filesystem_total_bytes: 1000.0,
-            filesystem_used_percent: 0.2,
-            network_in_bytes_per_second: 100.0,
-            network_out_bytes_per_second: 100.0,
-            timestamp: Time.parse('2017-03-01 12:15:00 +0000')
-          }]
-        })
-
-    end
   end
 end
