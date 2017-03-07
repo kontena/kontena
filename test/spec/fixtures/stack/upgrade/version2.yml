@@ -1,0 +1,5 @@
+stack: test/redis
+version: 3.2.8
+services:
+  redis:
+    image: redis:3.2.8-alpine
