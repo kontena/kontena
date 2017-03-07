@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe DistributedLock do
   it { should have_fields(:name, :lock_id, :created_at)}

@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe ServiceBalancerJob, celluloid: true do
   before(:each) { DistributedLock.delete_all }

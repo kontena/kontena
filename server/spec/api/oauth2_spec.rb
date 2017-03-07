@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe 'OAuth2 API' do
   let(:david) { User.create(email: 'david@example.com') }

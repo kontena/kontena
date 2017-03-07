@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Stacks::Create do
   let(:grid) { Grid.create!(name: 'test-grid') }

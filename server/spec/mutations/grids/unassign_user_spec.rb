@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Grids::UnassignUser do
   let(:current_user) { User.create!(email: 'jane@domain.com') }

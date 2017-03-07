@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe StackRemoveWorker do
   before(:each) do
