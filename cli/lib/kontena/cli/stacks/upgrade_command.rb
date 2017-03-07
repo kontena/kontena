@@ -28,7 +28,7 @@ module Kontena::Cli::Stacks
       stack = stack_from_yaml(filename, name: name, values: values, defaults: master_data['variables'])
 
       unless force? || master_data['stack'] == stack['stack']
-        confirm "Going to replace stack #{Kontena.pastel.cyan(master_data['stack'])} on master with #{Kontena.pastel.cyan(stack['stack'])} from #{Kontena.pastel.yellow(filename)}. Are you sure?"
+        confirm "Replacing stack #{Kontena.pastel.cyan(master_data['stack'])} on master with #{Kontena.pastel.cyan(stack['stack'])} from #{Kontena.pastel.yellow(filename)}. Are you sure?"
       end
 
       spinner "Upgrading stack #{pastel.cyan(name)}" do |spin|
