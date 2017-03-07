@@ -1,5 +1,5 @@
-json.from_time @node_stats[:from_time]
-json.to_time @node_stats[:to_time]
+json.from @node_stats[:from_time]
+json.to @node_stats[:to_time]
 json.total_data_points @node_stats[:total_data_points]
 json.average_cpu_usage_percent @node_stats[:average_cpu_usage_percent]
 json.average_memory_used_bytes @node_stats[:average_memory_used_bytes]
