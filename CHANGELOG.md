@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.3](https://github.com/kontena/kontena/releases/tag/v1.1.3) (2017-03-07)
+
+**Master & Agents:**
+
+- Fix master auth config race condition issues (#1921)
+
+**CLI:**
+
+- Send file:// as registry url to allow backwards compatibility with pre v1.1.2 masters (#1930)
+
 ## [1.1.2](https://github.com/kontena/kontena/releases/tag/v1.1.2) (2017-02-24)
 
 **Master & Agents:**
