@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/apps/common"
 
 describe Kontena::Cli::Apps::Common do

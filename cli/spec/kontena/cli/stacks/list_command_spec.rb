@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/stacks/list_command"
 
 describe Kontena::Cli::Stacks::ListCommand do

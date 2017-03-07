@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/apps/docker_helper"
 
 describe Kontena::Cli::Apps::DockerHelper do

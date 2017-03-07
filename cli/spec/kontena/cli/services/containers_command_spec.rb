@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/services/containers_command"
 
 describe Kontena::Cli::Services::ContainersCommand do

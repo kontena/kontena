@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/stacks/build_command"
 
 describe Kontena::Cli::Stacks::BuildCommand do

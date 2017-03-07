@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'kontena_cli'
 
 describe Kontena::PluginManager do

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/apps/service_generator"
 
 describe Kontena::Cli::Apps::ServiceGenerator do

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/stacks/show_command"
 
 describe Kontena::Cli::Stacks::ShowCommand do

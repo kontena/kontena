@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/common"
 
 describe Kontena::Cli::Common do

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'kontena/cli/vault/export_command'
 
 describe Kontena::Cli::Vault::ExportCommand do

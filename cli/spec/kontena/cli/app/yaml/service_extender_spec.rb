@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'kontena/cli/apps/yaml/service_extender'
 
 describe Kontena::Cli::Apps::YAML::ServiceExtender do

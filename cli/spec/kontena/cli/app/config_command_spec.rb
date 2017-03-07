@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/cli/apps/config_command"
 require 'ruby_dig'
 

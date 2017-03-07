@@ -1,4 +1,3 @@
-require 'spec_helper'
 require "kontena/main_command"
 
 describe Kontena::MainCommand do
