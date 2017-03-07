@@ -8,3 +8,4 @@ log/*.log
 /build/
 /release/
 /vendor/
+.rspec-local
