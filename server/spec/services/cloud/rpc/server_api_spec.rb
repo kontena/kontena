@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Cloud::Rpc::ServerApi do
   let(:david) do

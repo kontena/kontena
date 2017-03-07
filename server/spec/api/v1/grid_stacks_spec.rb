@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe '/v1/grids/:grid/stacks', celluloid: true do
 

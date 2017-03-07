@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe GridServices::Create do
   let(:grid) {

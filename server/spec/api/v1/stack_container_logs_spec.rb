@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe '/v1/stacks/:id/container_logs', celluloid: true do
 

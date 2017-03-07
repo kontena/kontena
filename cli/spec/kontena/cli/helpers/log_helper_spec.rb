@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/helpers/log_helper"
 
 describe Kontena::Cli::Helpers::LogHelper do

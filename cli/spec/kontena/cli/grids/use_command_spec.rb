@@ -1,5 +1,4 @@
 
-require_relative "../../../spec_helper"
 require 'kontena/cli/grids/use_command'
 
 describe Kontena::Cli::Grids::UseCommand do

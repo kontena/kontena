@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe GridServices::Deploy, celluloid: true do
   let(:host_node) { HostNode.create(node_id: 'aa')}

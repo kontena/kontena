@@ -1,4 +1,3 @@
-require_relative "../../../../spec_helper"
 require 'kontena/cli/cloud/master/add_command'
 
 describe Kontena::Cli::Cloud::Master::AddCommand do

@@ -5,3 +5,6 @@ docs/node_modules
 docs/_book
 .*.swo
 .*.swp
+.rspec-local
+.DS_Store
+.byebug_history

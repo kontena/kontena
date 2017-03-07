@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/stacks/deploy_command"
 
 describe Kontena::Cli::Stacks::DeployCommand do

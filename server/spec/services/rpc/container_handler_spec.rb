@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Rpc::ContainerHandler, celluloid: true do
   let(:grid) { Grid.create! }
