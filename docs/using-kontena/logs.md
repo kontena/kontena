@@ -18,13 +18,13 @@ The logs are stored in a capacity-bounded MongoDB collection, which limits the d
 
 Often there is a need to further process the logs and gather some relevant statistics and insight what is happening in your services. To ship the logs to some other system there are three different alternatives outlined in below chapters.
 
-### Enable fluentd shipping
+### Enable fluentd forwarding
 
-Kontena supports fluentd log shipping that can be configured on each grid. When fluentd shipping is enabled, all container logs are automatically sent to fluentd for further processing **in addition** of storing them in Kontena Master.
+Kontena supports fluentd log shipping that can be configured on each grid. When fluentd forwarding is enabled, all container logs are automatically sent to fluentd for further processing **in addition** of storing them in Kontena Master.
 
 You can enable fluentd forwarding using:
 ```
-kontena grid update --log-driver fluentd --log-opt fluentd-address=server:port my-grid
+kontena grid update --log-forwarder fluentd --log-opt fluentd-address=server:port my-grid
 ```
 
 Each event sent to fluentd is tagged with following notation:
@@ -33,7 +33,7 @@ Each event sent to fluentd is tagged with following notation:
 The record itself is a hash with following semantics:
 ```
 {
-  event: <log data>,
+  log: <log data>,
   type: stdout / stderr
 }
 ```

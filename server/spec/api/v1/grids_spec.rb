@@ -432,7 +432,7 @@ describe '/v1/grids', celluloid: true do
       port = 8125
       data = {
         logs: {
-          driver: 'fluentd',
+          forwarder: 'fluentd',
           opts: {
             server: server,
             port: port
@@ -442,10 +442,22 @@ describe '/v1/grids', celluloid: true do
       put "/v1/grids/#{grid.to_path}", data.to_json, request_headers
       expect(response.status).to eq(200)
       logs = grid.reload.grid_logs_opts
-      expect(logs.driver).to eq('fluentd')
+      expect(logs.forwarder).to eq('fluentd')
       expect(logs.opts['server']).to eq(server)
-      expect(json_response['logs']['driver']).to eq('fluentd')
+      expect(json_response['logs']['forwarder']).to eq('fluentd')
       expect(json_response['logs']['opts']['server']).to eq(server)
+    end
+
+    it 'disables logs' do
+      grid = david.grids.first
+      data = {
+        logs: {
+          forwarder: 'none'
+        }
+      }
+      put "/v1/grids/#{grid.to_path}", data.to_json, request_headers
+      expect(response.status).to eq(200)
+      expect(grid.reload.grid_logs_opts).to be_nil
     end
 
     it 'updates trusted_subnets' do

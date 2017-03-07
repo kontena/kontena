@@ -8,7 +8,7 @@ module Kontena::Cli::Grids
     parameter "NAME", "Grid name"
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
     option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
-    option "--log-driver", "LOG_DRIVER", "Set grid wide log driver"
+    option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder"
     option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
 
     def execute
@@ -26,9 +26,9 @@ module Kontena::Cli::Grids
         }
       end
 
-      if log_driver
+      if log_forwarder
         payload[:logs] = {
-          driver: log_driver,
+          forwarder: log_forwarder,
           opts: parse_log_opts
         }
       end
@@ -40,8 +40,8 @@ module Kontena::Cli::Grids
     end
 
     def validate_log_opts
-      if !log_opt_list.empty? && log_driver.nil?
-        raise Kontena::Errors::StandardError.new(1, "Need to specify --log-driver when using --log-opt")
+      if !log_opt_list.empty? && log_forwarder.nil?
+        raise Kontena::Errors::StandardError.new(1, "Need to specify --log-forwarder when using --log-opt")
       end
     end
 

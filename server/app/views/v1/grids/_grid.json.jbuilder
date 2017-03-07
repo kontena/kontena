@@ -15,7 +15,7 @@ json.subnet grid.subnet
 json.supernet grid.supernet
 if grid.grid_logs_opts
   json.logs do
-    json.driver grid.grid_logs_opts.driver
+    json.forwarder grid.grid_logs_opts.forwarder
     json.opts grid.grid_logs_opts.opts
   end
 end

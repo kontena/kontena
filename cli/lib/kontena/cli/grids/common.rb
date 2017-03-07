@@ -43,7 +43,7 @@ module Kontena::Cli::Grids
       end
       if logs = grid.dig('logs')
         puts "logs:"
-        puts "  driver: #{logs['driver']}"
+        puts "  forwarder: #{logs['forwarder']}"
         logs['opts'].each do |k,v|
           puts "  #{k}: #{v}"
         end

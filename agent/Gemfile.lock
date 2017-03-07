@@ -92,8 +92,8 @@ DEPENDENCIES
   etcd
   eventmachine (~> 1.2.3)
   faye-websocket (~> 0.10.7)
-  msgpack (~> 1.0.3)
   fluent-logger (~> 0.6.2)
+  msgpack (~> 1.0.3)
   rake
   rspec
   simplecov
@@ -102,4 +102,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.13.6
+   1.14.3

@@ -25,7 +25,7 @@ module Grids
       end
       hash :logs do
         required do
-          string :driver, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
+          string :forwarder, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
         end
         optional do
           model :opts, class: Hash
@@ -44,6 +44,12 @@ module Grids
           end
         end
       end
+      if self.logs
+        case self.logs[:forwarder]
+        when 'fluentd'
+          validate_fluentd_opts(self.logs[:opts])
+        end
+      end
     end
 
     def execute
@@ -59,10 +65,10 @@ module Grids
       end
 
       if self.logs
-        if self.logs[:driver] == 'none'
+        if self.logs[:forwarder] == 'none'
           self.grid.grid_logs_opts = nil
         else
-          self.grid.grid_logs_opts = GridLogsOpts.new(driver: self.logs[:driver], opts: self.logs[:opts])
+          self.grid.grid_logs_opts = GridLogsOpts.new(forwarder: self.logs[:forwarder], opts: self.logs[:opts])
         end
       end
       grid.update_attributes(attributes)
@@ -86,6 +92,15 @@ module Grids
         end
         GridScheduler.new(grid).reschedule
       }
+    end
+
+    def validate_fluentd_opts(opts)
+      address = opts['fluentd-address']
+      add_error(:logs, :forwarder, 'fluentd-address option must be given') unless address
+      if address
+        host, port = address.split(':')
+        add_error(:logs, :forwarder, 'fluentd-address must be given in format address:port') unless host && port
+      end
     end
   end
 end

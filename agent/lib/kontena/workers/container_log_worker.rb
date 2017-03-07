@@ -60,7 +60,7 @@ module Kontena::Workers
       data = match[2]
       msg = {
         id: id,
-        service: @container.service_name,
+        service: @container.service_name || @container.name,
         stack: @container.stack_name,
         instance: @container.instance_number,
         time: time.utc.xmlschema,

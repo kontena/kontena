@@ -119,11 +119,11 @@ module Docker
     end
 
     def service_name
-      self.labels['io.kontena.service.name'].to_s
+      (self.labels['io.kontena.service.name'] || self.name).to_s
     end
 
     def stack_name
-      self.labels['io.kontena.stack.name'].to_s
+      (self.labels['io.kontena.stack.name'] || 'system').to_s
     end
 
     # @return [Hash]

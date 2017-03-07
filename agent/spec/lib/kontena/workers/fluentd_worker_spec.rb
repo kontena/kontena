@@ -16,7 +16,7 @@ describe Kontena::Workers::FluentdWorker do
       {
         'grid' => {
           'logs' => {
-            'driver' => 'fluentd',
+            'forwarder' => 'fluentd',
             'opts' => {
               'fluentd-address' => 'foo:12345'
             }

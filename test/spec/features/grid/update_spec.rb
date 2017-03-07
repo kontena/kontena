@@ -6,7 +6,7 @@ describe 'update grid' do
   end
 
   it 'updates log shipping' do
-    k = run "kontena grid update --log-driver fluentd --log-opt server=foo e2e"
+    k = run "kontena grid update --log-forwarder fluentd --log-opt server=foo e2e"
     expect(k.code).to eq(0)
     k = run "kontena grid show e2e"
     expect(k.out).to match /fluentd/
