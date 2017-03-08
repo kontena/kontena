@@ -86,14 +86,14 @@ describe '/v1/nodes', celluloid: true do
       node.host_node_stats.create!({
         grid_id: grid.id,
         memory: {
-      		total: 1000,
-      		used: 100
+          total: 1000,
+          used: 100
       	},
       	filesystem: [{
       			total: 1000,
             used: 10
         }],
-      	cpu_average: {
+      	cpu: {
       		system: 5.5,
       		user: 10.0
       	},
@@ -108,8 +108,7 @@ describe '/v1/nodes', celluloid: true do
       get "/v1/nodes/#{node.to_path}/stats", nil, request_headers
 
       expect(response.status).to eq(200)
-      expect(json_response['total_data_points']).to eq 1
-      expect(json_response['metrics'].size).to eq 1
+      expect(json_response['stats'].size).to eq 1
     end
 
     it 'applies date filters' do
@@ -118,8 +117,7 @@ describe '/v1/nodes', celluloid: true do
       get "/v1/nodes/#{node.to_path}/stats?from=#{from}&to=#{to}", nil, request_headers
 
       expect(response.status).to eq(200)
-      expect(json_response['total_data_points']).to eq 0
-      expect(json_response['metrics'].size).to eq 0
+      expect(json_response['stats'].size).to eq 0
       expect(Time.parse(json_response['from'])).to eq from
       expect(Time.parse(json_response['to'])).to eq to
     end
