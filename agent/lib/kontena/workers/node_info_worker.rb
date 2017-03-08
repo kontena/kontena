@@ -113,7 +113,7 @@ module Kontena::Workers
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
       current_cpu = Vmstat.cpu
-      average_cpu = calculate_average_cpu(@previous_cpu, current_cpu)
+      cpu_usage = calculate_cpu_usage(@previous_cpu, current_cpu)
       @previous_cpu = current_cpu
 
       interval = [ 1, (Time.now - @stats_since).round ].max
@@ -146,7 +146,7 @@ module Kontena::Workers
             total: disk.total_bytes
           }
         ],
-        cpu_average: average_cpu,
+        cpu: cpu_usage,
         network: network_traffic,
         time: Time.now.utc.to_s
       }
@@ -161,9 +161,9 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
       statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])
       statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
-      statsd.gauge("#{key_base}.cpu_average.system", event[:cpu_average][:system])
-      statsd.gauge("#{key_base}.cpu_average.user", event[:cpu_average][:user])
-      statsd.gauge("#{key_base}.cpu_average.idle", event[:cpu_average][:idle])
+      statsd.gauge("#{key_base}.cpu.system", event[:cpu][:system])
+      statsd.gauge("#{key_base}.cpu.user", event[:cpu][:user])
+      statsd.gauge("#{key_base}.cpu.idle", event[:cpu][:idle])
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
@@ -253,31 +253,34 @@ module Kontena::Workers
       0
     end
 
-    # @param [Array<Vmstat::Cpu>] prev_cpu_stats
-    # @param [Array<Vmstat::Cpu>] current_cpu_stats
-    # @return [Hash]
-    def calculate_average_cpu(prev_cpu_stats, current_cpu_stats)
-      all = prev_cpu_stats.zip(current_cpu_stats).map do |prev, current|
-        system_ticks = current.system - prev.system
-        user_ticks = current.user - prev.user
-        idle_ticks = current.idle - prev.idle
+    # @param [Array<Vmstat::Cpu>] prev_cpus
+    # @param [Array<Vmstat::Cpu>] current_cpu
+    # @return [Hash] { :num_cores, :system, :user, :idle }
+    def calculate_cpu_usage(prev_cpus, current_cpus)
+      result = {
+        num_cores: prev_cpus.size,
+        system: 0.0,
+        user: 0.0,
+        idle: 0.0
+      }
 
-        total_ticks = system_ticks + user_ticks + idle_ticks
+      prev_cpus.zip(current_cpus).map { |prev_cpu, current_cpu|
+        system_ticks = current_cpu.system - prev_cpu.system
+        user_ticks = current_cpu.user - prev_cpu.user
+        idle_ticks = current_cpu.idle - prev_cpu.idle
 
-        [system_ticks, user_ticks, idle_ticks].map do |ticks|
-          (ticks / total_ticks.to_f) * 100.0
-        end
-      end
+        total_ticks = (system_ticks + user_ticks + idle_ticks).to_f
 
-      averages = all.transpose.map do |stats|
-        total = stats.reduce :+
-        total / stats.size.to_f
-      end
-
-      return {
-        system: averages[0],
-        user: averages[1],
-        idle: averages[2]
+        {
+          system: (system_ticks / total_ticks) * 100.0,
+          user: (user_ticks / total_ticks) * 100.0,
+          idle: (idle_ticks / total_ticks) * 100.0
+        }
+      }.inject(result) { |memo, cpu_core|
+        memo[:system] += cpu_core[:system]
+        memo[:user] += cpu_core[:user]
+        memo[:idle] += cpu_core[:idle]
+        memo
       }
     end
 
@@ -289,13 +292,14 @@ module Kontena::Workers
       in_bytes_per_second = (current_iface.in_bytes - previous_iface.in_bytes) / interval
       out_bytes_per_second = (current_iface.out_bytes - previous_iface.out_bytes) / interval
 
-      return {
+      {
+        interface_name: current_iface.name,
         in_bytes_per_second: in_bytes_per_second,
         out_bytes_per_second: out_bytes_per_second
       }
     end
 
-    def get_network_interface()
+    def get_network_interface
       Vmstat.network_interfaces.select { |x| x.ethernet? and x.in_bytes > 0 and x.out_bytes > 0 }
                                .sort { |l,r| r.out_bytes <=> l.out_bytes }
                                .first

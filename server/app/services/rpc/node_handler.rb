@@ -48,7 +48,7 @@ module Rpc
         load: data['load'],
         filesystem: data['filesystem'],
         usage: data['usage'],
-        cpu_average: data['cpu_average'],
+        cpu: data['cpu'],
         network: data['network'],
         created_at: time
       }

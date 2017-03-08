@@ -1,7 +1,7 @@
 
 describe HostNodeStat do
   it { should be_timestamped_document }
-  it { should have_fields(:memory, :load, :usage, :cpu_average, :network).of_type(Hash)}
+  it { should have_fields(:memory, :load, :usage, :cpu, :network).of_type(Hash)}
   it { should have_fields(:filesystem).of_type(Array)}
 
   it { should belong_to(:grid) }

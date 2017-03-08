@@ -10,7 +10,7 @@ describe Metrics::HostNodeStatMetrics do
       { # this record should be skipped
         grid: grid,
         host_node: node,
-        cpu_average: {
+        cpu: {
           system: 0.1,
           user: 0.2
         },
@@ -31,7 +31,7 @@ describe Metrics::HostNodeStatMetrics do
       { # This is included in first metric for grid
         grid: grid,
         host_node: node,
-        cpu_average: {
+        cpu: {
           system: 0.05,
           user: 0.05
           # .1 used
@@ -55,7 +55,7 @@ describe Metrics::HostNodeStatMetrics do
       { # This is included in first metric for other_grid
         grid: other_grid,
         host_node: other_node,
-        cpu_average: {
+        cpu: {
           system: 0.05,
           user: 0.05
           # .1 used
@@ -79,7 +79,7 @@ describe Metrics::HostNodeStatMetrics do
       { # This is included in first metric for grid
         grid: grid,
         host_node: node,
-        cpu_average: {
+        cpu: {
           user: 0.4,
           system: 0.3
           # .7 used
@@ -103,7 +103,7 @@ describe Metrics::HostNodeStatMetrics do
       { # This is included in second metric for grid
         grid: grid,
         host_node: node,
-        cpu_average: {
+        cpu: {
           user: 0.25,
           system: 0.25
           # .5 used
@@ -127,7 +127,7 @@ describe Metrics::HostNodeStatMetrics do
       { # this record should be skipped
         grid: grid,
         host_node: node,
-        cpu_average: {
+        cpu: {
           user: 0.2,
           system: 0.1
         },
@@ -158,17 +158,7 @@ describe Metrics::HostNodeStatMetrics do
       expect(results).to eq({
         from_time: Time.parse('2017-03-01 12:00:00 +00:00'),
         to_time: Time.parse('2017-03-01 13:00:00 +00:00'),
-        total_data_points: 3,
-        average_cpu_usage_percent: 0.45,
-        average_memory_used_bytes: 450.0,
-        average_memory_total_bytes: 1500.0,
-        average_memory_used_percent: 0.3,
-        average_filesystem_used_bytes: 500.0,
-        average_filesystem_total_bytes: 1250.0,
-        average_filesystem_used_percent: 0.4,
-        average_network_in_bytes_per_second: 275,
-        average_network_out_bytes_per_second: 350,
-        metrics: [
+        stats: [
           {
             data_points: 2,
             cpu_usage_percent: 0.4,

@@ -55,9 +55,8 @@ module V1
 
           # GET /v1/nodes/:grid/:node/stats
           r.on 'stats' do
-            default_seconds = 60 * 60
             to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
-            from = (r.params["from"] ? Time.parse(r.params["from"]) : (to - default_seconds)).utc
+            from = (r.params["from"] ? Time.parse(r.params["from"]) : (to - 1.hour)).utc
 
             @node_stats = Metrics::HostNodeStatMetrics.fetch_for_node(@node.id, from, to)
 
