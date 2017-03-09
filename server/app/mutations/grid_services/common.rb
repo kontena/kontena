@@ -1,6 +1,8 @@
 module GridServices
   module Common
 
+    include VolumesHelpers
+
     def self.included(base)
       base.extend(ClassMethods)
     end
@@ -87,18 +89,7 @@ module GridServices
     def build_service_volumes()
       service_volumes = []
       self.volumes.each do |vol|
-        # TODO Check existing volumes, if needed
-        service_volume = nil
-        elements = vol.split(':')
-        if elements[0].start_with?('/') && elements[1] && elements[1].start_with?('/') # Bind mount
-          service_volume = ServiceVolume.new(bind_mount: elements[0], path: elements[1], flags: elements[2..-1].join(':'))
-        elsif !elements[0].start_with?('/') && elements[1].start_with?('/') # Real volume
-          volume = self.grid.volumes.find_by(name: elements[0])
-          # TODO What if the volume is not found?
-          service_volume = ServiceVolume.new(volume: volume, path: elements[1], flags: elements[2..-1].join(':'))
-        elsif elements[0].start_with?('/') && (elements.size == 1 || !elements[1].start_with?('/')) # anon volume
-          service_volume = ServiceVolume.new(bind_mount: nil, path: elements[0], flags: nil) # anon vols do not support flags
-        end
+        service_volume = build_service_volume(vol)
         service_volumes << service_volume
       end
       service_volumes

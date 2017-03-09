@@ -20,4 +20,5 @@ class ServiceVolume
     elements << self.flags if self.flags && !self.flags.empty?
     elements.join(':')
   end
+
 end

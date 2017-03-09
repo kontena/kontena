@@ -18,6 +18,7 @@ class GridService
   field :memory, type: Fixnum
   field :memory_swap, type: Fixnum
   field :cpu_shares, type: Fixnum
+  field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
   field :privileged, type: Boolean
   field :cap_add, type: Array, default: []

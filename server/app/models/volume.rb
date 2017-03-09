@@ -31,7 +31,6 @@ class Volume
     when 'grid'
       self.name
     end
-
   end
 
 end
