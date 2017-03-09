@@ -21,10 +21,7 @@ describe '/v1/volumes' do
   end
 
   let(:john) do
-    user = User.create!(email: 'david@domain.com', external_id: '123456')
-    grid.users << user
-
-    user
+    User.create!(email: 'david@domain.com', external_id: '123456')
   end
 
   let(:johns_token) do
@@ -91,12 +88,13 @@ describe '/v1/volumes' do
     end
 
     it 'requires auth' do
-      get "/v1/volumes/#{grid.name}/#{volume.name}", nil#, { 'HTTP_AUTHORIZATION' => "Bearer #{johns_token.token_plain}"}
+      get "/v1/volumes/#{grid.name}/#{volume.name}", nil
       expect(response.status).to eq(403)
     end
 
     it 'returns 403 without grid access' do
-      get "/v1/volumes/#{grid.name}/#{volume.name}", nil#, { 'HTTP_AUTHORIZATION' => "Bearer #{johns_token.token_plain}"}
+      # John is not a user in this grid
+      get "/v1/volumes/#{grid.name}/#{volume.name}", nil, { 'HTTP_AUTHORIZATION' => "Bearer #{johns_token.token_plain}"}
       expect(response.status).to eq(403)
     end
   end

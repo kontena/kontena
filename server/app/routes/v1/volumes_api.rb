@@ -16,29 +16,19 @@ module V1
       def find_grid(grid_name)
         grid = Grid.find_by(name: grid_name)
         halt_request(404, {error: "Grid #{grid_name} not found"}) if !grid
-
+        unless current_user.accessible_grids.include?(grid)
+          halt_request(403, {error: 'Access denied'})
+        end
         grid
-      end
-
-      def find_stack(stack_name, grid)
-        stack = grid.stacks.find_by(name: stack_name)
-        halt_request(404, {error: "Stack #{stack_name} not found"}) if !stack
-        stack
       end
 
       # @param [String] grid_name
       # @param [String] stack_name
       # @param [String] volume_name
       # @return [GridService]
-      def load_volume(grid_name, volume_name)
-        grid = find_grid(grid_name)
-        unless current_user.accessible_grids.include?(grid)
-          halt_request(403, {error: 'Access denied'})
-        end
-        volume = grid.volumes.find_by(name: volume_name)
-
-        halt_request(404, {error: "Volume #{volume_name} not found"}) if !volume
-
+      def load_volume(volume_name)
+        volume = @grid.volumes.find_by(name: volume_name)
+        halt_request(404, {error: "Volume #{volume_name} not found"}) unless volume
         volume
       end
 
@@ -50,15 +40,14 @@ module V1
             render('volumes/index')
           end
           r.is ':volume' do |volume|
-            @volume = load_volume(grid_name, volume)
+            @volume = load_volume(volume)
             render('volumes/show')
           end
         end
         r.post do
           r.is do
-            grid = find_grid(grid_name)
             data = parse_json_body rescue {}
-            data[:grid] = grid
+            data[:grid] = @grid
             outcome = Volumes::Create.run(data)
             if outcome.success?
               volume = outcome.result
@@ -74,7 +63,7 @@ module V1
         end
         r.delete do
           r.is ':volume' do |volume|
-            @volume = load_volume(grid_name, volume)
+            @volume = load_volume(volume)
             outcome = Volumes::Delete.run(volume: @volume)
             if outcome.success?
               audit_event(r, @volume.grid, @volume, 'delete', @volume)
