@@ -428,14 +428,11 @@ describe '/v1/grids', celluloid: true do
 
     it 'updates logs' do
       grid = david.grids.first
-      server = '192.168.89.12'
-      port = 8125
       data = {
         logs: {
           forwarder: 'fluentd',
           opts: {
-            server: server,
-            port: port
+            'fluentd-address': '192.168.89.12:22445'
           }
         }
       }
@@ -443,9 +440,9 @@ describe '/v1/grids', celluloid: true do
       expect(response.status).to eq(200)
       logs = grid.reload.grid_logs_opts
       expect(logs.forwarder).to eq('fluentd')
-      expect(logs.opts['server']).to eq(server)
+      expect(logs.opts['fluentd-address']).to eq('192.168.89.12:22445')
       expect(json_response['logs']['forwarder']).to eq('fluentd')
-      expect(json_response['logs']['opts']['server']).to eq(server)
+      expect(json_response['logs']['opts']['fluentd-address']).to eq('192.168.89.12:22445')
     end
 
     it 'disables logs' do

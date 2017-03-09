@@ -1,6 +1,6 @@
 
 require_relative "../../../spec_helper"
-require 'kontena/cli/grids/use_command'
+require 'kontena/cli/grids/update_command'
 
 describe Kontena::Cli::Grids::UpdateCommand do
 
@@ -32,14 +32,14 @@ describe Kontena::Cli::Grids::UpdateCommand do
         expect(client).to receive(:put).with(
           'grids/test', hash_including({
             logs: {
-              driver: 'fluentd',
+              forwarder: 'fluentd',
               opts: {
                 foo: 'bar'
               }
             }
           })
         )
-        subject.run(['--log-driver', 'fluentd', '--log-opt', 'foo=bar', 'test'])
+        subject.run(['--log-forwarder', 'fluentd', '--log-opt', 'foo=bar', 'test'])
       end
     end
   end
