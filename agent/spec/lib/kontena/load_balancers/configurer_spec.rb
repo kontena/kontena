@@ -141,6 +141,11 @@ describe Kontena::LoadBalancers::Configurer do
   end
 
   describe "#remove_config" do
+    it 'does nothing with empty value' do
+      expect(subject.wrapped_object).not_to receive(:lsdir)
+      subject.remove_config(nil)
+    end
+
     it 'removes service from null stacked lbs' do
       expect(subject.wrapped_object).to receive(:lsdir).
         and_return(['/kontena/haproxy/lb1', '/kontena/haproxy/lb2'])

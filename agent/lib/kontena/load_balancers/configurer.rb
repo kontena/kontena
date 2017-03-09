@@ -14,7 +14,7 @@ module Kontena::LoadBalancers
     def initialize
       @etcd = Etcd.client(host: self.class.gateway, port: 2379)
       subscribe('lb:ensure_config', :on_ensure_config)
-      subscribe('lb:remove_service', :on_remove_service)
+      subscribe('lb:remove_config', :on_remove_config)
       info 'initialized'
     end
 
@@ -22,8 +22,8 @@ module Kontena::LoadBalancers
       self.ensure_config(event)
     end
 
-    def on_remove_service(topic, event)
-      self.remove_service(event)
+    def on_remove_config(topic, event)
+      self.remove_config(event)
     end
 
     # @param [Docker::Container] container
@@ -76,6 +76,8 @@ module Kontena::LoadBalancers
 
     # @param [String] service_name
     def remove_config(service_name)
+      return if service_name.to_s.empty?
+
       lsdir(ETCD_PREFIX).each do |key|
         if key_exists?("#{key}/services") || key_exists?("#{key}/tcp-services")
           # un-stacked lb
