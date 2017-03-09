@@ -3,7 +3,7 @@ module Volumes
 
     required do
       model :grid, class: Grid
-      string :scope # TODO Match the predefined scopes
+      string :scope, matches: /instance|stack|grid/
       string :name  # TODO Force same rules for naming as docker
     end
 

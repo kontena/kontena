@@ -12,7 +12,7 @@ describe Volumes::Create do
         outcome = Volumes::Create.run(
           grid: grid,
           name: 'foo',
-          scope: 'node'
+          scope: 'instance'
         )
         expect(outcome.success?).to be_truthy
       }.to change {Volume.count}. by 1

@@ -3,8 +3,8 @@ class Volume
   include Mongoid::Timestamps
 
   field :name, type: String
-  field :scope, type: String # TODO: Should be enum once scope names are fixed
-  field :driver, type: String, default: 'local'
+  field :scope, type: String # Mutation enforces scopes
+  field :driver, type: String
   field :driver_opts, type: Hash, default: {}
   field :external, type: Boolean
 
@@ -24,17 +24,14 @@ class Volume
   def name_for_service(service, instance_number)
 
     case self.scope
-    when 'container'
+    when 'instance'
       "#{service.name_with_stack}.#{self.name}-#{instance_number}"
-    when 'service'
-      "#{service.name_with_stack}.#{self.name}"
+    when 'stack'
+      "#{service.stack.name}.#{self.name}"
+    when 'grid'
+      self.name
     end
 
-  end
-
-  # @return [Boolean]
-  def default_stack?
-    self.stack.try(:name).to_s == Stack::NULL_STACK
   end
 
 end

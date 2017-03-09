@@ -10,7 +10,7 @@ describe Volume do
 
   describe '#to_path' do
     it 'returns full path' do
-      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'container')
+      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'instance')
       expect(vol.to_path).to eq "#{grid.name}/#{vol.name}"
     end
   end
@@ -18,14 +18,14 @@ describe Volume do
   describe '#name_for_service' do
     it 'return container scoped name' do
       service = double({:name_with_stack => 'stack.svc'})
-      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'container')
+      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'instance')
       expect(vol.name_for_service(service, 1)).to eq('stack.svc.a-volume-1')
     end
 
     it 'return service scoped name' do
-      service = double({:name_with_stack => 'stack.svc'})
-      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'service')
-      expect(vol.name_for_service(service, 1)).to eq('stack.svc.a-volume')
+      service = double({:stack => double({:name => 'stack'})})
+      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'stack')
+      expect(vol.name_for_service(service, 1)).to eq('stack.a-volume')
     end
   end
 end

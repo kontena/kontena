@@ -106,7 +106,7 @@ describe '/v1/volumes' do
     it 'creates new volume' do
       data = {
         name: 'foo',
-        scope: 'node'
+        scope: 'instance'
       }
       expect {
         post "/v1/volumes/#{grid.name}", data.to_json, request_headers
