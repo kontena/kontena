@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/kontena/kontena/releases/tag/v1.1.4) (2017-03-09)
+
+**Master & Agents:**
+
+- Fix travis Ubuntu package deployment to bintray (#1953)
+- Fix ubuntu packages to also support docker-{ce,ee}, fix docker-engine dependencies (#1950)
+
 ## [1.1.3](https://github.com/kontena/kontena/releases/tag/v1.1.3) (2017-03-07)
 
 **Master & Agents:**
