@@ -41,9 +41,9 @@ module Stacks
       if self.volumes
         self.volumes.each do |volume|
           if volume['external']
-            vol = Volume.where(name: volume['name'], grid: grid, stack: nil).first
+            vol = Volume.where(name: volume['external'], grid: grid, stack: nil).first
             unless vol
-              add_error(:volumes, :not_found, "External volume #{volume['name']} not found")
+              add_error(:volumes, :not_found, "External volume #{volume['external']} not found")
             end
           end
         end
@@ -79,6 +79,7 @@ module Stacks
 
       services = sort_services(attributes.delete(:services))
       attributes[:services] = services
+      attributes[:volumes] = self.volumes
       attributes[:stack_name] = attributes.delete(:stack)
       stack.stack_revisions.create!(attributes)
 

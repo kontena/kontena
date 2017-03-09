@@ -89,7 +89,19 @@ module GridServices
     def build_service_volumes()
       service_volumes = []
       self.volumes.each do |vol|
-        service_volume = build_service_volume(vol)
+        vol_spec = parse_volume(vol)
+        if vol_spec[:volume]
+          stack_volume = self.stack.latest_rev.volumes.find {|v|
+            v['name'] == vol_spec[:volume]
+          }
+          name = stack_volume['external']
+          if name
+            # Map external volume
+            volume = self.grid.volumes.find_by(name: name)
+            vol_spec[:volume] = volume
+          end
+        end
+        service_volume = ServiceVolume.new(**vol_spec)
         service_volumes << service_volume
       end
       service_volumes
