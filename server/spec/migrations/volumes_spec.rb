@@ -1,5 +1,5 @@
 require_relative '../spec_helper'
-require_relative '../../db/migrations/19_volumes'
+require_relative '../../db/migrations/19_volume_migration'
 
 describe VolumeMigration do
 
