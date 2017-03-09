@@ -1,3 +1,6 @@
+require 'kontena/cli/common'
+require 'kontena/cli/stacks/common'
+require 'kontena/cli/grid_options'
 require_relative 'stacks_helper'
 
 module Kontena::Cli::Stacks
@@ -8,7 +11,7 @@ module Kontena::Cli::Stacks
 
     banner "Deploys all services of a stack that has been installed in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    include Common::StackNameParamWithKontenaYmlFallback
 
     requires_current_master
     requires_current_master_token

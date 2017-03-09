@@ -1,3 +1,5 @@
+require 'kontena/cli/common'
+require 'kontena/cli/grid_options'
 require_relative 'common'
 
 module Kontena::Cli::Stacks
