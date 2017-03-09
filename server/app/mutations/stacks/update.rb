@@ -47,12 +47,14 @@ module Stacks
         variables: self.variables,
         version: self.version,
         registry: self.registry,
-        services: sort_services(self.services)
+        services: sort_services(self.services),
+        volumes: self.volumes
       }
       if latest_rev.changed?
         new_rev = latest_rev.dup
         new_rev.revision += 1
         new_rev.save
+        create_new_volumes(self.volumes) if self.volumes
         create_new_services(self.stack_instance, sort_services(self.services))
       end
       self.stack_instance.reload
@@ -70,6 +72,18 @@ module Stacks
           outcome = GridServices::Create.run(service)
           unless outcome.success?
             handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          end
+        end
+      end
+    end
+
+    def create_new_volumes(volumes)
+      volumes.each do |volume|
+        existing = self.stack_instance.grid.volumes.find_by(volume[:name])
+        unless existing
+          outcome = Volumes::Create.run(grid: self.stack_instance.grid, **volume.symbolize_keys)
+          unless outcome.success?
+            handle_volume_outcome_errors(volume[:name], outcome.errors.message)
           end
         end
       end

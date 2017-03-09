@@ -14,6 +14,12 @@ module Stacks
       end
     end
 
+    def handle_volume_outcome_errors(volume_name, messages)
+      messages.each do |key, msg|
+        add_error(:volumes, key.to_sym, "Volume create failed for volume '#{volume_name}': #{msg}")
+      end
+    end
+
     def validate_expose
       if self.expose && !self.services.find{ |s| s[:name] == self.expose}
         add_error(:expose, :not_found, "#{self.expose} is not defined in the services array")
