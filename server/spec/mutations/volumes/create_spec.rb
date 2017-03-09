@@ -12,11 +12,22 @@ describe Volumes::Create do
         outcome = Volumes::Create.run(
           grid: grid,
           name: 'foo',
+          driver: 'local',
           scope: 'instance'
         )
         expect(outcome.success?).to be_truthy
       }.to change {Volume.count}. by 1
     end
+
+    it 'fails to create without driver' do
+      outcome = Volumes::Create.run(
+        grid: grid,
+        name: 'foo',
+        scope: 'instance'
+      )
+      expect(outcome.success?).to be_falsey
+    end
+
 
     # TODO More failure cases
 

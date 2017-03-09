@@ -5,10 +5,10 @@ module Volumes
       model :grid, class: Grid
       string :scope, matches: /instance|stack|grid/
       string :name  # TODO Force same rules for naming as docker
+      string :driver
     end
 
     optional do
-      string :driver
       hash :driver_opts
     end
 

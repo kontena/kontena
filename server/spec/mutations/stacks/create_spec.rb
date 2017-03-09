@@ -270,7 +270,7 @@ describe Stacks::Create do
             source: '...',
             variables: {foo: 'bar'},
             services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
-            volumes: [{name: 'vol1', scope: 'grid', external: false}]
+            volumes: [{name: 'vol1', scope: 'grid', external: false, driver: 'local'}]
           ).run
           expect(outcome.success?).to be_truthy
         }.to change{ Volume.count }.by(1)
