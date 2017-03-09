@@ -116,7 +116,7 @@ describe '/v1/volumes' do
         post "/v1/volumes/#{grid.name}", data.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ Volume.count }.by(1)
-      expect(Volume.first.driver_opts).to eq({foo: 'bar'})
+      expect(Volume.find_by(name: 'foo').driver_opts['foo']).to eq('bar')
     end
   end
 

@@ -39,8 +39,6 @@ module V1
 
         halt_request(404, {error: "Volume #{volume_name} not found"}) if !volume
 
-
-
         volume
       end
 
@@ -72,9 +70,7 @@ module V1
               response.status = 422
               {error: outcome.errors.message}
             end
-
           end
-
         end
         r.delete do
           r.is ':volume' do |volume|
