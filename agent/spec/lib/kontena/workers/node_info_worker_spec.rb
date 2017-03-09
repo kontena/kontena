@@ -27,6 +27,14 @@ describe Kontena::Workers::NodeInfoWorker do
   }
   after(:each) { Celluloid.shutdown }
 
+  describe '#initialize' do
+    it 'subscribes to websocket:connected channel' do
+      expect(subject.wrapped_object).to receive(:publish_node_info).once
+      Celluloid::Notifications.publish('websocket:connected', {})
+      sleep 0.01
+    end
+  end
+
   describe '#start' do
     before(:each) { allow(rpc_client).to receive(:notification) }
 

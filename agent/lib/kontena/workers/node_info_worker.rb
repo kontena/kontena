@@ -24,10 +24,18 @@ module Kontena::Workers
       @statsd = nil
       @stats_since = Time.now
       @container_seconds = 0
+      subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
       info 'initialized'
       async.start if autostart
+    end
+
+    # @param [String] topic
+    # @param [Hash] data
+    def on_websocket_connected(topic, data)
+      self.publish_node_info
+      self.publish_node_stats
     end
 
     def start
