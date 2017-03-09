@@ -1,11 +1,11 @@
 module Metrics
-  class HostNodeStatMetrics
+  class HostNodeMetrics
       # @param [String] node_id
       # @param [Time] from_time
       # @param [Time] to_time
       # @return [Hash] the aggregation results
-    def self.fetch_for_node(node_id, from_time, to_time)
-      stats = HostNodeStat.get_aggregate_stats(node_id, from_time, to_time).map do |doc|
+    def self.fetch(node_id, from_time, to_time)
+      stats = HostNodeStat.get_aggregate_stats_for_node(node_id, from_time, to_time).map do |doc|
         ts = doc[:timestamp]
 
         {

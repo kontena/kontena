@@ -290,6 +290,56 @@ describe '/v1/grids', celluloid: true do
     end
   end
 
+  describe 'GET /stats' do
+    let :grid do
+       david.grids.first
+    end
+
+    let :node do
+      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+    end
+
+    before do
+      node.host_node_stats.create!({
+        grid_id: grid.id,
+        memory: {
+          total: 1000,
+          used: 100
+      	},
+      	filesystem: [{
+      			total: 1000,
+            used: 10
+        }],
+      	cpu: {
+      		system: 5.5,
+      		user: 10.0
+      	},
+      	network: {
+      		in_bytes_per_second: 400,
+      		out_bytes_per_second: 200
+      	}
+      })
+    end
+
+    it 'returns recent stats' do
+      get "/v1/grids/#{grid.to_path}/stats", nil, request_headers
+
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 1
+    end
+
+    it 'applies date filters' do
+      from = Time.parse("2017-01-01 12:00:00 +00:00").utc
+      to = Time.parse("2017-01-01 12:15:00 +00:00").utc
+      get "/v1/nodes/#{node.to_path}/stats?from=#{from}&to=#{to}", nil, request_headers
+
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 0
+      expect(Time.parse(json_response['from'])).to eq from
+      expect(Time.parse(json_response['to'])).to eq to
+    end
+  end
+
   describe 'POST /:name/users' do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first

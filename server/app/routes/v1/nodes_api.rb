@@ -58,8 +58,7 @@ module V1
             to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
             from = (r.params["from"] ? Time.parse(r.params["from"]) : (to - 1.hour)).utc
 
-            @node_stats = Metrics::HostNodeStatMetrics.fetch_for_node(@node.id, from, to)
-
+            @node_stats = Metrics::HostNodeMetrics.fetch(@node.id, from, to)
             render('host_nodes/stats')
           end
         end
