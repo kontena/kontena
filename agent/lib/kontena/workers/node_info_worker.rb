@@ -46,19 +46,6 @@ module Kontena::Workers
       end
     end
 
-    # @return [Node, NilClass]
-    def fetch_node
-      request = rpc_client.request('/nodes/get', docker_info['ID'])
-      info = request.value
-      if info
-        node = Node.new(info)
-        node
-      end
-    rescue => exc
-      error exc.message
-      nil
-    end
-
     # @param [String] topic
     # @param [Hash] node
     def on_node_info(topic, node)
