@@ -11,6 +11,7 @@ module Rpc
     def list(id)
       node = @grid.host_nodes.find_by(node_id: id)
       return { error: 'Node not found' } unless node
+      return { error: 'Migration not done' } unless migration_done?
       service_pods = node.grid_service_instances.includes(:grid_service).map { |i|
         ServicePodSerializer.new(i).to_hash if i.grid_service
       }.compact
@@ -29,6 +30,19 @@ module Rpc
         grid_service_id: pod['service_id'], instance_number: pod['instance_number']
       )
       service_instance.set(state: pod['state']) if service_instance
+    end
+
+    # @return [Boolean]
+    def migration_done?
+      if @migration_done.nil?
+        last = SchemaMigration.last
+        if last
+          @migration_done = last.version >= 19
+        else
+          @migration_done = false
+        end
+      end
+      @migration_done
     end
   end
 end
