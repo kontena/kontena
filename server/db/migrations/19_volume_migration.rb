@@ -8,15 +8,17 @@ class VolumeMigration < Mongodb::Migration
 
     GridService.each do |service|
       service.volumes.each do |v|
-        begin
-          service_volume = build_service_volume(v)
-          service.service_volumes << service_volume
-          service.save
-        rescue Mongoid::Errors::DocumentNotFound
-          name = v.split(':')[0]
-          Volume.create!(grid: service.grid, name: name, driver: 'local', scope: 'grid')
-          retry
+        volume_spec = parse_volume(v)
+        if volume_spec[:volume]
+          volume = service.grid.volumes.find_by(name: volume_spec[:volume])
+          unless volume
+            volume = Volume.create!(grid: service.grid, name: volume_spec[:volume], driver: 'local', scope: 'grid')
+          end
+          volume_spec[:volume] = volume
         end
+
+        service.service_volumes << ServiceVolume.new(**volume_spec)
+        service.save
       end
     end
   end

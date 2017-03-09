@@ -48,7 +48,7 @@ describe '/v1/grids/:grid/stacks', celluloid: true do
       source: '..',
       services: services,
       volumes: [
-        { name: 'vol1', external: true},
+        { name: 'vol1', external: 'someVolume'},
         { name: 'vol2', scope: 'grid', driver: 'local'}
       ]
     }
@@ -81,7 +81,7 @@ describe '/v1/grids/:grid/stacks', celluloid: true do
     end
 
     it 'creates new stack with volumes' do
-      volume = Volume.create(name: 'vol1', grid: grid, scope: 'grid')
+      volume = Volume.create(name: 'someVolume', grid: grid, scope: 'grid')
       expect {
         post "/v1/grids/#{grid.name}/stacks", stack_with_volumes.to_json, request_headers
         expect(response.status).to eq(201)

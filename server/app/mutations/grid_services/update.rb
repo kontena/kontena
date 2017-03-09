@@ -13,6 +13,7 @@ module GridServices
     optional do
       string :image
       model :grid, class: Grid
+      model :stack, class: Stack
     end
 
     def validate
@@ -48,6 +49,7 @@ module GridServices
 
     def execute
       self.grid = self.grid_service.grid
+      self.stack = self.grid_service.stack
       attributes = {}
       attributes[:strategy] = self.strategy if self.strategy
       attributes[:image_name] = self.image if self.image
@@ -70,7 +72,6 @@ module GridServices
       attributes[:devices] = self.devices if self.devices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
-      #attributes[:volumes] = self.volumes if self.volumes
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
 
       if self.links

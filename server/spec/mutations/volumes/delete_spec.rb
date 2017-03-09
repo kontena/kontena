@@ -11,7 +11,7 @@ describe Volumes::Delete do
       grid: grid,
       name: 'vol',
       driver: 'some-driver',
-      scope: 'node'
+      scope: 'grid'
     )
   end
 

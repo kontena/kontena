@@ -1,7 +1,8 @@
 
 describe GridServices::Update do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
+  let(:stack) {Stack.create!(name: 'foo', grid: grid)}
+  let(:redis_service) { GridService.create(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')}
 
   describe '#run' do
     it 'updates env variables' do
@@ -165,7 +166,7 @@ describe GridServices::Update do
         end
 
         it 'allows to add named volume' do
-          volume = Volume.create!(name: 'foo', grid: grid, scope: 'container')
+          volume = Volume.create!(name: 'foo', grid: grid, scope: 'instance')
           outcome = described_class.new(
             grid_service: redis_service,
             volumes: ['foo:/foo']
@@ -187,7 +188,7 @@ describe GridServices::Update do
 
       context 'stateful service' do
         let(:stateful_service) do
-          outcome = GridServices::Create.run(grid: grid, name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['/data'])
+          outcome = GridServices::Create.run(grid: grid, stack: stack, name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['/data'])
           outcome.result
         end
 

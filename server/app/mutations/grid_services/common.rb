@@ -91,15 +91,18 @@ module GridServices
       self.volumes.each do |vol|
         vol_spec = parse_volume(vol)
         if vol_spec[:volume]
-          stack_volume = self.stack.latest_rev.volumes.find {|v|
-            v['name'] == vol_spec[:volume]
-          }
-          name = stack_volume['external']
-          if name
-            # Map external volume
-            volume = self.grid.volumes.find_by(name: name)
-            vol_spec[:volume] = volume
+          # Named volume, try to find the proper mapping for external volumes
+          # NULL stack services don't have revs, for those just use the "global" name
+          volume_name = vol_spec[:volume]
+          if self.stack.latest_rev
+            stack_volume = self.stack.latest_rev.volumes.find {|v|
+              v['name'] == vol_spec[:volume]
+            }
+            volume_name = stack_volume['external']
           end
+          # Map external volume
+          volume = self.grid.volumes.find_by(name: volume_name)
+          vol_spec[:volume] = volume
         end
         service_volume = ServiceVolume.new(**vol_spec)
         service_volumes << service_volume

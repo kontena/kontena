@@ -54,7 +54,7 @@ describe VolumeMigration do
     )
   }
 
-  it 'create service_volume for anon vol' do
+  it 'create service_volume for named vol' do
     s = service_with_named_vol
     expect {
       VolumeMigration.up
