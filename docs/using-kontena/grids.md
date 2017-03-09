@@ -61,7 +61,7 @@ See the [Statistics](stats.md#exporting-stats) documentation for further details
 
 ### Logging options
 
-The `kontena grid update --log-driver some-driver --log-opt xyz=foo` options configures each host node to send container logs to a remote log collection service.
+The `kontena grid update --log-forwarder fluentd --log-opt fluentd-server=xyz:22445` options configures each host node to send container logs to a remote log collection service.
 
 See the [Logs](logs.md) documentation for further details.
 

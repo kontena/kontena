@@ -97,10 +97,6 @@ module Grids
     def validate_fluentd_opts(opts)
       address = opts['fluentd-address']
       add_error(:logs, :forwarder, 'fluentd-address option must be given') unless address
-      if address
-        host, port = address.split(':')
-        add_error(:logs, :forwarder, 'fluentd-address must be given in format address:port') unless host && port
-      end
     end
   end
 end

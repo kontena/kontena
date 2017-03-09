@@ -24,11 +24,14 @@ Kontena supports fluentd log shipping that can be configured on each grid. When 
 
 You can enable fluentd forwarding using:
 ```
-kontena grid update --log-forwarder fluentd --log-opt fluentd-address=server:port my-grid
+kontena grid update --log-forwarder fluentd --log-opt fluentd-address=server[:port] my-grid
 ```
 
 Each event sent to fluentd is tagged with following notation:
-`grid.stack.service.instance`
+`node.grid.stack.service.instance`
+
+Kontena "system" containers (kontena-agent, ipam-plugin, weave, etc.) will be tagged like:
+`node.grid.system.service`
 
 The record itself is a hash with following semantics:
 ```
@@ -39,7 +42,7 @@ The record itself is a hash with following semantics:
 ```
 
 To disable log forwarding, use:
-`kontena grid update --log-driver none my-grid`
+`kontena grid update --log-forwarder none my-grid`
 
 ### Enable container log shipping with Docker.
 
@@ -55,7 +58,7 @@ This is recommended for environments where lots of logs are being generated to a
 
 As logs are stored in Kontena Masters database, there is a single point of collection available. The Master database is MongoDB where the logs are stored in capped collection.
 
-To gather logs from master database directly, you need to run the collector somewhere that has access to the master database. Usually the database is not exposes to outside world from the master node, so natural place is to run it alongside with the master.
+To gather logs from master database directly, you need to run the collector somewhere that has access to the master database. Usually the database is not exposed to outside world from the master node, so natural place is to run it alongside with the master.
 
 For example, with fluentd you could use following configuration to get the logs shipped to AWS S3:
 ```

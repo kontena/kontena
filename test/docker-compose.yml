@@ -31,7 +31,7 @@ services:
       - mongodb
 
   agent:
-    container_name: e2e-kontena-agent
+    container_name: kontena-agent
     build:
       context: ../agent
       dockerfile: Dockerfile
