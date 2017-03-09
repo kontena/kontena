@@ -1,5 +1,5 @@
 
-module Kontena::Cli::Volume
+module Kontena::Cli::Volumes
   class CreateCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions

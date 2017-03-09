@@ -1,5 +1,5 @@
 
-module Kontena::Cli::Volume
+module Kontena::Cli::Volumes
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
