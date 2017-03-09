@@ -28,11 +28,7 @@ module Kontena::Cli::Volumes
     end
 
     def parse_driver_opts
-      opts = {}
-      driver_opt_list.each do |opt|
-        opts.merge Hash[opt.split '=']
-      end
-      opts
+      Hash[driver_opt_list.map{|opt| opt.split '='}]
     end
 
     def create_volume(volume)

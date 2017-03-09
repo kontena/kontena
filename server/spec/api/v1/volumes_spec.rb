@@ -107,12 +107,16 @@ describe '/v1/volumes' do
       data = {
         name: 'foo',
         scope: 'instance',
-        driver: 'local'
+        driver: 'local',
+        driver_opts: {
+          foo: 'bar'
+        }
       }
       expect {
         post "/v1/volumes/#{grid.name}", data.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ Volume.count }.by(1)
+      expect(Volume.first.driver_opts).to eq({foo: 'bar'})
     end
   end
 

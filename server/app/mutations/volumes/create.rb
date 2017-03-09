@@ -9,7 +9,7 @@ module Volumes
     end
 
     optional do
-      hash :driver_opts
+      model :driver_opts, class: Hash
     end
 
     def validate

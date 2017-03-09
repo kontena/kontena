@@ -19,6 +19,22 @@ describe Volumes::Create do
       }.to change {Volume.count}. by 1
     end
 
+    it 'creates new grid volume with options' do
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          name: 'foo',
+          driver: 'local',
+          scope: 'instance',
+          driver_opts: {
+            foo: 'bar'
+          }
+        )
+        expect(outcome.success?).to be_truthy
+        expect(outcome.result.driver_opts['foo']).to eq('bar')
+      }.to change {Volume.count}. by 1
+    end
+
     it 'fails to create without driver' do
       outcome = Volumes::Create.run(
         grid: grid,
