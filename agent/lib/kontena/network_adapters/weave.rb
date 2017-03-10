@@ -12,7 +12,7 @@ module Kontena::NetworkAdapters
     include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.8.2'
+    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.9.3'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
     WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 

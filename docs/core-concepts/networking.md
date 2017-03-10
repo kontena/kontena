@@ -125,6 +125,7 @@ Each host Node runs a number of infrastructure services as Docker containers, us
 | Weave Net | TCP      | 6783 | `*`                       | Weave Net Control
 | Weave Net | UDP      | 6783 | `*`                       | Weave Net Data (`sleeve`)
 | Weave Net | UDP      | 6784 | `*`                       | Weave Net Data (`fastdp`)
+| Weave Net | ESP (UDP) | 6784 | `*`                       | Weave Net Data (`IPSec fastdp`)
 
 Only the Weave Net service is externally accessible by default. This is required for forming the encrypted Overlay Network mesh between host Nodes.
 
@@ -137,10 +138,23 @@ The overlay network is established using the network addresses of the peer Nodes
 The overlay network mesh uses the Private network address of a peer node within the same Region; otherwise, the Public network address is used.
 Once the overlay network is started, the host Node's overlay network address is configured using [`weave expose`](https://www.weave.works/docs/net/latest/using-weave/host-network-integration/).
 
-The overlay network is powered by Weave Net, using [Weave's encrypted `sleeve` tunnels](https://www.weave.works/docs/net/latest/using-weave/security-untrusted-networks/) to form a flat Layer 2 network spanning all Grid Nodes and connected Containers.
+The overlay network, powered by Weave Net, forms a flat Layer 2 network spanning all Grid Nodes and connected Containers. The overlay network operates at three different modes depending on the environment and grid configuration, see below for their descriptions. **Selecting the fastest forwarding approach is automatic, and is determined on a connection-by-connection basis.**
 
-Alternatively, [Weave's Fast Datapath](https://www.weave.works/docs/net/latest/using-weave/fastdp/) can be used for traffic between Nodes within the Kontena Grid's [Trusted Subnets](https://kontena.io/docs/using-kontena/grids#grid-trusted-subnets).
+### Fast Datapath
+
+[Weave's Fast Datapath](https://www.weave.works/docs/net/latest/using-weave/fastdp/) can be used for traffic between Nodes within the Kontena Grid's [Trusted Subnets](https://kontena.io/docs/using-kontena/grids#grid-trusted-subnets).
 Using Trusted Subnets and Weave's Fast Datapath provides [improved performance](https://www.weave.works/weave-docker-networking-performance-fast-data-path/). The cost of this method is a lack of data plane encryption between Nodes.
+
+### Encrypted Datapath
+
+In the default configuration without any Grid `trusted subnets` have been configured in a grid, the overlay network creates IPSec encrypted Fast Datapath connections between the peers.
+
+**NOTE:**
+Each encrypted dataplane packet is encapsulated into ESP, thus in some networks a firewall rule for allowing ESP traffic needs to be installed. E.g. Google Cloud Platform denies ESP packets by default. When upgrading from a version earlier than 1.2.0, if your host's network interface has a limit on packet size (the "MTU") smaller than 1496 bytes, you should reboot after upgrading to ensure encrypted fast datapath can work. For instance this applies to Google Cloud Platform, but is not necessary on AWS.
+
+### Sleeve
+
+If Fast Datapath connections cannot be established, Weave automatically makes a fallback using [Weave's encrypted `sleeve` tunnels](https://www.weave.works/docs/net/latest/using-weave/fastdp/). Sleeve tunnels use user space encryption thus the sleeve connections are quite a bit slower than Fast Datapath connections.
 
 ## Service Containers
 
