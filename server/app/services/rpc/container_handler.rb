@@ -43,6 +43,7 @@ module Rpc
           grid_id: @grid.id,
           host_node_id: container['host_node_id'],
           grid_service_id: container['grid_service_id'],
+          instance_number: container['instance_number'],
           container_id: container['_id'],
           created_at: created_at,
           name: container['name'],

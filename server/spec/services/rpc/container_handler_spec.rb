@@ -77,6 +77,17 @@ describe Rpc::ContainerHandler, celluloid: true do
       expect(container.container_logs.last.name).to eq(container.name)
     end
 
+    it 'saves container.instance_number to log' do
+      container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', instance_number: 1)
+      subject.log({
+        'id' => container.container_id,
+        'data' => 'foo',
+        'type' => 'stderr'
+      })
+      subject.flush_logs
+      expect(container.container_logs.last.instance_number).to eq(container.instance_number)
+    end
+
     it 'does not create entry if container does not exist' do
       expect {
         subject.log({
