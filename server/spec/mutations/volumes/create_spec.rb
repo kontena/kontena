@@ -44,8 +44,18 @@ describe Volumes::Create do
       expect(outcome.success?).to be_falsey
     end
 
-
-    # TODO More failure cases
+    it 'fails to create volume with same name' do
+      Volume.create!(grid: grid, name: 'foo', driver: 'local', scope: 'grid')
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          name: 'foo',
+          driver: 'rexray',
+          scope: 'instance'
+        )
+        expect(outcome.success?).to be_falsey
+      }.to change {Volume.count}. by 0
+    end
 
   end
 

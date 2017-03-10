@@ -186,7 +186,7 @@ module Docker
               driver: sv.volume.driver,
               driver_opts: sv.volume.driver_opts
           }
-        elsif
+        else
           volume_specs << {
               bind_mount: sv.bind_mount,
               path: sv.path,

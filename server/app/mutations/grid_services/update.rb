@@ -35,9 +35,7 @@ module GridServices
         end
         if self.volumes
           changed_volumes = self.volumes.select { |v|
-            vols = self.grid_service.service_volumes.map {
-              |sv| sv.to_s
-            }
+            vols = self.grid_service.service_volumes.map { |sv| sv.to_s }
             !vols.include?(v)
           }
           if changed_volumes.any? { |v| !v.include?(':') }

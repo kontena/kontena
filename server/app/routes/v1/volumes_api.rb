@@ -50,9 +50,8 @@ module V1
             data[:grid] = @grid
             outcome = Volumes::Create.run(data)
             if outcome.success?
-              volume = outcome.result
-              audit_event(r, volume.grid, volume, 'create', volume)
               @volume = outcome.result
+              audit_event(r, @volume.grid, @volume, 'create', @volume)
               response.status = 201
               render('volumes/show')
             else

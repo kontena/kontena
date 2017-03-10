@@ -38,16 +38,17 @@ module Stacks
     end
 
     def validate_volumes
-      if self.volumes
-        self.volumes.each do |volume|
-          if volume['external']
-            vol = Volume.where(name: volume['external'], grid: grid, stack: nil).first
-            unless vol
-              add_error(:volumes, :not_found, "External volume #{volume['external']} not found")
-            end
+      return unless self.volumes
+
+      self.volumes.each do |volume|
+        if volume['external']
+          vol = Volume.where(name: volume['external'], grid: grid, stack: nil).first
+          unless vol
+            add_error(:volumes, :not_found, "External volume #{volume['external']} not found")
           end
         end
       end
+
     end
 
     def execute
