@@ -102,7 +102,7 @@ class HostNodeStat
         timestamp: '$_id',
         cpu_percent: 1,
         memory_used: 1,
-        memory_tota: 1,
+        memory_total: 1,
         filesystem_used: 1,
         filesystem_total: 1,
         network_in_bytes: 1,
