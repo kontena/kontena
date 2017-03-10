@@ -9,6 +9,7 @@ gem 'celluloid', '~> 0.17.3'
 gem 'etcd'
 gem 'statsd-ruby'
 gem 'vmstat'
+gem 'fluent-logger', '~>0.6.2'
 
 group :development, :test do
   gem 'rake', require: false

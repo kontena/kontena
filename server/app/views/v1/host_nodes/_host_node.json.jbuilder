@@ -36,6 +36,12 @@ json.grid do
     json.stats do
       json.statsd grid.stats['statsd']
     end
+    if grid.grid_logs_opts
+      json.logs do
+        json.forwarder grid.grid_logs_opts.forwarder
+        json.opts grid.grid_logs_opts.opts
+      end
+    end
     json.trusted_subnets grid.trusted_subnets
     json.subnet grid.subnet
     json.supernet grid.supernet
