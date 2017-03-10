@@ -84,5 +84,11 @@ describe EventStream do
       expect(MongoPubsub).to receive(:publish_async).with(EventStream.channel, {}).once
       subject.publish_async({})
     end
+
+    it 'does not publish message if MongoPubsub is not started' do
+      expect(MongoPubsub).to receive(:started?).and_return(false)
+      expect(MongoPubsub).not_to receive(:publish_async).with(EventStream.channel, {})
+      subject.publish_async({})
+    end
   end
 end

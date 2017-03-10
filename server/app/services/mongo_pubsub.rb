@@ -100,24 +100,24 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def self.publish(channel, data)
-    @supervisor.actors.first.publish(channel, data) if self.started?
+    @supervisor.actors.first.publish(channel, data)
   end
 
   # @param [String] channel
   # @param [Hash] data
   def self.publish_async(channel, data)
-    @supervisor.actors.first.async.publish(channel, data) if self.started?
+    @supervisor.actors.first.async.publish(channel, data)
   end
 
   # @param [String] channel
   # @return [Subscription]
   def self.subscribe(channel, &block)
-    @supervisor.actors.first.subscribe(channel, block) if self.started?
+    @supervisor.actors.first.subscribe(channel, block)
   end
 
   # @param [Subscription] subscription
   def self.unsubscribe(subscription)
-    @supervisor.actors.first.unsubscribe(subscription) if self.started?
+    @supervisor.actors.first.unsubscribe(subscription)
   end
 
   def self.started?
