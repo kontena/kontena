@@ -62,8 +62,8 @@ module Kontena::Cli::Stacks
       reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       outcome = reader.execute
 
-      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
-      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
+      hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
+      abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
       kontena_services = generate_services(outcome[:services], outcome[:version])
       stack = {
         'name' => outcome[:name],
@@ -73,6 +73,7 @@ module Kontena::Cli::Stacks
         'source' => reader.raw_content,
         'registry' => outcome[:registry],
         'services' => kontena_services,
+        'volumes' => outcome[:volumes],
         'variables' => outcome[:variables]
       }
       stack
@@ -110,23 +111,7 @@ module Kontena::Cli::Stacks
     end
 
     def display_notifications(messages, color = :yellow)
-      messages.each do |files|
-        files.each do |file, services|
-          STDERR.puts "#{file}:".colorize(color)
-          services.each do |service|
-            service.each do |name, errors|
-              STDERR.puts "  #{name}:".colorize(color)
-              if errors.is_a?(String)
-                STDERR.puts "    - #{errors}".colorize(color)
-              else
-                errors.each do |key, error|
-                  STDERR.puts "    - #{key}: #{error.to_json}".colorize(color)
-                end
-              end
-            end
-          end
-        end
-      end
+      STDERR.puts(Kontena.pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
     end
 
     def hint_on_validation_notifications(errors)

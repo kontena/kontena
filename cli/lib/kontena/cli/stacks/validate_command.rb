@@ -21,8 +21,8 @@ module Kontena::Cli::Stacks
     def execute
       reader = reader_from_yaml(filename, name: name, values: values)
       outcome = reader.execute
-      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
-      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
+      hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
+      abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
 
       if values_to
         vals = reader.variables.to_h(values_only: true).reject {|k,_| k == 'STACK' || k == 'GRID' }
