@@ -9,7 +9,6 @@ module Metrics
         ts = doc[:timestamp]
 
         {
-          data_points: doc[:data_points],
           cpu_usage_percent: doc[:cpu_usage_percent].round(2),
           memory_used_bytes: doc[:memory_used_bytes],
           memory_total_bytes: doc[:memory_total_bytes],

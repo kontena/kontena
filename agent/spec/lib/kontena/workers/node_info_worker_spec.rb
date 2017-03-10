@@ -3,6 +3,7 @@ describe Kontena::Workers::NodeInfoWorker do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
+  let(:statsd) { double(:statsd) }
 
   before(:each) {
     Celluloid.boot
@@ -215,9 +216,17 @@ describe Kontena::Workers::NodeInfoWorker do
   end
 
   describe '#publish_node_stats' do
-    it 'sends stats via rpc with timestamps' do
+    it 'sends stats via rpc' do
       expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
-        [hash_including(time: String, cpu: Hash, network: Hash)])
+        [hash_including(id: String, memory: Hash, usage: Hash, load: Hash,
+                        filesystem: Array, cpu: Hash, network: Hash, time: String)])
+      subject.publish_node_stats
+    end
+    
+    it 'sends stats to statsd' do
+      subject.instance_variable_set("@statsd", statsd)
+
+      expect(statsd).to receive(:gauge).exactly(12).times
       subject.publish_node_stats
     end
   end
@@ -253,9 +262,9 @@ describe Kontena::Workers::NodeInfoWorker do
       result = subject.calculate_network_traffic(prev, cur, 60)
 
       expect(result).to eq({
-        interface_name: :test,
-        in_bytes_per_second: 50,
-        out_bytes_per_second: 25
+        interface: :test,
+        in_bytes: 50,
+        out_bytes: 25
       })
     end
   end

@@ -167,8 +167,8 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
-      statsd.gauge("#{key_base}.network.in_bytes_per_second", event[:network][:in_bytes_per_second])
-      statsd.gauge("#{key_base}.network.out_bytes_per_second", event[:network][:out_bytes_per_second])
+      statsd.gauge("#{key_base}.network.in_bytes", event[:network][:in_bytes])
+      statsd.gauge("#{key_base}.network.out_bytes", event[:network][:out_bytes])
       statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
       event[:filesystem].each do |fs|
         name = fs[:name].split("/")[1..-1].join(".")
@@ -289,13 +289,13 @@ module Kontena::Workers
     # @param [Number] interval
     # @return [Hash]
     def calculate_network_traffic(previous_iface, current_iface, interval)
-      in_bytes_per_second = (current_iface.in_bytes - previous_iface.in_bytes) / interval
-      out_bytes_per_second = (current_iface.out_bytes - previous_iface.out_bytes) / interval
+      in_bytes = (current_iface.in_bytes - previous_iface.in_bytes) / interval
+      out_bytes = (current_iface.out_bytes - previous_iface.out_bytes) / interval
 
       {
-        interface_name: current_iface.name,
-        in_bytes_per_second: in_bytes_per_second,
-        out_bytes_per_second: out_bytes_per_second
+        interface: current_iface.name,
+        in_bytes: in_bytes,
+        out_bytes: out_bytes
       }
     end
 

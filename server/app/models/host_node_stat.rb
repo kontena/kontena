@@ -53,8 +53,8 @@ class HostNodeStat
           used: 1
         },
         network: {
-          in_bytes_per_second: 1,
-          out_bytes_per_second: 1
+          in_bytes: 1,
+          out_bytes: 1
         }
       }
     },
@@ -67,37 +67,30 @@ class HostNodeStat
           hour: { '$hour': '$created_at' },
           minute: { '$minute': '$created_at' }
         },
-        cpu_usage_percent: {
+        cpu_percent: {
           '$avg': { '$add': ['$cpu.user', '$cpu.system'] }
         },
-        memory_used_bytes: {
+        memory_used: {
           '$avg': '$memory.used'
         },
-        memory_total_bytes: {
+        memory_total: {
           '$avg': '$memory.total'
         },
-        memory_used_percent: {
-          '$avg': { '$divide': ['$memory.used', '$memory.total'] }
-        },
-        filesystem_used_bytes: {
+        filesystem_used: {
           '$avg': '$filesystem.used'
         },
-        filesystem_total_bytes: {
+        filesystem_total: {
           '$avg': '$filesystem.total'
         },
-        filesystem_used_percent: {
-          '$avg': { '$divide': ['$filesystem.used', '$filesystem.total'] }
+        network_in_bytes: {
+          '$avg': '$network.in_bytes'
         },
-        network_in_bytes_per_second: {
-          '$avg': '$network.in_bytes_per_second'
-        },
-        network_out_bytes_per_second: {
-          '$avg': '$network.out_bytes_per_second'
+        network_out_bytes: {
+          '$avg': '$network.out_bytes'
         },
         max_timestamp: {
           '$max': '$created_at'
-        },
-        data_points: { '$sum': 1 }
+        }
       }
     },
     {
@@ -107,16 +100,13 @@ class HostNodeStat
       '$project': {
         _id: 0,
         timestamp: '$_id',
-        cpu_usage_percent: 1,
-        memory_used_bytes: 1,
-        memory_total_bytes: 1,
-        memory_used_percent: 1,
-        filesystem_used_bytes: 1,
-        filesystem_total_bytes: 1,
-        filesystem_used_percent: 1,
-        network_in_bytes_per_second: 1,
-        network_out_bytes_per_second: 1,
-        data_points: 1
+        cpu_percent: 1,
+        memory_used: 1,
+        memory_tota: 1,
+        filesystem_used: 1,
+        filesystem_total: 1,
+        network_in_bytes: 1,
+        network_out_bytes: 1
       }
     }
     ])
@@ -159,8 +149,8 @@ class HostNodeStat
           used: 1
         },
         network: {
-          in_bytes_per_second: 1,
-          out_bytes_per_second: 1
+          in_bytes: 1,
+          out_bytes: 1
         }
       }
     },
@@ -175,32 +165,26 @@ class HostNodeStat
           hour: { '$hour': '$created_at' },
           minute: { '$minute': '$created_at' }
         },
-        cpu_usage_percent: {
+        cpu_percent: {
           '$avg': { '$add': ['$cpu.user', '$cpu.system'] }
         },
-        memory_used_bytes: {
+        memory_used: {
           '$avg': '$memory.used'
         },
-        memory_total_bytes: {
+        memory_total: {
           '$avg': '$memory.total'
         },
-        memory_used_percent: {
-          '$avg': { '$divide': ['$memory.used', '$memory.total'] }
-        },
-        filesystem_used_bytes: {
+        filesystem_used: {
           '$avg': '$filesystem.used'
         },
-        filesystem_total_bytes: {
+        filesystem_total: {
           '$avg': '$filesystem.total'
         },
-        filesystem_used_percent: {
-          '$avg': { '$divide': ['$filesystem.used', '$filesystem.total'] }
+        network_in_bytes: {
+          '$avg': '$network.in_bytes'
         },
-        network_in_bytes_per_second: {
-          '$avg': '$network.in_bytes_per_second'
-        },
-        network_out_bytes_per_second: {
-          '$avg': '$network.out_bytes_per_second'
+        network_out_bytes: {
+          '$avg': '$network.out_bytes'
         },
         max_timestamp: {
           '$max': '$created_at'
@@ -220,38 +204,29 @@ class HostNodeStat
           hour: '$_id.hour',
           minute: '$_id.minute'
         },
-        cpu_usage_percent: {
-          '$avg': '$cpu_usage_percent'
+        cpu_percent: {
+          '$avg': '$cpu_percent'
         },
-        memory_used_bytes: {
-          '$sum': '$memory_used_bytes'
+        memory_used: {
+          '$sum': '$memory_used'
         },
-        memory_total_bytes: {
-          '$sum': '$memory_total_bytes'
+        memory_total: {
+          '$sum': '$memory_total'
         },
-        memory_used_percent: {
-          '$avg': '$memory_used_percent'
+        filesystem_used: {
+          '$sum': '$filesystem_used'
         },
-        filesystem_used_bytes: {
-          '$sum': '$filesystem_used_bytes'
+        filesystem_total: {
+          '$sum': '$filesystem_total'
         },
-        filesystem_total_bytes: {
-          '$sum': '$filesystem_total_bytes'
+        network_in_bytes: {
+          '$sum': '$network_in_bytes'
         },
-        filesystem_used_percent: {
-          '$avg': '$filesystem_used_percent'
-        },
-        network_in_bytes_per_second: {
-          '$sum': '$network_in_bytes_per_second'
-        },
-        network_out_bytes_per_second: {
-          '$sum': '$network_out_bytes_per_second'
+        network_out_bytes: {
+          '$sum': '$network_out_bytes'
         },
         max_timestamp: {
           '$max': '$max_timestamp'
-        },
-        data_points: {
-          '$sum': '$data_points'
         }
       }
     },
@@ -262,16 +237,13 @@ class HostNodeStat
       '$project': {
         _id: 0,
         timestamp: '$_id',
-        cpu_usage_percent: 1,
-        memory_used_bytes: 1,
-        memory_total_bytes: 1,
-        memory_used_percent: 1,
-        filesystem_used_bytes: 1,
-        filesystem_total_bytes: 1,
-        filesystem_used_percent: 1,
-        network_in_bytes_per_second: 1,
-        network_out_bytes_per_second: 1,
-        data_points: 1
+        cpu_percent: 1,
+        memory_used: 1,
+        memory_total: 1,
+        filesystem_used: 1,
+        filesystem_total: 1,
+        network_in_bytes: 1,
+        network_out_bytes: 1
       }
     }
     ])
