@@ -41,6 +41,13 @@ module Kontena::Cli::Grids
         puts "  exports:"
         puts "    statsd: #{statsd['server']}:#{statsd['port']}"
       end
+      if logs = grid.dig('logs')
+        puts "logs:"
+        puts "  forwarder: #{logs['forwarder']}"
+        logs['opts'].each do |k,v|
+          puts "  #{k}: #{v}"
+        end
+      end
     end
 
     def grids
