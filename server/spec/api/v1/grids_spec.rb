@@ -307,16 +307,16 @@ describe '/v1/grids', celluloid: true do
           used: 100
       	},
       	filesystem: [{
-      			total: 1000,
-            used: 10
+          total: 1000,
+          used: 10
         }],
       	cpu: {
-      		system: 5.5,
-      		user: 10.0
+          system: 5.5,
+          user: 10.0
       	},
       	network: {
-      		in_bytes: 400,
-      		out_bytes: 200
+          in_bytes: 400,
+          out_bytes: 200
       	}
       })
     end
