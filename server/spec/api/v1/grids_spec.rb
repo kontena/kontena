@@ -315,8 +315,8 @@ describe '/v1/grids', celluloid: true do
       		user: 10.0
       	},
       	network: {
-      		in_bytes_per_second: 400,
-      		out_bytes_per_second: 200
+      		in_bytes: 400,
+      		out_bytes: 200
       	}
       })
     end
@@ -326,6 +326,10 @@ describe '/v1/grids', celluloid: true do
 
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 1
+      expect(json_response['stats'][0]['cpu_percent']).to eq 15.5
+      expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['network']).to eq({ 'in' => 400.0, 'out' => 200.0 })
     end
 
     it 'applies date filters' do

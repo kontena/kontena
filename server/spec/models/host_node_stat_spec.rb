@@ -35,8 +35,8 @@ describe HostNodeStat do
             used: 100
           }],
           network: {
-            in_bytes_per_second: 100,
-            out_bytes_per_second: 100,
+            in_bytes: 100,
+            out_bytes: 100,
           },
           created_at: Time.parse('2017-03-01 11:15:30 +00:00')
         },
@@ -59,8 +59,8 @@ describe HostNodeStat do
             # .2 used
           }],
           network: {
-            in_bytes_per_second: 100,
-            out_bytes_per_second: 100,
+            in_bytes: 100,
+            out_bytes: 100,
           },
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
@@ -83,8 +83,8 @@ describe HostNodeStat do
             # .2 used
           }],
           network: {
-            in_bytes_per_second: 100,
-            out_bytes_per_second: 100,
+            in_bytes: 100,
+            out_bytes: 100,
           },
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
@@ -107,8 +107,8 @@ describe HostNodeStat do
             # .2 used
           }],
           network: {
-            in_bytes_per_second: 100,
-            out_bytes_per_second: 100,
+            in_bytes: 100,
+            out_bytes: 100,
           },
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
@@ -131,8 +131,8 @@ describe HostNodeStat do
             # .4 used
           }],
           network: {
-            in_bytes_per_second: 200,
-            out_bytes_per_second: 300,
+            in_bytes: 200,
+            out_bytes: 300,
           },
           created_at: Time.parse('2017-03-01 12:15:45 +00:00')
         },
@@ -155,8 +155,8 @@ describe HostNodeStat do
             # .5 used
           }],
           network: {
-            in_bytes_per_second: 400,
-            out_bytes_per_second: 500,
+            in_bytes: 400,
+            out_bytes: 500,
           },
           created_at: Time.parse('2017-03-01 12:16:45 +00:00')
         },
@@ -176,47 +176,58 @@ describe HostNodeStat do
             total: 1000
           }],
           network: {
-            in_bytes_per_second: 200,
-            out_bytes_per_second: 300,
+            in_bytes: 200,
+            out_bytes: 300,
           },
           created_at: Time.parse('2017-03-01 13:15:30 +00:00')
         }
       ])
     }
 
-    describe '#get_aggregate_stats_for_node' do
+    describe '#get_aggregate__for_node' do
       it 'returns aggregated data by node_id' do
         stats
         from = Time.parse('2017-03-01 12:00:00 +00:00')
         to = Time.parse('2017-03-01 13:00:00 +00:00')
         results = HostNodeStat.get_aggregate_stats_for_node(node.id, from, to)
 
-        expect(results).to eq({
-          stats: [
+        expect(results).to eq([
             {
               # Records #2 and #4.
               # All fields are averaged except data_points is summed.
-              cpu_percent: 0.4,
-              memory_used: 300.0,
-              memory_total: 1000.0,
-              filesystem_used: 500.0,
-              filesystem_total: 1500.0,
-              network_in_bytes: 150,
-              network_out_bytes: 200,
-              timestamp: Time.parse('2017-03-01 12:15:00 +0000')
+              "cpu_percent" => 0.39999999999999997,
+              "memory_used" => 300.0,
+              "memory_total" => 1000.0,
+              "filesystem_used" => 500.0,
+              "filesystem_total" => 1500.0,
+              "network_in_bytes" => 150.0,
+              "network_out_bytes" => 200.0,
+              "timestamp" => {
+                "year" => 2017,
+                "month" => 3,
+                "day" => 1,
+                "hour" => 12,
+                "minute" => 15
+              }
             },
             {
               # Record #5
-              cpu_percent: 0.5,
-              memory_used: 600.0,
-              memory_total: 2000.0,
-              filesystem_used: 500.0,
-              filesystem_total: 1000.0,
-              network_in_bytes: 400,
-              network_out_bytes: 500,
-              timestamp: Time.parse('2017-03-01 12:16:00 +0000')
-            }]
-          })
+              "cpu_percent" => 0.5,
+              "memory_used" => 600.0,
+              "memory_total" => 2000.0,
+              "filesystem_used" => 500.0,
+              "filesystem_total" => 1000.0,
+              "network_in_bytes" => 400.0,
+              "network_out_bytes" => 500.0,
+              "timestamp" => {
+                "year" => 2017,
+                "month" => 3,
+                "day" => 1,
+                "hour" => 12,
+                "minute" => 16
+              }
+            }
+          ])
       end
     end
 
@@ -225,35 +236,46 @@ describe HostNodeStat do
         stats
         from = Time.parse('2017-03-01 12:00:00 +00:00')
         to = Time.parse('2017-03-01 13:00:00 +00:00')
-        results = HostNodeStat.get_aggregate_stats_for_node(node.id, from, to)
+        results = HostNodeStat.get_aggregate_stats_for_grid(grid.id, from, to)
 
-        expect(results).to eq({
-          stats: [
+        expect(results).to eq([
             {
               # Records #2, #4 and #5.
               # For same host_node_id, all fields are averaged except data_points is summed.
               # Then results are summed across node ids, except percent values are averaged.
-              cpu_usage: 0.25,
-              memory_used: 800.0,
-              memory_total: 2000.0,
-              filesystem_used: 700.0,
-              filesystem_total: 2500.0,
-              network_in_bytes: 250,
-              network_out_bytes: 300,
-              timestamp: Time.parse('2017-03-01 12:15:00 +0000')
+              "cpu_percent" => 0.25,
+              "memory_used" => 800.0,
+              "memory_total" => 2000.0,
+              "filesystem_used" => 700.0,
+              "filesystem_total" => 2500.0,
+              "network_in_bytes" => 250.0,
+              "network_out_bytes" => 300.0,
+              "timestamp" => {
+                "year" => 2017,
+                "month" => 3,
+                "day" => 1,
+                "hour" => 12,
+                "minute" => 15
+              }
             },
             {
               # Record #5
-              cpu_usage: 0.5,
-              memory_used: 600.0,
-              memory_total: 2000.0,
-              filesystem_used: 500.0,
-              filesystem_total: 1000.0,
-              network_in_bytes: 400,
-              network_out_bytes: 500,
-              timestamp: Time.parse('2017-03-01 12:16:00 +0000')
-            }]
-          })
+              "cpu_percent" => 0.5,
+              "memory_used" => 600.0,
+              "memory_total" => 2000.0,
+              "filesystem_used" => 500.0,
+              "filesystem_total" => 1000.0,
+              "network_in_bytes" => 400.0,
+              "network_out_bytes" => 500.0,
+              "timestamp" => {
+                "year" => 2017,
+                "month" => 3,
+                "day" => 1,
+                "hour" => 12,
+                "minute" => 16
+              }
+            }
+          ])
       end
     end
   end

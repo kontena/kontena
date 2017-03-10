@@ -4,7 +4,7 @@ V1::GridsApi.route('grid_stats') do |r|
   r.get do
     r.is do
       @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
-      @from = (r.params["from"] ? Time.parse(r.params["from"]) : (to - 1.hour)).utc
+      @from = (r.params["from"] ? Time.parse(r.params["from"]) : (@to - 1.hour)).utc
       @grid_stats = HostNodeStat.get_aggregate_stats_for_grid(@grid.id, @from, @to)
       render('grid_stats/stats')
     end
