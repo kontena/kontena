@@ -94,8 +94,8 @@ describe Kontena::Workers::ServicePodManager do
   describe '#terminate_workers' do
     it 'terminates workers that are not included in passed array' do
       workers = {
-        'a/1' => Kontena::Workers::ServicePodWorker.new(node),
-        'b/3' => Kontena::Workers::ServicePodWorker.new(node)
+        'a/1' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod)),
+        'b/3' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod))
       }
       allow(subject.wrapped_object).to receive(:workers).and_return(workers)
       expect(workers['a/1'].wrapped_object).to receive(:destroy).once
@@ -108,8 +108,8 @@ describe Kontena::Workers::ServicePodManager do
   describe '#finalize' do
     it 'terminates all workers' do
       workers = {
-        'a/1' => Kontena::Workers::ServicePodWorker.new(node),
-        'b/3' => Kontena::Workers::ServicePodWorker.new(node)
+        'a/1' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod)),
+        'b/3' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod))
       }
       allow(subject.wrapped_object).to receive(:workers).and_return(workers)
       subject.finalize

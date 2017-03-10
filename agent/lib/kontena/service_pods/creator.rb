@@ -38,7 +38,6 @@ module Kontena
         if service_container
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
-            notify_master(service_container, service_pod.deploy_rev)
             Celluloid::Notifications.publish('lb:ensure_instance_config', service_container)
             return service_container
           else
@@ -209,17 +208,6 @@ module Kontena
         return true if labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
 
         false
-      end
-
-      # @param [Docker::Container] service_container
-      # @param [String] deploy_rev
-      def notify_master(service_container, deploy_rev)
-        data = {
-          id: service_container.id,
-          status: 'deployed',
-          deploy_rev: deploy_rev
-        }
-        rpc_client.async.notification('/containers/event', [data])
       end
 
       # @param [Docker::Container] service_container

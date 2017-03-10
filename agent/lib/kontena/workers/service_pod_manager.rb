@@ -7,8 +7,9 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::WaitHelper
 
-    attr_reader :workers
+    attr_reader :workers, :node
 
     trap_exit :on_worker_exit
     finalizer :finalize
@@ -21,22 +22,12 @@ module Kontena::Workers
     end
 
     def start
-      node # blocks until it's available
+      wait!(interval: 0.1, message: 'waiting for node info') { self.node }
       populate_workers_from_docker
       loop do
         populate_workers_from_master
         sleep 30
       end
-    end
-
-    # @return [Node]
-    def node
-      while @node.nil?
-        @node = Actor[:node_info_worker].node
-        sleep 0.1 if @node.nil?
-      end
-
-      @node
     end
 
     # @param [String] topic
@@ -108,11 +99,12 @@ module Kontena::Workers
     def ensure_service_worker(service_pod)
       begin
         unless workers[service_pod.id]
-          worker = ServicePodWorker.new(node)
+          worker = ServicePodWorker.new(node, service_pod)
           self.link worker
           workers[service_pod.id] = worker
+        else
+          workers[service_pod.id].async.update(service_pod)
         end
-        workers[service_pod.id].async.update(service_pod)
       rescue Celluloid::DeadActorError => exc
         workers.delete(service_pod.id)
       end

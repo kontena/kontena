@@ -13,14 +13,15 @@ module Kontena::Workers
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod
 
-    def initialize(node, service_pod = nil)
+    def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
       @prev_state = 'unknown'
     end
 
-    def update(service_pod = nil)
-      @service_pod = service_pod if service_pod
+    # @param [Kontena::Models::ServicePod] service_pod
+    def update(service_pod)
+      @service_pod = service_pod
       ensure_desired_state
     end
 
@@ -30,8 +31,6 @@ module Kontena::Workers
     end
 
     def ensure_desired_state
-      return unless service_pod
-
       exclusive {
         debug "state of #{service_pod.name}: #{service_pod.desired_state}"
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
@@ -50,6 +49,10 @@ module Kontena::Workers
         elsif service_pod.terminated?
           info "terminating #{service_pod.name}"
           ensure_terminated if service_container
+        elsif service_pod.desired_state_unknown?
+          info "desired state is unknown for #{service_pod.name}, not doing anything"
+        else
+          warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
         end
       }
 
@@ -107,12 +110,12 @@ module Kontena::Workers
 
     # @param [String] current_state
     def sync_state_to_master(current_state)
-      state = {
+      data = {
         service_id: service_pod.service_id,
         instance_number: service_pod.instance_number,
         state: current_state
       }
-      rpc_client.async.notification('/node_service_pods/set_state', [node.id, state])
+      rpc_client.async.notification('/node_service_pods/set_state', [node.id, data])
       @prev_state = current_state
     end
   end

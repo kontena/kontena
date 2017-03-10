@@ -115,9 +115,6 @@ module Rpc
         if data['status'] == 'destroy'
           container = Container.instantiate(container)
           container.destroy
-        elsif data['status'] == 'deployed'
-          container = Container.instantiate(container)
-          container.set(:deploy_rev => data['deploy_rev'])
         end
       end
     end

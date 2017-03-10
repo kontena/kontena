@@ -110,6 +110,10 @@ module Kontena
         self.desired_state == 'terminated'
       end
 
+      def desired_state_unknown?
+        self.desired_state.nil? || self.desired_state == 'unknown'
+      end
+
       def mark_as_terminated
         @desired_state = 'terminated'
       end
