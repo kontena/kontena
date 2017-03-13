@@ -19,6 +19,7 @@ module Stacks
         add_error(:services, :empty, "stack does not specify any services")
         return
       end
+      validate_volumes
       sort_services(self.services).each do |s|
         service = s.dup
         validate_service_links(service)
