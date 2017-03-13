@@ -16,7 +16,7 @@ describe Kontena::Rpc::AgentApi do
   describe '#node_info' do
     it 'publishes event' do
       info = {'id' => 'xyz'}
-      expect(Celluloid::Notifications).to receive(:publish).with('agent:node_info', info)
+      expect(Celluloid::Notifications).to receive(:publish).with('agent:node_info', instance_of(Node))
       subject.node_info(info)
       sleep 0.01
     end

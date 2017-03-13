@@ -38,7 +38,7 @@ module GridServices
       lb_name = lb.qualified_name
       service_pod = Rpc::ServicePodSerializer.new(service_instance).to_hash
       RpcClient.new(service_instance.host_node.node_id).request(
-        '/load_balancers/remove_service', lb_name, service_pod
+        '/load_balancers/remove_service', service_pod
       )
     end
   end
