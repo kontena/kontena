@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe Role do
   it { should have_fields(:name, :description)}

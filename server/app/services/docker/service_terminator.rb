@@ -30,7 +30,7 @@ module Docker
     ##
     # @return [RpcClient]
     def client
-      RpcClient.new(host_node.node_id, 30)
+      RpcClient.new(host_node.node_id, 60)
     end
   end
 end

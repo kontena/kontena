@@ -1,4 +1,3 @@
-require_relative "../../../../spec_helper"
 require "kontena/cli/grid_options"
 require "kontena/cli/services/secrets/link_command"
 
@@ -7,16 +6,6 @@ describe Kontena::Cli::Services::Secrets::LinkCommand do
   include ClientHelpers
 
   describe '#execute' do
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['service', 'secret:name:env'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
-      subject.run(['service', 'secret:name:env'])
-    end
-
     it 'requires service as param' do
       expect {
         subject.run([])

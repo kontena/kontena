@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/apps/service_generator"
 
 describe Kontena::Cli::Apps::ServiceGenerator do
@@ -381,5 +380,5 @@ describe Kontena::Cli::Apps::ServiceGenerator do
         expect(result['secrets']).to be_nil
       end
     end
-  end  
+  end
 end

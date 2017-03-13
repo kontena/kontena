@@ -1,4 +1,3 @@
-require 'celluloid'
 require_relative '../services/logging'
 require_relative '../services/auth_provider'
 
@@ -39,7 +38,8 @@ class CloudWebsocketConnectJob
   end
 
   def kontena_auth_provider?
-    AuthProvider.instance.is_kontena?
+    ap = AuthProvider.instance
+    ap.valid? && ap.is_kontena?
   end
 
   def cloud_enabled_in_config?

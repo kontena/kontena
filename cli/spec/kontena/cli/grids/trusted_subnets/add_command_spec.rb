@@ -1,4 +1,3 @@
-require_relative "../../../../spec_helper"
 require "kontena/cli/grids/trusted_subnet_command"
 require "kontena/cli/grids/trusted_subnets/add_command"
 
@@ -7,16 +6,6 @@ describe Kontena::Cli::Grids::TrustedSubnets::AddCommand do
   include ClientHelpers
 
   describe '#execute' do
-    it 'requires api url' do
-      expect(subject).to receive(:require_api_url).once
-      subject.run(['grid', 'subnet'])
-    end
-
-    it 'requires token' do
-      expect(subject).to receive(:require_token).and_return(token)
-      subject.run(['grid', 'subnet'])
-    end
-
     it 'requires grid as param' do
       expect {
         subject.run([])

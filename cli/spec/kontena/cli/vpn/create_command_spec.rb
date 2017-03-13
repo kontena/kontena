@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/vpn/create_command"
 
 describe Kontena::Cli::Vpn::CreateCommand do
@@ -13,7 +12,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
 
       expect {
         subject.execute
-      }.to raise_error SystemExit
+      }.to exit_with_error
     end
   end
 
@@ -29,7 +28,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
 
       expect {
         subject.find_node(token, nil)
-      }.to raise_error SystemExit
+      }.to exit_with_error
     end
 
     it 'should return first online node with public ip' do
@@ -69,7 +68,7 @@ describe Kontena::Cli::Vpn::CreateCommand do
 
       expect {
         subject.find_node(token, 'foobar')
-      }.to raise_error SystemExit
+      }.to exit_with_error
     end
 
   end

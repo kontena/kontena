@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Registries::Create do
   let(:user) { User.create!(email: 'joe@domain.com')}

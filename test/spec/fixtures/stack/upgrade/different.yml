@@ -1,0 +1,5 @@
+stack: test/notredis
+version: 3.2.100
+services:
+  redis:
+    image: redis:3.2.100-windowsservercore

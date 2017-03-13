@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 # Lots of coverage already in Common spec
 describe Kontena::Cli::Config do

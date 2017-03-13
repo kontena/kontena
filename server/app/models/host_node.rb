@@ -1,3 +1,5 @@
+require 'ipaddr'
+
 class HostNode
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -143,6 +145,11 @@ class HostNode
       end
     end
     @host_provider
+  end
+
+  # @return [String] Overlay IP, without subnet mask
+  def overlay_ip
+    (IPAddr.new(self.grid.subnet) | self.node_number).to_s
   end
 
   private

@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/stacks/install_command"
 
 describe Kontena::Cli::Stacks::InstallCommand do
@@ -24,20 +23,6 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     before(:each) do
       allow(subject).to receive(:yaml_content).and_return("YAML content")
-    end
-
-    it 'requires api url' do
-      allow(File).to receive(:exist?).with('kontena.yml').and_return(true)
-      allow(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(name: nil, values: nil)).and_return(stack)
-      expect(described_class.requires_current_master?).to be_truthy
-      subject.run([])
-    end
-
-    it 'requires token' do
-      allow(File).to receive(:exist?).with('kontena.yml').and_return(true)
-      allow(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(name: nil, values: nil)).and_return(stack)
-      expect(described_class.requires_current_master_token?).to be_truthy
-      subject.run([])
     end
 
     it 'sends stack to master' do

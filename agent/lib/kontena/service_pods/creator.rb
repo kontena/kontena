@@ -3,6 +3,8 @@ require 'celluloid'
 require_relative 'common'
 require_relative '../logging'
 require_relative '../helpers/weave_helper'
+require_relative '../helpers/port_helper'
+require_relative '../helpers/rpc_helper'
 
 module Kontena
   module ServicePods
@@ -10,6 +12,8 @@ module Kontena
       include Kontena::Logging
       include Common
       include Kontena::Helpers::WeaveHelper
+      include Kontena::Helpers::PortHelper
+      include Kontena::Helpers::RpcHelper
 
       attr_reader :service_pod, :image_credentials
 
@@ -59,22 +63,14 @@ module Kontena
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
+        if service_pod.wait_for_port
+          info "waiting for port #{service_pod.name}:#{service_pod.wait_for_port} to respond"
+          wait_for_port(service_container, service_pod.wait_for_port)
+          info "port #{service_pod.name}:#{service_pod.wait_for_port} is responding"
+        end
         self.run_hooks(service_container, 'post_start')
 
         service_container
-      rescue => exc
-        error "#{exc.class.name}: #{exc.message}"
-        error "#{exc.backtrace.join("\n")}" if exc.backtrace
-      end
-
-      # @return [Celluloid::Future]
-      def perform_async
-        Celluloid::Future.new { self.perform }
-      end
-
-      # @param [ServicePod] service_pod
-      def self.perform_async(service_pod)
-        self.new(service_pod).perform_async
       end
 
       # @param [Docker::Container] service_container
@@ -105,16 +101,13 @@ module Kontena
       # @param [String] type
       def log_hook_output(id, lines, type)
         lines.each do |chunk|
-          msg = {
-              event: 'container:log',
-              data: {
-                  id: id,
-                  time: Time.now.utc.xmlschema,
-                  type: type,
-                  data: chunk
-              }
+          data = {
+              id: id,
+              time: Time.now.utc.xmlschema,
+              type: type,
+              data: chunk
           }
-          Celluloid::Actor[:queue_worker].send_message(msg)
+          rpc_client.async.notification('/containers/log', [data])
         end
       end
 
@@ -220,15 +213,22 @@ module Kontena
       # @param [Docker::Container] service_container
       # @param [String] deploy_rev
       def notify_master(service_container, deploy_rev)
-        msg = {
-          event: 'container:event',
-          data: {
-            id: service_container.id,
-            status: 'deployed',
-            deploy_rev: deploy_rev
-          }
+        data = {
+          id: service_container.id,
+          status: 'deployed',
+          deploy_rev: deploy_rev
         }
-        Celluloid::Actor[:queue_worker].send_message(msg)
+        rpc_client.async.notification('/containers/event', [data])
+      end
+
+      # @param [Docker::Container] service_container
+      # @param [Integer] port
+      def wait_for_port(service_container, port)
+        ip = service_container.overlay_ip
+        ip = '127.0.0.1' unless ip
+        Timeout.timeout(300) do
+          sleep 1 until container_port_open?(ip, port)
+        end
       end
     end
   end

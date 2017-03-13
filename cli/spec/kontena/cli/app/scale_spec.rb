@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/apps/scale_command"
 
 describe Kontena::Cli::Apps::ScaleCommand do
@@ -28,7 +27,7 @@ describe Kontena::Cli::Apps::ScaleCommand do
       it 'aborts execution' do
         expect{
           subject.run(['wordpress', 3])
-        }.to raise_error(SystemExit)
+        }.to exit_with_error
       end
     end
 
@@ -36,7 +35,7 @@ describe Kontena::Cli::Apps::ScaleCommand do
       it 'aborts execution' do
         expect{
           subject.run(['mysql', 3])
-        }.to raise_error(SystemExit)
+        }.to exit_with_error
       end
     end
 

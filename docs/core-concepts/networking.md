@@ -26,20 +26,38 @@ While a Kontena Master can manage multiple Grids, each Grid is an isolated overl
 
 ## Grid
 
-Each grid has a single overlay network. The default overlay network used is `10.81.0.0/16`, and it currently cannot be configured at creation time nor changed later.
-
-The grid's overlay network subnet is divided into two parts: `10.81.0.0/17` and `10.81.128.0/17`. The lower half is used by the Kontena Agent for statically allocated addresses used by infrastructure services such as etcd, and the upper half (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service container addresses managed by the [Kontena IPAM](https://github.com/kontena/kontena-ipam).
+Each grid has a single overlay network used for both host nodes and service containers.
+The default overlay network for a Kontena grid is `10.81.0.0/16`, but this can be customized using `kontena grid create --subnet=`.
+The grid subnet cannot be changed afterwards.
+The grid host nodes must not have any local routes that overlap with the grid subnet, or the Kontena grid infrastructure services on the host nodes may not work.
 
 Each Grid may also include a set of Trusted Subnets, which are used for the Overlay Networking between Host Node public and private IP addresses as described further below.
 
+### Subnet and Supernet
+
+Each grid is configured with a single subnet (default `10.81.0.0/16`) and supernet (default `10.80.0.0/12`).
+Both of these private RFC1918 IP address spaces are used for internal overlay networking within each grid.
+These overlay network addresses are only unique within a grid; different grids can (and will) use the same overlay network IP addresses.
+
+The grid subnet (`10.81.0.0/16`) is used to provide overlay networking addresses for both host nodes and service containers.
+The grid subnet is split into two parts: `10.81.0.0/17` and `10.81.128.0/17`.
+The lower half is used for the `10.81.0.X` host node overlay network addresses allocated by the Kontena server, and used to bootstrap the grid infrastructure services such as etcd.
+
+The upper half of the grid subnet (`10.81.128.0 - 10.81.255.255`) is used for dynamically allocated service containers, managed by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) using etcd.
+Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 32k Service Containers.
+
+The grid supernet (`10.80.0.0/12`) is reserved for future multi-network support, and will be used to dynamically allocate isolated subnets to provide network separation between grid services.
+
 ### IP Address Management
 
-Overlay network addresses are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) service running on each host Node.
-Using the default address allocation scheme, each Grid can contain up to 254 Host Nodes, and 32768 Service Containers.
+The dynamic overlay network addresses used by service containers are allocated by the [Kontena IPAM](https://github.com/kontena/kontena-ipam) service running on each host Node.
+The [Kontena IPAM](https://github.com/kontena/kontena-ipam) service uses the Grid's etcd infrstructure service, and will stop working if the Grid loses its etcd majority.
 
-The [Kontena IPAM](https://github.com/kontena/kontena-ipam) service uses the Grid's etcd service to track the allocated overlay network address across each of the Grid's Host Nodes.
-The overlay network address of a Service Container is reserved by the Kontena Agent when it is created.
-The overlay network address is released by the Kontena Agent when the Service Container is removed.
+The overlay network address of a Service Container is reserved by the Kontena Agent when it is created, and released by the Kontena Agent when the Service Container is removed.
+The Kontena Agent will also periodically cleanup any unused IPAM addresses that the agent was unable to release, which may happen when host nodes shut down.
+
+The service container's overlay network address will remain the same if the service container is restarted, such as when the service crashes.
+The service container's overlay network address will change when the service is re-deployed, either to the same or a different host node.
 
 ## Host Node
 
@@ -107,6 +125,7 @@ Each host Node runs a number of infrastructure services as Docker containers, us
 | Weave Net | TCP      | 6783 | `*`                       | Weave Net Control
 | Weave Net | UDP      | 6783 | `*`                       | Weave Net Data (`sleeve`)
 | Weave Net | UDP      | 6784 | `*`                       | Weave Net Data (`fastdp`)
+| Weave Net | ESP (UDP) | 6784 | `*`                       | Weave Net Data (`IPSec fastdp`)
 
 Only the Weave Net service is externally accessible by default. This is required for forming the encrypted Overlay Network mesh between host Nodes.
 
@@ -119,10 +138,23 @@ The overlay network is established using the network addresses of the peer Nodes
 The overlay network mesh uses the Private network address of a peer node within the same Region; otherwise, the Public network address is used.
 Once the overlay network is started, the host Node's overlay network address is configured using [`weave expose`](https://www.weave.works/docs/net/latest/using-weave/host-network-integration/).
 
-The overlay network is powered by Weave Net, using [Weave's encrypted `sleeve` tunnels](https://www.weave.works/docs/net/latest/using-weave/security-untrusted-networks/) to form a flat Layer 2 network spanning all Grid Nodes and connected Containers.
+The overlay network, powered by Weave Net, forms a flat Layer 2 network spanning all Grid Nodes and connected Containers. The overlay network operates at three different modes depending on the environment and grid configuration, see below for their descriptions. **Selecting the fastest forwarding approach is automatic, and is determined on a connection-by-connection basis.**
 
-Alternatively, [Weave's Fast Datapath](https://www.weave.works/docs/net/latest/using-weave/fastdp/) can be used for traffic between Nodes within the Kontena Grid's [Trusted Subnets](https://kontena.io/docs/using-kontena/grids#grid-trusted-subnets).
+### Fast Datapath
+
+[Weave's Fast Datapath](https://www.weave.works/docs/net/latest/using-weave/fastdp/) can be used for traffic between Nodes within the Kontena Grid's [Trusted Subnets](https://kontena.io/docs/using-kontena/grids#grid-trusted-subnets).
 Using Trusted Subnets and Weave's Fast Datapath provides [improved performance](https://www.weave.works/weave-docker-networking-performance-fast-data-path/). The cost of this method is a lack of data plane encryption between Nodes.
+
+### Encrypted Datapath
+
+In the default configuration without any Grid `trusted subnets` have been configured in a grid, the overlay network creates IPSec encrypted Fast Datapath connections between the peers.
+
+**NOTE:**
+Each encrypted dataplane packet is encapsulated into ESP, thus in some networks a firewall rule for allowing ESP traffic needs to be installed. E.g. Google Cloud Platform denies ESP packets by default. When upgrading from a version earlier than 1.2.0, if your host's network interface has a limit on packet size (the "MTU") smaller than 1496 bytes, you should reboot after upgrading to ensure encrypted fast datapath can work. For instance this applies to Google Cloud Platform, but is not necessary on AWS.
+
+### Sleeve
+
+If Fast Datapath connections cannot be established, Weave automatically makes a fallback using [Weave's encrypted `sleeve` tunnels](https://www.weave.works/docs/net/latest/using-weave/fastdp/). Sleeve tunnels use user space encryption thus the sleeve connections are quite a bit slower than Fast Datapath connections.
 
 ## Service Containers
 

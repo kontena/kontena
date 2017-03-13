@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe Grid do
   it { should be_timestamped_document }
@@ -17,6 +16,8 @@ describe Grid do
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
   it { should have_many(:registries) }
+
+  it { should embed_one(:grid_logs_opts) }
 
   it { should have_index_for(token: 1).with_options(unique: true) }
 

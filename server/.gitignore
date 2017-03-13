@@ -19,3 +19,4 @@
 /release/
 /vendor/
 /.bundle/
+.rspec-local

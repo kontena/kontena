@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Stacks::Common do
   let(:described_class) {

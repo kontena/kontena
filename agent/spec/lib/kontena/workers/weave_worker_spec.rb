@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::WeaveWorker do
 
@@ -92,13 +91,14 @@ describe Kontena::Workers::WeaveWorker do
       subject.start
     end
 
-    context "For a new container that is not yet running" do
+    context "For a 1.0 container that is not yet running" do
       let(:container) do
         double(Docker::Container,
           id: '123456789ABCDEF',
           name: 'test',
           overlay_cidr: '10.81.128.1/16',
           overlay_suffix: '16',
+          overlay_network: 'kontena',
         )
       end
 
@@ -113,7 +113,7 @@ describe Kontena::Workers::WeaveWorker do
       end
     end
 
-    context "For an old container that is still running" do
+    context "For a 0.16 container that is still running" do
       let(:container) do
         double(Docker::Container,
           id: '123456789ABCDEF',
@@ -121,6 +121,7 @@ describe Kontena::Workers::WeaveWorker do
           overlay_cidr: '10.81.1.1/19',
           overlay_ip: '10.81.1.1',
           overlay_suffix: '19',
+          overlay_network: nil,
         )
       end
 
@@ -135,7 +136,7 @@ describe Kontena::Workers::WeaveWorker do
       end
     end
 
-    context "For an old container that has already been migrated" do
+    context "For a 0.16 container that has already been migrated" do
       let(:container) do
         double(Docker::Container,
           id: '123456789ABCDEF',
@@ -143,6 +144,7 @@ describe Kontena::Workers::WeaveWorker do
           overlay_cidr: '10.81.1.1/19',
           overlay_ip: '10.81.1.1',
           overlay_suffix: '19',
+          overlay_network: nil,
         )
       end
 

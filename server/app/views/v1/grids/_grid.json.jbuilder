@@ -11,3 +11,11 @@ json.node_count grid.host_nodes.count
 json.service_count grid.grid_services.count
 json.container_count grid.containers.count
 json.user_count grid.users.count
+json.subnet grid.subnet
+json.supernet grid.supernet
+if grid.grid_logs_opts
+  json.logs do
+    json.forwarder grid.grid_logs_opts.forwarder
+    json.opts grid.grid_logs_opts.opts
+  end
+end

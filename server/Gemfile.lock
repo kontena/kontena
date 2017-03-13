@@ -21,8 +21,23 @@ GEM
     bindata (2.3.1)
     bson (3.2.6)
     builder (3.2.2)
-    celluloid (0.16.0)
-      timers (~> 4.0.0)
+    celluloid (0.17.3)
+      celluloid-essentials
+      celluloid-extras
+      celluloid-fsm
+      celluloid-pool
+      celluloid-supervision
+      timers (>= 4.1.1)
+    celluloid-essentials (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-extras (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-fsm (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-pool (0.20.5)
+      timers (>= 4.1.1)
+    celluloid-supervision (0.20.6)
+      timers (>= 4.1.1)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
     connection_pool (2.2.0)
@@ -33,14 +48,14 @@ GEM
     diff-lcs (1.2.5)
     docile (1.1.5)
     dotenv (1.0.2)
-    eventmachine (1.0.8)
+    eventmachine (1.2.2)
     faraday (0.9.2)
       multipart-post (>= 1.2, < 3)
     faye-websocket (0.10.2)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
     ffi (1.9.6)
-    hitimes (1.2.2)
+    hitimes (1.2.4)
     httpclient (2.8.2.3)
     i18n (0.7.0)
     jbuilder (2.2.5)
@@ -75,7 +90,7 @@ GEM
       bson (~> 3.0)
       connection_pool (~> 2.0)
       optionable (~> 0.2.0)
-    msgpack (0.7.4)
+    msgpack (1.0.3)
     multi_json (1.12.1)
     multipart-post (2.0.0)
     mutations (0.7.2)
@@ -125,7 +140,7 @@ GEM
     tilt-jbuilder (0.6.1)
       jbuilder
       tilt (<= 1.5.0)
-    timers (4.0.1)
+    timers (4.1.2)
       hitimes
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -145,7 +160,7 @@ DEPENDENCIES
   activesupport (~> 4.1.14)
   authority
   bcrypt
-  celluloid (~> 0.16.0)
+  celluloid (~> 0.17.3)
   dotenv
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)

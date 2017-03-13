@@ -35,17 +35,19 @@ GEM
     dotenv (1.0.2)
     etcd (0.3.0)
       mixlib-log
-    eventmachine (1.0.9.1)
+    eventmachine (1.2.3)
     excon (0.54.0)
-    faye-websocket (0.10.1)
+    faye-websocket (0.10.7)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
+    fluent-logger (0.6.2)
+      msgpack (>= 0.5.6, < 2)
     hitimes (1.2.3)
     i18n (0.7.0)
     json (1.8.3)
     minitest (5.5.0)
     mixlib-log (1.6.0)
-    msgpack (0.7.4)
+    msgpack (1.0.3)
     rake (10.4.2)
     rspec (3.1.0)
       rspec-core (~> 3.1.0)
@@ -75,7 +77,7 @@ GEM
     webmock (1.21.0)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
-    websocket-driver (0.6.3)
+    websocket-driver (0.6.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.2)
 
@@ -88,9 +90,10 @@ DEPENDENCIES
   docker-api (~> 1.32.0)
   dotenv
   etcd
-  eventmachine (~> 1.0.8)
-  faye-websocket (~> 0.10.1)
-  msgpack
+  eventmachine (~> 1.2.3)
+  faye-websocket (~> 0.10.7)
+  fluent-logger (~> 0.6.2)
+  msgpack (~> 1.0.3)
   rake
   rspec
   simplecov
@@ -99,4 +102,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.13.6
+   1.14.3

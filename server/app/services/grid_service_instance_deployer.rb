@@ -31,13 +31,8 @@ class GridServiceInstanceDeployer
   # @param [String] instance_number
   # @param [String] deploy_rev
   def wait_for_service_to_start(node, instance_number, deploy_rev)
-    # node/agent has 5 minutes to do it's job
-    Timeout.timeout(300) do
+    Timeout.timeout(30) do
       sleep 0.5 until self.deployed_service_container_exists?(instance_number, deploy_rev)
-      if self.wait_for_port?
-        container = self.find_service_instance_container(instance_number, deploy_rev)
-        sleep 0.5 until port_responding?(container, self.wait_for_port)
-      end
     end
   end
 
@@ -95,27 +90,5 @@ class GridServiceInstanceDeployer
     return unless node
     terminator = Docker::ServiceTerminator.new(node)
     terminator.terminate_service_instance(self.grid_service, instance_number)
-  end
-
-  # @return [Boolean]
-  def wait_for_port?
-    !self.wait_for_port.nil?
-  end
-
-  # @return [Integer]
-  def wait_for_port
-    self.grid_service.deploy_opts.wait_for_port
-  end
-
-  ##
-  # @param [Container] container
-  # @param [String] port
-  def port_responding?(container, port)
-    rpc_client = RpcClient.new(container.host_node.node_id, 2)
-    ip = container.ip_address || '127.0.0.1'
-    response = rpc_client.request('/agent/port_open?', ip, port)
-    response['open']
-  rescue RpcClient::Error
-    return false
   end
 end

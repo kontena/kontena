@@ -1,3 +1,5 @@
+require 'kontena/cli/etcd/health_command'
+
 describe Kontena::Cli::Etcd::HealthCommand do
   include ClientHelpers
   include OutputHelpers

@@ -1,32 +1,19 @@
-require_relative 'apps/init_command'
-require_relative 'apps/build_command'
-require_relative 'apps/config_command'
-require_relative 'apps/deploy_command'
-require_relative 'apps/start_command'
-require_relative 'apps/stop_command'
-require_relative 'apps/restart_command'
-require_relative 'apps/remove_command'
-require_relative 'apps/list_command'
-require_relative 'apps/logs_command'
-require_relative 'apps/monitor_command'
-require_relative 'apps/show_command'
-require_relative 'apps/scale_command'
 
 class Kontena::Cli::AppCommand < Kontena::Command
 
-  subcommand "init", "Init Kontena application", Kontena::Cli::Apps::InitCommand
-  subcommand "build", "Build Kontena services", Kontena::Cli::Apps::BuildCommand
-  subcommand "config", "View service configurations", Kontena::Cli::Apps::ConfigCommand
-  subcommand "deploy", "Deploy Kontena services", Kontena::Cli::Apps::DeployCommand
-  subcommand "scale", "Scale services", Kontena::Cli::Apps::ScaleCommand
-  subcommand "start", "Start services", Kontena::Cli::Apps::StartCommand
-  subcommand "stop", "Stop services", Kontena::Cli::Apps::StopCommand
-  subcommand "restart", "Restart services", Kontena::Cli::Apps::RestartCommand
-  subcommand "show", "Show service details", Kontena::Cli::Apps::ShowCommand
-  subcommand ["ps", "list", "ls"], "List services", Kontena::Cli::Apps::ListCommand
-  subcommand ["logs"], "Show service logs", Kontena::Cli::Apps::LogsCommand
-  subcommand "monitor", "Monitor services", Kontena::Cli::Apps::MonitorCommand
-  subcommand ["remove","rm"], "Remove services", Kontena::Cli::Apps::RemoveCommand
+  subcommand "init", "Init Kontena application", load_subcommand('apps/init_command')
+  subcommand "build", "Build Kontena services", load_subcommand('apps/build_command')
+  subcommand "config", "View service configurations", load_subcommand('apps/config_command')
+  subcommand "deploy", "Deploy Kontena services", load_subcommand('apps/deploy_command')
+  subcommand "scale", "Scale services", load_subcommand('apps/scale_command')
+  subcommand "start", "Start services", load_subcommand('apps/start_command')
+  subcommand "stop", "Stop services", load_subcommand('apps/stop_command')
+  subcommand "restart", "Restart services", load_subcommand('apps/restart_command')
+  subcommand "show", "Show service details", load_subcommand('apps/show_command')
+  subcommand ["ps", "list", "ls"], "List services", load_subcommand('apps/list_command')
+  subcommand ["logs"], "Show service logs", load_subcommand('apps/logs_command')
+  subcommand "monitor", "Monitor services", load_subcommand('apps/monitor_command')
+  subcommand ["remove","rm"], "Remove services", load_subcommand('apps/remove_command')
 
   def execute
   end

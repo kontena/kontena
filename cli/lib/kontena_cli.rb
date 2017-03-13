@@ -41,7 +41,7 @@ module Kontena
   end
 
   def self.simple_terminal?
-    on_windows? || ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
+    ENV['KONTENA_SIMPLE_TERM'] || !$stdout.tty?
   end
 
   def self.pastel
@@ -73,6 +73,14 @@ module Kontena
 
   def self.root
     File.dirname(__dir__)
+  end
+
+  def self.cli_root(*joinables)
+    if joinables.empty?
+      File.join(Kontena.root, 'lib/kontena/cli')
+    else
+      File.join(Kontena.root, 'lib/kontena/cli', *joinables)
+    end
   end
 end
 

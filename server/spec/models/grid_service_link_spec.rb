@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe GridServiceLink do
   it { should be_embedded_in(:grid_service) }

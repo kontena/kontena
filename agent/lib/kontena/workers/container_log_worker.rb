@@ -4,7 +4,6 @@ module Kontena::Workers
     include Kontena::Logging
 
     CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
-    EVENT_NAME = 'container:log'
 
     # @param [Docker::Container] container
     # @param [Queue] queue
@@ -38,7 +37,9 @@ module Kontena::Workers
       }
     rescue Excon::Errors::SocketError => exc
       since = Time.now.to_f
-      error "log socket error: #{@container.id}"
+      error "log socket error for container: #{@container.id}"
+      error "#{exc.class.name}: #{exc.message}"
+      error exc.backtrace.join("\n")
       retry
     rescue Docker::Error::TimeoutError
       since = Time.now.to_f
@@ -58,15 +59,20 @@ module Kontena::Workers
       time = DateTime.parse(match[1])
       data = match[2]
       msg = {
-          event: EVENT_NAME,
-          data: {
-              id: id,
-              time: time.utc.xmlschema,
-              type: stream,
-              data: data
-          }
+        id: id,
+        service: @container.service_name,
+        stack: @container.stack_name,
+        instance: @container.instance_number,
+        time: time.utc.xmlschema,
+        type: stream,
+        data: data
       }
       @queue << msg
+      publish_log(msg)
+    end
+
+    def publish_log(log)
+      Celluloid::Notifications.publish('container:log', log)
     end
   end
 end

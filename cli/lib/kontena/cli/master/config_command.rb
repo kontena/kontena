@@ -1,18 +1,13 @@
-require_relative 'config/set_command'
-require_relative 'config/get_command'
-require_relative 'config/unset_command'
-require_relative 'config/export_command'
-require_relative 'config/import_command'
 
 module Kontena
   module Cli
     module Master
       class ConfigCommand < Kontena::Command
-        subcommand "set", "Set a config value", Kontena::Cli::Master::Config::SetCommand
-        subcommand "get", "Get a config value", Kontena::Cli::Master::Config::GetCommand
-        subcommand "unset", "Clear a config value", Kontena::Cli::Master::Config::UnsetCommand
-        subcommand ["load", "import"], "Upload config to Master", Kontena::Cli::Master::Config::ImportCommand
-        subcommand ["dump", "export"], "Download config from Master", Kontena::Cli::Master::Config::ExportCommand
+        subcommand "set", "Set a config value", load_subcommand('master/config/set_command')
+        subcommand "get", "Get a config value", load_subcommand('master/config/get_command')
+        subcommand "unset", "Clear a config value", load_subcommand('master/config/unset_command')
+        subcommand ["load", "import"], "Upload config to Master", load_subcommand('master/config/import_command')
+        subcommand ["dump", "export"], "Download config from Master", load_subcommand('master/config/export_command')
 
         def execute
         end
@@ -20,4 +15,3 @@ module Kontena
     end
   end
 end
-

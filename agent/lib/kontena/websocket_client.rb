@@ -1,18 +1,21 @@
+require 'msgpack'
 require_relative 'logging'
 require_relative 'rpc_server'
+require_relative 'rpc_client'
+
+module Faye::WebSocket::Client::Connection
+  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
+  # force connection to close without waiting if the send buffer is full
+  def close_connection_after_writing
+    close_connection
+  end
+end
 
 module Kontena
   class WebsocketClient
     include Kontena::Logging
 
     KEEPALIVE_TIME = 30
-
-    if defined? Faye::Websocket::Client.CLOSE_TIMEOUT
-      # use a slightly longer timeout as a fallback
-      CLOSE_TIMEOUT = Faye::Websocket::Client.CLOSE_TIMEOUT + 5
-    else
-      CLOSE_TIMEOUT = 30
-    end
 
     attr_reader :api_uri,
                 :api_token,
@@ -22,19 +25,18 @@ module Kontena
 
     delegate :on, to: :ws
 
-    ##
     # @param [String] api_uri
     # @param [String] api_token
     def initialize(api_uri, api_token)
       @api_uri = api_uri
-      @api_token = api_token.to_s
-      @rpc_server = Kontena::RpcServer.new
+      @api_token = api_token
+      @rpc_server = Kontena::RpcServer.pool
+      @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
       @abort = false
-      info "initialized with token #{@api_token[0..10]}..."
       @connected = false
       @connecting = false
       @ping_timer = nil
-      @close_timer = nil
+      info "initialized with token #{@api_token[0..10]}..."
     end
 
     def ensure_connect
@@ -71,7 +73,7 @@ module Kontena
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
-      Celluloid::Notifications.publish('websocket:connect', self)
+      notify_actors('websocket:connect', self)
 
       @ws.on :open do |event|
         on_open(event)
@@ -83,7 +85,7 @@ module Kontena
         on_close(event)
       end
       @ws.on :error do |event|
-        error "connection closed with error: #{event.message}"
+        on_error(event)
       end
     end
 
@@ -101,36 +103,65 @@ module Kontena
       error "failed to send message: #{exc.message}"
     end
 
+    # @param [String] method
+    # @param [Array] params
+    def send_notification(method, params)
+      data = MessagePack.dump([2, method, params]).bytes
+      send_message(data)
+    rescue => exc
+      error "failed to send notification: #{exc.message}"
+    end
+
+    # @param [Integer] id
+    # @param [String] method
+    # @param [Array] params
+    def send_request(id, method, params)
+      data = MessagePack.dump([0, id, method, params]).bytes
+      send_message(data)
+    rescue => exc
+      error "failed to send request: #{exc.message}"
+    end
+
     # @param [Faye::WebSocket::API::Event] event
     def on_open(event)
       ping_timer.cancel if ping_timer
       info 'connection established'
       @connected = true
       @connecting = false
+      notify_actors('websocket:open', event)
     end
 
     # @param [Faye::WebSocket::API::Event] event
     def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        EM.defer {
-          response = rpc_server.handle_request(data)
-          send_message(MessagePack.dump(response).bytes)
-        }
+        rpc_server.async.handle_request(self, data)
+      elsif response_message?(data)
+        Celluloid::Actor[:rpc_client].async.handle_response(data)
       elsif notification_message?(data)
-        EM.defer {
-          rpc_server.handle_notification(data)
-        }
+        rpc_server.async.handle_notification(data)
       end
     rescue => exc
       error exc.message
     end
 
+    def on_error(event)
+      debug event.message.inspect
+
+      if event.message == Errno::EINVAL
+        error "invalid URI: #{api_uri}"
+      elsif event.message == Errno::ECONNREFUSED
+        error "connection refused: #{api_uri}"
+      elsif event.message == Errno::EPROTO
+        error "protocol error, check ws/wss: #{api_uri}"
+      else
+        error "connection error: #{event.message}"
+      end
+    end
+
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
       @ping_timer = nil
-      @close_timer.cancel if @close_timer
-      @close_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -139,7 +170,7 @@ module Kontena
       elsif event.code == 4010
         handle_invalid_version
       end
-      info "connection closed with code: #{event.code}"
+      info "connection closed with code #{event.code}"
     rescue => exc
       error exc.message
     end
@@ -167,11 +198,18 @@ module Kontena
       msg.is_a?(Array) && msg.size == 3 && msg[0] == 2
     end
 
+    # @param [Array] msg
+    # @return [Boolean]
+    def response_message?(msg)
+      msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
+    end
+
     # @return [String]
     def host_id
       Docker.info['ID']
     end
 
+    # @return [Array<String>]
     def labels
       Docker.info['Labels'].to_a.join(',')
     end
@@ -196,25 +234,15 @@ module Kontena
 
     # Abort the connection, closing the websocket, with a timeout
     def close
-      return if @close_timer
-
       # stop sending messages, queue them up until reconnected
-      Celluloid::Notifications.publish('websocket:disconnect', nil)
+      notify_actors('websocket:disconnect', nil)
 
-      # send close frame; this will get stuck if the server is not replying
-      ws.close(1000)
+      # send close frame; this has a 30s timeout
+      ws.close
+    end
 
-      @close_timer = EM::Timer.new(CLOSE_TIMEOUT) do
-        if ws
-          warn "Hit close timeout, abandoning existing websocket connection"
-
-          # ignore events from the abandoned connection
-          ws.remove_all_listeners
-
-          # fake it
-          on_close Faye::WebSocket::Event.create('close', :code => 1006, :reason => "Close timeout")
-        end
-      end
+    def notify_actors(event, value)
+      Celluloid::Notifications.publish(event, value)
     end
   end
 end

@@ -6,6 +6,7 @@ require_relative 'logging'
 
 module Kontena
   class RpcServer
+    include Celluloid
     include Kontena::Logging
 
     HANDLERS = {
@@ -28,7 +29,7 @@ module Kontena
     ##
     # @param [Array] message msgpack-rpc request array
     # @return [Array]
-    def handle_request(message)
+    def handle_request(ws_client, message)
       msg_id = message[1]
       handler = message[2].split('/')[1]
       method = message[2].split('/')[2]
@@ -36,17 +37,23 @@ module Kontena
         begin
           debug "rpc request: #{klass.name}##{method} #{message[3]}"
           result = klass.new.send(method, *message[3])
-          return [1, msg_id, nil, result]
+          send_message(ws_client, [1, msg_id, nil, result])
         rescue RpcServer::Error => exc
-          return [1, msg_id, {code: exc.code, message: exc.message, backtrace: exc.backtrace}, nil]
+          send_message(ws_client, [1, msg_id, {code: exc.code, message: exc.message, backtrace: exc.backtrace}, nil])
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
           error exc.backtrace.join("\n")
-          return [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}", backtrace: exc.backtrace}, nil]
+          send_message(ws_client, [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}", backtrace: exc.backtrace}, nil])
         end
       else
-        return [1, msg_id, {error: 'service not implemented'}, nil]
+        send_message(ws_client, [1, msg_id, {code: 501, error: 'service not implemented'}, nil])
       end
+    end
+
+    # @param [WebsocketClient] ws_client
+    # @param [Array, Hash] msg
+    def send_message(ws_client, msg)
+      ws_client.send_message(MessagePack.dump(msg).bytes)
     end
 
     ##
