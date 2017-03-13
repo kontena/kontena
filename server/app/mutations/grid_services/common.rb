@@ -98,7 +98,7 @@ module GridServices
             stack_volume = self.stack.latest_rev.volumes.find {|v|
               v['name'] == vol_spec[:volume]
             }
-            volume_name = stack_volume['external']
+            volume_name = stack_volume['external'] == true ? stack_volume['name'] : stack_volume.dig('external', 'name')
           end
           # Map external volume
           volume = self.grid.volumes.find_by(name: volume_name)

@@ -42,13 +42,13 @@ module Stacks
 
       self.volumes.each do |volume|
         if volume['external']
-          vol = Volume.where(name: volume['external'], grid: grid, stack: nil).first
+          volume_name = volume['external'] == true ? volume['name'] : volume.dig('external', 'name')
+          vol = self.grid.volumes.where(name: volume_name, grid: grid).first
           unless vol
-            add_error(:volumes, :not_found, "External volume #{volume['external']} not found")
+            add_error(:volumes, :not_found, "External volume #{volume_name} not found")
           end
         end
       end
-
     end
 
     def execute
