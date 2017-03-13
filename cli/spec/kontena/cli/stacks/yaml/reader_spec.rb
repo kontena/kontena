@@ -145,8 +145,10 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         expect(outcome[:errors]).to eq([{
           'docker-compose_v2.yml' =>[
             {
-              'wordpress' => {
-                'networks' => 'key not expected'
+              'services' => {
+                'wordpress' => {
+                  'networks' => 'key not expected'
+                }
               }
             }
           ]
