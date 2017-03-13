@@ -14,14 +14,17 @@ module Agent
       @cached_container = nil
     end
 
+    def init!
+      @db_session = ContainerLog.collection.session.with(
+        write: {
+          w: 0, fsync: false, j: false
+        }
+      )
+    end
+
     def run
       Thread.new {
-        # this Moped::Session may only be used in the same thread
-        @db_session = ContainerLog.collection.session.with(
-          write: {
-            w: 0, fsync: false, j: false
-          }
-        )
+        self.init! # the Moped::Session must be initialized within the thread
 
         i = 0
         loop do
