@@ -69,6 +69,7 @@ class Kontena::Command < Clamp::Command
 
   def self.inherited(where)
     where.extend Finalizer
+    super
   end
 
   def self.callback_matcher(cmd_class = nil, cmd_type = nil)
@@ -213,7 +214,7 @@ class Kontena::Command < Clamp::Command
     end
   rescue Kontena::Errors::StandardError => exc
     raise exc if ENV['DEBUG']
-    puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
     abort
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
