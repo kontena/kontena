@@ -10,7 +10,12 @@ module Stacks
       model :stack_instance, class: Stack
     end
 
+    optional do
+      model :grid, class: Grid
+    end
+
     def validate
+      self.grid = self.stack_instance.grid
       if stack_instance.name == Stack::NULL_STACK
         add_error(:stack, :access_denied, "Cannot update null stack")
         return
@@ -80,7 +85,7 @@ module Stacks
 
     def create_new_volumes(volumes)
       volumes.each do |volume|
-        existing = self.stack_instance.grid.volumes.find_by(volume[:name])
+        existing = self.stack_instance.grid.volumes.find_by(name: volume[:name])
         unless existing
           outcome = Volumes::Create.run(grid: self.stack_instance.grid, **volume.symbolize_keys)
           unless outcome.success?

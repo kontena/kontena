@@ -332,7 +332,7 @@ describe Stacks::Create do
         expect(redis.service_volumes.first.volume).to eq(volume)
       }.to change{ Volume.count }.by(0)
     end
-  
+
 
     it 'fails to create stack when external volume does not exist' do
       expect {
