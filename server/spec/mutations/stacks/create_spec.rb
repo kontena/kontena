@@ -153,7 +153,7 @@ describe Stacks::Create do
           image: 'myapi:latest',
           stateful: false,
           links: [
-            {name: 'redis', alias: 'redis'}
+            {'name' => 'redis', 'alias' => 'redis'}
           ]
         }
       ]
@@ -178,7 +178,7 @@ describe Stacks::Create do
           image: 'myapi:latest',
           stateful: false,
           links: [
-            {name: 'redis/redis', alias: 'redis'}
+            {'name' => 'redis/redis', 'alias' => 'redis'}
           ]
         }
       ]
@@ -203,7 +203,7 @@ describe Stacks::Create do
           image: 'myapi:latest',
           stateful: false,
           links: [
-            {name: 'redis', alias: 'redis'}
+            {'name' => 'redis', 'alias' => 'redis'}
           ]
         }
       ]
