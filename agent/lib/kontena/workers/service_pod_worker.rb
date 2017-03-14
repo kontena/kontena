@@ -27,7 +27,7 @@ module Kontena::Workers
 
     def destroy
       @service_pod.mark_as_terminated
-      update
+      ensure_desired_state
     end
 
     def ensure_desired_state
