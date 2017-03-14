@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.5-dev](https://github.com/kontena/kontena/tree/v1.1)
+
+**Master & Agents:**
+
+- Fix Ubuntu xenial package install to not override prompted debconf values with empty values from the default config file (#1975)
+- Fix server sharing of Moped::Session connections between threads (#1966)
+
+**CLI:**
+
+- Fix CLI to output API errors (Not found, access_denied, ..) to STDERR (#1963)
+
 ## [1.1.4](https://github.com/kontena/kontena/releases/tag/v1.1.4) (2017-03-09)
 
 **Master & Agents:**
