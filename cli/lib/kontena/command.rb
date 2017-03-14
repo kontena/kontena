@@ -69,7 +69,6 @@ class Kontena::Command < Clamp::Command
 
   def self.inherited(where)
     where.extend Finalizer
-    super
   end
 
   def self.callback_matcher(cmd_class = nil, cmd_type = nil)
