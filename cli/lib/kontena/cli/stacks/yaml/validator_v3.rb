@@ -15,6 +15,7 @@ module Kontena::Cli::Stacks
         stack
         version
         data
+        description
       )
 
       def initialize
