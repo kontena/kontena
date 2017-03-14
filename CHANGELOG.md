@@ -10,6 +10,7 @@
 **CLI:**
 
 - Fix CLI to output API errors (Not found, access_denied, ..) to STDERR (#1963)
+- Fix exec wrapper argument passing in omnibus cli installer (#1967)
 
 ## [1.1.4](https://github.com/kontena/kontena/releases/tag/v1.1.4) (2017-03-09)
 
