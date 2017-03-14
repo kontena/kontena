@@ -33,7 +33,7 @@ json.stack do
   json.id grid_service.stack.to_path
   json.name grid_service.stack.name
 end
-json.links grid_service.grid_service_links.map{|s|
+json.links grid_service.grid_service_links.select{ |s| !s.linked_grid_service.nil? }.map { |s|
   { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name }
 }
 json.log_driver grid_service.log_driver
