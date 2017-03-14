@@ -24,7 +24,6 @@ module Kontena::Workers
       @stats_since = Time.now
       @container_seconds = 0
       @previous_cpu = Vmstat.cpu
-      @previous_iface = get_network_interface
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -116,11 +115,6 @@ module Kontena::Workers
       cpu_usage = calculate_cpu_usage(@previous_cpu, current_cpu)
       @previous_cpu = current_cpu
 
-      interval = [ 1, (Time.now - @stats_since).round ].max
-      current_iface = Vmstat.network_interfaces.select { |x| x.name == @previous_iface.name }.first
-      network_traffic = calculate_network_traffic(@previous_iface, current_iface, interval)
-      @previous_iface = current_iface
-
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
       container_seconds = calculate_containers_time + container_partial_seconds
@@ -147,7 +141,7 @@ module Kontena::Workers
           }
         ],
         cpu: cpu_usage,
-        network: network_traffic,
+        network: get_network_traffic,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
@@ -167,15 +161,21 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
-      statsd.gauge("#{key_base}.network.in_bytes", event[:network][:in_bytes])
-      statsd.gauge("#{key_base}.network.out_bytes", event[:network][:out_bytes])
       statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
       event[:filesystem].each do |fs|
-        name = fs[:name].split("/")[1..-1].join(".")
+        name = fs[:name] ? fs[:name].split("/")[1..-1].join(".") : ""
         statsd.gauge("#{key_base}.filesystem.#{name}.free", fs[:free])
         statsd.gauge("#{key_base}.filesystem.#{name}.available", fs[:available])
         statsd.gauge("#{key_base}.filesystem.#{name}.used", fs[:used])
         statsd.gauge("#{key_base}.filesystem.#{name}.total", fs[:total])
+      end
+      event[:network].each do |network|
+        name = network[:name] ? network[:name] : ""
+        statsd.gauge("#{key_base}.network.#{name}.rx_bytes", network[:rx_bytes])
+        statsd.gauge("#{key_base}.network.#{name}.rx_errors", network[:rx_errors])
+        statsd.gauge("#{key_base}.network.#{name}.rx_dropped", network[:rx_dropped])
+        statsd.gauge("#{key_base}.network.#{name}.tx_bytes", network[:tx_bytes])
+        statsd.gauge("#{key_base}.network.#{name}.tx_errors", network[:tx_errors])
       end
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
@@ -284,25 +284,18 @@ module Kontena::Workers
       }
     end
 
-    # @param [Vmstat::NewtworkInterface] previous_iface
-    # @param [Vmstat::NetworkInterface] current_iface
-    # @param [Number] interval
-    # @return [Hash]
-    def calculate_network_traffic(previous_iface, current_iface, interval)
-      in_bytes = (current_iface.in_bytes - previous_iface.in_bytes) / interval
-      out_bytes = (current_iface.out_bytes - previous_iface.out_bytes) / interval
-
-      {
-        interface: current_iface.name,
-        in_bytes: in_bytes,
-        out_bytes: out_bytes
-      }
-    end
-
-    def get_network_interface
-      Vmstat.network_interfaces.select { |x| x.ethernet? and x.in_bytes > 0 and x.out_bytes > 0 }
-                               .sort { |l,r| r.out_bytes <=> l.out_bytes }
-                               .first
+    def get_network_traffic
+      Vmstat.network_interfaces.map do |iface|
+        {
+          name: iface.name,
+          type: iface.type,
+          rx_bytes: iface.in_bytes,
+          rx_errors: iface.in_errors,
+          rx_dropped: iface.in_drops,
+          tx_bytes: iface.out_bytes,
+          tx_errors: iface.out_errors
+        }
+      end
     end
 
     # @return [Hash]

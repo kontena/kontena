@@ -1,4 +1,3 @@
-
 describe Kontena::Workers::NodeInfoWorker do
   include RpcClientMocks
 
@@ -216,17 +215,19 @@ describe Kontena::Workers::NodeInfoWorker do
   end
 
   describe '#publish_node_stats' do
+
     it 'sends stats via rpc' do
       expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
         [hash_including(id: String, memory: Hash, usage: Hash, load: Hash,
-                        filesystem: Array, cpu: Hash, network: Hash, time: String)])
+                        filesystem: Array, cpu: Hash, network: Array, time: String)])
       subject.publish_node_stats
     end
-    
+
     it 'sends stats to statsd' do
       subject.instance_variable_set("@statsd", statsd)
 
-      expect(statsd).to receive(:gauge).exactly(12).times
+      # Will be called 19 times if there is one file system and one network interface
+      expect(statsd).to receive(:gauge).at_least(19).times
       subject.publish_node_stats
     end
   end
@@ -250,21 +251,6 @@ describe Kontena::Workers::NodeInfoWorker do
         system: 15.568862275449103,
         user: 7.784431137724551,
         idle: 176.64670658682633
-      })
-    end
-  end
-
-  describe '#calculate_network_traffic' do
-    it 'calculates network traffic' do
-      prev = Vmstat::NetworkInterface.new(:test, 2000, 0, 0, 3000, 0, 6)
-      cur = Vmstat::NetworkInterface.new(:test, 5000, 0, 0, 4500, 0, 6)
-
-      result = subject.calculate_network_traffic(prev, cur, 60)
-
-      expect(result).to eq({
-        interface: :test,
-        in_bytes: 50,
-        out_bytes: 25
       })
     end
   end
