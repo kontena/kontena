@@ -97,10 +97,13 @@ module Kontena::Cli::Stacks
                   end
                   if options.key?('external')
                     unless options['external'].is_a?(FalseClass)
-                      ['driver', 'driver_opts'].each do |key|
+                      ['driver', 'driver_opts', 'scope'].each do |key|
                         result[:errors] << { 'volumes' => { volume => { key => 'specified together with external' } } } if options.key?(key)
                       end
                     end
+                  end
+                  if options.key?('driver') && !options.key?('scope')
+                    result[:errors] << { 'volumes' => { volume => { 'scope' => 'required value missing' } } }
                   end
                 else
                   result[:errors] << { 'volumes' => { volume => option_errors.errors } }
