@@ -64,6 +64,12 @@ class User
   end
 
   ##
+  # @param [Grid] grid
+  def has_access?(grid)
+    self.accessible_grids.include?(grid)
+  end
+
+  ##
   # @param [String] role
   def in_role?(role)
     self.roles.where(name: role).exists?

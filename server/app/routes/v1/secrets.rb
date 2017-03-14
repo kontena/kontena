@@ -14,18 +14,6 @@ module V1
         halt_request(503, {error: 'Vault not configured'})
       end
 
-      # @param [String] grid_name
-      # @return [GridSecret]
-      def load_grid(grid_name)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
-
-        grid
-      end
 
       # @param [Grid] grid
       # @param [String] secret_name

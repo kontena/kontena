@@ -52,6 +52,18 @@ module RequestHelpers
     request.halt
   end
 
+  ##
+  # @param [String] name
+  # @return [Grid]
+  def load_grid(name)
+    @grid = Grid.find_by(name: name)
+    halt_request(404, {error: 'Not found'}) unless @grid
+    unless current_user.has_access?(@grid)
+      halt_request(403, {error: 'Access denied'})
+    end
+    @grid
+  end
+
   def test_env?
     ENV['RACK_ENV'].to_s == 'test'
   end

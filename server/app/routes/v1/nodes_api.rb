@@ -11,8 +11,7 @@ module V1
       # @param [String] node_id
       # @return [HostNode]
       def load_grid_node(grid_name, node_id)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
+        grid = load_grid(grid_name)
 
         if node_id.include?(':')
           node = grid.host_nodes.find_by(node_id: node_id)
@@ -20,10 +19,6 @@ module V1
           node = grid.host_nodes.find_by(name: node_id)
         end
         halt_request(404, {error: 'Not found'}) if !node
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
 
         node
       end

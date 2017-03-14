@@ -11,14 +11,9 @@ module V1
       require_current_user
 
       def load_grid_registry(grid_name, name)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'grid Not found'}) if !grid
+        grid = load_grid(grid_name)
         registry = grid.registries.find_by(name: name)
         halt_request(404, {error: 'Not found'}) if !registry
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
 
         registry
       end

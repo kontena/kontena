@@ -294,7 +294,7 @@ describe '/v1/grids', celluloid: true do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first
       post "/v1/grids/#{grid.to_path}/users", {email: david.email }.to_json, request_headers
-      expect(response.status).to eq(404)
+      expect(response.status).to eq(403)
     end
 
     it 'requires existing email' do
@@ -336,7 +336,7 @@ describe '/v1/grids', celluloid: true do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first
       delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
-      expect(response.status).to eq(404)
+      expect(response.status).to eq(403)
     end
 
     it 'validates that unassigned user belongs to grid' do
