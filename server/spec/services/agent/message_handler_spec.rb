@@ -8,6 +8,10 @@ describe Agent::MessageHandler do
   let(:subject) { described_class.new(queue) }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
 
+  before do
+    subject.init!
+  end
+
   describe '#run' do
     it 'performs', :performance => true do
       container = grid.containers.create!(container_id: SecureRandom.hex(16))

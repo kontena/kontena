@@ -65,9 +65,10 @@ class MongoPubsub
 
   attr_accessor :collection, :subscriptions
 
-  # @param [Moped::Collection]
-  def initialize(collection)
-    @collection = collection
+  # @param [Mongoid::Document] model
+  def initialize(model)
+    # The collection session is local to this Actor's thread
+    @collection = model.collection
     @subscriptions = []
     async.tail!
   end
@@ -120,8 +121,9 @@ class MongoPubsub
     @supervisor.actors.first.unsubscribe(subscription)
   end
 
-  def self.start!(collection)
-    @supervisor = self.supervise(collection)
+  # @param [Mongoid::Document] model
+  def self.start!(model)
+    @supervisor = self.supervise(model)
   end
 
   def self.clear!

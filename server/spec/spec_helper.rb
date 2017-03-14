@@ -60,7 +60,7 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    MongoPubsub.start!(PubsubChannel.collection)
+    MongoPubsub.start!(PubsubChannel)
     sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end

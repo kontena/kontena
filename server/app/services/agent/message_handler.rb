@@ -12,6 +12,9 @@ module Agent
       @stats = []
       @cached_grid = nil
       @cached_container = nil
+    end
+
+    def init!
       @db_session = ContainerLog.collection.session.with(
         write: {
           w: 0, fsync: false, j: false
@@ -21,6 +24,8 @@ module Agent
 
     def run
       Thread.new {
+        self.init! # the Moped::Session must be initialized within the thread
+
         i = 0
         loop do
           begin
