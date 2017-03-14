@@ -64,7 +64,8 @@ module Kontena::Cli::Stacks
 
       hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
       abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
-      kontena_services = generate_services(outcome[:services], outcome[:version])
+      kontena_services = generate_services(outcome[:services])
+      kontena_volumes = generate_volumes(outcome[:volumes])
       stack = {
         'name' => outcome[:name],
         'stack' => outcome[:stack],
@@ -73,7 +74,7 @@ module Kontena::Cli::Stacks
         'source' => reader.raw_content,
         'registry' => outcome[:registry],
         'services' => kontena_services,
-        'volumes' => outcome[:volumes],
+        'volumes' => kontena_volumes,
         'variables' => outcome[:variables]
       }
       stack
@@ -83,12 +84,21 @@ module Kontena::Cli::Stacks
       exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
     end
 
+    def generate_volumes(yaml_volumes)
+      return [] if yaml_volumes.nil?
+      volumes = []
+      yaml_volumes.each do |volume_name, config|
+        config['name'] = volume_name
+        volumes << config
+      end
+      volumes
+    end
 
     ##
     # @param [Hash] yaml
-    # @param [String] version
     # @return [Hash]
-    def generate_services(yaml_services, version)
+    def generate_services(yaml_services)
+      return [] if yaml_services.nil?
       services = []
       generator_klass = ServiceGeneratorV2
       yaml_services.each do |service_name, config|
