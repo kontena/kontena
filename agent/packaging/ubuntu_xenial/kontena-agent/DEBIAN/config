@@ -7,8 +7,8 @@ set -e
 if [ -e /etc/kontena-agent.env ]; then
   . /etc/kontena-agent.env
 
-  db_set kontena-agent/server_uri "${KONTENA_URI:-}"
-  db_set kontena-agent/grid_token "${KONTENA_TOKEN:-}"
+  [ -n "$KONTENA_URI" ] && db_set kontena-agent/server_uri "$KONTENA_URI"
+  [ -n "$KONTENA_TOKEN" ] && db_set kontena-agent/grid_token "$KONTENA_TOKEN"
 fi
 
 db_input high kontena-agent/server_uri || true
