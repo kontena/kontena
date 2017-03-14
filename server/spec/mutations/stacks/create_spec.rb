@@ -221,6 +221,33 @@ describe Stacks::Create do
       expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'redis' does not exist" } }
     end
 
+    it 'fails and does not create stack if a service links to itself' do
+      services = [
+        {
+          name: 'api',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {'name' => 'api', 'alias' => 'api'}
+          ]
+        }
+      ]
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'soome-stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: services
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'api' refers to self" } }
+      }.to change{ grid.stacks.count }.by(0)
+    end
+
     it 'does not create stack if any service validation fails' do
       services = [
         {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true },

@@ -40,7 +40,9 @@ module Stacks
       internal_links = links.select{ |l| !l['name'].include?('/') }
       links = links - internal_links
       internal_links.each do |l|
-        unless self.services.any?{|s| s[:name] == l['name']}
+        if l['name'] == service['name']
+          add_service_error(service[:name], :links, :self,  "Linked service '#{l['name']}' refers to self")
+        elsif !self.services.any?{|s| s[:name] == l['name']}
           add_service_error(service[:name], :links, :exist,  "Linked service '#{l['name']}' does not exist")
         end
       end
