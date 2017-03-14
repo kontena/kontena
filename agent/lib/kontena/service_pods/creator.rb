@@ -130,7 +130,7 @@ module Kontena
           if volume_spec['name']
             volume = Docker::Volume.get(volume_spec['name']) rescue nil
             unless volume
-              info "creating volume: volume_spec['name']"
+              info "creating volume: #{volume_spec['name']}"
               Docker::Volume.create(volume_spec['name'], {
                   'Driver' => volume_spec['driver'],
                   'DriverOpts' => volume_spec['driver_opts']
