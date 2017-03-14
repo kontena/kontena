@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
         version
         data
         description
+        expose
       )
 
       def initialize
