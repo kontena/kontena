@@ -171,6 +171,64 @@ describe Stacks::Create do
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
+    it 'creates stack with complex linked services in the correct order' do
+      services = [
+        {
+          name: 'bar',
+          image: 'bar:latest',
+          stateful: false,
+          links: [
+            {'name' => 'foo', 'alias' => 'api'}
+          ]
+        },
+        {
+          name: 'foo',
+          image: 'foo:latest',
+          stateful: true,
+          links: [
+            {'name' => 'asdf', 'alias' => 'api'}
+          ]
+        },
+        {
+          name: 'asdf',
+          image: 'asdf:latest',
+          stateful: true,
+          links: [
+            {'name' => 'asdf1', 'alias' => 'asdf1'},
+            {'name' => 'asdf2', 'alias' => 'asdf2'},
+            {'name' => 'asdf3', 'alias' => 'asdf3'},
+          ]
+        },
+        {
+          name: 'asdf1',
+          image: 'asdf:latest',
+          stateful: true,
+        },
+        {
+          name: 'asdf2',
+          image: 'asdf:latest',
+          stateful: true,
+        },
+        {
+          name: 'asdf3',
+          image: 'asdf:latest',
+          stateful: true,
+        },
+      ]
+      outcome = described_class.new(
+        grid: grid,
+        name: 'soome-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: services
+      ).run
+      expect(outcome).to be_success, outcome.errors
+      expect(outcome.result.stack_revisions.count).to eq(1)
+    end
+
     it 'does not create a stack if link to another stack is invalid' do
       services = [
         {
