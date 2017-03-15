@@ -11,7 +11,7 @@ describe WaitHelper do
 
   describe 'wait' do
     let :time_now do
-      Time.now
+      Time.now.to_f
     end
 
     it 'returns true immediately' do
@@ -21,10 +21,11 @@ describe WaitHelper do
     end
 
     it 'sleeps between retries and logs debug' do
-      expect(Time).to receive(:now).and_return(time_now).once
-      expect(Time).to receive(:now).and_return(time_now + 0.5).once
+      expect(subject).to receive(:_wait_now).and_return(time_now).once
+      expect(subject).to receive(:_wait_now).and_return(time_now + 0.5).once
       expect(subject).to receive(:sleep).once
       expect(subject).to receive(:debug).with('wait... foo')
+      expect(subject).to receive(:_wait_now).and_return(time_now + 1.5).once
       expect(subject).to_not receive(:sleep)
 
       @loop = 0
@@ -34,14 +35,14 @@ describe WaitHelper do
     end
 
     it 'sleeps between retries before timing out' do
-      expect(Time).to receive(:now).and_return(time_now).once
-      expect(Time).to receive(:now).and_return(time_now + 0.5).once
+      expect(subject).to receive(:_wait_now).and_return(time_now).once
+      expect(subject).to receive(:_wait_now).and_return(time_now + 0.5).once
       expect(subject).to receive(:sleep).once
-      expect(Time).to receive(:now).and_return(time_now + 1.0).once
+      expect(subject).to receive(:_wait_now).and_return(time_now + 1.0).once
       expect(subject).to receive(:sleep).once
-      expect(Time).to receive(:now).and_return(time_now + 1.5).once
+      expect(subject).to receive(:_wait_now).and_return(time_now + 1.5).once
       expect(subject).to receive(:sleep).once
-      expect(Time).to receive(:now).and_return(time_now + 2.001).once
+      expect(subject).to receive(:_wait_now).and_return(time_now + 2.001).once
       expect(subject).to_not receive(:sleep)
 
       value = subject.wait(timeout: 2) { false }

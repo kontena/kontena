@@ -4,6 +4,10 @@ module WaitHelper
   WAIT_TIMEOUT = 300
   WAIT_INTERVAL = 0.5
 
+  def _wait_now
+    Time.now.to_f
+  end
+
   # Wait until given block returns truthy value, returning nil on timeout
   #
   # @param timeout [Fixnum] How long to wait
@@ -14,10 +18,10 @@ module WaitHelper
   def wait(timeout: WAIT_TIMEOUT, interval: WAIT_INTERVAL, message: nil, &block)
     raise ArgumentError, 'no block given' unless block_given?
 
-    wait_until = Time.now.to_f + timeout
+    wait_until = _wait_now + timeout
 
     loop do
-      return nil if Time.now.to_f > wait_until
+      return nil if _wait_now > wait_until
 
       value = yield
 
