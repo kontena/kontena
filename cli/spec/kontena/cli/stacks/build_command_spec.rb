@@ -34,7 +34,7 @@ describe Kontena::Cli::Stacks::BuildCommand do
 
     before(:each) do
       allow(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
-      allow(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(:name, :values)).and_return(stack)
+      allow(subject).to receive(:stack_read_and_dump).with('kontena.yml', hash_including(:name, :values)).and_return(stack)
       allow(subject).to receive(:system).and_return(true)
     end
 
@@ -47,7 +47,7 @@ describe Kontena::Cli::Stacks::BuildCommand do
     end
 
     it 'reads stack file' do
-      expect(subject).to receive(:stack_from_yaml).with('kontena.yml', hash_including(:name, :values)).and_return(stack)
+      expect(subject).to receive(:stack_read_and_dump).with('kontena.yml', hash_including(:name, :values)).and_return(stack)
       subject.run([])
     end
 

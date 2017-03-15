@@ -11,6 +11,8 @@ module Kontena::Cli::Stacks
     parameter "NAME", "Stack name"
 
     include Common::StackFileOrNameParam
+
+    include Common::StackValuesToOption
     include Common::StackValuesFromOption
 
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
@@ -25,7 +27,7 @@ module Kontena::Cli::Stacks
         read_stack || spin.fail!
       end
 
-      stack = stack_from_yaml(filename, name: name, values: values, defaults: master_data['variables'])
+      stack = stack_read_and_dump(filename, name: name, values: values, defaults: master_data['variables'])
 
       unless force? || master_data['stack'] == stack['stack']
         confirm "Replacing stack #{Kontena.pastel.cyan(master_data['stack'])} on master with #{Kontena.pastel.cyan(stack['stack'])} from #{Kontena.pastel.yellow(filename)}. Are you sure?"

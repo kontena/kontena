@@ -13,14 +13,14 @@ module Kontena::Cli::Stacks
     include Common::StackNameOption
     option '--[no-]deploy', :flag, 'Trigger deploy after installation', default: true
 
+    include Common::StackValuesToOption
     include Common::StackValuesFromOption
-
 
     requires_current_master
     requires_current_master_token
 
     def execute
-      stack = stack_from_yaml(filename, name: name, values: values)
+      stack = stack_read_and_dump(filename, name: name, values: values)
 
       stack['name'] = name if name
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
