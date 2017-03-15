@@ -55,13 +55,11 @@ describe HostNodeStat do
           memory: {
             used: 500,
             total: 1000
-            # .5 used
           },
           filesystem: [{
             name: "fs1",
             used: 200,
             total: 1000
-            # .2 used
           }],
           network: [{
             name: "n1",
@@ -82,13 +80,11 @@ describe HostNodeStat do
           memory: {
             used: 500,
             total: 1000
-            # .5 used
           },
           filesystem: [{
             name: "fs1",
             used: 200,
             total: 1000
-            # .2 used
           }],
           network: [{
             name: "n1",
@@ -109,13 +105,11 @@ describe HostNodeStat do
           memory: {
             used: 500,
             total: 1000
-            # .5 used
           },
           filesystem: [{
             name: "fs1",
             used: 200,
             total: 1000
-            # .2 used
           },
           {
               name: "fs2",
@@ -146,13 +140,11 @@ describe HostNodeStat do
           memory: {
             used: 100,
             total: 1000
-            # .1 used
           },
           filesystem: [{
             name: "fs1",
             used: 800,
             total: 2000
-            # .4 used
           }],
           network: [{
             name: "n1",
@@ -173,13 +165,11 @@ describe HostNodeStat do
           memory: {
             used: 600,
             total: 2000
-            # .3 used
           },
           filesystem: [{
             name: "fs1",
             used: 500,
             total: 1000
-            # .5 used
           }],
           network: [{
             name: "n1",
@@ -222,60 +212,67 @@ describe HostNodeStat do
         to = Time.parse('2017-03-01 13:00:00 +00:00')
         results = HostNodeStat.get_aggregate_stats_for_node(node.id, from, to)
 
-        expect(results).to eq([
-            {
-              # Records #2 and #5.
-              "cpu_num_cores" => 1.0,
-              "cpu_percent_used" => 0.39999999999999997,
-              "memory_used" => 300.0,
-              "memory_total" => 1000.0,
-              "filesystem_used" => 500.0,
-              "filesystem_total" => 1500.0,
-              "network" => [
-                {
-                  "name" => "n1",
-                  "rx_bytes" => 150.0,
-                  "rx_errors" => 0.0,
-                  "rx_dropped" => 0.0,
-                  "tx_bytes" => 200.0,
-                  "tx_errors" => 0.0
-                }
-              ],
-              "timestamp" => {
-                "year" => 2017,
-                "month" => 3,
-                "day" => 1,
-                "hour" => 12,
-                "minute" => 15
-              }
-            },
-            {
-              # Record #6
-              "cpu_num_cores" => 1.0,
-              "cpu_percent_used" => 0.5,
-              "memory_used" => 600.0,
-              "memory_total" => 2000.0,
-              "filesystem_used" => 500.0,
-              "filesystem_total" => 1000.0,
-              "network" => [
-                {
-                  "name" => "n1",
-                  "rx_bytes" => 400.0,
-                  "rx_errors" => 0.0,
-                  "rx_dropped" => 0.0,
-                  "tx_bytes" => 500.0,
-                  "tx_errors" => 0.0
-                }
-              ],
-              "timestamp" => {
-                "year" => 2017,
-                "month" => 3,
-                "day" => 1,
-                "hour" => 12,
-                "minute" => 16
-              }
-            }
-          ])
+        # Records #2 and #5.
+        expect(results[0]["cpu"]).to eq({
+          "num_cores" => 1.0, #avg(1,1)
+          "percent_used" => 0.39999999999999997, #avg(.1, .7)
+        })
+        expect(results[0]["memory"]).to eq({
+          "used" => 300.0, #avg(500, 100)
+          "total" => 1000.0 #avg(1000, 1000)
+        })
+        expect(results[0]["filesystem"]).to eq({
+          "used" => 500.0, #avg(200, 800)
+          "total" => 1500.0 #avg(1000, 2000)
+        })
+        expect(results[0]["network"]).to match_array([ #array order may not match server value
+          {
+            "name" => "n1",
+            "rx_bytes" => 150.0, #avg(100, 200)
+            "rx_errors" => 0.0,
+            "rx_dropped" => 0.0,
+            "tx_bytes" => 200.0, #avg(100, 300)
+            "tx_errors" => 0.0
+          }
+        ])
+        expect(results[0]["timestamp"]).to eq({
+          "year" => 2017,
+          "month" => 3,
+          "day" => 1,
+          "hour" => 12,
+          "minute" => 15
+        })
+
+        # Record #6
+        expect(results[1]["cpu"]).to eq({
+          "num_cores" => 1.0,
+          "percent_used" => 0.5
+        })
+        expect(results[1]["memory"]).to eq({
+          "used" => 600.0,
+          "total" => 2000.0
+        })
+        expect(results[1]["filesystem"]).to eq({
+          "used" => 500.0,
+          "total" => 1000.0
+        })
+        expect(results[1]["network"]).to match_array([
+          {
+            "name" => "n1",
+            "rx_bytes" => 400.0,
+            "rx_errors" => 0.0,
+            "rx_dropped" => 0.0,
+            "tx_bytes" => 500.0,
+            "tx_errors" => 0.0
+          }
+        ])
+        expect(results[1]["timestamp"]).to eq({
+          "year" => 2017,
+          "month" => 3,
+          "day" => 1,
+          "hour" => 12,
+          "minute" => 16
+        })
       end
     end
 
@@ -286,70 +283,75 @@ describe HostNodeStat do
         to = Time.parse('2017-03-01 13:00:00 +00:00')
         results = HostNodeStat.get_aggregate_stats_for_grid(grid.id, from, to)
 
-        expect(results).to eq([
-            {
-              # Records #2, #4 and #5.
-              # For same host_node_id, all fields are averaged except data_points is summed.
-              # Then results are summed across node ids, except percent values are averaged.
-              "cpu_num_cores" => 3.0,
-              "cpu_percent_used" => 0.25,
-              "memory_used" => 800.0,
-              "memory_total" => 2000.0,
-              "filesystem_used" => 900.5,
-              "filesystem_total" => 3500.5,
-              "network" => [
-                {
-                  "name" => "n1",
-                  "rx_bytes" => 250.0,
-                  "rx_errors" => 0.0,
-                  "rx_dropped" => 0.0,
-                  "tx_bytes" => 300.0,
-                  "tx_errors" => 0.0
-                },
-                {
-                  "name" => "n2",
-                  "rx_bytes" => 100.5,
-                  "rx_errors" => 0.0,
-                  "rx_dropped" => 0.0,
-                  "tx_bytes" => 200.5,
-                  "tx_errors" => 0.0
-                }
-              ],
-              "timestamp" => {
-                "year" => 2017,
-                "month" => 3,
-                "day" => 1,
-                "hour" => 12,
-                "minute" => 15
-              }
-            },
-            {
-              # Record #6
-              "cpu_num_cores" => 1.0,
-              "cpu_percent_used" => 0.5,
-              "memory_used" => 600.0,
-              "memory_total" => 2000.0,
-              "filesystem_used" => 500.0,
-              "filesystem_total" => 1000.0,
-              "network" => [
-                {
-                  "name" => "n1",
-                  "rx_bytes" => 400.0,
-                  "rx_errors" => 0.0,
-                  "rx_dropped" => 0.0,
-                  "tx_bytes" => 500.0,
-                  "tx_errors" => 0.0
-                }
-              ],
-              "timestamp" => {
-                "year" => 2017,
-                "month" => 3,
-                "day" => 1,
-                "hour" => 12,
-                "minute" => 16
-              }
-            }
-          ])
+        # Records #2, #4 and #5.
+        expect(results[0]["cpu"]).to eq({
+          "num_cores" => 3.0, #sum( avg(1,1), 2 )
+          "percent_used" => 0.25, #avg( avg(.1, .7), .1 )
+        })
+        expect(results[0]["memory"]).to eq({
+          "used" => 800.0, #sum( avg(500, 100), 500 )
+          "total" => 2000.0 #sum( avg(1000, 1000), 1000 )
+        })
+        expect(results[0]["filesystem"]).to eq({
+          "used" => 900.5, #sum( avg(200, 800), sum(200, 200.5) )
+          "total" => 3500.5 #sum( avg(1000, 2000), sum(1000, 1000.5) )
+        })
+        expect(results[0]["network"]).to match_array([ #array order may not match server value
+          {
+            "name" => "n1",
+            "rx_bytes" => 250.0, #sum( avg(100, 200), 100 )
+            "rx_errors" => 0.0,
+            "rx_dropped" => 0.0,
+            "tx_bytes" => 300.0, #sum( avg(100, 300), 100 )
+            "tx_errors" => 0.0
+          },
+          {
+            "name" => "n2",
+            "rx_bytes" => 100.5,
+            "rx_errors" => 0.0,
+            "rx_dropped" => 0.0,
+            "tx_bytes" => 200.5,
+            "tx_errors" => 0.0
+          }
+        ])
+        expect(results[0]["timestamp"]).to eq({
+          "year" => 2017,
+          "month" => 3,
+          "day" => 1,
+          "hour" => 12,
+          "minute" => 15
+        })
+
+        # Record #6
+        expect(results[1]["cpu"]).to eq({
+          "num_cores" => 1.0,
+          "percent_used" => 0.5
+        })
+        expect(results[1]["memory"]).to eq({
+          "used" => 600.0,
+          "total" => 2000.0
+        })
+        expect(results[1]["filesystem"]).to eq({
+          "used" => 500.0,
+          "total" => 1000.0
+        })
+        expect(results[1]["network"]).to match_array([
+          {
+            "name" => "n1",
+            "rx_bytes" => 400.0,
+            "rx_errors" => 0.0,
+            "rx_dropped" => 0.0,
+            "tx_bytes" => 500.0,
+            "tx_errors" => 0.0
+          }
+        ])
+        expect(results[1]["timestamp"]).to eq({
+          "year" => 2017,
+          "month" => 3,
+          "day" => 1,
+          "hour" => 12,
+          "minute" => 16
+        })
       end
     end
   end

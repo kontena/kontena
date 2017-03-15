@@ -28,80 +28,53 @@ class HostNodeStat
         }
       }
     },
-    # Flatten filesystem and network arrays
+    # Flatten filesystem and sum values
     {
       '$unwind': '$filesystem',
     },
     {
+      '$group': {
+        _id: '$_id',
+        created_at: { '$first': '$created_at' },
+        cpu: { '$first': '$cpu' },
+        memory: { '$first': '$memory' },
+        network: { '$first': '$network' },
+        filesystem_used: { '$sum': '$filesystem.used' },
+        filesystem_total: { '$sum': '$filesystem.total' }
+      }
+    },
+    # Flatten network across minute, average values, reattach as nested array
+    {
       '$unwind': '$network',
     },
-    # Aggregate (sum) file system sub-array
     {
       '$group': {
         _id: {
-          created_at: '$created_at',
-          cpu: '$cpu',
-          memory: '$memory',
-          network: '$network',
+          year: { '$year': '$created_at' },
+          month: { '$month': '$created_at' },
+          day: { '$dayOfMonth': '$created_at' },
+          hour: { '$hour': '$created_at' },
+          minute: { '$minute': '$created_at' },
+          network_name: '$network.name'
         },
-        filesystem_used: {
-          '$sum': '$filesystem.used'
-        },
-        filesystem_total: {
-          '$sum': '$filesystem.total'
-        }
+        created_at: { '$first': '$created_at' },
+
+        cpu_num_cores: { '$avg': '$cpu.num_cores' },
+        cpu_percent_used: { '$avg': { '$add': ['$cpu.user', '$cpu.system'] } },
+
+        memory_used: { '$avg': '$memory.used' },
+        memory_total: { '$avg': '$memory.total' },
+
+        network_rx_bytes: { '$avg': '$network.rx_bytes' },
+        network_rx_errors: { '$avg': '$network.rx_errors' },
+        network_rx_dropped: { '$avg': '$network.rx_dropped' },
+        network_tx_bytes: { '$avg': '$network.tx_bytes' },
+        network_tx_errors: { '$avg': '$network.tx_errors' },
+
+        filesystem_used: { '$avg': '$filesystem_used' },
+        filesystem_total: { '$avg': '$filesystem_total' }
       }
     },
-    # Aggregate per minute, per network interface
-    {
-      '$group': {
-        _id: {
-          year: { '$year': '$_id.created_at' },
-          month: { '$month': '$_id.created_at' },
-          day: { '$dayOfMonth': '$_id.created_at' },
-          hour: { '$hour': '$_id.created_at' },
-          minute: { '$minute': '$_id.created_at' },
-          network_name: '$_id.network.name'
-        },
-        cpu_num_cores: {
-          '$avg': '$_id.cpu.num_cores'
-        },
-        cpu_percent_used: {
-          '$avg': { '$add': ['$_id.cpu.user', '$_id.cpu.system'] }
-        },
-        filesystem_used: {
-          '$avg': '$filesystem_used'
-        },
-        filesystem_total: {
-          '$avg': '$filesystem_total'
-        },
-        memory_used: {
-          '$avg': '$_id.memory.used'
-        },
-        memory_total: {
-          '$avg': '$_id.memory.total'
-        },
-        network_rx_bytes: {
-          '$avg': '$_id.network.rx_bytes'
-        },
-        network_rx_errors: {
-          '$avg': '$_id.network.rx_errors'
-        },
-        network_rx_dropped: {
-          '$avg': '$_id.network.rx_dropped'
-        },
-        network_tx_bytes: {
-          '$avg': '$_id.network.tx_bytes'
-        },
-        network_tx_errors: {
-          '$avg': '$_id.network.tx_errors'
-        },
-        max_timestamp: {
-          '$max': '$_id.created_at'
-        }
-      }
-    },
-    # Aggregate network values to a sub array
     {
       '$group': {
         _id: {
@@ -111,53 +84,50 @@ class HostNodeStat
           hour: '$_id.hour',
           minute: '$_id.minute'
         },
-        cpu_num_cores: {
-          '$avg': '$cpu_num_cores'
-        },
-        cpu_percent_used: {
-          '$avg': '$cpu_percent_used'
-        },
-        memory_used: {
-          '$avg': '$memory_used'
-        },
-        memory_total: {
-          '$avg': '$memory_total'
-        },
-        filesystem_used: {
-          '$avg': '$filesystem_used'
-        },
-        filesystem_total: {
-          '$avg': '$filesystem_total'
-        },
+        created_at: { '$first': '$created_at' },
+
+        cpu_num_cores: { '$first': '$cpu_num_cores' },
+        cpu_percent_used: { '$first': '$cpu_percent_used' },
+
+        memory_used: { '$first': '$memory_used' },
+        memory_total: { '$first': '$memory_total' },
+
         network: {
           '$addToSet': {
-              name: '$_id.network_name',
-              rx_bytes: '$network_rx_bytes',
-              rx_errors: '$network_rx_errors',
-              rx_dropped: '$network_rx_dropped',
-              tx_bytes: '$network_tx_bytes',
-              tx_errors: '$network_tx_errors'
+            name: '$_id.network_name',
+            rx_bytes: '$network_rx_bytes',
+            rx_errors: '$network_rx_errors',
+            rx_dropped: '$network_rx_dropped',
+            tx_bytes: '$network_tx_bytes',
+            tx_errors: '$network_tx_errors'
           }
         },
-        max_timestamp: {
-          '$max': '$max_timestamp'
-        }
+
+        filesystem_used: { '$first': '$filesystem_used' },
+        filesystem_total: { '$first': '$filesystem_total' }
       }
     },
+    # Sort and project back into useful format
     {
-      '$sort': { 'max_timestamp': 1 }
+      '$sort': { 'created_at': 1 }
     },
     {
       '$project': {
         _id: 0,
         timestamp: '$_id',
-        cpu_num_cores: 1,
-        cpu_percent_used: 1,
-        memory_used: 1,
-        memory_total: 1,
-        filesystem_used: 1,
-        filesystem_total: 1,
-        network: 1
+        cpu: {
+          num_cores: '$cpu_num_cores',
+          percent_used: '$cpu_percent_used'
+        },
+        memory: {
+          used: '$memory_used',
+          total: '$memory_total'
+        },
+        network: 1,
+        filesystem: {
+          used: '$filesystem_used',
+          total: '$filesystem_total'
+        }
       }
     }])
   end
@@ -173,82 +143,56 @@ class HostNodeStat
         }
       }
     },
-    # Flatten filesystem and network arrays
+    # Flatten filesystem and sum values
     {
       '$unwind': '$filesystem',
     },
     {
+      '$group': {
+        _id: '$_id',
+        host_node_id: { '$first': '$host_node_id' },
+        created_at: { '$first': '$created_at' },
+        cpu: { '$first': '$cpu' },
+        memory: { '$first': '$memory' },
+        network: { '$first': '$network' },
+        filesystem_used: { '$sum': '$filesystem.used' },
+        filesystem_total: { '$sum': '$filesystem.total' }
+      }
+    },
+    # Flatten network and group by minutes/node, average
+    {
       '$unwind': '$network',
     },
-    # Aggregate (sum) file system sub-array per node
     {
       '$group': {
         _id: {
-          created_at: '$created_at',
+          year: { '$year': '$created_at' },
+          month: { '$month': '$created_at' },
+          day: { '$dayOfMonth': '$created_at' },
+          hour: { '$hour': '$created_at' },
+          minute: { '$minute': '$created_at' },
           host_node_id: '$host_node_id',
-          cpu: '$cpu',
-          memory: '$memory',
-          network: '$network',
+          network_name: '$network.name'
         },
-        filesystem_used: {
-          '$sum': '$filesystem.used'
-        },
-        filesystem_total: {
-          '$sum': '$filesystem.total'
-        }
+        created_at: { '$first': '$created_at' },
+
+        cpu_num_cores: { '$avg': '$cpu.num_cores' },
+        cpu_percent_used: { '$avg': { '$add': ['$cpu.user', '$cpu.system'] } },
+
+        memory_used: { '$avg': '$memory.used' },
+        memory_total: { '$avg': '$memory.total' },
+
+        network_rx_bytes: { '$avg': '$network.rx_bytes' },
+        network_rx_errors: { '$avg': '$network.rx_errors' },
+        network_rx_dropped: { '$avg': '$network.rx_dropped' },
+        network_tx_bytes: { '$avg': '$network.tx_bytes' },
+        network_tx_errors: { '$avg': '$network.tx_errors' },
+
+        filesystem_used: { '$avg': '$filesystem_used' },
+        filesystem_total: { '$avg': '$filesystem_total' }
       }
     },
-    # Aggregate per minute, per network interface, per node
-    {
-      '$group': {
-        _id: {
-          year: { '$year': '$_id.created_at' },
-          month: { '$month': '$_id.created_at' },
-          day: { '$dayOfMonth': '$_id.created_at' },
-          hour: { '$hour': '$_id.created_at' },
-          minute: { '$minute': '$_id.created_at' },
-          host_node_id: '$_id.host_node_id',
-          network_name: '$_id.network.name'
-        },
-        cpu_num_cores: {
-          '$avg': '$_id.cpu.num_cores'
-        },
-        cpu_percent_used: {
-          '$avg': { '$add': ['$_id.cpu.user', '$_id.cpu.system'] }
-        },
-        filesystem_used: {
-          '$avg': '$filesystem_used'
-        },
-        filesystem_total: {
-          '$avg': '$filesystem_total'
-        },
-        memory_used: {
-          '$avg': '$_id.memory.used'
-        },
-        memory_total: {
-          '$avg': '$_id.memory.total'
-        },
-        network_rx_bytes: {
-          '$avg': '$_id.network.rx_bytes'
-        },
-        network_rx_errors: {
-          '$avg': '$_id.network.rx_errors'
-        },
-        network_rx_dropped: {
-          '$avg': '$_id.network.rx_dropped'
-        },
-        network_tx_bytes: {
-          '$avg': '$_id.network.tx_bytes'
-        },
-        network_tx_errors: {
-          '$avg': '$_id.network.tx_errors'
-        },
-        max_timestamp: {
-          '$max': '$_id.created_at'
-        }
-      }
-    },
-    # Aggregate node values
+    # Aggregate across nodes (sum for everything except CPU %, which we average)
     {
       '$group': {
         _id: {
@@ -259,45 +203,25 @@ class HostNodeStat
           minute: '$_id.minute',
           network_name: '$_id.network_name'
         },
-        cpu_num_cores: {
-          '$sum': '$cpu_num_cores'
-        },
-        cpu_percent_used: {
-          '$avg': '$cpu_percent_used'
-        },
-        filesystem_used: {
-          '$sum': '$filesystem_used'
-        },
-        filesystem_total: {
-          '$sum': '$filesystem_total'
-        },
-        memory_used: {
-          '$sum': '$memory_used'
-        },
-        memory_total: {
-          '$sum': '$memory_total'
-        },
-        network_rx_bytes: {
-          '$sum': '$network_rx_bytes'
-        },
-        network_rx_errors: {
-          '$sum': '$network_rx_errors'
-        },
-        network_rx_dropped: {
-          '$sum': '$network_rx_dropped'
-        },
-        network_tx_bytes: {
-          '$sum': '$network_tx_bytes'
-        },
-        network_tx_errors: {
-          '$sum': '$network_tx_errors'
-        },
-        max_timestamp: {
-          '$max': '$max_timestamp'
-        }
+        created_at: { '$first': '$created_at' },
+
+        cpu_num_cores: { '$sum': '$cpu_num_cores' },
+        cpu_percent_used: { '$avg': '$cpu_percent_used' },
+
+        memory_used: { '$sum': '$memory_used' },
+        memory_total: { '$sum': '$memory_total' },
+
+        network_rx_bytes: { '$sum': '$network_rx_bytes' },
+        network_rx_errors: { '$sum': '$network_rx_errors' },
+        network_rx_dropped: { '$sum': '$network_rx_dropped' },
+        network_tx_bytes: { '$sum': '$network_tx_bytes' },
+        network_tx_errors: { '$sum': '$network_tx_errors' },
+
+        filesystem_used: { '$sum': '$filesystem_used' },
+        filesystem_total: { '$sum': '$filesystem_total' }
       }
     },
-    # Aggregate network values to a sub array
+    # Aggregate networks into nested collection
     {
       '$group': {
         _id: {
@@ -305,55 +229,52 @@ class HostNodeStat
           month: '$_id.month',
           day: '$_id.day',
           hour: '$_id.hour',
-          minute: '$_id.minute'
+          minute: '$_id.minute',
         },
-        cpu_num_cores: {
-          '$avg': '$cpu_num_cores'
-        },
-        cpu_percent_used: {
-          '$avg': '$cpu_percent_used'
-        },
-        memory_used: {
-          '$avg': '$memory_used'
-        },
-        memory_total: {
-          '$avg': '$memory_total'
-        },
-        filesystem_used: {
-          '$avg': '$filesystem_used'
-        },
-        filesystem_total: {
-          '$avg': '$filesystem_total'
-        },
+        created_at: { '$first': '$created_at' },
+
+        cpu_num_cores: { '$first': '$cpu_num_cores' },
+        cpu_percent_used: { '$first': '$cpu_percent_used' },
+
+        memory_used: { '$first': '$memory_used' },
+        memory_total: { '$first': '$memory_total' },
+
         network: {
           '$addToSet': {
-              name: '$_id.network_name',
-              rx_bytes: '$network_rx_bytes',
-              rx_errors: '$network_rx_errors',
-              rx_dropped: '$network_rx_dropped',
-              tx_bytes: '$network_tx_bytes',
-              tx_errors: '$network_tx_errors'
+            name: '$_id.network_name',
+            rx_bytes: '$network_rx_bytes',
+            rx_errors: '$network_rx_errors',
+            rx_dropped: '$network_rx_dropped',
+            tx_bytes: '$network_tx_bytes',
+            tx_errors: '$network_tx_errors'
           }
         },
-        max_timestamp: {
-          '$max': '$max_timestamp'
-        }
+
+        filesystem_used: { '$first': '$filesystem_used' },
+        filesystem_total: { '$first': '$filesystem_total' }
       }
     },
+    # Sort and project back into useful format
     {
-      '$sort': { 'max_timestamp': 1 }
+      '$sort': { 'created_at': 1 }
     },
     {
       '$project': {
         _id: 0,
         timestamp: '$_id',
-        cpu_num_cores: 1,
-        cpu_percent_used: 1,
-        memory_used: 1,
-        memory_total: 1,
-        filesystem_used: 1,
-        filesystem_total: 1,
-        network: 1
+        cpu: {
+          num_cores: '$cpu_num_cores',
+          percent_used: '$cpu_percent_used'
+        },
+        memory: {
+          used: '$memory_used',
+          total: '$memory_total'
+        },
+        network: 1,
+        filesystem: {
+          used: '$filesystem_used',
+          total: '$filesystem_total'
+        }
       }
     }])
   end
