@@ -311,13 +311,15 @@ describe '/v1/grids', celluloid: true do
           used: 10
         }],
       	cpu: {
+          num_cores: 2,
           system: 5.5,
           user: 10.0
       	},
-      	network: {
-          in_bytes: 400,
-          out_bytes: 200
-      	}
+      	network: [{
+          name: "network1",
+          rx_bytes: 400,
+          tx_bytes: 200
+      	}]
       })
     end
 
@@ -326,10 +328,10 @@ describe '/v1/grids', celluloid: true do
 
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 1
-      expect(json_response['stats'][0]['cpu_percent']).to eq 15.5
+      expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
       expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
       expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
-      expect(json_response['stats'][0]['network']).to eq({ 'in' => 400.0, 'out' => 200.0 })
+      expect(json_response['stats'][0]['network']).to eq([{ 'name' => "network1", 'in' => 400.0, 'out' => 200.0 }])
     end
 
     it 'applies date filters' do

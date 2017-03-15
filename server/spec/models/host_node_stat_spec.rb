@@ -23,6 +23,7 @@ describe HostNodeStat do
           grid: grid,
           host_node: node,
           cpu: {
+            num_cores: 1,
             system: 0.1,
             user: 0.2
           },
@@ -31,19 +32,22 @@ describe HostNodeStat do
             used: 250
           },
           filesystem: [{
+            name: "fs1",
             total: 1000,
             used: 100
           }],
-          network: {
-            in_bytes: 100,
-            out_bytes: 100,
-          },
+          network: [{
+            name: "n1",
+            rx_bytes: 100,
+            tx_bytes: 100,
+          }],
           created_at: Time.parse('2017-03-01 11:15:30 +00:00')
         },
         { # 2) This is included in first metric for grid
           grid: grid,
           host_node: node,
           cpu: {
+            num_cores: 1,
             system: 0.05,
             user: 0.05
             # .1 used
@@ -54,20 +58,23 @@ describe HostNodeStat do
             # .5 used
           },
           filesystem: [{
+            name: "fs1",
             used: 200,
             total: 1000
             # .2 used
           }],
-          network: {
-            in_bytes: 100,
-            out_bytes: 100,
-          },
+          network: [{
+            name: "n1",
+            rx_bytes: 100,
+            tx_bytes: 100,
+          }],
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
         { # 3) This is skipped (wrong grid)
           grid: other_grid,
           host_node: other_node,
           cpu: {
+            num_cores: 2,
             system: 0.05,
             user: 0.05
             # .1 used
@@ -78,20 +85,23 @@ describe HostNodeStat do
             # .5 used
           },
           filesystem: [{
+            name: "fs1",
             used: 200,
             total: 1000
             # .2 used
           }],
-          network: {
-            in_bytes: 100,
-            out_bytes: 100,
-          },
+          network: [{
+            name: "n1",
+            rx_bytes: 100,
+            tx_bytes: 100,
+          }],
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
-        { # 4) This is included in first metric for grid
+        { # 4) This is included in first metric for grid (grid level test only)
           grid: grid,
           host_node: second_node,
           cpu: {
+            num_cores: 2,
             system: 0.05,
             user: 0.05
             # .1 used
@@ -102,20 +112,33 @@ describe HostNodeStat do
             # .5 used
           },
           filesystem: [{
+            name: "fs1",
             used: 200,
             total: 1000
             # .2 used
-          }],
-          network: {
-            in_bytes: 100,
-            out_bytes: 100,
           },
+          {
+              name: "fs2",
+              used: 200.5,
+              total: 1000.5
+          }],
+          network: [{
+            name: "n1",
+            rx_bytes: 100,
+            tx_bytes: 100,
+          },
+          {
+            name: "n2",
+            rx_bytes: 100.5,
+            tx_bytes: 200.5
+          }],
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
         { # 5) This is included in first metric for grid
           grid: grid,
           host_node: node,
           cpu: {
+            num_cores: 1,
             user: 0.4,
             system: 0.3
             # .7 used
@@ -126,20 +149,23 @@ describe HostNodeStat do
             # .1 used
           },
           filesystem: [{
+            name: "fs1",
             used: 800,
             total: 2000
             # .4 used
           }],
-          network: {
-            in_bytes: 200,
-            out_bytes: 300,
-          },
+          network: [{
+            name: "n1",
+            rx_bytes: 200,
+            tx_bytes: 300,
+          }],
           created_at: Time.parse('2017-03-01 12:15:45 +00:00')
         },
         { # 6) This is included in second metric for grid
           grid: grid,
           host_node: node,
           cpu: {
+            num_cores: 1,
             user: 0.25,
             system: 0.25
             # .5 used
@@ -150,20 +176,23 @@ describe HostNodeStat do
             # .3 used
           },
           filesystem: [{
+            name: "fs1",
             used: 500,
             total: 1000
             # .5 used
           }],
-          network: {
-            in_bytes: 400,
-            out_bytes: 500,
-          },
+          network: [{
+            name: "n1",
+            rx_bytes: 400,
+            tx_bytes: 500,
+          }],
           created_at: Time.parse('2017-03-01 12:16:45 +00:00')
         },
         { # 7) this record should be skipped
           grid: grid,
           host_node: node,
           cpu: {
+            num_cores: 1,
             user: 0.2,
             system: 0.1
           },
@@ -172,19 +201,21 @@ describe HostNodeStat do
             total: 1000
           },
           filesystem: [{
+            name: "fs1",
             used: 100,
             total: 1000
           }],
-          network: {
-            in_bytes: 200,
-            out_bytes: 300,
-          },
+          network: [{
+            name: "n1",
+            rx_bytes: 200,
+            tx_bytes: 300,
+          }],
           created_at: Time.parse('2017-03-01 13:15:30 +00:00')
         }
       ])
     }
 
-    describe '#get_aggregate__for_node' do
+    describe '#get_aggregate_stats_for_node' do
       it 'returns aggregated data by node_id' do
         stats
         from = Time.parse('2017-03-01 12:00:00 +00:00')
@@ -193,15 +224,23 @@ describe HostNodeStat do
 
         expect(results).to eq([
             {
-              # Records #2 and #4.
-              # All fields are averaged except data_points is summed.
-              "cpu_percent" => 0.39999999999999997,
+              # Records #2 and #5.
+              "cpu_num_cores" => 1.0,
+              "cpu_percent_used" => 0.39999999999999997,
               "memory_used" => 300.0,
               "memory_total" => 1000.0,
               "filesystem_used" => 500.0,
               "filesystem_total" => 1500.0,
-              "network_in_bytes" => 150.0,
-              "network_out_bytes" => 200.0,
+              "network" => [
+                {
+                  "name" => "n1",
+                  "rx_bytes" => 150.0,
+                  "rx_errors" => 0.0,
+                  "rx_dropped" => 0.0,
+                  "tx_bytes" => 200.0,
+                  "tx_errors" => 0.0
+                }
+              ],
               "timestamp" => {
                 "year" => 2017,
                 "month" => 3,
@@ -211,14 +250,23 @@ describe HostNodeStat do
               }
             },
             {
-              # Record #5
-              "cpu_percent" => 0.5,
+              # Record #6
+              "cpu_num_cores" => 1.0,
+              "cpu_percent_used" => 0.5,
               "memory_used" => 600.0,
               "memory_total" => 2000.0,
               "filesystem_used" => 500.0,
               "filesystem_total" => 1000.0,
-              "network_in_bytes" => 400.0,
-              "network_out_bytes" => 500.0,
+              "network" => [
+                {
+                  "name" => "n1",
+                  "rx_bytes" => 400.0,
+                  "rx_errors" => 0.0,
+                  "rx_dropped" => 0.0,
+                  "tx_bytes" => 500.0,
+                  "tx_errors" => 0.0
+                }
+              ],
               "timestamp" => {
                 "year" => 2017,
                 "month" => 3,
@@ -243,13 +291,30 @@ describe HostNodeStat do
               # Records #2, #4 and #5.
               # For same host_node_id, all fields are averaged except data_points is summed.
               # Then results are summed across node ids, except percent values are averaged.
-              "cpu_percent" => 0.25,
+              "cpu_num_cores" => 3.0,
+              "cpu_percent_used" => 0.25,
               "memory_used" => 800.0,
               "memory_total" => 2000.0,
-              "filesystem_used" => 700.0,
-              "filesystem_total" => 2500.0,
-              "network_in_bytes" => 250.0,
-              "network_out_bytes" => 300.0,
+              "filesystem_used" => 900.5,
+              "filesystem_total" => 3500.5,
+              "network" => [
+                {
+                  "name" => "n1",
+                  "rx_bytes" => 250.0,
+                  "rx_errors" => 0.0,
+                  "rx_dropped" => 0.0,
+                  "tx_bytes" => 300.0,
+                  "tx_errors" => 0.0
+                },
+                {
+                  "name" => "n2",
+                  "rx_bytes" => 100.5,
+                  "rx_errors" => 0.0,
+                  "rx_dropped" => 0.0,
+                  "tx_bytes" => 200.5,
+                  "tx_errors" => 0.0
+                }
+              ],
               "timestamp" => {
                 "year" => 2017,
                 "month" => 3,
@@ -259,14 +324,23 @@ describe HostNodeStat do
               }
             },
             {
-              # Record #5
-              "cpu_percent" => 0.5,
+              # Record #6
+              "cpu_num_cores" => 1.0,
+              "cpu_percent_used" => 0.5,
               "memory_used" => 600.0,
               "memory_total" => 2000.0,
               "filesystem_used" => 500.0,
               "filesystem_total" => 1000.0,
-              "network_in_bytes" => 400.0,
-              "network_out_bytes" => 500.0,
+              "network" => [
+                {
+                  "name" => "n1",
+                  "rx_bytes" => 400.0,
+                  "rx_errors" => 0.0,
+                  "rx_dropped" => 0.0,
+                  "tx_bytes" => 500.0,
+                  "tx_errors" => 0.0
+                }
+              ],
               "timestamp" => {
                 "year" => 2017,
                 "month" => 3,
