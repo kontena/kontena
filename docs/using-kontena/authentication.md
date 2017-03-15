@@ -35,7 +35,7 @@ To invite more users you first need to configure the Kontena Master to use an au
 To add new users, use the invite command:
 
 ```
-$ kontena master users invite user@example.com
+$ kontena master user invite user@example.com
 * Invite code: abcd123456
 ```
 

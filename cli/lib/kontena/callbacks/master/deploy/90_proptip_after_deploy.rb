@@ -22,7 +22,7 @@ module Kontena
           puts
         end
         puts "  To invite more users you can use:"
-        puts "  #{Kontena.pastel.green.on_black("  kontena master users invite email_address@example.com  ")}"
+        puts "  #{Kontena.pastel.green.on_black("  kontena master user invite email_address@example.com  ")}"
         puts
         puts "  The users can then join the master by using the invite code: "
         puts "  #{Kontena.pastel.green.on_black("  kontena master join #{current_master.url} <invite_code>  ")}"
