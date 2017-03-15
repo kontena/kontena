@@ -18,7 +18,7 @@ describe GridStat do
   context '.grid_memory_usage' do
     before :each do
       i = 0
-      @current_time = Time.now
+      @current_time = Time.now.utc
       5.times do
         allow(Time).to receive(:now) { @current_time - (i* 60 * 60 * 24) } # first 5 days ago, then 4 days ago etc
         ContainerStat.create(grid: grid, container: container1, memory: { 'usage' => 1})
