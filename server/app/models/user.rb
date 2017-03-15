@@ -66,7 +66,11 @@ class User
   ##
   # @param [Grid] grid
   def has_access?(grid)
-    self.accessible_grids.include?(grid)
+    if self.master_admin?
+      true
+    else
+      self.grid_ids.include?(grid.id)
+    end
   end
 
   ##
