@@ -1,6 +1,4 @@
 module Kontena::Cli::Master
-
-
   class UsersCommand < Kontena::Command
     subcommand "invite", "Invite user to Kontena Master", load_subcommand('master/users/invite_command')
     subcommand ["remove", "rm"], "Remove user from Kontena Master", load_subcommand('master/users/remove_command')

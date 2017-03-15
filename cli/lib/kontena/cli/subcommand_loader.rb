@@ -1,12 +1,17 @@
 module Kontena::Cli
   class SubcommandLoader
-    attr_reader :path
+    attr_reader :path, :deprecated
 
     # Create a subcommand loader instance
     #
     # @param [String] path path to command definition
-    def initialize(path)
+    def initialize(path, deprecated: nil)
       @path = path
+      @deprecated = deprecated
+    end
+
+    def deprecated?
+      !@deprecated.nil?
     end
 
     # Takes something like /foo/bar/cli/master/foo_coimmand and returns [:Master, :FooCommand]
@@ -54,6 +59,7 @@ module Kontena::Cli
       unless safe_require(path) || safe_require(Kontena.cli_root(path))
         raise ArgumentError, "Can't load #{path} or #{Kontena.cli_root(path)}"
       end
+      warn "[DEPRECATED] Command has been deprecated: #{deprecated}" if deprecated?
       @subcommand_class = const_get_tree(prepend_kontena_cli(symbolize_path(path)))
     end
 
