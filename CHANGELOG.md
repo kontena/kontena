@@ -5,7 +5,8 @@
 **Master & Agents:**
 
 - Fix Ubuntu xenial package install to not override prompted debconf values with empty values from the default config file (#1975)
-- Fix server sharing of Moped::Session connections between threads (#1966)
+- Fix sharing of Moped::Session connections between threads (#1966)
+- Fix timeout interrupts (#1990) 
 
 **CLI:**
 
