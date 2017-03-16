@@ -7,8 +7,9 @@ module GridCertificates
   class GetCertificate < Mutations::Command
     include Common
     include Logging
+    include WaitHelper
 
-    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze    
+    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
 
     required do
       model :grid, class: Grid
@@ -54,7 +55,7 @@ module GridCertificates
           end
         end
 
-        Timeout::timeout(30) {
+        wait!(timeout: 30) {
           info 'waiting for DNS validation...'
           sleep 1 until challenge.verify_status == 'valid'
           info 'DNS validation complete'
@@ -76,7 +77,7 @@ module GridCertificates
         when 'cert'
           cert = certificate.to_pem
       end
-      
+
 
       secrets = []
       secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
