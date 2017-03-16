@@ -6,7 +6,7 @@ describe LeaderElectorJob, celluloid: true do
     it 'elects only one candidate' do
       candidate1 = LeaderElectorJob.new
       candidate2 = LeaderElectorJob.new
-      WaitHelper.wait!(timeout: 5) { candidate1.leader? || candidate2.leader? }
+      WaitHelper.wait_until!(timeout: 5) { candidate1.leader? || candidate2.leader? }
       expect(candidate1.leader? != candidate2.leader?).to be_truthy
     end
   end

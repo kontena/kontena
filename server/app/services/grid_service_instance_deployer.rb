@@ -32,7 +32,7 @@ class GridServiceInstanceDeployer
   # @param [String] instance_number
   # @param [String] deploy_rev
   def wait_for_service_to_start(node, instance_number, deploy_rev)
-    wait!(timeout: 30) { self.deployed_service_container_exists?(instance_number, deploy_rev) }
+    wait_until!(timeout: 30) { self.deployed_service_container_exists?(instance_number, deploy_rev) }
   end
 
   # @param [HostNode] node

@@ -22,7 +22,7 @@ describe MongoPubsub do
       described_class.publish('channel1', channel1_msg)
       described_class.publish('channel2', channel2_msg)
 
-      WaitHelper.wait!(timeout: 5) { messages.size == 2 }
+      WaitHelper.wait_until!(timeout: 5) { messages.size == 2 }
 
       subs.each(&:terminate)
     end
