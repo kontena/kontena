@@ -28,6 +28,7 @@ describe WaitHelper do
 
     it 'sleeps between retries and logs debug' do
       expect(subject).to receive(:debug).with('waiting 0.5s of 2.0s until: something that is true the second time')
+      expect(subject).to receive(:debug).with('waited 0.5s until: something that is true the second time yielded true')
 
       @loop = 0
       value = subject.wait_until("something that is true the second time", timeout: 2) { (@loop += 1) > 1 }
@@ -41,7 +42,7 @@ describe WaitHelper do
       value = subject.wait_until(timeout: 2) { false }
 
       expect(value).to be_falsey
-      expect(@time_elapsed).to eq(2.5)
+      expect(@time_elapsed).to eq(2.0)
     end
 
     it 'raises if no block given' do

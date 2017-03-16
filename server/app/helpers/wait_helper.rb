@@ -21,18 +21,22 @@ module WaitHelper
     wait_start = _wait_now
     wait_until = _wait_now + timeout
 
-    loop do
-      return nil if _wait_now > wait_until
+    value = nil
 
-      value = yield
+    while _wait_now < wait_until do
+      break if value = yield
 
-      if value
-        return value
-      else
-        debug "waiting %.1fs of %.1fs until: %s" % [_wait_now - wait_start + interval, timeout, message || '???']
-        sleep interval
-      end
+      debug "waiting %.1fs of %.1fs until: %s" % [_wait_now - wait_start + interval, timeout, message || '???']
+      sleep interval
     end
+
+    if value
+      debug "waited %.1fs until: %s yielded %s" % [_wait_now - wait_start, message || '???', value]
+    else
+      debug "timeout after waiting %.1fs until: %s" % [_wait_now - wait_start, message || '???']
+    end
+
+    value
   end
 
   # Wait until given block returns truthy value, raising on timeout
