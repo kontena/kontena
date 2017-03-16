@@ -1,5 +1,6 @@
 class GridServiceInstanceDeployer
   include Logging
+  include WaitHelper
 
   attr_reader :grid_service
 
@@ -32,13 +33,17 @@ class GridServiceInstanceDeployer
   # @param [String] deploy_rev
   def wait_for_service_to_start(node, instance_number, deploy_rev)
     # node/agent has 5 minutes to do it's job
-    Timeout.timeout(300) do
-      sleep 0.5 until self.deployed_service_container_exists?(instance_number, deploy_rev)
+    wait_until!(timeout: 300) {
+      next false unless self.deployed_service_container_exists?(instance_number, deploy_rev)
+
       if self.wait_for_port?
-        container = self.find_service_instance_container(instance_number, deploy_rev)
-        sleep 0.5 until port_responding?(container, self.wait_for_port)
+        next false unless container = self.find_service_instance_container(instance_number, deploy_rev)
+
+        port_responding?(container, self.wait_for_port)
+      else
+        true
       end
-    end
+    }
   end
 
   # @param [HostNode] node

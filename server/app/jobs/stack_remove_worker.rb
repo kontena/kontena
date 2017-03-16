@@ -4,6 +4,7 @@ class StackRemoveWorker
   include Celluloid
   include Logging
   include Stacks::SortHelper
+  include WaitHelper
 
   def perform(stack_id)
     stack = Stack.find_by(id: stack_id)
@@ -24,11 +25,7 @@ class StackRemoveWorker
     services.each do |service|
       outcome = GridServices::Delete.run(grid_service: service)
       if outcome.success?
-        begin
-          Timeout::timeout(600) do
-            sleep 1 until GridService.find_by(id: service.id).nil?
-          end
-        rescue Timeout::Error
+        unless wait_until(timeout: 600) { GridService.find_by(id: service.id).nil? }
           error "Removing of #{service.to_path} timed out"
         end
       else

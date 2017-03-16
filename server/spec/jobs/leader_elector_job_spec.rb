@@ -11,9 +11,7 @@ describe LeaderElectorJob do
     it 'elects only one candidate' do
       candidate1 = LeaderElectorJob.new
       candidate2 = LeaderElectorJob.new
-      Timeout.timeout(5) do
-        sleep 0.1 until candidate1.leader? || candidate2.leader?
-      end
+      WaitHelper.wait_until!(timeout: 5) { candidate1.leader? || candidate2.leader? }
       expect(candidate1.leader? != candidate2.leader?).to be_truthy
     end
   end
