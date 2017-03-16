@@ -25,7 +25,6 @@ describe WaitHelper do
       expect(subject).to receive(:_wait_now).and_return(time_now + 0.5).once
       expect(subject).to receive(:sleep).once
       expect(subject).to receive(:debug).with('wait... foo')
-      expect(subject).to receive(:_wait_now).and_return(time_now + 1.5).once
       expect(subject).to_not receive(:sleep)
 
       @loop = 0
@@ -54,6 +53,21 @@ describe WaitHelper do
       expect {
         subject.wait_until
       }.to raise_error(ArgumentError)
+    end
+
+    context "with a zero timeout" do
+      it "yields once returning true" do
+        @count = 0
+        expect(subject.wait_until(timeout: 0.0) { @count += 1; true }).to eq true
+        expect(@count).to eq 1
+
+      end
+
+      it "yields once returning false" do
+        @count = 0
+        expect(subject.wait_until(timeout: 0.0) { @count += 1; false }).to eq false
+        expect(@count).to eq 1
+      end
     end
   end
 
