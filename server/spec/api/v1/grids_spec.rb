@@ -316,9 +316,13 @@ describe '/v1/grids', celluloid: true do
           user: 10.0
       	},
       	network: [{
-          name: "network1",
+          name: "eth0",
           rx_bytes: 400,
           tx_bytes: 200
+      	}, {
+          name: "eth1",
+          rx_bytes: 500,
+          tx_bytes: 500
       	}]
       })
     end
@@ -331,18 +335,25 @@ describe '/v1/grids', celluloid: true do
       expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
       expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
       expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
-      expect(json_response['stats'][0]['network']).to eq([{ 'name' => "network1", 'in' => 400.0, 'out' => 200.0 }])
+      expect(json_response['stats'][0]['network']).to eq({ 'name' => "eth0", 'in' => 400.0, 'out' => 200.0 })
     end
 
     it 'applies date filters' do
       from = Time.parse("2017-01-01 12:00:00 +00:00").utc
       to = Time.parse("2017-01-01 12:15:00 +00:00").utc
-      get "/v1/nodes/#{node.to_path}/stats?from=#{from}&to=#{to}", nil, request_headers
+      get "/v1/grids/#{grid.to_path}/stats?from=#{from}&to=#{to}", nil, request_headers
 
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 0
       expect(Time.parse(json_response['from'])).to eq from
       expect(Time.parse(json_response['to'])).to eq to
+    end
+
+    it 'applies network interface filter' do
+      get "/v1/grids/#{grid.to_path}/stats?iface=eth1", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 1
+      expect(json_response['stats'][0]['network']).to eq({ 'name' => "eth1", 'in' => 500.0, 'out' => 500.0 })
     end
   end
 

@@ -57,7 +57,8 @@ module V1
           r.on 'stats' do
             @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
             @from = (r.params["from"] ? Time.parse(r.params["from"]) : (@to - 1.hour)).utc
-            @node_stats = HostNodeStat.get_aggregate_stats_for_node(@node.id, @from, @to)
+            @network_iface = r.params["iface"] ? r.params["iface"] : "eth0"
+            @node_stats = HostNodeStat.get_aggregate_stats_for_node(@node.id, @from, @to, @network_iface)
             render('host_nodes/stats')
           end
         end

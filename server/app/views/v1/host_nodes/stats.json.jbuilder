@@ -14,9 +14,9 @@ json.stats @node_stats do |stat|
     json.used stat["filesystem"]["used"].to_i
     json.total stat["filesystem"]["total"].to_i
   end
-  json.network stat["network"] do |network|
-    json.name network["name"]
-    json.in network["rx_bytes"].to_i
-    json.out network["tx_bytes"].to_i
+  json.network do
+    json.name stat["network"]["name"]
+    json.in stat["network"]["rx_bytes"].to_i
+    json.out stat["network"]["tx_bytes"].to_i
   end
 end
