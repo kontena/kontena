@@ -50,6 +50,23 @@ describe WaitHelper do
         subject.wait_until
       }.to raise_error(ArgumentError)
     end
+
+    context "with a zero timeout" do
+      it "yields once returning true" do
+        @count = 0
+        expect(subject.wait_until(timeout: 0.0) { @count += 1; true }).to eq true
+        expect(@count).to eq 1
+        expect(@time_elapsed).to eq(0.0)
+
+      end
+
+      it "yields once returning false" do
+        @count = 0
+        expect(subject.wait_until(timeout: 0.0) { @count += 1; false }).to eq false
+        expect(@count).to eq 1
+        expect(@time_elapsed).to eq(0.0)
+      end
+    end
   end
 
   describe '#wait!' do

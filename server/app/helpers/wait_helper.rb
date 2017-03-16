@@ -8,7 +8,9 @@ module WaitHelper
     Time.now.to_f
   end
 
-  # Wait until given block returns truthy value, returning nil on timeout
+  # Wait until given block returns truthy value, returning nil on timeout.
+  #
+  # For a zero timeout, only yields exactly once.
   #
   # @param timeout [Fixnum] How long to wait
   # @param interval [Fixnum] At what interval is the block yielded
@@ -19,12 +21,13 @@ module WaitHelper
     raise ArgumentError, 'no block given' unless block_given?
 
     wait_start = _wait_now
-    wait_until = _wait_now + timeout
+    wait_until = wait_start + timeout
 
     value = nil
 
-    while _wait_now < wait_until do
+    loop do
       break if value = yield
+      break if _wait_now >= wait_until
 
       debug "waiting %.1fs of %.1fs until: %s" % [_wait_now - wait_start + interval, timeout, message || '???']
       sleep interval
