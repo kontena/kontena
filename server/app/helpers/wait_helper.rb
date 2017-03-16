@@ -28,7 +28,7 @@ module WaitHelper
       if value
         return value
       else
-        debug "wait... #{message}"
+        debug "wait... #{message}" if message
         sleep interval
       end
     end
