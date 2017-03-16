@@ -143,6 +143,7 @@ describe Kontena::Workers::LogWorker do
       allow(subject.queue).to receive(:size).and_return(described_class::QUEUE_LIMIT + 1)
       allow(rpc_client).to receive(:notification)
       expect(subject.throttling?).to be_falsey
+      expect(subject.wrapped_object).to receive(:stop)
       subject.process_queue_item(double(:msg))
       expect(subject.throttling?).to be_truthy
     end
@@ -152,6 +153,7 @@ describe Kontena::Workers::LogWorker do
       allow(rpc_client).to receive(:notification)
       subject.process_queue_item(double(:msg))
       allow(subject.queue).to receive(:size).and_return(10)
+      expect(subject.wrapped_object).to receive(:start)
       subject.process_queue_item(double(:msg))
       expect(subject.throttling?).to be_falsey
     end

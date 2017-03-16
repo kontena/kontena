@@ -82,11 +82,14 @@ module Kontena::Workers
       if @queue.size > QUEUE_LIMIT
         warn "queue size is over #{QUEUE_LIMIT}, discarding logs until queue is processed" unless throttling?
         @throttling = true
+        stop
       elsif @queue.size > 100
         sleep 0.001
-      else
-        info "queue has been almost processed, enabling log sending to master" if throttling?
+      elsif throttling?
+        info "queue has been almost processed, enabling log sending to master"
         @throttling = false
+        start
+      else
         sleep 0.05
       end
     end
