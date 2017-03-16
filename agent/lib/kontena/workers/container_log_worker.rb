@@ -4,7 +4,6 @@ module Kontena::Workers
     include Kontena::Logging
 
     CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
-    QUEUE_LIMIT = 5000
 
     # @param [Docker::Container] container
     # @param [Queue] queue
@@ -68,7 +67,7 @@ module Kontena::Workers
         type: stream,
         data: data
       }
-      @queue << msg if @queue.size < QUEUE_LIMIT
+      @queue << msg
       publish_log(msg)
     end
 

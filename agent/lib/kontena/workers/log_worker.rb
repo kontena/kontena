@@ -15,18 +15,24 @@ module Kontena::Workers
     START_EVENTS = ['start']
     STOP_EVENTS = ['die']
     ETCD_PREFIX = '/kontena/log_worker/containers'
+    QUEUE_LIMIT = 5000
 
     # @param [Boolean] autostart
     def initialize(autostart = true)
       @queue = Queue.new
       @workers = {}
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
+      @throttling = false
       subscribe('container:event', :on_container_event)
       subscribe('websocket:connected', :on_connect)
       subscribe('websocket:disconnect', :on_disconnect)
       info 'initialized'
 
       async.start if autostart
+    end
+
+    def throttling?
+      !!@throttling
     end
 
     # @param [String] topic
@@ -65,14 +71,24 @@ module Kontena::Workers
     def process_queue
       defer {
         while queue_processing? && data = @queue.pop
-          rpc_client.async.notification('/containers/log', [data])
-          if @queue.size > 100
-            sleep 0.001
-          else
-            sleep 0.05
-          end
+          process_queue_item(data)
         end
       }
+    end
+
+    # @param [Hash] data
+    def process_queue_item(data)
+      rpc_client.async.notification('/containers/log', [data]) unless throttling?
+      if @queue.size > QUEUE_LIMIT
+        warn "queue size is over #{QUEUE_LIMIT}, discarding logs until queue is processed" unless throttling?
+        @throttling = true
+      elsif @queue.size > 100
+        sleep 0.001
+      else
+        info "queue has been almost processed, enabling log sending to master" if throttling?
+        @throttling = false
+        sleep 0.05
+      end
     end
 
     def stop
