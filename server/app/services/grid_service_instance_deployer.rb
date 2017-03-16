@@ -33,12 +33,14 @@ class GridServiceInstanceDeployer
   # @param [String] deploy_rev
   def wait_for_service_to_start(node, instance_number, deploy_rev)
     # node/agent has 5 minutes to do it's job
-    wait!(timeout: 300) { self.deployed_service_container_exists?(instance_number, deploy_rev) }
-
-    if self.wait_for_port?
-      container = self.find_service_instance_container(instance_number, deploy_rev)
-      wait!(timeout: 300) { port_responding?(container, self.wait_for_port) }
-    end
+    wait!(timeout: 300) {
+      self.deployed_service_container_exists?(instance_number, deploy_rev)
+      
+      if self.wait_for_port?
+        container = self.find_service_instance_container(instance_number, deploy_rev)
+        port_responding?(container, self.wait_for_port)
+      end
+    }
   end
 
   # @param [HostNode] node
