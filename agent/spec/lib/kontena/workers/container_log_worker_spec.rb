@@ -34,5 +34,19 @@ describe Kontena::Workers::ContainerLogWorker do
         subject.on_message('id', 'stdout', '2016-02-29T07:26:07.798612937Z log message')
       }.to change{ queue.length }.by(1)
     end
+
+    it 'adds message to queue if queue size is under limit' do
+      allow(queue).to receive(:size).and_return(described_class::QUEUE_LIMIT - 1)
+      expect {
+        subject.on_message('id', 'stdout', '2016-02-29T07:26:07.798612937Z log message')
+      }.to change{ queue.length }.by(1)
+    end
+
+    it 'does not add message to queue if queue size is over limit' do
+      allow(queue).to receive(:size).once.and_return(described_class::QUEUE_LIMIT + 1)
+      expect {
+        subject.on_message('id', 'stdout', '2016-02-29T07:26:07.798612937Z log message')
+      }.to change{ queue.length }.by(0)
+    end
   end
 end
