@@ -15,7 +15,7 @@ module WaitHelper
   # @param message [String] Message for debugging
   # @param block [Block] Block to yield
   # @return [Object] Return value from block, or nil
-  def wait(timeout: WAIT_TIMEOUT, interval: WAIT_INTERVAL, message: nil, &block)
+  def wait_until(timeout: WAIT_TIMEOUT, interval: WAIT_INTERVAL, message: nil, &block)
     raise ArgumentError, 'no block given' unless block_given?
 
     wait_until = _wait_now + timeout
@@ -28,7 +28,7 @@ module WaitHelper
       if value
         return value
       else
-        debug "wait... #{message}" if message
+        debug "wait... #{message}"
         sleep interval
       end
     end
@@ -38,8 +38,8 @@ module WaitHelper
   #
   # @return [Object] Last return value of the block
   # @raise [Timeout::Error] If block does not return truthy value within given timeout
-  def wait!(**opts, &block)
-    if value = wait(**opts, &block)
+  def wait_until!(**opts, &block)
+    if value = wait_until(**opts, &block)
       return value
     else
       raise Timeout::Error

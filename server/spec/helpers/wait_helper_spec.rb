@@ -16,7 +16,7 @@ describe WaitHelper do
 
     it 'returns true immediately' do
       expect(subject).not_to receive(:sleep)
-      value = subject.wait { true }
+      value = subject.wait_until { true }
       expect(value).to be_truthy
     end
 
@@ -29,7 +29,7 @@ describe WaitHelper do
       expect(subject).to_not receive(:sleep)
 
       @loop = 0
-      value = subject.wait(timeout: 2, message: 'foo') { (@loop += 1) > 1 }
+      value = subject.wait_until(timeout: 2, message: 'foo') { (@loop += 1) > 1 }
 
       expect(value).to be_truthy
     end
@@ -45,14 +45,14 @@ describe WaitHelper do
       expect(subject).to receive(:_wait_now).and_return(time_now + 2.001).once
       expect(subject).to_not receive(:sleep)
 
-      value = subject.wait(timeout: 2) { false }
+      value = subject.wait_until(timeout: 2) { false }
 
       expect(value).to be_falsey
     end
 
     it 'raises if no block given' do
       expect {
-        subject.wait
+        subject.wait_until
       }.to raise_error(ArgumentError)
     end
   end
@@ -62,16 +62,16 @@ describe WaitHelper do
       retval = double()
 
       expect(subject).to_not receive(:sleep)
-      value = subject.wait! { retval }
+      value = subject.wait_until! { retval }
 
       expect(value).to be retval
     end
 
     it 'raises when wait return false' do
-      expect(subject).to receive(:wait).and_return(nil)
+      expect(subject).to receive(:wait_until).and_return(nil)
 
       expect {
-        subject.wait!(message: 'foo') { true }
+        subject.wait_until!(message: 'foo') { false }
       }.to raise_error(Timeout::Error)
     end
   end
