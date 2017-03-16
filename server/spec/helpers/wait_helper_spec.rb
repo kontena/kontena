@@ -9,45 +9,39 @@ describe WaitHelper do
     klass.new
   }
 
-  describe 'wait' do
-    let :time_now do
-      Time.now.to_f
-    end
+  # fake clock
+  before do
+    @time_elapsed = 0.0
 
+    allow(subject).to receive(:_wait_now) { @time_elapsed }
+    allow(subject).to receive(:sleep) { |dt| @time_elapsed += dt }
+  end
+
+  describe 'wait' do
     it 'returns true immediately' do
       expect(subject).not_to receive(:sleep)
+
       value = subject.wait_until { true }
+
       expect(value).to be_truthy
     end
 
     it 'sleeps between retries and logs debug' do
-      expect(subject).to receive(:_wait_now).and_return(time_now).once
-      expect(subject).to receive(:_wait_now).and_return(time_now + 0.5).once
-      expect(subject).to receive(:sleep).once
-      expect(subject).to receive(:debug).with('wait... foo')
-      expect(subject).to receive(:_wait_now).and_return(time_now + 1.5).once
-      expect(subject).to_not receive(:sleep)
+      expect(subject).to receive(:debug).with('waiting 0.5s of 2.0s until: something that is true the second time')
 
       @loop = 0
-      value = subject.wait_until(timeout: 2, message: 'foo') { (@loop += 1) > 1 }
+      value = subject.wait_until("something that is true the second time", timeout: 2) { (@loop += 1) > 1 }
 
       expect(value).to be_truthy
+      expect(@loop).to eq 2
+      expect(@time_elapsed).to eq(0.5)
     end
 
     it 'sleeps between retries before timing out' do
-      expect(subject).to receive(:_wait_now).and_return(time_now).once
-      expect(subject).to receive(:_wait_now).and_return(time_now + 0.5).once
-      expect(subject).to receive(:sleep).once
-      expect(subject).to receive(:_wait_now).and_return(time_now + 1.0).once
-      expect(subject).to receive(:sleep).once
-      expect(subject).to receive(:_wait_now).and_return(time_now + 1.5).once
-      expect(subject).to receive(:sleep).once
-      expect(subject).to receive(:_wait_now).and_return(time_now + 2.001).once
-      expect(subject).to_not receive(:sleep)
-
       value = subject.wait_until(timeout: 2) { false }
 
       expect(value).to be_falsey
+      expect(@time_elapsed).to eq(2.5)
     end
 
     it 'raises if no block given' do
@@ -58,21 +52,18 @@ describe WaitHelper do
   end
 
   describe '#wait!' do
-    it 'return value from wait' do
+    it 'returns value from wait' do
       retval = double()
 
-      expect(subject).to_not receive(:sleep)
       value = subject.wait_until! { retval }
 
       expect(value).to be retval
     end
 
-    it 'raises when wait return false' do
-      expect(subject).to receive(:wait_until).and_return(nil)
-
+    it 'raises when wait times out' do
       expect {
-        subject.wait_until!(message: 'foo') { false }
-      }.to raise_error(Timeout::Error)
+        subject.wait_until!("something that is never true") { false }
+      }.to raise_error(Timeout::Error, "Timeout after waiting 300.0s until: something that is never true")
     end
   end
 end
