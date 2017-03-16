@@ -36,7 +36,7 @@ class ContainerStat
     },
     {
       '$match': {
-        'network.interfaces.name': "eth0"
+        'network.interfaces.name': network_iface
       }
     },
     {
@@ -117,8 +117,8 @@ class ContainerStat
     }
     ]).map do |stat|
       # convert CPU mask to num_cores
-      #stat["cpu"]["num_cores"] = (stat["cpu"]["mask"].split('-').last.to_i + 1)
-      #stat["cpu"].delete("mask")
+      stat["cpu"]["num_cores"] = (stat["cpu"]["mask"].split('-').last.to_i + 1)
+      stat["cpu"].delete("mask")
       stat
     end
   end
