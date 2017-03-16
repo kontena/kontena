@@ -31,7 +31,7 @@ class GridServiceRemoveWorker
   # @param [GridService] grid_service
   # @param [Integer] timeout
   def wait_instance_removal(grid_service, timeout)
-    wait!(timeout: timeout) { grid_service.reload.containers.scoped.count == 0 }
+    wait_until!(timeout: timeout) { grid_service.reload.containers.scoped.count == 0 }
   end
 
   # @param [HostNode] node

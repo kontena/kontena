@@ -46,6 +46,6 @@ module WaitHelper
     end
   end
 
-  # Also allow WaitHelper.wait(...) to be called as a module method
+  # Also allow WaitHelper.wait_until(...) to be called as a module method
   extend self
 end
