@@ -22,8 +22,9 @@ class GridServiceRemoveWorker
       wait_instance_removal(grid_service, grid_service.containers.scoped.count * 30)
 
       grid_service.destroy
-    rescue Timeout::Error
-      error "service remove timed out #{grid_service.to_path}"
+    rescue => error
+      error "removing service #{grid_service.to_path}: #{error}"
+      error error.backtrace.join("\n")
       grid_service.set_state(prev_state)
     end
   end
@@ -31,7 +32,9 @@ class GridServiceRemoveWorker
   # @param [GridService] grid_service
   # @param [Integer] timeout
   def wait_instance_removal(grid_service, timeout)
-    wait_until!(timeout: timeout) { grid_service.reload.containers.scoped.count == 0 }
+    wait_until!("service #{grid_service.to_path} containers are gone", timeout: timeout) {
+      grid_service.reload.containers.scoped.count == 0
+    }
   end
 
   # @param [HostNode] node

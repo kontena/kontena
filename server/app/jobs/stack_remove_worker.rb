@@ -25,7 +25,7 @@ class StackRemoveWorker
     services.each do |service|
       outcome = GridServices::Delete.run(grid_service: service)
       if outcome.success?
-        unless wait_until(timeout: 600) { GridService.find_by(id: service.id).nil? }
+        unless wait_until("service #{service.to_path} is gone", timeout: 600) { GridService.find_by(id: service.id).nil? }
           error "Removing of #{service.to_path} timed out"
         end
       else

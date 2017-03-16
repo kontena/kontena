@@ -15,7 +15,7 @@ class DistributedLock
     lock_id = nil
     begin
       if timeout.to_f > 0.0
-        lock_id = WaitHelper.wait_until(timeout: timeout, interval: 0.05) { self.obtain_lock(name) }
+        lock_id = WaitHelper.wait_until("lock #{name} is available", timeout: timeout, interval: 0.05) { self.obtain_lock(name) }
       else
         lock_id = self.obtain_lock(name)
       end
