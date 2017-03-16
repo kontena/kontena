@@ -35,11 +35,19 @@ describe HostNodeStat do
             name: "fs1",
             total: 1000,
             used: 100
+          }, {
+            name: "fs2",
+            total: 1000,
+            used: 100
           }],
           network: [{
             name: "n1",
             rx_bytes: 100,
             tx_bytes: 100,
+          }, {
+            name: "n2",
+            rx_bytes: 100.5,
+            tx_bytes: 100.5,
           }],
           created_at: Time.parse('2017-03-01 11:15:30 +00:00')
         },
@@ -60,11 +68,19 @@ describe HostNodeStat do
             name: "fs1",
             used: 200,
             total: 1000
+          }, {
+            name: "fs2",
+            used: 200,
+            total: 1000
           }],
           network: [{
             name: "n1",
             rx_bytes: 100,
             tx_bytes: 100,
+          }, {
+            name: "n2",
+            rx_bytes: 100.5,
+            tx_bytes: 100.5,
           }],
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
@@ -85,11 +101,19 @@ describe HostNodeStat do
             name: "fs1",
             used: 200,
             total: 1000
+          }, {
+            name: "fs2",
+            used: 200,
+            total: 1000
           }],
           network: [{
             name: "n1",
             rx_bytes: 100,
             tx_bytes: 100,
+          }, {
+            name: "n2",
+            rx_bytes: 100.5,
+            tx_bytes: 100.5,
           }],
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
@@ -110,21 +134,19 @@ describe HostNodeStat do
             name: "fs1",
             used: 200,
             total: 1000
-          },
-          {
+          }, {
               name: "fs2",
-              used: 200.5,
-              total: 1000.5
+              used: 200,
+              total: 1000
           }],
           network: [{
             name: "n1",
             rx_bytes: 100,
             tx_bytes: 100,
-          },
-          {
+          }, {
             name: "n2",
             rx_bytes: 100.5,
-            tx_bytes: 200.5
+            tx_bytes: 100.5
           }],
           created_at: Time.parse('2017-03-01 12:15:30 +00:00')
         },
@@ -145,11 +167,19 @@ describe HostNodeStat do
             name: "fs1",
             used: 800,
             total: 2000
+          }, {
+            name: "fs2",
+            used: 800,
+            total: 2000
           }],
           network: [{
             name: "n1",
             rx_bytes: 200,
             tx_bytes: 300,
+          }, {
+            name: "n2",
+            rx_bytes: 200.5,
+            tx_bytes: 300.5,
           }],
           created_at: Time.parse('2017-03-01 12:15:45 +00:00')
         },
@@ -170,11 +200,19 @@ describe HostNodeStat do
             name: "fs1",
             used: 500,
             total: 1000
+          }, {
+            name: "fs2",
+            used: 500,
+            total: 1000
           }],
           network: [{
             name: "n1",
             rx_bytes: 400,
             tx_bytes: 500,
+          }, {
+            name: "n2",
+            rx_bytes: 400.5,
+            tx_bytes: 500.5,
           }],
           created_at: Time.parse('2017-03-01 12:16:45 +00:00')
         },
@@ -194,11 +232,19 @@ describe HostNodeStat do
             name: "fs1",
             used: 100,
             total: 1000
+          }, {
+            name: "fs2",
+            used: 100,
+            total: 1000
           }],
           network: [{
             name: "n1",
             rx_bytes: 200,
             tx_bytes: 300,
+          }, {
+            name: "n2",
+            rx_bytes: 200.5,
+            tx_bytes: 300.5,
           }],
           created_at: Time.parse('2017-03-01 13:15:30 +00:00')
         }
@@ -210,7 +256,7 @@ describe HostNodeStat do
         stats
         from = Time.parse('2017-03-01 12:00:00 +00:00')
         to = Time.parse('2017-03-01 13:00:00 +00:00')
-        results = HostNodeStat.get_aggregate_stats_for_node(node.id, from, to)
+        results = HostNodeStat.get_aggregate_stats_for_node(node.id, from, to, "n1")
 
         # Records #2 and #5.
         expect(results[0]["cpu"]).to eq({
@@ -222,19 +268,17 @@ describe HostNodeStat do
           "total" => 1000.0 #avg(1000, 1000)
         })
         expect(results[0]["filesystem"]).to eq({
-          "used" => 500.0, #avg(200, 800)
-          "total" => 1500.0 #avg(1000, 2000)
+          "used" => 1000.0, #avg( 200+200, 800+800 )
+          "total" => 3000.0 #avg( 1000+1000, 2000+2000 )
         })
-        expect(results[0]["network"]).to match_array([ #array order may not match server value
-          {
-            "name" => "n1",
-            "rx_bytes" => 150.0, #avg(100, 200)
-            "rx_errors" => 0.0,
-            "rx_dropped" => 0.0,
-            "tx_bytes" => 200.0, #avg(100, 300)
-            "tx_errors" => 0.0
-          }
-        ])
+        expect(results[0]["network"]).to eq({
+          "name" => "n1",
+          "rx_bytes" => 150.0, #avg(100, 200)
+          "rx_errors" => 0.0,
+          "rx_dropped" => 0.0,
+          "tx_bytes" => 200.0, #avg(100, 300)
+          "tx_errors" => 0.0
+        })
         expect(results[0]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
@@ -253,19 +297,17 @@ describe HostNodeStat do
           "total" => 2000.0
         })
         expect(results[1]["filesystem"]).to eq({
-          "used" => 500.0,
-          "total" => 1000.0
+          "used" => 1000.0, # 500+500
+          "total" => 2000.0 # 1000+1000
         })
-        expect(results[1]["network"]).to match_array([
-          {
-            "name" => "n1",
-            "rx_bytes" => 400.0,
-            "rx_errors" => 0.0,
-            "rx_dropped" => 0.0,
-            "tx_bytes" => 500.0,
-            "tx_errors" => 0.0
-          }
-        ])
+        expect(results[1]["network"]).to eq({
+          "name" => "n1",
+          "rx_bytes" => 400.0,
+          "rx_errors" => 0.0,
+          "rx_dropped" => 0.0,
+          "tx_bytes" => 500.0,
+          "tx_errors" => 0.0
+        })
         expect(results[1]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
@@ -281,39 +323,29 @@ describe HostNodeStat do
         stats
         from = Time.parse('2017-03-01 12:00:00 +00:00')
         to = Time.parse('2017-03-01 13:00:00 +00:00')
-        results = HostNodeStat.get_aggregate_stats_for_grid(grid.id, from, to)
+        results = HostNodeStat.get_aggregate_stats_for_grid(grid.id, from, to, "n2")
 
         # Records #2, #4 and #5.
         expect(results[0]["cpu"]).to eq({
-          "num_cores" => 3.0, #sum( avg(1,1), 2 )
-          "percent_used" => 0.25, #avg( avg(.1, .7), .1 )
+          "num_cores" => 3.0, # avg(1,1) + 2
+          "percent_used" => 0.25, #avg( avg(.1, .7) + .1 )
         })
         expect(results[0]["memory"]).to eq({
-          "used" => 800.0, #sum( avg(500, 100), 500 )
-          "total" => 2000.0 #sum( avg(1000, 1000), 1000 )
+          "used" => 800.0, # avg(500, 100) + 500
+          "total" => 2000.0 # avg(1000, 1000) + 1000
         })
         expect(results[0]["filesystem"]).to eq({
-          "used" => 900.5, #sum( avg(200, 800), sum(200, 200.5) )
-          "total" => 3500.5 #sum( avg(1000, 2000), sum(1000, 1000.5) )
+          "used" => 1400.0, # avg(200+200, 800+800) + (200+200)
+          "total" => 5000.0 # avg(1000+1000, 2000+2000) + (1000+1000)
         })
-        expect(results[0]["network"]).to match_array([ #array order may not match server value
-          {
-            "name" => "n1",
-            "rx_bytes" => 250.0, #sum( avg(100, 200), 100 )
-            "rx_errors" => 0.0,
-            "rx_dropped" => 0.0,
-            "tx_bytes" => 300.0, #sum( avg(100, 300), 100 )
-            "tx_errors" => 0.0
-          },
-          {
-            "name" => "n2",
-            "rx_bytes" => 100.5,
-            "rx_errors" => 0.0,
-            "rx_dropped" => 0.0,
-            "tx_bytes" => 200.5,
-            "tx_errors" => 0.0
-          }
-        ])
+        expect(results[0]["network"]).to eq({
+          "name" => "n2",
+          "rx_bytes" => 251.0, # avg(100.5, 200.5) + 100.5
+          "rx_errors" => 0.0,
+          "rx_dropped" => 0.0,
+          "tx_bytes" => 301.0, # avg(100.5, 300.5) + 100.5
+          "tx_errors" => 0.0
+        })
         expect(results[0]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
@@ -332,19 +364,17 @@ describe HostNodeStat do
           "total" => 2000.0
         })
         expect(results[1]["filesystem"]).to eq({
-          "used" => 500.0,
-          "total" => 1000.0
+          "used" => 1000.0, # 500+500
+          "total" => 2000.0 # 1000+1000
         })
-        expect(results[1]["network"]).to match_array([
-          {
-            "name" => "n1",
-            "rx_bytes" => 400.0,
-            "rx_errors" => 0.0,
-            "rx_dropped" => 0.0,
-            "tx_bytes" => 500.0,
-            "tx_errors" => 0.0
-          }
-        ])
+        expect(results[1]["network"]).to eq({
+          "name" => "n2",
+          "rx_bytes" => 400.5,
+          "rx_errors" => 0.0,
+          "rx_dropped" => 0.0,
+          "tx_bytes" => 500.5,
+          "tx_errors" => 0.0
+        })
         expect(results[1]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
