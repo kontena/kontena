@@ -20,6 +20,7 @@ class ContainerStat
   index({ grid_service_id: 1, created_at: 1 })
 
   def self.get_aggregate_stats_for_service(service_id, from_time, to_time, network_iface)
+
     self.collection.aggregate([
     {
       '$match': {
@@ -113,10 +114,11 @@ class ContainerStat
           tx_errors: '$network_tx_errors'
         }
       }
-    }]).map do |stat|
+    }
+    ]).map do |stat|
       # convert CPU mask to num_cores
-      stat["cpu"]["num_cores"] = (stat["cpu"]["mask"].split('-').last.to_i + 1)
-      stat["cpu"].delete("mask")
+      #stat["cpu"]["num_cores"] = (stat["cpu"]["mask"].split('-').last.to_i + 1)
+      #stat["cpu"].delete("mask")
       stat
     end
   end

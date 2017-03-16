@@ -61,11 +61,13 @@ describe '/v1/services' do
       memory: { 'usage' => 100000 },
       cpu: { 'usage_pct' => 10 },
       network: {
-          'rx_bytes' => 1397524, 'rx_packets' => 3109, 'rx_errors' => 0, 'rx_dropped' => 0, 'tx_bytes' => 1680754, 'tx_packets'=>3035, 'tx_errors'=>0, 'tx_dropped'=>0
+        interfaces: [{
+          'name' => 'eth0', 'rx_bytes' => 1397524, 'rx_packets' => 3109, 'rx_errors' => 0, 'rx_dropped' => 0, 'tx_bytes' => 1680754, 'tx_packets'=>3035, 'tx_errors'=>0, 'tx_dropped'=>0
+        }]
       },
       spec: {
           'memory' => { 'limit' => 512000000},
-          'cpu' => { 'limit' => 1024}
+          'cpu' => { 'limit' => 1024, 'mask' => '0-1' }
       }
     }
   end
@@ -290,6 +292,28 @@ describe '/v1/services' do
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
         expect(json_response['stats'].first['cpu']).to be_nil
+      end
+    end
+  end
+
+  describe 'GET /:id/metrics' do
+    context 'when container has stats data' do
+      it 'returns service metrics' do
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container_stat_data['grid_service_id'] = redis_service.id
+        container.container_stats.create!(container_stat_data)
+        get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(1)
+
+      end
+    end
+    context 'when container has not stats data' do
+      it 'returns empty result' do
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(0)
       end
     end
   end
