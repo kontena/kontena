@@ -8,6 +8,7 @@
 - Fix sharing of Moped::Session connections between threads (#1966)
 - Fix timeout interrupts (#1990) 
 - Stop agent log streaming if queue grows too big (#1994) (#1993)
+- Change wait_until to always yield at least once, even on a zero timeout (#1991)
 
 **CLI:**
 
