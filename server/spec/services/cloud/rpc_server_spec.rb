@@ -31,8 +31,13 @@ describe Cloud::RpcServer do
       allow(Cloud::Rpc::ServerApi).to receive(:new).and_return(server_api_stub)
       allow(server_api_stub).to receive(:get).with('param')
         .and_raise(Cloud::RpcServer::Error.new(403, 'Forbidden'))
-      result = subject.handle_request(message)
-      expect(result).to eq([1, 12345, { code: 403, message: 'Forbidden', backtrace: nil }, nil])
+      client_id, msg_id, error, result = subject.handle_request(message)
+      expect(client_id).to eq 1
+      expect(msg_id).to eq 12345
+      expect(error[:code]).to eq 403
+      expect(error[:message]).to eq 'Forbidden'
+      expect(error[:backtrace]).not_to match /Remote backtrace/
+      expect(result).to be_nil
     end
   end
 end
