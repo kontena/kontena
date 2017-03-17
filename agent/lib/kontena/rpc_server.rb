@@ -68,7 +68,6 @@ module Kontena
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
           error exc.backtrace.join("\n")
-          end
         end
       end
     end
