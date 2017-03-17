@@ -91,7 +91,7 @@ module Kontena::Cli::Stacks
     def generate_volumes(yaml_volumes)
       return [] unless yaml_volumes
       yaml_volumes.map do |name, config|
-        config.merge('name': name)
+        config.merge('name' => name)
       end
     end
 
