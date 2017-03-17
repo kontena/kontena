@@ -8,7 +8,9 @@ module WaitHelper
     Time.now.to_f
   end
 
-  # Wait until given block returns truthy value, returning nil on timeout
+  # Wait until given block returns truthy value, returning nil on timeout.
+  #
+  # For a zero timeout, only yields exactly once.
   #
   # @param timeout [Fixnum] How long to wait
   # @param interval [Fixnum] At what interval is the block yielded
@@ -20,18 +22,17 @@ module WaitHelper
 
     wait_until = _wait_now + timeout
 
+    value = nil
+    
     loop do
-      return nil if _wait_now > wait_until
+      break if value = yield
+      break if _wait_now >= wait_until
 
-      value = yield
-
-      if value
-        return value
-      else
-        debug "wait... #{message}" if message
-        sleep interval
-      end
+      debug "wait... #{message}" if message
+      sleep interval
     end
+
+    value
   end
 
   # Wait until given block returns truthy value, raising on timeout
