@@ -17,12 +17,12 @@ module Kontena
     }
 
     class Error < StandardError
-      attr_reader :code
+      attr_reader :code, :remote_backtrace
 
-      def initialize(code, message, backtrace = nil)
+      def initialize(code, message, remote_backtrace = nil)
         @code = code
+        @remote_backtrace = remote_backtrace
         super(message)
-        set_backtrace backtrace if backtrace
       end
     end
 
