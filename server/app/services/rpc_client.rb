@@ -3,12 +3,12 @@ require_relative 'mongo_pubsub'
 class RpcClient
 
   class Error < StandardError
-    attr_accessor :code, :message, :backtrace
+    attr_reader :code, :message, :backtrace
 
     def initialize(code, message, backtrace = nil)
-      self.code = code
-      self.message = message
-      self.backtrace = backtrace
+      @code = code
+      @message = message
+      @backtrace = Array(backtrace)
     end
   end
 
