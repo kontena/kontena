@@ -1,5 +1,3 @@
 module Scheduler
-  class Error < StandardError
-
-  end
+  Error = Class.new(StandardError)
 end

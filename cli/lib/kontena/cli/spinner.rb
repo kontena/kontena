@@ -1,6 +1,6 @@
 module Kontena
   module Cli
-    class SpinAbort < StandardError; end
+    SpinAbort = Class.new(StandardError)
 
     class SpinnerStatus
       attr_reader :thread, :result

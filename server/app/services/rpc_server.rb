@@ -13,12 +13,12 @@ class RpcServer
   }
 
   class Error < StandardError
-    attr_reader :code, :message, :backtrace
+    attr_reader :code
 
     def initialize(code, message, backtrace = nil)
       @code = code
-      @message = message
-      @backtrace = Array(backtrace)
+      super(message)
+      set_backtrace backtrace if backtrace
     end
   end
 

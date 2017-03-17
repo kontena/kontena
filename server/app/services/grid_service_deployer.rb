@@ -5,7 +5,7 @@ class GridServiceDeployer
   include Logging
   include DistributedLocks
 
-  class DeployError < StandardError; end
+  DeployError = Class.new(StandardError)
 
   DEFAULT_REGISTRY = 'index.docker.io'
 
