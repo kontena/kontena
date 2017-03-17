@@ -7,6 +7,7 @@
 - Fix Ubuntu xenial package install to not override prompted debconf values with empty values from the default config file (#1975)
 - Fix sharing of Moped::Session connections between threads (#1966)
 - Fix timeout interrupts (#1990) 
+- Stop agent log streaming if queue grows too big (#1994) (#1993)
 
 **CLI:**
 
