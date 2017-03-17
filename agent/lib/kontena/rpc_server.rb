@@ -17,12 +17,12 @@ module Kontena
     }
 
     class Error < StandardError
-      attr_reader :code, :remote_backtrace
+      attr_reader :code
 
       def initialize(code, message, remote_backtrace = nil)
         @code = code
-        @remote_backtrace = remote_backtrace
         super(message)
+        set_backtrace(Array(backtrace) + (['<Remote backtrace>'] + Array(remote_backtrace))) if remote_backtrace
       end
     end
 
@@ -68,6 +68,7 @@ module Kontena
         rescue => exc
           error "#{exc.class.name}: #{exc.message}"
           error exc.backtrace.join("\n")
+          end
         end
       end
     end

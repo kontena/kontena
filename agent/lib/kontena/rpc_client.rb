@@ -5,16 +5,15 @@ module Kontena
     include Celluloid
     include Kontena::Logging
 
-    class Error < StandardError
-      attr_reader :code, :remote_backtrace
+  class Error < StandardError
+    attr_reader :code
 
-      def initialize(code, message, remote_backtrace = nil)
-        @code = code
-        @remote_backtrace = remote_backtrace
-        super(message)
-      end
+    def initialize(code, message, remote_backtrace = nil)
+      @code = code
+      super(message)
+      set_backtrace(Array(backtrace) + (['<Remote backtrace>'] + Array(remote_backtrace))) if remote_backtrace
     end
-
+  end
     TimeoutError = Class.new(Error)
 
     attr_reader :requests
