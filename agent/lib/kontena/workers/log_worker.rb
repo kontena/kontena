@@ -35,6 +35,14 @@ module Kontena::Workers
       !!@throttling
     end
 
+    def throttle!
+      @throttling = true
+    end
+
+    def release_throttle!
+      @throttling = false
+    end
+
     # @param [String] topic
     # @param [Object] data
     def on_connect(topic, data)
@@ -47,7 +55,7 @@ module Kontena::Workers
     # @param [Object] data
     def on_disconnect(topic, data)
       @queue_processing = false
-      async.stop
+      async.stop_container_workers
       info 'stopped log streaming'
     end
 
@@ -57,6 +65,11 @@ module Kontena::Workers
 
     def start
       sleep 1 until Actor[:etcd_launcher].running?
+      start_container_workers
+      async.process_queue
+    end
+
+    def start_container_workers
       Docker::Container.all.each do |container|
         begin
           self.stream_container_logs(container) unless container.skip_logs?
@@ -64,37 +77,41 @@ module Kontena::Workers
           # Could be thrown since container.skip_logs? actually loads the container details
         end
       end
-
-      async.process_queue
     end
 
     def process_queue
+      current_actor = Actor.current
       defer {
-        while queue_processing? && data = @queue.pop
-          process_queue_item(data)
+        queue = current_actor.queue
+        while current_actor.queue_processing? && data = queue.pop
+          process_queue_item(current_actor, data, (queue.size + 1))
         end
       }
     end
 
+    # @param [LogWorker] worker
     # @param [Hash] data
-    def process_queue_item(data)
-      rpc_client.async.notification('/containers/log', [data]) unless throttling?
-      if @queue.size > QUEUE_LIMIT
-        warn "queue size is over #{QUEUE_LIMIT}, discarding logs until queue is processed" unless throttling?
-        @throttling = true
-        stop
-      elsif @queue.size > 100
-        sleep 0.001
-      elsif throttling?
-        info "queue has been almost processed, enabling log sending to master"
-        @throttling = false
-        start
+    # @param [Integer] queue_size
+    def process_queue_item(worker, data, queue_size)
+      rpc_client.async.notification('/containers/log', [data])
+      if queue_size > QUEUE_LIMIT && !worker.throttling?
+        warn "queue size is over #{QUEUE_LIMIT}, throttling logs until queue is processed"
+        worker.throttle!
+        worker.stop_container_workers
+      elsif queue_size > 100 && worker.throttling?
+        sleep 0.05
+      elsif queue_size > 100
+        sleep 0.01
+      elsif worker.throttling?
+        info "queue has been almost processed, releasing throttle"
+        worker.release_throttle!
+        worker.start_container_workers
       else
         sleep 0.05
       end
     end
 
-    def stop
+    def stop_container_workers
       return unless queue_processing?
 
       @workers.keys.dup.each do |id|
