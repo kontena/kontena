@@ -15,10 +15,9 @@ class RpcServer
   class Error < StandardError
     attr_reader :code
 
-    def initialize(code, message, remote_backtrace = nil)
+    def initialize(code, message)
       @code = code
       super(message)
-      set_backtrace(Array(backtrace) + (['<Remote backtrace>'] + Array(remote_backtrace))) if remote_backtrace
     end
   end
 
