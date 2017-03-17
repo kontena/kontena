@@ -54,6 +54,7 @@ module Kontena::Workers
     # @param [String] stream
     # @param [String] chunk
     def on_message(id, stream, chunk)
+      return if @queue.size > QUEUE_LIMIT
       match = chunk.match(CHUNK_REGEX)
       return unless match
       time = DateTime.parse(match[1])
@@ -67,7 +68,7 @@ module Kontena::Workers
               data: data
           }
       }
-      @queue << msg if @queue.size < QUEUE_LIMIT
+      @queue << msg
     end
   end
 end
