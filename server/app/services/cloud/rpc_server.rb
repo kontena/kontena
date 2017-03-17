@@ -12,7 +12,8 @@ module Cloud
       def initialize(code, message, remote_backtrace = nil)
         @code = code
         super(message)
-        set_backtrace(Array(backtrace) + (['<Remote backtrace>'] + Array(remote_backtrace))) if remote_backtrace
+        set_backtrace(caller) unless backtrace
+        set_backtrace(backtrace + (['<Remote backtrace>'] + Array(remote_backtrace))) if remote_backtrace
       end
     end
 
