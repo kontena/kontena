@@ -124,7 +124,6 @@ module Cloud
     def send_message(msg)
       EM.next_tick {
         begin
-          debug "Sending websocket message"
           @ws.send(msg) if @ws
         rescue
           error "failed to send message"
