@@ -114,3 +114,43 @@ You can check the docker id with the comand: `docker info | grep ID:`
 2. You could remove all traces of installation and do a clean install.   
 
 
+# OpenVPN Client Don't connect
+
+## Symptons
+
+1. `kontena vpn create` - executes correctly
+2. You create a _.ovpn_ file with `kontena vpn config > vpn.ovpn`
+3. Connection to client with your tooling is not working
+4. `kontena service logs vpn/server` shows the follow log entries:
+
+```
+Sun Mar 19 20:38:58 2017 TLS Error: incoming packet authentication failed from [AF_INET]192.168.183.1:33575
+Sun Mar 19 20:39:13 2017 Authenticate/Decrypt packet error: packet HMAC authentication failed
+Sun Mar 19 20:39:13 2017 TLS Error: incoming packet authentication failed from [AF_INET]192.168.183.1:33575
+```
+
+**Solution:**
+
+1. Try use openvpn client command on the client machine `openvpn --config vpn.ovpn`, if the error: _Options error: Unrecognized option or missing or extra parameter(s) in vpn.ovpn:20: script-security (2.4.0)_ occour, then:
+
+a) Edit the generated _vpn.ovpn_ file and adjust the line _script-security 2system_ remove _system_. The line should be as follow:
+
+```
+script-security 2
+```
+
+If you don't have the _update-resolv-conf_ scripts, you will need to adjust for VPN dns to work. This is distro specific.
+
+Arch Linux has a good documentation on that: https://wiki.archlinux.org/index.php/OpenVPN
+
+# OpenVPN connection don't resolv internal cluster names
+
+## Symptons
+
+1. Cluster dns names like _registry.default.kontena.local_ are not resolved by DNS, after a successful VPN connection.
+
+**Solution:**
+
+This issue is distro specific, but the ovpn file setup a open and down script using the file __/etc/openvpn/update-resolv-conf__.
+
+**Arch Linux** - You can install the aur package [openvpn-update-resolv-conf](https://aur.archlinux.org/packages/openvpn-update-resolv-conf), and the package _resolvconf_. Note: the aur package has some bugs, follow the comments in the aur page. More complete documentation in https://wiki.archlinux.org/index.php/OpenVPN
