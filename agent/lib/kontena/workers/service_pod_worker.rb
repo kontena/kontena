@@ -113,7 +113,8 @@ module Kontena::Workers
       data = {
         service_id: service_pod.service_id,
         instance_number: service_pod.instance_number,
-        state: current_state
+        state: current_state,
+        rev: service_pod.deploy_rev
       }
       rpc_client.async.notification('/node_service_pods/set_state', [node.id, data])
       @prev_state = current_state

@@ -6,7 +6,8 @@ describe Kontena::Workers::ServicePodWorker do
   let(:node) { Node.new('id' => 'aa') }
   let(:service_pod) do
     Kontena::Models::ServicePod.new(
-      'id' => 'foo/2', 'instance_number' => 2, 'updated_at' => Time.now.to_s
+      'id' => 'foo/2', 'instance_number' => 2,
+      'updated_at' => Time.now.to_s, 'deploy_rev' => Time.now.to_s
     )
   end
   let(:subject) { described_class.new(node, service_pod) }
@@ -89,6 +90,21 @@ describe Kontena::Workers::ServicePodWorker do
       container = double(:container, :running? => false, :restarting? => false)
       allow(subject.wrapped_object).to receive(:get_container).and_return(container)
       expect(subject.current_state).to eq('stopped')
+    end
+  end
+
+  describe '#sync_state_to_master' do
+    before(:each) do
+      mock_rpc_client
+      allow(rpc_client).to receive(:notification)
+    end
+
+    it 'sends correct data' do
+      expect(rpc_client).to receive(:notification).with(
+        '/node_service_pods/set_state',
+        [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
+      )
+      subject.sync_state_to_master('running')
     end
   end
 end

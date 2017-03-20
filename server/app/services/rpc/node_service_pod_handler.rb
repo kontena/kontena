@@ -29,7 +29,12 @@ module Rpc
       service_instance = node.grid_service_instances.find_by(
         grid_service_id: pod['service_id'], instance_number: pod['instance_number']
       )
-      service_instance.set(state: pod['state']) if service_instance
+      if service_instance
+        service_instance.set(
+          state: pod['state'],
+          rev: pod['rev']
+        )
+      end
     end
 
     # @return [Boolean]

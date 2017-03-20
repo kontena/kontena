@@ -40,6 +40,36 @@ describe Rpc::NodeServicePodHandler, celluloid: true do
     end
   end
 
+  describe '#set_state' do
+    let(:service) { grid.grid_services.create!(name: 'foo', image_name: 'foo/bar:latest') }
+    let(:service_instance) do
+      service.grid_service_instances.create!(
+        instance_number: 2, host_node: node, desired_state: 'running'
+      )
+    end
+    let(:data) do
+      {
+        'state' => 'running', 'rev' => Time.now.to_s,
+        'service_id' => service.id.to_s, 'instance_number' => service_instance.instance_number
+      }
+    end
+
+    it 'saves service pod state to service instance' do
+      instance = subject.set_state(node.node_id, data)
+      expect(instance.rev).to eq(data['rev'])
+      expect(instance.state).to eq(data['state'])
+    end
+
+    it 'returns nil if node not found' do
+      expect(subject.set_state('notvalid', data)).to be_nil
+    end
+
+    it 'returns nil if service instance not found' do
+      data['instance_number'] = 3
+      expect(subject.set_state(node.node_id, data)).to be_nil
+    end
+  end
+
   describe '#migration_done?' do
     it 'returns false if migrations are not recent enough' do
       expect(subject.migration_done?).to be_falsey
