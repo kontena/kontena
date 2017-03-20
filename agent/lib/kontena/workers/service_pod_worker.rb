@@ -21,6 +21,9 @@ module Kontena::Workers
 
     # @param [Kontena::Models::ServicePod] service_pod
     def update(service_pod)
+      if @service_pod && @service_pod.deploy_rev != service_pod.deploy_rev
+        @prev_state = nil
+      end
       @service_pod = service_pod
       ensure_desired_state
     end
@@ -51,6 +54,8 @@ module Kontena::Workers
           ensure_terminated if service_container
         elsif service_pod.desired_state_unknown?
           info "desired state is unknown for #{service_pod.name}, not doing anything"
+        elsif state_in_sync?(service_pod, service_container)
+          debug "state is in-sync: #{service_pod.desired_state}"
         else
           warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
         end
@@ -92,6 +97,19 @@ module Kontena::Workers
       creator.container_outdated?(service_container) ||
         creator.labels_outdated?(service_pod.labels, service_container) ||
           creator.recreate_service_container?(service_container)
+    end
+
+    # @param [ServicePod] service_pod
+    # @param [Docker::Container] service_container
+    # @return [Boolean]
+    def state_in_sync?(service_pod, service_container)
+      return true if service_pod.terminated? && service_container.nil?
+      return false if !service_pod.terminated? && service_container.nil?
+
+      return true if service_pod.running? && service_container.running?
+      return true if service_pod.stopped? && service_container.stopped?
+
+      false
     end
 
     # @return [String]
