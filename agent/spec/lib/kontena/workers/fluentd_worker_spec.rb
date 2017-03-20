@@ -13,7 +13,7 @@ describe Kontena::Workers::FluentdWorker do
   describe '#on_node_info' do
 
     let(:info) do
-      {
+      Node.new(
         'grid' => {
           'logs' => {
             'forwarder' => 'fluentd',
@@ -22,7 +22,7 @@ describe Kontena::Workers::FluentdWorker do
             }
           }
         }
-      }
+      )
     end
     it 'creates fluentd logger and starts forwarding' do
       subject.on_node_info('agent:node_info', info)
@@ -32,7 +32,7 @@ describe Kontena::Workers::FluentdWorker do
 
     it 'removes fluentd logger and stops forwarding' do
       subject.on_node_info('agent:node_info', info)
-      info['grid']['logs'] = { 'driver' => 'none'}
+      info.grid['logs'] = { 'driver' => 'none'}
       expect_any_instance_of(Fluent::Logger::FluentLogger).to receive(:close)
       subject.on_node_info('agent:node_info', info)
       expect(subject.wrapped_object.instance_variable_get('@fluentd')).to be_nil
