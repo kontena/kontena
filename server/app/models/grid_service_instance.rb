@@ -8,6 +8,8 @@ class GridServiceInstance
   field :desired_state, type: String, default: 'initialized'.freeze
   field :state, type: String, default: 'initialized'.freeze
 
+  validates_uniqueness_of :instance_number, scope: [:grid_service_id]
+
   belongs_to :grid_service
   belongs_to :host_node
 
