@@ -4,6 +4,7 @@ class GridServiceInstance
 
   field :instance_number, type: Integer
   field :deploy_rev, type: String
+  field :rev, type: String
   field :desired_state, type: String, default: 'initialized'.freeze
   field :state, type: String, default: 'initialized'.freeze
 
