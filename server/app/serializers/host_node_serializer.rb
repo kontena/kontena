@@ -62,7 +62,6 @@ class HostNodeSerializer < KontenaJsonSerializer
         id: grid.to_path,
         name: grid.name,
         initial_size: grid.initial_size,
-        token: grid.token,
         stats: { statsd: grid.stats['statsd'] },
         trusted_subnets: grid.trusted_subnets
       }

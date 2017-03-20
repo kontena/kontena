@@ -2,7 +2,6 @@ class GridSerializer < KontenaJsonSerializer
 
   attribute :id
   attribute :name
-  attribute :token
   attribute :initial_size
   attribute :stats
   attribute :default_affinity
