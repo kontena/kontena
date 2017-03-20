@@ -102,6 +102,7 @@ module Kontena::Workers
           worker = ServicePodWorker.new(node, service_pod)
           self.link worker
           workers[service_pod.id] = worker
+          worker.ensure_desired_state
         else
           workers[service_pod.id].async.update(service_pod)
         end
