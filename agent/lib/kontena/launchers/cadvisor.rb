@@ -106,10 +106,10 @@ module Kontena::Launchers
     # @return [Array<String>]
     def volume_binds
       [
-        '/:/rootfs:ro',
-        '/var/run:/var/run',
-        '/sys:/sys:ro',
-        '/var/lib/docker:/var/lib/docker:ro'
+        '/:/rootfs:ro,rshared',
+        '/var/run:/var/run:rshared',
+        '/sys:/sys:ro,rshared',
+        '/var/lib/docker:/var/lib/docker:ro,rshared'
       ]
     end
 
