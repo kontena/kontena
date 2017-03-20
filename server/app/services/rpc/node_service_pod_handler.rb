@@ -42,7 +42,7 @@ module Rpc
       if @migration_done.nil?
         last = SchemaMigration.last
         if last
-          @migration_done = last.version >= 19
+          @migration_done = last.version >= 20
         else
           @migration_done = false
         end
