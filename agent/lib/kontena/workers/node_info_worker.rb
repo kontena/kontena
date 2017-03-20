@@ -49,7 +49,7 @@ module Kontena::Workers
     # @param [String] topic
     # @param [Hash] node
     def on_node_info(topic, node)
-      if @node.nil? || (@node  && @node.statsd_conf != node.statsd_conf)
+      if @node.nil? || (@node.statsd_conf != node.statsd_conf)
         configure_statsd(node)
       end
       @node = node
