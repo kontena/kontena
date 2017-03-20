@@ -3,15 +3,13 @@ require_relative 'grid_service_scheduler'
 
 class GridServiceDeployer
   include Logging
-  include DistributedLocks
 
   class DeployError < StandardError; end
 
   attr_reader :grid_service_deploy,
               :grid_service,
               :nodes,
-              :scheduler,
-              :ping_subscription
+              :scheduler
 
   ##
   # @param [#find_node] strategy
