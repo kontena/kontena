@@ -35,4 +35,49 @@ describe GridServiceInstanceDeployer do
       expect(instance.host_node).to eq(node)
     end
   end
+
+  describe '#stop_current_instance' do
+    it 'sets desired_state to stopped' do
+      instance = grid_service.grid_service_instances.create!(
+        instance_number: 2, deploy_rev: (Time.now.utc - 1.day).to_s, host_node: node
+      )
+      subject.stop_current_instance(instance)
+      expect(instance.reload.desired_state).to eq('stopped')
+    end
+
+    it 'notifies node and waits instance to stop if node connected' do
+      instance = grid_service.grid_service_instances.create!(
+        instance_number: 2, deploy_rev: (Time.now.utc - 1.day).to_s, host_node: node
+      )
+      allow(node).to receive(:connected?).and_return(true)
+      expect(subject).to receive(:notify_node).with(node)
+      expect(subject).to receive(:wait_for_service_state)
+      subject.stop_current_instance(instance)
+      expect(instance.reload.desired_state).to eq('stopped')
+    end
+  end
+
+  describe '#wait_for_service_state' do
+    it 'returns true if service state matches' do
+      rev = Time.now.utc.to_s
+      instance = grid_service.grid_service_instances.create!(
+        desired_state: 'running',
+        state: 'running',
+        deploy_rev: rev,
+        instance_number: 2, host_node: node
+      )
+      expect(subject.wait_for_service_state(instance, 'running')).to be_truthy
+    end
+
+    it 'returns true if service state and rev matches' do
+      rev = Time.now.utc.to_s
+      instance = grid_service.grid_service_instances.create!(
+        desired_state: 'running',
+        state: 'running',
+        deploy_rev: rev, rev: rev,
+        instance_number: 2, host_node: node
+      )
+      expect(subject.wait_for_service_state(instance, 'running', rev)).to be_truthy
+    end
+  end
 end

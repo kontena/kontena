@@ -20,7 +20,7 @@ class GridServiceInstanceDeployer
 
     service_instance = create_service_instance(node, instance_number, deploy_rev)
     notify_node(node)
-    wait_for_service_state(service_instance, 'running')
+    wait_for_service_state(service_instance, 'running', deploy_rev)
 
     true
   rescue => exc
@@ -33,19 +33,30 @@ class GridServiceInstanceDeployer
   # @param [GridServiceInstance] current_instance
   def stop_current_instance(current_instance)
     current_instance.set(desired_state: 'stopped')
-    if current_instance.connected?
+    if current_instance.host_node.connected?
       notify_node(current_instance.host_node)
       wait_for_service_state(current_instance, 'stopped')
     end
   end
 
   # @param [GridServiceInstance] service_instance
-  def wait_for_service_state(service_instance, state)
+  def wait_for_service_state(service_instance, state, rev = nil)
     Timeout.timeout(300) do
-      until service_instance.reload.state == state do
-        sleep 1.0
+      state_match = false
+      if rev.nil?
+        rev_match = true
+      else
+        rev_match = false
+      end
+      until state_match && rev_match do
+        service_instance.reload
+        state_match = service_instance.state == state
+        rev_match = service_instance.rev == rev if rev
+        sleep 1.0 unless state_match && rev_match
       end
     end
+
+    true
   end
 
   # @param [HostNode] node
@@ -62,8 +73,6 @@ class GridServiceInstanceDeployer
     instance.set(host_node_id: node.id, deploy_rev: deploy_rev, desired_state: 'running')
 
     instance
-  rescue => exc
-    error exc.message
   end
 
   # @param [Integer] instance_number
