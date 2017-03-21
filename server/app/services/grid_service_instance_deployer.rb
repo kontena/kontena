@@ -33,7 +33,7 @@ class GridServiceInstanceDeployer
   # @param [GridServiceInstance] current_instance
   def stop_current_instance(current_instance)
     current_instance.set(desired_state: 'stopped')
-    if current_instance.host_node.connected?
+    if current_instance.host_node && current_instance.host_node.connected?
       notify_node(current_instance.host_node)
       wait_for_service_state(current_instance, 'stopped')
     end
