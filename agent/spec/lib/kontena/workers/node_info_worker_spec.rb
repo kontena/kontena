@@ -3,6 +3,15 @@ describe Kontena::Workers::NodeInfoWorker do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
+  let(:node) do
+    Node.new(
+      'id' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+      'instance_number' => 1,
+      'grid' => {
+
+      }
+    )
+  end
 
   before(:each) {
     Celluloid.boot
@@ -31,6 +40,7 @@ describe Kontena::Workers::NodeInfoWorker do
 
     it 'calls #publish_node_info' do
       stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
+      allow(subject.wrapped_object).to receive(:fetch_node).and_return(node)
       expect(subject.wrapped_object).to receive(:publish_node_info).at_least(:once)
       subject.async.start
       sleep 0.1
@@ -39,6 +49,7 @@ describe Kontena::Workers::NodeInfoWorker do
 
     it 'calls #publish_node_info' do
       stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
+      allow(subject.wrapped_object).to receive(:fetch_node).and_return(node)
       expect(subject.wrapped_object).to receive(:publish_node_stats).at_least(:once)
       subject.async.start
       sleep 0.1
@@ -48,7 +59,7 @@ describe Kontena::Workers::NodeInfoWorker do
 
   describe '#on_node_info' do
     it 'initializes statsd client if node has statsd config' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {
             'statsd' => {
@@ -57,20 +68,20 @@ describe Kontena::Workers::NodeInfoWorker do
             }
           }
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.on_node_info('agent:on_node_info', node)
       expect(subject.statsd).not_to be_nil
     end
 
     it 'does not initialize statsd if no statsd config exists' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {}
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.on_node_info('agent:on_node_info', node)
       expect(subject.statsd).to be_nil
     end
   end
