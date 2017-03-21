@@ -4,16 +4,9 @@ V1::ServicesApi.route('service_stats') do |r|
   r.get do
     r.is do
       network_iface = r.params["iface"] ? r.params["iface"] : "eth0"
+      sort = r.params["sort"] ? r.params["sort"] : "cpu"
 
-      containers = @grid_service.containers.where(container_id: {:$ne => nil}).asc(:created_at)
-      @stats = containers.map do |container|
-        stat = container.container_stats.last
-        stat.update_network_stats(network_iface) if stat
-        {
-            container: container,
-            stats: stat
-        }
-      end
+      @stats = Metrics.get_container_stats(@grid_service.containers, network_iface, sort.to_sym)
       render('grid_services/stats')
     end
   end

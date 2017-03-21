@@ -53,6 +53,15 @@ module V1
             render('host_nodes/health')
           end
 
+          # GET /v1/nodes/:grid/:node/stats
+          r.on 'stats' do
+            network_iface = r.params["iface"] ? r.params["iface"] : "eth0"
+            sort = r.params["sort"] ? r.params["sort"] : "cpu"
+
+            @stats = Metrics.get_container_stats(@node.containers, network_iface, sort.to_sym)
+            render('host_nodes/stats')
+          end
+
           # GET /v1/nodes/:grid/:node/metrics
           r.on 'metrics' do
             @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
