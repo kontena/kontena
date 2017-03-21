@@ -18,6 +18,8 @@ describe Kontena::RpcServer do
 
   after(:each) { Celluloid.shutdown }
 
+  after(:each) { Celluloid.shutdown }
+
   describe '#handle_request' do
     it 'calls handler and sends response back to ws_client' do
       expect(subject.wrapped_object).to receive(:send_message).with(ws_client, [1, 99, nil, {msg: 'hello world'}])

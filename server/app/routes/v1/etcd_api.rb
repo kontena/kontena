@@ -9,16 +9,6 @@ module V1
       validate_access_token
       require_current_user
 
-      def load_grid(grid_name)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
-
-        grid
-      end
 
       # /v1/etcd/:grid_name/:path
       r.on /([^\/]+)\/(.+)/ do |grid_name, path|

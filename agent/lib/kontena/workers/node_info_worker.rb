@@ -1,6 +1,7 @@
 require 'net/http'
 require 'vmstat'
 
+require_relative '../models/node'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 require_relative '../helpers/rpc_helper'
@@ -14,7 +15,7 @@ module Kontena::Workers
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
 
-    attr_reader :statsd, :stats_since
+    attr_reader :statsd, :stats_since, :node
 
     PUBLISH_INTERVAL = 60
 
@@ -32,6 +33,13 @@ module Kontena::Workers
       async.start if autostart
     end
 
+    # @param [String] topic
+    # @param [Hash] data
+    def on_websocket_connected(topic, data)
+      self.publish_node_info
+      self.publish_node_stats
+    end
+
     def start
       loop do
         sleep PUBLISH_INTERVAL
@@ -41,21 +49,22 @@ module Kontena::Workers
     end
 
     # @param [String] topic
-    # @param [Hash] data
-    def on_websocket_connected(topic, data)
-      self.publish_node_info
-      self.publish_node_stats
+    # @param [Hash] node
+    def on_node_info(topic, node)
+      if @node.nil? || (@node.statsd_conf != node.statsd_conf)
+        configure_statsd(node)
+      end
+      @node = node
     end
 
-    # @param [String] topic
-    # @param [Hash] info
-    def on_node_info(topic, info)
-      statsd_conf = info.dig('grid', 'stats', 'statsd')
-      if statsd_conf
+    # @param [Hash] node
+    def configure_statsd(node)
+      statsd_conf = node.statsd_conf
+      if statsd_conf && statsd_conf['server']
         info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
         @statsd = Statsd.new(
           statsd_conf['server'], statsd_conf['port'].to_i || 8125
-        ).tap{|sd| sd.namespace = info.dig('grid', 'name')}
+        ).tap{ |sd| sd.namespace = node.grid['name'] }
       else
         @statsd = nil
       end

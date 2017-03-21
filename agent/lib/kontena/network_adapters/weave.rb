@@ -172,13 +172,15 @@ module Kontena::NetworkAdapters
     end
 
     # @param [String] topic
-    # @param [Hash] info
-    def on_node_info(topic, info)
-      start(info)
+    # @param [Node] node
+    def on_node_info(topic, node)
+      start(node)
     end
 
-    def on_ipam_start(topic, info)
-      ensure_default_pool(info['grid'])
+    # @param [String] topic
+    # @param [Node] node
+    def on_ipam_start(topic, node)
+      ensure_default_pool(node.grid)
       Celluloid::Notifications.publish('network:ready', nil)
     end
 
@@ -215,20 +217,19 @@ module Kontena::NetworkAdapters
       @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, grid_subnet.to_cidr, upper.to_cidr)
     end
 
-    # @param [Hash] info
-    def start(info)
+    def start(node)
       wait { images_exist? && !starting? }
 
       @starting = true
 
       weave = Docker::Container.get('weave') rescue nil
-      if weave && config_changed?(weave, info)
+      if weave && config_changed?(weave, node)
         weave.delete(force: true)
       end
 
       weave = nil
-      peer_ips = info['peer_ips'] || []
-      trusted_subnets = info.dig('grid', 'trusted_subnets')
+      peer_ips = node.peer_ips || []
+      trusted_subnets = node.grid['trusted_subnets']
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
@@ -249,15 +250,15 @@ module Kontena::NetworkAdapters
       attach_router unless interface_ip('weave')
       connect_peers(peer_ips)
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
-      post_start(info)
+      post_start(node)
 
-      Celluloid::Notifications.publish('network_adapter:start', info) unless already_started?
+      Celluloid::Notifications.publish('network_adapter:start', node) unless already_started?
 
       @started = true
-      info
+      node
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
-      debug exc.backtrace.join("\n")
+      error exc.backtrace.join("\n")
     ensure
       @starting = false
     end
@@ -277,10 +278,10 @@ module Kontena::NetworkAdapters
       end
     end
 
-    # @param [Hash] info
-    def post_start(info)
-      grid_subnet = IPAddr.new(info['grid']['subnet'])
-      overlay_ip = info['overlay_ip']
+    # @param [Node] node
+    def post_start(node)
+      grid_subnet = IPAddr.new(node.grid['subnet'])
+      overlay_ip = node.overlay_ip
 
       if grid_subnet && overlay_ip
         weave_cidr = "#{overlay_ip}/#{grid_subnet.prefixlen}"
@@ -290,11 +291,11 @@ module Kontena::NetworkAdapters
     end
 
     # @param [Docker::Container] weave
-    # @param [Hash] config
-    def config_changed?(weave, config)
+    # @param [Node] node
+    def config_changed?(weave, node)
       return true if weave.config['Image'].split(':')[1] != WEAVE_VERSION
       cmd = Hash[*weave.config['Cmd'].flatten(1)]
-      return true if cmd['--trusted-subnets'] != config.dig('grid', 'trusted_subnets').to_a.join(',')
+      return true if cmd['--trusted-subnets'] != node.grid['trusted_subnets'].to_a.join(',')
 
       false
     end
@@ -392,6 +393,5 @@ module Kontena::NetworkAdapters
         )
       end
     end
-
   end
 end

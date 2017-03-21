@@ -30,15 +30,18 @@ module Kontena::Launchers
       info "ipam image pulled: #{@image_name}"
     end
 
-    def on_network_start(topic, info)
+    # @param [String] topic
+    # @param [Node] node
+    def on_network_start(topic, node)
       info "network started, launching ipam..."
-      async.start(info)
+      async.start(node)
     end
 
-    def start(info)
-      create_container(@image_name, info)
+    # @param [Node] node
+    def start(node)
+      create_container(@image_name, node)
       wait(message: "IPAM running") { running? }
-      Celluloid::Notifications.publish('ipam:start', info)
+      Celluloid::Notifications.publish('ipam:start', node)
     end
 
     def image_exists?
@@ -58,7 +61,7 @@ module Kontena::Launchers
       ipam_client.activate rescue nil
     end
 
-    def create_container(image, info)
+    def create_container(image, node)
       sleep 1 until image_exists?
 
       container = Docker::Container.get(IPAM_SERVICE_NAME) rescue nil
@@ -82,10 +85,10 @@ module Kontena::Launchers
         'StopSignal' => 'SIGTTIN',
         'Cmd' => ["bundle", "exec", "thin", "-a", "127.0.0.1", "-p", "2275", "-e", "production", "start"],
         'Env' => [
-          "NODE_ID=#{info['node_number']}",
+          "NODE_ID=#{node.node_number}",
           "LOG_LEVEL=#{ENV['LOG_LEVEL'] || 1}",
           "ETCD_ENDPOINT=http://127.0.0.1:2379",
-          "KONTENA_IPAM_SUPERNET=#{info['grid']['supernet']}",
+          "KONTENA_IPAM_SUPERNET=#{node.grid['supernet']}",
         ],
         'HostConfig' => {
           'NetworkMode' => 'host',
@@ -114,6 +117,5 @@ module Kontena::Launchers
         '/var/run/docker.sock:/var/run/docker.sock'
       ]
     end
-
   end
 end
