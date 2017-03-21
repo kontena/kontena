@@ -15,31 +15,42 @@ class GridServiceSchedulerWorker
   end
 
   def check_deploy_queue
-    service_deploy = GridServiceDeploy.where(started_at: nil)
-      .asc(:created_at)
-      .find_and_modify({:$set => {started_at: Time.now.utc}}, {new: true})
+    service_deploy = fetch_deploy_item
     return unless service_deploy
 
     with_dlock("check_deploy_queue:#{service_deploy.grid_service_id}", 10) do
       service_deploy.reload
       if service_deploy.grid_service.running? || service_deploy.grid_service.initialized?
         self.perform(service_deploy)
-      elsif service_deploy.grid_service.deploying?
-        info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
-        after(30) {
-          service_deploy.set(:started_at => nil)
-        }
       else
         service_deploy.destroy
       end
     end
   end
 
+  # @return [GridServiceDeploy, NilClass]
+  def fetch_deploy_item
+    GridServiceDeploy.where(started_at: nil)
+      .asc(:created_at)
+      .find_and_modify({:$set => {started_at: Time.now.utc}}, {new: true})
+  rescue Moped::Errors::OperationFailure
+    nil
+  end
+
   def perform(service_deploy)
-    unless service_deploy.grid_service.deploying?
-      self.deployer(service_deploy).deploy
-      self.deploy_dependant_services(service_deploy.grid_service)
+    unless service_deploy.grid_service.deploying?(ignore: service_deploy.id)
+      deploy(service_deploy)
+    else
+      info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
+      after(30) {
+        service_deploy.set(:started_at => nil)
+      }
     end
+  end
+
+  def deploy(service_deploy)
+    self.deployer(service_deploy).deploy
+    self.deploy_dependant_services(service_deploy.grid_service)
   end
 
   def deploy_dependant_services(grid_service)
