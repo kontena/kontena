@@ -16,6 +16,7 @@ require 'logger'
 require 'msgpack'
 require 'tilt/jbuilder.rb'
 require 'mongoid/enum'
+require 'json_serializer'
 
 def require_glob(glob)
   Dir.glob(glob).sort.each do |path|
@@ -30,3 +31,4 @@ require_glob __dir__ + '/helpers/*.rb'
 require_glob __dir__ + '/mutations/**/*.rb'
 require_glob __dir__ + '/jobs/**/*.rb'
 require_glob __dir__ + '/services/**/*.rb'
+require_glob __dir__ + '/serializers/**/*.rb'

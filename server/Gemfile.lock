@@ -68,6 +68,7 @@ GEM
       multi_json (>= 1.3)
       securecompare
       url_safe_base64
+    json-serializer (1.0.0)
     jsonpath (0.5.8)
       multi_json
     listen (2.8.3)
@@ -165,6 +166,7 @@ DEPENDENCIES
   faye-websocket (~> 0.10.0)
   httpclient (~> 2.3)
   json-jwt (= 1.5.2)
+  json-serializer
   jsonpath
   mongoid (~> 4.0.0)
   mongoid-enum

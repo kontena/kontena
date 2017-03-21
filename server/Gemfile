@@ -22,6 +22,7 @@ gem 'json-jwt', '= 1.5.2'
 gem 'jsonpath'
 gem 'bcrypt'
 gem 'rack-attack'
+gem 'json-serializer'
 
 group :development, :test do
   gem 'dotenv'

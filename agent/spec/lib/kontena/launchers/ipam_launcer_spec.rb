@@ -69,6 +69,12 @@ describe Kontena::Launchers::IpamPlugin do
 
     it 'deletes and recreates the container' do
       container = double
+      node = Node.new(
+        'node_number' => 1,
+        'grid' => {
+          'supernet' => '10.80.0.0/12',
+        }
+      )
       allow(Docker::Container).to receive(:get).and_return(container)
       allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
       expect(container).to receive(:delete)
@@ -94,16 +100,17 @@ describe Kontena::Launchers::IpamPlugin do
       expect(ipam_container).to receive(:start)
       allow(ipam_container).to receive(:id).and_return('12345')
 
-      subject.create_container('kontena/docker-ipam-plugin:latest', {
-        'node_number' => '1',
-        'grid' => {
-          'supernet' => '10.80.0.0/12',
-        },
-      })
+      subject.create_container('kontena/docker-ipam-plugin:latest', node)
     end
 
     it 'creates new container' do
       container = double
+      node = Node.new(
+        'node_number' => 1,
+        'grid' => {
+          'supernet' => '10.80.0.0/12',
+        }
+      )
       allow(Docker::Container).to receive(:get).and_return(nil)
       ipam_container = double
       expect(Docker::Container).to receive(:create).with(hash_including(
@@ -125,14 +132,7 @@ describe Kontena::Launchers::IpamPlugin do
         })).and_return(ipam_container)
       expect(ipam_container).to receive(:start)
       allow(ipam_container).to receive(:id).and_return('12345')
-      subject.create_container('kontena/docker-ipam-plugin:latest', {
-        'node_number' => '1',
-        'grid' => {
-          'supernet' => '10.80.0.0/12',
-        },
-      })
+      subject.create_container('kontena/docker-ipam-plugin:latest', node)
     end
-
   end
-
 end

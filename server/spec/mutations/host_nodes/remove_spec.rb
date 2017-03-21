@@ -15,11 +15,6 @@ describe HostNodes::Remove, celluloid: true do
       }.to change{ grid.host_nodes.count }.by(-1)
     end
 
-    it 'triggers grid_scheduler worker' do
-      expect(subject).to receive(:worker).once.with(:grid_scheduler)
-      subject.run
-    end
-
     it 'notifies grid nodes' do
       expect(subject).to receive(:notify_grid).once.with(grid)
       subject.run
