@@ -2,14 +2,6 @@ V1::GridsApi.route('grid_stats') do |r|
 
   # GET /v1/grids/:id/stats
   r.get do
-    r.is do
-      @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
-      @from = (r.params["from"] ? Time.parse(r.params["from"]) : (@to - 1.hour)).utc
-      @network_iface = r.params["iface"] ? r.params["iface"] : "eth0"
-      @grid_stats = HostNodeStat.get_aggregate_stats_for_grid(@grid.id, @from, @to, @network_iface)
-      render('grid_stats/stats')
-    end
-
     r.on 'containers' do
       @stats = GridStat.container_count(@grid.id, DateTime.now - 1.day, DateTime.now)
       render('grid_stats/containers')
