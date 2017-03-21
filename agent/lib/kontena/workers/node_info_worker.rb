@@ -24,6 +24,7 @@ module Kontena::Workers
       @stats_since = Time.now
       @container_seconds = 0
       @previous_cpu = Vmstat.cpu
+      @previous_network = Vmstat.network_interfaces
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -115,6 +116,10 @@ module Kontena::Workers
       cpu_usage = calculate_cpu_usage(@previous_cpu, current_cpu)
       @previous_cpu = current_cpu
 
+      current_network = Vmstat.network_interfaces
+      network_traffic = calculate_network_traffic(@previous_network, current_network, Time.now - @stats_since)
+      @previous_network = current_network
+
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
       container_seconds = calculate_containers_time + container_partial_seconds
@@ -141,7 +146,7 @@ module Kontena::Workers
           }
         ],
         cpu: cpu_usage,
-        network: get_network_traffic,
+        network: network_traffic,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
@@ -284,16 +289,26 @@ module Kontena::Workers
       }
     end
 
-    def get_network_traffic
-      Vmstat.network_interfaces.map do |iface|
+    # @param [Array<Vmstat::NetworkInterface>] prev_network
+    # @param [Array<Vmstat::NetworkInterface>] current_network
+    # @param [Number] interval_seconds
+    # @return [Hash]
+    def calculate_network_traffic(prev_network, current_network, interval_seconds)
+      current_network.map do |iface|
+        prev = prev_network.select { |prev| prev.name == iface.name }
+        prev_rx_bytes = prev.size > 0 ? prev[0].in_bytes : 0
+        prev_tx_bytes = prev.size > 0 ? prev[0].out_bytes : 0
+
         {
           name: iface.name,
           type: iface.type,
           rx_bytes: iface.in_bytes,
           rx_errors: iface.in_errors,
           rx_dropped: iface.in_drops,
+          rx_bytes_per_second: ((iface.in_bytes - prev_rx_bytes).to_f / interval_seconds.to_f).round,
           tx_bytes: iface.out_bytes,
-          tx_errors: iface.out_errors
+          tx_errors: iface.out_errors,
+          tx_bytes_per_second: ((iface.out_bytes - prev_tx_bytes).to_f / interval_seconds.to_f).round
         }
       end
     end

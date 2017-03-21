@@ -254,4 +254,46 @@ describe Kontena::Workers::NodeInfoWorker do
       })
     end
   end
+
+  describe '#calculate_network_traffic' do
+    it 'calculates network traffic' do
+      num_seconds = 60.0
+
+      prev = [
+        #  name=nil, in_bytes=nil, in_errors=nil, in_drops=nil, out_bytes=nil, out_errors=nil, type=nil
+        Vmstat::NetworkInterface.new("eth0", 100, 101, 102, 110, 111, 0),
+        Vmstat::NetworkInterface.new("eth1", 1000, 1001, 1002, 1010, 1011, 0)
+      ]
+      cur = [
+        Vmstat::NetworkInterface.new("eth0", 200, 201, 202, 210, 211, 0),
+        Vmstat::NetworkInterface.new("eth2", 2000, 2001, 2002, 2010, 2011, 1)
+      ]
+
+      result = subject.calculate_network_traffic(prev, cur, num_seconds)
+
+      expect(result).to eq([
+          {
+            name: "eth0",
+            type: 0,
+            rx_bytes: 200,
+            rx_bytes_per_second: 2,
+            rx_errors: 201,
+            rx_dropped: 202,
+            tx_bytes: 210,
+            tx_errors: 211,
+            tx_bytes_per_second: 2
+          }, {
+            name: "eth2",
+            type: 1,
+            rx_bytes: 2000,
+            rx_bytes_per_second: 33,
+            rx_errors: 2001,
+            rx_dropped: 2002,
+            tx_bytes: 2010,
+            tx_errors: 2011,
+            tx_bytes_per_second: 34
+          }
+      ])
+    end
+  end
 end

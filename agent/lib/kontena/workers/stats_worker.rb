@@ -98,13 +98,14 @@ module Kontena::Workers
       num_cores = cpu_usages ? cpu_usages.count : 1
       raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
       interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
+      network_traffic = calculate_network_traffic(prev_stat, current_stat)
 
       data = {
         id: id,
         spec: container.dig(:spec),
         cpu: {
           usage: raw_cpu_usage,
-          usage_pct: (((raw_cpu_usage / interval_in_ns ) / num_cores ) * 100).round(2)
+          usage_pct: ((raw_cpu_usage / interval_in_ns) * 100).round(2)
         },
         memory: {
           usage: current_stat.dig(:memory, :usage),
@@ -112,7 +113,7 @@ module Kontena::Workers
         },
         filesystem: current_stat[:filesystem],
         diskio: current_stat[:diskio],
-        network: current_stat[:network],
+        network: network_traffic,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/containers/stat', [data])
@@ -164,6 +165,30 @@ module Kontena::Workers
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
+    end
+
+    def calculate_network_traffic(prev_stat, current_stat)
+      prev_network = prev_stat[:network]
+      current_network = current_stat[:network]
+
+      return current_network unless prev_network and current_network
+
+      if (current_network[:interfaces])
+        prev_timestamp = Time.parse(prev_stat[:timestamp])
+        current_timestamp = Time.parse(current_stat[:timestamp])
+        interval_seconds = current_timestamp - prev_timestamp
+
+        current_network[:interfaces].each do |iface|
+          prev_iface = prev_network[:interfaces].select { |prev| iface[:name] == prev[:name] }
+          prev_rx_bytes = prev_iface.dig(0, :rx_bytes) || 0
+          prev_tx_bytes = prev_iface.dig(0, :tx_bytes) || 0
+
+          iface[:rx_bytes_per_second] = ((iface[:rx_bytes] - prev_rx_bytes).to_f / interval_seconds).round
+          iface[:tx_bytes_per_second] = ((iface[:tx_bytes] - prev_tx_bytes).to_f / interval_seconds).round
+        end
+      end
+
+      current_network
     end
   end
 end
