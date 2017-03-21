@@ -42,22 +42,17 @@ class GridServiceInstanceDeployer
 
   # @param [GridServiceInstance] service_instance
   def wait_for_service_state(service_instance, state, rev = nil)
-    wait_until!("service #{@grid_service.to_path} instance #{instance_number} is #{state} on node #{service_instance.host_node.to_path}", timeout: 300) do
-      state_match = false
-      if rev.nil?
-        rev_match = true
+    wait_until!("service #{@grid_service.to_path} instance #{service_instance.instance_number} is #{state} on node #{service_instance.host_node.to_path}", timeout: 300) do
+      service_instance.reload
+
+      if service_instance.state != state
+        false
+      elsif rev && service_instance.rev != rev
+        false
       else
-        rev_match = false
-      end
-      until state_match && rev_match do
-        service_instance.reload
-        state_match = service_instance.state == state
-        rev_match = service_instance.rev == rev if rev
-        sleep 1.0 unless state_match && rev_match
+        true
       end
     end
-
-    true
   end
 
   # @param [HostNode] node
