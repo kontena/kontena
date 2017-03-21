@@ -44,10 +44,7 @@ module Kontena::Workers
       exclusive {
         request = rpc_client.future.request("/node_service_pods/list", [node.id])
         response = request.value
-        unless response['service_pods'].is_a?(Array)
-          warn "failed to get list of service pods from master: #{response['error']}"
-          return
-        end
+        raise "Invalid response" unless response['service_pods'].is_a?(Array)
 
         service_pods = response['service_pods']
         current_ids = service_pods.map { |p| p['id'] }

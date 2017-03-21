@@ -16,8 +16,6 @@ module Rpc
       }.compact
 
       { service_pods: service_pods }
-    rescue
-      { error: 'Internal server error' }
     end
 
     # @param [String] id
