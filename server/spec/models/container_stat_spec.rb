@@ -13,6 +13,39 @@ describe ContainerStat do
   it { should have_index_for(grid_service_id: 1) }
   it { should have_index_for(created_at: 1) }
 
+  describe 'methods' do
+    let(:stat) { ContainerStat.new({
+        spec: {
+          "cpu" => { "mask" => "0-2" },
+          "memory" => { "limit" => 1000 }
+        },
+        cpu: { "usage_pct" => 10.0 },
+        memory: { "usage" => 100 },
+        network: {
+          "name" => "eth1",
+          "rx_bytes" => 100.5,
+          "tx_bytes" => 200.5,
+          "interfaces" => [ { "name" => "eth0", "rx_bytes" => 100, "tx_bytes" => 200 } ]
+        }
+    })}
+
+    describe '#calculate_num_cores' do
+      it 'calculates correct number of cpu cores from cpu mask' do
+        num_cores = ContainerStat.calculate_num_cores(stat.spec["cpu"]["mask"])
+        expect(num_cores).to eq(3)
+      end
+    end
+
+    describe '#update_network_stats' do
+      it 'updates values for selected network' do
+        stat.update_network_stats("eth0")
+        expect(stat.network["name"]).to eq("eth0")
+        expect(stat.network["rx_bytes"]).to eq(100)
+        expect(stat.network["tx_bytes"]).to eq(200)
+      end
+    end
+  end
+
   describe 'aggregations' do
     let(:grid_1) { Grid.create!(name: 'grid_1') }
     let(:grid_2) { Grid.create!(name: 'grid_2') }

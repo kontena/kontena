@@ -63,7 +63,8 @@ describe '/v1/services' do
       network: {
         interfaces: [{
           'name' => 'eth0', 'rx_bytes' => 1397524, 'rx_packets' => 3109, 'rx_errors' => 0, 'rx_dropped' => 0, 'tx_bytes' => 1680754, 'tx_packets'=>3035, 'tx_errors'=>0, 'tx_dropped'=>0
-        }]
+        }],
+        'name' => 'xxx', 'rx_bytes' => 123, 'rx_packets' => 456, 'rx_errors' => 0, 'rx_dropped' => 0, 'tx_bytes' => 789, 'tx_packets'=>111, 'tx_errors'=>0, 'tx_dropped'=>0
       },
       spec: {
           'memory' => { 'limit' => 512000000},
@@ -281,6 +282,14 @@ describe '/v1/services' do
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
         expect(json_response['stats'].first['container_id']).to eq(container.name.to_s)
+        expect(json_response['stats'].first['cpu']['usage']).to eq(10)
+        expect(json_response['stats'].first['cpu']['limit']).to eq(1024)
+        expect(json_response['stats'].first['cpu']['num_cores']).to eq(2)
+        expect(json_response['stats'].first['memory']['usage']).to eq(100000)
+        expect(json_response['stats'].first['memory']['limit']).to eq(512000000)
+        expect(json_response['stats'].first['network']['name']).to eq('eth0')
+        expect(json_response['stats'].first['network']['rx_bytes']).to eq(1397524)
+        expect(json_response['stats'].first['network']['tx_bytes']).to eq(1680754)
 
       end
     end
