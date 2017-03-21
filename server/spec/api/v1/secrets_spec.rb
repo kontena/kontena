@@ -57,7 +57,7 @@ describe 'secrets' do
     it 'returns error if user has no access to grid' do
       data = {name: 'PASSWD', value: 'secretzz'}
       post "/v1/grids/#{another_grid.to_path}/secrets", data.to_json, request_headers
-      expect(response.status).to eq(404)
+      expect(response.status).to eq(403)
     end
   end
 

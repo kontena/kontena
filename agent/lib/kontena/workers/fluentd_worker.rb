@@ -21,16 +21,16 @@ module Kontena::Workers
     end
 
     # @param [String] topic
-    # @param [Hash] info
-    def on_node_info(topic, info)
-      node_name = info['name']
-      driver = info.dig('grid', 'logs', 'forwarder')
+    # @param [Node] node
+    def on_node_info(topic, node)
+      node_name = node.name
+      driver = node.grid.dig('logs', 'forwarder')
       if driver == 'fluentd'
-        fluentd_address = info.dig('grid', 'logs', 'opts', 'fluentd-address')
+        fluentd_address = node.grid.dig('logs', 'opts', 'fluentd-address')
         info "starting fluentd log streaming to #{fluentd_address}"
         host, port = fluentd_address.split(':')
         @fluentd = Fluent::Logger::FluentLogger
-          .new("#{node_name}.#{info.dig('grid', 'name')}",
+          .new("#{node_name}.#{node.grid['name']}",
               :host => host,
               :port => port || 24224)
         @forwarding = true

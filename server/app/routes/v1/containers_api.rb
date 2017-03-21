@@ -17,16 +17,11 @@ module V1
       # @param [String] node_name
       # @param [String] container_name
       def load_grid_container(grid_name, node_name, container_name)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
+        grid = load_grid(grid_name)
         node = grid.host_nodes.find_by(name: node_name)
         halt_request(404, {error: 'Not found'}) if !node
         container = node.containers.find_by(name: container_name)
         halt_request(404, {error: 'Not found'}) if !container
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
 
         container
       end
@@ -71,12 +66,7 @@ module V1
 
       # /v1/containers/:grid_name/:node_name/:name
       r.on ':grid_name' do |grid_name|
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
+        grid = load_grid(grid_name)
 
         r.get do
           r.is do
