@@ -77,7 +77,7 @@ describe '/v1/nodes', celluloid: true do
     end
   end
 
-  describe 'GET /stats' do
+  describe 'GET /metrics' do
     let :node do
       grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
     end
@@ -110,8 +110,8 @@ describe '/v1/nodes', celluloid: true do
       })
     end
 
-    it 'returns recent stats' do
-      get "/v1/nodes/#{node.to_path}/stats", nil, request_headers
+    it 'returns recent metrics' do
+      get "/v1/nodes/#{node.to_path}/metrics", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 1
       expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
@@ -123,7 +123,7 @@ describe '/v1/nodes', celluloid: true do
     it 'applies date filters' do
       from = Time.parse("2017-01-01 12:00:00 +00:00").utc
       to = Time.parse("2017-01-01 12:15:00 +00:00").utc
-      get "/v1/nodes/#{node.to_path}/stats?from=#{from}&to=#{to}", nil, request_headers
+      get "/v1/nodes/#{node.to_path}/metrics?from=#{from}&to=#{to}", nil, request_headers
 
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 0
@@ -132,7 +132,7 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'applies network interface filter' do
-      get "/v1/nodes/#{node.to_path}/stats?iface=eth1", nil, request_headers
+      get "/v1/nodes/#{node.to_path}/metrics?iface=eth1", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 1
       expect(json_response['stats'][0]['network']).to eq({ 'name' => "eth1", 'in' => 500.0, 'out' => 500.0 })
