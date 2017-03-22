@@ -188,6 +188,51 @@ Removes an existing grid.
 Only `master_admin` role can remove a grid.
 </aside>
 
+## Get Grid stats
+
+```http
+GET /v1/grids/my-grid/stats HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get all containers running on the grid with latest statistics (cpu/memory/network usage).  Grid stats are based on container statistics collected with cAdvisor.
+
+### HTTP Request
+
+`GET /v1/grids/:id/stats`
+
+### Query Parameters
+
+Parameter | Description | Default Value
+--------- | ------------| -------------
+iface | Network interface included in stats | `eth0`
+sort | The stat to sort results by (always descending).  Possible values are `cpu` `memory` `rx_bytes` `tx_bytes` | `cpu`
+
+
+
+## Get Grid metrics
+
+```http
+GET /v1/grids/my-grid/metrics HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Gets aggregated statistics for a grid (cpu, memory, network, disk usage) for a given time frame, returning one statistic per minute.  Memory, network and disk usage values are summed across nodes, cpu is averaged across nodes.  Grid metrics are based on server statistics collected with vmstat.
+
+### HTTP Request
+
+`GET /v1/grids/:id/metrics `
+
+### Query Parameters
+
+Parameter | Description | Default Value
+--------- | ------------| -------------
+iface | Network interface included in stats | `eth0`
+from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
+to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
+
 # Nodes
 
 
@@ -344,6 +389,51 @@ Delete a node from a grid. Does not actually terminate virtual/physical host nod
 ### Endpoint
 
 `DELETE /v1/nodes/{node_id}`
+
+## Get node stats
+
+```http
+GET /v1/nodes/my-grid/misty-sun-87/stats HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get all containers running on the node with latest statistics (cpu/memory/network usage).  Node metrics are based on container statistics collected with cAdvisor.
+
+### HTTP Request
+
+`GET /v1/nodes/:grid_id/:id/stats`
+
+### Query Parameters
+
+Parameter | Description | Default Value
+--------- | ------------| -------------
+iface | Network interface included in stats | `eth0`
+sort | The stat to sort results by (always descending).  Possible values are `cpu` `memory` `rx_bytes` `tx_bytes` | `cpu`
+
+
+
+## Get node metrics
+
+```http
+GET /v1/nodes/my-grid/misty-sun-87/metrics HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Gets aggregated statistics for a node (cpu, memory, network, disk usage) for a given time frame, returning one statistic per minute.  Node metrics are based on server statistics collected with vmstat.
+
+### HTTP Request
+
+`GET /v1/nodes/:grid_id/:id/metrics `
+
+### Query Parameters
+
+Parameter | Description | Default Value
+--------- | ------------| -------------
+iface | Network interface included in stats | `eth0`
+from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
+to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
 
 # Stacks
@@ -884,6 +974,51 @@ Removes the service from the grid.
 ### Endpoint
 
 `DELETE /v1/services/{service_id}`
+
+## Get service stats
+
+```http
+GET /v1/services/my-grid/null/redis/stats HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get all containers belonging to the service with latest statistics (cpu/memory/network usage).  Service stats are based on container statistics collected with cAdvisor.
+
+### HTTP Request
+
+`GET /v1/services/:grid_id/:stack_id/:id/stats`
+
+### Query Parameters
+
+Parameter | Description | Default Value
+--------- | ------------| -------------
+iface | Network interface included in stats | `eth0`
+sort | The stat to sort results by (always descending).  Possible values are `cpu` `memory` `rx_bytes` `tx_bytes` | `cpu`
+
+
+
+## Get service metrics
+
+```http
+GET /v1/services/my-grid/null/redis/metrics HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Gets aggregated statistics for a service (cpu, memory, network) for a given time frame, returning one statistic per minute.  Service metrics are based on container statistics collected with cAdvisor.
+
+### HTTP Request
+
+`GET /v1/services/:grid_id/:stack_id/:id/metrics`
+
+### Query Parameters
+
+Parameter | Description | Default Value
+--------- | ------------| -------------
+iface | Network interface included in stats | `eth0`
+from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
+to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
 # Secrets
 
