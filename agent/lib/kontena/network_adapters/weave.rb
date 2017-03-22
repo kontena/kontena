@@ -11,6 +11,7 @@ module Kontena::NetworkAdapters
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
+    include Kontena::Observer
 
     WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.9.3'
     WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
@@ -26,7 +27,6 @@ module Kontena::NetworkAdapters
       @started = false
 
       info 'initialized'
-      subscribe('agent:node_info', :on_node_info)
       subscribe('ipam:start', :on_ipam_start)
       async.ensure_images if autostart
 
@@ -34,6 +34,10 @@ module Kontena::NetworkAdapters
 
       # Default size of pool is number of CPU cores, 2 for 1 core machine
       @executor_pool = WeaveExecutor.pool(args: [autostart])
+
+      observe(node: Actor[:node_info_worker]) do
+        start(@node)
+      end
     end
 
     def finalizer
@@ -169,12 +173,6 @@ module Kontena::NetworkAdapters
       end
 
       opts['HostConfig'] = host_config
-    end
-
-    # @param [String] topic
-    # @param [Node] node
-    def on_node_info(topic, node)
-      start(node)
     end
 
     # @param [String] topic
