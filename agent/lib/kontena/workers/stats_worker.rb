@@ -3,25 +3,27 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
     include Kontena::Helpers::RpcHelper
 
-    attr_reader :statsd, :node_name
+    attr_reader :statsd
 
     # @param [Boolean] autostart
     def initialize(autostart = true)
       @statsd = nil
-      @node_name = nil
       info 'initialized'
-      subscribe('agent:node_info', :on_node_info)
       async.start if autostart
+
+      observe(node: Actor[:node_info_worker]) do
+        configure_statsd(@node)
+      end
     end
 
-    # @param [String] topic
     # @param [Node] node
-    def on_node_info(topic, node)
-      @node_name = node.name
-      statsd_conf = node.grid.dig('stats', 'statsd')
-      if statsd_conf
+    def configure_statsd(node)
+      statsd_conf = node.statsd_conf
+      debug "configure stats: #{statsd_conf}"
+      if statsd_conf && statsd_conf['server']
         info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
         @statsd = Statsd.new(
           statsd_conf['server'], statsd_conf['port'].to_i || 8125
@@ -151,7 +153,7 @@ module Kontena::Workers
       if labels && labels[:'io.kontena.service.name']
         key_base = "services.#{name}"
       else
-        key_base = "#{node_name}.containers.#{name}"
+        key_base = "#{@node.name}.containers.#{name}"
       end
       statsd.gauge("#{key_base}.cpu.usage", event[:cpu][:usage_pct])
       statsd.gauge("#{key_base}.memory.usage", event[:memory][:usage])

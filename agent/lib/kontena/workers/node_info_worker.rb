@@ -57,7 +57,7 @@ module Kontena::Workers
       end
     end
 
-    # @param [Hash] node
+    # @param [Node] node
     def configure_statsd(node)
       statsd_conf = node.statsd_conf
       if statsd_conf && statsd_conf['server']
