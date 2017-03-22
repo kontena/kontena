@@ -38,7 +38,7 @@ module Kontena
     # @param method [Symbol]
     # @return [Object, nil] possible existing value
     def observe(actor, method)
-      debug "observe: #{actor}.#{method}"
+      debug "observe: #{actor}.#{method} = #{@value.inspect[0..64] + '...'}"
 
       observers[actor] = method
 
