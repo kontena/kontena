@@ -1,5 +1,5 @@
 require_relative '../spec_helper'
-require_relative '../../db/migrations/19_volume_migration'
+require_relative '../../db/migrations/21_volume_migration'
 
 describe VolumeMigration do
 
@@ -68,6 +68,20 @@ describe VolumeMigration do
     expect(volume.name).to eq('myVol')
     expect(volume.driver).to eq('local')
     expect(volume.scope).to eq('grid')
+  end
+
+  it 'ignores invalid volume definition' do
+    s = GridService.create!(
+      name: 'app',
+      grid: grid,
+      image_name: 'my/app:latest',
+      volumes: ['foo:data']
+    )
+    expect {
+      VolumeMigration.up
+    }.to change {Volume.count}.by (0)
+    s.reload
+    expect(s.service_volumes.count).to eq(0)
   end
 
 end
