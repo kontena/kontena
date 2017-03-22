@@ -34,7 +34,7 @@ module Rpc
         cap_drop: service.cap_drop,
         devices: service.devices,
         ports: service.ports,
-        volumes: service.volumes,
+        volumes: build_volumes,
         volumes_from: service.volumes_from,
         net: service.net,
         hostname: build_hostname,
@@ -163,6 +163,30 @@ module Rpc
       else
         DEFAULT_REGISTRY
       end
+    end
+
+    def build_volumes
+      volume_specs = []
+      service.service_volumes.each do |sv|
+        if sv.volume
+          volume_name = sv.volume.name_for_service(service, service_instance.instance_number)
+          volume_specs << {
+              name: volume_name,
+              path: sv.path,
+              flags: sv.flags,
+              driver: sv.volume.driver,
+              driver_opts: sv.volume.driver_opts
+          }
+        else
+          volume_specs << {
+              bind_mount: sv.bind_mount,
+              path: sv.path,
+              flags: sv.flags,
+          }
+        end
+      end
+
+      volume_specs
     end
   end
 end

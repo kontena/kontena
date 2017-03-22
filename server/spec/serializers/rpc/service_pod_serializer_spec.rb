@@ -208,23 +208,24 @@ describe Rpc::ServicePodSerializer do
       expect(subject.registry_name).to eq('kontena.io')
     end
   end
+
   describe '#build_volumes' do
 
     it 'adds volume specs' do
-      expect(subject.build_volumes(1)).to eq([
+      expect(subject.build_volumes).to eq([
         {:name=>"null.volA", :path => '/data', :flags => nil, :driver=>"local", :driver_opts=>{}},
-        {:name=>"app.ext-vol-1", :path => '/foo', :flags => nil, :driver=>"local", :driver_opts=>{}}
+        {:name=>"app.ext-vol-2", :path => '/foo', :flags => nil, :driver=>"local", :driver_opts=>{}}
       ])
     end
 
     it 'adds bind mounts as volumes' do
       service.service_volumes = [ServiceVolume.new(bind_mount: '/host/path', path: '/data')]
-      expect(subject.build_volumes(1)).to eq([{:bind_mount=>"/host/path", :path => '/data', :flags => nil}])
+      expect(subject.build_volumes).to eq([{:bind_mount=>"/host/path", :path => '/data', :flags => nil}])
     end
 
     it 'adds anon volume specs' do
       service.service_volumes = [ServiceVolume.new(path: '/data')]
-      expect(subject.build_volumes(1)).to eq([{:bind_mount=>nil, :path => '/data', :flags => nil}])
+      expect(subject.build_volumes).to eq([{:bind_mount=>nil, :path => '/data', :flags => nil}])
     end
   end
   describe '#image_credentials' do
