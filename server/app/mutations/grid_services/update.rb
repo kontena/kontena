@@ -43,6 +43,7 @@ module GridServices
           end
         end
       end
+      validate_volumes(self.volumes)
     end
 
     def execute

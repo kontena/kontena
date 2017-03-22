@@ -396,14 +396,14 @@ describe GridServices::Create do
             name: 'redis',
             stateful: false,
             volumes: [
-              '/foo:/data:ro:nocopy:rslave'
+              '/foo:/data:ro,nocopy,rslave'
             ]
         ).run
         expect(outcome.success?).to be(true)
         expect(outcome.result.service_volumes.first.volume).to be_nil
         expect(outcome.result.service_volumes.first.bind_mount).to eq('/foo')
         expect(outcome.result.service_volumes.first.path).to eq('/data')
-        expect(outcome.result.service_volumes.first.flags).to eq('ro:nocopy:rslave')
+        expect(outcome.result.service_volumes.first.flags).to eq('ro,nocopy,rslave')
       end
 
       it 'creates service with a anon volumes' do
@@ -429,6 +429,19 @@ describe GridServices::Create do
         expect(outcome.result.service_volumes[1].bind_mount).to eq(nil)
         expect(outcome.result.service_volumes[1].path).to eq('/bar')
         expect(outcome.result.service_volumes[1].flags).to eq(nil)
+      end
+
+      it 'fails to create service with invalid volume' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            volumes: [
+              'foo'
+            ]
+        ).run
+        expect(outcome.success?).to be(false)
       end
 
     end

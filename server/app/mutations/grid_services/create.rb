@@ -35,6 +35,7 @@ module GridServices
       if self.secrets
         validate_secrets_exist(self.grid, self.secrets)
       end
+      validate_volumes(self.volumes)
     end
 
     def execute

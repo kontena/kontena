@@ -137,6 +137,18 @@ module GridServices
       end
     end
 
+    def validate_volumes(volumes = nil)
+      return unless volumes
+
+      volumes.each do |volume|
+        begin
+          parse_volume(volume)
+        rescue ArgumentError => exc
+          add_error(:volumes, :invalid, exc.message)
+        end
+      end
+    end
+
     module ClassMethods
 
       def common_validations

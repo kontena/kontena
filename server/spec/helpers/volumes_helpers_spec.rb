@@ -17,13 +17,6 @@ describe VolumesHelpers do
       expect(volume[:flags]).to be_nil
     end
 
-    it 'ignores mount flags' do
-      volume = subject.parse_volume('/data:foo:bar:baz')
-      expect(volume[:path]).to eq('/data')
-      expect(volume[:bind_mount]).to be_nil
-      expect(volume[:volume]).to be_nil
-      expect(volume[:flags]).to be_nil
-    end
   end
 
   context 'named volumes' do
@@ -36,11 +29,11 @@ describe VolumesHelpers do
     end
 
     it 'includes mount flags' do
-      volume = subject.parse_volume('foo:/data:foo:bar:baz')
+      volume = subject.parse_volume('foo:/data:foo,bar,baz')
       expect(volume[:path]).to eq('/data')
       expect(volume[:bind_mount]).to be_nil
       expect(volume[:volume]).to eq('foo')
-      expect(volume[:flags]).to eq('foo:bar:baz')
+      expect(volume[:flags]).to eq('foo,bar,baz')
     end
   end
 
@@ -54,11 +47,31 @@ describe VolumesHelpers do
     end
 
     it 'includes mount flags' do
-      volume = subject.parse_volume('/foo:/data:foo:bar:baz')
+      volume = subject.parse_volume('/foo:/data:foo,bar,baz')
       expect(volume[:path]).to eq('/data')
       expect(volume[:bind_mount]).to eq('/foo')
       expect(volume[:volume]).to be_nil
-      expect(volume[:flags]).to eq('foo:bar:baz')
+      expect(volume[:flags]).to eq('foo,bar,baz')
+    end
+  end
+
+  context 'invalid volumes' do
+    it 'fails safely' do
+      expect {
+        subject.parse_volume('foo')
+      }.to raise_error(ArgumentError)
+    end
+
+    it 'mount flags not supported on anon volume' do
+      expect {
+        subject.parse_volume('/data:foo,bar,baz')
+      }.to raise_error(ArgumentError)
+    end
+
+    it 'mount path should be always full path' do
+      expect {
+        subject.parse_volume('/data:foo')
+      }.to raise_error(ArgumentError)
     end
   end
 end
