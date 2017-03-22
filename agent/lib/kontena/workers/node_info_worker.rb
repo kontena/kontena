@@ -11,6 +11,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observable
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
@@ -47,12 +48,13 @@ module Kontena::Workers
     end
 
     # @param [String] topic
-    # @param [Hash] node
+    # @param [Node] node
     def on_node_info(topic, node)
+      @node = node
+      update(node) # observable
       if @node.nil? || (@node.statsd_conf != node.statsd_conf)
         configure_statsd(node)
       end
-      @node = node
     end
 
     # @param [Hash] node
