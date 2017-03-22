@@ -9,20 +9,18 @@ module Kontena::Workers
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::WaitHelper
 
-    attr_reader :workers, :node
+    attr_reader :workers
 
     trap_exit :on_worker_exit
     finalizer :finalize
 
     def initialize(autostart = true)
       @workers = {}
-      subscribe('agent:node_info', :on_node_info)
       subscribe('service_pod:update', :on_update_notify)
       async.start if autostart
     end
 
     def start
-      wait_until!("have node info", interval: 0.1) { self.node }
       populate_workers_from_docker
       loop do
         populate_workers_from_master
@@ -30,10 +28,8 @@ module Kontena::Workers
       end
     end
 
-    # @param [String] topic
-    # @param [Node] node
-    def on_node_info(topic, node)
-      @node = node
+    def node
+      wait_until!(message: "node info") { Actor[:node_info_worker].node }
     end
 
     def on_update_notify(_, _)
