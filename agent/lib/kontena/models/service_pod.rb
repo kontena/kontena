@@ -279,7 +279,9 @@ module Kontena
         volumes = []
         self.volumes.each do |vol|
           if vol['bind_mount'] || vol['name']
-            volumes << "#{vol['bind_mount'] || vol['name']}:#{vol['path']}:#{vol['flags']}"
+            volume = "#{vol['bind_mount'] || vol['name']}:#{vol['path']}"
+            volume << ":#{vol['flags']}" if vol['flags'] && !vol['flags'].empty?
+            volumes << volume
           end
         end
         volumes

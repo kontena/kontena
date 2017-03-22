@@ -38,7 +38,6 @@ describe Kontena::Models::ServicePod do
       'hostname' => 'redis-2',
       'domainname' => 'default.kontena.local',
       'log_driver' => nil
-      #'volumes' => [{'name' => 'someVolume', 'driver' => 'local', 'driver_opts' => {'foo' => 'bar'}}]
     }
   end
 
@@ -410,10 +409,10 @@ describe Kontena::Models::ServicePod do
 
     it 'returns correct array when volumes are defined' do
       data['volumes'] = volumes
-      bind_vols = subject.build_bind_volumes
-      expect(bind_vols.size).to eq(2)
-      expect(bind_vols[0]).to eq('app.someVol:/data:')
-      expect(bind_vols[1]).to eq('/proc:/host/proc:ro')
+      expect(subject.build_bind_volumes).to eq([
+        'app.someVol:/data',
+        '/proc:/host/proc:ro'
+      ])
     end
   end
 
