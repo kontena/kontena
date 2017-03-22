@@ -18,16 +18,16 @@ module Kontena::Workers
     def initialize(autostart = true)
       @workers = {}
       observe(node: Actor[:node_info_worker])
-      subscribe('service_pod:update', :on_update_notify)
       async.start if autostart
     end
 
     def start
       wait_until!("have node info", interval: 0.1) { self.node }
       populate_workers_from_docker
-      loop do
+
+      subscribe('service_pod:update', :on_update_notify)
+      every(30) do
         populate_workers_from_master
-        sleep 30
       end
     end
 
