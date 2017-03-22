@@ -3,6 +3,7 @@ require_relative '../../serializers/rpc/host_node_serializer'
 
 module Agent
   class NodePlugger
+    include Logging
 
     attr_reader :node, :grid
 
@@ -21,7 +22,8 @@ module Agent
         self.send_master_info
         self.send_node_info
       rescue => exc
-        puts exc.message
+        error exc.message
+        error exc.backtrace.join("\n")
       end
     end
 
