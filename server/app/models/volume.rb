@@ -12,10 +12,9 @@ class Volume
 
   index({ grid_id: 1 })
   index({ name: 1 })
-  index({ stack_id: 1 })
 
   validates_presence_of :name, :scope, :grid_id
-  validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
+  validates_uniqueness_of :name, scope: [:grid_id]
 
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
