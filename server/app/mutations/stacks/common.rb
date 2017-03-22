@@ -14,9 +14,9 @@ module Stacks
       end
     end
 
-    def handle_volume_outcome_errors(volume_name, messages)
-      messages.each do |key, msg|
-        add_error(:volumes, key.to_sym, "Volume create failed for volume '#{volume_name}': #{msg}")
+    def handle_volume_outcome_errors(volume_name, errors)
+      errors.each do |key, atom|
+         add_service_error(volume_name, key, atom.symbolic, atom.message)
       end
     end
 
