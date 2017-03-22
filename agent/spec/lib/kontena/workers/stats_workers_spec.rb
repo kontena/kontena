@@ -20,14 +20,6 @@ describe Kontena::Workers::StatsWorker do
   end
   after(:each) { Celluloid.shutdown }
 
-  describe '#initialize' do
-    it 'subscribes to agent:node_info channel' do
-      expect(subject.wrapped_object).to receive(:on_node_info)
-      Celluloid::Notifications.publish('agent:node_info')
-      sleep 0.01
-    end
-  end
-
   describe '#collect_stats' do
     it 'loops through all containers' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return([
@@ -91,7 +83,7 @@ describe Kontena::Workers::StatsWorker do
 
   end
 
-  describe '#on_node_info' do
+  describe '#configure_statsd' do
     it 'initializes statsd client if node has statsd config' do
       node = Node.new(
         'grid' => {
@@ -104,7 +96,7 @@ describe Kontena::Workers::StatsWorker do
         }
       )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', node)
+      subject.configure_statsd(node)
       expect(subject.statsd).not_to be_nil
     end
 
@@ -115,7 +107,7 @@ describe Kontena::Workers::StatsWorker do
         }
       )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', node)
+      subject.configure_statsd(node)
       expect(subject.statsd).to be_nil
     end
   end

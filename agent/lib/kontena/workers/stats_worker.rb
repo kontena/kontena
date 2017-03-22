@@ -14,8 +14,10 @@ module Kontena::Workers
       info 'initialized'
       async.start if autostart
 
-      observe(node: Actor[:node_info_worker]) do
-        configure_statsd(@node)
+      if autostart
+        observe(node: Actor[:node_info_worker]) do
+          configure_statsd(@node)
+        end
       end
     end
 
