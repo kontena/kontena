@@ -51,6 +51,8 @@ module Kontena
   module Observer
     # Set instance attributes from multiple observables
     # Yields to block once all obsered instance attributes are valid, and when they are updated
+    # Crashes this Actor if any of the observed Actors crashes
+    #
     # @param observables [Hash{Symbol => Observable}]
     # @yield [] all observable attributes are valid
     def observe(**observables, &block)
@@ -70,6 +72,9 @@ module Kontena
           # update initial state; only run update block once at end
           instance_variable_set("@#{sym}", value)
         end
+
+        # crash if observed Actor crashes, otherwise we get stuck
+        self.link observable
       end
 
       # immediately run update block if all observables were ready

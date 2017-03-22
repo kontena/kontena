@@ -3,6 +3,10 @@ describe Kontena::Observable do
     Class.new do
       include Celluloid
       include Kontena::Observable
+
+      def crash
+        fail
+      end
     end
   end
 
@@ -86,5 +90,13 @@ describe Kontena::Observable do
 
     expect(observer[:object1]).to be object
     expect(observer[:object2]).to be object2
+  end
+
+  it "crashes if the observable does", :celluloid => true do
+    observer = observer_class.new(object: subject)
+
+    expect{subject.crash}.to raise_error(RuntimeError)
+
+    expect{observer.ready?}.to raise_error(Celluloid::DeadActorError)
   end
 end
