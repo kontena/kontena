@@ -17,6 +17,7 @@ describe Kontena::Workers::StatsWorker do
   before(:each) do
     Celluloid.boot
     mock_rpc_client
+    allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
   end
   after(:each) { Celluloid.shutdown }
 
@@ -28,13 +29,13 @@ describe Kontena::Workers::StatsWorker do
     end
   end
 
-  describe '#collect_stats' do
+  describe '#collect_container_stats' do
     it 'loops through all containers' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return([
         { namespace: 'docker', id: 'id', name: '/docker/id' },
       ])
       expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id' }
-      subject.collect_stats
+      subject.collect_container_stats
     end
 
     it 'ignores systemd mount cgroups' do
@@ -43,19 +44,19 @@ describe Kontena::Workers::StatsWorker do
         { namespace: 'docker', id: 'id2', name: '/system.slice/var-lib-docker-containers-id-shm.mount' },
       ])
       expect(subject.wrapped_object).to receive(:send_container_stats).once { |args| expect(args[:id]).to eq 'id1' }
-      subject.collect_stats
+      subject.collect_container_stats
     end
 
     it 'does nothing on get error' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return(nil)
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
-      subject.collect_stats
+      subject.collect_container_stats
     end
 
     it 'does not call send_stats if no container stats found' do
       expect(subject.wrapped_object).to receive(:get).once.with('/api/v1.2/subcontainers').and_return({})
       expect(subject.wrapped_object).not_to receive(:send_container_stats)
-      subject.collect_stats
+      subject.collect_container_stats
     end
   end
 
@@ -120,7 +121,7 @@ describe Kontena::Workers::StatsWorker do
     end
   end
 
-  describe '#send_statsd_metrics' do
+  describe '#send_container_statsd_metrics' do
     let(:event) do
       {
         id: 'aaaaaa',
@@ -148,7 +149,7 @@ describe Kontena::Workers::StatsWorker do
     it 'sends statsd metrics' do
       allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
       expect(statsd).to receive(:gauge)
-      subject.send_statsd_metrics('foobar', event)
+      subject.send_container_statsd_metrics('foobar', event)
     end
   end
 
@@ -158,7 +159,7 @@ describe Kontena::Workers::StatsWorker do
     end
 
     it 'sends container stats' do
-      expect(subject.wrapped_object).to receive(:send_statsd_metrics).with('weave', hash_including({
+      expect(subject.wrapped_object).to receive(:send_container_statsd_metrics).with('weave', hash_including({
           id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e',
           spec: 'spec',
           cpu: {
@@ -182,7 +183,7 @@ describe Kontena::Workers::StatsWorker do
 
     it 'does not fail on missing cpu stats' do
       event[:stats][-1][:cpu][:usage][:per_cpu_usage] = nil
-      expect(subject.wrapped_object).to receive(:send_statsd_metrics).with('weave', hash_including({
+      expect(subject.wrapped_object).to receive(:send_container_statsd_metrics).with('weave', hash_including({
           id: 'a675a5cd5f36ba747c9495f3dbe0de1d5f388a2ecd2aaf5feb00794e22de6c5e',
           spec: 'spec',
           cpu: {
@@ -203,9 +204,7 @@ describe Kontena::Workers::StatsWorker do
       )
       subject.send_container_stats(event)
     end
-  end
 
-  describe '#send_container_stats' do
     it 'sends stats via rpc' do
       expect(rpc_client).to receive(:notification).once.with('/containers/stat', [hash_including(time: String)])
 
@@ -231,6 +230,118 @@ describe Kontena::Workers::StatsWorker do
         ]
       }
       subject.send_container_stats(container)
+    end
+  end
+
+  describe '#on_node_info' do
+    it 'initializes statsd client if node has statsd config' do
+      node = Node.new(
+        'grid' => {
+          'stats' => {
+            'statsd' => {
+              'server' => '192.168.24.33',
+              'port' => 8125
+            }
+          }
+        }
+      )
+      expect(subject.statsd).to be_nil
+      subject.on_node_info('agent:on_node_info', node)
+      expect(subject.statsd).not_to be_nil
+    end
+
+    it 'does not initialize statsd if no statsd config exists' do
+      node = Node.new(
+        'grid' => {
+          'stats' => {}
+        }
+      )
+      expect(subject.statsd).to be_nil
+      subject.on_node_info('agent:on_node_info', node)
+      expect(subject.statsd).to be_nil
+    end
+  end
+
+  describe '#publish_node_stats' do
+    it 'sends node stats via rpc' do
+      expect(rpc_client).to receive(:notification).once.with(
+        '/nodes/stats', [hash_including(id: 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
+      )
+      subject.publish_node_stats
+    end
+  end
+
+  describe '#calculate_container_time' do
+    context 'container is running' do
+      it 'calculates container time since last check' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 30)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 300).to_s,
+          'Running' => true
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(30)
+      end
+
+      it 'calculates container time since container is started' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 50).to_s,
+          'Running' => true
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(50)
+      end
+    end
+
+    context 'container is not running' do
+      it 'calculates partial container time since last check' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 300).to_s,
+          'FinishedAt' => (Time.now - 2).to_s,
+          'Running' => false
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(58)
+      end
+
+      it 'calculates partial container time since container is started' do
+        allow(subject.wrapped_object).to receive(:stats_since).and_return(Time.now - 60)
+        container = double(:container, state: {
+          'StartedAt' => (Time.now - 50).to_s,
+          'FinishedAt' => (Time.now - 2).to_s,
+          'Running' => false
+        })
+        time = subject.calculate_container_time(container)
+        expect(time).to eq(48)
+      end
+    end
+  end
+
+  describe '#on_container_event' do
+    context 'die' do
+      it 'calculates container time if container is found' do
+        event = double(:event, status: 'die', id: 'aaa')
+        container = double(:container, id: 'aaa')
+        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).to receive(:calculate_container_time).and_return(1)
+        subject.on_container_event('on_container_event', event)
+      end
+
+      it 'does not calculate container time if container does not exist' do
+        event = double(:event, status: 'die', id: 'aaa')
+        allow(Docker::Container).to receive(:get).and_return(nil)
+        expect(subject.wrapped_object).not_to receive(:calculate_container_time)
+        subject.on_container_event('on_container_event', event)
+      end
+    end
+  end
+
+  describe '#publish_node_stats' do
+    it 'sends stats via rpc with timestamps' do
+      expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [hash_including(time: String)])
+      subject.publish_node_stats
     end
   end
 end
