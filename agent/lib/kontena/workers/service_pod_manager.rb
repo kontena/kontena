@@ -17,8 +17,11 @@ module Kontena::Workers
 
     def initialize(autostart = true)
       @workers = {}
-      observe(node: Actor[:node_info_worker])
-      async.start if autostart
+
+      if autostart
+        observe(node: Actor[:node_info_worker])
+        async.start
+      end
     end
 
     def start

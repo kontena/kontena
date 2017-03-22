@@ -35,8 +35,10 @@ module Kontena::NetworkAdapters
       # Default size of pool is number of CPU cores, 2 for 1 core machine
       @executor_pool = WeaveExecutor.pool(args: [autostart])
 
-      observe(node: Actor[:node_info_worker]) do
-        start(@node)
+      if autostart
+        observe(node: Actor[:node_info_worker]) do
+          start(@node)
+        end
       end
     end
 
