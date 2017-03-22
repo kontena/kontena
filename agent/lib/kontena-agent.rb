@@ -21,6 +21,8 @@ require_relative 'kontena/websocket_client'
 require_relative 'kontena/models/node'
 require_relative 'kontena/models/service_pod'
 
+require_relative 'kontena/helpers/observable'
+
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/weave_executor'
 require_relative 'kontena/network_adapters/ipam_client'
