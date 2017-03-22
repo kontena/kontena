@@ -9,7 +9,6 @@ module Kontena
     def initialize(opts)
       info "initializing agent (version #{VERSION})"
       @opts = opts
-      @queue = Queue.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
       @supervisor = Celluloid::Supervision::Container.run!
       self.supervise_state
