@@ -16,7 +16,7 @@ module V1
       def find_grid(grid_name)
         grid = Grid.find_by(name: grid_name)
         halt_request(404, {error: "Grid #{grid_name} not found"}) if !grid
-        unless current_user.accessible_grids.include?(grid)
+        unless current_user.has_access?(grid)
           halt_request(403, {error: 'Access denied'})
         end
         grid
