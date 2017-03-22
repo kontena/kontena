@@ -1,5 +1,3 @@
-require_relative '../../../spec_helper'
-
 describe Kontena::Workers::ServicePodManager do
   include RpcClientMocks
 

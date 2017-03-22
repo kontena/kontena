@@ -1,5 +1,3 @@
-require_relative '../../../spec_helper'
-
 describe Kontena::Workers::FluentdWorker do
 
   let(:subject) { described_class.new(false) }
