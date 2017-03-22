@@ -104,6 +104,11 @@ module V1
             render('grids/show')
           end
 
+          r.on 'token' do
+            halt_request(403, {error: 'Forbidden'}) unless current_user.can_update?(@grid)
+            render('grids/token')
+          end
+
           r.on 'container_logs' do
             scope = @grid.container_logs
 

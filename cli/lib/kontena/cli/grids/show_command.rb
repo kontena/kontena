@@ -12,12 +12,13 @@ module Kontena::Cli::Grids
     def execute
       require_api_url
 
-      grid = find_grid_by_name(name)
-      exit_with_error("Grid not found") unless grid
-
       if self.token?
-        puts grid['token']
+        token = client.get("grids/#{name}/token")
+        exit_with_error("Grid not found") unless token
+        puts token['token']
       else
+        grid = find_grid_by_name(name)
+        exit_with_error("Grid not found") unless grid
         print_grid(grid)
       end
     end

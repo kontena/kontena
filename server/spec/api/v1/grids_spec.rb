@@ -154,6 +154,29 @@ describe '/v1/grids', celluloid: true do
       expect(json_response['trusted_subnets']).to eq([])
     end
 
+    describe '/token' do
+      context 'when user is not master_admin or grid_admin' do
+        it 'returns error' do
+          grid = david.grids.first
+          get "/v1/grids/#{grid.to_path}/token", nil, request_headers
+          expect(response.status).to eq(403)
+        end
+      end
+
+      context 'when allowed to fetch token' do
+        before(:each) do
+          david.roles << Role.create(name: 'master_admin', description: 'Master admin')
+        end
+
+        it 'returns token' do
+          grid = david.grids.first
+          get "/v1/grids/#{grid.to_path}/token", nil, request_headers
+          expect(response.status).to eq(200)
+          expect(json_response['token']).to eq(grid.token)
+        end
+      end
+    end
+
     describe '/services' do
       it 'returns grid services' do
         grid = david.grids.first
