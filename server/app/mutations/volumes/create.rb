@@ -4,7 +4,7 @@ module Volumes
     required do
       model :grid, class: Grid
       string :scope, matches: /instance|stack|grid/
-      string :name  # TODO Force same rules for naming as docker
+      string :name , matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
       string :driver
     end
 
@@ -13,7 +13,9 @@ module Volumes
     end
 
     def validate
-      # These are not the validations you are looking for
+      if self.grid.volumes.find_by(name: self.name)
+        add_error(:name, :already_exists, "Volume with given name already exists")
+      end
     end
 
     def execute

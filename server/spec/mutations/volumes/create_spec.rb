@@ -7,6 +7,18 @@ describe Volumes::Create do
   end
 
   describe '#run' do
+    it 'does not allow volume name to start with -' do
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          name: '-foo',
+          driver: 'local',
+          scope: 'instance'
+        )
+        expect(outcome.success?).to be_falsey
+      }.to change {Volume.count}. by 0
+    end
+
     it 'creates new grid volume' do
       expect {
         outcome = Volumes::Create.run(
