@@ -19,8 +19,10 @@ module Kontena::Workers
       info 'initialized'
       subscribe('container:log', :on_log_event)
 
-      observe(node: Actor[:node_info_worker]) do
-        configure(@node)
+      if autostart
+        observe(node: Actor[:node_info_worker]) do
+          configure(@node)
+        end
       end
     end
 
