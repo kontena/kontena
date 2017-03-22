@@ -6,6 +6,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::WaitHelper
 
@@ -16,7 +17,7 @@ module Kontena::Workers
 
     def initialize(autostart = true)
       @workers = {}
-      subscribe('agent:node_info', :on_node_info)
+      observe(node: Actor[:node_info_worker])
       subscribe('service_pod:update', :on_update_notify)
       async.start if autostart
     end
@@ -28,12 +29,6 @@ module Kontena::Workers
         populate_workers_from_master
         sleep 30
       end
-    end
-
-    # @param [String] topic
-    # @param [Node] node
-    def on_node_info(topic, node)
-      @node = node
     end
 
     def on_update_notify(_, _)
