@@ -4,6 +4,7 @@ class StackRemoveWorker
   include Celluloid
   include Logging
   include Stacks::SortHelper
+  include WaitHelper
 
   def perform(stack_id)
     stack = Stack.find_by(id: stack_id)
