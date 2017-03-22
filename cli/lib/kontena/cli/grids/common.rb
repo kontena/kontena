@@ -102,6 +102,10 @@ module Kontena::Cli::Grids
       grids['grids'].find {|grid| grid['name'] == name }
     end
 
+    def get_grid_token(name)
+      client.get("grids/#{name}/token")
+    end
+
     def to_gigabytes(amount)
       return 0.0 if amount.nil?
       (amount.to_f / 1024 / 1024 / 1024).to_f.round(2)

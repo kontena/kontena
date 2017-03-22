@@ -13,7 +13,7 @@ module Kontena::Cli::Grids
       require_api_url
 
       if self.token?
-        token = client.get("grids/#{name}/token")
+        token = get_grid_token(name)
         exit_with_error("Grid not found") unless token
         puts token['token']
       else
