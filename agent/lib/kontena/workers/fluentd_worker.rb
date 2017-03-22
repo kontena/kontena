@@ -5,6 +5,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
 
     attr_reader :fluentd, :node_name, :queue
 
@@ -16,13 +17,15 @@ module Kontena::Workers
       @queue = []
       @forwarding = false
       info 'initialized'
-      subscribe('agent:node_info', :on_node_info)
       subscribe('container:log', :on_log_event)
+
+      observe(node: Actor[:node_info_worker]) do
+        configure(@node)
+      end
     end
 
-    # @param [String] topic
     # @param [Node] node
-    def on_node_info(topic, node)
+    def configure(node)
       node_name = node.name
       driver = node.grid.dig('logs', 'forwarder')
       if driver == 'fluentd'
