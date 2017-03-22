@@ -218,7 +218,7 @@ module Kontena::NetworkAdapters
     end
 
     def start(node)
-      wait { images_exist? && !starting? }
+      wait_until("weave is ready to start") { images_exist? && !starting? }
 
       @starting = true
 
@@ -238,7 +238,7 @@ module Kontena::NetworkAdapters
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         @executor_pool.execute(exec_params)
         weave = Docker::Container.get('weave') rescue nil
-        wait(timeout: 10, interval: 1, message: 'waiting for weave to start') {
+        wait_until("weave started", timeout: 10, interval: 1) {
           weave && weave.running?
         }
 
