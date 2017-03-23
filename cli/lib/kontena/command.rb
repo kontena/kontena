@@ -6,17 +6,7 @@ class Kontena::Command < Clamp::Command
     ENV['DEBUG'] ||= 'true'
   end
 
-  option ['-M', '--master-url'], '[URL]', 'Set master url (default: config or $KONTENA_URL)' do |master_url|
-    Kontena::Cli::Config.reset_instance
-    ENV['KONTENA_URL'] = master_url
-  end
-
-  option ['-T', '--master-token'], '[TOKEN]', 'Set master token (default: config or $KONTENA_TOKEN)' do |master_token|
-    Kontena::Cli::Config.reset_instance unless ENV['KONTENA_URL']
-    ENV['KONTENA_TOKEN'] = master_token
-  end
-
-  option ['-m', '--master'], '[NAME]', 'Use a master from client configuration by name (default: config or $KONTENA_MASTER)' do |master_name|
+  option ['-M', '--master'], '[NAME]', 'Use a master from client configuration by name (default: config or $KONTENA_MASTER)' do |master_name|
     Kontena::Cli::Config.reset_instance
     ENV['KONTENA_MASTER'] = master_name
   end
