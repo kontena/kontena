@@ -40,7 +40,7 @@ module Kontena::Launchers
     # @param [Node] node
     def start(node)
       create_container(@image_name, node)
-      wait(message: "IPAM running") { running? }
+      wait_until("IPAM running") { running? }
       Celluloid::Notifications.publish('ipam:start', node)
     end
 

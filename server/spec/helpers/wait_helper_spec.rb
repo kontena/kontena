@@ -1,7 +1,8 @@
-describe Kontena::Helpers::WaitHelper do
+
+describe WaitHelper do
 
   let(:klass) {
-    Class.new { include Kontena::Helpers::WaitHelper }
+    Class.new { include WaitHelper }
   }
 
   let(:subject) {

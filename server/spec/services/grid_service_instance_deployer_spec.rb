@@ -45,6 +45,14 @@ describe GridServiceInstanceDeployer do
       expect(instance.reload.desired_state).to eq('stopped')
     end
 
+    it 'sets desired_state to stopped even host_node is missing' do
+      instance = grid_service.grid_service_instances.create!(
+        instance_number: 2, deploy_rev: (Time.now.utc - 1.day).to_s
+      )
+      subject.stop_current_instance(instance)
+      expect(instance.reload.desired_state).to eq('stopped')
+    end
+
     it 'notifies node and waits instance to stop if node connected' do
       instance = grid_service.grid_service_instances.create!(
         instance_number: 2, deploy_rev: (Time.now.utc - 1.day).to_s, host_node: node

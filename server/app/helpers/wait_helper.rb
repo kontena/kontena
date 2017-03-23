@@ -1,5 +1,5 @@
-module Kontena::Helpers::WaitHelper
-  include Kontena::Logging
+module WaitHelper
+  include Logging
 
   WAIT_TIMEOUT = 300
   WAIT_INTERVAL = 0.5

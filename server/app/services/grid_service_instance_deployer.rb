@@ -1,5 +1,6 @@
 class GridServiceInstanceDeployer
   include Logging
+  include WaitHelper
 
   attr_reader :grid_service
 
@@ -33,7 +34,7 @@ class GridServiceInstanceDeployer
   # @param [GridServiceInstance] current_instance
   def stop_current_instance(current_instance)
     current_instance.set(desired_state: 'stopped')
-    if current_instance.host_node.connected?
+    if current_instance.host_node && current_instance.host_node.connected?
       notify_node(current_instance.host_node)
       wait_for_service_state(current_instance, 'stopped')
     end
@@ -41,22 +42,17 @@ class GridServiceInstanceDeployer
 
   # @param [GridServiceInstance] service_instance
   def wait_for_service_state(service_instance, state, rev = nil)
-    Timeout.timeout(300) do
-      state_match = false
-      if rev.nil?
-        rev_match = true
+    wait_until!("service #{@grid_service.to_path} instance #{service_instance.instance_number} is #{state} on node #{service_instance.host_node.to_path}", timeout: 300) do
+      service_instance.reload
+
+      if service_instance.state != state
+        false
+      elsif rev && service_instance.rev != rev
+        false
       else
-        rev_match = false
-      end
-      until state_match && rev_match do
-        service_instance.reload
-        state_match = service_instance.state == state
-        rev_match = service_instance.rev == rev if rev
-        sleep 1.0 unless state_match && rev_match
+        true
       end
     end
-
-    true
   end
 
   # @param [HostNode] node

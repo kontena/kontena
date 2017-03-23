@@ -22,7 +22,7 @@ module Kontena::Workers
     end
 
     def start
-      wait!(interval: 0.1, message: 'waiting for node info') { self.node }
+      wait_until!("have node info", interval: 0.1) { self.node }
       populate_workers_from_docker
       loop do
         populate_workers_from_master
