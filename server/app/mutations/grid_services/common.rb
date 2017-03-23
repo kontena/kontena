@@ -86,28 +86,37 @@ module GridServices
       service_secrets
     end
 
-    def build_service_volumes()
+    def build_service_volumes(grid, stack)
       service_volumes = []
       self.volumes.each do |vol|
         vol_spec = parse_volume(vol)
         if vol_spec[:volume]
-          # Named volume, try to find the proper mapping for external volumes
+          # Named volume, try to find the proper mapping for external volumes from stack definition
           # NULL stack services don't have revs, for those just use the "global" name
           volume_name = vol_spec[:volume]
-          if self.stack.latest_rev
-            stack_volume = self.stack.latest_rev.volumes.find {|v|
+          if stack.latest_rev
+            stack_volume = stack.latest_rev.volumes.find {|v|
               v['name'] == vol_spec[:volume]
             }
             # Use external volume definition if given
-            volume_name = stack_volume['external'] == true ? stack_volume['name'] : stack_volume.dig('external', 'name') || stack_volume['name']
+            volume_name = stack_volume_name(stack_volume)
           end
-          volume = self.grid.volumes.find_by(name: volume_name)
+          volume = grid.volumes.find_by(name: volume_name)
           vol_spec[:volume] = volume
         end
-        service_volume = ServiceVolume.new(**vol_spec)
-        service_volumes << service_volume
+        service_volumes << ServiceVolume.new(**vol_spec)
       end
       service_volumes
+    end
+
+    def stack_volume_name(stack_volume)
+      if stack_volume['external'] == true
+        # Use the plain volume name
+        stack_volume['name']
+      else
+        # Use either explicitly defined external name or plain name
+        stack_volume.dig('external', 'name') || stack_volume['name']
+      end
     end
 
     # @param [Grid] grid

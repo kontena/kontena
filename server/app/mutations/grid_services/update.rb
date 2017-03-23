@@ -47,8 +47,6 @@ module GridServices
     end
 
     def execute
-      self.grid = self.grid_service.grid
-      self.stack = self.grid_service.stack
       attributes = {}
       attributes[:strategy] = self.strategy if self.strategy
       attributes[:image_name] = self.image if self.image
@@ -87,7 +85,7 @@ module GridServices
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
       end
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes
+        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.grid, self.grid_service.stack)
       end
       grid_service.attributes = attributes
       if grid_service.changed?
