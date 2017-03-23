@@ -1,8 +1,8 @@
-require_relative '../spec_helper'
 
 describe RpcServer, celluloid: true do
 
   class HelloWorld
+    include Celluloid
 
     def initialize(grid)
     end
@@ -32,7 +32,7 @@ describe RpcServer, celluloid: true do
 
     it 'catches RpcServer::Error' do
       subject.handle_request(ws_client, grid.id, [1, 99, '/hello/hello', ['world']])
-      allow(subject.wrapped_object.handlers[grid.id]['hello']).to receive(:hello).once do
+      allow(subject.wrapped_object.handlers[grid.id]['hello'].wrapped_object).to receive(:hello).once do
         raise RpcServer::Error.new(404, 'oh-no')
       end
       expect(subject.wrapped_object).to receive(:send_message).with(ws_client, [1, 99, hash_including(code: 404) , nil])
@@ -42,7 +42,7 @@ describe RpcServer, celluloid: true do
 
     it 'catches exceptions' do
       subject.handle_request(ws_client, grid.id, [1, 99, '/hello/hello', ['world']])
-      allow(subject.wrapped_object.handlers[grid.id]['hello']).to receive(:hello).once do
+      allow(subject.wrapped_object.handlers[grid.id]['hello'].wrapped_object).to receive(:hello).once do
         raise StandardError.new('oh-no')
       end
       expect(subject.wrapped_object).to receive(:send_message).with(ws_client, [1, 99, hash_including(code: 500) , nil])

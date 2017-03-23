@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::NetworkAdapters::Weave do
 
@@ -128,47 +127,47 @@ describe Kontena::NetworkAdapters::Weave do
     end
 
     it 'returns false if config is the same' do
-      config = {
+      node = Node.new(
         'grid' => {
           'trusted_subnets' => []
         }
-      }
+      )
       weave_config = {
         'Image' => valid_image,
         'Cmd' => ['--trusted-subnets', '']
       }
       weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, config)).to be_falsey
+      expect(subject.config_changed?(weave, node)).to be_falsey
     end
 
     it 'returns true if image version is not same' do
-      config = {
+      node = Node.new(
         'grid' => {
           'trusted_subnets' => []
         }
-      }
+      )
       weave_config = {
         'Image' => "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:1.5.0",
         'Cmd' => ['--trusted-subnets', '']
       }
 
       weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, config)).to be_truthy
+      expect(subject.config_changed?(weave, node)).to be_truthy
     end
 
     it 'returns true if trusted-subnets is not same' do
-      config = {
+      node = Node.new(
         'grid' => {
           'trusted_subnets' => ['10.1.2.0/16']
         }
-      }
+      )
       weave_config = {
         'Image' => valid_image,
         'Cmd' => ['--trusted-subnets', '']
       }
 
       weave = double(:weave, config: weave_config)
-      expect(subject.config_changed?(weave, config)).to be_truthy
+      expect(subject.config_changed?(weave, node)).to be_truthy
     end
   end
 

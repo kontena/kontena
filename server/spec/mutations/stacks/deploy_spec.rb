@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Stacks::Deploy, celluloid: true do
   let(:grid) { Grid.create!(name: 'test-grid') }
@@ -71,10 +70,10 @@ describe Stacks::Deploy, celluloid: true do
       )
       worker = Celluloid::Actor[:stack_deploy_worker]
       redis = stack.grid_services.find_by(name: 'redis')
-      expect(worker.wrapped_object).to receive(:remove_service).once.with(redis.id)
       mutation = described_class.new(stack: stack)
       mutation.run
       sleep 0.01 until worker.mailbox.size == 0
+      expect(GridService.find(redis.id)).to be_nil
     end
   end
 end

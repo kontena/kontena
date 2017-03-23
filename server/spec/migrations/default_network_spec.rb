@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 require_relative '../../db/migrations/16_default_network'
 
 describe DefaultNetwork do

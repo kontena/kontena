@@ -15,7 +15,7 @@ module Kontena::Cli::Services
       require_api_url
 
       query_params = {}
-      query_params[:container] = parse_container_name(name, instance) if instance
+      query_params[:instance] = instance if instance
 
       show_logs("services/#{parse_service_id(name)}/container_logs", query_params) do |log|
         show_log(log)

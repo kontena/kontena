@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
@@ -7,23 +6,6 @@ describe GridServiceDeployer do
   let(:node1) { HostNode.create!(node_id: SecureRandom.uuid, grid: grid) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
-
-  describe '#registry_name' do
-    it 'returns DEFAULT_REGISTRY by default' do
-      expect(subject.registry_name).to eq(GridServiceDeployer::DEFAULT_REGISTRY)
-    end
-
-    it 'returns registry from image' do
-      subject.grid_service.image_name = 'kontena.io/admin/redis:2.8'
-      expect(subject.registry_name).to eq('kontena.io')
-    end
-  end
-
-  describe '#creds_for_registry' do
-    it 'return nil by default' do
-      expect(subject.creds_for_registry).to be_nil
-    end
-  end
 
   describe '#selected_nodes' do
     before(:each) do
@@ -81,43 +63,6 @@ describe GridServiceDeployer do
         Scheduler::Strategy::Daemon.new, service_deploy, grid.host_nodes.to_a
       )
       expect(subject.instance_count).to eq(2)
-    end
-  end
-
-  describe '#deploy' do
-    let(:channel) { "grid_service_deployer:#{grid_service.id}" }
-
-    it 'subscribes to ping' do
-      events = []
-      subscription = MongoPubsub.subscribe(channel) do |event|
-        events << event if event['event'] == 'pong'
-      end
-      allow(subject).to receive(:cleanup_deploy) do
-        sleep 0.1
-      end
-      allow(subject).to receive(:deploy_service_instance)
-      deploy = Thread.new { subject.deploy }
-      MongoPubsub.publish(channel, {'event' => 'ping'})
-      Timeout::timeout(5) do
-        sleep 0.05 until events.size > 0
-      end
-      expect(events.size).to eq(1)
-      deploy.kill
-    end
-
-    it 'cleans up subscription' do
-      events = []
-      subscription = MongoPubsub.subscribe(channel) do |event|
-        events << event if event['event'] == 'pong'
-      end
-      allow(subject).to receive(:cleanup_deploy)
-      allow(subject).to receive(:deploy_service_instance)
-      subject.deploy
-      sleep 0.01
-      MongoPubsub.publish(channel, {'event' => 'ping'})
-      Timeout::timeout(1) do
-        sleep 0.05 until events.size == 0
-      end
     end
   end
 end

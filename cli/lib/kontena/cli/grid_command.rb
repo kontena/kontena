@@ -1,34 +1,19 @@
-require_relative 'grids/list_command'
-require_relative 'grids/create_command'
-require_relative 'grids/update_command'
-require_relative 'grids/use_command'
-require_relative 'grids/show_command'
-require_relative 'grids/logs_command'
-require_relative 'grids/remove_command'
-require_relative 'grids/current_command'
-require_relative 'grids/env_command'
-require_relative 'grids/audit_log_command'
-require_relative 'grids/user_command'
-require_relative 'grids/cloud_config_command'
-require_relative 'grids/trusted_subnet_command'
-require_relative 'grids/health_command'
-
 class Kontena::Cli::GridCommand < Kontena::Command
 
-  subcommand ["list","ls"], "List all grids", Kontena::Cli::Grids::ListCommand
-  subcommand "create", "Create a new grid", Kontena::Cli::Grids::CreateCommand
-  subcommand "update", "Update grid", Kontena::Cli::Grids::UpdateCommand
-  subcommand "use", "Switch to use specific grid", Kontena::Cli::Grids::UseCommand
-  subcommand "show", "Show grid details", Kontena::Cli::Grids::ShowCommand
-  subcommand "logs", "Show logs from grid containers", Kontena::Cli::Grids::LogsCommand
-  subcommand ["remove","rm"], "Remove a grid", Kontena::Cli::Grids::RemoveCommand
-  subcommand "current", "Show current grid details", Kontena::Cli::Grids::CurrentCommand
-  subcommand "env", "Show the current grid environment details", Kontena::Cli::Grids::EnvCommand
-  subcommand "audit-log", "Show audit log of the current grid", Kontena::Cli::Grids::AuditLogCommand
-  subcommand "user", "User specific commands", Kontena::Cli::Grids::UserCommand
-  subcommand "cloud-config", "Generate cloud-config", Kontena::Cli::Grids::CloudConfigCommand
-  subcommand "trusted-subnet", "Trusted subnet related commands", Kontena::Cli::Grids::TrustedSubnetCommand
-  subcommand "health", "Check grid health", Kontena::Cli::Grids::HealthCommand
+  subcommand ["list","ls"], "List all grids", load_subcommand('grids/list_command')
+  subcommand "create", "Create a new grid", load_subcommand('grids/create_command')
+  subcommand "update", "Update grid", load_subcommand('grids/update_command')
+  subcommand "use", "Switch to use specific grid", load_subcommand('grids/use_command')
+  subcommand "show", "Show grid details", load_subcommand('grids/show_command')
+  subcommand "logs", "Show logs from grid containers", load_subcommand('grids/logs_command')
+  subcommand ["remove","rm"], "Remove a grid", load_subcommand('grids/remove_command')
+  subcommand "current", "Show current grid details", load_subcommand('grids/current_command')
+  subcommand "env", "Show the current grid environment details", load_subcommand('grids/env_command')
+  subcommand "audit-log", "Show audit log of the current grid", load_subcommand('grids/audit_log_command')
+  subcommand "user", "User specific commands", load_subcommand('grids/user_command')
+  subcommand "cloud-config", "Generate cloud-config", load_subcommand('grids/cloud_config_command')
+  subcommand "trusted-subnet", "Trusted subnet related commands", load_subcommand('grids/trusted_subnet_command')
+  subcommand "health", "Check grid health", load_subcommand('grids/health_command')
 
   def execute
   end

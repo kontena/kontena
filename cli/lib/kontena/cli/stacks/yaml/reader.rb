@@ -38,10 +38,10 @@ module Kontena::Cli::Stacks
           @registry    = current_account.stacks_url
         elsif from_url?
           @raw_content = load_from_url(file)
-          @registry = nil
+          @registry = 'file://'
         else
           @raw_content = File.read(File.expand_path(file))
-          @registry = nil
+          @registry = 'file://'
         end
 
         @errors           = []

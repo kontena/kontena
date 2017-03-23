@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::ImageCleanupWorker do
   let(:subject) { described_class.new(false) }

@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe GridServices::Deploy, celluloid: true do
   let(:host_node) { HostNode.create(node_id: 'aa')}
@@ -40,7 +39,7 @@ describe GridServices::Deploy, celluloid: true do
     end
 
     it 'allows to deploy service that is deploying' do
-      redis_service.set_state('deploying')
+      redis_service.grid_service_deploys.create!(started_at: Time.now)
       outcome = subject.run
       expect(outcome.success?).to be_truthy
       expect(redis_service.reload.deploying?).to be_truthy

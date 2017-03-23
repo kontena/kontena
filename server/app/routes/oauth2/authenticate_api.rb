@@ -25,7 +25,9 @@ module OAuth2Api
 
         params = request.params
 
-        unless AuthProvider.valid?
+        auth_provider = AuthProvider.instance
+
+        unless auth_provider.valid?
           mime_halt(
             501,
             'server_error',
@@ -57,7 +59,7 @@ module OAuth2Api
         end
 
         response.redirect(
-          AuthProvider.authorize_url(
+          auth_provider.authorize_url(
             state: AuthorizationRequest.create(
               redirect_uri: params['redirect_uri'],
               expires_in: params['expires_in'].to_i,

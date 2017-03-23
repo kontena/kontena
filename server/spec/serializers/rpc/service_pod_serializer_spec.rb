@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Docker::ServiceCreator do
+describe Rpc::ServicePodSerializer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:node) { HostNode.create!(name: 'node-1', node_id: 'a') }
   let(:lb) do
@@ -20,106 +20,112 @@ describe Docker::ServiceCreator do
       networks: [grid.networks.first]
     )
   end
+  let(:service_instance) do
+    service.grid_service_instances.create!(
+      instance_number: 2,
+      desired_state: 'running',
+      deploy_rev: 12,
+      host_node: node
+    )
+  end
+  let(:subject) { described_class.new(service_instance) }
 
-  let(:subject) { described_class.new(service, node) }
-
-  describe '#service_spec' do
-    let(:service_spec) { subject.service_spec(2, 'rev') }
+  describe '#to_hash' do
 
     it 'includes service_name' do
-      expect(service_spec).to include(:service_name => 'app')
+      expect(subject.to_hash).to include(:service_name => 'app')
     end
 
     it 'includes instance_number' do
-      expect(service_spec).to include(:instance_number => 2)
+      expect(subject.to_hash).to include(:instance_number => 2)
     end
 
     it 'includes image_name' do
-      expect(service_spec).to include(:image_name => service.image_name)
+      expect(subject.to_hash).to include(:image_name => service.image_name)
     end
 
     it 'includes deploy_rev' do
-      expect(service_spec).to include(:deploy_rev => 'rev')
+      expect(subject.to_hash).to include(:deploy_rev => '12')
     end
 
     it 'includes stateful' do
-      expect(service_spec).to include(:stateful => false)
+      expect(subject.to_hash).to include(:stateful => false)
     end
 
     it 'includes user' do
-      expect(service_spec).to include(:user => nil)
+      expect(subject.to_hash).to include(:user => nil)
     end
 
     it 'includes cmd' do
-      expect(service_spec).to include(:cmd => nil)
+      expect(subject.to_hash).to include(:cmd => nil)
     end
 
     it 'includes memory' do
-      expect(service_spec).to include(:memory => nil)
+      expect(subject.to_hash).to include(:memory => nil)
     end
 
     it 'includes memory_swap' do
-      expect(service_spec).to include(:memory_swap => nil)
+      expect(subject.to_hash).to include(:memory_swap => nil)
     end
 
     it 'includes cpu_shares' do
-      expect(service_spec).to include(:cpu_shares => nil)
+      expect(subject.to_hash).to include(:cpu_shares => nil)
     end
 
     it 'includes privileged' do
-      expect(service_spec).to include(:privileged => nil)
+      expect(subject.to_hash).to include(:privileged => nil)
     end
 
     it 'includes cap_add' do
-      expect(service_spec).to include(:cap_add => [])
+      expect(subject.to_hash).to include(:cap_add => [])
     end
 
     it 'includes cap_drop' do
-      expect(service_spec).to include(:cap_drop => [])
+      expect(subject.to_hash).to include(:cap_drop => [])
     end
 
     it 'includes devices' do
-      expect(service_spec).to include(:devices => [])
+      expect(subject.to_hash).to include(:devices => [])
     end
 
     it 'includes ports' do
-      expect(service_spec).to include(:ports => [])
+      expect(subject.to_hash).to include(:ports => [])
     end
 
     it 'includes volumes' do
-      expect(service_spec).to include(:volumes => [])
+      expect(subject.to_hash).to include(:volumes => [])
     end
 
     it 'includes volumes_from' do
-      expect(service_spec).to include(:volumes_from => [])
+      expect(subject.to_hash).to include(:volumes_from => [])
     end
 
     it 'includes net' do
-      expect(service_spec).to include(:net => 'bridge')
+      expect(subject.to_hash).to include(:net => 'bridge')
     end
 
     it 'includes log_driver' do
-      expect(service_spec).to include(:log_driver => nil)
+      expect(subject.to_hash).to include(:log_driver => nil)
     end
 
     it 'includes log_opts' do
-      expect(service_spec).to include(:log_opts => {})
+      expect(subject.to_hash).to include(:log_opts => {})
     end
 
     it 'includes hooks' do
-      expect(service_spec).to include(:hooks => [])
+      expect(subject.to_hash).to include(:hooks => [])
     end
 
     it 'includes secrets' do
-      expect(service_spec).to include(:secrets => [])
+      expect(subject.to_hash).to include(:secrets => [])
     end
 
     it 'includes default network' do
-      expect(service_spec).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
+      expect(subject.to_hash).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
     end
 
     describe '[:env]' do
-      let(:env) { service_spec[:env] }
+      let(:env) { subject.to_hash[:env] }
 
       it 'includes saved env variable' do
         expect(env).to include('FOO=bar')
@@ -136,10 +142,9 @@ describe Docker::ServiceCreator do
     end
 
     describe '[:labels]' do
-      let(:labels) { service_spec[:labels] }
+      let(:labels) { subject.to_hash[:labels] }
 
       it 'includes default service labels' do
-        expect(labels).to include('io.kontena.container.id' => anything)
         expect(labels).to include('io.kontena.service.id' => service.id.to_s)
         expect(labels).to include('io.kontena.service.name' => service.name)
         expect(labels).to include('io.kontena.stack.name' => service.stack.name)
@@ -176,6 +181,23 @@ describe Docker::ServiceCreator do
         expect(labels).not_to include('io.kontena.health_check.timeout' => '10')
         expect(labels).not_to include('io.kontena.health_check.initial_delay' => '10')
       end
+    end
+  end
+
+  describe '#registry_name' do
+    it 'returns DEFAULT_REGISTRY by default' do
+      expect(subject.registry_name).to eq(Rpc::ServicePodSerializer::DEFAULT_REGISTRY)
+    end
+
+    it 'returns registry from image' do
+      service.image_name = 'kontena.io/admin/redis:2.8'
+      expect(subject.registry_name).to eq('kontena.io')
+    end
+  end
+
+  describe '#image_credentials' do
+    it 'return nil by default' do
+      expect(subject.image_credentials).to be_nil
     end
   end
 end

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -ue
+
 # login
 docker login -u kontenabot -p $DOCKER_HUB_PASSWORD
 

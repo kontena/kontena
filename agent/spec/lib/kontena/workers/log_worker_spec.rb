@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 
 describe Kontena::Workers::LogWorker do
   include RpcClientMocks

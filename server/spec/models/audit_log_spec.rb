@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe AuditLog do
   it { should be_timestamped_document }

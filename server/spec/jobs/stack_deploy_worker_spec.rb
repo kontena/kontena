@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe StackDeployWorker, celluloid: true do
 
@@ -92,16 +91,9 @@ describe StackDeployWorker, celluloid: true do
         ]
       )
       stack_rev = stack.latest_rev
-      expect(subject.wrapped_object).to receive(:remove_service).once.with(lb.id)
-      subject.remove_services(stack, stack_rev)
-    end
-  end
-
-  describe '#remove_service' do
-    it 'calls service remove worker' do
-      expect(subject.respond_to?(:worker)).to be_truthy
-      expect(subject.wrapped_object).to receive(:worker).with(:grid_service_remove).and_return(spy)
-      subject.remove_service('foo')
+      expect {
+        subject.remove_services(stack, stack_rev)
+      }.to change { stack.grid_services.find_by(name: 'lb') }.from(lb).to(nil)
     end
   end
 end

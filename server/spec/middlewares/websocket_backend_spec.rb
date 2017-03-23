@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 require_relative '../../app/middlewares/websocket_backend'
 
 describe WebsocketBackend, celluloid: true do

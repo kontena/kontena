@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/stacks/remove_command"
 
 describe Kontena::Cli::Stacks::RemoveCommand do

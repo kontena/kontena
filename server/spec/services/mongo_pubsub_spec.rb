@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe MongoPubsub do
 
@@ -23,9 +22,8 @@ describe MongoPubsub do
       described_class.publish('channel1', channel1_msg)
       described_class.publish('channel2', channel2_msg)
 
-      Timeout::timeout(5) do
-        sleep 0.01 until messages.size == 2
-      end
+      WaitHelper.wait_until!(timeout: 5) { messages.size == 2 }
+
       subs.each(&:terminate)
     end
 

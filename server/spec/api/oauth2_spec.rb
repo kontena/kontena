@@ -1,30 +1,40 @@
-require_relative '../spec_helper'
 
 describe 'OAuth2 API' do
   let(:david) { User.create(email: 'david@example.com') }
   let(:json_header) { { 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json' } }
+  let(:auth_provider) { double(:auth_provider) }
 
   context '/authenticate when AP not configured' do
     describe 'GET /' do
       it 'returns error when AuthProvider is not configured' do
-        expect(AuthProvider.instance).to receive(:valid?).and_return(false)
+        expect(AuthProvider).to receive(:instance).and_return(auth_provider)
+        expect(auth_provider).to receive(:valid?).and_return(false)
         get '/authenticate'
         expect(response.status).to eq(501)
       end
     end
   end
 
-  context '/authenticate when AP not configured' do
+  context '/authenticate when AP configured' do
     describe 'GET /' do
       before(:each) do
-        allow(AuthProvider.instance).to receive(:valid?).and_return(true)
-        allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
+        Configuration['oauth2.client_id'] = "foo"
+        Configuration['oauth2.client_secret'] = "bar"
+        Configuration['oauth2.authorize_endpoint'] = "https://foo.kontena.io/foo"
+        Configuration['oauth2.token_endpoint'] = "https://foo.kontena.io/token"
+        Configuration['oauth2.userinfo_endpoint'] = "foo"
+        Configuration['oauth2.userinfo_scope'] = "foo"
+        Configuration['server.root_url'] = "https://example.com:8181"
       end
-      
+
+      after(:each) do
+        Configuration.destroy_all
+      end
+
       it 'returns a redirect when AuthProvider is configured' do
         get '/authenticate?redirect_uri=http://localhost:2323'
         expect(response.status).to eq(302)
-        expect(response.headers['Location']).to match(/http:\/\/foo/)
+        expect(response.headers['Location']).to match(/https:\/\/foo.kontena.io/)
       end
 
       it 'accepts invite code and stores it to auth request state storage' do
@@ -40,8 +50,9 @@ describe 'OAuth2 API' do
     let(:token) { AccessToken.create(user: david, scopes: ['user']) }
 
     before(:each) do
-      allow(AuthProvider.instance).to receive(:valid?).and_return(true)
-      allow(AuthProvider.instance).to receive(:authorize_url).and_return('http://foo')
+      allow(AuthProvider).to receive(:instance).and_return(auth_provider)
+      allow(auth_provider).to receive(:valid?).and_return(true)
+      allow(auth_provider).to receive(:authorize_url).and_return('http://foo')
     end
 
     context 'response_type = code' do
@@ -158,7 +169,7 @@ describe 'OAuth2 API' do
         expect(response.status).to eq(404)
       end
     end
-    
+
     context 'grant_type = refresh_token' do
       it 'returns a token in exchange when given a valid refresh token' do
         token = AccessToken.create(user: david, expires_at: Time.now + 7200, scopes: ['user'])
@@ -233,20 +244,24 @@ describe 'OAuth2 API' do
 
     it 'returns error if code can not be exchanged' do
       ar = AuthorizationRequest.create(user: david)
-      allow(AuthProvider).to receive(:get_token).and_return(nil)
+      allow(AuthProvider).to receive(:instance).and_return(auth_provider)
+      allow(auth_provider).to receive(:valid?).and_return(true)
+      expect(auth_provider).to receive(:get_token).and_return(nil)
       get "/cb?code=foo&state=#{ar.state_plain}"
       expect(response.status).to eq(400)
     end
 
     it 'stores the received token, creates a local access token and redirects when everything is fine' do
       ar = AuthorizationRequest.create(user: david, redirect_uri: 'http://localhost:1234/cb')
-      allow(AuthProvider).to receive(:get_token).and_return({
+      allow(AuthProvider).to receive(:instance).and_return(auth_provider)
+      allow(auth_provider).to receive(:valid?).and_return(true)
+      expect(auth_provider).to receive(:get_token).and_return({
         'access_token' => 'abcd1234',
         'refresh_token' => 'cdef2345',
         'expires_in' => 7200,
         'scope' => 'user:email'
       })
-      allow(AuthProvider).to receive(:get_userinfo).and_return({
+      expect(auth_provider).to receive(:get_userinfo).and_return({
         id: '12345',
         username: 'testfoo',
         email: 'foofoo@example.com'

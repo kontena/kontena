@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe Kontena::RpcServer do
 
@@ -16,6 +15,8 @@ describe Kontena::RpcServer do
     stub_const("Kontena::RpcServer::HANDLERS", {'hello' => HelloWorld})
     Celluloid.boot
   end
+
+  after(:each) { Celluloid.shutdown }
 
   after(:each) { Celluloid.shutdown }
 

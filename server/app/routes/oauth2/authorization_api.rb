@@ -80,7 +80,7 @@ module OAuth2Api
           end
         when INVITE
 
-          unless AuthProvider.valid?
+          unless AuthProvider.instance.valid?
             mime_halt(501, SERVER_ERROR, NOT_CONFIGURED) and return
           end
 

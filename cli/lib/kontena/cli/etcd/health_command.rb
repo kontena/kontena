@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'kontena/cli/helpers/health_helper'
 
 module Kontena::Cli::Etcd
   class HealthCommand < Kontena::Command

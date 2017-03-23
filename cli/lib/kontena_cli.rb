@@ -74,6 +74,14 @@ module Kontena
   def self.root
     File.dirname(__dir__)
   end
+
+  def self.cli_root(*joinables)
+    if joinables.empty?
+      File.join(Kontena.root, 'lib/kontena/cli')
+    else
+      File.join(Kontena.root, 'lib/kontena/cli', *joinables)
+    end
+  end
 end
 
 # Monkeypatching string to mimick 'colorize' gem

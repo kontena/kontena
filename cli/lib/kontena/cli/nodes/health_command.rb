@@ -1,4 +1,4 @@
-require_relative '../helpers/health_helper'
+require 'kontena/cli/helpers/health_helper'
 
 module Kontena::Cli::Nodes
   class HealthCommand < Kontena::Command

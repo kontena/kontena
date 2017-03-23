@@ -15,14 +15,6 @@ module V1
       validate_access_token
       require_current_user
 
-      ##
-      # @param [String] name
-      # @return [Grid]
-      def load_grid(name)
-        @grid = current_user.accessible_grids.find_by(name: name)
-        halt_request(404, {error: 'Not found'}) unless @grid
-      end
-
       # @param [Stack] stack
       # @param [Hash] data
       def update_stack(stack, data)

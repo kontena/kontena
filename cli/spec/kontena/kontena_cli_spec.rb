@@ -1,6 +1,6 @@
-require_relative '../spec_helper'
 require 'kontena_cli'
 require 'kontena/light_prompt'
+require 'kontena/cli/whoami_command'
 
 describe Kontena do
   context 'prompt' do

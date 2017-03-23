@@ -1,4 +1,3 @@
-require_relative '../../../spec_helper'
 require_relative '../../helpers/fixtures_helpers'
 
 describe Kontena::Workers::StatsWorker do
@@ -6,8 +5,14 @@ describe Kontena::Workers::StatsWorker do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
-
   let(:container) { spy(:container, id: 'foo', labels: {}) }
+  let(:node) do
+    Node.new(
+      'id' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+      'instance_number' => 1,
+      'grid' => {}
+    )
+  end
 
   before(:each) do
     Celluloid.boot
@@ -88,7 +93,7 @@ describe Kontena::Workers::StatsWorker do
 
   describe '#on_node_info' do
     it 'initializes statsd client if node has statsd config' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {
             'statsd' => {
@@ -97,20 +102,20 @@ describe Kontena::Workers::StatsWorker do
             }
           }
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.on_node_info('agent:node_info', node)
       expect(subject.statsd).not_to be_nil
     end
 
     it 'does not initialize statsd if no statsd config exists' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {}
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.on_node_info('agent:node_info', node)
       expect(subject.statsd).to be_nil
     end
   end

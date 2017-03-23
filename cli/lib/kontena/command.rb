@@ -1,4 +1,5 @@
 require 'clamp'
+require_relative 'cli/subcommand_loader'
 
 class Kontena::Command < Clamp::Command
 
@@ -60,6 +61,10 @@ class Kontena::Command < Clamp::Command
         end
       end
     end
+  end
+
+  def self.load_subcommand(path)
+    Kontena::Cli::SubcommandLoader.new(path)
   end
 
   def self.inherited(where)
@@ -208,7 +213,7 @@ class Kontena::Command < Clamp::Command
     end
   rescue Kontena::Errors::StandardError => exc
     raise exc if ENV['DEBUG']
-    puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
+    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
     abort
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything

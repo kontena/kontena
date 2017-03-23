@@ -9,8 +9,6 @@ namespace :release do
     DOCKER_VERSIONS = ['latest', VERSION.to_s.match(/(\d+\.\d+)/)[1]]
     DEB_COMPONENT = 'main'
   end
-  BINTRAY_USER = ENV['BINTRAY_USER']
-  BINTRAY_KEY = ENV['BINTRAY_KEY']
 
   desc 'Build Ubuntu packages'
   task :build_ubuntu => [:build_ubuntu_trusty, :build_ubuntu_xenial] do
@@ -69,8 +67,8 @@ namespace :release do
   task :push_ubuntu do
     rev = ENV['REV'] || '1'
     repo = ENV['REPO'] || 'ubuntu'
-    sh("curl -T ./release/trusty/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=#{DEB_COMPONENT};deb_architecture=amd64'")
-    sh("curl -T ./release/xenial/#{NAME}_#{VERSION}-#{rev}_all.deb -u#{BINTRAY_USER}:#{BINTRAY_KEY} 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=#{DEB_COMPONENT};deb_architecture=amd64'")
+    sh("curl --netrc -T ./release/trusty/#{NAME}_#{VERSION}-#{rev}_all.deb 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~trusty_all.deb;deb_distribution=trusty;deb_component=#{DEB_COMPONENT};deb_architecture=amd64;publish=1'")
+    sh("curl --netrc -T ./release/xenial/#{NAME}_#{VERSION}-#{rev}_all.deb 'https://api.bintray.com/content/kontena/#{repo}/#{NAME}/#{VERSION}/pool/#{DEB_COMPONENT}/k/#{NAME}-#{VERSION}-#{rev}~xenial_all.deb;deb_distribution=xenial;deb_component=#{DEB_COMPONENT};deb_architecture=amd64;publish=1'")
   end
 
   desc 'Upload docker image'

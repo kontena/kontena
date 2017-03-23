@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe RpcClient, celluloid: true do
   let(:node_id) { SecureRandom.hex(32) }

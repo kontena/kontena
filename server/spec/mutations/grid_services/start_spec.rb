@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe GridServices::Start, celluloid: true do
   let(:grid) {

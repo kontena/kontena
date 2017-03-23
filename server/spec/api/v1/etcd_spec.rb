@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe '/v1/etcd/:grid_name/:etcd_path' do
 

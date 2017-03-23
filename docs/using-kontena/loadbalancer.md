@@ -161,6 +161,12 @@ $ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out ca.pem -days 1080 -nod
 $ cat ca.pem key.pem > cert.pem
 ```
 
+For a real certificate you need to prepare it as follows (cert, intermediates and private key):
+
+```
+$ cat STAR_kontena_io.crt STAR_kontena_io.ca-bundle key.pem > cert.pem
+```
+
 Once you have the pem file, you can save it to the Kontena Vault:
 
 ```

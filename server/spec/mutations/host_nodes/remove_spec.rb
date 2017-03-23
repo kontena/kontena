@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe HostNodes::Remove, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
@@ -14,11 +13,6 @@ describe HostNodes::Remove, celluloid: true do
       expect {
         subject.run
       }.to change{ grid.host_nodes.count }.by(-1)
-    end
-
-    it 'triggers grid_scheduler worker' do
-      expect(subject).to receive(:worker).once.with(:grid_scheduler)
-      subject.run
     end
 
     it 'notifies grid nodes' do

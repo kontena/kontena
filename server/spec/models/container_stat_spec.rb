@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 
 describe ContainerStat do
   it { should be_timestamped_document }

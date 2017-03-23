@@ -32,6 +32,7 @@ class Grid
   has_many :grid_domain_authorizations, dependent: :delete
   has_many :networks, dependent: :delete
   has_and_belongs_to_many :users
+  embeds_one :grid_logs_opts, class_name: 'GridLogsOpts'
 
   index({ name: 1 }, { unique: true })
   index({ token: 1 }, { unique: true })

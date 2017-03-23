@@ -1,4 +1,3 @@
-require_relative "../../../../spec_helper"
 require "kontena/cli/grids/trusted_subnet_command"
 require "kontena/cli/grids/trusted_subnets/add_command"
 

@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require 'kontena/cli/master/use_command'
 
 describe Kontena::Cli::Master::UseCommand do

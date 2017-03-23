@@ -1,4 +1,3 @@
-require_relative '../spec_helper'
 require 'kontena_cli'
 require 'ostruct'
 

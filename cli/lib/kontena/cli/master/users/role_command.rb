@@ -1,10 +1,8 @@
 module Kontena::Cli::Master::Users
 
-  require_relative 'roles/add_command'
-  require_relative 'roles/remove_command'
 
   class RoleCommand < Kontena::Command
-    subcommand "add", "Add role to user", Roles::AddCommand
-    subcommand ["remove", "rm"], "Remove role from user", Roles::RemoveCommand
+    subcommand "add", "Add role to user", load_subcommand('master/users/roles/add_command')
+    subcommand ["remove", "rm"], "Remove role from user", load_subcommand('master/users/roles/remove_command')
   end
 end

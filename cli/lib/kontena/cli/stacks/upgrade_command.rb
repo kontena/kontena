@@ -15,6 +15,8 @@ module Kontena::Cli::Stacks
 
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
 
+    option '--force', :flag, 'Force upgrade'
+
     requires_current_master
     requires_current_master_token
 
@@ -24,6 +26,10 @@ module Kontena::Cli::Stacks
       end
 
       stack = stack_from_yaml(filename, name: name, values: values, defaults: master_data['variables'])
+
+      unless force? || master_data['stack'] == stack['stack']
+        confirm "Replacing stack #{Kontena.pastel.cyan(master_data['stack'])} on master with #{Kontena.pastel.cyan(stack['stack'])} from #{Kontena.pastel.yellow(filename)}. Are you sure?"
+      end
 
       spinner "Upgrading stack #{pastel.cyan(name)}" do |spin|
         update_stack(stack) || spin.fail!

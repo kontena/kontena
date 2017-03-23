@@ -1,4 +1,3 @@
-require_relative '../../spec_helper'
 
 describe GridServices::Delete do
   let(:user) { User.create!(email: 'joe@domain.com')}
@@ -17,9 +16,24 @@ describe GridServices::Delete do
   end
 
   describe '#run' do
-    it 'calls grid_service_remove worker' do
+    it 'removes grid service' do
       subject = described_class.new(grid_service: redis_service)
-      expect(subject).to receive(:worker).with(:grid_service_remove).and_return(spy)
+      expect {
+        subject.run
+      }.to change{ grid.grid_services.count }.by(-1)
+    end
+
+    it 'does not trigger lb config remove if service is not linked to load balancer' do
+      allow(redis_service).to receive(:linked_to_load_balancer?).and_return(false)
+      subject = described_class.new(grid_service: redis_service)
+      expect(subject).not_to receive(:notify_lb_remove)
+      subject.run
+    end
+
+    it 'triggers lb config removal if service is linked to load balancer' do
+      allow(redis_service).to receive(:linked_to_load_balancer?).and_return(true)
+      subject = described_class.new(grid_service: redis_service)
+      expect(subject).to receive(:notify_lb_remove).once
       subject.run
     end
 

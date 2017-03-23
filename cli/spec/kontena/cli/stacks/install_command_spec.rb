@@ -1,4 +1,3 @@
-require_relative "../../../spec_helper"
 require "kontena/cli/stacks/install_command"
 
 describe Kontena::Cli::Stacks::InstallCommand do

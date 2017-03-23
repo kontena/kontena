@@ -129,6 +129,14 @@ module Kontena
         type: Kontena::Workers::ContainerStarterWorker,
         as: :container_starter_worker
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::FluentdWorker,
+        as: :fluentd_worker
+      )
+      @supervisor.supervise(
+        type: Kontena::Workers::ServicePodManager,
+        as: :service_pod_manager
+      )
     end
 
     def supervise_lb

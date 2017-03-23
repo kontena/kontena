@@ -23,6 +23,7 @@ gem 'jsonpath'
 gem 'json-serializer'
 gem 'bcrypt'
 gem 'rack-attack'
+gem 'json-serializer'
 
 group :development, :test do
   gem 'dotenv'

@@ -1,3 +1,5 @@
+require 'kontena/cli/nodes/list_command'
+
 describe Kontena::Cli::Nodes::ListCommand do
   include ClientHelpers
   include OutputHelpers
