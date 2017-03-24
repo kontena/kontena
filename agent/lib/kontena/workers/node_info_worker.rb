@@ -294,8 +294,8 @@ module Kontena::Workers
       }
     end
 
-    # @param [Array<Vmstat::NetworkInterface>] prev_network
-    # @param [Array<Vmstat::NetworkInterface>] current_network
+    # @param [Array<Vmstat::NetworkInterface>] prev_interfaces
+    # @param [Array<Vmstat::NetworkInterface>] current_interfaces
     # @param [Number] interval_seconds
     # @return [Hash]
     def calculate_network_traffic(prev_interfaces, current_interfaces, interval_seconds)
@@ -308,17 +308,12 @@ module Kontena::Workers
       }
 
       {
-        internal: calculate_interface_traffic(internal_interfaces, prev_interfaces, interval_seconds),
-        external: calculate_interface_traffic(external_interfaces, prev_interfaces, interval_seconds)
+        internal: calculate_interface_traffic(prev_interfaces, internal_interfaces, interval_seconds),
+        external: calculate_interface_traffic(prev_interfaces, external_interfaces, interval_seconds)
       }
     end
 
-    # @return [Hash]
-    def docker_info
-      @docker_info ||= Docker.info
-    end
-
-    def calculate_interface_traffic(current_interfaces, prev_interfaces, interval_seconds)
+    def calculate_interface_traffic(prev_interfaces, current_interfaces, interval_seconds)
       results = {
         interfaces: [],
         rx_bytes: 0,
@@ -333,8 +328,11 @@ module Kontena::Workers
         result[:tx_bytes] += iface.out_bytes
 
         prev_iface = prev_interfaces.select { |x| x.name == iface.name }
-        result[:prev_rx_bytes] += (prev_iface.size > 0 ? prev_iface[0].in_bytes : 0)
-        result[:prev_tx_bytes] += (prev_iface.size > 0 ? prev_iface[0].out_bytes : 0)
+
+        if prev_iface.size > 0
+          result[:prev_rx_bytes] += prev_iface[0].in_bytes
+          result[:prev_tx_bytes] += prev_iface[0].out_bytes
+        end
 
         result
       }
@@ -346,6 +344,11 @@ module Kontena::Workers
       results.delete(:prev_tx_bytes)
 
       results
+    end
+
+    # @return [Hash]
+    def docker_info
+      @docker_info ||= Docker.info
     end
   end
 end

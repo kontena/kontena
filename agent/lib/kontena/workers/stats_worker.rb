@@ -222,8 +222,11 @@ module Kontena::Workers
         result[:tx_bytes] += iface[:tx_bytes]
 
         prev_iface = prev_interfaces.select { |x| x[:name] == iface[:name] }
-        result[:prev_rx_bytes] += (prev_iface.dig(0, :rx_bytes) || 0)
-        result[:prev_tx_bytes] += (prev_iface.dig(0, :tx_bytes) || 0)
+
+        if (prev_iface.size > 0)
+          result[:prev_rx_bytes] += prev_iface[0][:rx_bytes]
+          result[:prev_tx_bytes] += prev_iface[0][:tx_bytes]
+        end
 
         result
       }

@@ -274,12 +274,14 @@ describe Kontena::Workers::NodeInfoWorker do
         #  name=nil, in_bytes=nil, in_errors=nil, in_drops=nil, out_bytes=nil, out_errors=nil, type=nil
         Vmstat::NetworkInterface.new("weave", 50, 51, 52, 70, 71, 0),
         Vmstat::NetworkInterface.new("vethwe123", 100, 101, 102, 110, 111, 0),
-        Vmstat::NetworkInterface.new("docker0", 1000, 1001, 1002, 1010, 1011, 1)
+        Vmstat::NetworkInterface.new("docker0", 1000, 1001, 1002, 1010, 1011, 1),
+        Vmstat::NetworkInterface.new("other", 9999, 9999, 9999, 9999, 9999, 1)
       ]
       cur = [
         Vmstat::NetworkInterface.new("weave", 70, 71, 72, 90, 91, 0),
         Vmstat::NetworkInterface.new("vethwe123", 200, 201, 202, 210, 211, 0),
-        Vmstat::NetworkInterface.new("docker0", 2800, 2801, 2802, 3410, 3411, 1)
+        Vmstat::NetworkInterface.new("docker0", 2800, 2801, 2802, 3410, 3411, 1),
+        Vmstat::NetworkInterface.new("other", 9999, 9999, 9999, 9999, 9999, 1)
       ]
 
       result = subject.calculate_network_traffic(prev, cur, num_seconds)
