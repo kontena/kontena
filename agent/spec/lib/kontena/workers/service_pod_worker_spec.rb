@@ -19,6 +19,8 @@ describe Kontena::Workers::ServicePodWorker do
     before(:each) do
       mock_rpc_client
       allow(rpc_client).to receive(:notification)
+      allow(subject.wrapped_object).to receive(:ensure_health_check)
+      allow(subject.wrapped_object).to receive(:stop_health_check)
     end
 
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
@@ -64,6 +66,31 @@ describe Kontena::Workers::ServicePodWorker do
       allow(service_pod).to receive(:running?).and_return(false)
       allow(service_pod).to receive(:stopped?).and_return(false)
       expect(subject.wrapped_object).to receive(:ensure_terminated)
+      subject.ensure_desired_state
+    end
+
+    it 'calls ensure_health_check if desired_state running' do
+      container = double(:container, :running? => true, :restarting? => false)
+      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(subject.wrapped_object).to receive(:service_container_outdated?).and_return(false)
+      allow(service_pod).to receive(:terminated?).and_return(false)
+      allow(service_pod).to receive(:running?).and_return(true)
+      allow(service_pod).to receive(:stopped?).and_return(false)
+      expect(subject.wrapped_object).not_to receive(:stop_health_check)
+      expect(subject.wrapped_object).to receive(:ensure_health_check)
+      subject.ensure_desired_state
+    end
+
+    it 'calls stop_health_check if desired_state is not running' do
+      container = double(:container, :running? => true, :restarting? => false)
+      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(subject.wrapped_object).to receive(:ensure_stopped)
+      allow(subject.wrapped_object).to receive(:service_container_outdated?).and_return(false)
+      allow(service_pod).to receive(:terminated?).and_return(false)
+      allow(service_pod).to receive(:running?).and_return(false)
+      allow(service_pod).to receive(:stopped?).and_return(true)
+      expect(subject.wrapped_object).to receive(:stop_health_check)
+      expect(subject.wrapped_object).not_to receive(:ensure_health_check)
       subject.ensure_desired_state
     end
   end

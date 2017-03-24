@@ -13,6 +13,8 @@ module Kontena::Workers
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod
 
+    finalizer :finalize
+
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
@@ -37,6 +39,10 @@ module Kontena::Workers
       exclusive {
         debug "state of #{service_pod.name}: #{service_pod.desired_state}"
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
+        if service_container && !service_pod.running?
+          stop_health_check
+        end
+
         if service_pod.running? && service_container.nil?
           info "creating #{service_pod.name}"
           ensure_running
@@ -58,6 +64,10 @@ module Kontena::Workers
           debug "state is in-sync: #{service_pod.desired_state}"
         else
           warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
+        end
+
+        if service_pod.running? && service_container
+          ensure_health_check(service_container)
         end
       }
 
@@ -107,7 +117,7 @@ module Kontena::Workers
       return false if !service_pod.terminated? && service_container.nil?
 
       return true if service_pod.running? && service_container.running?
-      return true if service_pod.stopped? && service_container.stopped?
+      return true if service_pod.stopped? && !service_container.running?
 
       false
     end
@@ -136,6 +146,31 @@ module Kontena::Workers
       }
       rpc_client.async.notification('/node_service_pods/set_state', [node.id, data])
       @prev_state = current_state
+    end
+
+    # @param [Docker::Container] service_container
+    def ensure_health_check(service_container)
+      return if service_container.nil? || service_container.labels['io.kontena.health_check.uri'].nil?
+      return if @health_check && @health_check.alive?
+
+      @health_check = ContainerHealthCheckWorker.new(service_container)
+      @health_check.async.start
+    rescue => exc
+      error "#{exc.class.name}: #{exc.message}"
+    end
+
+    def stop_health_check
+      if @health_check
+        @health_check.terminate if @health_check.alive?
+      end
+    end
+
+    private
+
+    def finalize
+      if @health_check
+        @health_check.terminate if @health_check.alive?
+      end
     end
   end
 end

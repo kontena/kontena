@@ -38,7 +38,6 @@ require_relative 'kontena/workers/event_worker'
 require_relative 'kontena/workers/weave_worker'
 require_relative 'kontena/workers/image_cleanup_worker'
 require_relative 'kontena/workers/image_pull_worker'
-require_relative 'kontena/workers/health_check_worker'
 require_relative 'kontena/workers/container_starter_worker'
 require_relative 'kontena/workers/fluentd_worker'
 
