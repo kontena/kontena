@@ -1,6 +1,6 @@
 class Metrics
 
-  # @param [Container Mongo Collection] containers_collection
+  # @param [Moped::Collection] containers_collection
   # @param [Symbol] sort
   def self.get_container_stats(containers_collection, sort)
     containers = containers_collection.where(container_id: {:$ne => nil}).asc(:created_at)
