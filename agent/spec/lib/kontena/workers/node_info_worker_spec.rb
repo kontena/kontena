@@ -230,15 +230,15 @@ describe Kontena::Workers::NodeInfoWorker do
     it 'sends stats via rpc' do
       expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
         [hash_including(id: String, memory: Hash, usage: Hash, load: Hash,
-                        filesystem: Array, cpu: Hash, network: Array, time: String)])
+                        filesystem: Array, cpu: Hash, network: Hash, time: String)])
       subject.publish_node_stats
     end
 
     it 'sends stats to statsd' do
       subject.instance_variable_set("@statsd", statsd)
 
-      # Will be called 19 times if there is one file system and one network interface
-      expect(statsd).to receive(:gauge).at_least(19).times
+      # Will be called 18 times if there is one file system
+      expect(statsd).to receive(:gauge).at_least(18).times
       subject.publish_node_stats
     end
   end
@@ -272,39 +272,34 @@ describe Kontena::Workers::NodeInfoWorker do
 
       prev = [
         #  name=nil, in_bytes=nil, in_errors=nil, in_drops=nil, out_bytes=nil, out_errors=nil, type=nil
-        Vmstat::NetworkInterface.new("eth0", 100, 101, 102, 110, 111, 0),
-        Vmstat::NetworkInterface.new("eth1", 1000, 1001, 1002, 1010, 1011, 0)
+        Vmstat::NetworkInterface.new("weave", 50, 51, 52, 70, 71, 0),
+        Vmstat::NetworkInterface.new("vethwe123", 100, 101, 102, 110, 111, 0),
+        Vmstat::NetworkInterface.new("docker0", 1000, 1001, 1002, 1010, 1011, 1)
       ]
       cur = [
-        Vmstat::NetworkInterface.new("eth0", 200, 201, 202, 210, 211, 0),
-        Vmstat::NetworkInterface.new("eth2", 2000, 2001, 2002, 2010, 2011, 1)
+        Vmstat::NetworkInterface.new("weave", 70, 71, 72, 90, 91, 0),
+        Vmstat::NetworkInterface.new("vethwe123", 200, 201, 202, 210, 211, 0),
+        Vmstat::NetworkInterface.new("docker0", 2800, 2801, 2802, 3410, 3411, 1)
       ]
 
       result = subject.calculate_network_traffic(prev, cur, num_seconds)
 
-      expect(result).to eq([
-          {
-            name: "eth0",
-            type: 0,
-            rx_bytes: 200,
-            rx_bytes_per_second: 2,
-            rx_errors: 201,
-            rx_dropped: 202,
-            tx_bytes: 210,
-            tx_errors: 211,
-            tx_bytes_per_second: 2
-          }, {
-            name: "eth2",
-            type: 1,
-            rx_bytes: 2000,
-            rx_bytes_per_second: 33,
-            rx_errors: 2001,
-            rx_dropped: 2002,
-            tx_bytes: 2010,
-            tx_errors: 2011,
-            tx_bytes_per_second: 34
+      expect(result).to eq({
+          internal: {
+            interfaces: ["weave", "vethwe123"],
+            rx_bytes: 270,
+            rx_bytes_per_second: 2, # ((200+70) - (50+100)) / 60
+            tx_bytes: 300,
+            tx_bytes_per_second: 2 # ((210+90) - (110+70)) / 60
+          },
+          external: {
+            interfaces: ["docker0"],
+            rx_bytes: 2800,
+            rx_bytes_per_second: 30, # (2800 - 1000) / 60
+            tx_bytes: 3410,
+            tx_bytes_per_second: 40 # (3410 - 1010) / 60
           }
-      ])
+      })
     end
   end
 end

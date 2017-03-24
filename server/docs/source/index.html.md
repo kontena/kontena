@@ -206,7 +206,6 @@ Get all containers running on the grid with latest statistics (cpu/memory/networ
 
 Parameter | Description | Default Value
 --------- | ------------| -------------
-iface | Network interface included in stats | `eth0`
 sort | The stat to sort results by (always descending).  Possible values are `cpu` `memory` `rx_bytes` `tx_bytes` | `cpu`
 
 
@@ -229,7 +228,6 @@ Gets aggregated statistics for a grid (cpu, memory, network, disk usage) for a g
 
 Parameter | Description | Default Value
 --------- | ------------| -------------
-iface | Network interface included in stats | `eth0`
 from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
 to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
@@ -408,7 +406,6 @@ Get all containers running on the node with latest statistics (cpu/memory/networ
 
 Parameter | Description | Default Value
 --------- | ------------| -------------
-iface | Network interface included in stats | `eth0`
 sort | The stat to sort results by (always descending).  Possible values are `cpu` `memory` `rx_bytes` `tx_bytes` | `cpu`
 
 
@@ -431,7 +428,6 @@ Gets aggregated statistics for a node (cpu, memory, network, disk usage) for a g
 
 Parameter | Description | Default Value
 --------- | ------------| -------------
-iface | Network interface included in stats | `eth0`
 from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
 to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
@@ -993,7 +989,6 @@ Get all containers belonging to the service with latest statistics (cpu/memory/n
 
 Parameter | Description | Default Value
 --------- | ------------| -------------
-iface | Network interface included in stats | `eth0`
 sort | The stat to sort results by (always descending).  Possible values are `cpu` `memory` `rx_bytes` `tx_bytes` | `cpu`
 
 
@@ -1016,7 +1011,6 @@ Gets aggregated statistics for a service (cpu, memory, network) for a given time
 
 Parameter | Description | Default Value
 --------- | ------------| -------------
-iface | Network interface included in stats | `eth0`
 from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
 to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 

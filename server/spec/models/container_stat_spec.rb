@@ -22,10 +22,13 @@ describe ContainerStat do
         cpu: { "usage_pct" => 10.0 },
         memory: { "usage" => 100 },
         network: {
-          "name" => "eth1",
-          "rx_bytes" => 100.5,
-          "tx_bytes" => 200.5,
-          "interfaces" => [ { "name" => "eth0", "rx_bytes" => 100, "tx_bytes" => 200 } ]
+          "internal" => {
+            "interfaces" => ["ethwe"],
+            "rx_bytes" => 100.5,
+            "tx_bytes" => 200.5,
+            "rx_bytes_per_second" => 10,
+            "tx_bytes_per_second" => 20
+          }
         }
     })}
 
@@ -33,15 +36,6 @@ describe ContainerStat do
       it 'calculates correct number of cpu cores from cpu mask' do
         num_cores = ContainerStat.calculate_num_cores(stat.spec["cpu"]["mask"])
         expect(num_cores).to eq(3)
-      end
-    end
-
-    describe '#update_network_stats' do
-      it 'updates values for selected network' do
-        stat.update_network_stats("eth0")
-        expect(stat.network["name"]).to eq("eth0")
-        expect(stat.network["rx_bytes"]).to eq(100)
-        expect(stat.network["tx_bytes"]).to eq(200)
       end
     end
   end
@@ -70,7 +64,12 @@ describe ContainerStat do
           cpu: { usage_pct: 10.0 },
           memory: { usage: 100 },
           network: {
-            interfaces: [ { name: "eth0", rx_bytes: 100, tx_bytes: 200 }, { name: "eth1", rx_bytes: 100.5, tx_bytes: 200.5 } ]
+            internal: {
+              interfaces: ["ethwe"], rx_bytes: 100, tx_bytes: 200, rx_bytes_per_second: 100, tx_bytes_per_second: 200
+            },
+            external: {
+              interfaces: ["eth0"], rx_bytes: 100.5, tx_bytes: 200.5, rx_bytes_per_second: 100.5, tx_bytes_per_second: 200.5
+            }
           },
           created_at: Time.parse('2017-03-01 12:00:00 +00:00')
         },
@@ -86,7 +85,12 @@ describe ContainerStat do
           cpu: { usage_pct: 20.0 },
           memory: { usage: 200 },
           network: {
-            interfaces: [ { name: "eth0", rx_bytes: 100, tx_bytes: 200 }, { name: "eth1", rx_bytes: 100.5, tx_bytes: 200.5 } ]
+            internal: {
+              interfaces: ["ethwe"], rx_bytes: 100, tx_bytes: 200, rx_bytes_per_second: 100, tx_bytes_per_second: 200
+            },
+            external: {
+              interfaces: ["eth0"], rx_bytes: 100.5, tx_bytes: 200.5, rx_bytes_per_second: 100.5, tx_bytes_per_second: 200.5
+            }
           },
           created_at: Time.parse('2017-03-01 12:00:30 +00:00')
         },
@@ -102,7 +106,12 @@ describe ContainerStat do
           cpu: { usage_pct: 30.0 },
           memory: { usage: 300 },
           network: {
-            interfaces: [ { name: "eth0", rx_bytes: 100, tx_bytes: 200 }, { name: "eth1", rx_bytes: 100.5, tx_bytes: 200.5 } ]
+            internal: {
+              interfaces: ["ethwe"], rx_bytes: 100, tx_bytes: 200, rx_bytes_per_second: 100, tx_bytes_per_second: 200
+            },
+            external: {
+              interfaces: ["eth0"], rx_bytes: 100.5, tx_bytes: 200.5, rx_bytes_per_second: 100.5, tx_bytes_per_second: 200.5
+            }
           },
           created_at: Time.parse('2017-03-01 12:00:00 +00:00')
         },
@@ -118,7 +127,12 @@ describe ContainerStat do
           cpu: { usage_pct: 30.0 },
           memory: { usage: 300 },
           network: {
-            interfaces: [ { name: "eth0", rx_bytes: 100, tx_bytes: 200 }, { name: "eth1", rx_bytes: 100.5, tx_bytes: 200.5 } ]
+            internal: {
+              interfaces: ["ethwe"], rx_bytes: 100, tx_bytes: 200, rx_bytes_per_second: 100, tx_bytes_per_second: 200
+            },
+            external: {
+              interfaces: ["eth0"], rx_bytes: 100.5, tx_bytes: 200.5, rx_bytes_per_second: 100.5, tx_bytes_per_second: 200.5
+            }
           },
           created_at: Time.parse('2017-03-01 12:01:00 +00:00')
         },
@@ -134,7 +148,12 @@ describe ContainerStat do
           cpu: { usage_pct: 30.0 },
           memory: { usage: 300 },
           network: {
-            interfaces: [ { name: "eth0", rx_bytes: 100, tx_bytes: 200 }, { name: "eth1", rx_bytes: 100.5, tx_bytes: 200.5 } ]
+            internal: {
+              interfaces: ["ethwe"], rx_bytes: 100, tx_bytes: 200, rx_bytes_per_second: 100, tx_bytes_per_second: 200
+            },
+            external: {
+              interfaces: ["eth0"], rx_bytes: 100.5, tx_bytes: 200.5, rx_bytes_per_second: 100.5, tx_bytes_per_second: 200.5
+            }
           },
           created_at: Time.parse('2017-03-01 12:00:00 +00:00')
         },
@@ -150,7 +169,12 @@ describe ContainerStat do
           cpu: { usage_pct: 30.0 },
           memory: { usage: 300 },
           network: {
-            interfaces: [ { name: "eth0", rx_bytes: 100, tx_bytes: 200 }, { name: "eth1", rx_bytes: 100.5, tx_bytes: 200.5 } ]
+            internal: {
+              interfaces: ["ethwe"], rx_bytes: 100, tx_bytes: 200, rx_bytes_per_second: 100, tx_bytes_per_second: 200
+            },
+            external: {
+              interfaces: ["eth0"], rx_bytes: 100.5, tx_bytes: 200.5, rx_bytes_per_second: 100.5, tx_bytes_per_second: 200.5
+            }
           },
           created_at: Time.parse('2017-03-01 12:00:00 +00:00')
         }
@@ -162,7 +186,7 @@ describe ContainerStat do
         stats
         from = Time.parse('2017-03-01 12:00:00 +00:00')
         to = Time.parse('2017-03-01 13:00:00 +00:00')
-        results = ContainerStat.get_aggregate_stats_for_service(grid_1_service_1.id, from, to, "eth0")
+        results = ContainerStat.get_aggregate_stats_for_service(grid_1_service_1.id, from, to)
 
         # Records #2 and #5.
         expect(results[0]["cpu"]).to eq({
@@ -173,13 +197,19 @@ describe ContainerStat do
           "used" => 450.0, #avg(100,200) + 300
           "total" => 2000.0 #avg(1000,1000) + 1000
         })
-        expect(results[0]["network"]).to eq({
-          "name" => "eth0",
+        expect(results[0]["network"]["internal"]).to eq({
+          "interfaces" => ["ethwe"],
           "rx_bytes" => 200.0, #avg(100,100) + 100
-          "rx_errors" => 0.0,
-          "rx_dropped" => 0.0,
+          "rx_bytes_per_second" => 200.0,
           "tx_bytes" => 400.0, #avg(200,200) + 200
-          "tx_errors" => 0.0
+          "tx_bytes_per_second" => 400.0
+        })
+        expect(results[0]["network"]["external"]).to eq({
+          "interfaces" => ["eth0"],
+          "rx_bytes" => 201.0, #avg(100.5,100.5) + 100.5
+          "rx_bytes_per_second" => 201.0,
+          "tx_bytes" => 401.0, #avg(200.5,200.5) + 200.5
+          "tx_bytes_per_second" => 401.0
         })
         expect(results[0]["timestamp"]).to eq({
           "year" => 2017,
@@ -198,13 +228,19 @@ describe ContainerStat do
           "used" => 300.0,
           "total" => 1000.0
         })
-        expect(results[1]["network"]).to eq({
-          "name" => "eth0",
+        expect(results[1]["network"]["internal"]).to eq({
+          "interfaces" => ["ethwe"],
           "rx_bytes" => 100.0,
-          "rx_errors" => 0.0,
-          "rx_dropped" => 0.0,
+          "rx_bytes_per_second" => 100.0,
           "tx_bytes" => 200.0,
-          "tx_errors" => 0.0
+          "tx_bytes_per_second" => 200.0
+        })
+        expect(results[1]["network"]["external"]).to eq({
+          "interfaces" => ["eth0"],
+          "rx_bytes" => 100.5,
+          "rx_bytes_per_second" => 100.5,
+          "tx_bytes" => 200.5,
+          "tx_bytes_per_second" => 200.5
         })
         expect(results[1]["timestamp"]).to eq({
           "year" => 2017,

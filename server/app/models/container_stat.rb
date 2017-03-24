@@ -20,20 +20,6 @@ class ContainerStat
   index({ created_at: 1 })
   index({ grid_service_id: 1, created_at: 1 })
 
-  def update_network_stats(interface_name)
-    # Odds are, cAdvisor did not give us meaningful network stats at the
-    # root network level, so try to use some other interface.
-    return unless network
-
-    if (network["name"] != interface_name)
-      interfaces = network["interfaces"].select { |iface| iface["name"] == interface_name }
-
-      if (interfaces.size > 0)
-        interfaces[0].each { |key,val| network[key] = interfaces[0][key] }
-      end
-    end
-  end
-
   def self.calculate_num_cores(cpu_mask)
     if cpu_mask
       cpu_mask.split('-').last.to_i + 1
@@ -42,7 +28,7 @@ class ContainerStat
     end
   end
 
-  def self.get_aggregate_stats_for_service(service_id, from_time, to_time, network_iface)
+  def self.get_aggregate_stats_for_service(service_id, from_time, to_time)
     self.collection.aggregate([
     {
       '$match': {
@@ -51,14 +37,6 @@ class ContainerStat
           '$gte': from_time,
           '$lte': to_time
         }
-      }
-    },
-    {
-      '$unwind': '$network.interfaces'
-    },
-    {
-      '$match': {
-        'network.interfaces.name': network_iface
       }
     },
     {
@@ -79,12 +57,16 @@ class ContainerStat
         memory_used: { '$avg': '$memory.usage' },
         memory_total: { '$first': '$spec.memory.limit' },
 
-        network_name: { '$first': '$network.interfaces.name' },
-        network_rx_bytes: { '$avg': '$network.interfaces.rx_bytes' },
-        network_rx_errors: { '$avg': '$network.interfaces.rx_errors' },
-        network_rx_dropped: { '$avg': '$network.interfaces.rx_dropped' },
-        network_tx_bytes: { '$avg': '$network.interfaces.tx_bytes' },
-        network_tx_errors: { '$avg': '$network.interfaces.tx_errors' }
+        network_internal_interfaces: { '$first': '$network.internal.interfaces' },
+        network_internal_rx_bytes: { '$avg': '$network.internal.rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$avg': '$network.internal.rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$avg': '$network.internal.tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$avg': '$network.internal.tx_bytes_per_second' },
+        network_external_interfaces: { '$first': '$network.external.interfaces' },
+        network_external_rx_bytes: { '$avg': '$network.external.rx_bytes' },
+        network_external_rx_bytes_per_second: { '$avg': '$network.external.rx_bytes_per_second' },
+        network_external_tx_bytes: { '$avg': '$network.external.tx_bytes' },
+        network_external_tx_bytes_per_second: { '$avg': '$network.external.tx_bytes_per_second' }
       }
     },
     {
@@ -104,12 +86,16 @@ class ContainerStat
         memory_used: { '$sum': '$memory_used' },
         memory_total: { '$sum': '$memory_total' },
 
-        network_name: { '$first': '$network_name' },
-        network_rx_bytes: { '$sum': '$network_rx_bytes' },
-        network_rx_errors: { '$sum': '$network_rx_errors' },
-        network_rx_dropped: { '$sum': '$network_rx_dropped' },
-        network_tx_bytes: { '$sum': '$network_tx_bytes' },
-        network_tx_errors: { '$sum': '$network_tx_errors' }
+        network_internal_interfaces: { '$first': '$network_internal_interfaces' },
+        network_internal_rx_bytes: { '$sum': '$network_internal_rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$sum': '$network_internal_rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$sum': '$network_internal_tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$sum': '$network_internal_tx_bytes_per_second' },
+        network_external_interfaces: { '$first': '$network_external_interfaces' },
+        network_external_rx_bytes: { '$sum': '$network_external_rx_bytes' },
+        network_external_rx_bytes_per_second: { '$sum': '$network_external_rx_bytes_per_second' },
+        network_external_tx_bytes: { '$sum': '$network_external_tx_bytes' },
+        network_external_tx_bytes_per_second: { '$sum': '$network_external_tx_bytes_per_second' }
       }
     },
     {
@@ -128,12 +114,20 @@ class ContainerStat
           total: '$memory_total'
         },
         network: {
-          name: '$network_name',
-          rx_bytes: '$network_rx_bytes',
-          rx_errors: '$network_rx_errors',
-          rx_dropped: '$network_rx_dropped',
-          tx_bytes: '$network_tx_bytes',
-          tx_errors: '$network_tx_errors'
+          internal: {
+            interfaces: '$network_internal_interfaces',
+            rx_bytes: '$network_internal_rx_bytes',
+            rx_bytes_per_second: '$network_internal_rx_bytes_per_second',
+            tx_bytes: '$network_internal_tx_bytes',
+            tx_bytes_per_second: '$network_internal_tx_bytes_per_second'
+          },
+          external: {
+            interfaces: '$network_external_interfaces',
+            rx_bytes: '$network_external_rx_bytes',
+            rx_bytes_per_second: '$network_external_rx_bytes_per_second',
+            tx_bytes: '$network_external_tx_bytes',
+            tx_bytes_per_second: '$network_external_tx_bytes_per_second'
+          }
         }
       }
     }

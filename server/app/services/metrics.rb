@@ -1,17 +1,14 @@
 class Metrics
 
   # @param [Container Mongo Collection] containers_collection
-  # @param [String] network_iface
   # @param [Symbol] sort
-  def self.get_container_stats(containers_collection, network_iface, sort)
+  def self.get_container_stats(containers_collection, sort)
     containers = containers_collection.where(container_id: {:$ne => nil}).asc(:created_at)
 
     containers.map { |container|
-      stat = container.container_stats.last
-      stat.update_network_stats(network_iface) if stat
       {
           container: container,
-          stats: stat
+          stats: container.container_stats.last
       }
     }.sort_by { |stat|
       num = 0
@@ -21,9 +18,9 @@ class Metrics
         when :memory
           num = stat[:stats].memory['usage']
         when :rx_bytes
-          num = stat[:stats].network['rx_bytes']
+          num = (stat[:stats].network['internal']['rx_bytes'] + stat[:stats].network['external']['rx_bytes'])
         when :tx_bytes
-          num = stat[:stats].network['tx_bytes']
+          num = (stat[:stats].network['internal']['tx_bytes'] + stat[:stats].network['external']['tx_bytes'])
         else
           num = stat[:stats].cpu['usage_pct']
         end

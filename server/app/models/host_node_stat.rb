@@ -7,7 +7,7 @@ class HostNodeStat
   field :filesystem, type: Array
   field :usage, type: Hash
   field :cpu, type: Hash
-  field :network, type: Array
+  field :network, type: Hash
 
   belongs_to :grid
   belongs_to :host_node
@@ -17,7 +17,7 @@ class HostNodeStat
   index({ host_node_id: 1, created_at: 1 })
   index({ grid_id: 1, created_at: 1 })
 
-  def self.get_aggregate_stats_for_node(node_id, from_time, to_time, network_iface)
+  def self.get_aggregate_stats_for_node(node_id, from_time, to_time)
     self.collection.aggregate([
     {
       '$match': {
@@ -43,31 +43,6 @@ class HostNodeStat
         filesystem_total: { '$sum': '$filesystem.total' }
       }
     },
-    # Flatten network, get selected network interface
-    {
-      '$unwind': '$network',
-    },
-    {
-      '$match': {
-        'network.name': network_iface
-      }
-    },
-    {
-      '$group': {
-        _id: '$_id',
-        created_at: { '$first': '$created_at' },
-        cpu: { '$first': '$cpu' },
-        memory: { '$first': '$memory' },
-        network_name: { '$first': '$network.name' },
-        network_rx_bytes: { '$first': '$network.rx_bytes' },
-        network_rx_errors: { '$first': '$network.rx_errors' },
-        network_rx_dropped: { '$first': '$network.rx_dropped' },
-        network_tx_bytes: { '$first': '$network.tx_bytes' },
-        network_tx_errors: { '$first': '$network.tx_errors' },
-        filesystem_used: { '$first': '$filesystem_used' },
-        filesystem_total: { '$first': '$filesystem_total' }
-      }
-    },
     # Aggregate for each minute
     {
       '$group': {
@@ -86,12 +61,16 @@ class HostNodeStat
         memory_used: { '$avg': '$memory.used' },
         memory_total: { '$avg': '$memory.total' },
 
-        network_name: { '$first': '$network_name' },
-        network_rx_bytes: { '$avg': '$network_rx_bytes' },
-        network_rx_errors: { '$avg': '$network_rx_errors' },
-        network_rx_dropped: { '$avg': '$network_rx_dropped' },
-        network_tx_bytes: { '$avg': '$network_tx_bytes' },
-        network_tx_errors: { '$avg': '$network_tx_errors' },
+        network_internal_interfaces: { '$first': '$network.internal.interfaces' },
+        network_internal_rx_bytes: { '$avg': '$network.internal.rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$avg': '$network.internal.rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$avg': '$network.internal.tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$avg': '$network.internal.tx_bytes_per_second' },
+        network_external_interfaces: { '$first': '$network.external.interfaces' },
+        network_external_rx_bytes: { '$avg': '$network.external.rx_bytes' },
+        network_external_rx_bytes_per_second: { '$avg': '$network.external.rx_bytes_per_second' },
+        network_external_tx_bytes: { '$avg': '$network.external.tx_bytes' },
+        network_external_tx_bytes_per_second: { '$avg': '$network.external.tx_bytes_per_second' },
 
         filesystem_used: { '$avg': '$filesystem_used' },
         filesystem_total: { '$avg': '$filesystem_total' }
@@ -114,12 +93,20 @@ class HostNodeStat
           total: '$memory_total'
         },
         network: {
-          name: '$network_name',
-          rx_bytes: '$network_rx_bytes',
-          rx_errors: '$network_rx_errors',
-          rx_dropped: '$network_rx_dropped',
-          tx_bytes: '$network_tx_bytes',
-          tx_errors: '$network_tx_errors'
+          internal: {
+            interfaces: '$network_internal_interfaces',
+            rx_bytes: '$network_internal_rx_bytes',
+            rx_bytes_per_second: '$network_internal_rx_bytes_per_second',
+            tx_bytes: '$network_internal_tx_bytes',
+            tx_bytes_per_second: '$network_internal_tx_bytes_per_second'
+          },
+          external: {
+            interfaces: '$network_external_interfaces',
+            rx_bytes: '$network_external_rx_bytes',
+            rx_bytes_per_second: '$network_external_rx_bytes_per_second',
+            tx_bytes: '$network_external_tx_bytes',
+            tx_bytes_per_second: '$network_external_tx_bytes_per_second'
+          }
         },
         filesystem: {
           used: '$filesystem_used',
@@ -129,7 +116,7 @@ class HostNodeStat
     }])
   end
 
-  def self.get_aggregate_stats_for_grid(grid_id, from_time, to_time, network_iface)
+  def self.get_aggregate_stats_for_grid(grid_id, from_time, to_time)
     self.collection.aggregate([
     {
       '$match': {
@@ -156,32 +143,6 @@ class HostNodeStat
         filesystem_total: { '$sum': '$filesystem.total' }
       }
     },
-    # Flatten network, get selected network interface
-    {
-      '$unwind': '$network',
-    },
-    {
-      '$match': {
-        'network.name': network_iface
-      }
-    },
-    {
-      '$group': {
-        _id: '$_id',
-        host_node_id: { '$first': '$host_node_id' },
-        created_at: { '$first': '$created_at' },
-        cpu: { '$first': '$cpu' },
-        memory: { '$first': '$memory' },
-        network_name: { '$first': '$network.name' },
-        network_rx_bytes: { '$first': '$network.rx_bytes' },
-        network_rx_errors: { '$first': '$network.rx_errors' },
-        network_rx_dropped: { '$first': '$network.rx_dropped' },
-        network_tx_bytes: { '$first': '$network.tx_bytes' },
-        network_tx_errors: { '$first': '$network.tx_errors' },
-        filesystem_used: { '$first': '$filesystem_used' },
-        filesystem_total: { '$first': '$filesystem_total' }
-      }
-    },
     # Aggregate for each minute
     {
       '$group': {
@@ -201,12 +162,16 @@ class HostNodeStat
         memory_used: { '$avg': '$memory.used' },
         memory_total: { '$avg': '$memory.total' },
 
-        network_name: { '$first': '$network_name' },
-        network_rx_bytes: { '$avg': '$network_rx_bytes' },
-        network_rx_errors: { '$avg': '$network_rx_errors' },
-        network_rx_dropped: { '$avg': '$network_rx_dropped' },
-        network_tx_bytes: { '$avg': '$network_tx_bytes' },
-        network_tx_errors: { '$avg': '$network_tx_errors' },
+        network_internal_interfaces: { '$first': '$network.internal.interfaces' },
+        network_internal_rx_bytes: { '$avg': '$network.internal.rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$avg': '$network.internal.rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$avg': '$network.internal.tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$avg': '$network.internal.tx_bytes_per_second' },
+        network_external_interfaces: { '$first': '$network.external.interfaces' },
+        network_external_rx_bytes: { '$avg': '$network.external.rx_bytes' },
+        network_external_rx_bytes_per_second: { '$avg': '$network.external.rx_bytes_per_second' },
+        network_external_tx_bytes: { '$avg': '$network.external.tx_bytes' },
+        network_external_tx_bytes_per_second: { '$avg': '$network.external.tx_bytes_per_second' },
 
         filesystem_used: { '$avg': '$filesystem_used' },
         filesystem_total: { '$avg': '$filesystem_total' }
@@ -230,12 +195,16 @@ class HostNodeStat
         memory_used: { '$sum': '$memory_used' },
         memory_total: { '$sum': '$memory_total' },
 
-        network_name: { '$first': '$network_name' },
-        network_rx_bytes: { '$sum': '$network_rx_bytes' },
-        network_rx_errors: { '$sum': '$network_rx_errors' },
-        network_rx_dropped: { '$sum': '$network_rx_dropped' },
-        network_tx_bytes: { '$sum': '$network_tx_bytes' },
-        network_tx_errors: { '$sum': '$network_tx_errors' },
+        network_internal_interfaces: { '$first': '$network_internal_interfaces' },
+        network_internal_rx_bytes: { '$sum': '$network_internal_rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$sum': '$network_internal_rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$sum': '$network_internal_tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$sum': '$network_internal_tx_bytes_per_second' },
+        network_external_interfaces: { '$first': '$network_external_interfaces' },
+        network_external_rx_bytes: { '$sum': '$network_external_rx_bytes' },
+        network_external_rx_bytes_per_second: { '$sum': '$network_external_rx_bytes_per_second' },
+        network_external_tx_bytes: { '$sum': '$network_external_tx_bytes' },
+        network_external_tx_bytes_per_second: { '$sum': '$network_external_tx_bytes_per_second' },
 
         filesystem_used: { '$sum': '$filesystem_used' },
         filesystem_total: { '$sum': '$filesystem_total' }
@@ -258,12 +227,20 @@ class HostNodeStat
           total: '$memory_total'
         },
         network: {
-          name: '$network_name',
-          rx_bytes: '$network_rx_bytes',
-          rx_errors: '$network_rx_errors',
-          rx_dropped: '$network_rx_dropped',
-          tx_bytes: '$network_tx_bytes',
-          tx_errors: '$network_tx_errors'
+          internal: {
+            interfaces: '$network_internal_interfaces',
+            rx_bytes: '$network_internal_rx_bytes',
+            rx_bytes_per_second: '$network_internal_rx_bytes_per_second',
+            tx_bytes: '$network_internal_tx_bytes',
+            tx_bytes_per_second: '$network_internal_tx_bytes_per_second'
+          },
+          external: {
+            interfaces: '$network_external_interfaces',
+            rx_bytes: '$network_external_rx_bytes',
+            rx_bytes_per_second: '$network_external_rx_bytes_per_second',
+            tx_bytes: '$network_external_tx_bytes',
+            tx_bytes_per_second: '$network_external_tx_bytes_per_second'
+          }
         },
         filesystem: {
           used: '$filesystem_used',

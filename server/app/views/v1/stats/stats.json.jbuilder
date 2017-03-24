@@ -10,11 +10,7 @@ json.stats @stats.each do |stat|
       json.usage stat[:stats].memory['usage']
       json.limit stat[:stats].spec['memory']['limit']
     end
-    json.network do
-      json.name stat[:stats].network['name']
-      json.rx_bytes stat[:stats].network['rx_bytes']
-      json.tx_bytes stat[:stats].network['tx_bytes']
-    end
+    json.network stat[:stats].network
   else
     json.cpu nil
     json.memory nil

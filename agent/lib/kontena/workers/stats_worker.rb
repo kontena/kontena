@@ -156,39 +156,85 @@ module Kontena::Workers
       end
       statsd.gauge("#{key_base}.cpu.usage", event[:cpu][:usage_pct])
       statsd.gauge("#{key_base}.memory.usage", event[:memory][:usage])
-      interfaces = event.dig(:network, :interfaces) || []
-      interfaces.each do |iface|
-        [:rx_bytes, :tx_bytes].each do |metric|
-          statsd.gauge("#{key_base}.network.iface.#{iface[:name]}.#{metric}", iface[metric])
-        end
-      end
+      statsd.gauge("#{key_base}.network.internal.rx_bytes", event[:network][:internal][:rx_bytes])
+      statsd.gauge("#{key_base}.network.internal.tx_bytes", event[:network][:internal][:tx_bytes])
+      statsd.gauge("#{key_base}.network.external.rx_bytes", event[:network][:external][:rx_bytes])
+      statsd.gauge("#{key_base}.network.external.tx_bytes", event[:network][:external][:tx_bytes])
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
     end
 
     def calculate_network_traffic(prev_stat, current_stat)
-      prev_network = prev_stat[:network]
-      current_network = current_stat[:network]
+      prev_interfaces = prev_stat.dig(:network, :interfaces)
+      current_interfaces = current_stat.dig(:network, :interfaces)
 
-      return current_network unless prev_network and current_network
+      results = {
+        internal: {
+          interfaces: [],
+          rx_bytes: 0,
+          rx_bytes_per_second: 0,
+          tx_bytes: 0,
+          tx_bytes_per_second: 0
+        },
+        external: {
+          interfaces: [],
+          rx_bytes: 0,
+          rx_bytes_per_second: 0,
+          tx_bytes: 0,
+          tx_bytes_per_second: 0
+        }
+      }
 
-      if (current_network[:interfaces])
-        prev_timestamp = Time.parse(prev_stat[:timestamp])
-        current_timestamp = Time.parse(current_stat[:timestamp])
-        interval_seconds = current_timestamp - prev_timestamp
+      return results unless prev_interfaces and current_interfaces
 
-        current_network[:interfaces].each do |iface|
-          prev_iface = prev_network[:interfaces].select { |prev| iface[:name] == prev[:name] }
-          prev_rx_bytes = prev_iface.dig(0, :rx_bytes) || 0
-          prev_tx_bytes = prev_iface.dig(0, :tx_bytes) || 0
+      prev_timestamp = Time.parse(prev_stat[:timestamp])
+      current_timestamp = Time.parse(current_stat[:timestamp])
+      interval_seconds = current_timestamp - prev_timestamp
 
-          iface[:rx_bytes_per_second] = ((iface[:rx_bytes] - prev_rx_bytes).to_f / interval_seconds).round
-          iface[:tx_bytes_per_second] = ((iface[:tx_bytes] - prev_tx_bytes).to_f / interval_seconds).round
-        end
-      end
+      internal_interfaces = current_interfaces.select { |iface|
+        iface[:name].to_s == "ethwe"
+      }
 
-      current_network
+      external_interfaces = current_interfaces.select { |iface|
+        iface[:name].to_s == "eth0"
+      }
+
+      results[:internal] = calculate_interface_traffic(internal_interfaces, prev_interfaces, interval_seconds)
+      results[:external] = calculate_interface_traffic(external_interfaces, prev_interfaces, interval_seconds)
+
+      results
+    end
+
+
+    def calculate_interface_traffic(current_interfaces, prev_interfaces, interval_seconds)
+      results = {
+        interfaces: [],
+        rx_bytes: 0,
+        prev_rx_bytes: 0,
+        tx_bytes: 0,
+        prev_tx_bytes: 0
+      }
+
+      results = current_interfaces.inject(results) { |result, iface|
+        result[:interfaces] << iface[:name]
+        result[:rx_bytes] += iface[:rx_bytes]
+        result[:tx_bytes] += iface[:tx_bytes]
+
+        prev_iface = prev_interfaces.select { |x| x[:name] == iface[:name] }
+        result[:prev_rx_bytes] += (prev_iface.dig(0, :rx_bytes) || 0)
+        result[:prev_tx_bytes] += (prev_iface.dig(0, :tx_bytes) || 0)
+
+        result
+      }
+
+      results[:rx_bytes_per_second] = ((results[:rx_bytes] - results[:prev_rx_bytes]).to_f / interval_seconds).round
+      results[:tx_bytes_per_second] = ((results[:tx_bytes] - results[:prev_tx_bytes]).to_f / interval_seconds).round
+
+      results.delete(:prev_rx_bytes)
+      results.delete(:prev_tx_bytes)
+
+      results
     end
   end
 end

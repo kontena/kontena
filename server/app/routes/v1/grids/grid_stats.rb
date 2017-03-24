@@ -3,11 +3,10 @@ V1::GridsApi.route('grid_stats') do |r|
   # GET /v1/grids/:id/stats
   r.get do
     r.is do
-      network_iface = r.params["iface"] ? r.params["iface"] : "eth0"
       sort = r.params["sort"] ? r.params["sort"] : "cpu"
 
-      @stats = Metrics.get_container_stats(@grid.containers, network_iface, sort.to_sym)
-      render('grid_stats/stats')
+      @stats = Metrics.get_container_stats(@grid.containers, sort.to_sym)
+      render('stats/stats')
     end
 
     r.on 'containers' do
