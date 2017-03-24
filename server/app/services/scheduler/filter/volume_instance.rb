@@ -17,10 +17,21 @@ module Scheduler
 
         service.service_volumes.each do |sv|
           if sv.volume
-            filtered_nodes = filtered_nodes.select { |node|
-              # Check if node has required volume instance
-              node.volume_instances.where(name: sv.volume.name_for_service(service, instance_number)).exists?
-            }
+            case sv.volume.scope
+            when 'instance'
+              # Try to find a node which has the volume already for the instance
+              filtered_nodes = filtered_nodes.select { |node|
+                node.volume_instances.where(name: sv.volume.name_for_service(service, instance_number)).exists?
+              }
+            when 'stack'
+              # Stack scoped volumes can be created per node
+              filtered_nodes = nodes
+            when 'grid'
+              # Grid scoped volumes can be created per node
+              filtered_nodes = nodes
+            else
+              raise Scheduler::Error, "Unknown volume scope: #{sv.volume.scope}"
+            end
           end
         end
         debug "filtered nodes: #{filtered_nodes.map {|n| n.name}}"
