@@ -56,7 +56,15 @@ class HostNodeStat
         created_at: { '$first': '$created_at' },
 
         cpu_num_cores: { '$avg': '$cpu.num_cores' },
-        cpu_percent_used: { '$avg': { '$add': ['$cpu.user', '$cpu.system'] } },
+        cpu_percent_used: {
+          '$avg': {         
+            '$add': [
+              { '$ifNull': ['$cpu.user', 0] },
+              { '$ifNull': ['$cpu.system', 0] },
+              { '$ifNull': ['$cpu.nice', 0] }
+            ]
+          }
+        },
 
         memory_used: { '$avg': '$memory.used' },
         memory_total: { '$avg': '$memory.total' },
@@ -157,7 +165,15 @@ class HostNodeStat
         created_at: { '$first': '$created_at' },
 
         cpu_num_cores: { '$avg': '$cpu.num_cores' },
-        cpu_percent_used: { '$avg': { '$add': ['$cpu.user', '$cpu.system'] } },
+        cpu_percent_used: {
+          '$avg': {
+            '$add': [
+              { '$ifNull': ['$cpu.user', 0] },
+              { '$ifNull': ['$cpu.system', 0] },
+              { '$ifNull': ['$cpu.nice', 0] }
+            ]
+          }
+        },
 
         memory_used: { '$avg': '$memory.used' },
         memory_total: { '$avg': '$memory.total' },

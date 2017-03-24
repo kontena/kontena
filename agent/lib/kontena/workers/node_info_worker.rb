@@ -171,6 +171,7 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
       statsd.gauge("#{key_base}.cpu.system", event[:cpu][:system])
       statsd.gauge("#{key_base}.cpu.user", event[:cpu][:user])
+      statsd.gauge("#{key_base}.cpu.nice", event[:cpu][:nice])
       statsd.gauge("#{key_base}.cpu.idle", event[:cpu][:idle])
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
@@ -271,24 +272,28 @@ module Kontena::Workers
         num_cores: prev_cpus.size,
         system: 0.0,
         user: 0.0,
+        nice: 0.0,
         idle: 0.0
       }
 
       prev_cpus.zip(current_cpus).map { |prev_cpu, current_cpu|
         system_ticks = current_cpu.system - prev_cpu.system
         user_ticks = current_cpu.user - prev_cpu.user
+        nice_ticks = current_cpu.nice = prev_cpu.nice
         idle_ticks = current_cpu.idle - prev_cpu.idle
 
-        total_ticks = (system_ticks + user_ticks + idle_ticks).to_f
+        total_ticks = (system_ticks + user_ticks + nice_ticks + idle_ticks).to_f
 
         {
           system: (system_ticks / total_ticks) * 100.0,
           user: (user_ticks / total_ticks) * 100.0,
+          nice: (nice_ticks / total_ticks) * 100.0,
           idle: (idle_ticks / total_ticks) * 100.0
         }
       }.inject(result) { |memo, cpu_core|
         memo[:system] += cpu_core[:system]
         memo[:user] += cpu_core[:user]
+        memo[:nice] += cpu_core[:nice]
         memo[:idle] += cpu_core[:idle]
         memo
       }

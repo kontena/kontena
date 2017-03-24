@@ -261,6 +261,7 @@ describe Kontena::Workers::NodeInfoWorker do
         num_cores: 2,
         system: 15.568862275449103,
         user: 7.784431137724551,
+        nice: 0,
         idle: 176.64670658682633
       })
     end
