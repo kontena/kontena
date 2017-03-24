@@ -6,8 +6,14 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
 
     def validate(key, value, validations, errors)
       unless value.is_a?(Hash)
-        errors[key] = 'hooks must be array'
+        errors[key] = 'hooks must be hash'
         return
+      end
+
+      value.keys.each do |hook|
+        unless %w(pre_build post_start).include?(hook)
+          errors[key] = "invalid hook #{hook}"
+        end
       end
 
       if value['pre_build']
