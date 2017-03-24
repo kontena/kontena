@@ -20,6 +20,7 @@ require_relative 'kontena/websocket_client'
 
 require_relative 'kontena/models/node'
 require_relative 'kontena/models/service_pod'
+require_relative 'kontena/models/volume'
 
 require_relative 'kontena/observable'
 require_relative 'kontena/observer'
@@ -46,6 +47,7 @@ require_relative 'kontena/workers/container_starter_worker'
 require_relative 'kontena/workers/fluentd_worker'
 
 require_relative 'kontena/workers/service_pod_manager'
+require_relative 'kontena/workers/volumes/volume_manager'
 
 require_relative 'kontena/actors/container_coroner'
 

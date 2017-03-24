@@ -9,7 +9,8 @@ class RpcServer
   HANDLERS = {
     'containers' => Rpc::ContainerHandler,
     'nodes' => Rpc::NodeHandler,
-    'node_service_pods' => Rpc::NodeServicePodHandler
+    'node_service_pods' => Rpc::NodeServicePodHandler,
+    'node_volumes' => Rpc::NodeVolumeHandler
   }
 
   class Error < StandardError

@@ -31,7 +31,11 @@ module Kontena
           data_container = self.ensure_data_container(service_pod)
           service_pod.volumes_from << data_container.id
         end
-        ensure_volumes(service_pod)
+
+        wait!(timeout: 30, interval: 1, message: "waiting for volumes to be created") {
+          volumes_exist?(service_pod)
+        }
+
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
         wait_network_ready?
@@ -124,20 +128,14 @@ module Kontena
         data_container
       end
 
-      def ensure_volumes(service_pod)
-        service_pod.volumes.each do |volume_spec|
-          debug "ensuring volume: #{volume_spec}"
-          if volume_spec['name']
-            volume = Docker::Volume.get(volume_spec['name']) rescue nil
-            unless volume
-              info "creating volume: #{volume_spec['name']}"
-              Docker::Volume.create(volume_spec['name'], {
-                  'Driver' => volume_spec['driver'],
-                  'DriverOpts' => volume_spec['driver_opts']
-                })
-            end
+      def volumes_exist?(service_pod)
+        volume_manager = Celluloid::Actor[:volume_manager]
+        service_pod.volumes.each do |volume|
+          if volume['name']
+            return false unless volume_manager.volume_exist?(volume['name'])
           end
         end
+        true
       end
 
       # @param [Docker::Container] container
