@@ -89,7 +89,7 @@ module Stacks
         unless existing
           outcome = Volumes::Create.run(grid: self.stack_instance.grid, **volume.symbolize_keys)
           unless outcome.success?
-            handle_volume_outcome_errors(volume[:name], outcome.errors.message)
+            handle_volume_outcome_errors(volume[:name], outcome.errors)
           end
         end
       end

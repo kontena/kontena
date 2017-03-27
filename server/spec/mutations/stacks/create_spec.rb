@@ -292,6 +292,24 @@ describe Stacks::Create do
         }.to change{ Volume.count }.by(1)
       end
 
+      it 'mutation fails to create volumes' do
+        grid
+        expect {
+          outcome = described_class.new(
+            grid: grid,
+            name: 'stack',
+            stack: 'foo/bar',
+            version: '0.1.0',
+            registry: 'file://',
+            source: '...',
+            variables: {foo: 'bar'},
+            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+            volumes: [{name: 'vol1', scope: 'grid'}]
+          ).run
+          expect(outcome.success?).to be_falsey
+        }.to change{ Volume.count }.by(0)
+      end
+
       it 'creates stack with external volumes with name' do
         volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')
         expect {

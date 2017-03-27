@@ -68,7 +68,7 @@ module Stacks
         unless volume[:external]
           outcome = Volumes::Create.run(grid: self.grid, **volume.symbolize_keys)
           unless outcome.success?
-            handle_volume_outcome_errors(volume[:name], outcome.errors.message)
+            handle_volume_outcome_errors(volume[:name], outcome.errors)
             return
           end
         end

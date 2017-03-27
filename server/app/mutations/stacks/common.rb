@@ -16,7 +16,7 @@ module Stacks
 
     def handle_volume_outcome_errors(volume_name, errors)
       errors.each do |key, atom|
-         add_service_error(volume_name, key, atom.symbolic, atom.message)
+         add_error("volumes.#{volume_name}.#{key}", atom.symbolic, atom.message)
       end
     end
 
