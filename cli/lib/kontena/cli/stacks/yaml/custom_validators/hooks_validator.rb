@@ -6,8 +6,14 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
 
     def validate(key, value, validations, errors)
       unless value.is_a?(Hash)
-        errors[key] = 'hooks must be array'
+        errors[key] = "must be a mapping, not #{value.class}"
         return
+      end
+
+      value.keys.each do |hook|
+        unless %w(pre_build post_start).include?(hook)
+          errors[key] = "invalid hook #{hook}"
+        end
       end
 
       if value['pre_build']
@@ -21,7 +27,7 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
 
     def validate_pre_build_hooks(key, pre_build_hooks, errors)
       unless pre_build_hooks.is_a?(Array)
-        errors[key] = 'pre_build must be array'
+        errors[key] = { 'pre_build' => "must be an array" }
         return
       end
       pre_build_validation = {
@@ -36,7 +42,7 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
 
     def validate_post_start_hooks(key, post_start_hooks, errors)
       unless post_start_hooks.is_a?(Array)
-        errors[key] = 'post_start must be array'
+        errors[key] = { 'post_start' => 'must be an array' }
         return
       end
       post_start_validation = {
