@@ -27,7 +27,7 @@ class HostNode
   field :last_seen_at, type: Time
   field :agent_version, type: String
   field :docker_version, type: String
-  field :plugins, type: Hash
+  field :plugins, type: Hash, default: {}
 
   attr_accessor :schedule_counter
 
