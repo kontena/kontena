@@ -227,8 +227,47 @@ describe Kontena::Workers::NodeInfoWorker do
 
   describe '#publish_node_stats' do
     it 'sends stats via rpc with timestamps' do
-      expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [hash_including(time: String)])
+      expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
+        [hash_including(time: String, cpu: Hash, network: Hash)])
       subject.publish_node_stats
+    end
+  end
+
+  describe '#calculate_cpu_usage' do
+    it 'calculates cpu usage' do
+      prev = [
+        # cpu-num, user ticks, system ticks, nice ticks, idle ticks
+        Vmstat::Cpu.new(0, 926444, 1715744, 0, 8413871),
+        Vmstat::Cpu.new(1, 67122, 93965, 0, 10891139)
+      ]
+      cur = [
+        Vmstat::Cpu.new(0, 926482, 1715820, 0, 8414258),
+        Vmstat::Cpu.new(1, 67123, 93967, 0, 10891637)
+      ]
+
+      result = subject.calculate_cpu_usage(prev, cur)
+
+      expect(result).to eq({
+        num_cores: 2,
+        system: 15.568862275449103,
+        user: 7.784431137724551,
+        idle: 176.64670658682633
+      })
+    end
+  end
+
+  describe '#calculate_network_traffic' do
+    it 'calculates network traffic' do
+      prev = Vmstat::NetworkInterface.new(:test, 2000, 0, 0, 3000, 0, 6)
+      cur = Vmstat::NetworkInterface.new(:test, 5000, 0, 0, 4500, 0, 6)
+
+      result = subject.calculate_network_traffic(prev, cur, 60)
+
+      expect(result).to eq({
+        interface_name: :test,
+        in_bytes_per_second: 50,
+        out_bytes_per_second: 25
+      })
     end
   end
 end

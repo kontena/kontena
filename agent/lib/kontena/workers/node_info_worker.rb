@@ -24,6 +24,8 @@ module Kontena::Workers
       @statsd = nil
       @stats_since = Time.now
       @container_seconds = 0
+      @previous_cpu = Vmstat.cpu
+      @previous_iface = get_network_interface
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -119,6 +121,14 @@ module Kontena::Workers
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
+      current_cpu = Vmstat.cpu
+      cpu_usage = calculate_cpu_usage(@previous_cpu, current_cpu)
+      @previous_cpu = current_cpu
+
+      interval = [ 1, (Time.now - @stats_since).round ].max
+      current_iface = Vmstat.network_interfaces.select { |x| x.name == @previous_iface.name }.first
+      network_traffic = calculate_network_traffic(@previous_iface, current_iface, interval)
+      @previous_iface = current_iface
 
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
@@ -145,6 +155,8 @@ module Kontena::Workers
             total: disk.total_bytes
           }
         ],
+        cpu: cpu_usage,
+        network: network_traffic,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
@@ -158,9 +170,14 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
       statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])
       statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
+      statsd.gauge("#{key_base}.cpu.system", event[:cpu][:system])
+      statsd.gauge("#{key_base}.cpu.user", event[:cpu][:user])
+      statsd.gauge("#{key_base}.cpu.idle", event[:cpu][:idle])
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
+      statsd.gauge("#{key_base}.network.in_bytes_per_second", event[:network][:in_bytes_per_second])
+      statsd.gauge("#{key_base}.network.out_bytes_per_second", event[:network][:out_bytes_per_second])
       statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
       event[:filesystem].each do |fs|
         name = fs[:name].split("/")[1..-1].join(".")
@@ -243,6 +260,58 @@ module Kontena::Workers
     rescue => exc
       debug exc.message
       0
+    end
+
+    # @param [Array<Vmstat::Cpu>] prev_cpus
+    # @param [Array<Vmstat::Cpu>] current_cpu
+    # @return [Hash] { :num_cores, :system, :user, :idle }
+    def calculate_cpu_usage(prev_cpus, current_cpus)
+      result = {
+        num_cores: prev_cpus.size,
+        system: 0.0,
+        user: 0.0,
+        idle: 0.0
+      }
+
+      prev_cpus.zip(current_cpus).map { |prev_cpu, current_cpu|
+        system_ticks = current_cpu.system - prev_cpu.system
+        user_ticks = current_cpu.user - prev_cpu.user
+        idle_ticks = current_cpu.idle - prev_cpu.idle
+
+        total_ticks = (system_ticks + user_ticks + idle_ticks).to_f
+
+        {
+          system: (system_ticks / total_ticks) * 100.0,
+          user: (user_ticks / total_ticks) * 100.0,
+          idle: (idle_ticks / total_ticks) * 100.0
+        }
+      }.inject(result) { |memo, cpu_core|
+        memo[:system] += cpu_core[:system]
+        memo[:user] += cpu_core[:user]
+        memo[:idle] += cpu_core[:idle]
+        memo
+      }
+    end
+
+    # @param [Vmstat::NewtworkInterface] previous_iface
+    # @param [Vmstat::NetworkInterface] current_iface
+    # @param [Number] interval
+    # @return [Hash]
+    def calculate_network_traffic(previous_iface, current_iface, interval)
+      in_bytes_per_second = (current_iface.in_bytes - previous_iface.in_bytes) / interval
+      out_bytes_per_second = (current_iface.out_bytes - previous_iface.out_bytes) / interval
+
+      {
+        interface_name: current_iface.name,
+        in_bytes_per_second: in_bytes_per_second,
+        out_bytes_per_second: out_bytes_per_second
+      }
+    end
+
+    def get_network_interface
+      Vmstat.network_interfaces.select { |x| x.ethernet? and x.in_bytes > 0 and x.out_bytes > 0 }
+                               .sort { |l,r| r.out_bytes <=> l.out_bytes }
+                               .first
     end
 
     # @return [Hash]

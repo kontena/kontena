@@ -1,0 +1,15 @@
+json.from @node_stats[:from_time]
+json.to @node_stats[:to_time]
+json.stats @node_stats[:stats] do |stat|
+  json.timestamp stat[:timestamp]
+  json.data_points stat[:data_points]
+  json.cpu_usage_percent stat[:cpu_usage_percent]
+  json.memory_used_bytes stat[:memory_used_bytes]
+  json.memory_total_bytes stat[:memory_total_bytes]
+  json.memory_used_percent stat[:memory_used_percent]
+  json.filesystem_used_bytes stat[:filesystem_used_bytes]
+  json.filesystem_total_bytes stat[:filesystem_total_bytes]
+  json.filesystem_used_percent stat[:filesystem_used_percent]
+  json.network_in_bytes_per_second stat[:network_in_bytes_per_second]
+  json.network_out_bytes_per_second stat[:network_out_bytes_per_second]
+end
