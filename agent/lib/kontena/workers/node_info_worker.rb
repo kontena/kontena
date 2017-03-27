@@ -24,6 +24,7 @@ module Kontena::Workers
       @statsd = nil
       @stats_since = Time.now
       @container_seconds = 0
+      @previous_cpu = Vmstat.cpu
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -119,6 +120,9 @@ module Kontena::Workers
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
+      current_cpu = Vmstat.cpu
+      cpu_usage = calculate_cpu_usage(@previous_cpu, current_cpu)
+      @previous_cpu = current_cpu
 
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
@@ -145,6 +149,8 @@ module Kontena::Workers
             total: disk.total_bytes
           }
         ],
+        cpu: cpu_usage,
+        network: get_network_traffic,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
@@ -158,16 +164,27 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
       statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])
       statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
+      statsd.gauge("#{key_base}.cpu.system", event[:cpu][:system])
+      statsd.gauge("#{key_base}.cpu.user", event[:cpu][:user])
+      statsd.gauge("#{key_base}.cpu.idle", event[:cpu][:idle])
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
       statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
       event[:filesystem].each do |fs|
-        name = fs[:name].split("/")[1..-1].join(".")
+        name = fs[:name] ? fs[:name].split("/")[1..-1].join(".") : ""
         statsd.gauge("#{key_base}.filesystem.#{name}.free", fs[:free])
         statsd.gauge("#{key_base}.filesystem.#{name}.available", fs[:available])
         statsd.gauge("#{key_base}.filesystem.#{name}.used", fs[:used])
         statsd.gauge("#{key_base}.filesystem.#{name}.total", fs[:total])
+      end
+      event[:network].each do |network|
+        name = network[:name] ? network[:name] : ""
+        statsd.gauge("#{key_base}.network.#{name}.rx_bytes", network[:rx_bytes])
+        statsd.gauge("#{key_base}.network.#{name}.rx_errors", network[:rx_errors])
+        statsd.gauge("#{key_base}.network.#{name}.rx_dropped", network[:rx_dropped])
+        statsd.gauge("#{key_base}.network.#{name}.tx_bytes", network[:tx_bytes])
+        statsd.gauge("#{key_base}.network.#{name}.tx_errors", network[:tx_errors])
       end
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
@@ -243,6 +260,51 @@ module Kontena::Workers
     rescue => exc
       debug exc.message
       0
+    end
+
+    # @param [Array<Vmstat::Cpu>] prev_cpus
+    # @param [Array<Vmstat::Cpu>] current_cpu
+    # @return [Hash] { :num_cores, :system, :user, :idle }
+    def calculate_cpu_usage(prev_cpus, current_cpus)
+      result = {
+        num_cores: prev_cpus.size,
+        system: 0.0,
+        user: 0.0,
+        idle: 0.0
+      }
+
+      prev_cpus.zip(current_cpus).map { |prev_cpu, current_cpu|
+        system_ticks = current_cpu.system - prev_cpu.system
+        user_ticks = current_cpu.user - prev_cpu.user
+        idle_ticks = current_cpu.idle - prev_cpu.idle
+
+        total_ticks = (system_ticks + user_ticks + idle_ticks).to_f
+
+        {
+          system: (system_ticks / total_ticks) * 100.0,
+          user: (user_ticks / total_ticks) * 100.0,
+          idle: (idle_ticks / total_ticks) * 100.0
+        }
+      }.inject(result) { |memo, cpu_core|
+        memo[:system] += cpu_core[:system]
+        memo[:user] += cpu_core[:user]
+        memo[:idle] += cpu_core[:idle]
+        memo
+      }
+    end
+
+    def get_network_traffic
+      Vmstat.network_interfaces.map do |iface|
+        {
+          name: iface.name,
+          type: iface.type,
+          rx_bytes: iface.in_bytes,
+          rx_errors: iface.in_errors,
+          rx_dropped: iface.in_drops,
+          tx_bytes: iface.out_bytes,
+          tx_errors: iface.out_errors
+        }
+      end
     end
 
     # @return [Hash]

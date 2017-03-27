@@ -1,5 +1,5 @@
 
-describe '/v1/grids', celluloid: true do
+describe '/v1/nodes', celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
   let(:david) do
     user = User.create!(email: 'david@domain.com', external_id: '123456')
@@ -74,6 +74,68 @@ describe '/v1/grids', celluloid: true do
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['etcd_health']).to eq({'health' => nil, 'error' => "timeout"})
+    end
+  end
+
+  describe 'GET /metrics' do
+    let :node do
+      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+    end
+
+    before do
+      node.host_node_stats.create!({
+        grid_id: grid.id,
+        memory: {
+          total: 1000,
+          used: 100
+      	},
+      	filesystem: [{
+          total: 1000,
+          used: 10
+        }],
+      	cpu: {
+          num_cores: 2,
+          system: 5.5,
+          user: 10.0
+      	},
+      	network: [{
+          name: "eth0",
+          rx_bytes: 400,
+          tx_bytes: 200
+      	}, {
+          name: "eth1",
+          rx_bytes: 500,
+          tx_bytes: 500
+      	}]
+      })
+    end
+
+    it 'returns recent metrics' do
+      get "/v1/nodes/#{node.to_path}/metrics", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 1
+      expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
+      expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['network']).to eq({ 'name' => "eth0", 'in' => 400.0, 'out' => 200.0 })
+    end
+
+    it 'applies date filters' do
+      from = Time.parse("2017-01-01 12:00:00 +00:00").utc
+      to = Time.parse("2017-01-01 12:15:00 +00:00").utc
+      get "/v1/nodes/#{node.to_path}/metrics?from=#{from}&to=#{to}", nil, request_headers
+
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 0
+      expect(Time.parse(json_response['from'])).to eq from
+      expect(Time.parse(json_response['to'])).to eq to
+    end
+
+    it 'applies network interface filter' do
+      get "/v1/nodes/#{node.to_path}/metrics?iface=eth1", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 1
+      expect(json_response['stats'][0]['network']).to eq({ 'name' => "eth1", 'in' => 500.0, 'out' => 500.0 })
     end
   end
 
