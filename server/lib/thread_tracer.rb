@@ -29,6 +29,7 @@ class ThreadTracer
   def self.fatal!
     @fatal = true
   end
+  
   def self.fatal?
     @fatal
   end
