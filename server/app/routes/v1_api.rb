@@ -19,6 +19,7 @@ module V1
       r.on 'secrets',             proc { r.run SecretsApi }
       r.on 'stacks',              proc { r.run StacksApi }
       r.on 'certificates',        proc { r.run CertificatesApi }
+      r.on 'volumes',             proc { r.run VolumesApi }
     end
   end
 end

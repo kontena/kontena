@@ -14,6 +14,12 @@ module Stacks
       end
     end
 
+    def handle_volume_outcome_errors(volume_name, errors)
+      errors.each do |key, atom|
+         add_error("volumes.#{volume_name}.#{key}", atom.symbolic, atom.message)
+      end
+    end
+
     def validate_expose
       if self.expose && !self.services.find{ |s| s[:name] == self.expose}
         add_error(:expose, :not_found, "#{self.expose} is not defined in the services array")
@@ -31,6 +37,20 @@ module Stacks
         end
       end
       service[:links] = links
+    end
+
+    def validate_volumes
+      return unless self.volumes
+
+      self.volumes.each do |volume|
+        if volume['external']
+          volume_name = volume['external'] == true ? volume['name'] : volume.dig('external', 'name')
+          vol = self.grid.volumes.where(name: volume_name, grid: self.grid).first
+          unless vol
+            add_error(:volumes, :not_found, "External volume #{volume_name} not found")
+          end
+        end
+      end
     end
 
     def self.included(base)
@@ -52,6 +72,9 @@ module Stacks
           string :expose
           string :registry
           model :variables, class: Hash
+          array :volumes do
+            model :object, class: Hash
+          end
         end
       end
     end

@@ -31,6 +31,7 @@ module Kontena
           data_container = self.ensure_data_container(service_pod)
           service_pod.volumes_from << data_container.id
         end
+        ensure_volumes(service_pod)
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
         wait_network_ready?
@@ -121,6 +122,22 @@ module Kontena
         end
 
         data_container
+      end
+
+      def ensure_volumes(service_pod)
+        service_pod.volumes.each do |volume_spec|
+          debug "ensuring volume: #{volume_spec}"
+          if volume_spec['name']
+            volume = Docker::Volume.get(volume_spec['name']) rescue nil
+            unless volume
+              info "creating volume: #{volume_spec['name']}"
+              Docker::Volume.create(volume_spec['name'], {
+                  'Driver' => volume_spec['driver'],
+                  'DriverOpts' => volume_spec['driver_opts']
+                })
+            end
+          end
+        end
       end
 
       # @param [Docker::Container] container

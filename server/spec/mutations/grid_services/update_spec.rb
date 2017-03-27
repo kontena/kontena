@@ -1,7 +1,8 @@
 
 describe GridServices::Update do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
+  let(:stack) {Stack.create!(name: 'foo', grid: grid)}
+  let(:redis_service) { GridService.create(grid: grid, stack: stack, name: 'redis', image_name: 'redis:2.8')}
 
   describe '#run' do
     it 'updates env variables' do
@@ -161,16 +162,17 @@ describe GridServices::Update do
             volumes: ['/foo']
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes).to eq(['/foo'])
+          expect(outcome.result.service_volumes.first.path).to eq('/foo')
         end
 
         it 'allows to add named volume' do
+          volume = Volume.create!(name: 'foo', grid: grid, scope: 'instance')
           outcome = described_class.new(
             grid_service: redis_service,
             volumes: ['foo:/foo']
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes).to eq(['foo:/foo'])
+          expect(outcome.result.service_volumes.first.volume).to eq(volume)
         end
 
         it 'allows to add bind mounted volume' do
@@ -179,16 +181,19 @@ describe GridServices::Update do
             volumes: ['/foo:/foo']
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes).to eq(['/foo:/foo'])
+          expect(outcome.result.service_volumes.first.path).to eq('/foo')
+          expect(outcome.result.service_volumes.first.bind_mount).to eq('/foo')
         end
       end
 
       context 'stateful service' do
         let(:stateful_service) do
-          GridService.create(
-            grid: grid, name: 'redis', image_name: 'redis:2.8', stateful: true,
-            volumes: ['/data']
-          )
+          outcome = GridServices::Create.run(grid: grid, stack: stack, name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['/data'])
+          outcome.result
+        end
+
+        let! :volume do
+          Volume.create!(name: 'foo', grid: grid, scope: 'container')
         end
 
         it 'does not allow to add non-named volume' do
@@ -205,7 +210,7 @@ describe GridServices::Update do
             volumes: ['/data', 'foo:/foo']
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes).to eq(['/data', 'foo:/foo'])
+          expect(outcome.result.service_volumes.count).to eq(2)
         end
 
         it 'allows to add bind mounted volume' do
@@ -214,7 +219,7 @@ describe GridServices::Update do
             volumes: ['/data', '/foo:/foo']
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes).to eq(['/data', '/foo:/foo'])
+          expect(outcome.result.service_volumes.count).to eq(2)
         end
 
         it 'allows to remove a volume' do
@@ -223,7 +228,7 @@ describe GridServices::Update do
             volumes: []
           ).run
           expect(outcome.success?).to be_truthy
-          expect(outcome.result.volumes).to eq([])
+          expect(outcome.result.service_volumes.count).to eq(0)
         end
       end
     end
@@ -242,10 +247,8 @@ describe GridServices::Update do
 
       context 'stateful service' do
         let(:stateful_service) do
-          GridService.create(
-            grid: grid, name: 'redis', image_name: 'redis:2.8', stateful: true,
-            volumes: ['/data']
-          )
+          outcome = GridServices::Create.run(grid: grid, name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['/data'])
+          outcome.result
         end
 
         it 'does not allow to update volumes_from' do

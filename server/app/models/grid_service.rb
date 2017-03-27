@@ -49,6 +49,7 @@ class GridService
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
+  embeds_many :service_volumes, class_name: 'ServiceVolume'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
   embeds_one :health_check, class_name: 'GridServiceHealthCheck'
 

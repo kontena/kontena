@@ -75,5 +75,29 @@ describe Stacks::Deploy, celluloid: true do
       sleep 0.01 until worker.mailbox.size == 0
       expect(GridService.find(redis.id)).to be_nil
     end
+
+    it 'updates services with volumes' do
+      volume = Volume.create(grid: grid, name: 'vol', scope: 'instance', driver: 'local')
+
+      Stacks::Update.run(
+        stack_instance: stack,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: [
+          {name: 'redis', image: 'redis:2.8', volumes: ['vol:/data'] }
+        ],
+        volumes: [
+          {name: 'vol', external: true}
+        ]
+      )
+      outcome = described_class.run(stack: stack)
+      expect(outcome.success?).to be_truthy
+      redis = stack.reload.grid_services.find_by(name: 'redis')
+      expect(redis.service_volumes.count).to eq(1)
+      expect(redis.service_volumes.first.volume).to eq(volume)
+    end
   end
 end
