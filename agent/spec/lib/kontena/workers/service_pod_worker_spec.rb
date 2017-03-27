@@ -68,6 +68,28 @@ describe Kontena::Workers::ServicePodWorker do
     end
   end
 
+  describe '#state_in_sync' do
+    let(:container) { instance_double(Docker::Container) }
+
+    context "for a stopped service pod" do
+      let(:service_pod) do
+        Kontena::Models::ServicePod.new(
+          'id' => 'foo/2',
+          'instance_number' => 2,
+          'updated_at' => Time.now.to_s,
+          'deploy_rev' => Time.now.to_s,
+          'desired_state' => 'stopped',
+        )
+      end
+
+      it "returns true for a stopped container" do
+        expect(container).to receive(:running?).and_return(false)
+
+        expect(subject.state_in_sync?(service_pod, container)).to be_truthy
+      end
+    end
+  end
+
   describe '#current_state' do
     it 'returns missing if container is not found' do
       allow(subject.wrapped_object).to receive(:get_container).and_return(nil)
