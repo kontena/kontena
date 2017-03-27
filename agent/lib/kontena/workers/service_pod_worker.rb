@@ -107,7 +107,7 @@ module Kontena::Workers
       return false if !service_pod.terminated? && service_container.nil?
 
       return true if service_pod.running? && service_container.running?
-      return true if service_pod.stopped? && service_container.stopped?
+      return true if service_pod.stopped? && !service_container.running?
 
       false
     end

@@ -17,7 +17,8 @@ describe Rpc::ServicePodSerializer do
       image_name: 'my/app:latest',
       container_count: 2,
       env: ['FOO=bar'],
-      networks: [grid.networks.first]
+      networks: [grid.networks.first],
+      service_volumes: [ServiceVolume.new(volume: volume, path:'/data'), ServiceVolume.new(volume: ext_vol, path: '/foo')]
     )
   end
   let(:service_instance) do
@@ -29,6 +30,14 @@ describe Rpc::ServicePodSerializer do
     )
   end
   let(:subject) { described_class.new(service_instance) }
+
+  let! :volume do
+    Volume.create(grid: grid, name: 'volA', scope: 'stack', driver: 'local')
+  end
+
+  let! :ext_vol do
+    Volume.create(grid: grid, name: 'ext-vol', scope: 'instance', driver: 'local')
+  end
 
   describe '#to_hash' do
 
@@ -93,7 +102,12 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes volumes' do
-      expect(subject.to_hash).to include(:volumes => [])
+      expect(subject.to_hash).to include(:volumes =>
+        [
+          {name: 'null.volA', path: '/data', flags: nil, driver: 'local', driver_opts: {}},
+          {name: 'app.ext-vol-2', path: '/foo', flags: nil, driver: 'local', driver_opts: {}}
+        ]
+      )
     end
 
     it 'includes volumes_from' do
@@ -195,9 +209,29 @@ describe Rpc::ServicePodSerializer do
     end
   end
 
+  describe '#build_volumes' do
+
+    it 'adds volume specs' do
+      expect(subject.build_volumes).to eq([
+        {:name=>"null.volA", :path => '/data', :flags => nil, :driver=>"local", :driver_opts=>{}},
+        {:name=>"app.ext-vol-2", :path => '/foo', :flags => nil, :driver=>"local", :driver_opts=>{}}
+      ])
+    end
+
+    it 'adds bind mounts as volumes' do
+      service.service_volumes = [ServiceVolume.new(bind_mount: '/host/path', path: '/data')]
+      expect(subject.build_volumes).to eq([{:bind_mount=>"/host/path", :path => '/data', :flags => nil}])
+    end
+
+    it 'adds anon volume specs' do
+      service.service_volumes = [ServiceVolume.new(path: '/data')]
+      expect(subject.build_volumes).to eq([{:bind_mount=>nil, :path => '/data', :flags => nil}])
+    end
+  end
   describe '#image_credentials' do
     it 'return nil by default' do
       expect(subject.image_credentials).to be_nil
     end
   end
+
 end

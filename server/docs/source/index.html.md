@@ -209,6 +209,10 @@ Only `master_admin` role can remove a grid.
 	"os": "CoreOS 1185.3.0 (MoreOS)",
 	"kernel_version": "4.7.3-coreos-r2",
 	"driver": "overlay",
+	"plugins": {
+		"network": ["bridge", "host", "null"],
+		"volume": ["local"]
+	},
 	"cpus": 2,
 	"mem_total": 0.0,
 	"mem_limit": 0.0,

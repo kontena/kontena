@@ -10,6 +10,7 @@ describe HostNode do
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
   it { should have_fields(:last_seen_at).of_type(Time) }
+  it { should have_fields(:plugins).of_type(Hash) }
 
   it { should belong_to(:grid) }
   it { should have_many(:grid_service_instances) }
@@ -125,6 +126,11 @@ describe HostNode do
         subject.attributes_from_docker({'AgentVersion' => '1.2.3'})
       }.to change{ subject.agent_version }.to('1.2.3')
     end
+
+    it 'sets volume plugins' do
+      subject.attributes_from_docker({'Plugins' => {'Volume' => ['local', 'foobar']}})
+      expect(subject.plugins['volume']).to eq(['local', 'foobar'])
+    end
   end
 
   describe '#save!' do
@@ -138,7 +144,7 @@ describe HostNode do
     end
 
     it 'reserves node number successfully after race condition error' do
-      node1 = HostNode.create!(node_id: 'aa', node_number: 1, grid_id: 1)
+      HostNode.create!(node_id: 'aa', node_number: 1, grid_id: 1)
       allow(subject).to receive(:grid).and_return(grid)
       subject.attributes = {node_id: 'bb', grid_id: 1}
       subject.save!
@@ -146,7 +152,8 @@ describe HostNode do
     end
 
     it 'appends node_number to name if name is not unique' do
-      node1 = HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
+      grid = Grid.create!(name: 'test')
+      HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
 
       subject.attributes = {name: 'node', grid: grid}
       subject.save
@@ -159,7 +166,7 @@ describe HostNode do
 
     it 'does not append node_number to name if name is empty' do
       grid = Grid.create!(name: 'test')
-      node1 = HostNode.create!(node_id: 'aa', node_number: 1, grid: grid)
+      HostNode.create!(node_id: 'aa', node_number: 1, grid: grid)
 
       subject.attributes = {grid: grid}
       subject.save

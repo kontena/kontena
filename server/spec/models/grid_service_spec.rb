@@ -7,8 +7,8 @@ describe GridService do
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares,
                           :revision, :stack_revision).of_type(Fixnum) }
-  it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
-                          :cap_add, :cap_drop, :volumes).of_type(Array) }
+  it { should have_fields(:affinity, :cmd, :ports, :env, :volumes_from,
+                          :cap_add, :cap_drop).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
   it { should have_fields(:deploy_requested_at, :deployed_at).of_type(DateTime) }
   it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
@@ -18,6 +18,7 @@ describe GridService do
   it { should embed_many(:grid_service_links) }
   it { should embed_many(:secrets) }
   it { should embed_many(:hooks) }
+  it { should embed_many(:service_volumes) }
   it { should embed_one(:deploy_opts) }
   it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
