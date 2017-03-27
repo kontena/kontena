@@ -186,9 +186,7 @@ module Cloud
       params = [grid_id, users, msg[:object]]
       message = [2, "#{msg[:type]}##{msg[:event]}", params]
       debug "Sending notification message: #{message}"
-      EM.defer {
-        send_message(MessagePack.dump(message).bytes)
-      }
+      send_message(MessagePack.dump(message).bytes)
     end
 
     def resolve_grid_id(msg)
@@ -201,7 +199,7 @@ module Cloud
     end
 
     def resolve_users(grid_id)
-      if(grid_id)
+      if grid_id
         return users[grid_id] if users[grid_id] # Found from cache
         grid = Grid.find_by(name: grid_id)
         grid_users = (User.master_admins + grid.users).uniq
