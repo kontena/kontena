@@ -252,6 +252,10 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 	"os": "CoreOS 1185.3.0 (MoreOS)",
 	"kernel_version": "4.7.3-coreos-r2",
 	"driver": "overlay",
+	"plugins": {
+		"network": ["bridge", "host", "null"],
+		"volume": ["local"]
+	},
 	"cpus": 2,
 	"mem_total": 0.0,
 	"mem_limit": 0.0,
