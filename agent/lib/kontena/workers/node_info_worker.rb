@@ -5,6 +5,7 @@ require_relative '../models/node'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 require_relative '../helpers/rpc_helper'
+require_relative '../helpers/stats_helper'
 
 module Kontena::Workers
   class NodeInfoWorker
@@ -14,6 +15,7 @@ module Kontena::Workers
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::StatsHelper
 
     attr_reader :statsd, :stats_since, :node
 
@@ -304,51 +306,34 @@ module Kontena::Workers
     # @param [Number] interval_seconds
     # @return [Hash]
     def calculate_network_traffic(prev_interfaces, current_interfaces, interval_seconds)
+      prev_interfaces = prev_interfaces.map { |iface| {
+        name: iface.name,
+        rx_bytes: iface.in_bytes,
+        tx_bytes: iface.out_bytes
+      }}
+
       internal_interfaces = current_interfaces.select { |iface|
         iface.name.to_s == "weave" or iface.name.to_s.start_with?("vethwe")
       }
+      .map { |iface| {
+          name: iface.name,
+          rx_bytes: iface.in_bytes,
+          tx_bytes: iface.out_bytes
+      }}
 
       external_interfaces = current_interfaces.select { |iface|
         iface.name.to_s == "docker0"
       }
+      .map { |iface| {
+          name: iface.name,
+          rx_bytes: iface.in_bytes,
+          tx_bytes: iface.out_bytes
+      }}
 
       {
         internal: calculate_interface_traffic(prev_interfaces, internal_interfaces, interval_seconds),
         external: calculate_interface_traffic(prev_interfaces, external_interfaces, interval_seconds)
       }
-    end
-
-    def calculate_interface_traffic(prev_interfaces, current_interfaces, interval_seconds)
-      results = {
-        interfaces: [],
-        rx_bytes: 0,
-        prev_rx_bytes: 0,
-        tx_bytes: 0,
-        prev_tx_bytes: 0
-      }
-
-      results = current_interfaces.inject(results) { |result, iface|
-        result[:interfaces] << iface.name
-        result[:rx_bytes] += iface.in_bytes
-        result[:tx_bytes] += iface.out_bytes
-
-        prev_iface = prev_interfaces.select { |x| x.name == iface.name }
-
-        if prev_iface.size > 0
-          result[:prev_rx_bytes] += prev_iface[0].in_bytes
-          result[:prev_tx_bytes] += prev_iface[0].out_bytes
-        end
-
-        result
-      }
-
-      results[:rx_bytes_per_second] = ((results[:rx_bytes] - results[:prev_rx_bytes]).to_f / interval_seconds).round
-      results[:tx_bytes_per_second] = ((results[:tx_bytes] - results[:prev_tx_bytes]).to_f / interval_seconds).round
-
-      results.delete(:prev_rx_bytes)
-      results.delete(:prev_tx_bytes)
-
-      results
     end
 
     # @return [Hash]

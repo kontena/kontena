@@ -4,6 +4,7 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::StatsHelper
 
     attr_reader :statsd, :node_name
 
@@ -200,42 +201,8 @@ module Kontena::Workers
         iface[:name].to_s == "eth0"
       }
 
-      results[:internal] = calculate_interface_traffic(internal_interfaces, prev_interfaces, interval_seconds)
-      results[:external] = calculate_interface_traffic(external_interfaces, prev_interfaces, interval_seconds)
-
-      results
-    end
-
-
-    def calculate_interface_traffic(current_interfaces, prev_interfaces, interval_seconds)
-      results = {
-        interfaces: [],
-        rx_bytes: 0,
-        prev_rx_bytes: 0,
-        tx_bytes: 0,
-        prev_tx_bytes: 0
-      }
-
-      results = current_interfaces.inject(results) { |result, iface|
-        result[:interfaces] << iface[:name]
-        result[:rx_bytes] += iface[:rx_bytes]
-        result[:tx_bytes] += iface[:tx_bytes]
-
-        prev_iface = prev_interfaces.select { |x| x[:name] == iface[:name] }
-
-        if (prev_iface.size > 0)
-          result[:prev_rx_bytes] += prev_iface[0][:rx_bytes]
-          result[:prev_tx_bytes] += prev_iface[0][:tx_bytes]
-        end
-
-        result
-      }
-
-      results[:rx_bytes_per_second] = ((results[:rx_bytes] - results[:prev_rx_bytes]).to_f / interval_seconds).round
-      results[:tx_bytes_per_second] = ((results[:tx_bytes] - results[:prev_tx_bytes]).to_f / interval_seconds).round
-
-      results.delete(:prev_rx_bytes)
-      results.delete(:prev_tx_bytes)
+      results[:internal] = calculate_interface_traffic(prev_interfaces, internal_interfaces, interval_seconds)
+      results[:external] = calculate_interface_traffic(prev_interfaces, external_interfaces, interval_seconds)
 
       results
     end
