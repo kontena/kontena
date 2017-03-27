@@ -27,6 +27,7 @@ class HostNode
   field :last_seen_at, type: Time
   field :agent_version, type: String
   field :docker_version, type: String
+  field :plugins, type: Hash, default: {}
 
   attr_accessor :schedule_counter
 
@@ -71,7 +72,11 @@ class HostNode
       public_ip: attrs['PublicIp'],
       private_ip: attrs['PrivateIp'],
       agent_version: attrs['AgentVersion'],
-      docker_version: attrs['ServerVersion']
+      docker_version: attrs['ServerVersion'],
+      plugins: {
+        'volume' => attrs.dig('Plugins', 'Volume') || [],
+        'network' => attrs.dig('Plugins', 'Network') || []
+      }
     }
     if self.name.nil?
       self.name = attrs['Name']
@@ -164,7 +169,7 @@ class HostNode
       node_number = free_numbers.shift
       raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
       self.update_attribute(:node_number, node_number)
-    rescue Moped::Errors::OperationFailure => exc
+    rescue Moped::Errors::OperationFailure
       retry
     end
   end
