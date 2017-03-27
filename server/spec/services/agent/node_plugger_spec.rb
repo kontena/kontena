@@ -34,41 +34,13 @@ describe Agent::NodePlugger do
   describe '#send_node_info' do
     it "sends node info" do
       expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
-        id: 'xyz',
         name: 'test-node',
         grid: hash_including(
-          id: 'test-grid',
           name: 'test-grid',
-          stats: { statsd: nil },
-          logs: nil,
         ),
       ))
+
       subject.send_node_info
-    end
-
-    context "for a grid with stats and logs" do
-      before do
-        grid.stats = {'statsd' => { 'server' => '127.0.0.2', 'port' => 8125 }}
-        grid.grid_logs_opts = GridLogsOpts.new(forwarder: 'fluentd', opts: { 'fluentd-address' => '127.0.0.1'})
-      end
-
-      it "sends node info" do
-        expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
-          id: 'xyz',
-          name: 'test-node',
-          grid: hash_including(
-            id: 'test-grid',
-            name: 'test-grid',
-            stats: { statsd: { 'server' => '127.0.0.2', 'port' => 8125 } },
-            logs: {
-              forwarder: 'fluentd',
-              opts: { 'fluentd-address' => '127.0.0.1'}
-            },
-          ),
-        ))
-        subject.send_node_info
-      end
-
     end
   end
 end
