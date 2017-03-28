@@ -7,14 +7,13 @@ module Kontena::Workers
     include Kontena::Logging
     include Kontena::Observer
 
-    attr_reader :fluentd, :node_name, :queue
+    attr_reader :fluentd
 
     ##
     # @param [Queue] queue
     # @param [Boolean] autostart
     def initialize(autostart = true)
       @fluentd = nil
-      @queue = []
       @forwarding = false
       info 'initialized'
       subscribe('container:log', :on_log_event)
@@ -28,14 +27,13 @@ module Kontena::Workers
 
     # @param [Node] node
     def configure(node)
-      node_name = node.name
       driver = node.grid.dig('logs', 'forwarder')
       if driver == 'fluentd'
         fluentd_address = node.grid.dig('logs', 'opts', 'fluentd-address')
         info "starting fluentd log streaming to #{fluentd_address}"
         host, port = fluentd_address.split(':')
         @fluentd = Fluent::Logger::FluentLogger
-          .new("#{node_name}.#{node.grid['name']}",
+          .new("#{node.name}.#{node.grid['name']}",
               :host => host,
               :port => port || 24224)
         @forwarding = true
