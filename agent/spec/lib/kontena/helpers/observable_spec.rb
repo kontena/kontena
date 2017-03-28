@@ -147,7 +147,7 @@ describe Kontena::Observable do
       end
     end
 
-    it "propagates the observed value" do
+    it "propagates the observed value", :celluloid => true do
       chaining = chaining_class.new(subject)
       observer = observer_class.new(chaining)
 
