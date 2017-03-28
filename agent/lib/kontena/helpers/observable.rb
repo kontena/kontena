@@ -43,13 +43,13 @@ module Kontena
     def add_observer(observer, observe)
       debug "observer: #{observer} <- #{@value.inspect[0..64] + '...'}"
 
-      observers[observer] = observe
+      observers[observe] = observer
 
       return @value
     end
 
     def notify_observers
-      observers.each do |observer, observe|
+      observers.each do |observe, observer|
         begin
           debug "notify: #{observer} <- #{@value}"
 
