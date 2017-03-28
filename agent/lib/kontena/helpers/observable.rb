@@ -33,9 +33,9 @@ module Kontena
       notify_observers
     end
 
-    # Remote actor is observing this Actor's @value
-    # Updates to value will send to async method on given actor
-    # Returns current value
+    # Observer actor is observing this Actor's @value.
+    # Updates to value will send to update_observed on given actor.
+    # Returns current value.
     #
     # @param observer [Observer]
     # @param observe [Observer::Observe]
@@ -48,6 +48,7 @@ module Kontena
       return @value
     end
 
+    # Update @value to each Observer::Observe
     def notify_observers
       observers.each do |observe, observer|
         begin
@@ -66,7 +67,8 @@ module Kontena
   module Observer
     include Kontena::Logging
 
-    # A task observing some Observables, and tracking their values
+    # Observer is observing some Observables, and tracking their values.
+    # This object is passed to each Observer, which then passes it back to us for updates.
     class Observe
       # @param observables [Array<Observable>] Observable actors
       # @param block [Block] Observing block
@@ -120,10 +122,11 @@ module Kontena
     # Yields to block once all observed values are valid, and when they are updated.
     # Crashes this Actor if any of the observed Actors crashes.
     #
-    # Yields to block from new async task. Setup happens sync, and will raise on broken observables
+    # Yields to block from a different async task. Setup happens sync, and will raise on invalid observables
     #
     # @param observables [Array{Observable}]
     # @return [Observe]
+    # @raise failed to observe observables
     # @yield [] all observables are valid
     def observe(*observables, &block)
       # unique handle to identify this observe loop

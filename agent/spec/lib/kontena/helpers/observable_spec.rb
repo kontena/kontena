@@ -132,7 +132,7 @@ describe Kontena::Observable do
     expect{observer.ready?}.to raise_error(Celluloid::DeadActorError)
   end
 
-  context "For chanined observables" do
+  context "For chained observables" do
     let :chaining_class do
       Class.new do
         include Celluloid
