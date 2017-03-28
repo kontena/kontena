@@ -10,12 +10,19 @@ module Kontena
       @value
     end
 
+    # Registered Observers
+    #
+    # @return [Hash{Observe => Celluloid::Proxy::Cell<Observer>}]
     def observers
       @observers ||= {}
     end
 
-    # The Observable has a value
-    # This will notify any Observers, causing them to yield if ready
+    # The Observable has a value.
+    #
+    # This will notify any Observers, causing them to yield if ready.
+    #
+    # @param value [Object]
+    # @raise [ArgumentError] Update with nil value
     def update(value)
       raise ArgumentError, "Update with nil value" if value.nil?
       debug "update: #{value}"
@@ -37,7 +44,7 @@ module Kontena
     # Updates to value will send to update_observed on given actor.
     # Returns current value.
     #
-    # @param observer [Observer]
+    # @param observer [Celluloid::Proxy::Cell<Observer>]
     # @param observe [Observer::Observe]
     # @return [Object, nil] possible existing value
     def add_observer(observer, observe)
@@ -116,7 +123,7 @@ module Kontena
     # Called from Observable as an async task.
     #
     # @param observe [Observer::Observe]
-    # @param observable [Observable] actor
+    # @param observable [Celluloid::Proxy::Cell<Observable>]
     # @param value [Object, nil] observed value
     def update_observed(observe, observable, value)
       observe.set(observable, value)
@@ -135,7 +142,7 @@ module Kontena
     # Setup happens sync, and will raise on invalid observables.
     # Crashes this Actor if any of the observed Actors crashes.
     #
-    # @param observables [Array<Observable>]
+    # @param observables [Array<Celluloid::Proxy::Cell<Observable>>]
     # @raise failed to observe observables
     # @return [Observer::Observe]
     # @yield [*values] all Observables are ready
@@ -158,7 +165,7 @@ module Kontena
         self.monitor observable
       end
 
-      # immediately update if all observables were ready
+      # immediate async update if all observables were ready
       async.observed(observe)
 
       observe
