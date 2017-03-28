@@ -24,7 +24,7 @@ describe Kontena::Observer do
       end
 
       def ready?
-        !@values.nil?
+        @state.ready?
       end
 
       def crash
@@ -44,9 +44,7 @@ describe Kontena::Observer do
 
     subject { observer_class.new(observable) }
 
-    let :object do
-      double(:test)
-    end
+    let(:object) { double(:test) }
 
     it "does not observe any value if not yet updated", :celluloid => true do
       expect(subject).to_not be_ready
@@ -76,6 +74,30 @@ describe Kontena::Observer do
       expect{observable.crash}.to raise_error(RuntimeError)
 
       expect{subject.ready?}.to raise_error(Celluloid::DeadActorError)
+    end
+
+    context "Which later updates" do
+      let(:object2) { double(:test2) }
+
+      before do
+        observable.update object
+
+        expect(subject).to be_ready
+        expect(subject.values).to eq [object]
+      end
+
+      it "yields with the updated value", :celluloid => true do
+        observable.update object2
+
+        expect(subject.values).to eq [object2]
+      end
+
+      it "does not yield after a reset", :celluloid => true do
+        observable.reset
+
+        expect(subject.values).to eq [object]
+        expect(subject).to_not be_ready
+      end
     end
   end
 
