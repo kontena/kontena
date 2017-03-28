@@ -21,10 +21,12 @@ module Kontena
       def perform
         service_container = get_container(self.service_id, self.instance_number)
         if service_container.running?
-          info "restarting service: #{service_container.name}"
+          info "restarting service: #{service_container.name_for_humans}"
           service_container.restart('timeout' => 10)
+          emit_service_pod_event("service:restart_instance", "service #{service_container.name_for_humans} instance restarted successfully")
         else
-          info "service not running: #{service_container.name}"
+          info "service not running: #{service_container.name_for_humans}"
+          emit_service_pod_event("service:restart_instance", "service #{service_container.name_for_humans} instance not running, restart is ignored")
           return
         end
 

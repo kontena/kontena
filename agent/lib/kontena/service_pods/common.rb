@@ -19,6 +19,20 @@ module Kontena
           Docker::Container.get(container.id) rescue nil
         end
       end
+
+      # @param [String] reason
+      # @param [String] data
+      def emit_service_pod_event(reason, data, severity = Logger::INFO)
+        Celluloid::Notifications.publish('service_pod:event', {
+          service_id: @service_id,
+          severity: severity,
+          reason: reason,
+          data: data,
+          meta: {
+            instance_number: @instance_number
+          }
+        })
+      end
     end
   end
 end

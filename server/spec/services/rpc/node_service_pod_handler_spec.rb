@@ -47,6 +47,7 @@ describe Rpc::NodeServicePodHandler do
         instance_number: 2, host_node: node, desired_state: 'running'
       )
     end
+
     let(:data) do
       {
         'state' => 'running', 'rev' => Time.now.to_s,
@@ -69,6 +70,35 @@ describe Rpc::NodeServicePodHandler do
     it 'returns nil if service instance not found' do
       data['instance_number'] = 3
       expect(subject.set_state(node.node_id, data)).to eq({ error: 'Instance not found' })
+    end
+  end
+
+  describe '#event' do
+    let(:service) { grid.grid_services.create!(name: 'foo', image_name: 'foo/bar:latest') }
+
+    let(:service_instance) do
+      service.grid_service_instances.create!(
+        instance_number: 2, host_node: node, desired_state: 'running'
+      )
+    end
+
+    let(:data) do
+      {
+        'reason' => 'instance_create',
+        'data' => 'hello',
+        'service_id' => service.id.to_s,
+        'instance_number' => service_instance.instance_number
+      }
+    end
+
+    it 'saves event' do
+      expect {
+        subject.event(node.node_id, data)
+      }.to change { service.grid_service_logs.count }.by(1)
+    end
+
+    it 'returns nil if node not found' do
+      expect(subject.event('invalid', data)).to be_nil
     end
   end
 

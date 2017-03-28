@@ -44,15 +44,18 @@ class GridScheduler
 
     if !all_instances_exist?(service)
       info "service #{service.to_path} has wrong number of instances (or they are not distributed correctly)"
+      log_service_event(service, "service #{service.to_path} has wrong number of instances (or they are not distributed correctly)")
       return true
     end
     if lagging_behind?(service)
       info "service #{service.to_path} does have older versions running"
+      log_service_event(service, "service #{service.to_path} does have older version running")
       return true
     end
 
     if interval_passed?(service)
       info "service #{service.to_path} interval has passed"
+      log_service_event(service, "service #{service.to_path} deploy interval has passed")
       force_service_update(service)
       return true
     end
@@ -132,5 +135,17 @@ class GridScheduler
   # @param [String] name
   def strategy(name)
     GridServiceScheduler::STRATEGIES[name].new
+  end
+
+  # @param [GridService] service
+  # @param [String] msg
+  def log_service_event(service, msg, severity = EventLog::INFO)
+    EventLog.create(
+      msg: msg,
+      severity: severity,
+      reason: 'scheduler',
+      grid_service_id: service.id,
+      grid_id: service.grid_id
+    )
   end
 end

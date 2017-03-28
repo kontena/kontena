@@ -41,6 +41,29 @@ module Rpc
       end
     end
 
+    # @param [String] id
+    # @param [Hash] event
+    def event(id, event)
+      node = @grid.host_nodes.find_by(node_id: id)
+      return unless node
+
+      service = GridService.where(id: event['service_id'], grid_id: node.grid_id).first
+      return unless service
+
+      EventLog.create(
+        severity: event['severity'] || EventLog::INFO,
+        msg: event['data'],
+        reason: event['reason'],
+        grid_id: node.grid_id,
+        host_node_id: node.id,
+        stack_id: service.stack_id,
+        grid_service_id: service.id,
+        meta: {
+          instance_number: event['instance_number']
+        }
+      )
+    end
+
     # @return [Boolean]
     def migration_done?
       if @migration_done.nil?
