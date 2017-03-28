@@ -19,7 +19,9 @@ module Kontena::Workers
       @workers = {}
 
       if autostart
-        observe(node: Actor[:node_info_worker])
+        observe(Actor[:node_info_worker]) do |node|
+          @node = node
+        end
         async.start
       end
     end
