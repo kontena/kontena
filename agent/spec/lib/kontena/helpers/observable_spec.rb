@@ -100,4 +100,34 @@ describe Kontena::Observable do
 
     expect{observer.ready?}.to raise_error(Celluloid::DeadActorError)
   end
+
+  context "For chanined observables" do
+    let :chaining_class do
+      Class.new do
+        include Celluloid
+        include Kontena::Observer
+        include Kontena::Observable
+
+        def initialize(observable)
+          @state = observe(observable) do |value|
+            update "chained: " + value
+          end
+        end
+      end
+    end
+
+    it "propagates the observed value" do
+      chaining = chaining_class.new(subject)
+      observer = observer_class.new(chaining)
+
+      wait_future = observer.future.wait
+
+      subject.update "test"
+
+      wait_future.value(1.0)
+
+      expect(observer).to be_ready
+      expect(observer.values).to eq ["chained: test"]
+    end
+  end
 end
