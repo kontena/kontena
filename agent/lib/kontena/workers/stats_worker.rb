@@ -15,14 +15,15 @@ module Kontena::Workers
       async.start if autostart
 
       if autostart
-        observe(node: Actor[:node_info_worker]) do
-          configure_statsd(@node)
+        observe(Actor[:node_info_worker]) do |node|
+          configure_statsd(node)
         end
       end
     end
 
     # @param [Node] node
     def configure_statsd(node)
+      @node_name = node.name
       statsd_conf = node.statsd_conf
       debug "configure stats: #{statsd_conf}"
       if statsd_conf && statsd_conf['server']
@@ -155,7 +156,7 @@ module Kontena::Workers
       if labels && labels[:'io.kontena.service.name']
         key_base = "services.#{name}"
       else
-        key_base = "#{@node.name}.containers.#{name}"
+        key_base = "#{@node_name}.containers.#{name}"
       end
       statsd.gauge("#{key_base}.cpu.usage", event[:cpu][:usage_pct])
       statsd.gauge("#{key_base}.memory.usage", event[:memory][:usage])
