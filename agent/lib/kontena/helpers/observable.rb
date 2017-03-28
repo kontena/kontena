@@ -6,22 +6,6 @@ module Kontena
   module Observable
     include Kontena::Logging
 
-    # Update from Observable actor to Observer::Observe task with value
-    class Message
-      attr_reader :observable, :observe, :value
-
-      def initialize(observable, observe, value)
-        @observable = observable
-        @observe = observe
-        @value = value
-      end
-
-      # XXX: avoid any remote inspect or to_s calls on these actors when formatting for for an exception
-      def to_s
-        "#{self.class.name}<observable: @#{@observable.object_id}, observe: @#{@observe.object_id}, value: #{@value.inspect}>"
-      end
-    end
-
     def value
       @value
     end
@@ -53,8 +37,8 @@ module Kontena
     # Updates to value will send to async method on given actor
     # Returns current value
     #
-    # @param actor [celluloid::Actor]
-    # @param method [Symbol]
+    # @param observer [Observer]
+    # @param observe [Observer::Observe]
     # @return [Object, nil] possible existing value
     def add_observer(observer, observe)
       debug "observer: #{observer} <- #{@value.inspect[0..64] + '...'}"
@@ -70,7 +54,7 @@ module Kontena
           debug "notify: #{observer} <- #{@value}"
 
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
-          observer.mailbox << Message.new(Celluloid.current_actor, observe, @value)
+          observer.async.update_observed(observe, Celluloid.current_actor, @value)
         rescue Celluloid::DeadActorError => error
           observers.delete(actor)
         end
@@ -119,6 +103,19 @@ module Kontena
       end
     end
 
+    def observed(observe)
+      observe.call if observe.ready?
+    end
+
+    # Called by Observable
+    # @param observe [Observer::Observe]
+    # @param observable [Observable] actor
+    # @param value [Object, nil] observed value
+    def update_observed(observe, observable, value)
+      observe.set(observable, value)
+      observed(observe)
+    end
+
     # Yield values from Observables.
     # Yields to block once all observed values are valid, and when they are updated.
     # Crashes this Actor if any of the observed Actors crashes.
@@ -134,6 +131,7 @@ module Kontena
 
       # sync setup of each observable
       observables.each do |observable|
+        # register for async.update_observed(...)
         value = observe.set(observable, observable.add_observer(Celluloid.current_actor, observe))
 
         debug "observe #{observable} -> #{value}"
@@ -142,20 +140,8 @@ module Kontena
         self.link observable
       end
 
-      # async update message loop
-      Thread.current[:celluloid_actor].task :observe do
-        debug "observe..."
-
-        loop do
-          observe.call if observe.ready?
-
-          message = receive { |message| message.is_a?(Observable::Message) && message.observe.equal?(observe) }
-
-          debug "observe #{message.observable} -> #{message.value}" # XXX: remote to_s call via the observable actor
-
-          observe.set(message.observable, message.value)
-        end
-      end
+      # do not wait for update if observables were all ready
+      async.observed(observe)
 
       observe
     end
