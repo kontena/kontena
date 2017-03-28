@@ -45,4 +45,8 @@ class Stack
     return false unless latest_rev
     latest_rev.expose.to_s == grid_service.name
   end
+
+  def self.default_stack
+    where(name: NULL_STACK).first
+  end
 end

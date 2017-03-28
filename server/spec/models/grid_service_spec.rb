@@ -1,13 +1,14 @@
 
 describe GridService do
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
                           :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares,
                           :revision, :stack_revision).of_type(Fixnum) }
-  it { should have_fields(:affinity, :cmd, :ports, :env, :volumes, :volumes_from,
-                          :cap_add, :cap_drop, :volumes).of_type(Array) }
+  it { should have_fields(:affinity, :cmd, :ports, :env, :volumes_from,
+                          :cap_add, :cap_drop).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
   it { should have_fields(:deploy_requested_at, :deployed_at).of_type(DateTime) }
   it { should have_fields(:privileged).of_type(Mongoid::Boolean) }
@@ -17,6 +18,7 @@ describe GridService do
   it { should embed_many(:grid_service_links) }
   it { should embed_many(:secrets) }
   it { should embed_many(:hooks) }
+  it { should embed_many(:service_volumes) }
   it { should embed_one(:deploy_opts) }
   it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
@@ -123,8 +125,8 @@ describe GridService do
 
   describe '#set_state' do
     it 'sets value of state column' do
-      subject.set_state('running')
-      expect(subject.state).to eq('running')
+      grid_service.set_state('running')
+      expect(grid_service.state).to eq('running')
     end
 
     it 'does not modify updated_at field' do
@@ -133,6 +135,11 @@ describe GridService do
       grid_service.clear_timeless_option
       grid_service.set_state('running')
       expect(grid_service.updated_at).to eq(five_hours_ago)
+    end
+
+    it 'publishes update event' do
+      expect(grid_service).to receive(:publish_update_event).once
+      grid_service.set_state('running')
     end
   end
 

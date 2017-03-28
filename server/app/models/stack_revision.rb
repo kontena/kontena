@@ -11,6 +11,7 @@ class StackRevision
   field :revision, type: Integer, default: 1
   field :expose, type: String
   field :services, type: Array
+  field :volumes, type: Array
 
   belongs_to :stack
 

@@ -4,6 +4,15 @@ require 'base64'
 require_relative '../logging'
 require_relative './rpc_server'
 require_relative '../../helpers/current_leader'
+
+module Faye::WebSocket::Client::Connection
+  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
+  # force connection to close without waiting if the send buffer is full
+  def close_connection_after_writing
+    close_connection
+  end
+end
+
 module Cloud
   class WebsocketClient
     include CurrentLeader
@@ -26,13 +35,16 @@ module Cloud
 
     include Logging
     KEEPALIVE_TIME = 30
+
+
     @@api_uri
     attr_reader :api_uri,
                 :client_id,
                 :client_secret,
                 :ws,
                 :rpc_server,
-                :ping_timer
+                :ping_timer,
+                :users
 
     delegate :on, to: :ws
 
@@ -49,6 +61,7 @@ module Cloud
       @connected = false
       @connecting = false
       @ping_timer = nil
+      @users = {}
     end
 
     def ensure_connect
@@ -65,7 +78,7 @@ module Cloud
     def disconnect
       @connect_timer.cancel
       @connect_verify_timer.cancel
-      self.ws.close if self.ws
+      close
     end
 
     # @return [Boolean]
@@ -124,33 +137,35 @@ module Cloud
     def on_open(event)
       ping_timer.cancel if ping_timer
       info "cloud connection opened to #{self.api_uri}"
+      subscribe_events(EventStream.channel)
       @connected = true
       @connecting = false
     end
 
     # @param [Faye::WebSocket::API::Event] event
     def on_message(event)
+      debug "Received websocket message"
+      if leader?
         data = MessagePack.unpack(event.data.pack('c*'))
-        if request_message?(data)
-          EM.defer {
-            if leader?
-              response = rpc_server.handle_request(data)
-              send_message(MessagePack.dump(response).bytes)
-            end
-          }
-        elsif notification_message?(data)
-          EM.defer {
-            if leader?
-              rpc_server.handle_notification(data)
-            end
-          }
-        end
+        EM.defer {
+          if request_message?(data)
+            debug "Creating RPC request"
+            response = rpc_server.handle_request(data)
+            send_message(MessagePack.dump(response).bytes)
+          elsif notification_message?(data)
+            rpc_server.handle_notification(data)
+          end
+        }
+      else
+        debug "Ignoring request because not leader"
+      end
     rescue => exc
       error exc.message
     end
 
     # @param [Faye::WebSocket::API::Event] event
     def on_close(event)
+      @ping_timer = nil
       @connected = false
       @connecting = false
       @ws = nil
@@ -158,19 +173,69 @@ module Cloud
         handle_invalid_token
       end
       info "cloud connection closed with code: #{event.code}"
+      unsubscribe_events
     rescue => exc
       error exc.message
+    end
+
+    # @param [Hash] msg
+    def send_notification_message(msg)
+      invalidate_users_cache if msg[:type] == 'User' # clear cache if users are modified
+      grid_id = resolve_grid_id(msg)
+      users = resolve_users(grid_id)
+      params = [grid_id, users, msg[:object]]
+      message = [2, "#{msg[:type]}##{msg[:event]}", params]
+      debug "Sending notification message: #{message}"
+      send_message(MessagePack.dump(message).bytes)
+    end
+
+    def resolve_grid_id(msg)
+      object = msg[:object]
+      if msg[:type] == "Grid"
+        object['id']
+      else
+        object.dig('grid', 'id')
+      end
+    end
+
+    def resolve_users(grid_id)
+      if grid_id
+        return users[grid_id] if users[grid_id] # Found from cache
+        grid = Grid.find_by(name: grid_id)
+        grid_users = (User.master_admins + grid.users).uniq
+        users[grid_id] = grid_users.map{|u| u.external_id}.compact
+      else
+        User.master_admins.map{|u| u.external_id}.compact
+      end
+    end
+
+    # @param [String] channel
+    def subscribe_events(channel)
+      @subscription = MongoPubsub.subscribe(channel) do |message|
+        if leader?
+          send_notification_message(message)
+        end
+      end
+      @subscription
+    end
+
+    def unsubscribe_events
+      MongoPubsub.unsubscribe(@subscription) if @subscription
     end
 
     def handle_invalid_token
       error 'cloud does not accept our access token'
     end
 
-
     # @param [Array] msg
     # @return [Boolean]
     def request_message?(msg)
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 0
+    end
+
+    def invalidate_users_cache
+      debug 'invalidate user cache'
+      @users = {}
     end
 
     # @param [Array] msg
@@ -185,7 +250,7 @@ module Cloud
       @ping_timer = EM::Timer.new(2) do
         if @connected
           info 'did not receive pong, closing connection'
-          ws.close(1000)
+          close
         end
       end
       ws.ping {
@@ -194,6 +259,10 @@ module Cloud
       }
     rescue => exc
       error exc.message
+    end
+
+    def close
+      ws.close
     end
   end
 end

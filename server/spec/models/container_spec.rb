@@ -145,6 +145,34 @@ describe Container do
     end
   end
 
+  describe '#set_health_status' do
+    it 'updates health_status' do
+      subject.health_status = 'Not healthy'
+      subject.set_health_status('Healthy')
+      expect(subject.health_status).to eq('Healthy')
+    end
+
+    it 'updates health_status_at' do
+      subject.health_status = 'Not healthy'
+      last_updated = Time.now - 2.seconds
+      subject.health_status_at = last_updated
+      subject.set_health_status('Healthy')
+      expect(subject.health_status_at).not_to eq(last_updated)
+    end
+
+    it 'triggers publish_update_event if health status changes' do
+      subject.health_status = 'Not healthy'
+      expect(subject).to receive(:publish_update_event).once
+      subject.set_health_status('Healthy')
+    end
+
+    it 'does not trigger publish_update_event if health status does not change' do
+      subject.health_status = 'Healthy'
+      expect(subject).not_to receive(:publish_update_event)
+      subject.set_health_status('Healthy')
+    end
+  end
+
   describe '.service_instance' do
     it 'returns correct instance' do
       (1..3).each do |i|

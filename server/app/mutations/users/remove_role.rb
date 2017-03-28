@@ -28,6 +28,7 @@ module Users
 
     def execute
       user.roles.delete(role_instance)
+      user.publish_update_event # relation callback has bug so we have to explicitly run callback
       user
     end
   end

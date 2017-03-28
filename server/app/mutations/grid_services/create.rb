@@ -35,6 +35,7 @@ module GridServices
       if self.secrets
         validate_secrets_exist(self.grid, self.secrets)
       end
+      validate_volumes(self.volumes)
     end
 
     def execute
@@ -60,6 +61,11 @@ module GridServices
       if self.net == 'bridge' || self.net.nil?
         default_net = self.grid.networks.find_by(name: 'kontena')
         attributes[:networks] = [default_net]
+      end
+
+      attributes.delete(:volumes)
+      if self.volumes
+        attributes[:service_volumes] = self.build_service_volumes(self.grid, self.stack)
       end
 
       grid_service = GridService.new(attributes)

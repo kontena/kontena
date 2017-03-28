@@ -31,6 +31,12 @@ describe '/v1/services' do
     )
   end
 
+  let! :service_with_vol do
+    volume = Volume.create(grid: grid, name: 'volume', driver: 'local', scope: 'instance')
+    outcome = GridServices::Create.run(grid: grid, stateful: false, name: 'redis-2', image: 'redis:latest', volumes: ['volume:/data'])
+    outcome.result
+  end
+
   let! :redis_service do
     grid.grid_services.create!(
       name: 'redis',
@@ -105,6 +111,19 @@ describe '/v1/services' do
       expect(json_response['stack']['name']).to eq('teststack')
       expect(json_response['image']).to eq(stack_redis_service.image_name)
       expect(json_response['dns']).to eq('redis.teststack.terminal-a.kontena.local')
+    end
+
+    it 'returns stack service json with volumes' do
+      get "/v1/services/terminal-a/null/redis-2", nil, request_headers
+      expect(response.status).to eq(200), response.body
+      expect(json_response.keys.sort).to eq(%w(
+        id created_at updated_at stack image affinity name stateful user
+        instances cmd entrypoint ports env memory memory_swap cpu_shares
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
+      ).sort)
+      expect(json_response['volumes']).to eq(['volume:/data'])
     end
 
     it 'returns error without authorization' do

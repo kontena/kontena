@@ -40,7 +40,8 @@ module Kontena
                   :hooks,
                   :secrets,
                   :networks,
-                  :wait_for_port
+                  :wait_for_port,
+                  :volume_specs
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -267,12 +268,7 @@ module Kontena
       def build_volumes
         volumes = {}
         self.volumes.each do |vol|
-          path1, path2, _ = vol.split(':')
-          if path2.nil?
-            volumes[path1] = {}
-          else
-            volumes[path2] = {}
-          end
+          volumes[vol['path']] = {}
         end
         volumes
       end
@@ -282,7 +278,11 @@ module Kontena
       def build_bind_volumes
         volumes = []
         self.volumes.each do |vol|
-          volumes << vol if vol.include?(':')
+          if vol['bind_mount'] || vol['name']
+            volume = "#{vol['bind_mount'] || vol['name']}:#{vol['path']}"
+            volume << ":#{vol['flags']}" if vol['flags'] && !vol['flags'].empty?
+            volumes << volume
+          end
         end
         volumes
       end

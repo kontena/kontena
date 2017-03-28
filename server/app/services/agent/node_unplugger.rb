@@ -12,6 +12,7 @@ module Agent
     def unplug!
       begin
         self.update_node
+        self.publish_update_event
       rescue => exc
         error exc.message
       end
@@ -23,6 +24,10 @@ module Agent
       node.containers.unscoped.where(:container_type.ne => 'volume').each do |c|
         c.with(safe: false).set(:deleted_at => deleted_at)
       end
+    end
+
+    def publish_update_event     
+      node.publish_update_event
     end
   end
 end

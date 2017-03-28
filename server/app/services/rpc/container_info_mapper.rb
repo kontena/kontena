@@ -43,6 +43,7 @@ module Rpc
       else
         attributes[:host_node_id] = container.host_node.try(:id)
         container.with(write: {w: 0, j: false, fsync: false}).set(attributes)
+        container.publish_update_event
       end
     end
 
