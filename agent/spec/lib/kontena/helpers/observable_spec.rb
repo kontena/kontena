@@ -26,14 +26,10 @@ describe Kontena::Observable do
       include Celluloid
       include Kontena::Observer
 
-      attr_reader :values
+      attr_reader :state, :values
 
       def initialize(*observables)
-        @observables = observables
-      end
-
-      def start
-        observe *@observables do |*values|
+        @state = observe(*observables) do |*values|
           @values = values
         end
       end
@@ -48,11 +44,13 @@ describe Kontena::Observable do
     end
   end
 
+  it "raises synchronously if given an invalid actor", :celluloid => true do
+    expect{observer_class.new('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
+  end
+
   it "does not observe any value if not yet updated", :celluloid => true do
     observer = observer_class.new(subject)
-    observer.async.start
 
-    # XXX: timing
     expect(observer).to_not be_ready
   end
 
@@ -60,9 +58,6 @@ describe Kontena::Observable do
     subject.update object
 
     observer = observer_class.new(subject)
-    observer.async.start
-
-    sleep 0.1 # XXX: timing
 
     expect(observer).to be_ready
     expect(observer.values).to eq [object]
@@ -70,7 +65,6 @@ describe Kontena::Observable do
 
   it "waits for an updated value", :celluloid => true do
     observer = observer_class.new(subject)
-    observer.async.start
 
     wait_future = observer.future.wait
 
@@ -87,7 +81,6 @@ describe Kontena::Observable do
     subject2 = observable_class.new
 
     observer = observer_class.new(subject1, subject2)
-    observer.async.start
 
     wait_future = observer.future.wait
 
@@ -102,9 +95,6 @@ describe Kontena::Observable do
 
   it "crashes if the observable does", :celluloid => true do
     observer = observer_class.new(subject)
-    observer.async.start
-
-    sleep 0.1 # XXX: timing
 
     expect{subject.crash}.to raise_error(RuntimeError)
 

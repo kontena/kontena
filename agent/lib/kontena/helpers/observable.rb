@@ -6,19 +6,19 @@ module Kontena
   module Observable
     include Kontena::Logging
 
-    # Update from Observable to Observer::State handle with value
+    # Update from Observable actor to Observer::Observe task with value
     class Message
-      attr_reader :observable, :state, :value
+      attr_reader :observable, :observe, :value
 
-      def initialize(observable, state, value)
+      def initialize(observable, observe, value)
         @observable = observable
-        @state = state
+        @observe = observe
         @value = value
       end
 
       # XXX: avoid any remote inspect or to_s calls on these actors when formatting for for an exception
       def to_s
-        "#{self.class.name}<observable: @#{@observable.object_id}, state: @#{@state.object_id}, value: #{@value.inspect}>"
+        "#{self.class.name}<observable: @#{@observable.object_id}, observe: @#{@observe.object_id}, value: #{@value.inspect}>"
       end
     end
 
@@ -45,20 +45,21 @@ module Kontena
     # @param actor [celluloid::Actor]
     # @param method [Symbol]
     # @return [Object, nil] possible existing value
-    def add_observer(observer, state)
+    def add_observer(observer, observe)
       debug "observer: #{observer} <- #{@value.inspect[0..64] + '...'}"
 
-      observers[observer] = state
+      observers[observer] = observe
 
       return @value
     end
 
     def notify_observers
-      observers.each do |observer, state|
+      observers.each do |observer, observe|
         begin
           debug "notify: #{observer} <- #{@value}"
 
-          observer.mailbox << Message.new(Celluloid.current_actor, state, @value)
+          # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
+          observer.mailbox << Message.new(Celluloid.current_actor, observe, @value)
         rescue Celluloid::DeadActorError => error
           observers.delete(actor)
         end
@@ -70,41 +71,82 @@ module Kontena
   module Observer
     include Kontena::Logging
 
+    # A task observing some Observables, and tracking their values
+    class Observe
+      # @param observables [Array<Observable>] Observable actors
+      # @param block [Block] Observing block
+      def initialize(observables, block)
+        @observables = observables
+        @block = block
+        @values = { }
+      end
+
+      # Set value for observable
+      #
+      # @return value
+      def set(observable, value)
+        @values[observable] = value
+      end
+
+      # Each observable has a value?
+      #
+      # @return [Boolean]
+      def ready?
+        !@values.any? { |observable, value| value.nil? }
+      end
+
+      # Map each observable to its value
+      #
+      # @return [Array] values or nil
+      def values
+        @observables.map{|observable| @values[observable] }
+      end
+
+      # Yield to block with values
+      def call
+        @block.call(*values)
+      end
+    end
+
     # Yield values from Observables.
     # Yields to block once all observed values are valid, and when they are updated.
     # Crashes this Actor if any of the observed Actors crashes.
-    # XXX: this is a blocking call, which does not return
+    #
+    # Yields to block from new async task. Setup happens sync, and will raise on broken observables
     #
     # @param observables [Array{Observable}]
+    # @return [Observe]
     # @yield [] all observables are valid
     def observe(*observables, &block)
-      # this acts as a unique handle to identify this observe loop
-      state = {}
+      # unique handle to identify this observe loop
+      observe = Observe.new(observables, block)
 
-      # setup
+      # sync setup of each observable
       observables.each do |observable|
-        value = state[observable] = observable.add_observer(Celluloid.current_actor, state)
+        value = observe.set(observable, observable.add_observer(Celluloid.current_actor, observe))
 
         debug "observe #{observable} -> #{value}"
 
-        # crash if observed Actor crashes, otherwise we get stuck
+        # crash if observed Actor crashes, otherwise we get stuck without updates
         self.link observable
       end
 
-      loop do
-        values = observables.map{|observable| state[observable] }
+      # async update message loop
+      Thread.current[:celluloid_actor].task :observe do
+        debug "observe..."
 
-        # invoke block if all observables are ready
-        yield(*values) unless values.any? { |value| value.nil? }
+        loop do
+          observe.call if observe.ready?
 
-        # message loop to update state
-        message = receive { |message| message.is_a?(Observable::Message) && message.state.equal?(state) }
+          message = receive { |message| message.is_a?(Observable::Message) && message.observe.equal?(observe) }
 
-        # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
-        state[message.observable] = message.value
+          debug "observe #{message.observable} -> #{message.value}" # XXX: remote to_s call via the observable actor
 
-        debug "observe #{message.observable} -> #{message.value}"
+          observe.set(message.observable, message.value)
+        end
       end
+
+      observe
     end
   end
 end
