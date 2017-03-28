@@ -66,7 +66,7 @@ class GridServiceDeployer
     true
   rescue DeployError => exc
     error exc.message
-    log_service_event(self.grid_service, "deploy of #{self.grid_service.to_path} errored: #{exc.message}", EventLog::ERROR)
+    log_service_event("deploy of #{self.grid_service.to_path} errored: #{exc.message}", EventLog::ERROR)
     self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
     false
   rescue RpcClient::Error => exc

@@ -84,7 +84,7 @@ describe Rpc::NodeServicePodHandler do
 
     let(:data) do
       {
-        'reason' => 'instance_create',
+        'reason' => 'service:instance_create',
         'data' => 'hello',
         'service_id' => service.id.to_s,
         'instance_number' => service_instance.instance_number
@@ -94,7 +94,7 @@ describe Rpc::NodeServicePodHandler do
     it 'saves event' do
       expect {
         subject.event(node.node_id, data)
-      }.to change { service.grid_service_logs.count }.by(1)
+      }.to change { service.event_logs.count }.by(1)
     end
 
     it 'returns nil if node not found' do
