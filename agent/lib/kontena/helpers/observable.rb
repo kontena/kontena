@@ -105,11 +105,16 @@ module Kontena
       end
     end
 
+    # Observe has been updated, call if ready.
+    # Called from observe as an async task.
+    #
+    # @param observe [Observer::Observe]
     def observed(observe)
       observe.call if observe.ready?
     end
 
-    # Called by Observable
+    # Called from Observable as an async task.
+    #
     # @param observe [Observer::Observe]
     # @param observable [Observable] actor
     # @param value [Object, nil] observed value
@@ -118,16 +123,22 @@ module Kontena
       observed(observe)
     end
 
-    # Yield values from Observables.
-    # Yields to block once all observed values are valid, and when they are updated.
+    # Observe values from Observables, yielding each value to block.
+    #
+    #   observe(Actors[:test_actor]) do |test|
+    #     configure(foo: test.foo)
+    #   end
+    #
+    # Yield happens once each Observable is ready, and whenever they are updated.
+    # Yields to block happens from different async tasks.
+    #
+    # Setup happens sync, and will raise on invalid observables.
     # Crashes this Actor if any of the observed Actors crashes.
     #
-    # Yields to block from a different async task. Setup happens sync, and will raise on invalid observables
-    #
-    # @param observables [Array{Observable}]
-    # @return [Observe]
+    # @param observables [Array<Observable>]
     # @raise failed to observe observables
-    # @yield [] all observables are valid
+    # @return [Observer::Observe]
+    # @yield [*values] all Observables are ready
     def observe(*observables, &block)
       # unique handle to identify this observe loop
       observe = Observe.new(observables, block)
@@ -135,7 +146,10 @@ module Kontena
       # sync setup of each observable
       observables.each do |observable|
         # register for async.update_observed(...)
-        value = observe.set(observable, observable.add_observer(Celluloid.current_actor, observe))
+        value = observable.add_observer(Celluloid.current_actor, observe)
+
+        # store value for initial call, or nil to block
+        observe.set(observable, value)
 
         debug "observe #{observable} -> #{value}"
 
@@ -144,7 +158,7 @@ module Kontena
         self.monitor observable
       end
 
-      # do not wait for update if observables were all ready
+      # immediately update if all observables were ready
       async.observed(observe)
 
       observe
