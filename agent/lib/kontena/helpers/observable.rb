@@ -30,10 +30,21 @@ module Kontena
       @observers ||= {}
     end
 
+    # The Observable has a value
+    # This will notify any Observers, causing them to yield if ready
     def update(value)
+      raise ArgumentError, "Update with nil value" if value.nil?
       debug "update: #{value}"
 
       @value = value
+
+      notify_observers
+    end
+
+    # The Observable no longer has a value
+    # This will notify any Observers, causing them to block yields until we update again
+    def reset
+      @value = nil
 
       notify_observers
     end
