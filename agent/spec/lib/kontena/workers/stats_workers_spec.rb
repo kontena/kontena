@@ -171,7 +171,22 @@ describe Kontena::Workers::StatsWorker do
           },
           filesystem: event.dig(:stats, -1, :filesystem),
           diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          network: {
+            internal: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            },
+            external: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            }
+          }
         }
       ))
       expect(rpc_client).to receive(:notification).with(
@@ -195,7 +210,22 @@ describe Kontena::Workers::StatsWorker do
           },
           filesystem: event.dig(:stats, -1, :filesystem),
           diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          network: {
+            internal: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            },
+            external: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            }
+          }
         }
       ))
       expect(rpc_client).to receive(:notification).with(

@@ -35,6 +35,7 @@ class HostNode
   belongs_to :grid
   has_many :grid_service_instances
   has_many :containers
+  has_many :container_stats
   has_many :host_node_stats
   has_and_belongs_to_many :images
 

@@ -67,11 +67,16 @@ describe '/v1/services' do
       memory: { 'usage' => 100000 },
       cpu: { 'usage_pct' => 10 },
       network: {
-          'rx_bytes' => 1397524, 'rx_packets' => 3109, 'rx_errors' => 0, 'rx_dropped' => 0, 'tx_bytes' => 1680754, 'tx_packets'=>3035, 'tx_errors'=>0, 'tx_dropped'=>0
+        internal: {
+          'interfaces' => ['ethwe'], 'rx_bytes' => 1397524, 'rx_bytes_per_second' => 3109, 'tx_bytes' => 1680754, 'tx_bytes_per_second'=>3035
+        },
+        external: {
+          'interfaces' => ['eth0'], 'rx_bytes' => 123, 'rx_bytes_per_second' => 10, 'tx_bytes' => 456, 'tx_bytes_per_second'=>20
+        }
       },
       spec: {
-          'memory' => { 'limit' => 512000000},
-          'cpu' => { 'limit' => 1024}
+        'memory' => { 'limit' => 512000000},
+        'cpu' => { 'limit' => 1024, 'mask' => '0-1' }
       }
     }
   end
@@ -298,7 +303,21 @@ describe '/v1/services' do
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
         expect(json_response['stats'].first['container_id']).to eq(container.name.to_s)
-
+        expect(json_response['stats'].first['cpu']['usage']).to eq(10)
+        expect(json_response['stats'].first['cpu']['limit']).to eq(1024)
+        expect(json_response['stats'].first['cpu']['num_cores']).to eq(2)
+        expect(json_response['stats'].first['memory']['usage']).to eq(100000)
+        expect(json_response['stats'].first['memory']['limit']).to eq(512000000)
+        expect(json_response['stats'].first['network']['internal']['interfaces']).to eq(['ethwe'])
+        expect(json_response['stats'].first['network']['internal']['rx_bytes']).to eq(1397524)
+        expect(json_response['stats'].first['network']['internal']['rx_bytes_per_second']).to eq(3109)
+        expect(json_response['stats'].first['network']['internal']['tx_bytes']).to eq(1680754)
+        expect(json_response['stats'].first['network']['internal']['tx_bytes_per_second']).to eq(3035)
+        expect(json_response['stats'].first['network']['external']['interfaces']).to eq(['eth0'])
+        expect(json_response['stats'].first['network']['external']['rx_bytes']).to eq(123)
+        expect(json_response['stats'].first['network']['external']['rx_bytes_per_second']).to eq(10)
+        expect(json_response['stats'].first['network']['external']['tx_bytes']).to eq(456)
+        expect(json_response['stats'].first['network']['external']['tx_bytes_per_second']).to eq(20)
       end
     end
     context 'when container has not stats data' do
@@ -309,6 +328,28 @@ describe '/v1/services' do
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
         expect(json_response['stats'].first['cpu']).to be_nil
+      end
+    end
+  end
+
+  describe 'GET /:id/metrics' do
+    context 'when container has stats data' do
+      it 'returns service metrics' do
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container_stat_data['grid_service_id'] = redis_service.id
+        container.container_stats.create!(container_stat_data)
+        get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(1)
+
+      end
+    end
+    context 'when container has not stats data' do
+      it 'returns empty result' do
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(0)
       end
     end
   end

@@ -47,6 +47,23 @@ module V1
 
             render('host_nodes/health')
           end
+
+          # GET /v1/nodes/:grid/:node/stats
+          r.on 'stats' do
+            sort = r.params["sort"] ? r.params["sort"] : "cpu"
+
+            @stats = Metrics.get_container_stats(@node.containers, sort.to_sym)
+            render('stats/stats')
+          end
+
+          # GET /v1/nodes/:grid/:node/metrics
+          r.on 'metrics' do
+            @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
+            @from = (r.params["from"] ? Time.parse(r.params["from"]) : (@to - 1.hour)).utc
+            
+            @metrics = HostNodeStat.get_aggregate_stats_for_node(@node.id, @from, @to)
+            render('stats/metrics')
+          end
         end
 
         r.put do

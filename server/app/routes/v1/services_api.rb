@@ -44,6 +44,11 @@ module V1
           r.route 'service_stats'
         end
 
+        # /v1/services/:grid_name/:stack_name/:service_name/metrics
+        r.on 'metrics' do
+          r.route 'service_metrics'
+        end
+
         # /v1/services/:grid_name/:stack_name/:service_name/envs
         r.on 'envs' do
           r.route 'service_envs'
