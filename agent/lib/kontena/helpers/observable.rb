@@ -6,6 +6,22 @@ module Kontena
   module Observable
     include Kontena::Logging
 
+    # Update from Observable to Observer::State handle with value
+    class Message
+      attr_reader :observable, :state, :value
+
+      def initialize(observable, state, value)
+        @observable = observable
+        @state = state
+        @value = value
+      end
+
+      # XXX: avoid any remote inspect or to_s calls on these actors when formatting for for an exception
+      def to_s
+        "#{self.class.name}<observable: @#{@observable.object_id}, state: @#{@state.object_id}, value: #{@value.inspect}>"
+      end
+    end
+
     def value
       @value
     end
@@ -19,15 +35,7 @@ module Kontena
 
       @value = value
 
-      observers.each do |actor, method|
-        begin
-          debug "notify: #{actor}.#{method} #{value}"
-
-          actor.async method, value
-        rescue Celluloid::DeadActorError => error
-          observers.delete(actor)
-        end
-      end
+      notify_observers
     end
 
     # Remote actor is observing this Actor's @value
@@ -37,48 +45,66 @@ module Kontena
     # @param actor [celluloid::Actor]
     # @param method [Symbol]
     # @return [Object, nil] possible existing value
-    def observe(actor, method)
-      debug "observe: #{actor}.#{method} = #{@value.inspect[0..64] + '...'}"
+    def add_observer(observer, state)
+      debug "observer: #{observer} <- #{@value.inspect[0..64] + '...'}"
 
-      observers[actor] = method
+      observers[observer] = state
 
       return @value
+    end
+
+    def notify_observers
+      observers.each do |observer, state|
+        begin
+          debug "notify: #{observer} <- #{@value}"
+
+          observer.mailbox << Message.new(Celluloid.current_actor, state, @value)
+        rescue Celluloid::DeadActorError => error
+          observers.delete(actor)
+        end
+      end
     end
   end
 
   # An Actor that observes the value of other Obervable Actors
-  # The values of multiple Ovservables are stored as local instance attributes
   module Observer
-    # Set instance attributes from multiple observables
-    # Yields to block once all obsered instance attributes are valid, and when they are updated
-    # Crashes this Actor if any of the observed Actors crashes
+    include Kontena::Logging
+
+    # Yield values from Observables.
+    # Yields to block once all observed values are valid, and when they are updated.
+    # Crashes this Actor if any of the observed Actors crashes.
+    # XXX: this is a blocking call, which does not return
     #
-    # @param observables [Hash{Symbol => Observable}]
-    # @yield [] all observable attributes are valid
-    def observe(**observables, &block)
-      # invoke block when all observables are ready
-      update_proc = Proc.new do
-        block.call if block unless observables.any? { |sym, observable| instance_variable_get("@#{sym}").nil? }
-      end
+    # @param observables [Array{Observable}]
+    # @yield [] all observables are valid
+    def observe(*observables, &block)
+      # this acts as a unique handle to identify this observe loop
+      state = {}
 
-      observables.each do |sym, observable|
-        # update state for observable, and run update block
-        define_singleton_method("#{sym}=") do |value|
-          instance_variable_set("@#{sym}", value)
-          update_proc.call()
-        end
+      # setup
+      observables.each do |observable|
+        value = state[observable] = observable.add_observer(Celluloid.current_actor, state)
 
-        if value = observable.observe(Celluloid.current_actor, "#{sym}=")
-          # update initial state; only run update block once at end
-          instance_variable_set("@#{sym}", value)
-        end
+        debug "observe #{observable} -> #{value}"
 
         # crash if observed Actor crashes, otherwise we get stuck
         self.link observable
       end
 
-      # immediately run update block if all observables were ready
-      update_proc.call()
+      loop do
+        values = observables.map{|observable| state[observable] }
+
+        # invoke block if all observables are ready
+        yield(*values) unless values.any? { |value| value.nil? }
+
+        # message loop to update state
+        message = receive { |message| message.is_a?(Observable::Message) && message.state.equal?(state) }
+
+        # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
+        state[message.observable] = message.value
+
+        debug "observe #{message.observable} -> #{message.value}"
+      end
     end
   end
 end
