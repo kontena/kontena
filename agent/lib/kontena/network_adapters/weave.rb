@@ -36,8 +36,8 @@ module Kontena::NetworkAdapters
       @executor_pool = WeaveExecutor.pool(args: [autostart])
 
       if autostart
-        observe(node: Actor[:node_info_worker]) do
-          start(@node)
+        observe(Actor[:node_info_worker]) do |node|
+          start(node)
         end
       end
     end
