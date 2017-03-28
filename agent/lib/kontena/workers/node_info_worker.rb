@@ -50,11 +50,11 @@ module Kontena::Workers
     # @param [String] topic
     # @param [Node] node
     def on_node_info(topic, node)
-      @node = node
-      update(node) # observable
       if @node.nil? || (@node.statsd_conf != node.statsd_conf)
         configure_statsd(node)
       end
+      @node = node
+      update(node) # observable
     end
 
     # @param [Node] node
