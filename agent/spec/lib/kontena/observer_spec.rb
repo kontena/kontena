@@ -27,16 +27,11 @@ describe Kontena::Observer do
         !@values.nil?
       end
 
-      def wait
-        sleep 0.1 until ready?
-      end
-
       def crash
         fail
       end
     end
   end
-
 
   it "raises synchronously if given an invalid actor", :celluloid => true do
     expect{observer_class.new('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
@@ -57,19 +52,21 @@ describe Kontena::Observer do
       expect(subject).to_not be_ready
     end
 
-    it "immediately observes an updated value", :celluloid => true do
+    it "immediately yields an updated value", :celluloid => true do
       observable.update object
+
+      subject
 
       expect(subject).to be_ready
       expect(subject.values).to eq [object]
     end
 
-    it "waits for an updated value", :celluloid => true do
-      wait_future = subject.future.wait
+    it "later yields after updating value", :celluloid => true do
+      subject
+
+      expect(subject).to_not be_ready
 
       observable.update object
-
-      wait_future.value(1.0)
 
       expect(subject).to be_ready
       expect(subject.values).to eq [object]

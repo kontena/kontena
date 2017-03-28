@@ -10,14 +10,6 @@ describe Kontena::Observable do
     end
   end
 
-  subject do
-    observable_class.new
-  end
-
-  let :object do
-    double(:test)
-  end
-
   let :observer_class do
     Class.new do
       include Celluloid
@@ -40,6 +32,10 @@ describe Kontena::Observable do
       end
     end
   end
+
+  subject { observable_class.new }
+
+  let(:object) { double(:test) }
 
   it "rejects a nil update", :celluloid => true do
     expect{subject.update nil}.to raise_error(ArgumentError)
