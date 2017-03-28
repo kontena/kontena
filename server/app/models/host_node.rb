@@ -1,9 +1,10 @@
 require 'ipaddr'
+require_relative 'event_stream'
 
 class HostNode
   include Mongoid::Document
   include Mongoid::Timestamps
-
+  include EventStream
   class Error < StandardError
   end
 

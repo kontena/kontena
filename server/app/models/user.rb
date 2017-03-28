@@ -3,11 +3,12 @@ class User
   include Mongoid::Timestamps
   include Authority::UserAbilities
   include Authority::Abilities
+  include EventStream
 
-  has_and_belongs_to_many :grids
+  has_and_belongs_to_many :grids, after_add: :publish_update_event
   has_many :access_tokens, dependent: :delete
   has_many :audit_logs
-  has_and_belongs_to_many :roles
+  has_and_belongs_to_many :roles, after_add: :publish_update_event
 
   belongs_to :parent, class_name: "User", inverse_of: :children
   has_many :children, class_name: "User", inverse_of: :parent
@@ -77,6 +78,10 @@ class User
   # @param [String] role
   def in_role?(role)
     self.roles.where(name: role).exists?
+  end
+
+  def self.master_admins
+    self.where(role_ids: Role.master_admin)
   end
 
   def master_admin?

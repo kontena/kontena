@@ -24,6 +24,7 @@ module Grids
 
     def execute
       user.grids.delete(grid)
+      user.publish_update_event
       grid.reload.users
     end
   end

@@ -67,10 +67,7 @@ module Rpc
         grid_id: @grid.id, container_id: data['id']
       )
       if container
-        container.set(
-          health_status: data['status'],
-          health_status_at: Time.now
-        )
+        container.set_health_status(data['status'])
         if container.grid_service
           MongoPubsub.publish(GridServiceHealthMonitorJob::PUBSUB_KEY, id: container.grid_service.id)
         end

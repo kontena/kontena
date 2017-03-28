@@ -31,6 +31,16 @@ describe Grids::UnassignUser do
       }.to change{ user.grids.size }.by(-1)
     end
 
+    it 'publishes update event for user' do
+      grid.users << user
+      expect(grid).to receive(:publish_update_event).once      
+      outcome = described_class.new(
+          current_user: current_user,
+          user: user,
+          grid: grid
+      ).run
+    end
+
     context 'when a grid has only one user'
     it 'returns error' do
       expect {
