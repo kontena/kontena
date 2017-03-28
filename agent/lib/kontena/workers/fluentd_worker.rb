@@ -20,8 +20,8 @@ module Kontena::Workers
       subscribe('container:log', :on_log_event)
 
       if autostart
-        observe(node: Actor[:node_info_worker]) do
-          configure(@node)
+        observe(Actor[:node_info_worker]) do |node|
+          configure(node)
         end
       end
     end
