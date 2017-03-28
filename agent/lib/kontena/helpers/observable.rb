@@ -41,7 +41,7 @@ module Kontena
     end
 
     # Observer actor is observing this Actor's @value.
-    # Updates to value will send to update_observed on given actor.
+    # Updates to value will send to update_observe on given actor.
     # Returns current value.
     #
     # @param observer [Celluloid::Proxy::Cell<Observer>]
@@ -62,7 +62,7 @@ module Kontena
           debug "notify: #{observer} <- #{@value}"
 
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
-          observer.async.update_observed(observe, Celluloid.current_actor, @value)
+          observer.async.update_observe(observe, Celluloid.current_actor, @value)
         rescue Celluloid::DeadActorError => error
           observers.delete(observe)
         end
@@ -125,7 +125,7 @@ module Kontena
     # @param observe [Observer::Observe]
     # @param observable [Celluloid::Proxy::Cell<Observable>]
     # @param value [Object, nil] observed value
-    def update_observed(observe, observable, value)
+    def update_observe(observe, observable, value)
       observe.set(observable, value)
       observed(observe)
     end
@@ -152,7 +152,7 @@ module Kontena
 
       # sync setup of each observable
       observables.each do |observable|
-        # register for async.update_observed(...)
+        # register for async.update_observe(...)
         value = observable.add_observer(Celluloid.current_actor, observe)
 
         # store value for initial call, or nil to block
