@@ -6,8 +6,8 @@ module Kontena
   module Observable
     include Kontena::Logging
 
-    def value
-      @value
+    def observable_value
+      @observable_value
     end
 
     # Registered Observers
@@ -27,7 +27,7 @@ module Kontena
       raise ArgumentError, "Update with nil value" if value.nil?
       debug "update: #{value}"
 
-      @value = value
+      @observable_value = value
 
       notify_observers
     end
@@ -35,7 +35,7 @@ module Kontena
     # The Observable no longer has a value
     # This will notify any Observers, causing them to block yields until we update again
     def reset
-      @value = nil
+      @observable_value = nil
 
       notify_observers
     end
@@ -52,17 +52,17 @@ module Kontena
 
       observers[observe] = observer
 
-      return @value
+      return @observable_value
     end
 
     # Update @value to each Observer::Observe
     def notify_observers
       observers.each do |observe, observer|
         begin
-          debug "notify: #{observer} <- #{@value}"
+          debug "notify: #{observer} <- #{@observable_value}"
 
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
-          observer.async.update_observe(observe, Celluloid.current_actor, @value)
+          observer.async.update_observe(observe, Celluloid.current_actor, @observable_value)
         rescue Celluloid::DeadActorError => error
           observers.delete(observe)
         end
