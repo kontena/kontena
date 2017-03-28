@@ -32,9 +32,9 @@ module Kontena
         data_container = get_container(self.service_id, self.instance_number, 'volume')
         if data_container
           info "cleaning up service volumes: #{data_container.name}"
-          emit_service_pod_event("service:remove_instance", "removing service instance #{service_container.name_for_humans} data volume")
+          emit_service_pod_event("service:remove_instance", "removing service instance #{service_container.name_for_humans} data volume") if service_container
           data_container.delete(v: true)
-          emit_service_pod_event("service:remove_instance", "service instance #{service_container.name_for_humans} data volume removed succesfully")
+          emit_service_pod_event("service:remove_instance", "service instance #{service_container.name_for_humans} data volume removed succesfully") if service_container
         end
 
         service_container
