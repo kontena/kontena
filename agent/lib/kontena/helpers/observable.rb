@@ -57,7 +57,7 @@ module Kontena
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
           observer.async.update_observed(observe, Celluloid.current_actor, @value)
         rescue Celluloid::DeadActorError => error
-          observers.delete(actor)
+          observers.delete(observe)
         end
       end
     end
@@ -140,7 +140,8 @@ module Kontena
         debug "observe #{observable} -> #{value}"
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
-        self.link observable
+        # this is not a bidrectional link: our crashes do not propagate to the observable
+        self.monitor observable
       end
 
       # do not wait for update if observables were all ready

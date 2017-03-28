@@ -41,6 +41,10 @@ describe Kontena::Observable do
       def wait
         sleep 0.1 until ready?
       end
+
+      def crash
+        fail
+      end
     end
   end
 
@@ -130,6 +134,16 @@ describe Kontena::Observable do
     expect{subject.crash}.to raise_error(RuntimeError)
 
     expect{observer.ready?}.to raise_error(Celluloid::DeadActorError)
+  end
+
+  it "stops notifying any crashed observers", :celluloid => true do
+    observer = observer_class.new(subject)
+    expect(subject.observers).to_not be_empty
+
+    expect{observer.crash}.to raise_error(RuntimeError)
+
+    subject.update(object)
+    expect(subject.observers).to be_empty
   end
 
   context "For chained observables" do
