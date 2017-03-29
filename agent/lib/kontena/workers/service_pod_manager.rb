@@ -16,17 +16,17 @@ module Kontena::Workers
     finalizer :finalize
 
     def initialize(autostart = true)
+      @node = nil
       @workers = {}
 
-      if autostart
-        observe(Actor[:node_info_worker]) do |node|
-          @node = node
-        end
-        async.start
-      end
+      async.start if autostart
     end
 
     def start
+      observe(Actor[:node_info_worker]) do |node|
+        @node = node
+      end
+
       wait_until!("have node info", interval: 0.1) { self.node }
       populate_workers_from_docker
 
