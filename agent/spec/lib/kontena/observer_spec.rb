@@ -1,3 +1,5 @@
+require_relative '../../../lib/kontena/helpers/wait_helper'
+
 describe Kontena::Observer do
   let :observable_class do
     Class.new do
@@ -38,9 +40,7 @@ describe Kontena::Observer do
   end
 
   context "For a single observable" do
-    let :observable do
-      observable_class.new
-    end
+    let(:observable) { observable_class.new }
 
     subject { observer_class.new(observable) }
 
@@ -132,4 +132,68 @@ describe Kontena::Observer do
     end
   end
 
+  context "For a supervised observer that observes a supervised actor by name", :celluloid => true do
+    let :supervised_observer_class do
+      Class.new do
+        include Celluloid
+        include Kontena::Observer
+
+        attr_reader :state, :values
+
+        def initialize(actor_name)
+          @state = observe(Celluloid::Actor[actor_name]) do |*values|
+            @values = values
+          end
+        end
+
+        def ready?
+          @state.ready?
+        end
+
+        def crash
+          fail
+        end
+      end
+    end
+
+    before :each do
+      @observable_actor = Celluloid::Actor[:observable_test] = observable_class.new
+      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
+
+      expect(@observer_actor).to_not be_ready
+
+      @observable_actor.update_observable 1
+
+      expect(@observer_actor).to be_ready
+      expect(@observer_actor.values).to eq [1]
+    end
+
+    it "crashing allows it to re-observe the existing value immediately after restarting" do
+      expect{@observer_actor.crash}.to raise_error(RuntimeError)
+      Kontena::Helpers::WaitHelper.wait_until! { @observer_actor.dead? }
+
+      # simulate supervisor
+      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
+
+      expect(@observer_actor).to be_ready
+      expect(@observer_actor.values).to eq [1]
+    end
+
+    it "restarts after the observable crashes and waits for it to update" do
+      expect{@observable_actor.crash}.to raise_error(RuntimeError)
+      Kontena::Helpers::WaitHelper.wait_until! { @observable_actor.dead? && @observer_actor.dead? }
+
+      # simulate supervisor restart in the wrong order
+      expect{supervised_observer_class.new(:observable_test)}.to raise_error(Celluloid::DeadActorError)
+      @observable_actor = Celluloid::Actor[:observable_test] = observable_class.new
+      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
+
+      expect(@observer_actor).to_not be_ready
+
+      @observable_actor.update_observable 2
+
+      expect(@observer_actor).to be_ready
+      expect(@observer_actor.values).to eq [2]
+    end
+  end
 end
