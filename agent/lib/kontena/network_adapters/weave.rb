@@ -35,10 +35,12 @@ module Kontena::NetworkAdapters
       # Default size of pool is number of CPU cores, 2 for 1 core machine
       @executor_pool = WeaveExecutor.pool(args: [autostart])
 
-      if autostart
-        observe(Actor[:node_info_worker]) do |node|
-          start(node)
-        end
+      async.start if autostart
+    end
+
+    def start
+      observe(Actor[:node_info_worker]) do |node|
+        launch(node)
       end
     end
 
@@ -217,7 +219,7 @@ module Kontena::NetworkAdapters
       @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, grid_subnet.to_cidr, upper.to_cidr)
     end
 
-    def start(node)
+    def launch(node)
       wait_until("weave is ready to start") { images_exist? && !starting? }
 
       @starting = true
