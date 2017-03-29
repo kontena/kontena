@@ -10,6 +10,7 @@ module Kontena::Workers
 
     # @param [Boolean] autostart
     def initialize(autostart = true)
+      @node = nil
       @statsd = nil
       info 'initialized'
       async.start if autostart
@@ -23,7 +24,7 @@ module Kontena::Workers
 
     # @param [Node] node
     def configure_statsd(node)
-      @node_name = node.name
+      @node = node
       statsd_conf = node.statsd_conf
       debug "configure stats: #{statsd_conf}"
       if statsd_conf && statsd_conf['server']
@@ -156,7 +157,7 @@ module Kontena::Workers
       if labels && labels[:'io.kontena.service.name']
         key_base = "services.#{name}"
       else
-        key_base = "#{@node_name}.containers.#{name}"
+        key_base = "#{@node.name}.containers.#{name}"
       end
       statsd.gauge("#{key_base}.cpu.usage", event[:cpu][:usage_pct])
       statsd.gauge("#{key_base}.memory.usage", event[:memory][:usage])

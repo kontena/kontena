@@ -134,12 +134,13 @@ describe Kontena::Workers::StatsWorker do
     end
 
     let(:statsd) do
-      spy(:statsd)
+      instance_double(Statsd)
     end
 
     it 'sends statsd metrics' do
       allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
-      expect(statsd).to receive(:gauge)
+      expect(statsd).to receive(:gauge).with('services.foobar.cpu.usage', 12.32)
+      expect(statsd).to receive(:gauge).with('services.foobar.memory.usage', 24 * 1024 * 1024)
       subject.send_statsd_metrics('foobar', event)
     end
   end
