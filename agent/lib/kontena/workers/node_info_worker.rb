@@ -54,7 +54,7 @@ module Kontena::Workers
         configure_statsd(node)
       end
       @node = node
-      update(node) # observable
+      update_observable(node)
     end
 
     # @param [Node] node

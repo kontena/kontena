@@ -51,7 +51,7 @@ describe Kontena::Observer do
     end
 
     it "immediately yields an updated value", :celluloid => true do
-      observable.update object
+      observable.update_observable object
 
       subject
 
@@ -64,7 +64,7 @@ describe Kontena::Observer do
 
       expect(subject).to_not be_ready
 
-      observable.update object
+      observable.update_observable object
 
       expect(subject).to be_ready
       expect(subject.values).to eq [object]
@@ -80,20 +80,20 @@ describe Kontena::Observer do
       let(:object2) { double(:test2) }
 
       before do
-        observable.update object
+        observable.update_observable object
 
         expect(subject).to be_ready
         expect(subject.values).to eq [object]
       end
 
       it "yields with the updated value", :celluloid => true do
-        observable.update object2
+        observable.update_observable object2
 
         expect(subject.values).to eq [object2]
       end
 
       it "does not yield after a reset", :celluloid => true do
-        observable.reset
+        observable.reset_observable
 
         expect(subject.values).to eq [object]
         expect(subject).to_not be_ready
@@ -112,21 +112,21 @@ describe Kontena::Observer do
     let(:object3) { double(:test3) }
 
     it "yields with both values" do
-      observable1.update object1
-      observable2.update object2
+      observable1.update_observable object1
+      observable2.update_observable object2
 
       expect(subject).to be_ready
       expect(subject.values).to eq [object1, object2]
     end
 
     it "does not yield after a reset" do
-      observable1.update object1
-      observable2.update object2
+      observable1.update_observable object1
+      observable2.update_observable object2
 
       expect(subject.values).to eq [object1, object2]
 
-      observable1.reset
-      observable2.update object3
+      observable1.reset_observable
+      observable2.update_observable object3
 
       expect(subject.values).to eq [object1, object2]
     end

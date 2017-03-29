@@ -23,7 +23,7 @@ module Kontena
     #
     # @param value [Object]
     # @raise [ArgumentError] Update with nil value
-    def update(value)
+    def update_observable(value)
       raise ArgumentError, "Update with nil value" if value.nil?
       debug "update: #{value}"
 
@@ -34,7 +34,7 @@ module Kontena
 
     # The Observable no longer has a value
     # This will notify any Observers, causing them to block yields until we update again
-    def reset
+    def reset_observable
       @observable_value = nil
 
       notify_observers
