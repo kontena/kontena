@@ -15,12 +15,6 @@ module Kontena::Workers
       @statsd = nil
       info 'initialized'
       async.start if autostart
-
-      if autostart
-        observe(Actor[:node_info_worker]) do |node|
-          configure_statsd(node)
-        end
-      end
     end
 
     # @param [Node] node
@@ -39,6 +33,10 @@ module Kontena::Workers
     end
 
     def start
+      observe(Actor[:node_info_worker]) do |node|
+        configure_statsd(node)
+      end
+
       info 'waiting for cadvisor'
       sleep 1 until cadvisor_running?
       info 'cadvisor is running, starting stats loop'
