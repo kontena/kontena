@@ -133,7 +133,7 @@ class Container
   # @param [Hash] match
   # @return [Array<Hash>]
   def self.counts_for_grid_services(grid_id, match = {})
-    match = { :grid_id => grid_id}.merge(match)
+    match = { :grid_id => grid_id, :container_type => 'container'}.merge(match)
     self.collection.aggregate([
       { :$match => match },
       { :$group => { _id: "$grid_service_id", total: {:$sum => 1} } }
