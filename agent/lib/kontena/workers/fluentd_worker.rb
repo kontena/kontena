@@ -18,10 +18,12 @@ module Kontena::Workers
       info 'initialized'
       subscribe('container:log', :on_log_event)
 
-      if autostart
-        observe(Actor[:node_info_worker]) do |node|
-          configure(node)
-        end
+      async.start if autostart
+    end
+
+    def start
+      observe(Actor[:node_info_worker]) do |node|
+        configure(node)
       end
     end
 
