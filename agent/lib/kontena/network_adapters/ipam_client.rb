@@ -73,7 +73,12 @@ module Kontena::NetworkAdapters
       debug "response: #{response.status}/#{response.body}"
       JSON.parse(response.body)
     rescue Excon::Errors::HTTPStatusError => error
-      handle_error_response(error)
+      if error.response.status == 409
+        # IPAM return 409 in case the address still responds to ping, case zombies
+        warn error.response.body
+      else
+        handle_error_response(error)
+      end
     end
 
     def release_pool(network)

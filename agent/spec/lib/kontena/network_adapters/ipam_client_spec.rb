@@ -98,8 +98,16 @@ describe Kontena::NetworkAdapters::IpamClient do
 
     it 'handles error' do
       expect(connection).to receive(:post)
-        .and_raise(Excon::Errors::HTTPStatusError.new('error'))
+        .and_raise(Excon::Errors::HTTPStatusError.new('error', double(:request), double(:response, :status => 400)))
       expect(subject).to receive(:handle_error_response)
+      subject.release_address('kontena', '10.81.128.100')
+    end
+
+    it 'handles 409 zombie error' do
+      expect(connection).to receive(:post)
+        .and_raise(Excon::Errors::HTTPStatusError.new('error', double(:request), double(:response, :status => 409, :body => 'foo')))
+      expect(subject).not_to receive(:handle_error_response)
+      expect(subject).to receive(:warn).with('foo')
       subject.release_address('kontena', '10.81.128.100')
     end
   end
