@@ -1,4 +1,6 @@
-require_relative 'common'
+require 'kontena/cli/common'
+require 'kontena/cli/stacks/common'
+require 'kontena/cli/grid_options'
 
 module Kontena::Cli::Stacks
   class UpgradeCommand < Kontena::Command
@@ -8,9 +10,9 @@ module Kontena::Cli::Stacks
 
     banner "Upgrades a stack in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
-
+    include Common::StackNameParamWithKontenaYmlFallback
     include Common::StackFileOrNameParam
+
     include Common::StackValuesFromOption
 
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true

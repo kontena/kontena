@@ -1,4 +1,6 @@
-require_relative 'common'
+require 'kontena/cli/common'
+require 'kontena/cli/stacks/common'
+require 'kontena/cli/grid_options'
 
 module Kontena::Cli::Stacks
   class RemoveCommand < Kontena::Command
@@ -8,7 +10,8 @@ module Kontena::Cli::Stacks
 
     banner "Removes a stack in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    include Common::StackNameParamWithKontenaYmlFallback
+
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     requires_current_master

@@ -32,7 +32,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
       expect(client).to receive(:post).with(
         'grids/test-grid/stacks', stack
       )
-      subject.run([])
+      subject.run(['--no-deploy'])
     end
 
     it 'allows to override stack name' do
@@ -44,7 +44,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
       expect(client).to receive(:post).with(
         'grids/test-grid/stacks', stack
       )
-      subject.run(['--name', 'stack-b'])
+      subject.run(['--no-deploy', '--name', 'stack-b'])
     end
 
     it 'accepts a stack name as filename' do
@@ -53,7 +53,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
       expect(client).to receive(:post).with(
         'grids/test-grid/stacks', stack
       )
-      subject.run(['user/stack:1.0.0'])
+      subject.run(['--no-deploy', 'user/stack:1.0.0'])
     end
   end
 end

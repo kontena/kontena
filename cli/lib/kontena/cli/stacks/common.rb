@@ -7,6 +7,28 @@ module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
+    module StackNameParamWithKontenaYmlFallback
+      def self.included(where)
+        where.class_eval do
+          parameter "[NAME]", "Stack name (default: read from kontena.yml)" do |name|
+            name == '.' ? nil : name
+          end
+
+          def default_name
+            if File.exist?('kontena.yml') && File.readable?('kontena.yml')
+              name = ::YAML.safe_load(File.read('kontena.yml'))['stack'].split('/').last
+              ENV["DEBUG"] && STDERR.puts("Using stack name #{pastel.cyan(name)} from #{pastel.yellow('kontena.yml')}")
+              name
+            else
+              exit_with_error 'Stack name required'
+            end
+          rescue
+            exit_with_error 'Stack name required'
+          end
+        end
+      end
+    end
+
     module StackNameParam
       attr_accessor :stack_version
 
