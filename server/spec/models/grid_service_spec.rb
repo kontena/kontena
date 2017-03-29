@@ -1,6 +1,7 @@
 
 describe GridService do
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:image_name, :name, :user, :entrypoint, :state,
                           :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
@@ -124,8 +125,8 @@ describe GridService do
 
   describe '#set_state' do
     it 'sets value of state column' do
-      subject.set_state('running')
-      expect(subject.state).to eq('running')
+      grid_service.set_state('running')
+      expect(grid_service.state).to eq('running')
     end
 
     it 'does not modify updated_at field' do
@@ -134,6 +135,11 @@ describe GridService do
       grid_service.clear_timeless_option
       grid_service.set_state('running')
       expect(grid_service.updated_at).to eq(five_hours_ago)
+    end
+
+    it 'publishes update event' do
+      expect(grid_service).to receive(:publish_update_event).once
+      grid_service.set_state('running')
     end
   end
 

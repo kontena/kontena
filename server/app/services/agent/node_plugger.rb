@@ -19,6 +19,7 @@ module Agent
       begin
         prev_seen_at = node.last_seen_at
         self.update_node
+        self.publish_update_event
         self.send_master_info
         self.send_node_info
       rescue => exc
@@ -29,6 +30,10 @@ module Agent
 
     def update_node
       node.set(connected: true, last_seen_at: Time.now.utc)
+    end
+
+    def publish_update_event
+      node.publish_update_event
     end
 
     def send_node_info

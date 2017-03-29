@@ -5,6 +5,7 @@ require_relative '../models/node'
 require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 require_relative '../helpers/rpc_helper'
+require_relative '../helpers/stats_helper'
 
 module Kontena::Workers
   class NodeInfoWorker
@@ -15,6 +16,7 @@ module Kontena::Workers
     include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::StatsHelper
 
     attr_reader :statsd, :stats_since, :node
 
@@ -25,6 +27,8 @@ module Kontena::Workers
       @statsd = nil
       @stats_since = Time.now
       @container_seconds = 0
+      @previous_cpu = Vmstat.cpu
+      @previous_network = Vmstat.network_interfaces
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       subscribe('container:event', :on_container_event)
@@ -121,6 +125,13 @@ module Kontena::Workers
     def publish_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
+      current_cpu = Vmstat.cpu
+      cpu_usage = calculate_cpu_usage(@previous_cpu, current_cpu)
+      @previous_cpu = current_cpu
+
+      current_network = Vmstat.network_interfaces
+      network_traffic = calculate_network_traffic(@previous_network, current_network, Time.now - @stats_since)
+      @previous_network = current_network
 
       container_partial_seconds = @container_seconds.to_i
       @container_seconds = 0
@@ -147,6 +158,8 @@ module Kontena::Workers
             total: disk.total_bytes
           }
         ],
+        cpu: cpu_usage,
+        network: network_traffic,
         time: Time.now.utc.to_s
       }
       rpc_client.async.notification('/nodes/stats', [data])
@@ -160,12 +173,20 @@ module Kontena::Workers
       statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
       statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])
       statsd.gauge("#{key_base}.cpu.load.15m", event[:load][:'15m'])
+      statsd.gauge("#{key_base}.cpu.system", event[:cpu][:system])
+      statsd.gauge("#{key_base}.cpu.user", event[:cpu][:user])
+      statsd.gauge("#{key_base}.cpu.nice", event[:cpu][:nice])
+      statsd.gauge("#{key_base}.cpu.idle", event[:cpu][:idle])
       statsd.gauge("#{key_base}.memory.active", event[:memory][:active])
       statsd.gauge("#{key_base}.memory.free", event[:memory][:free])
       statsd.gauge("#{key_base}.memory.total", event[:memory][:total])
       statsd.gauge("#{key_base}.usage.container_seconds", event[:usage][:container_seconds])
+      statsd.gauge("#{key_base}.network.internal.rx_bytes", event[:network][:internal][:rx_bytes])
+      statsd.gauge("#{key_base}.network.internal.tx_bytes", event[:network][:internal][:tx_bytes])
+      statsd.gauge("#{key_base}.network.external.rx_bytes", event[:network][:external][:rx_bytes])
+      statsd.gauge("#{key_base}.network.external.tx_bytes", event[:network][:external][:tx_bytes])
       event[:filesystem].each do |fs|
-        name = fs[:name].split("/")[1..-1].join(".")
+        name = fs[:name] ? fs[:name].split("/")[1..-1].join(".") : ""
         statsd.gauge("#{key_base}.filesystem.#{name}.free", fs[:free])
         statsd.gauge("#{key_base}.filesystem.#{name}.available", fs[:available])
         statsd.gauge("#{key_base}.filesystem.#{name}.used", fs[:used])
@@ -245,6 +266,76 @@ module Kontena::Workers
     rescue => exc
       debug exc.message
       0
+    end
+
+    # @param [Array<Vmstat::Cpu>] prev_cpus
+    # @param [Array<Vmstat::Cpu>] current_cpu
+    # @return [Hash] { :num_cores, :system, :user, :idle }
+    def calculate_cpu_usage(prev_cpus, current_cpus)
+      result = {
+        num_cores: prev_cpus.size,
+        system: 0.0,
+        user: 0.0,
+        nice: 0.0,
+        idle: 0.0
+      }
+
+      prev_cpus.zip(current_cpus).map { |prev_cpu, current_cpu|
+        system_ticks = current_cpu.system - prev_cpu.system
+        user_ticks = current_cpu.user - prev_cpu.user
+        nice_ticks = current_cpu.nice = prev_cpu.nice
+        idle_ticks = current_cpu.idle - prev_cpu.idle
+
+        total_ticks = (system_ticks + user_ticks + nice_ticks + idle_ticks).to_f
+
+        {
+          system: (system_ticks / total_ticks) * 100.0,
+          user: (user_ticks / total_ticks) * 100.0,
+          nice: (nice_ticks / total_ticks) * 100.0,
+          idle: (idle_ticks / total_ticks) * 100.0
+        }
+      }.inject(result) { |memo, cpu_core|
+        memo[:system] += cpu_core[:system]
+        memo[:user] += cpu_core[:user]
+        memo[:nice] += cpu_core[:nice]
+        memo[:idle] += cpu_core[:idle]
+        memo
+      }
+    end
+
+    # @param [Array<Vmstat::NetworkInterface>] prev_interfaces
+    # @param [Array<Vmstat::NetworkInterface>] current_interfaces
+    # @param [Number] interval_seconds
+    # @return [Hash]
+    def calculate_network_traffic(prev_interfaces, current_interfaces, interval_seconds)
+      prev_interfaces = prev_interfaces.map { |iface| {
+        name: iface.name,
+        rx_bytes: iface.in_bytes,
+        tx_bytes: iface.out_bytes
+      }}
+
+      internal_interfaces = current_interfaces.select { |iface|
+        iface.name.to_s == "weave" or iface.name.to_s.start_with?("vethwe")
+      }
+      .map { |iface| {
+          name: iface.name,
+          rx_bytes: iface.in_bytes,
+          tx_bytes: iface.out_bytes
+      }}
+
+      external_interfaces = current_interfaces.select { |iface|
+        iface.name.to_s == "docker0"
+      }
+      .map { |iface| {
+          name: iface.name,
+          rx_bytes: iface.in_bytes,
+          tx_bytes: iface.out_bytes
+      }}
+
+      {
+        internal: calculate_interface_traffic(prev_interfaces, internal_interfaces, interval_seconds),
+        external: calculate_interface_traffic(prev_interfaces, external_interfaces, interval_seconds)
+      }
     end
 
     # @return [Hash]

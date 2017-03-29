@@ -352,6 +352,9 @@ module Kontena::NetworkAdapters
       info "Remove container=#{container_id} from network=#{overlay_network} at cidr=#{overlay_cidr}"
 
       @ipam_client.release_address(overlay_network, overlay_cidr)
+    rescue IpamError => error
+      # Cleanup will take care of these later on
+      warn "Failed to release container=#{container_id} from network=#{overlay_network} at cidr=#{overlay_cidr}: #{error}"
     end
 
     private

@@ -1,6 +1,7 @@
 
 describe User do
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:email)}
 
   it { should have_and_belong_to_many(:grids) }

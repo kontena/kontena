@@ -11,7 +11,7 @@ module Kontena::Launchers
 
     IPAM_SERVICE_NAME = 'kontena-ipam-plugin'.freeze
 
-    IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2.1'
+    IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2.2'
     IPAM_IMAGE = ENV['IPAM_IMAGE'] || 'kontena/ipam-plugin'
 
     def initialize(autostart = true)

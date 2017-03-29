@@ -5,6 +5,7 @@ describe HostNode do
   end
 
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:node_id, :name, :os, :driver, :public_ip).of_type(String) }
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
@@ -133,7 +134,7 @@ describe HostNode do
   end
 
   describe '#save!' do
-    let(:grid) { double(:grid, free_node_numbers: (1..254).to_a )}
+    let(:grid) { Grid.create!(name: 'test') }
 
     it 'reserves node number' do |variable|
       allow(subject).to receive(:grid).and_return(grid)

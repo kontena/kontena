@@ -121,6 +121,10 @@ class MongoPubsub
     @supervisor.actors.first.unsubscribe(subscription)
   end
 
+  def self.started?
+    !@supervisor.nil?
+  end
+
   # @param [Mongoid::Document] model
   def self.start!(model)
     @supervisor = Celluloid.supervise(as: :mongo_pubsub, type: MongoPubsub, args: [model])

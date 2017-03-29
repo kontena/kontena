@@ -39,6 +39,11 @@ module V1
         r.route 'grid_stats'
       end
 
+      r.on ':name/metrics' do |name|
+        load_grid(name)
+        r.route 'grid_metrics'
+      end
+
       r.on ':name/users' do |name|
         load_grid(name)
         r.route 'grid_users'
