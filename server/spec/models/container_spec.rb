@@ -186,4 +186,42 @@ describe Container do
       expect(container.name).to eq("redis-2")
     end
   end
+
+  describe 'counts_for_grid_services' do
+    let(:redis) do
+      GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
+    end
+    let(:nginx) do
+      GridService.create!(grid: grid, name: 'nginx', image_name: 'nginx')
+    end
+
+    it 'returns correct count per service' do
+      (1..3).each do |i|
+        redis.containers.create!(
+          grid: grid,
+          name: "redis-#{i}",
+          instance_number: i,
+          container_type: 'container'
+        )
+        redis.containers.create!(
+          grid: grid,
+          name: "redis-#{i}-volumes",
+          instance_number: i,
+          container_type: 'volume'
+        )
+      end
+      (1..3).each do |i|
+        nginx.containers.create!(
+          grid: grid,
+          name: "nginx-#{i}",
+          instance_number: i,
+          container_type: 'container'
+        )
+      end
+      expect(described_class.counts_for_grid_services(grid.id)).to include(
+        {'_id' => redis.id, 'total' => 3},
+        {'_id' => nginx.id, 'total' => 3}
+      )
+    end
+  end
 end
