@@ -6,7 +6,8 @@ class GridServiceInstanceDeployer
 
   class Error < StandardError; end
 
-  class AgentError < Error; end
+  class NodeError < Error; end
+  class ServiceError < Error; end
   class StateError < Error; end
 
   # @param grid_service_instance_deploy [GridServiceInstanceDeploy]
@@ -20,7 +21,7 @@ class GridServiceInstanceDeployer
   # @param deploy_rev [String]
   # @return [GridServiceInstanceDeploy] in error or success state
   def deploy(deploy_rev)
-    info "Deploying service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}"
+    info "Deploying service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}..."
 
     @grid_service_instance_deploy.set(:deploy_state => :ongoing)
 
@@ -28,6 +29,9 @@ class GridServiceInstanceDeployer
 
     if service_instance.nil?
       service_instance = create_service_instance
+    elsif service_instance.host_node.nil?
+      # host node was removed
+      warn "Replacing orphaned service #{@grid_service.to_path} instance #{service_instance.instance_number} on destroyed node"
     elsif service_instance.host_node != @host_node
       # we need to stop instance if it's running on different node
       stop_current_instance(service_instance, deploy_rev)
@@ -45,10 +49,12 @@ class GridServiceInstanceDeployer
   # @param service_instance [GridServiceInstance]
   # @param deploy_rev [String]
   def stop_current_instance(service_instance, deploy_rev)
+    info "Stopping existing service service #{@grid_service.to_path} instance #{service_instance.instance_number} on previous node #{service_instance.host_node.name}..."
+
     ensure_service_instance(service_instance, service_instance.host_node, deploy_rev, 'stopped')
 
   rescue => error
-    warn "Failed to stop existing service #{@grid_service.to_path} instance #{service_instance.instance_number} on old node #{service_instance.host_node}: #{error}"
+    warn "Failed to stop existing service #{@grid_service.to_path} instance #{service_instance.instance_number} on previous node #{service_instance.host_node.name}: #{error}"
   end
 
   # Update service instance, notify node, wait for update, and ensure that service is in desired state.
@@ -64,8 +70,8 @@ class GridServiceInstanceDeployer
   # @raise [Timeout::Error] no update from agent
   # @return [GridServiceInstance]
   def ensure_service_instance(service_instance, node, deploy_rev, desired_state)
-    raise "Host node is missing" unless node
-    raise "Host node is disconnected" unless node.connected?
+    raise NodeError, "Host node is missing" unless node
+    raise NodeError, "Host node is offline" unless node.connected?
 
     service_instance.set(
       host_node_id: node.id,
@@ -85,7 +91,7 @@ class GridServiceInstanceDeployer
     end
 
     if service_instance.error
-      raise AgentError, service_instance.error
+      raise ServiceError, service_instance.error
     elsif service_instance.rev > deploy_rev
       raise StateError, "Service instance was re-deployed" # by someone else
     elsif service_instance.state != desired_state
