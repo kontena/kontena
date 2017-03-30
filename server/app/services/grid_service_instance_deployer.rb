@@ -86,10 +86,9 @@ class GridServiceInstanceDeployer
   end
 
   def ensure_volume_instance(node, instance_number)
-    # TODO Maybe separate this functionality into own VolumeScheduler or such
     self.grid_service.service_volumes.each do |sv|
       if sv.volume
-        VolumeInstanceScheduler.new.schedule(node, sv, instance_number)
+        VolumeInstanceDeployer.new.deploy(node, sv, instance_number)
       end
     end
   end

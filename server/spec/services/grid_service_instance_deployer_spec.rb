@@ -98,8 +98,8 @@ describe GridServiceInstanceDeployer do
       grid_service.service_volumes << ServiceVolume.new(volume: volume, path: '/data')
       grid_service.service_volumes << ServiceVolume.new(bind_mount: '/tmp', path: '/data')
       volume_scheduler = double
-      expect(VolumeInstanceScheduler).to receive(:new).and_return(volume_scheduler)
-      expect(volume_scheduler).to receive(:schedule).with(node, grid_service.service_volumes[0], 2)
+      expect(VolumeInstanceDeployer).to receive(:new).and_return(volume_scheduler)
+      expect(volume_scheduler).to receive(:deploy).with(node, grid_service.service_volumes[0], 2)
       subject.ensure_volume_instance(node, 2)
     end
   end

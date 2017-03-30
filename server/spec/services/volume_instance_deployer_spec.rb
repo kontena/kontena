@@ -1,4 +1,4 @@
-describe VolumeInstanceScheduler do
+describe VolumeInstanceDeployer do
   let(:grid) do
     Grid.create!(name: 'foo')
   end
@@ -17,7 +17,7 @@ describe VolumeInstanceScheduler do
     expect_any_instance_of(RpcClient).to receive(:request).with('/volumes/notify_update', [])
     service.service_volumes << ServiceVolume.new(volume: volume)
     expect {
-      subject.schedule(node, service.service_volumes[0], 1)
+      subject.deploy(node, service.service_volumes[0], 1)
     }.to change{ VolumeInstance.count }.by(1)
   end
 
@@ -26,7 +26,7 @@ describe VolumeInstanceScheduler do
     node.volume_instances.create!(volume: volume, name: volume.name_for_service(service, 1))
     service.service_volumes << ServiceVolume.new(volume: volume)
     expect {
-      subject.schedule(node, service.service_volumes[0], 1)
+      subject.deploy(node, service.service_volumes[0], 1)
     }.not_to change{ VolumeInstance.count }
   end
 end

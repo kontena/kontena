@@ -1,6 +1,6 @@
-class VolumeInstanceScheduler
+class VolumeInstanceDeployer
 
-  def schedule(node, service_volume, instance_number)
+  def deploy(node, service_volume, instance_number)
     volume_name = service_volume.volume.name_for_service(service_volume.grid_service, instance_number)
     volume_instance = node.volume_instances.find_by(name: volume_name)
     unless volume_instance
