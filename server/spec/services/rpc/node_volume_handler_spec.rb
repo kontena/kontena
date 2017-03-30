@@ -14,13 +14,14 @@ describe Rpc::NodeVolumeHandler, celluloid: true do
 
     it 'returns hash with volume instances' do
       volume = grid.volumes.create!(driver: 'local', scope: 'instance', name: 'foo')
-      volume.volume_instances.create!(host_node: node, name: 'svc.foo-1')
+      volume_instance = volume.volume_instances.create!(host_node: node, name: 'svc.foo-1')
       list = subject.list(node.node_id)
       expect(list[:volumes][0]).to include(
         name: 'svc.foo-1',
         driver: 'local',
         driver_opts: {},
-        labels: {'io.kontena.volume.id' => volume.id.to_s}
+        volume_id: volume.id.to_s,
+        volume_instance_id: volume_instance.id.to_s
       )
     end
 
@@ -38,14 +39,11 @@ describe Rpc::NodeVolumeHandler, celluloid: true do
       grid.volumes.create!(driver: 'local', scope: 'instance', name: 'foo')
     }
 
-    # let(:volume_instance) {
-    #   volume.volume_instances.create!(host_node: node, name: 'svc.foo-1')
-    # }
-
     let(:data) do
       {
-        'id' => 'svc.foo-1',
-        'volume_id' => volume.id.to_s
+        'name' => 'svc.foo-1',
+        'volume_id' => volume.id.to_s,
+        'volume_instance_id' => '4567890'
       }
     end
 
@@ -59,14 +57,15 @@ describe Rpc::NodeVolumeHandler, celluloid: true do
       data['volume_id'] = 'foo'
       expect {
         subject.set_state(node.node_id, data)
-      }.not_to change {volume.volume_instances.count}
+      }.not_to change {VolumeInstance.count}
     end
 
-    it 'saves volume instance state to volume only once' do
+    it 'does not save volume instance if already exists' do
+      volume_instance = volume.volume_instances.create!(host_node: node, name: 'svc.foo-1')
+      data['volume_instance_id'] = volume_instance.id.to_s
       expect {
         subject.set_state(node.node_id, data)
-        subject.set_state(node.node_id, data)
-      }.to change {volume.volume_instances.count}.by 1
+      }.not_to change {VolumeInstance.count}
     end
   end
 

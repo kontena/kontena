@@ -43,12 +43,12 @@ module Kontena::Workers::Volumes
         end
         debug "got volumes from master: #{response}"
 
-        volumes = response['volumes']
+        volumes = response['volumes'].map{ |v| Kontena::Models::Volume.new(v) }
 
-        terminate_volumes(volumes.map {|v| v.dig('labels','io.kontena.volume.id')})
+        terminate_volumes(volumes.map {|v| v.volume_instance_id })
 
-        volumes.each do |s|
-          ensure_volume(Kontena::Models::Volume.new(s))
+        volumes.each do |volume|
+          ensure_volume(volume)
         end
       }
     end
@@ -62,7 +62,7 @@ module Kontena::Workers::Volumes
 
     # @param [Kontena::Models::Volume] volume
     def ensure_volume(volume)
-      debug "ensuring volume: #{volume.inspect}"
+      debug "ensuring volume existence: #{volume.inspect}"
       begin
         Docker::Volume.get(volume.name)
       rescue Docker::Error::NotFoundError
@@ -83,8 +83,8 @@ module Kontena::Workers::Volumes
     def sync_volume_to_master(docker_volume)
       data = docker_volume.info
       volume = {
-        'id' => docker_volume.id,
         'name' => data['Name'],
+        'volume_instance_id' => data.dig('Labels', 'io.kontena.volume_instance.id'),
         'volume_id' => data.dig('Labels', 'io.kontena.volume.id')
       }
       rpc_client.async.notification('/node_volumes/set_state', [node.id, volume])
@@ -102,9 +102,9 @@ module Kontena::Workers::Volumes
 
     def terminate_volumes(current_ids)
       Docker::Volume.all.each do |volume|
-        volume_id = volume.info.dig('Labels', 'io.kontena.volume.id')
-        if volume_id
-          unless current_ids.include?(volume_id)
+        volume_instance_id = volume.info.dig('Labels', 'io.kontena.volume_instance.id')
+        if volume_instance_id
+          unless current_ids.include?(volume_instance_id)
             info "removing volume: #{volume.id}"
             volume.remove
           end

@@ -10,8 +10,13 @@ api:
     - VAULT_IV=kfsdfopweu09fewjlhfksdjifjpoweop
     - ACME_ENDPOINT=https://acme-staging.api.letsencrypt.org/
     - INITIAL_ADMIN_CODE=initialadmincode
+    - DEBUG=1
   links:
    - mongodb
+  labels:
+    - io.kontena.container.skip_logs=1
 mongodb:
   image: mongo:3.0
   command: mongod --smallfiles
+  labels:
+    - io.kontena.container.skip_logs=1

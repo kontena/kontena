@@ -1,5 +1,5 @@
 module Rpc
-  class VolumeSerializer
+  class VolumeSerializer < RpcSerializer
 
     attr_reader :volume_instance
 
@@ -9,12 +9,11 @@ module Rpc
 
     def to_hash
       {
+        volume_id: @volume_instance.volume.id.to_s,
+        volume_instance_id: @volume_instance.id.to_s,
         name: @volume_instance.name,
         driver: @volume_instance.volume.driver,
-        driver_opts: @volume_instance.volume.driver_opts,
-        labels: {
-          'io.kontena.volume.id' => @volume_instance.volume.id.to_s
-        }
+        driver_opts: @volume_instance.volume.driver_opts
       }
     end
 

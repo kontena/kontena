@@ -39,14 +39,14 @@ describe Kontena::Workers::Volumes::VolumeManager do
       subject.populate_volumes_from_master
     end
 
-    it 'calls terminate ans ensure with volumes from master' do
+    it 'calls terminate and ensure with volumes from master' do
       expect(subject.wrapped_object).to receive(:terminate_volumes).with(['123', '456'])
       expect(rpc_client).to receive(:request).with('/node_volumes/list', [node.id]).and_return(
         rpc_future(
           {
             'volumes' => [
-              {'name' => 'foo', 'labels' => {'io.kontena.volume.id' => '123'}},
-              {'name' => 'bar', 'labels' => {'io.kontena.volume.id' => '456'}}
+              {'name' => 'foo', 'volume_instance_id' => '123'},
+              {'name' => 'bar', 'volume_instance_id' => '456'}
             ]
           }
         )
@@ -98,11 +98,11 @@ describe Kontena::Workers::Volumes::VolumeManager do
     it 'sends volume data to master' do
       expect(rpc_client).to receive(:notification).with(
         '/node_volumes/set_state',
-        [node.id, hash_including('id'=> 'foo', 'name' => 'foo', 'volume_id' => '123')]
+        [node.id, hash_including('name' => 'foo', 'volume_id' => '123', 'volume_instance_id' => '456')]
       )
       docker_volume = double(:volume, 'id' => 'foo', 'info' => {
         'Name' => 'foo',
-        'Labels' => { 'io.kontena.volume.id' => '123'}
+        'Labels' => { 'io.kontena.volume.id' => '123', 'io.kontena.volume_instance.id' => '456'}
       })
       subject.sync_volume_to_master(docker_volume)
     end
@@ -126,11 +126,11 @@ describe Kontena::Workers::Volumes::VolumeManager do
       volumes = [
         double(:volume, 'id' => 'foo', 'info' => {
           'Name' => 'foo',
-          'Labels' => { 'io.kontena.volume.id' => '123'}
+          'Labels' => { 'io.kontena.volume_instance.id' => '123'}
         }),
         double(:volume, 'id' => 'bar', 'info' => {
           'Name' => 'bar',
-          'Labels' => { 'io.kontena.volume.id' => '456'}
+          'Labels' => { 'io.kontena.volume_instance.id' => '456'}
         })
       ]
       expect(Docker::Volume).to receive(:all).and_return(volumes)
