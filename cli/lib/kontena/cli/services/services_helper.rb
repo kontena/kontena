@@ -236,7 +236,17 @@ module Kontena
               sleep 1
             end
             if deployment['state'] == 'error'
-              raise Kontena::Errors::StandardError.new(500, deployment['reason'])
+              message = deployment['reason']
+
+              if deployment['instance_deploys']
+                message += ":\n"
+
+                deployment['instance_deploys'].each do |instance_deploy|
+                  message += "\tFailed to deploy instance #{instance_deploy['instance_number']} to node #{instance_deploy['node']}: #{instance_deploy['error']}\n" if instance_deploy['error']
+                end
+              end
+
+              raise Kontena::Errors::StandardError.new(500, message)
             end
           end
 
