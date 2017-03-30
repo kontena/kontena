@@ -214,6 +214,7 @@ describe AuthProvider do
         expect(body['code']).to eq "abcd"
         expect(body['client_id']).to eq "clientid"
         expect(body['client_secret']).to eq "clientsecret"
+        expect(body['redirect_uri']).to eq "https://example.com/cb"
       end.and_return(success_response)
       subject.get_token("abcd")
     end

@@ -1,5 +1,6 @@
 class GridServiceInstanceDeployer
   include Logging
+  include WaitHelper
 
   attr_reader :grid_service
 
@@ -10,15 +11,18 @@ class GridServiceInstanceDeployer
   # @param [HostNode] node
   # @param [Integer] instance_number
   # @param [String] deploy_rev
-  # @param [Hash, NilClass] creds
   # @return [Boolean]
-  def deploy(node, instance_number, deploy_rev, creds = nil)
-    if !self.service_exists_on_node?(node, instance_number)
-      self.terminate_service_instance(instance_number)
+  def deploy(node, instance_number, deploy_rev)
+    current_instance = current_service_instance(instance_number)
+    if current_instance && current_instance.host_node != node
+      # we need to stop instance if it's running on different node
+      stop_current_instance(current_instance)
     end
 
-    self.create_service_instance(node, instance_number, deploy_rev, creds)
-    self.wait_for_service_to_start(node, instance_number, deploy_rev)
+    service_instance = create_service_instance(node, instance_number, deploy_rev)
+    notify_node(node)
+    wait_for_service_state(service_instance, 'running', deploy_rev)
+
     true
   rescue => exc
     error "failed to deploy service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
@@ -27,68 +31,55 @@ class GridServiceInstanceDeployer
     false
   end
 
-  # @param [HostNode] node
-  # @param [String] instance_number
-  # @param [String] deploy_rev
-  def wait_for_service_to_start(node, instance_number, deploy_rev)
-    Timeout.timeout(30) do
-      sleep 0.5 until self.deployed_service_container_exists?(instance_number, deploy_rev)
+  # @param [GridServiceInstance] current_instance
+  def stop_current_instance(current_instance)
+    current_instance.set(desired_state: 'stopped')
+    if current_instance.host_node && current_instance.host_node.connected?
+      notify_node(current_instance.host_node)
+      wait_for_service_state(current_instance, 'stopped')
+    end
+  end
+
+  # @param [GridServiceInstance] service_instance
+  def wait_for_service_state(service_instance, state, rev = nil)
+    wait_until!("service #{@grid_service.to_path} instance #{service_instance.instance_number} is #{state} on node #{service_instance.host_node.to_path}", timeout: 300) do
+      service_instance.reload
+
+      if service_instance.state != state
+        false
+      elsif rev && service_instance.rev != rev
+        false
+      else
+        true
+      end
     end
   end
 
   # @param [HostNode] node
   # @param [String] instance_number
-  # @return [Boolean]
-  def service_exists_on_node?(node, instance_number)
-    old_container = self.grid_service.containers.service_instance(
-      self.grid_service, instance_number
-    ).first
-    old_container && old_container.host_node && old_container.host_node == node
+  # @param [String] deploy_rev
+  # @return [GridServiceInstance]
+  def create_service_instance(node, instance_number, deploy_rev)
+    instance = current_service_instance(instance_number)
+    unless instance
+      instance = GridServiceInstance.create!(
+        host_node: node, grid_service: self.grid_service, instance_number: instance_number
+      )
+    end
+    instance.set(host_node_id: node.id, deploy_rev: deploy_rev, desired_state: 'running')
+
+    instance
+  end
+
+  # @param [Integer] instance_number
+  # @return [GridServiceInstance, NilClass]
+  def current_service_instance(instance_number)
+    GridServiceInstance.where(grid_service: self.grid_service, instance_number: instance_number).first
   end
 
   # @param [HostNode] node
-  # @param [String] instance_number
-  # @param [String] deploy_rev
-  # @param [Hash, NilClass] creds
-  def create_service_instance(node, instance_number, deploy_rev, creds)
-    creator = Docker::ServiceCreator.new(self.grid_service, node)
-    creator.create_service_instance(instance_number, deploy_rev, creds)
-  end
-
-  # @param [String] instance_number
-  # @param [String] deploy_rev
-  # @return [Boolean]
-  def deployed_service_container_exists?(instance_number, deploy_rev)
-    container = self.find_service_instance_container(instance_number, deploy_rev)
-    if container && container.container_id
-      true
-    else
-      false
-    end
-  end
-
-  # @param [String] instance_number
-  # @param [String] deploy_rev
-  # @return [Container, NilClass]
-  def find_service_instance_container(instance_number, deploy_rev)
-    self.grid_service.containers.service_instance(self.grid_service, instance_number).find_by(
-      deploy_rev: deploy_rev
-    )
-  end
-
-  # @param [String] instance_number
-  # @param [HostNode] node
-  def terminate_service_instance(instance_number, node = nil)
-    if node.nil?
-      container = self.grid_service.containers.service_instance(
-        self.grid_service, instance_number
-      ).first
-      return unless container
-      return unless container.host_node
-      node = container.host_node
-    end
-    return unless node
-    terminator = Docker::ServiceTerminator.new(node)
-    terminator.terminate_service_instance(self.grid_service, instance_number)
+  def notify_node(node)
+    rpc_client = RpcClient.new(node.node_id, 2)
+    rpc_client.request('/service_pods/notify_update', [])
   end
 end

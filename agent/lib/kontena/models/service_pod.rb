@@ -2,7 +2,9 @@ module Kontena
   module Models
     class ServicePod
 
-      attr_reader :service_id,
+      attr_reader :id,
+                  :desired_state,
+                  :service_id,
                   :service_name,
                   :instance_number,
                   :deploy_rev,
@@ -38,10 +40,13 @@ module Kontena
                   :hooks,
                   :secrets,
                   :networks,
-                  :wait_for_port
+                  :wait_for_port,
+                  :volume_specs
 
       # @param [Hash] attrs
       def initialize(attrs = {})
+        @id = attrs['id']
+        @desired_state = attrs['desired_state']
         @service_id = attrs['service_id']
         @service_name = attrs['service_name']
         @instance_number = attrs['instance_number'] || 1
@@ -94,6 +99,26 @@ module Kontena
         !self.stateless?
       end
 
+      def running?
+        self.desired_state == 'running'
+      end
+
+      def stopped?
+        self.desired_state == 'stopped'
+      end
+
+      def terminated?
+        self.desired_state == 'terminated'
+      end
+
+      def desired_state_unknown?
+        self.desired_state.nil? || self.desired_state == 'unknown'
+      end
+
+      def mark_as_terminated
+        @desired_state = 'terminated'
+      end
+
       # @return [String]
       def name
         "#{self.service_name}-#{self.instance_number}"
@@ -107,6 +132,17 @@ module Kontena
       # @return [String]
       def stack_name
         self.labels['io.kontena.stack.name']
+      end
+
+      # @return [String]
+      def lb_name
+        return self.labels['io.kontena.service.name'] if self.default_stack?
+        "#{self.stack_name}-#{self.labels['io.kontena.service.name']}"
+      end
+
+      # @return [Boolean]
+      def default_stack?
+        self.stack_name.nil? || self.stack_name.to_s == 'null'.freeze
       end
 
       # @return [Hash]
@@ -232,12 +268,7 @@ module Kontena
       def build_volumes
         volumes = {}
         self.volumes.each do |vol|
-          path1, path2, _ = vol.split(':')
-          if path2.nil?
-            volumes[path1] = {}
-          else
-            volumes[path2] = {}
-          end
+          volumes[vol['path']] = {}
         end
         volumes
       end
@@ -247,7 +278,11 @@ module Kontena
       def build_bind_volumes
         volumes = []
         self.volumes.each do |vol|
-          volumes << vol if vol.include?(':')
+          if vol['bind_mount'] || vol['name']
+            volume = "#{vol['bind_mount'] || vol['name']}:#{vol['path']}"
+            volume << ":#{vol['flags']}" if vol['flags'] && !vol['flags'].empty?
+            volumes << volume
+          end
         end
         volumes
       end

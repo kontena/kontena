@@ -145,6 +145,34 @@ describe Container do
     end
   end
 
+  describe '#set_health_status' do
+    it 'updates health_status' do
+      subject.health_status = 'Not healthy'
+      subject.set_health_status('Healthy')
+      expect(subject.health_status).to eq('Healthy')
+    end
+
+    it 'updates health_status_at' do
+      subject.health_status = 'Not healthy'
+      last_updated = Time.now - 2.seconds
+      subject.health_status_at = last_updated
+      subject.set_health_status('Healthy')
+      expect(subject.health_status_at).not_to eq(last_updated)
+    end
+
+    it 'triggers publish_update_event if health status changes' do
+      subject.health_status = 'Not healthy'
+      expect(subject).to receive(:publish_update_event).once
+      subject.set_health_status('Healthy')
+    end
+
+    it 'does not trigger publish_update_event if health status does not change' do
+      subject.health_status = 'Healthy'
+      expect(subject).not_to receive(:publish_update_event)
+      subject.set_health_status('Healthy')
+    end
+  end
+
   describe '.service_instance' do
     it 'returns correct instance' do
       (1..3).each do |i|
@@ -156,6 +184,44 @@ describe Container do
 
       container = described_class.service_instance(grid_service, 2).first
       expect(container.name).to eq("redis-2")
+    end
+  end
+
+  describe 'counts_for_grid_services' do
+    let(:redis) do
+      GridService.create!(grid: grid, name: 'redis', image_name: 'redis:2.8')
+    end
+    let(:nginx) do
+      GridService.create!(grid: grid, name: 'nginx', image_name: 'nginx')
+    end
+
+    it 'returns correct count per service' do
+      (1..3).each do |i|
+        redis.containers.create!(
+          grid: grid,
+          name: "redis-#{i}",
+          instance_number: i,
+          container_type: 'container'
+        )
+        redis.containers.create!(
+          grid: grid,
+          name: "redis-#{i}-volumes",
+          instance_number: i,
+          container_type: 'volume'
+        )
+      end
+      (1..3).each do |i|
+        nginx.containers.create!(
+          grid: grid,
+          name: "nginx-#{i}",
+          instance_number: i,
+          container_type: 'container'
+        )
+      end
+      expect(described_class.counts_for_grid_services(grid.id)).to include(
+        {'_id' => redis.id, 'total' => 3},
+        {'_id' => nginx.id, 'total' => 3}
+      )
     end
   end
 end

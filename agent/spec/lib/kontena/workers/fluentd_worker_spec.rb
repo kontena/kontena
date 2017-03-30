@@ -1,5 +1,3 @@
-require_relative '../../../spec_helper'
-
 describe Kontena::Workers::FluentdWorker do
 
   let(:subject) { described_class.new(false) }
@@ -10,10 +8,10 @@ describe Kontena::Workers::FluentdWorker do
 
   after(:each) { Celluloid.shutdown }
 
-  describe '#on_node_info' do
+  describe '#configure' do
 
     let(:info) do
-      {
+      Node.new(
         'grid' => {
           'logs' => {
             'forwarder' => 'fluentd',
@@ -22,21 +20,27 @@ describe Kontena::Workers::FluentdWorker do
             }
           }
         }
-      }
+      )
     end
+
     it 'creates fluentd logger and starts forwarding' do
-      subject.on_node_info('agent:node_info', info)
+      subject.configure(info)
       expect(subject.wrapped_object.instance_variable_get('@fluentd')).not_to be_nil
       expect(subject.wrapped_object.instance_variable_get('@forwarding')).to be_truthy
     end
 
-    it 'removes fluentd logger and stops forwarding' do
-      subject.on_node_info('agent:node_info', info)
-      info['grid']['logs'] = { 'driver' => 'none'}
-      expect_any_instance_of(Fluent::Logger::FluentLogger).to receive(:close)
-      subject.on_node_info('agent:node_info', info)
-      expect(subject.wrapped_object.instance_variable_get('@fluentd')).to be_nil
-      expect(subject.wrapped_object.instance_variable_get('@forwarding')).to be_falsey
+    context "after de-configuring the fluentd forwarder" do
+      before do
+        subject.configure(info)
+        info.grid['logs'] = { 'driver' => 'none'}
+      end
+
+      it 'removes fluentd logger and stops forwarding' do
+        expect_any_instance_of(Fluent::Logger::FluentLogger).to receive(:close)
+        subject.configure(info)
+        expect(subject.wrapped_object.instance_variable_get('@fluentd')).to be_nil
+        expect(subject.wrapped_object.instance_variable_get('@forwarding')).to be_falsey
+      end
     end
   end
 

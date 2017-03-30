@@ -180,7 +180,8 @@ class AuthProvider
       grant_type: 'authorization_code',
       code: code,
       client_id: self.client_id,
-      client_secret: self.client_secret
+      client_secret: self.client_secret,
+      redirect_uri:  callback_url
     }
 
     if token_method == :post

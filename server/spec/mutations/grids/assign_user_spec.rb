@@ -32,6 +32,16 @@ describe Grids::AssignUser do
       }.to change{ user.grids.size }.by(1)
     end
 
+    it 'publishes update event for user' do
+      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
+      expect(user).to receive(:publish_update_event).once
+      outcome = described_class.new(
+          current_user: current_user,
+          user: user,
+          grid: grid
+      ).run
+    end
+
     it 'returns array of grid users' do
       allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
       outcome = described_class.new(

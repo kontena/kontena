@@ -21,7 +21,10 @@ describe Kontena::ServicePods::Creator do
       'env' => [
         'KONTENA_SERVICE_NAME=redis-cache'
       ],
-      'net' => 'bridge'
+      'net' => 'bridge',
+      'volumes' => [
+        {'name' => 'someVolume', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}}
+      ]
     }
   end
 
@@ -33,6 +36,20 @@ describe Kontena::ServicePods::Creator do
       allow(subject).to receive(:get_container).and_return(nil)
       expect(subject).to receive(:create_container).with(service_pod.data_volume_config)
       subject.ensure_data_container(service_pod)
+    end
+  end
+
+  describe '#ensure_volumes' do
+    it 'creates volume if not found' do
+      expect(Docker::Volume).to receive(:get).with('someVolume').and_raise(Docker::Error::NotFoundError)
+      expect(Docker::Volume).to receive(:create)
+      subject.ensure_volumes(service_pod)
+    end
+
+    it 'does not create volume if found' do
+      expect(Docker::Volume).to receive(:get).with('someVolume').and_return(double())
+      expect(Docker::Volume).not_to receive(:create)
+      subject.ensure_volumes(service_pod)
     end
   end
 

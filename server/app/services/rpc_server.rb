@@ -1,6 +1,6 @@
 require_relative 'rpc/container_handler'
 require_relative 'rpc/node_handler'
-require_relative 'rpc/node_service_handler'
+require_relative 'rpc/node_service_pod_handler'
 
 class RpcServer
   include Celluloid
@@ -9,7 +9,7 @@ class RpcServer
   HANDLERS = {
     'containers' => Rpc::ContainerHandler,
     'nodes' => Rpc::NodeHandler,
-    'node_services' => Rpc::NodeServiceHandler
+    'node_service_pods' => Rpc::NodeServicePodHandler
   }
 
   class Error < StandardError
@@ -39,6 +39,10 @@ class RpcServer
       begin
         result = actor.send(method, *message[3])
         send_message(ws_client, [1, msg_id, nil, result])
+        unless actor.alive?
+          error "actor for handler #{handler} did die, removing it from cache"
+          @handlers[grid_id].delete(handler)
+        end
       rescue Celluloid::DeadActorError
         error "actor for handler #{handler} is dead, removing it from cache"
         @handlers[grid_id].delete(handler)

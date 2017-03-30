@@ -25,7 +25,7 @@ module Kontena
     # Send a debug message
     # @param [String] string
     def debug(string)
-      logger.debug(self.class.name.gsub('Kontena::', '')) { string }
+      logger.debug(self.class.name) { string }
     end
 
     # Send a info message

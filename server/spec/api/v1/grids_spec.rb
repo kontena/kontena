@@ -290,11 +290,89 @@ describe '/v1/grids', celluloid: true do
     end
   end
 
+  describe 'GET /metrics' do
+    let :grid do
+       david.grids.first
+    end
+
+    let :node do
+      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+    end
+
+    before do
+      node.host_node_stats.create!({
+        grid_id: grid.id,
+        memory: {
+          total: 1000,
+          used: 100
+      	},
+      	filesystem: [{
+          total: 1000,
+          used: 10
+        }],
+      	cpu: {
+          num_cores: 2,
+          system: 5.5,
+          user: 10.0
+      	},
+        network: {
+          internal: {
+            interfaces: ["weave", "vethwe123"],
+            rx_bytes: 400,
+            rx_bytes_per_second: 400.5,
+            tx_bytes: 200,
+            tx_bytes_per_second: 200.5,
+          },
+          external: {
+            interfaces: ["docker0"],
+            rx_bytes: 500,
+            rx_bytes_per_second: 500.5,
+            tx_bytes: 510,
+            tx_bytes_per_second: 510.5
+          }
+        }
+      })
+    end
+
+    it 'returns recent stats' do
+      get "/v1/grids/#{grid.to_path}/metrics", nil, request_headers
+
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 1
+      expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
+      expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['network']['internal']).to eq({
+        'interfaces' => ["weave", "vethwe123"],
+        'rx_bytes' => 400.0,
+        'rx_bytes_per_second' => 400.5,
+        'tx_bytes' => 200.0,
+        'tx_bytes_per_second' => 200.5 })
+        expect(json_response['stats'][0]['network']['external']).to eq({
+          'interfaces' => ["docker0"],
+          'rx_bytes' => 500.0,
+          'rx_bytes_per_second' => 500.5,
+          'tx_bytes' => 510.0,
+          'tx_bytes_per_second' => 510.5 })
+    end
+
+    it 'applies date filters' do
+      from = Time.parse("2017-01-01 12:00:00 +00:00").utc
+      to = Time.parse("2017-01-01 12:15:00 +00:00").utc
+      get "/v1/grids/#{grid.to_path}/metrics?from=#{from}&to=#{to}", nil, request_headers
+
+      expect(response.status).to eq(200)
+      expect(json_response['stats'].size).to eq 0
+      expect(Time.parse(json_response['from'])).to eq from
+      expect(Time.parse(json_response['to'])).to eq to
+    end
+  end
+
   describe 'POST /:name/users' do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first
       post "/v1/grids/#{grid.to_path}/users", {email: david.email }.to_json, request_headers
-      expect(response.status).to eq(404)
+      expect(response.status).to eq(403)
     end
 
     it 'requires existing email' do
@@ -336,7 +414,7 @@ describe '/v1/grids', celluloid: true do
     it 'validates that user belongs to grid' do
       grid = emily.grids.first
       delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
-      expect(response.status).to eq(404)
+      expect(response.status).to eq(403)
     end
 
     it 'validates that unassigned user belongs to grid' do

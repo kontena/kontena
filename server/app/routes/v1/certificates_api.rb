@@ -11,14 +11,6 @@ module V1
       validate_access_token
       require_current_user
 
-      ##
-      # @param [String] name
-      # @return [Grid]
-      def load_grid(name)
-        @grid = current_user.accessible_grids.find_by(name: name)
-        halt_request(404, {error: 'Not found'}) unless @grid
-      end
-
       def authorize_domain(data)
         data[:grid] = @grid
         outcome = GridCertificates::AuthorizeDomain.run(data)
@@ -30,7 +22,7 @@ module V1
             'record_type' => @authorization.challenge_opts['record_type'],
             'record_content' => @authorization.challenge_opts['record_content']
           }
-          
+
         else
           response.status = 422
           {error: outcome.errors.message}
@@ -43,7 +35,7 @@ module V1
         if outcome.success?
           @cert_secrets = outcome.result
           response.status = 201
-          
+
           @cert_secrets.collect { |s| s.name}
         else
           response.status = 422
@@ -65,7 +57,7 @@ module V1
 
       # /v1/certificates/:grid/
       r.on ':grid' do |grid|
-        
+
         load_grid(grid)
 
         r.post do
@@ -86,7 +78,7 @@ module V1
           end
         end
       end
-      
+
     end
   end
 end

@@ -165,6 +165,12 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
     end
 
     context 'hooks' do
+      context 'validates hook name' do
+        it 'must be valid hook' do
+          result = subject.validate_options('hooks' => { 'pre-build' => {} })
+          expect(result.errors.key?('hooks')).to be_truthy
+        end
+      end
       context 'validates pre_build' do
         it 'must be array' do
           result = subject.validate_options('hooks' => { 'pre_build' => {} })
