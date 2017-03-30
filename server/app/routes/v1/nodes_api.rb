@@ -51,8 +51,9 @@ module V1
           # GET /v1/nodes/:grid/:node/stats
           r.on 'stats' do
             sort = r.params["sort"] ? r.params["sort"] : "cpu"
+            limit = r.params["limit"] ? r.params["limit"].to_i : nil
 
-            @stats = Metrics.get_container_stats(@node.containers, sort.to_sym)
+            @stats = Metrics.get_container_stats(@node.containers, sort.to_sym, limit)
             render('stats/stats')
           end
 
@@ -60,7 +61,7 @@ module V1
           r.on 'metrics' do
             @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
             @from = (r.params["from"] ? Time.parse(r.params["from"]) : (@to - 1.hour)).utc
-            
+
             @metrics = HostNodeStat.get_aggregate_stats_for_node(@node.id, @from, @to)
             render('stats/metrics')
           end
