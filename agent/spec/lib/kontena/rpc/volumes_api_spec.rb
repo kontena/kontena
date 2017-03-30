@@ -1,11 +1,5 @@
 
-describe Kontena::Rpc::VolumesApi do
-  let(:executor) do
-    double(:executor)
-  end
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+describe Kontena::Rpc::VolumesApi, :celluloid => true do
 
   describe '#notify_update' do
     it 'publishes volume update notification' do
