@@ -6,6 +6,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::WaitHelper
 
@@ -15,25 +16,24 @@ module Kontena::Workers
     finalizer :finalize
 
     def initialize(autostart = true)
+      @node = nil
       @workers = {}
-      subscribe('agent:node_info', :on_node_info)
-      subscribe('service_pod:update', :on_update_notify)
+
       async.start if autostart
     end
 
     def start
+      observe(Actor[:node_info_worker]) do |node|
+        @node = node
+      end
+
       wait_until!("have node info", interval: 0.1) { self.node }
       populate_workers_from_docker
-      loop do
-        populate_workers_from_master
-        sleep 30
-      end
-    end
 
-    # @param [String] topic
-    # @param [Node] node
-    def on_node_info(topic, node)
-      @node = node
+      subscribe('service_pod:update', :on_update_notify)
+      every(30) do
+        populate_workers_from_master
+      end
     end
 
     def on_update_notify(_, _)

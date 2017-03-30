@@ -1,5 +1,3 @@
-require_relative '../../../spec_helper'
-
 describe Kontena::Workers::ServicePodManager do
   include RpcClientMocks
 
@@ -18,14 +16,6 @@ describe Kontena::Workers::ServicePodManager do
     allow(subject.wrapped_object).to receive(:node).and_return(node)
   end
   after(:each) { Celluloid.shutdown }
-
-  describe '#initialize' do
-    it 'starts to listen service_pod:update events' do
-      expect(subject.wrapped_object).to receive(:on_update_notify).once
-      Celluloid::Notifications.publish('service_pod:update', 'foo')
-      sleep 0.1
-    end
-  end
 
   describe '#populate_workers_from_master' do
     before(:each) do

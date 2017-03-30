@@ -9,9 +9,9 @@ module Kontena
     def initialize(opts)
       info "initializing agent (version #{VERSION})"
       @opts = opts
-      @queue = Queue.new
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
       @supervisor = Celluloid::Supervision::Container.run!
+      self.supervise_state
       self.supervise_launchers
       self.supervise_network_adapter
       self.supervise_lb
@@ -66,6 +66,13 @@ module Kontena
       end
     end
 
+    def supervise_state
+      @supervisor.supervise(
+        type: Kontena::Workers::NodeInfoWorker,
+        as: :node_info_worker
+      )
+    end
+
     def supervise_launchers
       @supervisor.supervise(
         type: Kontena::Launchers::IpamPlugin,
@@ -96,10 +103,6 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Workers::LogWorker,
         as: :log_worker
-      )
-      @supervisor.supervise(
-        type: Kontena::Workers::NodeInfoWorker,
-        as: :node_info_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerInfoWorker,
