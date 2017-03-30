@@ -44,12 +44,12 @@ module Kontena
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name_for_humans}"
             Celluloid::Notifications.publish('lb:ensure_instance_config', service_container)
-            emit_service_pod_event("service:create_instance", "service instance #{service_pod.name_for_humans} is up-to-date")
+            log_service_pod_event("service:create_instance", "service instance #{service_pod.name_for_humans} is up-to-date")
             return service_container
           else
             info "removing previous version of service: #{service_pod.name_for_humans}"
             self.cleanup_container(service_container)
-            emit_service_pod_event("service:create_instance", "removed previous version of service #{service_pod.name_for_humans} instance")
+            log_service_pod_event("service:create_instance", "removed previous version of service #{service_pod.name_for_humans} instance")
           end
         end
         service_config = config_container(service_pod)
@@ -57,7 +57,7 @@ module Kontena
         debug "creating container: #{service_pod.name}"
         service_container = create_container(service_config)
         debug "container created: #{service_pod.name}"
-        emit_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance created")
+        log_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance created")
         if service_container.load_balanced? && service_container.instance_number == 1
           Celluloid::Notifications.publish('lb:ensure_config', service_container)
         elsif !service_container.load_balanced? && service_container.instance_number == 1
@@ -66,17 +66,17 @@ module Kontena
 
         service_container.start
         info "service started: #{service_pod.name_for_humans}"
-        emit_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance started")
+        log_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance started")
 
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
         if service_pod.wait_for_port
           info "waiting for port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} to respond"
-          emit_service_pod_event("service:create_instance", "waiting for #{service_pod.name_for_humans} port #{service_pod.wait_for_port} to respond")
+          log_service_pod_event("service:create_instance", "waiting for #{service_pod.name_for_humans} port #{service_pod.wait_for_port} to respond")
           wait_for_port(service_container, service_pod.wait_for_port)
           info "port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} is responding"
-          emit_service_pod_event("service:create_instance", "#{service_pod.name_for_humans} port #{service_pod.wait_for_port} is responding")
+          log_service_pod_event("service:create_instance", "#{service_pod.name_for_humans} port #{service_pod.wait_for_port} is responding")
         end
         self.run_hooks(service_container, 'post_start')
 
@@ -102,7 +102,7 @@ module Kontena
         end
         true
       rescue => exc
-        emit_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
+        log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
         error exc.message
         false
       end
@@ -124,14 +124,9 @@ module Kontena
 
       # @param [String] reason
       # @param [String] data
-      def emit_service_pod_event(reason, data, severity = Logger::INFO)
-        Celluloid::Notifications.publish('service_pod:event', {
-          service_id: service_pod.service_id,
-          instance_number: service_pod.instance_number,
-          severity: severity,
-          reason: reason,
-          data: data
-        })
+      # @param [Integer] severity
+      def log_service_pod_event(reason, data, severity = Logger::INFO)
+        super(service_pod.service_id, service_pod.instance_number, reason, data, severity)
       end
 
       ##
@@ -142,9 +137,9 @@ module Kontena
         unless data_container
           info "creating data volumes for service: #{service_pod.name_for_humans}"
           data_container = create_container(service_pod.data_volume_config)
-          emit_service_pod_event("service:create_instance", "created data volume container for #{service_pod.name_for_humans}")
+          log_service_pod_event("service:create_instance", "created data volume container for #{service_pod.name_for_humans}")
         else
-          emit_service_pod_event("service:create_instance", "data volume container already exists for #{service_pod.name_for_humans}")
+          log_service_pod_event("service:create_instance", "data volume container already exists for #{service_pod.name_for_humans}")
         end
 
         data_container
@@ -190,9 +185,9 @@ module Kontena
       # @param [String] name
       # @param [Boolean] emit_event
       def ensure_image(name, emit_event = true)
-        emit_service_pod_event("service:create_instance", "pulling image #{name} for #{service_pod.name_for_humans}") if emit_event
+        log_service_pod_event("service:create_instance", "pulling image #{name} for #{service_pod.name_for_humans}") if emit_event
         Celluloid::Actor[:image_pull_worker].ensure_image(name, service_pod.deploy_rev, image_credentials)
-        emit_service_pod_event("service:create_instance", "pulled image #{name} for #{service_pod.name_for_humans}") if emit_event
+        log_service_pod_event("service:create_instance", "pulled image #{name} for #{service_pod.name_for_humans}") if emit_event
       end
 
       # @param [Docker::Container] service_container

@@ -23,11 +23,20 @@ module Kontena
         if service_container.running?
           info "stopping service: #{service_container.name_for_humans}"
 
-          emit_service_pod_event("service:stop_instance", "stopping service instance #{service_container.name_for_humans}")
+          log_service_pod_event(
+            self.service_id, self.instance_number,
+            "service:stop_instance", "stopping service instance #{service_container.name_for_humans}"
+          )
           service_container.stop('timeout' => 10)
-          emit_service_pod_event("service:stop_instance", "service instance #{service_container.name_for_humans} stopped successfully")
+          log_service_pod_event(
+            self.service_id, self.instance_number,
+            "service:stop_instance", "service instance #{service_container.name_for_humans} stopped successfully"
+          )
         else
-          emit_service_pod_event("service:stop_instance", "service instance #{service_container.name_for_humans} is not running")
+          log_service_pod_event(
+            self.service_id, self.instance_number,
+            "service:stop_instance", "service instance #{service_container.name_for_humans} is not running"
+          )
         end
 
         Celluloid::Notifications.publish('service_pod:stop', service_container)

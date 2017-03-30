@@ -22,9 +22,15 @@ module Kontena
         service_container = get_container(self.service_id, self.instance_number)
         unless service_container.running?
           info "starting service: #{service_container.name_for_humans}"
-          emit_service_pod_event("service:start_instance", "starting service instance #{service_container.name_for_humans}")
+          log_service_pod_event(
+            self.service_id, self.instance_number,
+            "service:start_instance", "starting service instance #{service_container.name_for_humans}"
+          )
           service_container.restart('timeout' => 10)
-          emit_service_pod_event("service:start_instance", "service instance #{service_container.name_for_humans} started successfully")
+          log_service_pod_event(
+            self.service_id, self.instance_number,
+            "service:start_instance", "service instance #{service_container.name_for_humans} started successfully"
+          )
         end
 
         Celluloid::Notifications.publish('service_pod:start', service_container)
