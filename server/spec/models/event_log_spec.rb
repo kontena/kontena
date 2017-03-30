@@ -6,6 +6,7 @@ describe EventLog do
   it { should belong_to(:grid) }
   it { should belong_to(:stack) }
   it { should belong_to(:grid_service) }
+  it { should belong_to(:volume) }
   it { should belong_to(:host_node) }
 
   it { should have_index_for(grid_id: 1) }
