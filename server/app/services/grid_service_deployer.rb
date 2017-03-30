@@ -113,7 +113,6 @@ class GridServiceDeployer
       host_node: node,
     )
 
-    info "deploying service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
     Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(grid_service_instance_deploy)
       instance_deployer.deploy(deploy_rev)
