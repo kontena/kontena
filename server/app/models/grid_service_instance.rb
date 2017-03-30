@@ -9,8 +9,8 @@ class GridServiceInstance
   field :deploy_rev, type: String
 
   # updated by agent
-  field :state, type: String, default: 'initialized'.freeze
   field :rev, type: String
+  field :state, type: String, default: 'initialized'.freeze
   field :error, type: String
 
   validates_uniqueness_of :instance_number, scope: [:grid_service_id]
