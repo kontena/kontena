@@ -72,7 +72,7 @@ module V1
           r.route 'grid_stats'
         end
 
-        r.on ':name/metrics'
+        r.on ':name/metrics' do
           load_grid(name)
           r.route 'grid_metrics'
         end
