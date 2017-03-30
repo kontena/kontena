@@ -128,30 +128,10 @@ class GridServiceInstanceDeployer
   end
 
   # @param [HostNode] node
-<<<<<<< be2fd644ac45f7068f15e026bc89e30e01e57ae9
   # @raise [RpcClient::TimeoutError]
   def notify_node(node, timeout: 2.0)
     rpc_client = RpcClient.new(node.node_id, timeout)
     rpc_client.request('/service_pods/notify_update', [])
-=======
-  def notify_node(node)
-    rpc_client = RpcClient.new(node.node_id, 2)
-    rpc_client.notify('/service_pods/notify_update', [])
-  end
-
-  # @param [String] msg
-  # @param [HostNode] node
-  # @param [Integer] severity
-  def log_service_event(msg, node, severity = EventLog::INFO)
-    EventLog.create(
-      host_node_id: node.id,
-      grid_id: @grid_service.grid_id,
-      grid_service_id: @grid_service.id,
-      reason: 'service:instance_deploy',
-      severity: severity,
-      msg: msg
-    )
->>>>>>> initial event log implementation
   end
 
   # @raise [RpcClient::Error]
