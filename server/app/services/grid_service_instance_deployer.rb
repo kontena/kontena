@@ -67,7 +67,12 @@ class GridServiceInstanceDeployer
     raise "Host node is missing" unless node
     raise "Host node is disconnected" unless node.connected?
 
-    service_instance.set(host_node_id: node.id, deploy_rev: deploy_rev, desired_state: desired_state)
+    service_instance.set(
+      host_node_id: node.id,
+      deploy_rev: deploy_rev,
+      desired_state: desired_state,
+      rev: nil, # reset
+    )
 
     notify_node(node)
 
