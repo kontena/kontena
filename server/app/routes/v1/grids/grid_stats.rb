@@ -4,8 +4,9 @@ V1::GridsApi.route('grid_stats') do |r|
   r.get do
     r.is do
       sort = r.params["sort"] ? r.params["sort"] : "cpu"
+      limit = r.params["limit"] ? r.params["limit"].to_i : nil
 
-      @stats = Metrics.get_container_stats(@grid.containers, sort.to_sym)
+      @stats = Metrics.get_container_stats(@grid.containers, sort.to_sym, limit)
       render('stats/stats')
     end
 

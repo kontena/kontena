@@ -87,7 +87,12 @@ describe '/v1/nodes', celluloid: true do
         grid_id: grid.id,
         memory: {
           total: 1000,
-          used: 100
+          used: 100,
+          free: 900,
+          active: 400,
+          inactive: 600,
+          cached: 40,
+          buffers: 60
       	},
       	filesystem: [{
           total: 1000,
@@ -122,8 +127,16 @@ describe '/v1/nodes', celluloid: true do
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 1
       expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
-      expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
       expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['memory']).to eq({
+        'used' => 100.0,
+        'total' => 1000.0,
+        'free' => 900.0,
+        'active' => 400.0,
+        'inactive' => 600.0,
+        'cached' => 40.0,
+        'buffers' => 60.0
+      })
       expect(json_response['stats'][0]['network']['internal']).to eq({
         'interfaces' => ["weave", "vethwe123"],
         'rx_bytes' => 400.0,
