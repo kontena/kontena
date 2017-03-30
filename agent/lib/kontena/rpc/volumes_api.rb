@@ -1,5 +1,3 @@
-require_relative '../service_pods/restarter'
-
 module Kontena
   module Rpc
     class VolumesApi

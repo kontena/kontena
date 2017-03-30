@@ -32,7 +32,7 @@ module Kontena
           service_pod.volumes_from << data_container.id
         end
 
-        wait!(timeout: 30, interval: 1, message: "waiting for volumes to be created") {
+        wait_until!("volumes exist", timeout: 30, interval: 1) {
           volumes_exist?(service_pod)
         }
 
