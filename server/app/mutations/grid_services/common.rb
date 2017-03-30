@@ -261,6 +261,7 @@ module GridServices
               integer :initial_delay, default: 10
             end
           end
+          string :stop_grace_period, matches: Duration::PATTERN
         end
       end
     end

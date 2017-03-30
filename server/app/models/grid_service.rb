@@ -37,6 +37,7 @@ class GridService
   field :revision, type: Fixnum, default: 1
   field :stack_revision, type: Fixnum
   field :strategy, type: String, default: 'ha'
+  field :stop_grace_period, type: Fixnum, default: 10
 
   belongs_to :grid
   belongs_to :image

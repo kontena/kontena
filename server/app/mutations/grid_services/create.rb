@@ -3,6 +3,7 @@ require_relative 'common'
 module GridServices
   class Create < Mutations::Command
     include Common
+    include Duration
 
     common_validations
 
@@ -42,6 +43,7 @@ module GridServices
       attributes = self.inputs.clone
       attributes[:image_name] = attributes.delete(:image)
       attributes[:container_count] = attributes.delete(:instances) if attributes[:instances]
+      attributes[:stop_grace_period] = parse_duration(attributes.delete(:stop_grace_period)) if attributes[:stop_grace_period]
 
       attributes.delete(:links)
       if self.links

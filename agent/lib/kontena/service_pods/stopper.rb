@@ -22,7 +22,7 @@ module Kontena
         service_container = get_container(self.service_id, self.instance_number)
         if service_container.running?
           info "stopping service: #{service_container.name_for_humans}"
-
+          service_container.stop!('timeout' => service_container.stop_grace_period)
           log_service_pod_event(
             self.service_id, self.instance_number,
             "service:stop_instance", "stopping service instance #{service_container.name_for_humans}"

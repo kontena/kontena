@@ -4,6 +4,7 @@ module GridServices
   class Update < Mutations::Command
     include Common
     include Logging
+    include Duration
 
     common_validations
 
@@ -80,6 +81,7 @@ module GridServices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
+      attributes[:stop_grace_period] = parse_duration(self.stop_grace_period) if self.stop_grace_period
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(

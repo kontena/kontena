@@ -41,6 +41,7 @@ module Kontena::Cli::Services
     option "--health-check-initial-delay", "DELAY", "Initial delay for health check"
     option "--health-check-port", "PORT", "Port for health check"
     option "--health-check-protocol", "PROTOCOL", "Protocol of health check"
+    option "--stop-timeout", "STOP_TIMEOUT", "Timeout (duration) to stop a container"
 
     def execute
       require_api_url
@@ -87,6 +88,7 @@ module Kontena::Cli::Services
       health_check = parse_health_check
       data[:health_check] = health_check unless health_check.empty?
       data[:pid] = pid if pid
+      data[:stop_grace_period] = stop_timeout if stop_timeout
       data
     end
   end

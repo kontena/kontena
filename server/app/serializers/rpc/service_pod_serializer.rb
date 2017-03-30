@@ -44,6 +44,7 @@ module Rpc
         log_opts: service.log_opts,
         pid: service.pid,
         wait_for_port: service.deploy_opts.wait_for_port,
+        stop_grace_period: service.stop_grace_period,
         env: build_env,
         secrets: build_secrets,
         labels: build_labels,
