@@ -7,29 +7,26 @@ module Kontena::Workers::Volumes
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::WaitHelper
+    include Kontena::Observer
 
     attr_reader :node
 
     def initialize(autostart = true)
       @workers = {}
-      subscribe('agent:node_info', :on_node_info)
       subscribe('volume:update', :on_update_notify)
       async.start if autostart
     end
 
     def start
-      wait!(interval: 0.5, message: 'waiting for node info') { self.node }
+      observe(Actor[:node_info_worker]) do |node|
+        @node = node
+      end
+      wait_until!('waiting for node info', interval: 0.5) { self.node }
       populate_volumes_from_docker
       loop do
         populate_volumes_from_master
         sleep 30
       end
-    end
-
-    # @param [String] topic
-    # @param [Node] node
-    def on_node_info(topic, node)
-      @node = node
     end
 
     def on_update_notify(_, _)
