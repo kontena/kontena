@@ -8,9 +8,9 @@ describe Kontena::Observable do
         fail
       end
 
-      def spam_updates(enum)
+      def spam_updates(enum, interval: false)
         enum.each do |value|
-          sleep 0.001
+          sleep interval if interval
           update_observable value
         end
       end
@@ -50,7 +50,6 @@ describe Kontena::Observable do
         @ordered
       end
 
-
       def crash
         fail
       end
@@ -75,6 +74,17 @@ describe Kontena::Observable do
     expect(subject.observers).to be_empty
   end
 
+  it "delivers updates in the right order", :celluloid => true do
+    observer = observer_class.new(subject)
+
+    update_count = 150
+
+    subject.spam_updates(1..update_count, interval: false)
+
+    expect(observer.value).to eq update_count
+    expect(observer.ordered?).to be_truthy
+  end
+
   it "handles concurrent observers", :celluloid => true do
     observer_count = 10
     update_count = 10
@@ -89,7 +99,7 @@ describe Kontena::Observable do
     end
 
     # run updates sync while the observers are starting
-    subject.spam_updates(1..update_count)
+    subject.spam_updates(1..update_count, interval: 0.001)
 
     # wait...
     subject.ping
