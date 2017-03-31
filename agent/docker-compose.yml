@@ -8,5 +8,3 @@ agent:
     - KONTENA_PEER_INTERFACE=eth1
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
-  labels:
-    - io.kontena.container.skip_logs=1
