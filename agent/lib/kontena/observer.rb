@@ -6,6 +6,7 @@ module Kontena
     # Observer is observing some Observables, and tracking their values.
     # This object is passed to each Observer, which then passes it back to us for updates.
     class Observe
+      # @param class_name [String] used for logging
       # @param observables [Array<Observable>] Observable actors
       # @param block [Block] Observing block
       def initialize(class_name, observables, block)
