@@ -38,7 +38,12 @@ describe Kontena::Observable do
       def start
         @state = observe(@observable) do |value|
           @first ||= value
-          @ordered = false if @value && @value >= value
+          if @value && @value > value
+            warn "unordered value=#{value} after #{@value}"
+            @ordered = false
+          else
+            debug "observed #{@value} -> #{value}"
+          end
           @value = value
         end
       end
@@ -109,6 +114,9 @@ describe Kontena::Observable do
 
     # this is potentially racy, but it's important, or this spec doesn't test what it should
     expect(observers.map{|obs| obs.first}.max).to be > 1
+
+    # also expect this...
+    expect(observers.map{|obs| obs.ordered?}).to eq [true] * observer_count
   end
 
   context "For chained observables" do
