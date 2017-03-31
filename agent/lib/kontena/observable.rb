@@ -61,12 +61,14 @@ module Kontena
     # Update @value to each Observer::Observe
     def notify_observers
       observers.each do |observe, observer|
-        begin
+        if observer.alive?
           debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
           observer.async.update_observe(observe, Celluloid.current_actor, @observable_value)
-        rescue Celluloid::DeadActorError => error
+        else
+          debug "observer died: #{observe}"
+
           observers.delete(observe)
         end
       end
