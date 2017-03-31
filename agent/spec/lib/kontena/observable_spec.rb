@@ -63,6 +63,10 @@ describe Kontena::Observable do
             update_observable "chained: " + value
           end
         end
+
+        def ping
+
+        end
       end
     end
 
@@ -71,6 +75,8 @@ describe Kontena::Observable do
       observer = observer_class.new(chaining)
 
       subject.update_observable "test"
+
+      chaining.ping # wait for intermediate actor to handle update
 
       expect(observer).to be_ready
       expect(observer.values).to eq ["chained: test"]
