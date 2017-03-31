@@ -63,6 +63,15 @@ RSpec.configure do |config|
     end
   end
 
+  config.around :each, :log_celluloid_actor_crashes => false do |ex|
+    Celluloid.log_actor_crashes = false
+    begin
+      ex.run
+    ensure
+      Celluloid.log_actor_crashes = true
+    end
+  end
+
 
 # The settings below are suggested to provide a good initial experience
 # with RSpec, but feel free to customize to your heart's content.

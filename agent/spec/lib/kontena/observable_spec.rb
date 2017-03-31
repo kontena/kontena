@@ -37,11 +37,11 @@ describe Kontena::Observable do
 
   let(:object) { double(:test) }
 
-  it "rejects a nil update", :celluloid => true do
+  it "rejects a nil update", :celluloid => true, :log_celluloid_actor_crashes => false do
     expect{subject.update_observable nil}.to raise_error(ArgumentError)
   end
 
-  it "stops notifying any crashed observers", :celluloid => true do
+  it "stops notifying any crashed observers", :celluloid => true, :log_celluloid_actor_crashes => false do
     observer = observer_class.new(subject)
     expect(subject.observers).to_not be_empty
 
