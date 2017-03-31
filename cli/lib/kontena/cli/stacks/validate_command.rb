@@ -20,8 +20,8 @@ module Kontena::Cli::Stacks
     def execute
       reader = reader_from_yaml(filename, name: name, values: values)
       outcome = reader.execute
-      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
-      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
+      hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
+      abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
 
       dump_variables(reader) if values_to
 
