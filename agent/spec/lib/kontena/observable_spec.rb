@@ -7,6 +7,13 @@ describe Kontena::Observable do
       def crash
         fail
       end
+
+      def spam_updates(enum)
+        enum.each do |value|
+          sleep 0.001
+          update_observable value
+        end
+      end
     end
   end
 
@@ -49,6 +56,19 @@ describe Kontena::Observable do
 
     subject.update_observable(object)
     expect(subject.observers).to be_empty
+  end
+
+  it "handles concurrent observers", :celluloid => true do
+    observer_count = 10
+    update_count = 100
+
+    subject.async.spam_updates(1..update_count)
+
+    observers = observer_count.times.map {
+      observer_class.new(subject)
+    }
+
+    expect(observers.map{|obs| obs.values[0]}).to eq [update_count] * observer_count
   end
 
   context "For chained observables" do
