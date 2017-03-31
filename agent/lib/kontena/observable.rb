@@ -51,7 +51,7 @@ module Kontena
     # @param observe [Observer::Observe]
     # @return [Object, nil] possible existing value
     def add_observer(observer, observe)
-      debug "observer: #{observe} <- #{@value.inspect[0..64] + '...'}"
+      debug "observer: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
       observers[observe] = observer
 
@@ -62,7 +62,7 @@ module Kontena
     def notify_observers
       observers.each do |observe, observer|
         begin
-          debug "notify: #{observe} <- #{@value.inspect[0..64] + '...'}"
+          debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
           observer.async.update_observe(observe, Celluloid.current_actor, @observable_value)
