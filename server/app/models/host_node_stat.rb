@@ -221,7 +221,7 @@ class HostNodeStat
         created_at: { '$first': '$created_at' },
 
         cpu_num_cores: { '$sum': '$cpu_num_cores' },
-        cpu_percent_used: { '$avg': '$cpu_percent_used' },
+        cpu_percent_used: { '$sum': '$cpu_percent_used' },
 
         memory_used: { '$sum': '$memory_used' },
         memory_total: { '$sum': '$memory_total' },
