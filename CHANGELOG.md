@@ -6,7 +6,7 @@
 
 - Bump ipam to 0.2.2 (#2030)
 
-## [1.1.5](https://github.com/kontena/kontena/tree/v1.1)
+## [1.1.5](https://github.com/kontena/kontena/releases/tag/v1.1.5) (2017-03-17)
 
 **Master & Agents:**
 
