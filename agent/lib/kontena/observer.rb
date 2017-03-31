@@ -76,6 +76,10 @@ module Kontena
     # Yield happens once each Observable is ready, and whenever they are updated.
     # Yields to block happens from different async tasks.
     #
+    # The block must be idempotent: it is not guaranteed to receive every Observable update,
+    # and it may receive some Observable updates multiple times. It is only guaranteed to
+    # receive the Observable updates in a strict order.
+    #
     # Setup happens sync, and will raise on invalid observables.
     # Crashes this Actor if any of the observed Actors crashes.
     #

@@ -17,9 +17,12 @@ module Kontena
       @observers ||= {}
     end
 
-    # The Observable has a value.
+    # The Observable has a value. Propagate it to any observing Actors.
     #
     # This will notify any Observers, causing them to yield if ready.
+    #
+    # The value must be safe for access by multiple threads, even after this update,
+    # and even after any later updates. Ideally, it should be immutable (frozen).
     #
     # @param value [Object]
     # @raise [ArgumentError] Update with nil value
