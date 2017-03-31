@@ -10,7 +10,7 @@ end
 require_relative '../lib/kontena-agent'
 require 'webmock/rspec'
 
-Kontena::Logging.initialize_logger((ENV['LOG_TARGET'] || './log/test.log'), ENV['LOG_LEVEL'])
+Kontena::Logging.initialize_logger((ENV['LOG_TARGET'] || './log/test.log'), ENV['LOG_LEVEL'].to_i)
 
 require_relative 'support/fiber_tracer' if ENV['TRACE_FIBERS']
 
