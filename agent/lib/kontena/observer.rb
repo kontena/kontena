@@ -8,10 +8,17 @@ module Kontena
     class Observe
       # @param observables [Array<Observable>] Observable actors
       # @param block [Block] Observing block
-      def initialize(observables, block)
+      def initialize(class_name, observables, block)
+        @class_name = class_name
         @observables = observables
         @block = block
         @values = { }
+      end
+
+      # Called by the Observer actor for logging
+      # Must be threadsafe and local
+      def to_s
+        "Observer<#{@class_name}@#{object_id}>"
       end
 
       # Set value for observable
@@ -77,7 +84,7 @@ module Kontena
     # @yield [*values] all Observables are ready
     def observe(*observables, &block)
       # unique handle to identify this observe loop
-      observe = Observe.new(observables, block)
+      observe = Observe.new(self.class.name, observables, block)
 
       # sync setup of each observable
       observables.each do |observable|
