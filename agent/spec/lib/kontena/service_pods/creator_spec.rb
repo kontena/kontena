@@ -39,20 +39,6 @@ describe Kontena::ServicePods::Creator do
     end
   end
 
-  describe '#ensure_volumes' do
-    it 'creates volume if not found' do
-      expect(Docker::Volume).to receive(:get).with('someVolume').and_raise(Docker::Error::NotFoundError)
-      expect(Docker::Volume).to receive(:create)
-      subject.ensure_volumes(service_pod)
-    end
-
-    it 'does not create volume if found' do
-      expect(Docker::Volume).to receive(:get).with('someVolume').and_return(double())
-      expect(Docker::Volume).not_to receive(:create)
-      subject.ensure_volumes(service_pod)
-    end
-  end
-
   describe '#get_container' do
     it 'gets container from docker' do
       expect(Docker::Container).to receive(:all).and_return([])

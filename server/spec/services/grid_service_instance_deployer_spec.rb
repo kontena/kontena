@@ -88,4 +88,19 @@ describe GridServiceInstanceDeployer do
       expect(subject.wait_for_service_state(instance, 'running', rev)).to be_truthy
     end
   end
+
+  describe '#ensure_volume_instance' do
+    let(:volume) do
+      grid.volumes.create!(name: 'foo', scope: 'instance', driver: 'local')
+    end
+
+    it 'schedules volume instances' do
+      grid_service.service_volumes << ServiceVolume.new(volume: volume, path: '/data')
+      grid_service.service_volumes << ServiceVolume.new(bind_mount: '/tmp', path: '/data')
+      volume_scheduler = double
+      expect(VolumeInstanceDeployer).to receive(:new).and_return(volume_scheduler)
+      expect(volume_scheduler).to receive(:deploy).with(node, grid_service.service_volumes[0], 2)
+      subject.ensure_volume_instance(node, 2)
+    end
+  end
 end
