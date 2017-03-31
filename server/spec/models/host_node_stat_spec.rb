@@ -434,7 +434,7 @@ describe HostNodeStat do
         # Records #2, #4 and #5.
         expect(results[0]["cpu"]).to eq({
           "num_cores" => 3.0,     # avg(1,1) + 2
-          "percent_used" => 0.25, #avg( avg(.1, .7) + .1 )
+          "percent_used" => 0.5, # avg(.1, .7) + .1
         })
         expect(results[0]["memory"]).to eq({
           "used" => 800.0,      # avg(500, 100) + 500
