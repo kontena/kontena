@@ -14,6 +14,10 @@ describe Kontena::Observable do
           update_observable value
         end
       end
+
+      def ping
+
+      end
     end
   end
 
@@ -22,17 +26,30 @@ describe Kontena::Observable do
       include Celluloid
       include Kontena::Observer
 
-      attr_reader :state, :values
+      attr_reader :state, :value, :first
 
-      def initialize(*observables)
-        @state = observe(*observables) do |*values|
-          @values = values
+      def initialize(observable, start: true)
+        @observable = observable
+        @first = nil
+        @ordered = true
+        self.start if start
+      end
+
+      def start
+        @state = observe(@observable) do |value|
+          @first ||= value
+          @ordered = false if @value && @value >= value
+          @value = value
         end
       end
 
       def ready?
-        !@values.nil?
+        !@value.nil?
       end
+      def ordered?
+        @ordered
+      end
+
 
       def crash
         fail
@@ -60,15 +77,28 @@ describe Kontena::Observable do
 
   it "handles concurrent observers", :celluloid => true do
     observer_count = 10
-    update_count = 100
+    update_count = 10
 
-    subject.async.spam_updates(1..update_count)
-
+    # setup
     observers = observer_count.times.map {
-      observer_class.new(subject)
+      observer_class.new(subject, start: false)
     }
 
-    expect(observers.map{|obs| obs.values[0]}).to eq [update_count] * observer_count
+    observers.each do |obs|
+      obs.async.start
+    end
+
+    # run updates sync while the observers are starting
+    subject.spam_updates(1..update_count)
+
+    # wait...
+    subject.ping
+
+    # all observers got the final value
+    expect(observers.map{|obs| obs.value}).to eq [update_count] * observer_count
+
+    # this is potentially racy, but it's important, or this spec doesn't test what it should
+    expect(observers.map{|obs| obs.first}.max).to be > 1
   end
 
   context "For chained observables" do
@@ -99,7 +129,7 @@ describe Kontena::Observable do
       chaining.ping # wait for intermediate actor to handle update
 
       expect(observer).to be_ready
-      expect(observer.values).to eq ["chained: test"]
+      expect(observer.value).to eq "chained: test"
     end
   end
 end
