@@ -140,6 +140,10 @@ module Kontena
         type: Kontena::Workers::ServicePodManager,
         as: :service_pod_manager
       )
+      @supervisor.supervise(
+        type: Kontena::Workers::Volumes::VolumeManager,
+        as: :volume_manager
+      )
     end
 
     def supervise_lb

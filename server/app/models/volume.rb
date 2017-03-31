@@ -10,6 +10,8 @@ class Volume
 
   belongs_to :grid
 
+  has_many :volume_instances, dependent: :destroy
+
   index({ grid_id: 1 })
   index({ name: 1 })
 
