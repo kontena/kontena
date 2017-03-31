@@ -13,13 +13,13 @@ module Kontena
       end
 
       def wait_weave_running?
-        wait!(timeout: 300, message: 'waiting for weave running') {
+        wait_until!("weave running", timeout: 300) {
           network_adapter.running?
         }
       end
 
       def wait_network_ready?
-        wait!(timeout: 300, message: 'waiting for all network components running') {
+        wait_until!("network ready", timeout: 300) {
           network_adapter.network_ready?
         }
       end

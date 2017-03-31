@@ -98,7 +98,7 @@ describe Kontena::NetworkAdapters::IpamClient do
 
     it 'handles error' do
       expect(connection).to receive(:post)
-        .and_raise(Excon::Errors::HTTPStatusError.new('error'))
+        .and_raise(Excon::Errors::HTTPStatusError.new('error', double(:request), double(:response, :status => 400)))
       expect(subject).to receive(:handle_error_response)
       subject.release_address('kontena', '10.81.128.100')
     end

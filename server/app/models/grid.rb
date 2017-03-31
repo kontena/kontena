@@ -1,9 +1,11 @@
 require 'ipaddr'
+require_relative 'event_stream'
 
 class Grid
   include Mongoid::Document
   include Mongoid::Timestamps
   include Authority::Abilities
+  include EventStream
 
   SUBNET = '10.81.0.0/16'
   SUPERNET = '10.80.0.0/12'
@@ -29,7 +31,9 @@ class Grid
   has_many :stacks, dependent: :destroy
   has_many :grid_domain_authorizations, dependent: :delete
   has_many :networks, dependent: :delete
+  has_many :volumes, dependent: :destroy
   has_and_belongs_to_many :users
+  embeds_one :grid_logs_opts, class_name: 'GridLogsOpts'
 
   index({ name: 1 }, { unique: true })
   index({ token: 1 }, { unique: true })

@@ -43,4 +43,5 @@ describe Stack do
       expect(subject.state).to eq(:running)
     end
   end
+
 end

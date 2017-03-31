@@ -27,10 +27,26 @@ describe Stacks::Create do
         version: '0.1.0',
         registry: 'file://',
         source: '...',
-          variables: {foo: 'bar'},
+        variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
       expect(outcome.result.stack_revisions.count).to eq(1)
+    end
+
+    it 'creates stack revision with volumes' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+        volumes: [{name: 'vol1', scope: 'grid', external: false, driver: 'local'}]
+      ).run
+      expect(outcome.result.stack_revisions.count).to eq(1)
+      expect(outcome.result.latest_rev.volumes.count).to eq(1)
     end
 
     it 'creates stack services' do
@@ -255,6 +271,102 @@ describe Stacks::Create do
         ).run
         expect(outcome.success?).to be(false)
       }.to change{ grid.stacks.count }.by(0)
+    end
+
+    context 'volumes' do
+      it 'creates volumes' do
+        grid
+        expect {
+          outcome = described_class.new(
+            grid: grid,
+            name: 'stack',
+            stack: 'foo/bar',
+            version: '0.1.0',
+            registry: 'file://',
+            source: '...',
+            variables: {foo: 'bar'},
+            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+            volumes: [{name: 'vol1', scope: 'grid', driver: 'local'}]
+          ).run
+          expect(outcome.success?).to be_truthy
+        }.to change{ Volume.count }.by(1)
+      end
+
+      it 'mutation fails to create volumes' do
+        grid
+        expect {
+          outcome = described_class.new(
+            grid: grid,
+            name: 'stack',
+            stack: 'foo/bar',
+            version: '0.1.0',
+            registry: 'file://',
+            source: '...',
+            variables: {foo: 'bar'},
+            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+            volumes: [{name: 'vol1', scope: 'grid'}]
+          ).run
+          expect(outcome.success?).to be_falsey
+        }.to change{ Volume.count }.by(0)
+      end
+
+      it 'creates stack with external volumes with name' do
+        volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')
+        expect {
+          outcome = described_class.new(
+            grid: grid,
+            name: 'stack',
+            stack: 'foo/bar',
+            version: '0.1.0',
+            registry: 'file://',
+            source: '...',
+            variables: {foo: 'bar'},
+            services: [{name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['vol1:/data'] }],
+            volumes: [{name: 'vol1', external: {name: 'someVolume'}}]
+          ).run
+          expect(outcome.success?).to be_truthy
+          redis = outcome.result.grid_services.first
+          expect(redis.service_volumes.first.volume).to eq(volume)
+        }.to change{ Volume.count }.by(0)
+      end
+    end
+
+    it 'creates stack with external volumes with no external name' do
+      volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['someVolume:/data'] }],
+          volumes: [{name: 'someVolume', external: true}]
+        ).run
+        expect(outcome.success?).to be_truthy
+        redis = outcome.result.grid_services.first
+        expect(redis.service_volumes.first.volume).to eq(volume)
+      }.to change{ Volume.count }.by(0)
+    end
+
+
+    it 'fails to create stack when external volume does not exist' do
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+          volumes: [{name: 'vol1', external: {name: 'foo'}}]
+        ).run
+        expect(outcome.success?).to be_falsey
+      }.to change{ Volume.count }.by(0)
     end
   end
 end

@@ -59,6 +59,13 @@ The `kontena grid update --statsd-server HOST:PORT` option configures each host 
 
 See the [Statistics](stats.md#exporting-stats) documentation for further details.
 
+### Logging options
+
+The `kontena grid update --log-forwarder fluentd --log-opt fluentd-server=xyz:22445` options configures each host node to send container logs to a remote log collection service.
+
+See the [Logs](logs.md) documentation for further details.
+
+
 ## Initial Nodes
 
 Each grid is created with an initial size, where the first `initial_size` nodes to join the grid will become ***initial*** nodes.

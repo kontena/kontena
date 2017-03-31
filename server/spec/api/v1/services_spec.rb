@@ -31,6 +31,12 @@ describe '/v1/services' do
     )
   end
 
+  let! :service_with_vol do
+    volume = Volume.create(grid: grid, name: 'volume', driver: 'local', scope: 'instance')
+    outcome = GridServices::Create.run(grid: grid, stateful: false, name: 'redis-2', image: 'redis:latest', volumes: ['volume:/data'])
+    outcome.result
+  end
+
   let! :redis_service do
     grid.grid_services.create!(
       name: 'redis',
@@ -61,11 +67,16 @@ describe '/v1/services' do
       memory: { 'usage' => 100000 },
       cpu: { 'usage_pct' => 10 },
       network: {
-          'rx_bytes' => 1397524, 'rx_packets' => 3109, 'rx_errors' => 0, 'rx_dropped' => 0, 'tx_bytes' => 1680754, 'tx_packets'=>3035, 'tx_errors'=>0, 'tx_dropped'=>0
+        internal: {
+          'interfaces' => ['ethwe'], 'rx_bytes' => 1397524, 'rx_bytes_per_second' => 3109, 'tx_bytes' => 1680754, 'tx_bytes_per_second'=>3035
+        },
+        external: {
+          'interfaces' => ['eth0'], 'rx_bytes' => 123, 'rx_bytes_per_second' => 10, 'tx_bytes' => 456, 'tx_bytes_per_second'=>20
+        }
       },
       spec: {
-          'memory' => { 'limit' => 512000000},
-          'cpu' => { 'limit' => 1024}
+        'memory' => { 'limit' => 512000000},
+        'cpu' => { 'limit' => 1024, 'mask' => '0-1' }
       }
     }
   end
@@ -100,6 +111,19 @@ describe '/v1/services' do
       expect(json_response['stack']['name']).to eq('teststack')
       expect(json_response['image']).to eq(stack_redis_service.image_name)
       expect(json_response['dns']).to eq('redis.teststack.terminal-a.kontena.local')
+    end
+
+    it 'returns stack service json with volumes' do
+      get "/v1/services/terminal-a/null/redis-2", nil, request_headers
+      expect(response.status).to eq(200), response.body
+      expect(json_response.keys.sort).to eq(%w(
+        id created_at updated_at stack image affinity name stateful user
+        instances cmd entrypoint ports env memory memory_swap cpu_shares
+        volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
+        strategy deploy_opts pid instance_counts net dns hooks secrets revision
+        stack_revision
+      ).sort)
+      expect(json_response['volumes']).to eq(['volume:/data'])
     end
 
     it 'returns error without authorization' do
@@ -188,6 +212,19 @@ describe '/v1/services' do
       expect(json_response['logs'].first['data']).to eq('foo')
     end
 
+    context 'when instance parameter is passed' do
+      it 'returns service container logs for related instance' do
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
+        log1 = container.container_logs.create!(name: 'redis-1', instance_number: 1, data: 'foo', type: 'stdout', grid_service: redis_service)
+        log2 = container2.container_logs.create!(name: 'redis-2', instance_number: 2, data: 'foo2', type: 'stdout', grid_service: redis_service)
+        get "/v1/services/#{redis_service.to_path}/container_logs?instance=1", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(1)
+        expect(json_response['logs'].first['data']).to eq('foo')
+      end
+    end
+
     context 'when from parameter is passed' do
       it 'returns service container logs created after passed id' do
         container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
@@ -266,7 +303,45 @@ describe '/v1/services' do
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
         expect(json_response['stats'].first['container_id']).to eq(container.name.to_s)
+        expect(json_response['stats'].first['cpu']['usage']).to eq(10)
+        expect(json_response['stats'].first['cpu']['limit']).to eq(1024)
+        expect(json_response['stats'].first['cpu']['num_cores']).to eq(2)
+        expect(json_response['stats'].first['memory']['usage']).to eq(100000)
+        expect(json_response['stats'].first['memory']['limit']).to eq(512000000)
+        expect(json_response['stats'].first['network']['internal']['interfaces']).to eq(['ethwe'])
+        expect(json_response['stats'].first['network']['internal']['rx_bytes']).to eq(1397524)
+        expect(json_response['stats'].first['network']['internal']['rx_bytes_per_second']).to eq(3109)
+        expect(json_response['stats'].first['network']['internal']['tx_bytes']).to eq(1680754)
+        expect(json_response['stats'].first['network']['internal']['tx_bytes_per_second']).to eq(3035)
+        expect(json_response['stats'].first['network']['external']['interfaces']).to eq(['eth0'])
+        expect(json_response['stats'].first['network']['external']['rx_bytes']).to eq(123)
+        expect(json_response['stats'].first['network']['external']['rx_bytes_per_second']).to eq(10)
+        expect(json_response['stats'].first['network']['external']['tx_bytes']).to eq(456)
+        expect(json_response['stats'].first['network']['external']['tx_bytes_per_second']).to eq(20)
+      end
 
+      it 'can sort and limit service stats' do
+        stats1 = container_stat_data.deep_dup
+        stats2 = container_stat_data.deep_dup
+        stats3 = container_stat_data.deep_dup
+
+        stats1[:network][:internal]['tx_bytes'] = 20
+        stats2[:network][:internal]['tx_bytes'] = 50
+        stats3[:network][:internal]['tx_bytes'] = 40
+
+        container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container1.container_stats.create!(stats1)
+
+        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
+        container2.container_stats.create!(stats2)
+
+        container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
+        container3.container_stats.create!(stats3)
+
+        get "/v1/services/#{redis_service.to_path}/stats?sort=tx_bytes&limit=1", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(1)
+        expect(json_response['stats'].first['container_id']).to eq(container2.name.to_s)
       end
     end
     context 'when container has not stats data' do
@@ -277,6 +352,28 @@ describe '/v1/services' do
         expect(json_response['stats'].size).to eq(1)
         expect(json_response['stats'].first.keys).to eq(%w(container_id cpu memory network))
         expect(json_response['stats'].first['cpu']).to be_nil
+      end
+    end
+  end
+
+  describe 'GET /:id/metrics' do
+    context 'when container has stats data' do
+      it 'returns service metrics' do
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container_stat_data['grid_service_id'] = redis_service.id
+        container.container_stats.create!(container_stat_data)
+        get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(1)
+
+      end
+    end
+    context 'when container has not stats data' do
+      it 'returns empty result' do
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(0)
       end
     end
   end

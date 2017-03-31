@@ -43,4 +43,5 @@ To operate properly Kontena needs only a few ports opened in firewalls. The prov
 
 **Between nodes:**
 
+* [IPSec (ESP)](https://tools.ietf.org/html/rfc2406) traffic needs to be allowed.
 * 6783-6784/tcp+udp, overlay network connections between nodes.

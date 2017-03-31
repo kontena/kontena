@@ -7,6 +7,10 @@ json.name node.name
 json.os node.os
 json.engine_root_dir node.docker_root_dir
 json.driver node.driver
+json.plugins do
+  json.network node.plugins['network'] || []
+  json.volume node.plugins['volume'] || []
+end
 json.kernel_version node.kernel_version
 json.labels node.labels
 json.mem_total node.mem_total
@@ -36,6 +40,12 @@ json.grid do
     json.stats do
       json.statsd grid.stats['statsd']
     end
+    if grid.grid_logs_opts
+      json.logs do
+        json.forwarder grid.grid_logs_opts.forwarder
+        json.opts grid.grid_logs_opts.opts
+      end
+    end
     json.trusted_subnets grid.trusted_subnets
     json.subnet grid.subnet
     json.supernet grid.supernet
@@ -48,5 +58,6 @@ json.resource_usage do
     json.load stats.load
     json.filesystem stats.filesystem
     json.usage stats.usage
+    json.cpu stats.cpu
   end
 end

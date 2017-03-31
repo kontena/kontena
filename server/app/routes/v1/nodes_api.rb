@@ -11,8 +11,7 @@ module V1
       # @param [String] node_id
       # @return [HostNode]
       def load_grid_node(grid_name, node_id)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
+        grid = load_grid(grid_name)
 
         if node_id.include?(':')
           node = grid.host_nodes.find_by(node_id: node_id)
@@ -20,10 +19,6 @@ module V1
           node = grid.host_nodes.find_by(name: node_id)
         end
         halt_request(404, {error: 'Not found'}) if !node
-
-        unless current_user.grid_ids.include?(grid.id)
-          halt_request(403, {error: 'Access denied'})
-        end
 
         node
       end
@@ -51,6 +46,24 @@ module V1
             end
 
             render('host_nodes/health')
+          end
+
+          # GET /v1/nodes/:grid/:node/stats
+          r.on 'stats' do
+            sort = r.params["sort"] ? r.params["sort"] : "cpu"
+            limit = r.params["limit"] ? r.params["limit"].to_i : nil
+
+            @stats = Metrics.get_container_stats(@node.containers, sort.to_sym, limit)
+            render('stats/stats')
+          end
+
+          # GET /v1/nodes/:grid/:node/metrics
+          r.on 'metrics' do
+            @to = (r.params["to"] ? Time.parse(r.params["to"]) : Time.now).utc
+            @from = (r.params["from"] ? Time.parse(r.params["from"]) : (@to - 1.hour)).utc
+
+            @metrics = HostNodeStat.get_aggregate_stats_for_node(@node.id, @from, @to)
+            render('stats/metrics')
           end
         end
 

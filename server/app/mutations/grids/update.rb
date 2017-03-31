@@ -23,6 +23,14 @@ module Grids
       array :default_affinity do
         string
       end
+      hash :logs do
+        required do
+          string :forwarder, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
+        end
+        optional do
+          model :opts, class: Hash
+        end
+      end
     end
 
     def validate
@@ -34,6 +42,12 @@ module Grids
           rescue IPAddr::InvalidAddressError
             add_error(:trusted_subnets, :invalid, "Invalid trusted_subnet #{subnet}")
           end
+        end
+      end
+      if self.logs
+        case self.logs[:forwarder]
+        when 'fluentd'
+          validate_fluentd_opts(self.logs[:opts])
         end
       end
     end
@@ -48,6 +62,14 @@ module Grids
       end
       if self.default_affinity
         attributes[:default_affinity] = self.default_affinity
+      end
+
+      if self.logs
+        if self.logs[:forwarder] == 'none'
+          self.grid.grid_logs_opts = nil
+        else
+          self.grid.grid_logs_opts = GridLogsOpts.new(forwarder: self.logs[:forwarder], opts: self.logs[:opts])
+        end
       end
       grid.update_attributes(attributes)
       if grid.errors.size > 0
@@ -70,6 +92,11 @@ module Grids
         end
         GridScheduler.new(grid).reschedule
       }
+    end
+
+    def validate_fluentd_opts(opts)
+      address = opts['fluentd-address']
+      add_error(:logs, :forwarder, 'fluentd-address option must be given') unless address
     end
   end
 end

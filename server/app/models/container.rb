@@ -1,8 +1,9 @@
 require 'ipaddr'
-
+require_relative 'event_stream'
 class Container
   include Mongoid::Document
   include Mongoid::Timestamps
+  include EventStream
 
   field :container_id, type: String
   field :name, type: String
@@ -118,11 +119,21 @@ class Container
     self.image_version == self.grid_service.image.image_id && self.created_at > self.grid_service.updated_at
   end
 
+  # @param [String] status
+  def set_health_status(status)
+    health_status_changed = self.health_status != status
+    self.set(
+      health_status: status,
+      health_status_at: Time.now
+    )
+    publish_update_event if health_status_changed
+  end
+
   # @param [BSON::ObjectId] grid_id
   # @param [Hash] match
   # @return [Array<Hash>]
   def self.counts_for_grid_services(grid_id, match = {})
-    match = { :grid_id => grid_id}.merge(match)
+    match = { :grid_id => grid_id, :container_type => 'container'}.merge(match)
     self.collection.aggregate([
       { :$match => match },
       { :$group => { _id: "$grid_service_id", total: {:$sum => 1} } }
@@ -161,5 +172,38 @@ class Container
       instance_number: instance_number.to_i
     }
     where(match)
+  end
+
+  def publish_create_event
+    return unless self.grid_service
+
+    event = {
+      event: 'update',
+      type: 'GridService',
+      object: GridServiceSerializer.new(self.grid_service).to_hash
+    }
+    publish_async(event)
+  end
+
+  def publish_update_event(relation_object = nil)
+    return unless self.grid_service
+
+    event = {
+      event: 'update',
+      type: 'GridService',
+      object: GridServiceSerializer.new(self.grid_service).to_hash
+    }
+    publish_async(event)
+  end
+
+  def publish_destroy_event
+    return unless self.grid_service
+
+    event = {
+      event: 'update',
+      type: 'GridService',
+      object: GridServiceSerializer.new(self.grid_service).to_hash
+    }
+    publish_async(event)
   end
 end
