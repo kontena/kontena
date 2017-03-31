@@ -19,7 +19,7 @@ module Kontena
       # Called by the Observer actor for logging
       # Must be threadsafe and local
       def to_s
-        "Observer<#{@class_name}@#{object_id}>"
+        "Observer<#{@class_name}>"
       end
 
       # Set value for observable
@@ -63,6 +63,8 @@ module Kontena
     # @param observable [Celluloid::Proxy::Cell<Observable>]
     # @param value [Object, nil] observed value
     def update_observe(observe, observable, value)
+      debug "observe Observable<#{observable.__klass__}> -> #{value}"
+
       observe.set(observable, value)
       observed(observe)
     end
@@ -99,7 +101,7 @@ module Kontena
         # store value for initial call, or nil to block
         observe.set(observable, value)
 
-        debug "observe #{observable} -> #{value}"
+        debug "observe Observable<#{observable.__klass__}> -> #{value}"
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
         # this is not a bidrectional link: our crashes do not propagate to the observable
