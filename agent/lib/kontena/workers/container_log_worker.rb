@@ -4,6 +4,7 @@ module Kontena::Workers
     include Kontena::Logging
 
     CHUNK_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s(.*)$/
+    QUEUE_LIMIT = 5000
     EVENT_NAME = 'container:log'
 
     # @param [Docker::Container] container
@@ -53,6 +54,7 @@ module Kontena::Workers
     # @param [String] stream
     # @param [String] chunk
     def on_message(id, stream, chunk)
+      return if @queue.size > QUEUE_LIMIT
       match = chunk.match(CHUNK_REGEX)
       return unless match
       time = DateTime.parse(match[1])

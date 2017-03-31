@@ -1,6 +1,7 @@
 class GridServiceRemoveWorker
   include Celluloid
   include Logging
+  include WaitHelper
 
   def perform(grid_service_id)
     grid_service = GridService.find_by(id: grid_service_id)
@@ -30,9 +31,7 @@ class GridServiceRemoveWorker
   # @param [GridService] grid_service
   # @param [Integer] timeout
   def wait_instance_removal(grid_service, timeout)
-    Timeout::timeout(timeout) do
-      sleep 1 until grid_service.reload.containers.scoped.count == 0
-    end
+    wait_until!(timeout: timeout) { grid_service.reload.containers.scoped.count == 0 }
   end
 
   # @param [HostNode] node
