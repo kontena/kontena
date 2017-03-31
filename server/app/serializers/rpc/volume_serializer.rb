@@ -1,20 +1,30 @@
 module Rpc
   class VolumeSerializer < RpcSerializer
 
-    attr_reader :volume_instance
+    attribute :volume_id
+    attribute :volume_instance_id
+    attribute :name
+    attribute :driver
+    attribute :driver_opts
 
-    def initialize(volume_instance)
-      @volume_instance = volume_instance
+    def volume_id
+      object.volume.id.to_s
     end
 
-    def to_hash
-      {
-        volume_id: @volume_instance.volume.id.to_s,
-        volume_instance_id: @volume_instance.id.to_s,
-        name: @volume_instance.name,
-        driver: @volume_instance.volume.driver,
-        driver_opts: @volume_instance.volume.driver_opts
-      }
+    def volume_instance_id
+      object.id.to_s
+    end
+
+    def name
+      object.name
+    end
+
+    def driver
+      object.volume.driver
+    end
+
+    def driver_opts
+      object.volume.driver_opts
     end
 
   end
