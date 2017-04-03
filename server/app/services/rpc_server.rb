@@ -39,10 +39,10 @@ class RpcServer
   end
 
   def report_queue
-    #if @queue.size > QUEUE_WARN_LIMIT
+    if @queue.size > QUEUE_WARN_LIMIT
       warn "#{@queue.size} messages in queue"
       info "#{@counter / REPORT_EVERY} requests per second"
-    #end
+    end
     @counter = 0
   end
 
