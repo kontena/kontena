@@ -24,6 +24,7 @@ describe Kontena::Workers::NodeInfoWorker do
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
     allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
     allow(rpc_client).to receive(:request)
+    allow(rpc_client).to receive(:notification)
   }
   after(:each) { Celluloid.shutdown }
 
