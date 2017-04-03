@@ -291,4 +291,8 @@ class WebsocketBackend
       self.on_close(client[:ws])
     end
   end
+
+  def stop_rpc_server
+    Celluloid::Actor.kill(@rpc_server) if @rpc_server.alive?
+  end
 end

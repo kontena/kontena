@@ -15,6 +15,10 @@ describe WebsocketBackend, celluloid: true do
     stub_const('Server::VERSION', '0.9.1')
   end
 
+  after(:each) do
+    subject.stop_rpc_server
+  end
+
   describe '#our_version' do
     it 'retuns baseline version with patch level 0' do
       expect(subject.our_version).to eq('0.9.0')
