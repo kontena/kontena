@@ -36,7 +36,6 @@ class RpcServer
   end
 
   def process!
-    sleep 0.1 # avoid busy loop block in actor
     @processing = true
     while @processing && data = @queue.pop
       @counter += 1
