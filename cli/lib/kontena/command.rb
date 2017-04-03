@@ -63,8 +63,8 @@ class Kontena::Command < Clamp::Command
     end
   end
 
-  def self.load_subcommand(path, deprecated: nil)
-    Kontena::Cli::SubcommandLoader.new(path, deprecated: deprecated)
+  def self.load_subcommand(path)
+    Kontena::Cli::SubcommandLoader.new(path)
   end
 
   def self.inherited(where)

@@ -5,7 +5,7 @@ class Kontena::Cli::MasterCommand < Kontena::Command
   subcommand ["remove", "rm"], "Remove a master from configuration", load_subcommand('master/remove_command')
   subcommand ["config", "cfg"], "Configure master settings", load_subcommand('master/config_command')
   subcommand "use", "Switch to use selected master", load_subcommand('master/use_command')
-  subcommand "users", "Users specific commands [DEPRECATED]", load_subcommand('master/users_command', deprecated: "Use 'kontena master user'")
+  subcommand "users", "Users specific commands [DEPRECATED]", load_subcommand('master/users_command')
   subcommand "user", "User specific commands", load_subcommand('master/user_command')
   subcommand "current", "Show current master details", load_subcommand('master/current_command')
   subcommand "login", "Authenticate to Kontena Master", load_subcommand('master/login_command')
