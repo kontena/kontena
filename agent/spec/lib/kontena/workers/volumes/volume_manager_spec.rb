@@ -96,7 +96,7 @@ describe Kontena::Workers::Volumes::VolumeManager do
 
   describe '#sync_volume_to_master' do
     it 'sends volume data to master' do
-      expect(rpc_client).to receive(:notification).with(
+      expect(rpc_client).to receive(:request).with(
         '/node_volumes/set_state',
         [node.id, hash_including('name' => 'foo', 'volume_id' => '123', 'volume_instance_id' => '456')]
       )

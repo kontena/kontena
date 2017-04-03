@@ -23,7 +23,7 @@ describe Kontena::Workers::NodeInfoWorker do
     })
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
     allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
-    allow(rpc_client).to receive(:notification)
+    allow(rpc_client).to receive(:request)
   }
   after(:each) { Celluloid.shutdown }
 
@@ -36,7 +36,7 @@ describe Kontena::Workers::NodeInfoWorker do
   end
 
   describe '#start' do
-    before(:each) { allow(rpc_client).to receive(:notification) }
+    before(:each) { allow(rpc_client).to receive(:request) }
 
     it 'calls #publish_node_info' do
       stub_const('Kontena::Workers::NodeInfoWorker::PUBLISH_INTERVAL', 0.01)
@@ -92,33 +92,33 @@ describe Kontena::Workers::NodeInfoWorker do
     end
 
     it 'sends node info via rpc' do
-      expect(rpc_client).to receive(:notification).once
+      expect(rpc_client).to receive(:request).once
       subject.publish_node_info
     end
 
     it 'contains docker id' do
-      expect(rpc_client).to receive(:notification).once.with(
+      expect(rpc_client).to receive(:request).once.with(
         '/nodes/update', [hash_including('ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
       )
       subject.publish_node_info
     end
 
     it 'contains public ip' do
-      expect(rpc_client).to receive(:notification).once.with(
+      expect(rpc_client).to receive(:request).once.with(
         '/nodes/update', [hash_including('PublicIp' => '8.8.8.8')]
       )
       subject.publish_node_info
     end
 
     it 'contains private ip' do
-      expect(rpc_client).to receive(:notification).once.with(
+      expect(rpc_client).to receive(:request).once.with(
         '/nodes/update', [hash_including('PrivateIp' => '192.168.66.2')]
       )
       subject.publish_node_info
     end
 
     it 'contains agent_version' do
-      expect(rpc_client).to receive(:notification).once do |key, msg|
+      expect(rpc_client).to receive(:request).once do |key, msg|
         expect(msg['AgentVersion']).to match(/\d+\.\d+\.\d+/)
       end
       subject.publish_node_info
@@ -226,6 +226,10 @@ describe Kontena::Workers::NodeInfoWorker do
   end
 
   describe '#publish_node_stats' do
+
+    before(:each) do
+      allow(rpc_client).to receive(:notification)
+    end
 
     it 'sends stats via rpc' do
       expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
