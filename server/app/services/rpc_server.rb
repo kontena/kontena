@@ -36,6 +36,7 @@ class RpcServer
   end
 
   def process!
+    sleep 0.1 # avoid busy loop block in actor
     @processing = true
     while @processing && data = @queue.pop
       @counter += 1
@@ -114,7 +115,7 @@ class RpcServer
   # @param [Faye::Websocket] ws
   # @param [Object] message
   def send_message(ws, message)
-    EM.next_tick {
+    EM.next_tick { # important to push sending back to EM reactor thread
       ws.send(MessagePack.dump(message.as_json).bytes)
     }
   end
