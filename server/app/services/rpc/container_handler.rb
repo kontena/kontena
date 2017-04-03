@@ -14,7 +14,7 @@ module Rpc
       @logs = []
       @stats = []
       @cached_containers = {}
-      @logs_buffer_size = 10
+      @logs_buffer_size = 5
       @stats_buffer_size = 5
       @containers_cache_size = 50
       @db_session = ContainerLog.collection.session.with(
