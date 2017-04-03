@@ -51,14 +51,14 @@ namespace :compose do
   desc "setup compose"
   task :setup => [:setup_master, :setup_grid]
 
-  desc "setup vagrant master"
+  desc "setup compose master"
   task :setup_master do
     sh "docker-compose up -d api"
     sleep 20
     sh "kontena master login --code initialadmincode --name compose-e2e http://localhost:9292"
   end
 
-  desc "setup vagrant grid"
+  desc "setup compose grid"
   task :setup_grid do
     sh "kontena grid create --token e2etoken e2e"
     sh "docker-compose up -d agent"

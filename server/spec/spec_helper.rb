@@ -22,6 +22,12 @@ if ENV['COVERAGE']
   end
 end
 
+require_relative '../lib/thread_tracer'
+require_relative '../lib/moped_session_tracer'
+
+# abort on Moped::Session threading issues
+ThreadTracer.fatal!
+
 require 'webmock/rspec'
 require_relative '../app/boot'
 require_relative '../server'
@@ -60,7 +66,7 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    MongoPubsub.start!(PubsubChannel.collection)
+    MongoPubsub.start!(PubsubChannel)
     sleep 0.1 until Mongoid.default_session.collection_names.include?(PubsubChannel.collection.name)
     Mongoid::Tasks::Database.create_indexes if ENV["CI"]
   end

@@ -32,6 +32,18 @@ module Kontena::Cli::Stacks
       end
     end
 
+    module StackValuesToOption
+      attr_accessor :values
+      def self.included(where)
+        where.option '--values-to', '[FILE]', 'Output variable values as YAML to file'
+      end
+
+      def dump_variables(reader)
+        vals = reader.variables.to_h(values_only: true).reject {|k,_| k == 'STACK' || k == 'GRID' }
+        File.write(values_to, ::YAML.dump(vals))
+      end
+    end
+
     module StackValuesFromOption
       attr_accessor :values
       def self.included(where)
@@ -58,8 +70,7 @@ module Kontena::Cli::Stacks
       reader
     end
 
-    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+    def stack_from_reader(reader)
       outcome = reader.execute
 
       hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
@@ -78,10 +89,21 @@ module Kontena::Cli::Stacks
       stack
     end
 
+    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+      stack_from_reader(reader)
+    end
+
+    def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values)
+      stack = stack_from_reader(reader)
+      dump_variables(reader) if values_to
+      stack
+    end
+
     def require_config_file(filename)
       exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
     end
-
 
     ##
     # @param [Hash] yaml

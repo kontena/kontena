@@ -14,7 +14,6 @@ module HostNodes
       self.host_node.destroy
 
       if grid
-        worker(:grid_scheduler).async.perform(grid.id)
         notify_grid(grid)
       end
     end

@@ -54,5 +54,15 @@ describe Users::AddRole do
       john.reload
       expect(john.roles.include?(grid_admin_role)).to be_truthy
     end
+
+    it 'publishes update event for user' do
+      allow(RoleAuthorizer).to receive(:assignable_by?).with(user).and_return(true)
+      expect(john).to receive(:publish_update_event).once
+      outcome = described_class.new(
+          current_user: user,
+          user: john,
+          role: grid_admin_role.name
+      ).run
+    end
   end
 end

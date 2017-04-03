@@ -1,6 +1,8 @@
+require_relative 'event_stream'
 class GridService
   include Mongoid::Document
   include Mongoid::Timestamps
+  include EventStream
 
   LB_IMAGE = 'kontena/lb:latest'
 
@@ -39,6 +41,7 @@ class GridService
   belongs_to :grid
   belongs_to :image
   belongs_to :stack
+  has_many :grid_service_instances, dependent: :destroy
   has_many :containers
   has_many :container_logs
   has_many :container_stats
@@ -48,6 +51,7 @@ class GridService
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
   embeds_many :secrets, class_name: 'GridServiceSecret'
+  embeds_many :service_volumes, class_name: 'ServiceVolume'
   embeds_one :deploy_opts, class_name: 'GridServiceDeployOpt', autobuild: true
   embeds_one :health_check, class_name: 'GridServiceHealthCheck'
 
@@ -64,7 +68,7 @@ class GridService
 
   # @return [String]
   def to_path
-    "#{self.grid.try(:name)}/#{self.stack.name}/#{self.name}"
+    "#{self.grid.try(:name)}/#{self.stack.try(:name)}/#{self.name}"
   end
 
   # @return [String]
@@ -92,7 +96,9 @@ class GridService
 
   # @param [String] state
   def set_state(state)
+    state_changed = self.state != state
     self.set(:state => state)
+    publish_update_event if state_changed    
   end
 
   # @return [Boolean]
@@ -115,8 +121,12 @@ class GridService
   end
 
   # @return [Boolean]
-  def deploying?
-    self.state == 'deploying'
+  def deploying?(ignore: nil)
+    scope = self.grid_service_deploys.where(
+      :created_at.gt => 10.minutes.ago, :started_at.ne => nil, :finished_at => nil
+    )
+    scope = scope.where(:_id.ne => ignore) if ignore
+    scope.count > 0
   end
 
   # @return [Boolean]

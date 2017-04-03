@@ -17,8 +17,7 @@ module Rpc
     def get(id)
       node = @grid.host_nodes.find_by(node_id: id)
       if node
-        template = Tilt.new('app/views/v1/host_nodes/_host_node.json.jbuilder')
-        JSON.parse(template.render(nil, node: node))
+        HostNodeSerializer.new(node).to_hash
       else
         {}
       end
@@ -48,6 +47,8 @@ module Rpc
         load: data['load'],
         filesystem: data['filesystem'],
         usage: data['usage'],
+        cpu: data['cpu'],
+        network: data['network'],
         created_at: time
       }
       @db_session[:host_node_stats].insert(stat)

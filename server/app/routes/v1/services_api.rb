@@ -21,16 +21,11 @@ module V1
       # @param [String] service_name
       # @return [GridService]
       def load_grid_service(grid_name, stack_name, service_name)
-        grid = Grid.find_by(name: grid_name)
-        halt_request(404, {error: 'Not found'}) if !grid
+        grid = load_grid(grid_name)
         stack = grid.stacks.find_by(name: stack_name)
         halt_request(404, {error: 'Not found'}) if !stack
         grid_service = stack.grid_services.find_by(name: service_name)
         halt_request(404, {error: 'Not found'}) if !grid_service
-
-        unless current_user.grid_ids.include?(grid_service.grid_id)
-          halt_request(403, {error: 'Access denied'})
-        end
 
         grid_service
       end
@@ -47,6 +42,11 @@ module V1
         # /v1/services/:grid_name/:stack_name/:service_name/stats
         r.on 'stats' do
           r.route 'service_stats'
+        end
+
+        # /v1/services/:grid_name/:stack_name/:service_name/metrics
+        r.on 'metrics' do
+          r.route 'service_metrics'
         end
 
         # /v1/services/:grid_name/:stack_name/:service_name/envs
