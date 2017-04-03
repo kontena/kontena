@@ -17,6 +17,25 @@ describe GridServiceInstanceDeployer do
 
   let(:deploy_rev) { Time.now.utc.to_s }
 
+  describe '#deploy' do
+    it "updates the instance deploy state to ongoing and then success" do
+      expect(subject).to receive(:ensure_volume_instance)
+      expect(subject).to receive(:ensure_service_instance) do
+        expect(instance_deploy).to be_ongoing
+      end
+
+      expect{subject.deploy(deploy_rev)}.to change{instance_deploy.reload.deploy_state}.from(:created).to(:success)
+    end
+
+    it "updates the instance deploy state to error on failure" do
+      expect(subject).to receive(:ensure_volume_instance)
+      expect(subject).to receive(:ensure_service_instance).and_raise(GridServiceInstanceDeployer::ServiceError, "Docker::Error::NotFoundError: No such image: redis:nonexist")
+
+      expect{subject.deploy(deploy_rev)}.to change{instance_deploy.reload.deploy_state}.from(:created).to(:error)
+      expect(instance_deploy.reload.error).to eq "GridServiceInstanceDeployer::ServiceError: Docker::Error::NotFoundError: No such image: redis:nonexist"
+    end
+  end
+
   context "Without any existing deployed instance" do
     describe '#get_service_instance' do
       it "returns nil" do
