@@ -26,7 +26,7 @@ class GridServiceInstanceDeployer
     @grid_service_instance_deploy.set(:deploy_state => :ongoing)
 
     ensure_volume_instance
-    ensure_service_instance
+    ensure_service_instance(deploy_rev)
 
   rescue => error
     warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
