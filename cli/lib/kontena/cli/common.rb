@@ -283,7 +283,7 @@ module Kontena
       def any_key_to_continue_with_timeout(timeout=9)
         return nil if running_silent?
         return nil unless $stdout.tty?
-        prompt.keypress("Press any key to continue or ctrl-c to cancel.. (Automatically continuing in :countdown seconds) ...", timeout: timeout)
+        prompt.keypress("Press any key to continue or ctrl-c to cancel (Automatically continuing in :countdown seconds) ...", timeout: timeout)
       end
 
       def any_key_to_continue(timeout = nil)
