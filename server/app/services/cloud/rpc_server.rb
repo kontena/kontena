@@ -16,7 +16,7 @@ module Cloud
       end
 
       def backtrace
-        super + Array(remote_backtrace)
+        Array(super) + Array(remote_backtrace)
       end
     end
 
