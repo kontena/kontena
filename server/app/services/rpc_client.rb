@@ -8,12 +8,11 @@ class RpcClient
     def initialize(code, message, remote_backtrace = nil)
       @code = code
       @remote_backtrace = (['<Remote>:'] + remote_backtrace) if remote_backtrace
-      @caller = caller
       super(message)
     end
 
     def backtrace
-      (super || @caller) + Array(remote_backtrace)
+      super + Array(remote_backtrace)
     end
   end
 
