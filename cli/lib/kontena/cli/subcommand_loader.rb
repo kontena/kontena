@@ -59,7 +59,7 @@ module Kontena::Cli
       unless safe_require(path) || safe_require(Kontena.cli_root(path))
         raise ArgumentError, "Can't load #{path} or #{Kontena.cli_root(path)}"
       end
-      warn "[DEPRECATED] Command has been deprecated: #{deprecated}" if deprecated?
+      warn Kontena.pastel.yellow("[DEPRECATED] Command has been deprecated: #{deprecated}") if deprecated?
       @subcommand_class = const_get_tree(prepend_kontena_cli(symbolize_path(path)))
     end
 
