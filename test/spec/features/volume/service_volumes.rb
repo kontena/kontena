@@ -17,9 +17,8 @@ describe 'service volumes' do
     expect(k.code).to eq(0)
     k = run "kontena service deploy redis"
     expect(k.code).to eq(0)
-    
+
     mount = container_mounts(find_container('redis-1')).find { |m| m['Name'] =~ /testVol/}
-    #mount = json.dig('Mounts').find { |m| m['Name'] =~ /testVol/}
     expect(mount).not_to be_nil
     expect(mount['Name']).to eq("redis.testVol-1")
     expect(mount['Destination']).to eq('/data')

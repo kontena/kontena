@@ -18,7 +18,6 @@ describe 'stack volumes' do
     k = run 'kontena volume ls'
     expect(k.out.match(/redis-data/)).to be_truthy
     container = find_container('redis.redis-1')
-    puts "****** #{container}"
     mount = container_mounts(container).find { |m| m['Name'] =~ /redis-data-1/}
     expect(mount).not_to be_nil
     expect(mount['Name']).to eq("redis.redis.redis-data-1")
