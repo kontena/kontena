@@ -2,7 +2,6 @@ require_relative 'fixnum_helper'
 
 module Rpc
   class NodeHandler
-    include Celluloid
     include FixnumHelper
 
     def initialize(grid)

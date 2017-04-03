@@ -15,7 +15,9 @@ class WebsocketBackend
     @logger = Logger.new(STDOUT)
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
-    @rpc_server = RpcServer.new
+    @queue = SizedQueue.new(1000)
+    @rpc_server = RpcServer.new(@queue)
+    @rpc_server.async.process!
     subscribe_to_rpc_channel
     watch_connections
   end
@@ -135,16 +137,18 @@ class WebsocketBackend
   def handle_rpc_request(ws, data)
     client = client_for_ws(ws)
     if client
-      @rpc_server.async.handle_request(ws, client[:grid_id].to_s, data)
+      @queue << [ws, client[:grid_id].to_s, data]
     end
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_notification(ws, data)
+    return if @queue.size > 800 # too busy to handle notifications
+
     client = client_for_ws(ws)
     if client
-      @rpc_server.async.handle_notification(client[:grid_id].to_s, data)
+      @queue << [client[:grid_id].to_s, data]
     end
   end
 
