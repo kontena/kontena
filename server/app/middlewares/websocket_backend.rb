@@ -246,11 +246,14 @@ class WebsocketBackend
   end
 
   def watch_connections
-    EM::PeriodicTimer.new(KEEPALIVE_TIME) do
-      @clients.each do |client|
-        self.verify_client_connection(client)
+    Thread.new {
+      sleep 1 until EM.reactor_running?
+      EM::PeriodicTimer.new(KEEPALIVE_TIME) do
+        @clients.each do |client|
+          self.verify_client_connection(client)
+        end
       end
-    end
+    }
   end
 
   def watch_queue
