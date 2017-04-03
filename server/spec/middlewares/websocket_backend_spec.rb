@@ -5,7 +5,7 @@ describe WebsocketBackend, celluloid: true do
   let(:subject) { described_class.new(app) }
 
   before(:all) do
-    EM.run
+    Thread.new { EM.run }
     sleep 0.1 until EM.reactor_running?
   end
 
