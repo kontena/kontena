@@ -5,22 +5,20 @@ describe Kontena::Workers::StatsWorker do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
-
   let(:container) { spy(:container, id: 'foo', labels: {}) }
+  let(:node) do
+    Node.new(
+      'id' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+      'instance_number' => 1,
+      'grid' => {}
+    )
+  end
 
   before(:each) do
     Celluloid.boot
     mock_rpc_client
   end
   after(:each) { Celluloid.shutdown }
-
-  describe '#initialize' do
-    it 'subscribes to agent:node_info channel' do
-      expect(subject.wrapped_object).to receive(:on_node_info)
-      Celluloid::Notifications.publish('agent:node_info')
-      sleep 0.01
-    end
-  end
 
   describe '#collect_stats' do
     it 'loops through all containers' do
@@ -85,9 +83,9 @@ describe Kontena::Workers::StatsWorker do
 
   end
 
-  describe '#on_node_info' do
+  describe '#configure_statsd' do
     it 'initializes statsd client if node has statsd config' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {
             'statsd' => {
@@ -96,20 +94,20 @@ describe Kontena::Workers::StatsWorker do
             }
           }
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.configure_statsd(node)
       expect(subject.statsd).not_to be_nil
     end
 
     it 'does not initialize statsd if no statsd config exists' do
-      info = {
+      node = Node.new(
         'grid' => {
           'stats' => {}
         }
-      }
+      )
       expect(subject.statsd).to be_nil
-      subject.on_node_info('agent:node_info', info)
+      subject.configure_statsd(node)
       expect(subject.statsd).to be_nil
     end
   end
@@ -136,12 +134,13 @@ describe Kontena::Workers::StatsWorker do
     end
 
     let(:statsd) do
-      spy(:statsd)
+      instance_double(Statsd)
     end
 
     it 'sends statsd metrics' do
       allow(subject.wrapped_object).to receive(:statsd).and_return(statsd)
-      expect(statsd).to receive(:gauge)
+      expect(statsd).to receive(:gauge).with('services.foobar.cpu.usage', 12.32)
+      expect(statsd).to receive(:gauge).with('services.foobar.memory.usage', 24 * 1024 * 1024)
       subject.send_statsd_metrics('foobar', event)
     end
   end
@@ -165,7 +164,22 @@ describe Kontena::Workers::StatsWorker do
           },
           filesystem: event.dig(:stats, -1, :filesystem),
           diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          network: {
+            internal: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            },
+            external: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            }
+          }
         }
       ))
       expect(rpc_client).to receive(:notification).with(
@@ -189,7 +203,22 @@ describe Kontena::Workers::StatsWorker do
           },
           filesystem: event.dig(:stats, -1, :filesystem),
           diskio: event.dig(:stats, -1, :diskio),
-          network: event.dig(:stats, -1, :network)
+          network: {
+            internal: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            },
+            external: {
+              interfaces: [],
+              rx_bytes: 0,
+              rx_bytes_per_second: 0,
+              tx_bytes: 0,
+              tx_bytes_per_second: 0
+            }
+          }
         }
       ))
       expect(rpc_client).to receive(:notification).with(

@@ -21,7 +21,7 @@ json.secrets grid_service.secrets.as_json(only: [:secret, :name, :type])
 json.memory grid_service.memory
 json.memory_swap grid_service.memory_swap
 json.cpu_shares grid_service.cpu_shares
-json.volumes grid_service.volumes
+json.volumes grid_service.service_volumes.map {|sv| sv.to_s}
 json.volumes_from grid_service.volumes_from
 json.cap_add grid_service.cap_add
 json.cap_drop grid_service.cap_drop
@@ -33,9 +33,9 @@ json.stack do
   json.id grid_service.stack.to_path
   json.name grid_service.stack.name
 end
-json.links grid_service.grid_service_links.map{|s|
-  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name }
-}
+json.links grid_service.grid_service_links.map { |s|
+  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name } if s.linked_grid_service
+}.compact
 json.log_driver grid_service.log_driver
 json.log_opts grid_service.log_opts
 json.strategy grid_service.strategy

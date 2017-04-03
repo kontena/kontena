@@ -16,6 +16,8 @@ module Kontena::Cli::Stacks
     option ['--[no-]sudo'], :flag, 'Run docker using sudo', hidden: Kontena.on_windows?, environment_variable: 'KONTENA_SUDO', default: false
 
     option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
+
+    include Common::StackValuesToOption
     include Common::StackValuesFromOption
 
     parameter "[SERVICE] ...", "Services to build"
@@ -25,7 +27,7 @@ module Kontena::Cli::Stacks
 
     def execute
       require_config_file(filename)
-      stack = stack_from_yaml(filename, name: name, values: values)
+      stack = stack_read_and_dump(filename, name: name, values: values)
       services = stack['services']
 
       unless service_list.empty?

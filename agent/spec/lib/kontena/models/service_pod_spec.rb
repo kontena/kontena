@@ -3,6 +3,8 @@ describe Kontena::Models::ServicePod do
 
   let(:data) do
     {
+      'id' => 'aaaaaaa/2',
+      'desired_state' => 'running',
       'service_id' => 'aaaaaaa',
       'service_name' => 'redis',
       'instance_number' => 2,
@@ -31,7 +33,6 @@ describe Kontena::Models::ServicePod do
       'secrets' => [
           {'name' => 'PASSWD', 'value' => 'secret123', 'type' => 'env'}
       ],
-      'volumes' => nil,
       'volumes_from' => nil,
       'net' => 'bridge',
       'hostname' => 'redis-2',
@@ -96,6 +97,62 @@ describe Kontena::Models::ServicePod do
   describe '#data_volume_name' do
     it 'returns generated name' do
       expect(subject.data_volume_name).to eq("#{subject.name}-volumes")
+    end
+  end
+
+  describe '#lb_name' do
+    it 'returns correct name for default stack' do
+      subject.labels['io.kontena.stack.name'] = nil
+      expect(subject.lb_name).to eq('redis-cache')
+    end
+
+    it 'returns correct name for non-default stack' do
+      subject.labels['io.kontena.stack.name'] = 'foobar'
+      expect(subject.lb_name).to eq('foobar-redis-cache')
+    end
+  end
+
+  describe '#running?' do
+    it 'returns true if desired_state running' do
+      allow(subject).to receive(:desired_state).and_return('running')
+      expect(subject.running?).to be_truthy
+    end
+
+    it 'returns true if desired_state is not running' do
+      allow(subject).to receive(:desired_state).and_return('stopped')
+      expect(subject.running?).to be_falsey
+    end
+  end
+
+  describe '#stopped?' do
+    it 'returns true if desired_state stopped' do
+      allow(subject).to receive(:desired_state).and_return('stopped')
+      expect(subject.stopped?).to be_truthy
+    end
+
+    it 'returns true if desired_state is not stopped' do
+      allow(subject).to receive(:desired_state).and_return('running')
+      expect(subject.stopped?).to be_falsey
+    end
+  end
+
+  describe '#terminated?' do
+    it 'returns true if desired_state terminated' do
+      allow(subject).to receive(:desired_state).and_return('terminated')
+      expect(subject.terminated?).to be_truthy
+    end
+
+    it 'returns true if desired_state is not terminated' do
+      allow(subject).to receive(:desired_state).and_return('running')
+      expect(subject.terminated?).to be_falsey
+    end
+  end
+
+  describe '#mark_as_terminated' do
+    it 'sets desired_state to terminated' do
+      expect {
+        subject.mark_as_terminated
+      }.to change{ subject.desired_state }.from('running').to('terminated')
     end
   end
 
@@ -221,7 +278,7 @@ describe Kontena::Models::ServicePod do
     end
 
     it 'does include Binds if binded volumes are defined' do
-      data['volumes'] = ['/data:/data']
+      data['volumes'] = [{'bind_mount' => '/data', 'path' => '/data'}]
       expect(host_config['Binds']).not_to be_nil
     end
 
@@ -318,7 +375,11 @@ describe Kontena::Models::ServicePod do
 
   describe '#build_volumes' do
     let(:volumes) do
-      ['/proc:/host/proc:ro', '/data']
+      [
+        {'name' => 'app.someVol', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}},
+        {'bind_mount' => '/proc', 'path' => '/host/proc', 'flags' => 'ro'},
+        {'name' => nil, 'bind_mount' => nil, 'path' => '/data'}
+      ]
     end
 
     it 'returns empty hash when no volumes are defined' do
@@ -335,7 +396,11 @@ describe Kontena::Models::ServicePod do
 
   describe '#build_bind_volumes' do
     let(:volumes) do
-      ['/proc:/host/proc:ro', '/data']
+      [
+        {'name' => 'app.someVol', 'path' => '/data', 'driver' => 'local', 'driver_opts' => {}},
+        {'bind_mount' => '/proc', 'path' => '/host/proc', 'flags' => 'ro'},
+        {'name' => nil, 'bind_mount' => nil, 'path' => '/data'}
+      ]
     end
 
     it 'returns empty array when no volumes are defined' do
@@ -344,9 +409,10 @@ describe Kontena::Models::ServicePod do
 
     it 'returns correct array when volumes are defined' do
       data['volumes'] = volumes
-      bind_vols = subject.build_bind_volumes
-      expect(bind_vols.size).to eq(1)
-      expect(bind_vols[0]).to eq('/proc:/host/proc:ro')
+      expect(subject.build_bind_volumes).to eq([
+        'app.someVol:/data',
+        '/proc:/host/proc:ro'
+      ])
     end
   end
 

@@ -5,32 +5,37 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
 
-    attr_reader :fluentd, :node_name, :queue
+    attr_reader :fluentd
 
     ##
     # @param [Queue] queue
     # @param [Boolean] autostart
     def initialize(autostart = true)
       @fluentd = nil
-      @queue = []
       @forwarding = false
       info 'initialized'
-      subscribe('agent:node_info', :on_node_info)
       subscribe('container:log', :on_log_event)
+
+      async.start if autostart
     end
 
-    # @param [String] topic
-    # @param [Hash] info
-    def on_node_info(topic, info)
-      node_name = info['name']
-      driver = info.dig('grid', 'logs', 'forwarder')
+    def start
+      observe(Actor[:node_info_worker]) do |node|
+        configure(node)
+      end
+    end
+
+    # @param [Node] node
+    def configure(node)
+      driver = node.grid.dig('logs', 'forwarder')
       if driver == 'fluentd'
-        fluentd_address = info.dig('grid', 'logs', 'opts', 'fluentd-address')
+        fluentd_address = node.grid.dig('logs', 'opts', 'fluentd-address')
         info "starting fluentd log streaming to #{fluentd_address}"
         host, port = fluentd_address.split(':')
         @fluentd = Fluent::Logger::FluentLogger
-          .new("#{node_name}.#{info.dig('grid', 'name')}",
+          .new("#{node.name}.#{node.grid['name']}",
               :host => host,
               :port => port || 24224)
         @forwarding = true

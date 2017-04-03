@@ -7,6 +7,10 @@ json.name node.name
 json.os node.os
 json.engine_root_dir node.docker_root_dir
 json.driver node.driver
+json.plugins do
+  json.network node.plugins['network'] || []
+  json.volume node.plugins['volume'] || []
+end
 json.kernel_version node.kernel_version
 json.labels node.labels
 json.mem_total node.mem_total
@@ -54,5 +58,6 @@ json.resource_usage do
     json.load stats.load
     json.filesystem stats.filesystem
     json.usage stats.usage
+    json.cpu stats.cpu
   end
 end

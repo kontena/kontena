@@ -1,0 +1,33 @@
+stack: user/stackname
+version: 0.1.1
+variables:
+  foo:
+    type: string
+    value: foofoo
+
+services:
+  wordpress_stateful:
+    image: image
+    stateful: true
+    volumes:
+      - wp-data:/var
+  wordpress_stateless:
+    image: image
+    stateful: false
+    volumes:
+      - wp-data-ext:/var
+      - wp-data-ext-2:/var/lib
+
+volumes:
+  wp-data:
+    driver: local
+    scope: instance
+    driver_opts:
+      foo: bar
+  wp-data-ext:
+    external: true
+    scope: instance
+  wp-data-ext-2:
+    external:
+      name: $foo
+    scope: instance

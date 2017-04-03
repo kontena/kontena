@@ -31,6 +31,11 @@ module Kontena
           data_container = self.ensure_data_container(service_pod)
           service_pod.volumes_from << data_container.id
         end
+
+        wait_until!("volumes exist", timeout: 30, interval: 1) {
+          volumes_exist?(service_pod)
+        }
+
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
         wait_network_ready?
@@ -38,7 +43,6 @@ module Kontena
         if service_container
           if service_uptodate?(service_container)
             info "service is up-to-date: #{service_pod.name}"
-            notify_master(service_container, service_pod.deploy_rev)
             Celluloid::Notifications.publish('lb:ensure_instance_config', service_container)
             return service_container
           else
@@ -54,7 +58,7 @@ module Kontena
         if service_container.load_balanced? && service_container.instance_number == 1
           Celluloid::Notifications.publish('lb:ensure_config', service_container)
         elsif !service_container.load_balanced? && service_container.instance_number == 1
-          Celluloid::Notifications.publish('lb:remove_service', service_container)
+          Celluloid::Notifications.publish('lb:remove_config', service_container.service_name_for_lb)
         end
 
         service_container.start
@@ -124,6 +128,16 @@ module Kontena
         data_container
       end
 
+      def volumes_exist?(service_pod)
+        volume_manager = Celluloid::Actor[:volume_manager]
+        service_pod.volumes.each do |volume|
+          if volume['name']
+            return false unless volume_manager.volume_exist?(volume['name'])
+          end
+        end
+        true
+      end
+
       # @param [Docker::Container] container
       def cleanup_container(container)
         container.stop('timeout' => 10)
@@ -159,6 +173,7 @@ module Kontena
       # @param [Docker::Container] service_container
       # @return [Boolean]
       def service_uptodate?(service_container)
+        return false unless service_container.running?
         return false if recreate_service_container?(service_container)
         return false if service_container.config['Image'] != service_pod.image_name
         return false if container_outdated?(service_container)
@@ -208,17 +223,6 @@ module Kontena
         return true if labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
 
         false
-      end
-
-      # @param [Docker::Container] service_container
-      # @param [String] deploy_rev
-      def notify_master(service_container, deploy_rev)
-        data = {
-          id: service_container.id,
-          status: 'deployed',
-          deploy_rev: deploy_rev
-        }
-        rpc_client.async.notification('/containers/event', [data])
       end
 
       # @param [Docker::Container] service_container

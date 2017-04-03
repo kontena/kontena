@@ -2,6 +2,8 @@ require_relative 'rpc/docker_container_api'
 require_relative 'rpc/agent_api'
 require_relative 'rpc/etcd_api'
 require_relative 'rpc/service_pods_api'
+require_relative 'rpc/lb_api'
+require_relative 'rpc/volumes_api'
 require_relative 'logging'
 
 module Kontena
@@ -12,8 +14,10 @@ module Kontena
     HANDLERS = {
         'containers' => Kontena::Rpc::DockerContainerApi,
         'service_pods' => Kontena::Rpc::ServicePodsApi,
+        'volumes' => Kontena::Rpc::VolumesApi,
         'agent' => Kontena::Rpc::AgentApi,
-        'etcd' => Kontena::Rpc::EtcdApi
+        'etcd' => Kontena::Rpc::EtcdApi,
+        'load_balancers' => Kontena::Rpc::LbApi
     }
 
     class Error < StandardError

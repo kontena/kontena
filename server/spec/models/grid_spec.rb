@@ -1,6 +1,7 @@
 
 describe Grid do
   it { should be_timestamped_document }
+  it { should be_kind_of(EventStream) }
   it { should have_fields(:name, :token) }
   it { should have_fields(:initial_size).of_type(Integer) }
   it { should have_fields(:stats).of_type(Hash) }

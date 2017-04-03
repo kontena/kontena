@@ -11,8 +11,7 @@ module Kontena::Cli::Stacks
     include Common::StackFileOrNameParam
     include Common::StackNameOption
 
-    option '--values-to', '[FILE]', 'Output variable values as YAML to file'
-
+    include Common::StackValuesToOption
     include Common::StackValuesFromOption
 
     requires_current_master # the stack may use a vault resolver
@@ -21,13 +20,11 @@ module Kontena::Cli::Stacks
     def execute
       reader = reader_from_yaml(filename, name: name, values: values)
       outcome = reader.execute
-      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
-      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
+      hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
+      abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
 
-      if values_to
-        vals = reader.variables.to_h(values_only: true).reject {|k,_| k == 'STACK' || k == 'GRID' }
-        File.write(values_to, ::YAML.dump(vals))
-      end
+      dump_variables(reader) if values_to
+
       result = reader.fully_interpolated_yaml.merge(
         # simplest way to stringify keys in a hash
         'variables' => JSON.parse(reader.variables.to_h(with_values: true, with_errors: true).to_json)

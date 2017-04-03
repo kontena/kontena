@@ -84,7 +84,7 @@ module Kontena::Cli::Cloud::Master
         puts "   Cloud than the one they currently have as their username in the"
         puts "   master will not be able to authenticate before an administrator"
         puts "   of the Kontena Master creates an invitation code for them"
-        puts "   (kontena master users invite old@email.example.com)"
+        puts "   (kontena master user invite old@email.example.com)"
         exit_with_error "Aborted" unless prompt.yes?("Proceed?")
       end
 

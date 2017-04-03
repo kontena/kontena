@@ -32,6 +32,18 @@ module Kontena::Cli::Stacks
       end
     end
 
+    module StackValuesToOption
+      attr_accessor :values
+      def self.included(where)
+        where.option '--values-to', '[FILE]', 'Output variable values as YAML to file'
+      end
+
+      def dump_variables(reader)
+        vals = reader.variables.to_h(values_only: true).reject {|k,_| k == 'STACK' || k == 'GRID' }
+        File.write(values_to, ::YAML.dump(vals))
+      end
+    end
+
     module StackValuesFromOption
       attr_accessor :values
       def self.included(where)
@@ -58,13 +70,13 @@ module Kontena::Cli::Stacks
       reader
     end
 
-    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+    def stack_from_reader(reader)
       outcome = reader.execute
 
-      hint_on_validation_notifications(outcome[:notifications]) if outcome[:notifications].size > 0
-      abort_on_validation_errors(outcome[:errors]) if outcome[:errors].size > 0
-      kontena_services = generate_services(outcome[:services], outcome[:version])
+      hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
+      abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
+      kontena_services = generate_services(outcome[:services])
+      kontena_volumes = generate_volumes(outcome[:volumes])
       stack = {
         'name' => outcome[:name],
         'stack' => outcome[:stack],
@@ -73,8 +85,21 @@ module Kontena::Cli::Stacks
         'source' => reader.raw_content,
         'registry' => outcome[:registry],
         'services' => kontena_services,
+        'volumes' => kontena_volumes,
         'variables' => outcome[:variables]
       }
+      stack
+    end
+
+    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+      stack_from_reader(reader)
+    end
+
+    def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values)
+      stack = stack_from_reader(reader)
+      dump_variables(reader) if values_to
       stack
     end
 
@@ -82,21 +107,19 @@ module Kontena::Cli::Stacks
       exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
     end
 
-
-    ##
-    # @param [Hash] yaml
-    # @param [String] version
-    # @return [Hash]
-    def generate_services(yaml_services, version)
-      services = []
-      generator_klass = ServiceGeneratorV2
-      yaml_services.each do |service_name, config|
-        exit_with_error("Image is missing for #{service_name}. Aborting.") unless config['image']
-        service = generator_klass.new(config).generate
-        service['name'] = service_name
-        services << service
+    def generate_volumes(yaml_volumes)
+      return [] unless yaml_volumes
+      yaml_volumes.map do |name, config|
+        config.merge('name' => name)
       end
-      services
+    end
+
+    def generate_services(yaml_services)
+      return [] unless yaml_services
+      yaml_services.map do |name, config|
+        exit_with_error("Image is missing for #{name}. Aborting.") unless config['image'] # why isn't this a validation?
+        ServiceGeneratorV2.new(config).generate.merge('name' => name)
+      end
     end
 
     def set_env_variables(stack, grid)
@@ -110,23 +133,7 @@ module Kontena::Cli::Stacks
     end
 
     def display_notifications(messages, color = :yellow)
-      messages.each do |files|
-        files.each do |file, services|
-          STDERR.puts "#{file}:".colorize(color)
-          services.each do |service|
-            service.each do |name, errors|
-              STDERR.puts "  #{name}:".colorize(color)
-              if errors.is_a?(String)
-                STDERR.puts "    - #{errors}".colorize(color)
-              else
-                errors.each do |key, error|
-                  STDERR.puts "    - #{key}: #{error.to_json}".colorize(color)
-                end
-              end
-            end
-          end
-        end
-      end
+      STDERR.puts(Kontena.pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
     end
 
     def hint_on_validation_notifications(errors)
