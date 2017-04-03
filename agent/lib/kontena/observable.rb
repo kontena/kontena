@@ -17,9 +17,12 @@ module Kontena
       @observers ||= {}
     end
 
-    # The Observable has a value.
+    # The Observable has a value. Propagate it to any observing Actors.
     #
     # This will notify any Observers, causing them to yield if ready.
+    #
+    # The value must be safe for access by multiple threads, even after this update,
+    # and even after any later updates. Ideally, it should be immutable (frozen).
     #
     # @param value [Object]
     # @raise [ArgumentError] Update with nil value
@@ -48,7 +51,7 @@ module Kontena
     # @param observe [Observer::Observe]
     # @return [Object, nil] possible existing value
     def add_observer(observer, observe)
-      debug "observer: #{observer} <- #{@value.inspect[0..64] + '...'}"
+      debug "observer: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
       observers[observe] = observer
 
@@ -58,12 +61,14 @@ module Kontena
     # Update @value to each Observer::Observe
     def notify_observers
       observers.each do |observe, observer|
-        begin
-          debug "notify: #{observer} <- #{@observable_value}"
+        if observer.alive?
+          debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
           # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
           observer.async.update_observe(observe, Celluloid.current_actor, @observable_value)
-        rescue Celluloid::DeadActorError => error
+        else
+          debug "observer died: #{observe}"
+
           observers.delete(observe)
         end
       end
