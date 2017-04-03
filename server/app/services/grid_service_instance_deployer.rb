@@ -25,20 +25,8 @@ class GridServiceInstanceDeployer
 
     @grid_service_instance_deploy.set(:deploy_state => :ongoing)
 
-    service_instance = get_service_instance
-
-    if service_instance.nil?
-      service_instance = create_service_instance
-    elsif service_instance.host_node.nil?
-      # host node was removed
-      warn "Replacing orphaned service #{@grid_service.to_path} instance #{service_instance.instance_number} on destroyed node"
-    elsif service_instance.host_node != @host_node
-      # we need to stop instance if it's running on different node
-      stop_current_instance(service_instance, deploy_rev)
-    end
-
     ensure_volume_instance
-    ensure_service_instance(service_instance, @host_node, deploy_rev, 'running')
+    ensure_service_instance
 
   rescue => error
     warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
@@ -47,15 +35,36 @@ class GridServiceInstanceDeployer
     @grid_service_instance_deploy.set(:deploy_state => :success)
   end
 
+  # Ensure the ServiceInstance matches the desired GridServiceInstanceDeploy configuration.
+  #
+  # @param deploy_rev [String]
+  # @raise
+  # @return [ServiceInstance]
+  def ensure_service_instance(deploy_rev)
+    service_instance = get_service_instance
+
+    if service_instance.nil?
+      service_instance = create_service_instance
+    elsif service_instance.host_node.nil?
+      # host node was removed
+      warn "Replacing orphaned service #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node"
+    elsif service_instance.host_node != @host_node
+      # we need to stop instance if it's running on different node
+      stop_service_instance(service_instance, deploy_rev)
+    end
+
+    deploy_service_instance(service_instance, @host_node, deploy_rev, 'running')
+  end
+
   # @param service_instance [GridServiceInstance]
   # @param deploy_rev [String]
-  def stop_current_instance(service_instance, deploy_rev)
-    info "Stopping existing service service #{@grid_service.to_path} instance #{service_instance.instance_number} on previous node #{service_instance.host_node.name}..."
+  def stop_service_instance(service_instance, deploy_rev)
+    info "Stopping existing service service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}..."
 
-    ensure_service_instance(service_instance, service_instance.host_node, deploy_rev, 'stopped')
+    deploy_service_instance(service_instance, service_instance.host_node, deploy_rev, 'stopped')
 
   rescue => error
-    warn "Failed to stop existing service #{@grid_service.to_path} instance #{service_instance.instance_number} on previous node #{service_instance.host_node.name}: #{error}"
+    warn "Failed to stop existing service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}: #{error}"
   end
 
   # Update service instance, notify node, wait for update, and ensure that service is in desired state.
@@ -70,7 +79,7 @@ class GridServiceInstanceDeployer
   # @raise [StateError] unexpected state after update
   # @raise [Timeout::Error] no update from agent
   # @return [GridServiceInstance]
-  def ensure_service_instance(service_instance, node, deploy_rev, desired_state)
+  def deploy_service_instance(service_instance, node, deploy_rev, desired_state)
     raise NodeError, "Host node is missing" unless node
     raise NodeError, "Host node is offline" unless node.connected?
 
@@ -83,7 +92,7 @@ class GridServiceInstanceDeployer
 
     notify_node(node)
 
-    service_instance = wait_until!("service #{@grid_service.to_path} instance #{service_instance.instance_number} is #{desired_state} on node #{node.to_path} at #{deploy_rev}", timeout: 300) do
+    service_instance = wait_until!("service #{@grid_service.to_path}-#{service_instance.instance_number} is #{desired_state} on node #{node.to_path} at #{deploy_rev}", timeout: 300) do
       service_instance.reload
 
       next nil unless service_instance.rev && service_instance.rev >= deploy_rev
