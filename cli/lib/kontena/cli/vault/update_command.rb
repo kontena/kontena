@@ -3,29 +3,20 @@ module Kontena::Cli::Vault
     include Kontena::Cli::Common
 
     parameter 'NAME', 'Secret name'
-    parameter '[VALUE]', 'Secret value'
+    parameter '[VALUE]', 'Secret value (default: STDIN)'
 
     option ['-u', '--upsert'], :flag, 'Create secret unless already exists', default: false
     option '--silent', :flag, "Reduce output verbosity"
-    option ['-i', '--stdin'], :flag, 'Read value from stdin', default: false
+
+    requires_current_master
 
     def default_value
-      exit_with_error('No value provided') unless stdin?
-      STDIN.read.chomp
+      Kontena.stdinput("Enter value for secret '#{name}'")
     end
 
     def execute
-      require_api_url
-      require_current_grid
-
-      token = require_token
-      data = {
-        name: name,
-        value: value,
-        upsert: upsert?
-      }
       vspinner "Updating #{name.colorize(:cyan)} value in the vault " do
-        client(token).put("secrets/#{current_grid}/#{name}", data)
+        client.put("secrets/#{current_grid}/#{name}", {name: name, value: value, upsert: upsert? })
       end
     end
   end

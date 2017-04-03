@@ -8,7 +8,7 @@ module Kontena::Cli::Master::Config
 
     banner "Updates configuration from a file into Master"
 
-    parameter '[PATH]', "Input from file in PATH, default: STDIN", required: false
+    parameter '[PATH]', "Input from file in PATH (default: STDIN)", required: false
 
     option ['--preset'], '[NAME]', 'Load preset', hidden: true
 
@@ -30,7 +30,7 @@ module Kontena::Cli::Master::Config
         path = File.join(Kontena.root, 'lib/kontena/presets', "#{self.preset}.yml")
         File.read(path)
       else
-        STDIN.read
+        Kontena.stdinput("Enter master configuration as #{format.upcase}")
       end
     end
 
