@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.6](https://github.com/kontena/kontena/releases/tag/v1.1.6) (2017-03-31)
+
+**Master & Agents:**
+
+- Bump ipam to 0.2.2 (#2030)
+
 ## [1.1.5](https://github.com/kontena/kontena/releases/tag/v1.1.5) (2017-03-17)
 
 **Master & Agents:**
