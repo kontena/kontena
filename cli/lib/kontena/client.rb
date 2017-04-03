@@ -532,7 +532,7 @@ module Kontena
       data = parse_response(response)
 
       if data.is_a?(Hash) && data.has_key?('error')
-        raise Kontena::Errors::StandardError.new(response.status, data['error'])
+        raise Kontena::Errors::StandardErrors.new(response.status, response.reason_phrase, data['error'])
       elsif data.is_a?(String) && !data.empty?
         raise Kontena::Errors::StandardError.new(response.status, data)
       else
