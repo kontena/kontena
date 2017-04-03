@@ -285,12 +285,12 @@ describe Kontena::Client do
           headers: {
             'Content-Type' => 'application/json',
           },
-          body: {'error' => "You are wrong"}.to_json,
+          body: {'error' => { 'foo' => "Foo was invalid" } }.to_json,
         )
       end
 
       it "raises StandardError with the server error message" do
-        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, "You are wrong")
+        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardErrors, /foo: Foo was invalid/)
       end
     end
 
