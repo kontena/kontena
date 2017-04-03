@@ -49,6 +49,11 @@ module Stacks
           unless vol
             add_error(:volumes, :not_found, "External volume #{volume_name} not found")
           end
+        else
+          outcome = Volumes::Create.validate(grid: self.grid, **volume.symbolize_keys)
+          unless outcome.success?
+            handle_volume_outcome_errors(volume['name'], outcome.errors)
+          end
         end
       end
     end

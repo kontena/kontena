@@ -109,7 +109,7 @@ describe Stacks::Update do
       expect {
         outcome = subject.run
         expect(outcome.success?).to be_falsey
-      }.to change { Volume.count }.by (0)
+      }.not_to change { [Volume.count, stack.latest_rev] }
     end
   end
 end

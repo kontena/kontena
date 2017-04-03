@@ -43,8 +43,9 @@ describe Stacks::Create do
         source: '...',
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
-        volumes: [{name: 'vol1', scope: 'grid', external: false, driver: 'local'}]
+        volumes: [{name: 'vol1', scope: 'grid', driver: 'local'}]
       ).run
+      expect(outcome.success?).to be_truthy
       expect(outcome.result.stack_revisions.count).to eq(1)
       expect(outcome.result.latest_rev.volumes.count).to eq(1)
     end
@@ -307,7 +308,7 @@ describe Stacks::Create do
             volumes: [{name: 'vol1', scope: 'grid'}]
           ).run
           expect(outcome.success?).to be_falsey
-        }.to change{ Volume.count }.by(0)
+        }.not_to change{ Stack.count }
       end
 
       it 'creates stack with external volumes with name' do
@@ -348,7 +349,7 @@ describe Stacks::Create do
         expect(outcome.success?).to be_truthy
         redis = outcome.result.grid_services.first
         expect(redis.service_volumes.first.volume).to eq(volume)
-      }.to change{ Volume.count }.by(0)
+      }.not_to change{ Volume.count }
     end
 
 
@@ -366,7 +367,7 @@ describe Stacks::Create do
           volumes: [{name: 'vol1', external: {name: 'foo'}}]
         ).run
         expect(outcome.success?).to be_falsey
-      }.to change{ Volume.count }.by(0)
+      }.not_to change{ Volume.count }
     end
   end
 end
