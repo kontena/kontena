@@ -1,6 +1,6 @@
 require_relative '../../../common'
 
-module Kontena::Cli::Master::Users::Roles
+module Kontena::Cli::Master::User::Role
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 

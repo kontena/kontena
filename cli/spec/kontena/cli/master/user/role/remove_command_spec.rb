@@ -1,7 +1,7 @@
-require 'kontena/cli/master/users_command'
-require 'kontena/cli/master/users/roles/remove_command'
+require 'kontena/cli/master/user_command'
+require 'kontena/cli/master/user/role/remove_command'
 
-describe Kontena::Cli::Master::Users::Roles::RemoveCommand do
+describe Kontena::Cli::Master::User::Role::RemoveCommand do
 
   include ClientHelpers
 
