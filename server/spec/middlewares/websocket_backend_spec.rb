@@ -4,9 +4,11 @@ describe WebsocketBackend, celluloid: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
 
-  before(:all) do
-    Thread.new { EM.run }
-    sleep 0.1 until EM.reactor_running?
+  around(:each) do |example|
+    EM.run {
+      example.run
+      EM.stop
+    }
   end
 
   before(:each) do
@@ -15,10 +17,6 @@ describe WebsocketBackend, celluloid: true do
 
   after(:each) do
     subject.stop_rpc_server
-  end
-
-  after(:all) do
-    EM.stop if EM.reactor_running?
   end
 
   describe '#our_version' do
