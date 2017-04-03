@@ -56,6 +56,12 @@ class GridServiceInstanceDeployer
     deploy_service_instance(service_instance, @host_node, deploy_rev, 'running')
   end
 
+  # Stop an existing instance on the previous host node.
+  #
+  # This strictly optional: changing the GridServiceInstance.host_node will eventually result in the old pod being terminated.
+  # This just lets us notify the old node and wait for the old pod to actually stop, and thus avoid duplicate instances under
+  # normal conditions.
+  #
   # @param service_instance [GridServiceInstance]
   # @param deploy_rev [String]
   def stop_service_instance(service_instance, deploy_rev)
