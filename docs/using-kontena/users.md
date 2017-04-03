@@ -20,7 +20,7 @@ Kontena has built-in role-based user management. The first user that logs in to 
 **user**
   * can only operate within Grids
 
-The user role is automatically assigned to any user added to a Grid using the [Add User to Grid](users#add-user-to-grid) command. There is no need to assign the role explicitly in this case. 
+The user role is automatically assigned to any user added to a Grid using the [Add User to Grid](users#add-user-to-grid) command. There is no need to assign the role explicitly in this case.
 
 ## Managing Users
 
@@ -35,19 +35,19 @@ The user role is automatically assigned to any user added to a Grid using the [A
 ### Invite User to Kontena Master
 
 ```
-$ kontena master users invite <email>
+$ kontena master user invite <email>
 ```
 
 ### Add Users to Role
 
 ```
-$ kontena master users role add <role> <email>
+$ kontena master user role add <role> <email>
 ```
 
 ### Remove Users from Role
 
 ```
-$ kontena master users role remove <role> <email>
+$ kontena master user role remove <role> <email>
 ```
 
 ### Add User to Grid
@@ -77,5 +77,5 @@ $ kontena grid user remove <email>
 ### Remove User from Kontena Master
 
 ```
-$ kontena master users remove <email>
+$ kontena master user remove <email>
 ```

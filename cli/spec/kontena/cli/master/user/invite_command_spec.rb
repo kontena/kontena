@@ -1,7 +1,7 @@
-require 'kontena/cli/master/users_command'
-require 'kontena/cli/master/users/invite_command'
+require 'kontena/cli/master/user_command'
+require 'kontena/cli/master/user/invite_command'
 
-describe Kontena::Cli::Master::Users::InviteCommand do
+describe Kontena::Cli::Master::User::InviteCommand do
 
   include ClientHelpers
 

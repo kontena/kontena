@@ -1,7 +1,7 @@
 require_relative '../../common'
-require_relative 'roles/add_command'
+require_relative 'role/add_command'
 
-module Kontena::Cli::Master::Users
+module Kontena::Cli::Master::User
   class InviteCommand < Kontena::Command
     include Kontena::Cli::Common
 

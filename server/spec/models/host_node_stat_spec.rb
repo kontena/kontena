@@ -28,8 +28,13 @@ describe HostNodeStat do
             user: 0.2
           },
           memory: {
+            used: 250,
             total: 1000,
-            used: 250
+            free: 750,
+            active: 500,
+            inactive: 500,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -69,7 +74,12 @@ describe HostNodeStat do
           },
           memory: {
             used: 500,
-            total: 1000
+            total: 1000,
+            free: 500,
+            active: 500,
+            inactive: 500,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -109,7 +119,12 @@ describe HostNodeStat do
           },
           memory: {
             used: 500,
-            total: 1000
+            total: 1000,
+            free: 500,
+            active: 500,
+            inactive: 500,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -149,7 +164,12 @@ describe HostNodeStat do
           },
           memory: {
             used: 500,
-            total: 1000
+            total: 1000,
+            free: 500,
+            active: 500,
+            inactive: 500,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -189,7 +209,12 @@ describe HostNodeStat do
           },
           memory: {
             used: 100,
-            total: 1000
+            total: 1000,
+            free: 900,
+            active: 500,
+            inactive: 500,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -229,7 +254,12 @@ describe HostNodeStat do
           },
           memory: {
             used: 600,
-            total: 2000
+            total: 2000,
+            free: 1400,
+            active: 1000,
+            inactive: 1000,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -268,7 +298,12 @@ describe HostNodeStat do
           },
           memory: {
             used: 250,
-            total: 1000
+            total: 1000,
+            free: 750,
+            active: 500,
+            inactive: 500,
+            cached: 100,
+            buffers: 100
           },
           filesystem: [{
             name: "fs1",
@@ -313,8 +348,13 @@ describe HostNodeStat do
           "percent_used" => 0.39999999999999997, #avg(.1, .7)
         })
         expect(results[0]["memory"]).to eq({
-          "used" => 300.0, #avg(500, 100)
-          "total" => 1000.0 #avg(1000, 1000)
+          "used" => 300.0,     #avg(500, 100)
+          "total" => 1000.0,   #avg(1000, 1000)
+          "free" => 700.0,     #avg(500, 900)
+          "active" => 500.0,   #avg(500, 500)
+          "inactive" => 500.0, #avg(500, 500)
+          "cached" => 100.0,   #avg(100, 100)
+          "buffers" => 100.0   #avg(100, 100)
         })
         expect(results[0]["filesystem"]).to eq({
           "used" => 1000.0, #avg( 200+200, 800+800 )
@@ -349,7 +389,12 @@ describe HostNodeStat do
         })
         expect(results[1]["memory"]).to eq({
           "used" => 600.0,
-          "total" => 2000.0
+          "total" => 2000.0,
+          "free" => 1400.0,
+          "active" => 1000.0,
+          "inactive" => 1000.0,
+          "cached" => 100.0,
+          "buffers" => 100.0
         })
         expect(results[1]["filesystem"]).to eq({
           "used" => 1000.0, # 500+500
@@ -388,12 +433,17 @@ describe HostNodeStat do
 
         # Records #2, #4 and #5.
         expect(results[0]["cpu"]).to eq({
-          "num_cores" => 3.0, # avg(1,1) + 2
-          "percent_used" => 0.25, #avg( avg(.1, .7) + .1 )
+          "num_cores" => 3.0,     # avg(1,1) + 2
+          "percent_used" => 0.5, # avg(.1, .7) + .1
         })
         expect(results[0]["memory"]).to eq({
-          "used" => 800.0, # avg(500, 100) + 500
-          "total" => 2000.0 # avg(1000, 1000) + 1000
+          "used" => 800.0,      # avg(500, 100) + 500
+          "total" => 2000.0,    # avg(1000, 1000) + 1000
+          "free" => 1200.0,     # avg(500, 900) + 500
+          "active" => 1000.0,   # avg(500, 500) + 500
+          "inactive" => 1000.0, # avg(500, 500) + 500
+          "cached" => 200.0,    # avg(100, 100) + 100
+          "buffers" => 200.0,   # avg(100, 100) + 100
         })
         expect(results[0]["filesystem"]).to eq({
           "used" => 1400.0, # avg(200+200, 800+800) + (200+200)
@@ -428,7 +478,12 @@ describe HostNodeStat do
         })
         expect(results[1]["memory"]).to eq({
           "used" => 600.0,
-          "total" => 2000.0
+          "total" => 2000.0,
+          "free" => 1400.0,
+          "active" => 1000.0,
+          "inactive" => 1000.0,
+          "cached" => 100.0,
+          "buffers" => 100.0
         })
         expect(results[1]["filesystem"]).to eq({
           "used" => 1000.0, # 500+500

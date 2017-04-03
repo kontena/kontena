@@ -37,6 +37,7 @@ class GridServiceInstanceDeployer
       stop_current_instance(service_instance, deploy_rev)
     end
 
+    ensure_volume_instance
     ensure_service_instance(service_instance, @host_node, deploy_rev, 'running')
 
   rescue => error
@@ -116,5 +117,14 @@ class GridServiceInstanceDeployer
   def notify_node(node, timeout: 2.0)
     rpc_client = RpcClient.new(node.node_id, timeout)
     rpc_client.request('/service_pods/notify_update', [])
+  end
+
+  # @raise [RpcClient::Error]
+  def ensure_volume_instance
+    @grid_service.service_volumes.each do |sv|
+      if sv.volume
+        VolumeInstanceDeployer.new.deploy(@host_node, sv, @instance_number)
+      end
+    end
   end
 end

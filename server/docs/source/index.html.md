@@ -287,9 +287,12 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 			"used": 0.0,
 			"total": 0.0
 		},
-    "usage": {
-      "container_seconds": 0
-    }
+		"cpu": {
+			"usage_pct": 0.0
+		},
+	    "usage": {
+	      "container_seconds": 0
+    	}
 	},
 	"grid": {
 		"id": "my-grid",

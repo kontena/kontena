@@ -69,5 +69,19 @@ module Kontena::Cli::Stacks::YAML
     def validate_options(service_config)
       HashValidator.validate(service_config, @schema, true)
     end
+
+    def validate_volume_options(volume_config)
+      HashValidator.validate(volume_config, volume_schema, true)
+    end
+
+    def volume_schema
+      {
+        'secrets' => optional('stacks_valid_secrets'),
+        'scope' => optional(['instance', 'service', 'stack', 'grid']),
+        'driver' => optional('string'),
+        'driver_opts' => optional( -> (value) { value.is_a?(Hash) }),
+        'external' => optional(-> (value) { value.is_a?(TrueClass) || value.is_a?(FalseClass) || (value.is_a?(Hash) && value['name'].is_a?(String)) })
+      }
+    end
   end
 end

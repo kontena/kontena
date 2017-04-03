@@ -2,10 +2,10 @@ class Metrics
 
   # @param [Moped::Collection] containers_collection
   # @param [Symbol] sort
-  def self.get_container_stats(containers_collection, sort)
+  def self.get_container_stats(containers_collection, sort, limit)
     containers = containers_collection.where(container_id: {:$ne => nil}).asc(:created_at)
 
-    containers.map { |container|
+    results = containers.map { |container|
       {
           container: container,
           stats: container.container_stats.last
@@ -28,5 +28,8 @@ class Metrics
 
       num
     }.reverse
+
+    results = results.take(limit) if (limit)
+    results
   end
 end

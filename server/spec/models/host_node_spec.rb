@@ -16,6 +16,7 @@ describe HostNode do
   it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
   it { should have_many(:host_node_stats) }
+  it { should have_many(:volume_instances) }
 
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_id: 1, node_number: 1).with_options(sparse: true, unique: true) }

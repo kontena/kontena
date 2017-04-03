@@ -1,4 +1,5 @@
-require_relative '../../../util'
+require 'kontena/cli/common'
+require 'kontena/util'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -141,12 +142,13 @@ module Kontena::Cli::Stacks
           result[:expose]        = fully_interpolated_yaml['expose']
           result[:errors]        = errors unless skip_validation?
           result[:notifications] = notifications
-          result[:services]      = errors.count == 0 ? parse_services(service_name) : {}
+          result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
           unless skip_variables?
             result[:variables]     = variables.to_h(values_only: true).reject do |k,_|
               k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
             end
           end
+          result[:volumes]       = errors.count.zero? ? parse_volumes : {}
         end
         result
       end
@@ -208,6 +210,19 @@ module Kontena::Cli::Stacks
         @validator ||= YAML::ValidatorV3.new
       end
 
+      def parse_volumes
+        volumes.each do |name, config|
+          if process_hash?(config)
+            volumes[name].delete('only_if')
+            volumes[name].delete('skip_if')
+            volumes[name] = process_volume(config)
+          else
+            volumes.delete(name)
+          end
+        end
+        volumes
+      end
+
       ##
       # @param [String] service_name - optional service to parse
       # @return [Hash]
@@ -264,9 +279,17 @@ module Kontena::Cli::Stacks
         service_config
       end
 
+      def process_volume(volume_config)
+        volume_config
+      end
+
+      def volumes
+        @volumes ||= fully_interpolated_yaml['volumes'] || {}
+      end
+
       # @return [Hash] - services from YAML file
       def services
-        @services ||= fully_interpolated_yaml['services']
+        @services ||= fully_interpolated_yaml['services'] || {}
       end
 
       def from_external_file(filename, service_name)
