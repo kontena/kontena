@@ -9,7 +9,7 @@ describe RpcClient, celluloid: true do
   end
 
   def publish_error(id, error)
-    MongoPubsub.publish(channel, {message: [1, id, error, nil]})
+    MongoPubsub.publish("#{channel}:#{id}", {message: [1, id, error, nil]})
   end
 
   def fake_server(type = 'request')
@@ -62,15 +62,24 @@ describe RpcClient, celluloid: true do
       server.terminate
     end
 
+    it 'raises a timeout' do
+      subject = RpcClient.new(node_id, 0.001)
+      expect {
+        subject.request('/hello/service', :foo, :bar)
+      }.to raise_error(RpcClient::TimeoutError, "Connection timeout (0.001s)")
+    end
+
     it 'raises error from rpc server' do
       server = fake_server {|resp|
         response = resp['message'][3]
         response.unshift(resp['message'][2])
-        publish_error(resp['message'][1], 'error!')
+        publish_error(resp['message'][1], {'code' => 500, 'message' => "test error", 'backtrace' => [
+          "/foo/bar.rb:1:in `foo'",
+        ]})
       }
       expect {
         subject.request('/hello/service', :foo, :bar)
-      }.to raise_error(RpcClient::Error)
+      }.to raise_error(RpcClient::Error, "test error")
 
       server.terminate
     end
