@@ -130,8 +130,12 @@ describe HostNode do
     end
 
     it 'sets volume plugins' do
-      subject.attributes_from_docker({'Plugins' => {'Volume' => ['local', 'foobar']}})
-      expect(subject.plugins['volume']).to eq(['local', 'foobar'])
+      subject.attributes_from_docker({'Drivers' => {'Volume' => [
+        { 'name' => 'local' }, { 'name' => 'foobar' }
+      ]}})
+      expect(subject.volume_drivers).to eq([
+        { 'name' => 'local' }, { 'name' => 'foobar' }
+      ])
     end
   end
 
