@@ -6,15 +6,15 @@ describe Scheduler::Filter::VolumePlugin do
     nodes = []
     nodes << HostNode.create!(
       grid: grid, node_id: 'node1', name: 'node-1',
-      plugins: {'volume' => [{'name' => 'local'}, {'name' => 'foo'}]}
+      volume_drivers: [{'name' => 'local'}, {'name' => 'foo'}]
     )
     nodes << HostNode.create!(
       grid: grid, node_id: 'node2', name: 'node-2',
-      plugins: {'volume' => [{'name' => 'foo'}]}
+      volume_drivers: [{'name' => 'foo'}]
     )
     nodes << HostNode.create!(
       grid: grid, node_id: 'node3', name: 'node-3',
-      plugins: {'volume' => [{'name' => 'local'}, {'name' => 'bar'}]}
+      volume_drivers: [{'name' => 'local'}, {'name' => 'bar'}]
     )
     nodes
   end

@@ -80,7 +80,7 @@ module Kontena::Workers
       node_info['PublicIp'] = self.public_ip
       node_info['PrivateIp'] = self.private_ip
       node_info['AgentVersion'] = Kontena::Agent::VERSION
-      node_info['Plugins'] = {
+      node_info['Drivers'] = {
         'Volume' => volume_drivers,
         'Network' => network_drivers
       }

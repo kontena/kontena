@@ -29,6 +29,8 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
   field :plugins, type: Hash, default: {}
+  field :volume_drivers, type: Array, default: []
+  field :network_drivers, type: Array, default: []
 
   attr_accessor :schedule_counter
 
@@ -76,10 +78,8 @@ class HostNode
       private_ip: attrs['PrivateIp'],
       agent_version: attrs['AgentVersion'],
       docker_version: attrs['ServerVersion'],
-      plugins: {
-        'volume' => attrs.dig('Plugins', 'Volume') || [],
-        'network' => attrs.dig('Plugins', 'Network') || []
-      }
+      volume_drivers: attrs.dig('Drivers', 'Volume') || [],
+      network_drivers: attrs.dig('Drivers', 'Network') || [],
     }
     if self.name.nil?
       self.name = attrs['Name']

@@ -10,7 +10,8 @@ describe HostNode do
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
   it { should have_fields(:last_seen_at).of_type(Time) }
-  it { should have_fields(:plugins).of_type(Hash) }
+  it { should have_fields(:network_drivers).of_type(Array) }
+  it { should have_fields(:volume_drivers).of_type(Array) }
 
   it { should belong_to(:grid) }
   it { should have_many(:grid_service_instances) }
