@@ -42,7 +42,7 @@ module Kontena::Workers
 
     def populate_workers_from_master
       exclusive {
-        request = rpc_client.request("/node_service_pods/list", [node.id])
+        request = rpc_client.future.request("/node_service_pods/list", [node.id])
         response = request.value
         unless response['service_pods'].is_a?(Array)
           warn "failed to get list of service pods from master: #{response['error']}"

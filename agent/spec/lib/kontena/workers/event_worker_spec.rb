@@ -42,7 +42,7 @@ describe Kontena::Workers::EventWorker do
 
     it 'streams and processes events' do
       times = 100
-      expect(rpc_client).to receive(:notification).exactly(times).times
+      expect(rpc_client).to receive(:request).exactly(times).times
       subject
       allow(Docker::Event).to receive(:stream) {|params, &block|
         times.times {
@@ -125,12 +125,12 @@ describe Kontena::Workers::EventWorker do
 
   describe '#publish_event' do
     it 'sends event via rpc' do
-      expect(rpc_client).to receive(:notification).with('/containers/event', [anything])
+      expect(rpc_client).to receive(:request).with('/containers/event', [anything])
       subject.publish_event(spy)
     end
 
     it 'publishes event' do
-      expect(rpc_client).to receive(:notification)
+      expect(rpc_client).to receive(:request)
       event = spy(:event)
       expect(subject.wrapped_object).to receive(:publish).with(described_class::EVENT_NAME, event)
       subject.publish_event(event)
@@ -138,7 +138,7 @@ describe Kontena::Workers::EventWorker do
 
     it 'does not send event if source is from network adapter' do
       event = spy(:event)
-      expect(rpc_client).not_to receive(:notification)
+      expect(rpc_client).not_to receive(:request)
       allow(network_adapter).to receive(:adapter_image?).and_return(true)
       subject.publish_event(event)
     end

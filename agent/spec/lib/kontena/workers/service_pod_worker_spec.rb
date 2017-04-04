@@ -16,7 +16,7 @@ describe Kontena::Workers::ServicePodWorker do
   describe '#ensure_desired_state' do
     before(:each) do
       mock_rpc_client
-      allow(rpc_client).to receive(:notification)
+      allow(rpc_client).to receive(:request)
     end
 
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
@@ -116,11 +116,11 @@ describe Kontena::Workers::ServicePodWorker do
   describe '#sync_state_to_master' do
     before(:each) do
       mock_rpc_client
-      allow(rpc_client).to receive(:notification)
+      allow(rpc_client).to receive(:request)
     end
 
     it 'sends correct data' do
-      expect(rpc_client).to receive(:notification).with(
+      expect(rpc_client).to receive(:request).with(
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
       )

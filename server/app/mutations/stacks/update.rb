@@ -39,7 +39,7 @@ module Stacks
         end
 
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
     end
@@ -77,7 +77,7 @@ module Stacks
           service[:stack] = stack
           outcome = GridServices::Create.run(service)
           unless outcome.success?
-            handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+            handle_service_outcome_errors(service[:name], outcome.errors)
           end
         end
       end

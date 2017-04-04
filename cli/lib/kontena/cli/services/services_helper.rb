@@ -250,7 +250,6 @@ module Kontena
         # @param [Fixnum] timeout
         # @param [Boo lean] verbose
         # @raise [Kontena::Errors::StandardError]
-        # @raise [Kontena::Errors::DetailsError]
         def wait_for_deploy_to_finish(token, deployment, timeout: 600)
           Timeout::timeout(timeout) do
             until deployment['finished_at']
@@ -259,7 +258,7 @@ module Kontena
             end
 
             if deployment['state'] == 'error'
-              raise Kontena::Errors::DetailsError.new(500, deployment['reason'], render_service_deploy_instances(deployment))
+              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment))
             else
               puts render_service_deploy_instances(deployment).join("\n")
             end
