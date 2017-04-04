@@ -30,7 +30,7 @@ module Kontena::Cli::Master::Config
         path = File.join(Kontena.root, 'lib/kontena/presets', "#{self.preset}.yml")
         File.read(path)
       else
-        Kontena.stdinput("Enter master configuration as #{format.upcase}")
+        stdin_input("Enter master configuration as #{format.upcase}")
       end
     end
 

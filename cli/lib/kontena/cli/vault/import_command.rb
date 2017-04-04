@@ -23,7 +23,7 @@ module Kontena::Cli::Vault
     end
 
     def input
-      path ? File.read(path) : Kontena.stdinput("Enter secrets YAML")
+      path ? File.read(path) : stdin_input("Enter secrets YAML")
     end
 
     def execute

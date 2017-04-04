@@ -82,16 +82,6 @@ module Kontena
       File.join(Kontena.root, 'lib/kontena/cli', *joinables)
     end
   end
-
-  def self.stdinput(message = nil)
-    if $stdin.tty?
-      prompt.multiline(message).join.chomp
-    elsif !$stdin.eof?
-      $stdin.read.chomp
-    else
-      exit_with_error 'Missing input'
-    end
-  end
 end
 
 # Monkeypatching string to mimick 'colorize' gem

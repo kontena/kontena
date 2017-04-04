@@ -22,6 +22,16 @@ module Kontena
         @pastel ||= Pastel.new(enabled: $stdout.tty?)
       end
 
+      def stdin_input(message = nil)
+        if $stdin.tty?
+          prompt.multiline(message).join.chomp
+        elsif !$stdin.eof?
+          $stdin.read.chomp
+        else
+          exit_with_error 'Missing input'
+        end
+      end
+
       def running_silent?
         self.respond_to?(:silent?) && self.silent?
       end

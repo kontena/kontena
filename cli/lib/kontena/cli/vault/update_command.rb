@@ -12,7 +12,7 @@ module Kontena::Cli::Vault
     requires_current_master
 
     def default_value
-      Kontena.stdinput("Enter value for secret '#{name}'")
+      stdin_input("Enter value for secret '#{name}'")
     end
 
     def execute
