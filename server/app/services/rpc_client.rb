@@ -15,7 +15,7 @@ class RpcClient
       local_backtrace = super
 
       if local_backtrace && @remote_backtrace
-        remote_backtrace + ["<RPC>"] + local_backtrace
+        remote_backtrace.map{|line| 'agent:' + line} + ["<RPC>"] + local_backtrace
       else
         local_backtrace
       end

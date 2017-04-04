@@ -83,6 +83,32 @@ describe RpcClient, celluloid: true do
 
       server.terminate
     end
+
+    it 'can be used to log an error message with a formatted backtrace' do
+      server = fake_server {|resp|
+        response = resp['message'][3]
+        response.unshift(resp['message'][2])
+        publish_error(resp['message'][1], {'code' => 500, 'message' => "test error", 'backtrace' => [
+          "/foo/bar.rb:1:in `foo'",
+        ]})
+      }
+      expect {
+        begin
+          subject.request('/hello/service', :foo, :bar)
+        rescue => exc
+          $stderr.puts "#{exc.class}: #{exc}"
+          $stderr.puts exc.backtrace.join("\n")
+        end
+      }.to output(Regexp.new('^' + [
+        "RpcClient::Error: test error",
+        "agent:/foo/bar.rb:1:in `foo'",
+        "<RPC>",
+        "/.*/app/services/rpc_client.rb:\\d+:in `request'",
+        ""
+      ].join("\n"), Regexp::MULTILINE)).to_stderr
+
+      server.terminate
+    end
   end
 
   describe '#notify' do
