@@ -6,16 +6,11 @@ module Kontena
     include Kontena::Logging
 
     class Error < StandardError
-      attr_reader :code, :remote_backtrace
+      attr_reader :code
 
-      def initialize(code, message, remote_backtrace = nil)
+      def initialize(code, message)
         @code = code
-        @remote_backtrace = (['<Remote>:'] + remote_backtrace) if remote_backtrace
         super(message)
-      end
-
-      def backtrace
-        Array(super) + Array(remote_backtrace)
       end
     end
 
