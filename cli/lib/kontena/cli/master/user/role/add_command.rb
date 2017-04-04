@@ -1,7 +1,7 @@
 require_relative '../../../common'
 
-module Kontena::Cli::Master::Users
-  module Roles
+module Kontena::Cli::Master::User
+  module Role
     class AddCommand < Kontena::Command
       include Kontena::Cli::Common
 
@@ -19,8 +19,8 @@ module Kontena::Cli::Master::Users
           begin
             response = client(token).post("users/#{email}/roles", data)
             puts "Added role #{role} to #{email}" unless running_silent?
-          rescue => exc
-            abort "Failed to add role #{role} to #{email} : #{exc.message}".colorize(:red)
+          rescue => ex
+            abort pastel.red("Failed to add role #{role} to #{email} : #{ex.message}")
           end
         end
       end

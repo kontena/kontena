@@ -340,8 +340,16 @@ describe '/v1/grids', celluloid: true do
       expect(response.status).to eq(200)
       expect(json_response['stats'].size).to eq 1
       expect(json_response['stats'][0]['cpu']).to eq({ 'used' => 15.5, 'cores' => 2 })
-      expect(json_response['stats'][0]['memory']).to eq({ 'used' => 100.0, 'total' => 1000.0 })
       expect(json_response['stats'][0]['filesystem']).to eq({ 'used' => 10.0, 'total' => 1000.0 })
+      expect(json_response['stats'][0]['memory']).to eq({
+        'used' => 100.0,
+        'total' => 1000.0,
+        'active' => 0,
+        'inactive' => 0,
+        'cached' => 0,
+        'buffers' => 0,
+        'free' => 0,
+      })
       expect(json_response['stats'][0]['network']['internal']).to eq({
         'interfaces' => ["weave", "vethwe123"],
         'rx_bytes' => 400.0,

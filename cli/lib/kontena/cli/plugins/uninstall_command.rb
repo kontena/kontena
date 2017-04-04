@@ -10,11 +10,12 @@ module Kontena::Cli::Plugins
 
     def execute
       confirm unless forced?
-      spinner "Uninstalling plugin #{name.colorize(:cyan)}" do |spin|
+      spinner "Uninstalling plugin #{pastel.cyan(name)}" do |spin|
         begin
           Kontena::PluginManager.instance.uninstall_plugin(name)
         rescue => ex
-          puts Kontena.pastel.red(ex.message)
+          $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
+          ENV["DEBUG"] && $stderr.puts(ex.backtrace.join("\n  "))
           spin.fail
         end
       end

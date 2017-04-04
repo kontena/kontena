@@ -13,6 +13,8 @@ class GridServiceInstanceDeployer
   # @param [String] deploy_rev
   # @return [Boolean]
   def deploy(node, instance_number, deploy_rev)
+    ensure_volume_instance(node, instance_number)
+
     current_instance = current_service_instance(instance_number)
     if current_instance && current_instance.host_node != node
       # we need to stop instance if it's running on different node
@@ -27,7 +29,7 @@ class GridServiceInstanceDeployer
   rescue => exc
     error "failed to deploy service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
     error exc.message
-    error exc.backtrace.join("\n")
+    error exc.backtrace.join("\n") if exc.backtrace
     false
   end
 
@@ -81,5 +83,13 @@ class GridServiceInstanceDeployer
   def notify_node(node)
     rpc_client = RpcClient.new(node.node_id, 2)
     rpc_client.request('/service_pods/notify_update', [])
+  end
+
+  def ensure_volume_instance(node, instance_number)
+    self.grid_service.service_volumes.each do |sv|
+      if sv.volume
+        VolumeInstanceDeployer.new.deploy(node, sv, instance_number)
+      end
+    end
   end
 end

@@ -1,6 +1,6 @@
 require_relative '../../../common'
 
-module Kontena::Cli::Master::Users::Roles
+module Kontena::Cli::Master::User::Role
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
@@ -18,9 +18,8 @@ module Kontena::Cli::Master::Users::Roles
         begin
           response = client(token).delete("users/#{email}/roles/#{role}")
           puts "Removed role #{role} from #{email}" if response
-        rescue => exc
-          puts "Failed to remove role #{role} from #{email}".colorize(:red)
-          puts exc.message
+        rescue => ex
+          $stderr.puts pastel.red("Failed to remove role #{role} from #{email} : #{ex.message}")
         end
       end
     end

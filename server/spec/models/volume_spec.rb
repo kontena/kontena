@@ -3,6 +3,7 @@ require_relative '../spec_helper'
 describe Volume do
   it { should be_timestamped_document }
   it { should have_fields(:name, :driver, :scope) }
+  it { should have_many(:volume_instances)}
 
   let(:grid) do
     Grid.create(name: 'test-grid')

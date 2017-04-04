@@ -26,7 +26,7 @@ module Kontena
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'CONFIG'
         load_settings_from_env || load_settings_from_config_file

@@ -35,7 +35,7 @@ describe Kontena::Observer do
     end
   end
 
-  it "raises synchronously if given an invalid actor", :celluloid => true do
+  it "raises synchronously if given an invalid actor", :celluloid => true, :log_celluloid_actor_crashes => false do
     expect{observer_class.new('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
   end
 
@@ -70,7 +70,7 @@ describe Kontena::Observer do
       expect(subject.values).to eq [object]
     end
 
-    it "crashes if the observable does", :celluloid => true do
+    it "crashes if the observable does", :celluloid => true, :log_celluloid_actor_crashes => false do
       expect{observable.crash}.to raise_error(RuntimeError)
 
       expect{subject.ready?}.to raise_error(Celluloid::DeadActorError)
@@ -168,7 +168,7 @@ describe Kontena::Observer do
       expect(@observer_actor.values).to eq [1]
     end
 
-    it "crashing allows it to re-observe the existing value immediately after restarting" do
+    it "crashing allows it to re-observe the existing value immediately after restarting", :log_celluloid_actor_crashes => false do
       expect{@observer_actor.crash}.to raise_error(RuntimeError)
       Kontena::Helpers::WaitHelper.wait_until! { @observer_actor.dead? }
 
@@ -179,7 +179,7 @@ describe Kontena::Observer do
       expect(@observer_actor.values).to eq [1]
     end
 
-    it "restarts after the observable crashes and waits for it to update" do
+    it "restarts after the observable crashes and waits for it to update", :log_celluloid_actor_crashes => false do
       expect{@observable_actor.crash}.to raise_error(RuntimeError)
       Kontena::Helpers::WaitHelper.wait_until! { @observable_actor.dead? && @observer_actor.dead? }
 

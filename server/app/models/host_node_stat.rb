@@ -57,7 +57,7 @@ class HostNodeStat
 
         cpu_num_cores: { '$avg': '$cpu.num_cores' },
         cpu_percent_used: {
-          '$avg': {         
+          '$avg': {
             '$add': [
               { '$ifNull': ['$cpu.user', 0] },
               { '$ifNull': ['$cpu.system', 0] },
@@ -68,6 +68,11 @@ class HostNodeStat
 
         memory_used: { '$avg': '$memory.used' },
         memory_total: { '$avg': '$memory.total' },
+        memory_free: { '$avg': '$memory.free' },
+        memory_active: { '$avg': '$memory.active' },
+        memory_inactive: { '$avg': '$memory.inactive' },
+        memory_cached: { '$avg': '$memory.cached' },
+        memory_buffers: { '$avg': '$memory.buffers' },
 
         network_internal_interfaces: { '$first': '$network.internal.interfaces' },
         network_internal_rx_bytes: { '$avg': '$network.internal.rx_bytes' },
@@ -98,7 +103,12 @@ class HostNodeStat
         },
         memory: {
           used: '$memory_used',
-          total: '$memory_total'
+          total: '$memory_total',
+          free: '$memory_free',
+          active: '$memory_active',
+          inactive: '$memory_inactive',
+          cached: '$memory_cached',
+          buffers: '$memory_buffers'
         },
         network: {
           internal: {
@@ -177,6 +187,11 @@ class HostNodeStat
 
         memory_used: { '$avg': '$memory.used' },
         memory_total: { '$avg': '$memory.total' },
+        memory_free: { '$avg': '$memory.free' },
+        memory_active: { '$avg': '$memory.active' },
+        memory_inactive: { '$avg': '$memory.inactive' },
+        memory_cached: { '$avg': '$memory.cached' },
+        memory_buffers: { '$avg': '$memory.buffers' },
 
         network_internal_interfaces: { '$first': '$network.internal.interfaces' },
         network_internal_rx_bytes: { '$avg': '$network.internal.rx_bytes' },
@@ -206,10 +221,15 @@ class HostNodeStat
         created_at: { '$first': '$created_at' },
 
         cpu_num_cores: { '$sum': '$cpu_num_cores' },
-        cpu_percent_used: { '$avg': '$cpu_percent_used' },
+        cpu_percent_used: { '$sum': '$cpu_percent_used' },
 
         memory_used: { '$sum': '$memory_used' },
         memory_total: { '$sum': '$memory_total' },
+        memory_free: { '$sum': '$memory_free' },
+        memory_active: { '$sum': '$memory_active' },
+        memory_inactive: { '$sum': '$memory_inactive' },
+        memory_cached: { '$sum': '$memory_cached' },
+        memory_buffers: { '$sum': '$memory_buffers' },
 
         network_internal_interfaces: { '$first': '$network_internal_interfaces' },
         network_internal_rx_bytes: { '$sum': '$network_internal_rx_bytes' },
@@ -240,7 +260,12 @@ class HostNodeStat
         },
         memory: {
           used: '$memory_used',
-          total: '$memory_total'
+          total: '$memory_total',
+          free: '$memory_free',
+          active: '$memory_active',
+          inactive: '$memory_inactive',
+          cached: '$memory_cached',
+          buffers: '$memory_buffers'
         },
         network: {
           internal: {

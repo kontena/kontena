@@ -1,7 +1,7 @@
-require 'kontena/cli/master/users_command'
-require 'kontena/cli/master/users/roles/add_command'
+require 'kontena/cli/master/user_command'
+require 'kontena/cli/master/user/role/add_command'
 
-describe Kontena::Cli::Master::Users::Roles::AddCommand do
+describe Kontena::Cli::Master::User::Role::AddCommand do
 
   include ClientHelpers
 

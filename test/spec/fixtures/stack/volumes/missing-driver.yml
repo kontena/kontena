@@ -1,0 +1,13 @@
+stack: redis
+description: Just a simple Redis stack with volume
+version: 0.0.1
+services:
+  redis:
+    image: redis:3.2-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+    scope: instance

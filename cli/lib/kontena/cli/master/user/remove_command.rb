@@ -1,6 +1,6 @@
 require_relative '../../common'
 
-module Kontena::Cli::Master::Users
+module Kontena::Cli::Master::User
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
@@ -15,9 +15,8 @@ module Kontena::Cli::Master::Users
       email_list.each do |email|
         begin
           client(token).delete("users/#{email}")
-        rescue => exc
-          STDERR.puts "Failed to remove user #{email}".colorize(:red)
-          STDERR.puts exc.message
+        rescue => ex
+          $stderr.puts pastel.red("Failed to remove user #{email} : #{ex.message}")
         end
       end
     end

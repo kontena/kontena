@@ -1,13 +1,13 @@
 require_relative '../../spec_helper'
 
-describe Rpc::NodeServicePodHandler, celluloid: true do
+describe Rpc::NodeServicePodHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node', node_id: 'abc') }
 
   describe '#list' do
     before(:each) do
-      allow(subject.wrapped_object).to receive(:migration_done?).and_return(true)
+      allow(subject).to receive(:migration_done?).and_return(true)
     end
 
     it 'returns hash with error if id does not exist' do
@@ -16,7 +16,7 @@ describe Rpc::NodeServicePodHandler, celluloid: true do
     end
 
     it 'returns hash with error if migration is not done' do
-      allow(subject.wrapped_object).to receive(:migration_done?).and_return(false)
+      allow(subject).to receive(:migration_done?).and_return(false)
       list = subject.list('foo')
       expect(list[:error]).not_to be_nil
     end
@@ -55,18 +55,20 @@ describe Rpc::NodeServicePodHandler, celluloid: true do
     end
 
     it 'saves service pod state to service instance' do
-      instance = subject.set_state(node.node_id, data)
-      expect(instance.rev).to eq(data['rev'])
-      expect(instance.state).to eq(data['state'])
+      subject.set_state(node.node_id, data)
+      service_instance.reload
+
+      expect(service_instance.rev).to eq(data['rev'])
+      expect(service_instance.state).to eq(data['state'])
     end
 
     it 'returns nil if node not found' do
-      expect(subject.set_state('notvalid', data)).to be_nil
+      expect(subject.set_state('notvalid', data)).to eq({ error: 'Node not found'})
     end
 
     it 'returns nil if service instance not found' do
       data['instance_number'] = 3
-      expect(subject.set_state(node.node_id, data)).to be_nil
+      expect(subject.set_state(node.node_id, data)).to eq({ error: 'Instance not found' })
     end
   end
 

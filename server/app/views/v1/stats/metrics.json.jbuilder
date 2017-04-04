@@ -9,6 +9,11 @@ json.stats @metrics do |stat|
   json.memory do
     json.used stat["memory"]["used"].to_i
     json.total stat["memory"]["total"].to_i
+    json.free stat["memory"]["free"].to_i
+    json.active stat["memory"]["active"].to_i
+    json.inactive stat["memory"]["inactive"].to_i
+    json.cached stat["memory"]["cached"].to_i
+    json.buffers stat["memory"]["buffers"].to_i
   end
   if !stat["filesystem"].nil?
     json.filesystem do

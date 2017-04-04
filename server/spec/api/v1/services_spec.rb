@@ -319,6 +319,30 @@ describe '/v1/services' do
         expect(json_response['stats'].first['network']['external']['tx_bytes']).to eq(456)
         expect(json_response['stats'].first['network']['external']['tx_bytes_per_second']).to eq(20)
       end
+
+      it 'can sort and limit service stats' do
+        stats1 = container_stat_data.deep_dup
+        stats2 = container_stat_data.deep_dup
+        stats3 = container_stat_data.deep_dup
+
+        stats1[:network][:internal]['tx_bytes'] = 20
+        stats2[:network][:internal]['tx_bytes'] = 50
+        stats3[:network][:internal]['tx_bytes'] = 40
+
+        container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container1.container_stats.create!(stats1)
+
+        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
+        container2.container_stats.create!(stats2)
+
+        container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
+        container3.container_stats.create!(stats3)
+
+        get "/v1/services/#{redis_service.to_path}/stats?sort=tx_bytes&limit=1", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['stats'].size).to eq(1)
+        expect(json_response['stats'].first['container_id']).to eq(container2.name.to_s)
+      end
     end
     context 'when container has not stats data' do
       it 'returns empty result' do

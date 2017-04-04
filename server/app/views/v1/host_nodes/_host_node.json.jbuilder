@@ -58,5 +58,6 @@ json.resource_usage do
     json.load stats.load
     json.filesystem stats.filesystem
     json.usage stats.usage
+    json.cpu stats.cpu
   end
 end

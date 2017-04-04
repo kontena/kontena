@@ -52,10 +52,10 @@ module Kontena::Cli::Cloud
 
     def web_flow
       if Kontena.browserless? && !force?
-        STDERR.puts "Your current environment does not seem to support opening a local graphical WWW browser."
-        STDERR.puts
-        STDERR.puts "You can perorm a login on another computer, copy the token and use it with 'kontena cloud login --token <token>'."
-        STDERR.puts "There will be an easier way to log in from a browserless environment soon."
+        $stderr.puts "Your current environment does not seem to support opening a local graphical WWW browser."
+        $stderr.puts
+        $stderr.puts "You can perorm a login on another computer, copy the token and use it with 'kontena cloud login --token <token>'."
+        $stderr.puts "There will be an easier way to log in from a browserless environment soon."
         exit_with_error 'Unable to launch a web browser'
       end
 

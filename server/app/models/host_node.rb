@@ -37,6 +37,7 @@ class HostNode
   has_many :containers
   has_many :container_stats
   has_many :host_node_stats
+  has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
   after_save :reserve_node_number, :ensure_unique_name
