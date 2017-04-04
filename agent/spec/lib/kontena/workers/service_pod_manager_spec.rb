@@ -35,20 +35,26 @@ describe Kontena::Workers::ServicePodManager do
       subject.populate_workers_from_master
     end
 
-    it 'does not call terminate_workers if master returns something weird', :log_celluloid_actor_crashes => false do
+    it 'does not call terminate_workers if master returns something weird' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
         {
           'service_pods' => 'lolwtf'
         }
       )
+      expect(subject.wrapped_object).to receive(:error).with(/Invalid response from master/)
       expect(subject.wrapped_object).not_to receive(:terminate_workers)
-      expect{subject.populate_workers_from_master}.to raise_error /Invalid response/
+      expect(subject.wrapped_object).not_to receive(:ensure_service_worker)
+
+      expect{subject.populate_workers_from_master}.not_to raise_error
     end
 
-    it 'does not call terminate_workers if master fails', :log_celluloid_actor_crashes => false do
+    it 'does not call terminate_workers if RPC fails' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_raise(Kontena::RpcClient::Error.new(500, "random failure"))
+      expect(subject.wrapped_object).to receive(:warn).with(/failed to get list of service pods from master/)
       expect(subject.wrapped_object).not_to receive(:terminate_workers)
-      expect{subject.populate_workers_from_master}.to raise_error /random failure/
+      expect(subject.wrapped_object).not_to receive(:ensure_service_worker)
+
+      subject.populate_workers_from_master
     end
 
     it 'calls ensure_service_worker for each service pod' do
