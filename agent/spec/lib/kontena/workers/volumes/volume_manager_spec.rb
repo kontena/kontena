@@ -33,7 +33,8 @@ describe Kontena::Workers::Volumes::VolumeManager do
           'volumes' => 'foo'
         }
       )
-      expect{subject.populate_volumes_from_master}.to raise_error(/Invalid response/)
+      expect(subject.wrapped_object).to receive(:error).with(/Invalid response from master/)
+      expect{subject.populate_volumes_from_master}.not_to raise_error
     end
 
     it 'calls terminate and ensure with volumes from master' do
