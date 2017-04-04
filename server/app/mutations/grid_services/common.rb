@@ -128,9 +128,9 @@ module GridServices
         link[:name] = "#{stack.name}/#{link[:name]}" unless link[:name].include?('/')
         linked_stack, service_name = parse_link(grid, link)
         if linked_stack.nil?
-          add_error(:links, :not_found, "Link #{link[:name]} points to non-existing stack")
+          add_errors(:links, :not_found, "Link #{link[:name]} points to non-existing stack")
         elsif linked_stack.grid_services.find_by(name: service_name).nil?
-          add_error(:links, :not_found, "Service #{link[:name]} does not exist")
+          add_errors(:links, :not_found, "Service #{link[:name]} does not exist")
         end
       end
     end

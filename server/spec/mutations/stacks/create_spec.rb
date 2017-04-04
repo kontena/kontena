@@ -171,7 +171,7 @@ describe Stacks::Create do
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
-    it 'does not create a stack if link to another stack is invalid' do
+    it 'fails if link to another stack is invalid' do
       services = [
         {
           name: 'api',
@@ -193,10 +193,10 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome).to_not be_success
-      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Link redis/redis points to non-existing stack" } }
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => [ "Link redis/redis points to non-existing stack" ] } }
     end
 
-    it 'does not create a stack if link within a stack is invalid' do
+    it 'fails if link within a stack is invalid' do
       services = [
         {
           name: 'api',
@@ -218,7 +218,7 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome).to_not be_success
-      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'redis' does not exist" } }
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => [ "Linked service 'redis' does not exist" ] } }
     end
 
     it 'does not create stack if any service validation fails' do
