@@ -28,28 +28,23 @@ describe Kontena::Workers::Volumes::VolumeManager do
 
   describe '#populate_volumes_from_master' do
     it 'fails with a warning if no proper response from master' do
-      expect(subject.wrapped_object).to receive(:warn)
       expect(rpc_client).to receive(:request).with('/node_volumes/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'volumes' => 'foo'
-          }
-        )
+        {
+          'volumes' => 'foo'
+        }
       )
-      subject.populate_volumes_from_master
+      expect{subject.populate_volumes_from_master}.to raise_error(/Invalid response/)
     end
 
     it 'calls terminate and ensure with volumes from master' do
       expect(subject.wrapped_object).to receive(:terminate_volumes).with(['123', '456'])
       expect(rpc_client).to receive(:request).with('/node_volumes/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'volumes' => [
-              {'name' => 'foo', 'volume_instance_id' => '123'},
-              {'name' => 'bar', 'volume_instance_id' => '456'}
-            ]
-          }
-        )
+        {
+          'volumes' => [
+            {'name' => 'foo', 'volume_instance_id' => '123'},
+            {'name' => 'bar', 'volume_instance_id' => '456'}
+          ]
+        }
       )
       expect(subject.wrapped_object).to receive(:ensure_volume).twice
       subject.populate_volumes_from_master

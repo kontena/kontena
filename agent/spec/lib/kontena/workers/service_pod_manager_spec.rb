@@ -25,40 +25,40 @@ describe Kontena::Workers::ServicePodManager do
 
     it 'calls terminate_workers' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'service_pods' => [
-              { 'id' => 'a/1', 'instance_number' => 1}
-            ]
-          }
-        )
+        {
+          'service_pods' => [
+            { 'id' => 'a/1', 'instance_number' => 1}
+          ]
+        }
       )
       expect(subject.wrapped_object).to receive(:terminate_workers).with(['a/1'])
       subject.populate_workers_from_master
     end
 
-    it 'does not call terminate_workers if master does not return service pods' do
+    it 'does not call terminate_workers if master returns something weird', :log_celluloid_actor_crashes => false do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'error' => 'oh no'
-          }
-        )
+        {
+          'service_pods' => 'lolwtf'
+        }
       )
       expect(subject.wrapped_object).not_to receive(:terminate_workers)
-      subject.populate_workers_from_master
+      expect{subject.populate_workers_from_master}.to raise_error /Invalid response/
+    end
+
+    it 'does not call terminate_workers if master fails', :log_celluloid_actor_crashes => false do
+      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_raise(Kontena::RpcClient::Error.new(500, "random failure"))
+      expect(subject.wrapped_object).not_to receive(:terminate_workers)
+      expect{subject.populate_workers_from_master}.to raise_error /random failure/
     end
 
     it 'calls ensure_service_worker for each service pod' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'service_pods' => [
-              { 'id' => 'a/1', 'instance_number' => 1},
-              { 'id' => 'b/2', 'instance_number' => 2}
-            ]
-          }
-        )
+        {
+          'service_pods' => [
+            { 'id' => 'a/1', 'instance_number' => 1},
+            { 'id' => 'b/2', 'instance_number' => 2}
+          ]
+        }
       )
       expect(subject.wrapped_object).to receive(:ensure_service_worker) do |s|
         expect(s.id).to eq('a/1')
