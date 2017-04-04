@@ -2,8 +2,7 @@ module GridServices
   class Deploy < Mutations::Command
     include Workers
 
-    class ExecutionError < StandardError
-    end
+    ExecutionError = Class.new(StandardError)
 
     VALID_STATES = %w(initialized running deploying stopped)
 
