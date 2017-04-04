@@ -7,12 +7,18 @@ class RpcClient
 
     def initialize(code, message, remote_backtrace = nil)
       @code = code
-      @remote_backtrace = (['<Remote>:'] + remote_backtrace) if remote_backtrace
+      @remote_backtrace = remote_backtrace
       super(message)
     end
 
     def backtrace
-      Array(super) + Array(remote_backtrace)
+      local_backtrace = super
+
+      if local_backtrace && @remote_backtrace
+        remote_backtrace + ["<RPC>"] + local_backtrace
+      else
+        local_backtrace
+      end
     end
   end
 
