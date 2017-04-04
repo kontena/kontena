@@ -63,7 +63,7 @@ describe WebsocketBackend, celluloid: true do
       allow(subject).to receive(:client_for_id).and_return(client)
       expect(subject).to receive(:send_message).with(client[:ws], 'hello')
       MongoPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
-      sleep 0.01
+      sleep 0.05
       EM.run_deferred_callbacks
     end
 
