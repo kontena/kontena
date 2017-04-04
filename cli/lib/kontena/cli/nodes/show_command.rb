@@ -26,7 +26,7 @@ module Kontena::Cli::Nodes
       puts "  kernel: #{node['kernel_version']}"
       puts "  drivers:"
       puts "    storage: #{node['driver']}"
-      puts "    volume: #{node.dig('plugins', 'volume').to_a.map{|v| v['name']}.join(',')}"
+      puts "    volume: #{node['volume_drivers'].to_a.map{|v| v['name']}.join(',')}"
       puts "  initial node: #{node['initial_member'] ? 'yes' : 'no'}"
       puts "  labels:"
       if node['labels']
