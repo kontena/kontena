@@ -26,7 +26,7 @@ describe RpcServer, celluloid: true do
   end
 
   describe '#handle_request' do
-    before(:each) { allow(ws_client).to receive(:send) }
+    before(:each) { allow(subject.wrapped_object).to receive(:send_message) }
 
     it 'calls handler and sends response back to ws_client' do
       expect(subject.wrapped_object).to receive(:send_message).with(ws_client, [1, 99, nil, {msg: 'hello world'}])
