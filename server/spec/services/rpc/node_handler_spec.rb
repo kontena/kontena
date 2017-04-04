@@ -1,5 +1,4 @@
-
-describe Rpc::NodeHandler, celluloid: true do
+describe Rpc::NodeHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:node) do

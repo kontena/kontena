@@ -1,6 +1,5 @@
 module Rpc
   class NodeServicePodHandler
-    include Celluloid
 
     def initialize(grid)
       @grid = grid
@@ -25,7 +24,8 @@ module Rpc
     # @param [Hash] pod
     def set_state(id, pod)
       node = @grid.host_nodes.find_by(node_id: id)
-      return unless node
+      return { error: 'Node not found' } unless node
+
       service_instance = node.grid_service_instances.find_by(
         grid_service_id: pod['service_id'], instance_number: pod['instance_number']
       )
@@ -34,6 +34,9 @@ module Rpc
           state: pod['state'],
           rev: pod['rev']
         )
+        {}
+      else
+        { error: 'Instance not found' }
       end
     end
 

@@ -6,6 +6,9 @@ require_relative '../services/agent/node_unplugger'
 class WebsocketBackend
   KEEPALIVE_TIME = 30 # in seconds
   RPC_MSG_TYPES = %w(request notify)
+  QUEUE_SIZE = 1000
+  QUEUE_WATCH_PERIOD = 60 # once in a minute
+  QUEUE_DROP_NOTIFICATIONS_LIMIT = (QUEUE_SIZE * 0.8)
 
   attr_reader :logger
 
@@ -15,9 +18,14 @@ class WebsocketBackend
     @logger = Logger.new(STDOUT)
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
-    @rpc_server = RpcServer.new
+    @msg_counter = 0
+    @msg_dropped = 0
+    @queue = SizedQueue.new(QUEUE_SIZE)
+    @rpc_server = RpcServer.new(@queue)
+    @rpc_server.async.process!
     subscribe_to_rpc_channel
     watch_connections
+    watch_queue
   end
 
   def call(env)
@@ -92,6 +100,7 @@ class WebsocketBackend
   # @param [Faye::WebSocket::Event] event
   def on_message(ws, event)
     data = MessagePack.unpack(event.data.pack('c*'))
+    @msg_counter += 1
     if rpc_notification?(data)
       handle_rpc_notification(ws, data)
     elsif rpc_request?(data)
@@ -135,16 +144,21 @@ class WebsocketBackend
   def handle_rpc_request(ws, data)
     client = client_for_ws(ws)
     if client
-      @rpc_server.async.handle_request(ws, client[:grid_id].to_s, data)
+      @queue << [ws, client[:grid_id].to_s, data]
     end
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_notification(ws, data)
+    if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT # too busy to handle notifications
+      @msg_dropped += 1
+      return
+    end
+
     client = client_for_ws(ws)
     if client
-      @rpc_server.async.handle_notification(client[:grid_id].to_s, data)
+      @queue << [client[:grid_id].to_s, data]
     end
   end
 
@@ -242,6 +256,16 @@ class WebsocketBackend
     }
   end
 
+  def watch_queue
+    EM::PeriodicTimer.new(QUEUE_WATCH_PERIOD) do
+      logger.warn "#{@queue.size} messages in queue" if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT
+      logger.warn "#{@msg_dropped} dropped notifications" if @msg_dropped > 0
+      logger.info "#{@msg_counter / QUEUE_WATCH_PERIOD} messages per second"
+      @msg_counter = 0
+      @msg_dropped = 0
+    end
+  end
+
   # @param [Hash] client
   def verify_client_connection(client)
     timer = EM::Timer.new(5) do
@@ -266,5 +290,9 @@ class WebsocketBackend
     else
       self.on_close(client[:ws])
     end
+  end
+
+  def stop_rpc_server
+    Celluloid::Actor.kill(@rpc_server) if @rpc_server.alive?
   end
 end
