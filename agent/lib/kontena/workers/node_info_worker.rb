@@ -76,12 +76,57 @@ module Kontena::Workers
 
     def publish_node_info
       debug 'publishing node information'
-      docker_info['PublicIp'] = self.public_ip
-      docker_info['PrivateIp'] = self.private_ip
-      docker_info['AgentVersion'] = Kontena::Agent::VERSION
-      rpc_client.async.request('/nodes/update', [docker_info])
+      node_info = docker_info.dup
+      node_info['PublicIp'] = self.public_ip
+      node_info['PrivateIp'] = self.private_ip
+      node_info['AgentVersion'] = Kontena::Agent::VERSION
+      node_info['Plugins'] = {
+        'Volume' => volume_drivers,
+        'Network' => network_drivers
+      }
+      rpc_client.async.request('/nodes/update', [node_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
+    end
+
+    # @return [Array<Hash>]
+    def volume_drivers
+      drivers = []
+      plugins.each do |plugin|
+        config = plugin['Config']
+        if config.dig('Interface', 'Types').include?('docker.volumedriver/1.0')
+          drivers << { name: plugin['Name'] } if plugin['Enabled']
+        end
+      end
+      docker_info.dig('Plugins', 'Volume').to_a.each do |plugin|
+        drivers << { name: plugin }
+      end
+
+      drivers
+    end
+
+    # @return [Array<Hash>]
+    def network_drivers
+      drivers = []
+      plugins.each do |plugin|
+        config = plugin['Config']
+        if config.dig('Interface', 'Types').include?('docker.networkdriver/1.0')
+          drivers << { name: plugin['Name'] } if plugin['Enabled']
+        end
+      end
+      docker_info.dig('Plugins', 'Network').to_a.each do |plugin|
+        drivers << { name: plugin }
+      end
+
+      drivers
+    end
+
+    # @return [Array<Hash>]
+    def plugins
+      JSON.parse(Docker.connection.get('/plugins'))
+    rescue => exc
+      warn "cannot fetch docker engine plugins: #{exc.message}"
+      []
     end
 
     ##

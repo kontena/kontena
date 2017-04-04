@@ -4,9 +4,18 @@ describe Scheduler::Filter::VolumePlugin do
   let(:grid) { Grid.create(name: 'test') }
   let(:nodes) do
     nodes = []
-    nodes << HostNode.create!(grid: grid, node_id: 'node1', name: 'node-1', plugins: {'volume' => ['local', 'foo']})
-    nodes << HostNode.create!(grid: grid, node_id: 'node2', name: 'node-2', plugins: {'volume' => ['foo']})
-    nodes << HostNode.create!(grid: grid, node_id: 'node3', name: 'node-3', plugins: {'volume' => ['local', 'bar']})
+    nodes << HostNode.create!(
+      grid: grid, node_id: 'node1', name: 'node-1',
+      plugins: {'volume' => [{'name' => 'local'}, {'name' => 'foo'}]}
+    )
+    nodes << HostNode.create!(
+      grid: grid, node_id: 'node2', name: 'node-2',
+      plugins: {'volume' => [{'name' => 'foo'}]}
+    )
+    nodes << HostNode.create!(
+      grid: grid, node_id: 'node3', name: 'node-3',
+      plugins: {'volume' => [{'name' => 'local'}, {'name' => 'bar'}]}
+    )
     nodes
   end
 
