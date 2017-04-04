@@ -36,26 +36,22 @@ module Kontena
 
     # @param [String] method
     # @param [Array] params
-    # @return [Celluloid::Future]
+    # @return [Object]
     def request(method, params)
       id = request_id
       @requests[id] = nil
-      future = Celluloid::Future.new {
-        sleep 0.01 until @client.connected?
-        @client.send_request(id, method, params)
-        time = Time.now.utc
-        until !@requests[id].nil?
-          sleep 0.01
-          raise TimeoutError.new(500, 'Request timed out') if time < (Time.now.utc - 30)
-        end
-        result, error = @requests.delete(id)
-        if error
-          raise Error.new(error['code'], error['message'], error['backtrace'])
-        end
-        result
-      }
-
-      future
+      sleep 0.01 until @client.connected?
+      @client.send_request(id, method, params)
+      time = Time.now.utc
+      until !@requests[id].nil?
+        sleep 0.01
+        raise TimeoutError.new(500, 'Request timed out') if time < (Time.now.utc - 30)
+      end
+      result, error = @requests.delete(id)
+      if error
+        raise Error.new(error['code'], error['message'])
+      end
+      result
     end
 
     def handle_response(response)

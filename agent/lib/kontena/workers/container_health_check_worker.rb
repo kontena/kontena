@@ -43,7 +43,7 @@ module Kontena::Workers
       else
         msg = check_tcp_status(ip, port, timeout)
       end
-      rpc_client.async.notification('/containers/health', [msg])
+      rpc_client.async.request('/containers/health', [msg])
 
       handle_action(msg)
     end

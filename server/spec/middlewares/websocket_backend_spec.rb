@@ -4,8 +4,19 @@ describe WebsocketBackend, celluloid: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
 
+  around(:each) do |example|
+    EM.run {
+      example.run
+      EM.stop
+    }
+  end
+
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')
+  end
+
+  after(:each) do
+    subject.stop_rpc_server
   end
 
   describe '#our_version' do

@@ -1,5 +1,4 @@
-
-describe Rpc::ContainerHandler, celluloid: true do
+describe Rpc::ContainerHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }

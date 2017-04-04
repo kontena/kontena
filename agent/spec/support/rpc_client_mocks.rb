@@ -7,6 +7,7 @@ module RpcClientMocks
   def mock_rpc_client
     allow(subject.wrapped_object).to receive(:rpc_client).and_return(rpc_client)
     allow(rpc_client).to receive(:async).and_return(rpc_client)
+    allow(rpc_client).to receive(:future).and_return(rpc_client)
   end
 
   def rpc_future(value)
