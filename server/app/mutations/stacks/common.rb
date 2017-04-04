@@ -13,19 +13,16 @@ module Stacks
       add_error("services.#{service_name}.#{key}", symbolic, message)
     end
 
-    # @param [String] service_name
-    # @param [Hash] messages
-    # @param [String] type
+    # @param service_name [String]
+    # @param errors [Mutations::ErrorHash] Mutations::Outcome.errors
     def handle_service_outcome_errors(service_name, errors)
-      errors.each do |key, atom|
-        add_service_error(service_name, key, atom.symbolic, atom.message)
-      end
+      add_outcome_errors("services.#{service_name}", errors)
     end
 
+    # @param volume_name [String]
+    # @param errors [Mutations::ErrorHash] Mutations::Outcome.errors
     def handle_volume_outcome_errors(volume_name, errors)
-      errors.each do |key, atom|
-         add_error("volumes.#{volume_name}.#{key}", atom.symbolic, atom.message)
-      end
+      add_outcome_errors("volumes.#{volume_name}", errors)
     end
 
     def validate_expose
