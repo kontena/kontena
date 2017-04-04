@@ -123,7 +123,11 @@ module Kontena::Workers
 
     # @return [Array<Hash>]
     def plugins
-      JSON.parse(Docker.connection.get('/plugins'))
+      if docker_api_version >= 1.26
+        JSON.parse(Docker.connection.get('/plugins'))
+      else
+        []
+      end
     rescue => exc
       warn "cannot fetch docker engine plugins: #{exc.message}"
       []
@@ -386,6 +390,16 @@ module Kontena::Workers
     # @return [Hash]
     def docker_info
       @docker_info ||= Docker.info
+    end
+
+    # @return [Hash]
+    def docker_version
+      @docker_version ||= Docker.version
+    end
+
+    # @return [Float]
+    def docker_api_version
+      docker_version["ApiVersion"].to_f
     end
   end
 end
