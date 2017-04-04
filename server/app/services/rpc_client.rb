@@ -12,6 +12,7 @@ class RpcClient
     end
 
     def backtrace
+      # this must return nil if no local backtrace is set yet, or ruby will not set any backtrace on raise
       local_backtrace = super
 
       if local_backtrace && @remote_backtrace
