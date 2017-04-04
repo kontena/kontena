@@ -308,7 +308,7 @@ describe Kontena::Client do
       end
 
       it "raises StandardError with the server error message" do
-        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardErrors, /foo: Foo was invalid/)
+        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardErrorHash, /foo: Foo was invalid/)
       end
     end
 

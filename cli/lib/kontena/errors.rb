@@ -13,7 +13,7 @@ module Kontena
     end
 
     # The normal {error: {foo: "invalid foo"}} error response format used by the API
-    class StandardErrors < StandardError
+    class StandardErrorHash < StandardError
       attr_reader :errors
 
       # @param errors [Hash]
