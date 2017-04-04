@@ -178,7 +178,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def run(arguments)
-    ENV["DEBUG"] && STDERR.puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
+    ENV["DEBUG"] && $stderr.puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
     @arguments = arguments
 
     run_callbacks :before_parse unless help_requested?
@@ -202,29 +202,26 @@ class Kontena::Command < Clamp::Command
     run_callbacks :after unless help_requested?
     exit(@exit_code) if @exit_code.to_i > 0
     @result
-  rescue Excon::Errors::SocketError => exc
-    if exc.message.include?('Unable to verify certificate')
+  rescue Excon::Errors::SocketError => ex
+    if ex.message.include?('Unable to verify certificate')
       $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
       $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"
       $stderr.puts "         Protip: you can bypass the certificate check by setting #{Kontena.pastel.yellow('SSL_IGNORE_ERRORS=true')} env variable, but any data you send to the server could be intercepted by others."
       abort
     else
-      abort(exc.message)
+      abort(ex.message)
     end
-  rescue Kontena::Errors::StandardError => exc
-    raise exc if ENV['DEBUG']
-    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
-    abort
+  rescue Kontena::Errors::StandardError => ex
+    raise ex if ENV['DEBUG']
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}")
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
     abort
   rescue Clamp::HelpWanted, Clamp::UsageError
     raise
-  rescue => exc
-    raise exc if ENV['DEBUG']
-    $stderr.puts " [#{Kontena.pastel.red('error')}] #{exc.message}"
-    $stderr.puts "         Rerun the command with environment DEBUG=true set to get the full exception"
-    abort
+  rescue => ex
+    raise ex if ENV['DEBUG']
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         Rerun the command with environment DEBUG=true set to get the full exception")
   end
 end
 

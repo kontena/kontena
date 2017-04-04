@@ -12,7 +12,7 @@ module Kontena
 
       def logger
         return @logger if @logger
-        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'COMMON'
         @logger
@@ -131,8 +131,8 @@ module Kontena
         client = Kontena::Client.new(server.url, server.token)
         logger.debug "Trying to invalidate refresh token on #{server.name}"
         client.refresh_token
-      rescue
-        logger.debug "Refreshing failed: #{$!} : #{$!.message}"
+      rescue => ex
+        logger.debug "Refreshing failed: #{ex.class.name} : #{ex.message}"
       end
 
       def require_current_master
@@ -289,7 +289,7 @@ module Kontena
         msg = "Press any key to continue or ctrl-c to cancel.. (Automatically continuing in ? seconds)"
 
         reader_thread = Thread.new do
-          Thread.main['any_key.char'] = STDIN.getch
+          Thread.main['any_key.char'] = $stdin.getch
         end
 
         countdown_thread = Thread.new do
@@ -316,7 +316,7 @@ module Kontena
         return any_key_to_continue_with_timeout(timeout) if timeout
         msg = "Press any key to continue or ctrl-c to cancel.. "
         print pastel.bright_cyan("#{msg}")
-        char = STDIN.getch
+        char = $stdin.getch
         print "\r#{' ' * msg.length}\r"
         if char == "\u0003"
           error "Canceled"

@@ -41,9 +41,9 @@ module Kontena::Cli::Master::User
           roles.each do |role|
             Kontena.run("master users role add #{role.shellescape} #{email.shellescape}")
           end
-        rescue
-          STDERR.puts "Failed to invite #{email}".colorize(:red)
-          ENV["DEBUG"] && STDERR.puts("#{$!} - #{$!.message} -- #{$!.backtrace}")
+        rescue => ex
+          $stderr.puts pastel.red("Failed to invite #{email}")
+          ENV["DEBUG"] && $stderr.puts("#{ex} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
         end
       end
     end

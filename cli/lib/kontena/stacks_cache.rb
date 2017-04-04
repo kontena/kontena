@@ -69,7 +69,7 @@ module Kontena
       end
 
       def dputs(msg)
-        ENV["DEBUG"] && STDERR.puts(msg)
+        ENV["DEBUG"] && $stderr.puts(msg)
       end
 
       def cache(stack, version = nil)
