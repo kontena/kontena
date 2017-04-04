@@ -6,42 +6,53 @@ describe Kontena::Cli::Vault::WriteCommand do
   include RequirementsHelper
   include ClientHelpers
 
-  let(:subject) do
-    described_class.new(File.basename($0))
-  end
-
-  let(:client) do
-    double
-  end
-
-  let(:token) do
-    'token'
-  end
-
+  let(:subject) { described_class.new(File.basename($0)) }
 
   describe '#execute' do
-    before(:each) do
-      allow(subject).to receive(:client).with(token).and_return(client)
-      allow(subject).to receive(:current_grid).and_return('test-grid')
-    end
+    context 'without value parameter' do
 
-    it 'returns error if value not provided' do
-      allow(STDIN).to receive(:read).once.and_return('')
-      expect(subject).to receive(:exit_with_error).with('No value provided').and_call_original
-      subject.run(['mysql_password'])
+      let(:stdin) { double(:stdin) }
+
+      before(:each) do
+        @old_stdin = $stdin
+        $stdin = stdin
+      end
+
+      after(:each) { $stdin = @old_stdin }
+
+      context 'no tty' do
+        context 'stdin empty' do
+          it 'returns an error' do
+            expect(stdin).to receive(:tty?).and_return(false)
+            expect(stdin).to receive(:eof?).and_return(true)
+            expect{subject.run(['mysql_password'])}.to exit_with_error.and output(/Missing/).to_stderr
+          end
+        end
+
+        context 'stdin has a value' do
+          it 'sends create request' do
+            expect(stdin).to receive(:tty?).and_return(false)
+            expect(stdin).to receive(:eof?).and_return(false)
+            expect(stdin).to receive(:read).and_return('secret')
+            expect(client).to receive(:post).with('grids/test-grid/secrets', { name: 'mysql_password', value: 'secret'})
+            expect{subject.run(['mysql_password'])}.not_to exit_with_error
+          end
+        end
+      end
+
+      context 'with tty' do
+        it 'prompts value from STDIN' do
+          expect(stdin).to receive(:tty?).and_return(true)
+          expect(subject.prompt).to receive(:multiline).and_return(['secret'])
+          expect(client).to receive(:post).with('grids/test-grid/secrets', { name: 'mysql_password', value: 'secret'})
+          expect{subject.run(['mysql_password'])}.not_to exit_with_error
+        end
+      end
     end
 
     it 'sends create request' do
       expect(client).to receive(:post).with('grids/test-grid/secrets', { name: 'mysql_password', value: 'secret'})
       subject.run(['mysql_password', 'secret'])
-    end
-
-    context 'when value not given' do
-      it 'reads value from STDIN' do
-        expect(STDIN).to receive(:read).once.and_return('very-secret')
-        expect(client).to receive(:post).with('grids/test-grid/secrets', { name: 'mysql_password', value: 'very-secret'})
-        subject.run(['mysql_password'])
-      end
     end
   end
 end
