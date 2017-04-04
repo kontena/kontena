@@ -79,7 +79,7 @@ module Kontena::Workers
       docker_info['PublicIp'] = self.public_ip
       docker_info['PrivateIp'] = self.private_ip
       docker_info['AgentVersion'] = Kontena::Agent::VERSION
-      rpc_client.async.notification('/nodes/update', [docker_info])
+      rpc_client.async.request('/nodes/update', [docker_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end

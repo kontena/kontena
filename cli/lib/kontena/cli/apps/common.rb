@@ -108,15 +108,15 @@ module Kontena::Cli::Apps
     def display_notifications(messages, color = :yellow)
       messages.each do |files|
         files.each do |file, services|
-          STDERR.puts "#{file}:".colorize(color)
+          $stderr.puts "#{file}:".colorize(color)
           services.each do |service|
             service.each do |name, errors|
-              STDERR.puts "  #{name}:".colorize(color)
+              $stderr.puts "  #{name}:".colorize(color)
               if errors.is_a?(String)
-                STDERR.puts "    - #{errors}".colorize(color)
+                $stderr.puts "    - #{errors}".colorize(color)
               else
                 errors.each do |key, error|
-                  STDERR.puts "    - #{key}: #{error.to_json}".colorize(color)
+                  $stderr.puts "    - #{key}: #{error.to_json}".colorize(color)
                 end
               end
             end
@@ -126,12 +126,12 @@ module Kontena::Cli::Apps
     end
 
     def hint_on_validation_notifications(errors)
-      STDERR.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
+      $stderr.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
       display_notifications(errors)
     end
 
     def abort_on_validation_errors(errors)
-      STDERR.puts "YAML validation failed! Aborting.".colorize(:red)
+      $stderr.puts "YAML validation failed! Aborting.".colorize(:red)
       display_notifications(errors, :red)
       abort
     end

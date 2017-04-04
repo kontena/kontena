@@ -6,11 +6,19 @@ module Stacks
     include SortHelper
 
     # @param [String] service_name
+    # @param [Symbol] key
+    # @param [Symbol] symbolic
+    # @param [String] message
+    def add_service_error(service_name, key, symbolic, message)
+      add_error("services.#{service_name}.#{key}", symbolic, message)
+    end
+
+    # @param [String] service_name
     # @param [Hash] messages
     # @param [String] type
-    def handle_service_outcome_errors(service_name, messages, type)
-      messages.each do |key, msg|
-        add_error(:services, key.to_sym, "Service #{type} failed for service '#{service_name}': #{msg}")
+    def handle_service_outcome_errors(service_name, errors)
+      errors.each do |key, atom|
+        add_service_error(service_name, key, atom.symbolic, atom.message)
       end
     end
 
@@ -33,7 +41,7 @@ module Stacks
       links = links - internal_links
       internal_links.each do |l|
         unless self.services.any?{|s| s[:name] == l['name']}
-          handle_service_outcome_errors(service[:name], { links: "Linked service '#{l['name']}' does not exist" }, :validate)
+          add_service_error(service[:name], :links, :exist,  "Linked service '#{l['name']}' does not exist")
         end
       end
       service[:links] = links

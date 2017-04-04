@@ -73,13 +73,13 @@ describe Kontena::Workers::ContainerInfoWorker do
 
   describe '#publish_info' do
     it 'publishes event to queue' do
-      expect(rpc_client).to receive(:notification).once
+      expect(rpc_client).to receive(:request).once
       subject.publish_info(spy(:container, json: {'Config' => {}}))
     end
 
     it 'publishes valid message' do
       container = double(:container, json: {'Config' => {}})
-      expect(rpc_client).to receive(:notification).once.with(
+      expect(rpc_client).to receive(:request).once.with(
         '/containers/save', [hash_including(node: 'host_id')]
       )
       allow(subject.wrapped_object).to receive(:node_info).and_return({'ID' => 'host_id'})

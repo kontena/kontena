@@ -10,7 +10,7 @@ module Kontena
         return unless command.exit_code == 0
         return unless config.current_master
 
-        ENV["DEBUG"] && STDERR.puts("Removing current master from config")
+        ENV["DEBUG"] && $stderr.puts("Removing current master from config")
         config.servers.delete_at(config.find_server_index(config.current_master.name))
         config.current_server = nil
         config.write
