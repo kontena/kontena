@@ -123,7 +123,7 @@ module Kontena::Workers
 
     # @return [Array<Hash>]
     def plugins
-      if docker_api_version >= 1.26
+      if docker_api_version >= 1.25
         JSON.parse(Docker.connection.get('/plugins'))
       else
         []
