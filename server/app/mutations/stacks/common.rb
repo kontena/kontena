@@ -43,7 +43,7 @@ module Stacks
         if volume['external']
           vol = self.grid.volumes.where(name: volume['external']).first
           unless vol
-            add_error(:volumes, :not_found, "External volume #{volume['external']} not found")
+            add_error("volumes.#{volume['name']}", :not_found, "External volume #{volume['external']} not found")
           end
         else
           add_error(:volumes, :invalid, "Only external volumes supported")

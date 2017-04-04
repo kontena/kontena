@@ -1,6 +1,5 @@
 module GridServices
   module Common
-
     include VolumesHelpers
 
     def self.included(base)
@@ -142,7 +141,7 @@ module GridServices
       secrets.each do |s|
         secret = grid.grid_secrets.find_by(name: s[:secret])
         unless secret
-          add_error(:secrets, :not_found, "Secret #{s[:secret]} does not exist")
+          add_errors(:secrets, :not_found, "Secret #{s[:secret]} does not exist")
         end
       end
     end
@@ -154,7 +153,7 @@ module GridServices
         begin
           parse_volume(volume)
         rescue ArgumentError => exc
-          add_error(:volumes, :invalid, exc.message)
+          add_errors(:volumes, :invalid, exc.message)
         end
       end
     end
