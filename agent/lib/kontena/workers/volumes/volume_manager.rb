@@ -35,12 +35,9 @@ module Kontena::Workers::Volumes
 
     def populate_volumes_from_master
       exclusive {
-        request = rpc_client.future.request("/node_volumes/list", [node.id])
-        response = request.value
-        unless response['volumes'].is_a?(Array)
-          warn "failed to get list of volumes from master: #{response['error']}"
-          return
-        end
+        response = rpc_client.request("/node_volumes/list", [node.id])
+
+        fail "Invalid response: #{response}" unless response['volumes'].is_a?(Array)
         debug "got volumes from master: #{response}"
 
         volumes = response['volumes'].map{ |v| Kontena::Models::Volume.new(v) }

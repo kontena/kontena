@@ -42,9 +42,9 @@ module Kontena::Workers
 
     def populate_workers_from_master
       exclusive {
-        request = rpc_client.future.request("/node_service_pods/list", [node.id])
-        response = request.value
-        raise "Invalid response" unless response['service_pods'].is_a?(Array)
+        response = rpc_client.request("/node_service_pods/list", [node.id])
+
+        raise "Invalid response: #{response}" unless response['service_pods'].is_a?(Array)
 
         service_pods = response['service_pods']
         current_ids = service_pods.map { |p| p['id'] }
