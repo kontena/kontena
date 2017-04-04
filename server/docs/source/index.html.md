@@ -253,8 +253,14 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 	"kernel_version": "4.7.3-coreos-r2",
 	"driver": "overlay",
 	"plugins": {
-		"network": ["bridge", "host", "null"],
-		"volume": ["local"]
+		"network": [
+			{"name": "bridge"}, 
+			{"name": "host"}, 
+			{"name": "null"}
+		],
+		"volume": [
+			{"name": "local"}
+		]
 	},
 	"cpus": 2,
 	"mem_total": 0.0,
