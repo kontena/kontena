@@ -28,7 +28,7 @@ class Kontena::Command < Clamp::Command
       return if self.has_subcommands?
       return if self.callback_matcher
 
-      name_parts = self.name.split('::')[-2, 2]
+      name_parts = self.name.split('::')[-2, 2] || []
 
       unless name_parts.compact.empty?
         # 1: Remove trailing 'Command' from for example AuthCommand
@@ -82,6 +82,24 @@ class Kontena::Command < Clamp::Command
     @command_class = cmd_class.to_sym
     @command_type = cmd_type.to_sym
     [@command_class, @command_type]
+  end
+
+  def initialize(*args)
+    if args.size == 1 && args.first.kind_of?(Hash)
+      super([])
+      args.first.each do |arg, value|
+        meth = "#{arg}=".to_sym
+        if self.respond_to?("#{arg}=")
+          self.send("#{arg}=", value)
+        elsif self.respond_to?("#{arg}_list=")
+          self.send("#{arg}_list=", value)
+        else
+          raise NoMethodError, "undefined method `#{arg}=' for #{self.inspect}"
+        end
+      end
+    else
+      super
+    end
   end
 
   def run_callbacks(state)
