@@ -3,6 +3,7 @@ module Kontena::Cli::Stacks::YAML::Opto::Resolvers
     include Kontena::Cli::Common
 
     def resolve
+      return nil unless current_master && current_grid
       message = hint || 'Select SSL certs'
       secrets = get_secrets.select{ |s|
         s['name'].match(/(ssl|cert)/i)

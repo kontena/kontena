@@ -3,6 +3,7 @@ module Kontena::Cli::Stacks::YAML::Opto::Resolvers
     include Kontena::Cli::Common
 
     def resolve
+      return nil unless current_master && current_grid
       message = hint['prompt']
       name_filter = hint['name']
       image_filter = hint['image']
