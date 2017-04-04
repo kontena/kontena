@@ -51,7 +51,7 @@ module Stacks
           outcome = GridServices::Create.run(service)
         end
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         else
           outcome.result.set(:stack_revision => stack_rev.revision)
         end
