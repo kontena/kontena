@@ -23,7 +23,7 @@ module Kontena
     ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
     returning == :status ? $!.status : nil
   rescue => ex
-    ENV["DEBUG"] && $stderr.puts("Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+    ENV["DEBUG"] && $stderr.puts("Command raised #{ex.class.name} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
     returning == :status ? 1 : nil
   end
 
