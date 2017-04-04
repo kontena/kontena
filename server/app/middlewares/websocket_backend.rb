@@ -86,7 +86,7 @@ class WebsocketBackend
       end
 
       logger.info "node opened connection: #{node.name || node_id}, labels: #{labels}"
-      node_plugger.plugin!
+      EM.defer { node_plugger.plugin! }
     else
       logger.error 'invalid grid token, closing connection'
       ws.close(4001)
@@ -186,14 +186,14 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @return [Hash,NilClass]
   def client_for_ws(ws)
-    @clients.find{|c| c[:ws] == ws}
+    @clients.find{ |c| c[:ws] == ws }
   end
 
   ##
   # @param [String] id
   # @return [Hash,NilClass]
   def client_for_id(id)
-    @clients.find{|c| c[:id] == id}
+    @clients.find{ |c| c[:id] == id }
   end
 
   # @param [String] agent_version
@@ -237,23 +237,22 @@ class WebsocketBackend
 
   # @param [Hash] msg
   def on_rpc_message(msg)
-    client = client_for_id(msg['id'])
-    if client
-      self.send_message(client[:ws], msg['message'])
-    end
+    EM.next_tick{
+      client = client_for_id(msg['id'])
+      if client
+        self.send_message(client[:ws], msg['message'])
+      end
+    }
   rescue => exc
     logger.error "on_rpc_message: #{exc.message}"
   end
 
   def watch_connections
-    Thread.new {
-      sleep 1 until EM.reactor_running?
-      EM::PeriodicTimer.new(KEEPALIVE_TIME) do
-        @clients.each do |client|
-          self.verify_client_connection(client)
-        end
+    EM::PeriodicTimer.new(KEEPALIVE_TIME) do
+      @clients.each do |client|
+        self.verify_client_connection(client)
       end
-    }
+    end
   end
 
   def watch_queue
@@ -284,8 +283,7 @@ class WebsocketBackend
       if node.connected?
         node.set(last_seen_at: Time.now.utc)
       else
-        grid = Grid.find_by(node_id: client[:grid_id])
-        Agent::NodePlugger.new(grid, node).plugin! if grid
+        self.on_close(client[:ws])
       end
     else
       self.on_close(client[:ws])
