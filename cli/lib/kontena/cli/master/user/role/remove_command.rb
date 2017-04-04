@@ -18,9 +18,8 @@ module Kontena::Cli::Master::User::Role
         begin
           response = client(token).delete("users/#{email}/roles/#{role}")
           puts "Removed role #{role} from #{email}" if response
-        rescue => exc
-          puts "Failed to remove role #{role} from #{email}".colorize(:red)
-          puts exc.message
+        rescue => ex
+          $stderr.puts pastel.red("Failed to remove role #{role} from #{email} : #{ex.message}")
         end
       end
     end

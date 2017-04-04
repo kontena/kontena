@@ -171,23 +171,21 @@ module Kontena
                 plugins << spec
               else
                 plugin_name = spec.name.sub('kontena-plugin-', '')
-                STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
-                STDERR.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
+                $stderr.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
+                $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
-            rescue LoadError => exc
-              STDERR.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"
-              if ENV['DEBUG']
-                STDERR.puts exc.message
-                STDERR.puts exc.backtrace.join("\n")
-              end
+            rescue LoadError => ex
+              $stderr.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"
+              ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
               exit 1
             end
           end
         end
       end
       plugins
-    rescue => exc
-      STDERR.puts exc.message
+    rescue => ex
+      $stderr.puts Kontena.pastel.red(ex.message)
+      ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
     end
 
     def prefix(plugin_name)

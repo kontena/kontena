@@ -74,8 +74,8 @@ module Kontena::Cli::Stacks
             )
           )
         )
-      rescue Psych::SyntaxError => e
-        raise "Error while parsing #{file}".colorize(:red)+ " " + e.message
+      rescue Psych::SyntaxError => ex
+        raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
       def fully_interpolated_yaml
@@ -93,8 +93,8 @@ module Kontena::Cli::Stacks
             )
           )
         )
-      rescue Psych::SyntaxError => e
-        raise "Error while parsing #{file}".colorize(:red)+ " " + e.message
+      rescue Psych::SyntaxError => ex
+        raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
       def raw_yaml
