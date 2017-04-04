@@ -7,9 +7,8 @@ describe Rpc::NodeVolumeHandler, celluloid: true do
 
   describe '#list' do
 
-    it 'returns hash with error if id does not exist' do
-      list = subject.list('foo')
-      expect(list[:error]).not_to be_nil
+    it 'fails if host node does not exist' do
+      expect{subject.list('foo')}.to raise_error 'Node not found'
     end
 
     it 'returns hash with volume instances' do
@@ -56,7 +55,7 @@ describe Rpc::NodeVolumeHandler, celluloid: true do
     it 'does not save volume instance if volume not found' do
       data['volume_id'] = 'foo'
       expect {
-        subject.set_state(node.node_id, data)
+        expect{subject.set_state(node.node_id, data)}.to raise_error 'Could not find volume with id: foo'
       }.not_to change {VolumeInstance.count}
     end
 
