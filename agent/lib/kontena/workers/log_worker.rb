@@ -65,7 +65,7 @@ module Kontena::Workers
     def process_queue
       defer {
         while queue_processing? && data = @queue.pop
-          rpc_client.async.notification('/containers/log', [data])
+          rpc_client.notification('/containers/log', [data])
           if @queue.size > 100
             sleep 0.001
           else

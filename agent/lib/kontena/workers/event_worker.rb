@@ -81,7 +81,7 @@ module Kontena::Workers
         from: event.from,
         time: event.time
       }
-      rpc_client.async.request('/containers/event', [data])
+      rpc_client.request('/containers/event', [data])
       publish(EVENT_NAME, event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"

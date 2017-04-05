@@ -1,70 +1,50 @@
 require_relative 'logging'
+require_relative 'rpc_client_session'
 
 module Kontena
   class RpcClient
     include Celluloid
     include Kontena::Logging
 
-    class Error < StandardError
-      attr_reader :code
-
-      def initialize(code, message)
-        @code = code
-        super(message)
-      end
-    end
-
-    TimeoutError = Class.new(Error)
-
-    attr_reader :requests
-
-    # @param [Kontena::WebsocketClient] client
-    def initialize(client)
+    def initialize(ws_client)
+      @ws_client = ws_client
       @requests = {}
-      @client = client
-      info 'initialized'
     end
 
-    # @param [String] method
-    # @param [Array] params
-    def notification(method, params)
-      @client.send_notification(method, params)
-    rescue => exc
-      logger.error exc.message
+    # @return [Kontena::RpcClient]
+    def session
+      RpcClientSession.new(@ws_client, current_actor)
     end
 
-    # @param [String] method
-    # @param [Array] params
-    # @return [Object]
-    def request(method, params)
-      id = request_id
-      @requests[id] = nil
-      sleep 0.01 until @client.connected?
-      @client.send_request(id, method, params)
-      time = Time.now.utc
-      until !@requests[id].nil?
-        sleep 0.01
-        raise TimeoutError.new(500, 'Request timed out') if time < (Time.now.utc - 30)
-      end
-      result, error = @requests.delete(id)
-      if error
-        raise Error.new(error['code'], error['message'])
-      end
-      result
-    end
-
+    # @param [Array] response
     def handle_response(response)
-      type, msgid, error, result = response
-      @requests[msgid] = [result, error]
+      _, msgid, error, result = response
+      if session = @requests[msgid]
+        begin
+          session.handle_response(result, error)
+        ensure
+          free_id(msgid)
+        end
+      end
+    rescue => exc
+      error exc.message
     end
 
+    # @param [RpcClientSession] session
     # @return [Fixnum]
-    def request_id
+    def request_id(session)
       id = -1
       until id != -1 && !@requests[id]
         id = rand(2_147_483_647)
       end
+      @requests[id] = session
       id
+    end
+
+    # @param [Integer] id
+    # @return [RpcClientSession, NilClass]
+    def free_id(id)
+      @requests.delete(id)
     end
   end
 end

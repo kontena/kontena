@@ -121,7 +121,7 @@ module Kontena::Workers
         network: network_traffic,
         time: Time.now.utc.to_s
       }
-      rpc_client.async.notification('/containers/stat', [data])
+      rpc_client.notification('/containers/stat', [data])
       send_statsd_metrics(name, data)
     end
 

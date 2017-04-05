@@ -25,13 +25,11 @@ describe Kontena::Workers::ServicePodManager do
 
     it 'calls terminate_workers' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'service_pods' => [
-              { 'id' => 'a/1', 'instance_number' => 1}
-            ]
-          }
-        )
+        {
+          'service_pods' => [
+            { 'id' => 'a/1', 'instance_number' => 1}
+          ]
+        }
       )
       expect(subject.wrapped_object).to receive(:terminate_workers).with(['a/1'])
       subject.populate_workers_from_master
@@ -39,11 +37,9 @@ describe Kontena::Workers::ServicePodManager do
 
     it 'does not call terminate_workers if master does not return service pods' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'error' => 'oh no'
-          }
-        )
+        {
+          'error' => 'oh no'
+        }
       )
       expect(subject.wrapped_object).not_to receive(:terminate_workers)
       subject.populate_workers_from_master
@@ -51,14 +47,12 @@ describe Kontena::Workers::ServicePodManager do
 
     it 'calls ensure_service_worker for each service pod' do
       allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'service_pods' => [
-              { 'id' => 'a/1', 'instance_number' => 1},
-              { 'id' => 'b/2', 'instance_number' => 2}
-            ]
-          }
-        )
+        {
+          'service_pods' => [
+            { 'id' => 'a/1', 'instance_number' => 1},
+            { 'id' => 'b/2', 'instance_number' => 2}
+          ]
+        }
       )
       expect(subject.wrapped_object).to receive(:ensure_service_worker) do |s|
         expect(s.id).to eq('a/1')
