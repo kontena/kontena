@@ -35,7 +35,7 @@ module Kontena::Workers::Volumes
 
     def populate_volumes_from_master
       exclusive {
-        response = rpc_client.request("/node_volumes/list", [node.id])
+        response = rpc_request("/node_volumes/list", [node.id])
 
         # sanity-check
         unless response['volumes'].is_a?(Array)

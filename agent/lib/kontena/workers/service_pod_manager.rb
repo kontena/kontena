@@ -42,7 +42,7 @@ module Kontena::Workers
 
     def populate_workers_from_master
       exclusive {
-        response = rpc_client.request("/node_service_pods/list", [node.id])
+        response = rpc_request("/node_service_pods/list", [node.id])
 
         # sanity-check
         unless response['service_pods'].is_a?(Array)
