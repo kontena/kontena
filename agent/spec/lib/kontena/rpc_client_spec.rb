@@ -12,7 +12,6 @@ describe Kontena::RpcClient, celluloid: true do
     it 'handles response to session if exist' do
       expect(session).to receive(:handle_response).once.with(response[3], response[2])
       subject.handle_response(response)
-      #expect(subject)
     end
 
     it 'does not handle response to session if id does not match' do
