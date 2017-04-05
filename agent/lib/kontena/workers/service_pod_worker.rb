@@ -39,9 +39,11 @@ module Kontena::Workers
           sync_state_to_master(current_state, error)
         else
           sync_state_to_master(current_state)
-        end
 
-        self.terminate if service_pod.terminated?
+          # Only terminate this actor after we have succesfully ensure_terminated the Docker container
+          # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
+          self.terminate if service_pod.terminated?
+        end
       }
     end
 
