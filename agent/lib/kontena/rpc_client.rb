@@ -47,13 +47,13 @@ module Kontena
       id = request_id
       @requests[id] = nil
 
-      if !wait_until("websocket client is connected", timeout: timeout, interval: 0.01) { @client.connected? }
+      if !wait_until("websocket client is connected", timeout: timeout, interval: 0.1) { @client.connected? }
         return nil, TimeoutError.new(500, 'WebsocketClient is not connected')
       end
 
       @client.send_request(id, method, params)
 
-      if !wait_until("request #{id} has response", timeout: timeout, interval: 0.01) { @requests[id] }
+      if !wait_until("request #{method} has response wth id=#{id}", timeout: timeout, interval: 0.01) { @requests[id] }
         return nil, TimeoutError.new(500, 'Request timed out')
       end
 
