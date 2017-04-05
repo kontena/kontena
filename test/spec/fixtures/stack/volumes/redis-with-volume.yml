@@ -10,4 +10,5 @@ services:
 
 volumes:
   redis-data:
-    external: true
+    scope: instance
+    driver: local

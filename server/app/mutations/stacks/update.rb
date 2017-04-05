@@ -60,7 +60,6 @@ module Stacks
         new_rev = latest_rev.dup
         new_rev.revision += 1
         new_rev.save
-        create_new_volumes(self.volumes) if self.volumes
         create_new_services(self.stack_instance, sort_services(self.services))
       end
       self.stack_instance.reload
@@ -82,17 +81,6 @@ module Stacks
         end
       end
     end
-
-    def create_new_volumes(volumes)
-      volumes.each do |volume|
-        existing = self.stack_instance.grid.volumes.find_by(name: volume[:name])
-        unless existing
-          outcome = Volumes::Create.run(grid: self.stack_instance.grid, **volume.symbolize_keys)
-          unless outcome.success?
-            handle_volume_outcome_errors(volume[:name], outcome.errors)
-          end
-        end
-      end
-    end
+    
   end
 end

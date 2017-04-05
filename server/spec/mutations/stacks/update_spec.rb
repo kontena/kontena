@@ -67,29 +67,6 @@ describe Stacks::Update do
       }.to change{ stack.grid_services.count }.by(1)
     end
 
-    it 'creates new volumes' do
-      services = [
-        {name: 'redis', image: 'redis:3.0', volumes: ['vol:/data']},
-      ]
-      volumes = [
-        {name: 'vol', driver: 'local', scope: 'instance'}
-      ]
-      subject = described_class.new(
-        stack_instance: stack,
-        stack: 'foo/bar',
-        version: '0.1.0',
-        registry: 'file://',
-        source: '...',
-        services: services,
-        volumes: volumes
-      )
-      expect {
-        outcome = subject.run
-        expect(outcome.success?).to be_truthy
-        expect(outcome.result.latest_rev.volumes.size).to eq(1)
-      }.to change { Volume.count }.by (1)
-    end
-
     it 'fails to create new volumes' do
       services = [
         {name: 'redis', image: 'redis:3.0', volumes: ['vol:/data']},
