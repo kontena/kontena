@@ -140,7 +140,7 @@ module Kontena::Workers
       }
 
       if state != @prev_state
-        rpc_client.async.request('/node_service_pods/set_state', [node.id, data])
+        rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
         @prev_state = state
       end
     end

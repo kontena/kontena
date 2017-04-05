@@ -128,7 +128,7 @@ describe Kontena::Workers::ServicePodWorker do
     end
 
     it 'sends error' do
-      expect(rpc_client).to receive(:notification).with(
+      expect(rpc_client).to receive(:request).with(
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
       )
