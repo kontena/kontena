@@ -19,7 +19,8 @@ describe Kontena::RpcClient, :celluloid => true do
       expect(subject.wrapped_object).to receive(:rand).twice do
         i += 1
       end
-      subject.request_id
+
+      expect(subject.request_id).to eq 2
     end
   end
 
@@ -68,6 +69,38 @@ describe Kontena::RpcClient, :celluloid => true do
 
       expect(subject.wrapped_object).to receive(:warn).with("RPC request /test failed: Request timed out")
       expect(subject.request("/test", ["foo"], timeout: 0.01)).to be_nil
+    end
+  end
+
+  context "for a very small random pool with conflicts" do
+    let(:size) { 5 }
+    let(:count) { size ** 2 }
+    
+    before do
+      stub_const("Kontena::RpcClient::REQUEST_ID_RANGE", 1..size)
+
+      # echo server
+      allow(ws_client).to receive(:send_request).with(Integer, '/echo', [Integer]) do |id, method, params|
+        Celluloid.after(0.01) {
+          subject.async.handle_response([1, id, nil, params])
+        }
+      end
+    end
+
+    it "does not cause request collisions" do
+      # N**2 requests with a pool of N IDs should guarantee collisions
+      expect(subject.wrapped_object).to receive(:sleep).at_least(:once).and_call_original
+
+      requests = (1..count).map{ |i|
+        subject.future.request_with_error("/echo", [i])
+      }
+      responses = requests.map{|f|
+        response, error = f.value
+        expect(error).to be_nil
+        response[0]
+      }
+
+      expect(responses).to match_array (1..count).to_a
     end
   end
 end

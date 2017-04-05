@@ -8,6 +8,8 @@ module Kontena
     include Kontena::Logging
     include Kontena::Helpers::WaitHelper
 
+    REQUEST_ID_RANGE = 1..2**31
+
     class Error < StandardError
       attr_reader :code
 
@@ -90,10 +92,13 @@ module Kontena
 
     # @return [Fixnum]
     def request_id
-      id = -1
-      until id != -1 && !@requests[id]
-        id = rand(2_147_483_647)
+      id = rand(REQUEST_ID_RANGE)
+
+      while @requests.has_key?(id)
+        sleep 0.001
+        id = rand(REQUEST_ID_RANGE)
       end
+
       id
     end
   end
