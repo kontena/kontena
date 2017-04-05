@@ -4,7 +4,7 @@ require_relative 'grid_service_scheduler'
 class GridServiceDeployer
   include Logging
 
-  class DeployError < StandardError; end
+  DeployError = Class.new(StandardError)
 
   attr_reader :grid_service_deploy,
               :grid_service,
@@ -39,67 +39,53 @@ class GridServiceDeployer
     nodes
   end
 
-  # @return [Boolean]
   def deploy
-    deploy_rev = Time.now.utc.to_s
-    info "starting to deploy #{self.grid_service.to_path} at #{deploy_rev}"
+    info "starting to deploy #{self.grid_service.to_path}"
     self.grid_service_deploy.set(:deploy_state => :ongoing)
+    deploy_rev = Time.now.utc.to_s
     self.grid_service.set(:deployed_at => deploy_rev)
 
+    deploy_futures = []
     total_instances = self.instance_count
     self.grid_service.grid_service_instances.where(:instance_number.gt => total_instances).destroy
-
-    deploy_futures = []
     total_instances.times do |i|
       instance_number = i + 1
       unless self.grid_service.reload.deploying?
-        raise DeployError, "desired state has changed"
+        raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
       end
-
-      deploy_futures << self.deploy_service_instance(instance_number, deploy_rev)
-
-      pending_deploys = deploy_futures.select{|f| !f.ready?}
-      if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size >= 20
-        info "throttling service instance #{self.grid_service.to_path} deploy because of min_health limit (#{pending_deploys.size} instances in-progress)"
-        sleep 0.1 until pending_deploys.any?{|f| f.ready? }
-      end
-
-      # bail out early if anything fails
-      if deploy_futures.select{|f| f.ready? }.map{|f| f.value }.any?{|d| d.error? } # raises on any Future exceptions
-        raise DeployError, "one or more instances failed"
-      end
-
+      self.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
       sleep 0.1
     end
+    deploy_futures.select{|f| !f.ready?}.each{|f| f.value }
 
-    # wait on all Futures
-    if deploy_futures.map{|f| f.value }.any?{|d| d.error? } # raises on any Future exceptions
-      raise DeployError, "one or more instances failed"
-    end
-
+    self.grid_service_deploy.set(finished_at: Time.now.utc, :deploy_state => :success)
     info "service #{self.grid_service.to_path} has been deployed"
-    self.grid_service_deploy.success!
 
     true
-  rescue => exc
-    error "Failed to deploy (#{self.grid_service.to_path}): #{exc.class.name}: #{exc.message}"
+  rescue DeployError => exc
+    error exc.message
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
+    false
+  rescue RpcClient::Error => exc
+    error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
-
-    self.grid_service_deploy.set(:deploy_state => :error, :reason => "#{exc.class}: #{exc}")
-
-    # Wait for any remaining instance deploy futures
-    deploy_futures.map{|f| f.value rescue nil }
-
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
+    false
+  rescue => exc
+    error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
+    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
     false
   ensure
     self.grid_service_deploy.set(:finished_at => Time.now.utc)
   end
 
+  # @param [Integer] total_instances
+  # @param [Array<Celluloid::Future>] deploy_futures
   # @param [Integer] instance_number
   # @param [String] deploy_rev
-  # @raise [DeployError] scheduling failed
-  # @return [Celluloid::Future] running deploy
-  def deploy_service_instance(instance_number, deploy_rev)
+  # @raise [DeployError]
+  def deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
     begin
       node = self.scheduler.select_node(
           self.grid_service, instance_number, self.nodes
@@ -112,11 +98,20 @@ class GridServiceDeployer
       instance_number: instance_number,
       host_node: node,
     )
-
-    Celluloid::Future.new {
+    
+    deploy_futures << Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(grid_service_instance_deploy)
       instance_deployer.deploy(deploy_rev)
     }
+    pending_deploys = deploy_futures.select{|f| !f.ready?}
+    if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size >= 20
+      info "throttling service instance #{self.grid_service.to_path} deploy because of min_health limit (#{pending_deploys.size} instances in-progress)"
+      pending_deploys[0].value rescue nil
+      sleep 0.1 until pending_deploys.any?{|f| f.ready?}
+    end
+    if deploy_futures.any?{|f| f.ready? && f.value == false}
+      raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
+    end
   end
 
   # @return [Integer]
