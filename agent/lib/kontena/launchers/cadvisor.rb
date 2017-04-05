@@ -32,8 +32,12 @@ module Kontena::Launchers
     end
 
     def start_cadvisor
-      pull_image(image)
-      create_container(image)
+      if cadvisor_enabled?
+        pull_image(image)
+        create_container(image)
+      else
+        warn "cadvisor is disabled"
+      end
     end
 
     def image
@@ -90,7 +94,7 @@ module Kontena::Launchers
     # @param [Exception] exc
     def log_error(exc)
       error "#{exc.class.name}: #{exc.message}"
-      error exc.backtrace.join("\n")
+      error exc.backtrace.join("\n") if exc.backtrace
     end
 
     # @return [Hash]
@@ -106,10 +110,10 @@ module Kontena::Launchers
     # @return [Array<String>]
     def volume_binds
       [
-        '/:/rootfs:ro',
-        '/var/run:/var/run',
-        '/sys:/sys:ro',
-        '/var/lib/docker:/var/lib/docker:ro'
+        '/:/rootfs:ro,rshared',
+        '/var/run:/var/run:rshared',
+        '/sys:/sys:ro,rshared',
+        '/var/lib/docker:/var/lib/docker:ro,rshared'
       ]
     end
 
@@ -120,6 +124,12 @@ module Kontena::Launchers
       return true if cadvisor.labels['io.kontena.agent.version'].to_s != Kontena::Agent::VERSION
 
       false
+    end
+
+    # @return [Boolean]
+    def cadvisor_enabled?
+      return true unless ENV['CADVISOR_DISABLED']
+      ENV['CADVISOR_DISABLED'] != 'true'
     end
   end
 end
