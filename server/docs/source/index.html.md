@@ -1312,8 +1312,8 @@ For example `"secret_name": "FOO_DOMAIN_COM"` will write following secrets to th
 Attribute | Description
 --------- | -----------
 name      | Name of the volume
-scope     | Scope for the volume
-driver    | Volume driver to be used
+scope     | Scope for the volume (`instance`, `stack` or `grid`)
+driver    | Volume driver to be used. Each node reports it's supported drivers, see [node details](#get-a-node-details)
 driver_opts| Options for the volume driver
 
 ## List volumes
