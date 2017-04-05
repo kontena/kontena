@@ -18,24 +18,34 @@ describe WaitHelper do
   end
 
   describe 'wait' do
-    it 'returns true immediately' do
+    it 'returns true immediately without any logging' do
       expect(subject).not_to receive(:sleep)
+      expect(subject).not_to receive(:debug)
 
       value = subject.wait_until { true }
 
       expect(value).to be_truthy
     end
 
-    it 'sleeps between retries and logs debug' do
-      expect(subject).to receive(:debug).with('waiting 0.5s of 2.0s until: something that is true the second time')
-      expect(subject).to receive(:debug).with('waited 0.5s until: something that is true the second time yielded true')
+    it 'sleeps between retries and logs debug while under threshold' do
+      expect(subject).to receive(:debug).with('waiting 1.4s of 3.0s until: something that takes two seconds')
+      expect(subject).to receive(:debug).with('waited 2.0s of 3.0s until: something that takes two seconds yielded true')
 
-      @loop = 0
-      value = subject.wait_until("something that is true the second time", timeout: 2) { (@loop += 1) > 1 }
+      value = subject.wait_until("something that takes two seconds", timeout: 3, interval: 0.1, threshold: 2.5) { @time_elapsed > 2.0 }
 
       expect(value).to be_truthy
-      expect(@loop).to eq 2
-      expect(@time_elapsed).to eq(0.5)
+      expect(@time_elapsed).to be > 2.0
+    end
+
+    it 'logs info if over threshold' do
+      expect(subject).to receive(:debug).with('waiting 1.5s of 3.0s until: something that takes two seconds')
+      expect(subject).to receive(:debug).with('waiting 2.0s of 3.0s until: something that takes two seconds')
+      expect(subject).to receive(:info).with('waited 2.5s of 3.0s until: something that takes two seconds yielded true')
+
+      value = subject.wait_until("something that takes two seconds", timeout: 3, interval: 0.5, threshold: 1.0) { @time_elapsed > 2.0 }
+
+      expect(value).to be_truthy
+      expect(@time_elapsed).to be > 2.0
     end
 
     it 'sleeps between retries before timing out' do
