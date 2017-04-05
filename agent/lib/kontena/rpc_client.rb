@@ -1,9 +1,12 @@
 require_relative 'logging'
+require_relative 'helpers/wait_helper'
+
 
 module Kontena
   class RpcClient
     include Celluloid
     include Kontena::Logging
+    include Kontena::Helpers::WaitHelper
 
     class Error < StandardError
       attr_accessor :code, :message, :backtrace
@@ -34,26 +37,36 @@ module Kontena
       logger.error exc.message
     end
 
+    # This method should not raise, or the Actor will crash, and terminate any other pending requests.
+    #
     # @param [String] method
     # @param [Array] params
-    # @return [Object]
-    def request(method, params)
+    # @param [Fixnum] timeout seconds
+    # @return [Object, Exception]
+    def request_with_error(method, params, timeout: 30)
       id = request_id
       @requests[id] = nil
-      sleep 0.01 until @client.connected?
+
+      if !wait_until("websocket client is connected", timeout: timeout, interval: 0.01) { @client.connected? }
+        return nil, TimeoutError.new(500, 'WebsocketClient is not connected')
+      end
+
       @client.send_request(id, method, params)
-      time = Time.now.utc
-      until !@requests[id].nil?
-        sleep 0.01
-        raise TimeoutError.new(500, 'Request timed out') if time < (Time.now.utc - 30)
+
+      if !wait_until("request #{id} has response", timeout: timeout, interval: 0.01) { @requests[id] }
+        return nil, TimeoutError.new(500, 'Request timed out')
       end
+
       result, error = @requests.delete(id)
+
       if error
-        raise Error.new(error['code'], error['message'])
+        return result, Error.new(error['code'], error['message'])
+      else
+        return result, nil
       end
-      result
     end
 
+    # Called from Kontena::WebsocketClient in the EM thread
     def handle_response(response)
       type, msgid, error, result = response
       @requests[msgid] = [result, error]
