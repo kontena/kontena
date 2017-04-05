@@ -1295,6 +1295,8 @@ For example `"secret_name": "FOO_DOMAIN_COM"` will write following secrets to th
 
 # Volumes
 
+**Volumes support is at experimental state which means that there might be breaking changes between versions until the experimental status is removed.**
+
 ## Volume
 
 ```json
