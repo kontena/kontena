@@ -148,7 +148,7 @@ describe GridServiceInstanceDeployer do
       it "warns if it fails" do
         expect(subject).to receive(:deploy_service_instance).and_raise(RpcClient::TimeoutError.new(503, "Connection timeout (2s)"))
 
-        expect(subject).to receive(:warn).with("Failed to stop existing service test-grid/null/redis-2 on previous node old-node: RpcClient::TimeoutError")
+        expect(subject).to receive(:warn).with("Failed to stop existing service test-grid/null/redis-2 on previous node old-node: Connection timeout (2s)")
 
         subject.stop_service_instance(service_instance, deploy_rev)
       end
