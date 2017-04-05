@@ -14,10 +14,15 @@ module Kontena::Cli::Stacks
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
 
-    requires_current_master # the stack may use a vault resolver
-    requires_current_master_token
+    option '--online', :flag, "Enable connections to current master", default: false
 
     def execute
+      unless online?
+        config.current_master = nil
+        values ||= {}
+        values.merge!('GRID' => 'validate')
+      end
+
       reader = reader_from_yaml(filename, name: name, values: values)
       outcome = reader.execute
       hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?

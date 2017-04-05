@@ -76,11 +76,7 @@ module Kontena::Cli::Stacks::YAML
 
     def volume_schema
       {
-        'secrets' => optional('stacks_valid_secrets'),
-        'scope' => optional(['instance', 'service', 'stack', 'grid']),
-        'driver' => optional('string'),
-        'driver_opts' => optional( -> (value) { value.is_a?(Hash) }),
-        'external' => optional(-> (value) { value.is_a?(TrueClass) || value.is_a?(FalseClass) || (value.is_a?(Hash) && value['name'].is_a?(String)) })
+        'external' => optional(-> (value) { value.is_a?(TrueClass) || (value.is_a?(Hash) && value['name'].is_a?(String)) })
       }
     end
   end

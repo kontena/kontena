@@ -65,6 +65,7 @@ module Kontena::Workers
         service_pod = Kontena::Models::ServicePod.new(
           'id' => "#{c.service_id}/#{c.instance_number}",
           'service_id' => c.service_id,
+          'service_name' => c.service_name,
           'instance_number' => c.instance_number,
           'desired_state' => 'unknown'
         )
@@ -102,7 +103,7 @@ module Kontena::Workers
           worker = ServicePodWorker.new(node, service_pod)
           self.link worker
           workers[service_pod.id] = worker
-          worker.ensure_desired_state
+          worker.async.apply
         else
           workers[service_pod.id].async.update(service_pod)
         end

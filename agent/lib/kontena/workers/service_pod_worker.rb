@@ -16,58 +16,62 @@ module Kontena::Workers
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
-      @prev_state = 'unknown'
+      @prev_state = nil # sync'd to master
     end
 
     # @param [Kontena::Models::ServicePod] service_pod
     def update(service_pod)
-      if @service_pod && @service_pod.deploy_rev != service_pod.deploy_rev
-        @prev_state = nil
-      end
       @service_pod = service_pod
-      ensure_desired_state
+      apply
     end
 
     def destroy
       @service_pod.mark_as_terminated
-      ensure_desired_state
+      apply
+    end
+
+    def apply
+      exclusive {
+        begin
+          ensure_desired_state
+        rescue => error
+          warn "failed to sync #{service_pod.name}: #{error}"
+          sync_state_to_master(current_state, error)
+        else
+          sync_state_to_master(current_state)
+
+          # Only terminate this actor after we have succesfully ensure_terminated the Docker container
+          # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
+          self.terminate if service_pod.terminated?
+        end
+      }
     end
 
     def ensure_desired_state
-      exclusive {
-        debug "state of #{service_pod.name}: #{service_pod.desired_state}"
-        service_container = get_container(service_pod.service_id, service_pod.instance_number)
-        if service_pod.running? && service_container.nil?
-          info "creating #{service_pod.name}"
-          ensure_running
-        elsif service_container && service_pod.running? && !service_container.running?
-          info "starting #{service_pod.name}"
-          ensure_started
-        elsif service_pod.running? && (service_container && service_container_outdated?(service_container, service_pod))
-          info "re-creating #{service_pod.name}"
-          ensure_running
-        elsif service_pod.stopped? && (service_container && service_container.running?)
-          info "stopping #{service_pod.name}"
-          ensure_stopped
-        elsif service_pod.terminated?
-          info "terminating #{service_pod.name}"
-          ensure_terminated if service_container
-        elsif service_pod.desired_state_unknown?
-          info "desired state is unknown for #{service_pod.name}, not doing anything"
-        elsif state_in_sync?(service_pod, service_container)
-          debug "state is in-sync: #{service_pod.desired_state}"
-        else
-          warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
-        end
-      }
-
-      if service_pod.terminated?
-        self.terminate
-        return
+      debug "state of #{service_pod.name}: #{service_pod.desired_state}"
+      service_container = get_container(service_pod.service_id, service_pod.instance_number)
+      if service_pod.running? && service_container.nil?
+        info "creating #{service_pod.name}"
+        ensure_running
+      elsif service_container && service_pod.running? && !service_container.running?
+        info "starting #{service_pod.name}"
+        ensure_started
+      elsif service_pod.running? && (service_container && service_container_outdated?(service_container, service_pod))
+        info "re-creating #{service_pod.name}"
+        ensure_running
+      elsif service_pod.stopped? && (service_container && service_container.running?)
+        info "stopping #{service_pod.name}"
+        ensure_stopped
+      elsif service_pod.terminated?
+        info "terminating #{service_pod.name}"
+        ensure_terminated if service_container
+      elsif service_pod.desired_state_unknown?
+        info "desired state is unknown for #{service_pod.name}, not doing anything"
+      elsif state_in_sync?(service_pod, service_container)
+        debug "state is in-sync: #{service_pod.desired_state}"
+      else
+        warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
       end
-
-      state = current_state
-      sync_state_to_master(state) if state != prev_state
     end
 
     def ensure_running
@@ -126,16 +130,21 @@ module Kontena::Workers
       end
     end
 
-    # @param [String] current_state
-    def sync_state_to_master(current_state)
-      data = {
+    # @param current_state [String]
+    # @param error [Exception]
+    def sync_state_to_master(current_state, error = nil)
+      state = {
         service_id: service_pod.service_id,
         instance_number: service_pod.instance_number,
+        rev: service_pod.deploy_rev,
         state: current_state,
-        rev: service_pod.deploy_rev
+        error: error ? "#{error.class}: #{error}" : nil,
       }
-      rpc_client.async.request('/node_service_pods/set_state', [node.id, data])
-      @prev_state = current_state
+
+      if state != @prev_state
+        rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
+        @prev_state = state
+      end
     end
   end
 end

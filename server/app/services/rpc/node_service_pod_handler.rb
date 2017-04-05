@@ -31,8 +31,9 @@ module Rpc
       )
       if service_instance
         service_instance.set(
+          rev: pod['rev'],
           state: pod['state'],
-          rev: pod['rev']
+          error: pod['error'],
         )
         {}
       else

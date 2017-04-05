@@ -94,10 +94,14 @@ class GridServiceDeployer
       raise DeployError, "Cannot find applicable node for service instance #{self.grid_service.to_path}-#{instance_number}: #{exc.message}"
     end
 
-    info "deploying service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
+    grid_service_instance_deploy = @grid_service_deploy.grid_service_instance_deploys.create(
+      instance_number: instance_number,
+      host_node: node,
+    )
+    
     deploy_futures << Celluloid::Future.new {
-      instance_deployer = GridServiceInstanceDeployer.new(self.grid_service)
-      instance_deployer.deploy(node, instance_number, deploy_rev)
+      instance_deployer = GridServiceInstanceDeployer.new(grid_service_instance_deploy)
+      instance_deployer.deploy(deploy_rev)
     }
     pending_deploys = deploy_futures.select{|f| !f.ready?}
     if pending_deploys.size >= (total_instances * self.min_health).floor || pending_deploys.size >= 20

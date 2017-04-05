@@ -48,8 +48,6 @@ module Stacks
         return
       end
 
-      create_volumes(attributes.delete(:volumes))
-
       services = sort_services(attributes.delete(:services))
       attributes[:services] = services
       attributes[:volumes] = self.volumes
@@ -59,20 +57,6 @@ module Stacks
       create_services(stack, services)
 
       stack
-    end
-
-    # @param [Array<Hash>] volumes
-    def create_volumes(volumes)
-      return unless volumes
-      volumes.each do |volume|
-        unless volume[:external]
-          outcome = Volumes::Create.run(grid: self.grid, **volume.symbolize_keys)
-          unless outcome.success?
-            handle_volume_outcome_errors(volume[:name], outcome.errors)
-            return
-          end
-        end
-      end
     end
 
     # @param [Stack] stack
