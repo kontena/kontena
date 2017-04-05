@@ -64,6 +64,7 @@ describe WebsocketBackend, celluloid: true do
       expect(subject).to receive(:send_message).with(client[:ws], 'hello')
       MongoPubsub.publish('rpc_client', {type: 'request', message: 'hello'})
       sleep 0.05
+      EM.run_deferred_callbacks
     end
 
     it 'does not send message if client is not found' do
@@ -91,10 +92,19 @@ describe WebsocketBackend, celluloid: true do
       subject.on_pong(client)
     end
 
-    it 'triggers agent plug' do
-      expect(Agent::NodePlugger).to receive(:new).and_return(spy)
+    it 'closes connection if node is not marked as connected' do
+      expect(subject).to receive(:on_close).with(client[:ws])
       client[:id] = node.node_id
       subject.on_pong(client)
+    end
+
+    it 'updates node last_seen_at if node is marked as connected' do
+      node.set(connected: true)
+      expect(subject).not_to receive(:on_close)
+      client[:id] = node.node_id
+      expect {
+        subject.on_pong(client)
+      }.to change { node.reload.last_seen_at }
     end
   end
 end
