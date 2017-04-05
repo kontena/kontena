@@ -66,6 +66,23 @@ module Kontena
       end
     end
 
+    # Async request wrapper.
+    #
+    # Logs a warning and returns nil on errors.
+    # Use Kontena::Helpers::RpcError.rpc_request to get a raised error instead.
+    #
+    # @return [Object, nil]
+    def request(method, params, **opts)
+      result, error = request_with_error(method, params, **opts)
+
+      if error
+        warn "RPC request #{method} failed: #{error}"
+        return nil
+      else
+        return result
+      end
+    end
+
     # Called from Kontena::WebsocketClient in the EM thread
     def handle_response(response)
       type, msgid, error, result = response
