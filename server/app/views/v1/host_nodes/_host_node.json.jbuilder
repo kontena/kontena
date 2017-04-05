@@ -7,10 +7,8 @@ json.name node.name
 json.os node.os
 json.engine_root_dir node.docker_root_dir
 json.driver node.driver
-json.plugins do
-  json.network node.plugins['network'] || []
-  json.volume node.plugins['volume'] || []
-end
+json.network_drivers node.network_drivers.as_json(only: [:name, :version])
+json.volume_drivers node.volume_drivers.as_json(only: [:name, :version])
 json.kernel_version node.kernel_version
 json.labels node.labels
 json.mem_total node.mem_total
