@@ -50,4 +50,24 @@ describe Kontena::RpcClient, :celluloid => true do
       expect(subject.request_with_error("/test", ["foo"], timeout: 0.01)).to match [nil, Kontena::RpcClient::TimeoutError]
     end
   end
+
+  describe '#request' do
+    it "returns the response" do
+      expect(ws_client).to receive(:send_request).with(Fixnum, "/test", ["foo"]) do |id, method, params|
+        Celluloid.after(0.0) {
+          subject.async.handle_response([1, id, nil, "foobar"])
+        }
+      end
+
+      expect(subject.wrapped_object).not_to receive(:warn)
+      expect(subject.request("/test", ["foo"], timeout: 1.0)).to eq "foobar"
+    end
+
+    it "returns nil and logs a warning on errors" do
+      expect(ws_client).to receive(:send_request).with(Fixnum, "/test", ["foo"]) # do nothing..
+
+      expect(subject.wrapped_object).to receive(:warn).with("RPC request /test failed: Kontena::RpcClient::TimeoutError")
+      expect(subject.request("/test", ["foo"], timeout: 0.01)).to be_nil
+    end
+  end
 end
