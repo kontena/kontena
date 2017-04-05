@@ -8,6 +8,8 @@ class GridServiceDeploy
   field :reason, type: String
   enum :deploy_state, [:created, :ongoing, :success, :error], default: :created
 
+  embeds_many :grid_service_instance_deploys
+
   index({ grid_service_id: 1 })
   index({ created_at: 1 })
   index({ started_at: 1 })
