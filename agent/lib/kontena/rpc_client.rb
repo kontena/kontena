@@ -6,16 +6,15 @@ module Kontena
     include Kontena::Logging
 
     class Error < StandardError
-      attr_accessor :code, :message, :backtrace
+      attr_reader :code
 
-      def initialize(code, message, backtrace = nil)
-        self.code = code
-        self.message = message
-        self.backtrace = backtrace
+      def initialize(code, message)
+        @code = code
+        super(message)
       end
     end
 
-    class TimeoutError < Error; end
+    TimeoutError = Class.new(Error)
 
     attr_reader :requests
 

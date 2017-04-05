@@ -47,7 +47,7 @@ module Kontena
       uri = URI.parse(@api_url)
       @host = uri.host
 
-      @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
+      @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
       @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
       @logger.progname = 'CLIENT'
 
@@ -139,8 +139,8 @@ module Kontena
       logger.debug "Requesting user info from #{final_path}"
       request(path: final_path)
       true
-    rescue
-      logger.debug "Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}"
+    rescue => ex
+      logger.debug "Authentication verification exception: #{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}"
       false
     end
 
@@ -172,8 +172,8 @@ module Kontena
     # @return [String] version_string
     def server_version
       request(auth: false, expects: 200)['version']
-    rescue
-      logger.debug "Server version exception: #{$!} #{$!.message}"
+    rescue => ex
+      logger.debug "Server version exception: #{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}"
       nil
     end
 
@@ -369,8 +369,8 @@ module Kontena
       else
         {}
       end
-    rescue
-      logger.debug "Access token refresh exception: #{$!} - #{$!.message} #{$!.backtrace}"
+    rescue => ex
+      logger.debug "Access token refresh exception: #{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}"
       false
     end
 
@@ -418,8 +418,8 @@ module Kontena
         logger.debug "Got null or bad response to refresh request: #{last_response.inspect}"
         false
       end
-    rescue
-      logger.debug "Access token refresh exception: #{$!} - #{$!.message} #{$!.backtrace}"
+    rescue => ex
+      logger.debug "Access token refresh exception: #{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}"
       false
     end
 
@@ -509,8 +509,8 @@ module Kontena
     # @return [Hash,Object,NilClass]
     def parse_json(json)
       JSON.parse(json)
-    rescue
-      logger.debug "JSON parse exception: #{$!} : #{$!.message}"
+    rescue => ex
+      logger.debug "JSON parse exception: #{ex.class.name} : #{ex.message}"
       nil
     end
 

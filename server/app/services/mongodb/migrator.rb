@@ -7,7 +7,7 @@ module Mongodb
     include Logging
     include DistributedLocks
 
-    class MigratorError < StandardError; end
+    MigratorError = Class.new(StandardError)
 
     class DuplicateMigrationNameError < MigratorError
       def initialize(name)

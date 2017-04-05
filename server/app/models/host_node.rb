@@ -5,8 +5,8 @@ class HostNode
   include Mongoid::Document
   include Mongoid::Timestamps
   include EventStream
-  class Error < StandardError
-  end
+
+  Error = Class.new(StandardError)
 
   field :node_id, type: String
   field :node_number, type: Integer

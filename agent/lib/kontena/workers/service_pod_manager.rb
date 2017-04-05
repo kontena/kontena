@@ -65,6 +65,7 @@ module Kontena::Workers
         service_pod = Kontena::Models::ServicePod.new(
           'id' => "#{c.service_id}/#{c.instance_number}",
           'service_id' => c.service_id,
+          'service_name' => c.service_name,
           'instance_number' => c.instance_number,
           'desired_state' => 'unknown'
         )
