@@ -142,7 +142,7 @@ describe Kontena::Workers::NodeInfoWorker do
   describe '#volume_drivers' do
     it 'returns array of drivers' do
       expect(subject.volume_drivers).to include(hash_including({name: 'local'}))
-      expect(subject.volume_drivers).to include(hash_including({name: 'foo:latest'}))
+      expect(subject.volume_drivers).to include(hash_including({name: 'foo', version: 'latest'}))
     end
   end
 

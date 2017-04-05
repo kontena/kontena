@@ -95,7 +95,8 @@ module Kontena::Workers
       plugins.each do |plugin|
         config = plugin['Config']
         if config.dig('Interface', 'Types').include?('docker.volumedriver/1.0')
-          drivers << { name: plugin['Name'] } if plugin['Enabled']
+          name, version = plugin['Name'].split(':')
+          drivers << { name: name, version: version } if plugin['Enabled']
         end
       end
       docker_info.dig('Plugins', 'Volume').to_a.each do |plugin|
@@ -111,7 +112,8 @@ module Kontena::Workers
       plugins.each do |plugin|
         config = plugin['Config']
         if config.dig('Interface', 'Types').include?('docker.networkdriver/1.0')
-          drivers << { name: plugin['Name'] } if plugin['Enabled']
+          name, version = plugin['Name'].split(':')
+          drivers << { name: name, version: version } if plugin['Enabled']
         end
       end
       docker_info.dig('Plugins', 'Network').to_a.each do |plugin|

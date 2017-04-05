@@ -28,11 +28,11 @@ class HostNode
   field :last_seen_at, type: Time
   field :agent_version, type: String
   field :docker_version, type: String
-  field :plugins, type: Hash, default: {}
-  field :volume_drivers, type: Array, default: []
-  field :network_drivers, type: Array, default: []
 
   attr_accessor :schedule_counter
+
+  embeds_many :volume_drivers, class_name: 'HostNodeDriver'
+  embeds_many :network_drivers, class_name: 'HostNodeDriver'
 
   belongs_to :grid
   has_many :grid_service_instances

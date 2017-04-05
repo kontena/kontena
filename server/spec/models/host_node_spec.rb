@@ -10,9 +10,9 @@ describe HostNode do
   it { should have_fields(:labels).of_type(Array) }
   it { should have_fields(:mem_total, :mem_limit).of_type(Integer) }
   it { should have_fields(:last_seen_at).of_type(Time) }
-  it { should have_fields(:network_drivers).of_type(Array) }
-  it { should have_fields(:volume_drivers).of_type(Array) }
 
+  it { should embed_many(:volume_drivers) }
+  it { should embed_many(:network_drivers) }
   it { should belong_to(:grid) }
   it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
@@ -129,13 +129,13 @@ describe HostNode do
       }.to change{ subject.agent_version }.to('1.2.3')
     end
 
-    it 'sets volume plugins' do
+    it 'sets volume drivers' do
       subject.attributes_from_docker({'Drivers' => {'Volume' => [
-        { 'name' => 'local' }, { 'name' => 'foobar' }
+        { 'name' => 'local' }, { 'name' => 'foobar', 'version' => 'latest' }
       ]}})
-      expect(subject.volume_drivers).to eq([
-        { 'name' => 'local' }, { 'name' => 'foobar' }
-      ])
+      expect(subject.volume_drivers.first.name).to eq('local')
+      expect(subject.volume_drivers.last.name).to eq('foobar')
+      expect(subject.volume_drivers.last.version).to eq('latest')
     end
   end
 
