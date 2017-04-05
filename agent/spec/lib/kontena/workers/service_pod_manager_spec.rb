@@ -85,8 +85,8 @@ describe Kontena::Workers::ServicePodManager do
   describe '#populate_workers_from_docker' do
     it 'calls ensure_service_worker for each container' do
       allow(subject.wrapped_object).to receive(:fetch_containers).and_return([
-        double(:a, id: 'a', service_id: 'foo', instance_number: 2),
-        double(:b, id: 'b', service_id: 'bar', instance_number: 1)
+        double(:a, id: 'a', service_id: 'foo', instance_number: 2, service_name: 'foo'),
+        double(:b, id: 'b', service_id: 'bar', instance_number: 1, service_name: 'bar')
       ])
       expect(subject.wrapped_object).to receive(:ensure_service_worker).twice
       subject.populate_workers_from_docker

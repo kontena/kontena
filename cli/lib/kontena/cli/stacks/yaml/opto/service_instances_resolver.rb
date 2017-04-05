@@ -2,6 +2,7 @@ module Kontena::Cli::Stacks
   module YAML
     class Opto::Resolvers::ServiceInstances < ::Opto::Resolver
       def resolve
+        return nil unless current_master && current_grid
         read_command = Kontena::Cli::Stacks::ShowCommand.new([self.stack])
         stack = read_command.fetch_stack(self.stack)
         service = stack['services'].find { |s| s['name'] == hint }

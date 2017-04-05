@@ -4,7 +4,7 @@ require_relative 'grid_service_scheduler'
 class GridServiceDeployer
   include Logging
 
-  class DeployError < StandardError; end
+  DeployError = Class.new(StandardError)
 
   attr_reader :grid_service_deploy,
               :grid_service,

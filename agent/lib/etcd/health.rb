@@ -1,9 +1,7 @@
 require 'etcd'
 
 module Etcd::Health
-  class Error < StandardError
-
-  end
+  Error = Class.new(StandardError)
 
   # @raise [Etcd::Health::Error]
   # @return [Boolean]

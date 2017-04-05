@@ -22,7 +22,7 @@ module Kontena
         self
       end
 
-      class TokenExpiredError < StandardError;  end
+      TokenExpiredError = Class.new(StandardError)
 
       def initialize
         super
