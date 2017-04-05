@@ -111,7 +111,7 @@ module Kontena
               type: type,
               data: chunk
           }
-          rpc_client.async.notification('/containers/log', [data])
+          rpc_client.notification('/containers/log', [data])
         end
       end
 

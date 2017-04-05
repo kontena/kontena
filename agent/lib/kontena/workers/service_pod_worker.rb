@@ -134,7 +134,7 @@ module Kontena::Workers
         state: current_state,
         rev: service_pod.deploy_rev
       }
-      rpc_client.async.request('/node_service_pods/set_state', [node.id, data])
+      rpc_client.request('/node_service_pods/set_state', [node.id, data])
       @prev_state = current_state
     end
   end

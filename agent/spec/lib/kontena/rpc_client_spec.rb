@@ -1,40 +1,49 @@
 
-describe Kontena::RpcClient, eventmachine: true do
+describe Kontena::RpcClient, celluloid: true do
 
-  let(:ws_client) { double(:ws_client) }
+  let(:ws_client) { double(:ws_client, connected?: true) }
   let(:subject) { described_class.new(ws_client) }
 
-  describe '#async' do
-    it 'returns AsyncProxy' do
-      expect(subject.async.class).to eq(Kontena::RpcClient::AsyncProxy)
+  describe '#handle_response' do
+    let(:session) { double(:session) }
+    let(:request_id) { subject.request_id(session) }
+    let(:response) { ['type', request_id, nil, {'foo' => 'bar'}] }
+
+    it 'handles response to session if exist' do
+      expect(session).to receive(:handle_response).once.with(response[3], response[2])
+      subject.handle_response(response)
+      #expect(subject)
     end
 
-    it 'raises error if client does not have called method' do
-      expect {
-        subject.async.foobar
-      }.to raise_error( ArgumentError )
+    it 'does not handle response to session if id does not match' do
+      response[1] = -1
+      expect(session).not_to receive(:handle_response)
+      subject.handle_response(response)
     end
 
-    it 'calls proxies call to client' do
-      expect(subject).to receive(:request).with('/foo/bar', [1,2,3])
-      subject.async.request('/foo/bar', [1,2,3])
-      EM.run_deferred_callbacks
+    it 'removes request_id after passing response to session' do
+      expect(session).to receive(:handle_response).once
+      subject.handle_response(response)
+      expect(subject.free_id(request_id)).to be_nil
     end
   end
 
-  describe '.request_id' do
+  describe '#request_id' do
     it 'returns random integer' do
-      id = described_class.request_id(subject)
+      id = subject.request_id(double(:session))
       expect(id).to be_instance_of(Fixnum)
     end
+  end
 
-    it 'retries to generate id if id is already used' do
-      described_class.requests[1] = double(:request)
-      i = 0
-      expect(described_class).to receive(:rand).twice do
-        i += 1
-      end
-      described_class.request_id(subject)
+  describe '#free_id' do
+    it 'returns removed request if exist' do
+      session = double(:session)
+      id = subject.request_id(session)
+      expect(subject.free_id(id)).to eq(session)
+    end
+
+    it 'returns nil if id does not exist' do
+      expect(subject.free_id(1)).to be_nil
     end
   end
 end

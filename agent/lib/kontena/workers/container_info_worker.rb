@@ -67,7 +67,7 @@ module Kontena::Workers
         node: self.node_info['ID'],
         container: data
       }
-      rpc_client.async.request('/containers/save', [data])
+      rpc_client.request('/containers/save', [data])
     rescue Docker::Error::NotFoundError
     rescue => exc
       error exc.message
@@ -82,7 +82,7 @@ module Kontena::Workers
         from: event.from,
         time: event.time
       }
-      rpc_client.async.request('/containers/event', [data])
+      rpc_client.request('/containers/event', [data])
     end
 
     # @return [Hash]

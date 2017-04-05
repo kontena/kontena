@@ -10,7 +10,6 @@ module Kontena
       info "initializing agent (version #{VERSION})"
       @opts = opts
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
-      Kontena::RpcClient.ws_client = @client
       @supervisor = Celluloid::Supervision::Container.run!
       self.supervise_state
       self.supervise_launchers

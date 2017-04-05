@@ -44,8 +44,7 @@ module Kontena::Workers
     end
 
     def start
-      loop do
-        sleep PUBLISH_INTERVAL
+      every(PUBLISH_INTERVAL) do
         self.publish_node_info
         self.publish_node_stats
       end
@@ -79,7 +78,7 @@ module Kontena::Workers
       docker_info['PublicIp'] = self.public_ip
       docker_info['PrivateIp'] = self.private_ip
       docker_info['AgentVersion'] = Kontena::Agent::VERSION
-      rpc_client.async.request('/nodes/update', [docker_info])
+      rpc_client.request('/nodes/update', [docker_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end
@@ -162,7 +161,7 @@ module Kontena::Workers
         network: network_traffic,
         time: Time.now.utc.to_s
       }
-      rpc_client.async.notification('/nodes/stats', [data])
+      rpc_client.notification('/nodes/stats', [data])
       send_statsd_metrics(data)
     end
 

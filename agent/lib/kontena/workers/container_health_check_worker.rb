@@ -43,7 +43,7 @@ module Kontena::Workers
       else
         msg = check_tcp_status(ip, port, timeout)
       end
-      rpc_client.async.request('/containers/health', [msg])
+      rpc_client.request('/containers/health', [msg])
 
       handle_action(msg)
     end
@@ -59,7 +59,7 @@ module Kontena::Workers
           type: 'stderr',
           data: "*** [Kontena/Agent] Restarting service as it's reported to be unhealthy."
         }
-        rpc_client.async.notification('/containers/log', [log])
+        rpc_client.notification('/containers/log', [log])
         defer {
           restart_container
         }

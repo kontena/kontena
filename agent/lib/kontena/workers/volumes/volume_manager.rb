@@ -35,8 +35,7 @@ module Kontena::Workers::Volumes
 
     def populate_volumes_from_master
       exclusive {
-        request = rpc_client.future.request("/node_volumes/list", [node.id])
-        response = request.value
+        response = rpc_client.request("/node_volumes/list", [node.id])
         unless response['volumes'].is_a?(Array)
           warn "failed to get list of volumes from master: #{response['error']}"
           return
@@ -87,7 +86,7 @@ module Kontena::Workers::Volumes
         'volume_instance_id' => data.dig('Labels', 'io.kontena.volume_instance.id'),
         'volume_id' => data.dig('Labels', 'io.kontena.volume.id')
       }
-      rpc_client.async.request('/node_volumes/set_state', [node.id, volume])
+      rpc_client.request('/node_volumes/set_state', [node.id, volume])
     end
 
     def volume_exist?(volume_name)
