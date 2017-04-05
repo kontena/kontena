@@ -24,7 +24,7 @@ module Kontena::Helpers::WaitHelper
 
     wait_start = _wait_now
     wait_until = wait_start + timeout
-    wait_time = 0
+    wait_time = nil
     logging_threshold = threshold / 2
 
     value = nil
@@ -33,7 +33,7 @@ module Kontena::Helpers::WaitHelper
       break if value = yield
       break if _wait_now >= wait_until # timeout
 
-      if wait_time > logging_threshold
+      if wait_time && wait_time > logging_threshold
         logging_threshold *= 2
 
         debug "waiting %.1fs of %.1fs until: %s" % [wait_time + interval, timeout, message || '???']
@@ -46,9 +46,9 @@ module Kontena::Helpers::WaitHelper
 
     if !value
       warn "timeout after waiting %.1fs of %.1fs until: %s" % [_wait_now - wait_start, timeout, message || '???']
-    elsif wait_time > threshold
+    elsif wait_time && wait_time > threshold
       info "waited %.1fs of %.1fs until: %s yielded %s" % [_wait_now - wait_start, timeout, message || '???', value]
-    else
+    elsif wait_time
       debug "waited %.1fs of %.1fs until: %s yielded %s" % [_wait_now - wait_start, timeout, message || '???', value]
     end
 

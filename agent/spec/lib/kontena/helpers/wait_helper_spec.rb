@@ -17,8 +17,9 @@ describe Kontena::Helpers::WaitHelper do
   end
 
   describe 'wait' do
-    it 'returns true immediately' do
+    it 'returns true immediately without any logging' do
       expect(subject).not_to receive(:sleep)
+      expect(subject).not_to receive(:debug)
 
       value = subject.wait_until { true }
 
