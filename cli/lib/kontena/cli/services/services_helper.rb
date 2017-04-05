@@ -224,23 +224,45 @@ module Kontena
           client(token).post("services/#{param}/deploy", data)
         end
 
+        # @param [Hash] deployment
+        # @return [String] multi-line
+        def render_service_deploy_instances(deployment)
+          deployment['instance_deploys'].map{ |instance_deploy|
+            description = "instance #{deployment['service_id']}-#{instance_deploy['instance_number']} to node #{instance_deploy['node']}"
+
+            case instance_deploy['state']
+            when 'created'
+              "#{pastel.dark('⊝')} Deploy #{description}"
+            when 'ongoing'
+              "#{pastel.cyan('⊙')} Deploying #{description}..."
+            when 'success'
+              "#{pastel.green('⊛')} Deployed #{description}"
+            when 'error'
+              "#{pastel.red('⊗')} Failed to deploy #{description}: #{instance_deploy['error']}"
+            else
+              "#{pastel.dark('⊗')} Deploy #{description}?"
+            end
+          }
+        end
+
         # @param [String] token
         # @param [Hash] deployment
-        # @return [Boolean]
-        def wait_for_deploy_to_finish(token, deployment, timeout = 600)
-          deployed = false
+        # @param [Fixnum] timeout
+        # @param [Boo lean] verbose
+        # @raise [Kontena::Errors::StandardError]
+        def wait_for_deploy_to_finish(token, deployment, timeout: 600)
           Timeout::timeout(timeout) do
-            until deployed
-              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
-              deployed = true if deployment['finished_at']
+            until deployment['finished_at']
               sleep 1
+              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
             end
+
             if deployment['state'] == 'error'
-              raise Kontena::Errors::StandardError.new(500, deployment['reason'])
+              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment))
+            else
+              puts render_service_deploy_instances(deployment).join("\n")
             end
           end
-
-          deployed
         rescue Timeout::Error
           raise Kontena::Errors::StandardError.new(500, 'deploy timed out')
         end

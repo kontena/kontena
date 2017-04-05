@@ -4,91 +4,141 @@ class GridServiceInstanceDeployer
 
   attr_reader :grid_service
 
-  def initialize(grid_service)
-    @grid_service = grid_service
+  class Error < StandardError; end
+
+  class NodeError < Error; end
+  class ServiceError < Error; end
+  class StateError < Error; end
+
+  # @param grid_service_instance_deploy [GridServiceInstanceDeploy]
+  def initialize(grid_service_instance_deploy)
+    @grid_service_instance_deploy = grid_service_instance_deploy
+    @grid_service = grid_service_instance_deploy.grid_service_deploy.grid_service
+    @instance_number = grid_service_instance_deploy.instance_number
+    @host_node = grid_service_instance_deploy.host_node
   end
 
-  # @param [HostNode] node
-  # @param [Integer] instance_number
-  # @param [String] deploy_rev
-  # @return [Boolean]
-  def deploy(node, instance_number, deploy_rev)
-    ensure_volume_instance(node, instance_number)
+  # @param deploy_rev [String]
+  # @return [GridServiceInstanceDeploy] in error or success state
+  def deploy(deploy_rev)
+    info "Deploying service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}..."
 
-    current_instance = current_service_instance(instance_number)
-    if current_instance && current_instance.host_node != node
+    @grid_service_instance_deploy.set(:deploy_state => :ongoing)
+
+    ensure_volume_instance
+    ensure_service_instance(deploy_rev)
+
+  rescue => error
+    warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
+    @grid_service_instance_deploy.set(:deploy_state => :error, :error => "#{error.class}: #{error}")
+  else
+    @grid_service_instance_deploy.set(:deploy_state => :success)
+  end
+
+  # Ensure the ServiceInstance matches the desired GridServiceInstanceDeploy configuration.
+  #
+  # @param deploy_rev [String]
+  # @raise
+  # @return [ServiceInstance]
+  def ensure_service_instance(deploy_rev)
+    service_instance = get_service_instance
+
+    if service_instance.nil?
+      service_instance = create_service_instance
+    elsif service_instance.host_node.nil?
+      # host node was removed
+      warn "Replacing orphaned service #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node"
+    elsif service_instance.host_node != @host_node
       # we need to stop instance if it's running on different node
-      stop_current_instance(current_instance)
+      stop_service_instance(service_instance, deploy_rev)
     end
 
-    service_instance = create_service_instance(node, instance_number, deploy_rev)
+    deploy_service_instance(service_instance, @host_node, deploy_rev, 'running')
+  end
+
+  # Stop an existing instance on the previous host node.
+  #
+  # This strictly optional: changing the GridServiceInstance.host_node will eventually result in the old pod being terminated.
+  # This just lets us notify the old node and wait for the old pod to actually stop, and thus avoid duplicate instances under
+  # normal conditions.
+  #
+  # @param service_instance [GridServiceInstance]
+  # @param deploy_rev [String]
+  def stop_service_instance(service_instance, deploy_rev)
+    info "Stopping existing service service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}..."
+
+    deploy_service_instance(service_instance, service_instance.host_node, deploy_rev, 'stopped')
+
+  rescue => error
+    warn "Failed to stop existing service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}: #{error}"
+  end
+
+  # Update service instance, notify node, wait for update, and ensure that service is in desired state.
+  # Returns updated GridServiceInstance, or raises on any errors.
+  #
+  # @param service_instance [GridServiceInstance]
+  # @param node [String] move to host node
+  # @param deploy_rev [String] revision
+  # @param desired_state [String] set and check for container state
+  # @raise [RpcClient::TimeoutError] notify node failed
+  # @raise [AgentError] agent failed to apply update
+  # @raise [StateError] unexpected state after update
+  # @raise [Timeout::Error] no update from agent
+  # @return [GridServiceInstance]
+  def deploy_service_instance(service_instance, node, deploy_rev, desired_state)
+    raise NodeError, "Host node is missing" unless node
+    raise NodeError, "Host node is offline" unless node.connected?
+
+    service_instance.set(
+      host_node_id: node.id,
+      deploy_rev: deploy_rev,
+      desired_state: desired_state,
+      rev: nil, # reset
+    )
+
     notify_node(node)
-    wait_for_service_state(service_instance, 'running', deploy_rev)
 
-    true
-  rescue => exc
-    error "failed to deploy service instance #{self.grid_service.to_path}-#{instance_number} to node #{node.name}"
-    error exc.message
-    error exc.backtrace.join("\n") if exc.backtrace
-    false
-  end
-
-  # @param [GridServiceInstance] current_instance
-  def stop_current_instance(current_instance)
-    current_instance.set(desired_state: 'stopped')
-    if current_instance.host_node && current_instance.host_node.connected?
-      notify_node(current_instance.host_node)
-      wait_for_service_state(current_instance, 'stopped')
-    end
-  end
-
-  # @param [GridServiceInstance] service_instance
-  def wait_for_service_state(service_instance, state, rev = nil)
-    wait_until!("service #{@grid_service.to_path} instance #{service_instance.instance_number} is #{state} on node #{service_instance.host_node.to_path}", timeout: 300) do
+    service_instance = wait_until!("service #{@grid_service.to_path}-#{service_instance.instance_number} is #{desired_state} on node #{node.to_path} at #{deploy_rev}", timeout: 300) do
       service_instance.reload
 
-      if service_instance.state != state
-        false
-      elsif rev && service_instance.rev != rev
-        false
-      else
-        true
-      end
+      next nil unless service_instance.rev && service_instance.rev >= deploy_rev
+
+      service_instance
+    end
+
+    if service_instance.error
+      raise ServiceError, service_instance.error
+    elsif service_instance.rev > deploy_rev
+      raise StateError, "Service instance was re-deployed" # by someone else
+    elsif service_instance.state != desired_state
+      raise StateError, "Service instance is not #{desired_state}, but #{service_instance.state}"
+    else
+      return service_instance
     end
   end
 
-  # @param [HostNode] node
-  # @param [String] instance_number
-  # @param [String] deploy_rev
   # @return [GridServiceInstance]
-  def create_service_instance(node, instance_number, deploy_rev)
-    instance = current_service_instance(instance_number)
-    unless instance
-      instance = GridServiceInstance.create!(
-        host_node: node, grid_service: self.grid_service, instance_number: instance_number
-      )
-    end
-    instance.set(host_node_id: node.id, deploy_rev: deploy_rev, desired_state: 'running')
-
-    instance
+  def create_service_instance
+    GridServiceInstance.create!(grid_service: @grid_service, instance_number: @instance_number)
   end
 
-  # @param [Integer] instance_number
   # @return [GridServiceInstance, NilClass]
-  def current_service_instance(instance_number)
-    GridServiceInstance.where(grid_service: self.grid_service, instance_number: instance_number).first
+  def get_service_instance
+    GridServiceInstance.where(grid_service: @grid_service, instance_number: @instance_number).first
   end
 
   # @param [HostNode] node
-  def notify_node(node)
-    rpc_client = RpcClient.new(node.node_id, 2)
+  # @raise [RpcClient::TimeoutError]
+  def notify_node(node, timeout: 2.0)
+    rpc_client = RpcClient.new(node.node_id, timeout)
     rpc_client.request('/service_pods/notify_update', [])
   end
 
-  def ensure_volume_instance(node, instance_number)
-    self.grid_service.service_volumes.each do |sv|
+  # @raise [RpcClient::Error]
+  def ensure_volume_instance
+    @grid_service.service_volumes.each do |sv|
       if sv.volume
-        VolumeInstanceDeployer.new.deploy(node, sv, instance_number)
+        VolumeInstanceDeployer.new.deploy(@host_node, sv, @instance_number)
       end
     end
   end

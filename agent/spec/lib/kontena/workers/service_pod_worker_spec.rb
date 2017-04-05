@@ -126,5 +126,13 @@ describe Kontena::Workers::ServicePodWorker do
       )
       subject.sync_state_to_master('running')
     end
+
+    it 'sends error' do
+      expect(rpc_client).to receive(:request).with(
+        '/node_service_pods/set_state',
+        [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
+      )
+      subject.sync_state_to_master('missing', Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+    end
   end
 end
