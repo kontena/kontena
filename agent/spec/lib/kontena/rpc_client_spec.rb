@@ -66,7 +66,7 @@ describe Kontena::RpcClient, :celluloid => true do
     it "returns nil and logs a warning on errors" do
       expect(ws_client).to receive(:send_request).with(Fixnum, "/test", ["foo"]) # do nothing..
 
-      expect(subject.wrapped_object).to receive(:warn).with("RPC request /test failed: Kontena::RpcClient::TimeoutError")
+      expect(subject.wrapped_object).to receive(:warn).with("RPC request /test failed: Request timed out")
       expect(subject.request("/test", ["foo"], timeout: 0.01)).to be_nil
     end
   end
