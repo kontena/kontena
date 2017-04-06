@@ -1,4 +1,15 @@
 module Kontena
+  autoload :Cli, 'kontena/cli'
+  autoload :Machine, 'kontena/machine'
+  autoload :Command, 'kontena/command'
+  autoload :Client, 'kontena/client'
+  autoload :StacksCache, 'kontena/stacks_cache'
+  autoload :Errors, 'kontena/errors'
+  autoload :StacksClient, 'kontena/stacks_client'
+  autoload :Util, 'kontena/util'
+  autoload :PluginManager, 'kontena/plugin_manager'
+  autoload :MainCommand, 'kontena/main_command'
+
   # Run a kontena command like it was launched from the command line.
   #
   # @example
@@ -103,12 +114,5 @@ require 'ruby_dig'
 require 'shellwords'
 require "safe_yaml"
 SafeYAML::OPTIONS[:default_mode] = :safe
-require_relative 'kontena/cli/version'
-require_relative 'kontena/cli/common'
-require_relative 'kontena/command'
-require_relative 'kontena/client'
-require_relative 'kontena/stacks_cache'
-require_relative 'kontena/plugin_manager'
-require_relative 'kontena/main_command'
-require_relative 'kontena/cli/spinner'
+
 

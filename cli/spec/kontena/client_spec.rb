@@ -1,5 +1,6 @@
 require 'kontena_cli'
 require 'ostruct'
+require 'excon/errors'
 
 describe Kontena::Client do
 

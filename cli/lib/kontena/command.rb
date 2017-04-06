@@ -1,5 +1,6 @@
 require 'clamp'
 require_relative 'cli/subcommand_loader'
+require 'excon/errors'
 
 class Kontena::Command < Clamp::Command
 

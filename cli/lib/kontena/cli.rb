@@ -1,5 +1,6 @@
 module Kontena
   module Cli
+    autoload :VERSION, 'kontena/cli/version'
     autoload :Helpers, 'kontena/cli/helpers'
     autoload :Common, 'kontena/cli/common'
     autoload :Spinner, 'kontena/cli/spinner'
