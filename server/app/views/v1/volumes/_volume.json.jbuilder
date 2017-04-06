@@ -5,3 +5,9 @@ json.name volume.name
 json.scope volume.scope
 json.driver volume.driver
 json.driver_opts volume.driver_opts
+json.instances volume.volume_instances.map { |v|
+  {
+    node: v.host_node.name,
+    name: v.name
+  }
+}
