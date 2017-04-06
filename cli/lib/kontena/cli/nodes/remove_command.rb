@@ -14,7 +14,7 @@ module Kontena::Cli::Nodes
       node = client(token).get("nodes/#{current_grid}/#{node_id}")
 
       if node['connected']
-        exit_with_error "Node #{node['name']} is still connected. You must terminate the node before removing it"
+        exit_with_error "Node #{node['name']} is still online. You must terminate the node before removing it."
       end
 
       confirm_command(node_id) unless forced?
