@@ -67,6 +67,7 @@ describe Kontena::RpcClient, :celluloid => true do
     it "returns nil and logs a warning on errors" do
       expect(ws_client).to receive(:send_request).with(Fixnum, "/test", ["foo"]) # do nothing..
 
+      expect(subject.wrapped_object).to receive(:warn).with(/timeout after waiting/)
       expect(subject.wrapped_object).to receive(:warn).with("RPC request /test failed: Request timed out")
       expect(subject.request("/test", ["foo"], timeout: 0.01)).to be_nil
     end
@@ -75,7 +76,7 @@ describe Kontena::RpcClient, :celluloid => true do
   context "for a very small random pool with conflicts" do
     let(:size) { 5 }
     let(:count) { size ** 2 }
-    
+
     before do
       stub_const("Kontena::RpcClient::REQUEST_ID_RANGE", 1..size)
 
