@@ -83,6 +83,7 @@ module GridServices
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(
+          self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
         )
       end

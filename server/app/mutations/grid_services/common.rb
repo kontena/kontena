@@ -23,7 +23,7 @@ module GridServices
     # @param [Stack] stack
     # @param [Array<Hash>] links
     # @return [Array<GridServiceLink>]
-    def build_grid_service_links(grid, stack, links)
+    def build_grid_service_links(existing_links, grid, stack, links)
       grid_service_links = []
       links.each do |link|
         link[:name] = "#{stack.name}/#{link[:name]}" unless link[:name].include?('/')
@@ -31,12 +31,16 @@ module GridServices
         next if linked_stack.nil?
 
         linked_service = linked_stack.grid_services.find_by(name: service_name)
-        if linked_service
-          grid_service_links << GridServiceLink.new(
+        next if linked_service.nil?
+
+        unless grid_serivce_link = existing_links.find{|l| l.linked_grid_service == linked_service && l.alias = link[:alias] }
+          grid_serivce_link = GridServiceLink.new(
               linked_grid_service: linked_service,
-              alias: link[:alias]
+              alias: link[:alias],
           )
         end
+
+        grid_service_links << grid_serivce_link
       end
       grid_service_links
     end

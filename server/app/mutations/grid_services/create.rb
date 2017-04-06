@@ -45,7 +45,7 @@ module GridServices
 
       attributes.delete(:links)
       if self.links
-        attributes[:grid_service_links] = build_grid_service_links(self.grid, self.stack, self.links)
+        attributes[:grid_service_links] = build_grid_service_links([], self.grid, self.stack, self.links)
       end
 
       attributes.delete(:hooks)
