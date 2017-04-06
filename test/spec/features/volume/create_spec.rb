@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'volume create' do
   after(:each) do
-    run "kontena volume rm testVol"
+    run "kontena volume rm --force testVol"
   end
 
   it 'creates a volume' do
@@ -28,7 +28,7 @@ describe 'volume create' do
     k = run "kontena volume create --driver local --scope instance testVol"
     expect(k.code).to eq(0)
 
-    k = run "kontena volume rm testVol"
+    k = run "kontena volume rm --force testVol"
     expect(k.code).to eq(0)
 
     k = run "kontena volume ls"
