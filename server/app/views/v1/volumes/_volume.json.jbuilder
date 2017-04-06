@@ -11,3 +11,15 @@ json.instances volume.volume_instances.map { |v|
     name: v.name
   }
 }
+
+services = []
+
+volume.grid.grid_services.each do |service|
+  service.service_volumes.each do |sv|
+    if sv.volume == volume
+      services << service.to_path
+    end
+  end
+end
+
+json.services services

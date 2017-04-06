@@ -27,6 +27,10 @@ module Kontena::Cli::Volumes
         puts "    name: #{instance['name']}"
         puts "    node: #{instance['node']}"
       end
+      puts "  services:"
+      vol['services'].each do |service|
+        puts "    - #{service}"
+      end
 
     end
 
