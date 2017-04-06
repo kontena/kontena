@@ -61,7 +61,7 @@ module Kontena::Cli::Stacks
       end
 
       def ask
-        prompt.ask(question_text, default: option.default, echo: echo?)
+        prompt.ask(question_text, default: option.default == false ? false : true, echo: echo?)
       end
 
       def resolve
