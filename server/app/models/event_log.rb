@@ -8,7 +8,7 @@ class EventLog
   ERROR = 3
 
   field :severity, type: Integer
-  field :reason, type: String
+  field :type, type: String
   field :msg, type: String
   field :meta, type: Hash
 

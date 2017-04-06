@@ -111,15 +111,15 @@ module Kontena::Workers
       Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
     end
 
-    # @param [String] reason
+    # @param [String] type
     # @param [String] data
     # @param [Integer] severity
-    def emit_service_pod_event(reason, data, severity = Logger::INFO)
+    def emit_service_pod_event(type, data, severity = Logger::INFO)
       if @container.service_container?
         publish('service_pod:event', {
           service_id: @container.service_id,
           instance_number: @container.instance_number,
-          reason: reason,
+          type: type,
           severity: severity,
           data: data
         })

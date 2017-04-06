@@ -155,7 +155,7 @@ class GridServiceInstanceDeployer
       grid_service_id: self.grid_service.id,
       msg: msg,
       severity: severity,
-      reason: 'service:deploy'.freeze
+      type: 'service:deploy'.freeze
     )
   end
 end

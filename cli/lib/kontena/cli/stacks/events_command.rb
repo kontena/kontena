@@ -1,12 +1,10 @@
-require_relative 'services_helper'
 require_relative '../helpers/log_helper'
 
-module Kontena::Cli::Services
+module Kontena::Cli::Stacks
   class EventsCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::LogHelper
-    include ServicesHelper
 
     parameter "NAME", "Service name"
 
@@ -14,11 +12,9 @@ module Kontena::Cli::Services
       require_api_url
 
       query_params = {}
-      query_params[:instance] = instance if instance
-
       titles = ['TIME', 'TYPE', 'MESSAGE']
-      puts "%-25s %-20s %s" % titles
-      show_logs("services/#{parse_service_id(name)}/event_logs", query_params) do |log|
+      puts "%-25s %-25s %s" % titles
+      show_logs("stacks/#{current_grid}/#{name}/event_logs", query_params) do |log|
         show_log(log)
       end
     end
@@ -29,8 +25,8 @@ module Kontena::Cli::Services
       if node
         msg = "#{msg} (#{node['id'].split('/')[-1]})"
       end
-      puts '%-25s %-20s %s' % [
-        log['created_at'], log['type'].sub('service:'.freeze, ''.freeze), msg
+      puts '%-25s %-25s %s' % [
+        log['created_at'], log['type'], msg
       ]
     end
   end

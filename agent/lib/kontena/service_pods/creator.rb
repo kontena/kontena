@@ -122,11 +122,11 @@ module Kontena
         end
       end
 
-      # @param [String] reason
+      # @param [String] type
       # @param [String] data
       # @param [Integer] severity
-      def log_service_pod_event(reason, data, severity = Logger::INFO)
-        super(service_pod.service_id, service_pod.instance_number, reason, data, severity)
+      def log_service_pod_event(type, data, severity = Logger::INFO)
+        super(service_pod.service_id, service_pod.instance_number, type, data, severity)
       end
 
       ##

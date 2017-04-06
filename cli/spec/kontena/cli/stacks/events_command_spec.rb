@@ -1,7 +1,7 @@
 require_relative "../../../spec_helper"
-require "kontena/cli/services/events_command"
+require "kontena/cli/stacks/events_command"
 
-describe Kontena::Cli::Services::EventsCommand do
+describe Kontena::Cli::Stacks::EventsCommand do
 
   include ClientHelpers
 
@@ -14,9 +14,9 @@ describe Kontena::Cli::Services::EventsCommand do
 
     it 'requests logs from master' do
       expect(client).to receive(:get).with(
-        'services/test-grid/null/service-a/event_logs', {limit: 100}
+        'stacks/test-grid/redish/event_logs', {limit: 100}
       )
-      subject.run(['service-a'])
+      subject.run(['redish'])
     end
   end
 end

@@ -17,7 +17,7 @@ module Kontena::Cli::Grids
       query_params[:nodes] = node_list.join(",") unless node_list.empty?
       query_params[:services] = service_list.join(",") unless service_list.empty?
 
-      titles = ['TIME', 'REASON', 'RELATIONSHIPS', 'MESSAGE']
+      titles = ['TIME', 'TYPE', 'RELATIONSHIPS', 'MESSAGE']
       puts "%-25s %-25s %-40s %s" % titles
       show_logs("grids/#{current_grid}/event_logs", query_params) do |log|
         show_log(log)
@@ -43,7 +43,7 @@ module Kontena::Cli::Grids
       end
 
       puts '%-25s %-25s %-40s %s' % [
-        time, log['reason'], rels.join(','), msg
+        time, log['type'], rels.join(','), msg
       ]
     end
   end

@@ -103,7 +103,7 @@ class GridServiceDeployer
       instance_number: instance_number,
       host_node: node,
     )
-    
+
     deploy_futures << Celluloid::Future.new {
       instance_deployer = GridServiceInstanceDeployer.new(grid_service_instance_deploy)
       instance_deployer.deploy(deploy_rev)
@@ -150,7 +150,7 @@ class GridServiceDeployer
       grid_service_id: self.grid_service.id,
       msg: msg,
       severity: severity,
-      reason: 'service:deploy'.freeze
+      type: 'service:deploy'.freeze
     )
   end
 end

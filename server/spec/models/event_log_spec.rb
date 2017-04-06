@@ -1,6 +1,6 @@
 describe EventLog do
   it { should have_fields(:created_at).of_type(Time) }
-  it { should have_fields(:reason, :msg).of_type(String) }
+  it { should have_fields(:type, :msg).of_type(String) }
   it { should have_fields(:severity).of_type(Integer) }
 
   it { should belong_to(:grid) }

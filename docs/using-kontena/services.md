@@ -239,7 +239,6 @@ $ kontena service events <name>
 -t, --tail                    Tail (follow) logs (default: false)
 --lines LINES                 Number of lines to show from the end of the logs (default: 100)
 --since SINCE                 Show logs since given timestamp
--i, --instance INSTANCE       Show only given instance specific logs
 ```
 
 ### Show Service Statistics

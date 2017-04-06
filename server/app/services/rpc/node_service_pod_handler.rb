@@ -53,7 +53,7 @@ module Rpc
       EventLog.create(
         severity: event['severity'] || EventLog::INFO,
         msg: event['data'],
-        reason: event['reason'],
+        type: event['type'],
         grid_id: node.grid_id,
         host_node_id: node.id,
         stack_id: service.stack_id,

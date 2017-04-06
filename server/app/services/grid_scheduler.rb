@@ -143,7 +143,7 @@ class GridScheduler
     EventLog.create(
       msg: msg,
       severity: severity,
-      reason: 'scheduler',
+      type: 'scheduler',
       grid_service_id: service.id,
       grid_id: service.grid_id
     )
