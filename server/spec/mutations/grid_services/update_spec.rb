@@ -316,6 +316,19 @@ describe GridServices::Update do
           }.to change{service.reload.revision}
           expect(service.service_volumes.map{|sv| sv.to_s}).to eq ['/foo:/foo', '/foo2:/foo2']
         end
+
+        it 'deletes volumes' do
+          subject = described_class.new(
+              grid_service: service,
+              volumes: [
+              ],
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}
+
+          expect(service.service_volumes.map{|sv| sv.to_s}).to eq []
+        end
       end
 
       context 'stateless service' do
