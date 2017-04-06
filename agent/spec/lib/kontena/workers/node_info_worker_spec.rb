@@ -19,8 +19,15 @@ describe Kontena::Workers::NodeInfoWorker do
     allow(Docker).to receive(:info).and_return({
       'Name' => 'node-1',
       'Labels' => nil,
-      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
+      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+      'Plugins' => {
+        'Network' => ['bridge', 'host'],
+        'Volume' => ['local']
+      }
     })
+    allow(subject.wrapped_object).to receive(:plugins).and_return([
+      { 'Name' => 'foo:latest', 'Enabled' => true, 'Config' => { 'Interface' => { 'Types' => ['docker.volumedriver/1.0']} } }
+    ])
     allow(Net::HTTP).to receive(:get).and_return('8.8.8.8')
     allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
     allow(rpc_client).to receive(:request)
@@ -123,6 +130,19 @@ describe Kontena::Workers::NodeInfoWorker do
         expect(msg['AgentVersion']).to match(/\d+\.\d+\.\d+/)
       end
       subject.publish_node_info
+    end
+  end
+
+  describe '#network_drivers' do
+    it 'returns array of drivers' do
+      expect(subject.network_drivers).to include(hash_including({name: 'bridge'}))
+    end
+  end
+
+  describe '#volume_drivers' do
+    it 'returns array of drivers' do
+      expect(subject.volume_drivers).to include(hash_including({name: 'local'}))
+      expect(subject.volume_drivers).to include(hash_including({name: 'foo', version: 'latest'}))
     end
   end
 

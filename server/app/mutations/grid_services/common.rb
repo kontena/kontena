@@ -99,7 +99,7 @@ module GridServices
               v['name'] == vol_spec[:volume]
             }
             # Use external volume definition if given
-            volume_name = stack_volume_name(stack_volume)
+            volume_name = stack_volume['external']
           end
           volume = grid.volumes.find_by(name: volume_name)
           vol_spec[:volume] = volume
@@ -107,16 +107,6 @@ module GridServices
         service_volumes << ServiceVolume.new(**vol_spec)
       end
       service_volumes
-    end
-
-    def stack_volume_name(stack_volume)
-      if stack_volume['external'] == true
-        # Use the plain volume name
-        stack_volume['name']
-      else
-        # Use either explicitly defined external name or plain name
-        stack_volume.dig('external', 'name') || stack_volume['name']
-      end
     end
 
     # @param [Grid] grid

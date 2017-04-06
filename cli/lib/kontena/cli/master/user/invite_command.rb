@@ -39,7 +39,7 @@ module Kontena::Cli::Master::User
             puts "  * command: kontena master join #{current_master.url} #{response['invite_code']}"
           end
           roles.each do |role|
-            Kontena.run("master users role add #{role.shellescape} #{email.shellescape}")
+            Kontena.run(["master", "user", "role", "add", role, email])
           end
         rescue => ex
           $stderr.puts pastel.red("Failed to invite #{email}")

@@ -18,7 +18,7 @@ module Kontena::Cli::Nodes
       exit_with_error "Cannot combine --any with a node name" if node_id && any?
 
       if node_id
-        node = client.get("grids/#{current_grid}/nodes/#{node_id}")
+        node = client.get("nodes/#{current_grid}/#{node_id}")
       elsif any?
         nodes = client.get("grids/#{current_grid}/nodes")['nodes']
         node = nodes.select{ |node| node['connected'] }.first

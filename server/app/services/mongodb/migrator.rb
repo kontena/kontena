@@ -15,6 +15,12 @@ module Mongodb
       end
     end
 
+    class DuplicateMigrationVersionError < MigratorError
+      def initialize(version)
+        super("Multiple migrations have the version #{version}")
+      end
+    end
+
     class UnknownMigrationVersionError < MigratorError
       def initialize(version)
         super("No migration with version number #{version}")
