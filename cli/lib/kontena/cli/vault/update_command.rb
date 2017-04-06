@@ -1,6 +1,7 @@
 module Kontena::Cli::Vault
   class UpdateCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
 
     parameter 'NAME', 'Secret name'
     parameter '[VALUE]', 'Secret value'
@@ -13,10 +14,14 @@ module Kontena::Cli::Vault
       require_current_grid
 
       token = require_token
-      value ||= STDIN.read.chomp
+      secret = value
+      if secret.to_s == ''
+        secret = STDIN.read.chomp
+      end      
+      exit_with_error('No value provided') if secret.to_s == ''
       data = {
         name: name,
-        value: value,
+        value: secret,
         upsert: upsert?
       }
       vspinner "Updating #{name.colorize(:cyan)} value in the vault " do

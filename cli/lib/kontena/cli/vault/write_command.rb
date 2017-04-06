@@ -15,7 +15,7 @@ module Kontena::Cli::Vault
       token = require_token
       secret = value
       if secret.to_s == ''
-        secret = STDIN.read
+        secret = STDIN.read.chomp
       end
       exit_with_error('No value provided') if secret.to_s == ''
       data = {
