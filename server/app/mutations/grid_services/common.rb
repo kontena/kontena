@@ -90,7 +90,7 @@ module GridServices
       service_secrets
     end
 
-    def build_service_volumes(grid, stack)
+    def build_service_volumes(existing_volumes, grid, stack)
       service_volumes = []
       self.volumes.each do |vol|
         vol_spec = parse_volume(vol)
@@ -108,7 +108,14 @@ module GridServices
           volume = grid.volumes.find_by(name: volume_name)
           vol_spec[:volume] = volume
         end
-        service_volumes << ServiceVolume.new(**vol_spec)
+
+        service_volume = existing_volumes.find{|sv| sv.path == vol_spec[:path] } || ServiceVolume.new(path: vol_spec[:path])
+
+        service_volume.volume = vol_spec[:volume]
+        service_volume.bind_mount = vol_spec[:bind_mount]
+        service_volume.flags = vol_spec[:flags]
+
+        service_volumes << service_volume
       end
       service_volumes
     end

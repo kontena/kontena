@@ -257,7 +257,7 @@ describe GridServices::Update do
           GridService.create(grid: grid, stack: stack, name: 'redis',
             image_name: 'redis:2.8',
             service_volumes: [
-              {bind_mount: '/foo', path: '/foo'},
+              {bind_mount: '/foo', path: '/foo', flags: ''},
             ],
           )
         }
@@ -272,6 +272,9 @@ describe GridServices::Update do
           expect {
             expect(outcome = subject.run).to be_success
           }.to_not change{service.reload.revision}
+
+          expect(service.service_volumes.first.to_s).to eq '/foo:/foo'
+
         end
 
         it 'changes volumes' do
@@ -285,6 +288,19 @@ describe GridServices::Update do
             expect(outcome = subject.run).to be_success
           }.to change{service.reload.revision}
           expect(service.service_volumes.first.to_s).to eq '/foo2:/foo'
+        end
+
+        it 'changes volume flags' do
+          subject = described_class.new(
+              grid_service: service,
+              volumes: [
+                '/foo:/foo:ro',
+              ],
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}
+          expect(service.service_volumes.first.to_s).to eq '/foo:/foo:ro'
         end
 
         it 'adds volumes' do

@@ -96,7 +96,9 @@ module GridServices
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
       end
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.grid, self.grid_service.stack)
+        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
+          self.grid_service.grid, self.grid_service.stack
+        )
       end
       grid_service.attributes = attributes
 

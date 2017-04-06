@@ -65,7 +65,7 @@ module GridServices
 
       attributes.delete(:volumes)
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes(self.grid, self.stack)
+        attributes[:service_volumes] = self.build_service_volumes([], self.grid, self.stack)
       end
 
       grid_service = GridService.new(attributes)
