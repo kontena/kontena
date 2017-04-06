@@ -37,6 +37,8 @@ class NodeCleanupJob
   def cleanup_stale_nodes
     HostNode.where(:last_seen_at.lt => NODE_DESTROY_TIMEOUT.ago).each do |node|
       if !node.grid.initial_node?(node) && !node.connected? && !node.stateful?
+        warn "Destroying disconnected node #{node.to_path}"
+
         node.destroy
       end
     end
