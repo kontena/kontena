@@ -52,7 +52,7 @@ module Kontena::Cli
     def klass
       return @subcommand_class if @subcommand_class
       unless safe_require(path) || safe_require(Kontena.cli_root(path))
-        raise ArgumentError, "Can't load #{path} or #{Kontena.cli_root(path)}"
+        raise RuntimeError, "Can't load #{path} or #{Kontena.cli_root(path)}"
       end
       @subcommand_class = const_get_tree(prepend_kontena_cli(symbolize_path(path)))
     end
