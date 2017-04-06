@@ -50,7 +50,7 @@ module Kontena::Cli::Stacks
       end
 
       def bool
-        prompt.yes?(question_text, default: !option.default == false)
+        prompt.yes?(question_text, default: !(option.default == false))
       end
 
       def echo?
