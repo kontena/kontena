@@ -133,25 +133,103 @@ describe GridServices::Update do
       end
     end
 
-    it 'fails validating secret existence' do
-      outcome = described_class.new(
-          grid_service: redis_service,
-          secrets: [
-            {secret: 'NON_EXISTING_SECRET', name: 'SOME_SECRET'}
-          ]
-      ).run
-      expect(outcome.success?).to be(false)
+    context 'secrets' do
+      it 'fails validating secret existence' do
+        outcome = described_class.new(
+            grid_service: redis_service,
+            secrets: [
+              {secret: 'NON_EXISTING_SECRET', name: 'SOME_SECRET'}
+            ]
+        ).run
+        expect(outcome.success?).to be(false)
+      end
+
+      it 'validates secret existence' do
+        GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
+        outcome = described_class.new(
+            grid_service: redis_service,
+            secrets: [
+              {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+      end
+
+      context 'for a service with secrets' do
+        let(:secret) { GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret') }
+
+        let(:service) {
+          GridService.create(grid: grid, stack: stack, name: 'redis',
+            image_name: 'redis:2.8',
+            secrets: [
+              {secret: secret.name, name: 'SOME_SECRET'}
+            ],
+          )
+        }
+
+        it 'does not change existing secrets' do
+          subject = described_class.new(
+              grid_service: service,
+              secrets: [
+                {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+              ]
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to_not change{service.reload.revision}
+        end
+
+        it 'changes secrets' do
+          subject = described_class.new(
+              grid_service: service,
+              secrets: [
+                {secret: 'EXISTING_SECRET', name: 'OTHER_SECRET'}
+              ]
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}
+        end
+      end
     end
 
-    it 'validates secret existence' do
-      GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
-      outcome = described_class.new(
-          grid_service: redis_service,
-          secrets: [
-            {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
-          ]
-      ).run
-      expect(outcome.success?).to be(true)
+    context 'hooks' do
+      context 'for a service with hooks' do
+        let(:service) {
+          GridService.create(grid: grid, stack: stack, name: 'redis',
+            image_name: 'redis:2.8',
+            hooks: [
+              GridServiceHook.new(
+                name: 'foo',
+                type: 'post_start',
+                cmd: 'sleep 1',
+                instances: ['*'],
+                oneshot: false
+              ),
+            ],
+          )
+        }
+
+        it 'does not change existing hooks' do
+          subject = described_class.new(
+            grid_service: service,
+            hooks: {
+              post_start: [
+                {
+                  name: 'foo',
+                  cmd: 'sleep 10',
+                  instances: "*",
+                  oneshot: false
+                }
+              ]
+            }
+          )
+
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to_not change{service.reload.revision}
+        end
+      end
     end
 
     context 'volumes' do
@@ -260,7 +338,64 @@ describe GridServices::Update do
         end
       end
     end
+
+    describe 'links' do
+      context 'for a service with links' do
+        let(:linked_service2) { GridService.create!(grid: grid, stack: stack, name: 'redis2', image_name: 'redis:2.8') }
+        let(:linked_service3) { GridService.create!(grid: grid, stack: stack, name: 'redis3', image_name: 'redis:2.8') }
+        let(:secret) { GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret') }
+        let(:service) {
+          GridService.create(grid: grid, stack: stack, name: 'redis',
+            image_name: 'redis:2.8',
+            grid_service_links: [
+              {linked_grid_service: linked_service2, alias: 'redis2'},
+            ],
+          )
+        }
+
+        it 'keeps existing links' do
+          linked_service2
+
+          subject = described_class.new(
+              grid_service: service,
+              links: [
+                {name: 'redis2', alias: 'redis2'}
+              ]
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to_not change{service.reload.revision}
+        end
+
+        it 'removes links' do
+          subject = described_class.new(
+              grid_service: service,
+              links: [ ],
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}.and change{service.reload.grid_service_links.count}.from(1).to(0)
+        end
+
+        it 'changes links' do
+          linked_service2
+          linked_service3
+
+          subject = described_class.new(
+              grid_service: service,
+              links: [
+                {name: 'redis3', alias: 'redis3'}
+              ]
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}.and change{service.reload.grid_service_links.first.alias}.from('redis2').to('redis3')
+        end
+      end
+
+    end
   end
+
 
   describe '#build_grid_service_hooks' do
     let(:subject) do
