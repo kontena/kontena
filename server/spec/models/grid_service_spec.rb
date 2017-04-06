@@ -20,12 +20,13 @@ describe GridService do
   it { should embed_many(:hooks) }
   it { should embed_many(:service_volumes) }
   it { should embed_one(:deploy_opts) }
-  it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
+  it { should have_many(:grid_service_instances) }
   it { should have_many(:grid_service_deploys) }
+  it { should have_many(:event_logs) }
 
   it { should validate_presence_of(:name) }
   it { should validate_presence_of(:image_name) }

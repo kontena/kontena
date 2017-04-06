@@ -199,7 +199,13 @@ Shows currently used Grid details.
 
 ### Grid Logs
 
-#### Show Current Grid Logs
+#### Show Current Grid Event Logs
+
+```
+$ kontena grid events
+```
+
+#### Show Current Grid Container Logs
 
 ```
 $ kontena grid logs

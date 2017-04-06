@@ -231,6 +231,54 @@ Parameter | Description | Default Value
 from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
 to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
+
+
+## Get Grid container logs
+
+```http
+GET /v1/grids/my-grid/container_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get container logs from a grid.
+
+### Endpoint
+
+`GET /v1/grids/{grid_id}/container_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
+## Get a grid event logs
+
+```http
+GET /v1/grids/my-grid/event_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get event logs from a grid.
+
+### Endpoint
+
+`GET /v1/grids/{grid_id}/event_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
 # Nodes
 
 
@@ -636,6 +684,29 @@ from | Show log items from log id
 since | Show log items since (timestamp)
 follow | Stream logs
 
+## Get a stack event logs
+
+```http
+GET /v1/stacks/my-grid/redis/event_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get event logs from a stack.
+
+### Endpoint
+
+`GET /v1/stacks/{stack_id}/event_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
 # Services
 
 ## Service
@@ -954,7 +1025,7 @@ Removes the service from the grid.
 
 `DELETE /v1/services/{service_id}`
 
-## Get service logs
+## Get service container logs
 
 ```http
 GET /v1/services/my-grid/null/redis/container_logs HTTP/1.1
@@ -967,6 +1038,38 @@ Get container logs from a service.
 ### Endpoint
 
 `GET /v1/services/{service_id}/container_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
+## Get service event logs
+
+```http
+GET /v1/services/my-grid/null/redis/event_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get event logs from a service.
+
+### Endpoint
+
+`GET /v1/services/{service_id}/event_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
 
 ## Get a service deploy
 

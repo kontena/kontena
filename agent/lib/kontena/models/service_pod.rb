@@ -125,6 +125,12 @@ module Kontena
       end
 
       # @return [String]
+      def name_for_humans
+        return self.name if self.default_stack?
+        self.name.sub('.', '/')
+      end
+
+      # @return [String]
       def data_volume_name
         "#{self.service_name}-#{self.instance_number}-volumes"
       end

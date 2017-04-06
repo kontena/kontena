@@ -18,7 +18,6 @@ module Kontena::Workers
     def initialize(autostart = true)
       @node = nil
       @workers = {}
-
       async.start if autostart
     end
 
@@ -31,6 +30,7 @@ module Kontena::Workers
       populate_workers_from_docker
 
       subscribe('service_pod:update', :on_update_notify)
+      subscribe('service_pod:event', :on_pod_event)
       every(30) do
         populate_workers_from_master
       end
@@ -38,6 +38,12 @@ module Kontena::Workers
 
     def on_update_notify(_, _)
       populate_workers_from_master
+    end
+
+    def on_pod_event(_, event)
+      rpc_client.async.notification("/node_service_pods/event", [node.id, event])
+    rescue => exc
+      error "sending event to master failed: #{exc.message}"
     end
 
     def populate_workers_from_master
@@ -110,7 +116,7 @@ module Kontena::Workers
         else
           workers[service_pod.id].async.update(service_pod)
         end
-      rescue Celluloid::DeadActorError => exc
+      rescue Celluloid::DeadActorError
         workers.delete(service_pod.id)
       end
     end
