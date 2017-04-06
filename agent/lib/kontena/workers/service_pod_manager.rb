@@ -42,10 +42,11 @@ module Kontena::Workers
 
     def populate_workers_from_master
       exclusive {
-        request = rpc_client.future.request("/node_service_pods/list", [node.id])
-        response = request.value
+        response = rpc_request("/node_service_pods/list", [node.id])
+
+        # sanity-check
         unless response['service_pods'].is_a?(Array)
-          warn "failed to get list of service pods from master: #{response['error']}"
+          error "Invalid response from master: #{response}"
           return
         end
 
@@ -57,6 +58,8 @@ module Kontena::Workers
           ensure_service_worker(Kontena::Models::ServicePod.new(s))
         end
       }
+    rescue Kontena::RpcClient::Error => exc
+      warn "failed to get list of service pods from master: #{exc}"
     end
 
     def populate_workers_from_docker

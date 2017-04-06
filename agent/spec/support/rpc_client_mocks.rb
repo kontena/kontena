@@ -1,7 +1,7 @@
 module RpcClientMocks
 
   def self.included(base)
-    base.let(:rpc_client) { double(:rpc_client) }
+    base.let(:rpc_client) { instance_double(Kontena::RpcClient) }
   end
 
   def mock_rpc_client
