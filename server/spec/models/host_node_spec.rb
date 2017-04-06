@@ -228,6 +228,30 @@ describe HostNode do
     end
   end
 
+  describe '#ephemeral?' do
+    it 'returns false if label is not set' do
+      expect(subject).to_not be_ephemeral
+    end
+
+    it 'returns true if label is set' do
+      subject.labels = ['ephemeral']
+
+      expect(subject).to be_ephemeral
+    end
+
+    it 'returns true if label is set with an empty value' do
+      subject.labels = ['ephemeral=']
+
+      expect(subject).to be_ephemeral
+    end
+
+    it 'returns true if label is set with any value' do
+      subject.labels = ['ephemeral=yes']
+
+      expect(subject).to be_ephemeral
+    end
+  end
+
   describe '#destroy' do
     let(:grid) { Grid.create!(name: 'test') }
     let(:stateful_service) {
