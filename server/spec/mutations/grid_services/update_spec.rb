@@ -233,6 +233,56 @@ describe GridServices::Update do
     end
 
     context 'volumes' do
+      context 'service with volumes' do
+        let(:service) {
+          GridService.create(grid: grid, stack: stack, name: 'redis',
+            image_name: 'redis:2.8',
+            service_volumes: [
+              {bind_mount: '/foo', path: '/foo'},
+            ],
+          )
+        }
+
+        it 'keeps existing volumes' do
+          subject = described_class.new(
+              grid_service: service,
+              volumes: [
+                '/foo:/foo',
+              ],
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to_not change{service.reload.revision}
+        end
+
+        it 'changes volumes' do
+          subject = described_class.new(
+              grid_service: service,
+              volumes: [
+                '/foo2:/foo',
+              ],
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}
+          expect(service.service_volumes.first.to_s).to eq '/foo2:/foo'
+        end
+
+        it 'adds volumes' do
+          subject = described_class.new(
+              grid_service: service,
+              volumes: [
+                '/foo:/foo',
+                '/foo2:/foo2',
+              ],
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}
+          expect(service.service_volumes.map{|sv| sv.to_s}).to eq ['/foo:/foo', '/foo2:/foo2']
+        end
+      end
+
       context 'stateless service' do
         it 'allows to add non-named volume' do
           outcome = described_class.new(
