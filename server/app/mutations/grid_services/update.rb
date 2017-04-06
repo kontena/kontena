@@ -49,11 +49,11 @@ module GridServices
 
     # List changed fields of model
     # @param document [Mongoid::Document]
-    # @return [Array<String>] field, embedded.field
+    # @return [String] field, embedded{field}
     def changed(document)
-      [document.changed] + document._children.select{|child| child.changed? }.map { |child|
-        child.changed.map{|changed_attr| "#{child.metadata_name.to_s}.#{changed_attr}"
-      } }.flatten
+      (document.changed + document._children.select{|child| child.changed? }.map { |child|
+        "#{child.metadata_name.to_s}{#{child.changed.join(", ")}}"
+      }).join(", ")
     end
 
     def execute
@@ -81,7 +81,11 @@ module GridServices
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
 
-      if self.links
+      if !self.links
+
+      elsif self.links.empty?
+        grid_service.grid_service_links.all.destroy_all if self.links.empty?
+      else
         attributes[:grid_service_links] = build_grid_service_links(
           self.grid_service.grid, grid_service.stack, self.links
         )
@@ -100,8 +104,10 @@ module GridServices
       grid_service.attributes = attributes
 
       if grid_service.changed?
-        info "updating service #{grid_service.to_path} with changes: #{changed(grid_service).join(" ")}"
+        info "updating service #{grid_service.to_path} with changes: #{changed(grid_service)}"
         grid_service.revision += 1
+      else
+        debug "not updating service #{grid_service.to_path} without changes"
       end
 
       grid_service.save
