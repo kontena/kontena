@@ -3,6 +3,7 @@ require_relative 'common'
 module GridServices
   class Update < Mutations::Command
     include Common
+    include Logging
 
     common_validations
 
@@ -44,6 +45,15 @@ module GridServices
         end
       end
       validate_volumes(self.volumes)
+    end
+
+    # List changed fields of model
+    # @param document [Mongoid::Document]
+    # @return [Array<String>] field, embedded.field
+    def changed(document)
+      [document.changed] + document._children.select{|child| child.changed? }.map { |child|
+        child.changed.map{|changed_attr| "#{child.metadata_name.to_s}.#{changed_attr}"
+      } }.flatten
     end
 
     def execute
@@ -88,9 +98,12 @@ module GridServices
         attributes[:service_volumes] = self.build_service_volumes(self.grid_service.grid, self.grid_service.stack)
       end
       grid_service.attributes = attributes
+
       if grid_service.changed?
+        info "updating service #{grid_service.to_path} with changes: #{changed(grid_service).join(" ")}"
         grid_service.revision += 1
       end
+
       grid_service.save
 
       grid_service
