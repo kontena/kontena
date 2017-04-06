@@ -14,7 +14,6 @@ module Kontena::Cli::Services
       require_api_url
 
       query_params = {}
-      query_params[:instance] = instance if instance
 
       titles = ['TIME', 'TYPE', 'MESSAGE']
       puts "%-25s %-20s %s" % titles
