@@ -466,7 +466,7 @@ describe GridServices::Update do
         end
 
         # Mongoid does not consider an empty array of embedded documents to be changed
-        skip 'clears links' do
+        it 'clears links' do
           subject = described_class.new(
               grid_service: service,
               links: [ ],
