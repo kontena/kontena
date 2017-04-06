@@ -8,6 +8,7 @@ toc_link: false
 
 * [Deploy](deploy.md)
 * [Grids](grids.md)
+* [Nodes](nodes.md)
 * [Image Registry](image-registry.md)
 * [Services](services.md)
 * [Users](users.md)
@@ -15,4 +16,3 @@ toc_link: false
 * [Certificates](certificates.md)
 * [Statistics](stats.md)
 * [Authentication](authentication.md)
-
