@@ -34,4 +34,16 @@ class Volume
     end
   end
 
+  def services
+    services = []
+    self.grid.grid_services.each do |service|
+      service.service_volumes.each do |sv|
+        if sv.volume == self
+          services << service
+        end
+      end
+    end
+    services
+  end
+
 end
