@@ -92,21 +92,7 @@ module Kontena::Cli::Stacks
             yaml['volumes'].each do |volume, options|
               if options.is_a?(Hash)
                 option_errors = validate_volume_options(options)
-                if option_errors.valid?
-                  if !options.key?('driver') && options.key?('driver_opts')
-                    result[:errors] << { 'volumes' => { volume => { 'driver_opts' => 'defined without defining driver' } } }
-                  end
-                  if options.key?('external')
-                    unless options['external'].is_a?(FalseClass)
-                      ['driver', 'driver_opts', 'scope'].each do |key|
-                        result[:errors] << { 'volumes' => { volume => { key => 'specified together with external' } } } if options.key?(key)
-                      end
-                    end
-                  end
-                  if options.key?('driver') && !options.key?('scope')
-                    result[:errors] << { 'volumes' => { volume => { 'scope' => 'required value missing' } } }
-                  end
-                else
+                unless option_errors.valid?
                   result[:errors] << { 'volumes' => { volume => option_errors.errors } }
                 end
               else

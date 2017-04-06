@@ -110,6 +110,11 @@ module Kontena::Cli::Stacks
     def generate_volumes(yaml_volumes)
       return [] unless yaml_volumes
       yaml_volumes.map do |name, config|
+        if config['external'].is_a?(TrueClass)
+          config['external'] = name
+        elsif config['external']['name']
+          config['external'] = config['external']['name']
+        end
         config.merge('name' => name)
       end
     end
