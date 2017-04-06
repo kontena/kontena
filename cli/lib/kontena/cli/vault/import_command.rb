@@ -23,7 +23,13 @@ module Kontena::Cli::Vault
     end
 
     def input
-      path ? File.read(path) : STDIN.read
+      if path
+        File.read(path)
+      elsif !$stdin.tty? && $stdin.closed?
+        $stdin.read
+      else
+        exit_with_error "Missing input"
+      end
     end
 
     def execute

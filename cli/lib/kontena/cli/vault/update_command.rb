@@ -8,19 +8,19 @@ module Kontena::Cli::Vault
     option ['-u', '--upsert'], :flag, 'Create secret unless already exists', default: false
     option '--silent', :flag, "Reduce output verbosity"
 
-    def execute
-      require_api_url
-      require_current_grid
+    requires_current_master
+    requires_current_master_token
 
-      token = require_token
-      value ||= STDIN.read.chomp
-      data = {
-        name: name,
-        value: value,
-        upsert: upsert?
-      }
-      vspinner "Updating #{name.colorize(:cyan)} value in the vault " do
-        client(token).put("secrets/#{current_grid}/#{name}", data)
+    def execute
+      unless value
+        if !$stdin.tty? && $stdin.closed?
+          exit_with_error('No value provided')
+        end
+        STDERR.puts("Enter a value for #{Kontena.pastel.cyan(name)}, press #{Kontena.pastel.yellow("ctrl-d")} when finished:") if $stdin.tty?
+        value = $stdin.read
+      end
+      vspinner "Updating #{Kontena.pastel.cyan(name)} value to the vault " do
+        client.put("secrets/#{current_grid}/#{name}", { name: name, value: value, upsert: upsert? })
       end
     end
   end
