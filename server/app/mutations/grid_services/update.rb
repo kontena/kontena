@@ -81,11 +81,7 @@ module GridServices
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
 
-      if !self.links
-
-      elsif self.links.empty?
-        grid_service.grid_service_links.all.destroy_all if self.links.empty?
-      else
+      if self.links
         attributes[:grid_service_links] = build_grid_service_links(
           self.grid_service.grid, grid_service.stack, self.links
         )
