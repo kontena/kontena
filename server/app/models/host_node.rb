@@ -130,30 +130,34 @@ class HostNode
     false
   end
 
+  # @param label [String] match label name before =
+  # @param empty_value value to return if label does not have any value
+  # @param default value to return if label not found
+  # @return [String, true] the string value
+  def lookup_label(lookup_name, empty_value: true, default: nil)
+    self.labels.to_a.each do |label|
+      name, value = label.split('=', 2)
+
+      next if name != lookup_name
+
+      return (value.nil? || value.empty?) ? empty_value : value
+    end
+    return default
+  end
+
   # @return [String]
   def availability_zone
-    if @availability_zone.nil?
-      @availability_zone = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^az=(.+)/)
-          @availability_zone = match[1]
-        end
-      end
-    end
-    @availability_zone
+    @availability_zone ||= lookup_label('az', empty_value: nil, default: 'default')
   end
 
   # @return [String]
   def host_provider
-    if @host_provider.nil?
-      @host_provider = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^provider=(.+)/)
-          @host_provider = match[1]
-        end
-      end
-    end
-    @host_provider
+    @host_provider ||= lookup_label('provider', empty_value: nil, default: 'default')
+  end
+
+  # @return [Boolean]
+  def ephemeral?
+    @ephemeral ||= lookup_label('ephemeral', empty_value: true, default: false)
   end
 
   # @return [String] Overlay IP, without subnet mask

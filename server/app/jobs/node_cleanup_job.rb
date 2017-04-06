@@ -6,7 +6,7 @@ class NodeCleanupJob
   include CurrentLeader
 
   NODE_DISCONNECT_TIMEOUT = 1.minute
-  NODE_DESTROY_TIMEOUT = 24.hours
+  NODE_DESTROY_TIMEOUT = 6.hours
 
   def initialize
     async.perform
@@ -36,8 +36,8 @@ class NodeCleanupJob
 
   def cleanup_stale_nodes
     HostNode.where(:last_seen_at.lt => NODE_DESTROY_TIMEOUT.ago).each do |node|
-      if !node.grid.initial_node?(node) && !node.connected? && !node.stateful?
-        warn "Destroying disconnected node #{node.to_path}"
+      if !node.grid.initial_node?(node) && !node.connected? && !node.stateful? && node.ephemeral?
+        warn "Destroying disconnected ephemeral node #{node.to_path}"
 
         node.destroy
       end
