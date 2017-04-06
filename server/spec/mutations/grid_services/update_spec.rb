@@ -156,13 +156,16 @@ describe GridServices::Update do
       end
 
       context 'for a service with secrets' do
-        let(:secret) { GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret') }
+        let(:secret1) { GridSecret.create!(grid: grid, name: 'SECRET1', value: 'secret') }
+        let(:secret2) { GridSecret.create!(grid: grid, name: 'SECRET2', value: 'secret') }
+        let(:secret3) { GridSecret.create!(grid: grid, name: 'SECRET3', value: 'secret') }
 
         let(:service) {
           GridService.create(grid: grid, stack: stack, name: 'redis',
             image_name: 'redis:2.8',
             secrets: [
-              {secret: secret.name, name: 'SOME_SECRET'}
+              {secret: secret1.name, name: 'SECRET1'},
+              {secret: secret2.name, name: 'SECRET2'},
             ],
           )
         }
@@ -171,7 +174,8 @@ describe GridServices::Update do
           subject = described_class.new(
               grid_service: service,
               secrets: [
-                {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+                {secret: secret1.name, name: 'SECRET1'},
+                {secret: secret2.name, name: 'SECRET2'},
               ]
           )
           expect {
@@ -183,12 +187,27 @@ describe GridServices::Update do
           subject = described_class.new(
               grid_service: service,
               secrets: [
-                {secret: 'EXISTING_SECRET', name: 'OTHER_SECRET'}
+                {secret: secret1.name, name: 'SECRET1'},
+                {secret: secret2.name, name: 'SECRET2b'},
               ]
           )
           expect {
             expect(outcome = subject.run).to be_success
           }.to change{service.reload.revision}
+        end
+
+        it 'removes secrets' do
+          subject = described_class.new(
+              grid_service: service,
+              secrets: [
+                {secret: secret1.name, name: 'SECRET1'},
+              ]
+          )
+          expect {
+            expect(outcome = subject.run).to be_success
+          }.to change{service.reload.revision}
+
+          expect(service.reload.secrets.map{|gss| gss.secret}).to eq ['SECRET1']
         end
       end
     end
