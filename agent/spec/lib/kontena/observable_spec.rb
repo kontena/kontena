@@ -79,6 +79,11 @@ describe Kontena::Observable do
 
     expect{observer.crash}.to raise_error(RuntimeError)
 
+    # make sure the observer is really dead
+    expect{observer.ping}.to raise_error(Celluloid::DeadActorError)
+    expect(observer).to_not be_alive
+    subject.ping
+
     subject.update_observable(object)
     expect(subject.observers).to be_empty
   end
