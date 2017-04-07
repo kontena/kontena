@@ -21,6 +21,10 @@ describe GridServiceScheduler do
       node = subject.select_node(grid_service, 'foo-1', nodes)
       expect(nodes.include?(node)).to eq(true)
     end
+
+    it 'fails if all nodes are offline' do
+      expect{subject.select_node(grid_service, 1, [])}.to raise_error(Scheduler::Error, "There are no nodes available")
+    end
   end
 
   describe '#filter_nodes' do
