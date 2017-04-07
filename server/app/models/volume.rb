@@ -35,15 +35,7 @@ class Volume
   end
 
   def services
-    services = []
-    self.grid.grid_services.each do |service|
-      service.service_volumes.each do |sv|
-        if sv.volume == self
-          services << service
-        end
-      end
-    end
-    services
+    self.grid.grid_services.where("service_volumes.volume_id" => self.id)
   end
 
 end

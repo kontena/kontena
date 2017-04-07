@@ -29,7 +29,7 @@ module Kontena::Cli::Volumes
       end
       puts "  services:"
       vol['services'].each do |service|
-        puts "    - #{service}"
+        puts "    - #{service['id']}"
       end
 
     end
