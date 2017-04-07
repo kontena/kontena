@@ -512,13 +512,7 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "volumes": [
     {
       "name": "aVolume",
-      "external": true
-    },
-    {
-      "name": "otherVolume",
-      "external": {
-        "name": "otherName"
-      }
+      "external": "otherName"
     }
   ]
 }
@@ -542,13 +536,8 @@ volumes | A list of volumes used in this stack (see [volumes](#volumes) for more
 Attribute | Description
 ---------- | -------
 name  | Name of the volume within the stack
-external | How the volume name is mapped to grid volume
+external | Name of the grid level volume definition to use
 
-### Volume external attribute
-
-When `"external":true` Kontena references the grid level volume with the same name as defined in the stack yaml.
-
-When `"external": {"name": "otherVolume"}` Kontena uses a grid volume called `otherVolume`
 
 ## Create a stack
 
