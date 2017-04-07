@@ -5,13 +5,10 @@ json.name volume.name
 json.scope volume.scope
 json.driver volume.driver
 json.driver_opts volume.driver_opts
-json.instances volume.volume_instances.map { |v|
-  {
-    node: v.host_node.name,
-    name: v.name
-  }
-}
-
-json.services volume.services.map { |s|
-  {id: s.to_path}
-}
+json.instances volume.volume_instances.each do |v|
+    json.node v.host_node.name
+    json.name v.name
+end
+json.services volume.services.each do |s|
+  json.id s.to_path
+end
