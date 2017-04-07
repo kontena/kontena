@@ -11,7 +11,7 @@ module Kontena::Cli::Vault
     requires_current_master
 
     def default_value
-      stdin_input("Enter value for secret '#{name}'")
+      stdin_input("Enter value for secret '#{name}'", :mask)
     end
 
     def execute

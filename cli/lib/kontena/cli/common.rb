@@ -22,9 +22,9 @@ module Kontena
         @pastel ||= Pastel.new(enabled: $stdout.tty?)
       end
 
-      def stdin_input(message = nil)
+      def stdin_input(message = nil, mode = :ask)
         if $stdin.tty?
-          prompt.multiline(message).join.chomp
+          Array(prompt.send(mode, message)).join.chomp
         elsif !$stdin.eof?
           $stdin.read.chomp
         else
