@@ -20,7 +20,7 @@ describe Kontena do
 
   describe '#minor_version' do
     it "returns a version string" do
-      expect(Kontena.minor_version).to match /\d+\.\d+/
+      expect(Kontena.minor_version).to match /^\d+\.\d+$/
     end
   end
 
