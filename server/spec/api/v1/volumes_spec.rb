@@ -84,7 +84,7 @@ describe '/v1/volumes' do
             "#{volume.name}:/data:ro"
           ]
       ).result
-      
+
       get "/v1/volumes/#{grid.name}/#{volume.name}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
@@ -95,7 +95,7 @@ describe '/v1/volumes' do
       expect(json_response['scope']).to eq(volume.scope)
       expect(json_response['instances'].first['node']).to eq(node.name)
       expect(json_response['instances'].first['name']).to eq('foo')
-      expect(json_response['services']).to eq([redis.to_path])
+      expect(json_response['services']).to eq([{'id' => redis.to_path}])
     end
 
     it 'return 404 for non existing volume' do
