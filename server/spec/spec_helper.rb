@@ -97,6 +97,8 @@ RSpec.configure do |config|
   def json_response
     @json_response ||= JSON.parse(response.body)
   end
+
+  RSpec::Matchers.define_negated_matcher :not_change, :change
 end
 
 require_glob __dir__ + '/support/*.rb'

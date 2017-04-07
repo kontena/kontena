@@ -1,4 +1,3 @@
-
 describe GridServices::Update do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:stack) {Stack.create!(name: 'foo', grid: grid)}
@@ -180,7 +179,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to_not change{service.reload.revision}
+          }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
         end
 
         it 'changes secrets' do
@@ -193,7 +192,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}
         end
 
         it 'removes secrets' do
@@ -205,7 +204,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}
 
           expect(service.reload.secrets.map{|gss| gss.secret}).to eq ['SECRET1']
         end
@@ -246,7 +245,7 @@ describe GridServices::Update do
 
           expect {
             expect(outcome = subject.run).to be_success
-          }.to_not change{service.reload.revision}
+          }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
         end
       end
     end
@@ -271,7 +270,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to_not change{service.reload.revision}
+          }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
 
           expect(service.service_volumes.first.to_s).to eq '/foo:/foo'
 
@@ -286,7 +285,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}
           expect(service.service_volumes.first.to_s).to eq '/foo2:/foo'
         end
 
@@ -299,7 +298,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}
           expect(service.service_volumes.first.to_s).to eq '/foo:/foo:ro'
         end
 
@@ -313,7 +312,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}
           expect(service.service_volumes.map{|sv| sv.to_s}).to eq ['/foo:/foo', '/foo2:/foo2']
         end
 
@@ -325,7 +324,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}
 
           expect(service.service_volumes.map{|sv| sv.to_s}).to eq []
         end
@@ -462,7 +461,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to_not change{service.reload.revision}
+          }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
         end
 
         # Mongoid does not consider an empty array of embedded documents to be changed
@@ -473,7 +472,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}.and change{service.reload.grid_service_links.count}.from(1).to(0)
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}.and change{service.reload.grid_service_links.count}.from(1).to(0)
         end
 
         it 'deletes links' do
@@ -488,7 +487,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}.and change{service.reload.grid_service_links.count}.from(2).to(1)
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}.and change{service.reload.grid_service_links.count}.from(2).to(1)
         end
 
         it 'changes links' do
@@ -503,7 +502,7 @@ describe GridServices::Update do
           )
           expect {
             expect(outcome = subject.run).to be_success
-          }.to change{service.reload.revision}.and change{service.reload.grid_service_links.first.alias}.from('redis2').to('redis3')
+          }.to change{service.reload.revision}.and change{service.reload.updated_at}.and change{service.reload.grid_service_links.first.alias}.from('redis2').to('redis3')
         end
       end
     end
