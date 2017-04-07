@@ -132,4 +132,30 @@ describe Kontena::Workers::LogWorker do
       subject.on_container_event('topic', double(:event, id: 'foo', status: 'create'))
     end
   end
+
+  describe '#process_queue_item' do
+    it 'sends log to master' do
+      expect(rpc_client).to receive(:notification)
+      subject.process_queue_item(double(:msg))
+    end
+
+    it 'enables throttling if queue size is over limit' do
+      allow(subject.queue).to receive(:size).and_return(described_class::QUEUE_LIMIT + 1)
+      allow(rpc_client).to receive(:notification)
+      expect(subject.throttling?).to be_falsey
+      expect(subject.wrapped_object).to receive(:stop)
+      subject.process_queue_item(double(:msg))
+      expect(subject.throttling?).to be_truthy
+    end
+
+    it 'disables throttling if queue has been processed' do
+      allow(subject.queue).to receive(:size).and_return(described_class::QUEUE_LIMIT + 1)
+      allow(rpc_client).to receive(:notification)
+      subject.process_queue_item(double(:msg))
+      allow(subject.queue).to receive(:size).and_return(10)
+      expect(subject.wrapped_object).to receive(:start)
+      subject.process_queue_item(double(:msg))
+      expect(subject.throttling?).to be_falsey
+    end
+  end
 end
