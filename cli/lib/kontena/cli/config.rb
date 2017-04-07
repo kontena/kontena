@@ -41,7 +41,7 @@ module Kontena
         return nil unless ENV['KONTENA_URL']
         logger.debug 'Loading configuration from ENV'
         servers << Server.new(
-          url: ENV['KONTENA_URL'], 
+          url: ENV['KONTENA_URL'],
           name: 'default',
           token: Token.new(access_token: ENV['KONTENA_TOKEN'], parent_type: :master, parent_name: 'default'),
           grid: ENV['KONTENA_GRID'],
@@ -66,9 +66,29 @@ module Kontena
         )
       end
 
-      # Load configuration from default location ($HOME/.kontena_client.json)
+      def move_config
+        if File.exist?(old_default_config_filename)
+          require 'fileutils'
+          FileUtils.mv(old_default_config_filename, default_config_filename)
+          true
+        else
+          false
+        end
+      rescue =>  ex
+        raise ex, "[ERROR] Could not move config file from #{old_default_config_filename} to new default location #{default_config_filename} : #{ex.message}"
+      end
+
+      # Load configuration from default location ($HOME/.kontena/config.json)
       def load_settings_from_config_file
-        settings = config_file_available? ? parse_config_file : default_settings
+        if config_file_available?
+          settings = parse_config_file
+        else
+          if move_config
+            settings = parse_config_file
+          else
+            settings = default_settings
+          end
+        end
 
         Array(settings['servers']).each do |server_data|
           if server_data['token']
@@ -172,7 +192,7 @@ module Kontena
         logger.debug "Migrating from legacy style configuration"
         {
           'current_server' => 'default',
-          'servers' => [ 
+          'servers' => [
             settings['server'].merge(
               'name' => 'default',
               'account' => 'kontena'
@@ -204,8 +224,22 @@ module Kontena
       end
 
       # Generate the default configuration filename
-      def default_config_filename
+      def old_default_config_filename
         File.join(Dir.home, '.kontena_client.json')
+      end
+
+      def default_config_filename
+        File.join(Dir.home, '.kontena', 'config.json')
+      end
+
+      def ensure_path
+        Dir.mkdir(kontena_home, 0700) unless File.directory?(kontena_home)
+      rescue => ex
+        raise ex, "[ERROR] Permission denied to create directory #{kontena_home} : #{ex.message}"
+      end
+
+      def kontena_home
+        @kontena_home ||= File.join(Dir.home, '.kontena')
       end
 
       # List of configured servers
@@ -303,7 +337,7 @@ module Kontena
       def require_current_master_token
         require_current_master
         token = current_master.token
-        if token && token.access_token 
+        if token && token.access_token
           return token unless token.expired?
           raise TokenExpiredError, "The access token has expired and needs to be refreshed."
         end
@@ -364,7 +398,7 @@ module Kontena
         raise ArgumentError, "You have not selected a grid. Use: kontena grid"
       end
 
-      # Name of the currently selected grid. Can override using 
+      # Name of the currently selected grid. Can override using
       # KONTENA_GRID environment variable.
       #
       # @return [String, NilClass]
@@ -433,7 +467,7 @@ module Kontena
         JSON.pretty_generate(to_hash)
       end
 
-      # Write the current configuration to config file. 
+      # Write the current configuration to config file.
       # Does nothing if using settings from environment variables.
       def write
         return nil if ENV['KONTENA_URL']
@@ -518,7 +552,7 @@ module Kontena
         def account
           return @account if @account
           return config.find_account('master') unless parent
-          @account = 
+          @account =
             case parent_type
             when :master then config.find_account(parent.account)
             when :account then parent

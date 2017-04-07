@@ -41,9 +41,9 @@ module RequirementsHelper
         )
         allow(Kontena::Cli::Config.instance).to receive(:require_current_master).and_return(true)
         allow(File).to receive(:exist?).and_call_original
-        allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
+        allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena', 'config.json')).and_return(true)
         allow(File).to receive(:read).and_call_original
-        allow(File).to receive(:read).with(File.join(Dir.home, '.kontena_client.json')).and_return("")
+        allow(File).to receive(:read).with(File.join(Dir.home, '.kontena', 'config.json')).and_return("")
       end
     end
   end

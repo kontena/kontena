@@ -101,7 +101,7 @@ describe Kontena::Cli::Common do
         }
       })
       expect(File).to receive(:write) do |filename, content|
-        expect(File.basename(filename)).to eq(".kontena_client.json")
+        expect(File.basename(filename)).to eq("config.json")
         config_hash = JSON.parse(content)
         expect(config_hash['servers']).to be_kind_of(Array)
         expect(config_hash['servers'].first).to be_kind_of(Hash)

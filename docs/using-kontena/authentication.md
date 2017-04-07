@@ -199,7 +199,7 @@ This is what happens under the hood during an authentication request to the Kont
 16. The user's browser follows the redirect to the local web server, which then parses the code from the query parameters.
 17. The local web server is terminated.
 18. The CLI exchanges the authorization code for an access token with the Master.
-19. The access token is saved to the client's `$HOME/.kontena_client.json` file.
+19. The access token is saved to the client's `$HOME/.kontena/config.json` file.
 20. The CLI has now been authenticated to access the Master API.
 
 If the user has already performed an authentication to the Master, an invitation code is no longer needed because the external user id for the user is already present. Subsequent authentications will be performed using the same flow without an invitation code and without having to click Agree because the application has already been approved.

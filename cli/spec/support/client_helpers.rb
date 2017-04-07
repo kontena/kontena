@@ -32,10 +32,10 @@ module ClientHelpers
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:current_grid).and_return(current_grid)
       allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena/certs/.pem')).and_return(false)
-      allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
-      allow(File).to receive(:readable?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
+      allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena', 'config.json')).and_return(true)
+      allow(File).to receive(:readable?).with(File.join(Dir.home, '.kontena', 'config.json')).and_return(true)
       allow(File).to receive(:read).and_call_original
-      allow(File).to receive(:read).with(File.join(Dir.home, '.kontena_client.json')).and_return(JSON.dump(settings))
+      allow(File).to receive(:read).with(File.join(Dir.home, '.kontena', 'config.json')).and_return(JSON.dump(settings))
       Kontena::Cli::Config.reset_instance
     end
   end

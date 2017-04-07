@@ -77,7 +77,7 @@ class Helper
   end
 
   def master_names
-    config_file = File.expand_path('~/.kontena_client.json')
+    config_file = File.expand_path('~/.kontena/config.json')
     if(File.exist?(config_file))
       config = JSON.parse(File.read(config_file))
       return config['servers'].map{|s| s['name']}
