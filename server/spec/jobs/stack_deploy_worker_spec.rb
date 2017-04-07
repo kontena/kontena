@@ -30,8 +30,10 @@ describe StackDeployWorker, celluloid: true do
       stack_deploy = stack.stack_deploys.create
       stack_rev = stack.latest_rev
 
-      deploy_result = double(:result, :success? => false, :error? => true)
-      allow(subject.wrapped_object).to receive(:deploy_service).and_return(deploy_result)
+      deploy_result = double(:result, :success? => false, :error? => true, :errors => double(message: { 'foo' => 'bar'}))
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_return(deploy_result)
+      expect(subject.wrapped_object).to receive(:error).once.with(/service test\/stack\/redis deploy failed:/)
+      expect(subject.wrapped_object).to receive(:error).once
       stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
       expect(stack_deploy.error?).to be_truthy
     end
