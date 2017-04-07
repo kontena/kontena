@@ -19,5 +19,6 @@ module Kontena
     autoload :Certificate, 'kontena/cli/certificate'
     autoload :Cloud, 'kontena/cli/cloud'
     autoload :Vault, 'kontena/cli/vault'
+    autoload :Master, 'kontena/cli/master'
   end
 end
