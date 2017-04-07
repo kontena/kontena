@@ -61,7 +61,7 @@ describe Kontena::Workers::FluentdWorker do
       subject.wrapped_object.instance_variable_set('@fluentd', fluentd)
       subject.wrapped_object.instance_variable_set('@forwarding', true)
       expect(fluentd).to receive(:post).with('web.nginx.1', {log: 'foo bar', source: 'stdout'})
-      subject.on_log_event('container:log', log_event)
+      subject.on_log_event(log_event)
     end
 
     it 'does not post event if not forwarding' do
@@ -69,14 +69,14 @@ describe Kontena::Workers::FluentdWorker do
       subject.wrapped_object.instance_variable_set('@fluentd', fluentd)
       subject.wrapped_object.instance_variable_set('@forwarding', false)
       expect(fluentd).not_to receive(:post)
-      subject.on_log_event('container:log', log_event)
+      subject.on_log_event(log_event)
     end
 
     it 'does not post event if no fluentd configured' do
       subject.wrapped_object.instance_variable_set('@fluentd', nil)
       subject.wrapped_object.instance_variable_set('@forwarding', true)
       expect_any_instance_of(Fluent::Logger::FluentLogger).not_to receive(:post)
-      subject.on_log_event('container:log', log_event)
+      subject.on_log_event(log_event)
     end
   end
 
