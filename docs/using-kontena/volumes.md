@@ -4,16 +4,16 @@ title: Volume Management
 
 # Volumes
 
-Kontena provides capability to manage persistent data using volumes.
+Kontena 1.2 provides **experimental** support for managing persistent service data using Docker volumes. The exact details of how these Kontena volumes are managed may still change as the implementation evolves.
 
-Volumes are supported as first-class citizens in both Kontena Master API and on stack yaml definitions.
+Volumes are supported as first-class objects in the Kontena Master API, which can be referred to from stack YAML definitions.
 
-Currently Kontena does not automatically configure any volume drivers within the grid so user must configure those themselves.
+Kontena tracks the available Docker volume drivers on each host node, as shown in kontena node show, and will only deploy services using such a volume driver onto a host node that provides that volume driver. In order to use any other volume drivers than the default local driver, those volume drivers must be provided by Docker plugins on the host nodes. Kontena itself does not yet support provisioning Docker plugins onto the grid's host nodes.
 
 
 ## Managing volumes with CLI
 
-User can manage volumes with Kontena CLI with `kontena volume xyz` commands
+Volumes can be managed from the Kontena CLI using the `kontena volume xyz` commands.
 
 ### Creating volumes
 
@@ -29,11 +29,11 @@ See volume [scopes](#volume-scopes) for details on the different scopes.
 
 `kontena volume rm my-volume`
 
-Deleting a volume that is still in use in any of the services will fail.
+Deleting a volume that is still in use by any Kontena services will fail. Deleting an unused volume will remove the underlying Docker volumes from the host nodes.
 
-## Managing volumes with Kontena Stacks
+## Using volumes with Kontena Stacks
 
-Volumes can be defined also within Kontena Stacks using top level `volumes` key. When a stack is installed or upgraded, volumes not yet created within Kontena Grid are automatically created and managed by Kontena. Volume configuration cannot be changed after it has been created as Docker itself does not allow this.
+Volumes can be used by services defined in Kontena stacks. To be able to use a volume in a service the volume must be first created using `kontena volume create ...` command or the corresponding REST API on Kontena master and introduced in stack yaml in a top level `volumes` section.
 
 
 Volumes configuration looks like this in stack yaml:
@@ -51,15 +51,11 @@ services:
 
 volumes:
   redis-data:
-    driver: rexray
-    scope: instance
-    driver_opts:
-      size: 30G
+    external:
+      name: redis-volume
 ```
 
-Volumes are defined under top-level `volumes` key using the same well-known syntax from docker-compose.
-
-The needed options depend on the volume driver used so make sure you check the volume driver capabilities.
+See stack yaml reference for details.
 
 ## Volume scopes
 
@@ -71,7 +67,7 @@ The suitable scope depends highly on the service using the data and the volume d
 
 ### Scope: instance
 
-Instance scoped volumes are created per service instance so in practice each service instance will get it's own volume created.
+Instance scoped volumes are created per service instance so in practice each service instance (container) will get it's own volume.
 
 Suitable for services where each instance should have their own data and possible data replication happens on application layer.
 

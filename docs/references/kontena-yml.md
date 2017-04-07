@@ -480,6 +480,37 @@ logging:
        # {% endraw %}
  ```
 
+## Volumes
+
+Kontena stack yaml support volumes to be used which are created using `kontena volume create ...` command or the corresponding REST API on master.
+
+```
+stack: redis
+description: Just a simple Redis stack with volume
+version: 0.0.1
+services:
+  redis:
+    image: redis:3.2-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+    external:
+      name: testVol
+
+```
+
+The used volumes must be introduced in the stack yaml file and mapped to the created volume by name. This creates the option to use "alias" names for grid level volumes within stack yaml. Other option is to introduce the volume with `external: true`:
+```
+volumes:
+  redis-data:
+    external: true
+```
+
+In this case Kontena expects to find a volume called `redis-data` before the stack can be installed or upgraded.
+
 ## Networking
 Each service within the same stack is both reachable by other services and discoverable by them at a hostname identical to the service name.
 
