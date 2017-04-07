@@ -36,7 +36,7 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
   subcommand "plugin", "Plugin related commands", load_subcommand('plugin_command')
   subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
-  subcommand "volume", "Volume specific commands", load_subcommand('volume_command')
+  subcommand "volume", "Volume specific commands [EXPERIMENTAL]", load_subcommand('volume_command')
 
   def execute
   end
