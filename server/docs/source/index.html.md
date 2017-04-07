@@ -560,6 +560,12 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   			]
   		}
   	}
+  ],
+  "volumes": [
+    {
+      "name": "aVolume",
+      "external": "otherName"
+    }
   ]
 }
 ```
@@ -575,6 +581,15 @@ version | A version number for the stack
 registry | A stack registry where stack schema is originally fetched
 expose | A service that stack exposes to grid level DNS namespace
 services | A list of stack services (see [services](#services) for more info)
+volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
+
+### Volume attributes
+
+Attribute | Description
+---------- | -------
+name  | Name of the volume within the stack
+external | Name of the grid level volume definition to use
+
 
 ## Create a stack
 
@@ -1373,6 +1388,92 @@ For example `"secret_name": "FOO_DOMAIN_COM"` will write following secrets to th
 ### Endpoint
 
 `POST /v1/certificates/{grid_id}/certificate`
+
+# Volumes
+
+**Volumes support is at experimental state which means that there might be breaking changes between versions until the experimental status is removed.**
+
+## Volume
+
+```json
+{
+  "id": "my-grid/foo",
+  "name": "foo",
+  "scope":"instance",
+  "driver":"local",
+  "driver_opts": {
+    "driver_specific_option": "foobar",
+    "another_option": "xyz"
+  },
+  "instances": [
+    {
+      "name":"stack.svc.foo-1",
+      "node": "node-1"
+    }
+  ],
+  "services": [
+    {
+      "id":"my-grid/stack/svc"
+    }
+  ]
+}
+```
+
+Attribute | Description
+--------- | -----------
+name      | Name of the volume
+scope     | Scope for the volume (`instance`, `stack` or `grid`)
+driver    | Volume driver to be used. Each node reports it's supported drivers, see [node details](#get-a-node-details)
+driver_opts| Options for the volume driver
+
+## List volumes
+
+Lists volumes created to a grid
+
+```http
+GET /v1/volumes/{grid_id} HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/volumes/{grid_id}`
+
+## Create a volume
+
+```http
+POST /v1/volumes/{grid_id} HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+
+{
+  "name":"foo",
+  "scope":"instance",
+  "driver":"local",
+  "driver_opts": {
+    "driver_specific_option": "foobar",
+    "another_option": "xyz"
+  }
+}
+```
+
+Creates a volume to a grid
+
+### Endpoint
+
+`POST /v1/volumes/{grid_id}`
+
+## Delete a volume
+
+```http
+DELETE /v1/volumes/{volume_id} HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+### Endpoint
+
+`DELETE /v1/volumes/{volume_id}`
 
 # Configuration
 
