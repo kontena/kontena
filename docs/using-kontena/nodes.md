@@ -8,7 +8,7 @@ Each node is a machine running the `kontena-agent`. The nodes connect to the Kon
 
 ### Provisioning nodes
 
-Nodes do not need to be explicitly created. The Kontena Master will automatically create new grid nodes for any `kontena-agent` connecting to the Kontena Master with the correct [grid token](grids#Grid Token).
+Nodes do not need to be explicitly created. The Kontena Master will automatically create new grid nodes for any `kontena-agent` connecting to the Kontena Master with the correct [grid token](grids.md#Grid Token).
 
 Nodes are identified by their Docker Engine ID, as shown in `docker info`:
 
@@ -22,8 +22,8 @@ Nodes will be considered as online so long as they have an active Websocket conn
 The agents will ping the server every 30 seconds, and expect a response within 2 seconds.
 The server will ping each agent every 30 seconds, and expect a response within 5 seconds.
 
-Grid service instances can be deployed to any online node, unless restricted using [service affinity filters](deploy#Affinity) or the [grid default affinity](grids#Default Affinity).
-When a host node comes online, existing grid services will be re-scheduled by the server to deploy new [`daemon`-strategy](deploy#Daemon) instances or re-balance other service instances onto the new node.
+Grid service instances can be deployed to any online node, unless restricted using [service affinity filters](deploy.md#Affinity) or the [grid default affinity](grids.md#Default Affinity).
+When a host node comes online, existing grid services will be re-scheduled by the server to deploy new [`daemon`-strategy](deploy.md#Daemon) instances or re-balance other service instances onto the new node.
 The re-schduling of grid services will happen within 20 seconds of the node coming online.
 
 ### Offline nodes
@@ -44,7 +44,7 @@ Alternatively, power off and destroy the node instance directly from the provide
 
 ## Node labels
 
-Host nodes can have arbitrary labels of the form `label` or `label=value`. These labels can be used for [service affinity filters](deploy#Affinity). Some special labels are also set by the node provisioning plugins, and are recognized by Kontena itself.
+Host nodes can have arbitrary labels of the form `label` or `label=value`. These labels can be used for [service affinity filters](deploy.md#Affinity). Some special labels are also set by the node provisioning plugins, and are recognized by Kontena itself.
 
 ### `provider`
 
@@ -54,11 +54,11 @@ Nodes provisioned by `kontena <provider> node create` plugin commands will have 
 
 Nodes provisioned by some plugins (`aws`, `azure`, `digitalocean`) will also have node label such as `az=us-west-a1`.
 
-The `az` label is used by the [`ha` deployment strategy](deploy#High Availability (HA)) to distribute service instances across different availability zones.
+The `az` label is used by the [`ha` deployment strategy](deploy.md#High Availability (HA)) to distribute service instances across different availability zones.
 
 ### `ephemeral`
 
 Nodes labeled as `ephemeral` will automatically be removed by the Kontena Master after they have been offline for longer than six hours (6h).
-The nodes should not be [initial nodes](grids#Initial Nodes), and they should not have any stateful services deployed on them.
+The nodes should not be [initial nodes](grids.md#Initial Nodes), and they should not have any stateful services deployed on them.
 
 Ephemeral nodes are intended to be used for autoscaled nodes, which may be provisioned automatically, and then cleaned up once terminated.
