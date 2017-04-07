@@ -24,7 +24,7 @@ The server will ping each agent every 30 seconds, and expect a response within 5
 
 Grid service instances can be deployed to any online node, unless restricted using [service affinity filters](deploy.md#affinity) or the [grid default affinity](grids.md#default-affinity).
 When a host node comes online, existing grid services will be re-scheduled by the server to deploy new [`daemon`-strategy](deploy.md#daemon) instances or re-balance other service instances onto the new node.
-The re-schduling of grid services will happen within 20 seconds of the node coming online.
+The re-scheduling of grid services will happen within 20 seconds of the node coming online.
 
 ### Offline nodes
 
@@ -32,7 +32,7 @@ If the agent's Websocket connection to the master is disconnected or times out, 
 
 Offline nodes will not have any new service instances scheduled to them.
 Any services with instances deployed to any offline nodes will be re-scheduled by the server, moving the instances to the remaining online nodes.
-The re-schduling of grid services will happen within 20 seconds of the node being marked as disconnected.
+The re-scheduling of grid services will happen within 20 seconds of the node being marked as disconnected.
 
 ### Decomissioning nodes
 
