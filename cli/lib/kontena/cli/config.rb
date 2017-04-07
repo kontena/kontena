@@ -68,6 +68,7 @@ module Kontena
 
       def move_config
         if File.exist?(old_default_config_filename)
+          ensure_config_path
           require 'fileutils'
           FileUtils.mv(old_default_config_filename, default_config_filename)
           at_exit do
@@ -91,6 +92,8 @@ module Kontena
       def load_settings_from_config_file
         if config_file_available?
           settings = parse_config_file
+        elsif ENV['KONTENA_CONFIG']
+          raise "Could not read configuration from #{ENV['KONTENA_CONFIG']}"
         else
           if move_config
             settings = parse_config_file
@@ -241,7 +244,7 @@ module Kontena
         File.join(Dir.home, '.kontena', 'config.json')
       end
 
-      def ensure_path
+      def ensure_config_path
         Dir.mkdir(kontena_home, 0700) unless File.directory?(kontena_home)
       rescue => ex
         raise ex, "[ERROR] Permission denied to create directory #{kontena_home} : #{ex.message}"
@@ -481,6 +484,7 @@ module Kontena
       def write
         return nil if ENV['KONTENA_URL']
         logger.debug "Writing configuration to #{config_filename}"
+        ensure_config_path
         File.write(config_filename, to_json)
       end
 
