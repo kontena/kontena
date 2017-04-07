@@ -51,8 +51,10 @@ describe Kontena::Cli::Vault::UpdateCommand do
         end
 
         context 'when value not given' do
+          let(:prompt) { double(:prompt) }
           it 'prompts for value' do
-            expect(subject.prompt).to receive(:multiline).once.and_return(['very-secret'])
+            expect(subject).to receive(:prompt).and_return(prompt)
+            expect(prompt).to receive(:mask).once.and_return('very-secret')
             expect(client).to receive(:put).with('secrets/test-grid/mysql_password', { name: 'mysql_password', value: 'very-secret', upsert: false})
             expect{subject.run(['mysql_password'])}.not_to exit_with_error
           end

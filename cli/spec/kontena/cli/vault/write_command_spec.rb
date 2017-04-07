@@ -41,9 +41,11 @@ describe Kontena::Cli::Vault::WriteCommand do
       end
 
       context 'with tty' do
+        let(:prompt) { double(:prompt) }
         it 'prompts value from STDIN' do
           expect(stdin).to receive(:tty?).and_return(true)
-          expect(subject.prompt).to receive(:multiline).and_return(['secret'])
+          expect(subject).to receive(:prompt).and_return(prompt)
+          expect(prompt).to receive(:mask).and_return('secret')
           expect(client).to receive(:post).with('grids/test-grid/secrets', { name: 'mysql_password', value: 'secret'})
           expect{subject.run(['mysql_password'])}.not_to exit_with_error
         end
