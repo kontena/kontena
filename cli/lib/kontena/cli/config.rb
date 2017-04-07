@@ -70,6 +70,15 @@ module Kontena
         if File.exist?(old_default_config_filename)
           require 'fileutils'
           FileUtils.mv(old_default_config_filename, default_config_filename)
+          at_exit do
+            # Need to do at exit, otherwise it will pop up in the first place the config is accessed,
+            # often after the first lines of command output have already been displayed
+            warn(
+              Kontena.pastel.yellow('Note: ') +
+              "Configuration file " + Kontena.pastel.cyan(old_default_config_filename) +
+              " was moved to the new default location " + Kontena.pastel.cyan(default_config_filename)
+            )
+          end
           true
         else
           false
