@@ -22,6 +22,9 @@ module Kontena
         @pastel ||= Pastel.new(enabled: $stdout.tty?)
       end
 
+      # Read from STDIN. If stdin is a console, use prompt to ask.
+      # @param [String] message
+      # @param [Symbol] mode (prompt method: :ask, :multiline, etc)
       def stdin_input(message = nil, mode = :ask)
         if $stdin.tty?
           Array(prompt.send(mode, message)).join.chomp
