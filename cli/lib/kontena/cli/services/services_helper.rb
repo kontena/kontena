@@ -190,7 +190,7 @@ module Kontena
 
         def show_service_instances(token, service_id)
           puts "  instances:"
-          instances = client(token).get("services/#{parse_service_id(service_id)}/instancess")['instances']
+          instances = client(token).get("services/#{parse_service_id(service_id)}/instances")['instances']
           containers = client(token).get("services/#{parse_service_id(service_id)}/containers")['containers']
           instances.each do |i|
             puts "    #{name}/#{i['instance_number']}:"
