@@ -60,14 +60,16 @@ describe '/v1/services/:id/event_logs' do
 
   describe 'DELETE /:id' do
     it 'removes service instance' do
+      node = HostNode.create(grid: grid, node_id: 'a')
       instance = redis_service.grid_service_instances.create!(
         instance_number: 2,
-        deploy_rev: Time.now.utc.to_s
+        deploy_rev: Time.now.utc.to_s,
+        host_node: node
       )
       expect {
         delete "/v1/services/#{redis_service.to_path}/instances/#{instance.id.to_s}", nil, request_headers
         expect(response.status).to eq(200)
-      }.to change { redis_service.grid_service_instances.count }.by(-1)
+      }.to change { instance.reload.host_node }.from(node).to(nil)
     end
   end
 end

@@ -25,7 +25,7 @@ V1::ServicesApi.route('service_instances') do |r|
     r.on ':id' do |id|
       instance = @grid_service.grid_service_instances.find(id)
       if instance
-        instance.destroy
+        instance.set(host_node_id: nil)
         response.status = 200
         {}
       else
