@@ -68,7 +68,13 @@ module Kontena::Workers
     def watch_queue
       loop do
         sleep 10
-        warn "queue size is #{@queue.size}" if @queue.size > (QUEUE_MAX_SIZE / 2)
+        if @queue.size > QUEUE_MAX_SIZE
+          warn "queue is full (size is #{@queue.size}), log lines are dropped until queue has free space"
+        elsif @queue.size > QUEUE_THROTTLE
+          warn "queue size is #{@queue.size}, log streams are throttled and some log lines may be dropped"
+        elsif @queue.size > (QUEUE_MAX_SIZE / 2)
+          warn "queue size is #{@queue.size}"
+        end
       end
     end
 
