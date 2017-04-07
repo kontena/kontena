@@ -4,19 +4,19 @@ describe NodeCleanupJob, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
 
   describe '#cleanup_stale_nodes' do
-    it 'removes old nodes' do
-      HostNode.create!(name: "node-1", grid: grid, connected: true, last_seen_at: 2.hours.ago)
-      HostNode.create!(name: "node-2", grid: grid, connected: false, last_seen_at: 2.hours.ago)
-      HostNode.create!(name: "node-3", grid: grid, connected: true, last_seen_at: 10.minutes.ago)
+    it 'removes old ephemeral nodes' do
+      HostNode.create!(name: "node-1", grid: grid, connected: true, labels: [ 'ephemeral' ], last_seen_at: 12.hours.ago)
+      HostNode.create!(name: "node-2", grid: grid, connected: false, labels: [ 'ephemeral' ], last_seen_at: 12.hours.ago)
+      HostNode.create!(name: "node-3", grid: grid, connected: true, labels: [ 'ephemeral' ], last_seen_at: 2.hours.ago)
 
       expect {
         subject.cleanup_stale_nodes
       }.to change{ HostNode.count }.by(-1)
     end
 
-    it 'does not remove initial node' do
-      HostNode.create!(name: "node-1", grid: grid, connected: false, last_seen_at: 2.hours.ago)
-      HostNode.create!(name: "node-2", grid: grid, connected: true, last_seen_at: 2.hours.ago)
+    it 'does not remove initial or non-ephemeral node' do
+      HostNode.create!(name: "node-1", grid: grid, connected: false, labels: [], last_seen_at: 2.hours.ago)
+      HostNode.create!(name: "node-2", grid: grid, connected: false, labels: [], last_seen_at: 2.hours.ago)
       HostNode.create!(name: "node-3", grid: grid, connected: true, last_seen_at: 10.minutes.ago)
 
       expect {
