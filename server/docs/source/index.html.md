@@ -1301,13 +1301,25 @@ For example `"secret_name": "FOO_DOMAIN_COM"` will write following secrets to th
 
 ```json
 {
-  "name":"foo",
+  "id": "my-grid/foo",
+  "name": "foo",
   "scope":"instance",
   "driver":"local",
   "driver_opts": {
     "driver_specific_option": "foobar",
     "another_option": "xyz"
-  }
+  },
+  "instances": [
+    {
+      "name":"stack.svc.foo-1",
+      "node": "node-1"
+    }
+  ],
+  "services": [
+    {
+      "id":"my-grid/stack/svc"
+    }
+  ]
 }
 ```
 
