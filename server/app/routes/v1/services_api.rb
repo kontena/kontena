@@ -34,6 +34,11 @@ module V1
       r.on ':grid_name/:stack_name/:service_name' do |grid_name, stack_name, service_name|
         @grid_service = load_grid_service(grid_name, stack_name, service_name)
 
+        # /v1/services/:grid_name/:stack_name/:service_name/instances
+        r.on 'instances' do
+          r.route 'service_instances'
+        end
+
         # /v1/services/:grid_name/:stack_name/:service_name/containers
         r.on 'containers' do
           r.route 'service_containers'
