@@ -12,7 +12,7 @@ Kontena volumes can use by volume drivers provided by Docker plugins installed o
 
 #### Native IPsec overlay network encryption
 
-Host nodes will be upgraded to Weave 1.9.3, and switch to using the new IPSec [encrypted datapath](https://github.com/kontena/kontena/blob/v1.2/docs/core-concepts/networking.md#encrypted-datapath)] for the overlay networking between host nodes.
+Host nodes will be upgraded to Weave 1.9.3, and switch to using the new IPSec [encrypted datapath](https://github.com/kontena/kontena/blob/v1.2/docs/core-concepts/networking.md#encrypted-datapath) for the overlay networking between host nodes.
 
 The new encrypted datapath uses native Linux IPsec encryption, providing improved performance compared to the current [userspace `sleeve`](https://github.com/kontena/kontena/blob/v1.2/docs/core-concepts/networking.md#sleeve) transport.
 Host nodes will fall back to the current UDP-based `sleeve` transport if they are unable to send or receive IPsec ESP packets. Note that the default firewall rules for e.g. Google Cloud Platform deny IPsec ESP packets by default.
