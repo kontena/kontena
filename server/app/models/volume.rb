@@ -35,4 +35,8 @@ class Volume
     end
   end
 
+  def services
+    self.grid.grid_services.where("service_volumes.volume_id" => self.id)
+  end
+
 end
