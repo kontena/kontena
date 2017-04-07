@@ -45,7 +45,7 @@ module GridServices
 
       attributes.delete(:links)
       if self.links
-        attributes[:grid_service_links] = build_grid_service_links(self.grid, self.stack, self.links)
+        attributes[:grid_service_links] = build_grid_service_links([], self.grid, self.stack, self.links)
       end
 
       attributes.delete(:hooks)
@@ -65,7 +65,7 @@ module GridServices
 
       attributes.delete(:volumes)
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes(self.grid, self.stack)
+        attributes[:service_volumes] = self.build_service_volumes([], self.grid, self.stack)
       end
 
       grid_service = GridService.new(attributes)

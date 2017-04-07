@@ -23,7 +23,7 @@ module GridServices
     # @param [Stack] stack
     # @param [Array<Hash>] links
     # @return [Array<GridServiceLink>]
-    def build_grid_service_links(grid, stack, links)
+    def build_grid_service_links(existing_links, grid, stack, links)
       grid_service_links = []
       links.each do |link|
         link[:name] = "#{stack.name}/#{link[:name]}" unless link[:name].include?('/')
@@ -31,12 +31,16 @@ module GridServices
         next if linked_stack.nil?
 
         linked_service = linked_stack.grid_services.find_by(name: service_name)
-        if linked_service
-          grid_service_links << GridServiceLink.new(
+        next if linked_service.nil?
+
+        unless grid_serivce_link = existing_links.find{|l| l.linked_grid_service == linked_service && l.alias = link[:alias] }
+          grid_serivce_link = GridServiceLink.new(
               linked_grid_service: linked_service,
-              alias: link[:alias]
+              alias: link[:alias],
           )
         end
+
+        grid_service_links << grid_serivce_link
       end
       grid_service_links
     end
@@ -86,7 +90,7 @@ module GridServices
       service_secrets
     end
 
-    def build_service_volumes(grid, stack)
+    def build_service_volumes(existing_volumes, grid, stack)
       service_volumes = []
       self.volumes.each do |vol|
         vol_spec = parse_volume(vol)
@@ -104,7 +108,14 @@ module GridServices
           volume = grid.volumes.find_by(name: volume_name)
           vol_spec[:volume] = volume
         end
-        service_volumes << ServiceVolume.new(**vol_spec)
+
+        service_volume = existing_volumes.find{|sv| sv.path == vol_spec[:path] } || ServiceVolume.new(path: vol_spec[:path])
+
+        service_volume.volume = vol_spec[:volume]
+        service_volume.bind_mount = vol_spec[:bind_mount]
+        service_volume.flags = vol_spec[:flags]
+
+        service_volumes << service_volume
       end
       service_volumes
     end

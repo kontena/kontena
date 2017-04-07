@@ -3,6 +3,7 @@ require_relative 'common'
 module GridServices
   class Update < Mutations::Command
     include Common
+    include Logging
 
     common_validations
 
@@ -46,6 +47,15 @@ module GridServices
       validate_volumes(self.volumes)
     end
 
+    # List changed fields of model
+    # @param document [Mongoid::Document]
+    # @return [String] field, embedded{field}
+    def changed(document)
+      (document.changed + document._children.select{|child| child.changed? }.map { |child|
+        "#{child.metadata_name.to_s}{#{child.changed.join(", ")}}"
+      }).join(", ")
+    end
+
     def execute
       attributes = {}
       attributes[:strategy] = self.strategy if self.strategy
@@ -73,6 +83,7 @@ module GridServices
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(
+          self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
         )
       end
@@ -85,12 +96,19 @@ module GridServices
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
       end
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.grid, self.grid_service.stack)
+        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
+          self.grid_service.grid, self.grid_service.stack
+        )
       end
       grid_service.attributes = attributes
+
       if grid_service.changed?
+        info "updating service #{grid_service.to_path} with changes: #{changed(grid_service)}"
         grid_service.revision += 1
+      else
+        debug "not updating service #{grid_service.to_path} without changes"
       end
+
       grid_service.save
 
       grid_service
