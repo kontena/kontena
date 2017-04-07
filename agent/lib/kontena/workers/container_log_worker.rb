@@ -87,6 +87,7 @@ module Kontena::Workers
 
     def publish_log(log)
       Actor[:fluentd_worker].async.on_log_event(log)
+    rescue Celluloid::DeadActorError
     end
   end
 end
