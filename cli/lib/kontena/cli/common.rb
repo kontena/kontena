@@ -22,6 +22,19 @@ module Kontena
         @pastel ||= Pastel.new(enabled: $stdout.tty?)
       end
 
+      # Read from STDIN. If stdin is a console, use prompt to ask.
+      # @param [String] message
+      # @param [Symbol] mode (prompt method: :ask, :multiline, etc)
+      def stdin_input(message = nil, mode = :ask)
+        if $stdin.tty?
+          Array(prompt.send(mode, message)).join.chomp
+        elsif !$stdin.eof?
+          $stdin.read.chomp
+        else
+          exit_with_error 'Missing input'
+        end
+      end
+
       def running_silent?
         self.respond_to?(:silent?) && self.silent?
       end
