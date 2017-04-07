@@ -14,6 +14,10 @@ describe Kontena::Cli::Stacks::LogsCommand do
       },
     ]
   end
+  
+  before(:each) do
+    Kontena.pastel.resolver.color.disable!
+  end
 
   it "shows stack logs" do
     expect(client).to receive(:get).with('stacks/test-grid/test-stack/container_logs', {
