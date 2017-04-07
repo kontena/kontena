@@ -23,6 +23,8 @@ The agents will ping the server every 30 seconds, and expect a response within 2
 The server will ping each agent every 30 seconds, and expect a response within 5 seconds.
 
 Grid service instances can be deployed to any online node, unless restricted using [service affinity filters](deploy#Affinity) or the [grid default affinity](grids#Default Affinity).
+When a host node comes online, existing grid services will be re-scheduled by the server to deploy new [`daemon`-strategy](deploy#Daemon) instances or re-balance other service instances onto the new node.
+The re-schduling of grid services will happen within 20 seconds of the node coming online.
 
 ### Offline nodes
 
