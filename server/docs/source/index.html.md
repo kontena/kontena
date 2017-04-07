@@ -1371,13 +1371,13 @@ Creates a volume to a grid
 ## Delete a volume
 
 ```http
-DELETE /v1/volumes/{grid_id}/{volume_name} HTTP/1.1
+DELETE /v1/volumes/{volume_id} HTTP/1.1
 Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 ### Endpoint
 
-`DELETE /v1/volumes/{grid_id}/{volume_name}`
+`DELETE /v1/volumes/{volume_id}`
 
 # Configuration
 
