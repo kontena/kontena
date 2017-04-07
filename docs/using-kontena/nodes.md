@@ -6,22 +6,39 @@ title: Nodes
 
 Each node is a machine running the `kontena-agent`. The nodes connect to the Kontena Master, which then schedules and deploys services onto those nodes.
 
-## Connecting nodes
+### Provisioning nodes
 
-Nodes do not need to be explicitly created. The Kontena Master will automatically create new grid nodes for any `kontena-agent` connecting to the Kontena Master with the correct [grid token](grids#Grid Token).  
+Nodes do not need to be explicitly created. The Kontena Master will automatically create new grid nodes for any `kontena-agent` connecting to the Kontena Master with the correct [grid token](grids#Grid Token).
 
-## Online nodes
+Nodes are identified by their Docker Engine ID, as shown in `docker info`:
+
+```
+ ID: 44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7
+```
+
+### Online nodes
 
 Nodes will be considered as online so long as they have an active Websocket connection to the Kontena Master.
+The agents will ping the server every 30 seconds, and expect a response within 2 seconds.
+The server will ping each agent every 30 seconds, and expect a response within 5 seconds.
+
 Grid service instances can be deployed to any online node, unless restricted using [service affinity filters](deploy#Affinity) or the [grid default affinity](grids#Default Affinity).
 
-The `kontena node rm` command can not be used to remove online nodes. The node must first be terminated (using the `kontena <provider> node terminate` command), and can then be removed once offline.
-
-## Offline nodes
+### Offline nodes
 
 If the agent's Websocket connection to the master is disconnected or times out, the server will mark the nodes as as offline.
 
-Offline nodes will not have any new service instances scheduled to them. Any services with instances deployed to any offline nodes will be re-scheduled by the server, moving the instances to the remaining online nodes.
+Offline nodes will not have any new service instances scheduled to them.
+Any services with instances deployed to any offline nodes will be re-scheduled by the server, moving the instances to the remaining online nodes.
+The re-schduling of grid services will happen within 20 seconds of the node being marked as disconnected.
+
+### Decomissioning nodes
+
+To decomission a node, you must first terminate it, and you can then remove the offline node from the Kontena Master.
+
+The `kontena node rm` command can not be used to remove an online node.
+Use the `kontena <provider> node terminate` plugin commands to terminate nodes and remove them from the Kontena Master.
+Alternatively, power off and destroy the node instance directly from the provider's control panel, and wait for the nodes to be offline before removing them from the CLI.
 
 ## Node labels
 
