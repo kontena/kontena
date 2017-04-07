@@ -90,15 +90,15 @@ TODO: something to link to here
 
 ### Known issues
 
-* After weave upgrade, service aliases are missing from DNS #2079
+* After weave upgrade, service aliases are missing from DNS (#2079)
 
     If `*.kontena.local` DNS aliases are missing after an upgrade, restart the `kotnena-agent`.
 
-* Stack upgrade can remove linked-to services, breaking linking services #1769
+* Stack upgrade can remove linked-to services, breaking linking services (#1769)
 
     Do not remove services from a stack if any services still link to them.
 
-* Stack upgrade / Service update will not re-deploy service on removal of embedded objects #2109
+* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
 
     Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
 
