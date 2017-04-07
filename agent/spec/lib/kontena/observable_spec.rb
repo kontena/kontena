@@ -91,7 +91,7 @@ describe Kontena::Observable do
   end
 
   it "handles concurrent observers", :celluloid => true do
-    observer_count = 10
+    observer_count = 20
     update_count = 10
 
     # setup
