@@ -36,6 +36,7 @@ class HostNode
 
   belongs_to :grid
   has_many :grid_service_instances
+  has_many :event_logs
   has_many :containers
   has_many :container_stats
   has_many :host_node_stats
@@ -130,30 +131,45 @@ class HostNode
     false
   end
 
+  # @param label [String] match label name before =
+  # @return [Boolean] label exists
+  def has_label?(lookup_name)
+    self.labels.to_a.each do |label|
+      name, value = label.split('=', 2)
+
+      next if name != lookup_name
+
+      return true
+    end
+    return false
+  end
+
+  # @param label [String] match label name before =
+  # @return [String, nil] the label value, or nil if omitted/empty
+  def label_value(lookup_name)
+    self.labels.to_a.each do |label|
+      name, value = label.split('=', 2)
+
+      next if name != lookup_name
+
+      return value
+    end
+    return nil
+  end
+
   # @return [String]
   def availability_zone
-    if @availability_zone.nil?
-      @availability_zone = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^az=(.+)/)
-          @availability_zone = match[1]
-        end
-      end
-    end
-    @availability_zone
+    @availability_zone ||= label_value('az') || 'default'
   end
 
   # @return [String]
   def host_provider
-    if @host_provider.nil?
-      @host_provider = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^provider=(.+)/)
-          @host_provider = match[1]
-        end
-      end
-    end
-    @host_provider
+    @host_provider ||= label_value('provider') || 'default'
+  end
+
+  # @return [Boolean]
+  def ephemeral?
+    @ephemeral ||= has_label?('ephemeral')
   end
 
   # @return [String] Overlay IP, without subnet mask

@@ -9,6 +9,7 @@ class Volume
   field :external, type: Boolean
 
   belongs_to :grid
+  has_many :event_logs
 
   has_many :volume_instances, dependent: :destroy
 
@@ -32,6 +33,10 @@ class Volume
     when 'grid'
       self.name
     end
+  end
+
+  def services
+    self.grid.grid_services.where("service_volumes.volume_id" => self.id)
   end
 
 end

@@ -27,6 +27,7 @@ class Grid
   has_many :container_logs
   has_many :container_stats
   has_many :audit_logs
+  has_many :event_logs
   has_many :registries, dependent: :delete
   has_many :stacks, dependent: :destroy
   has_many :grid_domain_authorizations, dependent: :delete
@@ -77,7 +78,7 @@ class Grid
   end
 
   def create_default_network
-    default_network = Network.create!(
+    Network.create!(
       grid: self,
       name: 'kontena',
       subnet: self.subnet,

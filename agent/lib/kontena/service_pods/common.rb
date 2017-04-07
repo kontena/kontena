@@ -1,6 +1,9 @@
+require_relative '../helpers/event_log_helper'
+
 module Kontena
   module ServicePods
     module Common
+      include Kontena::Helpers::EventLogHelper
 
       # @param [String] service_id
       # @param [Integer] instance_number

@@ -149,7 +149,7 @@ affinity:
 
 ```
 affinity:
-  - label==AWS
+  - label==provider=aws
 ```
 
 #### hooks

@@ -7,7 +7,7 @@ describe Kontena::ServicePods::Stopper do
   describe '#perform' do
 
     let(:container) do
-      double(:container, :running? => true, :name => '/foo')
+      double(:container, :running? => true, :name_for_humans => 'foo/bar-1')
     end
 
     before(:each) do

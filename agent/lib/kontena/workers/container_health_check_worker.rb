@@ -4,6 +4,7 @@ require_relative '../helpers/rpc_helper'
 module Kontena::Workers
   class ContainerHealthCheckWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::PortHelper
     include Kontena::Helpers::RpcHelper
@@ -53,13 +54,7 @@ module Kontena::Workers
         name = @container.labels['io.kontena.container.name']
         # Restart the container, master will handle re-scheduling logic
         info "About to restart container #{name} as it's reported to be unhealthy"
-        log = {
-          id: @container.id,
-          time: Time.now.utc.xmlschema,
-          type: 'stderr',
-          data: "*** [Kontena/Agent] Restarting service as it's reported to be unhealthy."
-        }
-        rpc_client.async.notification('/containers/log', [log])
+        emit_service_pod_event("service:health_check", "restarting #{name} because it's reported as unhealthy", Logger::WARN)
         defer {
           restart_container
         }
@@ -84,7 +79,7 @@ module Kontena::Workers
         debug "got status: #{response.status}"
         data['status'] = HEALTHY_STATUSES.include?(response.status) ? 'healthy' : 'unhealthy'
         data['status_code'] = response.status
-      rescue => exc
+      rescue
         data['status'] = 'unhealthy'
       end
       data
@@ -106,7 +101,7 @@ module Kontena::Workers
         debug "got status: #{response}"
         data['status'] = response ? 'healthy' : 'unhealthy'
         data['status_code'] = response ? 'open' : 'closed'
-      rescue => exc
+      rescue
         data['status'] = 'unhealthy'
       end
       data
@@ -116,8 +111,23 @@ module Kontena::Workers
       Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
     end
 
+    # @param [String] type
+    # @param [String] data
+    # @param [Integer] severity
+    def emit_service_pod_event(type, data, severity = Logger::INFO)
+      if @container.service_container?
+        publish('service_pod:event', {
+          service_id: @container.service_id,
+          instance_number: @container.instance_number,
+          type: type,
+          severity: severity,
+          data: data
+        })
+      end
+    end
+
     def log_exit
-      debug "stopped to check status from %s" % [@container.name]
+      info "stopped to check status from %s" % [@container.name]
     end
   end
 end
