@@ -22,7 +22,7 @@ Host nodes will fall back to the current UDP-based `sleeve` transport if they ar
 The server and agent have been improved to be more robust in the case of various error and overload situations affecting service deployments.
 The agent can now recover from various errors, healing itself and resolving any deployment inconsistencies.
 
-The `kontena stack deploy` and `kontena service deploy` commands now provide better reporting of deployment status and errors.
+The `kontena service deploy` command now provide better reporting of deployment status and errors. Pending CLI `kontena stack deploy` support for service deploy progress and errors (#2114).
 
 #### Kontena Cloud metrics and real-time events
 
