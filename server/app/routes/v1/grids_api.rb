@@ -19,50 +19,13 @@ module V1
       validate_access_token
       require_current_user
 
-      r.on ':name/stacks' do |name|
-        load_grid(name)
-        r.route 'grid_stacks'
-      end
+      r.is do
+        r.get do
+          @grids = current_user.accessible_grids
+          render('grids/index')
+        end
 
-      r.on ':name/services' do |name|
-        load_grid(name)
-        r.route 'grid_services'
-      end
-
-      r.on ':name/nodes' do |name|
-        load_grid(name)
-        r.route 'grid_nodes'
-      end
-
-      r.on ':name/stats' do |name|
-        load_grid(name)
-        r.route 'grid_stats'
-      end
-
-      r.on ':name/metrics' do |name|
-        load_grid(name)
-        r.route 'grid_metrics'
-      end
-
-      r.on ':name/users' do |name|
-        load_grid(name)
-        r.route 'grid_users'
-      end
-
-      # /v1/grids/:name/external_registries
-      r.on ':name/external_registries' do |name|
-        load_grid(name)
-        r.route 'external_registries'
-      end
-
-      # /v1/grids/:name/secrets
-      r.on ':name/secrets' do |name|
-        load_grid(name)
-        r.route 'grid_secrets'
-      end
-
-      r.post do
-        r.is do
+        r.post do
           data = parse_json_body
           outcome = Grids::Create.run(
               user: current_user,
@@ -86,17 +49,55 @@ module V1
         end
       end
 
-      r.get do
+      r.on ':name' do |name|
+        load_grid(name)
 
-        # GET /v1/grids
-        r.is do
-          @grids = current_user.accessible_grids
-          render('grids/index')
+        # /v1/grids/:name/stacks
+        r.on 'stacks' do
+          r.route 'grid_stacks'
         end
 
-        # GET /v1/grids/:name
-        r.on ':name' do |name|
+        # /v1/grids/:name/services
+        r.on 'services' do
+          r.route 'grid_services'
+        end
+
+        # /v1/grids/:name/nodes
+        r.on 'nodes' do
+          r.route 'grid_nodes'
+        end
+
+        # /v1/grids/:name/stats
+        r.on 'stats' do
+          r.route 'grid_stats'
+        end
+
+        r.on 'metrics' do
           load_grid(name)
+          r.route 'grid_metrics'
+        end
+
+        # /v1/grids/:name/users
+        r.on 'users' do
+          r.route 'grid_users'
+        end
+
+        # /v1/grids/:name/external_registries
+        r.on 'external_registries' do
+          r.route 'external_registries'
+        end
+
+        # /v1/grids/:name/secrets
+        r.on 'secrets' do
+          r.route 'grid_secrets'
+        end
+
+        # /v1/grids/:name/event_logs
+        r.on 'event_logs' do
+          r.route 'grid_event_logs'
+        end
+
+        r.get do
           r.is do
             render('grids/show')
           end
@@ -111,8 +112,8 @@ module V1
             end
 
             unless r['nodes'].nil?
-              nodes = r['nodes'].split(',').map do |name|
-                @grid.host_nodes.find_by(name: name).try(:id)
+              nodes = r['nodes'].split(',').map do |node_name|
+                @grid.host_nodes.find_by(name: node_name).try(:id)
               end.delete_if{|n| n.nil?}
 
               scope = scope.where(host_node_id: {:$in => nodes})
@@ -134,13 +135,9 @@ module V1
             render('audit_logs/index')
           end
         end
-      end
 
-      r.put do
-        r.on ':name' do |name|
-          load_grid(name)
-
-          # PUT /v1/grids/:id
+        r.put do
+          # PUT /v1/grids/:name
           r.is do
             data = parse_json_body
             data[:grid] = @grid
@@ -157,12 +154,8 @@ module V1
             end
           end
         end
-      end
 
-      r.delete do
-        r.on ':name' do |name|
-          load_grid(name)
-
+        r.delete do
           # DELETE /v1/grids/:name
           r.is do
             outcome = Grids::Delete.run({user: current_user, grid: @grid})

@@ -6,6 +6,7 @@ class Kontena::Cli::StackCommand < Kontena::Command
   subcommand "upgrade", "Upgrade a stack in a grid", load_subcommand('stacks/upgrade_command')
   subcommand ["start", "deploy"], "Deploy an installed stack in a grid", load_subcommand('stacks/deploy_command')
   subcommand "logs", "Show logs from services in a stack", load_subcommand('stacks/logs_command')
+  subcommand "events", "Show events from services in a stack", load_subcommand('stacks/events_command')
   subcommand "monitor", "Monitor services in a stack", load_subcommand('stacks/monitor_command')
   subcommand "build", "Build images listed in a stack file and push them to an image registry", load_subcommand('stacks/build_command')
   subcommand ["reg", "registry"], "Stack registry related commands", load_subcommand('stacks/registry_command')

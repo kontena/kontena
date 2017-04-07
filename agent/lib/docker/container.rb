@@ -40,6 +40,12 @@ module Docker
       "#{self.labels['io.kontena.stack.name']}-#{self.labels['io.kontena.service.name']}"
     end
 
+    # @return [String] Stack aware name
+    def name_for_humans
+      return self.name if self.default_stack?
+      self.name.sub('.', '/')
+    end
+
     # @return [Boolean]
     def default_stack?
       return false if self.labels['io.kontena.service.id'].nil?

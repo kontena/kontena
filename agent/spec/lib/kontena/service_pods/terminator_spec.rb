@@ -6,7 +6,7 @@ describe Kontena::ServicePods::Terminator do
 
   describe '#perform' do
     it 'terminates service instance' do
-      service_container = double(:service, :load_balanced? => false, :name => '/foo')
+      service_container = double(:service, :load_balanced? => false, :name => 'foo.bar-1', :name_for_humans => 'foo/bar-1')
       allow(subject).to receive(:get_container).with(service_id, 1).and_return(service_container)
       allow(subject).to receive(:get_container).with(service_id, 1, 'volume')
 
@@ -17,7 +17,7 @@ describe Kontena::ServicePods::Terminator do
     end
 
     it 'removes volumes if exist' do
-      service_container = spy(:service)
+      service_container = spy(:service, :name_for_humans => 'foo/bar-1')
       service_container_volumes = double(:service, name: '/foo-1-volumes')
       allow(subject).to receive(:get_container).with(service_id, 1).and_return(service_container)
       allow(subject).to receive(:get_container).with(service_id, 1, 'volume').and_return(service_container_volumes)

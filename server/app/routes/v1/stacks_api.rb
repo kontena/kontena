@@ -95,6 +95,10 @@ module V1
             r.route 'stack_container_logs'
           end
 
+          r.on "event_logs" do
+            r.route 'stack_event_logs'
+          end
+
           r.on 'deploys' do
             r.route 'stack_deploys'
           end

@@ -10,15 +10,14 @@ describe Rpc::NodeServicePodHandler do
       allow(subject).to receive(:migration_done?).and_return(true)
     end
 
-    it 'returns hash with error if id does not exist' do
-      list = subject.list('foo')
-      expect(list[:error]).not_to be_nil
+    it 'fails if node does not exist' do
+      expect{subject.list('foo')}.to raise_error RuntimeError, 'Node not found'
     end
 
-    it 'returns hash with error if migration is not done' do
-      allow(subject).to receive(:migration_done?).and_return(false)
-      list = subject.list('foo')
-      expect(list[:error]).not_to be_nil
+    it 'fails if migration is not done' do
+      expect(subject).to receive(:migration_done?).and_return(false)
+
+      expect{subject.list(node.node_id)}.to raise_error RuntimeError, 'Migration not done'
     end
 
     it 'returns hash with service pods' do
@@ -47,6 +46,7 @@ describe Rpc::NodeServicePodHandler do
         instance_number: 2, host_node: node, desired_state: 'running'
       )
     end
+
     let(:data) do
       {
         'state' => 'running', 'rev' => Time.now.to_s,
@@ -62,13 +62,42 @@ describe Rpc::NodeServicePodHandler do
       expect(service_instance.state).to eq(data['state'])
     end
 
-    it 'returns nil if node not found' do
-      expect(subject.set_state('notvalid', data)).to eq({ error: 'Node not found'})
+    it 'fails if node not found' do
+      expect{subject.set_state('notvalid', data)}.to raise_error 'Node not found'
     end
 
-    it 'returns nil if service instance not found' do
+    it 'fail if service instance not found' do
       data['instance_number'] = 3
-      expect(subject.set_state(node.node_id, data)).to eq({ error: 'Instance not found' })
+      expect{subject.set_state(node.node_id, data)}.to raise_error 'Instance not found'
+    end
+  end
+
+  describe '#event' do
+    let(:service) { grid.grid_services.create!(name: 'foo', image_name: 'foo/bar:latest') }
+
+    let(:service_instance) do
+      service.grid_service_instances.create!(
+        instance_number: 2, host_node: node, desired_state: 'running'
+      )
+    end
+
+    let(:data) do
+      {
+        'reason' => 'service:instance_create',
+        'data' => 'hello',
+        'service_id' => service.id.to_s,
+        'instance_number' => service_instance.instance_number
+      }
+    end
+
+    it 'saves event' do
+      expect {
+        subject.event(node.node_id, data)
+      }.to change { service.event_logs.count }.by(1)
+    end
+
+    it 'returns nil if node not found' do
+      expect(subject.event('invalid', data)).to be_nil
     end
   end
 

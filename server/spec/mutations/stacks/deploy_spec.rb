@@ -90,7 +90,7 @@ describe Stacks::Deploy, celluloid: true do
           {name: 'redis', image: 'redis:2.8', volumes: ['vol:/data'] }
         ],
         volumes: [
-          {name: 'vol', external: true}
+          {name: 'vol', external: 'vol'}
         ]
       )
       outcome = described_class.run(stack: stack)

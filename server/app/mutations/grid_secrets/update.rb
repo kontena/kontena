@@ -11,6 +11,8 @@ module GridSecrets
 
     def execute
       grid_secret.value = value
+      return grid_secret unless grid_secret.changed?
+      
       grid_secret.save
       if grid_secret.errors.size > 0
         grid_secret.errors.each do |key, message|

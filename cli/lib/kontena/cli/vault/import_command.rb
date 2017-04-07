@@ -10,7 +10,7 @@ module Kontena::Cli::Vault
     option '--skip-null', :flag, "Do not remove keys with null values"
     option '--empty-is-null', :flag, "Treat empty values as null"
 
-    parameter '[PATH]', "Input from file in PATH, default: STDIN"
+    parameter '[PATH]', "Input from file in PATH (default: STDIN)"
 
     requires_current_master
 
@@ -23,7 +23,7 @@ module Kontena::Cli::Vault
     end
 
     def input
-      path ? File.read(path) : STDIN.read
+      path ? File.read(path) : stdin_input("Enter secrets YAML", :multiline)
     end
 
     def execute

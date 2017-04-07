@@ -59,6 +59,11 @@ module V1
           r.route 'service_container_logs'
         end
 
+        # /v1/services/:grid_name/:stack_name/:service_name/event_logs
+        r.on 'event_logs' do
+          r.route 'service_event_logs'
+        end
+
         # /v1/services/:grid_name/:stack_name/:service_name/deploys
         r.on 'deploys' do
           r.route 'service_deploys'

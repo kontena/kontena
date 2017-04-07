@@ -57,6 +57,13 @@ describe '/v1/volumes' do
     )
   end
 
+  let! :node do
+    HostNode.create!(
+      grid: grid,
+      name: 'node-1'
+    )
+  end
+
   describe 'GET /' do
     it 'returns all volumes' do
       get "/v1/volumes/#{grid.name}", nil, request_headers
@@ -67,14 +74,28 @@ describe '/v1/volumes' do
 
   describe 'GET /:id' do
     it 'returns volume json' do
+      volume.volume_instances.create!(name: 'foo', host_node: node)
+      redis = GridServices::Create.run(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          volumes: [
+            "#{volume.name}:/data:ro"
+          ]
+      ).result
+
       get "/v1/volumes/#{grid.name}/#{volume.name}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response.keys.sort).to eq(%w(
-        id created_at updated_at driver driver_opts name scope
+        id created_at updated_at driver driver_opts name scope instances services
       ).sort)
       expect(json_response['id']).to eq("#{grid.name}/#{volume.name}")
       expect(json_response['driver']).to eq(volume.driver)
       expect(json_response['scope']).to eq(volume.scope)
+      expect(json_response['instances'].first['node']).to eq(node.name)
+      expect(json_response['instances'].first['name']).to eq('foo')
+      expect(json_response['services']).to eq([{'id' => redis.to_path}])
     end
 
     it 'return 404 for non existing volume' do

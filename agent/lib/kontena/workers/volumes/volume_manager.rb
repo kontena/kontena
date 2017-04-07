@@ -35,13 +35,15 @@ module Kontena::Workers::Volumes
 
     def populate_volumes_from_master
       exclusive {
-        request = rpc_client.future.request("/node_volumes/list", [node.id])
-        response = request.value
+        response = rpc_request("/node_volumes/list", [node.id])
+
+        # sanity-check
         unless response['volumes'].is_a?(Array)
-          warn "failed to get list of volumes from master: #{response['error']}"
+          error "Invalid response from master: #{response}"
           return
+        else
+          debug "got volumes from master: #{response}"
         end
-        debug "got volumes from master: #{response}"
 
         volumes = response['volumes'].map{ |v| Kontena::Models::Volume.new(v) }
 
@@ -51,6 +53,8 @@ module Kontena::Workers::Volumes
           ensure_volume(volume)
         end
       }
+    rescue Kontena::RpcClient::Error => exc
+      warn "failed to get list of service pods from master: #{exc}"
     end
 
     def populate_volumes_from_docker
