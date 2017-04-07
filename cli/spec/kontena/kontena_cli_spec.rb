@@ -18,6 +18,12 @@ describe Kontena do
     end
   end
 
+  describe '#minor_version' do
+    it "returns a version string" do
+      expect(Kontena.minor_version).to match /^\d+\.\d+$/
+    end
+  end
+
   describe '#run' do
     let(:whoami) { double(:whoami) }
 
@@ -39,6 +45,3 @@ describe Kontena do
     end
   end
 end
-
-
-
