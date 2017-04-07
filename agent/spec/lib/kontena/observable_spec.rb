@@ -48,6 +48,10 @@ describe Kontena::Observable do
         end
       end
 
+      def ping
+
+      end
+
       def ready?
         !@value.nil?
       end
@@ -106,8 +110,12 @@ describe Kontena::Observable do
     # run updates sync while the observers are starting
     subject.spam_updates(1..update_count, interval: 0.001)
 
-    # wait...
+    # wait for observable to notify all observers
     subject.ping
+
+    # wait for all observers to observe and update
+    observers.each do |obs| obs.ping end
+    observers.each do |obs| obs.ping end # and maybe a second round for the async update
 
     # all observers got the final value
     expect(observers.map{|obs| obs.value}).to eq [update_count] * observer_count
