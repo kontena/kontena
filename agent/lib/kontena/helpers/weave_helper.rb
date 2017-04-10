@@ -7,6 +7,7 @@ module Kontena
   module Helpers
     module WeaveHelper
       include WaitHelper
+      include Kontena::Logging
 
       def network_adapter
         Celluloid::Actor[:network_adapter]
@@ -37,6 +38,7 @@ module Kontena
       # @param [String] name
       def add_dns(container_id, ip, name)
         retries = 0
+        debug "adding dns #{name} for ip #{ip} on container #{container_id}"
         begin
           dns_client.put(
             path: "/name/#{container_id}/#{ip}",
@@ -52,6 +54,7 @@ module Kontena
             sleep 0.1
             retry
           end
+          error "failed to add dns #{name} for ip #{ip} on container #{container_id}"
           raise exc
         end
       end
