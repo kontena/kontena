@@ -30,10 +30,10 @@ class GridServiceInstanceDeployer
 
   rescue => error
     warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
-    @grid_service_instance_deploy.set(:deploy_state => :error, :error => "#{error.class}: #{error}")
     log_service_event("Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}", EventLog::ERROR)
+    return @grid_service_instance_deploy.set(:deploy_state => :error, :error => "#{error.class}: #{error}")
   else
-    @grid_service_instance_deploy.set(:deploy_state => :success)
+    return @grid_service_instance_deploy.set(:deploy_state => :success)
   end
 
   # Ensure the ServiceInstance matches the desired GridServiceInstanceDeploy configuration.
