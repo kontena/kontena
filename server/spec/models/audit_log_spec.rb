@@ -6,4 +6,6 @@ describe AuditLog do
   it { should belong_to(:grid) }
   it { should belong_to(:user) }
   it { should belong_to(:grid_service) }
+
+  it { should have_index_for(grid_id: 1).with_options(background: true) }
 end

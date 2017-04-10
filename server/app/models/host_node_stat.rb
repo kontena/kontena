@@ -12,10 +12,10 @@ class HostNodeStat
   belongs_to :grid
   belongs_to :host_node
 
-  index({ grid_id: 1 })
-  index({ host_node_id: 1 })
-  index({ host_node_id: 1, created_at: 1 })
-  index({ grid_id: 1, created_at: 1 })
+  index({ grid_id: 1 }, { background: true })
+  index({ host_node_id: 1 }, { background: true })
+  index({ host_node_id: 1, created_at: 1 }, { background: true })
+  index({ grid_id: 1, created_at: 1 }, { background: true })
 
   def self.get_aggregate_stats_for_node(node_id, from_time, to_time)
     self.collection.aggregate([

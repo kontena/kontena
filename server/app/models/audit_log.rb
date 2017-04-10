@@ -18,5 +18,5 @@ class AuditLog
   belongs_to :user
   belongs_to :grid_service
 
-  index({ grid_id: 1 })
+  index({ grid_id: 1 }, { background: true })
 end
