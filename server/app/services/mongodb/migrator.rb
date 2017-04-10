@@ -74,10 +74,8 @@ module Mongodb
     end
 
     def release_stale_lock
-      lock = DistributedLock.where(name: LOCK_NAME).first
-      if lock && lock.created_at < (LOCK_TIMEOUT * 3).seconds.ago
-        info "releasing stale distributed lock (locked at #{lock.created_at})"
-        lock.destroy
+      if DistributedLock.where(:name =>  LOCK_NAME, :created_at.lt => (LOCK_TIMEOUT * 3).seconds.ago).delete > 0
+        info "released stale distributed lock"
       end
     end
 
