@@ -90,7 +90,7 @@ describe GridServiceDeployer do
     describe '#deploy_service_instance' do
       let(:instance_deployer) { instance_double(GridServiceInstanceDeployer) }
 
-      it "aborts the service deploy if the instance deploy fails" do
+      it "aborts the service deploy if the instance deploy fails", :celluloid => true do
         total_instances = 2
         deploy_futures = []
         instance_number = 1
@@ -132,7 +132,7 @@ describe GridServiceDeployer do
           grid_service_deploy.started_at = Time.now.utc
         end
 
-        it "fails the service deploy if one of the concurrent instance deploys fail" do
+        it "fails the service deploy if one of the concurrent instance deploys fail", :celluloid => true do
           expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
