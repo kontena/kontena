@@ -29,7 +29,7 @@ describe WaitHelper do
 
     it 'sleeps between retries and logs debug while under threshold' do
       expect(subject).to receive(:debug).with('waiting 1.4s of 3.0s until: something that takes two seconds')
-      expect(subject).to receive(:debug).with('waited 2.0s of 3.0s until: something that takes two seconds yielded true')
+      expect(subject).to receive(:debug).with('waited 2.0s of 3.0s until: something that takes two seconds yielded TrueClass')
 
       value = subject.wait_until("something that takes two seconds", timeout: 3, interval: 0.1, threshold: 2.5) { @time_elapsed > 2.0 }
 
@@ -40,7 +40,7 @@ describe WaitHelper do
     it 'logs info if over threshold' do
       expect(subject).to receive(:debug).with('waiting 1.5s of 3.0s until: something that takes two seconds')
       expect(subject).to receive(:debug).with('waiting 2.0s of 3.0s until: something that takes two seconds')
-      expect(subject).to receive(:info).with('waited 2.5s of 3.0s until: something that takes two seconds yielded true')
+      expect(subject).to receive(:info).with('waited 2.5s of 3.0s until: something that takes two seconds yielded TrueClass')
 
       value = subject.wait_until("something that takes two seconds", timeout: 3, interval: 0.5, threshold: 1.0) { @time_elapsed > 2.0 }
 

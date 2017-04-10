@@ -47,9 +47,9 @@ module WaitHelper
     if !value
       warn "timeout after waiting %.1fs of %.1fs until: %s" % [_wait_now - wait_start, timeout, message || '???']
     elsif wait_time && wait_time > threshold
-      info "waited %.1fs of %.1fs until: %s yielded %s" % [_wait_now - wait_start, timeout, message || '???', value]
+      info "waited %.1fs of %.1fs until: %s yielded %s" % [_wait_now - wait_start, timeout, message || '???', value.class]
     elsif wait_time
-      debug "waited %.1fs of %.1fs until: %s yielded %s" % [_wait_now - wait_start, timeout, message || '???', value]
+      debug "waited %.1fs of %.1fs until: %s yielded %s" % [_wait_now - wait_start, timeout, message || '???', value.class]
     end
 
     value
