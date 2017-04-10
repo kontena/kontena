@@ -60,6 +60,10 @@ class StackDeployWorker
     }
 
     service_deploy.reload
+
+    raise "service #{service.to_path} deploy failed: #{service_deploy.reason}" if service_deploy.error?
+
+    service_deploy
   end
 
   # @param [Stack] stack
