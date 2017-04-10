@@ -97,5 +97,56 @@ describe StackDeployWorker, celluloid: true do
         subject.remove_services(stack, stack_rev)
       }.to change { stack.grid_services.find_by(name: 'lb') }.from(lb).to(nil)
     end
+
+    context "for a stack with externally linked services" do
+      let(:stack) do
+        Stacks::Create.run!(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          services: [
+            {name: 'foo', image: 'redis', stateful: false },
+            {name: 'bar', image: 'redis', stateful: false },
+          ]
+        )
+      end
+
+      let(:linking_service) do
+        GridServices::Create.run!(
+          grid: grid,
+          stack: stack,
+          name: 'asdf',
+          image: 'redis',
+          stateful: false,
+          links: [
+            {name: 'stack/bar', alias: 'bar'},
+          ],
+        )
+      end
+
+      it 'fails if removing a linked service' do
+        linking_service
+        expect(stack.grid_services.find_by(name: 'bar').linked_from_services.to_a).to_not be_empty
+
+        Stacks::Update.run(
+          stack_instance: stack,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          services: [
+            {name: 'foo', image: 'redis', stateful: false },
+          ],
+        )
+        stack_rev = stack.latest_rev
+        expect {
+          subject.remove_services(stack, stack_rev)
+        }.to raise_error(RuntimeError, 'service test/stack/bar remove failed: {"service"=>"Cannot delete service that is linked to another service (asdf)"}').and not_change { stack.grid_services.count }
+      end
+    end
   end
 end
