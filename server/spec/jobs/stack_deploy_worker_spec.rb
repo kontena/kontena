@@ -128,10 +128,7 @@ describe StackDeployWorker, celluloid: true do
       end
 
       it 'fails if removing a linked service' do
-        linking_service
-        expect(stack.grid_services.find_by(name: 'bar').linked_from_services.to_a).to_not be_empty
-
-        Stacks::Update.run(
+        Stacks::Update.run!(
           stack_instance: stack,
           name: 'stack',
           stack: 'foo/bar',
@@ -142,6 +139,11 @@ describe StackDeployWorker, celluloid: true do
             {name: 'foo', image: 'redis', stateful: false },
           ],
         )
+
+        # link to the service after the update, but before the deploy
+        linking_service
+        expect(stack.grid_services.find_by(name: 'bar').linked_from_services.to_a).to_not be_empty
+
         stack_rev = stack.latest_rev
         expect {
           subject.remove_services(stack, stack_rev)
