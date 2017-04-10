@@ -65,4 +65,51 @@ describe GridServiceDeployer do
       expect(subject.instance_count).to eq(2)
     end
   end
+
+  describe '#deploy_service_instance' do
+    let(:deploy_rev) { Time.now.utc.to_s }
+
+    let(:instance_deployer) { instance_double(GridServiceInstanceDeployer) }
+
+    context "for a grid without host nodes" do
+      it "fails with a scheduler error" do
+        total_instances = 2
+        deploy_futures = []
+        instance_number = 1
+
+        expect{
+          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+        }.to raise_error(GridServiceDeployer::DeployError, 'Cannot find applicable node for service instance test-grid/null/redis-1: There are no nodes available')
+      end
+
+    end
+
+    context "for a grid with host nodes" do
+      before(:each) do
+        grid.host_nodes.create!(name: 'node1', node_id: SecureRandom.uuid)
+        grid.host_nodes.create!(name: 'node2', node_id: SecureRandom.uuid)
+      end
+
+      it "aborts the service deploy if the instance deploy fails" do
+        total_instances = 2
+        deploy_futures = []
+        instance_number = 1
+
+        expect(GridServiceInstanceDeployer).to receive(:new).with(GridServiceInstanceDeploy) do |grid_service_instance_deploy|
+          expect(grid_service_instance_deploy.grid_service_deploy).to eq grid_service_deploy
+          expect(grid_service_instance_deploy.instance_number).to eq instance_number
+
+          expect(instance_deployer).to receive(:deploy).with(deploy_rev) do
+            grid_service_instance_deploy.set(:deploy_state => :error, :error => "testfail")
+          end
+
+          instance_deployer
+        end
+
+        expect{
+          subject.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
+        }.to raise_error(GridServiceDeployer::DeployError, 'halting deploy of test-grid/null/redis, one or more instances failed')
+      end
+    end
+  end
 end
