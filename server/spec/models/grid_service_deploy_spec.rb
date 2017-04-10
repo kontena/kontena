@@ -5,7 +5,8 @@ describe GridServiceDeploy do
   it { should have_fields(:reason).of_type(String) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:stack_deploy) }
-  it { should have_index_for(grid_service_id: 1) }
-  it { should have_index_for(created_at: 1) }
-  it { should have_index_for(started_at: 1) }
+
+  it { should have_index_for(grid_service_id: 1).with_options(background: true) }
+  it { should have_index_for(created_at: 1).with_options(background: true) }
+  it { should have_index_for(started_at: 1).with_options(background: true) }
 end

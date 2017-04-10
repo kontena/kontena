@@ -14,11 +14,11 @@ class ContainerStat
   belongs_to :grid_service
   belongs_to :container
 
-  index({ grid_id: 1 })
-  index({ grid_service_id: 1 })
-  index({ container_id: 1 })
-  index({ created_at: 1 })
-  index({ grid_service_id: 1, created_at: 1 })
+  index({ grid_id: 1 }, { background: true })
+  index({ grid_service_id: 1 }, { background: true })
+  index({ container_id: 1 }, { background: true })
+  index({ created_at: 1 }, { background: true })
+  index({ grid_service_id: 1, created_at: 1 }, { background: true })
 
   def self.calculate_num_cores(cpu_mask)
     if cpu_mask

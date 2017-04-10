@@ -18,14 +18,14 @@ class EventLog
   belongs_to :volume
   belongs_to :host_node
 
-  index({ created_at: 1 })
-  index({ severity: 1 })
-  index({ reason: 1 })
-  index({ grid_id: 1 })
-  index({ stack_id: 1 })
-  index({ grid_service_id: 1 })
-  index({ volume_id: 1 })
-  index({ host_node_id: 1 })
+  index({ created_at: 1 }, { background: true })
+  index({ severity: 1 }, { background: true })
+  index({ reason: 1 }, { background: true })
+  index({ grid_id: 1 }, { background: true })
+  index({ stack_id: 1 }, { background: true })
+  index({ grid_service_id: 1 }, { background: true })
+  index({ volume_id: 1 }, { background: true })
+  index({ host_node_id: 1 }, { background: true })
 
   def relationships
     relations = []
