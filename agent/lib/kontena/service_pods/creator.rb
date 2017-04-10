@@ -149,7 +149,7 @@ module Kontena
         volume_manager = Celluloid::Actor[:volume_manager]
         service_pod.volumes.each do |volume|
           if volume['name']
-            return false unless volume_manager.volume_exist?(volume['name'])
+            return false unless volume_manager.volume_exist?(volume['name'], volume['driver'])
           end
         end
         true

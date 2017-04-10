@@ -1,4 +1,4 @@
-describe Kontena::Workers::Volumes::VolumeManager do
+describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
@@ -11,12 +11,9 @@ describe Kontena::Workers::Volumes::VolumeManager do
   end
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
     allow(subject.wrapped_object).to receive(:node).and_return(node)
   end
-
-  after(:each) { Celluloid.shutdown }
 
   describe '#initialize' do
     it 'starts to listen volume:update events' do
@@ -108,13 +105,21 @@ describe Kontena::Workers::Volumes::VolumeManager do
 
   describe '#volume_exist?' do
     it 'return true if volume exists' do
-      expect(Docker::Volume).to receive(:get).with('foo').and_return(double)
-      expect(subject.volume_exist?('foo')).to be_truthy
+      expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'local'}))
+      expect(subject.volume_exist?('foo', 'local')).to be_truthy
     end
 
     it 'return false if volume not exists' do
       expect(Docker::Volume).to receive(:get).with('foo').and_raise(Docker::Error::NotFoundError)
-      expect(subject.volume_exist?('foo')).to be_falsey
+      expect(subject.volume_exist?('foo', 'local')).to be_falsey
+    end
+
+    it 'raises if volume drivers do not match' do
+      expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'foo'}))
+      expect {
+        # Call through wrapped object to avoid ugly logs in test trace
+        subject.wrapped_object.volume_exist?('foo', 'local')
+      }.to raise_error(Kontena::Workers::Volumes::VolumeManager::DriverMismatchError)
     end
 
   end
