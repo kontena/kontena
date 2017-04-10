@@ -70,8 +70,11 @@ describe Stacks::Deploy, celluloid: true do
       )
       worker = Celluloid::Actor[:stack_deploy_worker]
       redis = stack.grid_services.find_by(name: 'redis')
-      mutation = described_class.new(stack: stack)
-      mutation.run
+      
+      subject = described_class.new(stack: stack)
+      outcome = subject.run
+      expect(outcome).to be_success
+
       sleep 0.01 until worker.mailbox.size == 0
       expect(GridService.find(redis.id)).to be_nil
     end
@@ -99,62 +102,64 @@ describe Stacks::Deploy, celluloid: true do
       expect(redis.service_volumes.count).to eq(1)
       expect(redis.service_volumes.first.volume).to eq(volume)
     end
+  end
 
-    context "for a stack with externally linked services" do
-      let(:stack) do
-        Stacks::Create.run!(
-          grid: grid,
-          name: 'stack',
-          stack: 'foo/bar',
-          version: '0.1.0',
-          registry: 'file://',
-          source: '...',
-          services: [
-            {name: 'foo', image: 'redis', stateful: false },
-            {name: 'bar', image: 'redis', stateful: false },
-          ]
-        )
-      end
+  context "for a stack with externally linked services" do
+    let(:stack) do
+      Stacks::Create.run!(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: [
+          {name: 'foo', image: 'redis', stateful: false },
+          {name: 'bar', image: 'redis', stateful: false },
+        ]
+      )
+    end
 
-      let(:linking_service) do
-        GridServices::Create.run!(
-          grid: grid,
-          stack: stack,
-          name: 'asdf',
-          image: 'redis',
-          stateful: false,
-          links: [
-            {name: 'stack/bar', alias: 'bar'},
-          ],
-        )
-      end
+    let(:linking_service) do
+      GridServices::Create.run!(
+        grid: grid,
+        stack: stack,
+        name: 'asdf',
+        image: 'redis',
+        stateful: false,
+        links: [
+          {name: 'stack/bar', alias: 'bar'},
+        ],
+      )
+    end
 
-      it 'does not remove a linked service' do
-        Stacks::Update.run!(
-          stack_instance: stack,
-          name: 'stack',
-          stack: 'foo/bar',
-          version: '0.1.0',
-          registry: 'file://',
-          source: '...',
-          services: [
-            {name: 'foo', image: 'redis', stateful: false },
-          ],
-        )
+    it 'does not remove a linked service' do
+      Stacks::Update.run!(
+        stack_instance: stack,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: [
+          {name: 'foo', image: 'redis', stateful: false },
+        ],
+      )
 
-        # link to the service after the update, but before the deploy
-        linking_service
-        expect(stack.grid_services.find_by(name: 'bar').linked_from_services.to_a).to_not be_empty
+      # link to the service after the update, but before the deploy
+      linking_service
+      expect(stack.grid_services.find_by(name: 'bar').linked_from_services.to_a).to_not be_empty
 
-        expect(outcome = described_class.run(stack: stack)).to be_success
+      subject = described_class.new(stack: stack)
+      outcome = subject.run
+      expect(outcome).to be_success
 
-        worker = Celluloid::Actor[:stack_deploy_worker]
-        sleep 0.01 until worker.mailbox.size == 0
+      worker = Celluloid::Actor[:stack_deploy_worker]
+      sleep 0.01 until worker.mailbox.size == 0
 
-        stack_deploy = outcome.result.reload
+      stack_deploy = outcome.result.reload
 
-        expect(stack_deploy).to be_error # XXX: where does the error message go?
-      end
+      expect(stack_deploy).to be_error
     end
   end
 end
