@@ -17,7 +17,7 @@ describe 'service stop' do
     expect(k.run).to be_truthy
     sleep 1
     k = run("kontena service show test-1")
-    expect(k.out.scan('state: stopped').size).to eq(1)
+    expect(k.out.scan('desired_state: stopped').size).to eq(1)
     expect(k.out.scan('status: stopped').size).to eq(1)
   end
 
@@ -26,6 +26,6 @@ describe 'service stop' do
     expect(k.run).to be_truthy
     sleep 1
     k = run("kontena service show test-2")
-    expect(k.out.scan('state: stopped').size).to eq(1)
+    expect(k.out.scan('desired_state: stopped').size).to eq(1)
   end
 end
