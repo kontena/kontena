@@ -1,5 +1,8 @@
 class CreateHostNodeStatsCreatedAtIndex < Mongodb::Migration
   def self.up
-    Thread.new { HostNodeStat.create_indexes }
+    Thread.new {
+      Thread.current.abort_on_exception = true
+      HostNodeStat.create_indexes # might take a long time
+    }
   end
 end
