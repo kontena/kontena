@@ -12,7 +12,8 @@ module Rpc
       # TODO Do we need any other attrbutes for the composed key?
       cache_key = {
         id: service_instance.id,
-        deploy_rev: service_instance.deploy_rev
+        deploy_rev: service_instance.deploy_rev,
+        desired_state: service_instance.desired_state
       }
       @@lru_cache.getset(cache_key) {
         debug "pod_cache miss"
