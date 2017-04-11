@@ -107,6 +107,7 @@ end
 require 'ruby_dig'
 require 'shellwords'
 require "safe_yaml"
+require 'tty-table'
 SafeYAML::OPTIONS[:default_mode] = :safe
 require_relative 'kontena/cli/version'
 require_relative 'kontena/cli/common'
