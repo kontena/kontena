@@ -26,7 +26,19 @@ describe StackDeployWorker, celluloid: true do
       expect(stack_deploy.success?).to be_truthy
     end
 
-    it 'changes state to error when deploy fails' do
+    it 'changes deploy state to success when deploy is done' do
+      stack_deploy = stack.stack_deploys.create
+      stack_rev = stack.latest_rev
+
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
+      expect(subject.wrapped_object).to receive(:wait_until!) do
+        stack_deploy.grid_service_deploys.first.set(:deploy_state => :success, :finished_at => Time.now.utc)
+      end
+      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
+      expect(stack_deploy).to be_success
+    end
+
+    it 'changes state to error when deploy mutation fails' do
       stack_deploy = stack.stack_deploys.create
       stack_rev = stack.latest_rev
 
@@ -36,6 +48,19 @@ describe StackDeployWorker, celluloid: true do
       expect(subject.wrapped_object).to receive(:error).once
       stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
       expect(stack_deploy.error?).to be_truthy
+    end
+
+    it 'changes state to error when deploy fails' do
+      stack_deploy = stack.stack_deploys.create
+      stack_rev = stack.latest_rev
+
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
+      expect(subject.wrapped_object).to receive(:wait_until!) do
+        stack_deploy.grid_service_deploys.first.set(:deploy_state => :error, :finished_at => Time.now.utc)
+      end
+
+      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
+      expect(stack_deploy).to be_error
     end
   end
 
