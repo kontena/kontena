@@ -172,6 +172,9 @@ module Kontena
         handle_invalid_version
       end
       info "connection closed with code #{event.code}"
+
+      # may already have notified this if we closed the connection
+      notify_actors('websocket:disconnect', nil)
     rescue => exc
       error exc.message
     end
