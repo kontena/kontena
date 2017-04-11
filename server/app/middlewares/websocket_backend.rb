@@ -9,7 +9,9 @@ class WebsocketBackend
   WATCHDOG_THRESHOLD = 1.0.seconds
   WATCHDOG_TIMEOUT = 60.0.seconds
 
-  KEEPALIVE_TIME = 30 # in seconds
+  KEEPALIVE_TIME = 30.seconds
+  PING_TIMEOUT = 5.seconds
+
   RPC_MSG_TYPES = %w(request notify)
   QUEUE_SIZE = 1000
   QUEUE_WATCH_PERIOD = 60 # once in a minute
@@ -290,17 +292,24 @@ class WebsocketBackend
 
   # @param [Hash] client
   def verify_client_connection(client)
-    timer = EM::Timer.new(5) do
+    ping_time = Time.now
+    timer = EM::Timer.new(PING_TIMEOUT) do
       self.on_close(client[:ws])
     end
     client[:ws].ping {
       timer.cancel
-      self.on_pong(client)
+      self.on_pong(client, Time.now - ping_time)
     }
   end
 
   # @param [Hash] client
-  def on_pong(client)
+  def on_pong(client, delay)
+    if delay > PING_TIMEOUT / 2
+      logger.warn "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]]
+    else
+      logger.debug { "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]] }
+    end
+
     node = HostNode.find_by(node_id: client[:id])
     if node
       if node.connected?
