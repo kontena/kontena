@@ -181,7 +181,7 @@ class WebsocketBackend
       logger.info "node #{client[:id]} connection closed"
       unplug_client(client)
     else
-      logger.debug "ignore client for node #{client[:id]}"
+      logger.debug "ignore close of unplugged client"
     end
   rescue => exc
     logger.error "on_close: #{exc.message}"
