@@ -16,6 +16,20 @@ describe GridScheduler do
   let(:subject) { described_class.new(grid) }
 
 
+  describe '#should_reschedule_service?' do
+    before(:each) { nodes }
+    
+    it 'returns false to stateful service' do
+      service.set(stateful: true, state: 'running')
+      expect(subject.should_reschedule_service?(service)).to be_falsey
+    end
+
+    it 'returns true to stateless service' do
+      service.set(stateful: false, state: 'running')
+      expect(subject.should_reschedule_service?(service)).to be_truthy
+    end
+  end
+
   describe '#all_instances_exist?' do
     context 'all nodes are disconnected' do
       it 'returns always true' do
