@@ -2,7 +2,7 @@ module Rpc
   class NodeServicePodHandler
     include Logging
 
-    @@lru_cache ||= LruRedux::ThreadSafeCache.new(100)
+    @@lru_cache ||= LruRedux::ThreadSafeCache.new(1000)
 
     def initialize(grid)
       @grid = grid
