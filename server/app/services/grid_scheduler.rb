@@ -113,10 +113,16 @@ class GridScheduler
     available_nodes = service.grid.host_nodes.connected.to_a
     return true if available_nodes.size == 0
 
+    strategy = self.strategy(service.strategy)
     current_nodes = service.grid_service_instances.map{ |c| c.host_node }.compact.uniq.sort
+    offline_within_grace_period = current_nodes.select { |n|
+      !n.connected? && n.last_seen_at && n.last_seen_at > strategy.host_grace_period.ago
+    }
+    available_nodes = (available_nodes + offline_within_grace_period).uniq
+
     service_deploy = GridServiceDeploy.new(grid_service: service)
     service_deployer = GridServiceDeployer.new(
-      self.strategy(service.strategy), service_deploy, available_nodes
+      strategy, service_deploy, available_nodes
     )
     return false if service_deployer.instance_count != service.grid_service_instances.count
 

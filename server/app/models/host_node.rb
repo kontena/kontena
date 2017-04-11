@@ -29,8 +29,6 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
 
-  attr_accessor :schedule_counter
-
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
 

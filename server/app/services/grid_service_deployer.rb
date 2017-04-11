@@ -1,5 +1,6 @@
 require_relative 'logging'
 require_relative 'grid_service_scheduler'
+require_relative 'scheduler/node'
 
 class GridServiceDeployer
   include Logging
@@ -19,24 +20,25 @@ class GridServiceDeployer
     @grid_service_deploy = grid_service_deploy
     @scheduler = GridServiceScheduler.new(strategy)
     @grid_service = grid_service_deploy.grid_service
-    @nodes = nodes
+    @nodes = nodes.map { |n| Scheduler::Node.new(n) }
   end
 
   # @return [Array<HostNode>]
   def selected_nodes
+    count = self.instance_count
+    available_nodes = self.nodes.map { |n| n.clone }
     nodes = []
-    self.instance_count.times do |i|
+    count.times do |i|
       begin
         nodes << self.scheduler.select_node(
-          self.grid_service, i + 1, self.nodes
+          self.grid_service, i + 1, available_nodes
         )
       rescue Scheduler::Error
 
       end
     end
-    self.nodes.each{|n| n.schedule_counter = 0}
 
-    nodes
+    nodes.map { |n| n.node }
   end
 
   def deploy
@@ -103,7 +105,7 @@ class GridServiceDeployer
 
     grid_service_instance_deploy = @grid_service_deploy.grid_service_instance_deploys.create(
       instance_number: instance_number,
-      host_node: node,
+      host_node: node.node,
     )
 
     deploy_futures << Celluloid::Future.new {
@@ -123,18 +125,18 @@ class GridServiceDeployer
 
   # @return [Integer]
   def instance_count
+    available_nodes = self.nodes .map { |n| n.clone } # we don't want to touch originals here
     max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
     nodes = []
     max_instances.times do |i|
       begin
         nodes << self.scheduler.select_node(
-          self.grid_service, i + 1, self.nodes
+          self.grid_service, i + 1, available_nodes
         )
       rescue Scheduler::Error
 
       end
     end
-    self.nodes.each{|n| n.schedule_counter = 0}
     filtered_count = nodes.uniq.size
     self.scheduler.instance_count(filtered_count, self.grid_service.container_count)
   end
