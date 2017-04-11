@@ -26,7 +26,7 @@ module Kontena
             self.service_id, self.instance_number,
             "service:start_instance", "starting service instance #{service_container.name_for_humans}"
           )
-          service_container.restart('timeout' => 10)
+          service_container.restart!('timeout' => 10)
           log_service_pod_event(
             self.service_id, self.instance_number,
             "service:start_instance", "service instance #{service_container.name_for_humans} started successfully"
