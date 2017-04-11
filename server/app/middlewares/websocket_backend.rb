@@ -170,24 +170,39 @@ class WebsocketBackend
     end
   end
 
-  ##
-  # On websocket connection close
+  # Unplug client on websocket connection close.
+  #
+  # The client may have already been unplugged, if we closed the connection.
   #
   # @param [Faye::WebSocket] ws
   def on_close(ws)
     client = @clients.find{|c| c[:ws] == ws}
     if client
-      node = HostNode.find_by(node_id: client[:id])
-      if node
-        Agent::NodeUnplugger.new(node).unplug!
-        logger.info "node closed connection: #{node.name || node.node_id}"
-      end
-      @clients.delete(client)
+      logger.info "node #{client[:id]} connection closed"
+      unplug_client(client)
+    else
+      logger.debug "ignore client for node #{client[:id]}"
     end
-    ws.close
   rescue => exc
     logger.error "on_close: #{exc.message}"
     logger.error exc.backtrace.join("\n") if exc.backtrace
+  end
+
+  # Mark client HostNode as disconnected, and remove from @clients.
+  #
+  # The websocket connection may still be open and get closed later.
+  # The client HostNode may not exist anymore.
+  #
+  # @param [Hash] client
+  def unplug_client(client)
+    node = HostNode.find_by(node_id: client[:id])
+    if node
+      logger.info "disconnect node #{node.name || node.node_id}"
+      Agent::NodeUnplugger.new(node).unplug!
+    else
+      logger.warn "skip unplug of missing node #{client[:id]}"
+    end
+    @clients.delete(client)
   end
 
   ##
@@ -294,7 +309,7 @@ class WebsocketBackend
   def verify_client_connection(client)
     ping_time = Time.now
     timer = EM::Timer.new(PING_TIMEOUT) do
-      self.on_close(client[:ws])
+      self.on_client_timeout(client, Time.now - ping_time)
     end
     client[:ws].ping {
       timer.cancel
@@ -303,6 +318,14 @@ class WebsocketBackend
   end
 
   # @param [Hash] client
+  # @param [Fixnum] delay
+  def on_client_timeout(client, delay)
+    logger.warn "Close node %s connection after %.2fs timeout" % [client[:id], delay]
+    close_client(client)
+  end
+
+  # @param [Hash] client
+  # @param [Fixnum] delay
   def on_pong(client, delay)
     if delay > PING_TIMEOUT / 2
       logger.warn "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]]
@@ -315,11 +338,21 @@ class WebsocketBackend
       if node.connected?
         node.set(last_seen_at: Time.now.utc)
       else
-        self.on_close(client[:ws])
+        logger.warn "Close connection of disconnected node #{node.name || node.node_id}"
+        close_client(client)
       end
     else
-      self.on_close(client[:ws])
+      logger.warn "Close connection of destroyed node #{client[:id]}"
+      close_client(client)
     end
+  end
+
+  # Unplug client, marking HostNode as disconnected, and close the websocket connection.
+  #
+  # @param [Hash] client
+  def close_client(client)
+    unplug_client(client)
+    client[:ws].close # triggers on :close later, or after 30s timeout
   end
 
   def stop_rpc_server
