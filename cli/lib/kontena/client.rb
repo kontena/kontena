@@ -16,16 +16,16 @@ end
 module Kontena
   class Client
 
-    CLIENT_ID     = ENV['KONTENA_CLIENT_ID']     || '15faec8a7a9b4f1e8b7daebb1307f1d8'.freeze
-    CLIENT_SECRET = ENV['KONTENA_CLIENT_SECRET'] || 'fb8942ae00da4c7b8d5a1898effc742f'.freeze
+    CLIENT_ID     ||= ENV['KONTENA_CLIENT_ID']     || '15faec8a7a9b4f1e8b7daebb1307f1d8'.freeze
+    CLIENT_SECRET ||= ENV['KONTENA_CLIENT_SECRET'] || 'fb8942ae00da4c7b8d5a1898effc742f'.freeze
 
-    CONTENT_URLENCODED = 'application/x-www-form-urlencoded'.freeze
-    CONTENT_JSON       = 'application/json'.freeze
-    JSON_REGEX         = /application\/(.+?\+)?json/.freeze
-    CONTENT_TYPE       = 'Content-Type'.freeze
-    X_KONTENA_VERSION  = 'X-Kontena-Version'.freeze
-    ACCEPT             = 'Accept'.freeze
-    AUTHORIZATION      = 'Authorization'.freeze
+    CONTENT_URLENCODED ||= 'application/x-www-form-urlencoded'.freeze
+    CONTENT_JSON       ||= 'application/json'.freeze
+    JSON_REGEX         ||= /application\/(.+?\+)?json/.freeze
+    CONTENT_TYPE       ||= 'Content-Type'.freeze
+    X_KONTENA_VERSION  ||= 'X-Kontena-Version'.freeze
+    ACCEPT             ||= 'Accept'.freeze
+    AUTHORIZATION      ||= 'Authorization'.freeze
 
     attr_accessor :default_headers
     attr_accessor :path_prefix
