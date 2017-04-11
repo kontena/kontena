@@ -5,6 +5,12 @@ describe Rpc::NodeServicePodHandler do
   let(:subject) { described_class.new(grid) }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node', node_id: 'abc') }
 
+  before(:each) do
+    # reset cache between specs
+    cache = described_class.class_variable_get(:@@lru_cache)
+    cache.clear
+  end
+
   describe '#list' do
     before(:each) do
       allow(subject).to receive(:migration_done?).and_return(true)
@@ -105,5 +111,25 @@ describe Rpc::NodeServicePodHandler do
     it 'returns false if migrations are not recent enough' do
       expect(subject.migration_done?).to be_falsey
     end
+  end
+
+  describe '#cached_pod' do
+    it 'transforms the service instance into pod if not already in cache' do
+      service_instance = double({id: 'foo', deploy_rev: '12345', grid_service: double})
+      expect(Rpc::ServicePodSerializer).to receive(:new).once.and_return(double(:to_hash => {}))
+      subject.cached_pod(service_instance)
+      subject.cached_pod(service_instance)
+    end
+
+    it 'uses instance id and deploy_rev as cache key' do
+      service_instance_1 = double({id: 'foo', deploy_rev: '12345', grid_service: double})
+      expect(Rpc::ServicePodSerializer).to receive(:new).twice.and_return(double(:to_hash => {}))
+
+      subject.cached_pod(service_instance_1)
+
+      service_instance_2 = double({id: 'foo', deploy_rev: '54321', grid_service: double})
+      subject.cached_pod(service_instance_2)
+    end
+
   end
 end
