@@ -48,6 +48,7 @@ module Kontena::Cli::Cloud
       reset_cloud_client
       display_logo
       display_login_info(only: :account)
+      true
     end
 
     def web_flow
