@@ -135,4 +135,56 @@ describe Kontena::Workers::ServicePodWorker do
       subject.sync_state_to_master('missing', Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
     end
   end
+
+  describe '#needs_apply' do
+    it 'returns true if container_state_changed is true' do
+      expect(subject.needs_apply?(service_pod)).to be_truthy
+    end
+
+    it 'returns false if container_state_changed is false and pod has not changed' do
+      subject.container_state_changed = false
+      expect(subject.needs_apply?(service_pod)).to be_falsey
+    end
+
+    it 'returns true if container_state_changed is false and deploy_rev has changed' do
+      subject.container_state_changed = false
+      update = service_pod.dup
+      allow(update).to receive(:deploy_rev).and_return('new')
+      expect(subject.needs_apply?(update)).to be_truthy
+    end
+
+    it 'returns true if container_state_changed is false and deploy_rev has changed' do
+      subject.container_state_changed = false
+      update = service_pod.dup
+      allow(update).to receive(:desired_state).and_return('stopped')
+      expect(subject.needs_apply?(update)).to be_truthy
+    end
+  end
+
+  describe '#on_container_event' do
+    let(:actor) do
+      double(:actor, attributes: {
+        'io.kontena.service.id' => service_pod.service_id,
+        'io.kontena.service.instance_number' => service_pod.instance_number
+      })
+    end
+    let(:event) do
+      double(:event, actor: actor)
+    end
+
+    it 'marks container state changed if service id and instance number matches' do
+      subject.container_state_changed = false
+      expect {
+        subject.on_container_event('container:event', event)
+      }.to change { subject.container_state_changed }.from(false).to(true)
+    end
+
+    it 'does not mark state changed if service id does not match' do
+      subject.container_state_changed = false
+      actor.attributes['io.kontena.service.id'] = 'wrong-one'
+      expect {
+        subject.on_container_event('container:event', event)
+      }.not_to change { subject.container_state_changed }
+    end
+  end
 end
