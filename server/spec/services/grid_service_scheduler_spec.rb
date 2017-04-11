@@ -6,7 +6,7 @@ describe GridServiceScheduler do
   let(:nodes) do
     nodes = []
     3.times { nodes << HostNode.create!(node_id: SecureRandom.uuid) }
-    nodes
+    nodes.map { |n| Scheduler::Node.new(n) }
   end
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy) }
