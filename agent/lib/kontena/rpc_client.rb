@@ -30,6 +30,10 @@ module Kontena
       info 'initialized'
     end
 
+    def connected?
+      @client.connected?
+    end
+
     # @param [String] method
     # @param [Array] params
     def notification(method, params)

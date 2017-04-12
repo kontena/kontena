@@ -7,27 +7,33 @@ module Kontena::Workers
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
 
-    attr_reader :queue
+    attr_reader :container_coroner
 
     # @param [Boolean] autostart
     def initialize(autostart = true)
       subscribe('container:event', :on_container_event)
       subscribe('container:publish_info', :on_container_publish_info)
       subscribe('websocket:connected', :on_websocket_connected)
+      subscribe('websocket:disconnect', :on_websocket_disconnect)
       info 'initialized'
-      async.start if autostart
+      @container_coroner = Kontena::Actors::ContainerCoroner.new(self.node_info['ID'])
+      async.start if @autostart
     end
 
     def start
-      info 'fetching containers information'
-      self.publish_all_containers
+      publish_all_containers if rpc_client.connected?
     end
 
     def publish_all_containers
-      Docker::Container.all(all: true).each do |container|
+      all_containers.each do |container|
         self.publish_info(container)
         sleep 0.05
       end
+    end
+
+    # @return [Array<Docker::Container>]
+    def all_containers
+      Docker::Container.all(all: true)
     end
 
     # @param [String] topic
@@ -38,22 +44,26 @@ module Kontena::Workers
 
       container = Docker::Container.get(event.id)
       if container
-        self.publish_info(container)
-        self.notify_coroner(container) if container.suspiciously_dead?
+        publish_info(container)
       end
     rescue Docker::Error::NotFoundError
-      self.publish_destroy_event(event)
+      publish_destroy_event(event)
     rescue => exc
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n")
     end
 
     def on_container_publish_info(topic, container)
-      self.publish_info(container)
+      publish_info(container)
     end
 
     def on_websocket_connected(topic, data)
-      self.publish_all_containers
+      publish_all_containers
+      container_coroner.start
+    end
+
+    def on_websocket_disconnect(topic, data)
+      container_coroner.stop
     end
 
     ##
@@ -88,12 +98,6 @@ module Kontena::Workers
     # @return [Hash]
     def node_info
       @node_info ||= Docker.info
-    end
-
-    # @param [Docker::Container]
-    # @return [Kontena::Actors::ContainerCoroner]
-    def notify_coroner(container)
-      Kontena::Actors::ContainerCoroner.new(container)
     end
   end
 end

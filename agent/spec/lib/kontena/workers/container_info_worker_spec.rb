@@ -1,11 +1,10 @@
 
-describe Kontena::Workers::ContainerInfoWorker do
+describe Kontena::Workers::ContainerInfoWorker, celluloid: true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
 
   before(:each) do
-    Celluloid.boot
     allow(Docker).to receive(:info).and_return({
       'Name' => 'node-1',
       'Labels' => nil,
@@ -14,14 +13,54 @@ describe Kontena::Workers::ContainerInfoWorker do
     mock_rpc_client
   end
 
-  after(:each) do
-    Celluloid.shutdown
+  describe '#start' do
+    it 'calls #publish_all_containers if rpc client is connected' do
+      allow(rpc_client).to receive(:connected?).and_return(true)
+      expect(subject.wrapped_object).to receive(:publish_all_containers)
+      subject.start
+    end
+
+    it 'does not call #publish_all_containers if rpc client is not connected' do
+      allow(rpc_client).to receive(:connected?).and_return(false)
+      expect(subject.wrapped_object).not_to receive(:publish_all_containers)
+      subject.start
+    end
   end
 
-  describe '#start' do
-    it 'calls #publish_all_containers' do
+  describe '#on_websocket_connected' do
+    let(:coroner) do
+      double(:coroner)
+    end
+
+    before(:each) do
+      allow(coroner).to receive(:start)
       allow(subject.wrapped_object).to receive(:publish_all_containers)
-      subject.start
+      allow(subject.wrapped_object).to receive(:container_coroner).and_return(coroner)
+    end
+
+    it 'calls #publish_all_containers' do
+      expect(subject.wrapped_object).to receive(:publish_all_containers)
+      subject.on_websocket_connected('websocket:connected', nil)
+    end
+
+    it 'starts coroner' do
+      expect(coroner).to receive(:start)
+      subject.on_websocket_connected('websocket:connected', nil)
+    end
+  end
+
+  describe '#on_websocket_disconnect' do
+    let(:coroner) do
+      double(:coroner)
+    end
+
+    before(:each) do
+      allow(subject.wrapped_object).to receive(:container_coroner).and_return(coroner)
+    end
+
+    it 'stops coroner' do
+      expect(coroner).to receive(:stop)
+      subject.on_websocket_disconnect('websocket:disconnect', nil)
     end
   end
 
@@ -53,22 +92,6 @@ describe Kontena::Workers::ContainerInfoWorker do
       expect(subject.wrapped_object.logger).to receive(:error).twice
       subject.on_container_event('topic', event)
     end
-
-    it 'notifies coroner if container is dead' do
-      event = double(:event, status: 'die', id: 'foo')
-      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => true)
-      allow(Docker::Container).to receive(:get).once.and_return(container)
-      expect(subject.wrapped_object).to receive(:notify_coroner).with(container)
-      subject.on_container_event('topic', event)
-    end
-
-    it 'does not notify coroner if container is alive' do
-      event = double(:event, status: 'start', id: 'foo')
-      container = double(:container, :json => {'Image' => 'foo/bar:latest'}, :suspiciously_dead? => false)
-      allow(Docker::Container).to receive(:get).once.and_return(container)
-      expect(subject.wrapped_object).not_to receive(:notify_coroner).with(container)
-      subject.on_container_event('topic', event)
-    end
   end
 
   describe '#publish_info' do
@@ -84,17 +107,6 @@ describe Kontena::Workers::ContainerInfoWorker do
       )
       allow(subject.wrapped_object).to receive(:node_info).and_return({'ID' => 'host_id'})
       subject.publish_info(container)
-    end
-  end
-
-  describe '#notify_coroner' do
-    let(:container) do
-      double(:container, id: 'dead-id', name: '/dead')
-    end
-
-    it 'creates a coroner actor' do
-      coroner = subject.notify_coroner(container)
-      expect(coroner).to be_an_instance_of(Kontena::Actors::ContainerCoroner)
     end
   end
 end

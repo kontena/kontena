@@ -2,53 +2,52 @@ module Kontena::Actors
   class ContainerCoroner
     include Celluloid
     include Kontena::Logging
+    include Kontena::Helpers::RpcHelper
 
-    INVESTIGATION_TIME = (5 * 60)
-    INVESTIGATION_PERIOD = 5
+    INVESTIGATION_PERIOD = 20
 
-    # @param [Docker::Container]
-    # @param [Boolean] autostart
-    def initialize(container, autostart = true)
-      @container = container
-      async.start if autostart
+    # @param [String] node_id
+    def initialize(node_id)
+      @node_id = node_id
+      @processing = false
+    end
+
+    def process
+      prev = nil
+      while @processing do
+        ids = all_containers.map { |c| c.id }
+        if prev
+          diff = prev - ids
+          report(diff) if diff.size > 0
+        end
+        prev = ids
+        sleep INVESTIGATION_PERIOD
+      end
+    rescue => exc
+      warn "process loop failed: #{exc.message}"
+      retry
+    end
+
+    def report(data)
+      rpc_client.async.request('/containers/cleanup', [@node_id, data])
+    end
+
+    # @return [Array<Docker::Container>]
+    def all_containers
+      Docker::Container.all(all: true)
     end
 
     def start
-      @started = Time.now.to_i
-      info "starting to investigate #{@container.name}"
-      every(INVESTIGATION_PERIOD) {
-        if @started >= (Time.now.to_i - INVESTIGATION_TIME)
-          investigate
-        else
-          self.terminate
-        end
-      }
-    rescue Docker::Error::NotFoundError
-      self.terminate
+      return if @processing
+
+      @processing = true
+      async.process
     end
 
-    def investigate
-      exists = Docker::Container.get(@container.id) rescue nil
-      unless exists
-        confirm
-      end
-    end
+    def stop
+      return unless @processing
 
-    def confirm
-      info "container #{@container.name} has gone"
-      event = Docker::Event.new(
-        'Action' => 'destroy'.freeze,
-        'status' => 'destroy'.freeze,
-        'id' => @container.id,
-        'time' => Time.now.utc.to_s
-      )
-      event_worker.publish_event(event)
-      self.terminate
-    end
-
-    # @return [Kontena::Workers::EventWorker]
-    def event_worker
-      Actor[:event_worker]
+      @processing = false
     end
   end
 end
