@@ -42,6 +42,15 @@ module Stacks
           handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
+
+      removed_services = self.stack_instance.grid_services.reject{ |grid_service| self.services.any? {|s| s[:name] == grid_service.name} }
+      removed_services.each do |grid_service|
+        outcome = GridServices::Delete.validate(grid_service: grid_service)
+
+        unless outcome.success?
+          handle_service_outcome_errors(grid_service.name, outcome.errors)
+        end
+      end
     end
 
     def execute
@@ -81,6 +90,6 @@ module Stacks
         end
       end
     end
-    
+
   end
 end
