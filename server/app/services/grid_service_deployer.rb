@@ -57,7 +57,9 @@ class GridServiceDeployer
       self.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
       sleep 0.1
     end
-    deploy_futures.select{|f| !f.ready?}.each{|f| f.value }
+    if deploy_futures.any?{|f| f.value.error?}
+      raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
+    end
 
     self.grid_service_deploy.set(finished_at: Time.now.utc, :deploy_state => :success)
     log_service_event("service #{self.grid_service.to_path} deployed")
@@ -114,7 +116,7 @@ class GridServiceDeployer
       pending_deploys[0].value rescue nil
       sleep 0.1 until pending_deploys.any?{|f| f.ready?}
     end
-    if deploy_futures.any?{|f| f.ready? && f.value == false}
+    if deploy_futures.any?{|f| f.ready? && f.value.error?}
       raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
     end
   end

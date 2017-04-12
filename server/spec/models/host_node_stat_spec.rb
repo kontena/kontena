@@ -7,9 +7,9 @@ describe HostNodeStat do
   it { should belong_to(:grid) }
   it { should belong_to(:host_node) }
 
-  it { should have_index_for(grid_id: 1) }
-  it { should have_index_for(host_node_id: 1) }
-  it { should have_index_for(host_node_id:1, created_at: 1) }
+  it { should have_index_for(grid_id: 1).with_options(background: true) }
+  it { should have_index_for(host_node_id: 1).with_options(background: true) }
+  it { should have_index_for(host_node_id:1, created_at: 1).with_options(background: true) }
 
   describe 'aggregations' do
     let(:grid) { Grid.create!(name: 'test-grid') }

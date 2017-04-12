@@ -9,8 +9,11 @@ describe EventLog do
   it { should belong_to(:volume) }
   it { should belong_to(:host_node) }
 
-  it { should have_index_for(grid_id: 1) }
-  it { should have_index_for(stack_id: 1) }
-  it { should have_index_for(grid_service_id: 1) }
-  it { should have_index_for(host_node_id: 1) }
+  it { should have_index_for(reason: 1).with_options(background: true) }
+  it { should have_index_for(severity: 1).with_options(background: true) }
+  it { should have_index_for(grid_id: 1).with_options(background: true) }
+  it { should have_index_for(stack_id: 1).with_options(background: true) }
+  it { should have_index_for(grid_service_id: 1).with_options(background: true) }
+  it { should have_index_for(host_node_id: 1).with_options(background: true) }
+  it { should have_index_for(volume_id: 1).with_options(background: true) }
 end

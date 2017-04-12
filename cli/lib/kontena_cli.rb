@@ -28,6 +28,11 @@ module Kontena
   end
 
 
+  # @return [String] x.y
+  def self.minor_version
+    Kontena::Cli::VERSION.split('.')[0..1].join('.')
+  end
+
   def self.version
     "kontena-cli/#{Kontena::Cli::VERSION}"
   end
@@ -111,4 +116,3 @@ require 'kontena/stacks_cache'
 require 'kontena/plugin_manager'
 require 'kontena/main_command'
 require 'kontena/cli/spinner'
-

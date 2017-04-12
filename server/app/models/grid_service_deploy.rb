@@ -10,9 +10,9 @@ class GridServiceDeploy
 
   embeds_many :grid_service_instance_deploys
 
-  index({ grid_service_id: 1 })
-  index({ created_at: 1 })
-  index({ started_at: 1 })
+  index({ grid_service_id: 1 }, { background: true })
+  index({ created_at: 1 }, { background: true })
+  index({ started_at: 1 }, { background: true })
 
   belongs_to :grid_service
   belongs_to :stack_deploy

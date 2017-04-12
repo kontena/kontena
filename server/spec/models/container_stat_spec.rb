@@ -7,11 +7,10 @@ describe ContainerStat do
   it { should belong_to(:grid_service) }
   it { should belong_to(:container) }
 
-
-  it { should have_index_for(container_id: 1) }
-  it { should have_index_for(grid_id: 1) }
-  it { should have_index_for(grid_service_id: 1) }
-  it { should have_index_for(created_at: 1) }
+  it { should have_index_for(container_id: 1).with_options(background: true) }
+  it { should have_index_for(grid_id: 1).with_options(background: true) }
+  it { should have_index_for(grid_service_id: 1).with_options(background: true) }
+  it { should have_index_for(created_at: 1).with_options(background: true) }
 
   describe 'methods' do
     let(:stat) { ContainerStat.new({

@@ -26,14 +26,41 @@ describe StackDeployWorker, celluloid: true do
       expect(stack_deploy.success?).to be_truthy
     end
 
+    it 'changes deploy state to success when deploy is done' do
+      stack_deploy = stack.stack_deploys.create
+      stack_rev = stack.latest_rev
+
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
+      expect(subject.wrapped_object).to receive(:wait_until!) do
+        stack_deploy.grid_service_deploys.first.set(:deploy_state => :success, :finished_at => Time.now.utc)
+      end
+      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
+      expect(stack_deploy).to be_success
+    end
+
+    it 'changes state to error when deploy mutation fails' do
+      stack_deploy = stack.stack_deploys.create
+      stack_rev = stack.latest_rev
+
+      deploy_result = double(:result, :success? => false, :error? => true, :errors => double(message: { 'foo' => 'bar'}))
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_return(deploy_result)
+      expect(subject.wrapped_object).to receive(:error).once.with(/service test\/stack\/redis deploy failed:/)
+      expect(subject.wrapped_object).to receive(:error).once
+      stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
+      expect(stack_deploy.error?).to be_truthy
+    end
+
     it 'changes state to error when deploy fails' do
       stack_deploy = stack.stack_deploys.create
       stack_rev = stack.latest_rev
 
-      deploy_result = double(:result, :success? => false, :error? => true)
-      allow(subject.wrapped_object).to receive(:deploy_service).and_return(deploy_result)
+      expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
+      expect(subject.wrapped_object).to receive(:wait_until!) do
+        stack_deploy.grid_service_deploys.first.set(:deploy_state => :error, :finished_at => Time.now.utc)
+      end
+
       stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
-      expect(stack_deploy.error?).to be_truthy
+      expect(stack_deploy).to be_error
     end
   end
 

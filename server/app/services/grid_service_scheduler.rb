@@ -40,6 +40,10 @@ class GridServiceScheduler
   # @raise [Scheduler::Error]
   # @return HostNode
   def select_node(grid_service, instance_number, nodes)
+    if nodes.empty?
+      raise Scheduler::Error, "There are no nodes available"
+    end
+
     selected_node = nil
     @mutex.synchronize {
       filtered_nodes = self.filter_nodes(grid_service, instance_number, nodes)
