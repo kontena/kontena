@@ -3,7 +3,7 @@ class Watchdog
 
   INTERVAL = 0.5
   THRESHOLD = 1.0
-  TIMEOUT = 10.0
+  TIMEOUT = 60.0
   ABORT = true
 
   def self.logger(subject, target: STDOUT, level: ENV["WATCHDOG_DEBUG"] ? Logger::DEBUG : Logger::INFO)

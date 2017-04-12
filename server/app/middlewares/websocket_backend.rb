@@ -7,7 +7,7 @@ require_relative '../services/agent/node_unplugger'
 class WebsocketBackend
   WATCHDOG_INTERVAL = 0.5.seconds
   WATCHDOG_THRESHOLD = 1.0.seconds
-  WATCHDOG_TIMEOUT = 60.0.seconds # XXX: testing
+  WATCHDOG_TIMEOUT = 60.0.seconds
 
   KEEPALIVE_TIME = 30 # in seconds
   RPC_MSG_TYPES = %w(request notify)
