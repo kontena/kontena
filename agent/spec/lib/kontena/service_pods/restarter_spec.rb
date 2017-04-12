@@ -14,15 +14,20 @@ describe Kontena::ServicePods::Restarter do
       allow(subject).to receive(:get_container).and_return(container)
     end
 
-    it 'restarts container if running' do
-      expect(container).to receive(:restart).with({'timeout' => 10})
+    it 'does notthing if container if not running' do
+      allow(container).to receive(:running?).and_return(false)
+      expect(container).not_to receive(:restart!)
       subject.perform
     end
 
-    it 'does not start container if not running' do
-      allow(container).to receive(:running?).and_return(false)
-      expect(container).not_to receive(:start)
+    it 'restarts container if running' do
+      expect(container).to receive(:restart!).with({'timeout' => 10})
       subject.perform
+    end
+
+    it 'fails if container restart fails' do
+      expect(container).to receive(:restart!).with({'timeout' => 10}).and_raise(Docker::Error::ServerError, "failed")
+      expect{subject.perform}.to raise_error(Docker::Error::ServerError)
     end
   end
 end
