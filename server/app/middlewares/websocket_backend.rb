@@ -70,7 +70,7 @@ class WebsocketBackend
     if !grid.nil?
       node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
 
-      logger.info "node node_id opened connection"
+      logger.info "node #{node_id} opened connection"
 
       node = grid.host_nodes.find_by(node_id: node_id)
       labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
