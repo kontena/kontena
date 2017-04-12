@@ -41,9 +41,14 @@ class Watchdog
 
   def start
     logger.info "watchdog start"
-    every(@interval) do
+    @timer = every(@interval) do
       check
     end
+  end
+
+  # Stop the every loop from start
+  def stop
+    @timer.cancel
   end
 
   def check
@@ -65,8 +70,13 @@ class Watchdog
     @thread.backtrace
   end
 
+  # Abort the target thread by raising Watchdog::Abort.
+  # Stops the watchdog, we don't expect to receive any more pings.
   def abort
-    # XXX: let's assume that the thread has abort_on_exception and it does not rescue non-StandardError
+    # only abort once
+    self.stop
+
+    # assume that the thread has abort_on_exception and it does not rescue non-StandardError
     @thread.raise Abort, "ABORT #{@subject} watchdog timeout"
   end
 end
