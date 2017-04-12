@@ -2,10 +2,9 @@ module Rpc
   class NodeServicePodHandler
     include Logging
 
-    @@lru_cache ||= LruRedux::ThreadSafeCache.new(1000)
-
     def initialize(grid)
       @grid = grid
+      @lru_cache ||= LruRedux::ThreadSafeCache.new(1000)
     end
 
     def cached_pod(service_instance)
@@ -15,7 +14,7 @@ module Rpc
         deploy_rev: service_instance.deploy_rev,
         desired_state: service_instance.desired_state
       }
-      @@lru_cache.getset(cache_key) {
+      @lru_cache.getset(cache_key) {
         debug "pod_cache miss"
         ServicePodSerializer.new(service_instance).to_hash if service_instance.grid_service
       }

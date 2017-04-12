@@ -5,12 +5,6 @@ describe Rpc::NodeServicePodHandler do
   let(:subject) { described_class.new(grid) }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node', node_id: 'abc') }
 
-  before(:each) do
-    # reset cache between specs
-    cache = described_class.class_variable_get(:@@lru_cache)
-    cache.clear
-  end
-
   describe '#list' do
     before(:each) do
       allow(subject).to receive(:migration_done?).and_return(true)
