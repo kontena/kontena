@@ -1,15 +1,8 @@
 require_relative '../../app/middlewares/websocket_backend'
 
-describe WebsocketBackend, celluloid: true do
+describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
-
-  around(:each) do |example|
-    EM.run {
-      example.run
-      EM.stop
-    }
-  end
 
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')

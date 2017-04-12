@@ -90,6 +90,14 @@ RSpec.configure do |config|
     Celluloid.shutdown
   end
 
+  config.around :each, eventmachine: true do |example|
+    EM.run {
+      example.run
+      EM.stop
+    }
+  end
+
+
   def response
     last_response
   end
