@@ -1,7 +1,12 @@
 class CreateGridServiceInstance < Mongodb::Migration
   def self.up
     GridServiceInstance.create_indexes
-    Container.unscoped.where(container_type: 'container').includes(:grid_service).each do |c|
+    migrate_containers('volume')
+    migrate_containers('container')
+  end
+
+  def self.migrate_containers(container_type)
+    Container.unscoped.where(container_type: container_type).includes(:grid_service).each do |c|
       if c.grid_service && c.grid_service.grid_service_instances.find_by(instance_number: c.instance_number).nil?
         c.grid_service.grid_service_instances.create!(
           host_node_id: c.host_node_id,
