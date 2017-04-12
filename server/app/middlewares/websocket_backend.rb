@@ -69,6 +69,9 @@ class WebsocketBackend
     grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
     if !grid.nil?
       node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+
+      logger.info "node node_id opened connection"
+
       node = grid.host_nodes.find_by(node_id: node_id)
       labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
       unless node
@@ -93,7 +96,6 @@ class WebsocketBackend
         return
       end
 
-      logger.info "node opened connection: #{node.name || node_id}, labels: #{labels}"
       EM.defer { node_plugger.plugin! }
     else
       logger.error 'invalid grid token, closing connection'
@@ -197,7 +199,6 @@ class WebsocketBackend
   def unplug_client(client)
     node = HostNode.find_by(node_id: client[:id])
     if node
-      logger.info "disconnect node #{node.name || node.node_id}"
       Agent::NodeUnplugger.new(node).unplug!
     else
       logger.warn "skip unplug of missing node #{client[:id]}"
@@ -342,7 +343,7 @@ class WebsocketBackend
         close_client(client)
       end
     else
-      logger.warn "Close connection of destroyed node #{client[:id]}"
+      logger.warn "Close connection of missing node #{client[:id]}"
       close_client(client)
     end
   end

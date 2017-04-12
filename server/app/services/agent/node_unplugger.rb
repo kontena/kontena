@@ -10,6 +10,8 @@ module Agent
     end
 
     def unplug!
+      logger.info "disconnect node #{node.name || node.node_id}"
+
       begin
         self.update_node
         self.publish_update_event
@@ -26,7 +28,7 @@ module Agent
       end
     end
 
-    def publish_update_event     
+    def publish_update_event
       node.publish_update_event
     end
   end
