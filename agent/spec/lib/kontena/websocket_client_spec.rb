@@ -208,6 +208,8 @@ describe Kontena::WebsocketClient do
         expect(subject).to be_connected
         expect(subject).to_not be_connecting
 
+        expect(Celluloid::Notifications).to receive(:publish).with('websocket:close', nil)
+
         subject.on_close close_event
 
         expect(subject).to_not be_connected
