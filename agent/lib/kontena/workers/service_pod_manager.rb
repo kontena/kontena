@@ -32,8 +32,8 @@ module Kontena::Workers
       subscribe('service_pod:update', :on_update_notify)
       subscribe('service_pod:event', :on_pod_event)
       loop do
-        sleep 30
         populate_workers_from_master
+        sleep 30
       end
     end
 
@@ -70,6 +70,7 @@ module Kontena::Workers
       warn "failed to get list of service pods from master: #{exc}"
     rescue => exc
       error exc.message
+      error exc.backtrace.join("\n")
     end
 
     def populate_workers_from_docker
