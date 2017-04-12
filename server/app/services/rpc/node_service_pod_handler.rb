@@ -4,7 +4,7 @@ module Rpc
 
     def initialize(grid)
       @grid = grid
-      @lru_cache ||= LruRedux::ThreadSafeCache.new(1000)
+      @lru_cache = LruRedux::ThreadSafeCache.new(1000)
     end
 
     def cached_pod(service_instance)
