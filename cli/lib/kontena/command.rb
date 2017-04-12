@@ -1,5 +1,9 @@
 require 'clamp'
-require_relative 'cli/subcommand_loader'
+require 'kontena/cli/subcommand_loader'
+require 'kontena/cli/common'
+require 'kontena/util'
+require 'kontena/cli/bytes_helper'
+require 'kontena/cli/grid_options'
 
 class Kontena::Command < Clamp::Command
 
@@ -225,4 +229,4 @@ class Kontena::Command < Clamp::Command
   end
 end
 
-require_relative 'callback'
+require 'kontena/callback'

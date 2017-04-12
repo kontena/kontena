@@ -1,10 +1,4 @@
-require 'clamp'
-require 'kontena/cli/common'
-require 'kontena/util'
 require 'kontena/command'
-require 'kontena/callback'
-require 'kontena/cli/bytes_helper'
-require 'kontena/cli/grid_options'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util
