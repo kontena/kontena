@@ -11,7 +11,9 @@ class Watchdog
   TIMEOUT = 60.0
   ABORT = true
 
-  def self.logger(subject, target: STDOUT, level: ENV["WATCHDOG_DEBUG"] ? Logger::DEBUG : Logger::INFO)
+  LOG_LEVEL = Logger::INFO
+
+  def self.logger(subject, target: STDOUT, level: ENV["WATCHDOG_DEBUG"] ? Logger::DEBUG : LOG_LEVEL)
     logger = Logger.new(target)
     logger.progname = "#{self.name}<#{subject}>"
     logger.level = level
