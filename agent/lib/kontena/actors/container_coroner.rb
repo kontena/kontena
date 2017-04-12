@@ -29,7 +29,10 @@ module Kontena::Actors
     end
 
     def report(data)
-      rpc_client.async.request('/containers/cleanup', [@node_id, data])
+      rpc_request('/containers/cleanup', [@node_id, data])
+    rescue => exc
+      warn "failed to send report: #{exc.message}"
+      retry
     end
 
     # @return [Array<Docker::Container>]
@@ -48,6 +51,10 @@ module Kontena::Actors
       return unless @processing
 
       @processing = false
+    end
+
+    def processing?
+      @processing == true
     end
   end
 end
