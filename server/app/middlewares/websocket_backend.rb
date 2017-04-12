@@ -1,9 +1,14 @@
 require 'faye/websocket'
 require_relative '../services/rpc_server'
+require_relative '../services/watchdog'
 require_relative '../services/agent/node_plugger'
 require_relative '../services/agent/node_unplugger'
 
 class WebsocketBackend
+  WATCHDOG_INTERVAL = 0.5.seconds
+  WATCHDOG_THRESHOLD = 1.0.seconds
+  WATCHDOG_TIMEOUT = 60.0.seconds
+
   KEEPALIVE_TIME = 30 # in seconds
   RPC_MSG_TYPES = %w(request notify)
   QUEUE_SIZE = 1000
@@ -26,6 +31,7 @@ class WebsocketBackend
     subscribe_to_rpc_channel
     watch_connections
     watch_queue
+    watchdog
   end
 
   def call(env)
@@ -262,6 +268,23 @@ class WebsocketBackend
       logger.info "#{@msg_counter / QUEUE_WATCH_PERIOD} messages per second"
       @msg_counter = 0
       @msg_dropped = 0
+    end
+  end
+
+  # Start a Watchdog actor, and ping it every interval.
+  # It will log warnings and finally abort the EM thread if the timer does not get run on time.
+  def watchdog
+    EM.next_tick {
+      # must be called within the EM thread
+      @watchdog = Watchdog.new(self.class.name, Thread.current,
+        interval: WATCHDOG_INTERVAL,
+        threshold: WATCHDOG_THRESHOLD,
+        timeout: WATCHDOG_TIMEOUT,
+      )
+    }
+
+    EM::PeriodicTimer.new(WATCHDOG_INTERVAL) do
+      @watchdog.async.ping
     end
   end
 
