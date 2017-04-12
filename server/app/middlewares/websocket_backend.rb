@@ -271,9 +271,11 @@ class WebsocketBackend
     end
   end
 
-  # Start a Watchdog actor, and ping it every interval
+  # Start a Watchdog actor, and ping it every interval.
+  # It will log warnings and finally abort the EM thread if the timer does not get run on time.
   def watchdog
     EM.next_tick {
+      # must be called within the EM thread
       @watchdog = Watchdog.new(self.class.name, Thread.current,
         interval: WATCHDOG_INTERVAL,
         threshold: WATCHDOG_THRESHOLD,
