@@ -1,6 +1,11 @@
 class Watchdog
   include Celluloid
 
+  # this is not a StandardError, it is supposed to abort the thread
+  class Abort < Exception
+
+  end
+
   INTERVAL = 0.5
   THRESHOLD = 1.0
   TIMEOUT = 60.0
@@ -62,6 +67,6 @@ class Watchdog
 
   def abort
     # XXX: let's assume that the thread has abort_on_exception and it does not rescue non-StandardError
-    @thread.raise SystemExit, "ABORT #{@subject} watchdog timeout"
+    @thread.raise Abort, "ABORT #{@subject} watchdog timeout"
   end
 end
