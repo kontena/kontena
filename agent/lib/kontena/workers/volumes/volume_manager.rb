@@ -70,16 +70,17 @@ module Kontena::Workers::Volumes
     # @param [Kontena::Models::Volume] volume
     def ensure_volume(volume)
       debug "ensuring volume existence: #{volume.inspect}"
+
       begin
-        Docker::Volume.get(volume.name)
-      rescue Docker::Error::NotFoundError
-        info "creating volume"
-        v = Docker::Volume.create(volume.name, {
-          'Driver' => volume.driver,
-          'DriverOpts' => volume.driver_opts,
-          'Labels' => volume.labels
-        })
-        sync_volume_to_master(v)
+        unless __volume_exist?(volume.name, volume.driver)
+          info "creating volume"
+          v = Docker::Volume.create(volume.name, {
+            'Driver' => volume.driver,
+            'DriverOpts' => volume.driver_opts,
+            'Labels' => volume.labels
+          })
+          sync_volume_to_master(v)
+        end
       rescue => exc
         error "#{exc.class.name}: #{exc.message}"
         error exc.backtrace.join("\n") if exc.backtrace
@@ -102,7 +103,7 @@ module Kontena::Workers::Volumes
     # @param [String] name of the volume
     # @param [String] driver to expect on the volume if already existing
     # @raise [DriverMismatchError] If the volume is found but using a different driver than expected
-    def volume_exist?(volume_name, driver)
+    def __volume_exist?(volume_name, driver)
       begin
         debug "volume #{volume_name} exists"
         volume = Docker::Volume.get(volume_name)
@@ -114,6 +115,14 @@ module Kontena::Workers::Volumes
       rescue Docker::Error::NotFoundError
         debug "volume #{volume_name} does NOT exist"
         false
+      end
+    end
+
+    def volume_exist?(volume_name, driver)
+      begin
+        __volume_exist?(volume_name, driver)
+      rescue => error
+        abort error
       end
     end
 

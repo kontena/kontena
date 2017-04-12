@@ -72,7 +72,8 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
     end
 
     it 'does not create a volume if it already exists' do
-      expect(Docker::Volume).to receive(:get).with('foo').and_return(double)
+      expect(subject.wrapped_object).to receive(:__volume_exist?).with('foo', 'local').and_return(true)
+      expect(Docker::Volume).not_to receive(:create)
       subject.ensure_volume(volume)
     end
 
@@ -85,6 +86,15 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
       }).and_return(double)
       expect(subject.wrapped_object).to receive(:sync_volume_to_master)
       subject.ensure_volume(volume)
+    end
+
+    it 'does not crash actor if random failure from docker' do
+      expect(subject.wrapped_object).to receive(:__volume_exist?).with('foo', 'local').and_return(false)
+      expect(Docker::Volume).to receive(:create).and_raise(StandardError)
+      expect(subject.wrapped_object).not_to receive(:sync_volume_to_master)
+      subject.ensure_volume(volume)
+      # The actor should be still alive
+      expect(subject.alive?).to eq(true)
     end
 
   end
@@ -103,25 +113,41 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
     end
   end
 
-  describe '#volume_exist?' do
+  describe '#__volume_exist?' do
     it 'return true if volume exists' do
       expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'local'}))
-      expect(subject.volume_exist?('foo', 'local')).to be_truthy
+      expect(subject.__volume_exist?('foo', 'local')).to be_truthy
     end
 
     it 'return false if volume not exists' do
       expect(Docker::Volume).to receive(:get).with('foo').and_raise(Docker::Error::NotFoundError)
-      expect(subject.volume_exist?('foo', 'local')).to be_falsey
+      expect(subject.__volume_exist?('foo', 'local')).to be_falsey
     end
 
     it 'raises if volume drivers do not match' do
       expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'foo'}))
       expect {
         # Call through wrapped object to avoid ugly logs in test trace
-        subject.wrapped_object.volume_exist?('foo', 'local')
+        subject.wrapped_object.__volume_exist?('foo', 'local')
       }.to raise_error(Kontena::Workers::Volumes::VolumeManager::DriverMismatchError)
     end
 
+  end
+
+  describe '#volume_exist?' do
+    it 'return the status of __volume_exist?' do
+      expect(subject.wrapped_object).to receive(:__volume_exist?).with('foo', 'local').and_return(true)
+      expect(subject.volume_exist?('foo', 'local')).to eq(true)
+    end
+
+    it 'abort if __volume_exist? throws' do
+      expect(subject.wrapped_object).to receive(:__volume_exist?).with('foo', 'local').and_raise(Kontena::Workers::Volumes::VolumeManager::DriverMismatchError)
+      expect {
+        subject.volume_exist?('foo', 'local')
+      }.to raise_error(Kontena::Workers::Volumes::VolumeManager::DriverMismatchError)
+      # The actor should be still alive
+      expect(subject.alive?).to eq(true)
+    end
   end
 
   describe '#terminate_volumes' do
