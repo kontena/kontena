@@ -20,6 +20,12 @@ class Watchdog
 
   attr_reader :logger
 
+  # @param subject [String] used for logging, describe what is pinging this watchdog
+  # @param thread [Thread] thread to trace and abort on watchdog timeouts
+  # @param interval [Fixnum] expect to get a ping every interval seconds
+  # @param threshold [Fixnum] log warnings if pings interval goes above threshold seconds
+  # @param timeout [Fixnum] log fatal if ping interval goes above timeout seconds
+  # @param abort [Boolean] abort thread on timeout by raising Watchdog::Abort
   def initialize(subject, thread, interval: INTERVAL, threshold: THRESHOLD, timeout: TIMEOUT, abort: ABORT, start: true)
     @logger = self.class.logger(subject)
 
@@ -35,10 +41,12 @@ class Watchdog
     async.start if start
   end
 
+  # Keep the watchdog happy by pinging it every interval
   def ping
     @ping = Time.now
   end
 
+  # Start checking for pings
   def start
     logger.info "watchdog start"
     @timer = every(@interval) do
@@ -66,6 +74,7 @@ class Watchdog
     end
   end
 
+  # @return [Array<String>] current target thread stack
   def trace
     @thread.backtrace
   end
