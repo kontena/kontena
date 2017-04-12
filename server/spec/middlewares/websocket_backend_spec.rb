@@ -1,10 +1,10 @@
 require_relative '../../app/middlewares/websocket_backend'
 
-describe WebsocketBackend, celluloid: true do
+describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
 
-  around(:each) do |example|
+  around(:each, :eventmachine => true) do |example|
     EM.run {
       example.run
       EM.stop
@@ -105,6 +105,37 @@ describe WebsocketBackend, celluloid: true do
       expect {
         subject.on_pong(client)
       }.to change { node.reload.last_seen_at }
+    end
+  end
+
+  describe '#watchdog', eventmachine: false do
+    before do
+      # XXX: needed if running as the first spec, stops the EM thread started by app/initializers/eventmachine.rbapp/initializers/eventmachine.rb
+      # XXX: racey?
+      EM.stop if EM.reactor_running?
+
+      # disable watchdog logging
+      stub_const('Watchdog::LOG_LEVEL', Logger::UNKNOWN)
+    end
+
+    it 'kills the EM thread if it blocks', :celluloid => true do
+      stub_const('WebsocketBackend::WATCHDOG_INTERVAL', 0.01)
+      stub_const('WebsocketBackend::WATCHDOG_THRESHOLD', 0.02)
+      stub_const('WebsocketBackend::WATCHDOG_TIMEOUT', 0.02)
+
+      expect(EventMachine).to_not be_reactor_running
+
+      expect {
+        EM.run {
+          subject
+
+          EM.next_tick {
+            sleep 1
+          }
+        }
+      }.to raise_error(Watchdog::Abort)
+
+      expect(EventMachine).to_not be_reactor_running
     end
   end
 end
