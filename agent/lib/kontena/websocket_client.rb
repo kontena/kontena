@@ -224,7 +224,7 @@ module Kontena
         delay = Time.now - ping_time
 
         # @ping_timer remains nil until re-connected to prevent further keepalives while closing
-        if @connected
+        if connected?
           error 'keepalive ping %.2fs timeout, closing connection' % [delay]
           close
         end

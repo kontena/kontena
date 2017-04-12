@@ -113,6 +113,55 @@ describe Kontena::WebsocketClient do
       expect(subject).to receive(:handle_invalid_version).once
       subject.on_close(event)
     end
+
+    it 'publishes websocket:close' do
+      expect(Celluloid::Notifications).to receive(:publish).with('websocket:close', nil)
+      subject.on_close(event)
+    end
+  end
+
+  describe '#verify_connection' do
+    let :ws do
+      instance_double(Faye::WebSocket::Client)
+    end
+
+    before do
+      stub_const("Kontena::WebsocketClient::PING_TIMEOUT", 0.1)
+      allow(subject).to receive(:ws).and_return(ws)
+    end
+
+    it "logs a warning if delay is over threshold", :em => false do
+      expect(ws).to receive(:ping) do |&block|
+        sleep 0.05
+
+        block.call
+
+        EM.stop
+      end
+
+      expect(subject).to receive(:warn).with(/keepalive ping \d+.\d+s/)
+
+      EM.run {
+        subject.verify_connection
+      }
+    end
+
+    it "logs an error and closes the connection if over timeout", :em => false do
+      expect(ws).to receive(:ping) do |&block|
+        # nothing, let the ping timer expire
+      end
+
+      expect(subject).to receive(:connected?).and_return(true)
+      expect(subject).to receive(:error).with(/keepalive ping \d+.\d+s timeout/)
+
+      expect(subject).to receive(:close) do
+        EM.stop
+      end
+
+      EM.run {
+        subject.verify_connection
+      }
+    end
   end
 
   describe '#close' do
