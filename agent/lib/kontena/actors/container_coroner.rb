@@ -32,6 +32,7 @@ module Kontena::Actors
       rpc_request('/containers/cleanup', [@node_id, data])
     rescue => exc
       warn "failed to send report: #{exc.message}"
+      sleep 1
       retry
     end
 
