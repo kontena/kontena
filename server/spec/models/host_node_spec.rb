@@ -14,7 +14,7 @@ describe HostNode do
   it { should embed_many(:volume_drivers) }
   it { should embed_many(:network_drivers) }
   it { should belong_to(:grid) }
-  it { should have_many(:grid_service_instances) }
+  it { should have_many(:grid_service_instances).with_dependent(:nullify) }
   it { should have_many(:event_logs) }
   it { should have_many(:containers) }
   it { should have_many(:host_node_stats) }

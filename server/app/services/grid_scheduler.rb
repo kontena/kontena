@@ -124,7 +124,7 @@ class GridScheduler
     service_deployer = GridServiceDeployer.new(
       strategy, service_deploy, available_nodes
     )
-    return false if service_deployer.instance_count != service.grid_service_instances.count
+    return false if service_deployer.instance_count != service.grid_service_instances.has_node.count
 
     selected_nodes = service_deployer.selected_nodes.uniq.sort
     selected_nodes == current_nodes
