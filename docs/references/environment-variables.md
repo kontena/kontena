@@ -15,7 +15,7 @@ toc_order: 2
 - `LOG_LEVEL`: logging level
 - `ACME_ENDPOINT`: acme endpoint for Let's Encrypt
 - `AUTH_API_URL`: specifies authentication server url (default: https://auth.kontena.io)
-- `KONTENA_WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
+- `WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
 
 ## Kontena Agent
 
@@ -33,7 +33,7 @@ toc_order: 2
 - `WEAVE_IMAGE`: weave net image (default: weaveworks/weave)
 - `WEAVEEXEC_IMAGE`: weave exec image (default: weaveworks/weaveexec)
 - `WEAVE_VERSION`: weave net version
-- `KONTENA_WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
+- `WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
 
 ## Kontena CLI
 

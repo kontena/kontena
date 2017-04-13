@@ -10,7 +10,7 @@ class WebsocketBackend
   WATCHDOG_TIMEOUT = 60.0.seconds
 
   KEEPALIVE_TIME = 30.seconds
-  PING_TIMEOUT = Kernel::Float(ENV['KONTENA_WEBSOCKET_TIMEOUT'] || 5.seconds)
+  PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5.seconds)
 
   RPC_MSG_TYPES = %w(request notify)
   QUEUE_SIZE = 1000

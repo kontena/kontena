@@ -22,7 +22,7 @@ Nodes will be considered as online so long as they have an active Websocket conn
 The agents will ping the server every 30 seconds, and expect a response within 5 seconds.
 The server will ping each agent every 30 seconds, and expect a response within 5 seconds.
 
-The server and agent will log warning messages if the websocket keepalive ping delay goes over half of the timeout. Use [`KONTENA_WEBSOCKET_TIMEOUT`](../references/environment-variables.md) to adjust the timeout.
+The server and agent will log warning messages if the websocket keepalive ping delay goes over half of the timeout. Use [`WEBSOCKET_TIMEOUT`](../references/environment-variables.md) to adjust the timeout.
 
 Grid service instances can be deployed to any online node, unless restricted using [service affinity filters](deploy.md#affinity) or the [grid default affinity](grids.md#default-affinity).
 When a host node comes online, existing grid services will be re-scheduled by the server to deploy new [`daemon`-strategy](deploy.md#daemon) instances or re-balance other service instances onto the new node.

@@ -16,7 +16,7 @@ module Kontena
     include Kontena::Logging
 
     KEEPALIVE_INTERVAL = 30.0 # seconds
-    PING_TIMEOUT = Kernel::Float(ENV['KONTENA_WEBSOCKET_TIMEOUT'] || 5)
+    PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5)
 
     attr_reader :api_uri,
                 :api_token,
