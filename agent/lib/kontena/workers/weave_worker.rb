@@ -16,7 +16,7 @@ module Kontena::Workers
 
       @migrate_containers = nil # initialized by #start
 
-      if network_adapter.running?
+      if network_adapter.already_started?
         self.start
       else
         subscribe('network_adapter:start', :on_weave_start)

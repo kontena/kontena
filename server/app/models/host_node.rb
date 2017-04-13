@@ -29,13 +29,11 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
 
-  attr_accessor :schedule_counter
-
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
 
   belongs_to :grid
-  has_many :grid_service_instances
+  has_many :grid_service_instances, dependent: :nullify
   has_many :event_logs
   has_many :containers
   has_many :container_stats

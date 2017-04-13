@@ -26,13 +26,14 @@ module Kontena::Workers
         @node = node
       end
 
-      wait_until!("have node info", interval: 0.1) { self.node }
+      wait_until!("have node info", interval: 0.1, threshold: 10.0) { self.node }
       populate_workers_from_docker
 
       subscribe('service_pod:update', :on_update_notify)
       subscribe('service_pod:event', :on_pod_event)
-      every(30) do
+      loop do
         populate_workers_from_master
+        sleep 30
       end
     end
 
@@ -62,10 +63,14 @@ module Kontena::Workers
 
         service_pods.each do |s|
           ensure_service_worker(Kontena::Models::ServicePod.new(s))
+          sleep 0.05
         end
       }
     rescue Kontena::RpcClient::Error => exc
       warn "failed to get list of service pods from master: #{exc}"
+    rescue => exc
+      error exc.message
+      error exc.backtrace.join("\n")
     end
 
     def populate_workers_from_docker

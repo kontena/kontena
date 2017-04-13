@@ -23,6 +23,7 @@ gem 'jsonpath'
 gem 'json-serializer'
 gem 'bcrypt'
 gem 'rack-attack'
+gem 'lru_redux', '~> 1.1.0'
 
 group :development, :test do
   gem 'dotenv'

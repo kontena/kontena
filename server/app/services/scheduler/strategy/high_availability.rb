@@ -8,10 +8,15 @@ module Scheduler
         instance_count.to_i
       end
 
+      # @return [ActiveSupport::Duration]
+      def host_grace_period
+        2.minutes
+      end
+
       ##
       # @param [GridService] grid_service
       # @param [Integer] instance_number
-      # @param [Array<HostNode>] nodes
+      # @param [Array<Scheduler::Node>] nodes
       # @return [HostNode,NilClass]
       def find_node(grid_service, instance_number, nodes)
         if grid_service.stateless?
@@ -39,7 +44,7 @@ module Scheduler
           instance_number: instance_number
         )
         if prev_instance
-          nodes.find{ |n| n == prev_instance.host_node }
+          nodes.find{ |n| n.node == prev_instance.host_node }
         else
           candidates = self.sort_candidates(nodes, grid_service, instance_number)
           candidates.first

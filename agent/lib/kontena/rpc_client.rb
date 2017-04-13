@@ -30,6 +30,10 @@ module Kontena
       info 'initialized'
     end
 
+    def connected?
+      @client.connected?
+    end
+
     # @param [String] method
     # @param [Array] params
     def notification(method, params)
@@ -48,7 +52,7 @@ module Kontena
       id = request_id
       @requests[id] = nil
 
-      if !wait_until("websocket client is connected", timeout: timeout, interval: 0.1) { @client.connected? }
+      if !wait_until("websocket client is connected", timeout: timeout, threshold: 10.0, interval: 0.1) { @client.connected? }
         return nil, TimeoutError.new(500, 'WebsocketClient is not connected')
       end
 

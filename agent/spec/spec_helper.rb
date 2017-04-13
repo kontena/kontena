@@ -74,6 +74,11 @@ RSpec.configure do |config|
     end
   end
 
+  config.around :each do |ex|
+    Timeout.timeout(5.0) do
+      ex.run
+    end
+  end
 
 # The settings below are suggested to provide a good initial experience
 # with RSpec, but feel free to customize to your heart's content.

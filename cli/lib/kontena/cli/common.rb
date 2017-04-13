@@ -3,8 +3,8 @@ require 'pastel'
 require 'uri'
 require 'io/console'
 
-require_relative 'config'
-require_relative 'spinner'
+require 'kontena/cli/config'
+require 'kontena/cli/spinner'
 
 module Kontena
   module Cli

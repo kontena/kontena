@@ -60,10 +60,15 @@ class StackDeployWorker
     }
 
     service_deploy.reload
+
+    raise "service #{service.to_path} deploy failed: #{service_deploy.reason}" if service_deploy.error?
+
+    service_deploy
   end
 
   # @param [Stack] stack
   # @param [StackRevision] stack_rev
+  # @raise [RuntimeError]
   def remove_services(stack, stack_rev)
     removed_services = []
     stack.grid_services.each do |s|
@@ -72,8 +77,10 @@ class StackDeployWorker
       end
     end
     info "removing following services: #{removed_services.map{ |s| s.name}.join(', ')}"
-    removed_services.each do |s|
-      s.destroy
+    removed_services.each do |service|
+      outcome = GridServices::Delete.run(grid_service: service)
+
+      raise "service #{service.to_path} remove failed: #{outcome.errors.message}" unless outcome.success?
     end
   end
 end

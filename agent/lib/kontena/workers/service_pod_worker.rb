@@ -7,24 +7,49 @@ require_relative '../helpers/event_log_helper'
 module Kontena::Workers
   class ServicePodWorker
     include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::ServicePods::Common
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::EventLogHelper
 
     attr_reader :node, :prev_state, :service_pod
-    attr_accessor :service_pod
+    attr_accessor :service_pod, :container_state_changed
 
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
       @prev_state = nil # sync'd to master
+      @container_state_changed = true
+      subscribe('container:event', :on_container_event)
     end
 
     # @param [Kontena::Models::ServicePod] service_pod
     def update(service_pod)
-      @service_pod = service_pod
-      apply
+      if needs_apply?(service_pod)
+        @service_pod = service_pod
+        apply
+      else
+        @service_pod = service_pod
+      end
+    end
+
+    # @param [Kontena::Models::ServicePod] service_pod
+    # @return [Boolean]
+    def needs_apply?(service_pod)
+      @container_state_changed ||
+        @service_pod.desired_state != service_pod.desired_state ||
+          @service_pod.deploy_rev != service_pod.deploy_rev
+    end
+
+    # @param [String] topic
+    # @param [Docker::Event] e
+    def on_container_event(topic, e)
+      attrs = e.actor.attributes
+      if attrs['io.kontena.service.id'] == @service_pod.service_id &&
+          attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number
+        @container_state_changed = true
+      end
     end
 
     def destroy
@@ -37,9 +62,10 @@ module Kontena::Workers
         begin
           ensure_desired_state
         rescue => error
-          warn "failed to sync #{service_pod.name}: #{error}"
+          warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           sync_state_to_master(current_state, error)
         else
+          @container_state_changed = false
           sync_state_to_master(current_state)
 
           # Only terminate this actor after we have succesfully ensure_terminated the Docker container

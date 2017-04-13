@@ -7,6 +7,9 @@ module Mongodb
     include Logging
     include DistributedLocks
 
+    LOCK_NAME = 'mongodb_migrate'.freeze
+    LOCK_TIMEOUT = 60
+
     MigratorError = Class.new(StandardError)
 
     class DuplicateMigrationNameError < MigratorError
@@ -64,8 +67,15 @@ module Mongodb
 
     def migrate
       ensure_indexes
-      with_dlock('mongodb_migrate', 60) do
+      release_stale_lock
+      with_dlock(LOCK_NAME, LOCK_TIMEOUT) do
         migrate_without_lock
+      end
+    end
+
+    def release_stale_lock
+      if DistributedLock.where(:name =>  LOCK_NAME, :created_at.lt => (LOCK_TIMEOUT * 3).seconds.ago).delete > 0
+        info "released stale distributed lock"
       end
     end
 
@@ -75,6 +85,7 @@ module Mongodb
           info "migrating #{migration.name}"
           migration.migrate(:up)
           save_migration_version(migration)
+          info "migrated #{migration.name}"
         end
       end
     end

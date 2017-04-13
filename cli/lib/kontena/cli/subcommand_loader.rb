@@ -1,3 +1,4 @@
+require 'kontena_cli'
 module Kontena::Cli
   class SubcommandLoader
     attr_reader :path

@@ -1,4 +1,3 @@
-require 'kontena/cli/grid_options'
 require "kontena/cli/containers/logs_command"
 
 describe Kontena::Cli::Containers::LogsCommand do

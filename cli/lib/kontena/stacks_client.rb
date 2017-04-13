@@ -1,4 +1,4 @@
-require_relative 'client'
+require 'kontena/client'
 
 module Kontena
   class StacksClient < Client

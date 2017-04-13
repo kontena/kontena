@@ -9,4 +9,16 @@ describe GridServiceInstance do
 
   it { should have_index_for(grid_service_id: 1) }
   it { should have_index_for(host_node_id: 1) }
+
+  describe '.has_node' do
+    let(:grid) { Grid.create!(name: 'test') }
+    let(:node) { HostNode.create(node_id: 'a', name: 'a')}
+
+    it 'returns only instances with a host_node' do
+      described_class.create!(instance_number: 1, host_node: node)
+      described_class.create!(instance_number: 2)
+
+      expect(described_class.has_node.count).to eq(1)
+    end
+  end
 end

@@ -1,4 +1,4 @@
-describe Kontena::Workers::Volumes::VolumeManager do
+describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
@@ -11,12 +11,9 @@ describe Kontena::Workers::Volumes::VolumeManager do
   end
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
     allow(subject.wrapped_object).to receive(:node).and_return(node)
   end
-
-  after(:each) { Celluloid.shutdown }
 
   describe '#initialize' do
     it 'starts to listen volume:update events' do
@@ -75,7 +72,8 @@ describe Kontena::Workers::Volumes::VolumeManager do
     end
 
     it 'does not create a volume if it already exists' do
-      expect(Docker::Volume).to receive(:get).with('foo').and_return(double)
+      expect(subject.wrapped_object).to receive(:volume_exist?).with('foo', 'local').and_return(true)
+      expect(Docker::Volume).not_to receive(:create)
       subject.ensure_volume(volume)
     end
 
@@ -88,6 +86,24 @@ describe Kontena::Workers::Volumes::VolumeManager do
       }).and_return(double)
       expect(subject.wrapped_object).to receive(:sync_volume_to_master)
       subject.ensure_volume(volume)
+    end
+
+    it 'does not crash actor if random failure from docker' do
+      expect(subject.wrapped_object).to receive(:volume_exist?).with('foo', 'local').and_return(false)
+      expect(Docker::Volume).to receive(:create).and_raise(StandardError)
+      expect(subject.wrapped_object).not_to receive(:sync_volume_to_master)
+      subject.ensure_volume(volume)
+      # The actor should be still alive
+      expect(subject.alive?).to eq(true)
+    end
+
+    it 'does not crash actor from possible abort in volume_exists?' do
+      # This will cause the Celluloid::abort to happen
+      expect(Docker::Volume).to receive(:get).and_raise(StandardError)
+      expect(subject.wrapped_object).not_to receive(:sync_volume_to_master)
+      subject.ensure_volume(volume)
+      # The actor should be still alive
+      expect(subject.alive?).to eq(true)
     end
 
   end
@@ -108,13 +124,20 @@ describe Kontena::Workers::Volumes::VolumeManager do
 
   describe '#volume_exist?' do
     it 'return true if volume exists' do
-      expect(Docker::Volume).to receive(:get).with('foo').and_return(double)
-      expect(subject.volume_exist?('foo')).to be_truthy
+      expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'local'}))
+      expect(subject.volume_exist?('foo', 'local')).to be_truthy
     end
 
     it 'return false if volume not exists' do
       expect(Docker::Volume).to receive(:get).with('foo').and_raise(Docker::Error::NotFoundError)
-      expect(subject.volume_exist?('foo')).to be_falsey
+      expect(subject.volume_exist?('foo', 'local')).to be_falsey
+    end
+
+    it 'raises if volume drivers do not match' do
+      expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'foo'}))
+      expect {
+        subject.volume_exist?('foo', 'local')
+      }.to raise_error(Kontena::Workers::Volumes::VolumeManager::DriverMismatchError)
     end
 
   end

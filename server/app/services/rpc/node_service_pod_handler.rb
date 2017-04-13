@@ -1,21 +1,38 @@
 module Rpc
   class NodeServicePodHandler
+    include Logging
 
     def initialize(grid)
       @grid = grid
+      @lru_cache = LruRedux::ThreadSafeCache.new(1000)
+    end
+
+    def cached_pod(service_instance)
+      # TODO Do we need any other attrbutes for the composed key?
+      cache_key = {
+        id: service_instance.id,
+        deploy_rev: service_instance.deploy_rev,
+        desired_state: service_instance.desired_state
+      }
+      @lru_cache.getset(cache_key) {
+        debug "pod_cache miss"
+        ServicePodSerializer.new(service_instance).to_hash if service_instance.grid_service
+      }
     end
 
     # @param [String] id
     # @return [Array<Hash>]
     def list(id)
+      start = Time.now.to_f
       node = @grid.host_nodes.find_by(node_id: id)
       raise 'Node not found' unless node
       raise 'Migration not done' unless migration_done?
 
       service_pods = node.grid_service_instances.includes(:grid_service).map { |i|
-        ServicePodSerializer.new(i).to_hash if i.grid_service
+        cached_pod(i)
       }.compact
-
+      end_time = Time.now.to_f
+      debug "pod list rpc took: #{((end_time-start) * 1000).to_i}ms"
       { service_pods: service_pods }
     end
 

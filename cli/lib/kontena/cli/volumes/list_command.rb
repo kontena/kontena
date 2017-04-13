@@ -9,12 +9,13 @@ module Kontena::Cli::Volumes
     requires_current_master_token
 
     def execute
+      require 'tty-table'
+      
       volumes = client.get("volumes/#{current_grid}")['volumes']
-      columns = '%-25.25s %-25.25s %-25.25s %-25.25s'
-      puts columns % ['NAME', 'SCOPE', 'DRIVER', 'CREATED AT']
-      volumes.each do |volume|
-        puts columns % [volume['name'], volume['scope'], volume['driver'], volume['created_at']]
-      end
+      table = TTY::Table.new ['NAME', 'SCOPE', 'DRIVER', 'CREATED AT'], volumes.map { |volume|
+        [volume['name'], volume['scope'], volume['driver'], volume['created_at']]
+      }
+      puts table.render(:basic)
     end
 
   end

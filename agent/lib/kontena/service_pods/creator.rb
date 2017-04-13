@@ -64,7 +64,7 @@ module Kontena
           Celluloid::Notifications.publish('lb:remove_config', service_container.service_name_for_lb)
         end
 
-        service_container.start
+        service_container.start!
         info "service started: #{service_pod.name_for_humans}"
         log_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance started")
 
@@ -149,7 +149,7 @@ module Kontena
         volume_manager = Celluloid::Actor[:volume_manager]
         service_pod.volumes.each do |volume|
           if volume['name']
-            return false unless volume_manager.volume_exist?(volume['name'])
+            return false unless volume_manager.volume_exist?(volume['name'], volume['driver'])
           end
         end
         true

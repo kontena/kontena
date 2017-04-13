@@ -24,8 +24,9 @@ module Kontena::Workers
       @workers = {}
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
       subscribe('container:event', :on_container_event)
-      subscribe('websocket:connected', :on_connect)
+      subscribe('websocket:connected', :on_connect) # from master_info RPC
       subscribe('websocket:disconnect', :on_disconnect)
+      subscribe('websocket:close', :on_disconnect)
       info 'initialized'
 
       async.start if autostart

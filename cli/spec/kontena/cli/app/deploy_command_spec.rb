@@ -1,4 +1,3 @@
-require 'kontena/cli/grid_options'
 require "kontena/cli/apps/deploy_command"
 
 describe Kontena::Cli::Apps::DeployCommand do
