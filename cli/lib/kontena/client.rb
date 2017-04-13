@@ -6,12 +6,9 @@ require 'socket'
 require 'openssl'
 require 'uri'
 require 'time'
-require_relative 'errors'
-require_relative 'cli/version'
-begin
-  require_relative 'cli/config'
-rescue LoadError
-end
+require 'kontena/errors'
+require 'kontena/cli/version'
+require 'kontena/cli/config'
 
 module Kontena
   class Client
@@ -61,7 +58,7 @@ module Kontena
         ssl_verify_peer: ignore_ssl_errors? ? false : true
       }
       if ENV["DEBUG"]
-        require_relative 'debug_instrumentor'
+        require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end
 

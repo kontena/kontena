@@ -1,10 +1,4 @@
-require 'clamp'
-require_relative 'cli/common'
-require_relative 'util'
-require_relative 'command'
-require_relative 'callback'
-require_relative 'cli/bytes_helper'
-require_relative 'cli/grid_options'
+require 'kontena/command'
 
 class Kontena::MainCommand < Kontena::Command
   include Kontena::Util

@@ -1,4 +1,3 @@
-require 'kontena/cli/grid_options'
 require "kontena/cli/apps/logs_command"
 
 describe Kontena::Cli::Apps::LogsCommand do
