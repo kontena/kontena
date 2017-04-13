@@ -18,7 +18,7 @@ describe GridScheduler do
 
   describe '#should_reschedule_service?' do
     before(:each) { nodes }
-    
+
     it 'returns false to stateful service' do
       service.set(stateful: true, state: 'running')
       expect(subject.should_reschedule_service?(service)).to be_falsey
@@ -117,6 +117,34 @@ describe GridScheduler do
             deploy_rev: Time.now.to_s
           )
         end
+        expect(subject.all_instances_exist?(service)).to be_truthy
+      end
+    end
+
+    context 'some nodes are missing' do
+      it 'returns false if node is missing' do
+        2.times do |i|
+          service.grid_service_instances.create!(
+            host_node: nodes[i],
+            instance_number: i + 1,
+            deploy_rev: Time.now.to_s
+          )
+        end
+        nodes[1].destroy
+
+        expect(subject.all_instances_exist?(service)).to be_falsey
+      end
+
+      it 'returns true if node is missing outside scheduled nodes' do
+        2.times do |i|
+          service.grid_service_instances.create!(
+            host_node: nodes[i],
+            instance_number: i + 1,
+            deploy_rev: Time.now.to_s
+          )
+        end
+        nodes[2].destroy
+
         expect(subject.all_instances_exist?(service)).to be_truthy
       end
     end

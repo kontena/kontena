@@ -20,4 +20,8 @@ class GridServiceInstance
 
   index({ grid_service_id: 1 })
   index({ host_node_id: 1 })
+
+  def self.has_node
+    where(:host_node_id.ne => nil)
+  end
 end
