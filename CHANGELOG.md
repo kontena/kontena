@@ -100,6 +100,16 @@ TODO: something to link to here
 
     Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
 
+### Fixed issues
+
+* After weave upgrade, service aliases are missing from DNS #2079
+* Agent should check that volume driver match before reusing it #2089
+* Stack upgrade can remove linked-to services, breaking linking services #1769
+* Cli: kontena volume ls cuts long volume names #2083
+* Stack deploy and service deploy error states are broken #2127
+* Stateful service with daemon strategy behaviour is broken #2133
+* Re-creating indexes in migrations may timeout puma worker boot #2120
+
 ### Changes
 
 * Do not log entire yield value from wait_helper (#2124)
