@@ -28,6 +28,8 @@ class GridServiceInstanceDeployer
     ensure_volume_instance
     ensure_service_instance(deploy_rev)
 
+
+
   rescue => error
     warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
     log_service_event("Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}", EventLog::ERROR)
@@ -48,7 +50,7 @@ class GridServiceInstanceDeployer
       service_instance = create_service_instance
     elsif service_instance.host_node.nil?
       # host node was removed
-      warn "Replacing orphaned service #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node"
+      warn "Replacing orphaned service instance #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node"
       log_service_event("Replacing orphaned service #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node", EventLog::WARN)
     elsif service_instance.host_node != @host_node
       # we need to stop instance if it's running on different node
@@ -99,6 +101,10 @@ class GridServiceInstanceDeployer
       desired_state: desired_state,
       rev: nil, # reset
     )
+
+    # Store the pod
+    pod_hash = JSON.generate(Rpc::ServicePodSerializer.new(service_instance).to_hash)
+    service_instance.set(pod_hash: pod_hash)
 
     notify_node(node)
 

@@ -1,5 +1,6 @@
 module Rpc
   class NodeServicePodHandler
+    include Logging
 
     def initialize(grid)
       @grid = grid
@@ -11,11 +12,20 @@ module Rpc
       node = @grid.host_nodes.find_by(node_id: id)
       raise 'Node not found' unless node
       raise 'Migration not done' unless migration_done?
-
+      start = Time.now.to_f
       service_pods = node.grid_service_instances.includes(:grid_service).map { |i|
-        ServicePodSerializer.new(i).to_hash if i.grid_service
-      }.compact
+        pod = nil
+        if i.pod_hash
+          pod = JSON.parse(i.pod_hash)
+        else
+          pod = ServicePodSerializer.new(i).to_hash if i.grid_service
+        end
+        pod[:desired_state] = i.desired_state
 
+        pod
+      }.compact
+      end_time = Time.now.to_f
+      info "********* pod rpc took: #{ ((end_time - start) * 1000).to_i}ms"
       { service_pods: service_pods }
     end
 

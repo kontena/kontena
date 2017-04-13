@@ -13,6 +13,10 @@ class GridServiceInstance
   field :state, type: String, default: 'initialized'.freeze
   field :error, type: String
 
+  # Pre-generated pod hash
+  field :pod_hash, type: String
+
+
   validates_uniqueness_of :instance_number, scope: [:grid_service_id]
 
   belongs_to :grid_service
@@ -20,4 +24,6 @@ class GridServiceInstance
 
   index({ grid_service_id: 1 })
   index({ host_node_id: 1 })
+
+
 end
