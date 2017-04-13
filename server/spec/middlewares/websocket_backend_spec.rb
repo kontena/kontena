@@ -1,15 +1,8 @@
 require_relative '../../app/middlewares/websocket_backend'
 
-describe WebsocketBackend, celluloid: true do
+describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
-
-  around(:each) do |example|
-    EM.run {
-      example.run
-      EM.stop
-    }
-  end
 
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')
@@ -75,8 +68,15 @@ describe WebsocketBackend, celluloid: true do
   end
 
   describe '#on_pong' do
+    let(:logger) { instance_double(Logger) }
+    before do
+      allow(subject).to receive(:logger).and_return(logger)
+      allow(logger).to receive(:debug)
+    end
+
+    let(:client_ws) { instance_double(Faye::WebSocket) }
     let(:client) do
-      { id: 'node_id', ws: spy(:ws) }
+      { id: 'aa', ws: client_ws }
     end
 
     let(:grid) do
@@ -87,24 +87,42 @@ describe WebsocketBackend, celluloid: true do
       HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid)
     end
 
-    it 'calls on_close if client is not found' do
-      expect(subject).to receive(:on_close).with(client[:ws])
-      subject.on_pong(client)
+    it 'closes the websocket if client is not found' do
+      client[:id] = 'bb'
+      expect(subject.logger).to receive(:warn).with('Close connection of missing node bb')
+      expect(client_ws).to receive(:close)
+      expect(subject).to receive(:unplug_client).with(client)
+
+      subject.on_pong(client, 0.1)
     end
 
     it 'closes connection if node is not marked as connected' do
-      expect(subject).to receive(:on_close).with(client[:ws])
-      client[:id] = node.node_id
-      subject.on_pong(client)
+      node.set(connected: false)
+      expect(subject.logger).to receive(:warn).with('Close connection of disconnected node test-node')
+      expect(client_ws).to receive(:close)
+      expect(subject).to receive(:unplug_client).with(client)
+
+      subject.on_pong(client, 0.1)
     end
 
     it 'updates node last_seen_at if node is marked as connected' do
+      expect(subject.logger).to_not receive(:warn)
+
       node.set(connected: true)
-      expect(subject).not_to receive(:on_close)
-      client[:id] = node.node_id
+      expect(client_ws).not_to receive(:close)
+
       expect {
-        subject.on_pong(client)
+        subject.on_pong(client, 0.1)
       }.to change { node.reload.last_seen_at }
+    end
+
+    it 'logs a warning if ping delay is over threshold' do
+      node.set(connected: true)
+
+      expect(subject.logger).to receive(:warn).with('keepalive ping 3.00s of 5.00s timeout from client aa')
+      expect(client_ws).not_to receive(:close)
+
+      subject.on_pong(client, 3.0)
     end
   end
 end

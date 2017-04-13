@@ -38,7 +38,7 @@ describe NodeCleanupJob, celluloid: true do
 
   describe '#cleanup_stale_connections' do
     let(:node) do
-      HostNode.create!(name: "node-1", grid: grid, connected: false, last_seen_at: 2.hours.ago)
+      HostNode.create!(name: "node-1", grid: grid, connected: true, last_seen_at: 2.hours.ago)
     end
 
     let(:service) do

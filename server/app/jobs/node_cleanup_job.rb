@@ -25,7 +25,8 @@ class NodeCleanupJob
   end
 
   def cleanup_stale_connections
-    HostNode.where(:last_seen_at.lt => NODE_DISCONNECT_TIMEOUT.ago).each do |node|
+    HostNode.where(:connected => true, :last_seen_at.lt => NODE_DISCONNECT_TIMEOUT.ago).each do |node|
+      warn "Disconnecting stale node #{node.to_path}"
       node.set(connected: false)
       deleted_at = Time.now.utc
       node.containers.each do |c|
