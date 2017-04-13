@@ -47,6 +47,7 @@ class ContainerStat
           day: { '$dayOfMonth': '$created_at' },
           hour: { '$hour': '$created_at' },
           minute: { '$minute': '$created_at' },
+          host_node_id: '$host_node_id',
           container_id: '$container_id'
         },
         created_at: { '$first': '$created_at' },
@@ -80,8 +81,13 @@ class ContainerStat
         },
         created_at: { '$first': '$created_at' },
 
-        cpu_mask: { '$first': '$cpu_mask' },
-        cpu_percent_used: { '$avg': '$cpu_percent_used' },
+        cpu: {
+          '$push': {
+            host_node_id: '$_id.host_node_id',
+            mask: '$cpu_mask',
+            percent_used: '$cpu_percent_used',
+          }
+        },
 
         memory_used: { '$sum': '$memory_used' },
         memory_total: { '$sum': '$memory_total' },
@@ -105,10 +111,7 @@ class ContainerStat
       '$project': {
         _id: 0,
         timestamp: '$_id',
-        cpu: {
-          mask: '$cpu_mask',
-          percent_used: '$cpu_percent_used'
-        },
+        cpu: '$cpu',
         memory: {
           used: '$memory_used',
           total: '$memory_total'
@@ -132,9 +135,16 @@ class ContainerStat
       }
     }
     ]).map do |stat|
-      # convert CPU mask to num_cores
-      stat["cpu"]["num_cores"] = calculate_num_cores(stat["cpu"]["mask"])
-      stat["cpu"].delete("mask")
+      stat["cpu"] = stat["cpu"]
+        .group_by { |x|
+          x["host_node_id"]
+        }
+        .inject({ "num_cores" => 0, "percent_used" => 0.0 }) { |result, x|
+            values = x[1]
+            result["num_cores"] += calculate_num_cores(values.first["mask"])
+            result["percent_used"] += values.map { |v| v["percent_used"] }.inject(0.0, :+)
+            result
+        }
       stat
     end
   end
