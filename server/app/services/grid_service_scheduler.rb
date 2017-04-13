@@ -36,7 +36,7 @@ class GridServiceScheduler
   ##
   # @param [GridService] grid_service
   # @param [Integer] instance_number
-  # @param [Array<HostNode>] nodes
+  # @param [Array<Scheduler::Node>] nodes
   # @raise [Scheduler::Error]
   # @return HostNode
   def select_node(grid_service, instance_number, nodes)
@@ -53,7 +53,7 @@ class GridServiceScheduler
       raise Scheduler::Error, "Strategy #{self.strategy.class.to_s} did not find any node"
     end
 
-    node = nodes.find{|n| n == selected_node}
+    node = nodes.find{ |n| n == selected_node }
     node.schedule_counter += 1
 
     selected_node
@@ -62,7 +62,7 @@ class GridServiceScheduler
   ##
   # @param [GridService] grid_service
   # @param [Integer] instance_number
-  # @param [Array<HostNode>]
+  # @param [Array<Scheduler::Node>]
   # @raise [Scheduler::Error]
   # @return [Array<HostNode>]
   def filter_nodes(grid_service, instance_number, nodes)

@@ -18,7 +18,7 @@ describe Scheduler::Strategy::HighAvailability do
         )
       end
     end
-    nodes
+    nodes.map { |n| Scheduler::Node.new(n) }
   end
 
   let(:stateful_service) do
@@ -40,7 +40,7 @@ describe Scheduler::Strategy::HighAvailability do
 
       it 'returns node that has data volume container' do
         stateful_service.grid_service_instances.create!(
-          instance_number: 3, host_node: nodes[2]
+          instance_number: 3, host_node: nodes[2].node
         )
         expect(subject.find_node(stateful_service, 3, nodes)).to eq(nodes[2])
       end
@@ -69,14 +69,14 @@ describe Scheduler::Strategy::HighAvailability do
 
     it 'returns zero rank if instance is not already scheduled to node' do
       stateless_service.grid_service_instances.create!(
-        instance_number: 2, host_node: nodes[2]
+        instance_number: 2, host_node: nodes[2].node
       )
       expect(subject.instance_rank(node, stateless_service, 1)).to eq(0.0)
     end
 
     it 'returns negative rank if instance is already scheduled to node' do
       stateless_service.grid_service_instances.create!(
-        instance_number: 2, host_node: node
+        instance_number: 2, host_node: node.node
       )
       expect(subject.instance_rank(node, stateless_service, 2) < 0.0).to be_truthy
     end

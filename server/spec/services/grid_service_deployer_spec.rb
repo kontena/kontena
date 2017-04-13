@@ -137,9 +137,6 @@ describe GridServiceDeployer do
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
 
-              $stderr.puts "deploy 1: success"
-
-
               grid_service_deploy.grid_service_instance_deploys.create(
                 instance_number: instance_number,
                 host_node: grid.host_nodes.first,
@@ -150,8 +147,6 @@ describe GridServiceDeployer do
           expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 2, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
             deploy_futures << Celluloid::Future.new {
               sleep 0.01
-
-              $stderr.puts "deploy 2: error"
 
               grid_service_deploy.grid_service_instance_deploys.create(
                 instance_number: instance_number,

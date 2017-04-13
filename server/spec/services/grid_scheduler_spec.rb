@@ -4,9 +4,9 @@ describe GridScheduler do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:nodes) do
     nodes = []
-    3.times {
+    3.times { |i|
       nodes << HostNode.create!(
-        node_id: SecureRandom.uuid, grid: grid, connected: true
+        name: "node-#{i + 1}", node_id: SecureRandom.uuid, grid: grid, connected: true
       )
     }
     nodes
@@ -83,15 +83,41 @@ describe GridScheduler do
         nodes[1].set(connected: false)
       end
 
-      it 'returns true if all instances exist' do
+      let(:strategy) { Scheduler::Strategy::HighAvailability.new }
+
+      it 'returns false if node is offline and not seen' do
         2.times do |i|
           service.grid_service_instances.create!(
             host_node: nodes[i],
-            instance_number: i,
+            instance_number: i + 1,
             deploy_rev: Time.now.to_s
           )
         end
         expect(subject.all_instances_exist?(service)).to be_falsey
+      end
+
+      it 'returns false if node is offline and outside grace period' do
+        nodes[1].set(connected: false, last_seen_at: (strategy.host_grace_period + 2.seconds).ago)
+        2.times do |i|
+          service.grid_service_instances.create!(
+            host_node: nodes[i],
+            instance_number: i + 1,
+            deploy_rev: Time.now.to_s
+          )
+        end
+        expect(subject.all_instances_exist?(service)).to be_falsey
+      end
+
+      it 'returns true if node is offline and within grace period' do
+        nodes[1].set(connected: false, last_seen_at: (10.seconds).ago)
+        2.times do |i|
+          service.grid_service_instances.create!(
+            host_node: nodes[i],
+            instance_number: i + 1,
+            deploy_rev: Time.now.to_s
+          )
+        end
+        expect(subject.all_instances_exist?(service)).to be_truthy
       end
     end
   end
