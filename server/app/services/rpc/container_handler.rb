@@ -37,10 +37,10 @@ module Rpc
     def cleanup(node_id, ids)
       node = @grid.host_nodes.find_by(node_id: node_id)
       if node
-        @grid.containers.where(
+        @grid.containers.unscoped.where(
           :host_node_id => node.id,
           :container_id.in => ids
-        ).delete
+        ).destroy
       end
     end
 
