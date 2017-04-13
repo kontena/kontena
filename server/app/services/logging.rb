@@ -6,6 +6,7 @@ module Logging
     @logger = Logger.new(log_target)
     @logger.progname = 'API'
     @logger.level = ENV["DEBUG"] ? Logger::DEBUG : log_level
+    @logger
   end
 
   def self.logger
