@@ -32,6 +32,18 @@ module Rpc
       {}
     end
 
+    # @param [String] node_id
+    # @param [Array<String>] ids
+    def cleanup(node_id, ids)
+      node = @grid.host_nodes.find_by(node_id: node_id)
+      if node
+        @grid.containers.unscoped.where(
+          :host_node_id => node.id,
+          :container_id.in => ids
+        ).destroy
+      end
+    end
+
     # @param [Hash] data
     def log(data)
       container = cached_container(data['id'])

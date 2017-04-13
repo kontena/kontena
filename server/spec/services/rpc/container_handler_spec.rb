@@ -52,6 +52,19 @@ describe Rpc::ContainerHandler do
     end
   end
 
+  describe '#cleanup' do
+    it 'removes given containers ids' do
+      node = grid.host_nodes.create!(node_id: 'aa', name: 'node-1')
+      containers = []
+      containers << grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', host_node: node)
+      containers << grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-2', host_node: node)
+
+      expect {
+        subject.cleanup(node.node_id, [containers[0].container_id])
+      }.to change { grid.containers.count }.by(-1)
+    end
+  end
+
   describe '#log' do
     it 'creates new container log entry if container exists' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
