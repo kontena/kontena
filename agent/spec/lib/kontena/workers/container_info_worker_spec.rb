@@ -35,32 +35,11 @@ describe Kontena::Workers::ContainerInfoWorker, celluloid: true do
     before(:each) do
       allow(coroner).to receive(:start)
       allow(subject.wrapped_object).to receive(:publish_all_containers)
-      allow(subject.wrapped_object).to receive(:container_coroner).and_return(coroner)
     end
 
     it 'calls #publish_all_containers' do
       expect(subject.wrapped_object).to receive(:publish_all_containers)
       subject.on_websocket_connected('websocket:connected', nil)
-    end
-
-    it 'starts coroner' do
-      expect(coroner).to receive(:start)
-      subject.on_websocket_connected('websocket:connected', nil)
-    end
-  end
-
-  describe '#on_websocket_disconnect' do
-    let(:coroner) do
-      double(:coroner)
-    end
-
-    before(:each) do
-      allow(subject.wrapped_object).to receive(:container_coroner).and_return(coroner)
-    end
-
-    it 'stops coroner' do
-      expect(coroner).to receive(:stop)
-      subject.on_websocket_disconnect('websocket:disconnect', nil)
     end
   end
 

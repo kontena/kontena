@@ -7,14 +7,15 @@ module Kontena::Actors
     INVESTIGATION_PERIOD = 20
 
     # @param [String] node_id
-    def initialize(node_id)
+    # @param [Boolean] autostart
+    def initialize(node_id, autostart = true)
       @node_id = node_id
-      @processing = false
+      async.process if autostart
     end
 
     def process
       prev = nil
-      while @processing do
+      loop do
         ids = all_containers.map { |c| c.id }
         if prev
           diff = prev - ids
@@ -39,23 +40,6 @@ module Kontena::Actors
     # @return [Array<Docker::Container>]
     def all_containers
       Docker::Container.all(all: true)
-    end
-
-    def start
-      return if @processing
-
-      @processing = true
-      async.process
-    end
-
-    def stop
-      return unless @processing
-
-      @processing = false
-    end
-
-    def processing?
-      @processing == true
     end
   end
 end

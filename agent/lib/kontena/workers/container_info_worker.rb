@@ -14,10 +14,9 @@ module Kontena::Workers
       subscribe('container:event', :on_container_event)
       subscribe('container:publish_info', :on_container_publish_info)
       subscribe('websocket:connected', :on_websocket_connected)
-      subscribe('websocket:disconnect', :on_websocket_disconnect)
       info 'initialized'
-      @container_coroner = Kontena::Actors::ContainerCoroner.new(self.node_info['ID'])
-      async.start if @autostart
+      @container_coroner = Kontena::Actors::ContainerCoroner.new(self.node_info['ID'], autostart)
+      async.start if autostart
     end
 
     def start
@@ -59,11 +58,6 @@ module Kontena::Workers
 
     def on_websocket_connected(topic, data)
       publish_all_containers
-      container_coroner.start
-    end
-
-    def on_websocket_disconnect(topic, data)
-      container_coroner.stop
     end
 
     ##
