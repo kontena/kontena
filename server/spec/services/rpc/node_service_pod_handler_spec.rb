@@ -106,4 +106,24 @@ describe Rpc::NodeServicePodHandler do
       expect(subject.migration_done?).to be_falsey
     end
   end
+
+  describe '#cached_pod' do
+    it 'transforms the service instance into pod if not already in cache' do
+      service_instance = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: double})
+      expect(Rpc::ServicePodSerializer).to receive(:new).once.and_return(double(:to_hash => {}))
+      subject.cached_pod(service_instance)
+      subject.cached_pod(service_instance)
+    end
+
+    it 'uses instance id, deploy_rev and desired_state as cache key' do
+      service_instance_1 = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: double})
+      expect(Rpc::ServicePodSerializer).to receive(:new).twice.and_return(double(:to_hash => {}))
+
+      subject.cached_pod(service_instance_1)
+
+      service_instance_2 = double({id: 'foo', deploy_rev: '12345', desired_state: 'stopped', grid_service: double})
+      subject.cached_pod(service_instance_2)
+    end
+
+  end
 end

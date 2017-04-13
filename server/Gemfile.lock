@@ -75,6 +75,7 @@ GEM
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
+    lru_redux (1.1.0)
     minitest (5.9.0)
     mongoid (4.0.2)
       activemodel (~> 4.0)
@@ -168,6 +169,7 @@ DEPENDENCIES
   json-jwt (= 1.5.2)
   json-serializer
   jsonpath
+  lru_redux (~> 1.1.0)
   mongoid (~> 4.0.0)
   mongoid-enum
   mongoid-rspec (~> 2.2.0)
