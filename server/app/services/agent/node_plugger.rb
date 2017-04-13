@@ -16,7 +16,7 @@ module Agent
 
     # @return [Celluloid::Future]
     def plugin!
-      info "connect node #{node.name || node_id}"
+      info "connect node #{node.name || node.node_id}"
 
       begin
         prev_seen_at = node.last_seen_at
