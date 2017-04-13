@@ -86,11 +86,26 @@ class Helper
     []
   end
 
+  def subcommand_tree(cmd = nil, base = nil)
+    puts "#{cmd} ".strip
+    if base.has_subcommands?
+      base.recognised_subcommands.each do |sc|
+        subcommand_tree("#{cmd} #{sc.names.first}", sc.subcommand_class)
+      end
+    end
+  end
 end
 
 helper = Helper.new
 
 words = ARGV
+
+if words.first == '--subcommand-tree'
+  require 'kontena/main_command'
+  helper.subcommand_tree("kontena", Kontena::MainCommand)
+  exit 0
+end
+
 words.delete_at(0)
 
 completion = []
