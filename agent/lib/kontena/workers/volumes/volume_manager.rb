@@ -24,7 +24,7 @@ module Kontena::Workers::Volumes
       observe(Actor[:node_info_worker]) do |node|
         @node = node
       end
-      wait_until!('waiting for node info', interval: 0.5) { self.node }
+      wait_until!('waiting for node info', interval: 0.5, threshold: 10.0) { self.node }
       populate_volumes_from_docker
       loop do
         populate_volumes_from_master

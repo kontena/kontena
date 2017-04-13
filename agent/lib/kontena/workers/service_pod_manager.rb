@@ -26,7 +26,7 @@ module Kontena::Workers
         @node = node
       end
 
-      wait_until!("have node info", interval: 0.1) { self.node }
+      wait_until!("have node info", interval: 0.1, threshold: 10.0) { self.node }
       populate_workers_from_docker
 
       subscribe('service_pod:update', :on_update_notify)
