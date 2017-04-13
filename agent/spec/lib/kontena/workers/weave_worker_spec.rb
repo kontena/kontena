@@ -13,7 +13,7 @@ describe Kontena::Workers::WeaveWorker do
     allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
 
     # initialize without calling start()
-    allow(network_adapter).to receive(:running?).and_return(false).once
+    allow(network_adapter).to receive(:already_started?).and_return(false).once
     subject
   end
 
