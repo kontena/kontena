@@ -64,8 +64,8 @@ module Kontena
           Celluloid::Notifications.publish('lb:remove_config', service_container.service_name_for_lb)
         end
 
-        out = service_container.start!
-        info "service started: #{service_pod.name_for_humans}: #{out}"
+        service_container.start!
+        info "service started: #{service_pod.name_for_humans}"
         log_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance started")
 
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
