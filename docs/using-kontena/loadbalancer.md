@@ -78,7 +78,7 @@ These environment variables configure the load balancer itself.
 * `STATS_PASSWORD` - The password for accessing Kontena Load Balancer statistics using HTTP Basic authentication. The default username is `stats` and the default password is 'secret'.
 * `SSL_CERTS` - SSL certificates to be used. See more at [SSL Termination](loadbalancer.md#ssl-termination).
 * `KONTENA_LB_SSL_CIPHERS` - SSL Cipher suite used by the loadbalancer when operating in SSL mode. See more at [SSL Ciphers](loadbalancer.md#configuringcustomsslciphers)
-* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file. Note: If you need settings outside the `defaults` section (redirects for example), use this variable in the service, not in the loadbalancer.
+* `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to `defaults` section in the HAProxy configuration file
 
 ### Removing <NOSRV> / BADREQ log entries
 
@@ -243,6 +243,9 @@ These options are defined on the services that are balanced through Kontena Load
 * `KONTENA_LB_COOKIE`: Enables cookie-based session stickiness. With empty value, it defaults to the load balancer-set cookie. Can be customized to use application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)
 
 ## Custom Settings Examples and Use Cases
+
+Note: KONTENA_LB_CUSTOM_SETTINGS in the **loadbalancer** go to `defaults` section, in the **services** is appended to the related backend. 
+This is a important distinction because some settings cannot go to the defaults sections (like redirects) and vice-versa.
 
 Note: In the yaml file when you need multiple lines, use the syntax:
 
