@@ -113,6 +113,10 @@ module Kontena
         as: :event_worker
       )
       @supervisor.supervise(
+        type: Kontena::Workers::NodeStatsWorker,
+        as: :node_stats_worker
+      )
+      @supervisor.supervise(
         type: Kontena::Workers::StatsWorker,
         as: :stats_worker
       )
