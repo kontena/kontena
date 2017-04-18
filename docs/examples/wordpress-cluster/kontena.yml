@@ -1,0 +1,75 @@
+galera-seed:
+  image: jakolehm/galera-mariadb-10.0-xtrabackup:latest
+  stateful: true
+  command: seed
+  secrets:
+    - secret: XTRABACKUP_PASSWORD
+      name: XTRABACKUP_PASSWORD
+      type: env
+    - secret: MYSQL_ROOT_PASSWORD
+      name: MYSQL_ROOT_PASSWORD
+      type: env
+
+galera:
+  image: jakolehm/galera-mariadb-10.0-xtrabackup:latest
+  stateful: true
+  instances: 3
+  command: "node wordpress-cluster-galera-seed-1.kontena.local,wordpress-cluster-galera.kontena.local"
+  secrets:
+    - secret: XTRABACKUP_PASSWORD
+      name: XTRABACKUP_PASSWORD
+      type: env
+  links:
+    - galera-ha
+  environment:
+    - KONTENA_LB_MODE=tcp
+    - KONTENA_LB_BALANCE=roundrobin
+    - KONTENA_LB_INTERNAL_PORT=3306
+    - KONTENA_LB_EXTERNAL_PORT=3306
+
+galera-ha:
+  image: kontena/lb:latest
+  instances: 2
+
+wordpress:
+  image: wordpress:4.1
+  stateful: true
+  instances: 3
+  links:
+    - wordpress-ha
+  secrets:
+    - secret: WORDPRESS_DB_PASSWORD
+      name: WORDPRESS_DB_PASSWORD
+      type: env
+  environment:
+    - KONTENA_LB_MODE=http
+    - KONTENA_LB_BALANCE=source
+    - KONTENA_LB_INTERNAL_PORT=80
+    - WORDPRESS_DB_HOST=%{project}-galera-ha.kontena.local
+    - WORDPRESS_AUTH_KEY=topsecret
+    - WORDPRESS_SECURE_AUTH_KEY=topsecret
+    - WORDPRESS_LOGGED_IN_KEY=topsecret
+    - WORDPRESS_NONCE_KEY=topsecret
+    - WORDPRESS_AUTH_SALT=topsecret
+    - WORDPRESS_SECURE_AUTH_SALT=topsecret
+    - WORDPRESS_LOGGED_IN_SALT=topsecret
+    - WORDPRESS_NONCE_SALT=topsecret
+
+wordpress-btsync:
+  image: jakolehm/btsync:latest
+  volumes_from:
+    - "wordpress-cluster-wordpress-%%s"
+  secrets:
+    - secret: WORDPRESS_BTSYNC_SECRET
+      name: WORDPRESS_BTSYNC_SECRET
+      type: env
+  environment:
+    - SYNC_DIR=/var/www/html/wp-content
+  instances: 3
+  command: "$WORDPRESS_BTSYNC_SECRET"
+
+wordpress-ha:
+  image: kontena/lb:latest
+  instances: 2
+  ports:
+    - 80:80

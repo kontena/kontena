@@ -1,0 +1,32 @@
+seed:
+  image: jakolehm/galera-mariadb-10.0-xtrabackup:latest
+  stateful: true
+  command: seed
+  secrets:
+    - secret: GALERA_XTRABACKUP_PASSWORD
+      name: XTRABACKUP_PASSWORD
+      type: env
+    - secret: GALERA_MYSQL_ROOT_PASSWORD
+      name: MYSQL_ROOT_PASSWORD
+      type: env
+
+node:
+  image: jakolehm/galera-mariadb-10.0-xtrabackup:latest
+  stateful: true
+  instances: 3
+  command: "node %{project}-seed.kontena.local,%{project}-node.kontena.local"
+  secrets:
+    - secret: GALERA_XTRABACKUP_PASSWORD
+      name: XTRABACKUP_PASSWORD
+      type: env
+  environment:
+    - KONTENA_LB_MODE=tcp
+    - KONTENA_LB_BALANCE=leastconn
+    - KONTENA_LB_INTERNAL_PORT=3306
+    - KONTENA_LB_EXTERNAL_PORT=3306
+  links:
+    - lb
+
+lb:
+  image: kontena/lb:latest
+  instances: 2

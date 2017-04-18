@@ -1,0 +1,24 @@
+mongodb:
+  image: mongo:3.2
+  stateful: true
+
+server:
+  image: kontena/parse-server:latest
+  environment:
+    - MONGO_URI=%{project}-mongodb.kontena.local/production
+    - KONTENA_LB_INTERNAL_PORT=8080
+  secrets:
+    - secret: PARSE_MASTER_KEY
+      name: MASTER_KEY
+      type: env
+    - secret: PARSE_FILE_KEY
+      name: FILE_KEY
+      type: env
+  links:
+    - loadbalancer
+
+loadbalancer:
+  image: kontena/lb:latest
+  ports:
+    - 80:80
+    - 443:443

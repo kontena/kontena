@@ -1,0 +1,9 @@
+mongodb:
+  image: mongo:3.0
+
+server:
+  build: .
+  environment:
+    - MONGO_URI=mongodb/dev
+  ports:
+    - 8080:8080

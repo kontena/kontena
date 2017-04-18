@@ -1,0 +1,50 @@
+mongodb:
+  image: mongo:3.2
+  stateful: true
+  command: --replSet kontena --smallfiles
+  instances: 3
+  hooks:
+    post_start:
+      - cmd: sleep 10
+        name: sleep
+        instances: 3
+        oneshot: true
+      - cmd: mongo --eval "printjson(rs.initiate());"
+        name: rs_initiate
+        instances: 3
+        oneshot: true
+      - cmd: mongo --eval "printjson(rs.add('%{project}-mongodb-1'))"
+        name: rs_add2
+        instances: 3
+        oneshot: true
+      - cmd: mongo --eval "printjson(rs.add('%{project}-mongodb-2'))"
+        name: rs_add3
+        instances: 3
+        oneshot: true
+
+server:
+  image: kontena/parse-server:latest
+  instances: 3
+  environment:
+    - MONGO_URI=%{project}-mongodb.kontena.local/production
+    - KONTENA_LB_INTERNAL_PORT=8080
+  secrets:
+    - secret: PARSE_MASTER_KEY
+      name: MASTER_KEY
+      type: env
+    - secret: PARSE_FILE_KEY
+      name: FILE_KEY
+      type: env
+  links:
+    - loadbalancer
+
+loadbalancer:
+  image: kontena/lb:latest
+  instances: 2
+  ports:
+    - 80:80
+    - 443:443
+  secrets:
+    - secret: PARSE_SERVER_CERT
+      name: SSL_CERTS
+      type: env
