@@ -6,8 +6,6 @@ ENV['NO_MONGO_PUBSUB'] = 'true'
 
 require "irb"
 require "irb/completion"
-require "bundler/setup"
-Bundler.require
 require File.expand_path('../../app/boot.rb', __FILE__)
 
 IRB.start
