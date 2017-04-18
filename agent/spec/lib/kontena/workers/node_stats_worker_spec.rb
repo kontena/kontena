@@ -1,6 +1,7 @@
 describe Kontena::Workers::NodeStatsWorker, celluloid: true do
   include RpcClientMocks
 
+  let(:subject) { described_class.new(false) }
   let(:statsd) { double(:statsd) }
   let(:node) do
     Node.new(

@@ -18,7 +18,8 @@ module Kontena::Workers
 
     PUBLISH_INTERVAL = 60
 
-    def initialize
+    # @param [Boolean] autostart
+    def initialize(autostart = true)
       @node = nil
       @statsd = nil
       @stats_since = Time.now
@@ -27,6 +28,7 @@ module Kontena::Workers
       @previous_network = Vmstat.network_interfaces
       subscribe('container:event', :on_container_event)
       info 'initialized'
+      async.start if autostart
     end
 
     def start
