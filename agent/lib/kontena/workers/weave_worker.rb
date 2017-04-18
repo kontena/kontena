@@ -56,7 +56,7 @@ module Kontena::Workers
           warn "skip start event for missing container=#{event.id}"
         end
       elsif event.status == 'restart'
-        if network_adapter.router_image?(event.from)
+        if router_image?(event.from)
           wait_weave_running?
 
           self.start
