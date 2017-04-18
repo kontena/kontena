@@ -22,7 +22,6 @@ module Kontena::Workers
     def initialize(autostart = true)
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
-      subscribe('container:event', :on_container_event)
       info 'initialized'
       async.start if autostart
     end
