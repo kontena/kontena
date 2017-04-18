@@ -27,6 +27,7 @@ describe Kontena::Workers::NodeStatsWorker, celluloid: true do
     allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
     allow(rpc_client).to receive(:request)
     allow(rpc_client).to receive(:notification)
+    allow(rpc_client).to receive(:connected?).and_return(true)
   end
 
   describe '#configure_statsd' do
