@@ -43,7 +43,7 @@ module Kontena::Workers
     def start_publish_loop
       loop do
         sleep PUBLISH_INTERVAL
-        self.publish_node_stats if rpc_client.connected?
+        self.publish_node_stats
       end
     end
 
@@ -116,7 +116,7 @@ module Kontena::Workers
         network: network_traffic,
         time: Time.now.utc.to_s
       }
-      rpc_client.async.notification('/nodes/stats', [data])
+      rpc_client.async.notification('/nodes/stats', [data]) if rpc_client.connected?
       send_statsd_metrics(data)
     end
 
