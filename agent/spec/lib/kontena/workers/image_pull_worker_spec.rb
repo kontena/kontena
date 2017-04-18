@@ -7,6 +7,7 @@ describe Kontena::Workers::ImagePullWorker, celluloid: true do
     it 'pulls docker image' do
       expect(Docker::Image).to receive(:create).once.and_return(true)
       subject.pull_image('redis:latest', 'rev', nil)
+      expect(subject.fresh_pull?('redis:latest:rev')).to be_truthy
     end
 
     it 'aborts if docker image is not found' do
@@ -18,6 +19,7 @@ describe Kontena::Workers::ImagePullWorker, celluloid: true do
         subject.pull_image('redis:latest', 'rev', nil)
       }.to raise_error(Docker::Error::NotFoundError)
       expect(subject.alive?).to be_truthy
+      expect(subject.fresh_pull?('redis:latest:rev')).to be_falsey
     end
   end
 
@@ -27,7 +29,7 @@ describe Kontena::Workers::ImagePullWorker, celluloid: true do
     end
 
     it 'returns true if image is just pulled' do
-      subject.update_image_cache('redis:latest')
+      subject.image_cache['redis:latest'] = Time.now.utc
       expect(subject.fresh_pull?('redis:latest')).to be_truthy
     end
 

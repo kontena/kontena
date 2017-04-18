@@ -28,7 +28,8 @@ module Kontena::Workers
       else
         info "pulling image with credentials: #{image}"
       end
-      update_image_cache("#{image}:#{deploy_rev}")
+      cache_key = "#{image}:#{deploy_rev}"
+      image_cache[cache_key] = Time.now.utc
       retries = 0
       begin
         Docker::Image.create({'fromImage' => image}, creds)
@@ -41,6 +42,7 @@ module Kontena::Workers
           retry
         end
         unless image_exists?(image)
+          image_cache.delete(cache_key)
           abort exc
         else
           info "image pull failed, using local image: #{image}"
@@ -60,11 +62,6 @@ module Kontena::Workers
     def image_exists?(image)
       image = Docker::Image.get(image) rescue nil
       !image.nil?
-    end
-
-    # @param [String] image
-    def update_image_cache(image)
-      image_cache[image] = Time.now.utc
     end
   end
 end
