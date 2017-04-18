@@ -116,7 +116,7 @@ module Kontena::Workers
         network: network_traffic,
         time: Time.now.utc.to_s
       }
-      rpc_client.async.notification('/nodes/stats', [data]) if rpc_client.connected?
+      rpc_client.async.notification('/nodes/stats', [data])
       send_statsd_metrics(data)
     end
 
