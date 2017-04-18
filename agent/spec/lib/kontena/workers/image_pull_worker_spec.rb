@@ -1,9 +1,25 @@
 
-describe Kontena::Workers::ImagePullWorker do
+describe Kontena::Workers::ImagePullWorker, celluloid: true do
 
   let(:subject) { described_class.new }
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+
+  describe '#pull_image' do
+    it 'pulls docker image' do
+      expect(Docker::Image).to receive(:create).once.and_return(true)
+      subject.pull_image('redis:latest', 'rev', nil)
+    end
+
+    it 'aborts if docker image is not found' do
+      allow(subject.wrapped_object).to receive(:sleep).with(0.1).at_least(1).times
+      expect(Docker::Image).to receive(:create).exactly(10).times do
+        raise Docker::Error::NotFoundError.new('not found')
+      end
+      expect {
+        subject.pull_image('redis:latest', 'rev', nil)
+      }.to raise_error(Docker::Error::NotFoundError)
+      expect(subject.alive?).to be_truthy
+    end
+  end
 
   describe '#fresh_pull?' do
     it 'returns false if image has not been pulled' do

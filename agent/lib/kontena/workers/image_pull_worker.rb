@@ -41,7 +41,7 @@ module Kontena::Workers
           retry
         end
         unless image_exists?(image)
-          raise exc
+          abort exc
         else
           info "image pull failed, using local image: #{image}"
         end
