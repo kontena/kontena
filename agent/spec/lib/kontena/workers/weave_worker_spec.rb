@@ -28,6 +28,8 @@ describe Kontena::Workers::WeaveWorker do
     before(:each) do
       allow(network_adapter).to receive(:running?).and_return(true)
       allow(subject.wrapped_object).to receive(:started?).and_return(true)
+      allow(network_adapter).to receive(:router_image?).and_return(false)
+      allow(network_adapter).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
     end
 
     it 'calls #weave_attach on start event' do
@@ -42,9 +44,14 @@ describe Kontena::Workers::WeaveWorker do
       subject.on_container_event('topic', event)
     end
 
-    it 'calls #start on weave restart event' do
+    it 'does not call #start on weave restart event' do
       event = spy(:event, id: 'foobar', status: 'restart', from: 'weaveworks/weave:1.4.5')
-      expect(network_adapter).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
+      expect(subject.wrapped_object).not_to receive(:start)
+      subject.on_container_event('topic', event)
+    end
+
+    it 'calls #start on weave start event' do
+      event = spy(:event, id: 'foobar', status: 'start', from: 'weaveworks/weave:1.4.5')
       expect(subject.wrapped_object).to receive(:start).once
       subject.on_container_event('topic', event)
     end

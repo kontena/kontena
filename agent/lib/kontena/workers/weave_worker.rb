@@ -29,6 +29,18 @@ module Kontena::Workers
       self.start
     end
 
+    # Ensure that all service containers are attached and registered in Weave DNS.
+    #
+    # Only called after the network_adapter is running?
+    #
+    # This is called in multiple cases:
+    # * the agent was installed, and weave was just launched... it is unlikely for there to be any deployed containers waiting to be attached yet
+    # * the agent was rebooted, and weave was restarted by Docker, but none of the autostarted containers are attached yet
+    # * the agent was restarted, so weave is still running, and the containers might already be attached
+    # * the agent was upgraded, so weave might have been re-created, and some containers might be attached with the wrong netmask
+    # * the worker has crashed and restarted, so we might have missed some container events, and some containers might not be attached
+    # * the weave router container has crashed and restarted, so it will have forgotten Weave DNS names, but the containers will still be attached
+    # * the weave router container was re-created to update the configuration, so it will have forgotten Weave DNS names, but the containers will still be attached
     def start
       @migrate_containers = network_adapter.get_containers
       debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
@@ -39,7 +51,6 @@ module Kontena::Workers
       Docker::Container.all(all: false).each do |container|
         self.start_container(container)
       end
-      
     end
 
     def on_dns_add(topic, event)
@@ -54,17 +65,16 @@ module Kontena::Workers
       return unless started?
 
       if event.status == 'start'
-        container = Docker::Container.get(event.id) rescue nil
-        if container
-          self.start_container(container)
-        else
-          warn "skip start event for missing container=#{event.id}"
-        end
-      elsif event.status == 'restart'
         if network_adapter.router_image?(event.from)
+          info "Restart after weave restart"
+
           wait_weave_running?
 
           self.start
+        elsif container = Docker::Container.get(event.id) rescue nil
+          self.start_container(container)
+        else
+          warn "skip start event for missing container=#{event.id}"
         end
       elsif event.status == 'destroy'
         self.on_container_destroy(event)
