@@ -4,6 +4,8 @@ module Kontena::Workers
     include Celluloid
     include Kontena::Logging
 
+    exclusive :ensure_image
+
     attr_reader :image_cache
 
     def initialize
