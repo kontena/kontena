@@ -36,6 +36,7 @@ require_relative 'kontena/launchers/ipam_plugin'
 
 require_relative 'kontena/workers/log_worker'
 require_relative 'kontena/workers/node_info_worker'
+require_relative 'kontena/workers/node_stats_worker'
 require_relative 'kontena/workers/container_info_worker'
 require_relative 'kontena/workers/stats_worker'
 require_relative 'kontena/workers/event_worker'
