@@ -186,10 +186,7 @@ module Kontena::Workers
     def image_outdated?(service_container)
       image = Docker::Image.get(service_pod.image_name) rescue nil
       return true unless image
-
-      container_created = DateTime.parse(service_container.info['Created']) rescue nil
-      image_created = DateTime.parse(image.info['Created'])
-      return true if image_created > container_created
+      return true if image.id != service_container.info['Image']
 
       false
     end

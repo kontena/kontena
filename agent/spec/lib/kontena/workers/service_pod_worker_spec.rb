@@ -246,19 +246,19 @@ describe Kontena::Workers::ServicePodWorker do
   end
 
   describe '#image_outdated?' do 
-    it 'returns true if image is newer than service_pod updated_at' do
-      image = double(:image, info: { 'Created' => (Time.now.utc - 20).to_s })
+    it 'returns true if image id does not match to container' do
+      image = double(:image, id: 'abc')
       service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 120).to_s }
+        info: { 'Image' => 'bcd' }
       )
       allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_return(image)
       expect(subject.image_outdated?(service_container)).to be_truthy
     end
 
-    it 'returns false if image is older than service_pod updated_at' do
-      image = double(:image, info: { 'Created' => (Time.now.utc - 200).to_s })
+    it 'returns false if image id matches to container' do
+      image = double(:image, id: 'abc')
       service_container = double(:service_container,
-        info: { 'Created' => (Time.now.utc - 120).to_s }
+        info: { 'Image' => 'abc' }
       )
       allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_return(image)
       expect(subject.image_outdated?(service_container)).to be_falsey
