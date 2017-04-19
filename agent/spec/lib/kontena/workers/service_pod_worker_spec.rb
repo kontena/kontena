@@ -190,6 +190,7 @@ describe Kontena::Workers::ServicePodWorker do
 
   describe '#service_container_outdated?' do
     let(:creator) { double(:creator) }
+    let(:puller) { double(:puller) }
     let(:service_container) { double(:service_container) }
 
     before(:each) do
@@ -198,6 +199,8 @@ describe Kontena::Workers::ServicePodWorker do
       allow(creator).to receive(:labels_outdated?).and_return(false)
       allow(creator).to receive(:recreate_service_container?).and_return(false)
       allow(creator).to receive(:image_outdated?).and_return(false)
+      allow(puller).to receive(:ensure_image)
+      allow(subject.wrapped_object).to receive(:image_puller).and_return(puller)
     end
 
     it 'returns false if container is up-to-date' do
@@ -221,6 +224,7 @@ describe Kontena::Workers::ServicePodWorker do
 
     it 'returns true if service container image is outdated' do
       allow(creator).to receive(:image_outdated?).and_return(true)
+      expect(puller).to receive(:ensure_image).with(service_pod.image_name, service_pod.deploy_rev, nil)
       expect(subject.service_container_outdated?(service_container, service_pod)).to be_truthy
     end
   end

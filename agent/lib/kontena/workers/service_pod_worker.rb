@@ -156,10 +156,25 @@ module Kontena::Workers
     # @param [Kontena::Models::ServicePod] service_pod
     def service_container_outdated?(service_container, service_pod)
       creator = Kontena::ServicePods::Creator.new(service_pod)
-      creator.container_outdated?(service_container) ||
+      outdated = creator.container_outdated?(service_container) ||
           creator.labels_outdated?(service_pod.labels, service_container) ||
-          creator.recreate_service_container?(service_container) ||
-          creator.image_outdated?(service_pod.image_name, service_container)
+          creator.recreate_service_container?(service_container)
+      return true if outdated
+
+      image_puller.ensure_image(
+        service_pod.image_name, service_pod.deploy_rev, service_pod.image_credentials
+      )
+
+      if creator.image_outdated?(service_pod.image_name, service_container)
+        true
+      else
+        false
+      end
+    end
+
+    # @return [Kontena::Workers::ImagePullWorker]
+    def image_puller
+      Actor[:image_pull_worker]
     end
 
     # @param [Kontena::Models::ServicePod] service_pod
