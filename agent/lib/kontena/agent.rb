@@ -133,10 +133,6 @@ module Kontena
         as: :health_check_worker
       )
       @supervisor.supervise(
-        type: Kontena::Workers::ContainerStarterWorker,
-        as: :container_starter_worker
-      )
-      @supervisor.supervise(
         type: Kontena::Workers::FluentdWorker,
         as: :fluentd_worker
       )
