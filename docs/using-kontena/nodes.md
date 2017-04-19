@@ -33,8 +33,8 @@ The re-schduling of grid services will happen within 20 seconds of the node comi
 If the agent's Websocket connection to the master is disconnected or times out, the server will mark the nodes as as offline.
 
 Offline nodes will not have any new service instances scheduled to them.
-Any services with instances deployed to any offline nodes will be re-scheduled by the server, moving the instances to the remaining online nodes.
-The re-schduling of grid services will happen within 20 seconds of the node being marked as disconnected.
+Any stateless services with instances deployed to any offline nodes will be re-scheduled by the server, moving the instances to the remaining online nodes.
+The re-scheduling of grid services will happen within 20 seconds of the node being marked as disconnected.
 
 ### Decomissioning nodes
 
