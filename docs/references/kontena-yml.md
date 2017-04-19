@@ -79,7 +79,7 @@ instances: 1
 
 #### stateful
 
-Mark service as stateful (default: false). Kontena will create and automatically mount a data volume container for the service. This option also instructs the scheduler to not make any automatic scheduling decisions after initial deployment is done and bind the service instance to the scheduled host so that the volume can be mapped when the service is updated.
+Mark service as stateful (default: false). Kontena will create and automatically mount a data volume container for the service. This option binds each service instance to the host node that is first scheduled on to, so that the same volumes can be mapped whenever the service is updated. This option also instructs the scheduler to not make any automatic scheduling decisions for the service after initial deployment is done.
 
 ```
 stateful: true
@@ -424,23 +424,23 @@ user: app_user
 
 Mount paths as volumes, optionally specifying a path on the host machine. (HOST:CONTAINER), or an access mode (HOST:CONTAINER:ro).
 
-##### Named volume (must be defined in the top-level volumes key):
+##### Named volume:
 
 ```
 volumes:
   - mysql-data:/var/lib/mysql
 ```
 
-Named volumes must be defined in the top-level [volumes](#volumes-configuration-reference) key.
+Named volumes must be defined in the top-level [volumes](#volume-configuration-reference) key.
 
-##### Data volume:
+##### Anonymous data volume:
 
 ```
 volumes:
   - /var/lib/mysql
 ```
 
-Data volume is created on the fly. Volume is persistent only if service is marked as `stateful: true`.
+Anonymous data volumes are created on the fly. The volume is only persistent if the service is marked as `stateful: true`.
 
 ##### Bind mount host directory as a volume:
 
