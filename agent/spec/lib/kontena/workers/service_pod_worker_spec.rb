@@ -187,4 +187,41 @@ describe Kontena::Workers::ServicePodWorker do
       }.not_to change { subject.container_state_changed }
     end
   end
+
+  describe '#service_container_outdated?' do
+    let(:creator) { double(:creator) }
+    let(:service_container) { double(:service_container) }
+
+    before(:each) do
+      allow(Kontena::ServicePods::Creator).to receive(:new).with(service_pod).and_return(creator)
+      allow(creator).to receive(:container_outdated?).and_return(false)
+      allow(creator).to receive(:labels_outdated?).and_return(false)
+      allow(creator).to receive(:recreate_service_container?).and_return(false)
+      allow(creator).to receive(:image_outdated?).and_return(false)
+    end
+
+    it 'returns false if container is up-to-date' do
+      expect(subject.service_container_outdated?(service_container, service_pod)).to be_falsey
+    end
+
+    it 'returns true if container is too old' do
+      allow(creator).to receive(:container_outdated?).and_return(true)
+      expect(subject.service_container_outdated?(service_container, service_pod)).to be_truthy
+    end
+
+    it 'returns true if labels need update' do
+      allow(creator).to receive(:labels_outdated?).and_return(true)
+      expect(subject.service_container_outdated?(service_container, service_pod)).to be_truthy
+    end
+
+    it 'returns true if service container needs to be recreated' do
+      allow(creator).to receive(:recreate_service_container?).and_return(true)
+      expect(subject.service_container_outdated?(service_container, service_pod)).to be_truthy
+    end
+
+    it 'returns true if service container image is outdated' do
+      allow(creator).to receive(:image_outdated?).and_return(true)
+      expect(subject.service_container_outdated?(service_container, service_pod)).to be_truthy
+    end
+  end
 end
