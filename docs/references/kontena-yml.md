@@ -13,7 +13,11 @@ Each service is reachable by all other services in the same grid and discoverabl
 
 You can use variables to set configuration values with a bash-like `${VARIABLE}` syntax. See [variable substitution](#variable-substitution) for full details.
 
-## Stack configuration reference
+- [Stack Configuration Reference](#stack-configuration-reference)
+- [Service Configuration Reference](#service-configuration-reference)
+- [Volume Configuration Reference](#volume-configuration-reference)
+
+## Stack Configuration Reference
 
 #### stack
 Stack identification. Use format `<username>/<stack_name>`.
@@ -59,7 +63,8 @@ services:
     image: mariadb:latest
 ```
 
-## Service configuration reference
+## Service Configuration Reference
+
 > **Note:** Kontena supports Docker Compose file version 2. For more details about Docker Compose versioning, see the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/#versioning)
 
 ### Kontena specific keys
@@ -74,7 +79,7 @@ instances: 1
 
 #### stateful
 
-Mark service as stateful (default: false). Kontena will create and automatically mount a data volume container for the service. This option also instructs the scheduler to bind the service instance to the scheduled host so that the volume can be mapped when the service is updated.
+Mark service as stateful (default: false). Kontena will create and automatically mount a data volume container for the service. This option also instructs the scheduler to not make any automatic scheduling decisions after initial deployment is done and bind the service instance to the scheduled host so that the volume can be mapped when the service is updated.
 
 ```
 stateful: true
@@ -419,25 +424,29 @@ user: app_user
 
 Mount paths as volumes, optionally specifying a path on the host machine. (HOST:CONTAINER), or an access mode (HOST:CONTAINER:ro).
 
-Data volume:
+##### Named volume (must be defined in the top-level volumes key):
 
 ```
 volumes:
- - /var/lib/mysql
+  - mysql-data:/var/lib/mysql
 ```
 
-Bind mount host directory as a volume:
+Named volumes must be defined in the top-level [volumes](#volumes-configuration-reference) key.
 
-```
-volumes:
- - /data/mysql:/var/lib/mysql
-```
-
-Named volumes are supported in the service declaration, but not in the top-level `volumes` key. When defining named volume in the service declaration the default driver configured by the Docker Engine will be used (in most cases, this is the local driver). If volume does not exist it will be created.
+##### Data volume:
 
 ```
 volumes:
- - mysql:/var/lib/mysql
+  - /var/lib/mysql
+```
+
+Data volume is created on the fly. Volume is persistent only if service is marked as `stateful: true`.
+
+##### Bind mount host directory as a volume:
+
+```
+volumes:
+  - /data/mysql:/var/lib/mysql
 ```
 
 
@@ -480,9 +489,9 @@ logging:
        # {% endraw %}
  ```
 
-## Volumes
+## Volume Configuration Reference
 
-Kontena stack yaml support volumes to be used which are created using `kontena volume create ...` command or the corresponding REST API on master.
+Kontena stack yaml support volumes to be used which are created using `kontena volume create ...` [command](../using-kontena/volumes.md#creating-volumes) or the corresponding REST API on master.
 
 ```
 stack: redis
@@ -581,8 +590,17 @@ variables:
   mysql_root_pw:
     type: string
     from:
+      vault: EXAMPLE_MYSQL_ROOT_PASSWORD
       prompt: Enter a root password for MySQL or leave empty to auto generate
       random_string: 16
+    to:
+      vault: EXAMPLE_MYSQL_ROOT_PASSWORD
+  app_domain:
+    type: string 
+    default: www.my-app.com
+    from:
+      prompt: App domain
+
 services:
   loadbalancer:
     image: kontena/lb:latest
@@ -596,11 +614,11 @@ services:
       - loadbalancer
     environment:
       - DB_URL=db
-      - KONTENA_LB_INTERNAL_PORT=80
-      - KONTENA_LB_VIRTUAL_HOSTS=www.my-app.com
+      - KONTENA_LB_INTERNAL_PORT=8080
+      - KONTENA_LB_VIRTUAL_HOSTS={{ app_domain }}
     deploy:
       strategy: ha
-      wait_for_port: 80
+      wait_for_port: 8080
     hooks:
       post_start:
         - name: sleep
@@ -609,8 +627,14 @@ services:
   db:
     image: mysql:5.6
     stateful: true
-    environment:
-      - MYSQL_ROOT_PASSWORD=${mysql_root_pw}
+    secrets:
+      - secret: EXAMPLE_MYSQL_ROOT_PASSWORD
+        name: MYSQL_ROOT_PASSWORD
+        type: env
     volumes:
-      - /var/lib/mysql
+      - mysql-data:/var/lib/mysql
+volumes:
+  mysql-data:
+    external:
+      name: example-mysql-data
 ```
