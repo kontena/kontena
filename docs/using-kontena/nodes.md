@@ -34,7 +34,7 @@ If the agent's Websocket connection to the master is disconnected or times out, 
 
 Offline nodes will not have any new service instances scheduled to them.
 Any stateless services with instances deployed to any offline nodes will be re-scheduled by the server, moving the instances to the remaining online nodes.
-The re-scheduling of grid services will happen after node offline grace period, which depends on the deployment strategy in use. 
+The re-scheduling of grid services will happen after the node offline grace period, which depends on the deployment strategy in use.
 
 #### Deployment Strategy Offline Grace Periods
 
@@ -49,6 +49,10 @@ To decomission a node, you must first terminate it, and you can then remove the 
 The `kontena node rm` command can not be used to remove an online node.
 Use the `kontena <provider> node terminate` plugin commands to terminate nodes and remove them from the Kontena Master.
 Alternatively, power off and destroy the node instance directly from the provider's control panel, and wait for the nodes to be offline before removing them from the CLI.
+
+Any service instances deployed to a removed node will be invalidated, and can be re-deployed to a different node.
+This happens automatically for stateless services, similar to behavior of offline nodes, but without the grace period.
+For stateful services, any instances on removed nodes will be re-scheduled on the next service deploy, and the replacement service instances will lose their state.
 
 ## Node labels
 
