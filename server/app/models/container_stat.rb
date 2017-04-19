@@ -21,6 +21,9 @@ class ContainerStat
   index({ grid_service_id: 1, created_at: 1 }, { background: true })
 
   def self.calculate_num_cores(cpu_mask)
+    # cAdvisor returns the number of CPUs as a 'mask', in the format 0..N,
+    # where N is (NumCPUS - 1).
+    # Ex: for 4 cores, mask would be '0..3'
     if cpu_mask
       cpu_mask.split('-').last.to_i + 1
     else
@@ -29,6 +32,11 @@ class ContainerStat
   end
 
   def self.get_aggregate_stats_for_service(service_id, from_time, to_time)
+    # Note that CPU calculation for containers is not straightforward and requires
+    # some additional processing outside of the aggregation.
+    # The aggregation takes the average CPU values for a given time slice
+    # and puts in an array, one for each container instance.
+    # Then each resulting record is processed by Ruby code outside mongo.
     self.collection.aggregate([
     {
       '$match': {
@@ -135,6 +143,9 @@ class ContainerStat
       }
     }
     ]).map do |stat|
+      # Each stat will have an array of CPU values, one per container instance.
+      # We need to make sure we only increment the # of CPUs once per node,
+      # but sum percent_used values across all containers.
       stat["cpu"] = stat["cpu"]
         .group_by { |x|
           x["host_node_id"]
