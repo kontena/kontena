@@ -205,7 +205,7 @@ describe '/v1/services' do
   describe 'GET /:id/stats' do
     context 'when container has stats data' do
       it 'returns service stats' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         container.container_stats.create!(container_stat_data)
         get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
@@ -238,13 +238,13 @@ describe '/v1/services' do
         stats2[:network][:internal]['tx_bytes'] = 50
         stats3[:network][:internal]['tx_bytes'] = 40
 
-        container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         container1.container_stats.create!(stats1)
 
-        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
+        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb', state: { running: true })
         container2.container_stats.create!(stats2)
 
-        container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
+        container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc', state: { running: true })
         container3.container_stats.create!(stats3)
 
         get "/v1/services/#{redis_service.to_path}/stats?sort=tx_bytes&limit=1", nil, request_headers
@@ -255,7 +255,7 @@ describe '/v1/services' do
     end
     context 'when container has not stats data' do
       it 'returns empty result' do
-        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(1)
@@ -268,7 +268,7 @@ describe '/v1/services' do
   describe 'GET /:id/metrics' do
     context 'when container has stats data' do
       it 'returns service metrics' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         container_stat_data['grid_service_id'] = redis_service.id
         container.container_stats.create!(container_stat_data)
         get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
@@ -279,7 +279,7 @@ describe '/v1/services' do
     end
     context 'when container has not stats data' do
       it 'returns empty result' do
-        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(0)
