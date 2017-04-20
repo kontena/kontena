@@ -161,22 +161,43 @@ describe Kontena::Workers::NodeStatsWorker, celluloid: true do
     it 'calculates cpu usage' do
       prev = [
         # cpu-num, user ticks, system ticks, nice ticks, idle ticks
-        Vmstat::Cpu.new(0, 926444, 1715744, 0, 8413871),
-        Vmstat::Cpu.new(1, 67122, 93965, 0, 10891139)
+        Vmstat::Cpu.new(0, 100, 200, 300, 400),
+        Vmstat::Cpu.new(1, 1000, 2000, 3000, 4000)
       ]
       cur = [
-        Vmstat::Cpu.new(0, 926482, 1715820, 0, 8414258),
-        Vmstat::Cpu.new(1, 67123, 93967, 0, 10891637)
+        Vmstat::Cpu.new(0, 125, 250, 375, 500),
+        Vmstat::Cpu.new(1, 1250, 2500, 3750, 5000)
       ]
+
+      #              CPU 0:            | CPU 1:
+      # user:        125 - 100  =  25  | 1250 - 1000 =  250
+      # system:      250 - 200  =  50  | 2500 - 2000 =  500
+      # nice:        375 - 300  =  75  | 3750 - 3000 =  750
+      # idle:        500 - 400  = 100  | 5000 - 4000 = 1000
+      #              ----------------  | ------------------
+      # total ticks:              250  |               2500
+      #
+      #
+      # CPU 0 %:
+      # user:   (25 / 250) * 100 = 10
+      # system: (40 / 250) * 100 = 20
+      # nice:   (55 / 250) * 100 = 30
+      # idle:   (60 / 250) * 100 = 40
+      #
+      # CPU 1 %:
+      # user:   (250 / 2500) * 100 = 10
+      # system: (500 / 2500) * 100 = 20
+      # nice:   (750 / 2500) * 100 = 30
+      # idle:   (1000 / 2500) * 100 = 40
 
       result = subject.calculate_cpu_usage(prev, cur)
 
       expect(result).to eq({
         num_cores: 2,
-        system: 15.568862275449103,
-        user: 7.784431137724551,
-        nice: 0,
-        idle: 176.64670658682633
+        user: 20.0,
+        system: 40.0,
+        nice: 60.0,
+        idle: 80.0
       })
     end
   end
