@@ -173,7 +173,6 @@ module Kontena
 
       # @param [Hash] opts
       def create_container(opts)
-        ensure_image(opts['Image'], false)
         Docker::Container.create(opts)
       end
 
