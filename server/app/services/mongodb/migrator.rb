@@ -8,7 +8,7 @@ module Mongodb
     include DistributedLocks
 
     LOCK_NAME = 'mongodb_migrate'.freeze
-    LOCK_TIMEOUT = 60
+    LOCK_TIMEOUT = (60 * 5)
 
     MigratorError = Class.new(StandardError)
 
