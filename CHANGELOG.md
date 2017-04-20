@@ -332,10 +332,10 @@
 
 **CLI:**
 
-- allow to install plugins in cli docker image (#1055)
-- handle malformed YAML files in a sane way (#994)
-- do not clip service env output (#1036)
-- handle invalid master name gracefully and improve formatting (#997)
+- allow to install plugins in cli docker image ([#1055](https://github.com/kontena/kontena/issues/1055))
+- handle malformed YAML files in a sane way ([#994](https://github.com/kontena/kontena/issues/994))
+- do not clip service env output ([#1036](https://github.com/kontena/kontena/issues/1036) fixes [#1014](https://github.com/kontena/kontena/issues/1014))
+- handle invalid master name gracefully and improve formatting ([#997](https://github.com/kontena/kontena/issues/997) fixes [#1034](https://github.com/kontena/kontena/issues/1037))
 
 ## [0.15.4](https://github.com/kontena/kontena/releases/tag/v0.15.4) (2016-09-22)
 
