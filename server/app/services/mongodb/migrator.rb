@@ -1,11 +1,12 @@
 require_relative 'migration'
 require_relative 'migration_proxy'
 require_relative '../logging'
+require_relative '../../helpers/wait_helper'
 
 module Mongodb
   class Migrator
     include Logging
-    include DistributedLocks
+    include WaitHelper
 
     LOCK_NAME = 'mongodb_migrate'.freeze
     LOCK_TIMEOUT = (60 * 5)
@@ -68,13 +69,16 @@ module Mongodb
     def migrate
       ensure_indexes
       release_stale_lock
-      with_dlock(LOCK_NAME, LOCK_TIMEOUT) do
-        migrate_without_lock
-      end
+      lock_id = wait_until!("lock #{name} is available", timeout: LOCK_TIMEOUT, interval: 0.5) { 
+        DistributedLock.obtain_lock(LOCK_NAME)
+      }
+      migrate_without_lock
+    ensure
+      DistributedLock.release_lock(LOCK_NAME, lock_id)
     end
 
     def release_stale_lock
-      if DistributedLock.where(:name =>  LOCK_NAME, :created_at.lt => (LOCK_TIMEOUT * 3).seconds.ago).delete > 0
+      if DistributedLock.where(:name =>  LOCK_NAME, :created_at.lt => (LOCK_TIMEOUT * 2).seconds.ago).delete > 0
         info "released stale distributed lock"
       end
     end
