@@ -81,12 +81,12 @@ module Kontena::Workers
       if service_pod.running? && service_container.nil?
         info "creating #{service_pod.name}"
         ensure_running
-      elsif service_container && service_pod.running? && !service_container.running?
-        info "starting #{service_pod.name}"
-        ensure_started
       elsif service_pod.running? && (service_container && service_container_outdated?(service_container))
         info "re-creating #{service_pod.name}"
         ensure_running
+      elsif service_container && service_pod.running? && !service_container.running?
+        info "starting #{service_pod.name}"
+        ensure_started
       elsif service_pod.stopped? && (service_container && service_container.running?)
         info "stopping #{service_pod.name}"
         ensure_stopped

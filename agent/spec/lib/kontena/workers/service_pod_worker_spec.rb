@@ -29,6 +29,7 @@ describe Kontena::Workers::ServicePodWorker do
     it 'calls ensure_running if container is not running and service_pod desired_state is running' do
       container = double(:container, :running? => false, :restarting? => false)
       allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(subject.wrapped_object).to receive(:service_container_outdated?).and_return(false)
       allow(service_pod).to receive(:running?).and_return(true)
       expect(subject.wrapped_object).to receive(:ensure_started)
       subject.ensure_desired_state
