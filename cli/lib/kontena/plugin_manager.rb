@@ -176,7 +176,7 @@ module Kontena
                 $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
             rescue ScriptError, StandardError => ex
-              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception.\nYou can uninstall the plugin using: kontena plugin uninstall #{spec.name.sub('kontena-plugin-', '')}\n"
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
               ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
             end
           end
