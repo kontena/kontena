@@ -360,6 +360,18 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         result = subject.validate(stack)
         expect(result[:errors]).to be_empty
       end
+
+      it 'bind mount do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/var/run/docker.sock:/var/run/docker.sock']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'anon vols do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/data']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
     end
 
   end
