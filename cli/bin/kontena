@@ -13,6 +13,6 @@ if ARGV[0] == 'complete'
   require 'kontena/scripts/completer'
 else
   require 'kontena_cli'
-  Kontena::PluginManager.instance.init unless ARGV.find { |arg| !arg.start_with?('-') } == 'plugin'
+  Kontena::PluginManager.instance.init
   Kontena::MainCommand.run
 end
