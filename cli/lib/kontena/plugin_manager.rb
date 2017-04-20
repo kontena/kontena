@@ -167,6 +167,7 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
+                ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
                 load(plugin)
                 plugins << spec
               else
@@ -174,10 +175,9 @@ module Kontena
                 $stderr.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
                 $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
-            rescue LoadError => ex
-              $stderr.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"
+            rescue ScriptError, StandardError => ex
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
               ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
-              exit 1
             end
           end
         end
