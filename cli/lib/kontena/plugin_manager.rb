@@ -175,7 +175,7 @@ module Kontena
                 $stderr.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
                 $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
-            rescue LoadError, StandardError => ex
+            rescue ScriptError, StandardError => ex
               warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception.\nYou can uninstall the plugin using: kontena plugin uninstall #{spec.name.sub('kontena-plugin-', '')}\n"
               ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
             end
