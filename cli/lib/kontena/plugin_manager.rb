@@ -167,6 +167,7 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
+                ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
                 load(plugin)
                 plugins << spec
               else
@@ -175,7 +176,7 @@ module Kontena
                 $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
             rescue LoadError, StandardError => ex
-              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception.\nYou can uninstall the plugin using: kontena plugin uninstall #{spec.name.sub('kontena-plugin-', '')}\n"
               ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
             end
           end
