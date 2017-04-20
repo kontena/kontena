@@ -69,7 +69,7 @@ module Mongodb
     def migrate
       ensure_indexes
       release_stale_lock
-      lock_id = wait_until!("lock #{name} is available", timeout: LOCK_TIMEOUT, interval: 0.5) { 
+      lock_id = wait_until!("migration lock is available", timeout: LOCK_TIMEOUT, interval: 0.5) {
         DistributedLock.obtain_lock(LOCK_NAME)
       }
       migrate_without_lock
