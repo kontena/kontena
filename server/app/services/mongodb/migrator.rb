@@ -74,7 +74,7 @@ module Mongodb
       }
       migrate_without_lock
     ensure
-      DistributedLock.release_lock(LOCK_NAME, lock_id)
+      DistributedLock.release_lock(LOCK_NAME, lock_id) if lock_id
     end
 
     def release_stale_lock
