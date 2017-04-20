@@ -8,7 +8,9 @@
 The Kontena 1.2 release introduces [experimental support for volume management](https://github.com/kontena/kontena/blob/v1.2/docs/using-kontena/volumes.md).
 Stack services can now [use](https://github.com/kontena/kontena/blob/v1.2/docs/references/kontena-yml.md#volumes) volumes created by `kontena volume create`, and the service and volume instances will be scheduled together.
 
-Kontena volumes can use by volume drivers provided by Docker plugins installed on the host nodes, such as [rexray](https://rexray.codedellemc.com/).
+Kontena volumes can use volume drivers provided by Docker plugins installed on the host nodes, such as [rexray](https://rexray.codedellemc.com/).
+
+The exact details of how these Kontena volumes are managed may still change as the implementation evolves. If you use the experimental Kontena volumes support, be prepared to change your volume definitions as necessary when upgrading to newer Kontena versions.
 
 #### Native IPsec overlay network encryption
 
