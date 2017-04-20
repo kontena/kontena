@@ -42,8 +42,8 @@ module Kontena::Cli::Apps
 
     # @param [Array] queue
     def deploy_services(queue)
-      queue.each do |service|
-        name = service['id'].split('/').last
+      sort_services(queue).each do |service|
+        name = service['id'].split('/').last rescue service['name']
         options = {}
         options[:force] = true if force?
         spinner "Deploying #{unprefixed_name(name).colorize(:cyan)} " do
@@ -67,7 +67,6 @@ module Kontena::Cli::Apps
           # change prefixed service name also to links options
           linked_service_name = linked_service['name']
           options['links'][index]['name'] = "#{prefixed_name(linked_service['name'])}"
-          create_or_update_service(linked_service_name, services[linked_service_name]) unless in_deploy_queue?(linked_service_name)
         end
       end
 
