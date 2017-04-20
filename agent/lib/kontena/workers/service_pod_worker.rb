@@ -153,6 +153,7 @@ module Kontena::Workers
     end
 
     # @param [Docker::Container] service_container
+    # @return [Boolean]
     def service_container_outdated?(service_container)
       outdated = container_outdated?(service_container) ||
           labels_outdated?(service_container) ||
@@ -163,11 +164,7 @@ module Kontena::Workers
         service_pod.image_name, service_pod.deploy_rev, service_pod.image_credentials
       )
 
-      if image_outdated?(service_container)
-        true
-      else
-        false
-      end
+      image_outdated?(service_container)
     end
 
     # @param [Docker::Container] service_container
