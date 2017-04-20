@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc2) (2017-04-13)
+## [1.2.0.rc3](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc3) (2017-04-20)
 
 ### Highlights
 
@@ -22,13 +22,18 @@ Host nodes will fall back to the current UDP-based `sleeve` transport if they ar
 The server and agent have been improved to be more robust in the case of various error and overload situations affecting service deployments.
 The agent can now recover from various errors, healing itself and resolving any deployment inconsistencies.
 
-The `kontena service deploy` command now provide better reporting of deployment status and errors. Pending CLI `kontena stack deploy` support for service deploy progress and errors (#2114).
+The `kontena service deploy` command now provide better reporting of deployment status and errors.
+Pending CLI `kontena stack deploy` support for service deploy progress and errors (#2114).
 
-#### Kontena Cloud metrics and real-time events
+#### Support for Kontena Cloud metrics and real-time updates
 
-TODO: something to link to here
+The Kontena 1.2 release adds support for [Kontena Cloud](https://cloud.kontena.io), as well as realtime updates as services are deployed or host nodes update. Refer to the [release blog post](https://blog.kontena.io/kontena-1-2-0-release/#kontenacloudupdates) for more details.
 
 #### CLI
+
+* [`kontena shell`](https://github.com/kontena/kontena-plugin-shell#kontena-shell)
+
+    The [Kontena Shell](https://github.com/kontena/kontena-plugin-shell#kontena-shell) is available as an optional plugin for Kontena 1.2, offering an improved interactive console interface: `kontena plugin install shell`
 
 * [`kontena grid create --subnet --supernet`](https://github.com/kontena/kontena/blob/v1.2/docs/using-kontena/grids.md#grid-subnet-supernet)
 
@@ -87,6 +92,51 @@ TODO: something to link to here
 * New `volumes` section
 
     See the [Kontena stack volume](https://github.com/kontena/kontena/blob/v1.2/docs/references/kontena-yml.md#volumes) documentation.
+
+### Known issues
+
+* Kontena 1.2 cadvisor with rshared bind-mounts is broken on distros running Docker in a non-shared mount namespace #2175
+
+    Service container stats will not be available for host nodes installed using distribution packages that configure the Docker service to run in a separate non-shared mount namespace.
+
+* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
+
+    Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
+
+### Fixed issues
+
+* Agent starts outdated container instead of re-creating it #2154
+* Service with newer image is not deployed without force #2171
+* CreateEventLog migration throws error if index is building #2164
+* Unresolvable statsd endpoint crashes NodeInfoWorker #2165
+* rake kontena:reset_admin throws error #2168
+
+### Changes
+
+#### Docs
+* kontena.yml reference improvements (#2179)
+* Mention that re-scheduling happens only if service is stateless (#2178)
+* docs: service rescheduling after node removal (#2182)
+
+#### Agent
+* Refactor node stats to NodeStatsWorker (#2166)
+* Remove unused ContainerStarterWorker (#2181)
+* Don't crash ImagePullWorker if pull fails (#2172)
+* Fixing nice stats collection typo bug (#2190)
+* Check that image is up-to-date in ServicePodWorker (#2177)
+
+#### Server
+* Fix rake tasks to require celluloid/current (#2169)
+* Return container stats only from running instances (#2160)
+* remove bundler from bin/kontena-console (#2170)
+* Fix Service Metrics CPU (#2162)
+* Raise puma worker boot timeout & remove background threads (#2187)
+
+#### CLI
+* CLI logo now says "cli" (#2167)
+* Warn, don't exit, when a plugin fails to load (#2184)
+
+## [1.2.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc2) (2017-04-13)
 
 ### Known issues
 
