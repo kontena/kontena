@@ -1,8 +1,6 @@
 class CreateContainerStatsCreatedAtIndex < Mongodb::Migration
   def self.up
-    Thread.new {
-      Thread.current.abort_on_exception = true
-      ContainerStat.create_indexes # might take a long time
-    }
+    info "recreating container stat indexes, this might take long time"
+    ContainerStat.create_indexes
   end
 end
