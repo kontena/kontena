@@ -28,7 +28,7 @@ describe Mongodb::Migrator do
     end
 
     it 'removes lock if stale' do
-      DistributedLock.create(name: described_class::LOCK_NAME, created_at: 4.minutes.ago)
+      DistributedLock.create(name: described_class::LOCK_NAME, created_at: 11.minutes.ago)
       expect {
         subject.release_stale_lock
       }.to change { DistributedLock.count }.by(-1)

@@ -21,6 +21,9 @@ class ContainerStat
   index({ grid_service_id: 1, created_at: 1 }, { background: true })
 
   def self.calculate_num_cores(cpu_mask)
+    # cAdvisor returns the number of CPUs as a 'mask', in the format 0..N,
+    # where N is (NumCPUS - 1).
+    # Ex: for 4 cores, mask would be '0..3'
     if cpu_mask
       cpu_mask.split('-').last.to_i + 1
     else
@@ -29,6 +32,11 @@ class ContainerStat
   end
 
   def self.get_aggregate_stats_for_service(service_id, from_time, to_time)
+    # Note that CPU calculation for containers is not straightforward and requires
+    # some additional processing outside of the aggregation.
+    # The aggregation takes the average CPU values for a given time slice
+    # and puts in an array, one for each container instance.
+    # Then each resulting record is processed by Ruby code outside mongo.
     self.collection.aggregate([
     {
       '$match': {
@@ -47,6 +55,7 @@ class ContainerStat
           day: { '$dayOfMonth': '$created_at' },
           hour: { '$hour': '$created_at' },
           minute: { '$minute': '$created_at' },
+          host_node_id: '$host_node_id',
           container_id: '$container_id'
         },
         created_at: { '$first': '$created_at' },
@@ -80,8 +89,13 @@ class ContainerStat
         },
         created_at: { '$first': '$created_at' },
 
-        cpu_mask: { '$first': '$cpu_mask' },
-        cpu_percent_used: { '$avg': '$cpu_percent_used' },
+        cpu: {
+          '$push': {
+            host_node_id: '$_id.host_node_id',
+            mask: '$cpu_mask',
+            percent_used: '$cpu_percent_used',
+          }
+        },
 
         memory_used: { '$sum': '$memory_used' },
         memory_total: { '$sum': '$memory_total' },
@@ -105,10 +119,7 @@ class ContainerStat
       '$project': {
         _id: 0,
         timestamp: '$_id',
-        cpu: {
-          mask: '$cpu_mask',
-          percent_used: '$cpu_percent_used'
-        },
+        cpu: '$cpu',
         memory: {
           used: '$memory_used',
           total: '$memory_total'
@@ -132,9 +143,19 @@ class ContainerStat
       }
     }
     ]).map do |stat|
-      # convert CPU mask to num_cores
-      stat["cpu"]["num_cores"] = calculate_num_cores(stat["cpu"]["mask"])
-      stat["cpu"].delete("mask")
+      # Each stat will have an array of CPU values, one per container instance.
+      # We need to make sure we only increment the # of CPUs once per node,
+      # but sum percent_used values across all containers.
+      stat["cpu"] = stat["cpu"]
+        .group_by { |x|
+          x["host_node_id"]
+        }
+        .inject({ "num_cores" => 0, "percent_used" => 0.0 }) { |result, x|
+            values = x[1]
+            result["num_cores"] += calculate_num_cores(values.first["mask"])
+            result["percent_used"] += values.map { |v| v["percent_used"] }.inject(0.0, :+)
+            result
+        }
       stat
     end
   end
