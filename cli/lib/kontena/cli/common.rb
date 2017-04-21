@@ -382,6 +382,25 @@ module Kontena
       def display_logo
         puts File.read(File.expand_path('../../../../LOGO', __FILE__))
       end
+
+      GLYPHS = {
+        #name                                  #unicode     #ascii
+        :white_square                     => [ '□',         '-' ],
+        :black_square                     => [ '■',         '#' ],
+        :circled_x                        => [ '⊗',         'X' ],
+        :circled_dot                      => [ '⊙',         '.' ],
+        :circled_star                     => [ '⊛',         '*' ],
+        :circled_dash                     => [ '⊝',         '-' ],
+        :smiley_face                      => [ '㋛',        'Ü' ],
+        :nbsp                             => [ "\u{00a0}",  "\u{00a0}" ],
+      }
+      def glyph(symbol)
+        GLYPHS.fetch(symbol) { ['?'] }.send(glyph_method)
+      end
+
+      def glyph_method
+        @glyph_method ||= (Kontena.on_windows? || Kontena.simple_terminal?) ? :last : :first
+      end
     end
   end
 end
