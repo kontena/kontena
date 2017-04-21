@@ -32,6 +32,7 @@ module Kontena::Cli::Stacks
       deployed = false
       states = %w(success error)
       tracked_services = []
+      errors = []
       Timeout::timeout(timeout) do
         until deployed
           deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
@@ -52,14 +53,18 @@ module Kontena::Cli::Stacks
         if deployment['state'] == 'error'
           deployment['service_deploys'].each do |service_deploy|
             if service_deploy['state'] == 'error'
-              error service_deploy['reason']
+              errors << pastel.red("#{service_deploy['service_id']} deploy failed: #{service_deploy['reason']}")
+              service_deploy['instance_deploys'].each do |instance_deploy|
+                if instance_deploy['state'] == 'error'
+                  errors << pastel.red(" - #{instance_deploy['error']} on node #{instance_deploy['node']}")
+                end
+              end
             end
           end
-          abort
         end
       end
 
-      deployed
+      errors
     rescue Timeout::Error
       raise 'deploy timed out'
     end

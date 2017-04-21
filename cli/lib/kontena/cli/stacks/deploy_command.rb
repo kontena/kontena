@@ -21,7 +21,13 @@ module Kontena::Cli::Stacks
       spinner "Waiting for deployment to start" do
         wait_for_deployment_to_start(deployment)
       end
-      wait_for_deploy_to_finish(deployment)
+      errors = wait_for_deploy_to_finish(deployment)
+      if errors.empty?
+        puts pastel.green("Finished")
+      else
+        $stderr.puts errors.join("\n")
+        exit_with_error "Deployment failed"
+      end
     end
 
     def deploy_stack(name)
