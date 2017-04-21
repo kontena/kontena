@@ -22,7 +22,6 @@ module Kontena::Cli::Stacks
         wait_for_deployment_to_start(deployment)
       end
       wait_for_deploy_to_finish(deployment)
-      puts pastel.green("Finished")
     end
 
     def deploy_stack(name)
