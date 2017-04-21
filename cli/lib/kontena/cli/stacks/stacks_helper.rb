@@ -64,9 +64,14 @@ module Kontena::Cli::Stacks
         end
       end
 
-      errors
+      unless errors.empty?
+        $stderr.puts errors.join("\n")
+        exit_with_error "Deployment failed"
+      end
+
+      deployed
     rescue Timeout::Error
-      raise 'deploy timed out'
+      exit_with_error "Deployment timed out"
     end
 
     def wait_for_service_deploy(service_deploy, states)
