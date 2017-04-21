@@ -304,4 +304,75 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       end
     end
   end
+
+  describe '#validate' do
+
+    context 'volumes' do
+      let(:stack) do
+        {
+          'stack' => 'a-stack',
+          'services' => {
+            'foo' => {
+              'volumes' => [
+                'foo:/app'
+              ]
+            }
+          },
+          'volumes' => {
+
+          }
+
+        }
+      end
+      it 'fails validation if volumes are not declared' do
+        result = subject.validate(stack)
+        expect(result[:errors]).not_to be_empty
+      end
+
+      it 'validation succeeds if volumes are declared' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => true
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when external: false' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => false
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).not_to be_empty
+      end
+
+      it 'validation succeeds if volumes are declared' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => {
+              'name' => 'foobar'
+            }
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'bind mount do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/var/run/docker.sock:/var/run/docker.sock']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'anon vols do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/data']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+    end
+
+  end
 end
