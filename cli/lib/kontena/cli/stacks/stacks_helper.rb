@@ -31,7 +31,6 @@ module Kontena::Cli::Stacks
       deployed = false
       states = %w(success error)
       tracked_services = []
-      errors = []
       Timeout::timeout(timeout) do
         until deployed
           deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
