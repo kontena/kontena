@@ -108,142 +108,7 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 
 ### Fixed issues
 
-See the earlier 1.2.0.rc releases for the full list of fixed issues from Kontena 1.1.
-
-* Stack complains about bind mounts #2192
-* Agent pulls images and may re-create service containers after reboot/upgrade if Docker image has been updated #2197
-* CLI: kontena stack deploy does not report instance deploy errors #2196
-
-### Changes
-
-See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
-
-#### Agent
-* trigger image pull only if deploy_rev changes (#2198)
-
-#### CLI
-* Validate volume declaration on cli only if named volumes used (#2193)
-* Stack deploy error reporting (#2199)
-
-## [1.2.0.rc3](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc3) (2017-04-20)
-
-### Known issues
-
-* Kontena 1.2 cadvisor with rshared bind-mounts is broken on distros running Docker in a non-shared mount namespace #2175
-
-    Service container stats will not be available for host nodes installed using distribution packages that configure the Docker service to run in a separate non-shared mount namespace.
-
-* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
-
-    Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
-
-### Fixed issues
-
-* Agent starts outdated container instead of re-creating it #2154
-* Service with newer image is not deployed without force #2171
-* CreateEventLog migration throws error if index is building #2164
-* Unresolvable statsd endpoint crashes NodeInfoWorker #2165
-* rake kontena:reset_admin throws error #2168
-
-### Changes
-
-#### Docs
-* kontena.yml reference improvements (#2179)
-* Mention that re-scheduling happens only if service is stateless (#2178)
-* docs: service rescheduling after node removal (#2182)
-
-#### Agent
-* Refactor node stats to NodeStatsWorker (#2166)
-* Remove unused ContainerStarterWorker (#2181)
-* Don't crash ImagePullWorker if pull fails (#2172)
-* Fixing nice stats collection typo bug (#2190)
-* Check that image is up-to-date in ServicePodWorker (#2177)
-
-#### Server
-* Fix rake tasks to require celluloid/current (#2169)
-* Return container stats only from running instances (#2160)
-* remove bundler from bin/kontena-console (#2170)
-* Fix Service Metrics CPU (#2162)
-* Raise puma worker boot timeout & remove background threads (#2187)
-
-#### CLI
-* CLI logo now says "cli" (#2167)
-* Warn, don't exit, when a plugin fails to load (#2184)
-
-## [1.2.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc2) (2017-04-13)
-
-### Known issues
-
-* Service `*.kontena.local` DNS aliases missing after `kontena grid trusted-subnet` changes #2158
-
-    Using the `kontena grid trusted-subnet add/remove` commands to re-configure weave, any `$service.$grid.kontena.local` and `$service.$stack.kontena.local` DNS aliases will get forgotten.
-
-    Workaround is to `docker restart kontena-agent` on each host node to force service DNS aliases to be re-registered.
-
-* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
-
-    Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
-
-### Fixed issues
-
-* After weave upgrade, service aliases are missing from DNS #2079
-* Agent should check that volume driver match before reusing it #2089
-* Stack upgrade can remove linked-to services, breaking linking services #1769
-* Cli: kontena volume ls cuts long volume names #2083
-* Stack deploy and service deploy error states are broken #2127
-* Stateful service with daemon strategy behaviour is broken #2133
-* Re-creating indexes in migrations may timeout puma worker boot #2120
-
-### Changes
-
-* Do not log entire yield value from wait_helper (#2124)
-* fix e2e service start/stop tests (#2130)
-* Improve websocket timeouts and node connection open/close logging (#2142)
-
-#### Agent
-* Fix agent to raise on service container start, stop, restart errors (#2138)
-* Check volume driver match when ensuring volume existence (#2135)
-* Improve agent resource usage (#2143)
-* Reduce agent info logging (#2155)
-* Fix agent WeaveWorker to not start until Weave has started (#2153)
-* ContainerInfoWorker fixes (#2147)
-
-#### Server
-* Fix migration timeout issues (#2123)
-* do not reschedule stateful service automatically (#2137)
-* Fix service, stack deploy errors (#2132)
-* Server WebsocketBackend EventMachine watchdog (#2139)
-* migration service instance also from volume containers (#2129)
-* Fix stack deploy service removal (#2128)
-* Bring scheduler node offline grace period back (#2141)
-* Include CPU in resource usage json (#2151)
-* Add service pod caching on Rpc::NodeServicePodHandler (#2146)
-* Fix scheduler to notice if instance node was removed (#2152)
-* Fix server NodePlugger.plugin logging of new nodes without names (#2156)
-
-#### CLI
-* In cli login command, finish method was returning nil, which caused browser web flow prompt even when a valid token was passed in (#2145)
-* Use tty-table for volume ls (#2136)
-* Reduce already initialized constant warnings in api client (#2140)
-* "kontena complete --subcommand-tree" prints out the full command tree for tests (#2102)
-
-## [1.2.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc1) (2017-04-07)
-
-### Known issues
-
-* After weave upgrade, service aliases are missing from DNS (#2079)
-
-    If `*.kontena.local` DNS aliases are missing after an upgrade, restart the `kotnena-agent`.
-
-* Stack upgrade can remove linked-to services, breaking linking services (#1769)
-
-    Do not remove services from a stack if any services still link to them.
-
-* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
-
-    Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
-
-### Fixed issues
+#### [1.2.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc1) (2017-04-07)
 
 * Inconistent `master_admin` access checks (#1442)
 * Enable us to pipe service(/cluster?) logs to ELK Stack for example (#1719)
@@ -257,19 +122,38 @@ See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
 * Stack vault resolver shows errors (#2059)
 * Secret update triggers update of linked service even value does not change (#2094)
 
+#### [1.2.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc2) (2017-04-13)
+
+* After weave upgrade, service aliases are missing from DNS #2079
+* Agent should check that volume driver match before reusing it #2089
+* Stack upgrade can remove linked-to services, breaking linking services #1769
+* Cli: kontena volume ls cuts long volume names #2083
+* Stack deploy and service deploy error states are broken #2127
+* Stateful service with daemon strategy behaviour is broken #2133
+* Re-creating indexes in migrations may timeout puma worker boot #2120
+
+#### [1.2.0.rc3](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc3) (2017-04-20)
+
+* Agent starts outdated container instead of re-creating it #2154
+* Service with newer image is not deployed without force #2171
+* CreateEventLog migration throws error if index is building #2164
+* Unresolvable statsd endpoint crashes NodeInfoWorker #2165
+* rake kontena:reset_admin throws error #2168
+
+#### [1.2.0](https://github.com/kontena/kontena/releases/tag/v1.2.0) (2017-04-21)
+
+* Stack complains about bind mounts #2192
+* Agent pulls images and may re-create service containers after reboot/upgrade if Docker image has been updated #2197
+* CLI: kontena stack deploy does not report instance deploy errors #2196
 
 ### Changes
 
 * Improve how agent rpc server handles requests (#1607)
 * more e2e specs (#1830)
 * Configurable grid subnet, supernet (#1323)
-* Docs: link env variables reference to summary (#1912)
-* Updating development.md guide to include step to delete master nodes from local cli config file (#1909)
 * Refactor all agent communication to msgpack rpc (#1855)
 * Run e2e specs with docker-compose inside docker-compose with CoreOS inside Vagrant (#1878)
 * Add timestamps to host node and container stats (#1908)
-* docs: fix upgrading section links (#1941)
-* docs (lb) Example on how to include cert intermediates. (#1939)
 * Test: Skip compose build, bind-mount /app instead (#1881)
 * Remove unnecessary spec_helper requires in tests (#1932)
 * Fix ubuntu packages to also support docker-{ce,ee}, fix docker-engine dependencies (#1950)
@@ -289,9 +173,23 @@ See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
 * WaitHelper threshold for logging (#2072)
 * Grid/stack/service event logs (#2028)
 * Volume show command & API (#2099)
-* Volume related api docs (#2075)
 * Service instances api & related cli enhancements (#2101)
+
+* Do not log entire yield value from wait_helper (#2124)
+* fix e2e service start/stop tests (#2130)
+* Improve websocket timeouts and node connection open/close logging (#2142)
+
+#### Docs
+* Docs: link env variables reference to summary (#1912)
+* Updating development.md guide to include step to delete master nodes from local cli config file (#1909)
+* docs: fix upgrading section links (#1941)
+* docs (lb) Example on how to include cert intermediates. (#1939)
+* Volume related api docs (#2075)
 * Docs for volumes (#2049)
+
+* kontena.yml reference improvements (#2179)
+* Mention that re-scheduling happens only if service is stateless (#2178)
+* docs: service rescheduling after node removal (#2182)
 
 #### Agent
 * Agent: Upgrade to faye-websocket 0.10.7 with connection error reasons, close timeouts (#1757)
@@ -306,6 +204,21 @@ See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
 * Improve agent RPC request error handling (#2008)
 * Fix observable spec races (#2106)
 * Throttle agent logs streams if queue is full (#2111)
+
+* Fix agent to raise on service container start, stop, restart errors (#2138)
+* Check volume driver match when ensuring volume existence (#2135)
+* Improve agent resource usage (#2143)
+* Reduce agent info logging (#2155)
+* Fix agent WeaveWorker to not start until Weave has started (#2153)
+* ContainerInfoWorker fixes (#2147)
+
+* Refactor node stats to NodeStatsWorker (#2166)
+* Remove unused ContainerStarterWorker (#2181)
+* Don't crash ImagePullWorker if pull fails (#2172)
+* Fixing nice stats collection typo bug (#2190)
+* Check that image is up-to-date in ServicePodWorker (#2177)
+
+* trigger image pull only if deploy_rev changes (#2198)
 
 #### Server
 * Display server version on master container startup (#1839)
@@ -334,6 +247,24 @@ See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
 * Only cleanup nodes labeled as ephemeral (#2084)
 * Fix service update changes detection (#2097)
 * Fix scheduler to raise better error if given empty nodes (#2107)
+
+* Fix migration timeout issues (#2123)
+* do not reschedule stateful service automatically (#2137)
+* Fix service, stack deploy errors (#2132)
+* Server WebsocketBackend EventMachine watchdog (#2139)
+* migration service instance also from volume containers (#2129)
+* Fix stack deploy service removal (#2128)
+* Bring scheduler node offline grace period back (#2141)
+* Include CPU in resource usage json (#2151)
+* Add service pod caching on Rpc::NodeServicePodHandler (#2146)
+* Fix scheduler to notice if instance node was removed (#2152)
+* Fix server NodePlugger.plugin logging of new nodes without names (#2156)
+
+* Fix rake tasks to require celluloid/current (#2169)
+* Return container stats only from running instances (#2160)
+* remove bundler from bin/kontena-console (#2170)
+* Fix Service Metrics CPU (#2162)
+* Raise puma worker boot timeout & remove background threads (#2187)
 
 #### CLI
 * Upgrade to tty-prompt 0.11 with improved windows support (#1901)
@@ -365,6 +296,17 @@ See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
 * bump hash-validator to 0.7.1 which fixes the 'external: false' validation (#2105)
 * Make stack variable yes/no prompts honor default value (#2053)
 * CLI: mark volumes commands as experimental (#2108)
+
+* In cli login command, finish method was returning nil, which caused browser web flow prompt even when a valid token was passed in (#2145)
+* Use tty-table for volume ls (#2136)
+* Reduce already initialized constant warnings in api client (#2140)
+* "kontena complete --subcommand-tree" prints out the full command tree for tests (#2102)
+
+* CLI logo now says "cli" (#2167)
+* Warn, don't exit, when a plugin fails to load (#2184)
+
+* Validate volume declaration on cli only if named volumes used (#2193)
+* Stack deploy error reporting (#2199)
 
 ## [1.1.2](https://github.com/kontena/kontena/releases/tag/v1.1.2) (2017-02-24)
 
