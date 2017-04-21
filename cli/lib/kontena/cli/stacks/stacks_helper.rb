@@ -22,7 +22,7 @@ module Kontena::Cli::Stacks
 
       started
     rescue Timeout::Error
-      raise "deploy timed out"
+      raise 'deploy timed out'
     end
 
     # @param [Hash] deployment
