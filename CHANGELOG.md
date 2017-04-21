@@ -5,8 +5,8 @@
 ### Highlights
 
 #### Experimental volumes support
-The Kontena 1.2 release introduces [experimental support for volume management](https://kontena.io/docs/using-kontena/volumes.md).
-Stack services can now [use](https://kontena.io/docs/references/kontena-yml.md#volumes) volumes created by `kontena volume create`, and the service and volume instances will be scheduled together.
+The Kontena 1.2 release introduces [experimental support for volume management](https://kontena.io/docs/using-kontena/volumes).
+Stack services can now [use](https://kontena.io/docs/references/kontena-yml#volumes) volumes created by `kontena volume create`, and the service and volume instances will be scheduled together.
 
 Kontena volumes can use volume drivers provided by Docker plugins installed on the host nodes, such as [rexray](https://rexray.codedellemc.com/).
 
@@ -14,9 +14,9 @@ The exact details of how these Kontena volumes are managed may still change as t
 
 #### Native IPsec overlay network encryption
 
-Host nodes will be upgraded to Weave 1.9.3, and switch to using the new IPSec [encrypted datapath](https://kontena.io/docs/core-concepts/networking.md#encrypted-datapath) for the overlay networking between host nodes.
+Host nodes will be upgraded to Weave 1.9.3, and switch to using the new IPSec [encrypted datapath](https://kontena.io/docs/core-concepts/networking#encrypted-datapath) for the overlay networking between host nodes.
 
-The new encrypted datapath uses native Linux IPsec encryption, providing improved performance compared to the current [userspace `sleeve`](https://kontena.io/docs/core-concepts/networking.md#sleeve) transport.
+The new encrypted datapath uses native Linux IPsec encryption, providing improved performance compared to the current [userspace `sleeve`](https://kontena.io/docs/core-concepts/networking#sleeve) transport.
 Host nodes will fall back to the current UDP-based `sleeve` transport if they are unable to send or receive IPsec ESP packets. Note that the default firewall rules for e.g. Google Cloud Platform deny IPsec ESP packets by default.
 
 #### Improved service deployment and agent communication
@@ -36,11 +36,11 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
     The [Kontena Shell](https://github.com/kontena/kontena-plugin-shell#kontena-shell) is available as an optional plugin for Kontena 1.2, offering an improved interactive console interface: `kontena plugin install shell`
 
-* [`kontena grid create --subnet --supernet`](https://kontena.io/docs/using-kontena/grids.md#grid-subnet-supernet)
+* [`kontena grid create --subnet --supernet`](https://kontena.io/docs/using-kontena/grids#grid-subnet-supernet)
 
     If the default `10.80.0.0/12` internal overlay network address space overlaps with the the private networking address space on the host node provider, you can chose a different internal overlay networking address space for use by the Kontena host nodes and service containers.
 
-* [`kontena grid update --log-forwarder fluentd`](https://kontena.io/docs/using-kontena/grids.md#logging-options)
+* [`kontena grid update --log-forwarder fluentd`](https://kontena.io/docs/using-kontena/grids#logging-options)
 
     The agent can ship service container logs to an external `fluentd` server.
 
@@ -50,7 +50,7 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
 * `kontena stack {build,install,upgrade,validate} --values-to --values-from`
 
-    Automate [Kontena stack variables](https://kontena.io/docs/references/kontena-yml-variables.md) across deployments.
+    Automate [Kontena stack variables](https://kontena.io/docs/references/kontena-yml-variables) across deployments.
 
 * `kontena stack validate --online`
 
@@ -82,7 +82,7 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
 * `kontena volume create`, `show`, `remove`, `list`
 
-    See the [Volumes](https://kontena.io/docs/using-kontena/volumes.md) documentation.
+    See the [Volumes](https://kontena.io/docs/using-kontena/volumes) documentation.
 
 #### Stacks
 
@@ -92,7 +92,7 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
 * New `volumes` section
 
-    See the [Kontena stack volume](https://kontena.io/docs/references/kontena-yml.md#volumes) documentation.
+    See the [Kontena stack volume](https://kontena.io/docs/references/kontena-yml#volumes) documentation.
 
 ### Known issues
 
