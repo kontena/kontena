@@ -174,7 +174,6 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 * Grid/stack/service event logs (#2028)
 * Volume show command & API (#2099)
 * Service instances api & related cli enhancements (#2101)
-
 * Do not log entire yield value from wait_helper (#2124)
 * fix e2e service start/stop tests (#2130)
 * Improve websocket timeouts and node connection open/close logging (#2142)
@@ -186,7 +185,6 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 * docs (lb) Example on how to include cert intermediates. (#1939)
 * Volume related api docs (#2075)
 * Docs for volumes (#2049)
-
 * kontena.yml reference improvements (#2179)
 * Mention that re-scheduling happens only if service is stateless (#2178)
 * docs: service rescheduling after node removal (#2182)
@@ -204,20 +202,17 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 * Improve agent RPC request error handling (#2008)
 * Fix observable spec races (#2106)
 * Throttle agent logs streams if queue is full (#2111)
-
 * Fix agent to raise on service container start, stop, restart errors (#2138)
 * Check volume driver match when ensuring volume existence (#2135)
 * Improve agent resource usage (#2143)
 * Reduce agent info logging (#2155)
 * Fix agent WeaveWorker to not start until Weave has started (#2153)
 * ContainerInfoWorker fixes (#2147)
-
 * Refactor node stats to NodeStatsWorker (#2166)
 * Remove unused ContainerStarterWorker (#2181)
 * Don't crash ImagePullWorker if pull fails (#2172)
 * Fixing nice stats collection typo bug (#2190)
 * Check that image is up-to-date in ServicePodWorker (#2177)
-
 * trigger image pull only if deploy_rev changes (#2198)
 
 #### Server
@@ -247,7 +242,6 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 * Only cleanup nodes labeled as ephemeral (#2084)
 * Fix service update changes detection (#2097)
 * Fix scheduler to raise better error if given empty nodes (#2107)
-
 * Fix migration timeout issues (#2123)
 * do not reschedule stateful service automatically (#2137)
 * Fix service, stack deploy errors (#2132)
@@ -259,7 +253,6 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 * Add service pod caching on Rpc::NodeServicePodHandler (#2146)
 * Fix scheduler to notice if instance node was removed (#2152)
 * Fix server NodePlugger.plugin logging of new nodes without names (#2156)
-
 * Fix rake tasks to require celluloid/current (#2169)
 * Return container stats only from running instances (#2160)
 * remove bundler from bin/kontena-console (#2170)
@@ -296,15 +289,12 @@ Known regressions in the new Kontena 1.2 release compared to earlier releases.
 * bump hash-validator to 0.7.1 which fixes the 'external: false' validation (#2105)
 * Make stack variable yes/no prompts honor default value (#2053)
 * CLI: mark volumes commands as experimental (#2108)
-
 * In cli login command, finish method was returning nil, which caused browser web flow prompt even when a valid token was passed in (#2145)
 * Use tty-table for volume ls (#2136)
 * Reduce already initialized constant warnings in api client (#2140)
 * "kontena complete --subcommand-tree" prints out the full command tree for tests (#2102)
-
 * CLI logo now says "cli" (#2167)
 * Warn, don't exit, when a plugin fails to load (#2184)
-
 * Validate volume declaration on cli only if named volumes used (#2193)
 * Stack deploy error reporting (#2199)
 
