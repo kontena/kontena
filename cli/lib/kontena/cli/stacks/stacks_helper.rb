@@ -1,4 +1,3 @@
-
 module Kontena::Cli::Stacks
   module StacksHelper
 
