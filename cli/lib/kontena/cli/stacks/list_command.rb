@@ -24,22 +24,23 @@ module Kontena::Cli::Stacks
       response['stacks'].each do |stack|
         ports = stack_ports(stack)
         health = stack_health(stack)
-        if health == :unhealthy
-          icon = '⊗'.freeze
+        case health
+        when :unhealthy
+          icon = glyph(:circled_x)
           color = :red
-        elsif health == :partial
-          icon = '⊙'.freeze
+        when :partial
+          icon = glyph(:circled_dot)
           color = :yellow
-        elsif health == :healthy
-          icon = '⊛'.freeze
+        when :healthy
+          icon = glyph(:circled_star)
           color = :green
         else
-          icon = '⊝'.freeze
+          icon = glyph(:circled_dash)
           color = :dim
         end
 
         vars = [
-          icon.colorize(color),
+          pastel.send(color, icon),
           "#{stack['name']}",
           "#{stack['stack']}:#{stack['version']}",
           stack['services'].size,

@@ -45,7 +45,7 @@ module Kontena::Cli::Apps
         puts "services:"
         services.each do |name, data|
           color = color_for_service(name)
-          puts "  #{"■".colorize(color)} #{name} (#{data['instances']} instances)"
+          puts "  #{pastel.send(color, glyph(:black_square))} #{name} (#{data['instances']} instances)"
         end
         puts "nodes:"
         node_names = nodes.keys.sort
@@ -54,12 +54,12 @@ module Kontena::Cli::Apps
           puts "  #{name} (#{containers.size} instances)"
           print "  "
           containers.each do |container|
-            icon = "■"
+            icon = :black_square
             if container['status'] != 'running'
-              icon = "□"
+              icon = :white_square
             end
             color = color_for_service(container['service'])
-            print icon.colorize(color)
+            print pastel.send(color, glyph(icon))
           end
           puts ''
         end
