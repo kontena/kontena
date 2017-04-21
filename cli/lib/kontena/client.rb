@@ -325,7 +325,7 @@ module Kontena
       # Store the response into client.last_response
       @last_response = http_client.request(request_options)
 
-      parse_response(@last_response)
+      ret = parse_response(@last_response)
     rescue Excon::Errors::Unauthorized
       if token
         logger.debug 'Server reports access token expired'
@@ -342,6 +342,10 @@ module Kontena
       logger.debug "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}"
 
       handle_error_response(error.response)
+
+    else
+      logger.debug "#{http_method.upcase} #{path}: #{(body || query).inspect} -> #{@last_response.status} #{@last_response.reason_phrase}: #{ret.inspect}"
+      return ret
     end
 
     # Build a token refresh request param hash
