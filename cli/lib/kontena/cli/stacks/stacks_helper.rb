@@ -1,4 +1,3 @@
-
 module Kontena::Cli::Stacks
   module StacksHelper
 
@@ -52,7 +51,13 @@ module Kontena::Cli::Stacks
         if deployment['state'] == 'error'
           deployment['service_deploys'].each do |service_deploy|
             if service_deploy['state'] == 'error'
-              error service_deploy['reason']
+              $stderr.puts "Deployment of service #{pastel.cyan(service_deploy['service_id'])} failed:"
+              $stderr.puts "  - #{service_deploy['reason'].strip}"
+              service_deploy['instance_deploys'].each do |instance_deploy|
+                if instance_deploy['state'] == 'error'
+                  $stderr.puts "  - " + "#{instance_deploy['error'].strip} (on node #{pastel.cyan(instance_deploy['node'])})"
+                end
+              end
             end
           end
           abort
@@ -67,11 +72,12 @@ module Kontena::Cli::Stacks
     def wait_for_service_deploy(service_deploy, states)
       service_deployed = false
       name = service_deploy['service_id'].split('/')[-1]
-      spinner "Deploying service #{pastel.cyan(name)}" do
+      spinner "Deploying service #{pastel.cyan(name)}" do |spin|
         until service_deployed
           r = client.get("services/#{service_deploy['service_id']}/deploys/#{service_deploy['id']}")
           if states.include?(r['state'])
             service_deployed = true
+            spin.fail if r['state'] == 'error'
           else
             sleep 1
           end
