@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0.rc3](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc3) (2017-04-20)
+## [1.2.0](https://github.com/kontena/kontena/releases/tag/v1.2.0) (2017-04-21)
 
 ### Highlights
 
@@ -24,8 +24,7 @@ Host nodes will fall back to the current UDP-based `sleeve` transport if they ar
 The server and agent have been improved to be more robust in the case of various error and overload situations affecting service deployments.
 The agent can now recover from various errors, healing itself and resolving any deployment inconsistencies.
 
-The `kontena service deploy` command now provide better reporting of deployment status and errors.
-Pending CLI `kontena stack deploy` support for service deploy progress and errors (#2114).
+The `kontena service deploy` and `kontena stack` commands now provide better reporting of deployment errors.
 
 #### Support for Kontena Cloud metrics and real-time updates
 
@@ -94,6 +93,39 @@ The Kontena 1.2 release adds support for [Kontena Cloud](https://cloud.kontena.i
 * New `volumes` section
 
     See the [Kontena stack volume](https://github.com/kontena/kontena/blob/v1.2/docs/references/kontena-yml.md#volumes) documentation.
+
+### Known issues
+
+Known regressions in the new Kontena 1.2 release compared to earlier releases.
+
+* Kontena 1.2 cadvisor with rshared bind-mounts is broken on distros running Docker in a non-shared mount namespace #2175
+
+    Service container stats will not be available for host nodes installed using distribution packages that configure the Docker service to run in a separate non-shared mount namespace.
+
+* Stack upgrade / Service update will not re-deploy service on removal of embedded objects (#2109)
+
+    Removing hooks, links, secrets or volumes from a stack service will not re-deploy the service containers after a `kontena stack upgrade`. Use `kontena service deploy --force` to update the service container configuration.
+
+### Fixed issues
+
+See the earlier 1.2.0.rc releases for the full list of fixed issues from Kontena 1.1.
+
+* Stack complains about bind mounts #2192
+* Agent pulls images and may re-create service containers after reboot/upgrade if Docker image has been updated #2197
+* CLI: kontena stack deploy does not report instance deploy errors #2196
+
+### Changes
+
+See the earlier 1.2.0.rc releases for the full list of changes from Kontena 1.1.
+
+#### Agent
+* trigger image pull only if deploy_rev changes (#2198)
+
+#### CLI
+* Validate volume declaration on cli only if named volumes used (#2193)
+* Stack deploy error reporting (#2199)
+
+## [1.2.0.rc3](https://github.com/kontena/kontena/releases/tag/v1.2.0.rc3) (2017-04-20)
 
 ### Known issues
 
