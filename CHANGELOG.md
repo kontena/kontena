@@ -28,7 +28,7 @@ The `kontena service deploy` and `kontena stack` commands now provide better rep
 
 #### Support for Kontena Cloud metrics and real-time updates
 
-The Kontena 1.2 release adds support for [Kontena Cloud](https://cloud.kontena.io), as well as realtime updates as services are deployed or host nodes update. Refer to the [release blog post](https://blog.kontena.io/kontena-1-2-0-release/#kontenacloudupdates) for more details.
+The Kontena 1.2 release supports additional host/container stats used for the updated [Kontena Cloud](https://cloud.kontena.io) dashboard, as well as streaming of realtime updates as services are deployed or host nodes update. Refer to the [release blog post](https://blog.kontena.io/kontena-1-2-0-release/#kontenacloudupdates) for more details.
 
 #### CLI
 
