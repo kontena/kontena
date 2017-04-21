@@ -21,12 +21,14 @@ module Kontena::Workers
       @service_pod = service_pod
       @prev_state = nil # sync'd to master
       @container_state_changed = true
+      @deploy_rev_changed = false
       subscribe('container:event', :on_container_event)
     end
 
     # @param [Kontena::Models::ServicePod] service_pod
     def update(service_pod)
       if needs_apply?(service_pod)
+        check_deploy_rev(service_pod)
         @service_pod = service_pod
         apply
       else
@@ -40,6 +42,17 @@ module Kontena::Workers
       @container_state_changed ||
         @service_pod.desired_state != service_pod.desired_state ||
           @service_pod.deploy_rev != service_pod.deploy_rev
+    end
+
+    # @param [Kontena::Models::ServicePod] service_pod
+    def check_deploy_rev(service_pod)
+      return if @service_pod.deploy_rev.nil? || service_pod.deploy_rev.nil?
+      @deploy_rev_changed = @service_pod.deploy_rev != service_pod.deploy_rev
+    end
+
+    # @return [Boolean]
+    def deploy_rev_changed?
+      @deploy_rev_changed == true
     end
 
     # @param [String] topic
@@ -159,6 +172,7 @@ module Kontena::Workers
           labels_outdated?(service_container) ||
           recreate_service_container?(service_container)
       return true if outdated
+      return false unless deploy_rev_changed?
 
       image_puller.ensure_image(
         service_pod.image_name, service_pod.deploy_rev, service_pod.image_credentials

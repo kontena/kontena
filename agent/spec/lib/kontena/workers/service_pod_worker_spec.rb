@@ -162,6 +162,32 @@ describe Kontena::Workers::ServicePodWorker do
     end
   end
 
+  describe '#check_deploy_rev' do
+    it 'does nothing if passed service_pod deploy_rev is nil' do
+      expect {
+        update = service_pod.dup
+        allow(update).to receive(:deploy_rev).and_return(nil)
+        subject.check_deploy_rev(update)
+      }.not_to change { subject.deploy_rev_changed? }
+    end
+
+    it 'does nothing if service_pod deploy_rev is nil' do
+      expect {
+        allow(service_pod).to receive(:deploy_rev).and_return(nil)
+        update = service_pod.dup
+        subject.check_deploy_rev(update)
+      }.not_to change { subject.deploy_rev_changed? }
+    end
+
+    it 'changes if deploy_rev has changed' do
+      expect {
+        update = service_pod.dup
+        allow(update).to receive(:deploy_rev).and_return('aaa')
+        subject.check_deploy_rev(update)
+      }.to change { subject.deploy_rev_changed? }.from(false).to(true)
+    end
+  end
+
   describe '#on_container_event' do
     let(:actor) do
       double(:actor, attributes: {
@@ -221,7 +247,8 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.service_container_outdated?(service_container)).to be_truthy
     end
 
-    it 'returns true if service container image is outdated' do
+    it 'returns true if deploy_rev has changed and service container image is outdated' do
+      allow(subject.wrapped_object).to receive(:deploy_rev_changed?).and_return(true)
       allow(subject.wrapped_object).to receive(:image_outdated?).and_return(true)
       expect(puller).to receive(:ensure_image).with(service_pod.image_name, service_pod.deploy_rev, nil)
       expect(subject.service_container_outdated?(service_container)).to be_truthy
