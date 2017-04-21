@@ -43,6 +43,7 @@ class Server < Roda
   route do |r|
 
     r.root do
+      Mongoid.default_session.collection_names # crashes if db is not connected
       {
         name: 'Kontena Master',
         tagline: 'The Container Platform',
