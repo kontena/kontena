@@ -55,7 +55,7 @@ module Cloud
 
       def require_user(user_id)
         @user = User.find_by(external_id: user_id)
-        raise RpcServer::Error.new(403, 'Forbidden') unless @user
+        raise RpcServer::Error.new(403, 'Invalid user') unless @user
       end
 
       def request(path, opts = {})
