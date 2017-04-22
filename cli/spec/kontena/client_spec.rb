@@ -325,7 +325,7 @@ describe Kontena::Client do
       end
 
       it 'warns the user once if server version differs enough from master version' do
-        bumped_version = cli_version.split('.')[0] + '.' + (cli_version.split('.')[1].to_i + 1).to_s + '.0' # 1.5.4 --> 1.6.0
+        bumped_version = cli_version.split('.')[0] + '.' + (cli_version.split('.')[1].to_i + 2).to_s + '.0' # 1.5.4 --> 1.7.0
         expect(response).to receive(:headers).at_least(:once).and_return({'X-Kontena-Version' => bumped_version})
         expect(subject).to receive(:check_version_and_warn).at_least(:once).and_call_original
         expect(subject).to receive(:add_version_warning).with(bumped_version).once.and_return(true)

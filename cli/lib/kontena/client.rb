@@ -488,7 +488,13 @@ module Kontena
       return nil if $VERSION_WARNING_ADDED
       return nil unless server_version.to_s =~ /^\d+\.\d+\.\d+/
 
-      unless server_version[/^(\d+\.\d+)/, 1] == Kontena::Cli::VERSION[/^(\d+\.\d+)/, 1] # Just compare x.y
+      server_major, server_minor, _ = server_version.split('.')
+      cli_major,    cli_minor,    _ = Kontena::Cli::VERSION.split('.')
+
+      # 1.0.0 <--> 0.16.0 warns
+      # 1.4.0 <--> 1.6.0  warns
+      # 1.4.0 <--> 1.5.0  does not
+      if server_major != cli_major || (server_minor.to_i - cli_minor.to_i).abs >= 2
         add_version_warning(server_version)
         $VERSION_WARNING_ADDED = true
       end
