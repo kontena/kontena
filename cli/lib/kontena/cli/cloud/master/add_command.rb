@@ -1,3 +1,6 @@
+require 'kontena/cli/cloud_command'
+require 'kontena/cli/cloud/master_command'
+
 module Kontena::Cli::Cloud::Master
   class AddCommand < Kontena::Command
 
@@ -98,8 +101,8 @@ module Kontena::Cli::Cloud::Master
           if (self.provider && response['data']['attributes']['provider'] != self.provider) || (self.version && response['data']['attributes']['version'] != self.version)
             spinner "Updating provider and version attributes to Kontena Cloud master" do
               args = []
-              args << "--provider #{self.provider.shellescape}" if self.provider
-              args << "--version #{self.version.shellescape}" if self.version
+              args += ['--provider', self.provider] if self.provider
+              args += ['--version', self.version] if self.version
               args << self.cloud_master_id
               Kontena.run(['cloud', 'master', 'update'] + args)
             end

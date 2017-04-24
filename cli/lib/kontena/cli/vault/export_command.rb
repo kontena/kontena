@@ -13,7 +13,7 @@ module Kontena::Cli::Vault
       require 'shellwords'
       meth = json? ? :to_json : :to_yaml
       puts Hash[
-        *Kontena.run('vault ls --return', returning: :result).sort.flat_map do |secret|
+        *Kontena.run(['vault', 'ls', '--return'], returning: :result).sort.flat_map do |secret|
           [secret, Kontena.run(['vault', 'read', '--return', secret], returning: :result)]
         end
       ].send(meth)

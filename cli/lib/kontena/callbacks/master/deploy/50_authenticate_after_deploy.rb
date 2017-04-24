@@ -57,7 +57,7 @@ module Kontena
         ]
         Retriable.retriable do
           ENV["DEBUG"] && $stderr.puts("Running: #{cmd}")
-          Kontena.run(cmd)
+          raise "retry" unless Kontena.run(cmd, returning: :status).zero?
         end
       end
     end

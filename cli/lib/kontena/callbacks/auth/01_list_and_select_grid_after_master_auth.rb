@@ -20,7 +20,7 @@ module Kontena
         return unless command.exit_code == 0
         return unless current_master.grid.nil?
 
-        Kontena.run(%w(grid list --use --verbose))
+        Kontena.run(%w(grid list --use --verbose), returning: :status)
       end
     end
   end

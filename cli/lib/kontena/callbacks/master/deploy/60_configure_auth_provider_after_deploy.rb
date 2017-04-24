@@ -16,7 +16,7 @@ module Kontena
       end
 
       def configure_auth_provider
-        Kontena.run(['master', 'init-cloud'] + init_cloud_args)
+        Kontena.run(['master', 'init-cloud'] + init_cloud_args, returning: :status)
       end
 
       def after

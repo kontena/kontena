@@ -6,7 +6,7 @@ module Kontena
   #
   # @param [String,Array<String>] command_line
   # @return [Fixnum] exit_code
-  def self.run(*cmdline, returning: :status)
+  def self.run(*cmdline, returning: nil)
     if cmdline.first.kind_of?(Array)
       command = cmdline.first
     elsif cmdline.size == 1 && cmdline.first.include?(' ')
@@ -21,10 +21,12 @@ module Kontena
     return result if returning == :result
   rescue SystemExit => ex
     ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
-    returning == :status ? $!.status : nil
+    return ex.status if returning == :status
+    raise ex
   rescue => ex
     ENV["DEBUG"] && $stderr.puts("Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
-    returning == :status ? 1 : nil
+    return 1 if returning == :status
+    raise ex
   end
 
 

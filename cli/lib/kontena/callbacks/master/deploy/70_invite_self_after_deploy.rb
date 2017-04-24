@@ -44,7 +44,7 @@ module Kontena
         role_status = nil
 
         spinner "Adding master_admin role for #{cloud_user_data[:email]}" do |spin|
-          role_status = Kontena.run(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]])
+          role_status = Kontena.run(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]], returning: :status)
           spin.fail if role_status.to_i > 0
         end
 
@@ -52,7 +52,7 @@ module Kontena
 
         if current_master.grid
           spinner "Adding #{cloud_user_data[:email]} to grid '#{current_master.grid}'" do |spin|
-            grid_add_status = Kontena.run(["grid", "user", "add", "--grid", current_master.grid, cloud_user_data[:email]])
+            grid_add_status = Kontena.run(["grid", "user", "add", "--grid", current_master.grid, cloud_user_data[:email]], returning: :status)
             spin.fail if grid_add_status.to_i > 0
           end
         end
