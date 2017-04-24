@@ -1,4 +1,5 @@
 require_relative '../helpers/rpc_helper'
+require_relative '../helpers/weave_helper'
 
 module Kontena::Workers
   class EventWorker
@@ -6,6 +7,7 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::WeaveHelper
 
     EVENT_NAME = 'container:event'
 
@@ -73,7 +75,7 @@ module Kontena::Workers
 
     # @param [Docker::Event] event
     def publish_event(event)
-      return if Actor[:network_adapter].adapter_image?(event.from)
+      return if adapter_image?(event.from)
 
       data = {
         id: event.id,
