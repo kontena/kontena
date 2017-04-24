@@ -5,7 +5,6 @@ dependency "ruby"
 dependency "rubygems"
 dependency "libxml2"
 dependency "libxslt"
-
 whitelist_file "./wrappers/sh/kontena"
 build do
   gem "install rb-readline -v 0.5.4 --no-ri --no-doc"
