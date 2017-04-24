@@ -22,7 +22,7 @@ module Kontena
   rescue SystemExit => ex
     ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
     return ex.status if returning == :status
-    raise ex
+    raise ex unless ex.status.zero?
   rescue => ex
     ENV["DEBUG"] && $stderr.puts("Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
     return 1 if returning == :status
