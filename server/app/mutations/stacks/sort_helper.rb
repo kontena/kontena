@@ -1,6 +1,9 @@
 module Stacks
   module SortHelper
 
+    # Sort services with a stack, such that services come after any services that they link to.
+    # This can only be used to sort services within the same stack. Links to services in other stacks are ignored.
+    #
     # @param [Array<GridService,Hash>]
     # @return [Array<GridService,Hash>]
     def sort_services(services)
@@ -21,9 +24,9 @@ module Stacks
     # @return [Array<Hash>]
     def __links_for_service(service)
       if service.is_a?(GridService)
-        service.grid_service_links.map{ |l| { name: l.linked_grid_service.name } }
+        service.grid_service_links.select{|l| l.linked_grid_service.stack == service.stack }.map{ |l| { name: l.linked_grid_service.name } }
       else
-        service[:links] || []
+        (service[:links] || [])
       end
     end
   end
