@@ -98,7 +98,7 @@ module Kontena::Cli::Stacks
       end
 
       def raw_yaml
-        @raw_yaml ||= ::YAML.safe_load(raw_content)
+        @raw_yaml ||= ::YAML.safe_load(raw_content) || {}
       end
 
       # @return [Opto::Group]
