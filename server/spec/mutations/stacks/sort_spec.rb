@@ -61,7 +61,9 @@ describe Stacks::SortHelper do
 
     before do
       service_b.link_to(service_a)
-      service_a.reload
+
+      # XXX: mongoid has a bug where it sets grid_service_links on the linked-to service
+      services.each do |s| s.reload end
     end
 
     it "sorts them" do
@@ -70,6 +72,33 @@ describe Stacks::SortHelper do
 
     it "sorts them from reverse order" do
       expect(subject.sort_services(services.reverse).map{|s| s.name}).to eq ['a', 'b']
+    end
+  end
+
+  context "for two service objects with a link to an external service" do
+    let(:grid) { Grid.create!(name: 'test-grid') }
+    let(:stack) { grid.stacks.find_by(name: Stack::NULL_STACK) }
+    let(:stack_2) { grid.stacks.create!(name: 'bar') }
+
+    let(:service_2b) { GridService.create!(grid: grid, stack: stack_2, name: 'b', image_name: 'redis:latest') }
+    let(:service_2c) { GridService.create!(grid: grid, stack: stack_2, name: 'c', image_name: 'redis:latest') }
+    let(:service_a) { GridService.create!(grid: grid, stack: stack, name: 'a', image_name: 'redis:latest') }
+    let(:service_b) { GridService.create!(grid: grid, stack: stack, name: 'b', image_name: 'redis:latest') }
+    let(:service_c) { GridService.create!(grid: grid, stack: stack, name: 'c', image_name: 'redis:latest') }
+    let(:services) { [service_a, service_b, service_c] }
+
+    before do
+      service_a.link_to(service_2b)
+      service_a.link_to(service_2c)
+      service_b.link_to(service_a)
+      service_c.link_to(service_b)
+
+      # XXX: mongoid has a bug where it sets grid_service_links on the linked-to service
+      services.each do |s| s.reload end
+    end
+
+    it "sorts them, ignoring the external links" do
+      expect(subject.sort_services(services).map{|s| s.name}).to eq ['a', 'b', 'c']
     end
   end
 
