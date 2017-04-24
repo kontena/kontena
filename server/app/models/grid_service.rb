@@ -147,7 +147,7 @@ class GridService
   end
 
   def deploy_pending?
-    self.grid_service_deploys.where(started_at: nil).count > 0
+    self.grid_service_deploys.where(finished_at: nil).count > 0
   end
 
   # @return [Boolean]
