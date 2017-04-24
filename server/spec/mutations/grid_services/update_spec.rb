@@ -336,7 +336,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             volumes: ['/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.first.path).to eq('/foo')
         end
 
@@ -346,7 +346,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             volumes: ['foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.first.volume).to eq(volume)
         end
 
@@ -355,7 +355,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             volumes: ['/foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.first.path).to eq('/foo')
           expect(outcome.result.service_volumes.first.bind_mount).to eq('/foo')
         end
@@ -376,7 +376,9 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: ['/data', '/foo']
           ).run
-          expect(outcome.success?).to be_falsey
+          expect(outcome).to_not be_success
+          expect(outcome.errors.message).to eq({ 'volumes' => [ "Adding a non-named volume is not supported to a stateful service" ]})
+
         end
 
         it 'allows to add named volume' do
@@ -384,7 +386,7 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: ['/data', 'foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.count).to eq(2)
         end
 
@@ -393,7 +395,7 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: ['/data', '/foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.count).to eq(2)
         end
 
@@ -402,7 +404,7 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: []
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.count).to eq(0)
         end
       end
@@ -431,7 +433,8 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes_from: ['data-1']
           ).run
-          expect(outcome.success?).to be_falsey
+          expect(outcome).to_not be_success
+          expect(outcome.errors.message).to eq({ 'volumes_from' => "Cannot combine stateful & volumes_from" })
         end
       end
     end

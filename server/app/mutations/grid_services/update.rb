@@ -40,7 +40,7 @@ module GridServices
             !vols.include?(v)
           }
           if changed_volumes.any? { |v| !v.include?(':') }
-            add_error(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
+            add_errors(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
           end
         end
       end
