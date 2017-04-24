@@ -46,6 +46,18 @@ module Kontena::NetworkAdapters
       # If Celluloid manages to terminate the pool (through GC or by explicit shutdown) it will raise
     end
 
+    def api_client
+      @api_client ||= Excon.new("http://127.0.0.1:6784")
+    end
+
+    def weave_api_ready?
+      # getting status should be pretty fast, set low timeouts to fail faster
+      response = api_client.get(path: '/status', :connect_timeout => 5, :read_timeout => 5)
+      response.status == 200
+    rescue Excon::Error
+      false
+    end
+
     # @return [Boolean]
     def running?
       return false unless weave_container_running?
