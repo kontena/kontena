@@ -39,7 +39,7 @@ module Kontena
         puts
         puts "You don't seem to be logged in to Kontena Cloud"
         puts
-        Kontena.run("cloud login --verbose")
+        Kontena.run(%w(cloud login --verbose))
         config.reset_instance
         reset_cloud_client
         result = false

@@ -47,7 +47,7 @@ module Kontena::Cli::Cloud::Master
       masters = []
       spinner "Retrieving a list of your registered Kontena Masters in Kontena Cloud" do |spin|
         begin
-          masters = Kontena.run("cloud master list --return", returning: :result)
+          masters = Kontena.run(%w(cloud master list --return), returning: :result)
         rescue SystemExit
           spin.fail
         end
@@ -101,7 +101,7 @@ module Kontena::Cli::Cloud::Master
               args << "--provider #{self.provider.shellescape}" if self.provider
               args << "--version #{self.version.shellescape}" if self.version
               args << self.cloud_master_id
-              Kontena.run("cloud master update #{args.join(' ')}")
+              Kontena.run(['cloud', 'master', 'update'] + args)
             end
           end
         end
@@ -112,17 +112,26 @@ module Kontena::Cli::Cloud::Master
       end
 
       spinner "Loading Kontena Cloud auth provider base configuration to Kontena Master" do
-        Kontena.run('master config import --force --preset kontena_auth_provider')
+        Kontena.run(%w(master config import --force --preset kontena_auth_provider))
       end
 
       spinner "Updating OAuth2 client-id and client-secret to Kontena Master" do
-        Kontena.run("master config set oauth2.client_id=#{response['data']['attributes']['client-id'].shellescape} oauth2.client_secret=#{response['data']['attributes']['client-secret'].shellescape} server.root_url=#{current_master.url.shellescape} server.name=#{current_master.name.shellescape} cloud.provider_is_kontena=true")
+        Kontena.run(
+          [
+            'master', 'config', 'set',
+            "oauth2.client_id=#{response['data']['attributes']['client-id'].shellescape}",
+            "oauth2.client_secret=#{response['data']['attributes']['client-secret'].shellescape}",
+            "server.root_url=#{current_master.url.shellescape}",
+            "server.name=#{current_master.name.shellescape}",
+            "cloud.provider_is_kontena=true"
+          ]
+        )
       end
     end
 
     def execute
       unless cloud_client.authentication_ok?(kontena_account.userinfo_endpoint)
-        Kontena.run('cloud login')
+        Kontena.run(%w(cloud login))
         config.reset_instance
         reset_cloud_client
       end

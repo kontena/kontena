@@ -14,7 +14,7 @@ module Kontena::Cli::Vault
       meth = json? ? :to_json : :to_yaml
       puts Hash[
         *Kontena.run('vault ls --return', returning: :result).sort.flat_map do |secret|
-          [secret, Kontena.run("vault read --return #{secret.shellescape}", returning: :result)]
+          [secret, Kontena.run(['vault', 'read', '--return', secret], returning: :result)]
         end
       ].send(meth)
     end

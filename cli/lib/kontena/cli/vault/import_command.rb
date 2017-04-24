@@ -14,10 +14,6 @@ module Kontena::Cli::Vault
 
     requires_current_master
 
-    UPDATE_CMD = 'vault update --upsert --silent %{key} %{value}'
-    DELETE_CMD = 'vault rm --silent --force %{key}'
-
-
     def parsed_input
       json? ? JSON.load(input) : YAML.safe_load(input)
     end
@@ -60,8 +56,8 @@ module Kontena::Cli::Vault
 
       unless updates.empty?
         spinner "Updating #{updates.size} secrets" do |spin|
-          updates.each do |pair|
-            result = Kontena.run(UPDATE_CMD % { key: pair.first.shellescape, value: pair.last.shellescape })
+          updates.each do |key_value_pair|
+            result = Kontena.run(['vault', 'update', '--upsert', '--silent'] + key_value_pair)
             spin.fail! unless result.zero?
           end
         end
@@ -69,8 +65,8 @@ module Kontena::Cli::Vault
 
       unless deletes.empty? || skip_null?
         spinner "Deleting #{deletes.size} secrets" do |spin|
-          deletes.map(&:shellescape).each do |del|
-            result = Kontena.run(DELETE_CMD % { key: del })
+          deletes.map(&:shellescape).each do |key_to_delete|
+            result = Kontena.run(['vault', 'rm', '--silent', '--force', key_to_delete])
             spin.fail! unless result.zero?
           end
         end
