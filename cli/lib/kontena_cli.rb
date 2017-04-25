@@ -5,6 +5,7 @@ module Kontena
   #   Kontena.run("grid list --help")
   #
   # @param [String,Array<String>] command_line
+  # @param [Symbol] return_type Use returning: :status to return non-zero exit code if the command fails
   # @return [Fixnum] exit_code
   def self.run(*cmdline, returning: nil)
     if cmdline.first.kind_of?(Array)
@@ -18,7 +19,7 @@ module Kontena
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
     ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
     return 0 if returning == :status
-    return result if returning == :result
+    result
   rescue SystemExit => ex
     ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
     return ex.status if returning == :status
@@ -28,7 +29,6 @@ module Kontena
     return 1 if returning == :status
     raise ex
   end
-
 
   # @return [String] x.y
   def self.minor_version
