@@ -39,7 +39,7 @@ module Kontena::Cli::Master::User
             puts "  * command: kontena master join #{current_master.url} #{response['invite_code']}"
           end
           roles.each do |role|
-            raise "Failed to add role" unless Kontena.run(["master", "user", "role", "add", role, email], returning: :status).zero?
+            raise "Failed to add role" unless Kontena.run?(["master", "user", "role", "add", role, email])
           end
         rescue => ex
           ENV["DEBUG"] && $stderr.puts("#{ex} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")

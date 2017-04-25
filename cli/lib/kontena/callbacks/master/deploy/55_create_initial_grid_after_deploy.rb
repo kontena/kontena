@@ -13,7 +13,7 @@ module Kontena
 
         cmd = %w(grid create --silent test)
         Retriable.retriable do
-          raise "retry" unless Kontena.run(cmd, returning: :status).zero?
+          raise "retry" unless Kontena.run?(cmd)
         end
       end
     end

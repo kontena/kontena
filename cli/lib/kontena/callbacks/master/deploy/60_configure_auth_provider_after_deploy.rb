@@ -15,21 +15,16 @@ module Kontena
         args
       end
 
-      def configure_auth_provider
-        Kontena.run(['master', 'init-cloud'] + init_cloud_args, returning: :status)
-      end
-
       def after
         return unless command.exit_code == 0
         return unless command.result.kind_of?(Hash)
         return unless command.result.has_key?(:name)
         return unless config.current_master
         return unless config.current_master.name == command.result[:name]
-        if command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
-          return
-        end
 
-        configure_auth_provider
+        unless command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
+          Kontena.run?(['master', 'init-cloud'] + init_cloud_args)
+        end
       end
     end
   end

@@ -99,12 +99,12 @@ module Kontena::Cli::Cloud::Master
         end
         if response && response.kind_of?(Hash) && response.has_key?('data') && response['data']['attributes']
           if (self.provider && response['data']['attributes']['provider'] != self.provider) || (self.version && response['data']['attributes']['version'] != self.version)
-            spinner "Updating provider and version attributes to Kontena Cloud master" do
+            spinner "Updating provider and version attributes to Kontena Cloud master" do |spin|
               args = []
               args += ['--provider', self.provider] if self.provider
               args += ['--version', self.version] if self.version
               args << self.cloud_master_id
-              Kontena.run(['cloud', 'master', 'update'] + args)
+              spin.fail! unless Kontena.run?(['cloud', 'master', 'update'] + args)
             end
           end
         end
@@ -114,12 +114,12 @@ module Kontena::Cli::Cloud::Master
         end
       end
 
-      spinner "Loading Kontena Cloud auth provider base configuration to Kontena Master" do
-        Kontena.run(%w(master config import --force --preset kontena_auth_provider))
+      spinner "Loading Kontena Cloud auth provider base configuration to Kontena Master" do |spin|
+        spin.fail! unless Kontena.run?(%w(master config import --force --preset kontena_auth_provider))
       end
 
-      spinner "Updating OAuth2 client-id and client-secret to Kontena Master" do
-        Kontena.run(
+      spinner "Updating OAuth2 client-id and client-secret to Kontena Master" do |spin|
+        spin.fail! unless Kontena.run?(
           [
             'master', 'config', 'set',
             "oauth2.client_id=#{response['data']['attributes']['client-id'].shellescape}",
