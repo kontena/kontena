@@ -1,3 +1,19 @@
+# States:
+#   - created: created_at=T0
+#       GridServices::Deploy request, or some internal scheduler, decides to deploy the service
+#   - queued: created_at=T0 queued_at=T1
+#       GridServiceSchedulerWorker picks up the deploy
+#   - queued: created_at=T0 queued_at=T2
+#       A different deploy is already running, so this deploy remains queued.
+#       Deploy is picked up again by a different GridServiceSchedulerWorker
+#   - ongoing: created_at=T0 queued_at=T2 started_at=T3
+#       GridServiceDeployer was run by the GridServiceSchedulerWorker
+#   - success: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
+#       GridServiceDeployer has completed succesfully
+#   - error: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
+#       GridServiceDeployer has failed with an error
+#   - abort: created_at=T0 queued_at=T2 started_at=T3? finished_at=T4
+#       GridServiceSchedulerWorker has decided not to run the deploy
 class GridServiceDeploy
   include Mongoid::Document
   include Mongoid::Timestamps

@@ -137,9 +137,9 @@ class GridService
     self.stack.exposed_service?(self)
   end
 
-  # The service has deploys that are not finished.
+  # The service has deploys created, queued or started, but not yet finished.
   #
-  # This is equvialent to deploy_pending? || deploy_running?
+  # Equvialent to deploy_pending? || deploy_running?
   #
   # @return [Boolean]
   def deploying?
@@ -153,7 +153,7 @@ class GridService
     self.grid_service_deploys.where(:started_at => nil).count > 0
   end
 
-  # The service has ongoing deploys.
+  # The service has deploys that have been started, but not yet finished.
   #
   # @return [Boolean]
   def deploy_running?
