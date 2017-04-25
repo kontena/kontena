@@ -33,7 +33,7 @@ module Kontena
         invite_response = nil
         spinner "Creating user #{cloud_user_data[:email]} into Kontena Master" do |spin|
           invite_response = Kontena.run(["master", "user", "invite", "--external-id", cloud_user_data[:id], "--return", cloud_user_data[:email]])
-          spin.fail unless invite_response.kind_of?(Hash) && invite_response.has_key?('invite_code')
+          spin.fail! unless invite_response.kind_of?(Hash) && invite_response.has_key?('invite_code')
         end
 
         return nil unless invite_response
@@ -41,6 +41,7 @@ module Kontena
 
         success = spinner "Adding master_admin role for #{cloud_user_data[:email]}" do |spin|
           spin.fail! unless Kontena.run?(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]])
+          true
         end
 
         return nil unless success
