@@ -237,7 +237,7 @@ module Kontena::Workers
       prev_cpus.zip(current_cpus).map { |prev_cpu, current_cpu|
         system_ticks = current_cpu.system - prev_cpu.system
         user_ticks = current_cpu.user - prev_cpu.user
-        nice_ticks = current_cpu.nice = prev_cpu.nice
+        nice_ticks = current_cpu.nice - prev_cpu.nice
         idle_ticks = current_cpu.idle - prev_cpu.idle
 
         total_ticks = (system_ticks + user_ticks + nice_ticks + idle_ticks).to_f

@@ -67,7 +67,7 @@ module Kontena::Cli::Stacks
                     unless mount_point
                       result[:errors] << { 'services' => { service => { 'volumes' => { volume => 'mount point missing' } } } }
                     end
-                    if volume_name
+                    if volume_name && !volume_name.start_with?('/')
                       if yaml.key?('volumes')
                         unless yaml['volumes'][volume_name]
                           result[:errors] << { 'services' => { service => { 'volumes' => { volume_name => 'not found in top level volumes list' } } } }

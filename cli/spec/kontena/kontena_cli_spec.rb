@@ -12,9 +12,15 @@ describe Kontena do
       Kontena.reset_prompt
     end
 
-    it 'uses light prompt on windows' do
-      allow(ENV).to receive(:[]).with('OS').and_return('Windows_NT')
+    it 'uses light prompt on simple terminals' do
+      expect(ENV).to receive(:[]).with('KONTENA_SIMPLE_TERM').and_return('true')
       expect(Kontena.prompt).to be_kind_of(Kontena::LightPrompt)
+    end
+
+    it 'uses fancy prompt on fancy terminals' do
+      expect($stdout).to receive(:tty?).at_least(:once).and_return(true)
+      expect(ENV).to receive(:[]).with('KONTENA_SIMPLE_TERM').and_return(nil)
+      expect(Kontena.prompt).to be_kind_of(TTY::Prompt)
     end
   end
 

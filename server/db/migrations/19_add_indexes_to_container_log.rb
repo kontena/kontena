@@ -1,8 +1,6 @@
 class AddIndexesToContainerLog < Mongodb::Migration
   def self.up
-    Thread.new {
-      Thread.current.abort_on_exception = true
-      ContainerLog.create_indexes # might take a long time
-    }
+    info "recreating container log indexes, this might take long time"
+    ContainerLog.create_indexes
   end
 end
