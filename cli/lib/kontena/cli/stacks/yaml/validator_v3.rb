@@ -33,7 +33,7 @@ module Kontena::Cli::Stacks
 
       # bar -> bar
       # foo:bar -> bar
-      # foo:bar:baz -> bar
+      # foo:bar:ro -> bar
       def mount_point_from_volume_mapping(string)
         string.gsub(/:(?:ro|rw)\z/, '').split(':').last
       end
