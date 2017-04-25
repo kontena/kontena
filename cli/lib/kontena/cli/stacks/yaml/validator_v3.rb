@@ -31,6 +31,13 @@ module Kontena::Cli::Stacks
         Validations::CustomValidators.load
       end
 
+      # bar -> bar
+      # foo:bar -> bar
+      # foo:bar:baz -> bar
+      def mount_point_from_volume_mapping(string)
+        string.gsub(/:(?:ro|rw)\z/, '').split(':').last
+      end
+
       ##
       # @param [Hash] yaml
       # @param [TrueClass|FalseClass] strict
@@ -55,7 +62,7 @@ module Kontena::Cli::Stacks
               option_errors = validate_options(options)
               result[:errors] << { 'services' => { service => option_errors.errors } } unless option_errors.valid?
               if options['volumes']
-                mount_points = options['volumes'].inject(Hash.new(0)) { |hsh, vol| hsh[vol.split(':').last] += 1; hsh }
+                mount_points = options['volumes'].inject(Hash.new(0)) { |hsh, vol| hsh[mount_point_from_volume_mapping(vol)] += 1; hsh }
                 mount_points.each do |mount_point, occurences|
                   next unless occurences > 1
                   result[:errors] << { 'services' => { service => { 'volumes' => { mount_point => "mount point defined #{occurences} times" } } } }

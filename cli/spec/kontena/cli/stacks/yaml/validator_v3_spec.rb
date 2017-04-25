@@ -361,6 +361,24 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         expect(result[:errors]).to be_empty
       end
 
+      it 'validation passes when mount points are defined with :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo:ro', '/tmp/foo:/bar:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when same mount point is defined multiple times' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'validation fails when same mount point is defined multiple times mixing :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
       it 'bind mount do not need ext volumes' do
         stack['services']['foo']['volumes'] = ['/var/run/docker.sock:/var/run/docker.sock']
         result = subject.validate(stack)
@@ -374,5 +392,23 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       end
     end
 
+  end
+
+  describe '#mount_point_from_volume_mapping' do
+    it 'returns /bar when called with /foo:/bar' do
+      expect(subject.mount_point_from_volume_mapping("/foo:/bar")).to eq '/bar'
+    end
+
+    it 'returns /bar when called with /foo:/bar:ro' do
+      expect(subject.mount_point_from_volume_mapping("/foo:/bar:ro")).to eq '/bar'
+    end
+
+    it 'returns /bar when called with /bar' do
+      expect(subject.mount_point_from_volume_mapping("/bar")).to eq '/bar'
+    end
+
+    it 'returns /bar when called with /bar:ro' do
+      expect(subject.mount_point_from_volume_mapping("/bar:ro")).to eq '/bar'
+    end
   end
 end
