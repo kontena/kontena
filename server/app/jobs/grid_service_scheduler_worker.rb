@@ -54,13 +54,9 @@ class GridServiceSchedulerWorker
   end
 
   def deploy_dependant_services(grid_service)
-    grid_service.dependant_services.each do |serv|
-      info "deploying dependent service #{serv.to_path} of deployed service #{grid_service.to_path}"
-      service_deploy = GridServiceDeploy.create(
-        grid_service: serv,
-        started_at: Time.now.utc
-      )
-      self.class.new.perform(service_deploy)
+    grid_service.dependant_services.each do |service|
+      info "deploying dependent service #{service.to_path} of deployed service #{grid_service.to_path}"
+      GridServiceDeploy.create!(grid_service: service)
     end
   end
 
