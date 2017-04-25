@@ -1,13 +1,10 @@
 module Kontena
-  # Run a kontena command like it was launched from the command line.
-  #
-  # @example
-  #   Kontena.run("grid list --help")
+  # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
+  # except a SystemExit with status 0, which is considered a success.
   #
   # @param [String,Array<String>] command_line
-  # @param [Symbol] return_type Use returning: :status to return non-zero exit code if the command fails
-  # @return [Fixnum] exit_code
-  def self.run(*cmdline, returning: nil)
+  # @return command result or nil
+  def self.run(*cmdline)
     if cmdline.first.kind_of?(Array)
       command = cmdline.first
     elsif cmdline.size == 1 && cmdline.first.include?(' ')
@@ -15,19 +12,29 @@ module Kontena
     else
       command = cmdline
     end
-    ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}, returning: #{returning}")
+    ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}")
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
     ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
-    return 0 if returning == :status
     result
   rescue SystemExit => ex
-    ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
-    return ex.status if returning == :status
-    raise ex unless ex.status.zero?
-  rescue => ex
-    ENV["DEBUG"] && $stderr.puts("Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
-    return 1 if returning == :status
+    ENV["DEBUG"] && $stderr.puts("Command caused SystemExit, result: #{result.inspect} status: #{ex.status}")
+    return true if ex.status.zero?
     raise ex
+  rescue => ex
+    ENV["DEBUG"] && $stderr.puts("Command raised #{ex.class.name} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+    raise ex
+  end
+
+  # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
+  # @param [String,Array<String>] command_line
+  # @return [TrueClass,FalseClass] success
+  def self.run?(*cmdline)
+    run(*cmdline)
+    true
+  rescue SystemExit => ex
+    ex.status.zero?
+  rescue ScriptError, NoMemoryError, SystemStackError, StandardError => ex
+    false
   end
 
   # @return [String] x.y

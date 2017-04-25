@@ -46,24 +46,37 @@ describe Kontena do
       Kontena.run(['whoami', '--bash-completion-path'])
     end
 
-    it 'Returns the exit status when running with returning: :status when status is 1' do
-      expect(whoami).to receive(:run) { exit 1 }
-      expect(Kontena.run(['whoami'], returning: :status)).to eq 1
-    end
-
-    it 'Returns the exit status when running with returning: :status when status is 0' do
+    it 'Returns true if the command exits with SystemExit status 0' do
       expect(whoami).to receive(:run) { exit 0 }
-      expect(Kontena.run(['whoami'], returning: :status)).to be_zero
+      expect(Kontena.run(['whoami'])).to be_truthy
     end
 
-    it 'Re-raises the SystemExit without returning: :status when exiting with non-zero status' do
+    it 'Re-raises the SystemExit when command exits with non-zero status' do
       expect(whoami).to receive(:run) { exit 1 }
       expect{Kontena.run(['whoami'])}.to exit_with_error.status(1)
     end
+  end
 
-    it 'Continues as usual without returning: :status when exiting with zero status' do
+  describe '#run?' do
+    let(:whoami) { double(:whoami) }
+
+    before(:each) do
+      expect(Kontena::Cli::WhoamiCommand).to receive(:new).and_return(whoami)
+    end
+
+    it 'Returns false when status is 1' do
+      expect(whoami).to receive(:run) { exit 1 }
+      expect(Kontena.run?(['whoami'])).to be_falsey
+    end
+
+    it 'Returns true when status is 0' do
       expect(whoami).to receive(:run) { exit 0 }
-      expect{Kontena.run(['whoami'])}.not_to exit_with_error
+      expect(Kontena.run?(['whoami'])).to be_truthy
+    end
+
+    it 'Returns true when nothing was raised' do
+      expect(whoami).to receive(:run).and_return(nil)
+      expect(Kontena.run?(['whoami'])).to be_truthy
     end
   end
 end
