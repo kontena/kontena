@@ -9,43 +9,46 @@ class GridServiceSchedulerWorker
 
   def watch
     loop do
-      self.check_deploy_queue
+      if service_deploy = self.check_deploy_queue
+        self.deploy(service_deploy)
+      end
       sleep 1
     end
   end
 
+  # Fetch deploy from queue, and
+  #
+  # @return [GridServiceDeploy, nil] deploy to run
   def check_deploy_queue
     service_deploy = fetch_deploy_item
-    return unless service_deploy
+    return nil unless service_deploy
 
     with_dlock("check_deploy_queue:#{service_deploy.grid_service_id}", 10) do
-      service_deploy.reload
-      if service_deploy.grid_service.running? || service_deploy.grid_service.initialized?
-        self.perform(service_deploy)
+      if service_deploy.grid_service.deploy_started?
+        info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
+        return nil
+
+      elsif service_deploy.grid_service.running? || service_deploy.grid_service.initialized?
+        info "starting #{service_deploy.grid_service.to_path} deploy"
+        service_deploy.set(started_at: Time.now.utc)
+        return service_deploy
+
       else
         service_deploy.destroy
       end
     end
   end
 
+  # Mark created/queued deploys as queued, and return for processing.
+  # The caller has 30s to process the returned deploy, or it will be re-fetched.
+  #
   # @return [GridServiceDeploy, NilClass]
   def fetch_deploy_item
-    GridServiceDeploy.where(started_at: nil)
+    GridServiceDeploy.any_of({:_deploy_state => :created}, {:_deploy_state => :queued, :queued_at.lt => 30.seconds.ago})
       .asc(:created_at)
-      .find_and_modify({:$set => {started_at: Time.now.utc}}, {new: true})
+      .find_and_modify({:$set => {:_deploy_state => :queued, :queued_at => Time.now.utc}}, {new: true})
   rescue Moped::Errors::OperationFailure
     nil
-  end
-
-  def perform(service_deploy)
-    unless service_deploy.grid_service.deploying?(ignore: service_deploy.id)
-      deploy(service_deploy)
-    else
-      info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
-      after(30) {
-        service_deploy.set(:started_at => nil)
-      }
-    end
   end
 
   def deploy(service_deploy)

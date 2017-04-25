@@ -3,15 +3,17 @@ class GridServiceDeploy
   include Mongoid::Timestamps
   include Mongoid::Enum
 
+  field :queued_at, type: DateTime
   field :started_at, type: DateTime
   field :finished_at, type: DateTime
   field :reason, type: String
-  enum :deploy_state, [:created, :ongoing, :success, :error], default: :created
+  enum :deploy_state, [:created, :queued, :ongoing, :success, :error], default: :created
 
   embeds_many :grid_service_instance_deploys
 
   index({ grid_service_id: 1 }, { background: true })
   index({ created_at: 1 }, { background: true })
+  index({ queued_at: 1 }, { background: true })
   index({ started_at: 1 }, { background: true })
 
   belongs_to :grid_service
