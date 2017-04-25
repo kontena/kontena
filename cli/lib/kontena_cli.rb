@@ -33,7 +33,7 @@ module Kontena
     true
   rescue SystemExit => ex
     ex.status.zero?
-  rescue ScriptError, NoMemoryError, SystemStackError, StandardError => ex
+  rescue
     false
   end
 
