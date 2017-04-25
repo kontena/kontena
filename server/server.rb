@@ -3,6 +3,7 @@ require 'pathname'
 
 require_relative 'app/boot'
 require_relative 'app/boot_jobs'
+require_relative 'app/middlewares/filtered_logger'
 require_relative 'app/middlewares/token_authentication'
 require_relative 'app/middlewares/version_injector'
 require_relative 'app/helpers/config_helper'
@@ -15,7 +16,7 @@ Logger.class_eval { alias :write :'<<' }
 class Server < Roda
   VERSION = File.read('./VERSION').strip
 
-  use Rack::CommonLogger, Logging.logger
+  use FilteredLogger, Logging.logger
   use Rack::Attack
   use Rack::Static, urls: { "/code" => "app/views/static/code.html" }
   use TokenAuthentication, File.expand_path('../config/authentication.yml', __FILE__)
