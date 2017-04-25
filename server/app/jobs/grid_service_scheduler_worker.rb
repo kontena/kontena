@@ -16,20 +16,12 @@ class GridServiceSchedulerWorker
     end
   end
 
-  # Fetch deploy from queue, and
+  # Fetch deploy from queue, and return it if it should be run
   #
   # @return [GridServiceDeploy, nil] deploy to run
   def check_deploy_queue
     service_deploy = fetch_deploy_item
     return nil unless service_deploy
-
-    if service_deploy.started_at
-      warn "aborting legacy grid_service=#{service_deploy.grid_service_id} deploy from #{service_deploy.created_at}"
-      # legacy deployment before queueing fixes
-      service_deploy.abort! "deploy is legacy"
-      return nil
-    end
-    # TODO: abort stale deploys with ancient created_at, or deploys that have been running for too long
 
     with_dlock("check_deploy_queue:#{service_deploy.grid_service_id}", 10) do
       if service_deploy.grid_service.deploy_running?
@@ -49,14 +41,14 @@ class GridServiceSchedulerWorker
     end
   end
 
-  # Mark created/queued deploys as queued, and return for processing.
-  # The caller has 30s to process the returned deploy, or it will be re-fetched.
+  # Pick up the oldest non-queued deploy, mark it as queued, and return for processing.
+  # The caller has 30s to process the returned deploy, or it can be picked up again.
   #
   # @return [GridServiceDeploy, NilClass]
   def fetch_deploy_item
-    GridServiceDeploy.any_of({:_deploy_state => :created}, {:_deploy_state => :queued, :queued_at.lt => 30.seconds.ago})
+    GridServiceDeploy.any_of({:queued_at => nil}, {:queued_at.lt => 30.seconds.ago, :started_at => nil})
       .asc(:created_at)
-      .find_and_modify({:$set => {:_deploy_state => :queued, :queued_at => Time.now.utc}}, {new: true})
+      .find_and_modify({:$set => {:queued_at => Time.now.utc}}, {new: true})
   rescue Moped::Errors::OperationFailure
     nil
   end

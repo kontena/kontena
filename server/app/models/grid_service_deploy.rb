@@ -1,9 +1,9 @@
 # States:
 #   - created: created_at=T0
 #       GridServices::Deploy request, or some internal scheduler, decides to deploy the service
-#   - queued: created_at=T0 queued_at=T1
+#   - created: created_at=T0 queued_at=T1
 #       GridServiceSchedulerWorker picks up the deploy
-#   - queued: created_at=T0 queued_at=T2
+#   - created: created_at=T0 queued_at=T2
 #       A different deploy is already running, so this deploy remains queued.
 #       Deploy is picked up again by a different GridServiceSchedulerWorker
 #   - ongoing: created_at=T0 queued_at=T2 started_at=T3
@@ -23,7 +23,7 @@ class GridServiceDeploy
   field :started_at, type: DateTime
   field :finished_at, type: DateTime
   field :reason, type: String
-  enum :deploy_state, [:created, :queued, :ongoing, :success, :error, :abort], default: :created
+  enum :deploy_state, [:created, :ongoing, :success, :error, :abort], default: :created
 
   embeds_many :grid_service_instance_deploys
 
