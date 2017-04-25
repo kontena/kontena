@@ -3,7 +3,19 @@ require "kontena/cli/stacks/yaml/reader"
 
 describe Kontena::Cli::Stacks::Common do
 
-  let(:subject) { described_class }
+  let(:klass) do
+    Class.new(Kontena::Command) do
+      include Kontena::Cli::Stacks::Common
+      include Kontena::Cli::Common
+      include Kontena::Cli::Stacks::Common::StackNameParam
+      include Kontena::Cli::Stacks::Common::StackFileOrNameParam
+      include Kontena::Cli::Stacks::Common::StackNameOption
+      include Kontena::Cli::Stacks::Common::StackValuesToOption
+      include Kontena::Cli::Stacks::Common::StackValuesFromOption
+    end
+  end
+
+  let(:subject) { klass.new('') }
 
   context 'stack yaml reader methods' do
     let(:reader) { double(:reader) }

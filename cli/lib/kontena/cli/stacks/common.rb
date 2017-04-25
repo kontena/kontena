@@ -66,10 +66,9 @@ module Kontena::Cli::Stacks
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
-      set_env_variables(name || reader.stack_name, self.respond_to?(:current_grid) ? current_grid : nil)
+      set_env_variables(name || reader.stack_name, current_grid)
       reader
     end
-    module_function :reader_from_yaml
 
     def stack_from_reader(reader)
       outcome = reader.execute
@@ -91,21 +90,18 @@ module Kontena::Cli::Stacks
       }
       stack
     end
-    module_function :stack_from_reader
 
     def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
       reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack_from_reader(reader)
     end
-    module_function :stack_from_yaml
 
     def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
       reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack = stack_from_reader(reader)
-      dump_variables(reader) if self.respond_to?(:values_to) && values_to
+      dump_variables(reader) if values_to
       stack
     end
-    module_function :stack_read_and_dump
 
     def require_config_file(filename)
       exit_with_error("File #{filename} does not exist") unless File.exists?(filename)
@@ -122,7 +118,6 @@ module Kontena::Cli::Stacks
         config.merge('name' => name)
       end
     end
-    module_function :generate_volumes
 
     def generate_services(yaml_services)
       return [] unless yaml_services
@@ -131,13 +126,11 @@ module Kontena::Cli::Stacks
         ServiceGeneratorV2.new(config).generate.merge('name' => name)
       end
     end
-    module_function :generate_services
 
     def set_env_variables(stack, grid)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
     end
-    module_function :set_env_variables
 
     # @return [String]
     def current_dir
