@@ -53,6 +53,10 @@ class GridServiceDeployer
     self.grid_service.grid_service_instances.where(:instance_number.gt => total_instances).destroy
     total_instances.times do |i|
       instance_number = i + 1
+      self.grid_service_deploy.reload
+      unless self.grid_service_deploy.ongoing?
+        raise "halting deploy of #{self.grid_service.to_path}, deploy state is #{self.deploy_state}"
+      end
       self.grid_service.reload
       unless self.grid_service.running? || self.grid_service.initialized?
         raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
