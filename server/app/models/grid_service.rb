@@ -139,7 +139,7 @@ class GridService
 
   # The service has deploys that are not finished.
   #
-  # This is equvialent to deploy_pending? || deploy_started?.
+  # This is equvialent to deploy_pending? || deploy_running?
   #
   # @return [Boolean]
   def deploying?
@@ -156,7 +156,7 @@ class GridService
   # The service has ongoing deploys.
   #
   # @return [Boolean]
-  def deploy_started?
+  def deploy_running?
     self.grid_service_deploys.where(:started_at.ne => nil, :finished_at => nil).count > 0
   end
 
