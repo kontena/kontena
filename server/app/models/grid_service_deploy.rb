@@ -6,14 +6,14 @@
 #   - created: created_at=T0 queued_at=T2
 #       A different deploy is already running, so this deploy remains queued.
 #       Deploy is picked up again by a different GridServiceSchedulerWorker
+#   - created: created_at=T0 queued_at=T2 finished_at=T3
+#       GridServiceSchedulerWorker has decided not to run the deploy, such as if the service was stopped.
 #   - ongoing: created_at=T0 queued_at=T2 started_at=T3
 #       GridServiceDeployer was run by the GridServiceSchedulerWorker
 #   - success: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
 #       GridServiceDeployer has completed succesfully
 #   - error: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
 #       GridServiceDeployer has failed with an error
-#   - abort: created_at=T0 queued_at=T2 started_at=T3? finished_at=T4
-#       GridServiceSchedulerWorker has decided not to run the deploy
 class GridServiceDeploy
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -23,7 +23,7 @@ class GridServiceDeploy
   field :started_at, type: DateTime
   field :finished_at, type: DateTime
   field :reason, type: String
-  enum :deploy_state, [:created, :ongoing, :success, :error, :abort], default: :created
+  enum :deploy_state, [:created, :ongoing, :success, :error], default: :created
 
   embeds_many :grid_service_instance_deploys
 
@@ -35,10 +35,17 @@ class GridServiceDeploy
   belongs_to :grid_service
   belongs_to :stack_deploy
 
-  # Finish deploy in aborted state.
+  # Finish deploy without it necessarily being running.
   #
   # @param reason [String]
-  def abort!(reason)
-    self.set(:finished_at => Time.now.utc, :deploy_state => :abort, :reason => reason)
+  def abort!(reason = nil)
+    self.set(:finished_at => Time.now.utc, :reason => reason)
+  end
+
+  # Deploy has been aborted
+  #
+  # @return [Boolean]
+  def abort?
+    !self.finished_at.nil?
   end
 end
