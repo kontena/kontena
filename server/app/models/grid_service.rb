@@ -99,7 +99,7 @@ class GridService
   def set_state(state)
     state_changed = self.state != state
     self.set(:state => state)
-    publish_update_event if state_changed    
+    publish_update_event if state_changed
   end
 
   # @return [Boolean]
@@ -122,15 +122,6 @@ class GridService
   end
 
   # @return [Boolean]
-  def deploying?(ignore: nil)
-    scope = self.grid_service_deploys.where(
-      :created_at.gt => 10.minutes.ago, :started_at.ne => nil, :finished_at => nil
-    )
-    scope = scope.where(:_id.ne => ignore) if ignore
-    scope.count > 0
-  end
-
-  # @return [Boolean]
   def running?
     self.state == 'running'
   end
@@ -146,8 +137,27 @@ class GridService
     self.stack.exposed_service?(self)
   end
 
+  # The service has deploys that are not finished.
+  #
+  # This is equvialent to deploy_pending? || deploy_started?.
+  #
+  # @return [Boolean]
+  def deploying?
+    self.grid_service_deploys.where(:finished_at => nil).count > 0
+  end
+
+  # The service has deploys created or queued, but not yet started.
+  #
+  # @return [Boolean]
   def deploy_pending?
-    self.grid_service_deploys.where(started_at: nil).count > 0
+    self.grid_service_deploys.where(:started_at => nil).count > 0
+  end
+
+  # The service has ongoing deploys.
+  #
+  # @return [Boolean]
+  def deploy_started?
+    self.grid_service_deploys.where(:started_at.ne => nil, :finished_at => nil).count > 0
   end
 
   # @return [Boolean]
