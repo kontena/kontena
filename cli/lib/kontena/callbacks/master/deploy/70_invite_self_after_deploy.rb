@@ -32,7 +32,7 @@ module Kontena
 
         invite_response = nil
         spinner "Creating user #{cloud_user_data[:email]} into Kontena Master" do |spin|
-          invite_response = Kontena.run(["master", "user", "invite", "--external-id", cloud_user_data[:id], "--return", cloud_user_data[:email]], returning: :result)
+          invite_response = Kontena.run(["master", "user", "invite", "--external-id", cloud_user_data[:id], "--return", cloud_user_data[:email]])
           unless invite_response.kind_of?(Hash) && invite_response.has_key?('invite_code')
             spin.fail
           end
@@ -61,7 +61,7 @@ module Kontena
 
         new_user_token = nil
         spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
-          new_user_token = Kontena.run(["master", "token", "create", "-e", "0", "-s", "user", "--return", "-u", cloud_user_data[:email]], returning: :result)
+          new_user_token = Kontena.run(["master", "token", "create", "-e", "0", "-s", "user", "--return", "-u", cloud_user_data[:email]])
         end
 
         master_name = current_master.name.dup

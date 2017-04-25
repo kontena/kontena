@@ -50,7 +50,7 @@ module Kontena::Cli::Cloud::Master
       masters = []
       spinner "Retrieving a list of your registered Kontena Masters in Kontena Cloud" do |spin|
         begin
-          masters = Kontena.run(%w(cloud master list --return), returning: :result)
+          masters = Kontena.run(%w(cloud master list --return))
         rescue SystemExit
           spin.fail
         end

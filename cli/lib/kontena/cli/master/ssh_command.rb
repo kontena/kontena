@@ -16,7 +16,7 @@ module Kontena::Cli::Master
     end
 
     def master_provider
-      Kontena.run(%w(master config get --return server.provider), returning: :result)
+      Kontena.run(%w(master config get --return server.provider))
     end
 
     def execute
