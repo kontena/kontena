@@ -23,6 +23,14 @@ class GridServiceSchedulerWorker
     service_deploy = fetch_deploy_item
     return nil unless service_deploy
 
+    if service_deploy.started_at
+      warn "aborting legacy grid_service=#{service_deploy.grid_service_id} deploy from #{service_deploy.created_at}"
+      # legacy deployment before queueing fixes
+      service_deploy.abort! "deploy is legacy"
+      return nil
+    end
+    # TODO: abort stale deploys with ancient created_at, or deploys that have been running for too long
+
     with_dlock("check_deploy_queue:#{service_deploy.grid_service_id}", 10) do
       if service_deploy.grid_service.deploy_started?
         info "delaying #{service_deploy.grid_service.to_path} deploy because there is another deploy in progress"
@@ -34,7 +42,9 @@ class GridServiceSchedulerWorker
         return service_deploy
 
       else
-        service_deploy.destroy
+        info "aborting #{service_deploy.grid_service.to_path} deploy of non-running service"
+        service_deploy.abort! "service is not running"
+        return nil
       end
     end
   end

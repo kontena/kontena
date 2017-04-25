@@ -7,7 +7,7 @@ class GridServiceDeploy
   field :started_at, type: DateTime
   field :finished_at, type: DateTime
   field :reason, type: String
-  enum :deploy_state, [:created, :queued, :ongoing, :success, :error], default: :created
+  enum :deploy_state, [:created, :queued, :ongoing, :success, :error, :abort], default: :created
 
   embeds_many :grid_service_instance_deploys
 
@@ -18,4 +18,11 @@ class GridServiceDeploy
 
   belongs_to :grid_service
   belongs_to :stack_deploy
+
+  # Finish deploy in aborted state.
+  #
+  # @param reason [String]
+  def abort!(reason)
+    self.set(:finished_at => Time.now.utc, :deploy_state => :abort, :reason => reason)
+  end
 end
