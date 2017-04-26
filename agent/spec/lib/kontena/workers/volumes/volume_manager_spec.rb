@@ -120,6 +120,15 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
       })
       subject.sync_volume_to_master(docker_volume)
     end
+
+    it 'does not send volume data to master for un-managed volume' do
+      expect(rpc_client).not_to receive(:request)
+      docker_volume = double(:volume, 'id' => 'foo', 'info' => {
+        'Name' => 'foo',
+        'Labels' => { }
+      })
+      subject.sync_volume_to_master(docker_volume)
+    end
   end
 
   describe '#volume_exist?' do

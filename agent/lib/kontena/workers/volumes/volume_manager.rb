@@ -94,7 +94,12 @@ module Kontena::Workers::Volumes
         'volume_instance_id' => data.dig('Labels', 'io.kontena.volume_instance.id'),
         'volume_id' => data.dig('Labels', 'io.kontena.volume.id')
       }
-      rpc_client.async.request('/node_volumes/set_state', [node.id, volume])
+      # Only send "managed" volumes to server
+      if volume['volume_instance_id']
+        rpc_client.async.request('/node_volumes/set_state', [node.id, volume])
+      else
+        debug "Skip sending un-managed volume: #{volume['name']}"
+      end
     end
 
     # Checks if given volume exists with the expected driver
