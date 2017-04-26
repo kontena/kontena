@@ -324,6 +324,7 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
 
         }
       end
+
       it 'fails validation if volumes are not declared' do
         result = subject.validate(stack)
         expect(result[:errors]).not_to be_empty
@@ -392,23 +393,5 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       end
     end
 
-  end
-
-  describe '#mount_point_from_volume_mapping' do
-    it 'returns /bar when called with /foo:/bar' do
-      expect(subject.mount_point_from_volume_mapping("/foo:/bar")).to eq '/bar'
-    end
-
-    it 'returns /bar when called with /foo:/bar:ro' do
-      expect(subject.mount_point_from_volume_mapping("/foo:/bar:ro")).to eq '/bar'
-    end
-
-    it 'returns /bar when called with /bar' do
-      expect(subject.mount_point_from_volume_mapping("/bar")).to eq '/bar'
-    end
-
-    it 'returns /bar when called with /bar:ro' do
-      expect(subject.mount_point_from_volume_mapping("/bar:ro")).to eq '/bar'
-    end
   end
 end
