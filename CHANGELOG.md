@@ -88,11 +88,33 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
 * Support named `service: volumes: - volume:/path`
 
-    All named service volumes must now be defined in the `volumes` section.
+    All [named service volumes](https://www.kontena.io/docs/references/kontena-yml.html#named-volume) must now be defined in the new `volumes` section.
 
 * New `volumes` section
 
-    See the [Kontena stack volume](https://kontena.io/docs/references/kontena-yml#volumes) documentation.
+    See the new [Stack Volume Configuration Reference](https://www.kontena.io/docs/references/kontena-yml.html#volume-configuration-reference) documentation.
+
+### Upgrading
+
+#### Upgrading stacks with services using named Docker volumes
+
+After upgrading the server to Kontena 1.2, any named Docker volumes used by existing services should appear in `kontena volume ls`, as [grid-scoped volumes](https://www.kontena.io/docs/using-kontena/volumes.html#scope-grid) using the default `local` driver. However, trying to install or upgrade a stack file containing services that use those named volumes will first fail with a validation error: `service ... volumes ...: defines volume name, but file does not contain volumes definitions`
+
+The stack files containing services using named Docker volumes must be edited to use to use the new `volumes` section. The migrated Kontena volumes shown in `kontena volume ls` can be referenced as external volumes in the stack:
+
+```yaml
+stack: test/test
+services:
+  test:
+    volumes:
+      - test:/test
+volumes:
+  test:
+    external:      # equivalent to `external: true`, matching the name of the volumes section
+      name: test
+```
+
+After editing the stack file, the stack can be upgraded, and the services can continue to be deployed as before. Assuming the services are using affinity filters such that they continue to be deployed to the same host nodes, then any service containers deployed with Kontena 1.2 will use the existing named local Docker volumes that were implicitly created by earlier Kontena deployments. Using affnity filters to schedule onto specific nodes was already necessary for use of stable named service volumes in earlier versions of Kontena.
 
 ### Known issues
 
