@@ -118,7 +118,7 @@ volumes:
       name: test
 ```
 
-After editing the stack file, the stack can be upgraded, and the services can continue to be deployed as before. Assuming the services are using affinity filters such that they continue to be deployed to the same host nodes, then any service containers deployed with Kontena 1.2 will use the existing named local Docker volumes that were implicitly created by earlier Kontena deployments. Using affnity filters to schedule onto specific nodes was already necessary for use of stable named service volumes in earlier versions of Kontena.
+After editing the stack file, the stack can be upgraded, and the services can continue to be deployed as before. Assuming the services are using affinity filters such that they continue to be deployed to the same host nodes, then any service containers deployed with Kontena 1.2 will use the existing named local Docker volumes that were implicitly created by earlier Kontena deployments. Using affinity filters to schedule onto specific nodes was already necessary for use of stable named service volumes in earlier versions of Kontena.
 
 ### Known issues
 
