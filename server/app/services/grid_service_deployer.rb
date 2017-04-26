@@ -68,7 +68,7 @@ class GridServiceDeployer
       raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
     end
 
-    self.grid_service_deploy.set(finished_at: Time.now.utc, :deploy_state => :success)
+    self.grid_service_deploy.set(:deploy_state => :success)
     log_service_event("service #{self.grid_service.to_path} deployed")
     info "service #{self.grid_service.to_path} has been deployed"
 
