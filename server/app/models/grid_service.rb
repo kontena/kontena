@@ -162,6 +162,13 @@ class GridService
     self.grid_service_deploys.where(:started_at.ne => nil, :finished_at => nil).count > 0
   end
 
+  # Are there any deploys in queue or in progress for this service
+  # Ignores any possibly stale deploys that have been started but never finished
+  # @return [Boolean]
+  def deploy_outstanding?
+    self.grid_service_deploys.any_of({:started_at => nil, :finished_at => nil}, {:started_at.gt => 30.minutes.ago , finished_at: nil}).count > 0
+  end
+
   # @return [Boolean]
   def load_balancer?
     self.image_name.to_s.include?(LB_IMAGE) ||
