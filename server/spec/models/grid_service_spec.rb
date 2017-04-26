@@ -306,19 +306,24 @@ describe GridService do
     end
   end
 
-  describe '#deploy_pending?' do
+  describe '#deploy_outstanding?' do
     it 'returns false when no deployments' do
-      expect(subject.deploy_pending?).to be_falsey
+      expect(subject.deploy_outstanding?).to be_falsey
     end
 
     it 'returns true when queued deployments' do
       GridServiceDeploy.create!(grid_service: subject, started_at: nil, finished_at: nil)
-      expect(subject.deploy_pending?).to be_truthy
+      expect(subject.deploy_outstanding?).to be_truthy
     end
 
     it 'returns true when un-finished deployments' do
-      GridServiceDeploy.create!(grid_service: subject, started_at: Time.now, finished_at: nil)
-      expect(subject.deploy_pending?).to be_truthy
+      GridServiceDeploy.create!(grid_service: subject, started_at: 10.minutes.ago, finished_at: nil)
+      expect(subject.deploy_outstanding?).to be_truthy
+    end
+
+    it 'returns true when un-finished stale deployments' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: 32.minutes.ago, finished_at: nil)
+      expect(subject.deploy_outstanding?).to be_falsey
     end
   end
 end
