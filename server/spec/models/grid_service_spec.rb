@@ -321,8 +321,18 @@ describe GridService do
       expect(subject.deploy_outstanding?).to be_truthy
     end
 
-    it 'returns true when un-finished stale deployments' do
+    it 'returns false when un-finished stale deployments' do
       GridServiceDeploy.create!(grid_service: subject, started_at: 32.minutes.ago, finished_at: nil)
+      expect(subject.deploy_outstanding?).to be_falsey
+    end
+
+    it 'returns false when finished deployments' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: 32.minutes.ago, finished_at: 26.minutes.ago)
+      expect(subject.deploy_outstanding?).to be_falsey
+    end
+
+    it 'returns false when finished deployments with no started_at' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: nil, finished_at: 26.minutes.ago)
       expect(subject.deploy_outstanding?).to be_falsey
     end
   end
