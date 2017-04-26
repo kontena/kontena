@@ -90,8 +90,6 @@ class GridServiceDeployer
     log_service_event("unknown error while deploying #{self.grid_service.to_path}: #{exc.message}", EventLog::ERROR)
     self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
     false
-  ensure
-    self.grid_service_deploy.set(:finished_at => Time.now.utc)
   end
 
   # @param [Integer] total_instances
