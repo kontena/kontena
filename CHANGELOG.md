@@ -10,6 +10,8 @@ Stack services can now [use](https://kontena.io/docs/references/kontena-yml#volu
 
 Kontena volumes can use volume drivers provided by Docker plugins installed on the host nodes, such as [rexray](https://rexray.codedellemc.com/).
 
+See the [Upgrading](#upgrading-stacks-with-services-using-named-docker-volumes) section for existing stacks with services using named volumes, which were previously deployed as implicitly created local Docker volumes.
+
 The exact details of how these Kontena volumes are managed may still change as the implementation evolves. If you use the experimental Kontena volumes support, be prepared to change your volume definitions as necessary when upgrading to newer Kontena versions.
 
 #### Native IPsec overlay network encryption
@@ -98,7 +100,9 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
 #### Upgrading stacks with services using named Docker volumes
 
-After upgrading the server to Kontena 1.2, any named Docker volumes used by existing services should appear in `kontena volume ls`, as [grid-scoped volumes](https://www.kontena.io/docs/using-kontena/volumes.html#scope-grid) using the default `local` driver. However, trying to install or upgrade a stack file containing services that use those named volumes will first fail with a validation error: `service ... volumes ...: defines volume name, but file does not contain volumes definitions`
+Kontena Services could also use named volumes prior to Kontena 1.2, which would implicitly create local Docker volumes on each host node that service instances were deployed to.
+
+After upgrading the server to Kontena 1.2, any such named Docker volumes used by existing services will appear in `kontena volume ls`, in the form of [grid-scoped volumes](https://www.kontena.io/docs/using-kontena/volumes.html#scope-grid) using the default `local` driver. However, trying to install or upgrade a existing stack file containing services that use those named volumes will fail with a validation error: `service ... volumes ...: defines volume name, but file does not contain volumes definitions`
 
 The stack files containing services using named Docker volumes must be edited to use to use the new `volumes` section. The migrated Kontena volumes shown in `kontena volume ls` can be referenced as external volumes in the stack:
 
