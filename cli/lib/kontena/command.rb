@@ -210,6 +210,7 @@ class Kontena::Command < Clamp::Command
     if ex.message.include?('Unable to verify certificate')
       $stderr.puts " [#{Kontena.pastel.red('error')}] The server uses a certificate signed by an unknown authority."
       $stderr.puts "         You can trust this server by copying server CA pem file to: #{Kontena.pastel.yellow("~/.kontena/certs/<hostname>.pem")}"
+      $stderr.puts "         If kontena cannot find your system ca bundle, you can set #{Kontena.pastel.yellow('SSL_CERT_DIR=/etc/ssl/certs')} env variable to load them from another location."
       $stderr.puts "         Protip: you can bypass the certificate check by setting #{Kontena.pastel.yellow('SSL_IGNORE_ERRORS=true')} env variable, but any data you send to the server could be intercepted by others."
       abort
     else

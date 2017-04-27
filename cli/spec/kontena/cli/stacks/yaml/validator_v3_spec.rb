@@ -324,6 +324,7 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
 
         }
       end
+
       it 'fails validation if volumes are not declared' do
         result = subject.validate(stack)
         expect(result[:errors]).not_to be_empty
@@ -359,6 +360,24 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         }
         result = subject.validate(stack)
         expect(result[:errors]).to be_empty
+      end
+
+      it 'validation passes when mount points are defined with :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo:ro', '/tmp/foo:/bar:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when same mount point is defined multiple times' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'validation fails when same mount point is defined multiple times mixing :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
       end
 
       it 'bind mount do not need ext volumes' do
