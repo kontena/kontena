@@ -121,7 +121,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
       expect(subject.wrapped_object).to receive(:deployer).with(service_deploy).and_return(deployer)
     end
 
-    it 'runs deployer and marks deploy as finished_at' do
+    it "runs deployer and marks deploy as finished_at" do
       expect(deployer).to receive(:deploy).once
 
       expect{
@@ -129,12 +129,44 @@ describe GridServiceSchedulerWorker, celluloid: true do
       }.to change{service_deploy.reload.finished_at}.from(nil).to(a_value >= 1.second.ago)
     end
 
-    it 'runs deployer and marks deploy as finished_at on errors' do
+    it "runs deployer and marks deploy as finished_at on errors" do
       expect(deployer).to receive(:deploy).once.and_raise(RuntimeError, "testing")
 
       expect{
         subject.deploy(service_deploy)
       }.to raise_error(RuntimeError).and change{service_deploy.reload.finished_at}.from(nil).to(a_value >= 1.second.ago)
+    end
+
+    it "deploys dependent services" do
+      expect(deployer).to receive(:deploy).once
+      expect(subject.wrapped_object).to receive(:deploy_dependant_services).with(service)
+
+      subject.deploy(service_deploy)
+    end
+  end
+
+  context "with dependent services" do
+    let(:dependent_service) {
+      grid.grid_services.create(name: 'test2',
+          image_name: 'foo/bar:latest',
+          volumes_from: [
+            'test-%s',
+          ]
+      )
+    }
+
+    before do
+      dependent_service.link_to(service)
+
+      expect(service.dependant_services).to eq [dependent_service]
+    end
+
+    describe '#deploy_dependant_services' do
+      it "creates deploys for the dependent service" do
+        subject.deploy_dependant_services(service_deploy.grid_service)
+
+        expect(dependent_service).to be_deploying
+      end
     end
   end
 end
