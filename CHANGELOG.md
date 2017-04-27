@@ -15,7 +15,7 @@ The 1.2.1 release fixes various issues in the 1.2.0 release.
 
 ### Known issues
 
-Known regressions in the new Kontena 1.2.0 release compared to earlier releases.
+Known regressions in the Kontena 1.2 releases compared to earlier releases.
 
 * Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
 * Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
