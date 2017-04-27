@@ -3,7 +3,6 @@ describe GridServiceSchedulerWorker, celluloid: true do
 
   let(:grid) { Grid.create(name: 'test')}
   let(:service) { GridService.create(name: 'test', image_name: 'foo/bar:latest', grid: grid)}
-  let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
   let(:subject) { described_class.new(false) }
 
   describe '#check_deploy_queue' do
@@ -273,7 +272,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
   end
 
   context "for an expired deploy" do
-    let(:expired_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 60.minutes.ago, :queued_at => 40.minutes.ago, :started_at => 30.minutes.ago) }
+    let(:expired_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 60.minutes.ago, queued_at: 40.minutes.ago, started_at: 30.minutes.ago) }
 
     before do
       expired_deploy
@@ -295,7 +294,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
       it "ignores the deploy" do
         expect{
           expect(subject.fetch_deploy_item).to be_nil
-        }.to not_change{service_deploy.reload.queued_at}
+        }.to not_change{expired_deploy.reload.queued_at}
       end
     end
 
@@ -349,7 +348,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
 
     describe '#deploy_dependant_services' do
       it "creates deploys for the dependent service" do
-        subject.deploy_dependant_services(service_deploy.grid_service)
+        subject.deploy_dependant_services(service)
 
         expect(dependent_service).to be_deploying
       end
@@ -357,6 +356,8 @@ describe GridServiceSchedulerWorker, celluloid: true do
   end
 
   describe '#deploy' do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
+
     let(:deployer) { instance_double(GridServiceDeployer) }
 
     before do
