@@ -244,7 +244,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
   end
 
   context "for an aborted deploy" do
-    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc, :queued_at => 1.minute.ago) }
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 1.minute.ago, :queued_at => 1.minute.ago) }
 
     before do
       service_deploy
@@ -268,6 +268,65 @@ describe GridServiceSchedulerWorker, celluloid: true do
         expect{
           expect(subject.fetch_deploy_item).to be_nil
         }.to not_change{service_deploy.reload.queued_at}
+      end
+    end
+  end
+
+  context "for an expired deploy" do
+    let(:expired_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 60.minutes.ago, :queued_at => 40.minutes.ago, :started_at => 30.minutes.ago) }
+
+    before do
+      expired_deploy
+    end
+
+    describe 'service' do
+      it "is not deploying" do
+        expect(service).to_not be_deploying
+      end
+      it "is not deploy_pending" do
+        expect(service).to_not be_deploy_pending
+      end
+      it "is not deploy_running" do
+        expect(service).to_not be_deploy_running
+      end
+    end
+
+    describe '#fetch_deploy_item' do
+      it "ignores the deploy" do
+        expect{
+          expect(subject.fetch_deploy_item).to be_nil
+        }.to not_change{service_deploy.reload.queued_at}
+      end
+    end
+
+    context "with a newer created deploy" do
+      let(:created_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
+
+      before do
+        created_deploy
+      end
+
+      describe 'service' do
+        it "is deploying" do
+          expect(service).to be_deploying
+        end
+        it "is deploy_pending" do
+          expect(service).to be_deploy_pending
+        end
+        it "is not deploy_running" do
+          expect(service).to_not be_deploy_running
+        end
+      end
+
+      describe '#check_deploy_queue' do
+        it "starts and returns the deploy" do
+          expect{
+            expect(subject.check_deploy_queue).to eq created_deploy
+          }.to change{created_deploy.reload.started_at}.from(nil).to(a_value >= 1.second.ago)
+
+          expect(service).to_not be_deploy_pending
+          expect(service).to be_deploy_running
+        end
       end
     end
   end
