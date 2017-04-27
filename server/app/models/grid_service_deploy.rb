@@ -35,6 +35,15 @@ class GridServiceDeploy
   belongs_to :grid_service
   belongs_to :stack_deploy
 
+  def queued?
+    !self.queued_at.nil?
+  end
+
+  # @return [Boolean]
+  def running?
+    !self.started_at.nil?
+  end
+
   # Finish deploy without it necessarily being running.
   #
   # @param reason [String]

@@ -6,125 +6,212 @@ describe GridServiceSchedulerWorker, celluloid: true do
   let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
   let(:subject) { described_class.new(false) }
 
-  describe '#fetch_deploy_item' do
-    it 'returns nil if there are no deploys' do
-      grid
-      service
+  describe '#check_deploy_queue' do
+    it "returns nil if fetch_deploy_item returns nil" do
+      expect(subject.wrapped_object).to receive(:fetch_deploy_item).and_return(nil)
 
-      expect(service).to_not be_deploy_pending
-      expect(subject.fetch_deploy_item).to be_nil
-    end
-
-    it 'returns nil if the deploy is queued' do
-      grid
-      service
-      service_deploy
-
-      service_deploy.set(:queued_at => Time.now.utc)
-
-      expect(service).to be_deploy_pending
-      expect(subject.fetch_deploy_item).to be_nil
-    end
-
-    it 'queues and returns deploy if not yet queued' do
-      grid
-      service
-      service_deploy
-
-      expect{
-        expect(subject.fetch_deploy_item).to eq service_deploy
-      }.to change{service_deploy.reload.queued_at}.from(nil).to(a_value >= 1.second.ago)
-      expect(service).to be_deploy_pending
-    end
-
-    it 'queues and returns oldest item from deploy queue' do
-      newest = service_deploy
-      oldest = GridServiceDeploy.create(grid_service: service, created_at: 1.minute.ago)
-
-      expect(subject.fetch_deploy_item).to eq oldest
-      expect(newest.reload.queued_at).to be_nil
-      expect(oldest.reload.queued_at).not_to be_nil
-    end
-
-    it 're-queues and returns deploy if already queued but not yet started' do
-      grid
-      service
-      service_deploy
-
-      service_deploy.set(:queued_at => 1.minute.ago)
-
-      expect{
-        expect(subject.fetch_deploy_item).to eq service_deploy
-      }.to change{service_deploy.reload.queued_at}.from(a_value <= 1.minute.ago).to(a_value >= 1.second.ago)
-      expect(service).to be_deploy_pending
-    end
-
-    it 'does not return deploy if already started' do
-      grid
-      service
-      service_deploy
-
-      service_deploy.set(:queued_at => 1.minute.ago, :started_at => 30.seconds.ago)
-
-      expect{
-        expect(subject.fetch_deploy_item).to be_nil
-      }.to not_change{service_deploy.reload.queued_at}
-    end
-
-    it 'does not return deploy if aborted' do
-      grid
-      service
-      service_deploy
-
-      service_deploy.set(:queued_at => 1.minute.ago)
-      service_deploy.abort! 'testing'
-
-      expect{
-        expect(subject.fetch_deploy_item).to be_nil
-      }.to not_change{service_deploy.reload.queued_at}
+      expect(subject.check_deploy_queue).to be_nil
     end
   end
 
-  context "with a single created deploy" do
-    before do
-      service_deploy # create
+  context "without any deploys" do
+    describe 'service' do
+      it "is not deploying" do
+        expect(service).to_not be_deploying
+      end
+      it "is not deploy_pending" do
+        expect(service).to_not be_deploy_pending
+      end
+      it "is not deploy_running" do
+        expect(service).to_not be_deploy_running
+      end
     end
 
-    it "the service is deploying" do
-      expect(service).to be_deploying
-    end
-    it "the service is deploy_pending" do
-      expect(service).to be_deploy_pending
-    end
-    it "the service is not deploy_running" do
-      expect(service).to_not be_deploy_running
+    describe '#fetch_deploy_item' do
+      it 'returns nil' do
+        expect(subject.fetch_deploy_item).to be_nil
+      end
     end
 
     describe '#check_deploy_queue' do
-      it 'starts and returns the deploy' do
-        expect{
-          expect(subject.check_deploy_queue).to eq service_deploy
-        }.to change{service_deploy.reload.started_at}.from(nil).to(a_value >= 1.second.ago)
+      it 'returns nil' do
+        expect(subject.check_deploy_queue).to be_nil
       end
     end
   end
 
-  context "with another running deploy" do
-    let(:running_deploy) { service.grid_service_deploys.create!(queued_at: 2.seconds.ago, started_at: 1.second.ago) }
+  context "with a single created deploy" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
+
+    before do
+      service_deploy
+    end
+
+    describe 'service' do
+      it "is deploying" do
+        expect(service).to be_deploying
+      end
+      it "is deploy_pending" do
+        expect(service).to be_deploy_pending
+      end
+      it "is not deploy_running" do
+        expect(service).to_not be_deploy_running
+      end
+    end
+
+    describe '#fetch_deploy_item' do
+      it "queues and returns deploy" do
+        expect{
+          expect(subject.fetch_deploy_item).to eq service_deploy
+        }.to change{service_deploy.reload.queued_at}.from(nil).to(a_value >= 1.second.ago)
+
+        expect(service).to be_deploy_pending
+      end
+    end
+
+    describe '#check_deploy_queue' do
+      it "starts and returns the deploy" do
+        expect{
+          expect(subject.check_deploy_queue).to eq service_deploy
+        }.to change{service_deploy.reload.started_at}.from(nil).to(a_value >= 1.second.ago)
+
+        expect(service).to_not be_deploy_pending
+        expect(service).to be_deploy_running
+      end
+    end
+  end
+
+  context "with multiple created deploys" do
+    let(:oldest_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 2.minutes.ago) }
+    let(:newest_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 1.minutes.ago) }
+
+    before do
+      oldest_deploy
+      newest_deploy
+    end
+
+    describe '#fetch_deploy_item' do
+      it 'queues and returns oldest item from deploy queue' do
+        expect(subject.fetch_deploy_item).to eq oldest_deploy
+        expect(newest_deploy.reload).to_not be_queued
+        expect(oldest_deploy.reload).to be_queued
+      end
+    end
+  end
+
+  context "with a single recently queued deploy" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc, queued_at: Time.now.utc) }
+
+    before do
+      service_deploy
+    end
+
+    describe 'service' do
+      it "is deploying" do
+        expect(service).to be_deploying
+      end
+      it "is deploy_pending" do
+        expect(service).to be_deploy_pending
+      end
+      it "is not deploy_running" do
+        expect(service).to_not be_deploy_running
+      end
+    end
+
+    describe '#fetch_deploy_item' do
+      it 'returns nil' do
+        expect(subject.fetch_deploy_item).to be_nil
+      end
+    end
+  end
+
+  context "with an expired queued deploy" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc, queued_at: 1.minute.ago) }
+
+    before do
+      service_deploy
+    end
+
+    describe 'service' do
+      it "is deploying" do
+        expect(service).to be_deploying
+      end
+      it "is deploy_pending" do
+        expect(service).to be_deploy_pending
+      end
+      it "is not deploy_running" do
+        expect(service).to_not be_deploy_running
+      end
+    end
+
+    describe '#fetch_deploy_item' do
+      it 're-queues and returns deploy' do
+        expect{
+          expect(subject.fetch_deploy_item).to eq service_deploy
+        }.to change{service_deploy.reload.queued_at}.from(a_value <= 1.minute.ago).to(a_value >= 1.second.ago)
+
+        expect(service).to be_deploy_pending
+      end
+    end
+  end
+
+  context "with a single running deploy" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc, :queued_at => 1.minute.ago, :started_at => 30.seconds.ago) }
+
+    before do
+      service_deploy
+    end
+
+    describe 'service' do
+      it "is deploying" do
+        expect(service).to be_deploying
+      end
+      it "is not deploy_pending" do
+        expect(service).to_not be_deploy_pending
+      end
+      it "is deploy_running" do
+        expect(service).to be_deploy_running
+      end
+    end
+
+    describe '#fetch_deploy_item' do
+      it 'ignores deploy' do
+        expect{
+          expect(subject.fetch_deploy_item).to be_nil
+        }.to not_change{service_deploy.reload.queued_at}
+      end
+    end
+  end
+
+  context "with one queued and one running deploy" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
+    let(:running_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 1.minute.ago, :queued_at => 2.seconds.ago, :started_at => 1.seconds.ago) }
 
     before do
       service_deploy
       running_deploy
     end
 
-    it "the service is deploying" do
-      expect(service).to be_deploying
+    describe 'service' do
+      it "is deploying" do
+        expect(service).to be_deploying
+      end
+      it "is deploy_pending" do
+        expect(service).to be_deploy_pending
+      end
+      it "is deploy_running" do
+        expect(service).to be_deploy_running
+      end
     end
-    it "the service is deploy_pending" do
-      expect(service).to be_deploy_pending
-    end
-    it "the service is deploy_running" do
-      expect(service).to be_deploy_running
+
+    describe '#fetch_deploy_item' do
+      it "queues and returns deploy" do
+        expect{
+          expect(subject.fetch_deploy_item).to eq service_deploy
+        }.to change{service_deploy.reload.queued_at}.from(nil).to(a_value >= 1.second.ago)
+
+        expect(service).to be_deploy_pending
+      end
     end
 
     describe '#check_deploy_queue' do
@@ -132,20 +219,81 @@ describe GridServiceSchedulerWorker, celluloid: true do
         expect{
           expect(subject.check_deploy_queue).to be_nil
         }.to not_change{service_deploy.reload.started_at}.and not_change{running_deploy.reload.started_at}
+
+        expect(service_deploy).to_not be_running
+        expect(service).to be_deploy_pending
       end
     end
   end
 
-  context "for a stopped service" do
+  context "with a created deploy for a stopped service" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
+
     before do
-      service_deploy # create
+      service_deploy
       service.set_state('stopped')
     end
 
-    it 'aborts deploy if service is stopped' do
-      expect(subject.check_deploy_queue).to be_nil
+    describe '#check_deploy_queue' do
+      it 'aborts deploy if service is stopped' do
+        expect(subject.check_deploy_queue).to be_nil
 
-      expect(service_deploy.reload).to be_abort
+        expect(service_deploy.reload).to be_abort
+      end
+    end
+  end
+
+  context "for an aborted deploy" do
+    let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc, :queued_at => 1.minute.ago) }
+
+    before do
+      service_deploy
+      service_deploy.abort! 'testing'
+    end
+
+    describe 'service' do
+      it "is not deploying" do
+        expect(service).to_not be_deploying
+      end
+      it "is not deploy_pending" do
+        expect(service).to_not be_deploy_pending
+      end
+      it "is not deploy_running" do
+        expect(service).to_not be_deploy_running
+      end
+    end
+
+    describe '#fetch_deploy_item' do
+      it "ignores the deploy" do
+        expect{
+          expect(subject.fetch_deploy_item).to be_nil
+        }.to not_change{service_deploy.reload.queued_at}
+      end
+    end
+  end
+
+  context "with dependent services" do
+    let(:dependent_service) {
+      grid.grid_services.create(name: 'test2',
+          image_name: 'foo/bar:latest',
+          volumes_from: [
+            'test-%s',
+          ]
+      )
+    }
+
+    before do
+      dependent_service.link_to(service)
+
+      expect(service.dependant_services).to eq [dependent_service]
+    end
+
+    describe '#deploy_dependant_services' do
+      it "creates deploys for the dependent service" do
+        subject.deploy_dependant_services(service_deploy.grid_service)
+
+        expect(dependent_service).to be_deploying
+      end
     end
   end
 
@@ -177,31 +325,6 @@ describe GridServiceSchedulerWorker, celluloid: true do
       expect(subject.wrapped_object).to receive(:deploy_dependant_services).with(service)
 
       subject.deploy(service_deploy)
-    end
-  end
-
-  context "with dependent services" do
-    let(:dependent_service) {
-      grid.grid_services.create(name: 'test2',
-          image_name: 'foo/bar:latest',
-          volumes_from: [
-            'test-%s',
-          ]
-      )
-    }
-
-    before do
-      dependent_service.link_to(service)
-
-      expect(service.dependant_services).to eq [dependent_service]
-    end
-
-    describe '#deploy_dependant_services' do
-      it "creates deploys for the dependent service" do
-        subject.deploy_dependant_services(service_deploy.grid_service)
-
-        expect(dependent_service).to be_deploying
-      end
     end
   end
 end
