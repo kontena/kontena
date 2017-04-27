@@ -2,12 +2,20 @@
 
 ## [1.2.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-04-27)
 
+### Known issues
+
+Known regressions in the new Kontena 1.2.0 release compared to earlier releases.
+
+* Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
+* Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
+* Stopping service does not abort running deploy #2214
+
 ### Fixed issues
 
 * Stack upgrade variable defaulting from master broke in 1.2.0 #2216
 * Service volume mounts with :ro breaks validation in 1.2.0 #2219
 * CLI: stack reader explodes on an empty stack file: `NoMethodError : undefined method ''[]' for false:FalseClass` #2204
-* Missing documentation re upgrading path for named volumes #2222 
+* Missing documentation re upgrading path for named volumes #2222
 * OSX cli package (omnibus) is missing readline #2194
 * Server: GridServiceHealthMonitorJob can pile up deployments #2208
 
