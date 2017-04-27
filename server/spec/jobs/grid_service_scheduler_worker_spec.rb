@@ -6,6 +6,76 @@ describe GridServiceSchedulerWorker, celluloid: true do
   let(:service_deploy) { GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc) }
   let(:subject) { described_class.new(false) }
 
+  describe '#fetch_deploy_item' do
+    it 'returns nil if there are no deploys' do
+      grid
+      service
+
+      expect(service).to_not be_deploy_pending
+      expect(subject.fetch_deploy_item).to be_nil
+    end
+
+    it 'returns nil if the deploy is queued' do
+      grid
+      service
+      service_deploy
+
+      service_deploy.set(:queued_at => Time.now.utc)
+
+      expect(service).to be_deploy_pending
+      expect(subject.fetch_deploy_item).to be_nil
+    end
+
+    it 'queues and returns deploy if not yet queued' do
+      grid
+      service
+      service_deploy
+
+      expect{
+        expect(subject.fetch_deploy_item).to eq service_deploy
+      }.to change{service_deploy.reload.queued_at}.from(nil).to(an_instance_of(DateTime))
+      expect(service).to be_deploy_pending
+    end
+
+    it 're-queues and returns deploy if already queued but not yet started' do
+      grid
+      service
+      service_deploy
+
+      service_deploy.set(:queued_at => 1.minute.ago)
+
+      expect{
+        expect(subject.fetch_deploy_item).to eq service_deploy
+      }.to change{service_deploy.reload.queued_at}.from(a_value <= 1.minute.ago).to(a_value >= 1.second.ago)
+      expect(service).to be_deploy_pending
+    end
+
+    it 'does not return deploy if already started' do
+      grid
+      service
+      service_deploy
+
+      service_deploy.set(:queued_at => 1.minute.ago, :started_at => 30.seconds.ago)
+
+      expect{
+        expect(subject.fetch_deploy_item).to be_nil
+      }.to not_change{service_deploy.reload.queued_at}
+    end
+
+    it 'does not return deploy if aborted' do
+      grid
+      service
+      service_deploy
+
+      service_deploy.set(:queued_at => 1.minute.ago)
+      service_deploy.abort! 'testing'
+
+      expect{
+        expect(subject.fetch_deploy_item).to be_nil
+      }.to not_change{service_deploy.reload.queued_at}
+    end
+  end
+
   describe '#check_deploy_queue' do
     it 'picks oldest item from deploy queue' do
       newest = service_deploy
