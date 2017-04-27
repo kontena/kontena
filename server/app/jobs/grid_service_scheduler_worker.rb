@@ -44,11 +44,9 @@ class GridServiceSchedulerWorker
   # Pick up the oldest non-queued deploy, mark it as queued, and return for processing.
   # The caller has 30s to process the returned deploy, or it can be picked up again.
   #
-  # XXX: this can pick up an aborted deploy if it not started_at?
-  #
   # @return [GridServiceDeploy, NilClass]
   def fetch_deploy_item
-    GridServiceDeploy.any_of({:queued_at => nil}, {:queued_at.lt => 30.seconds.ago, :started_at => nil})
+    GridServiceDeploy.any_of({:queued_at => nil}, {:queued_at.lt => 30.seconds.ago, :started_at => nil, :finished_at => nil})
       .asc(:created_at)
       .find_and_modify({:$set => {:queued_at => Time.now.utc}}, {new: true})
   rescue Moped::Errors::OperationFailure

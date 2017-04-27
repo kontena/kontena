@@ -148,11 +148,9 @@ class GridService
 
   # The service has deploys created or queued, but not yet started.
   #
-  # XXX: an aborted deploy might be pending, even though it is finished?
-  #
   # @return [Boolean]
   def deploy_pending?
-    self.grid_service_deploys.where(:started_at => nil).count > 0
+    self.grid_service_deploys.where(:started_at => nil, :finished_at => nil).count > 0
   end
 
   # The service has deploys that have been started, but not yet finished.
