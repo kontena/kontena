@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.2.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-04-27)
+
+The 1.2.1 release fixes various issues in the 1.2.0 release.
+
+### Fixed issues
+
+* Stack upgrade variable defaulting from master broke in 1.2.0 #2216
+* Service volume mounts with :ro breaks validation in 1.2.0 #2219
+* CLI: stack reader explodes on an empty stack file: `NoMethodError : undefined method ''[]' for false:FalseClass` #2204
+* Missing documentation re upgrading path for named volumes #2222
+* OSX cli package (omnibus) is missing readline #2194
+* Server: GridServiceHealthMonitorJob can pile up deployments #2208
+
+### Known issues
+
+Known regressions in the Kontena 1.2 releases compared to earlier releases.
+
+* Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
+* Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
+* Stopping service does not abort running deploy #2214
+
+### Changes
+
+* Fix 1.2.0 release notes to document volume migration upgrades (#2223)
+
+#### Agent
+* Do not send un-managed volume infos to master (#2189)
+
+#### Server
+* Fix GridService#deploy_pending? to consider all unfinished deploys as pending (#2211)
+
+#### CLI
+* SSL: Give hint about setting certs path (#2201)
+* Make kontena_cli_spec spec test what it was supposed to (#2210)
+* Fix variable value defaulting from master during stack upgrade (#2217)
+* Fix validation of volume definitions with permission flags (#2220)
+* Handle empty YAML files in stack commands (#2206)
+* Add rb-readline to CLI installer (#2205)
+
 ## [1.2.0](https://github.com/kontena/kontena/releases/tag/v1.2.0) (2017-04-21)
 
 ### Highlights
