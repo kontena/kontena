@@ -59,7 +59,7 @@ class GridServiceSchedulerWorker
     self.deployer(service_deploy).deploy
     self.deploy_dependant_services(service_deploy.grid_service)
   ensure
-    self.grid_service_deploy.set(:finished_at => Time.now.utc)
+    service_deploy.set(:finished_at => Time.now.utc)
   end
 
   def deploy_dependant_services(grid_service)

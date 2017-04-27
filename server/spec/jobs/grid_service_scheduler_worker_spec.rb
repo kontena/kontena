@@ -114,12 +114,27 @@ describe GridServiceSchedulerWorker, celluloid: true do
     end
   end
 
-  describe '#perform' do
-    it 'triggers deploy' do
-      deployer = spy(:deployer)
-      expect(deployer).to receive(:deploy).once
+  describe '#deploy' do
+    let(:deployer) { instance_double(GridServiceDeployer) }
+
+    before do
       expect(subject.wrapped_object).to receive(:deployer).with(service_deploy).and_return(deployer)
-      subject.perform(service_deploy)
+    end
+
+    it 'runs deployer and marks deploy as finished_at' do
+      expect(deployer).to receive(:deploy).once
+
+      expect{
+        subject.deploy(service_deploy)
+      }.to change{service_deploy.reload.finished_at}.from(nil).to(a_value >= 1.second.ago)
+    end
+
+    it 'runs deployer and marks deploy as finished_at on errors' do
+      expect(deployer).to receive(:deploy).once.and_raise(RuntimeError, "testing")
+
+      expect{
+        subject.deploy(service_deploy)
+      }.to raise_error(RuntimeError).and change{service_deploy.reload.finished_at}.from(nil).to(a_value >= 1.second.ago)
     end
   end
 end
