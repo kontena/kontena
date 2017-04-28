@@ -228,6 +228,16 @@ class Kontena::Command < Clamp::Command
     raise ex if ENV['DEBUG']
     abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         Rerun the command with environment DEBUG=true set to get the full exception")
   end
+
+  def subcommand_missing(name)
+    guesses = self.class.recognised_subcommands.flat_map(&:names).select {|sc_name| sc_name.start_with?(name)}
+    if guesses.size == 1
+      return self.class.find_subcommand(guesses.first).subcommand_class
+    elsif guesses.size > 1
+      puts "Suggestions: #{guesses.join(', ')}"
+    end
+    super(name)
+  end
 end
 
 require 'kontena/callback'
