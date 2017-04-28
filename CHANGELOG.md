@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.2.1](https://github.com/kontena/kontena/releases/tag/v1.2.1) (2017-04-28)
+
+The 1.2.1 release fixes various issues in the 1.2.0 release.
+
+### Fixed issues
+
+#### [1.2.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-04-27)
+* Stack upgrade variable defaulting from master broke in 1.2.0 #2216
+* Service volume mounts with :ro breaks validation in 1.2.0 #2219
+* CLI: stack reader explodes on an empty stack file: `NoMethodError : undefined method ''[]' for false:FalseClass` #2204
+* Missing documentation re upgrading path for named volumes #2222
+* OSX cli package (omnibus) is missing readline #2194
+* Server: GridServiceHealthMonitorJob can pile up deployments #2208
+
+### Known issues
+
+Known regressions in the Kontena 1.2 releases compared to earlier releases.
+
+* Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
+* Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
+* Stopping service does not abort running deploy #2214
+
+### Changes
+
+No changes from `1.2.1.rc1`.
+
+* Fix 1.2.0 release notes to document volume migration upgrades (#2223)
+
+#### Agent
+* Do not send un-managed volume infos to master (#2189)
+
+#### Server
+* Fix GridService#deploy_pending? to consider all unfinished deploys as pending (#2211)
+
+#### CLI
+* SSL: Give hint about setting certs path (#2201)
+* Make kontena_cli_spec spec test what it was supposed to (#2210)
+* Fix variable value defaulting from master during stack upgrade (#2217)
+* Fix validation of volume definitions with permission flags (#2220)
+* Handle empty YAML files in stack commands (#2206)
+* Add rb-readline to CLI installer (#2205)
+
 ## [1.2.0](https://github.com/kontena/kontena/releases/tag/v1.2.0) (2017-04-21)
 
 ### Highlights
@@ -9,6 +51,8 @@ The Kontena 1.2 release introduces [experimental support for volume management](
 Stack services can now [use](https://kontena.io/docs/references/kontena-yml#volumes) volumes created by `kontena volume create`, and the service and volume instances will be scheduled together.
 
 Kontena volumes can use volume drivers provided by Docker plugins installed on the host nodes, such as [rexray](https://rexray.codedellemc.com/).
+
+See the [Upgrading](#upgrading-stacks-with-services-using-named-docker-volumes) section for existing stacks with services using named volumes, which were previously deployed as implicitly created local Docker volumes.
 
 The exact details of how these Kontena volumes are managed may still change as the implementation evolves. If you use the experimental Kontena volumes support, be prepared to change your volume definitions as necessary when upgrading to newer Kontena versions.
 
@@ -88,11 +132,35 @@ The Kontena 1.2 release supports additional host/container stats used for the up
 
 * Support named `service: volumes: - volume:/path`
 
-    All named service volumes must now be defined in the `volumes` section.
+    All [named service volumes](https://www.kontena.io/docs/references/kontena-yml.html#named-volume) must now be defined in the new `volumes` section.
 
 * New `volumes` section
 
-    See the [Kontena stack volume](https://kontena.io/docs/references/kontena-yml#volumes) documentation.
+    See the new [Stack Volume Configuration Reference](https://www.kontena.io/docs/references/kontena-yml.html#volume-configuration-reference) documentation.
+
+### Upgrading
+
+#### Upgrading stacks with services using named Docker volumes
+
+Kontena Services could also use named volumes prior to Kontena 1.2, which would implicitly create local Docker volumes on each host node that service instances were deployed to.
+
+After upgrading the server to Kontena 1.2, any such named Docker volumes used by existing services will appear in `kontena volume ls`, in the form of [grid-scoped volumes](https://www.kontena.io/docs/using-kontena/volumes.html#scope-grid) using the default `local` driver. However, trying to install or upgrade a existing stack file containing services that use those named volumes will fail with a validation error: `service ... volumes ...: defines volume name, but file does not contain volumes definitions`
+
+The stack files containing services using named Docker volumes must be edited to use to use the new `volumes` section. The migrated Kontena volumes shown in `kontena volume ls` can be referenced as external volumes in the stack:
+
+```yaml
+stack: test/test
+services:
+  test:
+    volumes:
+      - test:/test
+volumes:
+  test:
+    external:      # equivalent to `external: true`, matching the name of the volumes section
+      name: test
+```
+
+After editing the stack file, the stack can be upgraded, and the services can continue to be deployed as before. Assuming the services are using affinity filters such that they continue to be deployed to the same host nodes, then any service containers deployed with Kontena 1.2 will use the existing named local Docker volumes that were implicitly created by earlier Kontena deployments. Using affinity filters to schedule onto specific nodes was already necessary for the stable use of named service volumes in earlier versions of Kontena.
 
 ### Known issues
 
