@@ -42,6 +42,12 @@ describe GridServiceSchedulerWorker, celluloid: true do
 
       expect(subject.check_deploy_queue).to be_nil
     end
+
+    it "fails if fetch_deploy_item returns a non-pending deploy" do
+      service_deploy = GridServiceDeploy.create(grid_service: service, created_at: 1.hour.ago, started_at: 1.hour.ago)
+
+      expect{subject.check_deploy_queue}.to raise_error(RuntimeError, "deploy not pending")
+    end
   end
 
   context "without any deploys" do

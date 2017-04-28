@@ -6,7 +6,7 @@ class GridServiceSchedulerWorker
   def initialize(autostart = true)
     async.watch if autostart
   end
-  
+
   def watch
     loop do
       if service_deploy = self.check_deploy_queue
@@ -22,6 +22,8 @@ class GridServiceSchedulerWorker
   def check_deploy_queue
     service_deploy = fetch_deploy_item
     return nil unless service_deploy
+
+    fail "deploy not pending" unless service_deploy.pending?
 
     with_dlock("check_deploy_queue:#{service_deploy.grid_service_id}", 10) do
       if service_deploy.grid_service.deploy_running?
