@@ -237,7 +237,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
       it 'aborts deploy if service is stopped' do
         expect(subject.check_deploy_queue).to be_nil
 
-        expect(service_deploy.reload).to be_abort
+        expect(service_deploy.reload).to be_aborted
       end
     end
   end

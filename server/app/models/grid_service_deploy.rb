@@ -73,7 +73,7 @@ class GridServiceDeploy
   # Deploy was finished without being running.
   #
   # @return [Boolean]
-  def abort?
+  def aborted?
     !started? && finished?
   end
 
