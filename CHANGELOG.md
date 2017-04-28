@@ -1,11 +1,12 @@
 # Changelog
 
-## [1.2.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-04-27)
+## [1.2.1](https://github.com/kontena/kontena/releases/tag/v1.2.1) (2017-04-28)
 
 The 1.2.1 release fixes various issues in the 1.2.0 release.
 
 ### Fixed issues
 
+#### [1.2.1.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-04-27)
 * Stack upgrade variable defaulting from master broke in 1.2.0 #2216
 * Service volume mounts with :ro breaks validation in 1.2.0 #2219
 * CLI: stack reader explodes on an empty stack file: `NoMethodError : undefined method ''[]' for false:FalseClass` #2204
@@ -22,6 +23,8 @@ Known regressions in the Kontena 1.2 releases compared to earlier releases.
 * Stopping service does not abort running deploy #2214
 
 ### Changes
+
+No changes from `1.2.1.rc1`.
 
 * Fix 1.2.0 release notes to document volume migration upgrades (#2223)
 
