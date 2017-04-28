@@ -60,17 +60,24 @@ class GridServiceDeploy
     !!finished_at
   end
 
+  # Deploy has been running, and is now finished.
+  #
+  # @return [Boolean]
+  def done?
+    started? && finished?
+  end
+
+  # Deploy was finished without being running.
+  #
+  # @return [Boolean]
+  def abort?
+    !started? && finished?
+  end
+
   # Finish deploy without it necessarily being running.
   #
   # @param reason [String]
   def abort!(reason = nil)
     self.set(:finished_at => Time.now.utc, :reason => reason)
-  end
-
-  # Deploy has been aborted
-  #
-  # @return [Boolean]
-  def abort?
-    !self.finished_at.nil?
   end
 end

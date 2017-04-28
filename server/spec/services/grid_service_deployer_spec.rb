@@ -2,7 +2,7 @@
 describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
-  let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service) }
+  let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
   let(:node1) { HostNode.create!(node_id: SecureRandom.uuid, grid: grid) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
@@ -125,7 +125,7 @@ describe GridServiceDeployer do
             container_count: 2,
           )
         }
-        let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service) }
+        let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
         let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
 
         before do

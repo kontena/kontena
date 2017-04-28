@@ -54,7 +54,7 @@ class GridServiceDeployer
     total_instances.times do |i|
       instance_number = i + 1
       self.grid_service_deploy.reload
-      if self.grid_service_deploy.abort?
+      unless self.grid_service_deploy.running?
         raise "halting deploy of #{self.grid_service.to_path}, deploy was aborted: #{self.deploy_state.reason}"
       end
       self.grid_service.reload
