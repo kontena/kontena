@@ -12,8 +12,8 @@ class GridSecret
 
   index({ grid_id: 1 })
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 end

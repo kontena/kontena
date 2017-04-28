@@ -54,7 +54,8 @@ class HostNode
     node.containers.unscoped.destroy
   end
 
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 

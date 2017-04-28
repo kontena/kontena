@@ -16,8 +16,8 @@ class GridDomainAuthorization
 
   validates_uniqueness_of :domain, scope: [:grid_id]
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 end

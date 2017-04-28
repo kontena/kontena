@@ -53,7 +53,8 @@ class Container
   scope :deleted, -> { where(deleted_at: {'$ne' => nil}) }
   scope :volumes, -> { where(deleted_at: nil, container_type: 'volume') }
 
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     if self.host_node
       "#{self.host_node.to_path}/#{self.name}"
     else

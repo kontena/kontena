@@ -67,8 +67,8 @@ class GridService
 
   before_validation :ensure_stack
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.stack.try(:name)}/#{self.name}"
   end
 
@@ -99,7 +99,7 @@ class GridService
   def set_state(state)
     state_changed = self.state != state
     self.set(:state => state)
-    publish_update_event if state_changed    
+    publish_update_event if state_changed
   end
 
   # @return [Boolean]
