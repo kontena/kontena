@@ -5,6 +5,37 @@ describe GridServiceSchedulerWorker, celluloid: true do
   let(:service) { GridService.create(name: 'test', image_name: 'foo/bar:latest', grid: grid)}
   let(:subject) { described_class.new(false) }
 
+  describe '#watch' do
+    let(:deployer) { instance_double(GridServiceDeployer) }
+
+    before do
+      allow(subject.wrapped_object).to receive(:loop) do |&block| block.call end
+      allow(subject.wrapped_object).to receive(:sleep)
+      allow(GridServiceDeployer).to receive(:new).and_return(deployer)
+    end
+
+    it "does nothing if no queued deploys" do
+      expect(subject.wrapped_object).to_not receive(:deploy)
+      subject.watch
+    end
+
+    it "runs created deploys" do
+      service_deploy = GridServiceDeploy.create(grid_service: service, created_at: Time.now.utc)
+
+      expect(deployer).to receive(:deploy)
+
+      subject.watch
+    end
+
+    it "does not run finished deploys" do
+      service_deploy = GridServiceDeploy.create(grid_service: service, created_at: 1.hour.ago, queued_at: 1.hour.ago, started_at: 1.hour.ago, finished_at: 1.hour.ago)
+
+      expect(deployer).to_not receive(:deploy)
+
+      subject.watch
+    end
+  end
+
   describe '#check_deploy_queue' do
     it "returns nil if fetch_deploy_item returns nil" do
       expect(subject.wrapped_object).to receive(:fetch_deploy_item).and_return(nil)
