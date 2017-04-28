@@ -58,7 +58,7 @@ class GridServiceDeploy
 
   # @return [Boolean]
   def timeout?
-    started_at <= TIMEOUT.ago
+    started_at <= TIMEOUT.ago && !finished?
   end
 
   # @return [Boolean]

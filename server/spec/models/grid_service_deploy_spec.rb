@@ -49,7 +49,7 @@ describe GridServiceDeploy do
   end
 
   context "for a finished deploy" do
-    subject { service.grid_service_deploys.create(created_at: Time.now.utc, queued_at: Time.now.utc, started_at: Time.now.utc, finished_at: Time.now.utc) }
+    subject { service.grid_service_deploys.create(created_at: 1.hour.ago, queued_at: 1.hour.ago, started_at: 1.hour.ago, finished_at: 50.minutes.ago) }
 
     it "is running" do
       expect(subject).to be_queued
@@ -57,6 +57,7 @@ describe GridServiceDeploy do
       expect(subject).to be_started
       expect(subject).to_not be_running
       expect(subject).to be_finished
+      expect(subject).to_not be_timeout
     end
   end
 
@@ -89,6 +90,19 @@ describe GridServiceDeploy do
       expect(subject).to be_started
       expect(subject).to_not be_running
       expect(subject).to be_finished
+    end
+  end
+
+  context "for an timed out deploy" do
+    subject { service.grid_service_deploys.create(created_at: 1.hour.ago, queued_at: 1.hour.ago, started_at: 1.hour.ago) }
+
+    it "is running" do
+      expect(subject).to be_queued
+      expect(subject).to_not be_pending
+      expect(subject).to be_started
+      expect(subject).to_not be_running
+      expect(subject).to_not be_finished
+      expect(subject).to be_timeout
     end
   end
 end
