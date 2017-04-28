@@ -150,14 +150,14 @@ class GridService
   #
   # @return [Boolean]
   def deploy_pending?
-    self.grid_service_deploys.where(:started_at => nil, :finished_at => nil).count > 0
+    self.grid_service_deploys.pending.count > 0
   end
 
   # The service has deploys that have been started, but not yet finished.
   #
   # @return [Boolean]
   def deploy_running?
-    self.grid_service_deploys.where(:started_at.ne => nil, :finished_at => nil).count > 0
+    self.grid_service_deploys.running.count > 0
   end
 
   # Are there any deploys in queue or in progress for this service

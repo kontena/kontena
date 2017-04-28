@@ -35,6 +35,9 @@ class GridServiceDeploy
   belongs_to :grid_service
   belongs_to :stack_deploy
 
+  scope :pending, -> { where(:started_at => nil, :finished_at => nil) }
+  scope :running, -> { where(:started_at.ne => nil, :finished_at => nil) }
+
   # @return [Boolean]
   def queued?
     !!queued_at
