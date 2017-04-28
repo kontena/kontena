@@ -6,7 +6,7 @@ class GridServiceSchedulerWorker
   def initialize(autostart = true)
     async.watch if autostart
   end
-
+  
   def watch
     loop do
       if service_deploy = self.check_deploy_queue
@@ -41,8 +41,8 @@ class GridServiceSchedulerWorker
     end
   end
 
-  # Pick up the oldest non-queued deploy, mark it as queued, and return for processing.
-  # The caller has 30s to process the returned deploy, or it can be picked up again.
+  # Pick up the oldest pending un-queued deploy, mark it as queued, and return for processing.
+  # The caller has 30s to process the returned deploy, or it will can be picked up again.
   #
   # @return [GridServiceDeploy, NilClass]
   def fetch_deploy_item
@@ -53,6 +53,9 @@ class GridServiceSchedulerWorker
     nil
   end
 
+  # Run deploy, and then ensure that it gets marked as finished.
+  #
+  # @param service_deploy [GridServiceDeploy]
   def deploy(service_deploy)
     self.deployer(service_deploy).deploy
     self.deploy_dependant_services(service_deploy.grid_service)
@@ -60,6 +63,9 @@ class GridServiceSchedulerWorker
     service_deploy.set(:finished_at => Time.now.utc)
   end
 
+  # Create deploys for dependent services.
+  #
+  # @param grid_service [GridService]
   def deploy_dependant_services(grid_service)
     grid_service.dependant_services.each do |service|
       info "deploying dependent service #{service.to_path} of deployed service #{grid_service.to_path}"

@@ -148,14 +148,14 @@ class GridService
     self.grid_service_deploys.deploying.count > 0
   end
 
-  # The service has deploys created or queued, but not yet started.
+  # The service has deploys created or queued, but not yet started, running or finished.
   #
   # @return [Boolean]
   def deploy_pending?
     self.grid_service_deploys.pending.count > 0
   end
 
-  # The service has deploys that have been started, but not yet finished.
+  # The service has deploys that have been started, but not yet finished or timeout.
   #
   # @return [Boolean]
   def deploy_running?

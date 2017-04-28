@@ -1,24 +1,25 @@
 # States:
-#   - created: created_at=T0
+#   - created pending: created_at=T0
 #       GridServices::Deploy request, or some internal scheduler, decides to deploy the service
-#   - created: created_at=T0 queued_at=T1
+#   - created pending: created_at=T0 queued_at=T1
 #       GridServiceSchedulerWorker picks up the deploy
-#   - created: created_at=T0 queued_at=T2
+#   - created pending: created_at=T0 queued_at=T2
 #       A different deploy is already running, so this deploy remains queued.
 #       Deploy is picked up again by a different GridServiceSchedulerWorker
-#   - created: created_at=T0 queued_at=T2 finished_at=T3
+#   - created aborted: created_at=T0 queued_at=T2 finished_at=T3
 #       GridServiceSchedulerWorker has decided not to run the deploy, such as if the service was stopped.
-#   - ongoing: created_at=T0 queued_at=T2 started_at=T3
+#   - ongoing started running: created_at=T0 queued_at=T2 started_at=T3
 #       GridServiceDeployer was run by the GridServiceSchedulerWorker
-#   - success: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
+#   - success finished done: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
 #       GridServiceDeployer has completed succesfully
-#   - error: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
+#   - error finished done: created_at=T0 queued_at=T2 started_at=T3 finished_at=T4
 #       GridServiceDeployer has failed with an error
 class GridServiceDeploy
   include Mongoid::Document
   include Mongoid::Timestamps
   include Mongoid::Enum
 
+  # deploy times out if running for more than 30 minutes
   TIMEOUT = 30.minutes
 
   field :queued_at, type: DateTime
