@@ -1,4 +1,7 @@
 require_relative 'logging'
+require 'objspace'
+
+ObjectSpace.trace_object_allocations_start
 
 module Kontena
   class Agent
@@ -16,6 +19,7 @@ module Kontena
       self.supervise_network_adapter
       self.supervise_lb
       self.supervise_workers
+      self.supervise_profiler
     end
 
     # Connect to master server
@@ -154,6 +158,13 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::LoadBalancers::Registrator,
         as: :lb_registrator
+      )
+    end
+
+    def supervise_profiler
+      @supervisor.supervise(
+        type: Kontena::Workers::MemProfilerWorker,
+        as: :volume_manager
       )
     end
 
