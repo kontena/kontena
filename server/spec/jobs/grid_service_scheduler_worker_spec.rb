@@ -271,11 +271,11 @@ describe GridServiceSchedulerWorker, celluloid: true do
     end
   end
 
-  context "for an expired deploy" do
-    let(:expired_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 60.minutes.ago, queued_at: 40.minutes.ago, started_at: 30.minutes.ago) }
+  context "for an timeout deploy" do
+    let(:timeout_deploy) { GridServiceDeploy.create(grid_service: service, created_at: 60.minutes.ago, queued_at: 40.minutes.ago, started_at: 30.minutes.ago) }
 
     before do
-      expired_deploy
+      timeout_deploy
     end
 
     describe 'service' do
@@ -294,7 +294,7 @@ describe GridServiceSchedulerWorker, celluloid: true do
       it "ignores the deploy" do
         expect{
           expect(subject.fetch_deploy_item).to be_nil
-        }.to not_change{expired_deploy.reload.queued_at}
+        }.to not_change{timeout_deploy.reload.queued_at}
       end
     end
 

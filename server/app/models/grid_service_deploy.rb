@@ -19,6 +19,8 @@ class GridServiceDeploy
   include Mongoid::Timestamps
   include Mongoid::Enum
 
+  TIMEOUT = 30.minutes
+
   field :queued_at, type: DateTime
   field :started_at, type: DateTime
   field :finished_at, type: DateTime
@@ -36,7 +38,7 @@ class GridServiceDeploy
   belongs_to :stack_deploy
 
   scope :pending, -> { where(:started_at => nil, :finished_at => nil) }
-  scope :running, -> { where(:started_at.ne => nil, :finished_at => nil) }
+  scope :running, -> { where(:started_at.ne => nil).where(:started_at.gt => TIMEOUT.ago, :finished_at => nil) }
 
   # @return [Boolean]
   def queued?
@@ -54,8 +56,13 @@ class GridServiceDeploy
   end
 
   # @return [Boolean]
+  def timeout?
+    started_at <= TIMEOUT.ago
+  end
+
+  # @return [Boolean]
   def running?
-    started? && !finished?
+    started? && !finished? && !timeout?
   end
 
   # @return [Boolean]
