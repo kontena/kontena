@@ -141,9 +141,11 @@ class GridService
   #
   # Equvialent to deploy_pending? || deploy_running?
   #
+  # Ignores any expired deploys.
+  #
   # @return [Boolean]
   def deploying?
-    self.grid_service_deploys.where(:finished_at => nil).count > 0
+    self.grid_service_deploys.deploying.count > 0
   end
 
   # The service has deploys created or queued, but not yet started.
@@ -158,13 +160,6 @@ class GridService
   # @return [Boolean]
   def deploy_running?
     self.grid_service_deploys.running.count > 0
-  end
-
-  # Are there any deploys in queue or in progress for this service
-  # Ignores any possibly stale deploys that have been started but never finished
-  # @return [Boolean]
-  def deploy_outstanding?
-    self.grid_service_deploys.any_of({:started_at => nil, :finished_at => nil}, {:started_at.gt => 30.minutes.ago , finished_at: nil}).count > 0
   end
 
   # @return [Boolean]

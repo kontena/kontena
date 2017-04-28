@@ -37,6 +37,7 @@ class GridServiceDeploy
   belongs_to :grid_service
   belongs_to :stack_deploy
 
+  scope :deploying, -> { any_of({:started_at => nil, :finished_at => nil}, {:started_at.gt => TIMEOUT.ago , finished_at: nil}) }
   scope :pending, -> { where(:started_at => nil, :finished_at => nil) }
   scope :running, -> { where(:started_at.ne => nil).where(:started_at.gt => TIMEOUT.ago, :finished_at => nil) }
 
