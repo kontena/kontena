@@ -97,7 +97,7 @@ module Kontena::Cli::Stacks
     end
 
     def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack = stack_from_reader(reader)
       dump_variables(reader) if values_to
       stack
