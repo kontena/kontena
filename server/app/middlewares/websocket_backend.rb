@@ -22,7 +22,7 @@ class WebsocketBackend
   def initialize(app)
     @app     = app
     @clients = []
-    @logger = Logger.new(ENV['RACK_ENV'] == 'test' ? StringIO.new : STDOUT)
+    @logger = Logger.new(STDOUT)
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
     @msg_counter = 0

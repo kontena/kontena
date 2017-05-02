@@ -14,7 +14,7 @@ class Watchdog
   LOG_LEVEL = Logger::INFO
 
   def self.logger(subject, target: STDOUT, level: ENV["WATCHDOG_DEBUG"] ? Logger::DEBUG : LOG_LEVEL)
-    logger = Logger.new(ENV['RACK_ENV'] == 'test' ? StringIO.new : target)
+    logger = Logger.new(target)
     logger.progname = "#{self.name}<#{subject}>"
     logger.level = level
     logger
