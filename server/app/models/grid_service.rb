@@ -99,7 +99,7 @@ class GridService
   def set_state(state)
     state_changed = self.state != state
     self.set(:state => state)
-    publish_update_event if state_changed    
+    publish_update_event if state_changed
   end
 
   # @return [Boolean]
@@ -179,7 +179,7 @@ class GridService
   # @return [Hash]
   def env_hash
     if @env_hash.nil?
-      @env_hash = self.env.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      @env_hash = Hash[*self.env.flat_map { |kv_pair| kv_pair.split('=', 2) }]
     end
 
     @env_hash
