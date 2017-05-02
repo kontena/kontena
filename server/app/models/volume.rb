@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 class Volume
   include Mongoid::Document
   include Mongoid::Timestamps

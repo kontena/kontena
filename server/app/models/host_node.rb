@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 require 'ipaddr'
 require_relative 'event_stream'
 

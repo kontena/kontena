@@ -1,5 +1,7 @@
 require 'ipaddr'
 require_relative 'event_stream'
+require_relative '../helpers/to_path_cache_helper'
+
 class Container
   include Mongoid::Document
   include Mongoid::Timestamps

@@ -1,3 +1,5 @@
+require_relative '../helpers/to_path_cache_helper'
+
 class GridDomainAuthorization
   include Mongoid::Document
   include Mongoid::Timestamps

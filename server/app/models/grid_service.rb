@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 require_relative 'event_stream'
 class GridService
   include Mongoid::Document
