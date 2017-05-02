@@ -35,7 +35,7 @@ module Kontena::Cli::Stacks::YAML
           if value.is_a?(Hash)
             value.all? { |k,v| k.kind_of?(String) && (v.kind_of?(String) || v.kind_of?(Integer) || v.nil?) }
           elsif value.is_a?(Array)
-            value.all? { |v| v =~ /\A[^=]+=[^=]+?\z/ }
+            value.all? { |v| v =~ /\A\S+(?<!\\)=.*/ }
           else
             false
           end
