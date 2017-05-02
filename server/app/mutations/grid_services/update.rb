@@ -120,7 +120,7 @@ module GridServices
       new_env = GridService.new(env: env).env_hash
       current_env = self.grid_service.env_hash
       new_env.each do |k, v|
-        if v.empty? && current_env[k]
+        if (v.nil? || v.empty?) && current_env[k]
           new_env[k] = current_env[k]
         end
       end
