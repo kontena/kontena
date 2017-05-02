@@ -3,7 +3,6 @@ require 'shellwords'
 
 module Kontena::Cli::Services
   class UpdateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include ServicesHelper
 

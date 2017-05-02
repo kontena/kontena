@@ -1,6 +1,5 @@
 module Kontena::Cli::Master
   class UseCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "[NAME]", "Master name to use"
 

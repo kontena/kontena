@@ -3,7 +3,6 @@ require 'kontena/plugin_manager'
 module Kontena::Cli::Plugins
   class UninstallCommand < Kontena::Command
     include Kontena::Util
-    include Kontena::Cli::Common
     include Kontena::PluginManager::Common
 
     parameter 'NAME', 'Plugin name'

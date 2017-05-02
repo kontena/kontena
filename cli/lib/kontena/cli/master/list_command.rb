@@ -1,6 +1,5 @@
 module Kontena::Cli::Master
   class ListCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::TableGenerator::Helper
 
     def fields

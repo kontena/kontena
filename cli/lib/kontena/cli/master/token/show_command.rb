@@ -5,7 +5,6 @@ module Kontena::Cli::Master::Token
 
     parameter "TOKEN_OR_ID", "Access token or access token id"
 
-    include Kontena::Cli::Common
     include Common
 
     requires_current_master

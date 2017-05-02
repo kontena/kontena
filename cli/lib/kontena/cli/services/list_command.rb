@@ -2,7 +2,6 @@ require_relative 'services_helper'
 
 module Kontena::Cli::Services
   class ListCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::TableGenerator::Helper
     include ServicesHelper

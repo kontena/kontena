@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Grids
   class AuditLogCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Common
 
     option ["-l", "--lines"], "LINES", "Number of lines"

@@ -2,7 +2,6 @@ require_relative '../common'
 
 module Kontena::Cli::Stacks::Registry
   class PullCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
     include Kontena::Cli::Stacks::Common::StackNameParam
 

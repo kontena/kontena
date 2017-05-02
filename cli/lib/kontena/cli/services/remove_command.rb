@@ -2,7 +2,6 @@ require_relative 'services_helper'
 
 module Kontena::Cli::Services
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
     include ServicesHelper
 
     parameter "NAME", "Service name"

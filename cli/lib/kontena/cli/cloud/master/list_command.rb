@@ -1,7 +1,6 @@
 module Kontena::Cli::Cloud::Master
   class ListCommand < Kontena::Command
 
-    include Kontena::Cli::Common
     include Kontena::Cli::TableGenerator::Helper
 
     callback_matcher 'cloud-master', 'list'

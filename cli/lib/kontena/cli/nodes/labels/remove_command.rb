@@ -1,6 +1,5 @@
 module Kontena::Cli::Nodes::Labels
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "NODE", "Node name"
     parameter "LABEL ...", "Labels"

@@ -1,6 +1,5 @@
 module Kontena::Cli::Nodes
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter "NODE", "Node name"

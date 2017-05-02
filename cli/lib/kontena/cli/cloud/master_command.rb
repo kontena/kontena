@@ -1,6 +1,5 @@
 module Kontena::Cli::Cloud
   class MasterCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     subcommand ['list', 'ls'], "List masters in Kontena Cloud", load_subcommand('cloud/master/list_command')
     subcommand "add", "Register a master in Kontena Cloud", load_subcommand('cloud/master/add_command')

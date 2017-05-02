@@ -2,7 +2,6 @@ require_relative '../helpers/log_helper'
 
 module Kontena::Cli::Grids
   class EventsCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::Helpers::LogHelper
 
     SKIP_TYPES = ['grid']

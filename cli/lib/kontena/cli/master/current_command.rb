@@ -2,8 +2,6 @@ require 'uri'
 
 module Kontena::Cli::Master
   class CurrentCommand < Kontena::Command
-    include Kontena::Cli::Common
-
     option ["--name"], :flag, "Show name only", default: false
     option ["--address"], :flag, "Show IP address or FQDN only", default: false
     option ["--url"], :flag, "Show URL only", default: false

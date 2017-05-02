@@ -5,8 +5,6 @@ module Kontena::Cli::Master::Token
 
     option ['-f', '--force'], :flag, "Don't ask questions"
 
-    include Kontena::Cli::Common
-
     requires_current_master
     requires_current_master_token
 

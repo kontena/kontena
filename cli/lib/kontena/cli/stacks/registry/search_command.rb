@@ -2,7 +2,6 @@ require_relative '../common'
 
 module Kontena::Cli::Stacks::Registry
   class SearchCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
 
     banner "Search for stacks on the stack registry"

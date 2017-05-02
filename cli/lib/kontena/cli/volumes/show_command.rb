@@ -1,7 +1,6 @@
 
 module Kontena::Cli::Volumes
   class ShowCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     banner "Show details of a volume"
@@ -31,7 +30,6 @@ module Kontena::Cli::Volumes
       vol['services'].each do |service|
         puts "    - #{service['id']}"
       end
-
     end
 
   end

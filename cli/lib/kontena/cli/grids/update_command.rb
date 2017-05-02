@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Grids
   class UpdateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Common
 
     parameter "NAME", "Grid name"

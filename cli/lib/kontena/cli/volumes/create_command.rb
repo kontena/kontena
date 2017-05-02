@@ -1,7 +1,6 @@
 
 module Kontena::Cli::Volumes
   class CreateCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     banner "Creates a volume"

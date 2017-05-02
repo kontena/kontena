@@ -1,7 +1,5 @@
 module Kontena::Cli::Master
   class LogoutCommand < Kontena::Command
-    include Kontena::Cli::Common
-
     option ['-A', '--all'], :flag, 'Log out from all masters. By default only log out from current master.'
 
     def execute

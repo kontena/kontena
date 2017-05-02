@@ -1,6 +1,5 @@
 module Kontena::Cli::Containers
   class InspectCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter "CONTAINER_ID", "Container id"

@@ -1,6 +1,5 @@
 module Kontena::Cli::Registry
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 

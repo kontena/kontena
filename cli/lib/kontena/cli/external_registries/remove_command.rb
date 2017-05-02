@@ -1,6 +1,5 @@
 module Kontena::Cli::ExternalRegistries
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "NAME", "External registry name to remove"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced

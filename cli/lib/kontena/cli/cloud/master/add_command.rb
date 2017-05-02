@@ -1,8 +1,6 @@
 module Kontena::Cli::Cloud::Master
   class AddCommand < Kontena::Command
 
-    include Kontena::Cli::Common
-
     callback_matcher 'cloud-master', 'create'
 
     requires_current_account_token

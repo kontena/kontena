@@ -1,8 +1,6 @@
 module Kontena::Cli::Master::Config
   class GetCommand < Kontena::Command
 
-    include Kontena::Cli::Common
-
     requires_current_master
     requires_current_master_token
 

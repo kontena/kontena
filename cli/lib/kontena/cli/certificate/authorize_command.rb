@@ -1,9 +1,7 @@
 
 module Kontena::Cli::Certificate
   class AuthorizeCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-
 
     parameter "DOMAIN", "Domain to authorize"
 

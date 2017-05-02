@@ -2,7 +2,6 @@ require_relative '../../../common'
 
 module Kontena::Cli::Master::User::Role
   class RemoveCommand < Kontena::Command
-    include Kontena::Cli::Common
 
     parameter "ROLE", "Role name"
     parameter "USER ...", "List of users"

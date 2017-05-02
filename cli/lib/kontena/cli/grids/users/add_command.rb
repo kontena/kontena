@@ -2,7 +2,6 @@ require_relative '../common'
 
 module Kontena::Cli::Grids::Users
   class AddCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Grids::Common
 

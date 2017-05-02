@@ -3,7 +3,6 @@ require_relative 'common'
 module Kontena::Cli::Master::Token
   class ListCommand < Kontena::Command
     include Kontena::Util
-    include Kontena::Cli::Common
     include Kontena::Cli::TableGenerator::Helper
     include Common
 

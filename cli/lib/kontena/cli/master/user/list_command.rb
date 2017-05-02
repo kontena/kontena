@@ -2,7 +2,6 @@ require_relative '../../common'
 
 module Kontena::Cli::Master::User
   class ListCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::TableGenerator::Helper
 
     requires_current_master

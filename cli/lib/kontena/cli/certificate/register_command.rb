@@ -1,9 +1,6 @@
-
 module Kontena::Cli::Certificate
   class RegisterCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
-
 
     parameter "EMAIL", "Email to register"
 

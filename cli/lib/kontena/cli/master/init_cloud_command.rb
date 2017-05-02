@@ -1,8 +1,6 @@
 module Kontena::Cli::Master
   class InitCloudCommand < Kontena::Command
 
-    include Kontena::Cli::Common
-
     banner "Configures the current Kontena Master to use Kontena Cloud services and authentication"
 
     option '--force',           :flag,       "Don't ask questions"

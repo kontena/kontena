@@ -2,7 +2,6 @@ require_relative 'common'
 
 module Kontena::Cli::Stacks
   class ListCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::TableGenerator::Helper
     include Common

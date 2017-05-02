@@ -2,7 +2,6 @@ require_relative '../common'
 
 module Kontena::Cli::Stacks::Registry
   class PushCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
 
     banner "Pushes (uploads) a stack to the stack registry"

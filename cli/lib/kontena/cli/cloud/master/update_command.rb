@@ -1,8 +1,6 @@
 module Kontena::Cli::Cloud::Master
   class UpdateCommand < Kontena::Command
 
-    include Kontena::Cli::Common
-
     callback_matcher 'cloud-master', 'update'
 
     requires_current_account_token

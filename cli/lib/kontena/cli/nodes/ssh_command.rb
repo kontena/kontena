@@ -2,7 +2,6 @@ require 'kontena/plugin_manager'
 
 module Kontena::Cli::Nodes
   class SshCommand < Kontena::Command
-    include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
     parameter "[NODE]", "SSH to Grid node. Use --any to connect to the first available node"
