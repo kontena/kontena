@@ -33,7 +33,15 @@ module Kontena::Cli::Stacks::YAML
         'mem_swaplimit' => optional('string'),
         'environment' => optional(-> (value) {
           if value.is_a?(Hash)
-            value.all? { |k,v| k.kind_of?(String) && (v.kind_of?(String) || v.kind_of?(Integer) || v.nil?) }
+            value.all? do |k,v|
+              k.kind_of?(String) && (
+                v.kind_of?(String) ||
+                v.kind_of?(Integer) ||
+                v.kind_of?(TrueClass) ||
+                v.kind_of?(FalseClass) ||
+                v.nil?
+              )
+            end
           elsif value.is_a?(Array)
             value.all? { |v| v =~ /\A\S+(?<!\\)=.*/ }
           else
