@@ -31,7 +31,15 @@ module Kontena::Cli::Stacks::YAML
         'external_links' => optional('array'),
         'mem_limit' => optional('string'),
         'mem_swaplimit' => optional('string'),
-        'environment' => optional(-> (value) { value.is_a?(Array) || value.is_a?(Hash) }),
+        'environment' => optional(-> (value) {
+          if value.is_a?(Hash)
+            value.all? { |k,v| k.kind_of?(String) && (v.kind_of?(String) || v.kind_of?(Integer) || v.nil?) }
+          elsif value.is_a?(Array)
+            value.all? { |v| v =~ /\A[^=]+=[^=]+?\z/ }
+          else
+            false
+          end
+        }),
         'env_file' => optional(-> (value) { value.is_a?(String) || value.is_a?(Array) }),
         'instances' => optional('integer'),
         'links' => optional(-> (value) { value.is_a?(Array) || value.nil? }),
