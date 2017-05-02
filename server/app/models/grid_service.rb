@@ -179,7 +179,7 @@ class GridService
   # @return [Hash]
   def env_hash
     if @env_hash.nil?
-      @env_hash = Hash[*self.env.flat_map { |kv_pair| kv_pair.split(/(?<!\\)=/, 2) }]
+      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split(/(?<!\\)=/, 2) }]
     end
 
     @env_hash
