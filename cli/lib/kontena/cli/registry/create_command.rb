@@ -1,4 +1,5 @@
 require_relative '../stacks/stacks_helper'
+require 'securerandom'
 
 module Kontena::Cli::Registry
   class CreateCommand < Kontena::Command
