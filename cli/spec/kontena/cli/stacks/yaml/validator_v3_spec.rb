@@ -117,6 +117,11 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_truthy
     end
 
+    it 'passes validation if environment array includes items with booleans or nils' do
+      result = subject.validate_options('environment' => { 'KEY' => true, 'KEY2' => false, 'KEY3' => nil })
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
     context 'validates secrets' do
       it 'must be array' do
         result = subject.validate_options('secrets' => {})
