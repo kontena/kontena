@@ -1,7 +1,7 @@
 require_relative '../helpers/log_helper'
 
 module Kontena::Cli::Containers
-  class LogsCommand < Clamp::Command
+  class LogsCommand < Kontena::Command
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::LogHelper
 
