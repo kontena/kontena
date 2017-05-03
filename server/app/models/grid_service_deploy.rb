@@ -7,6 +7,7 @@ class GridServiceDeploy
   field :finished_at, type: DateTime
   field :reason, type: String
   enum :deploy_state, [:created, :ongoing, :success, :error], default: :created
+  enum :deploy_type, [:manual, :automatic], default: :automatic
 
   embeds_many :grid_service_instance_deploys
 

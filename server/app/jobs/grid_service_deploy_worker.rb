@@ -1,4 +1,4 @@
-class GridServiceSchedulerWorker
+class GridServiceDeployWorker
   include Celluloid
   include Logging
   include DistributedLocks
@@ -37,6 +37,7 @@ class GridServiceSchedulerWorker
     nil
   end
 
+  # @param [GridServiceDeploy] service_deploy
   def perform(service_deploy)
     unless service_deploy.grid_service.deploying?(ignore: service_deploy.id)
       deploy(service_deploy)
@@ -48,11 +49,13 @@ class GridServiceSchedulerWorker
     end
   end
 
+  # @param [GridServiceDeploy] service_deploy
   def deploy(service_deploy)
     self.deployer(service_deploy).deploy
     self.deploy_dependant_services(service_deploy.grid_service)
   end
 
+  # @param [GridService] grid_service
   def deploy_dependant_services(grid_service)
     grid_service.dependant_services.each do |serv|
       info "deploying dependent service #{serv.to_path} of deployed service #{grid_service.to_path}"
@@ -69,10 +72,22 @@ class GridServiceSchedulerWorker
   def deployer(grid_service_deploy)
     grid_service = grid_service_deploy.grid_service
     nodes = grid_service.grid.host_nodes.connected.to_a
-    strategy = self.strategies[grid_service.strategy].new
+    strategy = strategy(grid_service_deploy)
     GridServiceDeployer.new(strategy, grid_service_deploy, nodes)
   end
 
+  # @param [GridServiceDeploy] grid_service_deploy
+  # @return [Scheduler::Strategy::Common]
+  def strategy(grid_service_deploy)
+    grid_service = grid_service_deploy.grid_service
+    if grid_service_deploy.manual?
+      strategy = self.strategies[grid_service.strategy].new(:deployment)
+    else
+      strategy = self.strategies[grid_service.strategy].new(:scheduler)
+    end
+  end
+
+  # @return [Array<Class>]
   def strategies
     GridServiceScheduler::STRATEGIES
   end

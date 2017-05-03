@@ -12,7 +12,6 @@ class GridServiceDeployer
               :nodes,
               :scheduler
 
-  ##
   # @param [#find_node] strategy
   # @param [GridServiceDeploy] grid_service_deploy
   # @param [Array<HostNode>] nodes
@@ -23,24 +22,6 @@ class GridServiceDeployer
     @nodes = nodes.map { |n| Scheduler::Node.new(n) }
   end
 
-  # @return [Array<HostNode>]
-  def selected_nodes
-    count = self.instance_count
-    available_nodes = self.nodes.map { |n| n.clone }
-    nodes = []
-    count.times do |i|
-      begin
-        nodes << self.scheduler.select_node(
-          self.grid_service, i + 1, available_nodes
-        )
-      rescue Scheduler::Error
-
-      end
-    end
-
-    nodes.map { |n| n.node }
-  end
-
   def deploy
     info "starting to deploy #{self.grid_service.to_path}"
     log_service_event("service #{self.grid_service.to_path} deploy started")
@@ -49,7 +30,7 @@ class GridServiceDeployer
     self.grid_service.set(:deployed_at => deploy_rev)
 
     deploy_futures = []
-    total_instances = self.instance_count
+    total_instances = self.scheduler.calculated_instance_count(self.grid_service, self.nodes)
     self.grid_service.grid_service_instances.where(:instance_number.gt => total_instances).destroy
     total_instances.times do |i|
       instance_number = i + 1
@@ -121,24 +102,6 @@ class GridServiceDeployer
     if deploy_futures.any?{|f| f.ready? && f.value.error?}
       raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
     end
-  end
-
-  # @return [Integer]
-  def instance_count
-    available_nodes = self.nodes .map { |n| n.clone } # we don't want to touch originals here
-    max_instances = self.scheduler.instance_count(self.nodes.size, self.grid_service.container_count)
-    nodes = []
-    max_instances.times do |i|
-      begin
-        nodes << self.scheduler.select_node(
-          self.grid_service, i + 1, available_nodes
-        )
-      rescue Scheduler::Error
-
-      end
-    end
-    filtered_count = nodes.uniq.size
-    self.scheduler.instance_count(filtered_count, self.grid_service.container_count)
   end
 
   # @return [Float]
