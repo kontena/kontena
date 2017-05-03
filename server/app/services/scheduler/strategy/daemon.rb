@@ -15,7 +15,7 @@ module Scheduler
         10.minutes
       end
 
-      # @param [Array<HostNode>] nodes
+      # @param [Array<Scheduler::Node>] nodes
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       def sort_candidates(nodes, grid_service, instance_number)
