@@ -10,7 +10,7 @@ module Grids
       hash :stats do
         optional do
           hash :statsd do
-            optional do
+            required do
               string :server
               integer :port
             end
