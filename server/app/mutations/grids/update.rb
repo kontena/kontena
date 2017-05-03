@@ -8,9 +8,9 @@ module Grids
 
     optional do
       hash :stats do
-        required do
+        optional do
           hash :statsd do
-            required do
+            optional do
               string :server
               integer :port
             end
@@ -54,15 +54,9 @@ module Grids
 
     def execute
       attributes = {}
-      if self.stats
-        attributes[:stats] = self.stats['statsd']['server'] == 'none' ? {} : self.stats
-      end
-      if self.trusted_subnets
-        attributes[:trusted_subnets] = self.trusted_subnets
-      end
-      if self.default_affinity
-        attributes[:default_affinity] = self.default_affinity
-      end
+      attributes[:stats] = self.stats if self.stats
+      attributes[:trusted_subnets] = self.trusted_subnets if self.trusted_subnets
+      attributes[:default_affinity] = self.default_affinity if self.default_affinity
 
       if self.logs
         if self.logs[:forwarder] == 'none'

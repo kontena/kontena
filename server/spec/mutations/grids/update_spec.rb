@@ -31,7 +31,7 @@ describe Grids::Update, celluloid: true do
         }
       }
       grid.update_attributes stats: stats
-      described_class.new(user: user, grid: grid, stats: { statsd: { server: 'none', port: 0 } }).run
+      described_class.new(user: user, grid: grid, stats: { statsd: nil }).run
       expect(grid.reload.stats['statsd']).to be_nil
     end
 
