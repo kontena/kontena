@@ -24,9 +24,35 @@ describe GridScheduler do
       expect(subject.should_reschedule_service?(service)).to be_falsey
     end
 
-    it 'returns true to stateless service' do
-      service.set(stateful: false, state: 'running')
-      expect(subject.should_reschedule_service?(service)).to be_truthy
+    context "for a running stateless service" do
+      before do
+        service.set(stateful: false, state: 'running')
+      end
+
+      it 'returns true to stateless service' do
+        expect(subject.should_reschedule_service?(service)).to be_truthy
+      end
+
+      it 'returns false if service has pending deploys' do
+        service.grid_service_deploys.create!
+        expect(subject.should_reschedule_service?(service)).to be_falsey
+      end
+
+      it 'returns false if service has active deploys' do
+        service.grid_service_deploys.create(started_at: 5.minutes.ago)
+        expect(subject.should_reschedule_service?(service)).to be_falsey
+      end
+
+      it 'returns true if service has only finished deploys' do
+        service.grid_service_deploys.create(started_at: 5.minutes.ago, deploy_state: :success)
+        expect(subject.should_reschedule_service?(service)).to be_truthy
+      end
+
+      it 'returns true if service has only stale deploys' do
+        service.grid_service_deploys.create(started_at: 1.hour.ago)
+        expect(subject.should_reschedule_service?(service)).to be_truthy
+      end
+
     end
   end
 
@@ -147,38 +173,6 @@ describe GridScheduler do
 
         expect(subject.all_instances_exist?(service)).to be_truthy
       end
-    end
-  end
-
-  describe '#pending_deploys?' do
-    it 'returns false by default' do
-      expect(subject.pending_deploys?(service)).to be_falsey
-    end
-
-    it 'returns true if pending deploys' do
-      service.grid_service_deploys.create!
-      expect(subject.pending_deploys?(service)).to be_truthy
-    end
-  end
-
-  describe '#active_deploys?' do
-    it 'returns false by default' do
-      expect(subject.active_deploys?(service)).to be_falsey
-    end
-
-    it 'returns true if service has active deploys' do
-      service.grid_service_deploys.create(started_at: 5.minutes.ago)
-      expect(subject.active_deploys?(service)).to be_truthy
-    end
-
-    it 'returns false if service has only finished deploys' do
-      service.grid_service_deploys.create(started_at: 5.minutes.ago, deploy_state: :success)
-      expect(subject.active_deploys?(service)).to be_falsey
-    end
-
-    it 'returns false if service has only stale deploys' do
-      service.grid_service_deploys.create(started_at: 1.hour.ago)
-      expect(subject.active_deploys?(service)).to be_falsey
     end
   end
 
