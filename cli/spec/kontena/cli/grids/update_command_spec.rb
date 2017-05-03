@@ -28,15 +28,35 @@ describe Kontena::Cli::Grids::UpdateCommand do
 
       end
 
-      it 'should send valid options to server' do
+      it 'should send valid full options to server' do
+        expect(client).to receive(:get).with('grids/test').and_return({
+          "id" => "test",
+          "name" => "test",
+          "token" => "abcd",
+          "initial_size" => 1,
+          "stats" => { "statsd" => nil },
+          "default_affinity" => [],
+          "trusted_subnets" => [],
+          "node_count" => 2,
+          "service_count" => 2,
+          "container_count" => 21,
+          "user_count" => 2,
+          "subnet" => "10.81.0.0/16",
+          "supernet" => "10.80.0.0/12"
+        })
+
         expect(client).to receive(:put).with(
           'grids/test', hash_including({
-            logs: {
-              forwarder: 'fluentd',
-              opts: {
-                foo: 'bar'
+            'logs' => {
+              'forwarder' => 'fluentd',
+              'opts' => {
+                'foo' => 'bar'
               }
-            }
+            },
+            'default_affinity' => [],
+            'trusted_subnets' => [],
+            'node_count' => 2,
+            'stats' => { 'statsd' => nil }
           })
         )
         subject.run(['--log-forwarder', 'fluentd', '--log-opt', 'foo=bar', 'test'])
