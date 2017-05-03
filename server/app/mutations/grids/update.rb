@@ -8,7 +8,7 @@ module Grids
 
     optional do
       hash :stats do
-        required do
+        optional do
           hash :statsd do
             required do
               string :server
@@ -24,7 +24,7 @@ module Grids
         string
       end
       hash :logs do
-        required do
+        optional do
           string :forwarder, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
         end
         optional do
@@ -69,7 +69,7 @@ module Grids
       attributes = {}
 
       if self.node_count # assume this is a full update
-        attributes[:stats] = self.stats
+        attributes[:stats] = self.stats || { statsd: nil }
         attributes[:trusted_subnets] = self.trusted_subnets
         attributes[:default_affinity] = self.default_affinity
       else # assume this is pre 1.2.2 client that didn't send a full update
@@ -79,15 +79,15 @@ module Grids
 
       if self.logs
         if self.logs[:forwarder] == 'none'
-          self.grid.grid_logs_opts = nil
+          attributes[:grid_logs_opts] = nil
         else
-          self.grid.grid_logs_opts = GridLogsOpts.new(
+          attributes[:grid_logs_opts] = GridLogsOpts.new(
             forwarder: self.logs[:forwarder],
             opts: self.logs[:opts]
           )
         end
       elsif self.node_count # full update, 'logs': null
-        self.grid.grid_logs_opts = nil
+        attributes[:grid_logs_opts] = nil
       end
 
       grid.update_attributes(attributes)
