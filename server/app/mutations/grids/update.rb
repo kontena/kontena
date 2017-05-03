@@ -77,11 +77,15 @@ module Grids
         attributes[:default_affinity] = self.default_affinity if self.default_affinity
       end
 
-      if self.logs && self.logs[:forwarder] != 'none'
-        self.grid.grid_logs_opts = GridLogsOpts.new(
-          forwarder: self.logs[:forwarder],
-          opts: self.logs[:opts]
-        )
+      if self.logs
+        if self.logs[:forwarder] == 'none'
+          self.grid.grid_logs_opts = nil
+        else
+          self.grid.grid_logs_opts = GridLogsOpts.new(
+            forwarder: self.logs[:forwarder],
+            opts: self.logs[:opts]
+          )
+        end
       elsif self.node_count # full update, 'logs': null
         self.grid.grid_logs_opts = nil
       end
