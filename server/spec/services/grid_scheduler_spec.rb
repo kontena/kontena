@@ -44,7 +44,7 @@ describe GridScheduler do
       end
 
       it 'returns true if service has only finished deploys' do
-        service.grid_service_deploys.create(started_at: 5.minutes.ago, deploy_state: :success)
+        service.grid_service_deploys.create(started_at: 5.minutes.ago, finished_at: 4.minutes.ago, deploy_state: :success)
         expect(subject.should_reschedule_service?(service)).to be_truthy
       end
 
