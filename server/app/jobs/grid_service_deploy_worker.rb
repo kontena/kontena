@@ -1,4 +1,4 @@
-class GridServiceSchedulerWorker
+class GridServiceDeployWorker
   include Celluloid
   include Logging
   include DistributedLocks
