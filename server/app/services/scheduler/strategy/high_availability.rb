@@ -1,12 +1,9 @@
+require_relative 'common'
+
 module Scheduler
   module Strategy
     class HighAvailability
-
-      # @param [Integer] node_count
-      # @param [Integer] instance_count
-      def instance_count(node_count, instance_count)
-        instance_count.to_i
-      end
+      include Scheduler::Strategy::Common
 
       # @return [ActiveSupport::Duration]
       def host_grace_period

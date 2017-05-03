@@ -34,6 +34,7 @@ class GridSchedulerJob
       rescue => exc
         error "error occurred in service #{service.to_path}"
         error exc.message
+        error exc.backtrace.join("\n")
       end
     end
   end

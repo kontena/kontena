@@ -11,7 +11,6 @@ class GridServiceScheduler
 
   attr_reader :strategy, :filters
 
-  ##
   # @param [#find_node] strategy
   def initialize(strategy)
     @strategy = strategy
@@ -26,14 +25,44 @@ class GridServiceScheduler
     @mutex = Mutex.new
   end
 
-  # @param [Integer] node_count
-  # @param [Integer] instance_count
-  # @return [Integer]
-  def instance_count(node_count, instance_count)
-    self.strategy.instance_count(node_count, instance_count)
+  # @param [GridService] grid_service
+  # @param [Array<HostNode>] host_nodes
+  # @return [Array<HostNode>]
+  def selected_nodes(grid_service, host_nodes)
+    available_nodes = host_nodes.map {|n| Scheduler::Node.new(n) }
+    count = self.calculated_instance_count(grid_service, available_nodes)
+    nodes = []
+    count.times do |i|
+      begin
+        nodes << self.select_node(
+          grid_service, i + 1, available_nodes
+        )
+      rescue Scheduler::Error
+      end
+    end
+
+    nodes.map { |n| n.node }
   end
 
-  ##
+  # @param [GridService] grid_service
+  # @param [Array<Scheduler::Node>] nodes
+  # @return [Integer]
+  def calculated_instance_count(grid_service, nodes)
+    available_nodes = nodes.map { |n| n.clone } # we don't want to touch originals here
+    max_instances = self.strategy.instance_count(nodes.size, grid_service.container_count)
+    nodes = []
+    max_instances.times do |i|
+      begin
+        nodes << self.select_node(
+          grid_service, i + 1, available_nodes
+        )
+      rescue Scheduler::Error
+      end
+    end
+    filtered_count = nodes.uniq.size
+    self.strategy.instance_count(filtered_count,grid_service.container_count)
+  end
+
   # @param [GridService] grid_service
   # @param [Integer] instance_number
   # @param [Array<Scheduler::Node>] nodes
@@ -52,14 +81,13 @@ class GridServiceScheduler
     unless selected_node
       raise Scheduler::Error, "Strategy #{self.strategy.class.to_s} did not find any node"
     end
-
+  
     node = nodes.find{ |n| n == selected_node }
     node.schedule_counter += 1
 
     selected_node
   end
 
-  ##
   # @param [GridService] grid_service
   # @param [Integer] instance_number
   # @param [Array<Scheduler::Node>]

@@ -69,10 +69,11 @@ class GridServiceSchedulerWorker
   def deployer(grid_service_deploy)
     grid_service = grid_service_deploy.grid_service
     nodes = grid_service.grid.host_nodes.connected.to_a
-    strategy = self.strategies[grid_service.strategy].new
+    strategy = self.strategies[grid_service.strategy].new(:deployment)
     GridServiceDeployer.new(strategy, grid_service_deploy, nodes)
   end
 
+  # @return [Array<Class>]
   def strategies
     GridServiceScheduler::STRATEGIES
   end

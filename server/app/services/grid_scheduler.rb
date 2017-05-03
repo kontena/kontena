@@ -120,13 +120,11 @@ class GridScheduler
     }
     available_nodes = (available_nodes + offline_within_grace_period).uniq
 
-    service_deploy = GridServiceDeploy.new(grid_service: service)
-    service_deployer = GridServiceDeployer.new(
-      strategy, service_deploy, available_nodes
-    )
-    return false if service_deployer.instance_count != service.grid_service_instances.has_node.count
+    service_scheduler = GridServiceScheduler.new(strategy)
+    calculated_desired_count = service_scheduler.calculated_instance_count(service, available_nodes.map{|n| Scheduler::Node.new(n) })
+    return false if calculated_desired_count != service.grid_service_instances.has_node.count
 
-    selected_nodes = service_deployer.selected_nodes.uniq.sort
+    selected_nodes = service_scheduler.selected_nodes(service, available_nodes).uniq.sort
     selected_nodes == current_nodes
   end
 
@@ -138,7 +136,7 @@ class GridScheduler
 
   # @param [String] name
   def strategy(name)
-    GridServiceScheduler::STRATEGIES[name].new
+    GridServiceScheduler::STRATEGIES[name].new(:scheduler)
   end
 
   # @param [GridService] service
