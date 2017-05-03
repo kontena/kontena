@@ -12,17 +12,6 @@ describe Grids::Update, celluloid: true do
       allow_any_instance_of(GridAuthorizer).to receive(:updatable_by?).with(user).and_return(true)
     end
 
-    it 'updates statsd settings' do
-      stats = {
-        statsd: {
-          server: '127.0.0.1',
-          port: 8125
-        }
-      }
-      described_class.new(user: user, grid: grid, stats: stats).run
-      expect(grid.reload.stats['statsd']['server']).to eq('127.0.0.1')
-    end
-
     it 'returns error if grid has errors' do
       outcome = described_class.new(user: user, grid: grid, stats: 'foo').run
       expect(outcome.success?).to be_falsey
@@ -41,17 +30,85 @@ describe Grids::Update, celluloid: true do
       expect(grid.grid_logs_opts.opts['fluentd-address']).to eq('192.168.0.42:24224')
     end
 
-    it 'removes log settings' do
-      logs = {
-        forwarder: 'fluentd',
-        opts: {
-          'fluentd-address': '192.168.0.42:24224'
+    context 'full update' do
+      it 'updates multiple settings' do
+        described_class.new(
+          user: user,
+          grid: grid,
+          logs: { forwarder: 'fluentd', opts: { 'fluentd-address' => '192.167.0.42:24224' } },
+          stats: { statsd: { server: '127.0.0.1', port: 8125 } },
+          default_affinity: ['label==foo=bar'],
+          node_count: 3
+        ).run
+        grid.reload
+        expect(grid.stats['statsd']['server']).to eq '127.0.0.1'
+        expect(grid.stats['statsd']['port']).to eq 8125
+        expect(grid.grid_logs_opts['forwarder']).to eq 'fluentd'
+        expect(grid.grid_logs_opts['opts']['fluentd-address']).to eq '192.167.0.42:24224'
+        expect(grid.default_affinity.first).to eq 'label==foo=bar'
+      end
+
+      it 'clears statsd settings' do
+        grid.update_attribute :statsd, { server: '127.0.0.1', port: 8125 }
+        described_class.new(user: user, grid: grid, node_count: 3).run
+        expect(grid.reload.stats['statsd']).to be_nil
+      end
+
+      it 'updates statsd settings' do
+        stats = {
+          statsd: {
+            server: '127.0.0.1',
+            port: 8125
+          }
         }
-      }
-      grid.grid_logs_opts = GridLogsOpts.new(**logs)
-      outcome = described_class.new(user: user, grid: grid, logs: { forwarder: 'none'}).run
-      expect(outcome.success?).to be_truthy, outcome.errors
-      expect(grid.reload.grid_logs_opts).to be_nil
+        described_class.new(user: user, grid: grid, stats: stats, node_count: 3).run
+        expect(grid.reload.stats['statsd']['server']).to eq('127.0.0.1')
+      end
+
+      it 'removes log settings' do
+        logs = {
+          forwarder: 'fluentd',
+          opts: {
+            'fluentd-address': '192.168.0.42:24224'
+          }
+        }
+        grid.grid_logs_opts = GridLogsOpts.new(**logs)
+        outcome = described_class.new(user: user, grid: grid, node_count: 3).run
+        expect(outcome.success?).to be_truthy, outcome.errors
+        expect(grid.reload.grid_logs_opts).to be_nil
+      end
+    end
+
+    context 'partial update' do
+      it 'clears statsd settings' do
+        grid.update_attribute :statsd, { server: '127.0.0.1', port: 8125 }
+        described_class.new(user: user, grid: grid, stats: { statsd: nil }).run
+        expect(grid.reload.stats['statsd']).to be_nil
+      end
+
+      it 'updates statsd settings' do
+        stats = {
+          statsd: {
+            server: '127.0.0.1',
+            port: 8125
+          }
+        }
+        described_class.new(user: user, grid: grid, stats: stats).run
+        expect(grid.reload.stats['statsd']['server']).to eq('127.0.0.1')
+      end
+
+      it 'removes log settings' do
+        logs = {
+          forwarder: 'fluentd',
+          opts: {
+            'fluentd-address': '192.168.0.42:24224'
+          }
+        }
+        grid.grid_logs_opts = GridLogsOpts.new(**logs)
+        outcome = described_class.new(user: user, grid: grid, logs: { forwarder: 'none'}).run
+        expect(outcome.success?).to be_truthy, outcome.errors
+        expect(grid.reload.grid_logs_opts).to be_nil
+      end
     end
 
     it 'fails to update log settings with unsupported driver' do

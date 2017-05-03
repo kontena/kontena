@@ -8,7 +8,7 @@ module Grids
 
     optional do
       hash :stats do
-        required do
+        optional do
           hash :statsd do
             required do
               string :server
@@ -24,13 +24,25 @@ module Grids
         string
       end
       hash :logs do
-        required do
+        optional do
           string :forwarder, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
         end
         optional do
           model :opts, class: Hash
         end
       end
+
+      # not updatable at the moment, here to accept a full update json
+      string :id
+      string :name
+      string :token
+      integer :initial_size
+      integer :node_count
+      integer :service_count
+      integer :container_count
+      integer :user_count
+      string :subnet
+      string :supernet
     end
 
     def validate
@@ -44,6 +56,7 @@ module Grids
           end
         end
       end
+
       if self.logs
         case self.logs[:forwarder]
         when 'fluentd'
@@ -54,24 +67,31 @@ module Grids
 
     def execute
       attributes = {}
-      if self.stats
-        attributes[:stats] = self.stats
-      end
-      if self.trusted_subnets
+
+      if self.node_count # assume this is a full update
+        attributes[:stats] = self.stats || { statsd: nil }
         attributes[:trusted_subnets] = self.trusted_subnets
-      end
-      if self.default_affinity
         attributes[:default_affinity] = self.default_affinity
+      else # assume this is pre 1.2.2 client that didn't send a full update
+        attributes[:stats] = self.stats if self.stats
+        attributes[:default_affinity] = self.default_affinity if self.default_affinity
       end
 
       if self.logs
         if self.logs[:forwarder] == 'none'
-          self.grid.grid_logs_opts = nil
+          attributes[:grid_logs_opts] = nil
         else
-          self.grid.grid_logs_opts = GridLogsOpts.new(forwarder: self.logs[:forwarder], opts: self.logs[:opts])
+          attributes[:grid_logs_opts] = GridLogsOpts.new(
+            forwarder: self.logs[:forwarder],
+            opts: self.logs[:opts]
+          )
         end
+      elsif self.node_count # full update, 'logs': null
+        attributes[:grid_logs_opts] = nil
       end
+
       grid.update_attributes(attributes)
+
       if grid.errors.size > 0
         grid.errors.each do |key, message|
           add_error(key, :invalid, message)
