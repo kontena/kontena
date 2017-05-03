@@ -15,6 +15,18 @@ describe GridScheduler do
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(grid) }
 
+  describe '#reschedule_service' do
+    it 'creates service deploy' do
+      expect {
+        subject.reschedule_service(service)
+      }.to change { service.grid_service_deploys.count }.by(1)
+    end
+
+    it 'sets deployment type to automatic' do
+      deploy = subject.reschedule_service(service)
+      expect(deploy.automatic?).to be_truthy
+    end
+  end
 
   describe '#should_reschedule_service?' do
     before(:each) { nodes }

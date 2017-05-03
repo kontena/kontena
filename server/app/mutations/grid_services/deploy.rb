@@ -24,7 +24,7 @@ module GridServices
       attrs = { deploy_requested_at: Time.now.utc, state: 'running' }
       attrs[:updated_at] = Time.now.utc if force
       grid_service.set(attrs)
-      GridServiceDeploy.create(grid_service: grid_service)
+      GridServiceDeploy.create(grid_service: grid_service, deploy_type: :manual)
     end
   end
 end

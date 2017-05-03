@@ -2,15 +2,26 @@ module Scheduler
   module Strategy
     module Common
 
+      MODES = [
+        :scheduler, # default mode
+        :deployment # used only for manual deployments
+      ]
+
       attr_reader :mode
 
       # @param [Symbol] mode
       def initialize(mode = :scheduler)
+        raise ArgumentError.new("Invalid mode: #{mode}") unless MODES.include?(mode)
+
         @mode = mode
       end
 
       def deployment?
         @mode == :deployment
+      end
+
+      def scheduler?
+        @mode == :scheduler
       end
 
       # @param [Integer] node_count

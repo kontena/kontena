@@ -9,7 +9,7 @@ describe GridServiceDeployWorker, celluloid: true do
   describe '#check_deploy_queue' do
     it 'picks oldest item from deploy queue' do
       newest = service_deploy
-      oldest = GridServiceDeploy.create(grid_service: service, created_at: 1.minute.ago)
+      oldest = GridServiceDeploy.create!(grid_service: service, created_at: 1.minute.ago)
       subject.check_deploy_queue
       expect(newest.reload.started_at).to be_nil
       expect(oldest.reload.started_at).not_to be_nil
@@ -41,6 +41,17 @@ describe GridServiceDeployWorker, celluloid: true do
       service_deploy # create
       expect(subject.wrapped_object).not_to receive(:perform)
       subject.check_deploy_queue
+    end
+  end
+
+  describe '#strategy' do
+    it 'it sets strategy mode to deployment if deploy is manual' do
+      allow(service_deploy).to receive(:manual?).and_return(true)
+      expect(subject.strategy(service_deploy).deployment?).to be_truthy
+    end
+
+    it 'sets strategy mode to scheduler if deployment is not manual' do
+      expect(subject.strategy(service_deploy).scheduler?).to be_truthy
     end
   end
 

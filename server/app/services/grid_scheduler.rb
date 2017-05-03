@@ -131,7 +131,7 @@ class GridScheduler
   # @param [GridService] service
   def reschedule_service(service)
     info "rescheduling service #{service.to_path}"
-    GridServiceDeploy.create(grid_service: service)
+    GridServiceDeploy.create(grid_service: service, deploy_type: :automatic)
   end
 
   # @param [String] name

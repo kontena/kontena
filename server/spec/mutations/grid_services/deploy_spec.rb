@@ -75,5 +75,10 @@ describe GridServices::Deploy, celluloid: true do
       outcome = subject.run
       expect(outcome.result).to be_instance_of(GridServiceDeploy)
     end
+
+    it 'sets deploy as type=manual' do
+      outcome = subject.run
+      expect(outcome.result.manual?).to be_truthy
+    end
   end
 end
