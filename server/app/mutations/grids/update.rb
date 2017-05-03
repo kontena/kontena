@@ -72,7 +72,7 @@ module Grids
         attributes[:stats] = self.stats
         attributes[:trusted_subnets] = self.trusted_subnets
         attributes[:default_affinity] = self.default_affinity
-      else # assume this is pre 1.2.1 client that didn't send a full update
+      else # assume this is pre 1.2.2 client that didn't send a full update
         attributes[:stats] = self.stats if self.stats
         attributes[:default_affinity] = self.default_affinity if self.default_affinity
       end
