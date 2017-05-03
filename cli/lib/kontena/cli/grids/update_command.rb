@@ -9,6 +9,7 @@ module Kontena::Cli::Grids
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
     option "--no-statsd-server", :flag, "Unset statsd server setting"
     option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+    option "--no-default-affinity", :flag, "Unset grid default affinity"
     option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
     option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
 
@@ -40,6 +41,10 @@ module Kontena::Cli::Grids
 
       unless default_affinity_list.empty?
         payload[:default_affinity] = default_affinity_list
+      end
+
+      if no_default_affinity?
+        payload[:default_affinity] = []
       end
 
       client(token).put("grids/#{name}", payload)
