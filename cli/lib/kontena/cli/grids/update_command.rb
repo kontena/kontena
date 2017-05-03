@@ -66,7 +66,7 @@ module Kontena::Cli::Grids
       opts = {}
       log_opt_list.each do |opt|
         key, value = opt.split('=')
-        opts[key.to_sym] = value
+        opts[key] = value
       end
       opts
     end
