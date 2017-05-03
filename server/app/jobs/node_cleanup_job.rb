@@ -30,7 +30,7 @@ class NodeCleanupJob
       node.set(connected: false)
       deleted_at = Time.now.utc
       node.containers.each do |c|
-        c.with(safe: false).set(:deleted_at => deleted_at) unless c.deleted_at
+        c.set(:deleted_at => deleted_at) unless c.deleted_at
       end
     end
   end

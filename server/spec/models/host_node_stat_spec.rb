@@ -343,11 +343,11 @@ describe HostNodeStat do
         results = HostNodeStat.get_aggregate_stats_for_node(node.id, from, to)
 
         # Records #2 and #5.
-        expect(results[0]["cpu"]).to eq({
+        expect(results.to_a[0]["cpu"]).to eq({
           "num_cores" => 1.0, #avg(1,1)
           "percent_used" => 0.39999999999999997, #avg(.1, .7)
         })
-        expect(results[0]["memory"]).to eq({
+        expect(results.to_a[0]["memory"]).to eq({
           "used" => 300.0,     #avg(500, 100)
           "total" => 1000.0,   #avg(1000, 1000)
           "free" => 700.0,     #avg(500, 900)
@@ -356,25 +356,25 @@ describe HostNodeStat do
           "cached" => 100.0,   #avg(100, 100)
           "buffers" => 100.0   #avg(100, 100)
         })
-        expect(results[0]["filesystem"]).to eq({
+        expect(results.to_a[0]["filesystem"]).to eq({
           "used" => 1000.0, #avg( 200+200, 800+800 )
           "total" => 3000.0 #avg( 1000+1000, 2000+2000 )
         })
-        expect(results[0]["network"]["internal"]).to eq({
+        expect(results.to_a[0]["network"]["internal"]).to eq({
           "interfaces" => ["weave", "vethwe123"],
           "rx_bytes" => 150.0, #avg(100, 200)
           "rx_bytes_per_second" => 150.0,
           "tx_bytes" => 200.0, #avg(100, 300)
           "tx_bytes_per_second" => 200.0
         })
-        expect(results[0]["network"]["external"]).to eq({
+        expect(results.to_a[0]["network"]["external"]).to eq({
           "interfaces" => ["docker0"],
           "rx_bytes" => 150.5, #avg(100.5, 200.5)
           "rx_bytes_per_second" => 150.5,
           "tx_bytes" => 200.5, #avg(100.5, 300.5)
           "tx_bytes_per_second" => 200.5
         })
-        expect(results[0]["timestamp"]).to eq({
+        expect(results.to_a[0]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
           "day" => 1,
@@ -383,11 +383,11 @@ describe HostNodeStat do
         })
 
         # Record #6
-        expect(results[1]["cpu"]).to eq({
+        expect(results.to_a[1]["cpu"]).to eq({
           "num_cores" => 1.0,
           "percent_used" => 0.5
         })
-        expect(results[1]["memory"]).to eq({
+        expect(results.to_a[1]["memory"]).to eq({
           "used" => 600.0,
           "total" => 2000.0,
           "free" => 1400.0,
@@ -396,25 +396,25 @@ describe HostNodeStat do
           "cached" => 100.0,
           "buffers" => 100.0
         })
-        expect(results[1]["filesystem"]).to eq({
+        expect(results.to_a[1]["filesystem"]).to eq({
           "used" => 1000.0, # 500+500
           "total" => 2000.0 # 1000+1000
         })
-        expect(results[1]["network"]["internal"]).to eq({
+        expect(results.to_a[1]["network"]["internal"]).to eq({
           "interfaces" => ["weave", "vethwe123"],
           "rx_bytes" => 400.0,
           "rx_bytes_per_second" => 400.0,
           "tx_bytes" => 500.0,
           "tx_bytes_per_second" => 500.0
         })
-        expect(results[1]["network"]["external"]).to eq({
+        expect(results.to_a[1]["network"]["external"]).to eq({
           "interfaces" => ["docker0"],
           "rx_bytes" => 400.5,
           "rx_bytes_per_second" => 400.5,
           "tx_bytes" => 500.5,
           "tx_bytes_per_second" => 500.5
         })
-        expect(results[1]["timestamp"]).to eq({
+        expect(results.to_a[1]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
           "day" => 1,
@@ -432,11 +432,11 @@ describe HostNodeStat do
         results = HostNodeStat.get_aggregate_stats_for_grid(grid.id, from, to)
 
         # Records #2, #4 and #5.
-        expect(results[0]["cpu"]).to eq({
+        expect(results.to_a[0]["cpu"]).to eq({
           "num_cores" => 3.0,     # avg(1,1) + 2
           "percent_used" => 0.5, # avg(.1, .7) + .1
         })
-        expect(results[0]["memory"]).to eq({
+        expect(results.to_a[0]["memory"]).to eq({
           "used" => 800.0,      # avg(500, 100) + 500
           "total" => 2000.0,    # avg(1000, 1000) + 1000
           "free" => 1200.0,     # avg(500, 900) + 500
@@ -445,25 +445,25 @@ describe HostNodeStat do
           "cached" => 200.0,    # avg(100, 100) + 100
           "buffers" => 200.0,   # avg(100, 100) + 100
         })
-        expect(results[0]["filesystem"]).to eq({
+        expect(results.to_a[0]["filesystem"]).to eq({
           "used" => 1400.0, # avg(200+200, 800+800) + (200+200)
           "total" => 5000.0 # avg(1000+1000, 2000+2000) + (1000+1000)
         })
-        expect(results[0]["network"]["internal"]).to eq({
+        expect(results.to_a[0]["network"]["internal"]).to eq({
           "interfaces" => ["weave", "vethwe123"],
           "rx_bytes" => 250.0, #avg(100, 200) + 100
           "rx_bytes_per_second" => 250.0,
           "tx_bytes" => 300.0, #avg(100, 300) + 100
           "tx_bytes_per_second" => 300.0
         })
-        expect(results[0]["network"]["external"]).to eq({
+        expect(results.to_a[0]["network"]["external"]).to eq({
           "interfaces" => ["docker0"],
           "rx_bytes" => 251.0, #avg(100.5, 200.5) + 100.5
           "rx_bytes_per_second" => 251.0,
           "tx_bytes" => 301.0, #avg(100.5, 300.5) + 100.5
           "tx_bytes_per_second" => 301.0
         })
-        expect(results[0]["timestamp"]).to eq({
+        expect(results.to_a[0]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
           "day" => 1,
@@ -472,11 +472,11 @@ describe HostNodeStat do
         })
 
         # Record #6
-        expect(results[1]["cpu"]).to eq({
+        expect(results.to_a[1]["cpu"]).to eq({
           "num_cores" => 1.0,
           "percent_used" => 0.5
         })
-        expect(results[1]["memory"]).to eq({
+        expect(results.to_a[1]["memory"]).to eq({
           "used" => 600.0,
           "total" => 2000.0,
           "free" => 1400.0,
@@ -485,25 +485,25 @@ describe HostNodeStat do
           "cached" => 100.0,
           "buffers" => 100.0
         })
-        expect(results[1]["filesystem"]).to eq({
+        expect(results.to_a[1]["filesystem"]).to eq({
           "used" => 1000.0, # 500+500
           "total" => 2000.0 # 1000+1000
         })
-        expect(results[1]["network"]["internal"]).to eq({
+        expect(results.to_a[1]["network"]["internal"]).to eq({
           "interfaces" => ["weave", "vethwe123"],
           "rx_bytes" => 400.0,
           "rx_bytes_per_second" => 400.0,
           "tx_bytes" => 500.0,
           "tx_bytes_per_second" => 500.0
         })
-        expect(results[1]["network"]["external"]).to eq({
+        expect(results.to_a[1]["network"]["external"]).to eq({
           "interfaces" => ["docker0"],
           "rx_bytes" => 400.5,
           "rx_bytes_per_second" => 400.5,
           "tx_bytes" => 500.5,
           "tx_bytes_per_second" => 500.5
         })
-        expect(results[1]["timestamp"]).to eq({
+        expect(results.to_a[1]["timestamp"]).to eq({
           "year" => 2017,
           "month" => 3,
           "day" => 1,

@@ -17,7 +17,7 @@ module Rpc
       @logs_buffer_size = 5
       @stats_buffer_size = 5
       @containers_cache_size = 50
-      @db_session = ContainerLog.collection.session.with(
+      @db_session = ContainerLog.collection.client.with(
         write: {
           w: 0, fsync: false, j: false
         }
@@ -126,12 +126,12 @@ module Rpc
     end
 
     def flush_logs
-      @db_session[:container_logs].insert(@logs)
+      @db_session[:container_logs].insert_many(@logs)
       @logs.clear
     end
 
     def flush_stats
-      @db_session[:container_stats].insert(@stats.dup)
+      @db_session[:container_stats].insert_many(@stats.dup)
       @stats.clear
     end
 
@@ -149,7 +149,7 @@ module Rpc
       else
         container = @db_session[:containers].find(
             grid_id: @grid.id, container_id: id
-          ).limit(1).one
+          ).limit(1).first
         @cached_containers[id] = container if container
       end
 
