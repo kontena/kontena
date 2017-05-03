@@ -7,6 +7,7 @@ module Kontena::Cli::Grids
 
     parameter "NAME", "Grid name"
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
+    option "--no-statsd-server", :flag, "Unset statsd server setting"
     option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
     option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder"
     option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
@@ -24,6 +25,10 @@ module Kontena::Cli::Grids
             port: port || 8125
           }
         }
+      end
+
+      if no_statsd_server?
+        payload[:stats] = { statsd: { server: 'none', port: 0 } }
       end
 
       if log_forwarder
