@@ -50,6 +50,15 @@ describe Kontena::Cli::Grids::UpdateCommand do
         )
         subject.run(['--no-statsd-server', 'test'])
       end
+
+      it 'should send empty default_affinity when --no-default-affinity given' do
+        expect(client).to receive(:put).with(
+          'grids/test', hash_including({
+            default_affinity: []
+          })
+        )
+        subject.run(['--no-default-affinity', 'test'])
+      end
     end
   end
 end
