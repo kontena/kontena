@@ -23,6 +23,18 @@ describe Grids::Update, celluloid: true do
       expect(grid.reload.stats['statsd']['server']).to eq('127.0.0.1')
     end
 
+    it 'clears statsd settings' do
+      stats = {
+        statsd: {
+          server: '127.0.0.1',
+          port: 8125
+        }
+      }
+      grid.update_attributes stats: stats
+      described_class.new(user: user, grid: grid, stats: { statsd: nil }).run
+      expect(grid.reload.stats['statsd']).to be_nil
+    end
+
     it 'returns error if grid has errors' do
       outcome = described_class.new(user: user, grid: grid, stats: 'foo').run
       expect(outcome.success?).to be_falsey
