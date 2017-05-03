@@ -7,36 +7,53 @@ module Kontena::Cli::Grids
 
     parameter "NAME", "Grid name"
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
-    option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+    option "--disable-statsd-server", :flag, "Disable statsd exporting", default: false
+    option "--default-affinity", "AFFINITY", "Default affinity rule for the grid", multivalued: true
+    option "--disable-default-affinity", :flag, "Disable default affinity rule", default: false
     option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder"
-    option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
+    option "--disable-log-forwarder", :flag, "Disable log forwarding", default: false
+    option "--log-opt", "LOG_OPT", "Set log options (key=value)", multivalued: true
 
     def execute
       require_api_url
       token = require_token
       validate_log_opts
-      payload = {}
+      payload = client.get("grids/#{name}")
+
       if statsd_server
         server, port = statsd_server.split(':')
-        payload[:stats] = {
-          statsd: {
-            server: server,
-            port: port || 8125
+        payload['stats'] = {
+          'statsd' => {
+            'server' => server,
+            'port' => port || 8125
           }
         }
       end
 
+      if disable_statsd_server?
+        payload['stats'] = { 'statsd' => nil }
+      end
+
       if log_forwarder
-        payload[:logs] = {
-          forwarder: log_forwarder,
-          opts: parse_log_opts
+        payload['logs'] = {
+          'forwarder' => log_forwarder,
+          'opts' => parse_log_opts
         }
       end
 
-      if default_affinity_list
-        payload[:default_affinity] = default_affinity_list
+      if disable_log_forwarder?
+        payload['logs'] = nil
       end
-      client(token).put("grids/#{name}", payload)
+
+      if default_affinity_list
+        payload['default_affinity'] = default_affinity_list
+      end
+
+      if disable_default_affinity?
+        payload['default_affinity'] = []
+      end
+
+      client.put("grids/#{name}", payload)
     end
 
     def validate_log_opts
