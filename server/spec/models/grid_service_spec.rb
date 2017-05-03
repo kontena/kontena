@@ -1,4 +1,3 @@
-
 describe GridService do
   it { should be_timestamped_document }
   it { should be_kind_of(EventStream) }
@@ -303,6 +302,27 @@ describe GridService do
       grid.default_affinity = ['label!=type=ssd']
       subject.grid = grid
       expect(subject.affinity).to eq(['label!=type=ssd'])
+    end
+  end
+
+  describe '#env_hash' do
+    it 'should build a valid hash' do
+      expect(subject).to receive(:env).and_return(
+        [
+          'FOO=bar',
+          'BAR=',
+          'BAZ\=BUZ=foo',
+          'DOG'
+        ]
+      )
+      expect(subject.env_hash).to eq(
+        {
+          'FOO' => 'bar',
+          'BAR' => '',
+          'BAZ\=BUZ' => 'foo',
+          'DOG' => nil
+        }
+      )
     end
   end
 

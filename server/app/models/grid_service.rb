@@ -191,7 +191,7 @@ class GridService
   # @return [Hash]
   def env_hash
     if @env_hash.nil?
-      @env_hash = self.env.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split(/(?<!\\)=/, 2) }]
     end
 
     @env_hash
