@@ -53,14 +53,14 @@ module Kontena
         result << str
       end
 
-      if $stderr.tty?
+      if Kontena.logger.instance_variable_get(:@logdev).dev.tty?
         if direction == 'Request'
-          $stderr.puts(Kontena.pastel.blue("[API Client #{direction}]: #{result.join(" | ")}"))
+          Kontena.logger.debug { Kontena.pastel.blue("[API Client #{direction}]: #{result.join(" | ")}") }
         else
-          $stderr.puts(Kontena.pastel.magenta("[API Client #{direction}]: #{result.join(" | ")}"))
+          Kontena.logger.debug { Kontena.pastel.magenta("[API Client #{direction}]: #{result.join(" | ")}") }
         end
       else
-        $stderr.puts("[API Client #{direction}]: #{result.join(" | ")}")
+        Kontena.logger.debug { "[API Client #{direction}]: #{result.join(" | ")}" }
       end
 
       if block_given?
