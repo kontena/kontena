@@ -1,18 +1,20 @@
-$LOG_TARGET = ENV["LOG_TARGET"]
+$LOG_TARGET ||= ENV["LOG_TARGET"]
 
 if ENV["DEBUG"]
   $LOG_TARGET ||= $stderr
-else
+elsif !$LOG_TARGET
   kontena_home = File.join(Dir.home, '.kontena')
   Dir.mkdir(kontena_home, 0700) unless File.exist?(kontena_home)
-  $LOG_TARGET ||= File.join(kontena_home, 'kontena.log')
+  $LOG_TARGET = File.join(kontena_home, 'kontena.log')
 end
 
 $KONTENA_START_TIME = Time.now.to_f
-at_exit do
-  Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(2)} seconds" }
-  if $!
-    Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") }
+if ENV["DEBUG"]
+  at_exit do
+    Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(2)} seconds" }
+    if $!
+      Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") }
+    end
   end
 end
 
