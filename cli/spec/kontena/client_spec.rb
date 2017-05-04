@@ -257,7 +257,7 @@ describe Kontena::Client do
       end
 
       it "raises StandardError with the status phrase" do
-        expect{subject.request(http_method: :brew, path: 'coffee')}.to raise_error(Kontena::Errors::StandardError, "I'm a teapot")
+        expect{subject.request(http_method: :brew, path: 'coffee')}.to raise_error(Kontena::Errors::StandardError, "I'm a teapot (/v1/coffee)")
       end
     end
 
@@ -272,7 +272,7 @@ describe Kontena::Client do
       end
 
       it "raises StandardError with the server error message" do
-        expect{subject.post('print', { 'code' => "8A/HyA==" })}.to raise_error(Kontena::Errors::StandardError, "lp0 (printer) on fire")
+        expect{subject.post('print', { 'code' => "8A/HyA==" })}.to raise_error(Kontena::Errors::StandardError, "lp0 (printer) on fire (/v1/print)")
       end
     end
 
@@ -290,7 +290,7 @@ describe Kontena::Client do
       end
 
       it "raises StandardError with the server error message" do
-        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, "You are wrong")
+        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, "You are wrong (/v1/test)")
       end
     end
 
