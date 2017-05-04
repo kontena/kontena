@@ -39,7 +39,7 @@ module Scheduler
       # @param [Array<Scheduler::Node>] nodes
       # @return [Scheduler::Node,NilClass]
       def find_stateful_node(grid_service, instance_number, nodes)
-        prev_instance = grid_service.grid_service_instances.find_by(
+        prev_instance = grid_service.grid_service_instances.has_node.find_by(
           instance_number: instance_number
         )
         if prev_instance
