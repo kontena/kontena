@@ -29,12 +29,13 @@ module Kontena
         @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
         @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
         @logger.formatter = proc do |severity, datetime, progname, msg|
-          "#{datetime.strftime("%H:%M:%S")} #{sprintf("%-6s", progname)} | #{msg}\n"
+          timestamp = (1000 * (Time.now.to_f - ($PREVIOUS_LOG_TIME || $KONTENA_START_TIME))).to_i.to_s + "ms"
+          $PREVIOUS_LOG_TIME = Time.now.to_f
+          Kontena.pastel.cyan("#{sprintf("%-7s", timestamp)} #{sprintf("%-6s", progname)} | ") + "#{msg}\n"
         end
         @logger.progname = 'CONFIG'
         load_settings_from_env || load_settings_from_config_file
 
-        logger.debug "Kontena CLI #{Kontena::Cli::VERSION} (ruby-#{RUBY_VERSION}-#{RUBY_PLATFORM}})"
         logger.debug "Configuration loaded with #{servers.count} servers."
         logger.debug "Current master: #{current_server || '(not selected)'}"
         logger.debug "Current grid: #{current_grid || '(not selected)'}"

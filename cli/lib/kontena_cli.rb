@@ -1,3 +1,13 @@
+$KONTENA_START_TIME = Time.now.to_f
+if ENV["DEBUG"] || ENV["LOG_TARGET"]
+  at_exit do
+    Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(2)} seconds" }
+    if $!
+      Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") }
+    end
+  end
+end
+
 module Kontena
   # Run a kontena command like it was launched from the command line.
   #
@@ -50,7 +60,9 @@ module Kontena
   end
 
   def self.pastel
-    @pastel ||= Pastel.new(enabled: !simple_terminal?)
+    return @pastel if @pastel
+    require 'pastel'
+    @pastel = Pastel.new(enabled: !simple_terminal?)
   end
 
   def self.prompt
@@ -90,11 +102,14 @@ module Kontena
 
   def self.logger
     return @logger if @logger
+    require 'logger'
     @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
     @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
     @logger.progname = 'CLI'
     @logger.formatter = proc do |severity, datetime, progname, msg|
-      "#{datetime.strftime("%H:%M:%S")} #{sprintf("%-6s", progname)} | #{msg}\n"
+      timestamp = (1000 * (Time.now.to_f - ($PREVIOUS_LOG_TIME || $KONTENA_START_TIME))).to_i.to_s + "ms"
+      $PREVIOUS_LOG_TIME = Time.now.to_f
+      Kontena.pastel.cyan("#{sprintf("%-7s", timestamp)} #{sprintf("%-6s", progname)} | ") + "#{msg}\n"
     end
     @logger
   end
@@ -120,6 +135,7 @@ require 'shellwords'
 require "safe_yaml"
 SafeYAML::OPTIONS[:default_mode] = :safe
 require 'kontena/cli/version'
+Kontena.logger.debug { "Kontena CLI #{Kontena::Cli::VERSION} (ruby-#{RUBY_VERSION}+#{RUBY_PLATFORM})" }
 require 'kontena/cli/common'
 require 'kontena/command'
 require 'kontena/client'
