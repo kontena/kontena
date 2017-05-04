@@ -179,8 +179,7 @@ class HostNodeStat
           '$avg': {
             '$add': [
               { '$ifNull': ['$cpu.user', 0] },
-              { '$ifNull': ['$cpu.system', 0] },
-              { '$ifNull': ['$cpu.nice', 0] }
+              { '$ifNull': ['$cpu.system', 0] }
             ]
           }
         },
