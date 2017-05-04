@@ -44,8 +44,8 @@ module Kontena
       uri = URI.parse(@api_url)
       @host = uri.host
 
-      @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-      @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
+      @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
+      @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
       @logger.progname = 'CLIENT'
 
       @options[:default_headers] ||= {}
