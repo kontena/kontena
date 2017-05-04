@@ -151,7 +151,7 @@ class MongoPubsub
         latest = self.collection.find.sort(:$natural => -1).limit(1).first
         query = {_id: {:$gt => latest[:_id]}}
         info "starting to tail collection"
-        self.collection.find(query, {cursor_type: :tailable}).sort(:$natural => 1).each do |item|
+        self.collection.find(query, {cursor_type: :tailable_await, batch_size: 100}).sort(:$natural => 1).each do |item|
           channel = item['channel']
           data = item['data']
 
