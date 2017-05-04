@@ -14,8 +14,8 @@ module Kontena
         Kontena.logger
       end
 
-      def debug(msg = nil, &block)
-        block_given? ? Kontena.logger.debug(&block) : Kontena.logger.debug(msg)
+      def debug(msg_or_progname = nil, &block)
+        block_given? ? Kontena.logger.debug(msg_or_progname || Kontena.logger.progname, &block) : Kontena.logger.debug(msg_or_progname)
       end
 
       def pastel
