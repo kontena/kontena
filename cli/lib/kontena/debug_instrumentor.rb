@@ -22,6 +22,7 @@ module Kontena
         heads << "Accept: #{params[:headers]['Accept']}" if params[:headers]['Accept']
         heads << "Content-Type: #{params[:headers]['Content-Type']}" if params[:headers]['Content-Type']
         heads << "Authorization: #{params[:headers]['Authorization'].split(' ', 2).first}" if params[:headers]['Authorization']
+        heads << "X-Kontena-Version: #{params[:headers]['X-Kontena-Version']}" if params[:headers]['X-Kontena-Version']
         str << heads.join(', ')
         str << "} "
         result << str

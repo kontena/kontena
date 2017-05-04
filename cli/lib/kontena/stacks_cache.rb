@@ -69,7 +69,7 @@ module Kontena
       end
 
       def dputs(msg)
-        ENV["DEBUG"] && $stderr.puts(msg)
+        Kontena.logger.debug { msg }
       end
 
       def cache(stack, version = nil)

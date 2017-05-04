@@ -167,7 +167,7 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
-                ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
+                Kontena.logger.debug { "Loading plugin #{spec.name}" }
                 load(plugin)
                 plugins << spec
               else
@@ -177,7 +177,7 @@ module Kontena
               end
             rescue ScriptError, StandardError => ex
               warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
-              ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+              Kontena.logger.debug { "#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
             end
           end
         end
@@ -185,7 +185,7 @@ module Kontena
       plugins
     rescue => ex
       $stderr.puts Kontena.pastel.red(ex.message)
-      ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+      Kontena.logger.debug { "#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
     end
 
     def prefix(plugin_name)

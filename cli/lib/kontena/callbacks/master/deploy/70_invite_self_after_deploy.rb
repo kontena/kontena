@@ -39,7 +39,7 @@ module Kontena
         end
 
         return nil unless invite_response
-        ENV["DEBUG"] && $stderr.puts("Got invite code: #{invite_response['invite_code']}")
+        debug { "Got invite code: #{invite_response['invite_code']}" }
 
         role_status = nil
 
