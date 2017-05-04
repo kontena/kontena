@@ -30,6 +30,9 @@ module Kontena::Workers
       else
         @statsd = nil
       end
+    rescue => error
+      warn "statsd configuration failed: #{error.message}"
+      warn error.backtrace.join('\n') if error.backtrace
     end
 
     def start
