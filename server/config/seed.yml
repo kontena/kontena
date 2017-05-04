@@ -11,6 +11,7 @@ default: &default
   oauth2.token_method: <%= ENV['AUTH_TOKEN_METHOD'] %>
   oauth2.token_post_content_type: <%= ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] %>
   oauth2.code_requires_basic_auth: <%= ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == "true" %>
+  oauth2.userinfo_requires_basic_auth: <%= ENV['USERINFO_REQUIRES_BASIC_AUTH'].to_s == "true" %>
   oauth2.userinfo_scope: <%= ENV['AUTH_USERINFO_SCOPE'] %>
   oauth2.userinfo_username_jsonpath: <%= ENV['AUTH_USERINFO_USERNAME_JSONPATH'] %>
   oauth2.userinfo_email_jsonpath: <%= ENV['AUTH_USERINFO_EMAIL_JSONPATH'] %>
