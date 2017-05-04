@@ -11,11 +11,7 @@ module Kontena
     module Common
 
       def logger
-        return @logger if @logger
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'COMMON'
-        @logger
+        Kontena.logger
       end
 
       def pastel

@@ -87,6 +87,14 @@ module Kontena
       File.join(Kontena.root, 'lib/kontena/cli', *joinables)
     end
   end
+
+  def self.logger
+    return @logger if @logger
+    @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
+    @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
+    @logger.progname = 'CLI'
+    @logger
+  end
 end
 
 # Monkeypatching string to mimick 'colorize' gem
