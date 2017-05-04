@@ -1,10 +1,18 @@
+$LOG_TARGET = ENV["LOG_TARGET"]
+
+if ENV["DEBUG"]
+  $LOG_TARGET ||= $stderr
+else
+  kontena_home = File.join(Dir.home, '.kontena')
+  Dir.mkdir(kontena_home, 0700) unless File.exist?(kontena_home)
+  $LOG_TARGET ||= File.join(kontena_home, 'kontena.log')
+end
+
 $KONTENA_START_TIME = Time.now.to_f
-if ENV["DEBUG"] || ENV["LOG_TARGET"]
-  at_exit do
-    Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(2)} seconds" }
-    if $!
-      Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") }
-    end
+at_exit do
+  Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(2)} seconds" }
+  if $!
+    Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") }
   end
 end
 
@@ -30,10 +38,10 @@ module Kontena
     return 0 if returning == :status
     return result if returning == :result
   rescue SystemExit => ex
-    logger.debug { "Command completed with failure, result: #{result.inspect} status: #{ex.status}" }
+    logger.error { "Command completed with failure, result: #{result.inspect} status: #{ex.status}" }
     returning == :status ? $!.status : nil
   rescue => ex
-    logger.debug { "Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
+    logger.error { "Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
     returning == :status ? 1 : nil
   end
 
@@ -103,13 +111,13 @@ module Kontena
   def self.logger
     return @logger if @logger
     require 'logger'
-    @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
-    @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
+    @logger = Logger.new($LOG_TARGET, 'weekly')
+    @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
     @logger.progname = 'CLI'
     @logger.formatter = proc do |severity, datetime, progname, msg|
       timestamp = (1000 * (Time.now.to_f - ($PREVIOUS_LOG_TIME || $KONTENA_START_TIME))).to_i.to_s + "ms"
       $PREVIOUS_LOG_TIME = Time.now.to_f
-      Kontena.pastel.cyan("#{sprintf("%-7s", timestamp)} #{sprintf("%-6s", progname)} | ") + "#{msg}\n"
+      sprintf("%-6s", timestamp) + " #{progname}: #{msg}\n"
     end
     @logger
   end
