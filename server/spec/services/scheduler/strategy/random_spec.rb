@@ -35,6 +35,13 @@ describe Scheduler::Strategy::Random do
         expect(node).to eq(nodes[2])
       end
 
+      it 'returns a node if previously scheduled node has been removed' do 
+        stateless_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        nodes.delete(nodes[2]).destroy
+        node = subject.find_node(stateless_service, 2, nodes)
+        expect(nodes.include?(node)).to be_truthy
+      end
+
       it 'returns a node if previously scheduled node is not included in nodes array' do
         stateless_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
         nodes.delete(nodes[2])
@@ -53,6 +60,13 @@ describe Scheduler::Strategy::Random do
         stateful_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
         node = subject.find_node(stateful_service, 2, nodes)
         expect(node).to eq(nodes[2])
+      end
+
+      it 'returns a node if previously scheduled node has been removed' do 
+        stateful_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        nodes.delete(nodes[2]).destroy
+        node = subject.find_node(stateful_service, 2, nodes)
+        expect(nodes.include?(node)).to be_truthy
       end
 
       it 'returns nil if previously scheduled node is not included in nodes array' do
