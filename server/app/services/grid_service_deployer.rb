@@ -53,7 +53,12 @@ class GridServiceDeployer
     self.grid_service.grid_service_instances.where(:instance_number.gt => total_instances).destroy
     total_instances.times do |i|
       instance_number = i + 1
-      unless self.grid_service.reload.deploying?
+      self.grid_service_deploy.reload
+      unless self.grid_service_deploy.running?
+        raise "halting deploy of #{self.grid_service.to_path}, deploy was aborted: #{self.deploy_state.reason}"
+      end
+      self.grid_service.reload
+      unless self.grid_service.running? || self.grid_service.initialized?
         raise "halting deploy of #{self.grid_service.to_path}, desired state has changed"
       end
       self.deploy_service_instance(total_instances, deploy_futures, instance_number, deploy_rev)
@@ -63,7 +68,7 @@ class GridServiceDeployer
       raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
     end
 
-    self.grid_service_deploy.set(finished_at: Time.now.utc, :deploy_state => :success)
+    self.grid_service_deploy.set(:deploy_state => :success)
     log_service_event("service #{self.grid_service.to_path} deployed")
     info "service #{self.grid_service.to_path} has been deployed"
 
@@ -85,8 +90,6 @@ class GridServiceDeployer
     log_service_event("unknown error while deploying #{self.grid_service.to_path}: #{exc.message}", EventLog::ERROR)
     self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
     false
-  ensure
-    self.grid_service_deploy.set(:finished_at => Time.now.utc)
   end
 
   # @param [Integer] total_instances
