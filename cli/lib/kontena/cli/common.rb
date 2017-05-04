@@ -14,6 +14,10 @@ module Kontena
         Kontena.logger
       end
 
+      def debug(msg = nil, &block)
+        block_given? ? Kontena.logger.debug(&block) : Kontena.logger.debug(msg)
+      end
+
       def pastel
         @pastel ||= Pastel.new(enabled: $stdout.tty?)
       end
