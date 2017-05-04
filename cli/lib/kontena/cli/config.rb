@@ -26,11 +26,15 @@ module Kontena
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
+        @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
+        @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
+        @logger.formatter = proc do |severity, datetime, progname, msg|
+          "#{datetime.strftime("%H:%M:%S")} #{sprintf("%-6s", progname)} | #{msg}\n"
+        end
         @logger.progname = 'CONFIG'
         load_settings_from_env || load_settings_from_config_file
 
+        logger.debug "Kontena CLI #{Kontena::Cli::VERSION} (ruby-#{RUBY_VERSION}-#{RUBY_PLATFORM}})"
         logger.debug "Configuration loaded with #{servers.count} servers."
         logger.debug "Current master: #{current_server || '(not selected)'}"
         logger.debug "Current grid: #{current_grid || '(not selected)'}"

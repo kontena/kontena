@@ -14,16 +14,16 @@ module Kontena
     else
       command = cmdline
     end
-    ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}, returning: #{returning}")
+    logger.debug { "Running Kontena.run(#{command.inspect}, returning: #{returning}" }
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
-    ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
+    logger.debug { "Command completed, result: #{result.inspect} status: 0" }
     return 0 if returning == :status
     return result if returning == :result
   rescue SystemExit => ex
-    ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
+    logger.debug { "Command completed with failure, result: #{result.inspect} status: #{ex.status}" }
     returning == :status ? $!.status : nil
   rescue => ex
-    ENV["DEBUG"] && $stderr.puts("Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+    logger.debug { "Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
     returning == :status ? 1 : nil
   end
 
@@ -93,6 +93,9 @@ module Kontena
     @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
     @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
     @logger.progname = 'CLI'
+    @logger.formatter = proc do |severity, datetime, progname, msg|
+      "#{datetime.strftime("%H:%M:%S")} #{sprintf("%-6s", progname)} | #{msg}\n"
+    end
     @logger
   end
 end

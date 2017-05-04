@@ -46,6 +46,9 @@ module Kontena
 
       @logger = Logger.new(ENV['LOG_TARGET'] || (ENV["DEBUG"] ? $stderr : $stdout))
       @logger.level = (ENV['LOG_TARGET'].nil? && ENV["DEBUG"].nil?) ? Logger::INFO : Logger::DEBUG
+      @logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{datetime.strftime("%H:%M:%S")} #{sprintf("%-6s", progname)} | #{msg}\n"
+      end
       @logger.progname = 'CLIENT'
 
       @options[:default_headers] ||= {}
