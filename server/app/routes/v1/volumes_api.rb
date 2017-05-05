@@ -36,7 +36,7 @@ module V1
         @grid = find_grid(grid_name)
         r.get do
           r.is do
-            @volumes = @grid.volumes
+            @volumes = @grid.volumes.includes(:grid)
             render('volumes/index')
           end
           r.is ':volume' do |volume|
