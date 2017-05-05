@@ -218,8 +218,7 @@ class Kontena::Command < Clamp::Command
     end
   rescue Kontena::Errors::StandardError => ex
     raise ex if ENV['DEBUG']
-    Kontena.logger.error("ERROR") { "#{ex.class.name} : #{ex.message}" }
-    ex.backtrace.each { |line| Kontena.logger.error("ERROR") { "#{line}" } }
+    Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.status} : #{ex.message}")
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
@@ -228,8 +227,7 @@ class Kontena::Command < Clamp::Command
     raise
   rescue => ex
     raise ex if ENV['DEBUG']
-    Kontena.logger.error("ERROR") { "#{ex.class.name} : #{ex.message}" }
-    ex.backtrace.each { |line| Kontena.logger.error("ERROR") { "#{line}" } }
+    Kontena.logger.error(ex)
     abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{$LOG_TARGET} or run the command again with environment DEBUG=true set to see the full exception")
   end
 end

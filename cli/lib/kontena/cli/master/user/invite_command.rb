@@ -43,7 +43,7 @@ module Kontena::Cli::Master::User
           end
         rescue => ex
           $stderr.puts pastel.red("Failed to invite #{email}")
-          debug { "#{ex} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
+          logger.error(ex)
         end
       end
     end

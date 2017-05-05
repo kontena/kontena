@@ -9,8 +9,8 @@ module Kontena
       matches_commands 'master create'
 
       def after
-        debug { "Command result: #{command.result.inspect}" }
-        debug { "Command exit code: #{command.exit_code.inspect}" }
+        logger.debug { "Command result: #{command.result.inspect}" }
+        logger.debug { "Command exit code: #{command.exit_code.inspect}" }
         return unless command.exit_code == 0
         return unless command.result.kind_of?(Hash)
         return unless command.result.has_key?(:public_ip)
@@ -36,11 +36,11 @@ module Kontena
 
         # Figure out if HTTPS works, if not, try HTTP
         begin
-          debug { "Trying to request / from #{new_master.url}" }
+          logger.debug { "Trying to request / from #{new_master.url}" }
           client = Kontena::Client.new(new_master.url, nil, ignore_ssl_errors: true)
           client.get('/')
         rescue => ex
-          debug { "HTTPS test failed: #{ex.class.name} #{ex.message}" }
+          logger.debug { "HTTPS test failed: #{ex.class.name} #{ex.message}" }
           unless retried
             new_master.url = "http://#{command.result[:public_ip]}"
             retried = true
@@ -52,7 +52,7 @@ module Kontena
         require 'shellwords'
         cmd = "master login --no-login-info --skip-grid-auto-select --verbose --name #{command.result[:name].shellescape} --code #{command.result[:code].shellescape} #{new_master.url.shellescape}"
         Retriable.retriable do
-          debug { "Running: #{cmd}" }
+          logger.debug { "Running: #{cmd}" }
           Kontena.run(cmd)
         end
       end

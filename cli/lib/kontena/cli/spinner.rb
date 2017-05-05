@@ -69,7 +69,7 @@ module Kontena
           end
         rescue Exception => ex
           Kernel.puts "* #{msg}.. fail"
-          Kontena.logger.debug { "#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
+          Kontena.logger.error(ex)
           raise ex
         end
         exit(status) if status
@@ -160,7 +160,7 @@ module Kontena
         rescue Exception => ex
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
-          Kontena.logger.debug { "#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
+          Kontena.logger.error(ex)
           raise ex
         ensure
           unless Thread.main['spinner_msgs'].empty?

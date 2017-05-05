@@ -177,7 +177,7 @@ module Kontena
               end
             rescue ScriptError, StandardError => ex
               warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
-              Kontena.logger.error { "#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
+              Kontena.logger.error(ex)
             end
           end
         end
@@ -185,7 +185,7 @@ module Kontena
       plugins
     rescue => ex
       $stderr.puts Kontena.pastel.red(ex.message)
-      Kontena.logger.error { "#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}" }
+      Kontena.logger.error(ex)
     end
 
     def prefix(plugin_name)

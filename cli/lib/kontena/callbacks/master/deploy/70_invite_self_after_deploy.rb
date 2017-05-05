@@ -39,7 +39,7 @@ module Kontena
         end
 
         return nil unless invite_response
-        debug { "Got invite code: #{invite_response['invite_code']}" }
+        logger.debug { "Got invite code: #{invite_response['invite_code']}" }
 
         role_status = nil
 

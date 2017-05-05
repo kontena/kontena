@@ -51,17 +51,17 @@ module Kontena
           end
         end
         result << str
+      elsif params[:error]
+        result << params[:error]
       end
 
-      if Kontena.logger.instance_variable_get(:@logdev).dev.tty?
-        if direction == 'Request'
-          Kontena.logger.debug { Kontena.pastel.blue("[API Client #{direction}]: #{result.join(" | ")}") }
-        else
-          Kontena.logger.debug { Kontena.pastel.magenta("[API Client #{direction}]: #{result.join(" | ")}") }
-        end
-      else
-        Kontena.logger.debug { "[API Client #{direction}]: #{result.join(" | ")}" }
-      end
+      color = case direction
+              when 'Request' then :blue
+              when 'Response' then :magenta
+              else :red
+              end
+
+      Kontena.logger.debug("CLIENT") { Kontena.pastel.send(color, "[#{direction}]: #{result.join(" | ")}") }
 
       if block_given?
         yield

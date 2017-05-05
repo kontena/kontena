@@ -12,7 +12,7 @@ module Kontena
         return unless config.current_master.name == command.result[:name]
 
         cmd = "grid create --silent test"
-        debug { "Running: #{cmd}" }
+        logger.debug { "Running: #{cmd}" }
         Retriable.retriable do
           Kontena.run(cmd)
         end
