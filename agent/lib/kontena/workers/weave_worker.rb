@@ -16,6 +16,8 @@ module Kontena::Workers
 
       @migrate_containers = nil # initialized by #start
 
+      @subscribed_container_event = false
+
       if network_adapter.already_started?
         self.start
       else
@@ -32,7 +34,9 @@ module Kontena::Workers
       debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
 
       # ready to start handling container events
-      subscribe('container:event', :on_container_event)
+      # #start can be called multiple times, subscribe only if not done already as we don't want duplicate events
+      subscribe('container:event', :on_container_event) unless @subscribed_container_event
+      @subscribed_container_event = true
 
       info 'attaching network to existing containers'
       Docker::Container.all(all: false).each do |container|

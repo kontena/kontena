@@ -17,6 +17,16 @@ describe Kontena::Workers::WeaveWorker do
     subject
   end
 
+  describe '#start' do
+    it 'subscribes container:event only once' do
+      allow(network_adapter).to receive(:get_containers).and_return([])
+      allow(Docker::Container).to receive(:all).and_return([])
+      expect(subject.wrapped_object).to receive(:subscribe).with('container:event', :on_container_event).once
+      subject.start
+      subject.start
+    end
+  end
+
   describe '#on_weave_start' do
     it 'calls start' do
       expect(subject.wrapped_object).to receive(:start)
