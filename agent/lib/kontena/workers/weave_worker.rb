@@ -16,8 +16,8 @@ module Kontena::Workers
 
       @migrate_containers = nil # initialized by #start
 
-      @subscribed_container_event = false
-
+      @started = false # to prevent handling of container events before migration scan
+      subscribe('container:event', :on_container_event)
       if network_adapter.already_started?
         self.start
       else
@@ -33,15 +33,13 @@ module Kontena::Workers
       @migrate_containers = network_adapter.get_containers
       debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
 
-      # ready to start handling container events
-      # #start can be called multiple times, subscribe only if not done already as we don't want duplicate events
-      subscribe('container:event', :on_container_event) unless @subscribed_container_event
-      @subscribed_container_event = true
+      @started = true
 
       info 'attaching network to existing containers'
       Docker::Container.all(all: false).each do |container|
         self.start_container(container)
       end
+      
     end
 
     def on_dns_add(topic, event)
@@ -52,6 +50,8 @@ module Kontena::Workers
     # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
+      return unless started?
+
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
         if container
@@ -68,6 +68,10 @@ module Kontena::Workers
       elsif event.status == 'destroy'
         self.on_container_destroy(event)
       end
+    end
+
+    def started?
+      @started
     end
 
     # Ensure weave network for container
