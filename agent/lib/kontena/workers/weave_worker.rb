@@ -16,15 +16,43 @@ module Kontena::Workers
 
       @migrate_containers = nil # initialized by #start
 
+      # In case weave gets re-created (via version change, trusted-subnets, ...)
+      # it will lose all local DNS names thus they need to be re-added
+      subscribe('network_adapter:restart', :ensure_dns)
       if network_adapter.already_started?
         self.start
       else
         subscribe('network_adapter:start', :on_weave_start)
       end
+
     end
 
     def on_weave_start(topic, data)
       self.start
+    end
+
+    def ensure_dns(topic, data)
+      info 'ensuring existing containers have proper DNS names'
+      count = 0
+      Docker::Container.all(all: true).each do |container|
+        begin
+          overlay_cidr = container.overlay_cidr
+          if overlay_cidr
+            wait_weave_running?
+
+            register_container_dns(container)
+            count += 1
+          else
+            debug "skip DNS for container=#{container.name} without overlay_cidr"
+          end
+        rescue Docker::Error::NotFoundError
+          debug "skip DNS for missing container=#{container.id}"
+        rescue => exc
+          error "failed to ensure container DNS: #{exc.class.name}: #{exc.message}"
+          error exc.backtrace.join("\n")
+        end
+      end
+      info "ensured #{count} containers"
     end
 
     def start

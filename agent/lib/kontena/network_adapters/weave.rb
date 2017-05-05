@@ -223,10 +223,13 @@ module Kontena::NetworkAdapters
       wait_until("weave is ready to start") { images_exist? && !starting? }
 
       @starting = true
+      @recreated = false
 
       weave = Docker::Container.get('weave') rescue nil
       if weave && config_changed?(weave, node)
+        debug "weave running in stale config or version, needs to be re-created"
         weave.delete(force: true)
+        @recreated = true
       end
 
       weave = nil
@@ -253,8 +256,9 @@ module Kontena::NetworkAdapters
       connect_peers(peer_ips)
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
       post_start(node)
-
+      debug "weave ready, publishing 'network_adapter:start' event"
       Celluloid::Notifications.publish('network_adapter:start', node) unless already_started?
+      Celluloid::Notifications.publish('network_adapter:restart', node) if @recreated
 
       @started = true
       node
