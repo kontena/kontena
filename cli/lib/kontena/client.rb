@@ -28,7 +28,7 @@ module Kontena
     attr_accessor :default_headers
     attr_accessor :path_prefix
     attr_reader :http_client
-    attr_reader :last_response, :last_request
+    attr_reader :last_response
     attr_reader :options
     attr_reader :token
     attr_reader :logger
@@ -322,7 +322,6 @@ module Kontena
       }.merge(host_options)
 
       request_options.merge!(response_block: response_block) if response_block
-      @last_request = request_options
 
       # Store the response into client.last_response
       @last_response = http_client.request(request_options)
@@ -532,7 +531,7 @@ module Kontena
     def handle_error_response(response)
       data = parse_response(response)
 
-      request_path = (last_request && last_request[:path] ? " (#{last_request[:path]})" : '')
+      request_path = " (#{response.path})"
 
       if data.is_a?(Hash) && data.has_key?('error') && data['error'].is_a?(Hash)
         raise Kontena::Errors::StandardErrorHash.new(response.status, response.reason_phrase, data['error'])
