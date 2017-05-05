@@ -120,6 +120,7 @@ module Kontena
     return @logger if @logger
     if log_target.respond_to?(:tty?) && log_target.tty?
       @logger = Logger.new(log_target)
+      @logger.datetime_format = "%M%S.%2N "
     else
       @logger = Logger.new(log_target, 1, 65536)
       @logger.formatter = ColorStrippingFormatter.new
