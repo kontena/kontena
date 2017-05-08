@@ -55,7 +55,7 @@ class GridServiceDeployer
       instance_number = i + 1
       self.grid_service_deploy.reload
       unless self.grid_service_deploy.running?
-        raise "halting deploy of #{self.grid_service.to_path}, deploy was aborted: #{self.deploy_state.reason}"
+        raise "halting deploy of #{self.grid_service.to_path}, deploy was aborted: #{self.grid_service_deploy.reason}"
       end
       self.grid_service.reload
       unless self.grid_service.running? || self.grid_service.initialized?
