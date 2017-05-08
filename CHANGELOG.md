@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc1) (2017-05-08)
+
+The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some older issues.
+
+### Fixed issues
+
+* kontena registry create "ERROR" #2246
+* Syntax errors in kontena.yml service environment cause API 500 errors #2238
+* CLI: kontena grid update clears out default-affinity #2252
+* grid statsd server cannot be cleared once set #2230
+* Stopping service does not abort running deploy #2214
+* Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
+* Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
+* Server GridServiceDeployer can run for longer than 5-10 minutes, allowing further deploys to run simultaneously #2215
+* Agent: Actor crash-and-restart loop will eat lot of resources #2231
+* Agent WeaveWorker starts seeing container events twice after weave restart event #2225
+* Server API views should be optimized to pre-fetch referenced objects, avoiding O(N) queries #2234
+* Kontena 1.2 fails to re-schedule stateful ha service instance on removed node #2274
+* Random strategy moves services constantly #2244
+* Random strategy fails to schedule stateful service with existing instances #2254
+* Service `*.kontena.local` DNS aliases missing after `kontena grid trusted-subnet` changes #2158
+
+### Known issues
+* GridServiceDeploy can get stuck in pending state if deploy create races with service remove #2275
+
+### Changes
+
+#### Packaging
+* sign osx pkg properly (#2255)
+
+#### Agent
+* Don't crash StatsWorker actor if statsd config fails (#2262)
+* Prevent WeaveWorker from doing duplicate subscription for container:event (#2265)
+* Fix agent weave restart (#2278)
+
+#### Server
+* Fix server deploy queuing (#2221)
+* add missing includes to boost query performance (#2264)
+* Include grid and service in container log query (#2266)
+* Fix random strategy (#2256)
+* Add `--no-statsd-server` and `--no-default-affinity` to "kontena grid update" (#2251)
+
+#### CLI
+* Fix registry create command (#2240)
+* Make stack environment variable validation fail if array item has no equals sign (#2241)
+* Add require for securerandom in after deploy hook (#2247)
+* Add `--no-statsd-server` and `--no-default-affinity` to "kontena grid update" (#2251)
+
 ## [1.2.1](https://github.com/kontena/kontena/releases/tag/v1.2.1) (2017-04-28)
 
 The 1.2.1 release fixes various issues in the 1.2.0 release.
