@@ -13,9 +13,10 @@ module Kontena::Cli::Containers
       require_api_url
       token = require_token
       cmd = Shellwords.join(cmd_list)
+      base = self
       ws = connect(token)
       ws.on :message do |msg|
-        handle_message(msg)
+        base.handle_message(msg)
       end
       ws.on :open do
         ws.send(cmd)
@@ -35,7 +36,7 @@ module Kontena::Cli::Containers
 
     # @param [Docker::Container] container
     def handle_message(msg)
-      data = JSON.parse(msg.data) rescue nil
+      data = JSON.parse(msg.data)
       if data 
         if data['exit']
           exit data['exit'].to_i
@@ -47,6 +48,8 @@ module Kontena::Cli::Containers
           end
         end
       end
+    rescue => exc
+      STDERR << exc.message
     end
 
     # @param [String] token

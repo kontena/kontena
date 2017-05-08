@@ -95,9 +95,10 @@ module Kontena::Cli::Services
 
       cmd = Shellwords.join(cmd_list)
       token = require_token
-      ws = connect(ws_url, token)
+      base = self
+      ws = connect(ws_url(container), token)
       ws.on :message do |msg|
-        handle_message(msg)
+        base.handle_message(msg)        
       end
       ws.on :open do
         ws.send(cmd)
@@ -118,18 +119,21 @@ module Kontena::Cli::Services
 
     # @param [Websocket::Frame::Incoming] msg
     def handle_message(msg)
-      data = JSON.parse(msg.data) rescue nil
+      data = JSON.parse(msg.data)
       if data
         if data['exit']
           exit data['exit'].to_i
         else
-          STDOUT << data['chunk']
+          $stdout << data['chunk']
         end
       end
+    rescue => exc
+      STDERR << exc.message
     end
 
+    # @param [Hash] container
     # @return [String]
-    def ws_url
+    def ws_url(container)
       "#{require_current_master.url.sub('http', 'ws')}/v1/containers/#{container['id']}/exec?interactive=true"
     end
 
