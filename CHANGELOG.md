@@ -14,7 +14,9 @@ The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some old
 * Queued deploys time out after 10s if another deploy is running, leaving them stuck #2213
 * Service deploys can get stuck if there are several queued deploys when a service finishes deploying #2212
 * Server GridServiceDeployer can run for longer than 5-10 minutes, allowing further deploys to run simultaneously #2215
+* Agent: Actor crash-and-restart loop will eat lot of resources #2231
 * Agent WeaveWorker starts seeing container events twice after weave restart event #2225
+* Server API views should be optimized to pre-fetch referenced objects, avoiding O(N) queries #2234
 * Kontena 1.2 fails to re-schedule stateful ha service instance on removed node #2274
 * Random strategy moves services constantly #2244
 * Random strategy fails to schedule stateful service with existing instances #2254
