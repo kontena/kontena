@@ -45,12 +45,19 @@ describe Scheduler::Strategy::HighAvailability do
         expect(subject.find_node(stateful_service, 3, nodes)).to eq(nodes[2])
       end
 
-      it 'return nil if data volume node is not available' do
+      it 'return nil if data volume node is not available on schedulable nodes' do
         node4 = HostNode.create!(node_id: 'node4', name: 'node-4', connected: true, grid: grid)
         stateful_service.grid_service_instances.create!(
           instance_number: 3, host_node: node4
         )
         expect(subject.find_node(stateful_service, 3, nodes)).to be_nil
+      end
+
+      it 'return some node if previous instances node is removed (ServiceInstance.host_node == nil)' do
+        stateful_service.grid_service_instances.create!(
+          instance_number: 3, host_node: nil
+        )
+        expect(subject.find_node(stateful_service, 3, nodes)).not_to be_nil
       end
     end
 

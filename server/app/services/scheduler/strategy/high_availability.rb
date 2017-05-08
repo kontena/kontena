@@ -43,12 +43,15 @@ module Scheduler
         prev_instance = grid_service.grid_service_instances.find_by(
           instance_number: instance_number
         )
-        if prev_instance
+        if prev_instance && prev_instance.host_node
+          # previous instance exists on known node
           nodes.find{ |n| n.node == prev_instance.host_node }
         else
+          # No previous instance or it's host_node has been removed
           candidates = self.sort_candidates(nodes, grid_service, instance_number)
           candidates.first
         end
+        
       end
 
       # @param [Array<HostNode>] nodes
