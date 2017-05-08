@@ -43,7 +43,7 @@ module V1
           end
 
           r.on 'logs' do
-            logs = container.container_logs.includes(:host_node)
+            logs = container.container_logs.includes(:host_node, :grid, :grid_service)
 
             render_container_logs(r, logs)
           end
