@@ -18,6 +18,8 @@ module Kontena::Workers
 
       @started = false # to prevent handling of container events before migration scan
       subscribe('container:event', :on_container_event)
+      subscribe('network_adapter:restart', :on_weave_restart)
+
       if network_adapter.already_started?
         self.start
       else
@@ -26,6 +28,9 @@ module Kontena::Workers
     end
 
     def on_weave_start(topic, data)
+      self.start
+    end
+    def on_weave_restart(topic, data)
       self.start
     end
 
@@ -39,7 +44,6 @@ module Kontena::Workers
       Docker::Container.all(all: false).each do |container|
         self.start_container(container)
       end
-      
     end
 
     def on_dns_add(topic, event)

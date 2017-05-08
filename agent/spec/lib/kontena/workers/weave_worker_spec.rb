@@ -20,7 +20,13 @@ describe Kontena::Workers::WeaveWorker do
   describe '#on_weave_start' do
     it 'calls start' do
       expect(subject.wrapped_object).to receive(:start)
-      subject.on_weave_start('topic', event)
+      Celluloid::Notifications.publish('network_adapter:start', nil)
+    end
+  end
+  describe '#on_weave_restart' do
+    it 'calls start' do
+      expect(subject.wrapped_object).to receive(:start)
+      Celluloid::Notifications.publish('network_adapter:restart', nil)
     end
   end
 
