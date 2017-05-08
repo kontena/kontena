@@ -227,6 +227,7 @@ module Kontena::NetworkAdapters
 
       weave = Docker::Container.get('weave') rescue nil
       if weave && config_changed?(weave, node)
+        info "weave image or configuration has been changed, restarting"
         restarting = true
         weave.delete(force: true)
       end
