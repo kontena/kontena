@@ -1,3 +1,4 @@
+require 'shellwords'
 require_relative 'services_helper'
 
 module Kontena::Cli::Services
@@ -12,6 +13,7 @@ module Kontena::Cli::Services
     option ["-i", "--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
     option ["--shell"], :flag, "Execute as a shell command"
+    option ["--interactive"], :flag, "Keep stdin open"
     option ["--skip"], :flag, "Skip failed instances when executing --all"
     option ["--silent"], :flag, "Do not show exec status"
     option ["--verbose"], :flag, "Show exec status"
@@ -19,7 +21,46 @@ module Kontena::Cli::Services
     requires_current_master
     requires_current_grid
 
+    def execute
+      service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
+      service_containers.sort_by! { |container| container['instance_number'] }
+      running_containers = service_containers.select{|container| container['status'] == 'running' }
+
+      if running_containers.empty?
+        exit_with_error "Service #{name} does not have any running containers"
+      end
+
+      if all?
+        ret = true
+        service_containers.each do |container|
+          if container['status'] == 'running'
+            if !exec_container(container)
+              ret = false
+            end
+          else
+            warning "Service #{name} container #{container['name']} is #{container['status']}, skipping"
+          end
+        end
+        return ret
+      elsif instance
+        if !(container = service_containers.find{|c| c['instance_number'] == instance})
+          exit_with_error "Service #{name} does not have container instance #{instance}"
+        elsif container['status'] != 'running'
+          exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
+        else
+          interactive_exec(container)
+        end
+      else
+        if interactive?
+          interactive_exec(running_containers.first)
+        else 
+          exec_container(running_containers.first)
+        end
+      end
+    end
+
     # Exits if exec returns with non-zero
+    # @param [Docker::Container] container
     def exec_container(container)
       if shell?
         cmd = ['sh', '-c', cmd_list.join(' ')]
@@ -47,38 +88,61 @@ module Kontena::Cli::Services
       return exit_status == 0
     end
 
-    def execute
-      service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
-      service_containers.sort_by! { |container| container['instance_number'] }
-      running_containers = service_containers.select{|container| container['status'] == 'running' }
+    # @param [Docker::Container] container
+    def interactive_exec(container)
+      require 'websocket-client-simple'
+      require 'io/console'
 
-      if running_containers.empty?
-        exit_with_error "Service #{name} does not have any running containers"
+      cmd = Shellwords.join(cmd_list)
+      token = require_token
+      ws = connect(ws_url, token)
+      ws.on :message do |msg|
+        handle_message(msg)
       end
-
-      if all?
-        ret = true
-        service_containers.each do |container|
-          if container['status'] == 'running'
-            if !exec_container(container)
-              ret = false
-            end
-          else
-            warning "Service #{name} container #{container['name']} is #{container['status']}, skipping"
+      ws.on :open do
+        ws.send(cmd)
+      end
+      ws.on :close do |e|
+        exit 1
+      end
+      
+      stdin_thread = Thread.new {
+        STDIN.raw {
+          while char = STDIN.readpartial(1024)
+            ws.send(char)
           end
-        end
-        return ret
-      elsif instance
-        if !(container = service_containers.find{|container| container['instance_number'] == instance})
-          exit_with_error "Service #{name} does not have container instance #{instance}"
-        elsif container['status'] != 'running'
-          exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
+        }
+      }
+      stdin_thread.join
+    end
+
+    # @param [Websocket::Frame::Incoming] msg
+    def handle_message(msg)
+      data = JSON.parse(msg.data) rescue nil
+      if data
+        if data['exit']
+          exit data['exit'].to_i
         else
-          exec_container(container)
+          STDOUT << data['chunk']
         end
-      else
-        exec_container(running_containers.first)
       end
+    end
+
+    # @return [String]
+    def ws_url
+      "#{require_current_master.url.sub('http', 'ws')}/v1/containers/#{container['id']}/exec?interactive=true"
+    end
+
+    # @param [String] url
+    # @param [String] token
+    # @return [WebSocket::Client::Simple]
+    def connect(url, token)
+      WebSocket::Client::Simple.connect(url, {
+        headers: {
+          'Authorization' => "Bearer #{token.access_token}",
+          'Accept' => 'application/json'
+        }
+      })
     end
   end
 end
