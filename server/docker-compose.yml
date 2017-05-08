@@ -12,6 +12,8 @@ api:
     - INITIAL_ADMIN_CODE=initialadmincode
   links:
    - mongodb
+  labels:
+   - "io.kontena.container.skip_logs=1"
 mongodb:
   image: mongo:3.0
   command: mongod --smallfiles

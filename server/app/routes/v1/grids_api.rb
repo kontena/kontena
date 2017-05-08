@@ -103,7 +103,7 @@ module V1
           end
 
           r.on 'container_logs' do
-            scope = @grid.container_logs
+            scope = @grid.container_logs.includes(:host_node, :grid, :grid_service)
 
             unless r['containers'].nil?
               container_names = r['containers'].split(',')
