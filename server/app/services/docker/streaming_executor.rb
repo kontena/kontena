@@ -17,23 +17,23 @@ module Docker
     end
 
     # Starts normal exec session (without tty)
-    def run 
+    def start 
       create_session
       subscribe_to_session
       register_run_ws_events
     end
 
     def create_session
-      @exec_session = client.request('/containers/create_exec', container.container_id)
+      @exec_session = @client.request('/containers/create_exec', @container.container_id)
     end
 
     def subscribe_to_session
       @subscription = MongoPubsub.subscribe("container_exec:#{@exec_session['id']}") do |data|
         if data.has_key?('exit')
-          @ws.send(JSON.dump({exit: data['exit']}))
+          @ws.send(JSON.dump({ exit: data['exit'] }))
           @ws.close
         else
-          @ws.send(JSON.dump({stream: data['stream'], chunk: data['chunk']}))
+          @ws.send(JSON.dump({ stream: data['stream'], chunk: data['chunk'] }))
         end
       end
     end
@@ -52,7 +52,7 @@ module Docker
 
       @ws.on(:close) do |event|
         @client.notify('/containers/terminate_exec', @exec_session['id'])
-        @subscription.terminate if subscription
+        @subscription.terminate if @subscription
       end
     end
 
@@ -63,7 +63,7 @@ module Docker
 
       @ws.on(:close) do |event|
         @client.notify('/containers/terminate_exec', @exec_session['id'])
-        @subscription.terminate if subscription
+        @subscription.terminate if @subscription
       end
     end
   end
