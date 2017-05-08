@@ -223,9 +223,11 @@ module Kontena::NetworkAdapters
       wait_until("weave is ready to start") { images_exist? && !starting? }
 
       @starting = true
+      restarting = false
 
       weave = Docker::Container.get('weave') rescue nil
       if weave && config_changed?(weave, node)
+        restarting = true
         weave.delete(force: true)
       end
 
@@ -254,7 +256,12 @@ module Kontena::NetworkAdapters
       info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
       post_start(node)
 
-      Celluloid::Notifications.publish('network_adapter:start', node) unless already_started?
+      if !already_started?
+        # only publish once on agent boot, or after a crash and actor restart
+        Celluloid::Notifications.publish('network_adapter:start', node)
+      elsif restarting
+        Celluloid::Notifications.publish('network_adapter:restart', node)
+      end
 
       @started = true
       node
