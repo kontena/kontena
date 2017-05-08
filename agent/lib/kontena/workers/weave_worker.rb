@@ -50,6 +50,7 @@ module Kontena::Workers
     # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
+      # cannot run start_container before start has populated @migrate_containers
       return unless started?
 
       if event.status == 'start'
