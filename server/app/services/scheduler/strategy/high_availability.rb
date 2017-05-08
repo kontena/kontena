@@ -13,11 +13,10 @@ module Scheduler
         2.minutes
       end
 
-      ##
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       # @param [Array<Scheduler::Node>] nodes
-      # @return [HostNode,NilClass]
+      # @return [Scheduler::Node,NilClass]
       def find_node(grid_service, instance_number, nodes)
         if grid_service.stateless?
           find_stateless_node(grid_service, instance_number, nodes)
@@ -28,8 +27,8 @@ module Scheduler
 
       # @param [GridService] grid_service
       # @param [Integer] instance_number
-      # @param [Array<HostNode>] nodes
-      # @return [HostNode,NilClass]
+      # @param [Array<Scheduler::Node>] nodes
+      # @return [Scheduler::Node,NilClass]
       def find_stateless_node(grid_service, instance_number, nodes)
         candidates = self.sort_candidates(nodes, grid_service, instance_number)
         candidates.first
@@ -37,10 +36,10 @@ module Scheduler
 
       # @param [GridService] grid_service
       # @param [Integer] instance_number
-      # @param [Array<HostNode>] nodes
-      # @return [HostNode,NilClass]
+      # @param [Array<Scheduler::Node>] nodes
+      # @return [Scheduler::Node,NilClass]
       def find_stateful_node(grid_service, instance_number, nodes)
-        prev_instance = grid_service.grid_service_instances.find_by(
+        prev_instance = grid_service.grid_service_instances.has_node.find_by(
           instance_number: instance_number
         )
         if prev_instance
@@ -51,7 +50,7 @@ module Scheduler
         end
       end
 
-      # @param [Array<HostNode>] nodes
+      # @param [Array<Scheduler::Node>] nodes
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       def sort_candidates(nodes, grid_service, instance_number)
@@ -65,7 +64,7 @@ module Scheduler
         }
       end
 
-      # @param [HostNode] node
+      # @param [Scheduler::Node] node
       # @param [GridService] grid_service
       # @param [Fixnum] instance_number
       # @return [Float]
@@ -80,7 +79,7 @@ module Scheduler
         end
       end
 
-      # @param [HostNode] node
+      # @param [Scheduler::Node] node
       # @return [Float]
       def memory_rank(node)
         stats = node.host_node_stats.last
@@ -91,7 +90,7 @@ module Scheduler
         end
       end
 
-      # @param [HostNode] node
+      # @param [Scheduler::Node] node
       # @param [Array<HostNode>] nodes
       # @return [FixNum]
       def availability_zone_count(node, nodes)
@@ -99,7 +98,7 @@ module Scheduler
           node.availability_zone == n.availability_zone
         }
         zone_counter = 0
-        nodes_in_zone.each{|n| zone_counter += n.schedule_counter }
+        nodes_in_zone.each{ |n| zone_counter += n.schedule_counter }
 
         zone_counter
       end

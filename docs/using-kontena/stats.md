@@ -7,11 +7,11 @@ Kontena collects statistics about running Services with the help of [cAdvisor](h
 
 ```
 $ kontena service stats loadbalancer
-CONTAINER                      CPU %           MEM USAGE/LIMIT      MEM %           NET I/O        
-loadbalancer-3                 1.67%           208.64M / N/A        N/A             61.53G/16.17G  
-loadbalancer-5                 1.73%           213.72M / N/A        N/A             61.7G/16.28G   
-loadbalancer-2                 1.59%           198.91M / N/A        N/A             61.45G/16.1G   
-loadbalancer-1                 1.65%           219.86M / N/A        N/A             61.57G/16.52G  
+CONTAINER                      CPU %           MEM USAGE/LIMIT      MEM %           NET I/O
+loadbalancer-3                 1.67%           208.64M / N/A        N/A             61.53G/16.17G
+loadbalancer-5                 1.73%           213.72M / N/A        N/A             61.7G/16.28G
+loadbalancer-2                 1.59%           198.91M / N/A        N/A             61.45G/16.1G
+loadbalancer-1                 1.65%           219.86M / N/A        N/A             61.57G/16.52G
 loadbalancer-4                 2.05%           220.73M / N/A        N/A             61.7G/16.42G
 ```
 
@@ -25,6 +25,12 @@ Statistics exporting can be activated on a Grid by updating it:
 
 ```
 $ kontena grid update --statsd-server influx.example.com:8125
+```
+
+To disable stats exporting use:
+
+```
+$ kontena grid update --no-statsd-server grid_name
 ```
 
 

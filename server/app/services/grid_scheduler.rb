@@ -39,8 +39,7 @@ class GridScheduler
   def should_reschedule_service?(service)
     return false if service.stateful?
     return false unless service.running?
-    return false if pending_deploys?(service)
-    return false if active_deploys?(service)
+    return false if service.deploying?
     return false if active_deploys_within_stack?(service)
 
     if !all_instances_exist?(service)
@@ -62,18 +61,6 @@ class GridScheduler
     end
 
     false
-  end
-
-  # @param [GridService] service
-  # @return [Boolean]
-  def pending_deploys?(service)
-    service.grid_service_deploys.where(started_at: nil).count > 0
-  end
-
-  # @param [GridService] service
-  # @return [Boolean]
-  def active_deploys?(service)
-    service.grid_service_deploys.where(:started_at.gt => 30.minutes.ago, :deploy_state.in => [:created, :ongoing]).count > 0
   end
 
   # @param [GridService] service

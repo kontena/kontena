@@ -29,5 +29,6 @@ exclude "**/.git"
 exclude "**/bundler/git"
 
 package :pkg do
-  identifier "io.kontena.pkg.cli"
+  identifier "io.kontena.cli.pkg.kontena"
+  signing_identity "Developer ID Installer: Kontena Oy (JJ22T2W355)"
 end
