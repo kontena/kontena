@@ -5,6 +5,7 @@ class Kontena::Cli::WhoamiCommand < Kontena::Command
 
   def execute
     if self.token?
+      exit 1 unless current_master && current_master.token.access_token
       Kontena.run(%w(master token current --token))
       exit 0
     end
