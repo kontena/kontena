@@ -168,7 +168,7 @@ describe GridServiceDeployer do
           expect(grid_service_deploy).to be_error
         end
 
-        it "fails the service deploy if aborted" do
+        it "fails the service deploy if aborted", :celluloid => true do
           expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
             grid_service_deploy.abort! "testing"
 
@@ -190,6 +190,7 @@ describe GridServiceDeployer do
           grid_service_deploy.reload
 
           expect(grid_service_deploy).to be_error
+          expect(grid_service_deploy.reason).to eq "halting deploy of test-grid/null/redis, deploy was aborted: testing"
         end
       end
     end

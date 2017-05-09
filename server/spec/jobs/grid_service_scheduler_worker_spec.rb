@@ -275,6 +275,8 @@ describe GridServiceSchedulerWorker, celluloid: true do
         expect(subject.check_deploy_queue).to be_nil
 
         expect(service_deploy.reload).to be_aborted
+        expect(service_deploy.reload).to be_finished
+        expect(service_deploy.reload).to be_error
       end
     end
   end
