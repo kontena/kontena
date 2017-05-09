@@ -197,7 +197,10 @@ module Kontena::Workers
     def image_outdated?(service_container)
       begin
         image = Docker::Image.get(service_pod.image_name)
-        return true if image.id != service_container.info['Image']
+        if image.id != service_container.info['Image']
+          info "containers image(#{service_container.info['Image']} does not match images id(#{image.id})}"
+          return true
+        end
       rescue Docker::Error::NotFoundError
         info "failed to get image: #{service_pod.image_name}"
         return true
