@@ -45,9 +45,22 @@ describe GridServiceSchedulerWorker, celluloid: true do
 
     it "fails if fetch_deploy_item returns a non-pending deploy" do
       service_deploy = GridServiceDeploy.create(grid_service: service, created_at: 1.hour.ago, started_at: 1.hour.ago)
-
-      expect{subject.check_deploy_queue}.to raise_error(RuntimeError, "deploy not pending")
+      
+      expect(subject.check_deploy_queue).to be_nil
+      expect(service_deploy.reload).to be_finished
+      expect(service_deploy.reason).to eq "service deploy aborted: deploy not pending"
     end
+
+    it "aborts deploy when un-handled error occurs" do
+      service_deploy = GridServiceDeploy.create(grid_service: nil, created_at: 1.hour.ago)
+      expect(subject.wrapped_object).to receive(:fetch_deploy_item).and_return(service_deploy)
+      
+      expect(subject.check_deploy_queue).to be_nil
+      expect(service_deploy.reload).to be_aborted
+      expect(service_deploy.deploy_state).to eq :error
+      expect(service_deploy.reason).not_to be_nil
+    end
+    
   end
 
   context "without any deploys" do
@@ -275,6 +288,8 @@ describe GridServiceSchedulerWorker, celluloid: true do
         expect(subject.check_deploy_queue).to be_nil
 
         expect(service_deploy.reload).to be_aborted
+        expect(service_deploy.reload).to be_finished
+        expect(service_deploy.reload).to be_error
       end
     end
   end

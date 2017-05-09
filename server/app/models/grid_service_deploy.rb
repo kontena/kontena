@@ -86,10 +86,10 @@ class GridServiceDeploy
     !started? && finished?
   end
 
-  # Finish deploy without it necessarily being running.
+  # Finish deploy without it necessarily being running, setting an error state.
   #
   # @param reason [String]
   def abort!(reason = nil)
-    self.set(:finished_at => Time.now.utc, :reason => reason)
+    self.set(:finished_at => Time.now.utc, :deploy_state => :error, :reason => reason)
   end
 end

@@ -75,6 +75,11 @@ describe GridServiceDeploy do
       expect(subject).to_not be_running
       expect(subject).to be_finished
     end
+
+    it "is error" do
+      expect(subject).to be_error
+      expect(subject.reason).to eq "test"
+    end
   end
 
   context "for an aborted deploy after starting" do
@@ -90,6 +95,11 @@ describe GridServiceDeploy do
       expect(subject).to be_started
       expect(subject).to_not be_running
       expect(subject).to be_finished
+    end
+
+    it "is error" do
+      expect(subject).to be_error
+      expect(subject.reason).to eq "test"
     end
   end
 
