@@ -70,7 +70,6 @@ module Kontena::Cli::Stacks
     end
 
     def wait_for_service_deploy(service_deploy)
-      service_deployed = false
       name = service_deploy['service_id'].split('/')[-1]
       spinner "Deploying service #{pastel.cyan(name)}" do |spin|
         until service_deploy['finished_at']
