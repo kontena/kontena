@@ -1,11 +1,12 @@
 # Changelog
 
-## [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc1) (2017-05-08)
+## [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc2) (2017-05-09)
 
 The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some older issues.
 
 ### Fixed issues
 
+#### [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-05-08)
 * kontena registry create "ERROR" #2246
 * Syntax errors in kontena.yml service environment cause API 500 errors #2238
 * CLI: kontena grid update clears out default-affinity #2252
@@ -22,7 +23,8 @@ The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some old
 * Random strategy fails to schedule stateful service with existing instances #2254
 * Service `*.kontena.local` DNS aliases missing after `kontena grid trusted-subnet` changes #2158
 
-### Known issues
+#### [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-05-09)
+
 * GridServiceDeploy can get stuck in pending state if deploy create races with service remove #2275
 
 ### Changes
@@ -34,6 +36,8 @@ The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some old
 * Don't crash StatsWorker actor if statsd config fails (#2262)
 * Prevent WeaveWorker from doing duplicate subscription for container:event (#2265)
 * Fix agent weave restart (#2278)
+* Fix flaky WeaveWorker notification spec (#2282)
+
 
 #### Server
 * Fix server deploy queuing (#2221)
@@ -41,12 +45,16 @@ The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some old
 * Include grid and service in container log query (#2266)
 * Fix random strategy (#2256)
 * Add `--no-statsd-server` and `--no-default-affinity` to "kontena grid update" (#2251)
+* Fix GridServiceSerializer deploy_opts min_health typo (#2268)
+* Fix handling of aborted service deploys (#2281)
+* Abort deploy gracefully in exceptional cases (#2280)
 
 #### CLI
 * Fix registry create command (#2240)
 * Make stack environment variable validation fail if array item has no equals sign (#2241)
 * Add require for securerandom in after deploy hook (#2247)
 * Add `--no-statsd-server` and `--no-default-affinity` to "kontena grid update" (#2251)
+* Fix handling of aborted service deploys (#2281)
 
 ## [1.2.1](https://github.com/kontena/kontena/releases/tag/v1.2.1) (2017-04-28)
 
