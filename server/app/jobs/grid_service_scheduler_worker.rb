@@ -41,6 +41,12 @@ class GridServiceSchedulerWorker
         return nil
       end
     end
+  rescue => exc
+    error "aborting deploy on un-handled error: #{exc.message}"
+    error exc.backtrace.join("\n") if exc.backtrace
+    service_deploy.abort! "service deploy aborted: #{exc.message}" if service_deploy
+    
+    nil
   end
 
   # Pick up the oldest pending un-queued deploy, mark it as queued, and return for processing.
