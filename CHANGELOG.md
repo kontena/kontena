@@ -6,11 +6,11 @@ The 1.2.2 release fixes several issues in the 1.2 release, as well as some older
 
 ### Fixed issues
 
-#### [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc2) (2017-05-09)
+#### [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc2) (2017-05-09)
 
 * GridServiceDeploy can get stuck in pending state if deploy create races with service remove #2275
 
-#### [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-05-08)
+#### [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc1) (2017-05-08)
 * kontena registry create "ERROR" #2246
 * Syntax errors in kontena.yml service environment cause API 500 errors #2238
 * CLI: kontena grid update clears out default-affinity #2252
