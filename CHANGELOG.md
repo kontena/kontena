@@ -1,8 +1,8 @@
 # Changelog
 
-## [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.2.rc2) (2017-05-09)
+## [1.2.2](https://github.com/kontena/kontena/releases/tag/v1.2.2) (2017-05-10)
 
-The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some older issues.
+The 1.2.2 release fixes several issues in the 1.2 release, as well as some older issues.
 
 ### Fixed issues
 
@@ -37,7 +37,7 @@ The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some old
 * Prevent WeaveWorker from doing duplicate subscription for container:event (#2265)
 * Fix agent weave restart (#2278)
 * Fix flaky WeaveWorker notification spec (#2282)
-
+* Fix agent ServicePodWorker to log complete apply error (#2292)
 
 #### Server
 * Fix server deploy queuing (#2221)
@@ -48,6 +48,7 @@ The 1.2.2 release fixes several issues in the 1.2.0 release, as well as some old
 * Fix GridServiceSerializer deploy_opts min_health typo (#2268)
 * Fix handling of aborted service deploys (#2281)
 * Abort deploy gracefully in exceptional cases (#2280)
+* Do not run server workers in specs (#2284)
 
 #### CLI
 * Fix registry create command (#2240)
