@@ -76,6 +76,7 @@ module Kontena::Workers
           ensure_desired_state
         rescue => error
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
+          warn error
           sync_state_to_master(current_state, error)
         else
           @container_state_changed = false
