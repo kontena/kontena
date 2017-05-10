@@ -6,6 +6,10 @@ The 1.2.2 release fixes several issues in the 1.2 release, as well as some older
 
 ### Fixed issues
 
+#### [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc2) (2017-05-09)
+
+* GridServiceDeploy can get stuck in pending state if deploy create races with service remove #2275
+
 #### [1.2.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc1) (2017-05-08)
 * kontena registry create "ERROR" #2246
 * Syntax errors in kontena.yml service environment cause API 500 errors #2238
@@ -22,10 +26,6 @@ The 1.2.2 release fixes several issues in the 1.2 release, as well as some older
 * Random strategy moves services constantly #2244
 * Random strategy fails to schedule stateful service with existing instances #2254
 * Service `*.kontena.local` DNS aliases missing after `kontena grid trusted-subnet` changes #2158
-
-#### [1.2.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.2.1.rc2) (2017-05-09)
-
-* GridServiceDeploy can get stuck in pending state if deploy create races with service remove #2275
 
 ### Changes
 
