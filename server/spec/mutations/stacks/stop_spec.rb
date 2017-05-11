@@ -15,7 +15,7 @@ describe Stacks::Stop do
 
   describe '#run' do
     it 'stops all services in stack' do
-      expect(GridServices::Stop).to receive(:run).twice
+      expect(GridServices::Stop).to receive(:run).twice.and_return(double({:success? => true}))
 
       described_class.run(stack: stack)
     end

@@ -15,7 +15,7 @@ describe Stacks::Restart do
 
   describe '#run' do
     it 'stops all services in stack' do
-      expect(GridServices::Restart).to receive(:run).twice
+      expect(GridServices::Restart).to receive(:run).twice.and_return(double({:success? => true}))
 
       described_class.run(stack: stack)
     end

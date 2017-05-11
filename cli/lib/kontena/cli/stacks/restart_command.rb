@@ -14,7 +14,7 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      spinner "Sending stop signal for stack services" do
+      spinner "Sending restart signal for stack services" do
         client.post("stacks/#{current_grid}/#{name}/restart", {})
       end
     end
