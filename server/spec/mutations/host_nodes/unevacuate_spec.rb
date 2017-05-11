@@ -5,7 +5,7 @@ describe HostNodes::Unevacuate do
 
   let(:subject) {described_class.new}
 
-  let!(:redis) {GridService.create!(grid: grid, name: 'redis', image_name: 'redis', stateful: true)}
+  let!(:redis) {GridService.create!(grid: grid, name: 'redis', image_name: 'redis', stateful: true, state: 'running')}
   let!(:redis_instance) {
     redis.grid_service_instances.create!(
       instance_number: 2,
@@ -40,6 +40,14 @@ describe HostNodes::Unevacuate do
       expect {
         subject.start_stateless_services(node)
       }.to change {redis_instance.reload.desired_state}.from('stopped').to('running')
+    end
+
+    it 'does not start stopped services instances' do
+      expect(subject).not_to receive(:notify_node)
+      redis.set(:state => 'stopped')
+      expect {
+        subject.start_stateless_services(node)
+      }.not_to change {redis_instance.reload.desired_state}
     end
   end
 end
