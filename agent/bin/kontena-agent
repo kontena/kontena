@@ -10,7 +10,7 @@ $stdout.sync = true
 $0 = 'kontena-agent'
 
 api_token = ENV['KONTENA_TOKEN']
-api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
+api_uri = ENV['KONTENA_URI']
 
 if api_token.nil? || api_token.empty?
   abort('Configuration error: The KONTENA_TOKEN env is required')
