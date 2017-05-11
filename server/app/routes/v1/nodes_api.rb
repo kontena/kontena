@@ -22,13 +22,11 @@ module V1
 
         node
       end
-
+      
       r.on ':grid_name/:node_id' do |grid_name, node_id|
         validate_access_token
         require_current_user
-
         @node = load_grid_node(grid_name, node_id)
-
         r.on 'token' do
           halt_request(403, {error: 'Access denied'}) unless current_user.can_update?(@grid)
 
@@ -120,6 +118,28 @@ module V1
             if outcome.success?
               @node = outcome.result
               render('host_nodes/show')
+            else
+              halt_request(422, {error: outcome.errors.message})
+            end
+          end
+        end
+
+        r.post do
+          # POST /v1/nodes/:grid/:node/evacuate
+          r.on 'evacuate' do
+            outcome = HostNodes::Evacuate.run(@node)
+            if outcome.success?
+              {}
+            else
+              halt_request(422, {error: outcome.errors.message})
+            end
+          end
+
+          # POST /v1/nodes/:grid/:node/unevacuate
+          r.on 'unevacuate' do
+            outcome = HostNodes::Unevacuate.run(@node)
+            if outcome.success?
+              {}
             else
               halt_request(422, {error: outcome.errors.message})
             end
