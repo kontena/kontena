@@ -13,10 +13,10 @@ api_token = ENV['KONTENA_TOKEN']
 api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
 
 if !api_token
-  exit('KONTENA_TOKEN is required')
+  abort('Configuration error: The KONTENA_TOKEN env is required')
 end
 if !api_uri
-  exit('KONTENA_URI is required')
+  abort('Configuration error: The KONTENA_URI env is required')
 end
 if api_uri.match(/^http.*/)
   api_uri = api_uri.sub('http', 'ws')
