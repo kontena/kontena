@@ -1,6 +1,6 @@
 module Scheduler
   module Filter
-    class Affinity
+    class Evacuated
 
       ##
       # @param [GridService] service
