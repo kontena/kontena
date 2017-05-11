@@ -202,4 +202,40 @@ describe '/v1/stacks', celluloid: true do
       expect(response.status).to eq(404)
     end
   end
+
+  describe 'POST /:id/stop' do
+    it 'returns 200 when stop successful' do
+      expect(GridServices::Stop).to receive(:run).twice.and_return(double({:success? => true}))
+      expect {
+        post "/v1/stacks/#{stack.to_path}/stop", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{AuditLog.count}.by(1)
+    end
+    it 'returns 422 when stop fails' do
+      expect(GridServices::Stop).to receive(:run).twice.and_return(
+        double({:success? => false, :errors => double({:message => 'error'})}))
+      expect {
+        post "/v1/stacks/#{stack.to_path}/stop", nil, request_headers
+        expect(response.status).to eq(422)
+      }.to change{AuditLog.count}.by(0)
+    end
+  end
+  
+  describe 'POST /:id/restart' do
+    it 'returns 200 when restart successful' do
+      expect(GridServices::Restart).to receive(:run).twice.and_return(double({:success? => true}))
+      expect {
+        post "/v1/stacks/#{stack.to_path}/restart", nil, request_headers
+        expect(response.status).to eq(200)
+      }.to change{AuditLog.count}.by(1)
+    end
+    it 'returns 422 when restart fails' do
+      expect(GridServices::Restart).to receive(:run).twice.and_return(
+        double({:success? => false, :errors => double({:message => 'error'})}))
+      expect {
+        post "/v1/stacks/#{stack.to_path}/restart", nil, request_headers
+        expect(response.status).to eq(422)
+      }.to change{AuditLog.count}.by(0)
+    end
+  end
 end

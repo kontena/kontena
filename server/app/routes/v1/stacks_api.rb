@@ -65,11 +65,9 @@ module V1
       # @param [Stack] stack
       def stop_stack(stack)
         outcome = Stacks::Stop.run(stack: stack)
-
         if outcome.success?
           audit_event(request, @grid, @stack, 'stop')
           response.status = 200
-          @stack_deploy = outcome.result
           {}
         else
           response.status = 422
