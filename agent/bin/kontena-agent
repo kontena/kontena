@@ -12,10 +12,10 @@ $0 = 'kontena-agent'
 api_token = ENV['KONTENA_TOKEN']
 api_uri = ENV['KONTENA_URI'] || 'ws://api.kontena.io'
 
-if !api_token
+if api_token.nil? || api_token.empty?
   abort('Configuration error: The KONTENA_TOKEN env is required')
 end
-if !api_uri
+if api_uri.nil? || api_uri.empty?
   abort('Configuration error: The KONTENA_URI env is required')
 end
 if api_uri.match(/^http.*/)
