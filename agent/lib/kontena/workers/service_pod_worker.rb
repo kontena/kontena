@@ -183,14 +183,21 @@ module Kontena::Workers
     end
 
     # @param [Docker::Container] service_container
+    # @raise [ArgumentError] invalid date
+    # @raise [RuntimeError] service updated_at timestamp is in the future
     # @return [Boolean]
     def container_outdated?(service_container)
       updated_at = DateTime.parse(service_pod.updated_at)
-      created = DateTime.parse(service_container.info['Created']) rescue nil
-      return true if created.nil?
-      return true if created < updated_at
+      created = DateTime.parse(service_container.info['Created'])
 
-      false
+      if updated_at > DateTime.now
+        fail "service updated_at #{updated_at} is in the future"
+      elsif created < updated_at
+        info "service updated at #{updated_at} after service container created at #{created}"
+        true
+      else
+        false
+      end
     end
 
     # @param [Docker::Container] service_container

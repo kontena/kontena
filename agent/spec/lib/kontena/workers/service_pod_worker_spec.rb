@@ -271,9 +271,17 @@ describe Kontena::Workers::ServicePodWorker do
       allow(service_pod).to receive(:updated_at).and_return((Time.now.utc - 60).to_s)
       expect(subject.container_outdated?(service_container)).to be_falsey
     end
+
+    it 'fails if service_pod updated_at is in the future' do
+      service_container = double(:service_container,
+        info: { 'Created' => (Time.now.utc - 20).to_s }
+      )
+      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 60).to_s)
+      expect{subject.container_outdated?(service_container)}.to raise_error(/service updated_at .* is in the future/)
+    end
   end
 
-  describe '#image_outdated?' do 
+  describe '#image_outdated?' do
     it 'returns true if image id does not match to container' do
       image = double(:image, id: 'abc')
       service_container = double(:service_container,
