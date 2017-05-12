@@ -34,11 +34,11 @@ describe HostNodes::Unevacuate do
     end
   end
 
-  describe '#start_stateless_services' do
+  describe '#start_stateful_services' do
     it 'starts statefull instances on a given node' do
       expect(subject).to receive(:notify_node).once
       expect {
-        subject.start_stateless_services(node)
+        subject.start_stateful_services(node)
       }.to change {redis_instance.reload.desired_state}.from('stopped').to('running')
     end
 
@@ -46,7 +46,7 @@ describe HostNodes::Unevacuate do
       expect(subject).not_to receive(:notify_node)
       redis.set(:state => 'stopped')
       expect {
-        subject.start_stateless_services(node)
+        subject.start_stateful_services(node)
       }.not_to change {redis_instance.reload.desired_state}
     end
   end

@@ -48,7 +48,7 @@ describe HostNodes::Evacuate do
         host_node: node
       )
       expect(mutation).to receive(:re_deploy_needed_services)
-      expect(mutation).to receive(:stop_stateless_services)
+      expect(mutation).to receive(:stop_stateful_services)
 
       mutation.run
     end
@@ -64,11 +64,11 @@ describe HostNodes::Evacuate do
     end
   end
 
-  describe '#stop_stateless_services' do
+  describe '#stop_stateful_services' do
     it 'stops statefull instances on a given node' do
       expect(subject).to receive(:notify_node).once
       expect {
-        subject.stop_stateless_services(node)
+        subject.stop_stateful_services(node)
         expect(nginx_instance.reload.desired_state).to eq('running')
       }.to change {redis_instance.reload.desired_state}.from('running').to('stopped')
     end

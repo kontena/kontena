@@ -15,10 +15,10 @@ module HostNodes
     def execute
       self.host_node.set(:evacuated => false)
 
-      start_stateless_services(self.host_node)
+      start_stateful_services(self.host_node)
     end
 
-    def start_stateless_services(host_node)
+    def start_stateful_services(host_node)
       host_node.grid_service_instances.each do |instance|
         # Stateful instances might have been stopped by evacuate
         if instance.grid_service.stateful? && instance.grid_service.running? && instance.desired_state == 'stopped'

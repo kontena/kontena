@@ -16,7 +16,7 @@ module HostNodes
       self.host_node.set(:evacuated => true)
 
       re_deploy_needed_services(self.host_node)
-      stop_stateless_services(self.host_node)
+      stop_stateful_services(self.host_node)
     end
 
     # Re-deploy needed services, new deployments will filter out evacuated node
@@ -34,7 +34,7 @@ module HostNodes
       }.compact.uniq
     end
 
-    def stop_stateless_services(host_node)
+    def stop_stateful_services(host_node)
       host_node.grid_service_instances.each do |instance| 
         if instance.grid_service.stateful?
           instance.set(desired_state: 'stopped')
