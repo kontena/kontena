@@ -1,5 +1,5 @@
 
-describe Scheduler::Filter::Affinity do
+describe Scheduler::Filter::Evacuated do
 
   let(:grid) { Grid.create(name: 'test') }
   let(:nodes) do
