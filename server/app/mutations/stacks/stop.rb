@@ -1,6 +1,7 @@
 module Stacks
   class Stop < Mutations::Command
-
+    include Common
+    
     required do
       model :stack, class: Stack
     end

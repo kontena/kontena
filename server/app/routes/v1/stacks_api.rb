@@ -82,7 +82,6 @@ module V1
         if outcome.success?
           audit_event(request, @grid, @stack, 'restart')
           response.status = 200
-          @stack_deploy = outcome.result
           {}
         else
           response.status = 422
