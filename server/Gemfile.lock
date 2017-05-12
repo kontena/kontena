@@ -165,7 +165,7 @@ DEPENDENCIES
   json-serializer
   jsonpath
   lru_redux (~> 1.1.0)
-  mongoid (~> 5.1)
+  mongoid (~> 5.2.1)
   mongoid-enum
   mongoid-rspec (~> 3.0.0)
   msgpack
