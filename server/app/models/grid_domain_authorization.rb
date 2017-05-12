@@ -1,3 +1,5 @@
+require_relative '../helpers/to_path_cache_helper'
+
 class GridDomainAuthorization
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -16,8 +18,8 @@ class GridDomainAuthorization
 
   validates_uniqueness_of :domain, scope: [:grid_id]
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 end

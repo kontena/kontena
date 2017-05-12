@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 class Stack
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -18,8 +19,8 @@ class Stack
   validates_presence_of :name
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 

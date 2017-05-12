@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 class Volume
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -19,7 +20,8 @@ class Volume
   validates_presence_of :name, :scope, :grid_id
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 

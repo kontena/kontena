@@ -1,3 +1,5 @@
+require_relative '../helpers/to_path_cache_helper'
+
 class GridSecret
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -12,8 +14,8 @@ class GridSecret
 
   index({ grid_id: 1 })
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 end

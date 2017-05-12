@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 require_relative 'event_stream'
 class GridService
   include Mongoid::Document
@@ -67,8 +68,8 @@ class GridService
 
   before_validation :ensure_stack
 
-  # @return [String]
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.stack.try(:name)}/#{self.name}"
   end
 

@@ -1,3 +1,4 @@
+require_relative '../helpers/to_path_cache_helper'
 require 'ipaddr'
 require_relative 'event_stream'
 
@@ -54,7 +55,8 @@ class HostNode
     node.containers.unscoped.destroy
   end
 
-  def to_path
+  include ToPathCacheHelper
+  def build_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
 
