@@ -35,4 +35,9 @@ describe Kontena::Cli::Nodes::SshCommand do
     expect(subject).to receive(:exec).with('ssh', 'core@192.0.2.10', 'ls', '-l')
     subject.run ['test-node', 'ls', '-l']
   end
+
+  it "passes through arguments to SSH" do
+    expect(subject).to receive(:exec).with('ssh', 'core@192.0.2.10', '-F', 'ssh/config' 'ls', '-l')
+    subject.run ['test-node', '-F', 'ssh/config' 'ls', '-l']
+  end
 end
