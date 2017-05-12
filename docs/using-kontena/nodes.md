@@ -76,6 +76,12 @@ The re-scheduling of grid services will happen after the node offline grace peri
 - `ha`: 2 minutes
 - `random`: 30 seconds
 
+### Node evacuation
+
+Node can be evacuated using `kontena node evacuate` command. Node evacuation means that all the stateless services will be re-scheduled immediately out from the node. Any stateful services running on that node will be stopped. For a planned maintenance or node decommisioning it is a good idea to first evacuate the node so there are minimal disruptions on the services running.
+
+Once the maintenance is over and a node can be put back to work it can be un-evacuated using `kontena node unevacuate` command. This marks the node back in a state where it will get new deployments as Kontena scheduler will see this node back in the available nodes list.
+
 ### Decomissioning nodes
 
 Use the `kontena node rm` command to decomission a node.
