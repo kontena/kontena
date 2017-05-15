@@ -276,7 +276,7 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome).to_not be_success
-      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'redis' does not exist" } }
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "service api has missing links: redis" } }
     end
 
     it 'fails and does not create stack if a service links to itself' do
@@ -302,7 +302,42 @@ describe Stacks::Create do
           services: services
         ).run
         expect(outcome).to_not be_success
-        expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'api' refers to self" } }
+        expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["api", [...]]' } }
+      }.to change{ grid.stacks.count }.by(0)
+    end
+
+    it 'fails and does not create stack if services have recursive links' do
+      services = [
+        {
+          name: 'api',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {'name' => 'bar', 'alias' => 'bar'}
+          ]
+        },
+        {
+          name: 'bar',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {'name' => 'api', 'alias' => 'api'}
+          ]
+        }
+      ]
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'soome-stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: services
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["bar", ["api", [...]]]' } }
       }.to change{ grid.stacks.count }.by(0)
     end
 

@@ -28,13 +28,15 @@ module Stacks
     def validate_services
       sort_services(self.services).each do |s|
         service = s.dup
-        validate_service_links(service)
+        service[:links] = select_external_service_links(service)
         service[:grid] = self.grid
         outcome = GridServices::Create.validate(service)
         unless outcome.success?
           handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
+    rescue LinkError => error
+      add_service_error(error.service, :links, :invalid, error.message)
     end
 
     def execute
