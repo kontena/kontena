@@ -139,7 +139,7 @@ describe Rpc::ServicePodSerializer do
       expect(subject.to_hash).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
     end
 
-    it 'includes default network' do
+    it 'stop_grace_period' do
       expect(subject.to_hash).to include(:stop_grace_period => 20)
     end
 
