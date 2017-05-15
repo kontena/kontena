@@ -29,7 +29,9 @@ describe Duration do
   end
 
   it 'parses unknown format to zero' do
-    expect(subject.parse_duration('foo')).to eq(0)
+    expect {
+      subject.parse_duration('foo')
+    }.to raise_error(ArgumentError)
   end
 
 end

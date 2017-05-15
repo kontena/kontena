@@ -16,7 +16,9 @@ module Duration
   # @param [String] duration string
   # @return [Float] seconds
   def parse_duration(duration)
-    duration.scan(PATTERN).map{ |n, unit|
+    elements = duration.scan(PATTERN)
+    raise ArgumentError, "Duration pattern did not match anything" if elements.empty?
+    elements.map{ |n, unit|
       n.to_f * UNITS_IN_S[unit]
     }.reduce(:+).to_f
   end

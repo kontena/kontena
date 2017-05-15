@@ -392,6 +392,17 @@ describe GridServices::Create do
       expect(outcome.result.stop_grace_period).to eq(10)
     end
 
+    it 'fails to save with unknown grace_period' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          stop_grace_period: 'foo'
+      ).run
+      expect(outcome).not_to be_success
+    end
+
     context 'volumes' do
       let(:volume) do
         Volume.create!(grid: grid, name: 'foo', scope: 'node')
