@@ -111,9 +111,11 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
     end
 
     it 'fails validation if environment array includes items without equals sign' do
-      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2'])
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2', 'KEY3='])
       expect(result.errors.key?('environment')).to be_falsey
       result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2 VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+      result = subject.validate_options('environment' => ['=VALUE'])
       expect(result.errors.key?('environment')).to be_truthy
     end
 
