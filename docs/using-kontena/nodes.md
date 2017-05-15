@@ -76,11 +76,35 @@ The re-scheduling of grid services will happen after the node offline grace peri
 - `ha`: 2 minutes
 - `random`: 30 seconds
 
-### Node evacuation
+### Node availability
 
-Node can be evacuated using `kontena node evacuate` command. Node evacuation means that all the stateless services will be re-scheduled immediately out from the node. Any stateful services running on that node will be stopped. For a planned maintenance or node decommisioning it is a good idea to first evacuate the node so there are minimal disruptions on the services running.
+Node availablity for scheduling services can be controlled with `kontena node availablity` command. The current supported states are: `drain`and `active`.
 
-Once the maintenance is over and a node can be put back to work it can be un-evacuated using `kontena node unevacuate` command. This marks the node back in a state where it will get new deployments as Kontena scheduler will see this node back in the available nodes list.
+Nodes availablity status can be seen using `kontena node show xyz`:
+```
+$ k node show moby
+moby:
+  id: BCKY:WMSM:IMW4:KSNQ:C2MZ:4EZ7:ZG7J:5UQ2:MMA3:NYK7:5PEF:JBLN
+  agent version: 1.3.0.dev
+  docker version: 1.13.1
+  connected: yes
+  availability: drain
+  last connect: 2017-05-15T06:03:01.720Z
+  last seen: 2017-05-15T06:03:00.523Z
+... snip ...
+```
+
+#### Active
+
+Kontena scheduler can assign tasks into any node marked as `active` availability. `active` is also the default state for all nodes. To re-activate a node use `kontena node availability xyz active`
+
+#### Drain
+
+For a planned maintenance or node decommisioning it is a good idea to first drain the node so there are minimal disruptions on the services running. To drain the services from a node use `kontena node availability xyz drain`
+
+Node draining means that all the stateless services will be re-scheduled immediately out from the node. Any stateful services running on that node will be stopped.
+
+Once the maintenance is over and a node can be put back to work it can be put into active state using `kontena node availability xyz dactive` command. This marks the node back in a `active` state where it will get new deployments as Kontena scheduler will see this node back in the available nodes list.
 
 ### Decomissioning nodes
 
