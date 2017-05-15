@@ -167,8 +167,23 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
+                loaded_features_before = $LOADED_FEATURES.dup
+                load_path_before = $LOAD_PATH.dup
+
+                ENV["DEBUG"] && $stderr.puts("Activating plugin #{spec.name}")
+                spec.activate
+                spec.activate_dependencies
+
                 ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
-                load(plugin)
+                require(plugin)
+
+                if ENV['DEBUG'] == 'plugin'
+                  added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
+                  added_paths = ($LOAD_PATH - load_path_before).map {|feat| "- #{feat}"}
+                  $stderr.puts "Plugin manager loaded features for #{spec.name}: \n#{added_features.join("\n")}" unless added_features.empty?
+                  $stderr.puts "Plugin manager load paths added for #{spec.name}: \n#{added_paths.join("\n")}" unless added_paths.empty?
+                end
+
                 plugins << spec
               else
                 plugin_name = spec.name.sub('kontena-plugin-', '')
