@@ -108,16 +108,27 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_falsey
       result = subject.validate_options('environment' => { 'KEY' => 'VALUE' })
       expect(result.errors.key?('environment')).to be_falsey
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2', 'KEY3='])
+      expect(result.errors.key?('environment')).to be_falsey
     end
 
     it 'fails validation if environment array includes items without equals sign' do
-      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2', 'KEY3='])
-      expect(result.errors.key?('environment')).to be_falsey
       result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2 VALUE'])
       expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environment has invalid key prefix" do
       result = subject.validate_options('environment' => ['=VALUE'])
       expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environemnt has invalid key prefix with valud key prefix in value" do
       result = subject.validate_options('environment' => ['=VALUE=VALUE2'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environment contains invalid key prefix with valid key prefix in multi-line value" do
+      result = subject.validate_options('environment' => ['=ASDF\nKEY=VALUE'])
       expect(result.errors.key?('environment')).to be_truthy
     end
 
