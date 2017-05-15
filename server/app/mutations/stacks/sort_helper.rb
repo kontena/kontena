@@ -58,7 +58,7 @@ module Stacks
       service_links.each do |service, links|
         links.dup.each do |linked_service|
           if linked_service_links = service_links[linked_service]
-            service_links[service] << service_links[linked_service]
+            service_links[service] << linked_service_links
           else
             raise MissingLinkError.new(service, linked_service)
           end
