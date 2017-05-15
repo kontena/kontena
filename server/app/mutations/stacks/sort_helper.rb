@@ -70,7 +70,7 @@ module Stacks
       # {service => [linked_service, linked_service_link, ...]}
       service_links.each do |service, links|
         begin
-          service_links[service].flatten!
+          service_links[service] = service_links[service].flatten
         rescue ArgumentError
           raise RecursiveLinkError.new(service, links)
         end
