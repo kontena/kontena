@@ -172,7 +172,7 @@ module GridServices
           end
           string :entrypoint
           array :env do
-            string matches: /^([^=]+)=(.*)/
+            string matches: /\A\S+=/
           end
           array :secrets do
             hash do
