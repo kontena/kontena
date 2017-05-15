@@ -20,13 +20,15 @@ module Stacks
       }
     end
 
+    # Collect stack-local links for given service.
+    #
     # @param [Array<GridService,Hash>]
     # @return [Array<Hash>]
     def __links_for_service(service)
       if service.is_a?(GridService)
         service.grid_service_links.select{|l| l.linked_grid_service.stack == service.stack }.map{ |l| { name: l.linked_grid_service.name } }
       else
-        (service[:links] || [])
+        (service[:links] || []).select{|l| !l[:name].include? '/'}
       end
     end
   end

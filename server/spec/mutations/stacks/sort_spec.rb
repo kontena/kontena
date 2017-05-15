@@ -51,6 +51,31 @@ describe Stacks::SortHelper do
     end
   end
 
+  context "for two services hashes with an external link" do
+    let(:services) { [
+      {
+        name: 'foo',
+        links: [
+          {:name => 'other-stack/asdf', :alias => 'asdf'}
+        ]
+      },
+      {
+        name: 'bar',
+        links: [
+          {:name => 'foo', :alias => 'foo'}
+        ]
+      },
+    ]}
+
+    it "sorts them" do
+      expect(subject.sort_services(services).map{|s| s[:name]}).to eq ['foo', 'bar']
+    end
+
+    it "sorts them from reverse order" do
+      expect(subject.sort_services(services.reverse).map{|s| s[:name]}).to eq ['foo', 'bar']
+    end
+  end
+
   context "for two service objects with a single link" do
     let(:grid) { Grid.create!(name: 'test-grid') }
     let(:stack) { grid.stacks.find_by(name: Stack::NULL_STACK) }
