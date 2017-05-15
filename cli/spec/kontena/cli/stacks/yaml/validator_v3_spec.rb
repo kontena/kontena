@@ -117,6 +117,8 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_truthy
       result = subject.validate_options('environment' => ['=VALUE'])
       expect(result.errors.key?('environment')).to be_truthy
+      result = subject.validate_options('environment' => ['=VALUE=VALUE2'])
+      expect(result.errors.key?('environment')).to be_truthy
     end
 
     it 'passes validation if environment array includes items with booleans or nils' do

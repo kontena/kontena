@@ -43,7 +43,7 @@ module Kontena::Cli::Stacks::YAML
               )
             end
           elsif value.is_a?(Array)
-            value.all? { |v| v.kind_of?(String) && v =~ /^.+=.*/ }
+            value.all? { |v| v.kind_of?(String) && v =~ /^([^=]+)=(.*)/ }
           else
             false
           end
