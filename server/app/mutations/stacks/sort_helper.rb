@@ -1,10 +1,16 @@
 module Stacks
   module SortHelper
 
+    class LinkError < StandardError
+
+    end
+
     # Sort services with a stack, such that services come after any services that they link to.
     # This can only be used to sort services within the same stack. Links to services in other stacks are ignored.
     #
     # @param [Array<GridService,Hash>]
+    # @raise [LinkError] service ... has missing links: ...
+    # @raise [LinkError] service ... has recursive links: ...
     # @return [Array<GridService,Hash>]
     def sort_services(services)
       # Map of service name to array of deep links, including links of linked services
@@ -20,7 +26,11 @@ module Stacks
       # {service => [linked_service, [linked_service_links]]}
       service_links.each do |service, links|
         links.dup.each do |linked_service|
-          service_links[service] << service_links[linked_service]
+          if linked_service_links = service_links[linked_service]
+            service_links[service] << service_links[linked_service]
+          else
+            raise LinkError, "service #{service} has missing links: #{linked_service}"
+          end
         end
       end
 
@@ -31,7 +41,7 @@ module Stacks
         begin
           service_links[service].flatten!
         rescue ArgumentError
-          raise ArgumentError, "service #{service} has recursive links: #{links}"
+          raise LinkError, "service #{service} has recursive links: #{links}"
         end
       end
 

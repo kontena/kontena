@@ -127,6 +127,30 @@ describe Stacks::SortHelper do
     end
   end
 
+  context "for services with links to non-existing services" do
+    let(:services) { [
+      {
+        name: 'foo',
+      },
+      {
+        name: 'bar',
+        links: [
+          {:name => 'foo', :alias => 'foo'}
+        ]
+      },
+      {
+        name: 'asdf',
+        links: [
+          {:name => 'quux', :alias => 'quux'}
+        ]
+      },
+    ]}
+
+    it "fails while sorting them" do
+      expect{subject.sort_services(services)}.to raise_error(Stacks::SortHelper::LinkError, 'service asdf has missing links: quux')
+    end
+  end
+
   context "for three services with a recursive self-links" do
     let(:services) { [
       {
@@ -150,7 +174,7 @@ describe Stacks::SortHelper do
     ]}
 
     it "fails while sorting them" do
-      expect{subject.sort_services(services)}.to raise_error(ArgumentError, /service foo has recursive links: /)
+      expect{subject.sort_services(services)}.to raise_error(Stacks::SortHelper::LinkError, 'service foo has recursive links: ["asdf", ["bar", ["foo", [...]]]]')
     end
   end
 
