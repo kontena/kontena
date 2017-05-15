@@ -22,7 +22,7 @@ describe Kontena::ServicePods::Stopper do
 
     it 'stops container with a configured timeout' do
       expect(container).to receive(:stop_grace_period).and_return(20)
-      expect(container).to receive(:stop).with({'timeout' => 20})
+      expect(container).to receive(:stop!).with({'timeout' => 20})
       subject.perform
     end
 
