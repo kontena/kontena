@@ -2,7 +2,12 @@ module Stacks
   module SortHelper
 
     class LinkError < StandardError
+      attr_accessor :service
 
+      def initialize(service, *args)
+        super(*args)
+        @service = service
+      end
     end
 
     # Sort services with a stack, such that services come after any services that they link to.
@@ -29,7 +34,7 @@ module Stacks
           if linked_service_links = service_links[linked_service]
             service_links[service] << service_links[linked_service]
           else
-            raise LinkError, "service #{service} has missing links: #{linked_service}"
+            raise LinkError.new(service), "service #{service} has missing links: #{linked_service}"
           end
         end
       end
@@ -41,7 +46,7 @@ module Stacks
         begin
           service_links[service].flatten!
         rescue ArgumentError
-          raise LinkError, "service #{service} has recursive links: #{links}"
+          raise LinkError.new(service), "service #{service} has recursive links: #{links}"
         end
       end
 
