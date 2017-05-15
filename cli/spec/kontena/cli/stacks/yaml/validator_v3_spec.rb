@@ -137,6 +137,11 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_falsey
     end
 
+    it 'passes validation if environment array includes items with multi-line values' do
+      result = subject.validate_options('environment' => [ "KEY=foo\nbar" ])
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
     context 'validates secrets' do
       it 'must be array' do
         result = subject.validate_options('secrets' => {})
