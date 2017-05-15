@@ -47,14 +47,14 @@ module Stacks
       # Map of service name to array of deep links, including links of linked services
       service_links = {}
 
-      # Build hash of service name to array of linked service names
+      # Build hash of service name to shallow array of linked service names
       # {service => [linked_service]}
       services.each do |service|
         service_links[service[:name]] = __links_for_service(service)
       end
 
-      # Modify each service's array to add a direct reference to each linked service's own array of linked services
-      # {service => [linked_service, [linked_service_links]]}
+      # Mutate each service's array to add a deep reference to each linked service's own array of linked services
+      # {service => [linked_service, [linked_service_links, [...]]]}
       service_links.each do |service, links|
         links.dup.each do |linked_service|
           if linked_service_links = service_links[linked_service]
@@ -65,7 +65,7 @@ module Stacks
         end
       end
 
-      # Flatten the nested references to arrays
+      # Flatten the deep array references to a flat array
       # In case of recursive references, the Array#flatten! will fail with ArgumentError: tried to flatten recursive array
       # {service => [linked_service, linked_service_link, ...]}
       service_links.each do |service, links|
