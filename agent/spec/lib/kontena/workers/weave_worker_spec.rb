@@ -52,7 +52,7 @@ describe Kontena::Workers::WeaveWorker do
 
     it 'calls #start on weave restart event' do
       event = spy(:event, id: 'foobar', status: 'restart', from: 'weaveworks/weave:1.4.5')
-      expect(network_adapter).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
+      expect(subject.wrapped_object).to receive(:router_image?).with('weaveworks/weave:1.4.5').and_return(true)
       expect(subject.wrapped_object).to receive(:start).once
       subject.on_container_event('topic', event)
     end
