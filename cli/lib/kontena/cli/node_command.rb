@@ -10,7 +10,7 @@ class Kontena::Cli::NodeCommand < Kontena::Command
   subcommand "label", "Node label specific commands", load_subcommand('nodes/label_command')
   subcommand "health", "Check node health", load_subcommand('nodes/health_command')
   subcommand "env", "Generate kontena-agent.env configuration", load_subcommand('nodes/env_command')
-  subcommand "evacuate", "Evacuate node", load_subcommand('nodes/evacuate_command')
+  subcommand "availability", "Updatea node availability status", load_subcommand('nodes/availability_command')
   subcommand "unevacuate", "Un-evacuate node", load_subcommand('nodes/unevacuate_command')
 
   def execute

@@ -1,6 +1,6 @@
 module Scheduler
   module Filter
-    class Evacuated
+    class Availability
 
       ##
       # @param [GridService] service
@@ -8,7 +8,15 @@ module Scheduler
       # @param [Array<HostNode>] nodes
       # @raise [Scheduler::Error]
       def for_service(service, instance_number, nodes)
-        nodes = nodes.select { |n| !n.evacuated?}
+
+        nodes = nodes.select { |n| 
+          case n.availability
+          when 'active'
+            true
+          when 'drain'
+            false
+          end
+        }
 
         nodes
       end

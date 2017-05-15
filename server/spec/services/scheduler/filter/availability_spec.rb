@@ -1,5 +1,5 @@
 
-describe Scheduler::Filter::Evacuated do
+describe Scheduler::Filter::Availability do
 
   let(:grid) { Grid.create(name: 'test') }
   let(:nodes) do
@@ -13,13 +13,13 @@ describe Scheduler::Filter::Evacuated do
 
 
   describe '#for_service' do
-    it 'returns all nodes if none are evacuated' do
+    it 'returns all nodes if none are on drain mode' do
       filtered = subject.for_service(service, 1, nodes)
       expect(filtered).to eq(nodes)
     end
 
     it 'returns only unevacuated nodes' do
-      nodes[2].evacuated = true
+      nodes[2].availability = 'drain'
       filtered = subject.for_service(service, 1, nodes)
       expect(filtered).not_to include(nodes[2])
     end

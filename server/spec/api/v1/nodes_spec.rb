@@ -325,29 +325,18 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'POST' do
     let(:node) {grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')}
-    describe 'evacuate' do
-      it 'runs evacuate mutation' do
-        expect(HostNodes::Evacuate).to receive(:run).and_return(double({:success? => true}))
-        post "/v1/nodes/#{node.to_path}/evacuate", {}, request_headers
+    describe 'availability' do
+      it 'runs availability mutation' do
+        expect(HostNodes::Availability).to receive(:run).and_return(double({:success? => true}))
+        post "/v1/nodes/#{node.to_path}/availability", {availability: 'drain'}.to_json, request_headers
         expect(response.status).to eq(200)
       end
       it 'returns 422 if mutation fails' do
-        expect(HostNodes::Evacuate).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
-        post "/v1/nodes/#{node.to_path}/evacuate", {}, request_headers
+        expect(HostNodes::Availability).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
+        post "/v1/nodes/#{node.to_path}/availability", {}, request_headers
         expect(response.status).to eq(422)
       end
-    end
-    describe 'unevacuate' do
-      it 'runs evacuate mutation' do
-        expect(HostNodes::Unevacuate).to receive(:run).and_return(double({:success? => true}))
-        post "/v1/nodes/#{node.to_path}/unevacuate", {}, request_headers
-        expect(response.status).to eq(200)
-      end
-      it 'returns 422 if mutation fails' do
-        expect(HostNodes::Unevacuate).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
-        post "/v1/nodes/#{node.to_path}/unevacuate", {}, request_headers
-        expect(response.status).to eq(422)
-      end
+    
     end
   end
 

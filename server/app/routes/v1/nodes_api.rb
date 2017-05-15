@@ -125,20 +125,14 @@ module V1
         end
 
         r.post do
-          # POST /v1/nodes/:grid/:node/evacuate
-          r.on 'evacuate' do
-            outcome = HostNodes::Evacuate.run(host_node: @node)
+          # POST /v1/nodes/:grid/:node/availability
+          r.on 'availability' do
+            data = parse_json_body
+            params = { host_node: @node }
+            params[:availability] = data['availability']
+            outcome = HostNodes::Availability.run(params)
             if outcome.success?
-              {}
-            else
-              halt_request(422, {error: outcome.errors.message})
-            end
-          end
-
-          # POST /v1/nodes/:grid/:node/unevacuate
-          r.on 'unevacuate' do
-            outcome = HostNodes::Unevacuate.run(host_node: @node)
-            if outcome.success?
+              # TODO Return current availability after update
               {}
             else
               halt_request(422, {error: outcome.errors.message})
