@@ -18,6 +18,7 @@ module Kontena::Cli::Nodes
       puts "  docker version: #{node['docker_version']}"
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"
       puts "  last connect: #{node['connected_at']}"
+      puts "  availability: #{node['availability']}"
       puts "  last seen: #{node['last_seen_at']}"
       puts "  public ip: #{node['public_ip']}"
       puts "  private ip: #{node['private_ip']}"
