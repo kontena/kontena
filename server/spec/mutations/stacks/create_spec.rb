@@ -305,7 +305,7 @@ describe Stacks::Create do
         expect(outcome).to_not be_success
         expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["api", [...]]' } }
         expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :recursive } }
-      }.to change{ grid.stacks.count }.by(0)
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'fails and does not create stack if services have recursive links' do
@@ -341,7 +341,7 @@ describe Stacks::Create do
         expect(outcome).to_not be_success
         expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["bar", ["api", [...]]]' } }
         expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :recursive } }
-      }.to change{ grid.stacks.count }.by(0)
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'does not create stack if any service validation fails' do
@@ -361,7 +361,7 @@ describe Stacks::Create do
           services: services
         ).run
         expect(outcome.success?).to be(false)
-      }.to change{ grid.stacks.count }.by(0)
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'does not create stack if exposed service does not exist' do
@@ -381,7 +381,7 @@ describe Stacks::Create do
           services: services
         ).run
         expect(outcome).to_not be_success
-      }.to change{ grid.stacks.count }.by(0)
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'reports multiple service create errors' do
