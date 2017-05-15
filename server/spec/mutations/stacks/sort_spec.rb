@@ -127,6 +127,33 @@ describe Stacks::SortHelper do
     end
   end
 
+  context "for three services with a recursive self-links" do
+    let(:services) { [
+      {
+        name: 'foo',
+        links: [
+          {:name => 'asdf', :alias => 'asdf'}
+        ]
+      },
+      {
+        name: 'bar',
+        links: [
+          {:name => 'foo', :alias => 'foo'}
+        ]
+      },
+      {
+        name: 'asdf',
+        links: [
+          {:name => 'bar', :alias => 'bar'}
+        ]
+      },
+    ]}
+
+    it "fails while sorting them" do
+      expect{subject.sort_services(services)}.to raise_error(ArgumentError, /service foo has recursive links: /)
+    end
+  end
+
   context "for three services with a deep links" do
     let(:services) { [
       {

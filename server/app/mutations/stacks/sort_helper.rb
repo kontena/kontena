@@ -7,12 +7,42 @@ module Stacks
     # @param [Array<GridService,Hash>]
     # @return [Array<GridService,Hash>]
     def sort_services(services)
+      # Map of service name to array of deep links, including links of linked services
+      service_links = {}
+
+      # Build hash of service name to array of linked service names
+      # {service => [linked_service]}
+      services.each do |service|
+        service_links[service[:name]] = __links_for_service(service)
+      end
+
+      # Modify each service's array to add a direct reference to each linked service's own array of linked services
+      # {service => [linked_service, [linked_service_links]]}
+      service_links.each do |service, links|
+        links.dup.each do |linked_service|
+          service_links[service] << service_links[linked_service]
+        end
+      end
+
+      # Flatten the nested references to arrays
+      # In case of recursive references, the Array#flatten! will fail with ArgumentError: tried to flatten recursive array
+      # {service => [linked_service, linked_service_link, ...]}
+      service_links.each do |service, links|
+        begin
+          service_links[service].flatten!
+        rescue ArgumentError
+          raise ArgumentError, "service #{service} has recursive links: #{links}"
+        end
+      end
+
+      # Sort using deep service links
       services.sort{ |a, b|
-        a_links = __links_for_service(a)
-        b_links = __links_for_service(b)
-        if a_links.any?{ |l| l == b[:name] }
+        a_links = service_links[a[:name]]
+        b_links = service_links[b[:name]]
+
+        if a_links.include? b[:name]
           1
-        elsif b_links.any?{ |l| l == a[:name] }
+        elsif b_links.include? a[:name]
           -1
         else
           a_links.size <=> b_links.size
