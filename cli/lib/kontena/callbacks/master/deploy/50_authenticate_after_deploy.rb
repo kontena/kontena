@@ -1,3 +1,4 @@
+require 'securerandom'
 
 module Kontena
   module Callbacks

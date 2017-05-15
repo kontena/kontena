@@ -49,7 +49,7 @@ describe GridServiceHealthMonitorJob, celluloid: true do
           health_status: {healthy: 1, total: 6},
           deploy_opts: double({min_health: 0.8}),
           running?: true,
-          deploy_pending?: false
+          deploying?: false
         })
       expect(subject.deploy_needed?(service)).to be_truthy
     end
@@ -60,7 +60,7 @@ describe GridServiceHealthMonitorJob, celluloid: true do
           health_status: {healthy: 1, total: 6},
           deploy_opts: double({min_health: 0.8}),
           running?: true,
-          deploy_pending?: true
+          deploying?: true
         })
       expect(subject.deploy_needed?(service)).to be_falsey
     end

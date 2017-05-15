@@ -110,6 +110,18 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_falsey
     end
 
+    it 'fails validation if environment array includes items without equals sign' do
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2'])
+      expect(result.errors.key?('environment')).to be_falsey
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2 VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it 'passes validation if environment array includes items with booleans or nils' do
+      result = subject.validate_options('environment' => { 'KEY' => true, 'KEY2' => false, 'KEY3' => nil })
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
     context 'validates secrets' do
       it 'must be array' do
         result = subject.validate_options('secrets' => {})
@@ -324,6 +336,7 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
 
         }
       end
+
       it 'fails validation if volumes are not declared' do
         result = subject.validate(stack)
         expect(result[:errors]).not_to be_empty
@@ -359,6 +372,24 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         }
         result = subject.validate(stack)
         expect(result[:errors]).to be_empty
+      end
+
+      it 'validation passes when mount points are defined with :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo:ro', '/tmp/foo:/bar:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when same mount point is defined multiple times' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'validation fails when same mount point is defined multiple times mixing :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
       end
 
       it 'bind mount do not need ext volumes' do
