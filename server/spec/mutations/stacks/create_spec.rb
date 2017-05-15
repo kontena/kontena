@@ -477,4 +477,56 @@ describe Stacks::Create do
 
     end
   end
+
+  context "with an external stack" do
+    let(:stack2) do
+      Stacks::Create.run!(
+        grid: grid,
+        name: 'stack2',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: [
+          {name: 'foo', image: 'redis', stateful: false },
+          {name: 'bar', image: 'redis', stateful: false },
+        ]
+      )
+    end
+
+    let(:stack2_services_foo) do
+      stack2.grid_services.find_by(name: 'foo')
+    end
+
+    before do
+      stack2
+    end
+
+    it 'creates stack with external links' do
+      services = [
+        {
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: true,
+          links: [
+            {'name' => 'stack2/foo', 'alias' => 'foo'}
+          ]
+        }
+      ]
+      outcome = described_class.new(
+        grid: grid,
+        name: 'some-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: services
+      ).run
+
+      expect(outcome).to be_success
+      expect(outcome.result.stack_revisions.count).to eq(1)
+      expect(outcome.result.grid_services.find_by(name: 'redis').grid_service_links.map{|l| l.linked_grid_service}).to eq [stack2_services_foo]
+    end
+  end
 end
