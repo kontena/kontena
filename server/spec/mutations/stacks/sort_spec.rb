@@ -147,7 +147,7 @@ describe Stacks::SortHelper do
     ]}
 
     it "fails while sorting them" do
-      expect{subject.sort_services(services)}.to raise_error(Stacks::SortHelper::LinkError, 'service asdf has missing links: quux')
+      expect{subject.sort_services(services)}.to raise_error(Stacks::SortHelper::MissingLinkError, 'service asdf has missing links: quux')
     end
   end
 
@@ -174,7 +174,7 @@ describe Stacks::SortHelper do
     ]}
 
     it "fails while sorting them" do
-      expect{subject.sort_services(services)}.to raise_error(Stacks::SortHelper::LinkError, 'service foo has recursive links: ["asdf", ["bar", ["foo", [...]]]]')
+      expect{subject.sort_services(services)}.to raise_error(Stacks::SortHelper::RecursiveLinkError, 'service foo has recursive links: ["asdf", ["bar", ["foo", [...]]]]')
     end
   end
 

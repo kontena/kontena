@@ -277,6 +277,7 @@ describe Stacks::Create do
       ).run
       expect(outcome).to_not be_success
       expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "service api has missing links: redis" } }
+      expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :missing } }
     end
 
     it 'fails and does not create stack if a service links to itself' do
@@ -303,6 +304,7 @@ describe Stacks::Create do
         ).run
         expect(outcome).to_not be_success
         expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["api", [...]]' } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :recursive } }
       }.to change{ grid.stacks.count }.by(0)
     end
 
@@ -338,6 +340,7 @@ describe Stacks::Create do
         ).run
         expect(outcome).to_not be_success
         expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["bar", ["api", [...]]]' } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :recursive } }
       }.to change{ grid.stacks.count }.by(0)
     end
 

@@ -51,8 +51,10 @@ module Stacks
           handle_service_outcome_errors(grid_service.name, outcome.errors)
         end
       end
-    rescue LinkError => error
-      add_service_error(error.service, :links, :invalid, error.message)
+    rescue MissingLinkError => error
+      add_service_error(error.service, :links, :missing, error.message)
+    rescue RecursiveLinkError => error
+      add_service_error(error.service, :links, :recursive, error.message)
     end
 
     def execute

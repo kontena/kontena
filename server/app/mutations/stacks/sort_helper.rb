@@ -4,9 +4,35 @@ module Stacks
     class LinkError < StandardError
       attr_accessor :service
 
-      def initialize(service, *args)
-        super(*args)
+      def initialize(service)
+        super()
         @service = service
+      end
+    end
+
+    class MissingLinkError < LinkError
+      attr_accessor :link
+
+      def initialize(service, link)
+        super(service)
+        @link = link
+      end
+
+      def message
+        "service #{@service} has missing links: #{@link}"
+      end
+    end
+
+    class RecursiveLinkError < LinkError
+      attr_accessor :links
+
+      def initialize(service, links)
+        super(service)
+        @links = links
+      end
+
+      def message
+        "service #{@service} has recursive links: #{@links}"
       end
     end
 
@@ -14,8 +40,8 @@ module Stacks
     # This can only be used to sort services within the same stack. Links to services in other stacks are ignored.
     #
     # @param [Array<GridService,Hash>]
-    # @raise [LinkError] service ... has missing links: ...
-    # @raise [LinkError] service ... has recursive links: ...
+    # @raise [MissingLinkError] service ... has missing links: ...
+    # @raise [RecursiveLinkError] service ... has recursive links: ...
     # @return [Array<GridService,Hash>]
     def sort_services(services)
       # Map of service name to array of deep links, including links of linked services
@@ -34,7 +60,7 @@ module Stacks
           if linked_service_links = service_links[linked_service]
             service_links[service] << service_links[linked_service]
           else
-            raise LinkError.new(service), "service #{service} has missing links: #{linked_service}"
+            raise MissingLinkError.new(service, linked_service)
           end
         end
       end
@@ -46,7 +72,7 @@ module Stacks
         begin
           service_links[service].flatten!
         rescue ArgumentError
-          raise LinkError.new(service), "service #{service} has recursive links: #{links}"
+          raise RecursiveLinkError.new(service, links)
         end
       end
 
