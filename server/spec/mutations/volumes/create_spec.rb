@@ -56,6 +56,17 @@ describe Volumes::Create do
       expect(outcome.success?).to be_falsey
     end
 
+    it 'fails to create with invalid scope prefix' do
+      outcome = Volumes::Create.run(
+        grid: grid,
+        name: 'foo',
+        driver: 'local',
+        scope: 'foo-instance'
+      )
+      expect(outcome).to_not be_success
+      expect(outcome.errors.symbolic).to eq 'scope' => :in
+    end
+
     it 'fails to create volume with same name' do
       Volume.create!(grid: grid, name: 'foo', driver: 'local', scope: 'grid')
       expect {
