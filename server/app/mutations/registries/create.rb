@@ -5,7 +5,7 @@ module Registries
 
     required do
       model :grid
-      string :url, matches: /^https?:\/\/[\S]+$/
+      string :url, matches: /\Ahttps?:\/\/[\S]+\z/
       string :username
       string :password
       string :email
