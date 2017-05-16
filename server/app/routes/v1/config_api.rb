@@ -106,7 +106,7 @@ module V1
           params = request.params
           if params['filter']
             if params['filter'].end_with?('*')
-              regex = /^#{Regexp.escape(params['filter'].gsub(/\*/, ''))}/
+              regex = /\A#{Regexp.escape(params['filter'].gsub(/\*/, ''))}/
             else
               regex = Regexp.new(Regexp.escape(params['filter']))
             end
@@ -181,4 +181,3 @@ module V1
     end
   end
 end
-

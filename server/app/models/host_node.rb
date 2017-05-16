@@ -115,7 +115,7 @@ class HostNode
     if @region.nil?
       @region = 'default'.freeze
       self.labels.to_a.each do |label|
-        if match = label.match(/^region=(.+)/)
+        if match = label.match(/\Aregion=(.+)/)
           @region = match[1]
         end
       end
