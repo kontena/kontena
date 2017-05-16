@@ -66,6 +66,19 @@ describe Grids::Update, celluloid: true do
       expect(grid.reload.grid_logs_opts).to be_nil
     end
 
+    it 'fails to update log settings with multi-line driver' do
+      logs = {
+        forwarder: "fluentd\nfoobar",
+        opts: {
+          'fluentd-address': '192.168.0.42:24224'
+        }
+      }
+      expect{
+        outcome = described_class.new(user: user, grid: grid, logs: logs).run
+        expect(outcome).to_not be_success
+      }.to_not change{grid.reload.grid_logs_opts}.from(nil)
+    end
+
     it 'fails to update log settings with unsupported driver' do
       logs = {
         forwarder: 'foobar',

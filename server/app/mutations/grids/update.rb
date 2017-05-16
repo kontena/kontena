@@ -25,7 +25,7 @@ module Grids
       end
       hash :logs do
         required do
-          string :forwarder, matches: /^(fluentd|none)$/ # Only fluentd now supported, none removes log shipping
+          string :forwarder, in: ['fluentd', 'none'] # Only fluentd now supported, none removes log shipping
         end
         optional do
           model :opts, class: Hash
