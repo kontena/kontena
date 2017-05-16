@@ -105,11 +105,6 @@ class HostNode
     RpcClient.new(self.node_id, timeout)
   end
 
-  # @return [Integer]
-  def schedule_counter
-    @schedule_counter ||= 0
-  end
-
   def initial_member?
     return false if self.node_number.nil?
     return true if self.node_number <= self.grid.initial_size
