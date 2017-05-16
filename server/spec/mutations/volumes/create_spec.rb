@@ -19,6 +19,19 @@ describe Volumes::Create do
       }.to change {Volume.count}. by 0
     end
 
+    it 'fails validation on invalid name with newlines' do
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          name: "foo\nbar",
+          driver: 'local',
+          scope: 'instance'
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.symbolic).to eq 'name' => :matches
+      }.to_not change{Volume.count}
+    end
+
     it 'creates new grid volume' do
       expect {
         outcome = Volumes::Create.run(
