@@ -8,7 +8,7 @@ module GridCertificates
     include Common
     include Logging
 
-    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze    
+    LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
 
     required do
       model :grid, class: Grid
@@ -17,7 +17,7 @@ module GridCertificates
       array :domains do
         string
       end
-      string :cert_type, matches: /^(cert|chain|fullchain)$/, default: 'fullchain'
+      string :cert_type, in: ['cert', 'chain', 'fullchain'], default: 'fullchain'
     end
 
     def validate
@@ -76,7 +76,7 @@ module GridCertificates
         when 'cert'
           cert = certificate.to_pem
       end
-      
+
 
       secrets = []
       secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
