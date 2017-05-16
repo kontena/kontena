@@ -1,5 +1,3 @@
-require 'tty-table'
-
 module Kontena::Cli::ExternalRegistries
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
