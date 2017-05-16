@@ -9,7 +9,7 @@ module GridServices
     required do
       model :grid, class: Grid
       string :image
-      string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :name, matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
       boolean :stateful
     end
 
