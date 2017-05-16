@@ -11,8 +11,4 @@ describe Kontena::Cli::Containers::ListCommand do
       subject.run([])
     end
   end
-
-  context '#longest_string_in_array' do
-    expect(described_class.new('').longest_string_in_array(['a', 'bcd', 'ef'])).to eq 'bcd'
-  end
 end
