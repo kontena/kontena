@@ -223,6 +223,7 @@ describe AuthProvider do
   context "userinfo" do
     before(:each) do
       allow(client).to receive(:set_auth)
+      allow(client).to receive(:force_basic_auth=)
     end
 
     let(:client) { double }
