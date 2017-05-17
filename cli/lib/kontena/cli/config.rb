@@ -125,7 +125,7 @@ module Kontena
           authorization_endpoint: ENV['AUTH_AUTHORIZE_ENDPOINT'] || 'https://cloud.kontena.io/login/oauth/authorize',
           userinfo_endpoint: ENV['AUTH_USERINFO_ENDPOINT'] || 'https://cloud-api.kontena.io/user',
           token_post_content_type: ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] || 'application/x-www-form-urlencoded',
-          code_requires_basic_auth: ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].nil? ? false : (ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == true),
+          code_requires_basic_auth: ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == true,
           token_method: ENV['AUTH_TOKEN_METHOD'] || 'post',
           scope: ENV['AUTH_USERINFO_SCOPE'] || 'user',
           client_id: nil,
