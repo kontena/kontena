@@ -7,14 +7,12 @@ at_exit do
 end
 
 module Kontena
-  # Run a kontena command like it was launched from the command line.
-  #
-  # @example
-  #   Kontena.run("grid list --help")
+  # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
+  # except a SystemExit with status 0, which is considered a success.
   #
   # @param [String,Array<String>] command_line
-  # @return [Fixnum] exit_code
-  def self.run(*cmdline, returning: :status)
+  # @return command result or nil
+  def self.run!(*cmdline)
     if cmdline.first.kind_of?(Array)
       command = cmdline.first
     elsif cmdline.size == 1 && cmdline.first.include?(' ')
@@ -56,6 +54,18 @@ module Kontena
     @home = File.join(Dir.home, '.kontena')
     Dir.mkdir(@home, 0700) unless File.directory?(@home)
     @home
+  end
+
+  # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
+  # @param [String,Array<String>] command_line
+  # @return [TrueClass,FalseClass] success
+  def self.run(*cmdline)
+    result = run!(*cmdline)
+    result.nil? ? true : result
+  rescue SystemExit => ex
+    ex.status.zero?
+  rescue
+    false
   end
 
   # @return [String] x.y
