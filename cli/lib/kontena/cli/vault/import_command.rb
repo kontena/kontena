@@ -57,7 +57,7 @@ module Kontena::Cli::Vault
       unless updates.empty?
         spinner "Updating #{updates.size} secrets" do |spin|
           updates.each do |key_value_pair|
-            spin.fail! unless Kontena.run?(['vault', 'update', '--upsert', '--silent'] + key_value_pair)
+            spin.fail! unless Kontena.run(['vault', 'update', '--upsert', '--silent'] + key_value_pair)
           end
         end
       end
@@ -65,7 +65,7 @@ module Kontena::Cli::Vault
       unless deletes.empty? || skip_null?
         spinner "Deleting #{deletes.size} secrets" do |spin|
           deletes.map(&:shellescape).each do |key_to_delete|
-            spin.fail! unless Kontena.run?(['vault', 'rm', '--silent', '--force', key_to_delete])
+            spin.fail! unless Kontena.run(['vault', 'rm', '--silent', '--force', key_to_delete])
           end
         end
       end

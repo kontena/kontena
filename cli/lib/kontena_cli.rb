@@ -4,7 +4,7 @@ module Kontena
   #
   # @param [String,Array<String>] command_line
   # @return command result or nil
-  def self.run(*cmdline)
+  def self.run!(*cmdline)
     if cmdline.first.kind_of?(Array)
       command = cmdline.first
     elsif cmdline.size == 1 && cmdline.first.include?(' ')
@@ -28,9 +28,8 @@ module Kontena
   # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
   # @param [String,Array<String>] command_line
   # @return [TrueClass,FalseClass] success
-  def self.run?(*cmdline)
-    run(*cmdline)
-    true
+  def self.run(*cmdline)
+    run!(*cmdline)
   rescue SystemExit => ex
     ex.status.zero?
   rescue

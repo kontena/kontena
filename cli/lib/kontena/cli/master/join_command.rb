@@ -16,7 +16,7 @@ module Kontena::Cli::Master
 
       cmd = ['master', 'login'] + params
       cmd << url
-      Kontena.run(cmd)
+      Kontena.run!(cmd)
     end
   end
 end

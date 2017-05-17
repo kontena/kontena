@@ -23,7 +23,7 @@ module Kontena
         return unless config.current_master.name == command.result[:name]
 
         unless command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
-          Kontena.run?(['master', 'init-cloud'] + init_cloud_args)
+          Kontena.run(['master', 'init-cloud'] + init_cloud_args)
         end
       end
     end

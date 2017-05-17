@@ -20,7 +20,7 @@ module Kontena::Cli::Master
       args += ["--cloud-master-id", self.cloud_master_id.shellescape] if self.cloud_master_id
       args += ["--provider", self.provider.shellescape] if self.provider
       args += ["--version", self.version.shellescape] if self.version
-      Kontena.run(['cloud', 'master', 'add'] + args)
+      Kontena.run!(['cloud', 'master', 'add'] + args)
     end
   end
 end

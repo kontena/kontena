@@ -67,7 +67,7 @@ module Kontena::Cli::Master
         end
       end
       cmd = [cmd_class.to_s[/Plugin::(.+?)::/, 1].downcase, 'master', 'create'] + options
-      Kontena.run(cmd)
+      Kontena.run!(cmd)
     end
   end
 

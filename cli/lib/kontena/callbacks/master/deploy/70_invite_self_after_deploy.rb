@@ -40,7 +40,7 @@ module Kontena
         ENV["DEBUG"] && $stderr.puts("Got invite code: #{invite_response['invite_code']}")
 
         success = spinner "Adding master_admin role for #{cloud_user_data[:email]}" do |spin|
-          spin.fail! unless Kontena.run?(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]])
+          spin.fail! unless Kontena.run(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]])
           true
         end
 
@@ -48,14 +48,14 @@ module Kontena
 
         if current_master.grid
           spinner "Adding #{cloud_user_data[:email]} to grid '#{current_master.grid}'" do |spin|
-            spin.fail! unless Kontena.run?(["grid", "user", "add", "--grid", current_master.grid, cloud_user_data[:email]])
+            spin.fail! unless Kontena.run(["grid", "user", "add", "--grid", current_master.grid, cloud_user_data[:email]])
           end
         end
 
         return nil unless current_master.username.to_s == 'admin'
 
         new_user_token = spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
-          Kontena.run(["master", "token", "create", "-e", "0", "-s", "user", "--return", "-u", cloud_user_data[:email]])
+          Kontena.run!(["master", "token", "create", "-e", "0", "-s", "user", "--return", "-u", cloud_user_data[:email]])
         end
 
         master_name = current_master.name.dup
