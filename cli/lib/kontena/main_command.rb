@@ -51,6 +51,6 @@ class Kontena::MainCommand < Kontena::Command
   end
 
   def known_plugin_subcommand?(name)
-    ['vagrant', 'packet', 'digitalocean', 'azure', 'upcloud', 'aws'].include?(name)
+    ['vagrant', 'packet', 'digitalocean', 'azure', 'upcloud', 'aws', 'shell'].include?(name)
   end
 end

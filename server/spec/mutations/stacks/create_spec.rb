@@ -300,6 +300,29 @@ describe Stacks::Create do
       expect(outcome.errors.message).to eq 'services' => { 'foo' => {'name' => "Create failed"}, 'bar' => { 'links' => "Service soome-stack/foo does not exist"}}
     end
 
+    pending 'reports service error array outcomes' do
+      services = [
+        {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true,
+          env: [
+            'FOO',
+          ],
+        }
+      ]
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          services: services
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => {'env' => [ "Env[0] isn't in the right format" ]}}
+      }.to_not change{ grid.stacks.count }
+    end
+
     context 'volumes' do
       it 'creates stack with external volumes with name' do
         volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')

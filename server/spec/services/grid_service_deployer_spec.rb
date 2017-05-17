@@ -2,7 +2,7 @@
 describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
-  let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service) }
+  let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
   let(:node1) { HostNode.create!(node_id: SecureRandom.uuid, grid: grid) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
@@ -125,7 +125,7 @@ describe GridServiceDeployer do
             container_count: 2,
           )
         }
-        let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service) }
+        let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
         let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
 
         before do
@@ -166,6 +166,31 @@ describe GridServiceDeployer do
           grid_service_deploy.reload
 
           expect(grid_service_deploy).to be_error
+        end
+
+        it "fails the service deploy if aborted", :celluloid => true do
+          expect(subject).to receive(:deploy_service_instance).once.with(2, Array, 1, String) do |total_instances, deploy_futures, instance_number, deploy_rev|
+            grid_service_deploy.abort! "testing"
+
+            deploy_futures << Celluloid::Future.new {
+              grid_service_deploy.grid_service_instance_deploys.create(
+                instance_number: instance_number,
+                host_node: grid.host_nodes.first,
+                deploy_state: :success,
+              )
+            }
+          end
+
+          expect(subject).to_not receive(:deploy_service_instance)
+
+          subject.deploy
+          # TODO: expect first instance to get deployed, once the deployer waits for pending instance deploys to finish on errors
+          # expect{ ... }.to change{grid_service_deploy.grid_service_instance_deploys.count}.from(0).to(1)
+
+          grid_service_deploy.reload
+
+          expect(grid_service_deploy).to be_error
+          expect(grid_service_deploy.reason).to eq "halting deploy of test-grid/null/redis, deploy was aborted: testing"
         end
       end
     end

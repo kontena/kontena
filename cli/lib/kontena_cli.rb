@@ -119,21 +119,20 @@ module Kontena
   def self.logger
     return @logger if @logger
     if log_target.respond_to?(:tty?) && log_target.tty?
-      @logger = Logger.new(log_target)
-      @logger.datetime_format = "%M%S.%2N "
+      logger = Logger.new(log_target)
+      logger.datetime_format = "%M%S.%2N "
     else
-      @logger = Logger.new(log_target, 1, 65536)
-      @logger.formatter = ColorStrippingFormatter.new
+      logger = Logger.new(log_target, 1, 1_048_576)
+      logger.formatter = ColorStrippingFormatter.new
     end
-    @logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
-    @logger.progname = 'CLI'
-    @logger
+    logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    logger.progname = 'CLI'
+    @logger = logger
   end
 
   class ColorStrippingFormatter < Logger::Formatter
     def msg2str(msg)
-      msg.gsub!(/\e+\[{1,2}[0-9;:?]+m/m, '') if msg.kind_of?(String)
-      super(msg)
+      super(msg.kind_of?(String) ? msg.gsub(/\e+\[{1,2}[0-9;:?]+m/m, '') : msg)
     end
   end
 end

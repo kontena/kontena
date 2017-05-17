@@ -30,7 +30,7 @@ class GridServiceHealthMonitorJob
     min_health = service.deploy_opts.min_health || 0.8
     expected_health = 1 - min_health
     if health_percent < expected_health
-      service.running? && !service.deploy_outstanding?
+      service.running? && !service.deploying?
     else
       false
     end

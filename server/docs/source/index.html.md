@@ -648,6 +648,34 @@ Deploy a stack. Returns a stack deploy object that can be used for deploy tracki
 
 `POST /v1/stacks/{stack_id}/deploy`
 
+## Stop all stack services
+
+```http
+POST /v1/stacks/my-grid/redis/stop HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Stops all services in the stack.
+
+### Endpoint
+
+`POST /v1/stacks/{stack_id}/stop`
+
+## Restart all stack services
+
+```http
+POST /v1/stacks/my-grid/redis/restart HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Restart all services in the stack.
+
+### Endpoint
+
+`POST /v1/stacks/{stack_id}/restart`
+
 ## Delete a stack
 
 ```http
