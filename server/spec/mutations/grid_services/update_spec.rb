@@ -377,7 +377,7 @@ describe GridServices::Update do
             volumes: ['/data', '/foo']
           ).run
           expect(outcome).to_not be_success
-          expect(outcome.errors.message).to eq({ 'volumes' => [ "Adding a non-named volume is not supported to a stateful service" ]})
+          expect(outcome.errors.message).to eq({ 'volumes' => "Adding a non-named volume to a stateful service is not supported" })
 
         end
 
