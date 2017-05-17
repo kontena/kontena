@@ -20,9 +20,6 @@ module Kontena::Cli::Master
     end
 
     def execute
-
-      commands_list.insert('--') unless commands_list.empty?
-
       if master_provider == 'vagrant'
         unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
@@ -40,4 +37,3 @@ module Kontena::Cli::Master
     end
   end
 end
-

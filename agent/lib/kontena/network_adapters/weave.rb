@@ -13,10 +13,6 @@ module Kontena::NetworkAdapters
     include Kontena::Logging
     include Kontena::Observer
 
-    WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.9.3'
-    WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
-    WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
-
     DEFAULT_NETWORK = 'kontena'.freeze
 
     finalizer :finalizer
@@ -50,40 +46,15 @@ module Kontena::NetworkAdapters
       # If Celluloid manages to terminate the pool (through GC or by explicit shutdown) it will raise
     end
 
-    # @return [String]
-    def weave_version
-      WEAVE_VERSION
+    def api_client
+      @api_client ||= Excon.new("http://127.0.0.1:6784")
     end
 
-    # @return [String]
-    def weave_image
-      "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
-    end
-
-    # @return [String]
-    def weave_exec_image
-      "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
-    end
-
-    # @param [Docker::Container] container
-    # @return [Boolean]
-    def adapter_container?(container)
-      adapter_image?(container.config['Image'])
-    rescue Docker::Error::NotFoundError
-      false
-    end
-
-    # @param [String] image
-    # @return [Boolean]
-    def adapter_image?(image)
-      image.to_s.include?(WEAVEEXEC_IMAGE)
-    rescue
-      false
-    end
-
-    def router_image?(image)
-      image.to_s == "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
-    rescue
+    def weave_api_ready?
+      # getting status should be pretty fast, set low timeouts to fail faster
+      response = api_client.get(path: '/status', :connect_timeout => 5, :read_timeout => 5)
+      response.status == 200
+    rescue Excon::Error
       false
     end
 

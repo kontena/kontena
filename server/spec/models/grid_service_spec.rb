@@ -310,16 +310,16 @@ describe GridService do
       expect(subject).to receive(:env).and_return(
         [
           'FOO=bar',
+          'FOO=BAR=bar',
           'BAR=',
-          'BAZ\=BUZ=foo',
           'DOG'
         ]
       )
       expect(subject.env_hash).to eq(
         {
           'FOO' => 'bar',
+          'FOO' => 'BAR=bar',
           'BAR' => '',
-          'BAZ\=BUZ' => 'foo',
           'DOG' => nil
         }
       )
