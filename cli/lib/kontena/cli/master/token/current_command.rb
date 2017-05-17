@@ -33,7 +33,7 @@ module Kontena::Cli::Master::Token
         exit 0
       end
 
-      Kontena.run("master token show #{current_master.token.access_token}")
+      Kontena.run!(['master', 'token', 'show',  current_master.token.access_token])
     end
   end
 end

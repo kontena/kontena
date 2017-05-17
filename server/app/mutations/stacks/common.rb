@@ -24,16 +24,11 @@ module Stacks
     end
 
     # @param [Hash] service
-    def validate_service_links(service)
+    # @return [Array<Hash>] links to external services
+    def select_external_service_links(service)
       links = service[:links] || []
-      internal_links = links.select{ |l| !l['name'].include?('/') }
-      links = links - internal_links
-      internal_links.each do |l|
-        unless self.services.any?{|s| s[:name] == l['name']}
-          add_error("services.#{service['name']}.links", :not_found, "Linked service '#{l['name']}' does not exist")
-        end
-      end
-      service[:links] = links
+      external_links = links.select{ |l| l['name'].include?('/') }
+      external_links
     end
 
     def validate_volumes

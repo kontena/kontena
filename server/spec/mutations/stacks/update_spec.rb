@@ -14,6 +14,10 @@ describe Stacks::Update do
     ).result
   }
 
+  let(:service) {
+    stack.grid_services.find_by(name: 'redis')
+  }
+
   describe '#run' do
     it 'updates stack and creates a new revision' do
       services = [{name: 'redis', image: 'redis:3.0', stateful: true}]
@@ -88,6 +92,76 @@ describe Stacks::Update do
         expect(outcome.success?).to be_falsey
       }.not_to change { [Volume.count, stack.latest_rev] }
     end
+
+    it 'fails to add missing links' do
+      services = [
+        {name: 'redis', image: 'redis:3.0', links: [
+            {name: 'foo', alias: 'foo'},
+        ]},
+      ]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
+      expect {
+        outcome = subject.run
+
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => 'service redis has missing links: foo' } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => :missing } }
+      }.to_not change{ service.reload.grid_service_links }
+    end
+
+    it 'fails to add recursive links' do
+      services = [
+        {name: 'redis', image: 'redis:3.0', links: [
+            {name: 'redis', alias: 'redis'},
+        ]},
+      ]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
+      expect {
+        outcome = subject.run
+
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => 'service redis has recursive links: ["redis", [...]]' } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => :recursive } }
+      }.to_not change{ service.reload.grid_service_links }
+    end
+
+    it 'fails to add external links to missing stack' do
+      stack2 =
+      services = [
+        {name: 'redis', image: 'redis:3.0', links: [
+            {name: 'stack2/foo', alias: 'foo'},
+        ]},
+      ]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
+      expect {
+        outcome = subject.run
+
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => "Link stack2/foo points to non-existing stack" } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => :not_found } }
+      }.to_not change{ service.reload.grid_service_links }
+    end
   end
 
   context "for a stack with externally linked services" do
@@ -160,6 +234,50 @@ describe Stacks::Update do
 
       outcome = subject.run
       expect(outcome).to be_success
+    end
+  end
+
+  context "for an external stack" do
+    let(:stack2) do
+      Stacks::Create.run!(
+        grid: grid,
+        name: 'stack2',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: [
+          {name: 'foo', image: 'redis', stateful: false },
+          {name: 'bar', image: 'redis', stateful: false },
+        ]
+      )
+    end
+
+    before do
+      stack2
+    end
+
+    it 'fails to add external link to missing service' do
+      services = [
+        {name: 'redis', image: 'redis:3.0', links: [
+            {name: 'stack2/asdf', alias: 'asdf'},
+        ]},
+      ]
+      subject = described_class.new(
+        stack_instance: stack,
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: services
+      )
+      expect {
+        outcome = subject.run
+
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => "Service stack2/asdf does not exist" } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => :not_found } }
+      }.to_not change{ service.reload.grid_service_links }
     end
   end
 end

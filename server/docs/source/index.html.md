@@ -32,7 +32,7 @@ The API documentation will start with a general overview about the design and te
 ```shell
 # With shell, you can just pass the correct header with each request
 curl "api_endpoint_here"
-  -H "Authorization: bearer <access_token>"
+  -H "Authorization: Bearer <access_token>"
 ```
 
 > Make sure to replace `<access_token>` with your API key.
@@ -84,7 +84,7 @@ trusted_subnets | Array of subnets that can use faster network mode (without enc
 
 ```http
 GET /v1/grids HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -99,7 +99,7 @@ Lists all grids that logged in user has access.
 
 ```http
 POST /v1/grids HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Content-Type: application/json
 Accept: application/json
 
@@ -130,7 +130,7 @@ initial_size | Initial (minimum) number of nodes in the grid (initial members ar
 
 ```http
 PUT /v1/grids/my-grid HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Content-Type: application/json
 Accept: application/json
 
@@ -160,7 +160,7 @@ trusted_subnets | Initial (minimum) number of nodes in the grid (initial members
 
 ```http
 GET /v1/grids/my-grid HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -174,7 +174,7 @@ Get all the details of a specific grid.
 
 ```http
 DELETE /v1/grids/my-grid HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -192,7 +192,7 @@ Only `master_admin` role can remove a grid.
 
 ```http
 GET /v1/grids/my-grid/stats HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -214,7 +214,7 @@ sort | The stat to sort results by (always descending).  Possible values are `cp
 
 ```http
 GET /v1/grids/my-grid/metrics HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -237,7 +237,7 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
 ```http
 GET /v1/grids/my-grid/container_logs HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -260,7 +260,7 @@ follow | Stream logs
 
 ```http
 GET /v1/grids/my-grid/event_logs HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -391,7 +391,7 @@ grid | A grid object where the node is connected.
 
 ```http
 GET /v1/grids/my-grid/nodes HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -405,7 +405,7 @@ Lists all nodes in a grid.
 
 ```http
 PUT /v1/nodes/mygrid/misty-sun-87 HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 {
@@ -423,7 +423,7 @@ Update a node details.
 
 ```http
 GET /v1/nodes/my-grid/misty-sun-87 HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -437,7 +437,7 @@ Get a node details.
 
 ```http
 DELETE /v1/nodes/my-grid/misty-sun-87 HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -451,7 +451,7 @@ Delete a node from a grid. Does not actually terminate virtual/physical host nod
 
 ```http
 GET /v1/nodes/my-grid/misty-sun-87/stats HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -473,7 +473,7 @@ sort | The stat to sort results by (always descending).  Possible values are `cp
 
 ```http
 GET /v1/nodes/my-grid/misty-sun-87/metrics HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -595,7 +595,7 @@ external | Name of the grid level volume definition to use
 
 ```http
 POST /v1/grids/my-grid/stacks HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 {
@@ -617,7 +617,7 @@ Create a stack.
 
 ```http
 PUT /v1/stacks/my-grid/redis HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 {
@@ -638,7 +638,7 @@ Modify a stack
 
 ```http
 POST /v1/stacks/my-grid/redis/deploy HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -652,7 +652,7 @@ Deploy a stack. Returns a stack deploy object that can be used for deploy tracki
 
 ```http
 POST /v1/stacks/my-grid/redis/stop HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -666,7 +666,7 @@ Stops all services in the stack.
 
 ```http
 POST /v1/stacks/my-grid/redis/restart HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -680,7 +680,7 @@ Restart all services in the stack.
 
 ```http
 DELETE /v1/stacks/my-grid/redis HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -694,7 +694,7 @@ Delete a stack
 
 ```http
 GET /v1/stacks/my-grid/redis HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -708,7 +708,7 @@ Get a stack details.
 
 ```http
 GET /v1/stacks/my-grid/redis/container_logs HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -731,7 +731,7 @@ follow | Stream logs
 
 ```http
 GET /v1/stacks/my-grid/redis/event_logs HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -917,7 +917,7 @@ type | How secret is exposed to a service container
 
 ```http
 GET /v1/grids/my-grid/services HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -931,7 +931,7 @@ Lists all services in a grid.
 
 ```http
 POST /v1/grids/my-grid/services HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -952,7 +952,7 @@ Creates a service to a grid.
 
 ```http
 PUT /v1/services/my-grid/null/redis HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -971,7 +971,7 @@ Creates a service to a grid.
 
 ```http
 POST /v1/services/my-grid/null/redis/deploy HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -988,7 +988,7 @@ Deploys a service. Response is a json object that contains deployment id that ca
 
 ```http
 POST /v1/services/my-grid/null/redis/start HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1005,7 +1005,7 @@ Sends a start signal to the service instances and changes the service desired st
 
 ```http
 POST /v1/services/my-grid/null/redis/restart HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1022,7 +1022,7 @@ Sends a restart signal to the service instances.
 
 ```http
 POST /v1/services/my-grid/null/redis/stop HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1039,7 +1039,7 @@ Sends a stop signal to the service instances and changes the service desired sta
 
 ```http
 POST /v1/services/my-grid/null/redis/scale HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1058,7 +1058,7 @@ Scales services instances to given number. Returns a json object that contains d
 
 ```http
 DELETE /v1/services/my-grid/null/redis HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1072,7 +1072,7 @@ Removes the service from the grid.
 
 ```http
 GET /v1/services/my-grid/null/redis/container_logs HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1095,7 +1095,7 @@ follow | Stream logs
 
 ```http
 GET /v1/services/my-grid/null/redis/event_logs HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1118,7 +1118,7 @@ follow | Stream logs
 
 ```http
 GET /v1/services/my-grid/null/redis/deploys/893723489789 HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1132,7 +1132,7 @@ Removes the service from the grid.
 
 ```http
 GET /v1/services/my-grid/null/redis/stats HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1154,7 +1154,7 @@ sort | The stat to sort results by (always descending).  Possible values are `cp
 
 ```http
 GET /v1/services/my-grid/null/redis/metrics HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1195,7 +1195,7 @@ value | A value for the secret (encrypted in the database)
 
 ```http
 GET /v1/services/my-grid/secrets HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1209,7 +1209,7 @@ List all secrets in a grid.
 
 ```http
 POST /v1/services/my-grid/secrets HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1230,7 +1230,7 @@ Create a secret.
 
 ```http
 PUT /v1/secrets/my-grid/SECRET_PWD HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1251,7 +1251,7 @@ Update (or upsert) a secret.
 
 ```http
 GET /v1/secrets/my-grid/SECRET_PWD HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1265,7 +1265,7 @@ Read a secret.
 
 ```http
 DELETE /v1/secrets/my-grid/SECRET_PWD HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1293,7 +1293,7 @@ Delete a secret.
 
 ```http
 GET /v1/grids/my-grid/external_registries HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1307,7 +1307,7 @@ List external registries in a grid.
 
 ```http
 POST /v1/grids/my-grid/external_registries HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1329,7 +1329,7 @@ Create an external registry.
 
 ```http
 DELETE /v1/external_registries/my-grid/registry.domain.com HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1347,7 +1347,7 @@ Let's Encrypt certificate management.
 
 ```http
 POST /v1/certificates/my-grid/register HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1366,7 +1366,7 @@ Register email to Let's Encrypt.
 
 ```http
 POST /v1/certificates/my-grid/authorize HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1394,7 +1394,7 @@ record_content | A record content for the given domain
 
 ```http
 POST /v1/certificates/my-grid/certificate HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1460,7 +1460,7 @@ Lists volumes created to a grid
 
 ```http
 GET /v1/volumes/{grid_id} HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1472,7 +1472,7 @@ Accept: application/json
 
 ```http
 POST /v1/volumes/{grid_id} HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 {
@@ -1496,7 +1496,7 @@ Creates a volume to a grid
 
 ```http
 DELETE /v1/volumes/{volume_id} HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 ### Endpoint
@@ -1520,7 +1520,7 @@ Kontena Master configuration object.
 
 ```http
 GET /v1/config HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1535,7 +1535,7 @@ Get the configuration object.
 
 ```http
 PATCH /v1/config HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1555,7 +1555,7 @@ Update/upsert configuration key-value pairs.
 
 ```http
 PUT /v1/config HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 Content-Type: application/json
 
@@ -1606,7 +1606,7 @@ Standard OAuth2 token endpoint. Returns an [access token](#access-token).
 
 ```http
 GET /cb HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 code=s8d9f9sd8yfsdy&state=s89dfs98dfys8d9fy
@@ -1629,7 +1629,7 @@ state | OAuth2 code request
 
 ```http
 POST /oauth2/authorize HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 
 response_type=access_token&expires_in=7200
@@ -1676,7 +1676,7 @@ user | A user that owns the access token
 
 ```http
 GET /oauth2/tokens HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1690,7 +1690,7 @@ List access tokens that belong to current user.
 
 ```http
 GET /oauth2/tokens/09348203840328023948 HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
@@ -1704,7 +1704,7 @@ Get an access token details.
 
 ```http
 DELETE /oauth2/tokens/09348203840328023948 HTTP/1.1
-Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
