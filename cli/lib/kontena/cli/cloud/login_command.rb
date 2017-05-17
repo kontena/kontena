@@ -8,6 +8,7 @@ module Kontena::Cli::Cloud
     option ['-c', '--code'], '[CODE]', 'Use an authorization code'
     option ['-v', '--verbose'], :flag, 'Increase output verbosity'
     option ['-f', '--force'], :flag, 'Force reauthentication'
+    option ['-r', '--remote'], :flag, 'Remote login'
 
     def execute
       if self.code && self.force?
@@ -35,8 +36,11 @@ module Kontena::Cli::Cloud
           finish and return
         end
       end
-
-      web_flow
+      if remote?
+        remote_login
+      else
+        web_flow
+      end
       finish
     end
 
@@ -49,6 +53,37 @@ module Kontena::Cli::Cloud
       display_logo
       display_login_info(only: :account)
       true
+    end
+
+    def remote_login
+      client_id = kontena_account.client_id || Kontena::Client::CLIENT_ID
+      params = {
+        client_id: client_id
+      }
+      cloud_url = kontena_account.url
+      client = Kontena::Client.new(cloud_url, nil)
+      auth_request_response = client.post('/auth_requests', {}, params)
+      verification_uri = URI.parse(auth_request_response['verification_uri'])
+      puts "Please visit #{verification_uri.to_s.colorize(:cyan)} and enter the code"
+      puts
+      puts "#{auth_request_response['user_code']}"
+      puts
+      puts "Once the authentication is complete you can close the browser"
+      puts "window or tab and return to this window to continue."
+      puts
+
+      code_request_params = {
+        client_id: client_id,
+        device_code: auth_request_response['device_code']
+      }
+      code_response = nil
+      spinner "Waiting for authentication" do
+        until code_response do
+          code_response = client.post("/auth_requests/code", {}, code_request_params) rescue nil
+          sleep 1
+        end
+      end
+      update_token(code_response)
     end
 
     def web_flow
