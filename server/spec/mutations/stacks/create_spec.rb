@@ -423,7 +423,7 @@ describe Stacks::Create do
       expect(outcome.errors.message).to eq 'services' => { 'foo' => {'name' => "Create failed"}, 'bar' => { 'links' => "Service soome-stack/foo does not exist"}}
     end
 
-    pending 'reports service error array outcomes' do
+    it 'reports service error array outcomes' do
       services = [
         {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true,
           env: [
