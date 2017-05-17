@@ -15,8 +15,8 @@ module Kontena
         require 'shellwords'
 
         cmd = ['master', 'config', 'set', "server.provider=#{command.result[:provider]}"]
-        spinner "Setting Master configuration server.provider to '#{command.result[:provider]}'" do
-          Kontena.run(cmd.shelljoin)
+        spinner "Setting Master configuration server.provider to '#{command.result[:provider]}'" do |spin|
+          spin.fail! unless Kontena.run(cmd)
         end
       end
     end

@@ -26,7 +26,7 @@ module Kontena::Cli::Stacks
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         create_stack(stack)
       end
-      Kontena.run("stack deploy #{stack['name']}") if deploy?
+      Kontena.run!(['stack', 'deploy', stack['name']]) if deploy?
     end
 
     def create_stack(stack)

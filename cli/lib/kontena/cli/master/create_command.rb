@@ -66,9 +66,8 @@ module Kontena::Cli::Master
           end
         end
       end
-      command = cmd_class.to_s[/Plugin::(.+?)::/, 1].downcase
-      command << " master create #{options.join(" ")}"
-      Kontena.run(command)
+      cmd = [cmd_class.to_s[/Plugin::(.+?)::/, 1].downcase, 'master', 'create'] + options
+      Kontena.run!(cmd)
     end
   end
 
