@@ -153,10 +153,7 @@ module Kontena::Cli::Stacks
     end
 
     def stacks_client
-      return @stacks_client if @stacks_client
-      Kontena.run('cloud login') unless cloud_auth?
-      config.reset_instance
-      @stacks_client = Kontena::StacksClient.new(kontena_account.stacks_url, kontena_account.token)
+      @stacks_client ||= Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)
     end
   end
 end

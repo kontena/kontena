@@ -4,7 +4,7 @@ module Kontena::Cli::Cloud
   class LoginCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token', environment_variable: 'KONTENA_ACCOUNT_TOKEN'
+    option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token', environment_variable: 'KONTENA_CLOUD_TOKEN'
     option ['-c', '--code'], '[CODE]', 'Use an authorization code'
     option ['-v', '--verbose'], :flag, 'Increase output verbosity'
     option ['-f', '--force'], :flag, 'Force reauthentication'
