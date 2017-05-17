@@ -18,6 +18,21 @@ describe Kontena::Cli::Stacks::InstallCommand do
       }
     end
 
+    let(:stack_with_messages) do
+      stack.merge(
+        services: [
+          {
+            'name' => 'wordpress',
+            'hooks' => {
+              'post_install' => [
+                { 'message' => 'Hello from post install' }
+              ]
+            }
+          }
+        ]
+      )
+    end
+
     expect_to_require_current_master
     expect_to_require_current_master_token
 
@@ -54,6 +69,14 @@ describe Kontena::Cli::Stacks::InstallCommand do
         'grids/test-grid/stacks', stack
       )
       subject.run(['user/stack:1.0.0'])
+    end
+
+    it 'displays post install messages' do
+      allow(File).to receive(:exist?).with('kontena.yml').and_return(true)
+      allow(subject).to receive(:require_config_file).with('kontena.yml').and_return(true)
+      allow(subject).to receive(:stack_from_yaml).and_return(stack_with_messages)
+      allow(client).to receive(:post).and_return(true)
+      expect{subject.run(['user/stack:1.0.0'])}.to output(/Hello from post install/).to_stdout
     end
   end
 end

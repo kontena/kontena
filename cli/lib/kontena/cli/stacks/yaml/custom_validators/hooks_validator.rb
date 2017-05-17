@@ -23,6 +23,24 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
       if value['post_start']
         validate_post_start_hooks(key, value['post_start'], errors)
       end
+
+      if value['post_install']
+        validate_post_install_hooks(key, value['post_install'], errors)
+      end
+    end
+
+    def validate_post_install_hooks(key, post_install_hooks, errors)
+      unless post_install_hooks.is_a?(Array)
+        errors[key] = 'post_install must be array'
+        return
+      end
+      post_install_validation = {
+        'message' => 'string'
+      }
+      validator = HashValidator.validator_for(post_install_validation)
+      post_install_hooks.each do |post_install|
+        validator.validate('hooks.post_install', post_install, post_install_validation, errors)
+      end
     end
 
     def validate_pre_build_hooks(key, pre_build_hooks, errors)

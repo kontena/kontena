@@ -26,7 +26,20 @@ module Kontena::Cli::Stacks
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         create_stack(stack)
       end
+      display_post_install_messages(stack)
       Kontena.run("stack deploy #{stack['name']}") if deploy?
+    end
+
+    def display_post_install_messages(stack)
+      Array(stack[:services] || stack['services']).each do |service|
+        next unless service['hooks']
+        next unless service['hooks']['post_install']
+        service['hooks']['post_install'].each do |pi|
+          puts "Service #{pastel.cyan(service['name'])} post install message:"
+          puts
+          puts pi['message'] if pi['message']
+        end
+      end
     end
 
     def create_stack(stack)
