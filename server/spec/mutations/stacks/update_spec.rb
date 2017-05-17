@@ -158,8 +158,8 @@ describe Stacks::Update do
         outcome = subject.run
 
         expect(outcome).to_not be_success
-        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => "Link stack2/foo points to non-existing stack" } }
-        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => :not_found } }
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => [ "Link stack2/foo points to non-existing stack" ] } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => [:not_found] } }
       }.to_not change{ service.reload.grid_service_links }
     end
   end
@@ -275,8 +275,8 @@ describe Stacks::Update do
         outcome = subject.run
 
         expect(outcome).to_not be_success
-        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => "Service stack2/asdf does not exist" } }
-        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => :not_found } }
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => { 'links' => [ "Service stack2/asdf does not exist" ] } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'redis' => { 'links' => [:not_found] } }
       }.to_not change{ service.reload.grid_service_links }
     end
   end
