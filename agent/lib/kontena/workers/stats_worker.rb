@@ -106,8 +106,8 @@ module Kontena::Workers
       interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
       network_traffic = calculate_network_traffic(prev_stat, current_stat)
 
-      container_spec = container.dig(:spec)
-      container_spec.delete(:labels) if container_spec
+      container_spec = container[:spec]
+      container_spec.delete(:labels) if container_spec.is_a?(Hash) && container_spec.has_key?(:labels)
       data = {
         id: id,
         spec: container_spec,
