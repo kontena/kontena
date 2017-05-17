@@ -221,6 +221,10 @@ describe AuthProvider do
   end
 
   context "userinfo" do
+    before(:each) do
+      allow(client).to receive(:set_auth)
+    end
+
     let(:client) { double }
     let(:success_response) {
       OpenStruct.new(headers: OpenStruct.new("Content-Type" => "application/json"), body: '{"user": { "id" : "userid", "email" : "email", "username" : "username" } }')
