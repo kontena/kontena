@@ -228,7 +228,7 @@ class Kontena::Command < Clamp::Command
   rescue => ex
     raise ex if ENV['DEBUG']
     Kontena.logger.error(ex)
-    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{$LOG_TARGET} or run the command again with environment DEBUG=true set to see the full exception")
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{Kontena.log_target} or run the command again with environment DEBUG=true set to see the full exception")
   end
 end
 
