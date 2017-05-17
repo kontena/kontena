@@ -89,7 +89,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
       allow(client).to receive(:put).with(
         'stacks/test-grid/stack-a', anything
       ).and_return({})
-      expect(Kontena).to receive(:run).with(['stack', 'deploy', 'stack-a']).once
+      expect(Kontena).to receive(:run!).with(['stack', 'deploy', 'stack-a']).once
       subject.run(['stack-a', './path/to/kontena.yml'])
     end
 
@@ -101,7 +101,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
         allow(client).to receive(:put).with(
           'stacks/test-grid/stack-a', anything
         ).and_return({})
-        expect(Kontena).not_to receive(:run).with(['stack', 'deploy', 'stack-a'])
+        expect(Kontena).not_to receive(:run!).with(['stack', 'deploy', 'stack-a'])
         subject.run(['--no-deploy', 'stack-a', './path/to/kontena.yml'])
       end
     end

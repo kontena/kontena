@@ -15,16 +15,16 @@ describe Kontena::Cli::Vault::ExportCommand do
   end
 
   it 'goes through the list of vault keys and outputs a yaml' do
-    expect(Kontena).to receive(:run).with(/^vault ls/, returning: :result).and_return(['foo', 'bar'])
-    expect(Kontena).to receive(:run).with(/^vault read.*bar/, returning: :result).and_return('barbar')
-    expect(Kontena).to receive(:run).with(/^vault read.*foo/, returning: :result).and_return('foofoo')
+    expect(Kontena).to receive(:run!).with(['vault', 'ls', '--return']).and_return(['foo', 'bar'])
+    expect(Kontena).to receive(:run!).with(['vault', 'read', '--return', 'bar']).and_return('barbar')
+    expect(Kontena).to receive(:run!).with(['vault', 'read', '--return', 'foo']).and_return('foofoo')
     expect{subject.run([])}.to output(/bar: barbar\nfoo: foofoo/).to_stdout
   end
 
   it 'goes through the list of vault keys and outputs a json' do
-    expect(Kontena).to receive(:run).with(/^vault ls/, returning: :result).and_return(['foo', 'bar'])
-    expect(Kontena).to receive(:run).with(/^vault read.*bar/, returning: :result).and_return('barbar')
-    expect(Kontena).to receive(:run).with(/^vault read.*foo/, returning: :result).and_return('foofoo')
+    expect(Kontena).to receive(:run!).with(['vault', 'ls', '--return']).and_return(['foo', 'bar'])
+    expect(Kontena).to receive(:run!).with(['vault', 'read', '--return', 'bar']).and_return('barbar')
+    expect(Kontena).to receive(:run!).with(['vault', 'read', '--return', 'foo']).and_return('foofoo')
     expect{subject.run(['--json'])}.to output(/\"bar\":\"barbar\",\"foo\":\"foofoo\"/).to_stdout
   end
 

@@ -30,39 +30,38 @@ describe Kontena::Cli::Vault::ImportCommand do
 
   it 'runs vault write for kv-pairs in yaml' do
     expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\nbar: foo\n")
-    expect(Kontena).to receive(:run).with(/vault update.*foo bar/).and_return(0)
-    expect(Kontena).to receive(:run).with(/vault update.*bar foo/).and_return(0)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'foo', 'bar']).and_return(true)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'bar', 'foo']).and_return(true)
     subject.run(['--force', 'foo.yml'])
   end
 
   it 'runs vault rm for kv-pairs with null value in yaml' do
     expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\nbar: null\n")
-    expect(Kontena).to receive(:run).with(/vault update.*foo bar/).and_return(0)
-    expect(Kontena).to receive(:run).with(/vault rm.*bar/).and_return(0)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'foo', 'bar']).and_return(true)
+    expect(Kontena).to receive(:run).with(['vault', 'rm', '--silent', '--force', 'bar']).and_return(true)
     subject.run(['--force', 'foo.yml'])
   end
 
   it 'runs vault rm for kv-pairs with empty value in yaml when --empty-is-null' do
     expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\nbar:\n")
-    expect(Kontena).to receive(:run).with(/vault update.*foo bar/).and_return(0)
-    expect(Kontena).to receive(:run).with(/vault rm.*bar/).and_return(0)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'foo', 'bar']).and_return(true)
+    expect(Kontena).to receive(:run).with(['vault', 'rm', '--silent', '--force', 'bar']).and_return(true)
     subject.run(['--force', '--empty-is-null', 'foo.yml'])
   end
 
   it 'does not run vault rm for kv-pairs with empty value in yaml when no --empty-is-null' do
     expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\nbar: \"\"\n")
-    expect(Kontena).to receive(:run).with(/vault update.*foo bar/).and_return(0)
-    expect(Kontena).to receive(:run).with(/vault update.*bar ''/).and_return(0)
-    expect(Kontena).not_to receive(:run).with(/vault rm.*bar/)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'foo', 'bar']).and_return(true)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'bar', '']).and_return(true)
+    expect(Kontena).not_to receive(:run).with(['vault', 'rm', '--silent', '--force', 'bar'])
     subject.run(['--force', 'foo.yml'])
   end
 
   it 'doesnt vault rm for kv-pairs with null value in yaml when --skip-null used' do
     expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\nbar: null\n")
-    expect(Kontena).to receive(:run).with(/vault update.*foo bar/).and_return(0)
-    expect(Kontena).not_to receive(:run).with(/vault rm.*bar/)
+    expect(Kontena).to receive(:run).with(['vault', 'update', '--upsert', '--silent', 'foo', 'bar']).and_return(true)
+    expect(Kontena).not_to receive(:run).with(['vault', 'rm', '--silent', '--force', 'bar'])
     subject.run(['--force', '--skip-null', 'foo.yml'])
   end
-
 end
 

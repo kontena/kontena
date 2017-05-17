@@ -16,7 +16,7 @@ module Kontena::Cli::Master
     end
 
     def master_provider
-      Kontena.run('master config get --return server.provider', returning: :result)
+      Kontena.run!(%w(master config get --return server.provider))
     end
 
     def execute
@@ -26,7 +26,7 @@ module Kontena::Cli::Master
         end
         cmd = ['vagrant', 'master', 'ssh']
         cmd += commands_list
-        Kontena.run(cmd)
+        Kontena.run!(cmd)
       else
         cmd = ['ssh']
         cmd << "#{user}@#{master_host}"
