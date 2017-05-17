@@ -59,6 +59,27 @@ module V1
               {error: outcome.errors.message}
             end
           end
+
+          r.on 'plugins' do
+            r.on 'install' do
+              puts "****** plugins/install"
+              data = parse_json_body rescue {}
+              data[:grid] = @grid
+              outcome = Volumes::PluginInstall.run(data)
+              if outcome.success?
+                #@volume = outcome.result
+                #audit_event(r, @volume.grid, @volume, 'create', @volume)
+                response.status = 201
+                #render('volumes/show')
+                {}
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+            
+          end
+          
         end
         r.delete do
           r.is ':volume' do |volume|

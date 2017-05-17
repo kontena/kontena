@@ -5,5 +5,6 @@ class Kontena::Cli::VolumeCommand < Kontena::Command
   subcommand "show", "Show details of a volume", load_subcommand('volumes/show_command')
   subcommand ["remove", "rm"], "Remove a managed volume", load_subcommand('volumes/remove_command')
   subcommand ["list", "ls"], "List managed volumes", load_subcommand('volumes/list_command')
+  subcommand 'driver', "Manage volume plugins", load_subcommand('volumes/driver_command')
 
 end

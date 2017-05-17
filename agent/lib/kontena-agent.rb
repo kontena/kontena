@@ -49,6 +49,8 @@ require_relative 'kontena/workers/fluentd_worker'
 require_relative 'kontena/workers/service_pod_manager'
 require_relative 'kontena/workers/volumes/volume_manager'
 
+require_relative 'kontena/plugins/plugin_manager'
+
 require_relative 'kontena/actors/container_coroner'
 
 require_relative 'kontena/load_balancers/configurer'

@@ -4,6 +4,7 @@ require_relative 'rpc/etcd_api'
 require_relative 'rpc/service_pods_api'
 require_relative 'rpc/lb_api'
 require_relative 'rpc/volumes_api'
+require_relative 'rpc/plugins_api'
 require_relative 'logging'
 
 module Kontena
@@ -17,7 +18,8 @@ module Kontena
         'volumes' => Kontena::Rpc::VolumesApi,
         'agent' => Kontena::Rpc::AgentApi,
         'etcd' => Kontena::Rpc::EtcdApi,
-        'load_balancers' => Kontena::Rpc::LbApi
+        'load_balancers' => Kontena::Rpc::LbApi,
+        'plugins' => Kontena::Rpc::PluginsApi
     }
 
     class Error < StandardError
