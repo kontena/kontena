@@ -145,23 +145,29 @@ module GridServices
       end
     end
 
-    # @param stateful_volumes [Array<ServiceVolume>] existing anonymous volumes on stateful service
-    def validate_volumes(stateful_volumes: nil)
-      validate_each :volumes do |volume|
-        begin
-          v = parse_volume(volume)
-        rescue ArgumentError => exc
-          v = nil
-        end
+    # @param volume [String]
+    # @return [Array{Symbol, String}] for validate_each
+    def validate_volume(volume, stateful_volumes: nil)
+      begin
+        v = parse_volume(volume)
+      rescue ArgumentError => exc
+        return [:invalid, exc.message]
+      end
 
-        if v.nil?
-          [:invalid, exc.message]
-        elsif stateful_volumes && !v[:bind_mount] && !v[:volume] && !stateful_volumes.any? { |sv| sv.path == v[:path] }
-          # v is an anonymous volume, but there is no such existing volume
-          [:stateful, "Adding a new anonymous volume (#{v[:path]}) to a stateful service is not supported"]
-        else
-          nil
+      if stateful_volumes && !(v[:bind_mount] || v[:volume])
+        # v is an anonymous volume... there must be an existing stateful volume for it
+        unless stateful_volumes.any? { |sv| sv.path == v[:path] }
+          return [:stateful, "Adding a new anonymous volume (#{v[:path]}) to a stateful service is not supported"]
         end
+      end
+
+      return nil
+    end
+
+    # @param stateful_volumes [Array<ServiceVolume>] existing anonymous volumes on stateful service
+    def validate_volumes(**options)
+      validate_each :volumes do |volume|
+        validate_volume(volume, **options)
       end
     end
 
