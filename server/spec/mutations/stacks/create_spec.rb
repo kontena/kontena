@@ -153,7 +153,7 @@ describe Stacks::Create do
           image: 'myapi:latest',
           stateful: false,
           links: [
-            {name: 'redis', alias: 'redis'}
+            {'name' => 'redis', 'alias' => 'redis'}
           ]
         }
       ]
@@ -171,6 +171,64 @@ describe Stacks::Create do
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
+    it 'creates stack with complex linked services in the correct order' do
+      services = [
+        {
+          name: 'bar',
+          image: 'bar:latest',
+          stateful: false,
+          links: [
+            {'name' => 'foo', 'alias' => 'api'}
+          ]
+        },
+        {
+          name: 'foo',
+          image: 'foo:latest',
+          stateful: true,
+          links: [
+            {'name' => 'asdf', 'alias' => 'api'}
+          ]
+        },
+        {
+          name: 'asdf',
+          image: 'asdf:latest',
+          stateful: true,
+          links: [
+            {'name' => 'asdf1', 'alias' => 'asdf1'},
+            {'name' => 'asdf2', 'alias' => 'asdf2'},
+            {'name' => 'asdf3', 'alias' => 'asdf3'},
+          ]
+        },
+        {
+          name: 'asdf1',
+          image: 'asdf:latest',
+          stateful: true,
+        },
+        {
+          name: 'asdf2',
+          image: 'asdf:latest',
+          stateful: true,
+        },
+        {
+          name: 'asdf3',
+          image: 'asdf:latest',
+          stateful: true,
+        },
+      ]
+      outcome = described_class.new(
+        grid: grid,
+        name: 'soome-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: services
+      ).run
+      expect(outcome).to be_success, outcome.errors
+      expect(outcome.result.stack_revisions.count).to eq(1)
+    end
+
     it 'does not create a stack if link to another stack is invalid' do
       services = [
         {
@@ -178,7 +236,7 @@ describe Stacks::Create do
           image: 'myapi:latest',
           stateful: false,
           links: [
-            {name: 'redis/redis', alias: 'redis'}
+            {'name' => 'redis/redis', 'alias' => 'redis'}
           ]
         }
       ]
@@ -203,7 +261,7 @@ describe Stacks::Create do
           image: 'myapi:latest',
           stateful: false,
           links: [
-            {name: 'redis', alias: 'redis'}
+            {'name' => 'redis', 'alias' => 'redis'}
           ]
         }
       ]
@@ -218,7 +276,72 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome).to_not be_success
-      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'redis' does not exist" } }
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "service api has missing links: redis" } }
+      expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :missing } }
+    end
+
+    it 'fails and does not create stack if a service links to itself' do
+      services = [
+        {
+          name: 'api',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {'name' => 'api', 'alias' => 'api'}
+          ]
+        }
+      ]
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'soome-stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: services
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["api", [...]]' } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :recursive } }
+      }.to not_change{ grid.stacks.count }
+    end
+
+    it 'fails and does not create stack if services have recursive links' do
+      services = [
+        {
+          name: 'api',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {'name' => 'bar', 'alias' => 'bar'}
+          ]
+        },
+        {
+          name: 'bar',
+          image: 'myapi:latest',
+          stateful: false,
+          links: [
+            {'name' => 'api', 'alias' => 'api'}
+          ]
+        }
+      ]
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'soome-stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: services
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => 'service api has recursive links: ["bar", ["api", [...]]]' } }
+        expect(outcome.errors.symbolic).to eq 'services' => { 'api' => { 'links' => :recursive } }
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'does not create stack if any service validation fails' do
@@ -238,7 +361,7 @@ describe Stacks::Create do
           services: services
         ).run
         expect(outcome.success?).to be(false)
-      }.to change{ grid.stacks.count }.by(0)
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'does not create stack if exposed service does not exist' do
@@ -258,7 +381,7 @@ describe Stacks::Create do
           services: services
         ).run
         expect(outcome).to_not be_success
-      }.to change{ grid.stacks.count }.by(0)
+      }.to not_change{ grid.stacks.count }
     end
 
     it 'reports multiple service create errors' do
@@ -375,6 +498,58 @@ describe Stacks::Create do
       ).run
       expect(outcome.success?).to be_falsey
 
+    end
+  end
+
+  context "with an external stack" do
+    let(:stack2) do
+      Stacks::Create.run!(
+        grid: grid,
+        name: 'stack2',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        services: [
+          {name: 'foo', image: 'redis', stateful: false },
+          {name: 'bar', image: 'redis', stateful: false },
+        ]
+      )
+    end
+
+    let(:stack2_services_foo) do
+      stack2.grid_services.find_by(name: 'foo')
+    end
+
+    before do
+      stack2
+    end
+
+    it 'creates stack with external links' do
+      services = [
+        {
+          name: 'redis',
+          image: 'redis:2.8',
+          stateful: true,
+          links: [
+            {'name' => 'stack2/foo', 'alias' => 'foo'}
+          ]
+        }
+      ]
+      outcome = described_class.new(
+        grid: grid,
+        name: 'some-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: services
+      ).run
+
+      expect(outcome).to be_success
+      expect(outcome.result.stack_revisions.count).to eq(1)
+      expect(outcome.result.grid_services.find_by(name: 'redis').grid_service_links.map{|l| l.linked_grid_service}).to eq [stack2_services_foo]
     end
   end
 end

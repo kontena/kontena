@@ -27,7 +27,7 @@ module Stacks
       validate_volumes
       sort_services(self.services).each do |s|
         service = s.dup
-        validate_service_links(service)
+        service[:links] = select_external_service_links(service)
         existing_service = self.stack_instance.grid_services.where(:name => service[:name]).first
         if existing_service
           service[:grid_service] = existing_service
@@ -51,6 +51,10 @@ module Stacks
           handle_service_outcome_errors(grid_service.name, outcome.errors)
         end
       end
+    rescue MissingLinkError => error
+      add_service_error(error.service, :links, :missing, error.message)
+    rescue RecursiveLinkError => error
+      add_service_error(error.service, :links, :recursive, error.message)
     end
 
     def execute
