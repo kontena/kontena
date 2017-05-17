@@ -35,17 +35,10 @@ module GridServices
         if self.volumes_from && self.volumes_from.size > 0
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
         end
-        if self.volumes
-          changed_volumes = self.volumes.select { |v|
-            vols = self.grid_service.service_volumes.map { |sv| sv.to_s }
-            !vols.include?(v)
-          }
-          if changed_volumes.any? { |v| !v.include?(':') }
-            add_error(:volumes, :invalid, 'Adding a non-named volume to a stateful service is not supported')
-          end
-        end
+        validate_volumes(stateful_volumes: self.grid_service.service_volumes.select{|v| v.anonymous? })
+      else
+        validate_volumes()
       end
-      validate_volumes
     end
 
     # List changed fields of model

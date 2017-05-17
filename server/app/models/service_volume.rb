@@ -9,6 +9,14 @@ class ServiceVolume
 
   belongs_to :volume # optional
 
+  # A anonymous volume is created with the container (or stateful data container).
+  # It cannot be recovered after the container is removed.
+  #
+  # @return [Boolean]
+  def anonymous?
+    !volume && !bind_mount
+  end
+
   def to_s
     elements = []
     if self.volume
