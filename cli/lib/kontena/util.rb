@@ -1,8 +1,32 @@
 module Kontena
   module Util
     def self.included(base)
-        base.extend(ClassMethods)
+      base.extend(ClassMethods)
     end
+
+    def symbolize_keys(obj)
+      case obj
+      when Hash
+        Hash[obj.map { |k,v| [k.to_sym, symbolize_keys(v)] }]
+      when Array
+        obj.map { |v| symbolize_keys(v) }
+      else
+        obj
+      end
+    end
+    module_function :symbolize_keys
+
+    def symbolize_keys!(obj)
+      case obj
+      when Hash
+        obj.keys.each { |k| obj[k.to_sym] = symbolize_keys!(obj.delete(k)) }
+      when Array
+        obj.map! { |v| symbolize_keys!(v) }
+      else
+      end
+      obj
+    end
+    module_function :symbolize_keys!
 
     # @param [String] cmd
     def which(cmd)
