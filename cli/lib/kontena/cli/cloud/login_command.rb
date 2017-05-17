@@ -62,8 +62,18 @@ module Kontena::Cli::Cloud
       }
       cloud_url = kontena_account.url
       client = Kontena::Client.new(cloud_url, nil)
-      auth_request_response = client.post('/auth_requests', {}, params)
-      verification_uri = URI.parse(auth_request_response['verification_uri'])
+      auth_request_response = client.post('/auth_requests', params, {}, { 'Content-Type' => 'application/x-www-form-urlencoded' }) rescue nil
+      if !auth_request_response.kind_of?(Hash)
+        exit_with_error "Remote login request failed"
+      elsif auth_request_response['error']
+        exit_with_error "Remote login request failed: #{auth_request_response['error']}"
+      end
+      begin
+        verification_uri = URI.parse(auth_request_response['verification_uri'])
+      rescue => e
+        exit_with_error "Parsing remote login URL failed."
+      end
+
       puts "Please visit #{verification_uri.to_s.colorize(:cyan)} and enter the code"
       puts
       puts "#{auth_request_response['user_code']}"
@@ -79,7 +89,7 @@ module Kontena::Cli::Cloud
       code_response = nil
       spinner "Waiting for authentication" do
         until code_response do
-          code_response = client.post("/auth_requests/code", {}, code_request_params) rescue nil
+          code_response = client.post("/auth_requests/code",  code_request_params, {}, { 'Content-Type' => 'application/x-www-form-urlencoded' }) rescue nil
           sleep 1
         end
       end
@@ -88,11 +98,10 @@ module Kontena::Cli::Cloud
 
     def web_flow
       if Kontena.browserless? && !force?
-        $stderr.puts "Your current environment does not seem to support opening a local graphical WWW browser."
+        $stderr.puts "Your current environment does not seem to support opening a local graphical WWW browser. Using remote login instead."
         $stderr.puts
-        $stderr.puts "You can perorm a login on another computer, copy the token and use it with 'kontena cloud login --token <token>'."
-        $stderr.puts "There will be an easier way to log in from a browserless environment soon."
-        exit_with_error 'Unable to launch a web browser'
+        remote_login
+        return
       end
 
       require_relative '../localhost_web_server'

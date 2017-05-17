@@ -199,16 +199,19 @@ describe Kontena::Cli::Cloud::LoginCommand do
       allow(subject).to receive(:any_key_to_continue).and_return(true)
     end
     it 'creates auth request and exchanges code to access token' do
-      expect(client).to receive(:post).with('/auth_requests', {}, { client_id: '1234567890' }).ordered.and_return({
+      expect(client).to receive(:post).with('/auth_requests',
+        { client_id: '1234567890' }, {}, { 'Content-Type' => 'application/x-www-form-urlencoded' }
+      ).ordered.and_return({
         'verification_uri' => 'https://cloud.kontena.io/auth_requests/12345',
         'user_code' => 'tryme',
         'device_code' => 'devicex'
         })
-        
-      expect(client).to receive(:post).with('/auth_requests/code', {}, {
+
+      expect(client).to receive(:post).with('/auth_requests/code', {
           client_id: '1234567890',
           device_code: 'devicex'
-        }).ordered.and_return({ 'code' => 'abcd' })
+        }, {}, { 'Content-Type' => 'application/x-www-form-urlencoded'}
+      ).ordered.and_return({ 'code' => 'abcd' })
 
       expect(client).to receive(:exchange_code).with('abcd').ordered.and_return({
         'access_token' => 'abcdefg'
