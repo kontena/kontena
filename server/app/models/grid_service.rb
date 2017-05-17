@@ -122,15 +122,6 @@ class GridService
   end
 
   # @return [Boolean]
-  def deploying?(ignore: nil)
-    scope = self.grid_service_deploys.where(
-      :created_at.gt => 10.minutes.ago, :started_at.ne => nil, :finished_at => nil
-    )
-    scope = scope.where(:_id.ne => ignore) if ignore
-    scope.count > 0
-  end
-
-  # @return [Boolean]
   def running?
     self.state == 'running'
   end
@@ -146,17 +137,29 @@ class GridService
     self.stack.exposed_service?(self)
   end
 
-  # Are there any deploys in queue for this service
+  # The service has deploys created, queued or started, but not yet finished.
+  #
+  # Equvialent to deploy_pending? || deploy_running?
+  #
+  # Ignores any expired deploys.
+  #
   # @return [Boolean]
-  def deploy_pending?
-    self.grid_service_deploys.where(started_at: nil).count > 0
+  def deploying?
+    self.grid_service_deploys.deploying.count > 0
   end
 
-  # Are there any deploys in queue or in progress for this service
-  # Ignores any possibly stale deploys that have been started but never finished
+  # The service has deploys created or queued, but not yet started, running or finished.
+  #
   # @return [Boolean]
-  def deploy_outstanding?
-    self.grid_service_deploys.any_of({:started_at => nil, :finished_at => nil}, {:started_at.gt => 30.minutes.ago , finished_at: nil}).count > 0
+  def deploy_pending?
+    self.grid_service_deploys.pending.count > 0
+  end
+
+  # The service has deploys that have been started, but not yet finished or timeout.
+  #
+  # @return [Boolean]
+  def deploy_running?
+    self.grid_service_deploys.running.count > 0
   end
 
   # @return [Boolean]
@@ -188,7 +191,7 @@ class GridService
   # @return [Hash]
   def env_hash
     if @env_hash.nil?
-      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split(/(?<!\\)=/, 2) }]
+      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split('=', 2) }]
     end
 
     @env_hash
