@@ -231,6 +231,54 @@ Parameter | Description | Default Value
 from | The start date and time (example: `?from=2017-01-01T12:15:00.00Z`) | one hour ago
 to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
+
+
+## Get Grid container logs
+
+```http
+GET /v1/grids/my-grid/container_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get container logs from a grid.
+
+### Endpoint
+
+`GET /v1/grids/{grid_id}/container_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
+## Get a grid event logs
+
+```http
+GET /v1/grids/my-grid/event_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get event logs from a grid.
+
+### Endpoint
+
+`GET /v1/grids/{grid_id}/event_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
 # Nodes
 
 
@@ -252,10 +300,14 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 	"os": "CoreOS 1185.3.0 (MoreOS)",
 	"kernel_version": "4.7.3-coreos-r2",
 	"driver": "overlay",
-	"plugins": {
-		"network": ["bridge", "host", "null"],
-		"volume": ["local"]
-	},
+	"network_drivers": [
+		{"name": "bridge"}, 
+		{"name": "host"}, 
+		{"name": "null"}
+	],
+	"volume_drivers": [
+		{"name": "local"}
+	],
 	"cpus": 2,
 	"mem_total": 0.0,
 	"mem_limit": 0.0,
@@ -508,6 +560,12 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   			]
   		}
   	}
+  ],
+  "volumes": [
+    {
+      "name": "aVolume",
+      "external": "otherName"
+    }
   ]
 }
 ```
@@ -523,6 +581,15 @@ version | A version number for the stack
 registry | A stack registry where stack schema is originally fetched
 expose | A service that stack exposes to grid level DNS namespace
 services | A list of stack services (see [services](#services) for more info)
+volumes | A list of volumes used in this stack (see [volumes](#volumes) for more info)
+
+### Volume attributes
+
+Attribute | Description
+---------- | -------
+name  | Name of the volume within the stack
+external | Name of the grid level volume definition to use
+
 
 ## Create a stack
 
@@ -581,6 +648,34 @@ Deploy a stack. Returns a stack deploy object that can be used for deploy tracki
 
 `POST /v1/stacks/{stack_id}/deploy`
 
+## Stop all stack services
+
+```http
+POST /v1/stacks/my-grid/redis/stop HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Stops all services in the stack.
+
+### Endpoint
+
+`POST /v1/stacks/{stack_id}/stop`
+
+## Restart all stack services
+
+```http
+POST /v1/stacks/my-grid/redis/restart HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Restart all services in the stack.
+
+### Endpoint
+
+`POST /v1/stacks/{stack_id}/restart`
+
 ## Delete a stack
 
 ```http
@@ -622,6 +717,29 @@ Get container logs from a stack.
 ### Endpoint
 
 `GET /v1/stacks/{stack_id}/container_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
+## Get a stack event logs
+
+```http
+GET /v1/stacks/my-grid/redis/event_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get event logs from a stack.
+
+### Endpoint
+
+`GET /v1/stacks/{stack_id}/event_logs`
 
 ### Query parameters
 
@@ -950,7 +1068,7 @@ Removes the service from the grid.
 
 `DELETE /v1/services/{service_id}`
 
-## Get service logs
+## Get service container logs
 
 ```http
 GET /v1/services/my-grid/null/redis/container_logs HTTP/1.1
@@ -963,6 +1081,38 @@ Get container logs from a service.
 ### Endpoint
 
 `GET /v1/services/{service_id}/container_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
+
+## Get service event logs
+
+```http
+GET /v1/services/my-grid/null/redis/event_logs HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+Get event logs from a service.
+
+### Endpoint
+
+`GET /v1/services/{service_id}/event_logs`
+
+### Query parameters
+
+Parameter | Description
+---------- | -------
+limit | Limit how many log items are returned
+from | Show log items from log id
+since | Show log items since (timestamp)
+follow | Stream logs
 
 ## Get a service deploy
 
@@ -1266,6 +1416,92 @@ For example `"secret_name": "FOO_DOMAIN_COM"` will write following secrets to th
 ### Endpoint
 
 `POST /v1/certificates/{grid_id}/certificate`
+
+# Volumes
+
+**Volumes support is at experimental state which means that there might be breaking changes between versions until the experimental status is removed.**
+
+## Volume
+
+```json
+{
+  "id": "my-grid/foo",
+  "name": "foo",
+  "scope":"instance",
+  "driver":"local",
+  "driver_opts": {
+    "driver_specific_option": "foobar",
+    "another_option": "xyz"
+  },
+  "instances": [
+    {
+      "name":"stack.svc.foo-1",
+      "node": "node-1"
+    }
+  ],
+  "services": [
+    {
+      "id":"my-grid/stack/svc"
+    }
+  ]
+}
+```
+
+Attribute | Description
+--------- | -----------
+name      | Name of the volume
+scope     | Scope for the volume (`instance`, `stack` or `grid`)
+driver    | Volume driver to be used. Each node reports it's supported drivers, see [node details](#get-a-node-details)
+driver_opts| Options for the volume driver
+
+## List volumes
+
+Lists volumes created to a grid
+
+```http
+GET /v1/volumes/{grid_id} HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/volumes/{grid_id}`
+
+## Create a volume
+
+```http
+POST /v1/volumes/{grid_id} HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+
+{
+  "name":"foo",
+  "scope":"instance",
+  "driver":"local",
+  "driver_opts": {
+    "driver_specific_option": "foobar",
+    "another_option": "xyz"
+  }
+}
+```
+
+Creates a volume to a grid
+
+### Endpoint
+
+`POST /v1/volumes/{grid_id}`
+
+## Delete a volume
+
+```http
+DELETE /v1/volumes/{volume_id} HTTP/1.1
+Authorization: bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+### Endpoint
+
+`DELETE /v1/volumes/{volume_id}`
 
 # Configuration
 

@@ -1,4 +1,3 @@
-require 'kontena/cli/grid_options'
 require "kontena/cli/containers/list_command"
 
 describe Kontena::Cli::Containers::ListCommand do

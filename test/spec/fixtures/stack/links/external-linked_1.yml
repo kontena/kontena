@@ -1,0 +1,6 @@
+stack: test/links-external-linked
+services:
+  foo:
+    image: redis
+  bar:
+    image: redis

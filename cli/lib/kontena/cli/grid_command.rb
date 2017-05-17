@@ -6,6 +6,7 @@ class Kontena::Cli::GridCommand < Kontena::Command
   subcommand "use", "Switch to use specific grid", load_subcommand('grids/use_command')
   subcommand "show", "Show grid details", load_subcommand('grids/show_command')
   subcommand "logs", "Show logs from grid containers", load_subcommand('grids/logs_command')
+  subcommand "events", "Show events from grid", load_subcommand('grids/events_command')
   subcommand ["remove","rm"], "Remove a grid", load_subcommand('grids/remove_command')
   subcommand "current", "Show current grid details", load_subcommand('grids/current_command')
   subcommand "env", "Show the current grid environment details", load_subcommand('grids/env_command')

@@ -48,8 +48,7 @@ describe '/v1/grids/:grid/stacks', celluloid: true do
       source: '..',
       services: services,
       volumes: [
-        { name: 'vol1', external: { name: 'someVolume'}},
-        { name: 'vol2', scope: 'grid', driver: 'local'}
+        { name: 'vol1', external: 'someVolume'}
       ]
     }
   end
@@ -85,7 +84,7 @@ describe '/v1/grids/:grid/stacks', celluloid: true do
       expect {
         post "/v1/grids/#{grid.name}/stacks", stack_with_volumes.to_json, request_headers
         expect(response.status).to eq(201)
-      }.to change{ Volume.count }.by(1)
+      }.not_to change{ Volume.count }
     end
 
     it 'fails to create new stack with volumes when external volume does not exist' do

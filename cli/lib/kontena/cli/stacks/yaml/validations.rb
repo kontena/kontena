@@ -31,7 +31,23 @@ module Kontena::Cli::Stacks::YAML
         'external_links' => optional('array'),
         'mem_limit' => optional('string'),
         'mem_swaplimit' => optional('string'),
-        'environment' => optional(-> (value) { value.is_a?(Array) || value.is_a?(Hash) }),
+        'environment' => optional(-> (value) {
+          if value.is_a?(Hash)
+            value.all? do |k,v|
+              k.kind_of?(String) && (
+                v.kind_of?(String) ||
+                v.kind_of?(Integer) ||
+                v.kind_of?(TrueClass) ||
+                v.kind_of?(FalseClass) ||
+                v.nil?
+              )
+            end
+          elsif value.is_a?(Array)
+            value.all? { |v| v.kind_of?(String) && v =~ /\A[^=]+=/ }
+          else
+            false
+          end
+        }),
         'env_file' => optional(-> (value) { value.is_a?(String) || value.is_a?(Array) }),
         'instances' => optional('integer'),
         'links' => optional(-> (value) { value.is_a?(Array) || value.nil? }),
@@ -76,11 +92,7 @@ module Kontena::Cli::Stacks::YAML
 
     def volume_schema
       {
-        'secrets' => optional('stacks_valid_secrets'),
-        'scope' => optional(['instance', 'service', 'stack', 'grid']),
-        'driver' => optional('string'),
-        'driver_opts' => optional( -> (value) { value.is_a?(Hash) }),
-        'external' => optional(-> (value) { value.is_a?(TrueClass) || value.is_a?(FalseClass) || (value.is_a?(Hash) && value['name'].is_a?(String)) })
+        'external' => optional(-> (value) { value.is_a?(TrueClass) || (value.is_a?(Hash) && value['name'].is_a?(String)) })
       }
     end
   end

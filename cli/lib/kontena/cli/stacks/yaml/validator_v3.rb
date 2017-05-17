@@ -31,6 +31,24 @@ module Kontena::Cli::Stacks
         Validations::CustomValidators.load
       end
 
+      # borrowed from server/app/helpers/volumes_helpers.rb
+      def parse_volume(vol)
+        elements = vol.split(':')
+        if elements.size >= 2 # Bind mount or volume used
+          if elements[0].start_with?('/') && elements[1] && elements[1].start_with?('/') # Bind mount
+            {bind_mount: elements[0], path: elements[1], flags: elements[2..-1].join(',')}
+          elsif !elements[0].start_with?('/') && elements[1].start_with?('/') # Real volume
+            {volume: elements[0], path: elements[1], flags: elements[2..-1].join(',')}
+          else
+            {error: "volume definition not in right format: #{vol}" }
+          end
+        elsif elements.size == 1 && elements[0].start_with?('/') # anon volume
+          {bind_mount: nil, path: elements[0], flags: nil} # anon vols do not support flags
+        else
+          {error: "volume definition not in right format: #{vol}" }
+        end
+      end
+
       ##
       # @param [Hash] yaml
       # @param [TrueClass|FalseClass] strict
@@ -55,19 +73,15 @@ module Kontena::Cli::Stacks
               option_errors = validate_options(options)
               result[:errors] << { 'services' => { service => option_errors.errors } } unless option_errors.valid?
               if options['volumes']
-                mount_points = options['volumes'].inject(Hash.new(0)) { |hsh, vol| hsh[vol.split(':').last] += 1; hsh }
-                mount_points.each do |mount_point, occurences|
-                  next unless occurences > 1
-                  result[:errors] << { 'services' => { service => { 'volumes' => { mount_point => "mount point defined #{occurences} times" } } } }
-                end
-
+                mount_path_occurences = Hash.new(0)
                 options['volumes'].each do |volume|
-                  if volume.include?(':')
-                    volume_name, mount_point = volume.split(':', 2)
-                    unless mount_point
-                      result[:errors] << { 'services' => { service => { 'volumes' => { volume => 'mount point missing' } } } }
-                    end
-                    if volume_name
+                  parsed = parse_volume(volume)
+                  if parsed[:error]
+                    result[:errors] << { 'services' => { service => { 'volumes' => { volume => parsed[:error] } } } }
+                  elsif parsed[:path]
+                    mount_path_occurences[parsed[:path]] += 1
+                    volume_name = parsed[:volume]
+                    if volume_name && !volume_name.start_with?('/')
                       if yaml.key?('volumes')
                         unless yaml['volumes'][volume_name]
                           result[:errors] << { 'services' => { service => { 'volumes' => { volume_name => 'not found in top level volumes list' } } } }
@@ -76,7 +90,12 @@ module Kontena::Cli::Stacks
                         result[:errors] << { 'services' => { service => { 'volumes' => { volume => 'defines volume name, but file does not contain volumes definitions' } } } }
                       end
                     end
+                  else
+                    result[:errors] << { 'services' => { service => { 'volumes' => { volume => 'mount point missing' } } } }
                   end
+                end
+                mount_path_occurences.select {|path, occurences| occurences > 1 }.each do |path, occurences|
+                  result[:errors] << { 'services' => { service => { 'volumes' => { path => "mount point defined #{occurences} times" } } } }
                 end
               end
             end
@@ -92,21 +111,7 @@ module Kontena::Cli::Stacks
             yaml['volumes'].each do |volume, options|
               if options.is_a?(Hash)
                 option_errors = validate_volume_options(options)
-                if option_errors.valid?
-                  if !options.key?('driver') && options.key?('driver_opts')
-                    result[:errors] << { 'volumes' => { volume => { 'driver_opts' => 'defined without defining driver' } } }
-                  end
-                  if options.key?('external')
-                    unless options['external'].is_a?(FalseClass)
-                      ['driver', 'driver_opts', 'scope'].each do |key|
-                        result[:errors] << { 'volumes' => { volume => { key => 'specified together with external' } } } if options.key?(key)
-                      end
-                    end
-                  end
-                  if options.key?('driver') && !options.key?('scope')
-                    result[:errors] << { 'volumes' => { volume => { 'scope' => 'required value missing' } } }
-                  end
-                else
+                unless option_errors.valid?
                   result[:errors] << { 'volumes' => { volume => option_errors.errors } }
                 end
               else

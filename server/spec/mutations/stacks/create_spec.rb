@@ -6,7 +6,7 @@ describe Stacks::Create do
     it 'creates a new grid stack' do
       grid
       expect {
-        described_class.new(
+        outcome = described_class.new(
           grid: grid,
           name: 'stack',
           stack: 'foo/bar',
@@ -16,6 +16,8 @@ describe Stacks::Create do
           variables: {foo: 'bar'},
           services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
         ).run
+
+        expect(outcome).to be_success
       }.to change{ Stack.count }.by(1)
     end
 
@@ -30,23 +32,8 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
+      expect(outcome).to be_success
       expect(outcome.result.stack_revisions.count).to eq(1)
-    end
-
-    it 'creates stack revision with volumes' do
-      outcome = described_class.new(
-        grid: grid,
-        name: 'stack',
-        stack: 'foo/bar',
-        version: '0.1.0',
-        registry: 'file://',
-        source: '...',
-        variables: {foo: 'bar'},
-        services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
-        volumes: [{name: 'vol1', scope: 'grid', external: false, driver: 'local'}]
-      ).run
-      expect(outcome.result.stack_revisions.count).to eq(1)
-      expect(outcome.result.latest_rev.volumes.count).to eq(1)
     end
 
     it 'creates stack services' do
@@ -60,6 +47,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
+      expect(outcome).to be_success
       expect(outcome.result.grid_services.count).to eq(1)
     end
 
@@ -74,7 +62,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
-      expect(outcome.success?).to be(true)
+      expect(outcome).to be_success
     end
 
     it 'allows numbers in name' do
@@ -88,7 +76,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
-      expect(outcome.success?).to be(true)
+      expect(outcome).to be_success
     end
 
     it 'does not allow - as a first char in name' do
@@ -102,7 +90,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
-      expect(outcome.success?).to be(false)
+      expect(outcome).to_not be_success
       expect(outcome.errors.message.keys).to include('name')
     end
 
@@ -117,7 +105,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
       ).run
-      expect(outcome.success?).to be(false)
+      expect(outcome).to_not be_success
       expect(outcome.errors.message.keys).to include('name')
     end
 
@@ -132,7 +120,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: []
       ).run
-      expect(outcome.success?).to be(false)
+      expect(outcome).to_not be_success
       expect(outcome.errors.message.keys).to include('services')
     end
 
@@ -149,7 +137,7 @@ describe Stacks::Create do
         services: services
       ).run
 
-      expect(outcome.success?).to be(true)
+      expect(outcome).to be_success
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
@@ -179,7 +167,7 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: services
       ).run
-      expect(outcome.success?).to be(true)
+      expect(outcome).to be_success
       expect(outcome.result.stack_revisions.count).to eq(1)
     end
 
@@ -204,8 +192,8 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: services
       ).run
-      expect(outcome.success?).to be(false)
-      expect(outcome.errors.message).to eq 'services' => "Service validate failed for service 'api': Link redis/redis points to non-existing stack"
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Link redis/redis points to non-existing stack" } }
     end
 
     it 'does not create a stack if link within a stack is invalid' do
@@ -229,8 +217,8 @@ describe Stacks::Create do
         variables: {foo: 'bar'},
         services: services
       ).run
-      expect(outcome.success?).to be(false)
-      expect(outcome.errors.message).to eq 'services' => "Service validate failed for service 'api': Linked service 'redis' does not exist"
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Linked service 'redis' does not exist" } }
     end
 
     it 'does not create stack if any service validation fails' do
@@ -269,71 +257,75 @@ describe Stacks::Create do
           expose: 'foo',
           services: services
         ).run
-        expect(outcome.success?).to be(false)
+        expect(outcome).to_not be_success
       }.to change{ grid.stacks.count }.by(0)
     end
 
-    context 'volumes' do
-      it 'creates volumes' do
-        grid
-        expect {
-          outcome = described_class.new(
-            grid: grid,
-            name: 'stack',
-            stack: 'foo/bar',
-            version: '0.1.0',
-            registry: 'file://',
-            source: '...',
-            variables: {foo: 'bar'},
-            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
-            volumes: [{name: 'vol1', scope: 'grid', driver: 'local'}]
-          ).run
-          expect(outcome.success?).to be_truthy
-        }.to change{ Volume.count }.by(1)
-      end
+    it 'reports multiple service create errors' do
+      services = [
+        {
+          name: 'foo',
+          image: 'foo:latest',
+          stateful: false,
+        },
+        {
+          name: 'bar',
+          image: 'bar:latest',
+          stateful: false,
+          links: [
+            { 'name' => 'foo', 'alias' => 'foo' }
+          ]
+        },
+      ]
 
-      it 'mutation fails to create volumes' do
-        grid
-        expect {
-          outcome = described_class.new(
-            grid: grid,
-            name: 'stack',
-            stack: 'foo/bar',
-            version: '0.1.0',
-            registry: 'file://',
-            source: '...',
-            variables: {foo: 'bar'},
-            services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
-            volumes: [{name: 'vol1', scope: 'grid'}]
-          ).run
-          expect(outcome.success?).to be_falsey
-        }.to change{ Volume.count }.by(0)
-      end
+      foo_errors = Mutations::ErrorHash.new
+      foo_errors[:name] = Mutations::ErrorAtom.new(:name, :create, message: "Create failed")
+      bar_errors = Mutations::ErrorHash.new
+      bar_errors[:links] = Mutations::ErrorAtom.new(:links, :exist, message: "Service soome-stack/foo does not exist")
 
-      it 'creates stack with external volumes with name' do
-        volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')
-        expect {
-          outcome = described_class.new(
-            grid: grid,
-            name: 'stack',
-            stack: 'foo/bar',
-            version: '0.1.0',
-            registry: 'file://',
-            source: '...',
-            variables: {foo: 'bar'},
-            services: [{name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['vol1:/data'] }],
-            volumes: [{name: 'vol1', external: {name: 'someVolume'}}]
-          ).run
-          expect(outcome.success?).to be_truthy
-          redis = outcome.result.grid_services.first
-          expect(redis.service_volumes.first.volume).to eq(volume)
-        }.to change{ Volume.count }.by(0)
-      end
+      expect(GridServices::Create).to receive(:run).with(hash_including("name" => 'foo')).and_return(Mutations::Outcome.new(false, nil, foo_errors, {}))
+      expect(GridServices::Create).to receive(:run).with(hash_including("name" => 'bar')).and_return(Mutations::Outcome.new(false, nil, bar_errors, {}))
+
+      outcome = described_class.new(
+        grid: grid,
+        name: 'soome-stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: services
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'services' => { 'foo' => {'name' => "Create failed"}, 'bar' => { 'links' => "Service soome-stack/foo does not exist"}}
     end
 
-    it 'creates stack with external volumes with no external name' do
-      volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')
+    pending 'reports service error array outcomes' do
+      services = [
+        {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true,
+          env: [
+            'FOO',
+          ],
+        }
+      ]
       expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'redis',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          services: services
+        ).run
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'services' => { 'redis' => {'env' => [ "Env[0] isn't in the right format" ]}}
+      }.to_not change{ grid.stacks.count }
+    end
+
+    context 'volumes' do
+      it 'creates stack with external volumes with name' do
+        volume = Volume.create(name: 'someVolume', grid: grid, scope: 'node')
         outcome = described_class.new(
           grid: grid,
           name: 'stack',
@@ -342,31 +334,47 @@ describe Stacks::Create do
           registry: 'file://',
           source: '...',
           variables: {foo: 'bar'},
-          services: [{name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['someVolume:/data'] }],
-          volumes: [{name: 'someVolume', external: true}]
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true, volumes: ['vol1:/data'] }],
+          volumes: [{name: 'vol1', external: 'someVolume'}]
         ).run
         expect(outcome.success?).to be_truthy
         redis = outcome.result.grid_services.first
+        expect(outcome.result.latest_rev.volumes.size).to eq(1)
         expect(redis.service_volumes.first.volume).to eq(volume)
-      }.to change{ Volume.count }.by(0)
+      end
     end
 
-
     it 'fails to create stack when external volume does not exist' do
-      expect {
-        outcome = described_class.new(
-          grid: grid,
-          name: 'stack',
-          stack: 'foo/bar',
-          version: '0.1.0',
-          registry: 'file://',
-          source: '...',
-          variables: {foo: 'bar'},
-          services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
-          volumes: [{name: 'vol1', external: {name: 'foo'}}]
-        ).run
-        expect(outcome.success?).to be_falsey
-      }.to change{ Volume.count }.by(0)
+
+      outcome = described_class.new(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+        volumes: [{name: 'vol1', external: 'foo'}]
+      ).run
+      expect(outcome).not_to be_success
+
+    end
+
+    it 'fails to create stack with unsupported volume definition' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'stack',
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+        volumes: [{name: 'vol1', driver: 'foo', scope: 'foobar'}]
+      ).run
+      expect(outcome.success?).to be_falsey
+
     end
   end
 end

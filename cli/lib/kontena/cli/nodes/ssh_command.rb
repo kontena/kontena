@@ -18,7 +18,7 @@ module Kontena::Cli::Nodes
       exit_with_error "Cannot combine --any with a node name" if node_id && any?
 
       if node_id
-        node = client.get("grids/#{current_grid}/nodes/#{node_id}")
+        node = client.get("nodes/#{current_grid}/#{node_id}")
       elsif any?
         nodes = client.get("grids/#{current_grid}/nodes")['nodes']
         node = nodes.select{ |node| node['connected'] }.first
@@ -27,8 +27,6 @@ module Kontena::Cli::Nodes
       end
 
       provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
-
-      commands_list.insert('--') unless commands_list.empty?
 
       if provider == 'vagrant'
         unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }

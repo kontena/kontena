@@ -53,15 +53,21 @@ See the [Deployment Strategies](deploy.md#affinity) documentation for the affini
 This option can be changed using `kontena grid update --default-affinity ...`.
 This will re-schedule the grid services, and may cause service instances to be moved to different nodes.
 
+To disable any previously set grid default affinity use `kontena grid update --no-default-affinity grid_name`.
+
 ### `statsd` Server
 
 The `kontena grid update --statsd-server HOST:PORT` option configures each host node to send stats metrics for each host node and service container to a remote statsd receiver using the UDP StatsD protocol.
+
+To disable previously set statsd setting use `kontena grid update --no-statsd-server grid_name`.
 
 See the [Statistics](stats.md#exporting-stats) documentation for further details.
 
 ### Logging options
 
 The `kontena grid update --log-forwarder fluentd --log-opt fluentd-server=xyz:22445` options configures each host node to send container logs to a remote log collection service.
+
+Use `kontena grid update --log-forwarder none` to disable log forwarding.
 
 See the [Logs](logs.md) documentation for further details.
 
@@ -176,8 +182,13 @@ Parameters:
 
 Options:
     --statsd-server STATSD_SERVER Statsd server address (host:port)
+    --no-statsd-server            Unset statsd server setting
     --default-affinity [AFFINITY] Default affinity rule for the grid
+    --no-default-affinity         Unset grid default affinity
+    --log-forwarder LOG_FORWARDER Set grid wide log forwarder (set to 'none' to disable)
+    --log-opt [LOG_OPT]           Set log options (key=value)
     -h, --help                    print help
+    -D, --debug                   Enable debug (default: $DEBUG)
 ```
 
 #### Remove a Grid
@@ -199,7 +210,13 @@ Shows currently used Grid details.
 
 ### Grid Logs
 
-#### Show Current Grid Logs
+#### Show Current Grid Event Logs
+
+```
+$ kontena grid events
+```
+
+#### Show Current Grid Container Logs
 
 ```
 $ kontena grid logs

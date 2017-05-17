@@ -1,4 +1,3 @@
-require_relative '../grid_options'
 require_relative '../helpers/log_helper'
 
 module Kontena::Cli::Containers

@@ -110,6 +110,23 @@ describe Kontena::Workers::StatsWorker do
       subject.configure_statsd(node)
       expect(subject.statsd).to be_nil
     end
+
+    it 'does not crash the worker if statsd config fails' do
+      node = Node.new(
+        'grid' => {
+          'stats' => {
+            'statsd' => {
+              'server' => '192.168.24.33',
+              'port' => 8125
+            }
+          }
+        }
+      )
+      expect(subject.statsd).to be_nil
+      expect(Statsd).to receive(:new).and_raise("Boom")
+      subject.configure_statsd(node)
+      expect(subject.statsd).to be_nil
+    end
   end
 
   describe '#send_statsd_metrics' do

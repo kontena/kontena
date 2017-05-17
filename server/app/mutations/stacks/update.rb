@@ -39,7 +39,16 @@ module Stacks
         end
 
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+          handle_service_outcome_errors(service[:name], outcome.errors)
+        end
+      end
+
+      removed_services = self.stack_instance.grid_services.reject{ |grid_service| self.services.any? {|s| s[:name] == grid_service.name} }
+      removed_services.each do |grid_service|
+        outcome = GridServices::Delete.validate(grid_service: grid_service)
+
+        unless outcome.success?
+          handle_service_outcome_errors(grid_service.name, outcome.errors)
         end
       end
     end
@@ -60,7 +69,6 @@ module Stacks
         new_rev = latest_rev.dup
         new_rev.revision += 1
         new_rev.save
-        create_new_volumes(self.volumes) if self.volumes
         create_new_services(self.stack_instance, sort_services(self.services))
       end
       self.stack_instance.reload
@@ -77,22 +85,11 @@ module Stacks
           service[:stack] = stack
           outcome = GridServices::Create.run(service)
           unless outcome.success?
-            handle_service_outcome_errors(service[:name], outcome.errors.message, :update)
+            handle_service_outcome_errors(service[:name], outcome.errors)
           end
         end
       end
     end
 
-    def create_new_volumes(volumes)
-      volumes.each do |volume|
-        existing = self.stack_instance.grid.volumes.find_by(name: volume[:name])
-        unless existing
-          outcome = Volumes::Create.run(grid: self.stack_instance.grid, **volume.symbolize_keys)
-          unless outcome.success?
-            handle_volume_outcome_errors(volume[:name], outcome.errors)
-          end
-        end
-      end
-    end
   end
 end

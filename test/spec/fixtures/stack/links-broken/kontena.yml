@@ -1,6 +1,0 @@
-stack: test/links
-services:
-  a:
-    image: redis
-    links:
-      - nope

@@ -56,7 +56,7 @@ describe '/v1/grids', celluloid: true do
         post '/v1/grids', {name: 'foo'}.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ david.reload.grids.count }.by(1)
-      expect(Grid.where(name: 'foo').first.token).to match /\A[A-Za-z0-9+\/=]*\Z/
+      expect(Grid.where(name: 'foo').first.token).to match(/\A[A-Za-z0-9+\/=]*\Z/)
     end
 
     it 'creates a new grid with supplied token' do
@@ -286,6 +286,26 @@ describe '/v1/grids', celluloid: true do
         get "/v1/grids/#{@grid.to_path}/container_logs?nodes=node-2", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(0)
+      end
+    end
+
+    describe '/event_logs' do
+      let(:grid) { david.grids.first }
+
+      it 'returns empty logs array by default' do
+        get "/v1/grids/#{grid.to_path}/event_logs", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(0)
+      end
+
+      it 'returns grid events' do
+        2.times do |i|
+          grid.event_logs.create(msg: "hello #{i}", severity: EventLog::INFO)
+        end
+
+        get "/v1/grids/#{grid.to_path}/event_logs", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
       end
     end
   end
@@ -518,7 +538,7 @@ describe '/v1/grids', celluloid: true do
         logs: {
           forwarder: 'fluentd',
           opts: {
-            'fluentd-address': '192.168.89.12:22445'
+            'fluentd-address' => '192.168.89.12:22445'
           }
         }
       }

@@ -1,24 +1,23 @@
 require_relative '../../spec_helper'
 
-describe Rpc::NodeServicePodHandler, celluloid: true do
+describe Rpc::NodeServicePodHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:node) { HostNode.create!(grid: grid, name: 'test-node', node_id: 'abc') }
 
   describe '#list' do
     before(:each) do
-      allow(subject.wrapped_object).to receive(:migration_done?).and_return(true)
+      allow(subject).to receive(:migration_done?).and_return(true)
     end
 
-    it 'returns hash with error if id does not exist' do
-      list = subject.list('foo')
-      expect(list[:error]).not_to be_nil
+    it 'fails if node does not exist' do
+      expect{subject.list('foo')}.to raise_error RuntimeError, 'Node not found'
     end
 
-    it 'returns hash with error if migration is not done' do
-      allow(subject.wrapped_object).to receive(:migration_done?).and_return(false)
-      list = subject.list('foo')
-      expect(list[:error]).not_to be_nil
+    it 'fails if migration is not done' do
+      expect(subject).to receive(:migration_done?).and_return(false)
+
+      expect{subject.list(node.node_id)}.to raise_error RuntimeError, 'Migration not done'
     end
 
     it 'returns hash with service pods' do
@@ -47,6 +46,7 @@ describe Rpc::NodeServicePodHandler, celluloid: true do
         instance_number: 2, host_node: node, desired_state: 'running'
       )
     end
+
     let(:data) do
       {
         'state' => 'running', 'rev' => Time.now.to_s,
@@ -55,18 +55,49 @@ describe Rpc::NodeServicePodHandler, celluloid: true do
     end
 
     it 'saves service pod state to service instance' do
-      instance = subject.set_state(node.node_id, data)
-      expect(instance.rev).to eq(data['rev'])
-      expect(instance.state).to eq(data['state'])
+      subject.set_state(node.node_id, data)
+      service_instance.reload
+
+      expect(service_instance.rev).to eq(data['rev'])
+      expect(service_instance.state).to eq(data['state'])
+    end
+
+    it 'fails if node not found' do
+      expect{subject.set_state('notvalid', data)}.to raise_error 'Node not found'
+    end
+
+    it 'fail if service instance not found' do
+      data['instance_number'] = 3
+      expect{subject.set_state(node.node_id, data)}.to raise_error 'Instance not found'
+    end
+  end
+
+  describe '#event' do
+    let(:service) { grid.grid_services.create!(name: 'foo', image_name: 'foo/bar:latest') }
+
+    let(:service_instance) do
+      service.grid_service_instances.create!(
+        instance_number: 2, host_node: node, desired_state: 'running'
+      )
+    end
+
+    let(:data) do
+      {
+        'reason' => 'service:instance_create',
+        'data' => 'hello',
+        'service_id' => service.id.to_s,
+        'instance_number' => service_instance.instance_number
+      }
+    end
+
+    it 'saves event' do
+      expect {
+        subject.event(node.node_id, data)
+      }.to change { service.event_logs.count }.by(1)
     end
 
     it 'returns nil if node not found' do
-      expect(subject.set_state('notvalid', data)).to be_nil
-    end
-
-    it 'returns nil if service instance not found' do
-      data['instance_number'] = 3
-      expect(subject.set_state(node.node_id, data)).to be_nil
+      expect(subject.event('invalid', data)).to be_nil
     end
   end
 
@@ -74,5 +105,25 @@ describe Rpc::NodeServicePodHandler, celluloid: true do
     it 'returns false if migrations are not recent enough' do
       expect(subject.migration_done?).to be_falsey
     end
+  end
+
+  describe '#cached_pod' do
+    it 'transforms the service instance into pod if not already in cache' do
+      service_instance = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: double})
+      expect(Rpc::ServicePodSerializer).to receive(:new).once.and_return(double(:to_hash => {}))
+      subject.cached_pod(service_instance)
+      subject.cached_pod(service_instance)
+    end
+
+    it 'uses instance id, deploy_rev and desired_state as cache key' do
+      service_instance_1 = double({id: 'foo', deploy_rev: '12345', desired_state: 'running', grid_service: double})
+      expect(Rpc::ServicePodSerializer).to receive(:new).twice.and_return(double(:to_hash => {}))
+
+      subject.cached_pod(service_instance_1)
+
+      service_instance_2 = double({id: 'foo', deploy_rev: '12345', desired_state: 'stopped', grid_service: double})
+      subject.cached_pod(service_instance_2)
+    end
+
   end
 end

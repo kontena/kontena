@@ -1,5 +1,4 @@
-
-describe Rpc::ContainerHandler, celluloid: true do
+describe Rpc::ContainerHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
@@ -50,6 +49,19 @@ describe Rpc::ContainerHandler, celluloid: true do
       })
       expect(container.reload.running?).to eq(true)
       expect(container.container_id).to eq(container_id)
+    end
+  end
+
+  describe '#cleanup' do
+    it 'removes given containers ids' do
+      node = grid.host_nodes.create!(node_id: 'aa', name: 'node-1')
+      containers = []
+      containers << grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', host_node: node)
+      containers << grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-2', host_node: node)
+
+      expect {
+        subject.cleanup(node.node_id, [containers[0].container_id])
+      }.to change { grid.containers.count }.by(-1)
     end
   end
 

@@ -73,9 +73,9 @@ module Kontena::Cli::Stacks
               warnings: false
             )
           )
-        )
-      rescue Psych::SyntaxError => e
-        raise "Error while parsing #{file}".colorize(:red)+ " " + e.message
+        ) || {}
+      rescue Psych::SyntaxError => ex
+        raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
       def fully_interpolated_yaml
@@ -92,13 +92,13 @@ module Kontena::Cli::Stacks
               raise_on_unknown: true
             )
           )
-        )
-      rescue Psych::SyntaxError => e
-        raise "Error while parsing #{file}".colorize(:red)+ " " + e.message
+        ) || {}
+      rescue Psych::SyntaxError => ex
+        raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
       def raw_yaml
-        @raw_yaml ||= ::YAML.safe_load(raw_content)
+        @raw_yaml ||= ::YAML.safe_load(raw_content) || {}
       end
 
       # @return [Opto::Group]

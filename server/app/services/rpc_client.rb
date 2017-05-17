@@ -3,17 +3,27 @@ require_relative 'mongo_pubsub'
 class RpcClient
 
   class Error < StandardError
-    attr_accessor :code, :message, :backtrace
+    attr_reader :code, :remote_backtrace
 
-    def initialize(code, message, backtrace = nil)
-      self.code = code
-      self.message = message
-      self.backtrace = backtrace
+    def initialize(code, message, remote_backtrace = nil)
+      @code = code
+      @remote_backtrace = remote_backtrace
+      super(message)
+    end
+
+    def backtrace
+      # this must return nil if no local backtrace is set yet, or ruby will not set any backtrace on raise
+      local_backtrace = super
+
+      if local_backtrace && @remote_backtrace
+        remote_backtrace.map{|line| 'agent:' + line} + ["<RPC>"] + local_backtrace
+      else
+        local_backtrace
+      end
     end
   end
 
-  class TimeoutError < Error
-  end
+  TimeoutError = Class.new(Error)
 
   RPC_CHANNEL = 'rpc_client'
 

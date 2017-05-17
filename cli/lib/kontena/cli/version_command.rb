@@ -1,4 +1,4 @@
-require_relative 'version'
+require 'kontena/cli/version'
 
 class Kontena::Cli::VersionCommand < Kontena::Command
   include Kontena::Cli::Common

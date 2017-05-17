@@ -7,7 +7,7 @@ end
 task :environment do
   ENV['RACK_ENV'] = 'development' unless ENV['RACK_ENV']
 
-  require 'celluloid'
+  require 'celluloid/current'
   require 'roda'
   require 'mongoid'
   require 'json'

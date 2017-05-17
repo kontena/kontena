@@ -9,7 +9,7 @@ describe 'stack validate' do
         run 'kontena stack install --no-deploy'
       end
       with_fixture_dir("stack/service_link") do
-        k = kommando 'kontena stack validate', timeout: 5
+        k = kommando 'kontena stack validate --online', timeout: 5
         k.out.on "Select link" do
           k.in << "\r"
         end

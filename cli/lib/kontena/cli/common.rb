@@ -3,8 +3,8 @@ require 'pastel'
 require 'uri'
 require 'io/console'
 
-require_relative 'config'
-require_relative 'spinner'
+require 'kontena/cli/config'
+require 'kontena/cli/spinner'
 
 module Kontena
   module Cli
@@ -12,7 +12,7 @@ module Kontena
 
       def logger
         return @logger if @logger
-        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'COMMON'
         @logger
@@ -20,6 +20,19 @@ module Kontena
 
       def pastel
         @pastel ||= Pastel.new(enabled: $stdout.tty?)
+      end
+
+      # Read from STDIN. If stdin is a console, use prompt to ask.
+      # @param [String] message
+      # @param [Symbol] mode (prompt method: :ask, :multiline, etc)
+      def stdin_input(message = nil, mode = :ask)
+        if $stdin.tty?
+          Array(prompt.send(mode, message)).join.chomp
+        elsif !$stdin.eof?
+          $stdin.read.chomp
+        else
+          exit_with_error 'Missing input'
+        end
       end
 
       def running_silent?
@@ -131,8 +144,8 @@ module Kontena
         client = Kontena::Client.new(server.url, server.token)
         logger.debug "Trying to invalidate refresh token on #{server.name}"
         client.refresh_token
-      rescue
-        logger.debug "Refreshing failed: #{$!} : #{$!.message}"
+      rescue => ex
+        logger.debug "Refreshing failed: #{ex.class.name} : #{ex.message}"
       end
 
       def require_current_master

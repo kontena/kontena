@@ -167,27 +167,40 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
-                load(plugin)
+                loaded_features_before = $LOADED_FEATURES.dup
+                load_path_before = $LOAD_PATH.dup
+
+                ENV["DEBUG"] && $stderr.puts("Activating plugin #{spec.name}")
+                spec.activate
+                spec.activate_dependencies
+
+                ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
+                require(plugin)
+
+                if ENV['DEBUG'] == 'plugin'
+                  added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
+                  added_paths = ($LOAD_PATH - load_path_before).map {|feat| "- #{feat}"}
+                  $stderr.puts "Plugin manager loaded features for #{spec.name}: \n#{added_features.join("\n")}" unless added_features.empty?
+                  $stderr.puts "Plugin manager load paths added for #{spec.name}: \n#{added_paths.join("\n")}" unless added_paths.empty?
+                end
+
                 plugins << spec
               else
                 plugin_name = spec.name.sub('kontena-plugin-', '')
-                STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
-                STDERR.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
+                $stderr.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
+                $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
-            rescue LoadError => exc
-              STDERR.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"
-              if ENV['DEBUG']
-                STDERR.puts exc.message
-                STDERR.puts exc.backtrace.join("\n")
-              end
-              exit 1
+            rescue ScriptError, StandardError => ex
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
+              ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
             end
           end
         end
       end
       plugins
-    rescue => exc
-      STDERR.puts exc.message
+    rescue => ex
+      $stderr.puts Kontena.pastel.red(ex.message)
+      ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
     end
 
     def prefix(plugin_name)

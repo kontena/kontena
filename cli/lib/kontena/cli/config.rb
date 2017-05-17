@@ -22,11 +22,11 @@ module Kontena
         self
       end
 
-      class TokenExpiredError < StandardError;  end
+      TokenExpiredError = Class.new(StandardError)
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
+        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
         @logger.progname = 'CONFIG'
         load_settings_from_env || load_settings_from_config_file
@@ -41,7 +41,7 @@ module Kontena
         return nil unless ENV['KONTENA_URL']
         logger.debug 'Loading configuration from ENV'
         servers << Server.new(
-          url: ENV['KONTENA_URL'], 
+          url: ENV['KONTENA_URL'],
           name: 'default',
           token: Token.new(access_token: ENV['KONTENA_TOKEN'], parent_type: :master, parent_name: 'default'),
           grid: ENV['KONTENA_GRID'],
@@ -172,7 +172,7 @@ module Kontena
         logger.debug "Migrating from legacy style configuration"
         {
           'current_server' => 'default',
-          'servers' => [ 
+          'servers' => [
             settings['server'].merge(
               'name' => 'default',
               'account' => 'kontena'
@@ -303,7 +303,7 @@ module Kontena
       def require_current_master_token
         require_current_master
         token = current_master.token
-        if token && token.access_token 
+        if token && token.access_token
           return token unless token.expired?
           raise TokenExpiredError, "The access token has expired and needs to be refreshed."
         end
@@ -364,7 +364,7 @@ module Kontena
         raise ArgumentError, "You have not selected a grid. Use: kontena grid"
       end
 
-      # Name of the currently selected grid. Can override using 
+      # Name of the currently selected grid. Can override using
       # KONTENA_GRID environment variable.
       #
       # @return [String, NilClass]
@@ -433,7 +433,7 @@ module Kontena
         JSON.pretty_generate(to_hash)
       end
 
-      # Write the current configuration to config file. 
+      # Write the current configuration to config file.
       # Does nothing if using settings from environment variables.
       def write
         return nil if ENV['KONTENA_URL']
@@ -518,7 +518,7 @@ module Kontena
         def account
           return @account if @account
           return config.find_account('master') unless parent
-          @account = 
+          @account =
             case parent_type
             when :master then config.find_account(parent.account)
             when :account then parent

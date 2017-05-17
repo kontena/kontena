@@ -13,7 +13,14 @@ module Kontena::Cli::Services
       token = require_token
 
       show_service(token, name)
-      show_service_instances(token, name)
+      begin
+        show_service_instances(token, name)
+      rescue Kontena::Errors::StandardError => exc
+        if exc.status == 404
+          # fallback to old behaviour
+          show_service_containers(token, name)
+        end
+      end
     end
   end
 end

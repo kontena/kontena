@@ -59,7 +59,7 @@ class GridServiceSerializer < KontenaJsonSerializer
     deploy_opts = object.deploy_opts
     {
       wait_for_port: deploy_opts.wait_for_port,
-      min_healt: deploy_opts.min_health,
+      min_health: deploy_opts.min_health,
       interval: deploy_opts.interval
     }
   end

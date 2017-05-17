@@ -32,7 +32,7 @@ module Stacks
         service[:grid] = self.grid
         outcome = GridServices::Create.validate(service)
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :validate)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
     end
@@ -48,8 +48,6 @@ module Stacks
         return
       end
 
-      create_volumes(attributes.delete(:volumes))
-
       services = sort_services(attributes.delete(:services))
       attributes[:services] = services
       attributes[:volumes] = self.volumes
@@ -61,20 +59,6 @@ module Stacks
       stack
     end
 
-    # @param [Array<Hash>] volumes
-    def create_volumes(volumes)
-      return unless volumes
-      volumes.each do |volume|
-        unless volume[:external]
-          outcome = Volumes::Create.run(grid: self.grid, **volume.symbolize_keys)
-          unless outcome.success?
-            handle_volume_outcome_errors(volume[:name], outcome.errors)
-            return
-          end
-        end
-      end
-    end
-
     # @param [Stack] stack
     # @param [Array<Hash>] services
     def create_services(stack, services)
@@ -84,7 +68,7 @@ module Stacks
         service[:stack] = stack
         outcome = GridServices::Create.run(service)
         unless outcome.success?
-          handle_service_outcome_errors(service[:name], outcome.errors.message, :create)
+          handle_service_outcome_errors(service[:name], outcome.errors)
         end
       end
     end

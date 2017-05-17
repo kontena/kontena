@@ -23,8 +23,10 @@ module Kontena::Cli::Nodes
       puts "  private ip: #{node['private_ip']}"
       puts "  overlay ip: #{node['overlay_ip']}"
       puts "  os: #{node['os']}"
-      puts "  driver: #{node['driver']}"
       puts "  kernel: #{node['kernel_version']}"
+      puts "  drivers:"
+      puts "    storage: #{node['driver']}"
+      puts "    volume: #{node['volume_drivers'].to_a.map{|v| v['name']}.join(',')}"
       puts "  initial node: #{node['initial_member'] ? 'yes' : 'no'}"
       puts "  labels:"
       if node['labels']

@@ -3,7 +3,6 @@ require_relative 'container_info_mapper'
 
 module Rpc
   class ContainerHandler
-    include Celluloid
     include FixnumHelper
     include Logging
 
@@ -14,9 +13,10 @@ module Rpc
       @grid = grid
       @logs = []
       @stats = []
-      @cached_container = nil
+      @cached_containers = {}
       @logs_buffer_size = 5
       @stats_buffer_size = 5
+      @containers_cache_size = 50
       @db_session = ContainerLog.collection.session.with(
         write: {
           w: 0, fsync: false, j: false
@@ -28,6 +28,20 @@ module Rpc
     def save(data)
       info_mapper = ContainerInfoMapper.new(@grid)
       info_mapper.from_agent(data)
+
+      {}
+    end
+
+    # @param [String] node_id
+    # @param [Array<String>] ids
+    def cleanup(node_id, ids)
+      node = @grid.host_nodes.find_by(node_id: node_id)
+      if node
+        @grid.containers.unscoped.where(
+          :host_node_id => node.id,
+          :container_id.in => ids
+        ).destroy
+      end
     end
 
     # @param [Hash] data
@@ -52,13 +66,9 @@ module Rpc
         }
         if @logs.size >= @logs_buffer_size
           flush_logs
+          gc_cache
         end
       end
-    end
-
-    def flush_logs
-      @db_session[:container_logs].insert(@logs)
-      @logs.clear
     end
 
     # @param [Hash] data
@@ -97,13 +107,9 @@ module Rpc
         }
         if @stats.size >= @stats_buffer_size
           flush_stats
+          gc_cache
         end
       end
-    end
-
-    def flush_stats
-      @db_session[:container_stats].insert(@stats.dup)
-      @stats.clear
     end
 
     # @param [Hash] data
@@ -115,18 +121,36 @@ module Rpc
           container.destroy
         end
       end
+
+      {}
+    end
+
+    def flush_logs
+      @db_session[:container_logs].insert(@logs)
+      @logs.clear
+    end
+
+    def flush_stats
+      @db_session[:container_stats].insert(@stats.dup)
+      @stats.clear
+    end
+
+    def gc_cache
+      if @cached_containers.keys.size > @containers_cache_size
+        (@containers_cache_size / 5).times { @cached_containers.shift }
+      end
     end
 
     # @param [String] id
     # @return [Hash, NilClass]
     def cached_container(id)
-      if @cached_container && @cached_container['container_id'] == id
-        container = @cached_container
+      if @cached_containers[id]
+        container = @cached_containers[id]
       else
         container = @db_session[:containers].find(
             grid_id: @grid.id, container_id: id
           ).limit(1).one
-        @cached_container = container if container
+        @cached_containers[id] = container if container
       end
 
       container

@@ -276,7 +276,7 @@ describe Kontena::Client do
       end
     end
 
-    context "with a 422 response with JSON error" do
+    context "with a 422 response with JSON error string" do
       before :each do
         allow(subject).to receive(:http_client).and_call_original
 
@@ -291,6 +291,24 @@ describe Kontena::Client do
 
       it "raises StandardError with the server error message" do
         expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardError, "You are wrong")
+      end
+    end
+
+    context "with a 422 response with JSON error object" do
+      before :each do
+        allow(subject).to receive(:http_client).and_call_original
+
+        WebMock.stub_request(:any, 'http://localhost/v1/test').to_return(
+          status: 422,
+          headers: {
+            'Content-Type' => 'application/json',
+          },
+          body: {'error' => { 'foo' => "Foo was invalid" } }.to_json,
+        )
+      end
+
+      it "raises StandardError with the server error message" do
+        expect{subject.get('test')}.to raise_error(Kontena::Errors::StandardErrorHash, /foo: Foo was invalid/)
       end
     end
 

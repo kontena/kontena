@@ -41,12 +41,11 @@ module Kontena
         # @param [String] service_id
         def show_service(token, service_id)
           service = get_service(token, service_id)
-          grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
           puts "  created: #{service['created_at']}"
           puts "  updated: #{service['updated_at']}"
           puts "  stack: #{service['stack']['id'] }"
-          puts "  state: #{service['state'] }"
+          puts "  desired_state: #{service['state'] }"
           puts "  image: #{service['image']}"
           puts "  revision: #{service['revision']}"
           puts "  stack_revision: #{service['stack_revision']}" if service['stack_revision']
@@ -54,7 +53,9 @@ module Kontena
           puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
           puts "  deploy_opts:"
-          puts "    min_health: #{service['deploy_opts']['min_health']}"
+          if service['deploy_opts']['min_health']
+            puts "    min_health: #{service['deploy_opts']['min_health']}"
+          end
           if service['deploy_opts']['wait_for_port']
             puts "    wait_for_port: #{service['deploy_opts']['wait_for_port']}"
           end
@@ -104,7 +105,7 @@ module Kontena
             end
           end
 
-          unless service['net'].to_s.empty?
+          if service['net'].to_s != 'bridge'
             puts "  net: #{service['net']}"
           end
 
@@ -189,6 +190,40 @@ module Kontena
 
         def show_service_instances(token, service_id)
           puts "  instances:"
+          instances = client(token).get("services/#{parse_service_id(service_id)}/instances")['instances']
+          containers = client(token).get("services/#{parse_service_id(service_id)}/containers")['containers']
+          instances.each do |i|
+            puts "    #{name}/#{i['instance_number']}:"
+            puts "      scheduled_to: #{i.dig('node', 'name') || '-'}"
+            puts "      deploy_rev: #{i['deploy_rev']}"
+            puts "      rev: #{i['rev']}"
+            puts "      state: #{i['state']}"
+            puts "      error: #{i['error'] || '-'}" if i['error']
+            puts "      containers:"
+            containers.select { |c|
+              c['instance_number'] == i['instance_number']
+            }.each do |container|
+              puts "        #{container['name']} (on #{container.dig('node', 'name')}):"
+              puts "          dns: #{container['hostname']}.#{container['domainname']}"
+              puts "          ip: #{container['ip_address']}"
+              puts "          public ip: #{container['node']['public_ip'] rescue 'unknown'}"
+              if container['health_status']
+                health_time = Time.now - Time.parse(container.dig('health_status', 'updated_at'))
+                puts "          health: #{container.dig('health_status', 'status')} (#{health_time.to_i}s ago)"
+              end
+              puts "          status: #{container['status']}"
+              if container.dig('state', 'error') != ''
+                puts "          reason: #{container['state']['error']}"
+              end
+              if container.dig('state', 'exit_code').to_i != 0
+                puts "          exit code: #{container['state']['exit_code']}"
+              end
+            end
+          end
+        end
+
+        def show_service_containers(token, service_id)
+          puts "  instances:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
             puts "    #{container['name']}:"
@@ -224,23 +259,45 @@ module Kontena
           client(token).post("services/#{param}/deploy", data)
         end
 
+        # @param [Hash] deployment
+        # @return [String] multi-line
+        def render_service_deploy_instances(deployment)
+          deployment['instance_deploys'].map{ |instance_deploy|
+            description = "instance #{deployment['service_id']}-#{instance_deploy['instance_number']} to node #{instance_deploy['node']}"
+
+            case instance_deploy['state']
+            when 'created'
+              "#{pastel.dark('⊝')} Deploy #{description}"
+            when 'ongoing'
+              "#{pastel.cyan('⊙')} Deploying #{description}..."
+            when 'success'
+              "#{pastel.green('⊛')} Deployed #{description}"
+            when 'error'
+              "#{pastel.red('⊗')} Failed to deploy #{description}: #{instance_deploy['error']}"
+            else
+              "#{pastel.dark('⊗')} Deploy #{description}?"
+            end
+          }
+        end
+
         # @param [String] token
         # @param [Hash] deployment
-        # @return [Boolean]
-        def wait_for_deploy_to_finish(token, deployment, timeout = 600)
-          deployed = false
+        # @param [Fixnum] timeout
+        # @param [Boo lean] verbose
+        # @raise [Kontena::Errors::StandardError]
+        def wait_for_deploy_to_finish(token, deployment, timeout: 600)
           Timeout::timeout(timeout) do
-            until deployed
-              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
-              deployed = true if deployment['finished_at']
+            until deployment['finished_at']
               sleep 1
+              deployment = client(token).get("services/#{deployment['service_id']}/deploys/#{deployment['id']}")
             end
+
             if deployment['state'] == 'error'
-              raise Kontena::Errors::StandardError.new(500, deployment['reason'])
+              raise Kontena::Errors::StandardErrorArray.new(500, deployment['reason'], render_service_deploy_instances(deployment))
+            else
+              puts render_service_deploy_instances(deployment).join("\n")
             end
           end
-
-          deployed
         rescue Timeout::Error
           raise Kontena::Errors::StandardError.new(500, 'deploy timed out')
         end

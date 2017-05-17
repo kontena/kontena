@@ -6,11 +6,19 @@ module Stacks
     include SortHelper
 
     # @param [String] service_name
+    # @param [Symbol] key
+    # @param [Symbol] symbolic
+    # @param [String] message
+    def add_service_error(service_name, key, symbolic, message)
+      add_error("services.#{service_name}.#{key}", symbolic, message)
+    end
+
+    # @param [String] service_name
     # @param [Hash] messages
     # @param [String] type
-    def handle_service_outcome_errors(service_name, messages, type)
-      messages.each do |key, msg|
-        add_error(:services, key.to_sym, "Service #{type} failed for service '#{service_name}': #{msg}")
+    def handle_service_outcome_errors(service_name, errors)
+      errors.each do |key, atom|
+        add_service_error(service_name, key, atom.symbolic, atom.message)
       end
     end
 
@@ -33,7 +41,7 @@ module Stacks
       links = links - internal_links
       internal_links.each do |l|
         unless self.services.any?{|s| s[:name] == l['name']}
-          handle_service_outcome_errors(service[:name], { links: "Linked service '#{l['name']}' does not exist" }, :validate)
+          add_service_error(service[:name], :links, :exist,  "Linked service '#{l['name']}' does not exist")
         end
       end
       service[:links] = links
@@ -44,11 +52,12 @@ module Stacks
 
       self.volumes.each do |volume|
         if volume['external']
-          volume_name = volume['external'] == true ? volume['name'] : volume.dig('external', 'name')
-          vol = self.grid.volumes.where(name: volume_name, grid: self.grid).first
+          vol = self.grid.volumes.where(name: volume['external']).first
           unless vol
-            add_error(:volumes, :not_found, "External volume #{volume_name} not found")
+            add_error(:volumes, :not_found, "External volume #{volume['external']} not found")
           end
+        else
+          add_error(:volumes, :invalid, "Only external volumes supported")
         end
       end
     end

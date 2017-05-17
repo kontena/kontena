@@ -4,26 +4,19 @@ module Kontena::Cli::Vault
     include Kontena::Cli::GridOptions
 
     parameter 'NAME', 'Secret name'
-    parameter '[VALUE]', 'Secret value'
+    parameter '[VALUE]', 'Secret value (default: STDIN)'
 
     option '--silent', :flag, "Reduce output verbosity"
 
-    def execute
-      require_api_url
-      require_current_grid
+    requires_current_master
 
-      token = require_token
-      secret = value
-      if secret.to_s == ''
-        secret = STDIN.read
-      end
-      exit_with_error('No value provided') if secret.to_s == ''
-      data = {
-          name: name,
-          value: secret
-      }
+    def default_value
+      stdin_input("Enter value for secret '#{name}'", :mask)
+    end
+
+    def execute
       vspinner "Writing #{name.colorize(:cyan)} to the vault " do
-        client(token).post("grids/#{current_grid}/secrets", data)
+        client.post("grids/#{current_grid}/secrets", { name: name, value: value })
       end
     end
   end

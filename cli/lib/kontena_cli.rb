@@ -19,14 +19,19 @@ module Kontena
     ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
     return 0 if returning == :status
     return result if returning == :result
-  rescue SystemExit
-    ENV["DEBUG"] && STDERR.puts("Command completed with failure, result: #{result.inspect} status: #{$!.status}")
+  rescue SystemExit => ex
+    ENV["DEBUG"] && $stderr.puts("Command completed with failure, result: #{result.inspect} status: #{ex.status}")
     returning == :status ? $!.status : nil
-  rescue
-    ENV["DEBUG"] && STDERR.puts("Command raised #{$!} with message: #{$!.message}\n  #{$!.backtrace.join("  \n")}")
+  rescue => ex
+    ENV["DEBUG"] && $stderr.puts("Command raised #{ex} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
     returning == :status ? 1 : nil
   end
 
+
+  # @return [String] x.y
+  def self.minor_version
+    Kontena::Cli::VERSION.split('.')[0..1].join('.')
+  end
 
   def self.version
     "kontena-cli/#{Kontena::Cli::VERSION}"
@@ -95,7 +100,7 @@ require 'retriable'
 Retriable.configure do |c|
   c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
     return true unless ENV["DEBUG"]
-    puts "Retriable retry: #{try} - Exception: #{exception} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
+    puts "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
   end
 end
 
@@ -103,12 +108,11 @@ require 'ruby_dig'
 require 'shellwords'
 require "safe_yaml"
 SafeYAML::OPTIONS[:default_mode] = :safe
-require_relative 'kontena/cli/version'
-require_relative 'kontena/cli/common'
-require_relative 'kontena/command'
-require_relative 'kontena/client'
-require_relative 'kontena/stacks_cache'
-require_relative 'kontena/plugin_manager'
-require_relative 'kontena/main_command'
-require_relative 'kontena/cli/spinner'
-
+require 'kontena/cli/version'
+require 'kontena/cli/common'
+require 'kontena/command'
+require 'kontena/client'
+require 'kontena/stacks_cache'
+require 'kontena/plugin_manager'
+require 'kontena/main_command'
+require 'kontena/cli/spinner'

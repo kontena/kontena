@@ -51,10 +51,12 @@ RSpec.configure do |config|
 
   config.before(:each) do
     $stdout = StringIO.new
+    $stderr = StringIO.new
   end
 
   config.after(:each) do
     $stdout = STDOUT
+    $stderr = STDERR
   end
 end
 
