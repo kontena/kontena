@@ -13,23 +13,24 @@ module GridServices
 
     optional do
       string :image
-      model :grid, class: Grid
-      model :stack, class: Stack
+    end
+
+    def grid
+      self.grid_service.grid
+    end
+    def stack
+      self.grid_service.stack
     end
 
     def validate
-      if self.links
-        validate_links(self.grid_service.grid, self.grid_service.stack, self.links)
-      end
+      validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
-      if self.secrets
-        validate_secrets_exist(self.grid_service.grid, self.secrets)
-      end
+      validate_secrets
       if self.grid_service.stateful?
         if self.volumes_from && self.volumes_from.size > 0
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
@@ -40,11 +41,11 @@ module GridServices
             !vols.include?(v)
           }
           if changed_volumes.any? { |v| !v.include?(':') }
-            add_errors(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
+            add_error(:volumes, :invalid, 'Adding a non-named volume to a stateful service is not supported')
           end
         end
       end
-      validate_volumes(self.volumes)
+      validate_volumes
     end
 
     # List changed fields of model

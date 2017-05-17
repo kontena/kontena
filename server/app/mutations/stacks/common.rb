@@ -8,13 +8,13 @@ module Stacks
     # @param service_name [String]
     # @param errors [Mutations::ErrorHash] Mutations::Outcome.errors
     def handle_service_outcome_errors(service_name, errors)
-      add_outcome_errors("services.#{service_name}", errors)
+      add_error("services.#{service_name}", errors)
     end
 
     # @param volume_name [String]
     # @param errors [Mutations::ErrorHash] Mutations::Outcome.errors
     def handle_volume_outcome_errors(volume_name, errors)
-      add_outcome_errors("volumes.#{volume_name}", errors)
+      add_error("volumes.#{volume_name}", errors)
     end
 
     def validate_expose
@@ -30,7 +30,7 @@ module Stacks
       links = links - internal_links
       internal_links.each do |l|
         unless self.services.any?{|s| s[:name] == l['name']}
-          add_errors("services.#{service['name']}.links", :not_found, "Linked service '#{l['name']}' does not exist")
+          add_error("services.#{service['name']}.links", :not_found, "Linked service '#{l['name']}' does not exist")
         end
       end
       service[:links] = links

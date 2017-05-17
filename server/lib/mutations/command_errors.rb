@@ -1,28 +1,23 @@
+require 'mutations'
+
 module Mutations
   class Command
     protected
 
-    # Add multiple errors for a key
+    # Add error for a key
     #
-    def add_errors(key, kind, message = nil)
-      raise ArgumentError.new("Invalid kind of #{kind.class}") unless kind.is_a?(Symbol)
+    # @param key [Symbol] :foo
+    # @param key [String] 'foo.bar'
+    # @param error [Symbol] :not_found
+    # @param error [Mutations:ErrorAtom, Mutations::ErrorArray, Mutations::ErrorHash]
+    def add_error(key, error, message = nil)
+      if error.is_a? Symbol
+        error = ErrorAtom.new(key, error, message: message)
+      elsif error.is_a?(Mutations::ErrorAtom) || error.is_a?(Mutations::ErrorArray) || error.is_a?(Mutations::ErrorHash)
 
-      @errors ||= ErrorHash.new
-      path = key.to_s.split(".")
-      last = path.pop
-      inner = path.inject(@errors) do |cur_errors,part|
-        cur_errors[part.to_sym] ||= ErrorHash.new
+      else
+        raise ArgumentError.new("Invalid error of kind #{error.class}")
       end
-      inner[last] ||= ErrorArray.new
-      inner[last] << ErrorAtom.new(key, kind, message: message)
-    end
-
-    # Add nested errors from a sub-mutation.
-    #
-    # @param key [String] Top-level services.asdf key
-    # @param errors [ErrorHash] Sub-mutation Outcome.errors
-    def add_outcome_errors(key, errors)
-      raise ArgumentError.new("Invalid kind of #{kind.class}") unless errors.is_a?(ErrorHash)
 
       @errors ||= ErrorHash.new
       @errors.tap do |errs|
@@ -31,7 +26,21 @@ module Mutations
         inner = path.inject(errs) do |cur_errors,part|
           cur_errors[part.to_sym] ||= ErrorHash.new
         end
-        inner[last] = errors
+        inner[last] = error
+      end
+    end
+
+    def validate_each(key)
+      return unless @inputs[key]
+      
+      errors = ErrorArray.new
+      @inputs[key].each do |item|
+        kind, message = yield item
+
+        errors << ErrorAtom.new(key, kind, message: message) if kind
+      end
+      if errors.any?
+        add_error(key, errors)
       end
     end
   end

@@ -119,41 +119,40 @@ module GridServices
       service_volumes
     end
 
-    # @param [Grid] grid
-    # @param [Stack] stack
-    # @param [Array<Hash>] links
-    def validate_links(grid, stack, links)
-      links.each do |link|
-        link[:name] = "#{stack.name}/#{link[:name]}" unless link[:name].include?('/')
-        linked_stack, service_name = parse_link(grid, link)
+    def validate_links
+      validate_each :links do |link|
+        link[:name] = "#{self.stack.name}/#{link[:name]}" unless link[:name].include?('/')
+        linked_stack, service_name = parse_link(self.grid, link)
         if linked_stack.nil?
-          add_errors(:links, :not_found, "Link #{link[:name]} points to non-existing stack")
+          [:not_found, "Link #{link[:name]} points to non-existing stack"]
         elsif linked_stack.grid_services.find_by(name: service_name).nil?
-          add_errors(:links, :not_found, "Service #{link[:name]} does not exist")
+          [:not_found, "Service #{link[:name]} does not exist"]
+        else
+          nil
         end
       end
     end
 
     # Validates that the defined secrets exist
-    # @param [Grid] grid
-    # @param [Hash] secrets
-    def validate_secrets_exist(grid, secrets)
-      secrets.each do |s|
-        secret = grid.grid_secrets.find_by(name: s[:secret])
+    def validate_secrets
+      validate_each :secrets do |s|
+        secret = self.grid.grid_secrets.find_by(name: s[:secret])
         unless secret
-          add_errors(:secrets, :not_found, "Secret #{s[:secret]} does not exist")
+          [:not_found, "Secret #{s[:secret]} does not exist"]
+        else
+          nil
         end
       end
     end
 
-    def validate_volumes(volumes = nil)
-      return unless volumes
-
-      volumes.each do |volume|
+    def validate_volumes
+      validate_each :volumes do |volume|
         begin
           parse_volume(volume)
         rescue ArgumentError => exc
-          add_errors(:volumes, :invalid, exc.message)
+          [:invalid, exc.message]
+        else
+          nil
         end
       end
     end
