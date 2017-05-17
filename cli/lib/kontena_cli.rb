@@ -38,13 +38,17 @@ module Kontena
   def self.log_target
     return @log_target if @log_target
 
-    @log_target = ENV["LOG_TARGET"]
+    @log_target = ENV['LOG_TARGET']
 
     if ENV["DEBUG"]
       @log_target ||= $stderr
     elsif @log_target.nil?
       @log_target = File.join(home, 'kontena.log')
     end
+  end
+
+  def self.reset_logger
+    @log_target, @logger = nil
   end
 
   def self.home
