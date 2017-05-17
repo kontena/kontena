@@ -29,7 +29,8 @@ module Kontena
   # @param [String,Array<String>] command_line
   # @return [TrueClass,FalseClass] success
   def self.run(*cmdline)
-    run!(*cmdline)
+    result = run!(*cmdline)
+    result.nil? ? true : result
   rescue SystemExit => ex
     ex.status.zero?
   rescue

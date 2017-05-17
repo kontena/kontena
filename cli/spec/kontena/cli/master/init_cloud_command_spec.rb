@@ -20,7 +20,7 @@ describe Kontena::Cli::Master::InitCloudCommand do
   end
 
   it 'runs the invite self after deploy callback' do
-    expect(Kontena).to receive(:run).with(%w(cloud master add --current --force)).and_return(true)
+    expect(Kontena).to receive(:run!).with(%w(cloud master add --current --force)).and_return(true)
     expect_any_instance_of(Kontena::Callbacks::InviteSelfAfterDeploy).to receive(:after).and_return(true)
     subject.run(['--force'])
   end
