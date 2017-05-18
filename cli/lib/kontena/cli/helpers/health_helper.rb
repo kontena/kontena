@@ -49,5 +49,26 @@ module Kontena::Cli::Helpers
         return node['connected'] ? :ok : :offline
       end
     end
+
+    # Return a very show approximation of how long ago the given time was
+    # @param time [Time]
+    def time_to_terse_duration(time)
+      dt = Time.now - time
+
+      dt_s = dt.to_i
+      dt_m = dt_s / 60
+      dt_h = dt_m / 60
+      dt_d = dt_h / 60
+
+      if dt_d > 0
+        "%dd" % dt_d
+      elsif dt_h > 0
+        "%dh" % dt_h
+      elsif dt_m > 0
+        "%dm" % dt_m
+      else
+        "%ds" % dt_s
+      end
+    end
   end
 end

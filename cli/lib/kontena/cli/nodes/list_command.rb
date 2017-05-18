@@ -19,8 +19,17 @@ module Kontena::Cli::Nodes
     end
 
     def node_status(node)
-      node['connected'] ? pastel.green('online') : pastel.red('offline')
+      if node['connected']
+        duration = time_to_terse_duration(Time.parse(node['connected_at']))
+
+        "online #{duration}"
+      else
+        duration = time_to_terse_duration(Time.parse(node['disconnected_at']))
+
+        "offline #{duration}"
+      end
     end
+
 
     def node_initial(node, grid)
       return '-' unless node['initial_member']
