@@ -11,6 +11,7 @@ class WebsocketBackend
 
   KEEPALIVE_TIME = 30.seconds
   PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5.seconds)
+  CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.seconds)
 
   RPC_MSG_TYPES = %w(request notify)
   QUEUE_SIZE = 1000
@@ -96,10 +97,22 @@ class WebsocketBackend
       return
     end
 
-    # after version check, because older agent versions do not send this header
+    # check clock after version check, because older agent versions do not send this header
     connected_at = Time.parse(req.env['HTTP_KONTENA_CONNECTED_AT'])
+    connected_dt = Time.now - connected_at
 
-    logger.info "node #{node} agent version #{agent_version} connected at #{connected_at}"
+    if connected_dt > PING_TIMEOUT + CLOCK_SKEW
+      logger.warn "node #{node} connected too far in the past at #{connected_at}, #{'%.2fs' % connected_dt} ago"
+      handle_invalid_agent_clock(ws, node, connected_dt)
+      return
+
+    elsif connected_dt < -CLOCK_SKEW
+      logger.warn "node #{node} connected too far in the future at #{connected_at}, #{'%.2fs' % -connected_dt} ahead"
+      handle_invalid_agent_clock(ws, node, connected_dt)
+      return
+    end
+
+    logger.info "node #{node} agent version #{agent_version} connected at #{connected_at}, #{'%.2fs' % connected_dt} ago"
 
     client = {
         ws: ws,
@@ -114,6 +127,10 @@ class WebsocketBackend
     EM.defer { node_plugger.plugin! connected_at }
   rescue => exc
     logger.error exc
+  end
+
+  def handle_invalid_agent_clock(ws, node, connected_dt)
+    ws.close(4020, "agent clock offset #{'%.2fs' % connected_dt} exceeds threshold")
   end
 
   ##
