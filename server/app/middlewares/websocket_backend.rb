@@ -9,6 +9,7 @@ class WebsocketBackend
   WATCHDOG_THRESHOLD = 1.0.seconds
   WATCHDOG_TIMEOUT = 60.0.seconds
 
+  STRFTIME = '%F %T.%NZ'
   KEEPALIVE_TIME = 30.seconds
   PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5.seconds)
   CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.seconds)
@@ -40,7 +41,12 @@ class WebsocketBackend
   def call(env)
     if Faye::WebSocket.websocket?(env)
       req = Rack::Request.new(env)
-      ws = Faye::WebSocket.new(env)
+      ws = Faye::WebSocket.new(env, nil,
+        headers: {
+          'Kontena-Version' => Server::VERSION,
+          'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
+        },
+      )
 
       ws.on :open do |event|
         self.on_open(ws, req)
