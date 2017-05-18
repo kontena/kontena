@@ -11,10 +11,9 @@ module Agent
       @node = node
     end
 
-    def plugin!
-      info "connect node #{node}"
-
-      self.update_node
+    # @param [Time] connected_at
+    def plugin!(connected_at)
+      self.update_node! connected_at
       self.publish_update_event
       self.send_master_info
       self.send_node_info
@@ -22,8 +21,15 @@ module Agent
       error exc
     end
 
-    def update_node
-      node.set(connected: true, last_seen_at: Time.now.utc)
+    # @raise [RuntimeError] Node ... has already re-connected at ...
+    def update_node!(connected_at)
+      connected_node = HostNode.where(:id => node.id)
+        .any_of({:connected_at => nil}, {:connected_at.lt => connected_at})
+        .find_one_and_update({:$set => {connected: true, last_seen_at: Time.now.utc, connected_at: connected_at}})
+
+      fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
+
+      info "Connected node #{@node.to_path} at #{connected_at}"
     end
 
     def publish_update_event

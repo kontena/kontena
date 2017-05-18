@@ -96,7 +96,10 @@ class WebsocketBackend
       return
     end
 
-    logger.info "node #{node} agent version #{agent_version} connected"
+    # after version check, because older agent versions do not send this header
+    connected_at = Time.parse(req.env['HTTP_KONTENA_CONNECTED_AT'])
+
+    logger.info "node #{node} agent version #{agent_version} connected at #{connected_at}"
 
     client = {
         ws: ws,
@@ -108,7 +111,7 @@ class WebsocketBackend
     }
     @clients << client
 
-    EM.defer { node_plugger.plugin! }
+    EM.defer { node_plugger.plugin! connected_at }
   rescue => exc
     logger.error exc
   end
@@ -207,7 +210,7 @@ class WebsocketBackend
   def unplug_client(client)
     node = HostNode.find_by(node_id: client[:id])
     if node
-      Agent::NodeUnplugger.new(node).unplug!
+      Agent::NodeUnplugger.new(node).unplug! client[:connected_at]
     else
       logger.warn "skip unplug of missing node #{client[:id]}"
     end
@@ -245,7 +248,6 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [HostNode] node
   def handle_invalid_agent_version(ws, node, version)
-    node.set(connected: false, last_seen_at: Time.now.utc)
     # XXX: delay to give the Agent::NodePlugger.send_master_info -> MongoPubSub time to call send_message before the websocket gets closed... hopefully?
     EventMachine::Timer.new(1) do
       ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
