@@ -12,6 +12,7 @@ module Agent
     def unplug!
       info "disconnect node #{node}"
       self.update_node
+      self.update_node_containers
       self.publish_update_event
     rescue => exc
       error exc
@@ -19,10 +20,10 @@ module Agent
 
     def update_node
       node.set(:connected => false)
-      deleted_at = Time.now.utc
-      node.containers.unscoped.where(:container_type.ne => 'volume').each do |c|
-        c.set(:deleted_at => deleted_at)
-      end
+    end
+
+    def update_node_containers
+      node.containers.unscoped.where(:container_type.ne => 'volume').set(:deleted_at => Time.now.utc)
     end
 
     def publish_update_event
