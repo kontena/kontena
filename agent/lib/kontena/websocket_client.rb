@@ -166,12 +166,15 @@ module Kontena
       @connected = false
       @connecting = false
       @ws = nil
-      if event.code == 4001
+
+      case event.code
+      when 4001
         handle_invalid_token
-      elsif event.code == 4010
-        handle_invalid_version
+      when 4010
+        handle_invalid_version(event.reason)
+      else
+        warn "connection closed with code #{event.code}: #{event.reason}"
       end
-      info "connection closed with code #{event.code}"
       notify_actors('websocket:close', nil)
     rescue => exc
       error exc.message
@@ -182,9 +185,9 @@ module Kontena
       EM.next_tick { abort('Shutting down ...') }
     end
 
-    def handle_invalid_version
+    def handle_invalid_version(reason)
       agent_version = Kontena::Agent::VERSION
-      error "master does not accept our version (#{agent_version}), shutting down ..."
+      error "master does not accept our version (#{agent_version}): #{reason}"
       EM.next_tick { abort("Shutting down ...") }
     end
 

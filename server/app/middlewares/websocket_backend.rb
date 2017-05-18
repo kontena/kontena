@@ -70,7 +70,7 @@ class WebsocketBackend
     grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
     unless grid
       logger.error 'invalid grid token, closing connection'
-      ws.close(4001)
+      ws.close(4001, "Invalid grid token")
       return
     end
 
@@ -92,7 +92,7 @@ class WebsocketBackend
     unless self.valid_agent_version?(agent_version)
       logger.warn "node #{node} agent version #{version} is not compatible with server version #{Server::VERSION}"
       node_plugger.send_master_info
-      handle_invalid_agent_version(ws, node)
+      handle_invalid_agent_version(ws, node, agent_version)
       return
     end
 
@@ -244,11 +244,11 @@ class WebsocketBackend
 
   # @param [Faye::WebSocket] ws
   # @param [HostNode] node
-  def handle_invalid_agent_version(ws, node)
+  def handle_invalid_agent_version(ws, node, version)
     node.set(connected: false, last_seen_at: Time.now.utc)
     # XXX: delay to give the Agent::NodePlugger.send_master_info -> MongoPubSub time to call send_message before the websocket gets closed... hopefully?
     EventMachine::Timer.new(1) do
-      ws.close(4010) if ws
+      ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
     end
   end
 
@@ -331,7 +331,7 @@ class WebsocketBackend
   # @param [Fixnum] delay
   def on_client_timeout(client, delay)
     logger.warn "Close node %s connection after %.2fs timeout" % [client[:id], delay]
-    close_client(client)
+    close_client(client, 4030, "ping timeout after %2.fs" % [delay])
   end
 
   # @param [Hash] client
@@ -349,20 +349,23 @@ class WebsocketBackend
         node.set(last_seen_at: Time.now.utc)
       else
         logger.warn "Close connection of disconnected node #{node}"
-        close_client(client)
+        close_client(client, 4042, "host node #{node} has been disconnected")
       end
     else
-      logger.warn "Close connection of missing node #{client[:id]}"
-      close_client(client)
+      logger.warn "Close connection of removed node #{client[:id]}"
+      close_client(client, 4040, "host node #{client[:id]} has been removed")
     end
   end
 
   # Unplug client, marking HostNode as disconnected, and close the websocket connection.
   #
   # @param [Hash] client
-  def close_client(client)
+  def close_client(client, code, reason)
+    # immediately remove from @clients and mark as disconnected
     unplug_client(client)
-    client[:ws].close # triggers on :close later, or after 30s timeout
+
+    # triggers on :close later, or after 30s timeout, but the client will already be gone
+    client[:ws].close(code, reason)
   end
 
   def stop_rpc_server
