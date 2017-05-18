@@ -365,7 +365,7 @@ module Kontena
             {
               ip: '0.0.0.0',
               protocol: 'tcp'
-            }.merge(Kontena::Util.symbolize_keys(match_data.named_captures).compact)
+            }.merge(match_data.names.map { |name| [name.to_sym, md[name]] }.to_h.compact)
           end
         end
 
