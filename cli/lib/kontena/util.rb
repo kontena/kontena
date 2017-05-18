@@ -7,7 +7,7 @@ module Kontena
     def symbolize_keys(obj)
       case obj
       when Hash
-        Hash[obj.map { |k,v| [k.to_sym, symbolize_keys(v)] }]
+        obj.map { |k,v| [k.to_sym, symbolize_keys(v)] }.to_h
       when Array
         obj.map { |v| symbolize_keys(v) }
       else
