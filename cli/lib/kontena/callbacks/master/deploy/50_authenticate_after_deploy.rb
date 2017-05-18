@@ -1,4 +1,3 @@
-require 'securerandom'
 
 module Kontena
   module Callbacks
@@ -9,6 +8,7 @@ module Kontena
       matches_commands 'master create'
 
       def after
+        require 'securerandom'
         ENV["DEBUG"] && $stderr.puts("Command result: #{command.result.inspect}")
         ENV["DEBUG"] && $stderr.puts("Command exit code: #{command.exit_code.inspect}")
         return unless command.exit_code == 0
