@@ -171,12 +171,13 @@ module Kontena
                 loaded_features_before = $LOADED_FEATURES.dup
                 load_path_before = $LOAD_PATH.dup
 
-                ENV["DEBUG"] && $stderr.puts("Activating plugin #{spec.name}")
+                Kontena.logger.debug { "Activating plugin #{spec.name}" }
                 spec.activate
                 spec.activate_dependencies
 
-                ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
+                Kontena.logger.debug { "Loading plugin #{spec.name}" }
                 require(plugin)
+                Kontena.logger.debug { "Loaded plugin #{spec.name}" }
 
                 if ENV['DEBUG'] == 'plugin'
                   added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
