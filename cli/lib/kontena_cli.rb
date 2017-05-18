@@ -20,17 +20,30 @@ module Kontena
     else
       command = cmdline
     end
-    logger.debug { "Running Kontena.run(#{command.inspect}, returning: #{returning}" }
+    logger.debug { "Running Kontena.run(#{command.inspect}" }
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
     logger.debug { "Command completed, result: #{result.inspect} status: 0" }
-    return 0 if returning == :status
-    return result if returning == :result
+    result
   rescue SystemExit => ex
-    logger.error { "Command completed with failure, result: #{result.inspect} status: #{ex.status}" }
-    returning == :status ? $!.status : nil
+    logger.debug { "Command caused SystemExit, status: #{ex.status}" }
+    return true if ex.status.zero?
+    raise ex
   rescue => ex
-    logger.error(ex)
-    returning == :status ? 1 : nil
+    logger.error { "Command #{cmdline.inspect} exception" }
+    logger.error { ex }
+    raise ex
+  end
+
+  # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
+  # @param [String,Array<String>] command_line
+  # @return [TrueClass,FalseClass] success
+  def self.run(*cmdline)
+    result = run!(*cmdline)
+    result.nil? ? true : result
+  rescue SystemExit => ex
+    ex.status.zero?
+  rescue
+    false
   end
 
   def self.log_target
@@ -54,18 +67,6 @@ module Kontena
     @home = File.join(Dir.home, '.kontena')
     Dir.mkdir(@home, 0700) unless File.directory?(@home)
     @home
-  end
-
-  # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
-  # @param [String,Array<String>] command_line
-  # @return [TrueClass,FalseClass] success
-  def self.run(*cmdline)
-    result = run!(*cmdline)
-    result.nil? ? true : result
-  rescue SystemExit => ex
-    ex.status.zero?
-  rescue
-    false
   end
 
   # @return [String] x.y
