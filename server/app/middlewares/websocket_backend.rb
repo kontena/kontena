@@ -66,43 +66,51 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [Rack::Request] req
   def on_open(ws, req)
+    # check grid
     grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
-    if !grid.nil?
-      node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
-
-      logger.info "node #{node_id} opened connection"
-
-      node = grid.host_nodes.find_by(node_id: node_id)
-      labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
-      unless node
-        node = grid.host_nodes.create!(node_id: node_id, labels: labels)
-      end
-
-      node_plugger = Agent::NodePlugger.new(grid, node)
-      client = {
-          ws: ws,
-          id: node_id.to_s,
-          node_id: node.id,
-          grid_id: grid.id,
-          created_at: Time.now
-      }
-      @clients << client
-
-      agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
-      unless self.valid_agent_version?(agent_version)
-        logger.error "version mismatch: server (#{Server::VERSION}), node (#{agent_version})"
-        node_plugger.send_master_info
-        self.handle_invalid_agent_version(ws, node)
-        return
-      end
-
-      EM.defer { node_plugger.plugin! }
-    else
+    unless grid
       logger.error 'invalid grid token, closing connection'
       ws.close(4001)
+      return
     end
+
+    # check host node
+    node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+    labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
+
+    node = grid.host_nodes.find_by(node_id: node_id)
+
+    unless node
+      node = grid.host_nodes.create!(node_id: node_id, labels: labels)
+    end
+
+    node_plugger = Agent::NodePlugger.new(node)
+
+    # check version
+    agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
+
+    unless self.valid_agent_version?(agent_version)
+      logger.warn "node #{node} agent version #{version} is not compatible with server version #{Server::VERSION}"
+      node_plugger.send_master_info
+      handle_invalid_agent_version(ws, node)
+      return
+    end
+
+    logger.info "node #{node} agent version #{agent_version} connected"
+
+    client = {
+        ws: ws,
+        id: node_id.to_s,
+        node_id: node.id,
+        grid_id: grid.id,
+        created_at: Time.now,
+        connected_at: connected_at,
+    }
+    @clients << client
+
+    EM.defer { node_plugger.plugin! }
   rescue => exc
-    logger.error "#{exc.class.name}: #{exc.message}"
+    logger.error exc
   end
 
   ##
