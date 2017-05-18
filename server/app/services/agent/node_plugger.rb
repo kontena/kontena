@@ -1,25 +1,20 @@
-require_relative '../grid_scheduler'
 require_relative '../../serializers/rpc/host_node_serializer'
 
 module Agent
   class NodePlugger
     include Logging
 
-    attr_reader :node, :grid
+    attr_reader :node
 
-    # @param [Grid] grid
     # @param [HostNode] node
-    def initialize(grid, node)
-      @grid = grid
+    def initialize(node)
       @node = node
     end
 
-    # @return [Celluloid::Future]
     def plugin!
       info "connect node #{node}"
 
       begin
-        prev_seen_at = node.last_seen_at
         self.update_node
         self.publish_update_event
         self.send_master_info
