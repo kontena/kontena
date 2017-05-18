@@ -1,6 +1,9 @@
+require_relative '../../helpers/mutations_helpers'
+
 module GridServices
   module Common
     include VolumesHelpers
+    include MutationsHelpers
 
     def self.included(base)
       base.extend(ClassMethods)

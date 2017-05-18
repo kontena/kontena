@@ -29,19 +29,5 @@ module Mutations
         inner[last] = error
       end
     end
-
-    def validate_each(key)
-      return unless @inputs[key]
-      
-      errors = ErrorArray.new
-      @inputs[key].each do |item|
-        kind, message = yield item
-
-        errors << ErrorAtom.new(key, kind, message: message) if kind
-      end
-      if errors.any?
-        add_error(key, errors)
-      end
-    end
   end
 end
