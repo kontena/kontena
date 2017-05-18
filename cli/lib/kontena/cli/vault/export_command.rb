@@ -12,9 +12,11 @@ module Kontena::Cli::Vault
     def execute
       require 'shellwords'
       meth = json? ? :to_json : :to_yaml
-      Kontena.run!(['vault', 'ls', '--return']).sort.map do |secret|
-        [secret, Kontena.run!(['vault', 'read', '--return', secret])]
-      end.to_h.send(meth)
+      puts(
+        Kontena.run!(['vault', 'ls', '--return']).sort.map do |secret|
+          [secret, Kontena.run!(['vault', 'read', '--return', secret])]
+        end.to_h.send(meth)
+      )
     end
   end
 end
