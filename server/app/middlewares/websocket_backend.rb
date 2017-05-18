@@ -57,7 +57,7 @@ class WebsocketBackend
       end
 
       ws.on :close do |event|
-        self.on_close(ws)
+        self.on_close(ws, event)
       end
 
       # Return async Rack response
@@ -133,7 +133,7 @@ class WebsocketBackend
   end
 
   def handle_invalid_agent_clock(ws, node, connected_dt)
-    ws.close(4020, "agent clock offset #{'%.2fs' % connected_dt} exceeds threshold")
+    close_node(4020, "agent clock offset #{'%.2fs' % connected_dt} exceeds threshold")
   end
 
   ##
@@ -208,11 +208,11 @@ class WebsocketBackend
   # The client may have already been unplugged, if we closed the connection.
   #
   # @param [Faye::WebSocket] ws
-  def on_close(ws)
+  def on_close(ws, event)
     client = @clients.find{|c| c[:ws] == ws}
     if client
       logger.info "node #{client[:id]} connection closed"
-      unplug_client(client)
+      unplug_client(client, event.code, event.reason)
     else
       logger.debug "ignore close of unplugged client"
     end
@@ -227,14 +227,41 @@ class WebsocketBackend
   # The client HostNode may not exist anymore.
   #
   # @param [Hash] client
-  def unplug_client(client)
+  def unplug_client(client, code, reason)
     node = HostNode.find_by(node_id: client[:id])
     if node
+      self.disconnect_node(node, code, reason)
       Agent::NodeUnplugger.new(node).unplug! client[:connected_at]
     else
       logger.warn "skip unplug of missing node #{client[:id]}"
     end
     @clients.delete(client)
+  end
+
+  # @param node [HostNode]
+  # @param code [Integer] code 1000 for succesful close
+  # @param reason [String]
+  def disconnect_node(node, code, reason)
+    if code == 1000
+      error = nil
+    elsif reason
+      error = reason
+    else
+      error = code.to_s
+    end
+
+    node.set(:disconnected_at => Time.now.utc, :connection_error => error)
+  end
+
+  # Close websocket connection without unplugging node
+  #
+  # @param ws [Faye::WebSocket]
+  # @param node [HostNode]
+  # @param code [Integer] code 1000 for succesful close
+  # @param reason [String]
+  def close_node(ws, node, code, reason)
+    ws.close(code, reason)
+    disconnect_node(node, code, reason)
   end
 
   ##
@@ -269,15 +296,7 @@ class WebsocketBackend
   # @param [HostNode] node
   def handle_invalid_agent_version(ws, node, version)
     send_master_info(ws)
-    ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
-  end
-
-  # Send master_info RPC notification directly, without looping through the normal RPC mechanisms
-  #
-  # @param [Faye::Websocket] ws
-  def send_master_info(ws)
-    # symbols in RPC parameters are implicitly converted into strings by MongoPubsub
-    send_rpc_notify(ws, '/agent/master_info', {'version' => Server::VERSION})
+    close_node(ws, node, 4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
   end
 
   # @param [Faye::Websocket] ws
@@ -400,7 +419,7 @@ class WebsocketBackend
   # @param [Hash] client
   def close_client(client, code, reason)
     # immediately remove from @clients and mark as disconnected
-    unplug_client(client)
+    unplug_client(client, code, reason)
 
     # triggers on :close later, or after 30s timeout, but the client will already be gone
     client[:ws].close(code, reason)
