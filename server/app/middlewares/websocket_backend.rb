@@ -246,6 +246,7 @@ class WebsocketBackend
   # @param [HostNode] node
   def handle_invalid_agent_version(ws, node)
     node.set(connected: false, last_seen_at: Time.now.utc)
+    # XXX: delay to give the Agent::NodePlugger.send_master_info -> MongoPubSub time to call send_message before the websocket gets closed... hopefully?
     EventMachine::Timer.new(1) do
       ws.close(4010) if ws
     end
