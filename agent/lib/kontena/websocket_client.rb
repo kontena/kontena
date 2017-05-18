@@ -15,6 +15,7 @@ module Kontena
   class WebsocketClient
     include Kontena::Logging
 
+    STRFTIME = '%F %T.%NZ'
     KEEPALIVE_INTERVAL = 30.0 # seconds
     PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5)
 
@@ -70,7 +71,8 @@ module Kontena
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
           'Kontena-Version' => Kontena::Agent::VERSION,
-          'Kontena-Node-Labels' => labels
+          'Kontena-Node-Labels' => labels,
+          'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
