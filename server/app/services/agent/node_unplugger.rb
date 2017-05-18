@@ -11,13 +11,10 @@ module Agent
 
     def unplug!
       info "disconnect node #{node}"
-
-      begin
-        self.update_node
-        self.publish_update_event
-      rescue => exc
-        error exc.message
-      end
+      self.update_node
+      self.publish_update_event
+    rescue => exc
+      error exc
     end
 
     def update_node

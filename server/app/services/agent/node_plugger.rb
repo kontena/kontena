@@ -14,15 +14,12 @@ module Agent
     def plugin!
       info "connect node #{node}"
 
-      begin
-        self.update_node
-        self.publish_update_event
-        self.send_master_info
-        self.send_node_info
-      rescue => exc
-        error exc.message
-        error exc.backtrace.join("\n")
-      end
+      self.update_node
+      self.publish_update_event
+      self.send_master_info
+      self.send_node_info
+    rescue => exc
+      error exc
     end
 
     def update_node
