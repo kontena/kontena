@@ -2,36 +2,33 @@
 set -ue
 
 CURR_BRANCH=${CURR_BRANCH:-$TRAVIS_BRANCH}
-echo "Current branch: '$CURR_BRANCH' Tag: '$TRAVIS_TAG' Commit range: '$TRAVIS_COMMIT_RANGE'"
-echo "Changed files:"
-git diff --name-only $TRAVIS_COMMIT_RANGE
+
+declare -a CHANGED_FILES
+OLD_IFS=$IFS
+IFS=$'\n'
+CHANGED_DIRS=$(git diff --name-only $TRAVIS_COMMIT_RANGE | cut -d"/" -f1 | uniq)
+IFS=$OLD_IFS
+
+changes_contain () {
+  local seeking=$1
+  local in=1
+  for element in $CHANGED_DIRS; do
+    if [[ $element == $seeking ]]; then
+      in=0
+      break
+    fi
+  done
+  return $in
+}
 
 if [ "$CURR_BRANCH" != "master" ] && [ "$TRAVIS_TAG" == "" ]
 then
-  if [ "$TEST_DIR" == "cli" ]
+  if changes_contain "$TEST_DIR"
   then
-    if git diff --name-only $TRAVIS_COMMIT_RANGE | grep -Eqe "^cli/"
-    then
-      echo "Skipping $TEST_DIR test because there are no changes to $TEST_DIR in branch $CURR_BRANCH"
-      exit 0
-    fi
-  fi
-
-  if [ "$TEST_DIR" == "agent" ]
-  then
-    if git diff --name-only $TRAVIS_COMMIT_RANGE | grep -Eqe "^agent/"
-      echo "Skipping $TEST_DIR test because there are no changes to $TEST_DIR in branch $CURR_BRANCH"
-      exit 0
-    fi
-  fi
-
-  if [ "$TEST_DIR" == "server" ]
-  then
-    if git diff --name-only $TRAVIS_COMMIT_RANGE | grep -Eqe "^server/")
-    then
-      echo "Skipping $TEST_DIR test because there are no changes to $TEST_DIR in branch $CURR_BRANCH"
-      exit 0
-    fi
+    echo "The branch '$CURR_BRANCH' contains changes to '$TEST_DIR'"
+  else
+    echo "Skipping tests for '$TEST_DIR' because it has not been changed in '$CURR_BRANCH'"
+    exit 0
   fi
 fi
 
