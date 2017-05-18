@@ -365,7 +365,7 @@ module Kontena
             {
               ip: '0.0.0.0',
               protocol: 'tcp'
-            }.merge(match_data.names.map { |name| [name.to_sym, md[name]] }.to_h.compact)
+            }.merge(match_data.names.map { |name| [name.to_sym, match_data[name]] }.to_h.reject { |_,v| v.nil? })
           end
         end
 
