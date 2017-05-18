@@ -19,6 +19,7 @@ module Kontena::Cli::Nodes
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"
       puts "  last connect: #{node['connected_at']}"
       puts "  last seen: #{node['last_seen_at']}"
+      puts "  last disconnect: #{node['disconnected_at']}"
       puts "  public ip: #{node['public_ip']}"
       puts "  private ip: #{node['private_ip']}"
       puts "  overlay ip: #{node['overlay_ip']}"
