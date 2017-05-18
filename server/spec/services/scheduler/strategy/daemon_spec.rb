@@ -3,18 +3,21 @@ describe Scheduler::Strategy::Daemon do
 
   let(:grid) { Grid.create(name: 'test') }
 
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(
-      node_id: 'node2', name: 'node-2', connected: true, grid: grid, node_number: 2
-    )
-    nodes << HostNode.create!(
+  let(:host_nodes) do
+    [
+      HostNode.create!(
       node_id: 'node1', name: 'node-1', connected: true, grid: grid, node_number: 1
-    )
-    nodes << HostNode.create!(
-      node_id: 'node3', name: 'node-3', connected: true, grid: grid, node_number: 3
-    )
-    nodes
+      ),
+      HostNode.create!(
+        node_id: 'node2', name: 'node-2', connected: true, grid: grid, node_number: 2
+      ),
+      HostNode.create!(
+        node_id: 'node3', name: 'node-3', connected: true, grid: grid, node_number: 3
+      ),
+    ]
+  end
+  let(:scheduler_nodes) do
+    host_nodes.map{|n| Scheduler::Node.new(n)}
   end
 
   let(:stateless_service) do
@@ -29,8 +32,7 @@ describe Scheduler::Strategy::Daemon do
 
   describe '#sort_candidates' do
     it 'sorts by node_number by default' do
-      expected_nodes = [nodes[1], nodes[0], nodes[2]]
-      expect(subject.sort_candidates(nodes, stateless_service, 1)).to eq(expected_nodes)
+      expect(subject.sort_candidates(scheduler_nodes.shuffle, stateless_service, 1)).to eq(scheduler_nodes)
     end
   end
 end
