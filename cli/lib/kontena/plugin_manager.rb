@@ -159,6 +159,10 @@ module Kontena
       SafeYAML::OPTIONS[:default_mode] = :safe if Object.const_defined?(:SafeYAML)
     end
 
+    def plugin_debug?
+      @plugin_debug ||= ENV['DEBUG'] == 'plugin'
+    end
+
     def load_plugins
       plugins = []
       Gem::Specification.to_a.each do |spec|
@@ -171,15 +175,15 @@ module Kontena
                 loaded_features_before = $LOADED_FEATURES.dup
                 load_path_before = $LOAD_PATH.dup
 
-                Kontena.logger.debug { "Activating plugin #{spec.name}" }
+                Kontena.logger.debug { "Activating plugin #{spec.name}" } if plugin_debug?
                 spec.activate
                 spec.activate_dependencies
 
                 Kontena.logger.debug { "Loading plugin #{spec.name}" }
                 require(plugin)
-                Kontena.logger.debug { "Loaded plugin #{spec.name}" }
+                Kontena.logger.debug { "Loaded plugin #{spec.name}" } if plugin_debug?
 
-                if ENV['DEBUG'] == 'plugin'
+                if plugin_debug?
                   added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
                   added_paths = ($LOAD_PATH - load_path_before).map {|feat| "- #{feat}"}
                   $stderr.puts "Plugin manager loaded features for #{spec.name}: \n#{added_features.join("\n")}" unless added_features.empty?
