@@ -3,6 +3,9 @@ require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
 require_relative '../../stacks_client'
 
+require "safe_yaml"
+SafeYAML::OPTIONS[:default_mode] = :safe
+
 module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper

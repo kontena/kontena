@@ -25,7 +25,8 @@ module Kontena::Cli::Stacks
       attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values, :registry
 
       def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
-        require 'yaml'
+        require "safe_yaml"
+        SafeYAML::OPTIONS[:default_mode] = :safe
         require_relative 'service_extender'
         require_relative 'validator_v3'
         require_relative 'opto'

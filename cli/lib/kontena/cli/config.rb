@@ -1,8 +1,8 @@
 require 'ostruct'
 require 'singleton'
 require 'forwardable'
-require 'json'
 require 'logger'
+autoload :JSON, 'json'
 
 module Kontena
   module Cli
@@ -28,6 +28,7 @@ module Kontena
       attr_accessor :logger
       attr_accessor :current_server
       attr_reader :current_account
+
 
       def self.reset_instance
         Singleton.send :__init__, self

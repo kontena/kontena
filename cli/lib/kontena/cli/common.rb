@@ -1,10 +1,3 @@
-require 'pastel'
-require 'uri'
-require 'io/console'
-
-require 'kontena/cli/config'
-require 'kontena/cli/spinner'
-require 'kontena/cli/table_generator'
 require 'forwardable'
 
 module Kontena
@@ -13,7 +6,16 @@ module Kontena
       extend Forwardable
 
       def_delegators :Kontena, :pastel, :prompt, :logger
+      def_delegators :prompt, :ask, :yes?
+      def_delegators :config,
+        :current_grid=, :require_current_grid, :current_master,
+        :current_master=, :require_current_master, :require_current_account,
+        :current_account
       def_delegator Kontena::Cli::Spinner, :spin, :spinner
+      def_delegator Kontena::Cli::Config, :instance, :config
+      def_delegator Kontena::Cli::Config, :instance, :settings
+      def_delegator :config, :config_filename, :settings_filename
+      def_delegator :client, :server_version, :api_url_version
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message
@@ -120,10 +122,7 @@ module Kontena
         $stderr.puts " [#{error}] #{msg}"
         exit code
       end
-
-      def config
-        Kontena::Cli::Config.instance
-      end
+      module_function :exit_with_error
 
       def require_api_url
         config.require_current_master.url
@@ -155,18 +154,6 @@ module Kontena
         logger.debug "Refreshing failed: #{ex.class.name} : #{ex.message}"
       end
 
-      def require_current_master
-        config.require_current_master
-      end
-
-      def require_current_account
-        config.require_current_account
-      end
-
-      def current_account
-        config.current_account
-      end
-
       def kontena_account
         @kontena_account ||= config.current_account
       end
@@ -176,10 +163,6 @@ module Kontena
         return false unless kontena_account.token
         return false unless kontena_account.token.access_token
         true
-      end
-
-      def api_url_version
-        client.server_version
       end
 
       def cloud_client
@@ -205,24 +188,8 @@ module Kontena
         @client = nil
       end
 
-      def settings_filename
-        config.config_filename
-      end
-
-      def settings
-        config
-      end
-
       def api_url
         config.require_current_master.url
-      end
-
-      def current_grid=(grid)
-        config.current_grid=(grid)
-      end
-
-      def require_current_grid
-        config.require_current_grid
       end
 
       def clear_current_grid
@@ -238,25 +205,9 @@ module Kontena
         config.find_server_index(require_current_master.name)
       end
 
-      def current_master
-        config.current_master
-      end
-
-      def current_master=(master_alias)
-        config.current_master = master_alias
-      end
-
       def error(message = "Error")
         prompt.error(message)
         exit(1)
-      end
-
-      def ask(question = "")
-        prompt.ask(question)
-      end
-
-      def yes?(question = "")
-        prompt.yes?(question)
       end
 
       def confirm_command(name, message = nil)
@@ -351,6 +302,7 @@ module Kontena
       def display_logo
         puts File.read(File.expand_path('../../../../LOGO', __FILE__))
       end
+      module_function :display_logo
     end
   end
 end
