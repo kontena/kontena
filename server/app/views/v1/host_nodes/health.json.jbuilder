@@ -10,6 +10,6 @@ json.websocket_connection do
   json.error @node.connection_error
 end
 json.etcd_health do
-  json.health @etcd_health[:health]
-  json.error @etcd_health[:error]
+  json.health @etcd_health[:health] if @etcd_health
+  json.error @etcd_health[:error] if @etcd_health
 end
