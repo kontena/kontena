@@ -89,8 +89,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
     it 'closes the websocket if client is not found' do
       client[:id] = 'bb'
-      expect(subject.logger).to receive(:warn).with('Close connection of missing node bb')
-      expect(client_ws).to receive(:close)
+      expect(subject.logger).to receive(:warn).with('Close connection of removed node bb')
+      expect(client_ws).to receive(:close).with(4040, 'host node bb has been removed')
       expect(subject).to receive(:unplug_client).with(client)
 
       subject.on_pong(client, 0.1)
@@ -99,7 +99,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     it 'closes connection if node is not marked as connected' do
       node.set(connected: false)
       expect(subject.logger).to receive(:warn).with('Close connection of disconnected node test-node')
-      expect(client_ws).to receive(:close)
+      expect(client_ws).to receive(:close).with(4042, 'host node test-node has been disconnected')
       expect(subject).to receive(:unplug_client).with(client)
 
       subject.on_pong(client, 0.1)
