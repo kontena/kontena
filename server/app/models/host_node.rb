@@ -29,6 +29,8 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
   field :connected_at, type: DateTime
+  field :disconnected_at, type: DateTime
+  field :connection_error, type: String
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
