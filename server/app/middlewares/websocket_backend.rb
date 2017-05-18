@@ -346,10 +346,15 @@ class WebsocketBackend
     end
 
     node = HostNode.find_by(node_id: client[:id])
+
     if node
-      if node.connected?
-        node.set(last_seen_at: Time.now.utc)
-      else
+      connected_node = HostNode.where(id: node.id, connected_at: client[:connected_at])
+        .find_one_and_update({:$set => {last_seen_at: Time.now.utc}})
+
+      if !connected_node
+        logger.warn "Close conflicting connection for node #{node} connected at #{client[:connected_at]}, node has re-connected at #{node.connected_at}"
+        close_client(client, 4041, "host node #{node} connection conflict with new connection at #{node.connected_at}")
+      elsif !connected_node.connected
         logger.warn "Close connection of disconnected node #{node}"
         close_client(client, 4042, "host node #{node} has been disconnected")
       end
