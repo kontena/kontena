@@ -38,8 +38,8 @@ class DistributedLock
     modify = {'$set' => {name: name, lock_id: lock_id, created_at: Time.now.utc}}
     lock = nil
     begin
-      lock = where(query).find_and_modify(modify, {upsert: true, new: true})
-    rescue Moped::Errors::OperationFailure
+      lock = where(query).find_one_and_update(modify, {upsert: true, return_document: :after})
+    rescue Mongo::Error::OperationFailure
     end
     if lock && lock.lock_id == lock_id
       lock_id

@@ -44,7 +44,7 @@ class GridServiceDeployer
   def deploy
     info "starting to deploy #{self.grid_service.to_path}"
     log_service_event("service #{self.grid_service.to_path} deploy started")
-    self.grid_service_deploy.set(:deploy_state => :ongoing)
+    self.grid_service_deploy.set(:_deploy_state => :ongoing)
     deploy_rev = Time.now.utc.to_s
     self.grid_service.set(:deployed_at => deploy_rev)
 
@@ -68,7 +68,7 @@ class GridServiceDeployer
       raise DeployError.new("halting deploy of #{self.grid_service.to_path}, one or more instances failed")
     end
 
-    self.grid_service_deploy.set(:deploy_state => :success)
+    self.grid_service_deploy.set(:_deploy_state => :success)
     log_service_event("service #{self.grid_service.to_path} deployed")
     info "service #{self.grid_service.to_path} has been deployed"
 
@@ -76,19 +76,19 @@ class GridServiceDeployer
   rescue DeployError => exc
     error exc.message
     log_service_event("deploy of #{self.grid_service.to_path} errored: #{exc.message}", EventLog::ERROR)
-    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
+    self.grid_service_deploy.set(:_deploy_state => :error, :reason => exc.message)
     false
   rescue RpcClient::Error => exc
     error "Rpc error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     log_service_event("agent communication error while deploying #{self.grid_service.to_path}: #{exc.message}", EventLog::ERROR)
-    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
+    self.grid_service_deploy.set(:_deploy_state => :error, :reason => exc.message)
     false
   rescue => exc
     error "Unknown error (#{self.grid_service.to_path}): #{exc.class.name} #{exc.message}"
     error exc.backtrace.join("\n") if exc.backtrace
     log_service_event("unknown error while deploying #{self.grid_service.to_path}: #{exc.message}", EventLog::ERROR)
-    self.grid_service_deploy.set(:deploy_state => :error, :reason => exc.message)
+    self.grid_service_deploy.set(:_deploy_state => :error, :reason => exc.message)
     false
   end
 
