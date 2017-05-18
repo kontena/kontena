@@ -10,7 +10,7 @@ module Agent
     end
 
     def unplug!
-      info "disconnect node #{node.name || node.node_id}"
+      info "disconnect node #{node}"
 
       begin
         self.update_node

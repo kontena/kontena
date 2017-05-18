@@ -54,6 +54,11 @@ class HostNode
     node.containers.unscoped.destroy
   end
 
+  # @return [String]
+  def to_s
+    self.name || self.node_id
+  end
+
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
   end

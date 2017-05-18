@@ -339,7 +339,7 @@ class WebsocketBackend
       if node.connected?
         node.set(last_seen_at: Time.now.utc)
       else
-        logger.warn "Close connection of disconnected node #{node.name || node.node_id}"
+        logger.warn "Close connection of disconnected node #{node}"
         close_client(client)
       end
     else
