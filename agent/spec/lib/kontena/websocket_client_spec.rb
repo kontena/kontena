@@ -184,7 +184,7 @@ describe Kontena::WebsocketClient do
         double(:open_event)
       end
       let :close_event do
-        double(:close_event, code: 1006)
+        double(:close_event, code: 1006, reason: "Connection closed")
       end
 
       let :close_timer do
