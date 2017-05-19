@@ -95,8 +95,8 @@ describe Kontena::Cli::Cloud::Master::AddCommand do
       subject.provider = 'provider'
       subject.version  = '10.10.10'
 
-      expect(Kontena).to receive(:run!).with(%w(master config import --force --preset kontena_auth_provider))
-      expect(Kontena).to receive(:run!).with(%w(master config set oauth2.client_id=123 oauth2.client_secret=345 server.root_url=foofoofoo server.name=foofoo cloud.provider_is_kontena=true))
+      expect(Kontena).to receive(:run!).with(%w(master config import --force --preset kontena_auth_provider), capture: false)
+      expect(Kontena).to receive(:run!).with(%w(master config set oauth2.client_id=123 oauth2.client_secret=345 server.root_url=foofoofoo server.name=foofoo cloud.provider_is_kontena=true), capture: false)
 
       subject.register_current
     end
@@ -108,9 +108,9 @@ describe Kontena::Cli::Cloud::Master::AddCommand do
       subject.version  = '10.10.10'
       subject.cloud_master_id = 'abcd'
 
-      expect(Kontena).to receive(:run!).with(%w(cloud master update --provider provider --version 10.10.10 abcd)).and_return(true)
-      expect(Kontena).to receive(:run!).with(%w(master config import --force --preset kontena_auth_provider)).and_return(true)
-      expect(Kontena).to receive(:run!).with(%w(master config set oauth2.client_id=123 oauth2.client_secret=345 server.root_url=foofoofoo server.name=foofoo cloud.provider_is_kontena=true)).and_return(true)
+      expect(Kontena).to receive(:run!).with(%w(cloud master update --provider provider --version 10.10.10 abcd), capture: false).and_return(true)
+      expect(Kontena).to receive(:run!).with(%w(master config import --force --preset kontena_auth_provider), capture: false).and_return(true)
+      expect(Kontena).to receive(:run!).with(%w(master config set oauth2.client_id=123 oauth2.client_secret=345 server.root_url=foofoofoo server.name=foofoo cloud.provider_is_kontena=true), capture: false).and_return(true)
 
       subject.register_current
     end
