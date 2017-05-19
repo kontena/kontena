@@ -31,35 +31,44 @@ describe Kontena do
   end
 
   describe '#run!' do
-    let(:whoami) { double(:whoami) }
-
-    before(:each) do
-      expect(Kontena::Cli::WhoamiCommand).to receive(:new).and_return(whoami)
+    context 'capture' do
+      it 'captures command output' do
+        STDOUT.puts Kontena.run!(['--version'], capture:true).inspect
+        expect(Kontena.run!(['--version'], capture: true).join(' ')).to match /kontena\-cli \d+\.\d+.\d+/
+      end
     end
 
-    it 'accepts a command line as string' do
-      expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
-      Kontena.run!('whoami --bash-completion-path')
-    end
+    context 'without capture' do
+      let(:whoami) { double(:whoami) }
 
-    it 'accepts a command line as a list of parameters' do
-      expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
-      Kontena.run!('whoami', '--bash-completion-path')
-    end
+      before(:each) do
+        expect(Kontena::Cli::WhoamiCommand).to receive(:new).and_return(whoami)
+      end
 
-    it 'accepts a command line as an array' do
-      expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
-      Kontena.run!(['whoami', '--bash-completion-path'])
-    end
+      it 'accepts a command line as string' do
+        expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
+        Kontena.run!('whoami --bash-completion-path')
+      end
 
-    it 'Returns true if the command exits with SystemExit status 0' do
-      expect(whoami).to receive(:run) { exit 0 }
-      expect(Kontena.run!(['whoami'])).to be_truthy
-    end
+      it 'accepts a command line as a list of parameters' do
+        expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
+        Kontena.run!('whoami', '--bash-completion-path')
+      end
 
-    it 'Re-raises the SystemExit when command exits with non-zero status' do
-      expect(whoami).to receive(:run) { exit 1 }
-      expect{Kontena.run!(['whoami'])}.to exit_with_error.status(1)
+      it 'accepts a command line as an array' do
+        expect(whoami).to receive(:run).with(['--bash-completion-path']).and_return(true)
+        Kontena.run!(['whoami', '--bash-completion-path'])
+      end
+
+      it 'Returns true if the command exits with SystemExit status 0' do
+        expect(whoami).to receive(:run) { exit 0 }
+        expect(Kontena.run!(['whoami'])).to be_truthy
+      end
+
+      it 'Re-raises the SystemExit when command exits with non-zero status' do
+        expect(whoami).to receive(:run) { exit 1 }
+        expect{Kontena.run!(['whoami'])}.to exit_with_error.status(1)
+      end
     end
   end
 

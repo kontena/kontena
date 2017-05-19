@@ -14,13 +14,17 @@ module Kontena
       command = cmdline
     end
     ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}")
+    result = nil
     if capture
       orig_stdout = $stdout
       stdout = StringIO.new
       $stdout = stdout
-      Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
-      $stdout = orig_stdout
-      result = stdout.string.split(/[\r\n]/)
+      begin
+        Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+      ensure
+        result = stdout.string.split(/[\r\n]/)
+        $stdout = orig_stdout
+      end
     else
       result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
     end
@@ -28,6 +32,7 @@ module Kontena
     result
   rescue SystemExit => ex
     ENV["DEBUG"] && $stderr.puts("Command caused SystemExit, result: #{result.inspect} status: #{ex.status}")
+    return result if ex.status.zero? && capture
     return true if ex.status.zero?
     raise ex
   rescue => ex
