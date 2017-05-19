@@ -2,9 +2,10 @@ module Kontena
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
   #
-  # @param [String,Array<String>] command_line
+  # @param command_line [String,Array<String>]
+  # @param capture [TrueClass,FalseClass] return command STDOUT output lines
   # @return command result or nil
-  def self.run!(*cmdline)
+  def self.run!(*cmdline, capture: false)
     if cmdline.first.kind_of?(Array)
       command = cmdline.first
     elsif cmdline.size == 1 && cmdline.first.include?(' ')
@@ -13,7 +14,16 @@ module Kontena
       command = cmdline
     end
     ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}")
-    result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+    if capture
+      orig_stdout = $stdout
+      stdout = StringIO.new
+      $stdout = stdout
+      Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+      $stdout = orig_stdout
+      result = stdout.string.split(/[\r\n]/)
+    else
+      result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+    end
     ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
     result
   rescue SystemExit => ex
@@ -28,8 +38,8 @@ module Kontena
   # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
   # @param [String,Array<String>] command_line
   # @return [TrueClass,FalseClass] success
-  def self.run(*cmdline)
-    result = run!(*cmdline)
+  def self.run(*cmdline, capture: false)
+    result = run!(*cmdline, capture: capture)
     result.nil? ? true : result
   rescue SystemExit => ex
     ex.status.zero?
