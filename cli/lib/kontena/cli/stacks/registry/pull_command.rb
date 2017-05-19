@@ -4,11 +4,13 @@ module Kontena::Cli::Stacks::Registry
   class PullCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
-    include Kontena::Cli::Stacks::Common::StackNameParam
+    include Kontena::Cli::Stacks::Common::RegistryStackNameParam
 
     banner "Pulls / downloads a stack from the stack registry"
 
-    option ['-F', '--file'], '[FILENAME]', "Write to file (default STDOUT)"
+    attr_accessor :stack_version
+
+    option ['-F', '--file'], 'FILE', "Write to file (default STDOUT)", required: false
     option '--no-cache', :flag, "Don't use local cache"
     option '--return', :flag, 'Return the result', hidden: true
 

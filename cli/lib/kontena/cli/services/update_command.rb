@@ -7,7 +7,7 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
 
     option "--image", "IMAGE", "Docker image to use"
     option ["-p", "--ports"], "PORT", "Publish a service's port to the host", multivalued: true

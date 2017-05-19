@@ -6,7 +6,7 @@ module Kontena::Cli::Etcd
     include Kontena::Cli::GridOptions
     include Common
 
-    parameter "KEY", "Etcd key"
+    parameter "ETCD_KEY", "Etcd key", attribute_name: :key
 
     option "--recursive", :flag, "List keys recursively", default: false
 

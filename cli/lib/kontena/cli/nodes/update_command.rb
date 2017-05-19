@@ -3,8 +3,8 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NODE_ID", "Node id"
-    option ["-l", "--label"], "LABEL", "Node label", multivalued: true
+    parameter "NODE_NAME", "Node name", attribute_name: :node_id
+    option ["-l", "--label"], "LABEL", "Node label", multivalued: true, completion: "NODE_LABEL"
 
     def execute
       require_api_url

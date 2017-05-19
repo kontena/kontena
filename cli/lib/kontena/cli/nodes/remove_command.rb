@@ -3,7 +3,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NODE_ID", "Node id"
+    parameter "NODE_NAME", "Node name", attribute_name: :node_id
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute

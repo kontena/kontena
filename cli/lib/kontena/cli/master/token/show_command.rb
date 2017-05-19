@@ -3,7 +3,7 @@ require_relative 'common'
 module Kontena::Cli::Master::Token
   class ShowCommand < Kontena::Command
 
-    parameter "TOKEN_OR_ID", "Access token or access token id"
+    parameter "TOKEN_OR_ID", "Access token or access token id", completion: "MASTER_TOKEN"
 
     include Kontena::Cli::Common
     include Common

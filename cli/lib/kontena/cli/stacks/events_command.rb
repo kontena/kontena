@@ -6,7 +6,7 @@ module Kontena::Cli::Stacks
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::LogHelper
 
-    parameter "NAME", "Service name"
+    parameter "STACK_NAME", "Stack name", attribute_name: :name
 
     def execute
       require_api_url

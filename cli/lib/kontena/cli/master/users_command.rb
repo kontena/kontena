@@ -8,6 +8,5 @@ module Kontena::Cli::Master
     subcommand ["list", "ls"], "List users", load_subcommand('master/user/list_command')
     subcommand "role", "User role specific commands", load_subcommand('master/user/role_command')
 
-
   end
 end

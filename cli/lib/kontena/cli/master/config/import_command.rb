@@ -8,14 +8,13 @@ module Kontena::Cli::Master::Config
 
     banner "Updates configuration from a file into Master"
 
-    parameter '[PATH]', "Input from file in PATH (default: STDIN)", required: false
+    parameter '[FILE]', "Input from file in PATH (default: STDIN)", required: false, attribute_name: :path, completion: %w(*.yml *.json)
 
     option ['--preset'], '[NAME]', 'Load preset', hidden: true
 
-    option ['--format'], '[FORMAT]', "Specify input format (json, yaml) (default: guess from PATH or json)"
+    option ['--format'], '[FORMAT]', "Specify input format (json, yaml) (default: guess from PATH or json)", completion: %w(yaml json)
     option ['--full'], :flag, "Perform full update, keys that are not present in the input are cleared"
     option ['-f', '--force'], :flag, "Don't ask for confirmation"
-
 
     def input_as_hash
       if self.path && self.preset

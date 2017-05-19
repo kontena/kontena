@@ -5,10 +5,10 @@ module Kontena::Cli::Master
 
     banner "Configures the current Kontena Master to use Kontena Cloud services and authentication"
 
-    option '--force',           :flag,       "Don't ask questions"
-    option '--cloud-master-id', '[ID]',      "Use existing cloud master ID"
-    option '--provider',        '[NAME]',    "Set master provider name"
-    option '--version',         '[VERSION]', "Set master version"
+    option '--force', :flag, "Don't ask questions"
+    option '--cloud-master-id', '[CLOUD_MASTER_ID]', "Use existing cloud master ID"
+    option '--provider', '[NAME]', "Set master provider name", completion: "PLUGIN_NAME"
+    option '--version', '[VERSION]', "Set master version", completion: %w(latest edge)
 
     requires_current_master
     requires_current_master_token

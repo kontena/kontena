@@ -3,7 +3,11 @@ module Kontena::Cli::Grids::TrustedSubnets
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
+<<<<<<< Updated upstream
     requires_current_master
+=======
+    parameter "GRID_NAME", "Grid name", attribute_name: :name
+>>>>>>> Stashed changes
 
     def execute
       grid = client.get("grids/#{current_grid}")

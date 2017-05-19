@@ -5,10 +5,10 @@ module Kontena::Cli::Apps
     include Kontena::Cli::Common
     include Common
 
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'YAML_FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
 
-    parameter "[SERVICE] ...", "Services to start"
+    parameter "[SERVICE] ...", "Services to start", completion: :yaml_services
 
     attr_reader :services
 

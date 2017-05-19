@@ -5,8 +5,8 @@ module Kontena::Cli::Master::User
     class AddCommand < Kontena::Command
       include Kontena::Cli::Common
 
-      parameter "ROLE", "Role name"
-      parameter "USER ...", "List of users"
+      parameter "ROLE", "Role name", completion: %w(master_admin grid_admin)
+      parameter "EMAIL ...", "List of users", completion: "MASTER_USER", attribute_name: :user_list
 
       option '--silent', :flag, 'Reduce output verbosity'
 

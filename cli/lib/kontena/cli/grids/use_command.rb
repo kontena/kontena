@@ -7,7 +7,7 @@ module Kontena::Cli::Grids
 
     requires_current_master
 
-    parameter "NAME", "Grid name to use"
+    parameter "GRID_NAME", "Grid name to use", attribute_name: :name
 
     option ['--silent'], :flag, 'Reduce output verbosity'
 

@@ -8,7 +8,7 @@ module Kontena::Cli::Services
     include Kontena::Cli::Helpers::LogHelper
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
     option ["-i", "--instance"], "INSTANCE", "Show only given instance specific logs"
 
     def execute

@@ -20,15 +20,28 @@ module Kontena::Cli::Stacks
       end
     end
 
+    module RegistryStackNameParam
+      attr_accessor :stack_version
+
+      def self.included(where)
+        where.parameter "STACK_NAME", "Stack name, for example user/stackname or user/stackname:version", completion: "REGISTRY_STACK_NAME" do |name|
+          if name.include?(':')
+            name, @stack_version = name.split(':',2 )
+          end
+          name
+        end
+      end
+    end
+
     module StackFileOrNameParam
       def self.included(where)
-        where.parameter "[FILE]", "Kontena stack file, registry stack name (user/stack or user/stack:version) or URL", default: "kontena.yml", attribute_name: :filename
+        where.parameter "[YAML_FILE]", "Kontena stack file, registry stack name (user/stack or user/stack:version) or URL", default: "kontena.yml", attribute_name: :filename
       end
     end
 
     module StackNameOption
       def self.included(where)
-        where.option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
+        where.option ['-n', '--name'], 'STACK_NAME', 'Define stack name (by default comes from stack file)', attribute_name: :name
       end
     end
 
@@ -47,7 +60,7 @@ module Kontena::Cli::Stacks
     module StackValuesFromOption
       attr_accessor :values
       def self.included(where)
-        where.option '--values-from', '[FILE]', 'Read variable values from YAML' do |filename|
+        where.option '--values-from', '[YAML_FILE]', 'Read variable values from YAML', attribute_name: :values_file do |filename|
           if filename
             require_config_file(filename)
             @values = ::YAML.safe_load(File.read(filename))

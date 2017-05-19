@@ -4,7 +4,9 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::GridOptions
     include Kontena::Cli::BytesHelper
 
-    parameter "NODE_ID", "Node id"
+    parameter "NODE_NAME", "Node name", attribute_name: :node_id
+
+    option '--ip', '[FIELD]', "Show public/private/overlay IP only or use 'all' for all IPs", completion: %w(public private overlay all), attribute_name: :ip_field
 
     def execute
       require_api_url
@@ -12,6 +14,17 @@ module Kontena::Cli::Nodes
       token = require_token
 
       node = client(token).get("nodes/#{current_grid}/#{node_id}")
+
+      if ip_field
+        if ip_field == 'all'
+          puts %w(public_ip private_ip overlay_ip).map { |field| node[field] }.join("\n")
+        else
+          puts node[ip_field + "_ip"]
+        end
+
+        exit 0
+      end
+
       puts "#{node['name']}:"
       puts "  id: #{node['id']}"
       puts "  agent version: #{node['agent_version']}"

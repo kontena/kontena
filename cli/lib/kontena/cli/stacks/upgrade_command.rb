@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
     banner "Upgrades a stack in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    parameter "STACK_NAME", "Stack name", attribute_name: :name
 
     include Common::StackFileOrNameParam
 

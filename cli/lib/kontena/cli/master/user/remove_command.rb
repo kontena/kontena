@@ -4,7 +4,7 @@ module Kontena::Cli::Master::User
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "EMAIL ...", "List of emails"
+    parameter "EMAIL ...", "List of emails", completion: "MASTER_USER"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute

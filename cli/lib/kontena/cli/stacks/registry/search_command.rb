@@ -7,7 +7,7 @@ module Kontena::Cli::Stacks::Registry
 
     banner "Search for stacks on the stack registry"
 
-    parameter "[QUERY]", "Query string"
+    parameter "[QUERY]", "Query string", completion: "REGISTRY_STACK_NAME"
 
     def execute
       results = stacks_client.search(query.to_s)

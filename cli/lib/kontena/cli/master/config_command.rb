@@ -1,4 +1,3 @@
-
 module Kontena
   module Cli
     module Master

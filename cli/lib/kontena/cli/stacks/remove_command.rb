@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
     banner "Removes a stack in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    parameter "STACK_NAME", "Stack name", attribute_name: :name
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     requires_current_master

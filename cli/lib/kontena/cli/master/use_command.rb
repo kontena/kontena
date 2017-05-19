@@ -2,7 +2,7 @@ module Kontena::Cli::Master
   class UseCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "NAME", "Master name to use"
+    parameter "MASTER_NAME", "Master name to use", attribute_name: :name
 
     def execute
       master = config.find_server(name)

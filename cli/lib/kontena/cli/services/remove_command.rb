@@ -5,7 +5,7 @@ module Kontena::Cli::Services
     include Kontena::Cli::Common
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
     option "--instance", "INSTANCE", "Remove only given instance"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 

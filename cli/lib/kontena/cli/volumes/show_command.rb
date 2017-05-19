@@ -6,7 +6,7 @@ module Kontena::Cli::Volumes
 
     banner "Show details of a volume"
 
-    parameter 'VOLUME', 'Volume'
+    parameter 'VOLUME_NAME', 'Volume', attribute_name: :volume
 
     requires_current_master
     requires_current_master_token

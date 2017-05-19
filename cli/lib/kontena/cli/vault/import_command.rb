@@ -10,7 +10,7 @@ module Kontena::Cli::Vault
     option '--skip-null', :flag, "Do not remove keys with null values"
     option '--empty-is-null', :flag, "Treat empty values as null"
 
-    parameter '[PATH]', "Input from file in PATH (default: STDIN)"
+    parameter '[YAML_FILE]', "Input from file in PATH (default: STDIN)", attribute_name: :path
 
     requires_current_master
 

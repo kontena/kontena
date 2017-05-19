@@ -3,7 +3,7 @@ require 'kontena/cli/version'
 class Kontena::Cli::VersionCommand < Kontena::Command
   include Kontena::Cli::Common
 
-  option "--cli", :flag, "Only CLI version"
+  option "--cli", :flag, "Show CLI version only"
 
   def execute
     puts "cli: #{Kontena::Cli::VERSION}"

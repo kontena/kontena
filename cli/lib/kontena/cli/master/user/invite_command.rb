@@ -7,9 +7,9 @@ module Kontena::Cli::Master::User
 
     parameter "EMAIL ...", "List of emails"
 
-    option ['-r', '--roles'], '[ROLES]', 'Comma separated list of roles to assign to the invited users'
+    option ['-r', '--roles'], '[ROLES]', 'Comma separated list of roles to assign to the invited users', completion: %w(master_admin grid_admin)
     option ['-c', '--code'], :flag, 'Only output the invite code'
-    option '--external-id', '[EXTERNAL ID]', 'Assign external id to user', hidden: true
+    option '--external-id', '[EXTERNAL_ID]', 'Assign external id to user', hidden: true
     option '--return', :flag, 'Return the code', hidden: true
 
     requires_current_master

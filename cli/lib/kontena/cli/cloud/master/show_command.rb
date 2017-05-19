@@ -7,7 +7,7 @@ module Kontena::Cli::Cloud::Master
 
     requires_current_account_token
 
-    parameter "MASTER_ID", "Master ID"
+    parameter "CLOUD_MASTER_ID", "Master ID", attribute_name: :master_id
 
     def execute
       response = cloud_client.get("user/masters/#{master_id}")

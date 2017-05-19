@@ -1,4 +1,5 @@
 require 'kontena/cli/master/user_command'
+require 'kontena/cli/master/user/role_command'
 require 'kontena/cli/master/user/role/remove_command'
 
 describe Kontena::Cli::Master::User::Role::RemoveCommand do

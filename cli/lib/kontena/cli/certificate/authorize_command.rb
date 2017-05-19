@@ -4,7 +4,6 @@ module Kontena::Cli::Certificate
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-
     parameter "DOMAIN", "Domain to authorize"
 
     def execute

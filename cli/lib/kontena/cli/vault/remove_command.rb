@@ -3,7 +3,7 @@ module Kontena::Cli::Vault
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NAME", "Secret name"
+    parameter "SECRET_NAME", "Secret name", attribute_name: :name
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
     option "--silent", :flag, "Reduce output verbosity"
 

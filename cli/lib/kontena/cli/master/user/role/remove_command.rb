@@ -4,10 +4,9 @@ module Kontena::Cli::Master::User::Role
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "ROLE", "Role name"
-    parameter "USER ...", "List of users"
+    parameter "ROLE", "Role name", completion: %w(grid_admin master_admin)
+    parameter "EMAIL ...", "List of users", completion: "MASTER_USER", attribute_name: :user_list
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
-
 
     def execute
       require_api_url

@@ -4,7 +4,7 @@ module Kontena::Cli::Master
   class LoginCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "[URL]", "Kontena Master URL or name"
+    parameter "[MASTER_URL]", "Kontena Master URL or name", attribute_name: :url
     option ['-j', '--join'], '[INVITE_CODE]', "Join master using an invitation code"
     option ['-t', '--token'], '[TOKEN]', 'Use a pre-generated access token', environment_variable: 'KONTENA_TOKEN'
     option ['-n', '--name'], '[NAME]', 'Set server name', environment_variable: 'KONTENA_MASTER'

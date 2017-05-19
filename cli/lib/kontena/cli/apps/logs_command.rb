@@ -9,9 +9,9 @@ module Kontena::Cli::Apps
 
     include Common
 
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'YAML_FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
-    parameter "[SERVICE] ...", "Show only specified service logs"
+    parameter "[SERVICE] ...", "Show only specified service logs", completion: :yaml_services
 
     def execute
       require_config_file(filename)

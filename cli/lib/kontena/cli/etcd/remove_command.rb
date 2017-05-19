@@ -6,7 +6,7 @@ module Kontena::Cli::Etcd
     include Kontena::Cli::GridOptions
     include Common
 
-    parameter "KEY", "Etcd key"
+    parameter "ETCD_KEY", "Etcd key", attribute_name: :key
 
     option "--recursive", :flag, "Remove keys recursively"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced

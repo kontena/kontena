@@ -7,7 +7,7 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Helpers::HealthHelper
     include Common
 
-    parameter "[NAME]", "Grid name"
+    parameter "[GRID_NAME]", "Grid name", attribute_name: :name
 
     def execute
       require_api_url

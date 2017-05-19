@@ -6,7 +6,7 @@ module Kontena::Cli::Services::Envs
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
     parameter "ENV", "Environment variable name"
 
     def execute

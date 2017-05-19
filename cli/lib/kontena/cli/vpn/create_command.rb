@@ -6,8 +6,8 @@ module Kontena::Cli::Vpn
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Stacks::StacksHelper
 
-    option '--node', 'NODE', 'Node name where VPN is deployed'
-    option '--ip', 'IP', 'Node ip-address to use in VPN service configuration'
+    option '--node', 'NODE_NAME', 'Node name where VPN is deployed', attribute_name: :node
+    option '--ip', 'NODE_IP', 'Node ip-address to use in VPN service configuration', attribute_name: :ip
 
     def execute
       require_api_url

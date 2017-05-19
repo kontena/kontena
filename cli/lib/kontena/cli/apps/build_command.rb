@@ -8,10 +8,10 @@ module Kontena::Cli::Apps
     include DockerHelper
 
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'YAML_FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['--no-cache'], :flag, 'Do not use cache when building the image', default: false
     option '--skip-validation', :flag, 'Skip YAML file validation', default: false
-    parameter "[SERVICE] ...", "Services to build"
+    parameter "[SERVICE] ...", "Services to build", completion: :yaml_services
 
     attr_reader :services
 

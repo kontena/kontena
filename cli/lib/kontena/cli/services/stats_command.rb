@@ -10,7 +10,7 @@ module Kontena::Cli::Services
       1.8446744073709552e+19, 9.223372036854772e+18
     ]
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
     option ["-t", "--tail"], :flag, "Tail (follow) stats in real time", default: false
 
     def execute

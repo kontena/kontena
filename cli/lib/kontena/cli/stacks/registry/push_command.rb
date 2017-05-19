@@ -7,7 +7,7 @@ module Kontena::Cli::Stacks::Registry
 
     banner "Pushes (uploads) a stack to the stack registry"
 
-    parameter "FILENAME", "Stack file path"
+    parameter "YAML_FILE", "Stack file path", attribute_name: :filename
 
     requires_current_account_token
 

@@ -5,7 +5,7 @@ module Kontena::Cli::Plugins
     include Kontena::Util
     include Kontena::Cli::Common
 
-    parameter 'NAME', 'Plugin name'
+    parameter 'PLUGIN_NAME', 'Plugin name', attribute_name: :name
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def execute

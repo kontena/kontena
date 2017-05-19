@@ -2,8 +2,8 @@ module Kontena::Cli::Nodes::Labels
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "NODE_ID", "Node id"
-    parameter "LABEL ...", "Labels"
+    parameter "NODE_NAME", "Node name", attribute_name: :node_id
+    parameter "LABEL ...", "Labels", completion: "NODE_LABEL"
 
     requires_current_master
     requires_current_master_token

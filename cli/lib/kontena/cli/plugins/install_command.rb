@@ -5,7 +5,7 @@ module Kontena::Cli::Plugins
     include Kontena::Util
     include Kontena::Cli::Common
 
-    parameter 'NAME', 'Plugin name'
+    parameter 'NAME', 'Plugin name', completion: "PLUGIN_SEARCH"
 
     option ['-v', '--version'], 'VERSION', 'Specify version of plugin to install'
     option '--pre', :flag, 'Allow pre-release of a plugin to be installed', default: false
