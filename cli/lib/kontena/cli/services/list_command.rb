@@ -58,7 +58,7 @@ module Kontena::Cli::Services
 
         instances = [row['instance_counts']['running'], row['instances']]
         if instances.first < instances.last
-          instances.first = pastel.cyan(instances.first.to_s)
+          instances[0] = pastel.cyan(instances[0].to_s)
         end
         row['instances'] = instances.join(' / ')
       end
