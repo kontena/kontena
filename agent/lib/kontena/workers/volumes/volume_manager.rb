@@ -130,7 +130,11 @@ module Kontena::Workers::Volumes
         if volume_instance_id
           unless current_ids.include?(volume_instance_id)
             info "removing volume: #{volume.id}"
-            volume.remove
+            begin
+              volume.remove
+            rescue => exc
+              warn "removing volume failed: #{exc.class} #{exc.message}"
+            end
           end
         end
       end

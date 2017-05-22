@@ -167,6 +167,20 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
       expect(volumes[0]).to receive(:remove)
       subject.terminate_volumes(['456'])
     end
+
+    it 'handles error from volume remove' do
+      volumes = [
+        double(:volume, 'id' => 'foo', 'info' => {
+          'Name' => 'foo',
+          'Labels' => { 'io.kontena.volume_instance.id' => '123'}
+        })
+      ]
+      expect(Docker::Volume).to receive(:all).and_return(volumes)
+      expect(volumes[0]).to receive(:remove).and_raise("BoomBoom")
+      subject.terminate_volumes(['456'])
+      # The actor should be still alive
+      expect(subject).to be_alive
+    end
   end
 
 end
