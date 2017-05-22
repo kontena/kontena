@@ -97,7 +97,7 @@ class WebsocketBackend
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
 
     unless self.valid_agent_version?(agent_version)
-      logger.warn "node #{node} agent version #{version} is not compatible with server version #{Server::VERSION}"
+      logger.warn "node #{node} agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
       node_plugger.send_master_info
       handle_invalid_agent_version(ws, node, agent_version)
       return

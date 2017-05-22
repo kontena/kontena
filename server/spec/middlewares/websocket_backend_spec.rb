@@ -90,8 +90,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       'HTTP_KONTENA_NODE_ID' => node_id,
       'HTTP_KONTENA_NODE_LABELS' => node_labels,
       'HTTP_KONTENA_VERSION' => node_version,
-      'HTTP_KONTENA_CONNECTED_AT' => connected_at.strftime('%F %T.%NZ'),
-    })}
+      'HTTP_KONTENA_CONNECTED_AT' => connected_at ? connected_at.strftime('%F %T.%NZ') : nil,
+    }.compact)}
 
     before do
       grid
@@ -127,13 +127,44 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
     end
 
-    describe '#on_open' do
-      it 'accepts the connection and creates a new host node' do
-        expect(subject.logger).to receive(:info).with(/node nodeABC agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+    context "with the wrong version" do
+      let(:node_version) { '0.8.0' }
+      let(:connected_at) { nil }
 
+      before do
+        # force sync close
+        allow(EventMachine::Timer).to receive(:new) do |timeout, &block|
+          block.call
+        end
+      end
+
+      describe '#on_open' do
+        it 'creates the node, but does not connect it' do
+          expect(subject.logger).to receive(:warn).with('node nodeABC agent version 0.8.0 is not compatible with server version 0.9.1')
+          expect(client_ws).to receive(:close).with(4010, 'agent version 0.8.0 is not compatible with server version 0.9.1')
+
+          # XXX: does not happen, because client is not yet in @clients
+          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to change{grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+        end
+      end
+    end
+
+    describe '#on_open' do
+      before do
+        # force sync plugin
         allow(EM).to receive(:defer) do |&block|
           block.call
         end
+      end
+
+      it 'accepts the connection and creates a new host node' do
+        expect(subject.logger).to receive(:info).with(/node nodeABC agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+
+        # XXX: racy via pubsub
         expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
         expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC')]])
 
