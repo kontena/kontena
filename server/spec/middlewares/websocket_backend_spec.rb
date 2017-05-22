@@ -103,9 +103,13 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         expect(subject.logger).to receive(:error).with(/on_close: undefined local variable or method `asdf' for #<WebsocketBackend:/)
         expect(subject.logger).to receive(:error)
 
+        VeryFatalTimeoutError = Class.new(Exception)
+
         t = Time.now
-        Timeout.timeout(0.1) do
-          subject.on_close(client_ws)
+        Timeout.timeout(0.2, VeryFatalTimeoutError) do
+          Timeout.timeout(0.1, VeryFatalTimeoutError) do
+            subject.on_close(client_ws)
+          end
         end
         dt = Time.now - t
 
