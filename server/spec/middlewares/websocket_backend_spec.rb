@@ -75,8 +75,9 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     let(:client_ws) { instance_double(Faye::WebSocket) }
+    let(:connected_at) { 1.minute.ago }
     let(:client) do
-      { id: 'aa', ws: client_ws }
+      { id: 'aa', ws: client_ws, connected_at: connected_at }
     end
 
     let(:grid) do
@@ -84,7 +85,37 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     let(:node) do
-      HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid)
+      HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid,
+        connected: true, connected_at: connected_at,
+      )
+    end
+
+    before do
+      subject.instance_variable_get('@clients') << client
+    end
+
+    describe '#unplug_client' do
+      it "logs a warning if the host node is not found" do
+        node.set(node_id: 'bb')
+
+        expect(subject.logger).to receive(:warn).with('skip unplug of missing node aa')
+
+        subject.unplug_client(client)
+      end
+
+      it "does not disconnect the node if another connection is active" do
+        node.set(connected_at: Time.now)
+
+        expect {
+          subject.unplug_client(client)
+        }.to not_change{node.reload; [node.connected, node.connected_at]}
+      end
+
+      it "disconnects the node" do
+        expect {
+          subject.unplug_client(client)
+        }.to change{node.reload.connected}.to be_falsey
+      end
     end
 
     describe '#on_client_timeout' do
