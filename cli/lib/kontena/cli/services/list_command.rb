@@ -33,6 +33,8 @@ module Kontena::Cli::Services
     end
 
     def service_name(service)
+      stack_id = stack_id(service)
+      return service['name'] if stack_id == 'null'
       [ stack_id(service), service['name'] ].compact.join('/')
     end
 
