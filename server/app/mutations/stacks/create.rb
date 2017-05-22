@@ -36,9 +36,9 @@ module Stacks
         end
       end
     rescue MissingLinkError => error
-      add_service_error(error.service, :links, :missing, error.message)
+      add_error("services.#{error.service}.links", :missing, error.message)
     rescue RecursiveLinkError => error
-      add_service_error(error.service, :links, :recursive, error.message)
+      add_error("services.#{error.service}.links", :recursive, error.message)
     end
 
     def execute
