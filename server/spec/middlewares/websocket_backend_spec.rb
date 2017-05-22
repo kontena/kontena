@@ -143,7 +143,6 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           expect(subject.logger).to receive(:warn).with('node nodeABC agent version 0.8.0 is not compatible with server version 0.9.1')
           expect(client_ws).to receive(:close).with(4010, 'agent version 0.8.0 is not compatible with server version 0.9.1')
 
-          # XXX: does not happen, because client is not yet in @clients
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
 
           expect{

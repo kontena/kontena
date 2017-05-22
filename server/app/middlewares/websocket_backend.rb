@@ -90,15 +90,11 @@ class WebsocketBackend
     unless node
       node = grid.host_nodes.create!(node_id: node_id, labels: labels)
     end
-
-    node_plugger = Agent::NodePlugger.new(node)
-
     # check version
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
 
     unless self.valid_agent_version?(agent_version)
       logger.warn "node #{node} agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
-      node_plugger.send_master_info
       handle_invalid_agent_version(ws, node, agent_version)
       return
     end
@@ -130,7 +126,7 @@ class WebsocketBackend
     }
     @clients << client
 
-    EM.defer { node_plugger.plugin! connected_at }
+    EM.defer { Agent::NodePlugger.new(node).plugin! connected_at }
   rescue => exc
     logger.error exc
   end
@@ -271,10 +267,21 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [HostNode] node
   def handle_invalid_agent_version(ws, node, version)
-    # XXX: delay to give the Agent::NodePlugger.send_master_info -> MongoPubSub time to call send_message before the websocket gets closed... hopefully?
-    EventMachine::Timer.new(1) do
-      ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
-    end
+    send_master_info(ws)
+    ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
+  end
+
+  # Send master_info RPC notification directly, without looping through the normal RPC mechanisms
+  #
+  # @param [Faye::Websocket] ws
+  def send_master_info(ws)
+    # symbols in RPC parameters are implicitly converted into strings by MongoPubsub
+    send_rpc_notify(ws, '/agent/master_info', {'version' => Server::VERSION})
+  end
+
+  # @param [Faye::Websocket] ws
+  def send_rpc_notify(ws, method, *params)
+    send_message(ws, [2, method, params])
   end
 
   # Must be called in EM thread.
