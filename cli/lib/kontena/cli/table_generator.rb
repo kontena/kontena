@@ -7,7 +7,7 @@ module Kontena
       attr_reader :data
       attr_reader :fields
       attr_reader :header
-      attr_reader :row_format_proc, :header_format_proc, :render_options
+      attr_reader :row_format_proc, :header_format_proc, :render_options, :render_mode
 
       DEFAULT_HEADER_FORMAT_PROC = lambda { |header| header.to_s.capitalize }
 
@@ -18,9 +18,13 @@ module Kontena
           end
         end
 
+        def table_generator
+          Kontena::Cli::TableGenerator
+        end
+
         def generate_table(array, fields = nil, &block)
           fields ||= self.fields if self.respond_to?(:fields)
-          Kontena::Cli::TableGenerator.new(
+          table_generator.new(
             array,
             fields,
             row_format_proc: block_given? ? block.to_proc : nil,
@@ -41,22 +45,27 @@ module Kontena
       # @return [TTY::Table]
       def initialize(data, fields = nil, row_format_proc: nil, header_format_proc: nil, render_options: nil)
         @data = data
-        @render_options = render_options || {}
+        @render_options = render_options || { }
+        @render_mode = @render_options.delete(:mode) || :basic
         @row_format_proc = row_format_proc
         @header_format_proc = header_format_proc || DEFAULT_HEADER_FORMAT_PROC
         @fields = parse_fields(fields)
-        @header = generate_header(fields)
+        @header = generate_header(fields || @fields)
       end
 
-      def table
+      def create_table(header, rows)
         TTY::Table.new(
           header: header,
           rows: rows
         )
       end
 
+      def table
+        create_table(header, rows)
+      end
+
       def render
-        table.render(:basic, render_options || {})
+        table.render(render_mode, render_options)
       end
 
       def format_row(row)
@@ -95,8 +104,17 @@ module Kontena
       end
 
       def generate_header(fields)
-        header = Array(fields.kind_of?(Hash) ? fields.keys : fields)
-        header.size < 2 ? nil : header.map { |head| format_header_item(head) }
+        if fields.kind_of?(Hash)
+          header = fields.keys
+        else
+          header = Array(fields)
+        end
+
+        if header.size < 2
+          nil
+        else
+          header.map { |head| format_header_item(head) }
+        end
       end
     end
   end

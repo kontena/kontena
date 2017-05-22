@@ -41,6 +41,8 @@ module OutputHelpers
 
       if @expected_header
         @expected.unshift(@expected_header)
+      elsif @no_header
+        nil
       else
         @real.shift
       end
@@ -68,6 +70,10 @@ module OutputHelpers
 
     chain :with_header do |header|
       @expected_header = header
+    end
+
+    chain :without_header do
+      @no_header = true
     end
 
     failure_message do |block|
