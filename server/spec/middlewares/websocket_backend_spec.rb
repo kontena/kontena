@@ -4,6 +4,12 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
   let(:app) { spy(:app) }
   let(:subject) { described_class.new(app) }
 
+  let(:logger) { instance_double(Logger) }
+  before do
+    allow(subject).to receive(:logger).and_return(logger)
+    allow(logger).to receive(:debug)
+  end
+
   before(:each) do
     stub_const('Server::VERSION', '0.9.1')
   end
@@ -67,13 +73,84 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
   end
 
-  context "with a connected client" do
-    let(:logger) { instance_double(Logger) }
-    before do
-      allow(subject).to receive(:logger).and_return(logger)
-      allow(logger).to receive(:debug)
+  context "for a connecting client" do
+    let(:grid) do
+      Grid.create!(name: 'test', token: 'secret123')
     end
 
+    let(:grid_token) { 'secret123' }
+    let(:node_id) { 'nodeABC' }
+    let(:node_labels) { 'test1,test2' }
+    let(:node_version) { '0.9.1' }
+    let(:connected_at) { 1.second.ago.utc }
+
+    let(:client_ws) { instance_double(Faye::WebSocket) }
+    let(:rack_req) { instance_double(Rack::Request, env: {
+      'HTTP_KONTENA_GRID_TOKEN' => grid_token,
+      'HTTP_KONTENA_NODE_ID' => node_id,
+      'HTTP_KONTENA_NODE_LABELS' => node_labels,
+      'HTTP_KONTENA_VERSION' => node_version,
+      'HTTP_KONTENA_CONNECTED_AT' => connected_at.strftime('%F %T.%NZ'),
+    })}
+
+    before do
+      grid
+    end
+
+    context "without any grid token" do
+      let(:rack_req) { instance_double(Rack::Request, env: {})}
+
+      describe '#on_open' do
+        it 'closes the connection without creating the node' do
+          expect(subject.logger).to receive(:error).with('invalid grid token, closing connection')
+          expect(client_ws).to receive(:close).with(4001, 'Invalid grid token')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{grid.reload.host_nodes}
+        end
+      end
+    end
+
+    context "with the wrong grid token" do
+      let(:grid_token) { 'the wrong secret' }
+
+      describe '#on_open' do
+        it 'closes the connection without creating the node' do
+          expect(subject.logger).to receive(:error).with('invalid grid token, closing connection')
+          expect(client_ws).to receive(:close).with(4001, 'Invalid grid token')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{grid.reload.host_nodes}
+        end
+      end
+    end
+
+    describe '#on_open' do
+      it 'accepts the connection and creates a new host node' do
+        expect(subject.logger).to receive(:info).with(/node nodeABC agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+
+        allow(EM).to receive(:defer) do |&block|
+          block.call
+        end
+        expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
+        expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC')]])
+
+        expect{
+          subject.on_open(client_ws, rack_req)
+        }.to change{grid.reload.host_nodes.count}.from(0).to(1)
+
+        host_node = grid.host_nodes.first
+
+        expect(host_node.node_id).to eq node_id
+        expect(host_node.connected).to eq true
+        expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
+      end
+    end
+  end
+
+  context "with a connected client" do
     let(:client_ws) { instance_double(Faye::WebSocket) }
     let(:connected_at) { 1.minute.ago }
     let(:client) do
