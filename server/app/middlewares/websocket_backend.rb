@@ -277,12 +277,12 @@ class WebsocketBackend
     end
   end
 
+  # Must be called in EM thread.
+  #
   # @param [Faye::Websocket] ws
   # @param [Array] message
   def send_message(ws, message)
-    EM.next_tick {
-      ws.send(MessagePack.dump(message).bytes)
-    }
+    ws.send(MessagePack.dump(message).bytes)
   end
 
   def subscribe_to_rpc_channel
