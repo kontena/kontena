@@ -90,6 +90,7 @@ class WebsocketBackend
     unless node
       node = grid.host_nodes.create!(node_id: node_id, labels: labels)
     end
+
     # check version
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
 
