@@ -94,6 +94,34 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       subject.instance_variable_get('@clients') << client
     end
 
+    describe '#on_close' do
+      it "logs a warning if the client is not found" do
+        subject.instance_variable_get('@clients').clear
+
+        expect(subject.logger).to receive(:debug).with('ignore close of unplugged client')
+
+        subject.on_close(client_ws)
+      end
+
+      it "calls unplug_client" do
+        expect(subject.logger).to receive(:info).with('node aa connection closed')
+
+        expect(subject).to receive(:unplug_client).with(client)
+
+        subject.on_close(client_ws)
+      end
+
+      it "rescues errors" do
+        expect(subject).to receive(:unplug_client).and_raise("failed")
+
+        expect(subject.logger).to receive(:info).with('node aa connection closed')
+        expect(subject.logger).to receive(:error).with('on_close: failed')
+        expect(subject.logger).to receive(:error)
+
+        subject.on_close(client_ws)
+      end
+    end
+
     describe '#unplug_client' do
       it "logs a warning if the host node is not found" do
         node.set(node_id: 'bb')
