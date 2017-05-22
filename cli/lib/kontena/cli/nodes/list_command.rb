@@ -47,17 +47,21 @@ module Kontena::Cli::Nodes
       all? ? client.get("grids")['grids'] : [client.get("grids/#{current_grid}")]
     end
 
+    def grid_nodes(grid_name)
+      client.get("grids/#{grid_name}/nodes")['nodes']
+    end
+
     def node_data
       grids.flat_map do |grid|
         grid_nodes = []
 
-        client.get("grids/#{grid['id']}/nodes")['nodes'].each do |node|
+        grid_nodes(grid['id']).each do |node|
           node['name'] = node_name(node, grid)
+          grid_nodes << node
           next if quiet?
           node['initial'] = node_initial(node, grid)
           node['status'] = node_status(node)
           node['labels'] = node_labels(node)
-          grid_nodes << node
         end
 
         unless quiet?
@@ -67,7 +71,7 @@ module Kontena::Cli::Nodes
           end
         end
 
-        grid_nodes
+        grid_nodes.sort { |n| n['node_number'] }
       end
     end
 
