@@ -59,14 +59,7 @@ class MongoPubsub
 
     # @param [Hash] data
     def send_message(data)
-      payload = Marshal::load(data.data)
-      if payload.is_a?(Hash)
-        # Serialization preserves symbol keys opposed to old un-serialized hash storing which automatically converted
-        # symbol keys into strings.
-        # There's lot of code paths where stringified keys are expected
-        payload = payload.stringify_keys
-      end
-      
+      payload = MessagePack.unpack(data.data)
       @block.call(payload)
     end
   end
@@ -101,7 +94,7 @@ class MongoPubsub
   def publish(channel, data)
     self.collection.insert_one(
       channel: channel,
-      data: BSON::Binary.new(Marshal::dump(data)),
+      data: BSON::Binary.new(MessagePack.pack(data)),
       created_at: Time.now.utc
     )
   end
