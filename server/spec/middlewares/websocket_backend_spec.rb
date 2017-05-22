@@ -155,6 +155,46 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
     end
 
+    context "with a Kontena-Connected-At time in the past" do
+      let(:connected_at) { 5.minutes.ago.utc }
+
+      describe '#on_open' do
+        it 'creates the node, but does not connect it' do
+          expect(subject.logger).to receive(:warn).with(/node nodeABC connected too far in the past at #{connected_at}, \d+\.\d+s ago/)
+          expect(client_ws).to receive(:close).with(4020, /agent clock offset \d+\.\d+s exceeds threshold/)
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to change{grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+
+          host_node = grid.host_nodes.first
+
+          expect(host_node.node_id).to eq node_id
+          expect(host_node.connected).to eq false
+        end
+      end
+    end
+
+    context "with a Kontena-Connected-At time in the future" do
+      let(:connected_at) { Time.now.utc + 60.0 }
+
+      describe '#on_open' do
+        it 'creates the node, but does not connect it' do
+          expect(subject.logger).to receive(:warn).with(/node nodeABC connected too far in the future at #{connected_at}, \d+\.\d+s ahead/)
+          expect(client_ws).to receive(:close).with(4020, /agent clock offset -\d+\.\d+s exceeds threshold/)
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to change{grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+
+          host_node = grid.host_nodes.first
+
+          expect(host_node.node_id).to eq node_id
+          expect(host_node.connected).to eq false
+        end
+      end
+    end
+
     describe '#on_open' do
       before do
         # force sync plugin
