@@ -153,9 +153,9 @@ describe Cloud::WebsocketClient do
     it 'sends notification message' do
       grid  #create
       message = {
-        type: 'GridService',
-        event: 'create',
-        object: { name: "test-service", grid: { id: "test"} }
+        'type' => 'GridService',
+        'event' => 'create',
+        'object' => { name: "test-service", grid: { id: "test"} }
       }
       expect(ws).to receive(:send).once do
           EM.stop
@@ -171,9 +171,9 @@ describe Cloud::WebsocketClient do
       it 'is right formatted' do
         grid  #create
         message = {
-          type: 'GridService',
-          event: 'create',
-          object: {"name": "test-service", "grid": {"id": "test"}}
+          'type' => 'GridService',
+          'event' => 'create',
+          'object' => {"name": "test-service", "grid": {"id": "test"}}
         }
 
         expect(ws).to receive(:send).once do |param|
@@ -195,9 +195,9 @@ describe Cloud::WebsocketClient do
         it 'contains grid as first entry' do
           grid  #create
           message = {
-            type: 'GridService',
-            event: 'create',
-            object: { "name" => "test-service", "grid" => { "id" => "test" }}
+            'type' => 'GridService',
+            'event' => 'create',
+            'object' => { "name" => "test-service", "grid" => { "id" => "test" }}
           }
 
           expect(ws).to receive(:send).once do |param|
@@ -216,9 +216,9 @@ describe Cloud::WebsocketClient do
         it 'contains users as second entry' do
           grid  #create
           message = {
-            type: 'GridService',
-            event: 'create',
-            object: { "name" => "test-service", "grid" => { "id" => "test" }}
+            'type' => 'GridService',
+            'event' => 'create',
+            'object' => { "name" => "test-service", "grid" => { "id" => "test" }}
           }
 
           expect(ws).to receive(:send).once do |param|
@@ -238,9 +238,9 @@ describe Cloud::WebsocketClient do
         it 'contains object as third entry' do
           grid  #create
           message = {
-            type: 'GridService',
-            event: 'create',
-            object: { "name" => "test-service", "grid" => { "id" => "test" }}
+            'type' => 'GridService',
+            'event' => 'create',
+            'object' => { "name" => "test-service", "grid" => { "id" => "test" }}
           }
 
           expect(ws).to receive(:send).once do |param|
