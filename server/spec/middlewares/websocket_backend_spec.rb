@@ -95,6 +95,9 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
     before do
       grid
+
+      # block weird errors from unexpected send_message -> ws.send
+      expect(client_ws).to_not receive(:send)
     end
 
     context "without any grid token" do
@@ -163,10 +166,6 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       it 'accepts the connection and creates a new host node' do
         expect(subject.logger).to receive(:info).with(/node nodeABC agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
 
-        # XXX: racy via pubsub
-        expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
-        expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC')]])
-
         expect{
           subject.on_open(client_ws, rack_req)
         }.to change{grid.reload.host_nodes.count}.from(0).to(1)
@@ -176,6 +175,13 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         expect(host_node.node_id).to eq node_id
         expect(host_node.connected).to eq true
         expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
+
+        # XXX: racy via mongo pubsub
+        expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
+        expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC')]])
+
+        sleep 0.1
+        EM.run_deferred_callbacks
       end
     end
   end
