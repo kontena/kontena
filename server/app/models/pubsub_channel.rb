@@ -3,5 +3,5 @@ class PubsubChannel
 
   field :created_at, type: DateTime
   field :channel, type: String
-  field :data, type: Hash
+  field :data, type: BSON::Binary
 end
