@@ -356,7 +356,7 @@ class WebsocketBackend
   # @param [Fixnum] delay
   def on_client_timeout(client, delay)
     logger.warn "Close node %s connection after %.2fs timeout" % [client[:id], delay]
-    close_client(client, 4030, "ping timeout after %2.fs" % [delay])
+    close_client(client, 4030, "ping timeout after %.2fs" % [delay])
   end
 
   # @param [Hash] client
