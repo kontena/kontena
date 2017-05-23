@@ -21,33 +21,42 @@ module Kontena
 
         __init_timers__
 
+        DEBUG_INDICATOR = Kontena.pastel.bright_blue('D').freeze
+        WARN_INDICATOR  = Kontena.pastel.yellow('W').freeze
+        INFO_INDICATOR  = Kontena.pastel.cyan('I').freeze
+        ERROR_INDICATOR = Kontena.pastel.red('E').freeze
+
         def colorize_severity(severity)
           case severity[0..0]
-          when 'D' then Kontena.pastel.blue('D')
-          when 'W' then Kontena.pastel.yellow('W')
-          when 'I' then Kontena.pastel.cyan('I')
-          when 'E', 'F' then Kontena.pastel.red('E')
+          when 'D' then DEBUG_INDICATOR
+          when 'W' then WARN_INDICATOR
+          when 'I' then INFO_INDICATOR
+          when 'E', 'F' then ERROR_INDICATOR
           else severity[0..0]
           end
         end
 
+        TS_FORMAT = '%+6dms'.freeze
+        TS_ZERO   = Kontena.pastel.bright_black.on_black(sprintf('%+6sms', '<1')).freeze
+
         def colorize_time
           elapsed = self.class.ms_since_last
-          str = sprintf("%6s", "#{elapsed}ms")
-          if elapsed > 300
-            Kontena.pastel.red(str)
+          if elapsed.zero?
+            TS_ZERO
+          elsif elapsed > 300
+            Kontena.pastel.red.on_black(TS_FORMAT % [elapsed])
           elsif elapsed > 100
-            Kontena.pastel.yellow(str)
+            Kontena.pastel.yellow.on_black(TS_FORMAT % [elapsed])
           else
-            str
+            Kontena.pastel.on_black(TS_FORMAT % [elapsed])
           end
         end
 
-        LEFT_BRACKET = Kontena.pastel.cyan('[').freeze
-        RIGHT_BRACKET = Kontena.pastel.cyan(']').freeze
+        SEPARATOR = Kontena.pastel.on_black(' ').freeze
+        HEAD_FORMAT = "%s#{SEPARATOR}%s".freeze
 
         def call(severity, time, progname, msg)
-          "#{LEFT_BRACKET}#{colorize_severity(severity)} #{colorize_time} #{progname}#{RIGHT_BRACKET} #{msg2str(msg)}\n"
+          (HEAD_FORMAT % [colorize_severity(severity), colorize_time]) + " #{msg2str(msg)}\n"
         end
       end
     end
