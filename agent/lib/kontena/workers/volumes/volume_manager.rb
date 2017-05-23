@@ -132,8 +132,9 @@ module Kontena::Workers::Volumes
             info "removing volume: #{volume.id}"
             begin
               volume.remove
+              info "removed volume: #{volume.id} succesfully"
             rescue => exc
-              warn "removing volume failed: #{exc.class} #{exc.message}"
+              warn "removing volume #{volume.id} failed: #{exc.class} #{exc.message}"
             end
           end
         end
