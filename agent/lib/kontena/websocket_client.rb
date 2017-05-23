@@ -174,6 +174,8 @@ module Kontena
         handle_invalid_token
       when 4010
         handle_invalid_version(event.reason)
+      when 4040, 4041
+        handle_invalid_connection(event.reason)
       else
         warn "connection closed with code #{event.code}: #{event.reason}"
       end
@@ -190,6 +192,11 @@ module Kontena
     def handle_invalid_version(reason)
       agent_version = Kontena::Agent::VERSION
       error "master does not accept our version (#{agent_version}): #{reason}"
+      EM.next_tick { abort("Shutting down ...") }
+    end
+
+    def handle_invalid_connection(reason)
+      error "master indicates that this agent should not reconnect: #{reason}"
       EM.next_tick { abort("Shutting down ...") }
     end
 
