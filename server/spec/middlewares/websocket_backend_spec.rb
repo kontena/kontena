@@ -323,7 +323,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       it 'closes connection if node is not marked as connected' do
         node.set(connected: false)
         expect(subject.logger).to receive(:warn).with('Close connection of disconnected node test-node')
-        expect(client_ws).to receive(:close).with(4042, 'host node test-node has been disconnected')
+        expect(client_ws).to receive(:close).with(4031, 'host node test-node has been disconnected')
         expect(subject).to receive(:unplug_client).with(client)
 
         subject.on_pong(client, 0.1)

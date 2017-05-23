@@ -387,7 +387,7 @@ class WebsocketBackend
         close_client(client, 4041, "host node #{node} connection conflict with new connection at #{node.connected_at}")
       elsif !connected_node.connected
         logger.warn "Close connection of disconnected node #{node}"
-        close_client(client, 4042, "host node #{node} has been disconnected")
+        close_client(client, 4031, "host node #{node} has been disconnected")
       end
     else
       logger.warn "Close connection of removed node #{client[:id]}"
