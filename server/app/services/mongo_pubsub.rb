@@ -59,7 +59,7 @@ class MongoPubsub
 
     # @param [Hash] data
     def send_message(data)
-      payload = MessagePack.unpack(data.data)
+      payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
       @block.call(payload)
     end
   end
