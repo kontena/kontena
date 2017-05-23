@@ -27,6 +27,24 @@ describe MongoPubsub do
       subs.each(&:terminate)
     end
 
+    it 'supports hash keys with mixed symbols and strings' do
+      messages = []
+
+      sub =  described_class.subscribe('test') {|msg|
+        messages << msg
+      }
+
+      described_class.publish('test', {'foo' => 'bar 1'})
+      described_class.publish('test', {foo: 'bar 2'})
+
+      WaitHelper.wait_until!(timeout: 5) { messages.size == 2 }
+
+      expect(messages.map{|m| m[:foo]}).to eq ['bar 1', 'bar 2']
+      expect(messages.map{|m| m['foo']}).to eq ['bar 1', 'bar 2']
+
+      sub.terminate
+    end
+
     it 'quarantees message ordering' do
       expected_mailbox = []
       mailbox1 = []
