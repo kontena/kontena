@@ -186,8 +186,10 @@ module Kontena
                 if plugin_debug?
                   added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
                   added_paths = ($LOAD_PATH - load_path_before).map {|feat| "- #{feat}"}
-                  $stderr.puts "Plugin manager loaded features for #{spec.name}: \n#{added_features.join("\n")}" unless added_features.empty?
-                  $stderr.puts "Plugin manager load paths added for #{spec.name}: \n#{added_paths.join("\n")}" unless added_paths.empty?
+                  Kontena.logger.debug { "Plugin manager loaded features for #{spec.name}:" } unless added_features.empty?
+                  added_features.each { |feat| Kontena.logger.debug { feat } }
+                  Kontena.logger.debug { "Plugin manager load paths added for #{spec.name}:" } unless added_paths.empty?
+                  added_paths.each { |path| Kontena.logger.debug { path } }
                 end
 
                 plugins << spec
