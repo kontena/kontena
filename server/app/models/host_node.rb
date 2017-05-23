@@ -105,24 +105,6 @@ class HostNode
     RpcClient.new(self.node_id, timeout)
   end
 
-  # @return [Integer]
-  def schedule_counter
-    @schedule_counter ||= 0
-  end
-
-  # @return [String]
-  def region
-    if @region.nil?
-      @region = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^region=(.+)/)
-          @region = match[1]
-        end
-      end
-    end
-    @region
-  end
-
   def initial_member?
     return false if self.node_number.nil?
     return true if self.node_number <= self.grid.initial_size
@@ -153,6 +135,11 @@ class HostNode
       return value
     end
     return nil
+  end
+
+  # @return [String]
+  def region
+    @region ||= label_value('region') || 'default'
   end
 
   # @return [String]
