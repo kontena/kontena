@@ -65,7 +65,11 @@ module Kontena
       end
 
       def render
-        table.render(render_mode, render_options)
+        if data.empty?
+          fields.map(&method(:format_header_item)).join('  ')
+        else
+          table.render(render_mode, render_options)
+        end
       end
 
       def format_row(row)
