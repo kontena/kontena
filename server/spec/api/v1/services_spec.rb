@@ -8,7 +8,7 @@ describe '/v1/services' do
   end
 
   let! :grid do
-    grid = Grid.create!(name: 'terminal-a')
+    Grid.create!(name: 'terminal-a')
   end
 
   let(:david) do
@@ -202,101 +202,10 @@ describe '/v1/services' do
     end
   end
 
-  describe 'GET /:id/container_logs' do
-    it 'returns service container logs' do
-      container = redis_service.containers.create!(name: 'redis-1', container_id: 'bbb')
-      container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
-      get "/v1/services/#{redis_service.to_path}/container_logs", nil, request_headers
-      expect(response.status).to eq(200)
-      expect(json_response['logs'].size).to eq(1)
-      expect(json_response['logs'].first['data']).to eq('foo')
-    end
-
-    context 'when instance parameter is passed' do
-      it 'returns service container logs for related instance' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
-        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
-        log1 = container.container_logs.create!(name: 'redis-1', instance_number: 1, data: 'foo', type: 'stdout', grid_service: redis_service)
-        log2 = container2.container_logs.create!(name: 'redis-2', instance_number: 2, data: 'foo2', type: 'stdout', grid_service: redis_service)
-        get "/v1/services/#{redis_service.to_path}/container_logs?instance=1", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(1)
-        expect(json_response['logs'].first['data']).to eq('foo')
-      end
-    end
-
-    context 'when from parameter is passed' do
-      it 'returns service container logs created after passed id' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
-        log1 = container.container_logs.create!(data: 'foo', type: 'stdout', grid_service: redis_service)
-        log2 = container.container_logs.create!(data: 'foo2', type: 'stdout', grid_service: redis_service)
-        get "/v1/services/#{redis_service.to_path}/container_logs?from=#{log1.id}", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(1)
-        expect(json_response['logs'].first['data']).to eq('foo2')
-      end
-    end
-
-    context 'when since parameter is passed' do
-      it 'returns service container logs created after passed timestamp' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
-        log1 = container.container_logs.create!(
-          data: 'foo', type: 'stdout', grid_service: redis_service, created_at: 5.minutes.ago
-        )
-        log2 = container.container_logs.create!(
-          data: 'foo2', type: 'stdout', grid_service: redis_service, created_at: 3.minutes.ago
-        )
-        log3 = container.container_logs.create!(
-          data: 'foo3', type: 'stdout', grid_service: redis_service, created_at: 1.minutes.ago
-        )
-        get "/v1/services/#{redis_service.to_path}/container_logs?since=#{log2.created_at}", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(2)
-        expect(json_response['logs'].first['data']).to eq('foo2')
-      end
-    end
-
-    context 'when limit parameter is passed' do
-      before do
-        stub_const('LogsHelpers::LOGS_LIMIT_DEFAULT', 10)
-        stub_const('LogsHelpers::LOGS_LIMIT_MAX', 20)
-
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
-        (1..100).each do |i|
-          container.container_logs.create!(data: "log #{i}", type: 'stdout', grid_service: redis_service)
-        end
-      end
-
-      it 'accepts a smaller value' do
-        get "/v1/services/#{redis_service.to_path}/container_logs?limit=2", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(2)
-      end
-
-      it 'ignores an invalid value' do
-        get "/v1/services/#{redis_service.to_path}/container_logs?limit=foo", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(10)
-      end
-
-      it 'ignores an zero value' do
-        get "/v1/services/#{redis_service.to_path}/container_logs?limit=0", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(10)
-      end
-
-      it 'limits the maximum value' do
-        get "/v1/services/#{redis_service.to_path}/container_logs?limit=100", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['logs'].size).to eq(20)
-      end
-    end
-  end
-
   describe 'GET /:id/stats' do
     context 'when container has stats data' do
       it 'returns service stats' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         container.container_stats.create!(container_stat_data)
         get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
@@ -329,13 +238,13 @@ describe '/v1/services' do
         stats2[:network][:internal]['tx_bytes'] = 50
         stats3[:network][:internal]['tx_bytes'] = 40
 
-        container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         container1.container_stats.create!(stats1)
 
-        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
+        container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb', state: { running: true })
         container2.container_stats.create!(stats2)
 
-        container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
+        container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc', state: { running: true })
         container3.container_stats.create!(stats3)
 
         get "/v1/services/#{redis_service.to_path}/stats?sort=tx_bytes&limit=1", nil, request_headers
@@ -346,7 +255,7 @@ describe '/v1/services' do
     end
     context 'when container has not stats data' do
       it 'returns empty result' do
-        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         get "/v1/services/#{redis_service.to_path}/stats", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(1)
@@ -359,7 +268,7 @@ describe '/v1/services' do
   describe 'GET /:id/metrics' do
     context 'when container has stats data' do
       it 'returns service metrics' do
-        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        container = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         container_stat_data['grid_service_id'] = redis_service.id
         container.container_stats.create!(container_stat_data)
         get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
@@ -370,7 +279,7 @@ describe '/v1/services' do
     end
     context 'when container has not stats data' do
       it 'returns empty result' do
-        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+        redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
         get "/v1/services/#{redis_service.to_path}/metrics", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['stats'].size).to eq(0)

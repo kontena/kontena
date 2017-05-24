@@ -5,6 +5,9 @@ describe Volume do
   it { should have_fields(:name, :driver, :scope) }
   it { should have_many(:volume_instances)}
 
+  it { should belong_to(:grid) }
+  it { should have_many(:event_logs) }
+
   let(:grid) do
     Grid.create(name: 'test-grid')
   end

@@ -41,12 +41,11 @@ module Kontena
         # @param [String] service_id
         def show_service(token, service_id)
           service = get_service(token, service_id)
-          grid = service['id'].split('/')[0]
           puts "#{service['id']}:"
           puts "  created: #{service['created_at']}"
           puts "  updated: #{service['updated_at']}"
           puts "  stack: #{service['stack']['id'] }"
-          puts "  state: #{service['state'] }"
+          puts "  desired_state: #{service['state'] }"
           puts "  image: #{service['image']}"
           puts "  revision: #{service['revision']}"
           puts "  stack_revision: #{service['stack_revision']}" if service['stack_revision']
@@ -54,7 +53,9 @@ module Kontena
           puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
           puts "  deploy_opts:"
-          puts "    min_health: #{service['deploy_opts']['min_health']}"
+          if service['deploy_opts']['min_health']
+            puts "    min_health: #{service['deploy_opts']['min_health']}"
+          end
           if service['deploy_opts']['wait_for_port']
             puts "    wait_for_port: #{service['deploy_opts']['wait_for_port']}"
           end
@@ -104,7 +105,7 @@ module Kontena
             end
           end
 
-          unless service['net'].to_s.empty?
+          if service['net'].to_s != 'bridge'
             puts "  net: #{service['net']}"
           end
 
@@ -188,6 +189,40 @@ module Kontena
         end
 
         def show_service_instances(token, service_id)
+          puts "  instances:"
+          instances = client(token).get("services/#{parse_service_id(service_id)}/instances")['instances']
+          containers = client(token).get("services/#{parse_service_id(service_id)}/containers")['containers']
+          instances.each do |i|
+            puts "    #{name}/#{i['instance_number']}:"
+            puts "      scheduled_to: #{i.dig('node', 'name') || '-'}"
+            puts "      deploy_rev: #{i['deploy_rev']}"
+            puts "      rev: #{i['rev']}"
+            puts "      state: #{i['state']}"
+            puts "      error: #{i['error'] || '-'}" if i['error']
+            puts "      containers:"
+            containers.select { |c|
+              c['instance_number'] == i['instance_number']
+            }.each do |container|
+              puts "        #{container['name']} (on #{container.dig('node', 'name')}):"
+              puts "          dns: #{container['hostname']}.#{container['domainname']}"
+              puts "          ip: #{container['ip_address']}"
+              puts "          public ip: #{container['node']['public_ip'] rescue 'unknown'}"
+              if container['health_status']
+                health_time = Time.now - Time.parse(container.dig('health_status', 'updated_at'))
+                puts "          health: #{container.dig('health_status', 'status')} (#{health_time.to_i}s ago)"
+              end
+              puts "          status: #{container['status']}"
+              if container.dig('state', 'error') != ''
+                puts "          reason: #{container['state']['error']}"
+              end
+              if container.dig('state', 'exit_code').to_i != 0
+                puts "          exit code: #{container['state']['exit_code']}"
+              end
+            end
+          end
+        end
+
+        def show_service_containers(token, service_id)
           puts "  instances:"
           result = client(token).get("services/#{parse_service_id(service_id)}/containers")
           result['containers'].each do |container|
@@ -322,23 +357,16 @@ module Kontena
         # @param [Array<String>] port_options
         # @return [Array<Hash>]
         def parse_ports(port_options)
-          port_options.map{|p|
-            port, protocol = p.split('/')
-            protocol ||= 'tcp'
-            port_elements = port.split(':')
-            container_port = port_elements[-1]
-            node_port = port_elements[-2]
-            ip = port_elements[-3] || '0.0.0.0'
-            if node_port.nil? || container_port.nil?
-              raise ArgumentError.new("Invalid port value #{p}")
-            end
+          port_regex = Regexp.new(/\A(?<ip>\d+\.\d+\.\d+\.\d+)?:?(?<node_port>\d+)\:(?<container_port>\d+)\/?(?<protocol>\w+)?\z/)
+          port_options.map do |p|
+            match_data = port_regex.match(p.to_s)
+            raise ArgumentError, "Invalid port value #{p}" unless match_data
+
             {
-              ip: ip,
-              container_port: container_port,
-              node_port: node_port,
-              protocol: protocol
-            }
-          }
+              ip: '0.0.0.0',
+              protocol: 'tcp'
+            }.merge(match_data.names.map { |name| [name.to_sym, match_data[name]] }.to_h.reject { |_,v| v.nil? })
+          end
         end
 
         # @param [Array<String>] link_options

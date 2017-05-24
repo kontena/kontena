@@ -73,7 +73,7 @@ module Kontena::Cli::Stacks
               warnings: false
             )
           )
-        )
+        ) || {}
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
@@ -92,13 +92,13 @@ module Kontena::Cli::Stacks
               raise_on_unknown: true
             )
           )
-        )
+        ) || {}
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
       def raw_yaml
-        @raw_yaml ||= ::YAML.safe_load(raw_content)
+        @raw_yaml ||= ::YAML.safe_load(raw_content) || {}
       end
 
       # @return [Opto::Group]
@@ -165,7 +165,7 @@ module Kontena::Cli::Stacks
         template = Liquid::Template.parse(content)
 
         # Wrap nil values in LiquidNull to not have Liquid consider them as undefined
-        vars = Hash[vars.map {|key, value| [key, value.nil? ? LiquidNull.new : value]}]
+        vars = vars.map {|key, value| [key, value.nil? ? LiquidNull.new : value]}.to_h
 
         template.render!(vars, strict_variables: true, strict_filters: true)
       end

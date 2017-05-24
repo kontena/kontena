@@ -15,7 +15,8 @@ module Kontena
   class WebsocketClient
     include Kontena::Logging
 
-    KEEPALIVE_TIME = 30
+    KEEPALIVE_INTERVAL = 30.0 # seconds
+    PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5)
 
     attr_reader :api_uri,
                 :api_token,
@@ -43,7 +44,7 @@ module Kontena
       EM::PeriodicTimer.new(1) {
         connect unless connected?
       }
-      EM::PeriodicTimer.new(KEEPALIVE_TIME) {
+      EM::PeriodicTimer.new(KEEPALIVE_INTERVAL) {
         if connected?
           EM.next_tick { verify_connection }
         end
@@ -171,6 +172,7 @@ module Kontena
         handle_invalid_version
       end
       info "connection closed with code #{event.code}"
+      notify_actors('websocket:close', nil)
     rescue => exc
       error exc.message
     end
@@ -215,18 +217,29 @@ module Kontena
     end
 
     def verify_connection
-      return unless @ping_timer.nil?
+      return if @ping_timer
 
-      @ping_timer = EM::Timer.new(2) do
+      ping_time = Time.now
+      @ping_timer = EM::Timer.new(PING_TIMEOUT) do
+        delay = Time.now - ping_time
+
         # @ping_timer remains nil until re-connected to prevent further keepalives while closing
-        if @connected
-          info 'did not receive pong, closing connection'
+        if connected?
+          error 'keepalive ping %.2fs timeout, closing connection' % [delay]
           close
         end
       end
       ws.ping {
         @ping_timer.cancel
         @ping_timer = nil
+
+        delay = Time.now - ping_time
+
+        if delay > PING_TIMEOUT / 2
+          warn "keepalive ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
+        else
+          debug "keepalive ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
+        end
       }
     rescue => exc
       error exc.message

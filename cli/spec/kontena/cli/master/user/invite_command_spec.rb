@@ -7,8 +7,8 @@ describe Kontena::Cli::Master::User::InviteCommand do
 
   describe "#invite" do
     it 'makes invitation request for all given users' do
-      expect(client).to receive(:post).with("/oauth2/authorize", {email: 'john@example.org', external_id: nil, response_type: "invite"}).once
-      expect(client).to receive(:post).with("/oauth2/authorize", {email: 'jane@example.org', external_id: nil, response_type: "invite"}).once
+      expect(client).to receive(:post).with("/oauth2/authorize", {email: 'john@example.org', external_id: nil, response_type: "invite"}).once.and_return(Hash.new { "foo" })
+      expect(client).to receive(:post).with("/oauth2/authorize", {email: 'jane@example.org', external_id: nil, response_type: "invite"}).once.and_return(Hash.new { "bar" })
 
       subject.run(['john@example.org', 'jane@example.org'])
     end

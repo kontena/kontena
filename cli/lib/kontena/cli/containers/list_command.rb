@@ -1,5 +1,3 @@
-require_relative '../grid_options'
-
 module Kontena::Cli::Containers
   class ListCommand < Kontena::Command
     include Kontena::Util

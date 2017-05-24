@@ -1,3 +1,4 @@
+require 'securerandom'
 
 module Kontena
   module Callbacks
@@ -49,10 +50,15 @@ module Kontena
         end
 
         require 'shellwords'
-        cmd = "master login --no-login-info --skip-grid-auto-select --verbose --name #{command.result[:name].shellescape} --code #{command.result[:code].shellescape} #{new_master.url.shellescape}"
+        cmd = [
+          'master', 'login', '--no-login-info' ,'--skip-grid-auto-select', '--verbose',
+          '--name', command.result[:name],
+          '--code', command.result[:code],
+          new_master.url
+        ]
         Retriable.retriable do
           ENV["DEBUG"] && $stderr.puts("Running: #{cmd}")
-          Kontena.run(cmd)
+          Kontena.run!(cmd)
         end
       end
     end

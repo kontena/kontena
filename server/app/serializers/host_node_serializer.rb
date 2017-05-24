@@ -75,7 +75,8 @@ class HostNodeSerializer < KontenaJsonSerializer
         memory: stats.memory,
         load: stats.load,
         filesystem: stats.filesystem,
-        usage: stats.usage
+        usage: stats.usage,
+        cpu: stats.cpu
       }
     end
   end

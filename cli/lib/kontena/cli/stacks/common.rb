@@ -97,7 +97,7 @@ module Kontena::Cli::Stacks
     end
 
     def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack = stack_from_reader(reader)
       dump_variables(reader) if values_to
       stack
@@ -110,6 +110,11 @@ module Kontena::Cli::Stacks
     def generate_volumes(yaml_volumes)
       return [] unless yaml_volumes
       yaml_volumes.map do |name, config|
+        if config['external'].is_a?(TrueClass)
+          config['external'] = name
+        elsif config['external']['name']
+          config['external'] = config['external']['name']
+        end
         config.merge('name' => name)
       end
     end
@@ -149,7 +154,7 @@ module Kontena::Cli::Stacks
 
     def stacks_client
       return @stacks_client if @stacks_client
-      Kontena.run('cloud login') unless cloud_auth?
+      Kontena.run!(%w(cloud login)) unless cloud_auth?
       config.reset_instance
       @stacks_client = Kontena::StacksClient.new(kontena_account.stacks_url, kontena_account.token)
     end

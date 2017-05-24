@@ -12,11 +12,13 @@ require 'roda'
 require 'mongoid'
 require 'json'
 require 'mutations'
+require_relative '../lib/mutations/command_errors'
 require 'logger'
 require 'msgpack'
 require 'tilt/jbuilder.rb'
 require 'mongoid/enum'
 require 'json_serializer'
+require 'lru_redux'
 
 def require_glob(glob)
   Dir.glob(glob).sort.each do |path|

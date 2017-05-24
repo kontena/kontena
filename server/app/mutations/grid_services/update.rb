@@ -3,6 +3,7 @@ require_relative 'common'
 module GridServices
   class Update < Mutations::Command
     include Common
+    include Logging
 
     common_validations
 
@@ -12,38 +13,41 @@ module GridServices
 
     optional do
       string :image
-      model :grid, class: Grid
-      model :stack, class: Stack
+    end
+
+    def grid
+      self.grid_service.grid
+    end
+    def stack
+      self.grid_service.stack
     end
 
     def validate
-      if self.links
-        validate_links(self.grid_service.grid, self.grid_service.stack, self.links)
-      end
+      validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
-      if self.secrets
-        validate_secrets_exist(self.grid_service.grid, self.secrets)
-      end
+      validate_secrets
       if self.grid_service.stateful?
         if self.volumes_from && self.volumes_from.size > 0
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
         end
-        if self.volumes
-          changed_volumes = self.volumes.select { |v|
-            vols = self.grid_service.service_volumes.map { |sv| sv.to_s }
-            !vols.include?(v)
-          }
-          if changed_volumes.any? { |v| !v.include?(':') }
-            add_error(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
-          end
-        end
+        validate_volumes(stateful_volumes: self.grid_service.service_volumes.select{|v| v.anonymous? })
+      else
+        validate_volumes()
       end
-      validate_volumes(self.volumes)
+    end
+
+    # List changed fields of model
+    # @param document [Mongoid::Document]
+    # @return [String] field, embedded{field}
+    def changed(document)
+      (document.changed + document._children.select{|child| child.changed? }.map { |child|
+        "#{child.metadata_name.to_s}{#{child.changed.join(", ")}}"
+      }).join(", ")
     end
 
     def execute
@@ -73,6 +77,7 @@ module GridServices
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(
+          self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
         )
       end
@@ -85,12 +90,19 @@ module GridServices
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
       end
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.grid, self.grid_service.stack)
+        attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
+          self.grid_service.grid, self.grid_service.stack
+        )
       end
       grid_service.attributes = attributes
+
       if grid_service.changed?
+        info "updating service #{grid_service.to_path} with changes: #{changed(grid_service)}"
         grid_service.revision += 1
+      else
+        debug "not updating service #{grid_service.to_path} without changes"
       end
+
       grid_service.save
 
       grid_service
@@ -102,7 +114,7 @@ module GridServices
       new_env = GridService.new(env: env).env_hash
       current_env = self.grid_service.env_hash
       new_env.each do |k, v|
-        if v.empty? && current_env[k]
+        if (v.nil? || v.empty?) && current_env[k]
           new_env[k] = current_env[k]
         end
       end

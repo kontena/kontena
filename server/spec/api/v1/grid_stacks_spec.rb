@@ -48,7 +48,7 @@ describe '/v1/grids/:grid/stacks', celluloid: true do
       source: '..',
       services: services,
       volumes: [
-        { name: 'vol1', external: { name: 'someVolume'}}
+        { name: 'vol1', external: 'someVolume'}
       ]
     }
   end

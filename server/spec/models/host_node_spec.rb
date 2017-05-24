@@ -14,7 +14,8 @@ describe HostNode do
   it { should embed_many(:volume_drivers) }
   it { should embed_many(:network_drivers) }
   it { should belong_to(:grid) }
-  it { should have_many(:grid_service_instances) }
+  it { should have_many(:grid_service_instances).with_dependent(:nullify) }
+  it { should have_many(:event_logs) }
   it { should have_many(:containers) }
   it { should have_many(:host_node_stats) }
   it { should have_many(:volume_instances) }
@@ -225,6 +226,30 @@ describe HostNode do
     it 'returns host_provider from labels' do
       subject.labels = ['foo=bar', 'provider=aws']
       expect(subject.host_provider).to eq('aws')
+    end
+  end
+
+  describe '#ephemeral?' do
+    it 'returns false if label is not set' do
+      expect(subject).to_not be_ephemeral
+    end
+
+    it 'returns true if label is set' do
+      subject.labels = ['ephemeral']
+
+      expect(subject).to be_ephemeral
+    end
+
+    it 'returns true if label is set with an empty value' do
+      subject.labels = ['ephemeral=']
+
+      expect(subject).to be_ephemeral
+    end
+
+    it 'returns true if label is set with any value' do
+      subject.labels = ['ephemeral=yes']
+
+      expect(subject).to be_ephemeral
     end
   end
 

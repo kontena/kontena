@@ -6,12 +6,12 @@ describe ContainerStat do
   it { should belong_to(:grid) }
   it { should belong_to(:grid_service) }
   it { should belong_to(:container) }
+  it { should belong_to(:host_node) }
 
-
-  it { should have_index_for(container_id: 1) }
-  it { should have_index_for(grid_id: 1) }
-  it { should have_index_for(grid_service_id: 1) }
-  it { should have_index_for(created_at: 1) }
+  it { should have_index_for(container_id: 1).with_options(background: true) }
+  it { should have_index_for(grid_id: 1).with_options(background: true) }
+  it { should have_index_for(grid_service_id: 1).with_options(background: true) }
+  it { should have_index_for(created_at: 1).with_options(background: true) }
 
   describe 'methods' do
     let(:stat) { ContainerStat.new({
@@ -43,13 +43,16 @@ describe ContainerStat do
   describe 'aggregations' do
     let(:grid_1) { Grid.create!(name: 'grid_1') }
     let(:grid_2) { Grid.create!(name: 'grid_2') }
+    let(:grid_1_node_1) { HostNode.create!(grid: grid_1, name: 'grid_1_node_1')}
+    let(:grid_1_node_2) { HostNode.create!(grid: grid_1, name: 'grid_1_node_2')}
+    let(:grid_2_node_1) { HostNode.create!(grid: grid_2, name: 'grid_2_node_1')}
     let(:grid_1_service_1) { GridService.create!(grid: grid_1, name: 'grid_1_service_1', image_name: 'i1') }
     let(:grid_1_service_2) { GridService.create!(grid: grid_1, name: 'grid_1_service_2', image_name: 'i2') }
     let(:grid_2_service_1) { GridService.create!(grid: grid_2, name: 'grid_2_service_1', image_name: 'i1') }
-    let(:grid_1_service_1_container_1) { Container.create!(grid: grid_1, grid_service: grid_1_service_1, name: "grid_1_service_1_container_1") }
-    let(:grid_1_service_1_container_2) { Container.create!(grid: grid_1, grid_service: grid_1_service_1, name: "grid_1_service_1_container_2") }
-    let(:grid_1_service_2_container_1) { Container.create!(grid: grid_1, grid_service: grid_1_service_2, name: "grid_1_service_2_container_1") }
-    let(:grid_2_service_1_container_1) { Container.create!(grid: grid_2, grid_service: grid_2_service_1, name: "grid_2_service_1_container_1") }
+    let(:grid_1_service_1_container_1) { Container.create!(grid: grid_1, host_node: grid_1_node_1, grid_service: grid_1_service_1, name: "grid_1_service_1_container_1") }
+    let(:grid_1_service_1_container_2) { Container.create!(grid: grid_1, host_node: grid_1_node_2, grid_service: grid_1_service_1, name: "grid_1_service_1_container_2") }
+    let(:grid_1_service_2_container_1) { Container.create!(grid: grid_1, host_node: grid_1_node_1, grid_service: grid_1_service_2, name: "grid_1_service_2_container_1") }
+    let(:grid_2_service_1_container_1) { Container.create!(grid: grid_2, host_node: grid_2_node_1, grid_service: grid_2_service_1, name: "grid_2_service_1_container_1") }
     let(:stats) {
       ContainerStat.create!([
         # 1) Grid 1, Service 1, Container 1 - included in results (first)
@@ -57,6 +60,7 @@ describe ContainerStat do
           grid: grid_1,
           grid_service: grid_1_service_1,
           container: grid_1_service_1_container_1,
+          host_node: grid_1_service_1_container_1.host_node, # grid_1_node_1
           spec: {
             cpu: { mask: "0-1" },
             memory: { limit: 1000 }
@@ -78,6 +82,7 @@ describe ContainerStat do
           grid: grid_1,
           grid_service: grid_1_service_1,
           container: grid_1_service_1_container_1,
+          host_node: grid_1_service_1_container_1.host_node, # grid_1_node_1
           spec: {
             cpu: { mask: "0-1" },
             memory: { limit: 1000 }
@@ -99,8 +104,9 @@ describe ContainerStat do
           grid: grid_1,
           grid_service: grid_1_service_1,
           container: grid_1_service_1_container_2,
+          host_node: grid_1_service_1_container_2.host_node, # grid_1_node_2
           spec: {
-            cpu: { mask: "0-1" },
+            cpu: { mask: "0-3" },
             memory: { limit: 1000 }
           },
           cpu: { usage_pct: 30.0 },
@@ -120,6 +126,7 @@ describe ContainerStat do
           grid: grid_1,
           grid_service: grid_1_service_1,
           container: grid_1_service_1_container_2,
+          host_node: grid_1_service_1_container_2.host_node, # grid_1_node_2
           spec: {
             cpu: { mask: "0-2" },
             memory: { limit: 1000 }
@@ -141,6 +148,7 @@ describe ContainerStat do
           grid: grid_1,
           grid_service: grid_1_service_2,
           container: grid_1_service_2_container_1,
+          host_node: grid_1_service_2_container_1.host_node, # grid_1_node_1
           spec: {
             cpu: { mask: "0-1" },
             memory: { limit: 1000 }
@@ -162,6 +170,7 @@ describe ContainerStat do
           grid: grid_2,
           grid_service: grid_2_service_1,
           container: grid_2_service_1_container_1,
+          host_node: grid_2_service_1_container_1.host_node, # grid_2_node_1
           spec: {
             cpu: { mask: "0-1" },
             memory: { limit: 1000 }
@@ -184,14 +193,15 @@ describe ContainerStat do
     describe '#get_aggregate_stats_for_service' do
       it 'returns aggregated data by service_id' do
         stats
+
         from = Time.parse('2017-03-01 12:00:00 +00:00')
         to = Time.parse('2017-03-01 13:00:00 +00:00')
         results = ContainerStat.get_aggregate_stats_for_service(grid_1_service_1.id, from, to)
 
-        # Records #2 and #5.
+        # Records #1, #2 and #3
         expect(results[0]["cpu"]).to eq({
-          "num_cores" => 2,
-          "percent_used" => 22.5, #avg( avg(10,20), 30 )
+          "num_cores" => 6, #2 + 4
+          "percent_used" => 45.0, #avg(10 + 20) + 30
         })
         expect(results[0]["memory"]).to eq({
           "used" => 450.0, #avg(100,200) + 300
@@ -219,7 +229,7 @@ describe ContainerStat do
           "minute" => 00
         })
 
-        # Record #6
+        # Record #4
         expect(results[1]["cpu"]).to eq({
           "num_cores" => 3,
           "percent_used" => 30.0

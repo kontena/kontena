@@ -1,10 +1,17 @@
 require 'faye/websocket'
 require_relative '../services/rpc_server'
+require_relative '../services/watchdog'
 require_relative '../services/agent/node_plugger'
 require_relative '../services/agent/node_unplugger'
 
 class WebsocketBackend
-  KEEPALIVE_TIME = 30 # in seconds
+  WATCHDOG_INTERVAL = 0.5.seconds
+  WATCHDOG_THRESHOLD = 1.0.seconds
+  WATCHDOG_TIMEOUT = 60.0.seconds
+
+  KEEPALIVE_TIME = 30.seconds
+  PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5.seconds)
+
   RPC_MSG_TYPES = %w(request notify)
   QUEUE_SIZE = 1000
   QUEUE_WATCH_PERIOD = 60 # once in a minute
@@ -26,6 +33,7 @@ class WebsocketBackend
     subscribe_to_rpc_channel
     watch_connections
     watch_queue
+    watchdog
   end
 
   def call(env)
@@ -61,6 +69,9 @@ class WebsocketBackend
     grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
     if !grid.nil?
       node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+
+      logger.info "node #{node_id} opened connection"
+
       node = grid.host_nodes.find_by(node_id: node_id)
       labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
       unless node
@@ -85,8 +96,7 @@ class WebsocketBackend
         return
       end
 
-      logger.info "node opened connection: #{node.name || node_id}, labels: #{labels}"
-      node_plugger.plugin!
+      EM.defer { node_plugger.plugin! }
     else
       logger.error 'invalid grid token, closing connection'
       ws.close(4001)
@@ -162,38 +172,52 @@ class WebsocketBackend
     end
   end
 
-  ##
-  # On websocket connection close
+  # Unplug client on websocket connection close.
+  #
+  # The client may have already been unplugged, if we closed the connection.
   #
   # @param [Faye::WebSocket] ws
   def on_close(ws)
     client = @clients.find{|c| c[:ws] == ws}
     if client
-      node = HostNode.find_by(node_id: client[:id])
-      if node
-        Agent::NodeUnplugger.new(node).unplug!
-        logger.info "node closed connection: #{node.name || node.node_id}"
-      end
-      @clients.delete(client)
+      logger.info "node #{client[:id]} connection closed"
+      unplug_client(client)
+    else
+      logger.debug "ignore close of unplugged client"
     end
-    ws.close
   rescue => exc
     logger.error "on_close: #{exc.message}"
     logger.error exc.backtrace.join("\n") if exc.backtrace
+  end
+
+  # Mark client HostNode as disconnected, and remove from @clients.
+  #
+  # The websocket connection may still be open and get closed later.
+  # The client HostNode may not exist anymore.
+  #
+  # @param [Hash] client
+  def unplug_client(client)
+    node = HostNode.find_by(node_id: client[:id])
+    if node
+      Agent::NodeUnplugger.new(node).unplug!
+    else
+      logger.warn "skip unplug of missing node #{client[:id]}"
+    end
+    @clients.delete(client)
   end
 
   ##
   # @param [Faye::WebSocket] ws
   # @return [Hash,NilClass]
   def client_for_ws(ws)
-    @clients.find{|c| c[:ws] == ws}
+    @clients.find{ |c| c[:ws] == ws }
   end
 
   ##
   # @param [String] id
   # @return [Hash,NilClass]
   def client_for_id(id)
-    @clients.find{|c| c[:id] == id}
+    @clients.find{ |c| c[:id] == id }
   end
 
   # @param [String] agent_version
@@ -237,23 +261,22 @@ class WebsocketBackend
 
   # @param [Hash] msg
   def on_rpc_message(msg)
-    client = client_for_id(msg['id'])
-    if client
-      self.send_message(client[:ws], msg['message'])
-    end
+    EM.next_tick{
+      client = client_for_id(msg['id'])
+      if client
+        self.send_message(client[:ws], msg['message'])
+      end
+    }
   rescue => exc
     logger.error "on_rpc_message: #{exc.message}"
   end
 
   def watch_connections
-    Thread.new {
-      sleep 1 until EM.reactor_running?
-      EM::PeriodicTimer.new(KEEPALIVE_TIME) do
-        @clients.each do |client|
-          self.verify_client_connection(client)
-        end
+    EM::PeriodicTimer.new(KEEPALIVE_TIME) do
+      @clients.each do |client|
+        self.verify_client_connection(client)
       end
-    }
+    end
   end
 
   def watch_queue
@@ -266,30 +289,71 @@ class WebsocketBackend
     end
   end
 
+  # Start a Watchdog actor, and ping it every interval.
+  # It will log warnings and finally abort the EM thread if the timer does not get run on time.
+  def watchdog
+    EM.next_tick {
+      # must be called within the EM thread
+      @watchdog = Watchdog.new(self.class.name, Thread.current,
+        interval: WATCHDOG_INTERVAL,
+        threshold: WATCHDOG_THRESHOLD,
+        timeout: WATCHDOG_TIMEOUT,
+      )
+    }
+
+    EM::PeriodicTimer.new(WATCHDOG_INTERVAL) do
+      @watchdog.async.ping
+    end
+  end
+
   # @param [Hash] client
   def verify_client_connection(client)
-    timer = EM::Timer.new(5) do
-      self.on_close(client[:ws])
+    ping_time = Time.now
+    timer = EM::Timer.new(PING_TIMEOUT) do
+      self.on_client_timeout(client, Time.now - ping_time)
     end
     client[:ws].ping {
       timer.cancel
-      self.on_pong(client)
+      self.on_pong(client, Time.now - ping_time)
     }
   end
 
   # @param [Hash] client
-  def on_pong(client)
+  # @param [Fixnum] delay
+  def on_client_timeout(client, delay)
+    logger.warn "Close node %s connection after %.2fs timeout" % [client[:id], delay]
+    close_client(client)
+  end
+
+  # @param [Hash] client
+  # @param [Fixnum] delay
+  def on_pong(client, delay)
+    if delay > PING_TIMEOUT / 2
+      logger.warn "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]]
+    else
+      logger.debug { "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]] }
+    end
+
     node = HostNode.find_by(node_id: client[:id])
     if node
       if node.connected?
         node.set(last_seen_at: Time.now.utc)
       else
-        grid = Grid.find_by(node_id: client[:grid_id])
-        Agent::NodePlugger.new(grid, node).plugin! if grid
+        logger.warn "Close connection of disconnected node #{node.name || node.node_id}"
+        close_client(client)
       end
     else
-      self.on_close(client[:ws])
+      logger.warn "Close connection of missing node #{client[:id]}"
+      close_client(client)
     end
+  end
+
+  # Unplug client, marking HostNode as disconnected, and close the websocket connection.
+  #
+  # @param [Hash] client
+  def close_client(client)
+    unplug_client(client)
+    client[:ws].close # triggers on :close later, or after 30s timeout
   end
 
   def stop_rpc_server

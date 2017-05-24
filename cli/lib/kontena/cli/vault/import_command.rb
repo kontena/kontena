@@ -10,20 +10,16 @@ module Kontena::Cli::Vault
     option '--skip-null', :flag, "Do not remove keys with null values"
     option '--empty-is-null', :flag, "Treat empty values as null"
 
-    parameter '[PATH]', "Input from file in PATH, default: STDIN"
+    parameter '[PATH]', "Input from file in PATH (default: STDIN)"
 
     requires_current_master
-
-    UPDATE_CMD = 'vault update --upsert --silent %{key} %{value}'
-    DELETE_CMD = 'vault rm --silent --force %{key}'
-
 
     def parsed_input
       json? ? JSON.load(input) : YAML.safe_load(input)
     end
 
     def input
-      path ? File.read(path) : STDIN.read
+      path ? File.read(path) : stdin_input("Enter secrets YAML", :multiline)
     end
 
     def execute
@@ -60,18 +56,16 @@ module Kontena::Cli::Vault
 
       unless updates.empty?
         spinner "Updating #{updates.size} secrets" do |spin|
-          updates.each do |pair|
-            result = Kontena.run(UPDATE_CMD % { key: pair.first.shellescape, value: pair.last.shellescape })
-            spin.fail! unless result.zero?
+          updates.each do |key_value_pair|
+            spin.fail! unless Kontena.run(['vault', 'update', '--upsert', '--silent'] + key_value_pair)
           end
         end
       end
 
       unless deletes.empty? || skip_null?
         spinner "Deleting #{deletes.size} secrets" do |spin|
-          deletes.map(&:shellescape).each do |del|
-            result = Kontena.run(DELETE_CMD % { key: del })
-            spin.fail! unless result.zero?
+          deletes.map(&:shellescape).each do |key_to_delete|
+            spin.fail! unless Kontena.run(['vault', 'rm', '--silent', '--force', key_to_delete])
           end
         end
       end

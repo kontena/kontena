@@ -5,27 +5,16 @@ module Stacks
 
     include SortHelper
 
-    # @param [String] service_name
-    # @param [Symbol] key
-    # @param [Symbol] symbolic
-    # @param [String] message
-    def add_service_error(service_name, key, symbolic, message)
-      add_error("services.#{service_name}.#{key}", symbolic, message)
-    end
-
-    # @param [String] service_name
-    # @param [Hash] messages
-    # @param [String] type
+    # @param service_name [String]
+    # @param errors [Mutations::ErrorHash] Mutations::Outcome.errors
     def handle_service_outcome_errors(service_name, errors)
-      errors.each do |key, atom|
-        add_service_error(service_name, key, atom.symbolic, atom.message)
-      end
+      add_error("services.#{service_name}", errors)
     end
 
+    # @param volume_name [String]
+    # @param errors [Mutations::ErrorHash] Mutations::Outcome.errors
     def handle_volume_outcome_errors(volume_name, errors)
-      errors.each do |key, atom|
-         add_error("volumes.#{volume_name}.#{key}", atom.symbolic, atom.message)
-      end
+      add_error("volumes.#{volume_name}", errors)
     end
 
     def validate_expose
@@ -35,16 +24,11 @@ module Stacks
     end
 
     # @param [Hash] service
-    def validate_service_links(service)
+    # @return [Array<Hash>] links to external services
+    def select_external_service_links(service)
       links = service[:links] || []
-      internal_links = links.select{ |l| !l['name'].include?('/') }
-      links = links - internal_links
-      internal_links.each do |l|
-        unless self.services.any?{|s| s[:name] == l['name']}
-          add_service_error(service[:name], :links, :exist,  "Linked service '#{l['name']}' does not exist")
-        end
-      end
-      service[:links] = links
+      external_links = links.select{ |l| l['name'].include?('/') }
+      external_links
     end
 
     def validate_volumes
@@ -52,13 +36,12 @@ module Stacks
 
       self.volumes.each do |volume|
         if volume['external']
-          volume_name = volume['external'] == true ? volume['name'] : volume.dig('external', 'name')
-          vol = self.grid.volumes.where(name: volume_name).first
+          vol = self.grid.volumes.where(name: volume['external']).first
           unless vol
-            add_error(:volumes, :not_found, "External volume #{volume_name} not found")
+            add_error("volumes.#{volume['name']}.external", :not_found, "External volume #{volume['external']} not found")
           end
         else
-          add_error(:volumes, :invalid, "Only external volumes supported")
+          add_error("volumes.#{volume['name']}", :invalid, "Only external volumes supported")
         end
       end
     end

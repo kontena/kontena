@@ -11,6 +11,7 @@ class Kontena::Cli::ServiceCommand < Kontena::Command
   subcommand ["remove", "rm"], "Remove service", load_subcommand('services/remove_command')
   subcommand "containers", "List service containers", load_subcommand('services/containers_command')
   subcommand "logs", "Show service logs", load_subcommand('services/logs_command')
+  subcommand "events", "Show service events", load_subcommand('services/events_command')
   subcommand "stats", "Show service statistics", load_subcommand('services/stats_command')
   subcommand "monitor", "Monitor", load_subcommand('services/monitor_command')
 

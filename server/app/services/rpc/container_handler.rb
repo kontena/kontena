@@ -17,7 +17,7 @@ module Rpc
       @logs_buffer_size = 5
       @stats_buffer_size = 5
       @containers_cache_size = 50
-      @db_session = ContainerLog.collection.session.with(
+      @db_session = ContainerLog.collection.client.with(
         write: {
           w: 0, fsync: false, j: false
         }
@@ -30,6 +30,18 @@ module Rpc
       info_mapper.from_agent(data)
 
       {}
+    end
+
+    # @param [String] node_id
+    # @param [Array<String>] ids
+    def cleanup(node_id, ids)
+      node = @grid.host_nodes.find_by(node_id: node_id)
+      if node
+        @grid.containers.unscoped.where(
+          :host_node_id => node.id,
+          :container_id.in => ids
+        ).destroy
+      end
     end
 
     # @param [Hash] data
@@ -67,7 +79,7 @@ module Rpc
       if container
         container.set_health_status(data['status'])
         if container.grid_service
-          MongoPubsub.publish(GridServiceHealthMonitorJob::PUBSUB_KEY, id: container.grid_service.id)
+          MongoPubsub.publish(GridServiceHealthMonitorJob::PUBSUB_KEY, id: container.grid_service.id.to_s)
         end
       else
         warn "health status update failed, could not find container for id: #{data['id']}"
@@ -114,12 +126,12 @@ module Rpc
     end
 
     def flush_logs
-      @db_session[:container_logs].insert(@logs)
+      @db_session[:container_logs].insert_many(@logs)
       @logs.clear
     end
 
     def flush_stats
-      @db_session[:container_stats].insert(@stats.dup)
+      @db_session[:container_stats].insert_many(@stats.dup)
       @stats.clear
     end
 
@@ -137,7 +149,7 @@ module Rpc
       else
         container = @db_session[:containers].find(
             grid_id: @grid.id, container_id: id
-          ).limit(1).one
+          ).limit(1).first
         @cached_containers[id] = container if container
       end
 

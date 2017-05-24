@@ -36,13 +36,5 @@ describe GridSecrets::Create do
       expect(web.reload.updated_at.to_s).not_to eq(hour_ago.to_s)
       expect(db.reload.updated_at.to_s).to eq(hour_ago.to_s)
     end
-
-    it 'schedules deploy for related grid services' do
-      web # create
-      db # create
-      expect {
-        subject.run
-      }.to change{ web.grid_service_deploys.count }.by(1)
-    end
   end
 end

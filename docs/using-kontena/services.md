@@ -26,6 +26,7 @@ Kontena monitors the state of each Service instance and actively manages it to e
 * [Restart Service](services.md#restart-service)
 * [Show Details](services.md#show-service-details)
 * [Show Logs](services.md#show-service-logs)
+* [Show Event Logs](services.md#show-service-event-logs)
 * [Show Statistics](services.md#show-service-statistics)
 * [Monitor Service Instances](services.md#monitor-service-instances)
 * [Show Environment Variables](services.md#show-service-environment-variables)
@@ -218,7 +219,26 @@ $ kontena service logs <name>
 **Options:**
 
 ```
---grid GRID                   Specify Grid to use
+--grid GRID                   Specify grid to use
+-t, --tail                    Tail (follow) logs (default: false)
+--lines LINES                 Number of lines to show from the end of the logs (default: 100)
+--since SINCE                 Show logs since given timestamp
+-i, --instance INSTANCE       Show only given instance specific logs
+```
+
+### Show Service Event Logs
+
+```
+$ kontena service events <name>
+```
+
+**Options:**
+
+```
+--grid GRID                   Specify grid to use
+-t, --tail                    Tail (follow) logs (default: false)
+--lines LINES                 Number of lines to show from the end of the logs (default: 100)
+--since SINCE                 Show logs since given timestamp
 ```
 
 ### Show Service Statistics

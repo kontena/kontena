@@ -28,7 +28,8 @@ describe RpcClient, celluloid: true do
         publish_response(resp['message'][1], response)
       }
       resp = subject.request('/hello/service', :foo, :bar)
-      expect(resp).to eq(['/hello/service', :foo, :bar])
+      # Msgpack serializes symbols into strings
+      expect(resp).to eq(['/hello/service', 'foo', 'bar'])
 
       server.terminate
     end
@@ -117,7 +118,8 @@ describe RpcClient, celluloid: true do
       server = fake_server('notify') {|resp|
         receiver.handle(resp['message'][2])
       }
-      expect(receiver).to receive(:handle).with([:foo, :bar])
+      # Msgpack serializes symbols into strings
+      expect(receiver).to receive(:handle).with(['foo', 'bar'])
       subject.notify('/hello/service', :foo, :bar)
       sleep 0.05
       server.terminate

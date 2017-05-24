@@ -48,6 +48,10 @@ describe Kontena::Observable do
         end
       end
 
+      def ping
+
+      end
+
       def ready?
         !@value.nil?
       end
@@ -75,6 +79,11 @@ describe Kontena::Observable do
 
     expect{observer.crash}.to raise_error(RuntimeError)
 
+    # make sure the observer is really dead
+    expect{observer.ping}.to raise_error(Celluloid::DeadActorError)
+    expect(observer).to_not be_alive
+    subject.ping
+
     subject.update_observable(object)
     expect(subject.observers).to be_empty
   end
@@ -91,7 +100,7 @@ describe Kontena::Observable do
   end
 
   it "handles concurrent observers", :celluloid => true do
-    observer_count = 10
+    observer_count = 20
     update_count = 10
 
     # setup
@@ -106,8 +115,12 @@ describe Kontena::Observable do
     # run updates sync while the observers are starting
     subject.spam_updates(1..update_count, interval: 0.001)
 
-    # wait...
+    # wait for observable to notify all observers
     subject.ping
+
+    # wait for all observers to observe and update
+    observers.each do |obs| obs.ping end
+    observers.each do |obs| obs.ping end # and maybe a second round for the async update
 
     # all observers got the final value
     expect(observers.map{|obs| obs.value}).to eq [update_count] * observer_count

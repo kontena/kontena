@@ -59,7 +59,8 @@ class MongoPubsub
 
     # @param [Hash] data
     def send_message(data)
-      @block.call(data)
+      payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
+      @block.call(payload)
     end
   end
 
@@ -91,9 +92,9 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def publish(channel, data)
-    self.collection.insert(
+    self.collection.insert_one(
       channel: channel,
-      data: data,
+      data: BSON::Binary.new(MessagePack.pack(data)),
       created_at: Time.now.utc
     )
   end
@@ -151,10 +152,10 @@ class MongoPubsub
         latest = self.collection.find.sort(:$natural => -1).limit(1).first
         query = {_id: {:$gt => latest[:_id]}}
         info "starting to tail collection"
-        self.collection.find(query).sort(:$natural => 1).tailable.each do |item|
+        self.collection.find(query, {cursor_type: :tailable_await, batch_size: 100}).sort(:$natural => 1).each do |item|
           channel = item['channel']
           data = item['data']
-
+          
           subscribers = self.subscriptions.select{|s| s.channel == channel }
           subscribers.each do |subscription|
             begin
@@ -173,11 +174,11 @@ class MongoPubsub
   end
 
   def ensure_collection!
-    unless self.collection.session.collection_names.include?(self.collection.name)
-      self.collection.session.command(create: self.collection.name)
+    unless self.collection.client.database.collection_names.include?(self.collection.name)
+      self.collection.client.command(create: self.collection.name)
     end
     unless self.collection.capped?
-      self.collection.session.command(
+      self.collection.client.command(
         convertToCapped: self.collection.name,
         capped: true,
         size: 24.megabytes

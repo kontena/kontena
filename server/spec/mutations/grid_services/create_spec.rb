@@ -368,6 +368,20 @@ describe GridServices::Create do
       expect(outcome.success?).to be(true)
     end
 
+    it 'validates env syntax' do
+      outcome = described_class.new(
+        grid: grid,
+        name: 'redis',
+        image: 'redis:2.8',
+        stateful: false,
+        env: [
+          'FOO',
+        ],
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'env' => [ "Env[0] isn't in the right format" ]
+    end
+
     context 'volumes' do
       let(:volume) do
         Volume.create!(grid: grid, name: 'foo', scope: 'node')

@@ -7,7 +7,7 @@ describe 'stack volumes' do
 
   after(:each) do
     run "kontena stack rm --force redis"
-    run "kontena volume rm redis-data"
+    run "kontena volume rm --force redis-data"
   end
 
 

@@ -40,4 +40,43 @@ describe 'stack upgrade' do
       end
     end
   end
+
+  context "for a stack that is linked to externally" do
+    before(:each) do
+      with_fixture_dir("stack/links") do
+        k = run 'kontena stack install external-linked_1.yml'
+        expect(k.code).to eq(0), k.out
+      end
+    end
+
+    after(:each) do
+      run 'kontena service rm --force external-linking-service'
+      run 'kontena stack rm --force links-external-linked'
+    end
+
+    it 'fails to upgrade if linked' do
+      k = run 'kontena service create --link links-external-linked/bar external-linking-service redis'
+      expect(k.code).to eq(0), k.out
+
+      with_fixture_dir("stack/links") do
+        k = run 'kontena stack upgrade --no-deploy external-linked_2.yml'
+        expect(k.code).to_not eq(0), k.out
+      end
+    end
+
+    it 'fails to deploy if linked' do
+      with_fixture_dir("stack/links") do
+        k = run 'kontena stack upgrade --no-deploy links-external-linked external-linked_2.yml'
+        expect(k.code).to eq(0), k.out
+      end
+
+      k = run 'kontena service create --link links-external-linked/bar external-linking-service redis'
+      expect(k.code).to eq(0), k.out
+
+      with_fixture_dir("stack/links") do
+        k = run 'kontena stack deploy links-external-linked external-linked_2.yml'
+        expect(k.code).to_not eq(0), k.out
+      end
+    end
+  end
 end

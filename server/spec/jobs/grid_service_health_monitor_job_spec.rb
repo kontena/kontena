@@ -12,21 +12,21 @@ describe GridServiceHealthMonitorJob, celluloid: true do
     it 'create deployment if leader' do
       expect(subject.wrapped_object).to receive(:leader?).and_return(true)
       expect(subject.wrapped_object).to receive(:deploy_needed?).and_return(true)
-      subject.handle_event({'id' => service.id})
+      subject.handle_event({'id' => service.id.to_s})
       expect(GridServiceDeploy.count).to eq(1)
     end
 
     it 'does nothing if not leader' do
       expect(subject.wrapped_object).to receive(:leader?).and_return(false)
       expect(subject.wrapped_object).not_to receive(:deploy_needed?)
-      subject.handle_event({'id' => service.id})
+      subject.handle_event({'id' => service.id.to_s})
       expect(GridServiceDeploy.count).to eq(0)
     end
 
     it 'does not create deployment' do
       expect(subject.wrapped_object).to receive(:leader?).and_return(true)
       expect(subject.wrapped_object).to receive(:deploy_needed?).and_return(false)
-      subject.handle_event({'id' => service.id})
+      subject.handle_event({'id' => service.id.to_s})
       expect(GridServiceDeploy.count).to eq(0)
     end
 
@@ -49,7 +49,7 @@ describe GridServiceHealthMonitorJob, celluloid: true do
           health_status: {healthy: 1, total: 6},
           deploy_opts: double({min_health: 0.8}),
           running?: true,
-          deploy_pending?: false
+          deploying?: false
         })
       expect(subject.deploy_needed?(service)).to be_truthy
     end
@@ -60,7 +60,7 @@ describe GridServiceHealthMonitorJob, celluloid: true do
           health_status: {healthy: 1, total: 6},
           deploy_opts: double({min_health: 0.8}),
           running?: true,
-          deploy_pending?: true
+          deploying?: true
         })
       expect(subject.deploy_needed?(service)).to be_falsey
     end

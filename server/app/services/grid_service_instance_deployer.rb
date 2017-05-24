@@ -23,16 +23,17 @@ class GridServiceInstanceDeployer
   def deploy(deploy_rev)
     info "Deploying service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}..."
 
-    @grid_service_instance_deploy.set(:deploy_state => :ongoing)
+    @grid_service_instance_deploy.set(:_deploy_state => :ongoing)
 
     ensure_volume_instance
     ensure_service_instance(deploy_rev)
 
   rescue => error
     warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
-    @grid_service_instance_deploy.set(:deploy_state => :error, :error => "#{error.class}: #{error}")
+    log_service_event("Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}", EventLog::ERROR)
+    return @grid_service_instance_deploy.set(:_deploy_state => :error, :error => "#{error.class}: #{error}")
   else
-    @grid_service_instance_deploy.set(:deploy_state => :success)
+    return @grid_service_instance_deploy.set(:_deploy_state => :success)
   end
 
   # Ensure the ServiceInstance matches the desired GridServiceInstanceDeploy configuration.
@@ -48,6 +49,7 @@ class GridServiceInstanceDeployer
     elsif service_instance.host_node.nil?
       # host node was removed
       warn "Replacing orphaned service #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node"
+      log_service_event("Replacing orphaned service #{@grid_service.to_path}-#{service_instance.instance_number} on destroyed node", EventLog::WARN)
     elsif service_instance.host_node != @host_node
       # we need to stop instance if it's running on different node
       stop_service_instance(service_instance, deploy_rev)
@@ -66,11 +68,13 @@ class GridServiceInstanceDeployer
   # @param deploy_rev [String]
   def stop_service_instance(service_instance, deploy_rev)
     info "Stopping existing service service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}..."
+    log_service_event("Stopping existing service service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}...")
 
     deploy_service_instance(service_instance, service_instance.host_node, deploy_rev, 'stopped')
 
   rescue => error
     warn "Failed to stop existing service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}: #{error}"
+    log_service_event("Failed to stop existing service #{@grid_service.to_path}-#{service_instance.instance_number} on previous node #{service_instance.host_node.name}: #{error}", EventLog::WARN)
   end
 
   # Update service instance, notify node, wait for update, and ensure that service is in desired state.
@@ -124,7 +128,7 @@ class GridServiceInstanceDeployer
 
   # @return [GridServiceInstance, NilClass]
   def get_service_instance
-    GridServiceInstance.where(grid_service: @grid_service, instance_number: @instance_number).first
+    GridServiceInstance.where(grid_service: @grid_service, instance_number: @instance_number).sort(_id: :asc).first
   end
 
   # @param [HostNode] node
@@ -141,5 +145,17 @@ class GridServiceInstanceDeployer
         VolumeInstanceDeployer.new.deploy(@host_node, sv, @instance_number)
       end
     end
+  end
+
+  # @param [String] reason
+  # @param [String] msg
+  def log_service_event(msg, severity = EventLog::INFO)
+    EventLog.create(
+      grid_id: self.grid_service.grid_id,
+      grid_service_id: self.grid_service.id,
+      msg: msg,
+      severity: severity,
+      type: 'service:deploy'.freeze
+    )
   end
 end

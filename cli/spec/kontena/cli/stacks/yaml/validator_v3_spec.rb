@@ -108,6 +108,38 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
       expect(result.errors.key?('environment')).to be_falsey
       result = subject.validate_options('environment' => { 'KEY' => 'VALUE' })
       expect(result.errors.key?('environment')).to be_falsey
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2=VALUE2', 'KEY3='])
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
+    it 'fails validation if environment array includes items without equals sign' do
+      result = subject.validate_options('environment' => ['KEY=VALUE', 'KEY2 VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environment has invalid key prefix" do
+      result = subject.validate_options('environment' => ['=VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environemnt has invalid key prefix with valud key prefix in value" do
+      result = subject.validate_options('environment' => ['=VALUE=VALUE2'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it "fails validation if environment contains invalid key prefix with valid key prefix in multi-line value" do
+      result = subject.validate_options('environment' => ['=ASDF\nKEY=VALUE'])
+      expect(result.errors.key?('environment')).to be_truthy
+    end
+
+    it 'passes validation if environment array includes items with booleans or nils' do
+      result = subject.validate_options('environment' => { 'KEY' => true, 'KEY2' => false, 'KEY3' => nil })
+      expect(result.errors.key?('environment')).to be_falsey
+    end
+
+    it 'passes validation if environment array includes items with multi-line values' do
+      result = subject.validate_options('environment' => [ "KEY=foo\nbar" ])
+      expect(result.errors.key?('environment')).to be_falsey
     end
 
     context 'validates secrets' do
@@ -303,5 +335,95 @@ describe Kontena::Cli::Stacks::YAML::ValidatorV3 do
         end
       end
     end
+  end
+
+  describe '#validate' do
+
+    context 'volumes' do
+      let(:stack) do
+        {
+          'stack' => 'a-stack',
+          'services' => {
+            'foo' => {
+              'volumes' => [
+                'foo:/app'
+              ]
+            }
+          },
+          'volumes' => {
+
+          }
+
+        }
+      end
+
+      it 'fails validation if volumes are not declared' do
+        result = subject.validate(stack)
+        expect(result[:errors]).not_to be_empty
+      end
+
+      it 'validation succeeds if volumes are declared' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => true
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when external: false' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => false
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).not_to be_empty
+      end
+
+      it 'validation succeeds if volumes are declared' do
+        stack['volumes'] = {
+          'foo' => {
+            'external' => {
+              'name' => 'foobar'
+            }
+          }
+        }
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation passes when mount points are defined with :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo:ro', '/tmp/foo:/bar:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'validation fails when same mount point is defined multiple times' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'validation fails when same mount point is defined multiple times mixing :ro' do
+        stack['services']['foo']['volumes'] = ['/var/foo:/foo', '/tmp/foo:/foo:ro']
+        result = subject.validate(stack)
+        expect(result[:errors]).to include({"services"=>{"foo"=>{"volumes"=>{"/foo"=>"mount point defined 2 times"}}}})
+      end
+
+      it 'bind mount do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/var/run/docker.sock:/var/run/docker.sock']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+
+      it 'anon vols do not need ext volumes' do
+        stack['services']['foo']['volumes'] = ['/data']
+        result = subject.validate(stack)
+        expect(result[:errors]).to be_empty
+      end
+    end
+
   end
 end

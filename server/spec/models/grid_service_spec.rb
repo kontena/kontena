@@ -1,4 +1,3 @@
-
 describe GridService do
   it { should be_timestamped_document }
   it { should be_kind_of(EventStream) }
@@ -20,12 +19,13 @@ describe GridService do
   it { should embed_many(:hooks) }
   it { should embed_many(:service_volumes) }
   it { should embed_one(:deploy_opts) }
-  it { should have_many(:grid_service_instances) }
   it { should have_many(:containers) }
   it { should have_many(:container_logs) }
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
+  it { should have_many(:grid_service_instances) }
   it { should have_many(:grid_service_deploys) }
+  it { should have_many(:event_logs) }
 
   it { should validate_presence_of(:name) }
   it { should validate_presence_of(:image_name) }
@@ -302,6 +302,58 @@ describe GridService do
       grid.default_affinity = ['label!=type=ssd']
       subject.grid = grid
       expect(subject.affinity).to eq(['label!=type=ssd'])
+    end
+  end
+
+  describe '#env_hash' do
+    it 'should build a valid hash' do
+      expect(subject).to receive(:env).and_return(
+        [
+          'FOO=bar',
+          'FOO=BAR=bar',
+          'BAR=',
+          'DOG'
+        ]
+      )
+      expect(subject.env_hash).to eq(
+        {
+          'FOO' => 'bar',
+          'FOO' => 'BAR=bar',
+          'BAR' => '',
+          'DOG' => nil
+        }
+      )
+    end
+  end
+
+  describe '#deploying?' do
+    it 'returns false when no deployments' do
+      expect(subject.deploying?).to be_falsey
+    end
+
+    it 'returns true when queued deployments' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: nil, finished_at: nil)
+      expect(subject.deploying?).to be_truthy
+    end
+
+    it 'returns true when un-finished deployments' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: 10.minutes.ago, finished_at: nil)
+      expect(subject.deploying?).to be_truthy
+    end
+
+    it 'returns false when un-finished stale deployments' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: 32.minutes.ago, finished_at: nil)
+      expect(subject.deploying?).to be_falsey
+    end
+
+    it 'returns false when finished deployments' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: 32.minutes.ago, finished_at: 26.minutes.ago)
+      expect(subject.deploying?).to be_falsey
+    end
+
+    it 'returns false when finished deployments with no started_at' do
+      GridServiceDeploy.create!(grid_service: subject, started_at: nil, finished_at: 26.minutes.ago)
+      expect(subject.deploying?).to be_falsey
     end
   end
 end

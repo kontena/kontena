@@ -1,7 +1,9 @@
+require_relative '../../helpers/mutations_helpers'
+
 module GridServices
   module Common
-
     include VolumesHelpers
+    include MutationsHelpers
 
     def self.included(base)
       base.extend(ClassMethods)
@@ -23,7 +25,7 @@ module GridServices
     # @param [Stack] stack
     # @param [Array<Hash>] links
     # @return [Array<GridServiceLink>]
-    def build_grid_service_links(grid, stack, links)
+    def build_grid_service_links(existing_links, grid, stack, links)
       grid_service_links = []
       links.each do |link|
         link[:name] = "#{stack.name}/#{link[:name]}" unless link[:name].include?('/')
@@ -31,12 +33,16 @@ module GridServices
         next if linked_stack.nil?
 
         linked_service = linked_stack.grid_services.find_by(name: service_name)
-        if linked_service
-          grid_service_links << GridServiceLink.new(
+        next if linked_service.nil?
+
+        unless grid_serivce_link = existing_links.find{|l| l.linked_grid_service == linked_service && l.alias = link[:alias] }
+          grid_serivce_link = GridServiceLink.new(
               linked_grid_service: linked_service,
-              alias: link[:alias]
+              alias: link[:alias],
           )
         end
+
+        grid_service_links << grid_serivce_link
       end
       grid_service_links
     end
@@ -86,7 +92,7 @@ module GridServices
       service_secrets
     end
 
-    def build_service_volumes(grid, stack)
+    def build_service_volumes(existing_volumes, grid, stack)
       service_volumes = []
       self.volumes.each do |vol|
         vol_spec = parse_volume(vol)
@@ -99,62 +105,72 @@ module GridServices
               v['name'] == vol_spec[:volume]
             }
             # Use external volume definition if given
-            volume_name = stack_volume_name(stack_volume)
+            volume_name = stack_volume['external']
           end
           volume = grid.volumes.find_by(name: volume_name)
           vol_spec[:volume] = volume
         end
-        service_volumes << ServiceVolume.new(**vol_spec)
+
+        service_volume = existing_volumes.find{|sv| sv.path == vol_spec[:path] } || ServiceVolume.new(path: vol_spec[:path])
+
+        service_volume.volume = vol_spec[:volume]
+        service_volume.bind_mount = vol_spec[:bind_mount]
+        service_volume.flags = vol_spec[:flags]
+
+        service_volumes << service_volume
       end
       service_volumes
     end
 
-    def stack_volume_name(stack_volume)
-      if stack_volume['external'] == true
-        # Use the plain volume name
-        stack_volume['name']
-      else
-        # Use either explicitly defined external name or plain name
-        stack_volume.dig('external', 'name') || stack_volume['name']
-      end
-    end
-
-    # @param [Grid] grid
-    # @param [Stack] stack
-    # @param [Array<Hash>] links
-    def validate_links(grid, stack, links)
-      links.each do |link|
-        link[:name] = "#{stack.name}/#{link[:name]}" unless link[:name].include?('/')
-        linked_stack, service_name = parse_link(grid, link)
+    def validate_links
+      validate_each :links do |link|
+        link[:name] = "#{self.stack.name}/#{link[:name]}" unless link[:name].include?('/')
+        linked_stack, service_name = parse_link(self.grid, link)
         if linked_stack.nil?
-          add_error(:links, :not_found, "Link #{link[:name]} points to non-existing stack")
+          [:not_found, "Link #{link[:name]} points to non-existing stack"]
         elsif linked_stack.grid_services.find_by(name: service_name).nil?
-          add_error(:links, :not_found, "Service #{link[:name]} does not exist")
+          [:not_found, "Service #{link[:name]} does not exist"]
+        else
+          nil
         end
       end
     end
 
     # Validates that the defined secrets exist
-    # @param [Grid] grid
-    # @param [Hash] secrets
-    def validate_secrets_exist(grid, secrets)
-      secrets.each do |s|
-        secret = grid.grid_secrets.find_by(name: s[:secret])
+    def validate_secrets
+      validate_each :secrets do |s|
+        secret = self.grid.grid_secrets.find_by(name: s[:secret])
         unless secret
-          add_error(:secrets, :not_found, "Secret #{s[:secret]} does not exist")
+          [:not_found, "Secret #{s[:secret]} does not exist"]
+        else
+          nil
         end
       end
     end
 
-    def validate_volumes(volumes = nil)
-      return unless volumes
+    # @param volume [String]
+    # @return [Array{Symbol, String}] for validate_each
+    def validate_volume(volume, stateful_volumes: nil)
+      begin
+        v = parse_volume(volume)
+      rescue ArgumentError => exc
+        return [:invalid, exc.message]
+      end
 
-      volumes.each do |volume|
-        begin
-          parse_volume(volume)
-        rescue ArgumentError => exc
-          add_error(:volumes, :invalid, exc.message)
+      if stateful_volumes && !(v[:bind_mount] || v[:volume])
+        # v is an anonymous volume... there must be an existing stateful volume for it
+        unless stateful_volumes.any? { |sv| sv.path == v[:path] }
+          return [:stateful, "Adding a new anonymous volume (#{v[:path]}) to a stateful service is not supported"]
         end
+      end
+
+      return nil
+    end
+
+    # @param stateful_volumes [Array<ServiceVolume>] existing anonymous volumes on stateful service
+    def validate_volumes(**options)
+      validate_each :volumes do |volume|
+        validate_volume(volume, **options)
       end
     end
 
@@ -171,7 +187,7 @@ module GridServices
           end
           string :entrypoint
           array :env do
-            string
+            string matches: /\A[^=]+=/
           end
           array :secrets do
             hash do

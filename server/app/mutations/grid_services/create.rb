@@ -23,19 +23,15 @@ module GridServices
       if self.stateful && self.volumes_from && self.volumes_from.size > 0
         add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
       end
-      if self.links
-        validate_links(self.grid, self.stack, self.links)
-      end
+      validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
-      if self.secrets
-        validate_secrets_exist(self.grid, self.secrets)
-      end
-      validate_volumes(self.volumes)
+      validate_secrets
+      validate_volumes
     end
 
     def execute
@@ -45,7 +41,7 @@ module GridServices
 
       attributes.delete(:links)
       if self.links
-        attributes[:grid_service_links] = build_grid_service_links(self.grid, self.stack, self.links)
+        attributes[:grid_service_links] = build_grid_service_links([], self.grid, self.stack, self.links)
       end
 
       attributes.delete(:hooks)
@@ -65,7 +61,7 @@ module GridServices
 
       attributes.delete(:volumes)
       if self.volumes
-        attributes[:service_volumes] = self.build_service_volumes(self.grid, self.stack)
+        attributes[:service_volumes] = self.build_service_volumes([], self.grid, self.stack)
       end
 
       grid_service = GridService.new(attributes)

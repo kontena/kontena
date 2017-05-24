@@ -18,7 +18,6 @@ module Kontena::Workers
     def initialize(autostart = true)
       @node = nil
       @workers = {}
-
       async.start if autostart
     end
 
@@ -27,12 +26,14 @@ module Kontena::Workers
         @node = node
       end
 
-      wait_until!("have node info", interval: 0.1) { self.node }
+      wait_until!("have node info", interval: 0.1, threshold: 10.0) { self.node }
       populate_workers_from_docker
 
       subscribe('service_pod:update', :on_update_notify)
-      every(30) do
+      subscribe('service_pod:event', :on_pod_event)
+      loop do
         populate_workers_from_master
+        sleep 30
       end
     end
 
@@ -40,12 +41,19 @@ module Kontena::Workers
       populate_workers_from_master
     end
 
+    def on_pod_event(_, event)
+      rpc_client.async.notification("/node_service_pods/event", [node.id, event])
+    rescue => exc
+      error "sending event to master failed: #{exc.message}"
+    end
+
     def populate_workers_from_master
       exclusive {
-        request = rpc_client.future.request("/node_service_pods/list", [node.id])
-        response = request.value
+        response = rpc_request("/node_service_pods/list", [node.id])
+
+        # sanity-check
         unless response['service_pods'].is_a?(Array)
-          warn "failed to get list of service pods from master: #{response['error']}"
+          error "Invalid response from master: #{response}"
           return
         end
 
@@ -55,8 +63,14 @@ module Kontena::Workers
 
         service_pods.each do |s|
           ensure_service_worker(Kontena::Models::ServicePod.new(s))
+          sleep 0.05
         end
       }
+    rescue Kontena::RpcClient::Error => exc
+      warn "failed to get list of service pods from master: #{exc}"
+    rescue => exc
+      error exc.message
+      error exc.backtrace.join("\n")
     end
 
     def populate_workers_from_docker
@@ -107,7 +121,7 @@ module Kontena::Workers
         else
           workers[service_pod.id].async.update(service_pod)
         end
-      rescue Celluloid::DeadActorError => exc
+      rescue Celluloid::DeadActorError
         workers.delete(service_pod.id)
       end
     end

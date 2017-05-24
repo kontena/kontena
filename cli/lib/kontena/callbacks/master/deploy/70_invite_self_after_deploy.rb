@@ -32,36 +32,30 @@ module Kontena
 
         invite_response = nil
         spinner "Creating user #{cloud_user_data[:email]} into Kontena Master" do |spin|
-          invite_response = Kontena.run("master users invite --external-id #{cloud_user_data[:id]} --return #{cloud_user_data[:email].shellescape}", returning: :result)
-          unless invite_response.kind_of?(Hash) && invite_response.has_key?('invite_code')
-            spin.fail
-          end
+          invite_response = Kontena.run(["master", "user", "invite", "--external-id", cloud_user_data[:id], "--return", cloud_user_data[:email]])
+          spin.fail! unless invite_response.kind_of?(Hash) && invite_response.has_key?('invite_code')
         end
 
         return nil unless invite_response
         ENV["DEBUG"] && $stderr.puts("Got invite code: #{invite_response['invite_code']}")
 
-        role_status = nil
-
-        spinner "Adding master_admin role for #{cloud_user_data[:email]}" do |spin|
-          role_status = Kontena.run("master users role add --silent master_admin #{cloud_user_data[:email].shellescape}")
-          spin.fail if role_status.to_i > 0
+        success = spinner "Adding master_admin role for #{cloud_user_data[:email]}" do |spin|
+          spin.fail! unless Kontena.run(["master", "user", "role", "add", "--silent", "master_admin", cloud_user_data[:email]])
+          true
         end
 
-        return nil if role_status.to_i > 0
+        return nil unless success
 
         if current_master.grid
           spinner "Adding #{cloud_user_data[:email]} to grid '#{current_master.grid}'" do |spin|
-            grid_add_status = Kontena.run("grid user add --grid #{current_master.grid} #{cloud_user_data[:email].shellescape}")
-            spin.fail if grid_add_status.to_i > 0
+            spin.fail! unless Kontena.run(["grid", "user", "add", "--grid", current_master.grid, cloud_user_data[:email]])
           end
         end
 
-        return unless current_master.username.to_s == 'admin'
+        return nil unless current_master.username.to_s == 'admin'
 
-        new_user_token = nil
-        spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
-          new_user_token = Kontena.run("master token create -e 0 -s user --return -u #{cloud_user_data[:email].shellescape}", returning: :result)
+        new_user_token = spinner "Creating an access token for #{cloud_user_data[:email]}" do |spin|
+          Kontena.run!(["master", "token", "create", "-e", "0", "-s", "user", "--return", "-u", cloud_user_data[:email]])
         end
 
         master_name = current_master.name.dup
