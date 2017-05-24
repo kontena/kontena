@@ -1,8 +1,8 @@
 begin
   unless Gem.loaded_specs.include?('kontena-cli')
     load File.expand_path('../../kontena-cli.gemspec', __FILE__)
-    KONTENA_CLI.activate
-    KONTENA_CLI.activate_dependencies
+    KontenaCliGemspec.activate
+    KontenaCliGemspec.activate_dependencies
   end
 rescue LoadError
 end
