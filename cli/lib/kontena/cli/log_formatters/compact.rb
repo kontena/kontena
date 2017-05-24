@@ -5,7 +5,8 @@ module Kontena
     module LogFormatter
       class Compact < Logger::Formatter
         def self.ms_since_first
-          ((Time.now.to_f - @first_log) * 1000).to_i
+          #((Time.now.to_f - @first_log) * 1000).to_i
+          Time.now.to_f - @first_log
         end
 
         def self.ms_since_last
@@ -21,10 +22,10 @@ module Kontena
 
         __init_timers__
 
-        DEBUG_INDICATOR = Kontena.pastel.bright_blue('D').freeze
-        WARN_INDICATOR  = Kontena.pastel.yellow('W').freeze
-        INFO_INDICATOR  = Kontena.pastel.cyan('I').freeze
-        ERROR_INDICATOR = Kontena.pastel.red('E').freeze
+        DEBUG_INDICATOR = Kontena.pastel.inverse.bright_blue('D').freeze
+        WARN_INDICATOR  = Kontena.pastel.inverse.yellow('W').freeze
+        INFO_INDICATOR  = Kontena.pastel.inverse.cyan('I').freeze
+        ERROR_INDICATOR = Kontena.pastel.inverse.red('E').freeze
 
         def colorize_severity(severity)
           case severity[0..0]
@@ -36,23 +37,21 @@ module Kontena
           end
         end
 
-        TS_FORMAT = '%+6dms'.freeze
-        TS_ZERO   = Kontena.pastel.bright_black.on_black(sprintf('%+6sms', '<1')).freeze
+        TS_FORMAT = '%6.3fs'.freeze
 
         def colorize_time
           elapsed = self.class.ms_since_last
-          if elapsed.zero?
-            TS_ZERO
-          elsif elapsed > 300
-            Kontena.pastel.red.on_black(TS_FORMAT % [elapsed])
+          ts = TS_FORMAT % [self.class.ms_since_first]
+          if elapsed > 300
+            Kontena.pastel.red.inverse(ts)
           elsif elapsed > 100
-            Kontena.pastel.yellow.on_black(TS_FORMAT % [elapsed])
+            Kontena.pastel.yellow.inverse(ts)
           else
-            Kontena.pastel.on_black(TS_FORMAT % [elapsed])
+            Kontena.pastel.inverse(ts)
           end
         end
 
-        SEPARATOR = Kontena.pastel.on_black(' ').freeze
+        SEPARATOR = Kontena.pastel.inverse(' ').freeze
         HEAD_FORMAT = "%s#{SEPARATOR}%s".freeze
 
         def call(severity, time, progname, msg)
