@@ -42,6 +42,7 @@ module OAuth2Api
       r.post do
         params = params_from_anywhere
         if params.nil? || params.empty?
+          debug { "Could not parse request parameters" }
           mime_halt(400, OAuth2Api::INVALID_REQUEST) and return
         end
 
@@ -49,15 +50,18 @@ module OAuth2Api
         when CODE, TOKEN
           validate_access_token(USER)
           unless params[SCOPE]
+            debug { "Scope missing from #{params[RESPONSE_TYPE]} request" }
             mime_halt(400, INVALID_SCOPE) and return
           end
 
           if params['user']
             unless current_user.master_admin?
+              debug { "Generating tokens for other users only allowed for users with master_admin role " }
               mime_halt(403, ACCESS_DENIED, NO_PERM) and return
             end
             user = User.where(email: params['user']).first
             unless user
+              debug { "Could not find user #{params['user']}" }
               mime_halt(404, NOT_FOUND) and return
             end
           else
@@ -72,6 +76,7 @@ module OAuth2Api
             with_code: params[RESPONSE_TYPE] == CODE
           )
           if task.success?
+            debug { "Created a #{params[RESPONSE_TYPE]} for user #{user.email}" }
             response.status = 201
             @access_token = task.result
             render(AUTH_SHOW)
@@ -81,6 +86,7 @@ module OAuth2Api
         when INVITE
 
           unless AuthProvider.instance.valid?
+            error { "Unable to create an invite, authentication provider not configured" }
             mime_halt(501, SERVER_ERROR, NOT_CONFIGURED) and return
           end
 
@@ -92,7 +98,10 @@ module OAuth2Api
             with_invite: true
           )
 
-          unless task.success?
+          if task.success?
+            info "Created an invite for user #{params[EMAIL]}"
+          else
+            info "Error inviting user #{params[EMAIL]} : #{task.errors.symbolic.inspect}"
             if task.errors.symbolic[:user] == :forbidden
               mime_halt(403, ACCESS_DENIED, NO_PERM) and return
             else
@@ -113,6 +122,7 @@ module OAuth2Api
             mime_halt(500, SERVER_ERROR, @user.errors.inspect) and return
           end
         else
+          debug { "Unsupported response_type #{params[RESPONSE_TYPE]}" }
           mime_halt(400, UNSUPPORTED, UNSUPPORTED_DESC) and return
         end
       end
