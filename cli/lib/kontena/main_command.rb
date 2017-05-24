@@ -33,9 +33,6 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
   subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
 
-  def execute
-  end
-
   # @param [String] command
   # @param [String] description
   # @param [Class] klass
