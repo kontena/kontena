@@ -2,7 +2,7 @@ require 'logger'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
-  Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(2)} seconds" }
+  Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(3)} seconds" }
   Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") } if $!
 end
 
