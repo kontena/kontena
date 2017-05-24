@@ -36,7 +36,7 @@ module Kontena
           end
         end
 
-        TS_FORMAT = '%6.3fs'.freeze
+        TS_FORMAT = '%6.3f'.freeze
 
         def colorize_time
           elapsed = self.class.ms_since_last
