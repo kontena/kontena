@@ -51,7 +51,7 @@ module Kontena::Cli::Stacks::YAML
         'env_file' => optional(-> (value) { value.is_a?(String) || value.is_a?(Array) }),
         'instances' => optional('integer'),
         'links' => optional(-> (value) { value.is_a?(Array) || value.nil? }),
-        'ports' => optional('array'),
+        'ports' => optional(-> (value) { value.is_a?(Array) && value.all? { |v| v.is_a?(String) && v.match(/\A(\d+\.\d+\.\d+\.\d+)?:?(\d+)\:(\d+)\/?(\w+)?\z/) } }),
         'pid' => optional('string'),
         'privileged' => optional('boolean'),
         'user' => optional('string'),
