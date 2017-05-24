@@ -5,7 +5,6 @@ module Kontena
     module LogFormatter
       class Compact < Logger::Formatter
         def self.ms_since_first
-          #((Time.now.to_f - @first_log) * 1000).to_i
           Time.now.to_f - @first_log
         end
 
@@ -16,7 +15,7 @@ module Kontena
         end
 
         def self.__init_timers__
-          @first_log = Time.now.to_f
+          @first_log = $KONTENA_START_TIME || Time.now.to_f
           @last_log = @first_log
         end
 
