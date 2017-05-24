@@ -63,7 +63,7 @@ module OAuth2Api
           else
             debug { "Could not find a matching token using authorization code" }
             debug { auth_code_report }
-            mime_halt(400, OAuth2Api::INVALID_REQUEST, AUTHORIZATION_CODE) and return
+            mime_halt(404, OAuth2Api::INVALID_REQUEST, AUTHORIZATION_CODE) and return
           end
         when REFRESH_TOKEN
           unless params[REFRESH_TOKEN]
@@ -73,7 +73,7 @@ module OAuth2Api
           @access_token = AccessToken.find_internal_by_refresh_token(params[REFRESH_TOKEN])
           unless @access_token
             debug { "Could not find a matching refresh_token " }
-            mime_halt(400, OAuth2Api::INVALID_REQUEST, REFRESH_TOKEN) and return
+            mime_halt(404, OAuth2Api::INVALID_REQUEST, REFRESH_TOKEN) and return
           end
         else
           info "Unsupported grant type #{params[GRANT_TYPE]}"
