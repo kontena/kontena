@@ -3,7 +3,7 @@ lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'kontena/cli/version'
 
-Gem::Specification.new do |spec|
+KONTENA_CLI = Gem::Specification.new do |spec|
   spec.name          = "kontena-cli"
   spec.version       = Kontena::Cli::VERSION
   spec.authors       = ["Kontena, Inc"]

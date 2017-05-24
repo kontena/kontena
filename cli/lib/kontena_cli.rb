@@ -1,3 +1,10 @@
+begin
+  load File.expand_path('../../kontena-cli.gemspec', __FILE__)
+  KONTENA_CLI.activate
+  KONTENA_CLI.activate_dependencies
+rescue LoadError
+end
+
 module Kontena
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
