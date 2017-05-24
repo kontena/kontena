@@ -1,9 +1,5 @@
 require 'clamp'
-require 'kontena/cli/subcommand_loader'
-require 'kontena/cli/common'
-require 'kontena/util'
-require 'kontena/cli/bytes_helper'
-require 'kontena/cli/grid_options'
+require 'excon/errors'
 
 class Kontena::Command < Clamp::Command
 

@@ -1,4 +1,5 @@
 require 'singleton'
+require 'excon'
 
 module Kontena
   class PluginManager
