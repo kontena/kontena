@@ -267,15 +267,15 @@ module Kontena
 
             case instance_deploy['state']
             when 'created'
-              "#{pastel.dark('⊝')} Deploy #{description}"
+              "#{pastel.dark(glyph(:circled_dash))} Deploy #{description}"
             when 'ongoing'
-              "#{pastel.cyan('⊙')} Deploying #{description}..."
+              "#{pastel.cyan(glyph(:circled_dot))} Deploying #{description}..."
             when 'success'
-              "#{pastel.green('⊛')} Deployed #{description}"
+              "#{pastel.green(glyph(:circled_star))} Deployed #{description}"
             when 'error'
-              "#{pastel.red('⊗')} Failed to deploy #{description}: #{instance_deploy['error']}"
+              "#{pastel.red(glyph(:circled_x))} Failed to deploy #{description}: #{instance_deploy['error']}"
             else
-              "#{pastel.dark('⊗')} Deploy #{description}?"
+              "#{pastel.dark(glyph(:circled_x))} Deploy #{description}?"
             end
           }
         end
@@ -514,18 +514,11 @@ module Kontena
         # @param [Symbol] health
         # @return [String]
         def health_status_icon(health)
-          if health == :unhealthy
-            icon = '⊗'.freeze
-            icon.colorize(:red)
-          elsif health == :partial
-            icon = '⊙'.freeze
-            icon.colorize(:yellow)
-          elsif health == :healthy
-            icon = '⊛'.freeze
-            icon.colorize(:green)
-          else
-            icon = '⊝'.freeze
-            icon.colorize(:dim)
+          case health
+          when :unhealthy then pastel.red(glyph(:circled_x))
+          when :partial then pastel.yellow(glyph(:circled_dot))
+          when :healthy then pastel.green(glyph(:circled_star))
+          else pastel.dim(glyph(:circled_dash))
           end
         end
 

@@ -1,17 +1,14 @@
 module Kontena::Cli::Helpers
   module HealthHelper
+    include Kontena::Cli::Common
+
     def health_icon(health)
       case health
-      when nil
-        " "
-      when :ok
-        pastel.green('⊛')
-      when :warning
-        pastel.yellow('⊙')
-      when :error
-        pastel.red('⊗')
-      when :offline
-        pastel.dark('⊝')
+      when NilClass then " "
+      when :ok then pastel.green(glyph(:nbsp))
+      when :warning then pastel.yellow(glyph(:circled_dot))
+      when :error then pastel.red(glyph(:circled_x))
+      when :offline then pastel.dark(glyph(:circled_dash))
       else
         fail "Invalid health=#{health}"
       end

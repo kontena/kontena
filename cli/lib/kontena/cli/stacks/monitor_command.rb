@@ -40,12 +40,12 @@ module Kontena::Cli::Stacks
           end
         end
         clear_terminal
-        puts "grid: #{current_grid}"
-        puts "stack: #{name}"
+        puts "grid: #{pastel.cyan(current_grid)}"
+        puts "stack: #{pastel.cyan(name)}"
         puts "services:"
         services.each do |service|
           color = color_for_service(service['name'])
-          puts "  #{"■".colorize(color)} #{service['name']} (#{service['instances']} instances)"
+          puts "  #{pastel.send(color, glyph(:black_square))} #{service['name']} (#{service['instances']} instances)"
         end
         puts "nodes:"
         node_names = nodes.keys.sort
@@ -54,12 +54,12 @@ module Kontena::Cli::Stacks
           puts "  #{name} (#{containers.size} instances)"
           print "  "
           containers.each do |container|
-            icon = "■"
+            icon = glyph(:black_square)
             if container['status'] != 'running'
-              icon = "□"
+              icon = glyph(:white_square)
             end
             color = color_for_service(container['service'])
-            print icon.colorize(color)
+            print pastel.send(color, icon)
           end
           puts ''
         end

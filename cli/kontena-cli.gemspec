@@ -34,4 +34,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "safe_yaml", "~> 1.0"
   spec.add_runtime_dependency "liquid", "~> 4.0.0"
   spec.add_runtime_dependency "tty-table", "~> 0.8.0"
+  spec.add_runtime_dependency "tty-progressbar", "0.11.0"
 end
