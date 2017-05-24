@@ -8,7 +8,7 @@ module Kontena::Cli::Stacks
 
     banner "Deploys all services of a stack that has been installed in a grid on Kontena Master"
 
-    parameter "NAME", "Stack name"
+    parameter "STACK_NAME", "Stack name", attribute_name: :name
 
     requires_current_master
     requires_current_master_token

@@ -8,8 +8,8 @@ module Kontena::Cli::Stacks
 
     banner "Monitor services in a stack"
 
-    parameter "NAME", "Stack name"
-    parameter "[SERVICES] ...", "Stack services to monitor", attribute_name: 'selected_services'
+    parameter "STACK_NAME", "Stack name", attribute_name: :name
+    parameter "[SERVICE_NAME] ...", "Stack services to monitor", attribute_name: 'selected_services', completion: :stack_services
 
     requires_current_master
     requires_current_master_token

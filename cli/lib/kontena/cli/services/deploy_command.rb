@@ -6,7 +6,7 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
     option '--force', :flag, 'Force deploy even if service does not have any changes'
 
     def execute

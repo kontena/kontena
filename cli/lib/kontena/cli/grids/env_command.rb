@@ -5,7 +5,7 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
-    parameter "[NAME]", "Grid name"
+    parameter "[GRID_NAME]", "Grid name", attribute_name: :name
     option ["-e", "--export"], :flag, "Add export", default: false
 
     def execute

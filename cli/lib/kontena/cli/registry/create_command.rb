@@ -9,7 +9,7 @@ module Kontena::Cli::Registry
 
     REGISTRY_VERSION = '2.6.0'
 
-    option '--node', 'NODE', 'Node name'
+    option '--node', 'NODE_NAME', 'Node name', attribute_name: :node
     option '--s3-bucket', 'S3_BUCKET', 'S3 bucket'
     option '--s3-region', 'S3_REGION', 'S3 region', default: 'eu-west-1'
     option '--s3-encrypt', :flag, 'Encrypt S3 objects', default: false

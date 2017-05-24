@@ -9,14 +9,14 @@ module Kontena::Cli::Apps
     include Common
     include DockerHelper
 
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'YAML_FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['--no-build'], :flag, 'Don\'t build an image, even if it\'s missing', default: false
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option '--async', :flag, 'Run deploys async/parallel'
     option '--force', :flag, 'Force deploy even if service does not have any changes'
 
     option '--skip-validation', :flag, 'Skip YAML file validation', default: false
-    parameter "[SERVICE] ...", "Services to start"
+    parameter "[SERVICE] ...", "Services to start", completion: :yaml_services
 
     attr_reader :services, :deploy_queue
 

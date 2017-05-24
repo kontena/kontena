@@ -6,8 +6,8 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
-    parameter "NAME", "Service name"
-    parameter "TARGET", "Link target service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
+    parameter "TARGET_SERVICE_NAME", "Link target service name", completion: "SERVICE_NAME", attribute_name: :target
 
     def execute
       require_api_url

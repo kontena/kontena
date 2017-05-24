@@ -4,7 +4,7 @@ module Kontena::Cli::Stacks::Registry
   class RemoveCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
-    include Kontena::Cli::Stacks::Common::StackNameParam
+    include Kontena::Cli::Stacks::Common::RegistryStackNameParam
 
     banner "Removes a stack (or version) from the stack registry. Use user/stack_name or user/stack_name:version."
 

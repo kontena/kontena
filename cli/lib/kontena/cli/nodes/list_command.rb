@@ -6,7 +6,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
 
-    option ["--all"], :flag, "List nodes for all grids", default: false
+    option ["-a", "--all"], :flag, "List nodes for all grids", default: false, attribute_name: :all
 
     def node_initial(node, grid)
       if node['initial_member']

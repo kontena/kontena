@@ -6,8 +6,8 @@ module Kontena::Cli::Services::Secrets
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
 
-    parameter "NAME", "Service name"
-    parameter "SECRET", "Secret to be added from Vault (format: secret:name:type)"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
+    parameter "SECRET", "Secret to be added from Vault (format: secret:name:type)", completion: "SECRET_NAME" # at least you get to complete something
 
     def execute
       require_api_url

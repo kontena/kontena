@@ -6,7 +6,7 @@ module Kontena::Cli::Volumes
 
 
     banner "Removes a volume"
-    parameter 'VOLUME', 'Volume'
+    parameter 'VOLUME_NAME', 'Volume', attribute_name: :volume
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     requires_current_master

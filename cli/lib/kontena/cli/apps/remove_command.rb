@@ -6,11 +6,11 @@ module Kontena::Cli::Apps
     include Kontena::Cli::GridOptions
     include Common
 
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'YAML_FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
     option '--force', :flag, 'Force remove', default: false, attribute_name: :forced
 
-    parameter "[SERVICE] ...", "Remove services"
+    parameter "[SERVICE] ...", "Remove services", completion: :yaml_services
 
     attr_reader :services
 

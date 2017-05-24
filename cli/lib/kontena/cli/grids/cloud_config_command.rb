@@ -5,12 +5,12 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
-    parameter "NAME", "Grid name"
+    parameter "GRID_NAME", "Grid name"
     option "--dns", "DNS",  "DNS server", multivalued: true
     option "--peer-interface", "IFACE", "Peer (private) network interface", default: "eth1"
     option "--default-interface-match", "IFACE-GLOB", "Match default network interfaces", default: nil
     option "--docker-bip", "BIP", "Docker bridge ip", default: "172.17.43.1/16"
-    option "--version", "VERSION", "Agent version", default: "latest"
+    option "--version", "VERSION", "Agent version", default: "latest", completion: %w(latest edge)
 
     def execute
       require_api_url

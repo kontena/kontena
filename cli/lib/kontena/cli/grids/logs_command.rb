@@ -4,9 +4,10 @@ module Kontena::Cli::Grids
   class LogsCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::Helpers::LogHelper
-    option "--node", "NODE", "Filter by node name", multivalued: true
+
+    option "--node", "NODE_NAME", "Filter by node name", multivalued: true, attribute_name: :node_list
     option "--service", "SERVICE", "Filter by service name", multivalued: true
-    option ["-c", "--container"], "CONTAINER", "Filter by container", multivalued: true
+    option ["-c", "--container"], "CONTAINER_ID", "Filter by container", multivalued: true, attribute_name: :container_list
 
     def execute
       require_api_url

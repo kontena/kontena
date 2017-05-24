@@ -6,7 +6,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
 
-    parameter "NODE_ID", "Node id"
+    parameter "NODE_NAME", "Node name", attribute_name: :node_id
 
     def execute
       require_api_url

@@ -7,7 +7,7 @@ module Kontena::Cli::Grids
 
     SKIP_TYPES = ['grid']
 
-    option "--node", "NODE", "Filter by node name", multivalued: true
+    option "--node", "NODE_NAME", "Filter by node name", multivalued: true, attribute_name: :node_list
     option "--service", "SERVICE", "Filter by service name", multivalued: true
 
     def execute

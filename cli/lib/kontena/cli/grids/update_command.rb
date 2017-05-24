@@ -5,12 +5,12 @@ module Kontena::Cli::Grids
     include Kontena::Cli::Common
     include Common
 
-    parameter "NAME", "Grid name"
+    parameter "GRID_NAME", "Grid name", attribute_name: :name
     option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
     option "--no-statsd-server", :flag, "Unset statsd server setting"
     option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
     option "--no-default-affinity", :flag, "Unset grid default affinity"
-    option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
+    option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)", completion: %w(none fluentd)
     option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
 
     def execute

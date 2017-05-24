@@ -1,7 +1,7 @@
 module Kontena::Cli::Master::Token
   class RemoveCommand < Kontena::Command
 
-    parameter "TOKEN_OR_ID", "Access token or access token id"
+    parameter "TOKEN_OR_ID", "Access token or access token id", completion: "MASTER_TOKEN"
 
     option ['-f', '--force'], :flag, "Don't ask questions"
 

@@ -8,7 +8,7 @@ module Kontena::Cli::Master::Config
 
     banner "Sets a configuration value to Master"
 
-    parameter "KEY_VALUE_PAIR ...", "Key/value pair, for example server.root_url=http://example.com", required: true
+    parameter "KEY_VALUE_PAIR ...", "Key/value pair, for example server.root_url=http://example.com", required: true, completion: "CONFIG_KEY"
 
     def execute
       data = self.key_value_pair_list.map{ |p| p.split('=') }.to_h

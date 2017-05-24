@@ -7,7 +7,7 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     option ["-q", "--quiet"], :flag, "Show only service names"
-    option '--stack', 'STACK', 'Stack name'
+    option '--stack', 'STACK_NAME', 'Stack name'
 
     def execute
       require_api_url

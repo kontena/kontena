@@ -8,7 +8,7 @@ module Kontena::Cli::Master::Config
 
     banner "Reads a configuration value from master"
 
-    parameter "KEY", "Configuration key to read from master", required: true
+    parameter "CONFIG_KEY", "Configuration key to read from master", required: true
 
     option ['-p', '--pair'], :flag, "Print key=value instead of only value"
 

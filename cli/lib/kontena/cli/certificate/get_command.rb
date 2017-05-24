@@ -4,11 +4,9 @@ module Kontena::Cli::Certificate
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-
     option '--secret-name', 'SECRET_NAME', 'The name for the secret to store the certificate in'
-    option '--cert-type', 'CERT_TYPE', 'The type of certificate to get: fullchain, chain or cert', default: 'fullchain'
+    option '--cert-type', 'CERT_TYPE', 'The type of certificate to get: fullchain, chain or cert', default: 'fullchain', completion: %w(fullchain chain cert)
     parameter "DOMAIN ...", "Domain(s) to get certificate for"
-
 
     def execute
       require_api_url

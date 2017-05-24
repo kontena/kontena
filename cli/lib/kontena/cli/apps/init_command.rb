@@ -10,11 +10,10 @@ module Kontena::Cli::Apps
     include Kontena::Cli::Common
     include Common
 
-    option ["-f", "--file"], "FILE", "Specify a docker-compose file", attribute_name: :docker_compose_file, default: 'docker-compose.yml'
+    option ["-f", "--file"], "YAML_FILE", "Specify a docker-compose file", attribute_name: :docker_compose_file, default: 'docker-compose.yml'
     option ["-i", "--image-name"], "IMAGE_NAME", "Specify a docker image name"
     option ["-b", "--base-image"], "BASE_IMAGE_NAME", "Specify a docker base image name", default: "kontena/buildstep"
     option ["-p", "--project-name"], "NAME", "Specify an alternate project name (default: directory name)"
-
 
     def execute
       if File.exist?('Dockerfile')

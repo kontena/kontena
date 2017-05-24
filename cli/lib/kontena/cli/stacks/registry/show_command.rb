@@ -4,7 +4,7 @@ module Kontena::Cli::Stacks::Registry
   class ShowCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::Stacks::Common
-    include Kontena::Cli::Stacks::Common::StackNameParam
+    include Kontena::Cli::Stacks::Common::RegistryStackNameParam
 
     banner "Shows information about a stack on the stacks registry"
 

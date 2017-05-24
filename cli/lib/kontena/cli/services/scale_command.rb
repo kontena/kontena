@@ -6,7 +6,7 @@ module Kontena::Cli::Services
     include Kontena::Cli::GridOptions
     include ServicesHelper
 
-    parameter "NAME", "Service name"
+    parameter "SERVICE_NAME", "Service name", attribute_name: :name
     parameter "INSTANCES", "Scales service to given number of instances"
 
     def execute

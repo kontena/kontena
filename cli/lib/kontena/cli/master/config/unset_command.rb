@@ -6,7 +6,7 @@ module Kontena::Cli::Master::Config
     requires_current_master
     requires_current_master_token
 
-    parameter "KEY ...", "Key(s) to unset", required: true
+    parameter "CONFIG_KEY ...", "Key(s) to unset", required: true, attribute_name: :key_list
 
     banner "Clears a configuration value from Master"
 

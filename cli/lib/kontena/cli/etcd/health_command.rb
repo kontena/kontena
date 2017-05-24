@@ -7,7 +7,7 @@ module Kontena::Cli::Etcd
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
 
-    parameter "[NODE]", "Show health for specific node"
+    parameter "[NODE_NAME]", "Show health for specific node", attribute_name: :node
 
     requires_current_master
     requires_current_grid

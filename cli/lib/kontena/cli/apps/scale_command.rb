@@ -6,10 +6,10 @@ module Kontena::Cli::Apps
     include Kontena::Cli::GridOptions
     include Common
 
-    option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
+    option ['-f', '--file'], 'YAML_FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
 
-    parameter "SERVICE", "Service to show"
+    parameter "SERVICE", "Service to show", completion: :yaml_services
     parameter "INSTANCES", "Scales service to given number of instances"
 
     attr_reader :services

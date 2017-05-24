@@ -3,7 +3,7 @@ module Kontena::Cli::Grids::TrustedSubnets
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "SUBNET", "Trusted subnet"
+    parameter "TRUSTED_SUBNET", "Trusted subnet", attribute_name: :subnet
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     requires_current_master

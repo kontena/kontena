@@ -8,10 +8,10 @@ module Kontena::Cli::Master::Config
 
     banner "Reads configuration from master"
 
-    parameter '[PATH]', "Output to file in PATH, default: STDOUT", required: false
-    option ['-f', '--format'], '[FORMAT]', "Specify output format (json, yaml) (default: guess from PATH or json)"
+    parameter '[FILE]', "Output to file in PATH, default: STDOUT", required: false, attribute_name: :path, completion: %w(*.yml *.json)
+    option ['-f', '--format'], '[FORMAT]', "Specify output format (json, yaml) (default: guess from PATH or json)", completion: %(yaml json)
 
-    option ['--filter'], "[FILTER]", "Filter keys, example: oauth2.*"
+    option ['--filter'], "[KEY]", "Filter keys, example: oauth2.*"
 
     def decorate(data)
       case self.format.downcase
