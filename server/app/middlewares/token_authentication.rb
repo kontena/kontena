@@ -120,7 +120,7 @@ class TokenAuthentication
     message_parts = ['Bearer realm="kontena_master"']
     message_parts << "error=\"#{error}\"" if error
     message_parts << "error_description=\"#{error_description}\"" if error_description
-    { 'WWW-Authenticate' => message_parts.join(",\n    ") }
+    { 'WWW-Authenticate' => message_parts.join(", ") }
   end
 
   def authenticate_header(error = nil, error_description = nil)
