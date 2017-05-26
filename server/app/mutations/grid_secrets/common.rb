@@ -10,7 +10,8 @@ module GridSecrets
 
         info "force service #{grid_service.to_path} update for changed secret #{secret.to_path}"
 
-        grid_service.set(updated_at: Time.now.utc)
+        grid_service.revision += 1
+        grid_service.save
       end
     end
   end
