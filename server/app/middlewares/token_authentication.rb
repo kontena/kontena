@@ -72,7 +72,8 @@ class TokenAuthentication
     end
     @app.call(env)
   rescue
-    info "Token Authentication exception: #{$!} - #{$!.message} -- #{$!.backtrace}"
+    error "Token Authentication exception"
+    error $!
     error_response 'server_error', 'Server has encountered an error'
   end
 
@@ -165,7 +166,8 @@ class TokenAuthentication
     return nil unless token
     AccessToken.find_internal_by_access_token(token)
   rescue
-    info "Exception while fetching token from db: #{$!} #{$!.message}"
+    error "Exception while fetching token from db"
+    error $!
     nil
   end
 end
