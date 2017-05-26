@@ -22,7 +22,10 @@ module GridServices
 
     def execute
       attrs = { deploy_requested_at: Time.now.utc, state: 'running' }
-      attrs[:updated_at] = Time.now.utc if force
+      if force
+        attrs[:revision] = grid_service.revision + 1
+        attrs[:updated_at] = Time.now.utc
+      end
       grid_service.set(attrs)
       GridServiceDeploy.create(grid_service: grid_service)
     end
