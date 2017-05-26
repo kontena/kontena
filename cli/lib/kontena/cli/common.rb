@@ -1,25 +1,26 @@
-require 'tty-prompt'
 require 'pastel'
 require 'uri'
 require 'io/console'
 
 require 'kontena/cli/config'
 require 'kontena/cli/spinner'
+require 'kontena/cli/table_generator'
+require 'forwardable'
 
 module Kontena
   module Cli
     module Common
+      extend Forwardable
+
+      def_delegators :Kontena, :pastel, :prompt
+      def_delegator Kontena::Cli::Spinner, :spin, :spinner
 
       def logger
         return @logger if @logger
         @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
         @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'COMMON'
+        @logger.progname = self.class.name
         @logger
-      end
-
-      def pastel
-        @pastel ||= Pastel.new(enabled: $stdout.tty?)
       end
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
@@ -41,6 +42,10 @@ module Kontena
 
       def running_verbose?
         self.respond_to?(:verbose?) && self.verbose?
+      end
+
+      def running_quiet?
+        self.respond_to?(:quiet?) && self.quiet?
       end
 
       # Puts that puts even when self.silent?
@@ -87,9 +92,19 @@ module Kontena
       def vspinner(msg, &block)
         return vfakespinner(msg) unless block_given?
 
-        if running_verbose?
+        if running_verbose? && $stdout.tty?
           spinner(msg, &block)
         else
+          logger.debug { msg }
+          yield
+        end
+      end
+
+      def spin_if(obj_or_proc, message, &block)
+        if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
+          spinner(message, &block)
+        else
+          logger.debug { message }
           yield
         end
       end
@@ -97,7 +112,7 @@ module Kontena
       # Like vspinner but without actually running any block
       def vfakespinner(msg, success: true)
         if !running_verbose?
-          logger.debug msg
+          logger.debug { msg }
           return
         end
         puts " [#{ success ? 'done'.colorize(:green) : 'fail'.colorize(:red)}] #{msg}"
@@ -252,10 +267,6 @@ module Kontena
         prompt.yes?(question)
       end
 
-      def prompt
-        ::Kontena.prompt
-      end
-
       def confirm_command(name, message = nil)
         if self.respond_to?(:force?) && self.force?
           return
@@ -287,10 +298,6 @@ module Kontena
 
       def add_master(server_name, master_info)
         config.add_server(master_info.merge('name' => server_name))
-      end
-
-      def spinner(msg, &block)
-        Kontena::Cli::Spinner.spin(msg, &block)
       end
 
       def any_key_to_continue_with_timeout(timeout=9)

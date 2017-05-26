@@ -13,6 +13,18 @@ module Kontena
     class Config < OpenStruct
       include Singleton
 
+      module Fields
+        def keys
+          @table.keys
+        end
+
+        def values_at(*fields)
+          (fields.first.is_a?(Array) ? fields.first : fields).map { |field| self[field] }
+        end
+      end
+
+      include Fields
+
       attr_accessor :logger
       attr_accessor :current_server
       attr_reader :current_account
@@ -468,6 +480,7 @@ module Kontena
       end
 
       class Account < OpenStruct
+        include Fields
         include TokenSerializer
         include ConfigurationInstance
 
@@ -484,6 +497,7 @@ module Kontena
       end
 
       class Server < OpenStruct
+        include Fields
         include TokenSerializer
         include ConfigurationInstance
 
@@ -494,6 +508,7 @@ module Kontena
       end
 
       class Token < OpenStruct
+        include Fields
         include ConfigurationInstance
 
         # Hash representation of token data
