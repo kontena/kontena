@@ -4,6 +4,7 @@ module ContainerHelper
   # @param [String] name of the container to check
   def container_exist?(name)
     k = run "kontena container ls"
+    fail "kontena container ls command failed: #{k.out}" if k.code != 0
     k.out.include?(name)
   end
 
