@@ -66,7 +66,7 @@ class GridScheduler
   # @param [GridService] service
   # @return [Boolean]
   def active_deploys_within_stack?(service)
-    service.stack.stack_deploys.where(:created_at.gt => 30.minutes.ago, :deploy_state.in => [:created, :ongoing]).count > 0
+    service.stack.stack_deploys.where(:created_at.gt => 30.minutes.ago, :_deploy_state.in => [:created, :ongoing]).count > 0
   end
 
   # @param [GridService] service

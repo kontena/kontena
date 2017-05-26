@@ -1,6 +1,3 @@
-require 'kontena/cli/cloud_command'
-require 'kontena/cli/cloud/master_command'
-
 module Kontena::Cli::Cloud::Master
   class AddCommand < Kontena::Command
 

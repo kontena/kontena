@@ -90,6 +90,6 @@ class GridServiceDeploy
   #
   # @param reason [String]
   def abort!(reason = nil)
-    self.set(:finished_at => Time.now.utc, :deploy_state => :error, :reason => reason)
+    self.set(:finished_at => Time.now.utc, :_deploy_state => :error, :reason => reason)
   end
 end

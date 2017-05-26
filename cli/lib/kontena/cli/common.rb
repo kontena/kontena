@@ -1,22 +1,19 @@
-require 'tty-prompt'
 require 'pastel'
 require 'uri'
 require 'io/console'
 
 require 'kontena/cli/config'
 require 'kontena/cli/spinner'
+require 'kontena/cli/table_generator'
+require 'forwardable'
 
 module Kontena
   module Cli
     module Common
+      extend Forwardable
 
-      def logger
-        Kontena.logger
-      end
-
-      def pastel
-        @pastel ||= Pastel.new(enabled: $stdout.tty?)
-      end
+      def_delegators :Kontena, :pastel, :prompt, :logger
+      def_delegator Kontena::Cli::Spinner, :spin, :spinner
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message
@@ -37,6 +34,10 @@ module Kontena
 
       def running_verbose?
         self.respond_to?(:verbose?) && self.verbose?
+      end
+
+      def running_quiet?
+        self.respond_to?(:quiet?) && self.quiet?
       end
 
       # Puts that puts even when self.silent?
@@ -83,9 +84,19 @@ module Kontena
       def vspinner(msg, &block)
         return vfakespinner(msg) unless block_given?
 
-        if running_verbose?
+        if running_verbose? && $stdout.tty?
           spinner(msg, &block)
         else
+          logger.debug { msg }
+          yield
+        end
+      end
+
+      def spin_if(obj_or_proc, message, &block)
+        if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
+          spinner(message, &block)
+        else
+          logger.debug { message }
           yield
         end
       end
@@ -93,7 +104,7 @@ module Kontena
       # Like vspinner but without actually running any block
       def vfakespinner(msg, success: true)
         if !running_verbose?
-          logger.debug msg
+          logger.debug { msg }
           return
         end
         puts " [#{ success ? 'done'.colorize(:green) : 'fail'.colorize(:red)}] #{msg}"
@@ -248,10 +259,6 @@ module Kontena
         prompt.yes?(question)
       end
 
-      def prompt
-        ::Kontena.prompt
-      end
-
       def confirm_command(name, message = nil)
         if self.respond_to?(:force?) && self.force?
           return
@@ -285,51 +292,17 @@ module Kontena
         config.add_server(master_info.merge('name' => server_name))
       end
 
-      def spinner(msg, &block)
-        Kontena::Cli::Spinner.spin(msg, &block)
-      end
-
       def any_key_to_continue_with_timeout(timeout=9)
         return nil if running_silent?
         return nil unless $stdout.tty?
-        start_time = Time.now.to_i
-        end_time   = start_time + timeout
-        Thread.main['any_key.timed_out']   = false
-        msg = "Press any key to continue or ctrl-c to cancel.. (Automatically continuing in ? seconds)"
-
-        reader_thread = Thread.new do
-          Thread.main['any_key.char'] = $stdin.getch
-        end
-
-        countdown_thread = Thread.new do
-          time_left = timeout
-          while time_left > 0 && Thread.main['any_key.char'].nil?
-            print "\r#{pastel.bright_white("#{msg.sub("?", time_left.to_s)}")} "
-            time_left = end_time - Time.now.to_i
-            sleep 0.1
-          end
-          print "\r#{' ' * msg.length}  \r"
-          reader_thread.kill if reader_thread.alive?
-        end
-
-        countdown_thread.join
-
-        if Thread.main['any_key.char'] == "\u0003"
-          error "Canceled"
-        end
+        prompt.keypress("Press any key to continue or ctrl-c to cancel (Automatically continuing in :countdown seconds) ...", timeout: timeout)
       end
 
       def any_key_to_continue(timeout = nil)
         return nil if running_silent?
         return nil unless $stdout.tty?
         return any_key_to_continue_with_timeout(timeout) if timeout
-        msg = "Press any key to continue or ctrl-c to cancel.. "
-        print pastel.bright_cyan("#{msg}")
-        char = $stdin.getch
-        print "\r#{' ' * msg.length}\r"
-        if char == "\u0003"
-          error "Canceled"
-        end
+        prompt.keypress("Press any key to continue or ctrl-c to cancel..")
       end
 
       def display_account_login_info

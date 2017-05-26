@@ -105,24 +105,6 @@ class HostNode
     RpcClient.new(self.node_id, timeout)
   end
 
-  # @return [Integer]
-  def schedule_counter
-    @schedule_counter ||= 0
-  end
-
-  # @return [String]
-  def region
-    if @region.nil?
-      @region = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^region=(.+)/)
-          @region = match[1]
-        end
-      end
-    end
-    @region
-  end
-
   def initial_member?
     return false if self.node_number.nil?
     return true if self.node_number <= self.grid.initial_size
@@ -156,6 +138,11 @@ class HostNode
   end
 
   # @return [String]
+  def region
+    @region ||= label_value('region') || 'default'
+  end
+
+  # @return [String]
   def availability_zone
     @availability_zone ||= label_value('az') || 'default'
   end
@@ -186,7 +173,7 @@ class HostNode
       node_number = free_numbers.shift
       raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
       self.update_attribute(:node_number, node_number)
-    rescue Moped::Errors::OperationFailure
+    rescue Mongo::Error::OperationFailure
       retry
     end
   end

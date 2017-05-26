@@ -100,7 +100,7 @@ describe GridServiceDeployer do
           expect(grid_service_instance_deploy.instance_number).to eq instance_number
 
           expect(instance_deployer).to receive(:deploy).with(deploy_rev) do
-            grid_service_instance_deploy.set(:deploy_state => :error, :error => "testfail")
+            grid_service_instance_deploy.set(:_deploy_state => :error, :error => "testfail")
           end
 
           instance_deployer
