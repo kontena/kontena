@@ -21,10 +21,10 @@ module Kontena
 
         __init_timers__
 
-        DEBUG_INDICATOR = Kontena.pastel.inverse.bright_blue('D').freeze
-        WARN_INDICATOR  = Kontena.pastel.inverse.yellow('W').freeze
-        INFO_INDICATOR  = Kontena.pastel.inverse.cyan('I').freeze
-        ERROR_INDICATOR = Kontena.pastel.inverse.red('E').freeze
+        DEBUG_INDICATOR = Kontena.pastel.inverse.bright_blue('DEBUG').freeze
+        WARN_INDICATOR  = Kontena.pastel.inverse.yellow('WARN ').freeze
+        INFO_INDICATOR  = Kontena.pastel.inverse.cyan('INFO ').freeze
+        ERROR_INDICATOR = Kontena.pastel.inverse.red('ERROR').freeze
 
         def colorize_severity(severity)
           case severity[0..0]
@@ -36,25 +36,28 @@ module Kontena
           end
         end
 
-        TS_FORMAT = '%6.3f'.freeze
+        TS_FORMAT = '%4d'.freeze
 
-        def colorize_time
+        def colorized_time
           elapsed = self.class.ms_since_last
-          ts = TS_FORMAT % [self.class.ms_since_first]
+          ts = TS_FORMAT % [elapsed]
           if elapsed > 300
-            Kontena.pastel.red.inverse(ts)
+            Kontena.pastel.red(ts)
           elsif elapsed > 100
-            Kontena.pastel.yellow.inverse(ts)
+            Kontena.pastel.yellow(ts)
           else
-            Kontena.pastel.inverse(ts)
+            ts
           end
         end
 
-        SEPARATOR = Kontena.pastel.inverse(' ').freeze
-        HEAD_FORMAT = "%s#{SEPARATOR}%s".freeze
-
-        def call(severity, time, progname, msg)
-          (HEAD_FORMAT % [colorize_severity(severity), colorize_time]) + " #{msg2str(msg)}\n"
+        if ENV['DEBUG_PERF']
+          define_method :call do |severity, time, progname, msg|
+            "#{colorize_severity(severity)} #{colorized_time} #{msg2str(msg)}\n"
+          end
+        else
+          define_method :call do |severity, time, progname, msg|
+            "#{colorize_severity(severity)} #{msg2str(msg)}\n"
+          end
         end
       end
     end
