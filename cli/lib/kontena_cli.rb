@@ -2,9 +2,10 @@ module Kontena
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
   #
-  # @param [String,Array<String>] command_line
+  # @param command_line [String,Array<String>]
+  # @param capture [TrueClass,FalseClass] return command STDOUT output lines
   # @return command result or nil
-  def self.run!(*cmdline)
+  def self.run!(*cmdline, capture: false)
     if cmdline.first.kind_of?(Array)
       command = cmdline.first
     elsif cmdline.size == 1 && cmdline.first.include?(' ')
@@ -13,11 +14,25 @@ module Kontena
       command = cmdline
     end
     ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}")
-    result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+    result = nil
+    if capture
+      orig_stdout = $stdout
+      stdout = StringIO.new
+      $stdout = stdout
+      begin
+        Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+      ensure
+        result = stdout.string.split(/[\r\n]/)
+        $stdout = orig_stdout
+      end
+    else
+      result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
+    end
     ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
     result
   rescue SystemExit => ex
     ENV["DEBUG"] && $stderr.puts("Command caused SystemExit, result: #{result.inspect} status: #{ex.status}")
+    return result if ex.status.zero? && capture
     return true if ex.status.zero?
     raise ex
   rescue => ex
@@ -28,8 +43,8 @@ module Kontena
   # Run a kontena command and return true if the command did not raise or exit with a non-zero exit code. Raises nothing.
   # @param [String,Array<String>] command_line
   # @return [TrueClass,FalseClass] success
-  def self.run(*cmdline)
-    result = run!(*cmdline)
+  def self.run(*cmdline, capture: false)
+    result = run!(*cmdline, capture: capture)
     result.nil? ? true : result
   rescue SystemExit => ex
     ex.status.zero?
