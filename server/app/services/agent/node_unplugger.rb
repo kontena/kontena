@@ -21,7 +21,7 @@ module Agent
     # @raise [RuntimeError] Node ... has already re-connected at ...
     def update_node!(connected_at)
       connected_node = HostNode.where(:id => node.id, :connected_at => connected_at)
-        .find_one_and_update({:$set => {connected: false}}, {new: true})
+        .find_one_and_update({:$set => {connected: false}})
 
       fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
 
