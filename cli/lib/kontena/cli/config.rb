@@ -60,11 +60,9 @@ module Kontena
           parent_type: :master,
           parent_name: 'default'
         )
-        accounts << Account.new(
-          url: ENV['AUTH_API_URL'] || 'https://auth.kontena.io',
-          name: 'kontena',
-          token: Token.new(access_token: ENV['KONTENA_ACCOUNT_TOKEN'], parent_type: :account, parent_name: 'default')
-        )
+        accounts << Account.new(kontena_account_data.merge(
+          token: Token.new(access_token: ENV['KONTENA_CLOUD_TOKEN'], parent_type: :account, parent_name: 'default')
+        ))
 
         self.current_master  = 'default'
         self.current_account = 'kontena'
@@ -127,22 +125,23 @@ module Kontena
         accounts.delete_at(master_index) if master_index
         accounts << Account.new(master_account_data)
 
-        self.current_account = settings['current_account'] || 'kontena'
+        self.current_account = ENV['KONTENA_CLOUD'] || settings['current_account'] || 'kontena'
       end
 
       def kontena_account_data
         {
           name: 'kontena',
-          url: 'https://cloud-api.kontena.io',
-          stacks_url: 'https://stacks.kontena.io',
-          token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
-          authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
-          userinfo_endpoint: 'https://cloud-api.kontena.io/user',
-          token_post_content_type: 'application/x-www-form-urlencoded',
-          code_requires_basic_auth: false,
-          token_method: 'post',
-          scope: 'user',
-          client_id: nil
+          url: ENV['KONTENA_CLOUD_URL'] || 'https://cloud-api.kontena.io',
+          stacks_url: ENV['KONTENA_STACK_REGISTRY_URL'] || 'https://stacks.kontena.io',
+          token_endpoint: ENV['AUTH_TOKEN_ENDPOINT'] || 'https://cloud-api.kontena.io/oauth2/token',
+          authorization_endpoint: ENV['AUTH_AUTHORIZE_ENDPOINT'] || 'https://cloud.kontena.io/login/oauth/authorize',
+          userinfo_endpoint: ENV['AUTH_USERINFO_ENDPOINT'] || 'https://cloud-api.kontena.io/user',
+          token_post_content_type: ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] || 'application/x-www-form-urlencoded',
+          code_requires_basic_auth: ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == true,
+          token_method: ENV['AUTH_TOKEN_METHOD'] || 'post',
+          scope: ENV['AUTH_USERINFO_SCOPE'] || 'user',
+          client_id: nil,
+          stacks_read_authentication: ENV['KONTENA_STACK_REGISTRY_READ_AUTHENTICATION'].to_s == 'true'
         }
       end
 

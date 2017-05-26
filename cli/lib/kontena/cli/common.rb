@@ -176,7 +176,7 @@ module Kontena
       end
 
       def kontena_account
-        @kontena_account ||= config.find_account(ENV['KONTENA_ACCOUNT'] || 'kontena')
+        @kontena_account ||= config.current_account
       end
 
       def cloud_auth?
