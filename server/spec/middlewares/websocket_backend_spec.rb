@@ -67,7 +67,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
   end
 
-  describe '#on_pong' do
+  context "with a connected client" do
     let(:logger) { instance_double(Logger) }
     before do
       allow(subject).to receive(:logger).and_return(logger)
@@ -87,42 +87,74 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid)
     end
 
-    it 'closes the websocket if client is not found' do
-      client[:id] = 'bb'
-      expect(subject.logger).to receive(:warn).with('Close connection of missing node bb')
-      expect(client_ws).to receive(:close)
-      expect(subject).to receive(:unplug_client).with(client)
-
-      subject.on_pong(client, 0.1)
+    before do
+      subject.instance_variable_get('@clients') << client
     end
 
-    it 'closes connection if node is not marked as connected' do
-      node.set(connected: false)
-      expect(subject.logger).to receive(:warn).with('Close connection of disconnected node test-node')
-      expect(client_ws).to receive(:close)
-      expect(subject).to receive(:unplug_client).with(client)
+    describe '#on_close' do
+      it 'survives NameError' do
+        subject.extend(Module.new do
+          def unplug_client(client)
+            asdf
+          end
+        end)
 
-      subject.on_pong(client, 0.1)
+        expect(subject.logger).to receive(:info).with('node aa connection closed')
+        expect(subject.logger).to receive(:error).with(/on_close: undefined local variable or method `asdf' for #<WebsocketBackend:/)
+        expect(subject.logger).to receive(:error)
+
+        VeryFatalTimeoutError = Class.new(Exception)
+
+        t = Time.now
+        Timeout.timeout(0.2, VeryFatalTimeoutError) do
+          Timeout.timeout(0.1, VeryFatalTimeoutError) do
+            subject.on_close(client_ws)
+          end
+        end
+        dt = Time.now - t
+
+        expect(dt).to be < 0.1
+      end
     end
 
-    it 'updates node last_seen_at if node is marked as connected' do
-      expect(subject.logger).to_not receive(:warn)
+    describe '#on_pong' do
+      it 'closes the websocket if client is not found' do
+        client[:id] = 'bb'
+        expect(subject.logger).to receive(:warn).with('Close connection of missing node bb')
+        expect(client_ws).to receive(:close)
+        expect(subject).to receive(:unplug_client).with(client)
 
-      node.set(connected: true)
-      expect(client_ws).not_to receive(:close)
-
-      expect {
         subject.on_pong(client, 0.1)
-      }.to change { node.reload.last_seen_at }
-    end
+      end
 
-    it 'logs a warning if ping delay is over threshold' do
-      node.set(connected: true)
+      it 'closes connection if node is not marked as connected' do
+        node.set(connected: false)
+        expect(subject.logger).to receive(:warn).with('Close connection of disconnected node test-node')
+        expect(client_ws).to receive(:close)
+        expect(subject).to receive(:unplug_client).with(client)
 
-      expect(subject.logger).to receive(:warn).with('keepalive ping 3.00s of 5.00s timeout from client aa')
-      expect(client_ws).not_to receive(:close)
+        subject.on_pong(client, 0.1)
+      end
 
-      subject.on_pong(client, 3.0)
+      it 'updates node last_seen_at if node is marked as connected' do
+        expect(subject.logger).to_not receive(:warn)
+
+        node.set(connected: true)
+        expect(client_ws).not_to receive(:close)
+
+        expect {
+          subject.on_pong(client, 0.1)
+        }.to change { node.reload.last_seen_at }
+      end
+
+      it 'logs a warning if ping delay is over threshold' do
+        node.set(connected: true)
+
+        expect(subject.logger).to receive(:warn).with('keepalive ping 3.00s of 5.00s timeout from client aa')
+        expect(client_ws).not_to receive(:close)
+
+        subject.on_pong(client, 3.0)
+      end
     end
   end
 end
