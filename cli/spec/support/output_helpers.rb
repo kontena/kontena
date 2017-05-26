@@ -5,6 +5,7 @@ module OutputHelpers
     supports_block_expectations
 
     match do |block|
+      @expected = expected
       stdout = lines.flatten.join("\n") + "\n"
 
       begin
@@ -14,7 +15,7 @@ module OutputHelpers
 
         return false
       else
-        return values_match? expected, @return
+        return values_match? @expected, @return
       end
     end
 
@@ -22,7 +23,7 @@ module OutputHelpers
       if @error
         return @error
       else
-        return "expected #{block} to return #{expected}, but returned #{@return}"
+        return "expected #{block} to return #{@expected}, but returned #{@return}"
       end
     end
   end
@@ -59,7 +60,9 @@ module OutputHelpers
           end
         end
       else
-        @error = "expected #{@expected.size} lines but got #{@lines.size} lines instead"
+        @error = "expected #{@expected.size} lines but got #{@real.size} lines instead:\n"
+        @error += "Expected:\n#{@expected.map(&:inspect).join("\n")}"
+        @error += "Received:\n#{@real.map(&:inspect).join("\n")}"
       end
       @error.nil?
     end

@@ -2,11 +2,11 @@ module Kontena
   module Callbacks
     class BeforeDeployConfigurationWizard < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create'
 
       def after_load
+        extend Kontena::Cli::Common
+
         command.class_eval do
           option ['--no-prompt'], :flag, "Don't ask questions"
           option ['--skip-auth-provider'], :flag, "Skip auth provider configuration (single user mode)"

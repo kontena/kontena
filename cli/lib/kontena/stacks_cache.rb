@@ -1,10 +1,6 @@
-require_relative 'stacks_client'
-require_relative 'cli/common'
-require_relative 'cli/stacks/common'
-require 'yaml'
-require 'uri'
-
 module Kontena
+  autoload :StacksClient, 'kontena/stacks_client'
+
   class StacksCache
     class CachedStack
 
@@ -12,6 +8,8 @@ module Kontena
       attr_accessor :version
 
       def initialize(stack, version = nil)
+        require "safe_yaml"
+        SafeYAML::OPTIONS[:default_mode] = :safe
         unless version
           stack, version = stack.split(':', 2)
         end
@@ -59,6 +57,8 @@ module Kontena
     end
 
     class RegistryClientFactory
+      require 'kontena/cli/common'
+      require 'kontena/cli/stacks/common'
       include Kontena::Cli::Common
       include Kontena::Cli::Stacks::Common
     end

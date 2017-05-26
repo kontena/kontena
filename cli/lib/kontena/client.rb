@@ -1,16 +1,3 @@
-require 'json'
-require 'excon'
-require 'uri'
-require 'base64'
-require 'socket'
-require 'openssl'
-require 'uri'
-require 'time'
-require 'logger'
-require 'kontena/errors'
-require 'kontena/cli/version'
-require 'kontena/cli/config'
-
 module Kontena
   class Client
 
@@ -41,6 +28,18 @@ module Kontena
     # @param [Kontena::Cli::Config::Token,Hash] access_token
     # @param [Hash] options
     def initialize(api_url, token = nil, options = {})
+      require 'json'
+      require 'excon'
+      require 'uri'
+      require 'base64'
+      require 'socket'
+      require 'openssl'
+      require 'uri'
+      require 'time'
+      require 'kontena/errors'
+      require 'kontena/cli/version'
+      require 'kontena/cli/config'
+
       @api_url, @token, @options = api_url, token, options
       uri = URI.parse(@api_url)
       @host = uri.host

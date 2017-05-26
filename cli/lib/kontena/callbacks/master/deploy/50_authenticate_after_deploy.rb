@@ -1,14 +1,14 @@
-require 'securerandom'
-
 module Kontena
   module Callbacks
     class AuthenticateAfterDeploy < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create'
 
       def after
+        extend Kontena::Cli::Common
+
+        require 'securerandom'
+        extend Kontena::Cli::Common
         logger.debug { "Command result: #{command.result.inspect}" }
         logger.debug { "Command exit code: #{command.exit_code.inspect}" }
         return unless command.exit_code == 0

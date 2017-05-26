@@ -7,6 +7,20 @@ at_exit do
 end
 
 module Kontena
+  module Cli
+    autoload :Config, 'kontena/cli/config'
+    autoload :Spinner, 'kontena/cli/spinner'
+    autoload :Common, 'kontena/cli/common'
+    autoload :TableGenerator, 'kontena/cli/table_generator'
+  end
+
+  autoload :Command, 'kontena/command'
+  autoload :Client, 'kontena/client'
+  autoload :StacksCache, 'kontena/stacks_cache'
+  autoload :PluginManager, 'kontena/plugin_manager'
+  autoload :MainCommand, 'kontena/main_command'
+  autoload :Errors, 'kontena/errors'
+
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
   #
@@ -166,14 +180,5 @@ end
 
 require 'ruby_dig'
 require 'shellwords'
-require "safe_yaml"
-SafeYAML::OPTIONS[:default_mode] = :safe
 require 'kontena/cli/version'
 Kontena.logger.debug { "Kontena CLI #{Kontena::Cli::VERSION} (ruby-#{RUBY_VERSION}+#{RUBY_PLATFORM})" }
-require 'kontena/cli/common'
-require 'kontena/command'
-require 'kontena/client'
-require 'kontena/stacks_cache'
-require 'kontena/plugin_manager'
-require 'kontena/main_command'
-require 'kontena/cli/spinner'

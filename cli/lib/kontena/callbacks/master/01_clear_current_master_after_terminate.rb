@@ -2,11 +2,10 @@ module Kontena
   module Callbacks
     class ClearCurrentMasterAfterTerminate < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master terminate'
 
       def after
+        extend Kontena::Cli::Common
         return unless command.exit_code == 0
         return unless config.current_master
 

@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'yaml'
 
 module Kontena::Cli::Stacks
   class ValidateCommand < Kontena::Command

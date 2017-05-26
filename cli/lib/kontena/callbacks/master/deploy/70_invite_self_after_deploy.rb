@@ -2,8 +2,6 @@ module Kontena
   module Callbacks
     class InviteSelfAfterDeploy < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create', 'master init_cloud'
 
       def cloud_user_data
@@ -25,6 +23,7 @@ module Kontena
       end
 
       def after
+        extend Kontena::Cli::Common
         return unless current_master
         return unless command.exit_code == 0
         return nil if command.respond_to?(:skip_auth_provider?) && command.skip_auth_provider?
