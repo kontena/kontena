@@ -35,17 +35,17 @@ module Kontena
 
     def show(stack_name, stack_version = nil)
       raise_unless_read_token
-      get("#{path_to(stack_name, stack_version)}", ACCEPT_JSON, options[:read_requires_token])
+      get("#{path_to(stack_name, stack_version)}", nil, ACCEPT_JSON, options[:read_requires_token])
     end
 
     def versions(stack_name)
       raise_unless_read_token
-      get("#{path_to(stack_name, nil)}/versions", ACCEPT_JSON, options[:read_requires_token])['versions']
+      get("#{path_to(stack_name, nil)}/versions", nil, ACCEPT_JSON, options[:read_requires_token])['versions']
     end
 
     def pull(stack_name, version = nil)
       raise_unless_read_token
-      get(path_to(stack_name, version), ACCEPT_YAML, options[:read_requires_token])
+      get(path_to(stack_name, version), nil, ACCEPT_YAML, options[:read_requires_token])
     rescue StandardError => ex
       ex.message << " : #{path_to(stack_name, version)}"
       raise ex, ex.message
