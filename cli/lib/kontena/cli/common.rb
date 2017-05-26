@@ -174,11 +174,13 @@ module Kontena
       end
 
       def client(token = nil, api_url = nil)
+        return @client if @client
+
         if token.kind_of?(String)
           token = Kontena::Cli::Config::Token.new(access_token: token)
         end
 
-        @client ||= Kontena::Client.new(
+        @client = Kontena::Client.new(
           api_url || require_current_master.url,
           token || require_current_master.token
         )

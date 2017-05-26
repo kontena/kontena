@@ -11,6 +11,7 @@ module Kontena
     autoload :Config, 'kontena/cli/config'
     autoload :Spinner, 'kontena/cli/spinner'
     autoload :Common, 'kontena/cli/common'
+    autoload :TableGenerator, 'kontena/cli/table_generator'
   end
 
   autoload :Command, 'kontena/command'
