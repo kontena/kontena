@@ -185,10 +185,10 @@ module Kontena::Workers
     # @param [Docker::Container] service_container
     # @return [Boolean]
     def container_outdated?(service_container)
-      updated_at = DateTime.parse(service_pod.updated_at)
-      created = DateTime.parse(service_container.info['Created']) rescue nil
-      return true if created.nil?
-      return true if created < updated_at
+      if service_pod.service_revision > service_container.service_revision
+        info "container service revision=#{service_container.service_revision} is older than service revision=#{service_pod.service_revision}"
+        return true
+      end
 
       false
     end
