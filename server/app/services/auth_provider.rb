@@ -82,12 +82,14 @@ class AuthProvider
     return unless valid?
     return unless master_access_token
 
+    debug { "Updating master information to Kontena Cloud" }
+
     uri = URI.parse(self.cloud_api_url) rescue nil
     return unless uri
 
     uri.path = '/master'
 
-    client = HTTPClient.new
+    client = http_client
     if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
@@ -100,6 +102,7 @@ class AuthProvider
         }
       }
     }
+    debug { "Master info: #{body[:attributes].inspect}" }
     response = client.request(
       :put,
       uri.to_s,
@@ -110,26 +113,40 @@ class AuthProvider
       },
       body: body.to_json
     )
+  rescue => ex
+    ex.message.gsub!(master_access_token, '<master_access_token>')
+    error ex
   end
 
   def master_access_token
     unless @master_access_token
       response = request_master_access_token
       if response.status == 200
-        json_response = JSON.parse(response.body) rescue nil
+        json_response = JSON.parse(response.body)
         @master_access_token = json_response['access_token'] if json_response
       end
     end
     @master_access_token
+  rescue => ex
+    error ex
+  end
+
+  def http_client
+    if ENV['DEBUG']
+      HTTPClient.class_exec { def debug_dev; STDOUT; end }
+    end
+    HTTPClient.new
   end
 
   def request_master_access_token
-    client = HTTPClient.new
+    client = http_client
+
     body = {
       grant_type: 'client_credentials',
       client_id: self.client_id,
       client_secret: self.client_secret
     }
+    debug { "Requesting master access token from Kontena Cloud" }
     client.request(
       :post,
       self.token_endpoint,
@@ -137,7 +154,10 @@ class AuthProvider
         'Content-Type' => 'application/x-www-form-urlencoded',
         'Accept' => 'application/json'
       },
-      body: body)
+      body: body
+    )
+  rescue => ex
+    error ex
   end
 
   def missing_fields
@@ -147,7 +167,9 @@ class AuthProvider
   # Returns true when all required fields have values. These are the minimum settings that
   # are required for the module to work.
   def valid?
-    missing_fields.empty?
+    return true if missing_fields.empty?
+    debug { "Auth provider not valid, missing fields: #{missing_fields.join(',')}" }
+    false
   end
 
   def callback_url
@@ -167,6 +189,8 @@ class AuthProvider
       }.reject {|_,v| v.nil? }
     )
     uri.to_s
+  rescue => ex
+    error ex
   end
 
   # Exchange an authorization code for an access_token and usually refresh_token + expires_in
@@ -192,7 +216,7 @@ class AuthProvider
       query = URI.encode_www_form(request_params)
     end
 
-    client = HTTPClient.new
+    client = http_client
     if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
@@ -224,8 +248,10 @@ class AuthProvider
     else
       nil
     end
-  rescue
-    debug "#{$!} #{$!.message}"
+  rescue => ex
+    ex.message.gsub!(self.client_secret, '<client_secret>') if self.client_secret
+    ex.message.gsub!(code, '<authorization_code>') if code
+    error ex
     nil
   end
 
@@ -236,7 +262,7 @@ class AuthProvider
   def get_userinfo(access_token)
     uri = URI.parse(self.userinfo_endpoint)
     uri.path = uri.path.gsub(/\:access\_token/, access_token)
-    client = HTTPClient.new
+    client = http_client
     if self.ignore_invalid_ssl
       client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
@@ -258,8 +284,9 @@ class AuthProvider
     end
 
     result
-  rescue
-    debug "#{$!} #{$!.message}"
+  rescue => ex
+    ex.message.gsub!(access_token, '<access_token>') if access_token
+    error ex
     nil
   end
 
@@ -276,8 +303,8 @@ class AuthProvider
       end
     end
     nil
-  rescue
-    debug "#{$!} #{$!.message}"
+  rescue => ex
+    error ex
     nil
   end
 end

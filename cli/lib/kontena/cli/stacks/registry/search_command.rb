@@ -9,8 +9,14 @@ module Kontena::Cli::Stacks::Registry
 
     parameter "[QUERY]", "Query string"
 
+    option ['-q', '--quiet'], :flag, "Output the identifying column only"
+
     def execute
       results = stacks_client.search(query.to_s)
+      if quiet?
+        puts results.map { |s| s['stack'] }.join("\n")
+        exit 0
+      end
       exit_with_error 'Nothing found' if results.empty?
       titles = ['NAME', 'VERSION', 'DESCRIPTION']
       columns = "%-40s %-10s %-40s"

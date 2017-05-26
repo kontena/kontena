@@ -88,7 +88,6 @@ module Kontena
         else
           @token = token
         end
-        @default_headers.merge!('Authorization' => "Bearer #{@token['access_token']}")
       end
 
       @api_url = api_url

@@ -9,7 +9,9 @@ module Kontena::Cli::Apps
     option ['-f', '--file'], 'FILE', 'Specify an alternate Kontena compose file', attribute_name: :filename, default: 'kontena.yml'
     option ['-p', '--project-name'], 'NAME', 'Specify an alternate project name (default: directory name)'
 
-    parameter "[SERVICE] ...", "Services to start"
+    option ['-q', '--quiet'], :flag, "Output the identifying column only"
+
+    parameter "[SERVICE] ...", "Services to list"
 
     attr_reader :services
 
@@ -17,6 +19,12 @@ module Kontena::Cli::Apps
       require_config_file(filename)
 
       @services = services_from_yaml(filename, service_list, service_prefix, true)
+
+      if quiet?
+        puts services.map(&:first).join("\n")
+        exit 0
+      end
+
       if services.size > 0
         show_services(services)
       elsif !service_list.empty?
@@ -32,7 +40,7 @@ module Kontena::Cli::Apps
       services.each do |service_name, opts|
         service = get_service(token, prefixed_name(service_name)) rescue false
         if service
-          name = service['name'].sub("#{@service_prefix}-", '')
+          name = service['name'].sub("#{service_prefix}-", '')
           state = service['stateful'] ? 'yes' : 'no'
           ports = service['ports'].map{|p|
             "#{p['ip']}:#{p['node_port']}->#{p['container_port']}/#{p['protocol']}"

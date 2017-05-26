@@ -59,7 +59,8 @@ class MongoPubsub
 
     # @param [Hash] data
     def send_message(data)
-      @block.call(data)
+      payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
+      @block.call(payload)
     end
   end
 
@@ -93,7 +94,7 @@ class MongoPubsub
   def publish(channel, data)
     self.collection.insert_one(
       channel: channel,
-      data: data,
+      data: BSON::Binary.new(MessagePack.pack(data)),
       created_at: Time.now.utc
     )
   end
@@ -154,7 +155,7 @@ class MongoPubsub
         self.collection.find(query, {cursor_type: :tailable_await, batch_size: 100}).sort(:$natural => 1).each do |item|
           channel = item['channel']
           data = item['data']
-
+          
           subscribers = self.subscriptions.select{|s| s.channel == channel }
           subscribers.each do |subscription|
             begin

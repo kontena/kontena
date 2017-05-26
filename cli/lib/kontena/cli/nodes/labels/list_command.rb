@@ -4,6 +4,9 @@ module Kontena::Cli::Nodes::Labels
 
     parameter "NODE_ID", "Node id"
 
+    # the command outputs id info only anyway, this is here strictly for ignoring purposes
+    option ['-q', '--quiet'], :flag, "Output the identifying column only", hidden: true
+
     requires_current_master
     requires_current_master_token
     requires_current_grid

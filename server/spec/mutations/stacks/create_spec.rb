@@ -251,10 +251,10 @@ describe Stacks::Create do
         services: services
       ).run
       expect(outcome).to_not be_success
-      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => "Link redis/redis points to non-existing stack" } }
+      expect(outcome.errors.message).to eq 'services' => { 'api' => { 'links' => [ "Link redis/redis points to non-existing stack" ] } }
     end
 
-    it 'does not create a stack if link within a stack is invalid' do
+    it 'fails if link within a stack is invalid' do
       services = [
         {
           name: 'api',
@@ -423,7 +423,7 @@ describe Stacks::Create do
       expect(outcome.errors.message).to eq 'services' => { 'foo' => {'name' => "Create failed"}, 'bar' => { 'links' => "Service soome-stack/foo does not exist"}}
     end
 
-    pending 'reports service error array outcomes' do
+    it 'reports service error array outcomes' do
       services = [
         {grid: grid, name: 'redis', image: 'redis:2.8', stateful: true,
           env: [
@@ -481,6 +481,7 @@ describe Stacks::Create do
         volumes: [{name: 'vol1', external: 'foo'}]
       ).run
       expect(outcome).not_to be_success
+      expect(outcome.errors.message).to eq({'volumes' => {'vol1' => { 'external' => "External volume foo not found"}}})
 
     end
 
@@ -496,7 +497,8 @@ describe Stacks::Create do
         services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
         volumes: [{name: 'vol1', driver: 'foo', scope: 'foobar'}]
       ).run
-      expect(outcome.success?).to be_falsey
+      expect(outcome).not_to be_success
+      expect(outcome.errors.message).to eq({'volumes' => {'vol1' => "Only external volumes supported"}})
 
     end
   end
