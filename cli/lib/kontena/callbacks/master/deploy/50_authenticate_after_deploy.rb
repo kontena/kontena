@@ -5,6 +5,8 @@ module Kontena
       matches_commands 'master create'
 
       def after
+        extend Kontena::Cli::Common
+
         require 'securerandom'
         extend Kontena::Cli::Common
         logger.debug { "Command result: #{command.result.inspect}" }
