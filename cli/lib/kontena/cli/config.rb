@@ -38,20 +38,22 @@ module Kontena
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'CONFIG'
+        @logger = Kontena.logger
         load_settings_from_env || load_settings_from_config_file
 
-        logger.debug "Configuration loaded with #{servers.count} servers."
-        logger.debug "Current master: #{current_server || '(not selected)'}"
-        logger.debug "Current grid: #{current_grid || '(not selected)'}"
+        debug { "Configuration loaded with #{servers.count} servers." }
+        debug { "Current master: #{current_server || '(not selected)'}" }
+        debug { "Current grid: #{current_grid || '(not selected)'}" }
+      end
+
+      def debug(&block)
+        Kontena.logger.add(Logger::DEBUG, nil, 'CONFIG', &block)
       end
 
       # Craft a regular looking configuration based on ENV variables
       def load_settings_from_env
         return nil unless ENV['KONTENA_URL']
-        logger.debug 'Loading configuration from ENV'
+        debug { 'Loading configuration from ENV' }
         servers << Server.new(
           url: ENV['KONTENA_URL'],
           name: 'default',
@@ -94,7 +96,7 @@ module Kontena
           if servers.find { |s| s['name'] == server.name}
             server.name = "#{server.name}-2"
             server.name.succ! until servers.find { |s| s['name'] == server.name }.nil?
-            logger.debug "Renamed server to #{server.name} because a duplicate was found in config"
+            debug { "Renamed server to #{server.name} because a duplicate was found in config" }
           end
           servers << server
         end
@@ -168,7 +170,7 @@ module Kontena
       #
       # @return [Hash]
       def default_settings
-        logger.debug 'Configuration file not found, using default settings.'
+        debug { 'Configuration file not found, using default settings.' }
         {
           'current_server' => 'default',
           'servers' => []
@@ -180,7 +182,7 @@ module Kontena
       # @param [Hash] settings_hash
       # @return [Hash] migrated_settings_hash
       def migrate_legacy_settings(settings)
-        logger.debug "Migrating from legacy style configuration"
+        debug { "Migrating from legacy style configuration" }
         {
           'current_server' => 'default',
           'servers' => [
@@ -197,7 +199,7 @@ module Kontena
       #
       # @return [Hash] config_data
       def parse_config_file
-        logger.debug "Loading configuration from #{config_filename}"
+        debug { "Loading configuration from #{config_filename}" }
         settings = JSON.load(File.read(config_filename))
         if settings.has_key?('server')
           settings = migrate_legacy_settings(settings)
@@ -448,7 +450,7 @@ module Kontena
       # Does nothing if using settings from environment variables.
       def write
         return nil if ENV['KONTENA_URL']
-        logger.debug "Writing configuration to #{config_filename}"
+        debug { "Writing configuration to #{config_filename}" }
         File.write(config_filename, to_json)
       end
 

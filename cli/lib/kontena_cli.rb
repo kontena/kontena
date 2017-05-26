@@ -1,3 +1,11 @@
+require 'logger'
+
+$KONTENA_START_TIME = Time.now.to_f
+at_exit do
+  Kontena.logger.debug { "Execution took #{(Time.now.to_f - $KONTENA_START_TIME).round(3)} seconds" }
+  Kontena.logger.debug { "#{$!.class.name}" + ($!.respond_to?(:status) ? " status #{$!.status}" : "") } if $!
+end
+
 module Kontena
   # Run a kontena command like it was launched from the command line. Re-raises any exceptions,
   # except a SystemExit with status 0, which is considered a success.
@@ -12,16 +20,17 @@ module Kontena
     else
       command = cmdline
     end
-    ENV["DEBUG"] && puts("Running Kontena.run(#{command.inspect}")
+    logger.debug { "Running Kontena.run(#{command.inspect}" }
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
-    ENV["DEBUG"] && puts("Command completed, result: #{result.inspect} status: 0")
+    logger.debug { "Command completed, result: #{result.inspect} status: 0" }
     result
   rescue SystemExit => ex
-    ENV["DEBUG"] && $stderr.puts("Command caused SystemExit, result: #{result.inspect} status: #{ex.status}")
+    logger.debug { "Command caused SystemExit, status: #{ex.status}" }
     return true if ex.status.zero?
     raise ex
   rescue => ex
-    ENV["DEBUG"] && $stderr.puts("Command raised #{ex.class.name} with message: #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+    logger.error { "Command #{cmdline.inspect} exception" }
+    logger.error { ex }
     raise ex
   end
 
@@ -35,6 +44,29 @@ module Kontena
     ex.status.zero?
   rescue
     false
+  end
+
+  def self.log_target
+    return @log_target if @log_target
+
+    @log_target = ENV['LOG_TARGET']
+
+    if ENV["DEBUG"]
+      @log_target ||= $stderr
+    elsif @log_target.nil?
+      @log_target = File.join(home, 'kontena.log')
+    end
+  end
+
+  def self.reset_logger
+    @log_target, @logger = nil
+  end
+
+  def self.home
+    return @home if @home
+    @home = File.join(Dir.home, '.kontena')
+    Dir.mkdir(@home, 0700) unless File.directory?(@home)
+    @home
   end
 
   # @return [String] x.y
@@ -59,7 +91,9 @@ module Kontena
   end
 
   def self.pastel
-    @pastel ||= Pastel.new(enabled: !simple_terminal?)
+    return @pastel if @pastel
+    require 'pastel'
+    @pastel = Pastel.new(enabled: !simple_terminal?)
   end
 
   def self.prompt
@@ -96,6 +130,23 @@ module Kontena
       File.join(Kontena.root, 'lib/kontena/cli', *joinables)
     end
   end
+
+  def self.logger
+    return @logger if @logger
+    if log_target.respond_to?(:tty?) && log_target.tty?
+      logger = Logger.new(log_target)
+      require 'kontena/cli/log_formatters/compact'
+      logger.formatter = Kontena::Cli::LogFormatter::Compact.new
+    else
+      logger = Logger.new(log_target, 1, 1_048_576)
+      require 'kontena/cli/log_formatters/strip_color'
+      logger.formatter = Kontena::Cli::LogFormatter::StripColor.new
+    end
+    logger.level = ENV["DEBUG"] ? Logger::DEBUG : Logger::INFO
+    logger.progname = 'CLI'
+    @logger = logger
+  end
+
 end
 
 # Monkeypatching string to mimick 'colorize' gem
@@ -118,6 +169,7 @@ require 'shellwords'
 require "safe_yaml"
 SafeYAML::OPTIONS[:default_mode] = :safe
 require 'kontena/cli/version'
+Kontena.logger.debug { "Kontena CLI #{Kontena::Cli::VERSION} (ruby-#{RUBY_VERSION}+#{RUBY_PLATFORM})" }
 require 'kontena/cli/common'
 require 'kontena/command'
 require 'kontena/client'

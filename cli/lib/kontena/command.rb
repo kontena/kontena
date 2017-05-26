@@ -9,6 +9,7 @@ class Kontena::Command < Clamp::Command
 
   option ['-D', '--debug'], :flag, "Enable debug", environment_variable: 'DEBUG' do
     ENV['DEBUG'] ||= 'true'
+    Kontena.reset_logger
   end
 
   attr_accessor :arguments
@@ -182,7 +183,7 @@ class Kontena::Command < Clamp::Command
   end
 
   def run(arguments)
-    ENV["DEBUG"] && $stderr.puts("Running #{self} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'")
+    Kontena.logger.debug { "Running #{self.class.name} with #{arguments.inspect} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'" }
     @arguments = arguments
 
     run_callbacks :before_parse unless help_requested?
@@ -218,7 +219,8 @@ class Kontena::Command < Clamp::Command
     end
   rescue Kontena::Errors::StandardError => ex
     raise ex if ENV['DEBUG']
-    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}")
+    Kontena.logger.error(ex)
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.status} : #{ex.message}")
   rescue Errno::EPIPE
     # If user is piping the command outputs to some other command that might exit before CLI has outputted everything
     abort
@@ -226,7 +228,8 @@ class Kontena::Command < Clamp::Command
     raise
   rescue => ex
     raise ex if ENV['DEBUG']
-    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         Rerun the command with environment DEBUG=true set to get the full exception")
+    Kontena.logger.error(ex)
+    abort(" [#{Kontena.pastel.red('error')}] #{ex.class.name} : #{ex.message}\n         See #{Kontena.log_target} or run the command again with environment DEBUG=true set to see the full exception")
   end
 end
 

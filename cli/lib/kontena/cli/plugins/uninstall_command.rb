@@ -15,7 +15,7 @@ module Kontena::Cli::Plugins
           Kontena::PluginManager.instance.uninstall_plugin(name)
         rescue => ex
           $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-          ENV["DEBUG"] && $stderr.puts(ex.backtrace.join("\n  "))
+          logger.error(ex)
           spin.fail
         end
       end

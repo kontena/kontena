@@ -12,16 +12,8 @@ module Kontena
     module Common
       extend Forwardable
 
-      def_delegators :Kontena, :pastel, :prompt
+      def_delegators :Kontena, :pastel, :prompt, :logger
       def_delegator Kontena::Cli::Spinner, :spin, :spinner
-
-      def logger
-        return @logger if @logger
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = self.class.name
-        @logger
-      end
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message
