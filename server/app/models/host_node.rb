@@ -28,6 +28,7 @@ class HostNode
   field :last_seen_at, type: Time
   field :agent_version, type: String
   field :docker_version, type: String
+  field :connected_at, type: DateTime
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
@@ -52,6 +53,11 @@ class HostNode
 
   after_destroy do |node|
     node.containers.unscoped.destroy
+  end
+
+  # @return [String]
+  def to_s
+    self.name || self.node_id
   end
 
   def to_path
