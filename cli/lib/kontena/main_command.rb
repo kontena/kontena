@@ -41,7 +41,8 @@ class Kontena::MainCommand < Kontena::Command
 
   def subcommand_missing(name)
     if known_plugin_subcommand?(name)
-      abort "The '#{name}' plugin has not been installed. Use: kontena plugin install #{name}"
+      extend Kontena::Cli::Common
+      exit_with_error "The '#{name}' plugin has not been installed. Use: kontena plugin install #{name}"
     else
       super(name)
     end

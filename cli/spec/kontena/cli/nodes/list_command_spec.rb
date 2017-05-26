@@ -6,8 +6,6 @@ describe Kontena::Cli::Nodes::ListCommand do
 
   let(:subject) { described_class.new("kontena") }
 
-  let(:client) { double }
-
   before do
     allow(subject).to receive(:health_icon) {|health| health.inspect }
     allow(subject).to receive(:client).and_return(client)
