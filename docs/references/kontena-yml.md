@@ -324,6 +324,16 @@ A reference to a file that contains environment variables.
 env_file: production.env
 ```
 
+#### stop_grace_period
+
+Specify how long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with stop_signal), before sending SIGKILL. Specified as a duration:
+```
+stop_grace_period: 1s
+stop_grace_period: 1m30s
+stop_grace_period: 1m12.3s
+stop_grace_period: 1h1m12.3s
+```
+
 #### extends
 
 Extend another service, in the current file, another file or a stack in the stacks registry, optionally overriding configuration. You can, for example, extend `docker-compose.yml` services and introduce only Kontena-specific fields in `kontena.yml`.

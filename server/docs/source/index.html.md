@@ -521,6 +521,7 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   		"stateful": true,
   		"replicas": 3,
   		"cmd": "--replset kontena --smallfiles",
+		"stop_grace_period": "1m23s",
   		"health_check": {
   			"protocol": "tcp",
   			"port": 27017
@@ -815,6 +816,7 @@ log_driver | Log driver (string)
 log_opts | Log driver options (object)
 hooks | Commands to be executed when service instance is deployed
 instance_counts | Stats about how many instances this service currently has
+stop_grace_period | How long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with the image), before sending SIGKILL.
 
 ### Deploy Opt attributes
 
