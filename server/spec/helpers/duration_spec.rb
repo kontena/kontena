@@ -24,13 +24,21 @@ describe Duration do
     expect(subject.parse_duration('93s')).to eq(93)
   end
 
-  it 'parses unknown units to zero' do
-    expect(subject.parse_duration('1m93x')).to eq(60)
+  it 'fails with unknown units' do
+    expect {
+      subject.parse_duration('1m93x')
+    }.to raise_error(ArgumentError)
   end
 
-  it 'parses unknown format to zero' do
+  it 'fails with completely unknown format' do
     expect {
       subject.parse_duration('foo')
+    }.to raise_error(ArgumentError)
+  end
+
+  it 'fails with partially unknown format' do
+    expect {
+      puts subject.parse_duration('1m foo')
     }.to raise_error(ArgumentError)
   end
 
