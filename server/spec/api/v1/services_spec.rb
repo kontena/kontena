@@ -150,6 +150,14 @@ describe '/v1/services' do
       expect(json_response['health_status']).to be_nil
       expect(json_response['health_check']).to be_nil
     end
+
+    it 'returns stop_grace_period' do
+      redis_service.stop_grace_period = 37
+      redis_service.save
+      get "/v1/services/#{redis_service.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['stop_grace_period']).to eq(37)
+    end
   end
 
   describe 'PUT /:id' do

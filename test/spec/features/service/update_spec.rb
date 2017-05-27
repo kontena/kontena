@@ -24,4 +24,13 @@ describe 'service update' do
       expect(k.out.match(/port: 8080/)).not_to be_truthy
     end
   end
+
+  context 'stop_grace_period' do
+    it 'allows update stop-timeout' do
+      k = run "kontena service update --stop-timeout 1m23s test-1"
+      expect(k.code).to eq(0)
+      k = run "kontena service show test-1"
+      expect(k.out.match(/stop_grace_period: 83s/)).to be_truthy
+    end
+  end
 end
