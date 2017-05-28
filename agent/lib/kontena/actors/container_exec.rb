@@ -16,7 +16,6 @@ module Kontena::Actors
       @container = container
       @read_pipe, @write_pipe = IO.pipe
       info "initialized (session #{@uuid})"
-      @mutex = Mutex.new
     end
 
     def input(input)
@@ -25,7 +24,7 @@ module Kontena::Actors
 
     def run(cmd)
       info "starting command: #{cmd}"
-      _, _, exit_code = @container.exec(cmd, @opts) do |stream, chunk|
+      _, _, exit_code = @container.exec(cmd) do |stream, chunk|
         rpc_client.notification('/container_exec/output', [@uuid, stream, chunk.force_encoding(Encoding::UTF_8)])
       end
     ensure 
