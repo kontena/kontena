@@ -113,7 +113,9 @@ module Kontena
         raise RpcServer::Error.new(404, 'Not found')
       end
 
-      def create_exec(id)
+      # @param [String] container_id
+      # @return [Hash]
+      def create_exec(container_id)
         container = Docker::Container.get(id)
         executor = Kontena::Actors::ContainerExec.new(container)
         actor_id = "container_exec_#{executor.uuid}"
@@ -123,25 +125,20 @@ module Kontena
         raise RpcServer::Error.new(404, 'Container not found')
       end
 
-      def run_exec(id, cmd)
-        actor_id = "container_exec_#{id}"
+      # @param [String] session_id
+      # @param [Array<String>] cmd
+      # @param [Boolean] tty
+      def run_exec(session_id, cmd, tty = false)
+        actor_id = "container_exec_#{session_id}"
         executor = Celluloid::Actor[actor_id]
         if executor
-          executor.async.run(cmd)
+          if tty
+            executor.async.interactive(cmd)
+          else
+            executor.async.run(cmd)
+          end
         else
-          raise RpcServer::Error.new(404, "Exec session (#{id}) not found")
-        end
-
-        {}
-      end
-
-      def tty_exec(id, cmd)
-        actor_id = "container_exec_#{id}"
-        executor = Celluloid::Actor[actor_id]
-        if executor
-          executor.async.interactive(cmd)
-        else
-          raise RpcServer::Error.new(404, "Exec session (#{id}) not found")
+          raise RpcServer::Error.new(404, "Exec session (#{session_id}) not found")
         end
 
         {}
