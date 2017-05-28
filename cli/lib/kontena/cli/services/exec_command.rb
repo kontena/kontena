@@ -1,5 +1,6 @@
 require 'shellwords'
 require_relative 'services_helper'
+require_relative '../helpers/exec_helper'
 
 module Kontena::Cli::Services
   class ExecCommand < Kontena::Command
@@ -107,28 +108,7 @@ module Kontena::Cli::Services
         exit 1
       end
       
-      stdin_thread = Thread.new {
-        STDIN.raw {
-          while char = STDIN.readpartial(1024)
-            ws.send(char)
-          end
-        }
-      }
-      stdin_thread.join
-    end
-
-    # @param [Websocket::Frame::Incoming] msg
-    def handle_message(msg)
-      data = JSON.parse(msg.data)
-      if data
-        if data['exit']
-          exit data['exit'].to_i
-        else
-          $stdout << data['chunk']
-        end
-      end
-    rescue => exc
-      STDERR << exc.message
+      stream_stdin_to_ws(ws).join
     end
 
     # @param [Hash] container

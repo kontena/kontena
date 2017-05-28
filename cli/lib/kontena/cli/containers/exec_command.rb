@@ -1,3 +1,5 @@
+require_relative '../helpers/exec_helper'
+
 module Kontena::Cli::Containers
   class ExecCommand < Kontena::Command
     include Kontena::Cli::Common
@@ -24,32 +26,8 @@ module Kontena::Cli::Containers
       ws.on :close do |e|
         exit 1
       end
-      stdin_thread = Thread.new {
-        STDIN.raw {
-          while char = STDIN.readpartial(1024)
-            ws.send(char)
-          end
-        }
-      }
-      stdin_thread.join
-    end
 
-    # @param [Docker::Container] container
-    def handle_message(msg)
-      data = JSON.parse(msg.data)
-      if data 
-        if data['exit']
-          exit data['exit'].to_i
-        else 
-          if data['stream'] == 'stderr'.freeze
-            STDERR << data['chunk']
-          else 
-            STDOUT << data['chunk']
-          end
-        end
-      end
-    rescue => exc
-      STDERR << exc.message
+      stream_stdin_to_ws(ws).join
     end
 
     # @param [String] token
