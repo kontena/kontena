@@ -52,16 +52,27 @@ services:
 
 #### expose
 
-Expose a service from stack for use by other stacks. Read more about exposing services [here](https://kontena.io/docs/using-kontena/stacks#exposing-services-between-stacks).
+Expose a named service from stack for use by other stacks. Read more about exposing services [here](https://kontena.io/docs/using-kontena/stacks#exposing-services-between-stacks).
 
 ```
 expose: api
+```
+
+#### services
+
+The named services that belong to the stack. See the [Service Configuration section](#service-configuration-reference) for the keys usable for each service.
+
+```
 services:
   api:
     image: registry/api:latest
   db:
     image: mariadb:latest
 ```
+
+The service name must start with a letter, number or underscore, and may also contain dashes.
+
+There is no limitation on the length of a service name per se, but the resulting service container FQDN (`service-1.stack-name.grid-name.kontena.local`) must be 64 bytes or less. The effective maximum service name length thus also depends on the grid and stack names, so they should be kept reasonably short.
 
 ## Service Configuration Reference
 
@@ -596,7 +607,7 @@ variables:
     to:
       vault: EXAMPLE_MYSQL_ROOT_PASSWORD
   app_domain:
-    type: string 
+    type: string
     default: www.my-app.com
     from:
       prompt: App domain
