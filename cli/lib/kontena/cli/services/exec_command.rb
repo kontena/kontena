@@ -25,13 +25,14 @@ module Kontena::Cli::Services
 
     def execute
       require 'websocket-client-simple'
+
+      exit_with_error "--interactive cannot be used with --all" if all? && interactive?
+
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
       service_containers.sort_by! { |container| container['instance_number'] }
       running_containers = service_containers.select{|container| container['status'] == 'running' }
-
-      if running_containers.empty?
-        exit_with_error "Service #{name} does not have any running containers"
-      end
+      
+      exit_with_error "Service #{name} does not have any running containers" if running_containers.empty?
 
       if all?
         ret = true
@@ -50,8 +51,10 @@ module Kontena::Cli::Services
           exit_with_error "Service #{name} does not have container instance #{instance}"
         elsif container['status'] != 'running'
           exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
-        else
+        elsif interactive?
           interactive_exec(container)
+        else 
+          exec_container(container)
         end
       else
         if interactive?
@@ -65,6 +68,7 @@ module Kontena::Cli::Services
     # Exits if exec returns with non-zero
     # @param [Docker::Container] container
     def exec_container(container)
+      exit_status = nil
       if !silent? && (verbose? || all?)
         spinner "Executing command on #{container['name']}" do
           exit_status = normal_exec(container)
@@ -128,7 +132,7 @@ module Kontena::Cli::Services
         base.handle_message(msg)        
       end
       ws.on :open do
-        ws.send(JSON.dump(cmd))
+        ws.send(cmd)
       end
       ws.on :close do |e|
         exit 1
