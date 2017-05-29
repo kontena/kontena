@@ -18,10 +18,12 @@ module Kontena::Actors
       info "initialized (session #{@uuid})"
     end
 
+    # @param [String] input
     def input(input)
       @write_pipe.write(input)
     end
 
+    # @param [String] cmd
     def run(cmd)
       info "starting command: #{cmd}"
       _, _, exit_code = @container.exec(cmd) do |stream, chunk|
@@ -29,10 +31,10 @@ module Kontena::Actors
       end
     ensure 
       info "command finished: #{cmd} with code #{exit_code}"
-      rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
-      self.terminate
+      shutdown(cmd, exit_code)
     end
 
+    # @param [String] cmd
     def interactive(cmd)
       info "starting interactive session: #{cmd}"
       opts = {tty: true, stdin: @read_pipe}
@@ -44,6 +46,12 @@ module Kontena::Actors
       }
     ensure 
       info "interactive session finished: #{cmd} with code #{exit_code}"
+      shutdown(cmd, exit_code)
+    end
+
+    # @param [String] cmd
+    # @param [Integer] exit_code
+    def shutdown(cmd, exit_code)
       rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
       self.terminate
     end
