@@ -37,8 +37,8 @@ module Rpc
         volumes: build_volumes,
         volumes_from: service.volumes_from,
         net: service.net,
-        hostname: build_hostname,
-        domainname: build_domainname,
+        hostname: service_instance.hostname,
+        domainname: service_instance.domain,
         exposed: service.stack_exposed?,
         log_driver: service.log_driver,
         log_opts: service.log_opts,
@@ -130,18 +130,6 @@ module Rpc
         }
       end
       networks
-    end
-
-    def build_hostname
-      "#{service.name}-#{service_instance.instance_number}"
-    end
-
-    def build_domainname
-      if service.stack.name == Stack::NULL_STACK
-        "#{service.grid.name}.kontena.local"
-      else
-        "#{service.stack.name}.#{service.grid.name}.kontena.local"
-      end
     end
 
     # @return [Hash,NilClass]

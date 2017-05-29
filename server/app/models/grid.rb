@@ -48,6 +48,11 @@ class Grid
     self.name
   end
 
+  # @return [String]
+  def domain
+    "#{self.name}.kontena.local"
+  end
+
   def to_json(args = {})
     super(args.merge({:except => [:_id] }))
   end
