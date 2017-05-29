@@ -10,17 +10,19 @@ module Docker
     end
 
     # Starts exec session with tty
-    def start_tty
+    # @param [Boolean] shell
+    def start_tty(shell)
       create_session
       subscribe_to_session
-      register_tty_ws_events
+      register_tty_ws_events(shell)
     end
 
     # Starts normal exec session (without tty)
-    def start 
+    # @param [Boolean] shell
+    def start(shell)
       create_session
       subscribe_to_session
-      register_run_ws_events
+      register_run_ws_events(shell)
     end
 
     def create_session
@@ -38,13 +40,19 @@ module Docker
       end
     end
 
-    def register_tty_ws_events
+    # @param [Boolean] shell
+    def register_tty_ws_events(shell)
       init = true
       @ws.on(:message) do |event|
         if init == true
-          cmd = ['/bin/sh', '-c', event.data]
-          @client.notify('/containers/tty_exec', @exec_session['id'], cmd)
-          init = false
+          begin
+            cmd = JSON.parse(event.data)
+            cmd = ['/bin/sh', '-c', cmd.join(' ')] if shell
+            @client.notify('/containers/run_exec', @exec_session['id'], cmd, true)
+            init = false
+          rescue JSON::ParserError
+            @ws.close
+          end
         else
           @client.notify('/containers/tty_input', @exec_session['id'], event.data)
         end
@@ -56,9 +64,16 @@ module Docker
       end
     end
 
-    def register_run_ws_events
+    # @param [Boolean] shell
+    def register_run_ws_events(shell)
       @ws.on(:message) do |event|
-        @client.notify('/containers/run_exec', @exec_session['id'], event.data)
+        begin
+          cmd = JSON.parse(event.data)
+          cmd = ['/bin/sh', '-c', cmd.join(' ')] if shell
+          @client.notify('/containers/run_exec', @exec_session['id'], cmd, false)
+        rescue JSON::ParserError
+          @ws.close
+        end
       end
 
       @ws.on(:close) do |event|

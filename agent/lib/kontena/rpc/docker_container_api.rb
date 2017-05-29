@@ -116,7 +116,7 @@ module Kontena
       # @param [String] container_id
       # @return [Hash]
       def create_exec(container_id)
-        container = Docker::Container.get(id)
+        container = Docker::Container.get(container_id)
         executor = Kontena::Actors::ContainerExec.new(container)
         actor_id = "container_exec_#{executor.uuid}"
         Celluloid::Actor[actor_id] = executor

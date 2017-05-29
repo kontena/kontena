@@ -15,18 +15,23 @@ module Kontena::Cli::Helpers
 
     # @param [Websocket::Frame::Incoming] msg
     def handle_message(msg)
-      data = JSON.parse(msg.data)
-      if data
-        if data['exit']
+      data = parse_message(msg)
+      if data.is_a?(Hash)
+        if data.has_key?('exit')
           exit data['exit'].to_i
         else
           $stdout << data['chunk']
         end
       end
-    rescue JSON::ParserError
-      # should we handle these?
     rescue => exc
-      $stderr << exc.message
+      $stderr << "#{exc.class.name}: #{exc.message}"
+    end
+
+    # @param [Websocket::Frame::Incoming] msg
+    def parse_message(msg)
+      JSON.parse(msg.data)
+    rescue JSON::ParserError
+      nil
     end
   end
 end

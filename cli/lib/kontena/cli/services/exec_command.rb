@@ -6,6 +6,7 @@ module Kontena::Cli::Services
   class ExecCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::Helpers::ExecHelper
     include ServicesHelper
 
     parameter "NAME", "Service name"
@@ -23,6 +24,7 @@ module Kontena::Cli::Services
     requires_current_grid
 
     def execute
+      require 'websocket-client-simple'
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
       service_containers.sort_by! { |container| container['instance_number'] }
       running_containers = service_containers.select{|container| container['status'] == 'running' }
@@ -63,26 +65,15 @@ module Kontena::Cli::Services
     # Exits if exec returns with non-zero
     # @param [Docker::Container] container
     def exec_container(container)
-      if shell?
-        cmd = ['sh', '-c', cmd_list.join(' ')]
-      else
-        cmd = cmd_list
-      end
-
-      stdout = stderr = exit_status = nil
-
       if !silent? && (verbose? || all?)
         spinner "Executing command on #{container['name']}" do
-          stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
+          exit_status = normal_exec(container)
 
           raise Kontena::Cli::SpinAbort if exit_status != 0
         end
       else
-        stdout, stderr, exit_status = client.post("containers/#{container['id']}/exec", {cmd: cmd})
+        exit_status = normal_exec(container)
       end
-
-      stdout.each do |chunk| $stdout.write chunk end
-      stderr.each do |chunk| $stderr.write chunk end
 
       exit exit_status if exit_status != 0 && !skip?
 
@@ -90,19 +81,54 @@ module Kontena::Cli::Services
     end
 
     # @param [Docker::Container] container
+    # @return [Boolean]
+    def normal_exec(container)
+      base = self
+      cmd = JSON.dump(cmd_list)
+      exit_status = nil
+      token = require_token
+      url = ws_url(container)
+      url << '?shell=true' if shell?
+      ws = connect(url, token)
+      ws.on :message do |msg|
+        data = base.parse_message(msg)
+        if data 
+          if data['exit']
+            exit_status = data['exit'].to_i
+          elsif data['stream'] == 'stdout'
+            $stdout << data['chunk']
+          else 
+            $stderr << data['chunk']
+          end
+        end
+      end
+      ws.on :open do
+        ws.send(cmd)
+      end
+      ws.on :close do |e|
+        exit_status = 1
+      end
+
+      sleep 0.01 until !exit_status.nil?
+
+      exit_status
+    end
+
+    # @param [Docker::Container] container
     def interactive_exec(container)
-      require 'websocket-client-simple'
       require 'io/console'
 
-      cmd = Shellwords.join(cmd_list)
       token = require_token
+      cmd = JSON.dump(cmd_list)
       base = self
-      ws = connect(ws_url(container), token)
+      url = ws_url(container) << '?interactive=true'
+      url << '&shell=true' if shell?
+      ws = connect(url, token)
       ws.on :message do |msg|
         base.handle_message(msg)        
       end
       ws.on :open do
-        ws.send(cmd)
+        ws.send(JSON.dump(cmd))
       end
       ws.on :close do |e|
         exit 1
@@ -114,7 +140,7 @@ module Kontena::Cli::Services
     # @param [Hash] container
     # @return [String]
     def ws_url(container)
-      "#{require_current_master.url.sub('http', 'ws')}/v1/containers/#{container['id']}/exec?interactive=true"
+      "#{require_current_master.url.sub('http', 'ws')}/v1/containers/#{container['id']}/exec"
     end
 
     # @param [String] url

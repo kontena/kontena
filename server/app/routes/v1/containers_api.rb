@@ -59,10 +59,10 @@ module V1
               executor = Docker::StreamingExecutor.new(container, ws)
               if r['interactive']
                 audit_event(r, container.grid, container, 'exec_tty')
-                executor.start_tty
+                executor.start_tty(r['shell'].to_s == 'true')
               else
                 audit_event(r, container.grid, container, 'exec')
-                executor.start
+                executor.start(r['shell'].to_s == 'true')
               end
             end
           end
