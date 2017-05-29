@@ -11,9 +11,16 @@ The [Grid](../core-concepts/architecture.md#the-grid) is a top-level object in K
 * [Users](grids.md#grid-users)
 * [Trusted Subnets](grids.md#grid-trusted-subnets)
 
-## Grid Options
+## Configuration
 
 There are a number of per-grid options. Some of these can be changed using `kontena grid update`, but others must be determined ahead of time when using `kontena grid create`, and cannot be changed later.
+
+
+### Grid name
+
+The grid name will be used as part of the `grid-name.kontena.local` DNS domain used for service lookups. The grid name may consist of letters (`a-z`), digits (`0-9`), underscores (`_`) and dashes (`-`).
+
+There is no limitation on the length of a grid name per se, but the resulting FQDN of each deployed service container (`service-1.stack-name.grid-name.kontena.local`) must be 64 bytes or less. The grid names should be kept reasonably short, to avoid limitating the use of longer stack and service names when deploying.
 
 ### Create options
 These options can only be set when using `kontena grid create`, and cannot be changed later.
