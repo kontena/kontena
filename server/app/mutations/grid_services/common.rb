@@ -9,6 +9,11 @@ module GridServices
       base.extend(ClassMethods)
     end
 
+    # @return [Integer]
+    def instance_count
+      self.instances || self.container_count || 1
+    end
+
     # @param [Grid] grid
     # @param [Hash] link
     # @return [Array<Stack,String>]
@@ -120,6 +125,16 @@ module GridServices
         service_volumes << service_volume
       end
       service_volumes
+    end
+
+    def validate_name
+      domain = self.stack.domain
+      hostname = "#{self.name}-#{self.instance_count}"
+      fqdn = "#{hostname}.#{domain}"
+
+      if fqdn.length > 64
+        add_error(:name, :length, "Total grid service name length #{fqdn.length} is over limit (64): #{fqdn}")
+      end
     end
 
     def validate_links

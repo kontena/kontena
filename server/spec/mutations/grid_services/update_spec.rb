@@ -508,6 +508,27 @@ describe GridServices::Update do
         end
       end
     end
+
+    context 'for a service with a very long name' do
+      let(:service) { GridService.create(grid: grid, name: 'xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38', image_name: 'redis:2.8')}
+
+      it 'allows scaling to single-digit instances' do
+        outcome = described_class.run(
+            grid_service: service,
+            instances: 9,
+        )
+        expect(outcome).to be_success
+      end
+
+      it 'does not allow scaling to double-digit instances' do
+        outcome = described_class.run(
+            grid_service: service,
+            instances: 10,
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.message).to eq 'name' => 'Total grid service name length 65 is over limit (64): xxxxxxxx10xxxxxxxx20xxxxxxxx30xxxxxx38-10.test-grid.kontena.local'
+      end
+    end
   end
 
   describe '#build_grid_service_hooks' do
