@@ -1,16 +1,16 @@
-require 'securerandom'
-
 module Kontena
   module Callbacks
     class AuthenticateAfterDeploy < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create'
 
       def after
-        ENV["DEBUG"] && $stderr.puts("Command result: #{command.result.inspect}")
-        ENV["DEBUG"] && $stderr.puts("Command exit code: #{command.exit_code.inspect}")
+        extend Kontena::Cli::Common
+
+        require 'securerandom'
+        extend Kontena::Cli::Common
+        logger.debug { "Command result: #{command.result.inspect}" }
+        logger.debug { "Command exit code: #{command.exit_code.inspect}" }
         return unless command.exit_code == 0
         return unless command.result.kind_of?(Hash)
         return unless command.result.has_key?(:public_ip)
@@ -36,11 +36,11 @@ module Kontena
 
         # Figure out if HTTPS works, if not, try HTTP
         begin
-          ENV["DEBUG"] && $stderr.puts("Trying to request / from #{new_master.url}")
+          logger.debug { "Trying to request / from #{new_master.url}" }
           client = Kontena::Client.new(new_master.url, nil, ignore_ssl_errors: true)
           client.get('/')
         rescue => ex
-          ENV["DEBUG"] && $stderr.puts("HTTPS test failed: #{ex.class.name} #{ex.message}")
+          logger.debug { "HTTPS test failed: #{ex.class.name} #{ex.message}" }
           unless retried
             new_master.url = "http://#{command.result[:public_ip]}"
             retried = true
@@ -50,10 +50,15 @@ module Kontena
         end
 
         require 'shellwords'
-        cmd = "master login --no-login-info --skip-grid-auto-select --verbose --name #{command.result[:name].shellescape} --code #{command.result[:code].shellescape} #{new_master.url.shellescape}"
+        cmd = [
+          'master', 'login', '--no-login-info' ,'--skip-grid-auto-select', '--verbose',
+          '--name', command.result[:name],
+          '--code', command.result[:code],
+          new_master.url
+        ]
         Retriable.retriable do
-          ENV["DEBUG"] && $stderr.puts("Running: #{cmd}")
-          Kontena.run(cmd)
+          logger.debug { "Running: #{cmd}" }
+          Kontena.run!(cmd)
         end
       end
     end

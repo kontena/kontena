@@ -4,7 +4,7 @@ class CreateEventLog < Mongodb::Migration
     EventLog.create_indexes
     unless EventLog.collection.capped?
       size = (ENV['EVENT_LOGS_CAPPED_SIZE'] || 100).to_i
-      EventLog.collection.session.command(
+      EventLog.collection.client.command(
         convertToCapped: EventLog.collection.name,
         capped: true,
         size: size.megabytes

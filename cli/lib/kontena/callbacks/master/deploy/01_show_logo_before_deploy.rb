@@ -2,11 +2,10 @@ module Kontena
   module Callbacks
     class DisplayLogoBeforeMasterDeploy < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create'
 
       def before
+        extend Kontena::Cli::Common
         display_logo
       end
     end

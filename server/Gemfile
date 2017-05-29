@@ -5,9 +5,9 @@ gem 'roda', '~> 2.5.0'
 gem 'celluloid', '~> 0.17.3'
 gem 'tilt-jbuilder'
 gem 'mutations'
-gem 'mongoid', '~> 4.0.0'
+gem 'mongoid', '~> 5.2.1'
 gem 'symmetric-encryption'
-gem 'activesupport', '~> 4.1.14'
+gem 'activesupport', '~> 4.2'
 gem 'faye-websocket', '~> 0.10.7'
 gem 'websocket-driver', '~> 0.6.2'
 gem 'puma'
@@ -27,8 +27,8 @@ gem 'lru_redux', '~> 1.1.0'
 
 group :development, :test do
   gem 'dotenv'
-  gem 'rspec', '~> 3.1.0', require: false
-  gem 'mongoid-rspec', '~> 2.2.0', require: false
+  gem 'rspec', '~> 3.3.0', require: false
+  gem 'mongoid-rspec', '~> 3.0.0', require: false
   gem 'rack-test', require: false
   gem 'rerun', require: false
   gem 'simplecov', require: false

@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative '../services/services_helper'
 require_relative './service_generator'
 require_relative './service_generator_v2'

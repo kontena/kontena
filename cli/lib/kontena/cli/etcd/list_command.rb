@@ -6,18 +6,23 @@ module Kontena::Cli::Etcd
     include Kontena::Cli::GridOptions
     include Common
 
-    parameter "KEY", "Etcd key"
+    parameter "[KEY]", "Etcd key", default: '/'
 
-    option "--recursive", :flag, "List keys recursively", default: false
+    option ['-r', '--recursive'], :flag, "List keys recursively", default: false
+
+    # the command outputs id info only anyway, this is here strictly for ignoring purposes
+    option ['-q', '--quiet'], :flag, "Output the identifying column only", hidden: true
+
+    requires_current_master
+    requires_current_master_token
 
     def execute
-      require_api_url
-      token = require_token
       validate_key
 
-      opts = []
-      opts << 'recursive=true' if recursive?
-      response = client(token).get("etcd/#{current_grid}/#{key}?#{opts.join('&')}")
+      response = spin_if(!quiet?, "Retrieving keys from etcd") do
+        client.get("etcd/#{current_grid}/#{key}#{'?recursive=true' if recursive?}")
+      end
+
       if response['children']
         children = response['children'].map{|c| c['key'] }
         puts children.join("\n")

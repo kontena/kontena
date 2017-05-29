@@ -84,7 +84,7 @@ describe '/v1/grids', celluloid: true do
         post '/v1/grids', {}.to_json, request_headers
       }.to change{ AuditLog.count }.by(1)
       audit_log = AuditLog.last
-      grid = david.reload.grids.last
+      grid = david.reload.grids.order_by(:id.asc).last
       expect(audit_log.event_name).to eq('create')
       expect(audit_log.resource_id).to eq(grid.id.to_s)
       expect(audit_log.grid).to eq(grid)

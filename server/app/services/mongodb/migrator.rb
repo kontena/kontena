@@ -110,7 +110,7 @@ module Mongodb
     def ensure_indexes
       begin
         DistributedLock.create_indexes
-      rescue Moped::Errors::ConnectionFailure
+      rescue Mongo::Error::ConnectionFailure
         info "cannot connect to database, retrying in 1 second ..."
         sleep 1
         retry

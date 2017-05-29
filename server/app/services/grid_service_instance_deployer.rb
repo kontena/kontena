@@ -23,7 +23,7 @@ class GridServiceInstanceDeployer
   def deploy(deploy_rev)
     info "Deploying service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name} at #{deploy_rev}..."
 
-    @grid_service_instance_deploy.set(:deploy_state => :ongoing)
+    @grid_service_instance_deploy.set(:_deploy_state => :ongoing)
 
     ensure_volume_instance
     ensure_service_instance(deploy_rev)
@@ -31,9 +31,9 @@ class GridServiceInstanceDeployer
   rescue => error
     warn "Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}\n#{error.backtrace.join("\n")}"
     log_service_event("Failed to deploy service instance #{@grid_service.to_path}-#{@instance_number} to node #{@host_node.name}: #{error.class}: #{error}", EventLog::ERROR)
-    return @grid_service_instance_deploy.set(:deploy_state => :error, :error => "#{error.class}: #{error}")
+    return @grid_service_instance_deploy.set(:_deploy_state => :error, :error => "#{error.class}: #{error}")
   else
-    return @grid_service_instance_deploy.set(:deploy_state => :success)
+    return @grid_service_instance_deploy.set(:_deploy_state => :success)
   end
 
   # Ensure the ServiceInstance matches the desired GridServiceInstanceDeploy configuration.
@@ -128,7 +128,7 @@ class GridServiceInstanceDeployer
 
   # @return [GridServiceInstance, NilClass]
   def get_service_instance
-    GridServiceInstance.where(grid_service: @grid_service, instance_number: @instance_number).first
+    GridServiceInstance.where(grid_service: @grid_service, instance_number: @instance_number).sort(_id: :asc).first
   end
 
   # @param [HostNode] node

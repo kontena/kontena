@@ -19,7 +19,7 @@ module Kontena::Cli::Plugins
             Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
           rescue => ex
             $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-            ENV["DEBUG"] && $stderr.puts(ex.backtrace.join("\n  "))
+            logger.error(ex)
             spin.fail!
           end
         end
@@ -33,7 +33,7 @@ module Kontena::Cli::Plugins
             Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
           rescue => ex
             $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-            ENV["DEBUG"] && $stderr.puts(ex.backtrace.join("\n  "))
+            logger.error(ex)
             spin.fail!
           end
         end

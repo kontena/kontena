@@ -55,6 +55,7 @@ RSpec.configure do |config|
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
   include Shell
+  include ContainerHelper
 
   config.before :each do
     k = Kommando.run "kontena grid use e2e"

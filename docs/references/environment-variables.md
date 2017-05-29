@@ -16,6 +16,9 @@ toc_order: 2
 - `ACME_ENDPOINT`: acme endpoint for Let's Encrypt
 - `AUTH_API_URL`: specifies authentication server url (default: https://auth.kontena.io)
 - `WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
+- `KONTENA_CLOCK_SKEW`: acceptable clock skew for connecting agents (default: 1.0s)
+
+  The acceptable range of clock offsets is between `WEBSOCKET_TIMEOUT` + `KONTENA_CLOCK_SKEW` (default: 6.0) seconds in the past, and `KONTENA_CLOCK_SKEW` (default: 1.0) seconds in the future.
 
 ## Kontena Agent
 

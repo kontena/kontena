@@ -88,6 +88,10 @@ describe Kontena::WebsocketClient do
   describe '#on_close' do
     let(:event) { Faye::WebSocket::API::CloseEvent.new('close', {}) }
 
+    before do
+      allow(EM).to receive(:next_tick) do |&block| block.call end
+    end
+
     it 'sets connected to false' do
       subject.on_open(spy)
       expect {
@@ -96,21 +100,43 @@ describe Kontena::WebsocketClient do
     end
 
     it 'sets connecting to false' do
-      subject.connect
+      subject.instance_variable_set('@connecting', true)
       expect {
         subject.on_close(event)
       }.to change{ subject.connecting? }.from(true).to(false)
     end
 
-    it 'handles 4001 error code' do
+    it 'aborts on 4001 error code' do
       event = Faye::WebSocket::API::CloseEvent.new('close', code: 4001)
-      expect(subject).to receive(:handle_invalid_token).once
+      expect(subject).to receive(:handle_invalid_token).and_call_original
+      expect(subject).to receive(:abort)
       subject.on_close(event)
     end
 
-    it 'handles 4010 error code' do
+    it 'aborts on 4010 error code' do
       event = Faye::WebSocket::API::CloseEvent.new('close', code: 4010)
-      expect(subject).to receive(:handle_invalid_version).once
+      expect(subject).to receive(:handle_invalid_version).and_call_original
+      expect(subject).to receive(:abort)
+      subject.on_close(event)
+    end
+
+    it 'disconnects on 4030 error code' do
+      event = Faye::WebSocket::API::CloseEvent.new('close', code: 4030)
+      expect(subject).to_not receive(:abort)
+      subject.on_close(event)
+    end
+
+    it 'aborts on 4040 error code' do
+      event = Faye::WebSocket::API::CloseEvent.new('close', code: 4040)
+      expect(subject).to receive(:handle_invalid_connection).and_call_original
+      expect(subject).to receive(:abort)
+      subject.on_close(event)
+    end
+
+    it 'aborts on 4041 error code' do
+      event = Faye::WebSocket::API::CloseEvent.new('close', code: 4040)
+      expect(subject).to receive(:handle_invalid_connection).and_call_original
+      expect(subject).to receive(:abort)
       subject.on_close(event)
     end
 
@@ -184,7 +210,7 @@ describe Kontena::WebsocketClient do
         double(:open_event)
       end
       let :close_event do
-        double(:close_event, code: 1006)
+        double(:close_event, code: 1006, reason: "Connection closed")
       end
 
       let :close_timer do

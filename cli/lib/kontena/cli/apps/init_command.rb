@@ -4,6 +4,8 @@ require_relative 'dockerfile_generator'
 require_relative 'docker_compose_generator'
 require_relative 'kontena_yml_generator'
 
+require "safe_yaml"
+SafeYAML::OPTIONS[:default_mode] = :safe
 
 module Kontena::Cli::Apps
   class InitCommand < Kontena::Command

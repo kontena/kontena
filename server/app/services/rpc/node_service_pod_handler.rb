@@ -81,7 +81,7 @@ module Rpc
     # @return [Boolean]
     def migration_done?
       if @migration_done.nil?
-        last = SchemaMigration.last
+        last = SchemaMigration.order_by(:id.asc).last
         if last
           @migration_done = last.version >= 20
         else

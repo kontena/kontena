@@ -32,7 +32,7 @@ describe StackDeployWorker, celluloid: true do
 
       expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
       expect(subject.wrapped_object).to receive(:wait_until!) do
-        stack_deploy.grid_service_deploys.first.set(:deploy_state => :success, :finished_at => Time.now.utc)
+        stack_deploy.grid_service_deploys.first.set(:_deploy_state => :success, :finished_at => Time.now.utc)
       end
       stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)
       expect(stack_deploy).to be_success
@@ -56,7 +56,7 @@ describe StackDeployWorker, celluloid: true do
 
       expect(GridServices::Deploy).to receive(:run).with(grid_service: GridService).and_call_original
       expect(subject.wrapped_object).to receive(:wait_until!) do
-        stack_deploy.grid_service_deploys.first.set(:deploy_state => :error, :finished_at => Time.now.utc)
+        stack_deploy.grid_service_deploys.first.set(:_deploy_state => :error, :finished_at => Time.now.utc)
       end
 
       stack_deploy = subject.deploy_stack(stack_deploy, stack_rev)

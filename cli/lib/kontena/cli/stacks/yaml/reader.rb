@@ -25,7 +25,8 @@ module Kontena::Cli::Stacks
       attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values, :registry
 
       def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
-        require 'yaml'
+        require "safe_yaml"
+        SafeYAML::OPTIONS[:default_mode] = :safe
         require_relative 'service_extender'
         require_relative 'validator_v3'
         require_relative 'opto'
@@ -165,7 +166,7 @@ module Kontena::Cli::Stacks
         template = Liquid::Template.parse(content)
 
         # Wrap nil values in LiquidNull to not have Liquid consider them as undefined
-        vars = Hash[vars.map {|key, value| [key, value.nil? ? LiquidNull.new : value]}]
+        vars = vars.map {|key, value| [key, value.nil? ? LiquidNull.new : value]}.to_h
 
         template.render!(vars, strict_variables: true, strict_filters: true)
       end
