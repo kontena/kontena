@@ -12,16 +12,14 @@ module Kontena::Cli::Master::Config
 
     option ['-p', '--pair'], :flag, "Print key=value instead of only value"
 
-    option '--return', :flag, "Return the value", hidden: true
+    def response
+      client.get("config/#{key}")
+    end
 
     def execute
-      if self.pair?
-        puts client.get("config/#{self.key}").inspect
-      elsif self.return?
-        return client.get("config/#{self.key}")[self.key]
-      else
-        puts client.get("config/#{self.key}")[self.key]
-      end
+      value = response[key]
+      print(key + '=') if pair?
+      puts value
     end
   end
 end
