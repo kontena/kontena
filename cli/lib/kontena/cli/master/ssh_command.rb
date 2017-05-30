@@ -31,7 +31,7 @@ module Kontena::Cli::Master
     def master_is_vagrant?
       if master_provider_vagrant?
         unless vagrant_plugin_installed?
-          exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
+          exit_with_error 'You need to install vagrant plugin to ssh into this master. Use: kontena plugin install vagrant'
         end
         logger.debug { "Master config server.provider is vagrant" }
         true
