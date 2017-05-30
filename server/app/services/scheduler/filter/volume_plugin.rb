@@ -19,7 +19,8 @@ module Scheduler
         }.compact
 
         nodes = nodes.select { |node|
-          (needed_drivers - node.plugins['volume']).empty?
+          volume_drivers = node.volume_drivers.map { |v| v['name'] }
+          (needed_drivers - volume_drivers).empty?
         }
 
         if nodes.empty?

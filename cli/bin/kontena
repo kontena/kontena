@@ -12,7 +12,8 @@ if ARGV[0] == 'complete'
   ARGV.delete_at(0)
   require 'kontena/scripts/completer'
 else
+  ENV['DEBUG'] ||= "true" if ARGV.any? { |arg| arg == '-D' || arg == '--debug'}
   require 'kontena_cli'
-  Kontena::PluginManager.instance.init
+  Kontena::PluginManager.instance.init unless ENV['NO_PLUGINS']
   Kontena::MainCommand.run
 end

@@ -18,7 +18,7 @@ module Kontena::Cli::Nodes
       exit_with_error "Cannot combine --any with a node name" if node_id && any?
 
       if node_id
-        node = client.get("grids/#{current_grid}/nodes/#{node_id}")
+        node = client.get("nodes/#{current_grid}/#{node_id}")
       elsif any?
         nodes = client.get("grids/#{current_grid}/nodes")['nodes']
         node = nodes.select{ |node| node['connected'] }.first
@@ -28,14 +28,12 @@ module Kontena::Cli::Nodes
 
       provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
-      commands_list.insert('--') unless commands_list.empty?
-
       if provider == 'vagrant'
         unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
         cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list
-        Kontena.run(cmd)
+        Kontena.run!(cmd)
       else
         cmd = ['ssh']
         cmd += ["-i", identity_file] if identity_file

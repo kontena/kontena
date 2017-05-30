@@ -3,7 +3,6 @@ describe Kontena::Workers::EventWorker do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
-  let(:network_adapter) { spy(:network_adapter) }
   let(:event) {
     {
       'Action' => 'start',
@@ -25,9 +24,6 @@ describe Kontena::Workers::EventWorker do
 
   before(:each) {
     Celluloid.boot
-    allow(network_adapter).to receive(:adapter_image?).and_return(false)
-    allow(Celluloid::Actor).to receive(:[])
-    allow(Celluloid::Actor).to receive(:[]).with(:network_adapter).and_return(network_adapter)
     mock_rpc_client
   }
   after(:each) { Celluloid.shutdown }
@@ -42,7 +38,7 @@ describe Kontena::Workers::EventWorker do
 
     it 'streams and processes events' do
       times = 100
-      expect(rpc_client).to receive(:notification).exactly(times).times
+      expect(rpc_client).to receive(:request).exactly(times).times
       subject
       allow(Docker::Event).to receive(:stream) {|params, &block|
         times.times {
@@ -125,27 +121,21 @@ describe Kontena::Workers::EventWorker do
 
   describe '#publish_event' do
     it 'sends event via rpc' do
-      expect(rpc_client).to receive(:notification).with('/containers/event', [anything])
+      expect(rpc_client).to receive(:request).with('/containers/event', [anything])
       subject.publish_event(spy)
     end
 
     it 'publishes event' do
-      expect(rpc_client).to receive(:notification)
+      expect(rpc_client).to receive(:request)
       event = spy(:event)
       expect(subject.wrapped_object).to receive(:publish).with(described_class::EVENT_NAME, event)
       subject.publish_event(event)
     end
 
-    it 'does not send event if source is from network adapter' do
-      event = spy(:event)
-      expect(rpc_client).not_to receive(:notification)
-      allow(network_adapter).to receive(:adapter_image?).and_return(true)
-      subject.publish_event(event)
-    end
-
     it 'does not publish event if source is from network adapter' do
       event = spy(:event)
-      allow(network_adapter).to receive(:adapter_image?).and_return(true)
+      allow(subject.wrapped_object).to receive(:adapter_image?).and_return(true)
+      expect(rpc_client).not_to receive(:request)
       expect(subject.wrapped_object).not_to receive(:publish)
       subject.publish_event(event)
     end

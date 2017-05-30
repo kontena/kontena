@@ -30,6 +30,9 @@ module Kontena::Workers
       else
         @statsd = nil
       end
+    rescue => error
+      warn "statsd configuration failed: #{error.message}"
+      warn error.backtrace.join("\n") if error.backtrace
     end
 
     def start
@@ -99,15 +102,15 @@ module Kontena::Workers
       current_stat = container.dig(:stats, -1)
       # Need to default to something usable in calculations
 
-      cpu_usages = current_stat.dig(:cpu, :usage, :per_cpu_usage)
-      num_cores = cpu_usages ? cpu_usages.count : 1
       raw_cpu_usage = current_stat.dig(:cpu, :usage, :total) - prev_stat.dig(:cpu, :usage, :total)
       interval_in_ns = get_interval(current_stat.dig(:timestamp), prev_stat.dig(:timestamp))
       network_traffic = calculate_network_traffic(prev_stat, current_stat)
 
+      container_spec = container[:spec]
+      container_spec.delete(:labels) if container_spec.is_a?(Hash) && container_spec.has_key?(:labels)
       data = {
         id: id,
-        spec: container.dig(:spec),
+        spec: container_spec,
         cpu: {
           usage: raw_cpu_usage,
           usage_pct: ((raw_cpu_usage / interval_in_ns) * 100).round(2)

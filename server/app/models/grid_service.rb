@@ -47,6 +47,7 @@ class GridService
   has_many :container_stats
   has_many :audit_logs
   has_many :grid_service_deploys, dependent: :destroy
+  has_many :event_logs
   has_and_belongs_to_many :networks
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'
@@ -98,7 +99,7 @@ class GridService
   def set_state(state)
     state_changed = self.state != state
     self.set(:state => state)
-    publish_update_event if state_changed    
+    publish_update_event if state_changed
   end
 
   # @return [Boolean]
@@ -121,15 +122,6 @@ class GridService
   end
 
   # @return [Boolean]
-  def deploying?(ignore: nil)
-    scope = self.grid_service_deploys.where(
-      :created_at.gt => 10.minutes.ago, :started_at.ne => nil, :finished_at => nil
-    )
-    scope = scope.where(:_id.ne => ignore) if ignore
-    scope.count > 0
-  end
-
-  # @return [Boolean]
   def running?
     self.state == 'running'
   end
@@ -145,8 +137,29 @@ class GridService
     self.stack.exposed_service?(self)
   end
 
+  # The service has deploys created, queued or started, but not yet finished.
+  #
+  # Equvialent to deploy_pending? || deploy_running?
+  #
+  # Ignores any expired deploys.
+  #
+  # @return [Boolean]
+  def deploying?
+    self.grid_service_deploys.deploying.count > 0
+  end
+
+  # The service has deploys created or queued, but not yet started, running or finished.
+  #
+  # @return [Boolean]
   def deploy_pending?
-    self.grid_service_deploys.where(started_at: nil).count > 0
+    self.grid_service_deploys.pending.count > 0
+  end
+
+  # The service has deploys that have been started, but not yet finished or timeout.
+  #
+  # @return [Boolean]
+  def deploy_running?
+    self.grid_service_deploys.running.count > 0
   end
 
   # @return [Boolean]
@@ -178,7 +191,7 @@ class GridService
   # @return [Hash]
   def env_hash
     if @env_hash.nil?
-      @env_hash = self.env.inject({}){|h, n| h[n.split('=', 2)[0]] = n.split('=', 2)[1]; h }
+      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split('=', 2) }]
     end
 
     @env_hash

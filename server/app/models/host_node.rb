@@ -5,8 +5,8 @@ class HostNode
   include Mongoid::Document
   include Mongoid::Timestamps
   include EventStream
-  class Error < StandardError
-  end
+
+  Error = Class.new(StandardError)
 
   field :node_id, type: String
   field :node_number, type: Integer
@@ -28,12 +28,14 @@ class HostNode
   field :last_seen_at, type: Time
   field :agent_version, type: String
   field :docker_version, type: String
-  field :plugins, type: Hash, default: {}
+  field :connected_at, type: DateTime
 
-  attr_accessor :schedule_counter
+  embeds_many :volume_drivers, class_name: 'HostNodeDriver'
+  embeds_many :network_drivers, class_name: 'HostNodeDriver'
 
   belongs_to :grid
-  has_many :grid_service_instances
+  has_many :grid_service_instances, dependent: :nullify
+  has_many :event_logs
   has_many :containers
   has_many :container_stats
   has_many :host_node_stats
@@ -51,6 +53,11 @@ class HostNode
 
   after_destroy do |node|
     node.containers.unscoped.destroy
+  end
+
+  # @return [String]
+  def to_s
+    self.name || self.node_id
   end
 
   def to_path
@@ -76,10 +83,8 @@ class HostNode
       private_ip: attrs['PrivateIp'],
       agent_version: attrs['AgentVersion'],
       docker_version: attrs['ServerVersion'],
-      plugins: {
-        'volume' => attrs.dig('Plugins', 'Volume') || [],
-        'network' => attrs.dig('Plugins', 'Network') || []
-      }
+      volume_drivers: attrs.dig('Drivers', 'Volume') || [],
+      network_drivers: attrs.dig('Drivers', 'Network') || [],
     }
     if self.name.nil?
       self.name = attrs['Name']
@@ -106,54 +111,56 @@ class HostNode
     RpcClient.new(self.node_id, timeout)
   end
 
-  # @return [Integer]
-  def schedule_counter
-    @schedule_counter ||= 0
-  end
-
-  # @return [String]
-  def region
-    if @region.nil?
-      @region = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^region=(.+)/)
-          @region = match[1]
-        end
-      end
-    end
-    @region
-  end
-
   def initial_member?
     return false if self.node_number.nil?
     return true if self.node_number <= self.grid.initial_size
     false
   end
 
+  # @param label [String] match label name before =
+  # @return [Boolean] label exists
+  def has_label?(lookup_name)
+    self.labels.to_a.each do |label|
+      name, value = label.split('=', 2)
+
+      next if name != lookup_name
+
+      return true
+    end
+    return false
+  end
+
+  # @param label [String] match label name before =
+  # @return [String, nil] the label value, or nil if omitted/empty
+  def label_value(lookup_name)
+    self.labels.to_a.each do |label|
+      name, value = label.split('=', 2)
+
+      next if name != lookup_name
+
+      return value
+    end
+    return nil
+  end
+
+  # @return [String]
+  def region
+    @region ||= label_value('region') || 'default'
+  end
+
   # @return [String]
   def availability_zone
-    if @availability_zone.nil?
-      @availability_zone = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^az=(.+)/)
-          @availability_zone = match[1]
-        end
-      end
-    end
-    @availability_zone
+    @availability_zone ||= label_value('az') || 'default'
   end
 
   # @return [String]
   def host_provider
-    if @host_provider.nil?
-      @host_provider = 'default'.freeze
-      self.labels.to_a.each do |label|
-        if match = label.match(/^provider=(.+)/)
-          @host_provider = match[1]
-        end
-      end
-    end
-    @host_provider
+    @host_provider ||= label_value('provider') || 'default'
+  end
+
+  # @return [Boolean]
+  def ephemeral?
+    @ephemeral ||= has_label?('ephemeral')
   end
 
   # @return [String] Overlay IP, without subnet mask
@@ -172,7 +179,7 @@ class HostNode
       node_number = free_numbers.shift
       raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
       self.update_attribute(:node_number, node_number)
-    rescue Moped::Errors::OperationFailure
+    rescue Mongo::Error::OperationFailure
       retry
     end
   end

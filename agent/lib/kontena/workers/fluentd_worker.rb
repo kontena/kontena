@@ -16,8 +16,6 @@ module Kontena::Workers
       @fluentd = nil
       @forwarding = false
       info 'initialized'
-      subscribe('container:log', :on_log_event)
-
       async.start if autostart
     end
 
@@ -47,7 +45,7 @@ module Kontena::Workers
       end
     end
 
-    def on_log_event(topic, log)
+    def on_log_event(log)
       if @forwarding && @fluentd
         tag = [log[:stack], log[:service], log[:instance]].join('.')
         record = {

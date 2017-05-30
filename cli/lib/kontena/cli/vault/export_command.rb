@@ -11,12 +11,15 @@ module Kontena::Cli::Vault
 
     def execute
       require 'shellwords'
+      require 'json'
+      require "safe_yaml"
+      SafeYAML::OPTIONS[:default_mode] = :safe
       meth = json? ? :to_json : :to_yaml
-      puts Hash[
-        *Kontena.run('vault ls --return', returning: :result).sort.flat_map do |secret|
-          [secret, Kontena.run("vault read --return #{secret.shellescape}", returning: :result)]
-        end
-      ].send(meth)
+      puts(
+        Kontena.run!(['vault', 'ls', '--return']).sort.map do |secret|
+          [secret, Kontena.run!(['vault', 'read', '--return', secret])]
+        end.to_h.send(meth)
+      )
     end
   end
 end

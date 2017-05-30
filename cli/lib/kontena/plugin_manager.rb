@@ -159,6 +159,10 @@ module Kontena
       SafeYAML::OPTIONS[:default_mode] = :safe if Object.const_defined?(:SafeYAML)
     end
 
+    def plugin_debug?
+      @plugin_debug ||= ENV['DEBUG'] == 'plugin'
+    end
+
     def load_plugins
       plugins = []
       Gem::Specification.to_a.each do |spec|
@@ -167,27 +171,44 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
-                load(plugin)
+
+                loaded_features_before = $LOADED_FEATURES.dup
+                load_path_before = $LOAD_PATH.dup
+
+                Kontena.logger.debug { "Activating plugin #{spec.name}" } if plugin_debug?
+                spec.activate
+                spec.activate_dependencies
+
+                Kontena.logger.debug { "Loading plugin #{spec.name}" }
+                require(plugin)
+                Kontena.logger.debug { "Loaded plugin #{spec.name}" } if plugin_debug?
+
+                if plugin_debug?
+                  added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
+                  added_paths = ($LOAD_PATH - load_path_before).map {|feat| "- #{feat}"}
+                  Kontena.logger.debug { "Plugin manager loaded features for #{spec.name}:" } unless added_features.empty?
+                  added_features.each { |feat| Kontena.logger.debug { feat } }
+                  Kontena.logger.debug { "Plugin manager load paths added for #{spec.name}:" } unless added_paths.empty?
+                  added_paths.each { |path| Kontena.logger.debug { path } }
+                end
+
                 plugins << spec
               else
                 plugin_name = spec.name.sub('kontena-plugin-', '')
-                STDERR.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
-                STDERR.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
+                $stderr.puts " [#{Kontena.pastel.red('error')}] Plugin #{Kontena.pastel.cyan(plugin_name)} (#{spec.version}) is not compatible with the current cli version."
+                $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
-            rescue LoadError => exc
-              STDERR.puts " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}"
-              if ENV['DEBUG']
-                STDERR.puts exc.message
-                STDERR.puts exc.backtrace.join("\n")
-              end
-              exit 1
+            rescue ScriptError, StandardError => ex
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
+              Kontena.logger.error(ex)
             end
           end
         end
       end
       plugins
-    rescue => exc
-      STDERR.puts exc.message
+    rescue => ex
+      $stderr.puts Kontena.pastel.red(ex.message)
+      Kontena.logger.error(ex)
     end
 
     def prefix(plugin_name)

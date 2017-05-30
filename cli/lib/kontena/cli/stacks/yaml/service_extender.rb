@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative '../../../util'
 
 module Kontena::Cli::Stacks

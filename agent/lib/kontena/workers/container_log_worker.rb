@@ -10,6 +10,13 @@ module Kontena::Workers
     def initialize(container, queue)
       @container = container
       @queue = queue
+      @dropped = 0
+      every(60) {
+        if @dropped > 0
+          warn "dropped #{@dropped} log lines because queue was full"
+        end
+        @dropped = 0
+      }
     end
 
     # @param [Integer] since unix timestamp
@@ -67,12 +74,20 @@ module Kontena::Workers
         type: stream,
         data: data
       }
-      @queue << msg
       publish_log(msg)
+      if @queue.size > LogWorker::QUEUE_MAX_SIZE
+        @dropped += 1
+      elsif @queue.size > LogWorker::QUEUE_THROTTLE
+        @queue << msg
+        sleep 0.0001
+      elsif @queue.size < LogWorker::QUEUE_THROTTLE
+        @queue << msg
+      end
     end
 
     def publish_log(log)
-      Celluloid::Notifications.publish('container:log', log)
+      Actor[:fluentd_worker].async.on_log_event(log)
+    rescue Celluloid::DeadActorError
     end
   end
 end

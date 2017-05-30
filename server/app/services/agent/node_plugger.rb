@@ -1,35 +1,35 @@
-require_relative '../grid_scheduler'
 require_relative '../../serializers/rpc/host_node_serializer'
 
 module Agent
   class NodePlugger
     include Logging
 
-    attr_reader :node, :grid
+    attr_reader :node
 
-    # @param [Grid] grid
     # @param [HostNode] node
-    def initialize(grid, node)
-      @grid = grid
+    def initialize(node)
       @node = node
     end
 
-    # @return [Celluloid::Future]
-    def plugin!
-      begin
-        prev_seen_at = node.last_seen_at
-        self.update_node
-        self.publish_update_event
-        self.send_master_info
-        self.send_node_info
-      rescue => exc
-        error exc.message
-        error exc.backtrace.join("\n")
-      end
+    # @param [Time] connected_at
+    def plugin!(connected_at)
+      self.update_node! connected_at
+      self.publish_update_event
+      self.send_master_info
+      self.send_node_info
+    rescue => exc
+      error exc
     end
 
-    def update_node
-      node.set(connected: true, last_seen_at: Time.now.utc)
+    # @raise [RuntimeError] Node ... has already re-connected at ...
+    def update_node!(connected_at)
+      connected_node = HostNode.where(:id => node.id)
+        .any_of({:connected_at => nil}, {:connected_at.lt => connected_at})
+        .find_one_and_update({:$set => {connected: true, last_seen_at: Time.now.utc, connected_at: connected_at}})
+
+      fail "Node #{@node} has already re-connected at #{@node.connected_at}" unless connected_node
+
+      info "Connected node #{@node.to_path} at #{connected_at}"
     end
 
     def publish_update_event

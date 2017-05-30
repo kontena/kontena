@@ -4,13 +4,17 @@ module Kontena::Cli::Volumes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-
     banner "Creates a volume"
     parameter 'NAME', 'Volume name'
 
-    option '--driver', 'DRIVER', 'Volume driver to be used'
+    SCOPES = %w(grid stack instance)
+
+    option '--driver', 'DRIVER', 'Volume driver to be used', required: true
     option '--driver-opt', 'DRIVER_OPT', 'Volume driver options', multivalued: true
-    option '--scope', 'SCOPE', 'Volume scope'
+    option '--scope', 'SCOPE', "Volume scope (#{SCOPES.join(',')})", required: true do |scope|
+      exit_with_error "Unknown scope '#{scope}, must be one of #{SCOPES.join(',')}" unless SCOPES.include?(scope)
+      scope
+    end
 
     requires_current_master
     requires_current_master_token
@@ -28,7 +32,7 @@ module Kontena::Cli::Volumes
     end
 
     def parse_driver_opts
-      Hash[driver_opt_list.map{|opt| opt.split '='}]
+      driver_opt_list.map{|opt| opt.split '='}.to_h
     end
 
     def create_volume(volume)

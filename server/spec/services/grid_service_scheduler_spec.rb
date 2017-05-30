@@ -6,7 +6,7 @@ describe GridServiceScheduler do
   let(:nodes) do
     nodes = []
     3.times { nodes << HostNode.create!(node_id: SecureRandom.uuid) }
-    nodes
+    nodes.map { |n| Scheduler::Node.new(n) }
   end
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy) }
@@ -20,6 +20,10 @@ describe GridServiceScheduler do
     it 'returns a node' do
       node = subject.select_node(grid_service, 'foo-1', nodes)
       expect(nodes.include?(node)).to eq(true)
+    end
+
+    it 'fails if all nodes are offline' do
+      expect{subject.select_node(grid_service, 1, [])}.to raise_error(Scheduler::Error, "There are no nodes available")
     end
   end
 

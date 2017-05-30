@@ -1,4 +1,5 @@
-require 'yaml'
+require "safe_yaml"
+SafeYAML::OPTIONS[:default_mode] = :safe
 require_relative 'service_extender'
 require_relative 'validator'
 require_relative 'validator_v2'
@@ -53,8 +54,8 @@ module Kontena::Cli::Apps
         replace_dollar_dollars(content)
         begin
           @yaml = ::YAML.safe_load(content)
-        rescue Psych::SyntaxError => e
-          raise "Error while parsing #{file}".colorize(:red)+ " "+e.message
+        rescue Psych::SyntaxError => ex
+          raise ex.class, "Error while parsing #{file} : #{ex.message}"
         end
       end
 

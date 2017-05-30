@@ -1,6 +1,8 @@
 
 class Kontena::Cli::AppCommand < Kontena::Command
 
+  warn Kontena.pastel.yellow("[DEPRECATED] The `kontena app` commands are deprecated in favor of `kontena stack` commands and will be removed in future releases")
+
   subcommand "init", "Init Kontena application", load_subcommand('apps/init_command')
   subcommand "build", "Build Kontena services", load_subcommand('apps/build_command')
   subcommand "config", "View service configurations", load_subcommand('apps/config_command')

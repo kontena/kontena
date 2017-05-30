@@ -15,7 +15,9 @@ module Kontena
   class WebsocketClient
     include Kontena::Logging
 
-    KEEPALIVE_TIME = 30
+    STRFTIME = '%F %T.%NZ'
+    KEEPALIVE_INTERVAL = 30.0 # seconds
+    PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5)
 
     attr_reader :api_uri,
                 :api_token,
@@ -43,7 +45,7 @@ module Kontena
       EM::PeriodicTimer.new(1) {
         connect unless connected?
       }
-      EM::PeriodicTimer.new(KEEPALIVE_TIME) {
+      EM::PeriodicTimer.new(KEEPALIVE_INTERVAL) {
         if connected?
           EM.next_tick { verify_connection }
         end
@@ -69,7 +71,8 @@ module Kontena
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
           'Kontena-Version' => Kontena::Agent::VERSION,
-          'Kontena-Node-Labels' => labels
+          'Kontena-Node-Labels' => labels,
+          'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
@@ -165,12 +168,18 @@ module Kontena
       @connected = false
       @connecting = false
       @ws = nil
-      if event.code == 4001
+
+      case event.code
+      when 4001
         handle_invalid_token
-      elsif event.code == 4010
-        handle_invalid_version
+      when 4010
+        handle_invalid_version(event.reason)
+      when 4040, 4041
+        handle_invalid_connection(event.reason)
+      else
+        warn "connection closed with code #{event.code}: #{event.reason}"
       end
-      info "connection closed with code #{event.code}"
+      notify_actors('websocket:close', nil)
     rescue => exc
       error exc.message
     end
@@ -180,9 +189,14 @@ module Kontena
       EM.next_tick { abort('Shutting down ...') }
     end
 
-    def handle_invalid_version
+    def handle_invalid_version(reason)
       agent_version = Kontena::Agent::VERSION
-      error "master does not accept our version (#{agent_version}), shutting down ..."
+      error "master does not accept our version (#{agent_version}): #{reason}"
+      EM.next_tick { abort("Shutting down ...") }
+    end
+
+    def handle_invalid_connection(reason)
+      error "master indicates that this agent should not reconnect: #{reason}"
       EM.next_tick { abort("Shutting down ...") }
     end
 
@@ -215,18 +229,29 @@ module Kontena
     end
 
     def verify_connection
-      return unless @ping_timer.nil?
+      return if @ping_timer
 
-      @ping_timer = EM::Timer.new(2) do
+      ping_time = Time.now
+      @ping_timer = EM::Timer.new(PING_TIMEOUT) do
+        delay = Time.now - ping_time
+
         # @ping_timer remains nil until re-connected to prevent further keepalives while closing
-        if @connected
-          info 'did not receive pong, closing connection'
+        if connected?
+          error 'keepalive ping %.2fs timeout, closing connection' % [delay]
           close
         end
       end
       ws.ping {
         @ping_timer.cancel
         @ping_timer = nil
+
+        delay = Time.now - ping_time
+
+        if delay > PING_TIMEOUT / 2
+          warn "keepalive ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
+        else
+          debug "keepalive ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
+        end
       }
     rescue => exc
       error exc.message

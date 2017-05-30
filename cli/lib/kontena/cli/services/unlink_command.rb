@@ -1,4 +1,3 @@
-require_relative '../grid_options'
 require_relative 'services_helper'
 
 module Kontena::Cli::Services

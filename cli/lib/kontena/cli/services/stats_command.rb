@@ -7,7 +7,8 @@ module Kontena::Cli::Services
     include ServicesHelper
 
     MEM_MAX_LIMITS = [
-      1.8446744073709552e+19, 9.223372036854772e+18
+      2**64,
+      2**63 - 4096
     ]
 
     parameter "NAME", "Service name"

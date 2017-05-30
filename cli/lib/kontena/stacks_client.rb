@@ -1,4 +1,4 @@
-require_relative 'client'
+require 'kontena/client'
 
 module Kontena
   class StacksClient < Client
@@ -6,6 +6,19 @@ module Kontena
     ACCEPT_JSON = { 'Accept' => 'application/json' }
     ACCEPT_YAML = { 'Accept' => 'application/yaml' }
     CT_YAML     = { 'Content-Type' => 'application/yaml' }
+
+    def raise_unless_token
+      unless token && token['access_token']
+        raise Kontena::Errors::StandardError.new(401, "Stack registry write operations require authentication")
+      end
+    end
+
+    def raise_unless_read_token
+      return false unless options[:read_requires_token]
+      unless token && token['access_token']
+        raise Kontena::Errors::StandardError.new(401, "Stack registry requires authentication")
+      end
+    end
 
     def full_uri(stack_name, version = nil)
       URI.join(api_url, path_to(stack_name, version)).to_s
@@ -16,29 +29,35 @@ module Kontena
     end
 
     def push(stack_name, version, data)
-      post('/stack/', data, {}, CT_YAML)
+      raise_unless_token
+      post('/stack/', data, {}, CT_YAML, true)
     end
 
     def show(stack_name, stack_version = nil)
-      get("#{path_to(stack_name, stack_version)}", {}, ACCEPT_JSON)
+      raise_unless_read_token
+      get("#{path_to(stack_name, stack_version)}", nil, ACCEPT_JSON, options[:read_requires_token])
     end
 
     def versions(stack_name)
-      get("#{path_to(stack_name, nil)}/versions", {}, ACCEPT_JSON)['versions']
+      raise_unless_read_token
+      get("#{path_to(stack_name, nil)}/versions", nil, ACCEPT_JSON, options[:read_requires_token])['versions']
     end
 
     def pull(stack_name, version = nil)
-      get(path_to(stack_name, version), {}, ACCEPT_YAML)
+      raise_unless_read_token
+      get(path_to(stack_name, version), nil, ACCEPT_YAML, options[:read_requires_token])
     rescue StandardError => ex
       ex.message << " : #{path_to(stack_name, version)}"
       raise ex, ex.message
     end
 
     def search(query)
-      get('/search', { q: query }, {}, ACCEPT_JSON)['stacks']
+      raise_unless_read_token
+      get('/search', { q: query }, ACCEPT_JSON, options[:read_requires_token])['stacks']
     end
 
     def destroy(stack_name, version = nil)
+      raise_unless_token
       delete(path_to(stack_name, version), {})
     end
   end

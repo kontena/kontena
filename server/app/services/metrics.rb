@@ -1,9 +1,9 @@
 class Metrics
 
-  # @param [Moped::Collection] containers_collection
+  # @param [Mongo::Collection] containers_collection
   # @param [Symbol] sort
   def self.get_container_stats(containers_collection, sort, limit)
-    containers = containers_collection.where(container_id: {:$ne => nil}).asc(:created_at)
+    containers = containers_collection.where(container_id: {:$ne => nil}, 'state.running': true).asc(:created_at)
 
     results = containers.map { |container|
       {

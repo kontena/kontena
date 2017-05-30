@@ -3,6 +3,9 @@ require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
 require_relative '../../stacks_client'
 
+require "safe_yaml"
+SafeYAML::OPTIONS[:default_mode] = :safe
+
 module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
@@ -97,7 +100,7 @@ module Kontena::Cli::Stacks
     end
 
     def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack = stack_from_reader(reader)
       dump_variables(reader) if values_to
       stack
@@ -110,6 +113,11 @@ module Kontena::Cli::Stacks
     def generate_volumes(yaml_volumes)
       return [] unless yaml_volumes
       yaml_volumes.map do |name, config|
+        if config['external'].is_a?(TrueClass)
+          config['external'] = name
+        elsif config['external']['name']
+          config['external'] = config['external']['name']
+        end
         config.merge('name' => name)
       end
     end
@@ -133,25 +141,22 @@ module Kontena::Cli::Stacks
     end
 
     def display_notifications(messages, color = :yellow)
-      STDERR.puts(Kontena.pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
+      $stderr.puts(Kontena.pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
     end
 
     def hint_on_validation_notifications(errors)
-      STDERR.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
+      $stderr.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
       display_notifications(errors)
     end
 
     def abort_on_validation_errors(errors)
-      STDERR.puts "YAML validation failed! Aborting.".colorize(:red)
+      $stderr.puts "YAML validation failed! Aborting.".colorize(:red)
       display_notifications(errors, :red)
       abort
     end
 
     def stacks_client
-      return @stacks_client if @stacks_client
-      Kontena.run('cloud login') unless cloud_auth?
-      config.reset_instance
-      @stacks_client = Kontena::StacksClient.new(kontena_account.stacks_url, kontena_account.token)
+      @stacks_client ||= Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)
     end
   end
 end

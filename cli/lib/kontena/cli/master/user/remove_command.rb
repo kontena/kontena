@@ -15,9 +15,8 @@ module Kontena::Cli::Master::User
       email_list.each do |email|
         begin
           client(token).delete("users/#{email}")
-        rescue => exc
-          STDERR.puts "Failed to remove user #{email}".colorize(:red)
-          STDERR.puts exc.message
+        rescue => ex
+          $stderr.puts pastel.red("Failed to remove user #{email} : #{ex.message}")
         end
       end
     end

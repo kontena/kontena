@@ -6,6 +6,11 @@ describe Kontena::Cli::Stacks::YAML::Opto::Resolvers::ServiceLink do
     described_class.new({'prompt' => 'foo'})
   end
 
+  before(:each) do
+    allow(subject).to receive(:current_master).and_return("foo")
+    allow(subject).to receive(:current_grid).and_return("foo")
+  end
+
   describe '#resolve' do
     it 'returns nil if no matching services' do
       expect(subject).to receive(:get_services).and_return([])

@@ -2,15 +2,14 @@ json.id node.node_id
 json.connected node.connected
 json.created_at node.created_at
 json.updated_at node.updated_at
+json.connected_at node.connected_at
 json.last_seen_at node.last_seen_at
 json.name node.name
 json.os node.os
 json.engine_root_dir node.docker_root_dir
 json.driver node.driver
-json.plugins do
-  json.network node.plugins['network'] || []
-  json.volume node.plugins['volume'] || []
-end
+json.network_drivers node.network_drivers.as_json(only: [:name, :version])
+json.volume_drivers node.volume_drivers.as_json(only: [:name, :version])
 json.kernel_version node.kernel_version
 json.labels node.labels
 json.mem_total node.mem_total

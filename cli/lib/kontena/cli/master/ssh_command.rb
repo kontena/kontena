@@ -16,20 +16,17 @@ module Kontena::Cli::Master
     end
 
     def master_provider
-      Kontena.run('master config get --return server.provider', returning: :result)
+      Kontena.run!(%w(master config get --return server.provider))
     end
 
     def execute
-
-      commands_list.insert('--') unless commands_list.empty?
-
       if master_provider == 'vagrant'
         unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
         cmd = ['vagrant', 'master', 'ssh']
         cmd += commands_list
-        Kontena.run(cmd)
+        Kontena.run!(cmd)
       else
         cmd = ['ssh']
         cmd << "#{user}@#{master_host}"
@@ -40,4 +37,3 @@ module Kontena::Cli::Master
     end
   end
 end
-

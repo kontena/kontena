@@ -2,12 +2,11 @@ require_relative 'fixnum_helper'
 
 module Rpc
   class NodeHandler
-    include Celluloid
     include FixnumHelper
 
     def initialize(grid)
       @grid = grid
-      @db_session = HostNode.collection.session.with(
+      @db_session = HostNode.collection.client.with(
         write: {
           w: 0, fsync: false, j: false
         }
@@ -51,7 +50,7 @@ module Rpc
         network: data['network'],
         created_at: time
       }
-      @db_session[:host_node_stats].insert(stat)
+      @db_session[:host_node_stats].insert_one(stat)
     end
   end
 end

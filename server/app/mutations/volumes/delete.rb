@@ -6,19 +6,23 @@ module Volumes
     end
 
     def validate
-      self.volume.grid.grid_services.each do |service|
-        service.service_volumes.each do |sv|
-          if sv.volume == self.volume
-            add_error(service.name, :volume_in_use, "Volume still in use in service #{sv.grid_service.name}")
-          end
-        end
+      unless self.volume.services.empty?
+        add_error(self.volume.name, :volume_in_use, "Volume still in use in services #{self.volume.services.map{|s| s.to_path}}")
       end
     end
 
     def execute
+      nodes = self.volume.volume_instances.map { |instance| instance.host_node}.uniq
       self.volume.destroy
+      notify_nodes(nodes)
     end
 
+    def notify_nodes(nodes)
+      nodes.each do |node|
+        RpcClient.new(node.node_id).notify('/volumes/notify_update', 'remove') if node.connected?
+      end
+    end
+    
   end
 
 end

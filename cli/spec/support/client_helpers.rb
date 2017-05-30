@@ -21,8 +21,8 @@ module ClientHelpers
       {'current_server' => 'alias',
        'current_account' => 'kontena',
        'servers' => [
-           {'name' => 'some_master', 'url' => 'some_master'},
-           {'name' => 'alias', 'url' => 'someurl', 'token' => token, 'account' => 'master', 'grid' => current_grid},
+           {'name' => 'some_master', 'url' => 'http://someurl.example.com'},
+           {'name' => 'alias', 'url' => 'http://someurl.example.com/', 'token' => token, 'account' => 'master', 'grid' => current_grid},
        ]
       }
     end
@@ -31,7 +31,7 @@ module ClientHelpers
       RSpec::Mocks.space.proxy_for(File).reset
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:current_grid).and_return(current_grid)
-      allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena/certs/.pem')).and_return(false)
+      allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena/certs/someurl.example.com.pem')).and_return(false)
       allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena', 'config.json')).and_return(true)
       allow(File).to receive(:readable?).with(File.join(Dir.home, '.kontena', 'config.json')).and_return(true)
       allow(File).to receive(:read).and_call_original
@@ -39,5 +39,4 @@ module ClientHelpers
       Kontena::Cli::Config.reset_instance
     end
   end
-
 end

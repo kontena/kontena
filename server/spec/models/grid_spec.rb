@@ -17,6 +17,7 @@ describe Grid do
   it { should have_many(:container_stats) }
   it { should have_many(:audit_logs) }
   it { should have_many(:registries) }
+  it { should have_many(:event_logs) }
 
   it { should embed_one(:grid_logs_opts) }
 

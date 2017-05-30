@@ -1,5 +1,3 @@
-require 'kontena/cli/master/user_command'
-
 module Kontena::Cli::Master
   class UserCommand < Kontena::Command
     subcommand "invite", "Invite user to Kontena Master", load_subcommand('master/user/invite_command')

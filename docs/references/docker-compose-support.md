@@ -51,7 +51,5 @@
 | ulimits | ✗ |
 | user | ✓ |
 | working_dir | ✗ |
-| volumes | ✓ <sup>*</sup>|
+| volumes | ✓ |
 | volumes_from | ✓ |
-
-<sup>*</sup> Named volumes are supported in the service declaration, but not in the top-level `volumes` key. When defining named volume in the service declaration the default driver configured by the Docker Engine will be used (in most cases, this is the local driver).

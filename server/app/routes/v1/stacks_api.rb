@@ -62,6 +62,33 @@ module V1
         end
       end
 
+      # @param [Stack] stack
+      def stop_stack(stack)
+        outcome = Stacks::Stop.run(stack: stack)
+        if outcome.success?
+          audit_event(request, @grid, @stack, 'stop')
+          response.status = 200
+          {}
+        else
+          response.status = 422
+          {error: outcome.errors.message}
+        end
+      end
+
+      # @param [Stack] stack
+      def restart_stack(stack)
+        outcome = Stacks::Restart.run(stack: stack)
+
+        if outcome.success?
+          audit_event(request, @grid, @stack, 'restart')
+          response.status = 200
+          {}
+        else
+          response.status = 422
+          {error: outcome.errors.message}
+        end
+      end
+
       # /v1/stacks/:grid/
       r.on ':grid/:name' do |grid, name|
 
@@ -72,8 +99,16 @@ module V1
         end
 
         r.post do
-          r.on ':deploy' do
+          r.on 'deploy' do
             deploy_stack(@stack)
+          end
+
+          r.on 'stop' do
+            stop_stack(@stack)
+          end
+
+          r.on 'restart' do
+            restart_stack(@stack)
           end
         end
 
@@ -93,6 +128,10 @@ module V1
 
           r.on "container_logs" do
             r.route 'stack_container_logs'
+          end
+
+          r.on "event_logs" do
+            r.route 'stack_event_logs'
           end
 
           r.on 'deploys' do

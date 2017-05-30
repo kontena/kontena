@@ -18,7 +18,7 @@ describe Scheduler::Strategy::HighAvailability do
         )
       end
     end
-    nodes
+    nodes.map { |n| Scheduler::Node.new(n) }
   end
 
   let(:stateful_service) do
@@ -31,6 +31,27 @@ describe Scheduler::Strategy::HighAvailability do
 
   describe '#find_node' do
     context 'stateful service' do
+
+      it 'returns previously scheduled node if it exists in nodes array' do
+        stateful_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        node = subject.find_node(stateful_service, 2, nodes)
+        expect(node).to eq(nodes[2])
+      end
+
+      it 'returns nil if previously scheduled node does not exist in nodes array' do
+        stateful_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        nodes.delete(nodes[2])
+        node = subject.find_node(stateful_service, 2, nodes)
+        expect(node).to be_nil
+      end
+
+      it 'returns a node if previously scheduled node has been removed' do
+        stateful_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        nodes.delete(nodes[2]).destroy
+        node = subject.find_node(stateful_service, 2, nodes)
+        expect(nodes.include?(node)).to be_truthy
+      end
+
       it 'returns node from az that does not yet have service instance' do
         nodes[2].schedule_counter = 1 # az=b
         expect(['a', 'c']).to include(subject.find_node(stateful_service, 2, nodes).availability_zone)
@@ -40,7 +61,7 @@ describe Scheduler::Strategy::HighAvailability do
 
       it 'returns node that has data volume container' do
         stateful_service.grid_service_instances.create!(
-          instance_number: 3, host_node: nodes[2]
+          instance_number: 3, host_node: nodes[2].node
         )
         expect(subject.find_node(stateful_service, 3, nodes)).to eq(nodes[2])
       end
@@ -55,6 +76,27 @@ describe Scheduler::Strategy::HighAvailability do
     end
 
     context 'stateless service' do
+
+      it 'returns previously scheduled node if it exists in nodes array' do
+        stateless_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        node = subject.find_node(stateless_service, 2, nodes)
+        expect(node).to eq(nodes[2])
+      end
+
+      it 'returns a node if previously scheduled node does not exist in nodes array' do
+        stateless_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        nodes.delete(nodes[2])
+        node = subject.find_node(stateless_service, 2, nodes)
+        expect(nodes.include?(node)).to be_truthy
+      end
+
+      it 'returns a node if previously scheduled node has been removed' do
+        stateless_service.grid_service_instances.create!(instance_number: 2, host_node: nodes[2].node)
+        nodes.delete(nodes[2]).destroy
+        node = subject.find_node(stateless_service, 2, nodes)
+        expect(nodes.include?(node)).to be_truthy
+      end
+
       it 'returns node from az that does not yet have service instance' do
         nodes[2].schedule_counter = 1 # az=b
         expect(['a', 'c']).to include(subject.find_node(stateless_service, 2, nodes).availability_zone)
@@ -69,14 +111,14 @@ describe Scheduler::Strategy::HighAvailability do
 
     it 'returns zero rank if instance is not already scheduled to node' do
       stateless_service.grid_service_instances.create!(
-        instance_number: 2, host_node: nodes[2]
+        instance_number: 2, host_node: nodes[2].node
       )
       expect(subject.instance_rank(node, stateless_service, 1)).to eq(0.0)
     end
 
     it 'returns negative rank if instance is already scheduled to node' do
       stateless_service.grid_service_instances.create!(
-        instance_number: 2, host_node: node
+        instance_number: 2, host_node: node.node
       )
       expect(subject.instance_rank(node, stateless_service, 2) < 0.0).to be_truthy
     end

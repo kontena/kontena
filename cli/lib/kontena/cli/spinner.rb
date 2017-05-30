@@ -1,6 +1,6 @@
 module Kontena
   module Cli
-    class SpinAbort < StandardError; end
+    SpinAbort = Class.new(StandardError)
 
     class SpinnerStatus
       attr_reader :thread, :result
@@ -69,9 +69,7 @@ module Kontena
           end
         rescue Exception => ex
           Kernel.puts "* #{msg}.. fail"
-          if ENV["DEBUG"]
-            Kernel.puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
-          end
+          Kontena.logger.error(ex)
           raise ex
         end
         exit(status) if status
@@ -158,15 +156,11 @@ module Kontena
         rescue SpinAbort
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
-          if ENV["DEBUG"]
-            STDERR.puts "Spin aborted through fail!"
-          end
+          Kontena.logger.debug { "Spin aborted through fail!" }
         rescue Exception => ex
           spin_thread.kill
           Kernel.puts "\r [" + "fail".colorize(:red)   + "] #{msg}     "
-          if ENV["DEBUG"]
-            STDERR.puts "#{ex} #{ex.message}\n#{ex.backtrace.join("\n")}"
-          end
+          Kontena.logger.error(ex)
           raise ex
         ensure
           unless Thread.main['spinner_msgs'].empty?

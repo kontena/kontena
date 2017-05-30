@@ -12,7 +12,7 @@ describe Metrics do
   end
 
   let! :containers do
-    container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa')
+    container1 = redis_service.containers.create!(name: 'redis-1', container_id: 'aaa', state: { running: true })
     container1.container_stats.create!({
       memory: { 'usage' => 50 },
       cpu: { 'usage_pct' => 100 },
@@ -30,7 +30,7 @@ describe Metrics do
       }
     })
 
-    container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb')
+    container2 = redis_service.containers.create!(name: 'redis-2', container_id: 'bbb', state: { running: true })
     container2.container_stats.create!({
       memory: { 'usage' => 100 },
       cpu: { 'usage_pct' => 50 },
@@ -48,7 +48,7 @@ describe Metrics do
       }
     })
 
-    container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc')
+    container3 = redis_service.containers.create!(name: 'redis-3', container_id: 'ccc', state: { running: true })
     container3.container_stats.create!({
       memory: { 'usage' => 50 },
       cpu: { 'usage_pct' => 50 },
@@ -66,7 +66,7 @@ describe Metrics do
       }
     })
 
-    container4 = redis_service.containers.create!(name: 'redis-4', container_id: 'ddd')
+    container4 = redis_service.containers.create!(name: 'redis-4', container_id: 'ddd', state: { running: true })
     container4.container_stats.create!({
       memory: { 'usage' => 50 },
       cpu: { 'usage_pct' => 50 },
@@ -84,11 +84,29 @@ describe Metrics do
       }
     })
 
-    [container1, container2, container3, container4]
+    container5 = redis_service.containers.create!(name: 'redis-5', container_id: 'eee', state: { running: false })
+    container5.container_stats.create!({
+      memory: { 'usage' => 50 },
+      cpu: { 'usage_pct' => 50 },
+      network: {
+        internal: {
+          'interfaces' => ['ethwe'], 'rx_bytes' => 50, 'rx_bytes_per_second' => 50, 'tx_bytes' => 50, 'tx_bytes_per_second'=>50
+        },
+        external: {
+          'interfaces' => ['eth0'], 'rx_bytes' => 50, 'rx_bytes_per_second' => 50, 'tx_bytes' => 100, 'tx_bytes_per_second'=>50
+        }
+      },
+      spec: {
+        'memory' => { 'limit' => 50},
+        'cpu' => { 'limit' => 50, 'mask' => '0-1' }
+      }
+    })
+
+    [container1, container2, container3, container4, container5]
   end
 
   describe '#get_container_stats' do
-    it 'returns all stats by default' do
+    it 'returns all stats from running instances by default' do
       redis_service
       containers
 

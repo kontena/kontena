@@ -1,18 +1,3 @@
-require 'json'
-require 'excon'
-require 'uri'
-require 'base64'
-require 'socket'
-require 'openssl'
-require 'uri'
-require 'time'
-require_relative 'errors'
-require_relative 'cli/version'
-begin
-  require_relative 'cli/config'
-rescue LoadError
-end
-
 module Kontena
   class Client
 
@@ -43,13 +28,23 @@ module Kontena
     # @param [Kontena::Cli::Config::Token,Hash] access_token
     # @param [Hash] options
     def initialize(api_url, token = nil, options = {})
+      require 'json'
+      require 'excon'
+      require 'uri'
+      require 'base64'
+      require 'socket'
+      require 'openssl'
+      require 'uri'
+      require 'time'
+      require 'kontena/errors'
+      require 'kontena/cli/version'
+      require 'kontena/cli/config'
+
       @api_url, @token, @options = api_url, token, options
       uri = URI.parse(@api_url)
       @host = uri.host
 
-      @logger = Logger.new(ENV["DEBUG"] ? STDERR : STDOUT)
-      @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-      @logger.progname = 'CLIENT'
+      @logger = Kontena.logger
 
       @options[:default_headers] ||= {}
 
@@ -61,7 +56,7 @@ module Kontena
         ssl_verify_peer: ignore_ssl_errors? ? false : true
       }
       if ENV["DEBUG"]
-        require_relative 'debug_instrumentor'
+        require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end
 
@@ -70,12 +65,12 @@ module Kontena
         excon_opts[:ssl_ca_file] = cert_file
         key = OpenSSL::X509::Certificate.new(File.read(cert_file))
         if key.issuer.to_s == "/C=FI/O=Test/OU=Test/CN=Test"
-          logger.debug "Key looks like a self-signed cert made by Kontena CLI, setting verify_peer_host to 'Test'"
+          debug { "Key looks like a self-signed cert made by Kontena CLI, setting verify_peer_host to 'Test'" }
           excon_opts[:ssl_verify_peer_host] = 'Test'
         end
       end
 
-      logger.debug "Excon opts: #{excon_opts.inspect}"
+      debug { "Excon opts: #{excon_opts.inspect}" }
 
       @http_client = Excon.new(api_url, excon_opts)
 
@@ -91,11 +86,18 @@ module Kontena
         else
           @token = token
         end
-        @default_headers.merge!('Authorization' => "Bearer #{@token['access_token']}")
       end
 
       @api_url = api_url
       @path_prefix = options[:prefix] || '/v1/'
+    end
+
+    def debug(&block)
+      logger.debug("CLIENT", &block)
+    end
+
+    def error(&block)
+      logger.error("CLIENT", &block)
     end
 
     # Generates a header hash for HTTP basic authentication.
@@ -136,11 +138,12 @@ module Kontena
       return false unless token_verify_path
 
       final_path = token_verify_path.gsub(/\:access\_token/, token['access_token'])
-      logger.debug "Requesting user info from #{final_path}"
+      debug { "Requesting user info from #{final_path}" }
       request(path: final_path)
       true
-    rescue
-      logger.debug "Authentication verification exception: #{$!} #{$!.message} #{$!.backtrace}"
+    rescue => ex
+      error { "Authentication verification exception" }
+      error { ex }
       false
     end
 
@@ -172,8 +175,9 @@ module Kontena
     # @return [String] version_string
     def server_version
       request(auth: false, expects: 200)['version']
-    rescue
-      logger.debug "Server version exception: #{$!} #{$!.message}"
+    rescue => ex
+      error { "Server version exception" }
+      error { ex }
       nil
     end
 
@@ -331,7 +335,7 @@ module Kontena
       parse_response(@last_response)
     rescue Excon::Errors::Unauthorized
       if token
-        logger.debug 'Server reports access token expired'
+        debug { 'Server reports access token expired' }
 
         if retried || !token || !token['refresh_token']
           raise Kontena::Errors::StandardError.new(401, 'The access token has expired and needs to be refreshed')
@@ -342,7 +346,7 @@ module Kontena
       end
       raise Kontena::Errors::StandardError.new(401, 'Unauthorized')
     rescue Excon::Errors::HTTPStatusError => error
-      logger.debug "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}"
+      debug { "Request #{error.request[:method].upcase} #{error.request[:path]}: #{error.response.status} #{error.response.reason_phrase}: #{error.response.body}" }
 
       handle_error_response(error.response)
     end
@@ -369,8 +373,9 @@ module Kontena
       else
         {}
       end
-    rescue
-      logger.debug "Access token refresh exception: #{$!} - #{$!.message} #{$!.backtrace}"
+    rescue => ex
+      error { "Access token refresh exception" }
+      error { ex }
       false
     end
 
@@ -381,7 +386,7 @@ module Kontena
     # @param [Boolean] use_basic_auth? When true, use basic auth authentication header
     # @return [Boolean] success?
     def refresh_token
-      logger.debug "Performing token refresh"
+      debug { "Performing token refresh" }
       return false if token.nil?
       return false if token['refresh_token'].nil?
       uri = URI.parse(token_account['token_endpoint'])
@@ -389,7 +394,7 @@ module Kontena
       endpoint_data[:host] = uri.host if uri.host
       endpoint_data[:port] = uri.port if uri.port
 
-      logger.debug "Token refresh endpoint: #{endpoint_data.inspect}"
+      debug { "Token refresh endpoint: #{endpoint_data.inspect}" }
 
       return false unless endpoint_data[:path]
 
@@ -408,18 +413,19 @@ module Kontena
       )
 
       if response && response['access_token']
-        logger.debug "Got response to refresh request"
+        debug { "Got response to refresh request" }
         token['access_token']  = response['access_token']
         token['refresh_token'] = response['refresh_token']
         token['expires_at'] = in_to_at(response['expires_in'])
         token.config.write if token.respond_to?(:config)
         true
       else
-        logger.debug "Got null or bad response to refresh request: #{last_response.inspect}"
+        debug { "Got null or bad response to refresh request: #{last_response.inspect}" }
         false
       end
-    rescue
-      logger.debug "Access token refresh exception: #{$!} - #{$!.message} #{$!.backtrace}"
+    rescue => ex
+      error { "Access token refresh exception" }
+      error { ex }
       false
     end
 
@@ -509,8 +515,8 @@ module Kontena
     # @return [Hash,Object,NilClass]
     def parse_json(json)
       JSON.parse(json)
-    rescue
-      logger.debug "JSON parse exception: #{$!} : #{$!.message}"
+    rescue => ex
+      debug { "JSON parse exception: #{ex.class.name} : #{ex.message}" }
       nil
     end
 
@@ -531,12 +537,16 @@ module Kontena
     def handle_error_response(response)
       data = parse_response(response)
 
-      if data.is_a?(Hash) && data.has_key?('error')
-        raise Kontena::Errors::StandardError.new(response.status, data['error'])
+      request_path = " (#{response.path})"
+
+      if data.is_a?(Hash) && data.has_key?('error') && data['error'].is_a?(Hash)
+        raise Kontena::Errors::StandardErrorHash.new(response.status, response.reason_phrase, data['error'])
+      elsif data.is_a?(Hash) && data.has_key?('error')
+        raise Kontena::Errors::StandardError.new(response.status, data['error'] + request_path)
       elsif data.is_a?(String) && !data.empty?
-        raise Kontena::Errors::StandardError.new(response.status, data)
+        raise Kontena::Errors::StandardError.new(response.status, data + request_path)
       else
-        raise Kontena::Errors::StandardError.new(response.status, response.reason_phrase)
+        raise Kontena::Errors::StandardError.new(response.status, response.reason_phrase + request_path)
       end
     end
 

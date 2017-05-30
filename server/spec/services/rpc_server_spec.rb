@@ -12,6 +12,9 @@ describe RpcServer, celluloid: true do
     end
   end
 
+  let(:queue) { SizedQueue.new(800) }
+  let(:subject) { described_class.new(queue) }
+
   let(:grid) { Grid.create!(name: 'test') }
 
   let(:ws_client) do
@@ -23,7 +26,7 @@ describe RpcServer, celluloid: true do
   end
 
   describe '#handle_request' do
-    before(:each) { allow(ws_client).to receive(:send) }
+    before(:each) { allow(subject.wrapped_object).to receive(:send_message) }
 
     it 'calls handler and sends response back to ws_client' do
       expect(subject.wrapped_object).to receive(:send_message).with(ws_client, [1, 99, nil, {msg: 'hello world'}])

@@ -1,11 +1,23 @@
 require 'faye/websocket'
 require_relative '../services/rpc_server'
+require_relative '../services/watchdog'
 require_relative '../services/agent/node_plugger'
 require_relative '../services/agent/node_unplugger'
 
 class WebsocketBackend
-  KEEPALIVE_TIME = 30 # in seconds
+  WATCHDOG_INTERVAL = 0.5.seconds
+  WATCHDOG_THRESHOLD = 1.0.seconds
+  WATCHDOG_TIMEOUT = 60.0.seconds
+
+  STRFTIME = '%F %T.%NZ'
+  KEEPALIVE_TIME = 30.seconds
+  PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5.seconds)
+  CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.seconds)
+
   RPC_MSG_TYPES = %w(request notify)
+  QUEUE_SIZE = 1000
+  QUEUE_WATCH_PERIOD = 60 # once in a minute
+  QUEUE_DROP_NOTIFICATIONS_LIMIT = (QUEUE_SIZE * 0.8)
 
   attr_reader :logger
 
@@ -15,15 +27,26 @@ class WebsocketBackend
     @logger = Logger.new(STDOUT)
     @logger.level = (ENV['LOG_LEVEL'] || Logger::INFO).to_i
     @logger.progname = 'WebsocketBackend'
-    @rpc_server = RpcServer.new
+    @msg_counter = 0
+    @msg_dropped = 0
+    @queue = SizedQueue.new(QUEUE_SIZE)
+    @rpc_server = RpcServer.new(@queue)
+    @rpc_server.async.process!
     subscribe_to_rpc_channel
     watch_connections
+    watch_queue
+    watchdog
   end
 
   def call(env)
     if Faye::WebSocket.websocket?(env)
       req = Rack::Request.new(env)
-      ws = Faye::WebSocket.new(env)
+      ws = Faye::WebSocket.new(env, nil,
+        headers: {
+          'Kontena-Version' => Server::VERSION,
+          'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
+        },
+      )
 
       ws.on :open do |event|
         self.on_open(ws, req)
@@ -50,41 +73,67 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [Rack::Request] req
   def on_open(ws, req)
+    # check grid
     grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
-    if !grid.nil?
-      node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
-      node = grid.host_nodes.find_by(node_id: node_id)
-      labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
-      unless node
-        node = grid.host_nodes.create!(node_id: node_id, labels: labels)
-      end
-
-      node_plugger = Agent::NodePlugger.new(grid, node)
-      client = {
-          ws: ws,
-          id: node_id.to_s,
-          node_id: node.id,
-          grid_id: grid.id,
-          created_at: Time.now
-      }
-      @clients << client
-
-      agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
-      unless self.valid_agent_version?(agent_version)
-        logger.error "version mismatch: server (#{Server::VERSION}), node (#{agent_version})"
-        node_plugger.send_master_info
-        self.handle_invalid_agent_version(ws, node)
-        return
-      end
-
-      logger.info "node opened connection: #{node.name || node_id}, labels: #{labels}"
-      node_plugger.plugin!
-    else
+    unless grid
       logger.error 'invalid grid token, closing connection'
-      ws.close(4001)
+      ws.close(4001, "Invalid grid token")
+      return
     end
+
+    # check host node
+    node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+    labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
+
+    node = grid.host_nodes.find_by(node_id: node_id)
+
+    unless node
+      node = grid.host_nodes.create!(node_id: node_id, labels: labels)
+    end
+
+    # check version
+    agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
+
+    unless self.valid_agent_version?(agent_version)
+      logger.warn "node #{node} agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
+      handle_invalid_agent_version(ws, node, agent_version)
+      return
+    end
+
+    # check clock after version check, because older agent versions do not send this header
+    connected_at = Time.parse(req.env['HTTP_KONTENA_CONNECTED_AT'])
+    connected_dt = Time.now - connected_at
+
+    if connected_dt > PING_TIMEOUT + CLOCK_SKEW
+      logger.warn "node #{node} connected too far in the past at #{connected_at}, #{'%.2fs' % connected_dt} ago"
+      handle_invalid_agent_clock(ws, node, connected_dt)
+      return
+
+    elsif connected_dt < -CLOCK_SKEW
+      logger.warn "node #{node} connected too far in the future at #{connected_at}, #{'%.2fs' % -connected_dt} ahead"
+      handle_invalid_agent_clock(ws, node, connected_dt)
+      return
+    end
+
+    logger.info "node #{node} agent version #{agent_version} connected at #{connected_at}, #{'%.2fs' % connected_dt} ago"
+
+    client = {
+        ws: ws,
+        id: node_id.to_s,
+        node_id: node.id,
+        grid_id: grid.id,
+        created_at: Time.now,
+        connected_at: connected_at,
+    }
+    @clients << client
+
+    EM.defer { Agent::NodePlugger.new(node).plugin! connected_at }
   rescue => exc
-    logger.error "#{exc.class.name}: #{exc.message}"
+    logger.error exc
+  end
+
+  def handle_invalid_agent_clock(ws, node, connected_dt)
+    ws.close(4020, "agent clock offset #{'%.2fs' % connected_dt} exceeds threshold")
   end
 
   ##
@@ -92,6 +141,7 @@ class WebsocketBackend
   # @param [Faye::WebSocket::Event] event
   def on_message(ws, event)
     data = MessagePack.unpack(event.data.pack('c*'))
+    @msg_counter += 1
     if rpc_notification?(data)
       handle_rpc_notification(ws, data)
     elsif rpc_request?(data)
@@ -135,51 +185,70 @@ class WebsocketBackend
   def handle_rpc_request(ws, data)
     client = client_for_ws(ws)
     if client
-      @rpc_server.async.handle_request(ws, client[:grid_id].to_s, data)
+      @queue << [ws, client[:grid_id].to_s, data]
     end
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_notification(ws, data)
+    if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT # too busy to handle notifications
+      @msg_dropped += 1
+      return
+    end
+
     client = client_for_ws(ws)
     if client
-      @rpc_server.async.handle_notification(client[:grid_id].to_s, data)
+      @queue << [client[:grid_id].to_s, data]
     end
   end
 
-  ##
-  # On websocket connection close
+  # Unplug client on websocket connection close.
+  #
+  # The client may have already been unplugged, if we closed the connection.
   #
   # @param [Faye::WebSocket] ws
   def on_close(ws)
     client = @clients.find{|c| c[:ws] == ws}
     if client
-      node = HostNode.find_by(node_id: client[:id])
-      if node
-        Agent::NodeUnplugger.new(node).unplug!
-        logger.info "node closed connection: #{node.name || node.node_id}"
-      end
-      @clients.delete(client)
+      logger.info "node #{client[:id]} connection closed"
+      unplug_client(client)
+    else
+      logger.debug "ignore close of unplugged client"
     end
-    ws.close
   rescue => exc
     logger.error "on_close: #{exc.message}"
     logger.error exc.backtrace.join("\n") if exc.backtrace
+  end
+
+  # Mark client HostNode as disconnected, and remove from @clients.
+  #
+  # The websocket connection may still be open and get closed later.
+  # The client HostNode may not exist anymore.
+  #
+  # @param [Hash] client
+  def unplug_client(client)
+    node = HostNode.find_by(node_id: client[:id])
+    if node
+      Agent::NodeUnplugger.new(node).unplug! client[:connected_at]
+    else
+      logger.warn "skip unplug of missing node #{client[:id]}"
+    end
+    @clients.delete(client)
   end
 
   ##
   # @param [Faye::WebSocket] ws
   # @return [Hash,NilClass]
   def client_for_ws(ws)
-    @clients.find{|c| c[:ws] == ws}
+    @clients.find{ |c| c[:ws] == ws }
   end
 
   ##
   # @param [String] id
   # @return [Hash,NilClass]
   def client_for_id(id)
-    @clients.find{|c| c[:id] == id}
+    @clients.find{ |c| c[:id] == id }
   end
 
   # @param [String] agent_version
@@ -198,19 +267,30 @@ class WebsocketBackend
 
   # @param [Faye::WebSocket] ws
   # @param [HostNode] node
-  def handle_invalid_agent_version(ws, node)
-    node.set(connected: false, last_seen_at: Time.now.utc)
-    EventMachine::Timer.new(1) do
-      ws.close(4010) if ws
-    end
+  def handle_invalid_agent_version(ws, node, version)
+    send_master_info(ws)
+    ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
+  end
+
+  # Send master_info RPC notification directly, without looping through the normal RPC mechanisms
+  #
+  # @param [Faye::Websocket] ws
+  def send_master_info(ws)
+    # symbols in RPC parameters are implicitly converted into strings by MongoPubsub
+    send_rpc_notify(ws, '/agent/master_info', {'version' => Server::VERSION})
   end
 
   # @param [Faye::Websocket] ws
+  def send_rpc_notify(ws, method, *params)
+    send_message(ws, [2, method, params])
+  end
+
+  # Must be called in EM thread.
+  #
+  # @param [Faye::Websocket] ws
   # @param [Array] message
   def send_message(ws, message)
-    EM.next_tick {
-      ws.send(MessagePack.dump(message).bytes)
-    }
+    ws.send(MessagePack.dump(message).bytes)
   end
 
   def subscribe_to_rpc_channel
@@ -223,48 +303,110 @@ class WebsocketBackend
 
   # @param [Hash] msg
   def on_rpc_message(msg)
-    client = client_for_id(msg['id'])
-    if client
-      self.send_message(client[:ws], msg['message'])
-    end
+    EM.next_tick{
+      client = client_for_id(msg['id'])
+      if client
+        self.send_message(client[:ws], msg['message'])
+      end
+    }
   rescue => exc
     logger.error "on_rpc_message: #{exc.message}"
   end
 
   def watch_connections
-    Thread.new {
-      sleep 1 until EM.reactor_running?
-      EM::PeriodicTimer.new(KEEPALIVE_TIME) do
-        @clients.each do |client|
-          self.verify_client_connection(client)
-        end
+    EM::PeriodicTimer.new(KEEPALIVE_TIME) do
+      @clients.each do |client|
+        self.verify_client_connection(client)
       end
+    end
+  end
+
+  def watch_queue
+    EM::PeriodicTimer.new(QUEUE_WATCH_PERIOD) do
+      logger.warn "#{@queue.size} messages in queue" if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT
+      logger.warn "#{@msg_dropped} dropped notifications" if @msg_dropped > 0
+      logger.info "#{@msg_counter / QUEUE_WATCH_PERIOD} messages per second"
+      @msg_counter = 0
+      @msg_dropped = 0
+    end
+  end
+
+  # Start a Watchdog actor, and ping it every interval.
+  # It will log warnings and finally abort the EM thread if the timer does not get run on time.
+  def watchdog
+    EM.next_tick {
+      # must be called within the EM thread
+      @watchdog = Watchdog.new(self.class.name, Thread.current,
+        interval: WATCHDOG_INTERVAL,
+        threshold: WATCHDOG_THRESHOLD,
+        timeout: WATCHDOG_TIMEOUT,
+      )
     }
+
+    EM::PeriodicTimer.new(WATCHDOG_INTERVAL) do
+      @watchdog.async.ping
+    end
   end
 
   # @param [Hash] client
   def verify_client_connection(client)
-    timer = EM::Timer.new(5) do
-      self.on_close(client[:ws])
+    ping_time = Time.now
+    timer = EM::Timer.new(PING_TIMEOUT) do
+      self.on_client_timeout(client, Time.now - ping_time)
     end
     client[:ws].ping {
       timer.cancel
-      self.on_pong(client)
+      self.on_pong(client, Time.now - ping_time)
     }
   end
 
   # @param [Hash] client
-  def on_pong(client)
+  # @param [Fixnum] delay
+  def on_client_timeout(client, delay)
+    logger.warn "Close node %s connection after %.2fs timeout" % [client[:id], delay]
+    close_client(client, 4030, "ping timeout after %.2fs" % [delay])
+  end
+
+  # @param [Hash] client
+  # @param [Fixnum] delay
+  def on_pong(client, delay)
+    if delay > PING_TIMEOUT / 2
+      logger.warn "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]]
+    else
+      logger.debug { "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]] }
+    end
+
     node = HostNode.find_by(node_id: client[:id])
+
     if node
-      if node.connected?
-        node.set(last_seen_at: Time.now.utc)
-      else
-        grid = Grid.find_by(node_id: client[:grid_id])
-        Agent::NodePlugger.new(grid, node).plugin! if grid
+      connected_node = HostNode.where(id: node.id, connected_at: client[:connected_at])
+        .find_one_and_update({:$set => {last_seen_at: Time.now.utc}})
+
+      if !connected_node
+        logger.warn "Close conflicting connection for node #{node} connected at #{client[:connected_at]}, node has re-connected at #{node.connected_at}"
+        close_client(client, 4041, "host node #{node} connection conflict with new connection at #{node.connected_at}")
+      elsif !connected_node.connected
+        logger.warn "Close connection of disconnected node #{node}"
+        close_client(client, 4031, "host node #{node} has been disconnected")
       end
     else
-      self.on_close(client[:ws])
+      logger.warn "Close connection of removed node #{client[:id]}"
+      close_client(client, 4040, "host node #{client[:id]} has been removed")
     end
+  end
+
+  # Unplug client, marking HostNode as disconnected, and close the websocket connection.
+  #
+  # @param [Hash] client
+  def close_client(client, code, reason)
+    # immediately remove from @clients and mark as disconnected
+    unplug_client(client)
+
+    # triggers on :close later, or after 30s timeout, but the client will already be gone
+    client[:ws].close(code, reason)
+  end
+
+  def stop_rpc_server
+    Celluloid::Actor.kill(@rpc_server) if @rpc_server.alive?
   end
 end

@@ -49,12 +49,16 @@ RSpec.configure do |config|
     end
   end
 
-  config.before(:each) do
-    $stdout = StringIO.new
-  end
+  unless ENV["DEBUG"]
+    config.before(:each) do
+      $stdout = StringIO.new
+      $stderr = StringIO.new
+    end
 
-  config.after(:each) do
-    $stdout = STDOUT
+    config.after(:each) do
+      $stdout = STDOUT
+      $stderr = STDERR
+    end
   end
 end
 

@@ -10,7 +10,12 @@ module Scheduler
         node_count.to_i * instance_count.to_i
       end
 
-      # @param [Array<HostNode>] nodes
+      # @return [ActiveSupport::Duration]
+      def host_grace_period
+        10.minutes
+      end
+
+      # @param [Array<Scheduler::Node>] nodes
       # @param [GridService] grid_service
       # @param [Integer] instance_number
       def sort_candidates(nodes, grid_service, instance_number)

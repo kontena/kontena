@@ -7,16 +7,18 @@ describe 'stack volumes' do
 
   after(:each) do
     run "kontena stack rm --force redis"
-    run "kontena volume rm redis-data"
+    run "kontena volume rm --force redis-data"
   end
 
-  it 'stack creates volumes' do
+
+  it 'creates stack with reference to external volume' do
+    k = run 'kontena volume create --scope instance --driver local redis-data'
+    expect(k.code).to eq(0)
     with_fixture_dir("stack/volumes") do
       k = run 'kontena stack install redis-simple.yml'
       expect(k.code).to eq(0), k.out
     end
-    k = run 'kontena volume ls'
-    expect(k.out.match(/redis-data/)).to be_truthy
+
     container = find_container('redis.redis-1')
     mount = container_mounts(container).find { |m| m['Name'] =~ /redis-data-1/}
     expect(mount).not_to be_nil
@@ -24,24 +26,20 @@ describe 'stack volumes' do
     expect(mount['Destination']).to eq('/data')
   end
 
-  it 'fails to install stack with missing volume driver' do
+  it 'fails to create stack with reference to non-existing external volume' do
     with_fixture_dir("stack/volumes") do
-      k = run 'kontena stack install missing-driver.yml'
+      k = run 'kontena stack install redis-simple.yml'
+      expect(k.code).not_to eq(0)
+    end
+  end
+
+  it 'fails to install stack with stack scoped volume' do
+    with_fixture_dir("stack/volumes") do
+      k = run 'kontena stack install redis-with-volume.yml'
       expect(k.code).not_to eq(0)
     end
     k = run 'kontena stack show redis'
     expect(k.code).not_to eq(0)
   end
-
-  it 'fails to update stack with missing volume driver' do
-    with_fixture_dir("stack/volumes") do
-      k = run 'kontena stack install redis-simple.yml'
-      expect(k.code).to eq(0), k.out
-    end
-    k = run 'kontena stack upgrade redis missing-driver.yml'
-    expect(k.code).not_to eq(0)
-  end
-
-
 
 end

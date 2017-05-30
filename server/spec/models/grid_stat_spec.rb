@@ -30,10 +30,10 @@ describe GridStat do
 
     it 'returns correct amount of stats' do
       stat = GridStat.memory_usage(grid.id, DateTime.now - 4.days, DateTime.now) # opt out first container_stat
-      expect(stat.length).to eq(4)
+      expect(stat.count).to eq(4)
 
       stat = GridStat.memory_usage(grid.id, DateTime.now - 5.days, DateTime.now - 1.day) # opt out last container_stat
-      expect(stat.length).to eq(4)
+      expect(stat.count).to eq(4)
     end
 
     it 'sums container memory usages' do

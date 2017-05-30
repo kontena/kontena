@@ -24,42 +24,54 @@ describe Kontena::Workers::ServicePodManager do
     end
 
     it 'calls terminate_workers' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'service_pods' => [
-              { 'id' => 'a/1', 'instance_number' => 1}
-            ]
-          }
-        )
-      )
+      allow(rpc_client).to receive(:request_with_error).with('/node_service_pods/list', [node.id]).and_return([
+        {
+          'service_pods' => [
+            { 'id' => 'a/1', 'instance_number' => 1}
+          ]
+        },
+        nil
+      ])
       expect(subject.wrapped_object).to receive(:terminate_workers).with(['a/1'])
       subject.populate_workers_from_master
     end
 
-    it 'does not call terminate_workers if master does not return service pods' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'error' => 'oh no'
-          }
-        )
-      )
+    it 'does not call terminate_workers if master returns something weird' do
+      allow(rpc_client).to receive(:request_with_error).with('/node_service_pods/list', [node.id]).and_return([
+        {
+          'service_pods' => 'lolwtf'
+        },
+        nil
+      ])
+      expect(subject.wrapped_object).to receive(:error).with(/Invalid response from master/)
       expect(subject.wrapped_object).not_to receive(:terminate_workers)
+      expect(subject.wrapped_object).not_to receive(:ensure_service_worker)
+
+      expect{subject.populate_workers_from_master}.not_to raise_error
+    end
+
+    it 'does not call terminate_workers if RPC fails' do
+      allow(rpc_client).to receive(:request_with_error).with('/node_service_pods/list', [node.id]).and_return([
+        nil,
+        Kontena::RpcClient::Error.new(500, "random failure")
+      ])
+      expect(subject.wrapped_object).to receive(:warn).with(/failed to get list of service pods from master/)
+      expect(subject.wrapped_object).not_to receive(:terminate_workers)
+      expect(subject.wrapped_object).not_to receive(:ensure_service_worker)
+
       subject.populate_workers_from_master
     end
 
     it 'calls ensure_service_worker for each service pod' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
-        rpc_future(
-          {
-            'service_pods' => [
-              { 'id' => 'a/1', 'instance_number' => 1},
-              { 'id' => 'b/2', 'instance_number' => 2}
-            ]
-          }
-        )
-      )
+      allow(rpc_client).to receive(:request_with_error).with('/node_service_pods/list', [node.id]).and_return([
+        {
+          'service_pods' => [
+            { 'id' => 'a/1', 'instance_number' => 1},
+            { 'id' => 'b/2', 'instance_number' => 2}
+          ]
+        },
+        nil
+      ])
       expect(subject.wrapped_object).to receive(:ensure_service_worker) do |s|
         expect(s.id).to eq('a/1')
       end
@@ -73,8 +85,8 @@ describe Kontena::Workers::ServicePodManager do
   describe '#populate_workers_from_docker' do
     it 'calls ensure_service_worker for each container' do
       allow(subject.wrapped_object).to receive(:fetch_containers).and_return([
-        double(:a, id: 'a', service_id: 'foo', instance_number: 2),
-        double(:b, id: 'b', service_id: 'bar', instance_number: 1)
+        double(:a, id: 'a', service_id: 'foo', instance_number: 2, service_name: 'foo'),
+        double(:b, id: 'b', service_id: 'bar', instance_number: 1, service_name: 'bar')
       ])
       expect(subject.wrapped_object).to receive(:ensure_service_worker).twice
       subject.populate_workers_from_docker

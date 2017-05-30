@@ -1,4 +1,4 @@
-stack: test/links
+stack: test/links-broken
 services:
   a:
     image: redis

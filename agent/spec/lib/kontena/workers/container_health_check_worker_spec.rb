@@ -2,7 +2,9 @@
 describe Kontena::Workers::ContainerHealthCheckWorker do
   include RpcClientMocks
 
-  let(:container) { double(:container, id: '1234', name: 'test') }
+  let(:container) do
+    double(:container, id: '1234', name: 'test', service_container?: true, service_id: 'abc', instance_number: 1)
+  end
   subject { described_class.new(container) }
 
   before(:each) do
@@ -33,7 +35,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_http_status).with('1.2.3.4', 8080, '/', 10).twice.and_return({})
         expect(subject.wrapped_object).to receive(:handle_action).twice
-        expect(rpc_client).to receive(:notification).twice
+        expect(rpc_client).to receive(:request).twice
         subject.start
       end
     end
@@ -58,7 +60,7 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
         expect(subject.wrapped_object).to receive(:sleep).with(20)
         expect(subject.wrapped_object).to receive(:check_tcp_status).with('1.2.3.4', 1234, 10).twice.and_return({})
         expect(subject.wrapped_object).to receive(:handle_action).twice
-        expect(rpc_client).to receive(:notification).twice
+        expect(rpc_client).to receive(:request).twice
         subject.start
       end
     end
@@ -73,7 +75,6 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
     it 'restarts container when unhealthy' do
       expect(subject.wrapped_object).to receive(:restart_container)
       expect(container).to receive(:labels).and_return({})
-      expect(rpc_client).to receive(:notification).once
       subject.handle_action({'status' => 'unhealthy'})
     end
   end

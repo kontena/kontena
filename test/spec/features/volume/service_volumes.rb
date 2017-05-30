@@ -7,7 +7,7 @@ describe 'service volumes' do
 
   after(:each) do
     run "kontena service rm --force null/redis"
-    run "kontena volume rm testVol"
+    run "kontena volume rm --force testVol"
   end
 
   it 'service uses a volume' do
@@ -29,7 +29,7 @@ describe 'service volumes' do
     expect(k.code).to eq(0)
     k = run "kontena service create -v testVol:/data redis redis:alpine"
     expect(k.code).to eq(0)
-    k = run "kontena volume rm testVol"
+    k = run "kontena volume rm --force testVol"
     expect(k.code).not_to eq(0)
   end
 

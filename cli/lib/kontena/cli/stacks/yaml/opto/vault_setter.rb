@@ -1,10 +1,11 @@
 module Kontena::Cli::Stacks
   module YAML
     class Opto::Setters::Vault < ::Opto::Setter
+      include Kontena::Cli::Common
       def set(value)
-        require 'shellwords'
-        ENV["DEBUG"] && STDERR.puts("Setting to vault: #{hint}")
-        Kontena.run("vault write --silent #{hint} #{value.to_s.shellescape}")
+        if current_master && current_grid
+          client.put("secrets/#{current_grid}/#{hint}", {name: hint, value: value, upsert: true})
+        end
       end
     end
   end

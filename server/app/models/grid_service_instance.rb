@@ -3,10 +3,15 @@ class GridServiceInstance
   include Mongoid::Timestamps
 
   field :instance_number, type: Integer
-  field :deploy_rev, type: String
-  field :rev, type: String
+
+  # updated by master
   field :desired_state, type: String, default: 'initialized'.freeze
+  field :deploy_rev, type: String
+
+  # updated by agent
+  field :rev, type: String
   field :state, type: String, default: 'initialized'.freeze
+  field :error, type: String
 
   validates_uniqueness_of :instance_number, scope: [:grid_service_id]
 
@@ -15,4 +20,8 @@ class GridServiceInstance
 
   index({ grid_service_id: 1 })
   index({ host_node_id: 1 })
+
+  def self.has_node
+    where(:host_node_id.ne => nil)
+  end
 end

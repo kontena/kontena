@@ -1,4 +1,3 @@
-require "kontena/cli/grid_options"
 require "kontena/cli/services/update_command"
 
 describe Kontena::Cli::Services::UpdateCommand do

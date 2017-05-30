@@ -44,6 +44,7 @@
 * [Applications](using-kontena/applications.md)
 * [Telemetry](using-kontena/telemetry.md)
 * [Logs](using-kontena/logs.md)
+* [Volumes](using-kontena/volumes.md)
 
 ### Core Concepts
 
