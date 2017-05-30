@@ -19,8 +19,12 @@ module Kontena::Cli::Helpers
       if data.is_a?(Hash)
         if data.has_key?('exit')
           exit data['exit'].to_i
-        else
-          $stdout << data['chunk']
+        elsif data.has_key?('stream')
+          if data['stream'] == 'stdout'
+            $stdout << data['chunk'] 
+          else 
+            $stderr << data['chunk']
+          end
         end
       end
     rescue => exc
@@ -32,6 +36,26 @@ module Kontena::Cli::Helpers
       JSON.parse(msg.data)
     rescue JSON::ParserError
       nil
+    end
+
+    # @param [String] container_id
+    # @return [String]
+    def ws_url(container_id)
+      url = require_current_master.url
+      url << '/' unless url.end_with?('/')
+      "#{url.sub('http', 'ws')}v1/containers/#{container_id}/exec"
+    end
+
+    # @param [String] url
+    # @param [String] token
+    # @return [WebSocket::Client::Simple]
+    def connect(url, token)
+      WebSocket::Client::Simple.connect(url, {
+        headers: {
+          'Authorization' => "Bearer #{token.access_token}",
+          'Accept' => 'application/json'
+        }
+      })
     end
   end
 end

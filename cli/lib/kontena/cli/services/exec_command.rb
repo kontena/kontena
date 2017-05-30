@@ -66,7 +66,7 @@ module Kontena::Cli::Services
     end
 
     # Exits if exec returns with non-zero
-    # @param [Docker::Container] container
+    # @param [Hash] container
     def exec_container(container)
       exit_status = nil
       if !silent? && (verbose? || all?)
@@ -84,14 +84,14 @@ module Kontena::Cli::Services
       return exit_status == 0
     end
 
-    # @param [Docker::Container] container
+    # @param [Hash] container
     # @return [Boolean]
     def normal_exec(container)
       base = self
       cmd = JSON.dump({ cmd: cmd_list })
       exit_status = nil
       token = require_token
-      url = ws_url(container)
+      url = ws_url(container['id'])
       url << '?shell=true' if shell?
       ws = connect(url, token)
       ws.on :message do |msg|
@@ -118,14 +118,14 @@ module Kontena::Cli::Services
       exit_status
     end
 
-    # @param [Docker::Container] container
+    # @param [Hash] container
     def interactive_exec(container)
       require 'io/console'
 
       token = require_token
       cmd = JSON.dump({ cmd: cmd_list })
       base = self
-      url = ws_url(container) << '?interactive=true'
+      url = ws_url(container['id']) << '?interactive=true'
       url << '&shell=true' if shell?
       ws = connect(url, token)
       ws.on :message do |msg|
@@ -139,24 +139,6 @@ module Kontena::Cli::Services
       end
       
       stream_stdin_to_ws(ws).join
-    end
-
-    # @param [Hash] container
-    # @return [String]
-    def ws_url(container)
-      "#{require_current_master.url.sub('http', 'ws')}/v1/containers/#{container['id']}/exec"
-    end
-
-    # @param [String] url
-    # @param [String] token
-    # @return [WebSocket::Client::Simple]
-    def connect(url, token)
-      WebSocket::Client::Simple.connect(url, {
-        headers: {
-          'Authorization' => "Bearer #{token.access_token}",
-          'Accept' => 'application/json'
-        }
-      })
     end
   end
 end
