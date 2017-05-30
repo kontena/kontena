@@ -5,6 +5,7 @@ module Kontena::Cli::Stacks
 
       def resolve
         return nil unless current_master && current_grid
+        require 'kontena/cli/stacks/show_command'
         read_command = Kontena::Cli::Stacks::ShowCommand.new([self.stack])
         stack = read_command.fetch_stack(self.stack)
         service = stack['services'].find { |s| s['name'] == hint }
