@@ -88,7 +88,7 @@ module Kontena::Cli::Services
     # @return [Boolean]
     def normal_exec(container)
       base = self
-      cmd = JSON.dump(cmd_list)
+      cmd = JSON.dump({ cmd: cmd_list })
       exit_status = nil
       token = require_token
       url = ws_url(container)
@@ -123,7 +123,7 @@ module Kontena::Cli::Services
       require 'io/console'
 
       token = require_token
-      cmd = JSON.dump(cmd_list)
+      cmd = JSON.dump({ cmd: cmd_list })
       base = self
       url = ws_url(container) << '?interactive=true'
       url << '&shell=true' if shell?

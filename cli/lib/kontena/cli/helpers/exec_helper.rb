@@ -7,7 +7,7 @@ module Kontena::Cli::Helpers
       Thread.new {
         STDIN.raw {
           while char = STDIN.readpartial(1024)
-            ws.send(char)
+            ws.send(JSON.dump({ stdin: char }))
           end
         }
       }

@@ -17,7 +17,7 @@ module Kontena::Cli::Containers
 
       require_api_url
       token = require_token
-      cmd = JSON.dump(cmd_list)
+      cmd = JSON.dump({cmd: cmd_list})
       base = self
       ws = connect(token)
       ws.on :message do |msg|

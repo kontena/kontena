@@ -1,5 +1,6 @@
 module Docker
   class StreamingExecutor
+    include Logging
 
     # @param [Container] container
     # @param [#send,#close] ws
@@ -46,15 +47,28 @@ module Docker
       @ws.on(:message) do |event|
         if init == true
           begin
-            cmd = JSON.parse(event.data)
-            cmd = ['/bin/sh', '-c', cmd.join(' ')] if shell
-            @client.notify('/containers/run_exec', @exec_session['id'], cmd, true)
-            init = false
+            data = JSON.parse(event.data)
+            if data.has_key?('cmd')
+              if shell
+                cmd = ['/bin/sh', '-c', data['cmd'].join(' ')]
+              else 
+                cmd = data['cmd']
+              end
+              @client.notify('/containers/run_exec', @exec_session['id'], cmd, true)
+              init = false
+            end
           rescue JSON::ParserError
+            error "invalid handshake json"
             @ws.close
           end
         else
-          @client.notify('/containers/tty_input', @exec_session['id'], event.data)
+          begin
+            input = JSON.parse(event.data)
+            @client.notify('/containers/tty_input', @exec_session['id'], input['stdin']) if input.has_key?('stdin')
+          rescue JSON::ParserError
+            error "invalid tty_input json"
+            @ws.close
+          end
         end
       end
 
@@ -68,10 +82,17 @@ module Docker
     def register_run_ws_events(shell)
       @ws.on(:message) do |event|
         begin
-          cmd = JSON.parse(event.data)
-          cmd = ['/bin/sh', '-c', cmd.join(' ')] if shell
-          @client.notify('/containers/run_exec', @exec_session['id'], cmd, false)
+          data = JSON.parse(event.data)
+          if data.has_key?('cmd')
+            if shell
+              cmd = ['/bin/sh', '-c', data['cmd'].join(' ')]
+            else 
+              cmd = data['cmd']
+            end
+            @client.notify('/containers/run_exec', @exec_session['id'], cmd, false)
+          end
         rescue JSON::ParserError
+          error "invalid json"
           @ws.close
         end
       end
