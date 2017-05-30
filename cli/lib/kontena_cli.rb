@@ -34,7 +34,7 @@ module Kontena
     else
       command = cmdline
     end
-    logger.debug { "Running Kontena.run(#{command.inspect}" }
+    logger.debug { "Running Kontena.run(#{command.inspect})" }
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
     logger.debug { "Command completed, result: #{result.inspect} status: 0" }
     result
