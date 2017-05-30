@@ -6,7 +6,7 @@ module Grids
 
     required do
       model :user
-      string :name, nils: true, min_length: 3, matches: /^(\w|-)+$/
+      string :name, nils: true, min_length: 3, matches: /\A(\w|-)+\z/
       integer :initial_size, default: 1, min: 1, max: 7
     end
 

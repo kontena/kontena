@@ -41,6 +41,24 @@ describe Grids::Create, celluloid: true do
         expect(outcome.errors.message.keys).to include('grid')
       end
 
+      it 'rejects an invalid name' do
+        outcome = described_class.run(
+            user: user,
+            name: 'test/grid'
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.symbolic).to eq 'name' => :matches
+      end
+
+      it 'rejects an invalid name with newlines' do
+        outcome = described_class.run(
+            user: user,
+            name: "foo\nbar"
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.symbolic).to eq 'name' => :matches
+      end
+
       context 'when name is provided' do
         it 'does not generate random name ' do
           subject = described_class.new(

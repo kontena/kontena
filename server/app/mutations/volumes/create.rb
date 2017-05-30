@@ -3,8 +3,8 @@ module Volumes
 
     required do
       model :grid, class: Grid
-      string :scope, matches: /instance|stack|grid/
-      string :name , matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :scope, in: ['instance', 'stack', 'grid']
+      string :name , matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
       string :driver
     end
 

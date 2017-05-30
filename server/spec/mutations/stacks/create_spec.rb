@@ -109,6 +109,21 @@ describe Stacks::Create do
       expect(outcome.errors.message.keys).to include('name')
     end
 
+    it 'does not allow newlines in name' do
+      outcome = described_class.new(
+        grid: grid,
+        name: "foo\nbar",
+        stack: 'foo/bar',
+        version: '0.1.0',
+        registry: 'file://',
+        source: '...',
+        variables: {foo: 'bar'},
+        services: [{name: 'redis', image: 'redis:2.8', stateful: true }]
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.symbolic).to eq 'name' => :matches
+    end
+
     it 'does not allow empty services array' do
       outcome = described_class.new(
         grid: grid,

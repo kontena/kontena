@@ -72,7 +72,7 @@ module Scheduler
       # @param [GridService] service
       # @return [Boolean]
       def filter_by_net?(service)
-        !service.net.to_s.match(/^container:.+/).nil?
+        !service.net.to_s.match(/\Acontainer:.+/).nil?
       end
 
       # @param [GridService] service
