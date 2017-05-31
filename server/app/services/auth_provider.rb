@@ -226,14 +226,14 @@ class AuthProvider
       client.force_basic_auth = true
     end
 
+    headers = { 'Accept' => 'application/json' }
+    headers['Content-Type'] = self.token_post_content_type unless token_method == :get
+
     response = client.request(
       token_method,
       self.token_endpoint,
       follow_redirect: false,
-      header: {
-        'Accept' => 'application/json',
-        'Content-Type' => self.token_post_content_type
-      },
+      header: headers,
       body: body,
       query: query
     )
