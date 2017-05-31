@@ -24,7 +24,7 @@ While the CLI provides a quick look at the current state of a Service, you may a
 Statistics exporting can be activated on a Grid by updating it:
 
 ```
-$ kontena grid update --statsd-server influx.example.com:8125
+$ kontena grid update --statsd-server influx.example.com:8125 grid_name
 ```
 
 To disable stats exporting use:
