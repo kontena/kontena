@@ -34,7 +34,7 @@ $ kontena grid update --no-statsd-server grid_name
 ```
 
 
-**Note:** When statistics exporting is activated, Kontena will NOT send existing statistics from the database. It will only stream new statistics.
+**Note:** When statistics exporting is activated, Kontena will NOT send any existing statistics from the database. It will only stream new statistics.
 
 ## Where to collect stats?
 
