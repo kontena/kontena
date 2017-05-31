@@ -3,56 +3,45 @@ module Kontena::Cli::Containers
     include Kontena::Util
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::TableGenerator::Helper
 
-    option ['--all', '-a'], :flag, 'Show all containers'
+    option ['-a', '--all'], :flag, 'Show all containers'
+
+    requires_current_master
+    requires_current_master_token
+
+    NON_STOP_STATES = ['paused', 'restarting', 'oom_killed', 'dead', 'running']
+
+    def fields
+      return ['id'] if quiet?
+      { container_id: 'id', image: 'image', command: 'cmd', created: 'created_at', status: 'state' }
+    end
 
     def execute
-      require_api_url
-      token = require_token
+      result = spin_if(!quiet?, "Retrieving container list") do
+        Array(client.get("containers/#{current_grid}#{'?all=1' if all?}")['containers'])
+      end
 
-      params = '?'
-      params << 'all=1' if all?
-      result = client(token).get("containers/#{current_grid}#{params}")
-      containers = result['containers']
-      id_column = longest_string_in_array(containers.map {|c| "#{c['node']['name']}/#{c['name']}"})
-      image_column = longest_string_in_array(containers.map {|c| c['image'] })
-      columns = "%-#{id_column + 2}s %-#{image_column + 2}s %-30s %-20s %-10s"
-      puts columns % [ 'CONTAINER ID', 'IMAGE', 'COMMAND', 'CREATED', 'STATUS']
-      result['containers'].reverse.each do |container|
-        puts columns % [
-          "#{container['node']['name']}/#{container['name']}",
-          container['image'],
-          "\"#{container['cmd'].to_a.join(' ')[0..26]}\"",
-          "#{time_ago(container['created_at'])} ago",
-          container_status(container)
-        ]
+      print_table(result.reverse) do |row|
+        row['id'] = container_id(row)
+        row['created_at'] = time_ago(row['created_at'])
+        row['cmd'] = truncate_cmd(row)
+        row['state'] = container_state(row)
       end
     end
 
-    def longest_string_in_array(array)
-      longest = 0
-      array.each do |item|
-        longest = item.length if item.length > longest
-      end
-
-      longest
+    def container_id(row)
+      "#{row['node']['name']}/#{row['name']}"
     end
 
-    def container_status(container)
-      s = container['state']
-      if s['paused']
-        'paused'.freeze
-      elsif s['restarting']
-        'restarting'.freeze
-      elsif s['oom_killed']
-        'oom_killed'.freeze
-      elsif s['dead']
-        'dead'.freeze
-      elsif s['running']
-        'running'.freeze
-      else
-        'stopped'.freeze
-      end
+    def truncate_cmd(row)
+      cmd = row['cmd'].nil? ? '' : row['cmd'].join(' ')
+      cmd = "#{cmd[0..24]}#{pastel.cyan('..')}" if cmd.length > 26
+      "\"#{cmd}\""
+    end
+
+    def container_state(row)
+      NON_STOP_STATES.find { |state| row.fetch('state', {})[state] == true } || pastel.cyan('stopped')
     end
   end
 end

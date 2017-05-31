@@ -1,9 +1,6 @@
 require 'kontena/command'
 
 class Kontena::MainCommand < Kontena::Command
-  include Kontena::Util
-  include Kontena::Cli::Common
-
   option ['-v', '--version'], :flag, "Output Kontena CLI version #{Kontena::Cli::VERSION}" do
     build_tags = [ 'ruby' + RUBY_VERSION ]
     build_tags << RUBY_PLATFORM
@@ -44,6 +41,7 @@ class Kontena::MainCommand < Kontena::Command
 
   def subcommand_missing(name)
     if known_plugin_subcommand?(name)
+      extend Kontena::Cli::Common
       exit_with_error "The '#{name}' plugin has not been installed. Use: kontena plugin install #{name}"
     else
       super(name)

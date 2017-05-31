@@ -42,7 +42,7 @@ module Kontena::Cli::Master::User
             raise "Failed to add role" unless Kontena.run(["master", "user", "role", "add", role, email])
           end
         rescue => ex
-          ENV["DEBUG"] && $stderr.puts("#{ex} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+          logger.error(ex)
           exit_with_error "Failed to invite #{email} : #{ex.message}"
         end
       end

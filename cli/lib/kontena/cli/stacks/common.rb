@@ -3,6 +3,9 @@ require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
 require_relative '../../stacks_client'
 
+require "safe_yaml"
+SafeYAML::OPTIONS[:default_mode] = :safe
+
 module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
@@ -153,10 +156,7 @@ module Kontena::Cli::Stacks
     end
 
     def stacks_client
-      return @stacks_client if @stacks_client
-      Kontena.run!(%w(cloud login)) unless cloud_auth?
-      config.reset_instance
-      @stacks_client = Kontena::StacksClient.new(kontena_account.stacks_url, kontena_account.token)
+      @stacks_client ||= Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)
     end
   end
 end

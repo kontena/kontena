@@ -2,11 +2,11 @@ module Kontena
   module Callbacks
     class SuggestInvitingYourself < Kontena::Callback
 
-      include Kontena::Cli::Common
-
       matches_commands 'master create'
 
       def after
+        extend Kontena::Cli::Common
+
         return unless current_master
         return unless command.exit_code == 0
         return if current_master.username.to_s == 'admin'

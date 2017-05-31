@@ -5,15 +5,17 @@ module Kontena::Cli::Services::Envs
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Services::ServicesHelper
+    include Kontena::Cli::TableGenerator::Helper
 
     parameter "NAME", "Service name"
 
+    requires_current_master
+    requires_current_master_token
+
     def execute
-      require_api_url
-      token = require_token
-      service = client(token).get("services/#{parse_service_id(name)}")
+      service = client.get("services/#{parse_service_id(name)}")
       service["env"].sort.each do |env|
-        puts env
+        puts quiet? ? env.split('=', 2).first : env
       end
     end
   end

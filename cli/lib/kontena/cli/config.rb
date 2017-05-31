@@ -1,8 +1,8 @@
 require 'ostruct'
 require 'singleton'
 require 'forwardable'
-require 'json'
 require 'logger'
+autoload :JSON, 'json'
 
 module Kontena
   module Cli
@@ -13,9 +13,22 @@ module Kontena
     class Config < OpenStruct
       include Singleton
 
+      module Fields
+        def keys
+          @table.keys
+        end
+
+        def values_at(*fields)
+          (fields.first.is_a?(Array) ? fields.first : fields).map { |field| self[field] }
+        end
+      end
+
+      include Fields
+
       attr_accessor :logger
       attr_accessor :current_server
       attr_reader :current_account
+
 
       def self.reset_instance
         Singleton.send :__init__, self
@@ -26,20 +39,22 @@ module Kontena
 
       def initialize
         super
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'CONFIG'
+        @logger = Kontena.logger
         load_settings_from_env || load_settings_from_config_file
 
-        logger.debug "Configuration loaded with #{servers.count} servers."
-        logger.debug "Current master: #{current_server || '(not selected)'}"
-        logger.debug "Current grid: #{current_grid || '(not selected)'}"
+        debug { "Configuration loaded with #{servers.count} servers." }
+        debug { "Current master: #{current_server || '(not selected)'}" }
+        debug { "Current grid: #{current_grid || '(not selected)'}" }
+      end
+
+      def debug(&block)
+        Kontena.logger.add(Logger::DEBUG, nil, 'CONFIG', &block)
       end
 
       # Craft a regular looking configuration based on ENV variables
       def load_settings_from_env
         return nil unless ENV['KONTENA_URL']
-        logger.debug 'Loading configuration from ENV'
+        debug { 'Loading configuration from ENV' }
         servers << Server.new(
           url: ENV['KONTENA_URL'],
           name: 'default',
@@ -48,11 +63,9 @@ module Kontena
           parent_type: :master,
           parent_name: 'default'
         )
-        accounts << Account.new(
-          url: ENV['AUTH_API_URL'] || 'https://auth.kontena.io',
-          name: 'kontena',
-          token: Token.new(access_token: ENV['KONTENA_ACCOUNT_TOKEN'], parent_type: :account, parent_name: 'default')
-        )
+        accounts << Account.new(kontena_account_data.merge(
+          token: Token.new(access_token: ENV['KONTENA_CLOUD_TOKEN'], parent_type: :account, parent_name: 'default')
+        ))
 
         self.current_master  = 'default'
         self.current_account = 'kontena'
@@ -84,7 +97,7 @@ module Kontena
           if servers.find { |s| s['name'] == server.name}
             server.name = "#{server.name}-2"
             server.name.succ! until servers.find { |s| s['name'] == server.name }.nil?
-            logger.debug "Renamed server to #{server.name} because a duplicate was found in config"
+            debug { "Renamed server to #{server.name} because a duplicate was found in config" }
           end
           servers << server
         end
@@ -115,22 +128,23 @@ module Kontena
         accounts.delete_at(master_index) if master_index
         accounts << Account.new(master_account_data)
 
-        self.current_account = settings['current_account'] || 'kontena'
+        self.current_account = ENV['KONTENA_CLOUD'] || settings['current_account'] || 'kontena'
       end
 
       def kontena_account_data
         {
           name: 'kontena',
-          url: 'https://cloud-api.kontena.io',
-          stacks_url: 'https://stacks.kontena.io',
-          token_endpoint: 'https://cloud-api.kontena.io/oauth2/token',
-          authorization_endpoint: 'https://cloud.kontena.io/login/oauth/authorize',
-          userinfo_endpoint: 'https://cloud-api.kontena.io/user',
-          token_post_content_type: 'application/x-www-form-urlencoded',
-          code_requires_basic_auth: false,
-          token_method: 'post',
-          scope: 'user',
-          client_id: nil
+          url: ENV['KONTENA_CLOUD_URL'] || 'https://cloud-api.kontena.io',
+          stacks_url: ENV['KONTENA_STACK_REGISTRY_URL'] || 'https://stacks.kontena.io',
+          token_endpoint: ENV['AUTH_TOKEN_ENDPOINT'] || 'https://cloud-api.kontena.io/oauth2/token',
+          authorization_endpoint: ENV['AUTH_AUTHORIZE_ENDPOINT'] || 'https://cloud.kontena.io/login/oauth/authorize',
+          userinfo_endpoint: ENV['AUTH_USERINFO_ENDPOINT'] || 'https://cloud-api.kontena.io/user',
+          token_post_content_type: ENV['AUTH_TOKEN_POST_CONTENT_TYPE'] || 'application/x-www-form-urlencoded',
+          code_requires_basic_auth: ENV['AUTH_CODE_REQUIRES_BASIC_AUTH'].to_s == true,
+          token_method: ENV['AUTH_TOKEN_METHOD'] || 'post',
+          scope: ENV['AUTH_USERINFO_SCOPE'] || 'user',
+          client_id: nil,
+          stacks_read_authentication: ENV['KONTENA_STACK_REGISTRY_READ_AUTHENTICATION'].to_s == 'true'
         }
       end
 
@@ -157,7 +171,7 @@ module Kontena
       #
       # @return [Hash]
       def default_settings
-        logger.debug 'Configuration file not found, using default settings.'
+        debug { 'Configuration file not found, using default settings.' }
         {
           'current_server' => 'default',
           'servers' => []
@@ -169,7 +183,7 @@ module Kontena
       # @param [Hash] settings_hash
       # @return [Hash] migrated_settings_hash
       def migrate_legacy_settings(settings)
-        logger.debug "Migrating from legacy style configuration"
+        debug { "Migrating from legacy style configuration" }
         {
           'current_server' => 'default',
           'servers' => [
@@ -186,7 +200,7 @@ module Kontena
       #
       # @return [Hash] config_data
       def parse_config_file
-        logger.debug "Loading configuration from #{config_filename}"
+        debug { "Loading configuration from #{config_filename}" }
         settings = JSON.load(File.read(config_filename))
         if settings.has_key?('server')
           settings = migrate_legacy_settings(settings)
@@ -437,7 +451,7 @@ module Kontena
       # Does nothing if using settings from environment variables.
       def write
         return nil if ENV['KONTENA_URL']
-        logger.debug "Writing configuration to #{config_filename}"
+        debug { "Writing configuration to #{config_filename}" }
         File.write(config_filename, to_json)
       end
 
@@ -468,6 +482,7 @@ module Kontena
       end
 
       class Account < OpenStruct
+        include Fields
         include TokenSerializer
         include ConfigurationInstance
 
@@ -484,6 +499,7 @@ module Kontena
       end
 
       class Server < OpenStruct
+        include Fields
         include TokenSerializer
         include ConfigurationInstance
 
@@ -494,6 +510,7 @@ module Kontena
       end
 
       class Token < OpenStruct
+        include Fields
         include ConfigurationInstance
 
         # Hash representation of token data

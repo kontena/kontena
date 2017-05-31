@@ -251,10 +251,10 @@ class GridService
   # @return [Boolean]
   def depending_on_other_services?
     if self.affinity
-      if self.affinity.any?{|a| a.match(/^service(!=|==).+/)}
+      if self.affinity.any?{|a| a.match(/\Aservice(!=|==).+/)}
         return true
       end
-      if self.affinity.any?{|a| a.match(/^container(!=|==).+/)}
+      if self.affinity.any?{|a| a.match(/\Acontainer(!=|==).+/)}
         return true
       end
     end
@@ -263,7 +263,7 @@ class GridService
       return true if self.volumes_from.size > 0
     end
 
-    return true if self.net.to_s.match(/^container:.+/)
+    return true if self.net.to_s.match(/\Acontainer:.+/)
 
     false
   end
