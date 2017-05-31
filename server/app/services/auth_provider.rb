@@ -98,7 +98,7 @@ class AuthProvider
 
     body = {
       data: {
-        attributes: {          
+        attributes: {
           'redirect-uri' => callback_url,
           'url'          => self.root_url,
           'uuid'         => self.uuid
