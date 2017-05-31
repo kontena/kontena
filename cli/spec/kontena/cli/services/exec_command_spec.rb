@@ -36,6 +36,10 @@ describe Kontena::Cli::Services::ExecCommand do
     ws_client_class.new
   end
 
+  let(:master_url) do
+    subject.require_current_master.url.gsub('http', 'ws')
+  end
+
   def respond_ok(ws_client)
     ws_client.receive_message({'stream' => 'stdout', 'chunk' => "ok\n"})
     ws_client.receive_message({'exit' => 0})
@@ -63,7 +67,7 @@ describe Kontena::Cli::Services::ExecCommand do
     end
 
     it "Executes on the running container by default" do
-      expect(WebSocket::Client::Simple).to receive(:connect).with('someurl/v1/containers/test-grid/host/test-service.container-1/exec', anything).and_return(ws_client)
+      expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-1/exec", anything).and_return(ws_client)
       expect(ws_client).to receive(:send) do |foo|
         ws_client.receive_message({'stream' => 'stdout', 'chunk' => "ok\n"})
         ws_client.receive_message({'exit' => 0})
@@ -101,7 +105,7 @@ describe Kontena::Cli::Services::ExecCommand do
 
     it "Executes on the first running container by default" do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(WebSocket::Client::Simple).to receive(:connect).with('someurl/v1/containers/test-grid/host/test-service.container-1/exec', anything).and_return(ws_client)
+      expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-1/exec", anything).and_return(ws_client)
       expect(ws_client).to receive(:send) do
         respond_ok(ws_client)
       end
@@ -112,7 +116,7 @@ describe Kontena::Cli::Services::ExecCommand do
 
     it "Executes on the first running container, even if they are ordered differently" do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return({'containers' => service_containers['containers'].reverse })
-      expect(WebSocket::Client::Simple).to receive(:connect).with('someurl/v1/containers/test-grid/host/test-service.container-1/exec', anything).and_return(ws_client)
+      expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-1/exec", anything).and_return(ws_client)
       expect(ws_client).to receive(:send) do
         respond_ok(ws_client)
       end
@@ -123,7 +127,7 @@ describe Kontena::Cli::Services::ExecCommand do
 
     it "Executes on the first running container if given" do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(WebSocket::Client::Simple).to receive(:connect).with('someurl/v1/containers/test-grid/host/test-service.container-1/exec', anything).and_return(ws_client)
+      expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-1/exec", anything).and_return(ws_client)
       expect(ws_client).to receive(:send) do
         respond_ok(ws_client)
       end
@@ -134,7 +138,7 @@ describe Kontena::Cli::Services::ExecCommand do
 
     it "Executes on the second running container if given" do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(WebSocket::Client::Simple).to receive(:connect).with('someurl/v1/containers/test-grid/host/test-service.container-2/exec', anything).and_return(ws_client)
+      expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-2/exec", anything).and_return(ws_client)
       expect(ws_client).to receive(:send) do
         respond_ok(ws_client)
       end
@@ -154,7 +158,7 @@ describe Kontena::Cli::Services::ExecCommand do
 
       3.times do |i|
         ws_client = ws_client_class.new
-        expect(WebSocket::Client::Simple).to receive(:connect).with("someurl/v1/containers/test-grid/host/test-service.container-#{i + 1}/exec", anything).and_return(ws_client)
+        expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-#{i + 1}/exec", anything).and_return(ws_client)
         expect(ws_client).to receive(:send) do
           ws_client.receive_message({'stream' => 'stdout', 'chunk' => "test#{i + 1}\n"})
           ws_client.receive_message({'exit' => 0})
@@ -168,7 +172,7 @@ describe Kontena::Cli::Services::ExecCommand do
 
     it "Stops if the first container fails" do
       expect(client).to receive(:get).with('services/test-grid/null/test-service/containers').and_return(service_containers)
-      expect(WebSocket::Client::Simple).to receive(:connect).with('someurl/v1/containers/test-grid/host/test-service.container-1/exec', anything).and_return(ws_client)
+      expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-1/exec", anything).and_return(ws_client)
       expect(ws_client).to receive(:send) do
         respond_error(ws_client)
       end
@@ -182,7 +186,7 @@ describe Kontena::Cli::Services::ExecCommand do
       i = 1
       [:ok, :err].each do |status|
         ws_client = ws_client_class.new
-        expect(WebSocket::Client::Simple).to receive(:connect).with("someurl/v1/containers/test-grid/host/test-service.container-#{i}/exec", anything).and_return(ws_client)
+        expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-#{i}/exec", anything).and_return(ws_client)
         expect(ws_client).to receive(:send) do
           if status == :ok
             respond_ok(ws_client)
@@ -203,7 +207,7 @@ describe Kontena::Cli::Services::ExecCommand do
       i = 1
       [:ok, :err, :ok].each do |status|
         ws_client = ws_client_class.new
-        expect(WebSocket::Client::Simple).to receive(:connect).with("someurl/v1/containers/test-grid/host/test-service.container-#{i}/exec", anything).and_return(ws_client)
+        expect(WebSocket::Client::Simple).to receive(:connect).with("#{master_url}v1/containers/test-grid/host/test-service.container-#{i}/exec", anything).and_return(ws_client)
         expect(ws_client).to receive(:send) do
           if status == :ok
             respond_ok(ws_client)
