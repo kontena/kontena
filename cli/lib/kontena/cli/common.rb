@@ -26,9 +26,9 @@ module Kontena
         Kontena.pastel
       end
 
-      def spinner(*args)
+      def spinner(msg, &block)
         require 'kontena/cli/spinner' unless Kontena::Cli.const_defined?(:Spinner)
-        Kontena::Cli::Spinner.spin(*args)
+         Kontena::Cli::Spinner.spin(msg, &block)
       end
 
       def config
