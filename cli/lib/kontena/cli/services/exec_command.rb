@@ -108,7 +108,7 @@ module Kontena::Cli::Services
         ws.text(cmd)
       end
       ws.on :close do |e|
-        exit_status = 1
+        exit_status = 1 if exit_status.nil?
       end
       ws.connect
 
