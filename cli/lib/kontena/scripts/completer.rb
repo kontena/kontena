@@ -143,8 +143,7 @@ begin
       when 'grid'
         completion.clear
         sub_commands = %w(add-user audit-log create current list user remove show use)
-        if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+        if words[1] && sub_commands.include?(words[1])
           completion.push helper.grids
         else
           completion.push sub_commands
@@ -152,8 +151,7 @@ begin
       when 'node'
         completion.clear
         sub_commands = %w(list show remove)
-        if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+        if words[1] && sub_commands.include?(words[1])
           completion.push helper.nodes
         else
           completion.push sub_commands
@@ -193,8 +191,7 @@ begin
         sub_commands = %w(containers create delete deploy list logs restart
                         scale show start stats stop update monitor env
                         secret link unlink)
-        if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+        if words[1] && sub_commands.include?(words[1])
           completion.push helper.services
         else
           completion.push sub_commands
@@ -202,8 +199,7 @@ begin
       when 'container'
         completion.clear
         sub_commands = %w(exec inspect logs)
-        if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+        if words[1] && sub_commands.include?(words[1])
           completion.push helper.containers
         else
           completion.push sub_commands
@@ -218,8 +214,7 @@ begin
         completion.clear
         sub_commands = %w(init build config deploy start stop remove rm ps list
                           logs monitor show)
-        if words[1]
-          completion.push(sub_commands) unless sub_commands.include?(words[1])
+        if words[1] && sub_commands.include?(words[1])
           completion.push helper.yml_services
         else
           completion.push sub_commands
@@ -236,9 +231,10 @@ begin
               completion.push helper.yml_files
           elsif words[1] == 'upgrade' && words[3]
             completion.push helper.yml_files
-          else
-            completion.push(sub_commands) unless sub_commands.include?(words[1])
+          elsif words[1] && sub_commands.include?(words[1])
             completion.push helper.stacks
+          else
+            completion.push(sub_commands)
           end
         else
           completion.push sub_commands
