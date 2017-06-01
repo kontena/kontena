@@ -28,8 +28,8 @@ module Kontena
             array,
             fields,
             row_format_proc: block_given? ? block.to_proc : nil,
-            header_format_proc: lambda { |item| pastel.blue(item.to_s.capitalize) },
-            render_options: self.respond_to?(:render_options) ? self.render_options : nil
+            header_format_proc: lambda { |item| pastel.bold(item.to_s.upcase) },
+            render_options: self.respond_to?(:render_options) ? self.render_options : {padding: [0,2,0,0]}
           ).render
         end
 

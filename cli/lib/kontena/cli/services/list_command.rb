@@ -17,7 +17,7 @@ module Kontena::Cli::Services
     end
 
     def fields
-      quiet? ? ['name'] : {'  ' => 'health_icon', name: 'name', instances: 'instances', stateful: 'stateful', state: 'state', "exposed ports" => 'ports' }
+      quiet? ? ['name'] : {name: 'name', instances: 'instances', stateful: 'stateful', state: 'state', "exposed ports" => 'ports' }
     end
 
     def service_port(port)
@@ -49,9 +49,8 @@ module Kontena::Cli::Services
 
     def execute
       print_table(services) do |row|
-        row['name'] = service_name(row)
+        row['name'] = quiet? ? service_name(row) :  health_status_icon(health_status(row)) + " " + service_name(row)
         next if quiet?
-        row['health_icon'] = health_status_icon(health_status(row))
         row['stateful'] = row['stateful'] ? pastel.green('yes') : 'no'
         row['ports'] = row['ports'].map(&method(:service_port)).join(',')
         row['state'] = pastel.send(state_color(row['state']), row['state'])
