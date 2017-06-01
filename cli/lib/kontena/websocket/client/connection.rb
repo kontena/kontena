@@ -12,10 +12,9 @@ module Kontena
 
         attr_reader :url
 
+        # @param [String] url
+        # @param [Hash] options
         def initialize(url, options = {})
-          @handlers = {
-            open: [], message: [], close: []
-          }
           @options = options
           @url = url
           @client = ::WebSocket::Driver.client(self)
