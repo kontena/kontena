@@ -173,8 +173,7 @@ end
 require 'retriable'
 Retriable.configure do |c|
   c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
-    return true unless ENV["DEBUG"]
-    puts "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
+    Kontena.logger.debug { "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}" }
   end
 end
 
