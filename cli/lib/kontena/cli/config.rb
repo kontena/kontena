@@ -79,9 +79,41 @@ module Kontena
         )
       end
 
-      # Load configuration from default location ($HOME/.kontena_client.json)
+      def move_config
+        if File.exist?(old_default_config_filename)
+          ensure_config_path
+          require 'fileutils'
+          FileUtils.mv(old_default_config_filename, default_config_filename)
+          at_exit do
+            # Need to do at exit, otherwise it will pop up in the first place the config is accessed,
+            # often after the first lines of command output have already been displayed
+            warn(
+              Kontena.pastel.yellow('Note: ') +
+              "Configuration file " + Kontena.pastel.cyan(old_default_config_filename) +
+              " was moved to the new default location " + Kontena.pastel.cyan(default_config_filename)
+            )
+          end
+          true
+        else
+          false
+        end
+      rescue =>  ex
+        raise ex, "[ERROR] Could not move config file from #{old_default_config_filename} to new default location #{default_config_filename} : #{ex.message}"
+      end
+
+      # Load configuration from default location ($HOME/.kontena/config.json)
       def load_settings_from_config_file
-        settings = config_file_available? ? parse_config_file : default_settings
+        if config_file_available?
+          settings = parse_config_file
+        elsif ENV['KONTENA_CONFIG']
+          raise "Could not read configuration from #{ENV['KONTENA_CONFIG']}"
+        else
+          if move_config
+            settings = parse_config_file
+          else
+            settings = default_settings
+          end
+        end
 
         Array(settings['servers']).each do |server_data|
           if server_data['token']
@@ -218,8 +250,22 @@ module Kontena
       end
 
       # Generate the default configuration filename
-      def default_config_filename
+      def old_default_config_filename
         File.join(Dir.home, '.kontena_client.json')
+      end
+
+      def default_config_filename
+        File.join(Dir.home, '.kontena', 'config.json')
+      end
+
+      def ensure_config_path
+        Dir.mkdir(kontena_home, 0700) unless File.directory?(kontena_home)
+      rescue => ex
+        raise ex, "[ERROR] Permission denied to create directory #{kontena_home} : #{ex.message}"
+      end
+
+      def kontena_home
+        @kontena_home ||= File.join(Dir.home, '.kontena')
       end
 
       # List of configured servers
@@ -452,6 +498,7 @@ module Kontena
       def write
         return nil if ENV['KONTENA_URL']
         debug { "Writing configuration to #{config_filename}" }
+        ensure_config_path
         File.write(config_filename, to_json)
       end
 
