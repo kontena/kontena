@@ -3,6 +3,30 @@ require 'kontena/cli/common'
 class Helper
   include Kontena::Cli::Common
 
+  def client_config
+    require 'json'
+    config_file = File.expand_path('~/.kontena_client.json')
+    if(File.exist?(config_file))
+      JSON.parse(File.read(config_file))
+    else
+      {}
+    end
+  rescue => ex
+    logger.debug ex
+    {}
+  end
+
+  def current_grid
+    client_config['servers'].find { |s| s['name'] == client_config['current_server']}['grid']
+  rescue => ex
+    logger.debug ex
+    nil
+  end
+
+  def current_master_name
+    client_config['current_server']
+  end
+
   def client
     $VERSION_WARNING_ADDED=true
     token = require_token
@@ -11,7 +35,8 @@ class Helper
 
   def grids
     client.get("grids")['grids'].map{|grid| grid['id']}
-  rescue
+  rescue => ex
+    logger.debug ex
     []
   end
 
@@ -27,7 +52,8 @@ class Helper
     results.push stacks.map{|s| s['name']}
     results.delete('null')
     results
-  rescue
+  rescue => ex
+    logger.debug ex
     []
   end
 
@@ -43,7 +69,8 @@ class Helper
       end
     }
     results
-  rescue
+  rescue => ex
+    logger.debug ex
     []
   end
 
@@ -55,7 +82,8 @@ class Helper
       results.push(containers.map{|c| c['id'] })
     end
     results
-  rescue
+  rescue => ex
+    logger.debug ex
     []
   end
 
@@ -66,24 +94,22 @@ class Helper
       services = yaml['services']
       services.keys
     end
-  rescue
+  rescue => ex
+    logger.debug ex
     []
   end
 
   def yml_files
     Dir["./*.yml"].map{|file| file.sub('./', '')}
-  rescue
+  rescue => ex
+    logger.debug ex
     []
   end
 
   def master_names
-    require 'json'
-    config_file = File.expand_path('~/.kontena_client.json')
-    if(File.exist?(config_file))
-      config = JSON.parse(File.read(config_file))
-      return config['servers'].map{|s| s['name']}
-    end
-  rescue
+    client_config['servers'].map{|s| s['name']}
+  rescue => ex
+    logger.debug ex
     []
   end
 
@@ -143,7 +169,9 @@ begin
       when 'grid'
         completion.clear
         sub_commands = %w(add-user audit-log create current list user remove show use)
-        if words[1] && sub_commands.include?(words[1])
+        if words[1] && words[1] == 'use'
+          completion.push helper.grids.reject { |g| g == helper.current_grid }
+        elsif words[1] && %w(update show rm remove env cloud-config health).include?(words[1])
           completion.push helper.grids
         else
           completion.push sub_commands
@@ -160,6 +188,8 @@ begin
         completion.clear
         sub_commands = %w(list use user current remove rm config cfg login logout token join audit-log init-cloud)
         if words[1] && words[1] == 'use'
+          completion.push helper.master_names.reject { |n| n == helper.current_master_name }
+        elsif words[1] && %w(remove rm).include?(words[1])
           completion.push helper.master_names
         elsif words[1] && words[1] == 'user'
           users_sub_commands = %w(invite list role)
