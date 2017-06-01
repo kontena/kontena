@@ -90,7 +90,7 @@ describe 'complete' do
         end
       end
 
-      it 'can complete grid names' do
+      it 'can complete node names' do
         node_names = run('kontena node ls -q').out.split(/[\r\n]+/)
         k = run 'kontena complete kontena node show'
         rows = k.out.split(/[\r\n]+/)
