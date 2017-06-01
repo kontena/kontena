@@ -50,14 +50,32 @@ describe 'complete' do
   end
 
   context 'master queries' do
-    it 'can complete node names' do
-      k = run 'kontena complete kontena node show'
-      expect(k.out).to match(/moby/)
+    context 'with current master set' do
+      it 'can complete node names' do
+        k = run 'kontena complete kontena node show'
+        expect(k.out).to match(/moby/)
+      end
+
+      it 'can complete grid names' do
+        k = run 'kontena complete kontena grid show'
+        expect(k.out).to match(/e2e/)
+      end
     end
 
-    it 'can complete grid names' do
-      k = run 'kontena complete kontena grid show'
-      expect(k.out).to match(/e2e/)
+    context 'without current master set' do
+      before(:each) do
+        @current = run('kontena master current').out[/\b(.+?)http/, 1]
+        run 'kontena master use --clear'
+      end
+
+      after(:each) do
+        run 'kontena master use ' + @current
+      end
+
+      it 'should return empty' do
+        k = run 'kontena complete kontena node show'
+        expect(k.out.split(/[\r\n]+/).size).to be_zero
+      end
     end
   end
 end
