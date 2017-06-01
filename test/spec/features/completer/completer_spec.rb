@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'complete' do
   it 'outputs subcommand tree with --subcommand-tree' do
-    k = run 'kontena whoami'
+    k = run 'kontena complete --subcommand-tree'
     expect(k.code).to eq(0)
     expect(k.out).to match(/^kontena grid show$/)
     expect(k.out).to match(/^kontena stack install$/)
