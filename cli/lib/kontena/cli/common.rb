@@ -35,7 +35,6 @@ module Kontena
         require 'kontena/cli/config' unless Kontena::Cli.const_defined?(:Config)
         Kontena::Cli::Config.instance
       end
-      alias_method :settings, :config
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message

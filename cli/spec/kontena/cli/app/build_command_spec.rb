@@ -19,20 +19,8 @@ describe Kontena::Cli::Apps::BuildCommand do
     fixture('docker-compose.yml')
   end
 
-  let(:settings) do
-    {'current_server' => 'alias',
-     'servers' => [
-         {
-           'name' => 'some_master',
-           'url' => 'some_master'
-         }
-     ]
-    }
-  end
-
   describe '#execute' do
     before(:each) do
-      allow(subject).to receive(:settings).and_return(settings)
       allow(subject).to receive(:current_dir).and_return("kontena-test")
       allow(File).to receive(:exists?).and_return(true)
       allow(File).to receive(:read).with("#{Dir.getwd}/kontena.yml").and_return(kontena_yml)
