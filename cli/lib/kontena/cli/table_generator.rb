@@ -11,6 +11,8 @@ module Kontena
 
       DEFAULT_HEADER_FORMAT_PROC = lambda { |header| header.to_s.capitalize }
 
+      DEFAULT_RENDER_OPTS = {padding: [0,2,0,0]}
+
       module Helper
         def self.included(base)
           if base.respond_to?(:option)
@@ -28,8 +30,8 @@ module Kontena
             array,
             fields,
             row_format_proc: block_given? ? block.to_proc : nil,
-            header_format_proc: lambda { |item| pastel.blue(item.to_s.capitalize) },
-            render_options: self.respond_to?(:render_options) ? self.render_options : nil
+            header_format_proc: lambda { |item| pastel.bold(item.to_s.upcase) },
+            render_options: self.respond_to?(:render_options) ? DEFAULT_RENDER_OPTS.merge(self.render_options) : DEFAULT_RENDER_OPTS
           ).render
         end
 
