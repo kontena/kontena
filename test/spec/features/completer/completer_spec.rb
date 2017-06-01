@@ -1,40 +1,47 @@
 require 'spec_helper'
 
 describe 'complete' do
+
   it 'outputs subcommand tree with --subcommand-tree' do
     k = run 'kontena complete --subcommand-tree'
     expect(k.code).to eq(0)
-    expect(k.out).to match(/^kontena grid show$/)
-    expect(k.out).to match(/^kontena stack install$/)
-    expect(k.out).to match(/^kontena service restart$/)
-    expect(k.out).to match(/^kontena volume list$/)
-    expect(k.out).to match(/^kontena master user role add$/)
-    expect(k.out).to match(/^kontena master user role add foo$/)
-    expect(k.out.split(/[\r\n]/).size > 100).to be_truthy
+    rows = k.out.split(/[\r\n]+/)
+    expect(rows).to include "kontena grid show"
+    expect(rows).to include "kontena stack install"
+    expect(rows).to include "kontena service restart"
+    expect(rows).to include "kontena volume list"
+    expect(rows).to include "kontena master user role add"
+    expect(rows).not_to include "kontena master user role add foo"
+    expect(rows.size > 100).to be_truthy
   end
 
   it 'can complete subcommands' do
     k = run 'kontena complete kontena'
-    expect(k.out).to match(/^stack$/)
-    expect(k.out).to match(/^vault$/)
-    expect(k.out).to match(/^whoami$/)
+    rows = k.out.split(/[\r\n]+/)
+    expect(rows).to include "stack"
+    expect(rows).to include "vault"
+    expect(rows).to include "whoami"
   end
 
   it 'can complete subsubcommands' do
     k = run 'kontena complete kontena stack'
-    expect(k.out).to match(/^install$/)
-    expect(k.out).to match(/^deploy$/)
+    rows = k.out.split(/[\r\n]+/)
+    expect(rows).to include "install"
+    expect(rows).to include "deploy"
   end
 
   it 'can complete subsubsubcommands' do
     k = run 'kontena complete kontena master user'
-    expect(k.out).to match(/^invite$/)
+    rows = k.out.split(/[\r\n]+/)
+    expect(rows).to include "invite"
+    expect(rows).to include "role"
   end
 
   it 'can complete subsubsubsubcommands' do
     k = run 'kontena complete kontena master user role'
-    expect(k.out).to match(/^add$/)
-    expect(k.out).to match(/^remove$/)
+    rows = k.out.split(/[\r\n]+/)
+    expect(rows).to include "add"
+    expect(rows).to include "remove"
   end
 
   it 'can complete master names' do
@@ -45,7 +52,7 @@ describe 'complete' do
   context 'master queries' do
     it 'can complete node names' do
       k = run 'kontena complete kontena node show'
-      expect(k.out).to match(/online/)
+      expect(k.out).to match(/moby/)
     end
 
     it 'can complete grid names' do

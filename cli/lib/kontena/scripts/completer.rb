@@ -162,7 +162,7 @@ begin
         if words[1] && words[1] == 'use'
           completion.push helper.master_names
         elsif words[1] && words[1] == 'user'
-          users_sub_commands = %(invite list role)
+          users_sub_commands = %w(invite list role)
           if words[2] == 'role'
             role_subcommands = %w(add remove rm)
             if !words[3] || !role_subcommands.include?(words[3])
