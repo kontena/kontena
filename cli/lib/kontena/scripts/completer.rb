@@ -1,5 +1,4 @@
 require 'kontena/cli/common'
-require 'yaml'
 
 class Helper
   include Kontena::Cli::Common
@@ -61,6 +60,7 @@ class Helper
   end
 
   def yml_services
+    require 'yaml'
     if File.exist?('kontena.yml')
       yaml = YAML.safe_load(File.read('kontena.yml'))
       services = yaml['services']
@@ -77,6 +77,7 @@ class Helper
   end
 
   def master_names
+    require 'json'
     config_file = File.expand_path('~/.kontena_client.json')
     if(File.exist?(config_file))
       config = JSON.parse(File.read(config_file))
@@ -162,7 +163,14 @@ begin
           completion.push helper.master_names
         elsif words[1] && words[1] == 'user'
           users_sub_commands = %(invite list role)
-          completion.push users_sub_commands
+          if words[2] == 'role'
+            role_subcommands = %w(add remove rm)
+            if !words[3] || !role_subcommands.include?(words[3])
+              completion.push role_subcommands
+            end
+          else
+            completion.push users_sub_commands
+          end
         elsif words[1] && ['config', 'cfg'].include?(words[1])
           config_sub_commands = %(set get dump load import export unset)
           completion.push config_sub_commands
