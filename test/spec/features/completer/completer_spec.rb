@@ -51,14 +51,19 @@ describe 'complete' do
 
   context 'master queries' do
     context 'with current master set' do
-      it 'can complete node names' do
+      it 'can complete grid names' do
+        node_names = run('kontena node ls -q').out.split(/[\r\n]+/)
         k = run 'kontena complete kontena node show'
-        expect(k.out).to match(/moby/)
+        rows = k.out.split(/[\r\n]+/)
+        node_names.each do |node_name|
+          expect(rows).to include node_name
+        end
       end
 
       it 'can complete grid names' do
         k = run 'kontena complete kontena grid show'
-        expect(k.out).to match(/e2e/)
+        rows = k.out.split(/[\r\n]+/)
+        expect(rows).to include "e2e"
       end
     end
 
