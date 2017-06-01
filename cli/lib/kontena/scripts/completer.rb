@@ -1,4 +1,3 @@
-require 'kontena/client'
 require 'kontena/cli/common'
 require 'yaml'
 
