@@ -1,21 +1,40 @@
 require 'forwardable'
+require 'kontena_cli'
 
 module Kontena
   module Cli
     module Common
       extend Forwardable
 
-      def_delegators :Kontena, :pastel, :prompt, :logger
       def_delegators :prompt, :ask, :yes?
       def_delegators :config,
         :current_grid=, :require_current_grid, :current_master,
         :current_master=, :require_current_master, :require_current_account,
         :current_account
-      def_delegator Kontena::Cli::Spinner, :spin, :spinner
-      def_delegator Kontena::Cli::Config, :instance, :config
-      def_delegator Kontena::Cli::Config, :instance, :settings
       def_delegator :config, :config_filename, :settings_filename
       def_delegator :client, :server_version, :api_url_version
+
+      def logger
+        Kontena.logger
+      end
+
+      def prompt
+        Kontena.prompt
+      end
+
+      def pastel
+        Kontena.pastel
+      end
+
+      def spinner(msg, &block)
+        require 'kontena/cli/spinner' unless Kontena::Cli.const_defined?(:Spinner)
+         Kontena::Cli::Spinner.spin(msg, &block)
+      end
+
+      def config
+        require 'kontena/cli/config' unless Kontena::Cli.const_defined?(:Config)
+        Kontena::Cli::Config.instance
+      end
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message

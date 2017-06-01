@@ -70,7 +70,7 @@ module Kontena
         if data.empty?
           fields.map(&method(:format_header_item)).join('  ')
         else
-          table.render(render_mode, render_options)
+          table.render(render_mode, render_options).gsub(/\s+$/, '')
         end
       end
 
