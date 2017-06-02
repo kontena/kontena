@@ -50,6 +50,7 @@ module Kontena
       end
 
       def before
+        extend Kontena::Cli::Common
         unless_param(:name) do
           if command.cloud_master_id
             response = spinner "Receiving Master information from Kontena Cloud" do
