@@ -19,18 +19,18 @@ module Kontena::Cli::Stacks
       variables? ? show_variables : show_stack
     end
 
-    def fetch_stack
+    def fetch_stack(name)
       client.get("stacks/#{current_grid}/#{name}")
     end
 
     def show_variables
       require 'yaml'
-      stack = fetch_stack
+      stack = fetch_stack(name)
       puts stack['variables'].to_yaml
     end
 
     def show_stack
-      stack = fetch_stack
+      stack = fetch_stack(name)
 
       puts "#{stack['name']}:"
       puts "  created: #{stack['created_at']}"
