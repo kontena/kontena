@@ -140,6 +140,7 @@ describe AuthProvider do
     end
 
     it "should update kontena cloud information when valid" do
+      uuid = SecureRandom.uuid
       Configuration['oauth2.client_id'] = "foo"
       Configuration['oauth2.client_secret'] = "foo"
       Configuration['oauth2.authorize_endpoint'] = "https://foo.kontena.io/foo"
@@ -147,6 +148,7 @@ describe AuthProvider do
       Configuration['oauth2.userinfo_endpoint'] = "foo"
       Configuration['oauth2.userinfo_scope'] = "foo"
       Configuration['server.root_url'] = "https://example.com:8181"
+      Configuration['server.uuid'] = uuid
       allow(subject).to receive(:master_access_token).and_return('foobar')
       expect(client).to receive(:request) do |httpmethod, url, options|
         expect(httpmethod).to eq :put
@@ -154,7 +156,11 @@ describe AuthProvider do
         expect(options[:header]['Content-Type']).to eq "application/json"
         expect(options[:header]['Authorization']).to eq "Bearer foobar"
         body = JSON.parse(options[:body])
-        expect(body["data"]["attributes"]["redirect-uri"]).to eq "https://example.com:8181/cb"
+        expect(body["data"]["attributes"]).to eq({
+          'redirect-uri' => 'https://example.com:8181/cb',
+          'url' => 'https://example.com:8181',
+          'uuid' => uuid
+        })
       end.and_return(success_response)
       subject.update_kontena
     end
