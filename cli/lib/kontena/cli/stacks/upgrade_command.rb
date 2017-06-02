@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
     include Common::StackValuesFromOption
 
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
+    option '--use-defaults', :flag, 'Use the default or previous values for all variables instead of prompting'
 
     option '--force', :flag, 'Force upgrade'
 
@@ -26,6 +27,8 @@ module Kontena::Cli::Stacks
       master_data = spinner "Reading stack #{pastel.cyan(name)} metadata from Kontena Master" do |spin|
         read_stack || spin.fail!
       end
+
+      values = values.to_h.merge(master_data.delete('variables').to_h) if use_defaults?
 
       stack = stack_read_and_dump(filename, name: name, values: values, defaults: master_data['variables'])
 

@@ -13,7 +13,8 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
       {
         'name' => 'stack-a',
         'stack' => 'foo/stack-a',
-        'services' => []
+        'services' => [],
+        'variables' => defaults
       }
     end
 
@@ -105,5 +106,16 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
         subject.run(['--no-deploy', 'stack-a', './path/to/kontena.yml'])
       end
     end
+
+    context '--use-defaults option' do
+      it 'uses the values received in master stack response as values instead of defaults for upgrade' do
+        expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
+        allow(subject).to receive(:require_config_file).with('./path/to/kontena.yml').and_return(true)
+        expect(subject).to receive(:stack_read_and_dump).with('./path/to/kontena.yml', name: 'stack-a', values: defaults, defaults: nil).and_return(stack)
+        expect(client).to receive(:put).with('stacks/test-grid/stack-a', hash_including('variables' => { 'foo' => 'bar' }))
+        subject.run(['--use-defaults', 'stack-a', './path/to/kontena.yml'])
+      end
+    end
   end
 end
+
