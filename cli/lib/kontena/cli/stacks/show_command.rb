@@ -13,16 +13,24 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
+    option '--variables', :flag, 'Output the variable-value pairs as YAML'
+
     def execute
-      show_stack(name)
+      variables? ? show_variables : show_stack
     end
 
-    def fetch_stack(name)
+    def fetch_stack
       client.get("stacks/#{current_grid}/#{name}")
     end
 
-    def show_stack(name)
-      stack = fetch_stack(name)
+    def show_variables
+      require 'yaml'
+      stack = fetch_stack
+      puts stack['variables'].to_yaml
+    end
+
+    def show_stack
+      stack = fetch_stack
 
       puts "#{stack['name']}:"
       puts "  created: #{stack['created_at']}"
