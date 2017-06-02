@@ -13,23 +13,28 @@ module Kontena::Cli::Containers
     option ["--interactive"], :flag, "Keep stdin open"
 
     def execute
-      require 'websocket-client-simple'
-
       require_api_url
       token = require_token
       cmd = JSON.dump({cmd: cmd_list})
-      base = self
-      ws = connect(ws_url("#{current_grid}/#{container_id}"), token)
+      url = ws_url("#{current_grid}/#{container_id}")
+      url << 'interactive=true&' if interactive?
+      url << 'shell=true' if shell?
+      ws = connect(url, token)
+
       ws.on :message do |msg|
-        base.handle_message(msg)
+        self.handle_message(msg)
       end
       ws.on :open do
-        ws.send(cmd)
+        ws.text(cmd)
       end
       ws.on :close do |e|
-        exit 1
+        if e.reason.include?('code: 404')
+          exit_with_error('Not found')
+        else
+          exit 1
+        end
       end
-
+      ws.connect
       if interactive?
         stream_stdin_to_ws(ws).join
       else 

@@ -1,13 +1,16 @@
+require_relative '../../websocket/client'
+
 module Kontena::Cli::Helpers
   module ExecHelper
 
     # @param [WebSocket::Client::Simple] ws 
     # @return [Thread]
     def stream_stdin_to_ws(ws)
+      require 'io/console'
       Thread.new {
         STDIN.raw {
           while char = STDIN.readpartial(1024)
-            ws.send(JSON.dump({ stdin: char }))
+            ws.text(JSON.dump({ stdin: char }))
           end
         }
       }
@@ -43,19 +46,22 @@ module Kontena::Cli::Helpers
     def ws_url(container_id)
       url = require_current_master.url
       url << '/' unless url.end_with?('/')
-      "#{url.sub('http', 'ws')}v1/containers/#{container_id}/exec"
+      "#{url.sub('http', 'ws')}v1/containers/#{container_id}/exec?"
     end
 
     # @param [String] url
     # @param [String] token
     # @return [WebSocket::Client::Simple]
     def connect(url, token)
-      WebSocket::Client::Simple.connect(url, {
+      options = {
         headers: {
-          'Authorization' => "Bearer #{token.access_token}",
-          'Accept' => 'application/json'
+          'Authorization' => "Bearer #{token.access_token}"
         }
-      })
+      }
+      if ENV['SSL_IGNORE_ERRORS'].to_s == 'true'
+        options[:verify_mode] = ::OpenSSL::SSL::VERIFY_NONE
+      end
+      Kontena::Websocket::Client.new(url, options)
     end
   end
 end

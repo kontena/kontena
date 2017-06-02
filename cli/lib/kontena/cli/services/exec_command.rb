@@ -24,8 +24,6 @@ module Kontena::Cli::Services
     requires_current_grid
 
     def execute
-      require 'websocket-client-simple'
-
       exit_with_error "--interactive cannot be used with --all" if all? && interactive?
 
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
@@ -92,7 +90,7 @@ module Kontena::Cli::Services
       exit_status = nil
       token = require_token
       url = ws_url(container['id'])
-      url << '?shell=true' if shell?
+      url << 'shell=true' if shell?
       ws = connect(url, token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
@@ -107,11 +105,12 @@ module Kontena::Cli::Services
         end
       end
       ws.on :open do
-        ws.send(cmd)
+        ws.text(cmd)
       end
-      ws.on :close do |e|
-        exit_status = 1
+      ws.on :close do |e|s
+        exit_status = 1 if exit_status.nil? && e.code != 1000
       end
+      ws.connect
 
       sleep 0.01 until !exit_status.nil?
 
@@ -120,23 +119,22 @@ module Kontena::Cli::Services
 
     # @param [Hash] container
     def interactive_exec(container)
-      require 'io/console'
-
       token = require_token
       cmd = JSON.dump({ cmd: cmd_list })
       base = self
-      url = ws_url(container['id']) << '?interactive=true'
+      url = ws_url(container['id']) << 'interactive=true'
       url << '&shell=true' if shell?
       ws = connect(url, token)
       ws.on :message do |msg|
         base.handle_message(msg)        
       end
       ws.on :open do
-        ws.send(cmd)
+        ws.text(cmd)
       end
       ws.on :close do |e|
-        exit 1
+        exit 1 if e.code != 1000
       end
+      ws.connect
       
       stream_stdin_to_ws(ws).join
     end
