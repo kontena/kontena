@@ -24,6 +24,7 @@ module Kontena
 
       # Render as indented YAML
       def errors_message(indent: "\t")
+        require 'yaml'
         @errors.to_yaml.lines[1..-1].map{|line| "#{indent}#{line}" }.join
       end
 
