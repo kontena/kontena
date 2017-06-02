@@ -20,7 +20,7 @@ describe 'service exec' do
   it 'returns an error if command not found' do
     k = kommando("kontena service exec test-1 thisdoesnotexist")
     k.run
-    expect(k.code).to eq(1)
+    expect(k.code).to eq(126)
   end
 
   it 'runs a command inside a service on a given instances' do

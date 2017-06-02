@@ -28,7 +28,11 @@ module Kontena::Cli::Containers
         ws.text(cmd)
       end
       ws.on :close do |e|
-        exit 1
+        if e.reason.include?('code: 404')
+          exit_with_error('Not found')
+        else
+          exit 1
+        end
       end
       ws.connect
       if interactive?
