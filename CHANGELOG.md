@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.0.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.0.rc2) (2017-06-02)
+## [1.3.0.rc2](https://github.com/kontena/kontena/releases/tag/v1.3.0.rc2) (2017-06-02)
 
 ### Highlights
 
