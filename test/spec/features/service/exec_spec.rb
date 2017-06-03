@@ -32,7 +32,7 @@ describe 'service exec' do
   end
 
   it 'runs a command inside a service with tty' do
-    k = kommando("kontena service exec --interactive test-1 sh")
+    k = kommando("kontena service exec -it test-1 sh")
     
     k.out.on("#") do
       k.in << "ls -la /\r"

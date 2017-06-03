@@ -12,10 +12,11 @@ module Kontena::Cli::Services
     parameter "NAME", "Service name"
     parameter "CMD ...", "Command"
 
-    option ["-i", "--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
+    option ["--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
     option ["--shell"], :flag, "Execute as a shell command"
-    option ["--interactive"], :flag, "Keep stdin open"
+    option ["-i", "--interactive"], :flag, "Keep stdin open"
+    option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY"
     option ["--skip"], :flag, "Skip failed instances when executing --all"
     option ["--silent"], :flag, "Do not show exec status"
     option ["--verbose"], :flag, "Show exec status"
@@ -91,6 +92,7 @@ module Kontena::Cli::Services
       token = require_token
       url = ws_url(container['id'])
       url << 'shell=true' if shell?
+      url << 'tty=true' if tty?
       ws = connect(url, token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
@@ -124,6 +126,7 @@ module Kontena::Cli::Services
       base = self
       url = ws_url(container['id']) << 'interactive=true'
       url << '&shell=true' if shell?
+      url << '&tty=true' if tty?
       ws = connect(url, token)
       ws.on :message do |msg|
         base.handle_message(msg)        

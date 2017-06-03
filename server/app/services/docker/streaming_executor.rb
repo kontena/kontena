@@ -10,20 +10,18 @@ module Docker
       @client = RpcClient.new(container.host_node.node_id)
     end
 
-    # Starts exec session with tty
-    # @param [Boolean] shell
-    def start_tty(shell)
-      create_session
-      subscribe_to_session
-      register_tty_ws_events(shell)
-    end
-
     # Starts normal exec session (without tty)
     # @param [Boolean] shell
-    def start(shell)
+    # @param [Boolean] stdin
+    # @param [Boolean] tty
+    def start(shell, stdin, tty)
       create_session
       subscribe_to_session
-      register_run_ws_events(shell)
+      if stdin 
+        register_stdin_ws_events(shell, tty)
+      else 
+        register_run_ws_events(shell, tty)
+      end
     end
 
     def create_session
@@ -42,7 +40,8 @@ module Docker
     end
 
     # @param [Boolean] shell
-    def register_tty_ws_events(shell)
+    # @param [Boolean] tty
+    def register_stdin_ws_events(shell, tty)
       init = true
       @ws.on(:message) do |event|
         if init == true
@@ -54,7 +53,7 @@ module Docker
               else 
                 cmd = data['cmd']
               end
-              @client.notify('/containers/run_exec', @exec_session['id'], cmd, true)
+              @client.notify('/containers/run_exec', @exec_session['id'], cmd, tty, true)
               init = false
             end
           rescue JSON::ParserError
@@ -79,7 +78,8 @@ module Docker
     end
 
     # @param [Boolean] shell
-    def register_run_ws_events(shell)
+    # @param [Boolean] tty
+    def register_run_ws_events(shell, tty)
       @ws.on(:message) do |event|
         begin
           data = JSON.parse(event.data)
@@ -89,7 +89,7 @@ module Docker
             else 
               cmd = data['cmd']
             end
-            @client.notify('/containers/run_exec', @exec_session['id'], cmd, false)
+            @client.notify('/containers/run_exec', @exec_session['id'], cmd, tty, false)
           end
         rescue JSON::ParserError
           error "invalid json"

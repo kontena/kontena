@@ -10,7 +10,8 @@ module Kontena::Cli::Containers
     parameter "CMD ...", "Command"
 
     option ["--shell"], :flag, "Execute as a shell command"
-    option ["--interactive"], :flag, "Keep stdin open"
+    option ["-i", "--interactive"], :flag, "Keep stdin open"
+    option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY"
 
     def execute
       require_api_url
@@ -18,6 +19,7 @@ module Kontena::Cli::Containers
       cmd = JSON.dump({cmd: cmd_list})
       url = ws_url("#{current_grid}/#{container_id}")
       url << 'interactive=true&' if interactive?
+      url << 'tty=true&' if tty?
       url << 'shell=true' if shell?
       ws = connect(url, token)
 

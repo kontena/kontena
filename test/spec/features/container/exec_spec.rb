@@ -20,7 +20,7 @@ describe 'container exec' do
 
   it 'runs a command inside a container with tty' do
     id = container_id
-    k = kommando("kontena container exec --interactive #{id} sh")
+    k = kommando("kontena container exec -it #{id} sh")
     
     k.out.on("#") do
       k.in << "ls -la \r"

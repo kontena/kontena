@@ -128,15 +128,12 @@ module Kontena
       # @param [String] session_id
       # @param [Array<String>] cmd
       # @param [Boolean] tty
-      def run_exec(session_id, cmd, tty = false)
+      # @param [Boolean] stdin
+      def run_exec(session_id, cmd, tty = false, stdin = false)
         actor_id = "container_exec_#{session_id}"
         executor = Celluloid::Actor[actor_id]
         if executor
-          if tty
-            executor.async.interactive(cmd)
-          else
-            executor.async.run(cmd)
-          end
+          executor.async.run(cmd, tty, stdin)
         else
           raise RpcServer::Error.new(404, "Exec session (#{session_id}) not found")
         end
@@ -144,6 +141,8 @@ module Kontena
         {}
       end
 
+      # @param [String] id
+      # @param [String] input
       def tty_input(id, input)
         actor_id = "container_exec_#{id}"
         executor = Celluloid::Actor[actor_id]
@@ -152,6 +151,7 @@ module Kontena
         end
       end
 
+      # @param [String] id
       def terminate_exec(id)
         actor_id = "container_exec_#{id}"
         executor = Celluloid::Actor[actor_id]

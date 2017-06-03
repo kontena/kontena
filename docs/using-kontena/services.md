@@ -376,10 +376,11 @@ $ kontena service exec <name>
 
 ```
 --grid GRID                   Specify grid to use
--i, --instance INSTANCE       Exec on given numbered instance, default first running
+--instance INSTANCE           Exec on given numbered instance, default first running
 -a, --all                     Exec on all running instances
 --shell                       Execute as a shell command
---interactive                 Keep stdin open
+-i, --interactive             Keep stdin open
+-t, --tty                     Allocate a pseudo-TTY
 --skip                        Skip failed instances when executing --all
 --silent                      Do not show exec status
 --verbose                     Show exec status
