@@ -147,7 +147,7 @@ module Kontena
         actor_id = "container_exec_#{id}"
         executor = Celluloid::Actor[actor_id]
         if executor
-          executor.async.input(input)
+          executor.input(input)
         end
       end
 
