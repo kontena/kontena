@@ -32,7 +32,7 @@ module Kontena
     def initialize(api_uri, api_token)
       @api_uri = api_uri
       @api_token = api_token
-      @rpc_server = Kontena::RpcServer.pool
+      @rpc_server = Kontena::RpcServer.supervise(as: :rpc_server)
       @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
       @abort = false
       @connected = false
@@ -138,11 +138,11 @@ module Kontena
     def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        rpc_server.async.handle_request(self, data)
+        Celluloid::Actor[:rpc_server].async.handle_request(self, data)
       elsif response_message?(data)
         Celluloid::Actor[:rpc_client].async.handle_response(data)
       elsif notification_message?(data)
-        rpc_server.async.handle_notification(data)
+        Celluloid::Actor[:rpc_server].async.handle_notification(data)
       end
     rescue => exc
       error exc.message
