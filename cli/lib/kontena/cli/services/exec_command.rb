@@ -25,6 +25,7 @@ module Kontena::Cli::Services
     requires_current_grid
 
     def execute
+      exit_with_error "the input device is not a TTY" if tty? && !STDIN.tty?
       exit_with_error "--interactive cannot be used with --all" if all? && interactive?
 
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
@@ -123,23 +124,22 @@ module Kontena::Cli::Services
     def interactive_exec(container)
       token = require_token
       cmd = JSON.dump({ cmd: cmd_list })
-      base = self
       url = ws_url(container['id']) << 'interactive=true'
       url << '&shell=true' if shell?
       url << '&tty=true' if tty?
       ws = connect(url, token)
       ws.on :message do |msg|
-        base.handle_message(msg)        
+        self.handle_message(msg)
       end
       ws.on :open do
         ws.text(cmd)
+        self.stream_stdin_to_ws(ws)
       end
       ws.on :close do |e|
         exit 1 if e.code != 1000
       end
       ws.connect
-      
-      stream_stdin_to_ws(ws).join
+      sleep
     end
   end
 end

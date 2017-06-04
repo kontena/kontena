@@ -8,11 +8,18 @@ module Kontena::Cli::Helpers
     def stream_stdin_to_ws(ws)
       require 'io/console'
       Thread.new {
-        STDIN.raw {
-          while char = STDIN.readpartial(1024)
+        if STDIN.tty?
+          STDIN.raw {
+            while char = STDIN.readpartial(1024)
+              ws.text(JSON.dump({ stdin: char }))
+            end
+          }
+        else
+          while char = STDIN.gets
             ws.text(JSON.dump({ stdin: char }))
           end
-        }
+          ws.text(JSON.dump({ stdin: nil }))
+        end
       }
     end
 
@@ -24,7 +31,7 @@ module Kontena::Cli::Helpers
           exit data['exit'].to_i
         elsif data.has_key?('stream')
           if data['stream'] == 'stdout'
-            $stdout << data['chunk'] 
+            $stdout << data['chunk']
           else 
             $stderr << data['chunk']
           end

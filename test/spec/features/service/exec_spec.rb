@@ -43,6 +43,12 @@ describe 'service exec' do
     expect(k.run).to be_truthy
   end
 
+  it 'runs a command with piped stdin' do
+    k = kommando("$ echo beer | kontena service exec -i test-1 rev")
+    expect(k.run).to be_truthy
+    expect(k.out).to eq('reeb')
+  end
+
   it 'runs a command on every instance with --all' do 
     run("kontena service scale test-1 2")
     k = kommando("kontena service exec --all --silent test-1 hostname -s")

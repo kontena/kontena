@@ -14,6 +14,8 @@ module Kontena::Cli::Containers
     option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY"
 
     def execute
+      exit_with_error "the input device is not a TTY" if tty? && !STDIN.tty?
+
       require_api_url
       token = require_token
       cmd = JSON.dump({cmd: cmd_list})
@@ -28,6 +30,7 @@ module Kontena::Cli::Containers
       end
       ws.on :open do
         ws.text(cmd)
+        self.stream_stdin_to_ws(ws) if interactive?
       end
       ws.on :close do |e|
         if e.reason.include?('code: 404')
@@ -37,11 +40,7 @@ module Kontena::Cli::Containers
         end
       end
       ws.connect
-      if interactive?
-        stream_stdin_to_ws(ws).join
-      else 
-        sleep
-      end
+      sleep
     end
   end
 end

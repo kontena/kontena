@@ -30,8 +30,12 @@ module Kontena::Actors
 
     # @param [String] input
     def input(input)
-      @last_input = Time.now.to_i
-      @write_pipe.write(input)
+      if input.nil?
+        @write_pipe.close
+      else
+        @last_input = Time.now.to_i
+        @write_pipe.write(input)
+      end
     end
 
     # @param [String] cmd
