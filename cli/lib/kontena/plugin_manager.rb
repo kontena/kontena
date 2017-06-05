@@ -56,6 +56,8 @@ module Kontena
     # Search rubygems for kontena plugins
     # @param pattern [String] optional search pattern
     def search_plugins(pattern = nil)
+      require 'excon'
+      require 'json'
       client = Excon.new('https://rubygems.org')
       response = client.get(
         path: "/api/v1/search.json?query=#{prefix(pattern)}",
@@ -71,6 +73,8 @@ module Kontena
     # Retrieve plugin versions from rubygems
     # @param plugin_name [String]
     def gem_versions(plugin_name)
+      require 'excon'
+      require 'json'
       client = Excon.new('https://rubygems.org')
       response = client.get(
         path: "/api/v1/versions/#{prefix(plugin_name)}.json",
@@ -199,7 +203,7 @@ module Kontena
                 $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
             rescue ScriptError, StandardError => ex
-              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name} from #{spec.gem_dir}\n\tRerun the command with environment DEBUG=true set to get the full exception."
               Kontena.logger.error(ex)
             end
           end
