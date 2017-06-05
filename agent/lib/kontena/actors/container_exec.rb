@@ -15,17 +15,7 @@ module Kontena::Actors
       @uuid = SecureRandom.uuid
       @container = container
       @read_pipe, @write_pipe = IO.pipe
-      @last_input = Time.now.to_i
       info "initialized (session #{@uuid})"
-
-      every(60) { self.check_activity }
-    end
-
-    def check_activity
-      if @last_input < (Time.now.to_i - 60*60)
-        warn "shutting down because no activity in last hour"
-        shutdown(1)
-      end
     end
 
     # @param [String] input
@@ -33,7 +23,6 @@ module Kontena::Actors
       if input.nil?
         @write_pipe.close
       else
-        @last_input = Time.now.to_i
         @write_pipe.write(input)
       end
     end
@@ -62,6 +51,8 @@ module Kontena::Actors
       shutdown(exit_code)
     end
 
+    # @param [String] stream
+    # @param [String] chunk
     def handle_stream_chunk(stream, chunk)
       rpc_client.notification('/container_exec/output', [@uuid, stream, chunk.force_encoding(Encoding::UTF_8)])
     end
