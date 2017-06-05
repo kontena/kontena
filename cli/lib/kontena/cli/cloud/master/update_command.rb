@@ -37,7 +37,7 @@ module Kontena::Cli::Cloud::Master
       attrs["owner"]        = self.owner        if self.owner
 
       response = cloud_client.put(
-        "master",
+        "user/masters/#{master_id}",
         { data: { attributes: attrs.reject{ |k, _| ['client-id', 'client-secret'].include?(k) } } }
       )
 
