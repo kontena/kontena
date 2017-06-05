@@ -1,7 +1,7 @@
 describe 'container exec' do
   def container_id
     k = run("kontena container list")
-    k.out.match(/^.* (.+\/kontena-agent) .*/)[1]
+    k.out.match(/.* (.+\/kontena-agent).*/)[1]
   end
 
   it 'executes command in a given container' do 
