@@ -3,7 +3,7 @@ require_relative '../../websocket/client'
 module Kontena::Cli::Helpers
   module ExecHelper
 
-    # @param [WebSocket::Client::Simple] ws 
+    # @param [WebSocket::Client::Simple] ws
     # @return [Thread]
     def stream_stdin_to_ws(ws)
       require 'io/console'
@@ -50,9 +50,12 @@ module Kontena::Cli::Helpers
     # @param [String] container_id
     # @return [String]
     def ws_url(container_id)
-      url = require_current_master.url
-      url << '/' unless url.end_with?('/')
-      "#{url.sub('http', 'ws')}v1/containers/#{container_id}/exec?"
+      require 'uri' unless Object.const_defined?(:URI)
+      url = URI.parse(require_current_master.url)
+      url.scheme = url.scheme.sub('http', 'ws')
+      url.path = "/v1/containers/#{container_id}/exec"
+      url.query = {}
+      url.to_s
     end
 
     # @param [String] url
