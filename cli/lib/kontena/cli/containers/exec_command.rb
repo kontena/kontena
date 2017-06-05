@@ -19,28 +19,40 @@ module Kontena::Cli::Containers
       require_api_url
       token = require_token
       cmd = JSON.dump({cmd: cmd_list})
-      url = ws_url("#{current_grid}/#{container_id}")
-      url << 'interactive=true&' if interactive?
-      url << 'tty=true&' if tty?
-      url << 'shell=true' if shell?
+      queue = Queue.new
+      stdin_reader = nil
       ws = connect(url, token)
-
       ws.on :message do |msg|
-        self.handle_message(msg)
+        data = parse_message(msg)
+        queue << data if data.is_a?(Hash)
       end
       ws.on :open do
         ws.text(cmd)
-        self.stream_stdin_to_ws(ws) if interactive?
+        stdin_reader = self.stream_stdin_to_ws(ws) if self.interactive?
       end
       ws.on :close do |e|
         if e.reason.include?('code: 404')
-          exit_with_error('Not found')
+          queue << {'exit' => 1, 'message' => 'Not found'}
         else
-          exit 1
+          queue << {'exit' => 1}
         end
       end
       ws.connect
-      sleep
+      while msg = queue.pop
+        self.handle_message(msg)
+      end
+    rescue SystemExit
+      stdin_reader.kill if stdin_reader
+      raise
+    end
+
+    # @return [String]
+    def url
+      url = ws_url("#{current_grid}/#{container_id}")
+      url = url + 'interactive=true&' if interactive?
+      url = url + 'tty=true&' if tty?
+      url = url + 'shell=true' if shell?
+      url
     end
   end
 end

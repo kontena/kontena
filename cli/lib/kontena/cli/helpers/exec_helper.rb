@@ -23,22 +23,21 @@ module Kontena::Cli::Helpers
       }
     end
 
-    # @param [Websocket::Frame::Incoming] msg
+    # @param [Hash] msg
     def handle_message(msg)
-      data = parse_message(msg)
-      if data.is_a?(Hash)
-        if data.has_key?('exit')
-          exit data['exit'].to_i
-        elsif data.has_key?('stream')
-          if data['stream'] == 'stdout'
-            $stdout << data['chunk']
-          else 
-            $stderr << data['chunk']
-          end
+      if msg.has_key?('exit')
+        if msg['message']
+          exit_with_error(msg['message'])
+        else
+          exit msg['exit'].to_i
+        end
+      elsif msg.has_key?('stream')
+        if msg['stream'] == 'stdout'
+          $stdout << msg['chunk']
+        else
+          $stderr << msg['chunk']
         end
       end
-    rescue => exc
-      $stderr << "#{exc.class.name}: #{exc.message}"
     end
 
     # @param [Websocket::Frame::Incoming] msg

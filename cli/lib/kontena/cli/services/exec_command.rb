@@ -91,10 +91,7 @@ module Kontena::Cli::Services
       cmd = JSON.dump({ cmd: cmd_list })
       exit_status = nil
       token = require_token
-      url = ws_url(container['id'])
-      url << 'shell=true' if shell?
-      url << 'tty=true' if tty?
-      ws = connect(url, token)
+      ws = connect(url(container['id']), token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
         if data 
@@ -124,22 +121,41 @@ module Kontena::Cli::Services
     def interactive_exec(container)
       token = require_token
       cmd = JSON.dump({ cmd: cmd_list })
-      url = ws_url(container['id']) << 'interactive=true'
-      url << '&shell=true' if shell?
-      url << '&tty=true' if tty?
-      ws = connect(url, token)
+      queue = Queue.new
+      stdin_stream = nil
+      ws = connect(url(container['id']), token)
       ws.on :message do |msg|
-        self.handle_message(msg)
+        data = self.parse_message(msg)
+        queue << data if data.is_a?(Hash)
       end
       ws.on :open do
         ws.text(cmd)
-        self.stream_stdin_to_ws(ws)
+        stdin_stream = self.stream_stdin_to_ws(ws)
       end
       ws.on :close do |e|
-        exit 1 if e.code != 1000
+        if e.code != 1000
+          queue << {'exit' => 1}
+        else
+          queue << {'exit' => 0}
+        end
       end
       ws.connect
-      sleep
+      while msg = queue.pop
+        self.handle_message(msg)
+      end
+    rescue SystemExit
+      stdin_stream.kill if stdin_stream
+      raise
+    end
+
+    # @param [String] container_id
+    # @return [String]
+    def url(container_id)
+      url = ws_url(container_id)
+      url = url + 'interactive=true&' if interactive?
+      url = url + 'shell=true&' if shell?
+      url = url + 'tty=true' if tty?
+      url
     end
   end
 end

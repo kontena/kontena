@@ -46,7 +46,7 @@ module Kontena
         def_delegators :@client, :text, :binary, :ping, :close, :protocol, :on
 
         def write(buffer)
-          @socket.write buffer
+          @socket.write(buffer)
         end
 
         def read_socket
