@@ -29,7 +29,7 @@ module Kontena::Cli::Services
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
       service_containers.sort_by! { |container| container['instance_number'] }
       running_containers = service_containers.select{|container| container['status'] == 'running' }
-      
+
       exit_with_error "Service #{name} does not have any running containers" if running_containers.empty?
 
       if all?
@@ -51,13 +51,13 @@ module Kontena::Cli::Services
           exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
         elsif interactive?
           interactive_exec(container)
-        else 
+        else
           exec_container(container)
         end
       else
         if interactive?
           interactive_exec(running_containers.first)
-        else 
+        else
           exec_container(running_containers.first)
         end
       end
@@ -94,12 +94,12 @@ module Kontena::Cli::Services
       ws = connect(url, token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
-        if data 
+        if data
           if data['exit']
             exit_status = data['exit'].to_i
           elsif data['stream'] == 'stdout'
             $stdout << data['chunk']
-          else 
+          else
             $stderr << data['chunk']
           end
         end
@@ -107,7 +107,7 @@ module Kontena::Cli::Services
       ws.on :open do
         ws.text(cmd)
       end
-      ws.on :close do |e|s
+      ws.on :close do |e|
         exit_status = 1 if exit_status.nil? && e.code != 1000
       end
       ws.connect
@@ -126,7 +126,7 @@ module Kontena::Cli::Services
       url << '&shell=true' if shell?
       ws = connect(url, token)
       ws.on :message do |msg|
-        base.handle_message(msg)        
+        base.handle_message(msg)
       end
       ws.on :open do
         ws.text(cmd)
@@ -135,7 +135,7 @@ module Kontena::Cli::Services
         exit 1 if e.code != 1000
       end
       ws.connect
-      
+
       stream_stdin_to_ws(ws).join
     end
   end
