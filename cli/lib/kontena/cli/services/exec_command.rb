@@ -1,4 +1,6 @@
 require 'shellwords'
+require 'json'
+require 'uri'
 require_relative 'services_helper'
 require_relative '../helpers/exec_helper'
 
@@ -31,7 +33,7 @@ module Kontena::Cli::Services
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
       service_containers.sort_by! { |container| container['instance_number'] }
       running_containers = service_containers.select{|container| container['status'] == 'running' }
-      
+
       exit_with_error "Service #{name} does not have any running containers" if running_containers.empty?
 
       if all?
@@ -53,13 +55,13 @@ module Kontena::Cli::Services
           exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
         elsif interactive?
           interactive_exec(container)
-        else 
+        else
           exec_container(container)
         end
       else
         if interactive?
           interactive_exec(running_containers.first)
-        else 
+        else
           exec_container(running_containers.first)
         end
       end
@@ -91,15 +93,15 @@ module Kontena::Cli::Services
       cmd = JSON.dump({ cmd: cmd_list })
       exit_status = nil
       token = require_token
-      ws = connect(url(container['id']), token)
+      ws = connect(ws_url(container['id'], shell: shell?), token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
-        if data 
+        if data
           if data['exit']
             exit_status = data['exit'].to_i
           elsif data['stream'] == 'stdout'
             $stdout << data['chunk']
-          else 
+          else
             $stderr << data['chunk']
           end
         end
@@ -123,7 +125,7 @@ module Kontena::Cli::Services
       cmd = JSON.dump({ cmd: cmd_list })
       queue = Queue.new
       stdin_stream = nil
-      ws = connect(url(container['id']), token)
+      ws = connect(ws_url(container['id'], interactive: true, shell: shell?, tty: tty?), token)
       ws.on :message do |msg|
         data = self.parse_message(msg)
         queue << data if data.is_a?(Hash)
@@ -146,16 +148,6 @@ module Kontena::Cli::Services
     rescue SystemExit
       stdin_stream.kill if stdin_stream
       raise
-    end
-
-    # @param [String] container_id
-    # @return [String]
-    def url(container_id)
-      url = ws_url(container_id)
-      url = url + 'interactive=true&' if interactive?
-      url = url + 'shell=true&' if shell?
-      url = url + 'tty=true' if tty?
-      url
     end
   end
 end
