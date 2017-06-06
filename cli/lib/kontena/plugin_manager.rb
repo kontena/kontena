@@ -2,6 +2,14 @@ require 'singleton'
 
 module Kontena
   class PluginManager
+    autoload :RubygemsClient, 'kontena/plugin_manager/rubygems_client'
+    Gem.autoload :DependencyInstaller, 'rubygems/dependency_installer'
+    Gem.autoload :Requirement, 'rubygems/requirement'
+    Gem.autoload :Uninstaller, 'rubygems/uninstaller'
+    Gem.autoload :Commands, 'rubygems/command'
+    Gem.autoload :DefaultUserInteraction, 'rubygems/user_interaction'
+    Gem.autoload :StreamUI, 'rubygems/user_interaction'
+    Gem::Commands.autoload :CleanupCommand, 'rubygems/commands/cleanup_command'
 
     include Singleton
 
@@ -22,9 +30,6 @@ module Kontena
     # @param pre [Boolean] install a prerelease version if available
     # @param version [String] install a specific version
     def install_plugin(plugin_name, pre: false, version: nil)
-      require 'rubygems/dependency_installer'
-      require 'rubygems/requirement'
-
       cmd = Gem::DependencyInstaller.new(
         document: false,
         force: true,
@@ -42,7 +47,6 @@ module Kontena
       installed = installed(plugin_name)
       raise "Plugin #{plugin_name} not installed" unless installed
 
-      require 'rubygems/uninstaller'
       cmd = Gem::Uninstaller.new(
         installed.name,
         all: true,
@@ -56,35 +60,13 @@ module Kontena
     # Search rubygems for kontena plugins
     # @param pattern [String] optional search pattern
     def search_plugins(pattern = nil)
-      require 'excon'
-      require 'json'
-      client = Excon.new('https://rubygems.org')
-      response = client.get(
-        path: "/api/v1/search.json?query=#{prefix(pattern)}",
-        headers: {
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json'
-        }
-      )
-
-      JSON.parse(response.body) rescue nil
+      RubygemsClient.new.search(prefix(pattern))
     end
 
     # Retrieve plugin versions from rubygems
     # @param plugin_name [String]
     def gem_versions(plugin_name)
-      require 'excon'
-      require 'json'
-      client = Excon.new('https://rubygems.org')
-      response = client.get(
-        path: "/api/v1/versions/#{prefix(plugin_name)}.json",
-        headers: {
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json'
-        }
-      )
-      versions = JSON.parse(response.body)
-      versions.map { |version| Gem::Version.new(version["number"]) }.sort.reverse
+      RubygemsClient.new.versions(prefix(plugin_name))
     end
 
     # Get the latest version number from rubygems
@@ -124,7 +106,6 @@ module Kontena
     # Runs gem cleanup, removes remains from previous versions
     # @param plugin_name [String]
     def cleanup_plugin(plugin_name)
-      require 'rubygems/commands/cleanup_command'
       cmd = Gem::Commands::CleanupCommand.new
       options = []
       options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
@@ -225,7 +206,6 @@ module Kontena
     end
 
     def use_dummy_ui
-      require 'rubygems/user_interaction'
       Gem::DefaultUserInteraction.ui = dummy_ui
     end
 
