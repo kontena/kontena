@@ -1,6 +1,5 @@
 require 'shellwords'
 require 'json'
-require 'uri'
 require_relative 'services_helper'
 require_relative '../helpers/exec_helper'
 
