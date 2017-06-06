@@ -20,38 +20,45 @@ module Kontena::Actors
 
     # @param [String] input
     def input(input)
-      @write_pipe.write(input)
-    end
-
-    # @param [String] cmd
-    def run(cmd)
-      info "starting command: #{cmd}"
-      _, _, exit_code = @container.exec(cmd) do |stream, chunk|
-        rpc_client.notification('/container_exec/output', [@uuid, stream, chunk.force_encoding(Encoding::UTF_8)])
+      if input.nil?
+        @write_pipe.close
+      else
+        @write_pipe.write(input)
       end
-    ensure 
-      info "command finished: #{cmd} with code #{exit_code}"
-      shutdown(cmd, exit_code)
     end
 
     # @param [String] cmd
-    def interactive(cmd)
-      info "starting interactive session: #{cmd}"
-      opts = {tty: true, stdin: @read_pipe}
+    # @param [Boolean] tty
+    # @param [Boolean] stdin
+    def run(cmd, tty = false, stdin = false)
+      info "starting command: #{cmd} (tty: #{tty}, stdin: #{stdin})"
       exit_code = 0
+      opts = {tty: tty}
+      opts[:stdin] = @read_pipe if stdin
       defer {
-        _, _, exit_code = @container.exec(cmd, opts) do |data|
-          rpc_client.notification('/container_exec/output', [@uuid, 'stdout', data.force_encoding(Encoding::UTF_8)])
+        if tty
+          _, _, exit_code = @container.exec(cmd, opts) do |chunk|
+            self.handle_stream_chunk('stdout'.freeze, chunk)
+          end
+        else 
+          _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
+            self.handle_stream_chunk(stream, chunk)
+          end
         end
       }
     ensure 
-      info "interactive session finished: #{cmd} with code #{exit_code}"
-      shutdown(cmd, exit_code)
+      info "command finished: #{cmd} with code #{exit_code}"
+      shutdown(exit_code)
     end
 
-    # @param [String] cmd
+    # @param [String] stream
+    # @param [String] chunk
+    def handle_stream_chunk(stream, chunk)
+      rpc_client.notification('/container_exec/output', [@uuid, stream, chunk.force_encoding(Encoding::UTF_8)])
+    end
+
     # @param [Integer] exit_code
-    def shutdown(cmd, exit_code)
+    def shutdown(exit_code)
       rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
       self.terminate
     end

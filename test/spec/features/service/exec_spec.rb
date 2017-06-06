@@ -32,7 +32,7 @@ describe 'service exec' do
   end
 
   it 'runs a command inside a service with tty' do
-    k = kommando("kontena service exec --interactive test-1 sh")
+    k = kommando("kontena service exec -it test-1 sh")
     
     k.out.on("#") do
       k.in << "ls -la /\r"
@@ -41,6 +41,12 @@ describe 'service exec' do
       end
     end
     expect(k.run).to be_truthy
+  end
+
+  it 'runs a command with piped stdin' do
+    k = kommando("$ echo beer | kontena service exec -i test-1 rev")
+    expect(k.run).to be_truthy
+    expect(k.out).to eq('reeb')
   end
 
   it 'runs a command on every instance with --all' do 

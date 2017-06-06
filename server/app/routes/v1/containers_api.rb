@@ -57,12 +57,12 @@ module V1
           r.on 'exec' do
             r.websocket do |ws|
               executor = Docker::StreamingExecutor.new(container, ws)
-              if r['interactive']
-                audit_event(r, container.grid, container, 'exec_tty')
-                executor.start_tty(r['shell'].to_s == 'true')
+              if r['interactive'].to_s == 'true'
+                audit_event(r, container.grid, container, 'exec_interactive')
+                executor.start(r['shell'].to_s == 'true', true, r['tty'].to_s == 'true')
               else
                 audit_event(r, container.grid, container, 'exec')
-                executor.start(r['shell'].to_s == 'true')
+                executor.start(r['shell'].to_s == 'true', false, r['tty'].to_s == 'true')
               end
             end
           end

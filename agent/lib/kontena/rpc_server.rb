@@ -29,6 +29,8 @@ module Kontena
       end
     end
 
+    exclusive :handle_notification
+
     ##
     # @param [Array] message msgpack-rpc request array
     # @return [Array]

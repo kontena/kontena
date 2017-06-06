@@ -12,10 +12,11 @@ module Kontena::Cli::Services
     parameter "NAME", "Service name"
     parameter "CMD ...", "Command"
 
-    option ["-i", "--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
+    option ["--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
     option ["--shell"], :flag, "Execute as a shell command"
-    option ["--interactive"], :flag, "Keep stdin open"
+    option ["-i", "--interactive"], :flag, "Keep stdin open"
+    option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY"
     option ["--skip"], :flag, "Skip failed instances when executing --all"
     option ["--silent"], :flag, "Do not show exec status"
     option ["--verbose"], :flag, "Show exec status"
@@ -24,6 +25,7 @@ module Kontena::Cli::Services
     requires_current_grid
 
     def execute
+      exit_with_error "the input device is not a TTY" if tty? && !STDIN.tty?
       exit_with_error "--interactive cannot be used with --all" if all? && interactive?
 
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
@@ -89,9 +91,7 @@ module Kontena::Cli::Services
       cmd = JSON.dump({ cmd: cmd_list })
       exit_status = nil
       token = require_token
-      url = ws_url(container['id'])
-      url << 'shell=true' if shell?
-      ws = connect(url, token)
+      ws = connect(url(container['id']), token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
         if data 
@@ -121,22 +121,41 @@ module Kontena::Cli::Services
     def interactive_exec(container)
       token = require_token
       cmd = JSON.dump({ cmd: cmd_list })
-      base = self
-      url = ws_url(container['id']) << 'interactive=true'
-      url << '&shell=true' if shell?
-      ws = connect(url, token)
+      queue = Queue.new
+      stdin_stream = nil
+      ws = connect(url(container['id']), token)
       ws.on :message do |msg|
-        base.handle_message(msg)        
+        data = self.parse_message(msg)
+        queue << data if data.is_a?(Hash)
       end
       ws.on :open do
         ws.text(cmd)
+        stdin_stream = self.stream_stdin_to_ws(ws)
       end
       ws.on :close do |e|
-        exit 1 if e.code != 1000
+        if e.code != 1000
+          queue << {'exit' => 1}
+        else
+          queue << {'exit' => 0}
+        end
       end
       ws.connect
-      
-      stream_stdin_to_ws(ws).join
+      while msg = queue.pop
+        self.handle_message(msg)
+      end
+    rescue SystemExit
+      stdin_stream.kill if stdin_stream
+      raise
+    end
+
+    # @param [String] container_id
+    # @return [String]
+    def url(container_id)
+      url = ws_url(container_id)
+      url = url + 'interactive=true&' if interactive?
+      url = url + 'shell=true&' if shell?
+      url = url + 'tty=true' if tty?
+      url
     end
   end
 end
