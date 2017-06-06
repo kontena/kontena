@@ -1,0 +1,9 @@
+stack: test/simple
+services:
+  foo:
+    image: redis
+
+  bar:
+    image: redis
+    links:
+      - foo
