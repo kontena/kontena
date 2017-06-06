@@ -92,7 +92,7 @@ module Kontena::Cli::Services
       cmd = JSON.dump({ cmd: cmd_list })
       exit_status = nil
       token = require_token
-      ws = connect(ws_url(container['id'], shell: shell?), token)
+      ws = connect(url(container['id']), token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
         if data
@@ -124,7 +124,7 @@ module Kontena::Cli::Services
       cmd = JSON.dump({ cmd: cmd_list })
       queue = Queue.new
       stdin_stream = nil
-      ws = connect(ws_url(container['id'], interactive: true, shell: shell?, tty: tty?), token)
+      ws = connect(url(container['id']), token)
       ws.on :message do |msg|
         data = self.parse_message(msg)
         queue << data if data.is_a?(Hash)
@@ -147,6 +147,10 @@ module Kontena::Cli::Services
     rescue SystemExit
       stdin_stream.kill if stdin_stream
       raise
+    end
+
+    def url(container_id)
+      ws_url(container_id, shell: shell?, interactive: interactive?, tty: tty?)
     end
   end
 end
