@@ -50,6 +50,7 @@ module Kontena::Cli::Helpers
     # @param container_id [String] The container id
     # @param interactive [Boolean] Interactive TTY on/off
     # @param shell [Boolean] Shell on/of
+    # @param tty [Boolean] TTY on/of
     # @return [String]
     def ws_url(container_id, interactive: false, shell: false, tty: false)
       require 'uri' unless Object.const_defined?(:URI)
