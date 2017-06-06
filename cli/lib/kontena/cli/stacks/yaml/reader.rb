@@ -167,6 +167,7 @@ module Kontena::Cli::Stacks
 
         # Wrap nil values in LiquidNull to not have Liquid consider them as undefined
         vars = vars.map {|key, value| [key, value.nil? ? LiquidNull.new : value]}.to_h
+        vars['VARIABLES'] = vars.keys.reject { |k,_| k == 'STACK' || k == 'GRID' }
 
         template.render!(vars, strict_variables: true, strict_filters: true)
       end
