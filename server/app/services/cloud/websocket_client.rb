@@ -180,18 +180,20 @@ module Cloud
 
     # @param [Hash] msg
     def send_notification_message(msg)
-      invalidate_users_cache if msg[:type] == 'User' # clear cache if users are modified
+      invalidate_users_cache if msg['type'] == 'User' # clear cache if users are modified
       grid_id = resolve_grid_id(msg)
       users = resolve_users(grid_id)
-      params = [grid_id, users, msg[:object]]
-      message = [2, "#{msg[:type]}##{msg[:event]}", params]
+      params = [grid_id, users, msg['object']]
+      message = [2, "#{msg['type']}##{msg['event']}", params]
       debug "Sending notification message: #{message}"
       send_message(MessagePack.dump(message).bytes)
+    rescue => exc
+      error exc.message
     end
 
     def resolve_grid_id(msg)
-      object = msg[:object]
-      if msg[:type] == "Grid"
+      object = msg['object']
+      if msg['type'] == "Grid"
         object['id']
       else
         object.dig('grid', 'id')
