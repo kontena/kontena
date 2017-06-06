@@ -51,17 +51,18 @@ module Kontena::Cli::Helpers
     # @param interactive [Boolean] Interactive TTY on/off
     # @param shell [Boolean] Shell on/of
     # @return [String]
-    def ws_url(container_id, interactive: false, shell: false)
+    def ws_url(container_id, interactive: false, shell: false, tty: false)
       require 'uri' unless Object.const_defined?(:URI)
       extend Kontena::Cli::Common unless self.respond_to?(:require_current_master)
 
       url = URI.parse(require_current_master.url)
       url.scheme = url.scheme.sub('http', 'ws')
       url.path = "/v1/containers/#{container_id}/exec"
-      if shell || interactive
+      if shell || interactive || tty
         query = {}
         query.merge!(interactive: true) if interactive
         query.merge!(shell: true) if shell
+        query.merge!(tty: true) if tty
         url.query = URI.encode_www_form(query)
       end
       url.to_s
