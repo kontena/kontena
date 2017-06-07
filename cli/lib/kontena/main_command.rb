@@ -10,6 +10,7 @@ class Kontena::MainCommand < Kontena::Command
   end
 
   subcommand "cloud", "Kontena Cloud specific commands", load_subcommand('cloud_command')
+  subcommand "login", "Login to Kontena Masters or Kontena Cloud accounts", load_subcommand('login_command')
   subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", load_subcommand('logout_command')
   subcommand "grid", "Grid specific commands", load_subcommand('grid_command')
   subcommand "app", "App specific commands", load_subcommand('app_command')
