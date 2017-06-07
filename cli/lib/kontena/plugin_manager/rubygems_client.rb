@@ -2,7 +2,7 @@ require 'excon'
 require 'json'
 
 module Kontena
-  class PluginManager
+  module PluginManager
     class RubygemsClient
 
       RUBYGEMS_URL = 'https://rubygems.org'
@@ -35,6 +35,13 @@ module Kontena
         versions.map { |version| Gem::Version.new(version["number"]) }.sort.reverse
       end
 
+      # Get the latest version number from rubygems
+      # @param plugin_name [String]
+      # @param pre [Boolean] include prerelease versions
+      def latest_version(gem_name, pre: false)
+        return versions(gem_name).first if pre
+        versions(gem_name).find { |version| !version.prerelease? }
+      end
     end
   end
 end

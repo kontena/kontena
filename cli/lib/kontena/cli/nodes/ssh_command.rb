@@ -1,3 +1,5 @@
+require 'kontena/plugin_manager'
+
 module Kontena::Cli::Nodes
   class SshCommand < Kontena::Command
     include Kontena::Cli::Common
@@ -29,7 +31,7 @@ module Kontena::Cli::Nodes
       provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
       if provider == 'vagrant'
-        unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
+        unless Kontena::PluginManager::Common.installed?('vagrant')
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
         cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list
