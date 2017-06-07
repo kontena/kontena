@@ -1,4 +1,4 @@
-require 'logger'
+require 'kontena/autoload_core'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
