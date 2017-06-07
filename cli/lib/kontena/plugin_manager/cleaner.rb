@@ -12,14 +12,18 @@ module Kontena
         @plugin_name = plugin_name
       end
 
+      def command
+        @command ||= Gem::Commands::CleanupCommand.new
+      end
+
       # Runs gem cleanup, removes remains from previous versions
       # @param plugin_name [String]
       def cleanup
-        cmd = Gem::Commands::CleanupCommand.new
         options = []
         options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
-        cmd.handle_options options
-        without_safe { cmd.execute }
+        command.handle_options options
+        without_safe { command.execute }
+        true
       rescue Gem::SystemExitException => e
         raise unless e.exit_code.zero?
         true

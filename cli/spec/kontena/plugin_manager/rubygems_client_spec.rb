@@ -1,4 +1,4 @@
-require 'kontena/plugin_manager/rubygems_client'
+require 'kontena/plugin_manager'
 require 'json'
 
 describe Kontena::PluginManager::RubygemsClient do

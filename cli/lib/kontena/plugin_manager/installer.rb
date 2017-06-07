@@ -19,17 +19,20 @@ module Kontena
         @version = version
       end
 
-      # Install a plugin
-      def install
-        cmd = Gem::DependencyInstaller.new(
+      def command
+        @command ||= Gem::DependencyInstaller.new(
           document: false,
           force: true,
           prerelease: pre,
           minimal_deps: true
         )
+      end
+
+      # Install a plugin
+      def install
         plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
-        without_safe { cmd.install(prefix(plugin_name), plugin_version) }
-        cmd.installed_gems
+        without_safe { command.install(prefix(plugin_name), plugin_version) }
+        command.installed_gems
       end
 
       # Upgrade an installed plugin
@@ -42,7 +45,7 @@ module Kontena
         raise "Plugin #{plugin_name} not installed" unless installed
         latest = rubygems_client.latest_version(plugin_name, pre: pre)
         if latest > installed.version
-          install_plugin(plugin_name, version: latest.to_s)
+          install(plugin_name, version: latest.to_s)
         end
       end
     end
