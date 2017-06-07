@@ -6,6 +6,7 @@ module Kontena
 
   module Cli
     autoload :ShellSpinner, 'kontena/cli/spinner'
+    autoload :Spinner, 'kontena/cli/spinner'
     autoload :Config, 'kontena/cli/config'
 
     module Common
