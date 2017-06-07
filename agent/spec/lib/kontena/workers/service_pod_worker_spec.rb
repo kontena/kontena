@@ -291,6 +291,20 @@ describe Kontena::Workers::ServicePodWorker do
       allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_return(image)
       expect(subject.image_outdated?(service_container)).to be_falsey
     end
+
+    it 'returns true if Docker::Error::NotFoundError raised' do
+      service_container = double(:service_container)
+      allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_raise(Docker::Error::NotFoundError)
+      expect(subject.image_outdated?(service_container)).to be_truthy
+    end
+
+    it 'lets un-expected errors fall through'  do
+      service_container = double(:service_container)
+      allow(Docker::Image).to receive(:get).with(service_pod.image_name).and_raise(StandardError)
+      # call through wrapped_object to prevent actor crash logs during spec runs
+      expect {subject.wrapped_object.image_outdated?(service_container)}.to raise_error(StandardError)
+    end
+    
   end
 
   describe '#labels_outdated?' do
