@@ -55,9 +55,8 @@ module Kontena::Workers
         # Restart the container, master will handle re-scheduling logic
         info "About to restart container #{name} as it's reported to be unhealthy"
         emit_service_pod_event("service:health_check", "restarting #{name} because it's reported as unhealthy", Logger::WARN)
-        defer {
-          restart_container
-        }
+        
+        restart_container
       end
     end
 
