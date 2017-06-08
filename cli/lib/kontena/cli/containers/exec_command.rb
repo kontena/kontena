@@ -21,6 +21,7 @@ module Kontena::Cli::Containers
       cmd = JSON.dump({cmd: cmd_list})
       queue = Queue.new
       stdin_reader = nil
+      url = ws_url("#{current_grid}/#{container_id}", interactive: interactive?, shell: shell?, tty: tty?)
       ws = connect(url, token)
       ws.on :message do |msg|
         data = parse_message(msg)
@@ -44,15 +45,6 @@ module Kontena::Cli::Containers
     rescue SystemExit
       stdin_reader.kill if stdin_reader
       raise
-    end
-
-    # @return [String]
-    def url
-      url = ws_url("#{current_grid}/#{container_id}")
-      url = url + 'interactive=true&' if interactive?
-      url = url + 'tty=true&' if tty?
-      url = url + 'shell=true' if shell?
-      url
     end
   end
 end

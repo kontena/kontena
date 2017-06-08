@@ -1,4 +1,5 @@
 require 'shellwords'
+require 'json'
 require_relative 'services_helper'
 require_relative '../helpers/exec_helper'
 
@@ -31,7 +32,7 @@ module Kontena::Cli::Services
       service_containers = client.get("services/#{parse_service_id(name)}/containers")['containers']
       service_containers.sort_by! { |container| container['instance_number'] }
       running_containers = service_containers.select{|container| container['status'] == 'running' }
-      
+
       exit_with_error "Service #{name} does not have any running containers" if running_containers.empty?
 
       if all?
@@ -53,13 +54,13 @@ module Kontena::Cli::Services
           exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
         elsif interactive?
           interactive_exec(container)
-        else 
+        else
           exec_container(container)
         end
       else
         if interactive?
           interactive_exec(running_containers.first)
-        else 
+        else
           exec_container(running_containers.first)
         end
       end
@@ -94,12 +95,12 @@ module Kontena::Cli::Services
       ws = connect(url(container['id']), token)
       ws.on :message do |msg|
         data = base.parse_message(msg)
-        if data 
+        if data
           if data['exit']
             exit_status = data['exit'].to_i
           elsif data['stream'] == 'stdout'
             $stdout << data['chunk']
-          else 
+          else
             $stderr << data['chunk']
           end
         end
@@ -148,14 +149,8 @@ module Kontena::Cli::Services
       raise
     end
 
-    # @param [String] container_id
-    # @return [String]
     def url(container_id)
-      url = ws_url(container_id)
-      url = url + 'interactive=true&' if interactive?
-      url = url + 'shell=true&' if shell?
-      url = url + 'tty=true' if tty?
-      url
+      ws_url(container_id, shell: shell?, interactive: interactive?, tty: tty?)
     end
   end
 end

@@ -3,7 +3,7 @@ require_relative '../../websocket/client'
 module Kontena::Cli::Helpers
   module ExecHelper
 
-    # @param [WebSocket::Client::Simple] ws 
+    # @param [WebSocket::Client::Simple] ws
     # @return [Thread]
     def stream_stdin_to_ws(ws)
       require 'io/console'
@@ -47,12 +47,26 @@ module Kontena::Cli::Helpers
       nil
     end
 
-    # @param [String] container_id
+    # @param container_id [String] The container id
+    # @param interactive [Boolean] Interactive TTY on/off
+    # @param shell [Boolean] Shell on/of
+    # @param tty [Boolean] TTY on/of
     # @return [String]
-    def ws_url(container_id)
-      url = require_current_master.url
-      url << '/' unless url.end_with?('/')
-      "#{url.sub('http', 'ws')}v1/containers/#{container_id}/exec?"
+    def ws_url(container_id, interactive: false, shell: false, tty: false)
+      require 'uri' unless Object.const_defined?(:URI)
+      extend Kontena::Cli::Common unless self.respond_to?(:require_current_master)
+
+      url = URI.parse(require_current_master.url)
+      url.scheme = url.scheme.sub('http', 'ws')
+      url.path = "/v1/containers/#{container_id}/exec"
+      if shell || interactive || tty
+        query = {}
+        query.merge!(interactive: true) if interactive
+        query.merge!(shell: true) if shell
+        query.merge!(tty: true) if tty
+        url.query = URI.encode_www_form(query)
+      end
+      url.to_s
     end
 
     # @param [String] url
