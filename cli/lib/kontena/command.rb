@@ -188,7 +188,21 @@ class Kontena::Command < Clamp::Command
 
     run_callbacks :before_parse unless help_requested?
 
-    parse @arguments
+    begin
+      parse @arguments
+    rescue Clamp::UsageError => ex
+      if !$stdin.tty? && ex.message == 'too many arguments' && self.class.parameters.size == 1
+        param = self.class.parameters.first
+        ([send(param.attribute_name)] + remaining_arguments).each do |extra_arg|
+          arguments = @arguments - remaining_arguments
+          arguments[-1] = extra_arg
+          run(arguments)
+        end
+        return
+      else
+        raise ex
+      end
+    end
 
     unless help_requested?
       verify_current_master
