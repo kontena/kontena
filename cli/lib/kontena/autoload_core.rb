@@ -12,6 +12,7 @@ autoload :DateTime, 'date'
 autoload :Date, 'date'
 autoload :Base64, 'base64'
 autoload :SecureRandom, 'securerandom'
+autoload :StringIO, 'stringio'
 
 # dependencies
 autoload :Excon, 'excon'

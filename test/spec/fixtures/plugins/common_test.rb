@@ -14,3 +14,4 @@ puts prompt.help_color
 logger.info "hello"
 raise "foo" unless respond_to?(:ask)
 raise "foo" unless respond_to?(:yes?)
+puts StringIO.new.inspect
