@@ -2,7 +2,13 @@ require 'forwardable'
 require 'kontena_cli'
 
 module Kontena
+  autoload :Client, 'kontena/client'
+
   module Cli
+    autoload :ShellSpinner, 'kontena/cli/spinner'
+    autoload :Spinner, 'kontena/cli/spinner'
+    autoload :Config, 'kontena/cli/config'
+
     module Common
       extend Forwardable
 
@@ -27,12 +33,10 @@ module Kontena
       end
 
       def spinner(msg, &block)
-        require 'kontena/cli/spinner' unless Kontena::Cli.const_defined?(:Spinner)
          Kontena::Cli::Spinner.spin(msg, &block)
       end
 
       def config
-        require 'kontena/cli/config' unless Kontena::Cli.const_defined?(:Config)
         Kontena::Cli::Config.instance
       end
 

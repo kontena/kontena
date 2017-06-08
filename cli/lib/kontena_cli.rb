@@ -1,4 +1,4 @@
-require 'logger'
+require 'kontena/autoload_core'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
@@ -9,6 +9,7 @@ end
 module Kontena
   module Cli
     autoload :Config, 'kontena/cli/config'
+    autoload :ShellSpinner, 'kontena/cli/spinner'
     autoload :Spinner, 'kontena/cli/spinner'
     autoload :Common, 'kontena/cli/common'
     autoload :TableGenerator, 'kontena/cli/table_generator'
