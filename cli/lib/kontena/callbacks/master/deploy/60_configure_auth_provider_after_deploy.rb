@@ -9,7 +9,7 @@ module Kontena
         args << '--force'
         args += ["--cloud-master-id", command.cloud_master_id] if command.cloud_master_id
         args += ["--provider", command.result[:provider]] if command.result[:provider]
-        args << ["--version", command.result[:version]] if command.result[:version]
+        args += ["--version", command.result[:version]] if command.result[:version]
         args
       end
 
