@@ -7,7 +7,7 @@ toc_order: 1
 
 # What is Kontena?
 
-[Kontena](http://www.kontena.io) is an open source project for orchestrating and running containerized workloads on a cluster. The Kontena system is comprised of a number of **Kontena Nodes** (meaning servers or virtual machines that run containerized workloads) and a **Kontena Master** (which controls and monitors the Nodes).
+[Kontena](http://www.kontena.io) is an open source project for orchestrating and running containerized workloads on a cluster. The **Kontena Platform** is comprised of a number of **Kontena Nodes** (meaning servers or virtual machines that run containerized workloads) and a **Kontena Master** (which controls and monitors the Nodes).
 
 With Kontena, you can construct your application using the **Kontena Service** definition. A Service definition describes the container image, networking, scaling and stateful/stateless attributes of your application. Services may be linked together to create the desired architecture. Each service is automatically assigned an internal DNS address, which can be used inside your application for inter-Service communications.
 
@@ -19,7 +19,7 @@ Kontena's key features include:
 * Log and statistics aggregation with streaming
 * Access control and roles for Kontena users
 
-Kontena is administered via the Kontena command line interface, **Kontena CLI**. At the moment, there is no graphical UI for Kontena.
+Kontena is administered via the Kontena command line interface, **Kontena CLI**. **[Kontena Cloud](https://cloud.kontena.io)** provides hosted Graphical UI for monitoring, analyzing and operating Kontena Platforms.
 
 ## Learn More
 
