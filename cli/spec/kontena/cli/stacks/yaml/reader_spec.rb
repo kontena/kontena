@@ -444,7 +444,11 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
 
       it 'interpolates variables into services' do
-        expect(subject.execute[:services].size).to eq 5
+        expect(subject.execute[:services].size).to eq 6
+      end
+
+      it 'passes an array of variable names to liquid' do
+        expect(subject.execute[:services]['var_test']['environment'].first).to eq "TEST=grid_name,copies"
       end
     end
 

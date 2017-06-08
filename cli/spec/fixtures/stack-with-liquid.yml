@@ -12,10 +12,12 @@ variables:
     value: 5
 
 services:
+  var_test:
+    environment:
+      - "TEST={{ VARIABLES | join: ',' }}"
   # {% for copy in (1..copies) %}
   service-{{copy}}:
     image: foo:{{copy}}
     environment:
       - TEST_VAR="{{ grid_name }}"
   # {% endfor %}
-
