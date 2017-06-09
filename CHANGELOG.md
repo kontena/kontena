@@ -6,7 +6,9 @@
 
 This release upgrades the used MongoDB driver to a version which supports newer MongoDB release than 3.0. It essentially means that now there's support for using hosted (e.g. Mongo Atlas) services as Kontena Master database. And naturally, the newer mongoid and underlying db driver boosts the stability of the server.
 
-We've also added support for using Kontena cli to open an interactive terminals into running service instances. This makes debugging and executing any helper etc. scripts lot easier.
+We've also added support for using Kontena CLI to open an interactive terminals into running service instances. This makes debugging and executing any maintenance scripts a lot easier.
+
+All CLI list commands such as `kontena node list` or `kontena service list` now accept `-q` or `--quiet` parameter for outputting only the identifying column of the list, such as node name or container ID. This makes it easier to pipe the output to other commands. For example: `kontena service ls -q|xargs -n1 kontena service show`.
 
 ### Breaking changes
 
