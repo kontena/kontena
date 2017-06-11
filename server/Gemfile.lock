@@ -94,7 +94,7 @@ GEM
       activesupport
     origin (2.3.0)
     puma (3.6.0)
-    rack (1.6.4)
+    rack (2.0.3)
     rack-attack (5.0.1)
       rack
     rack-test (0.6.2)
@@ -106,7 +106,7 @@ GEM
       ffi (>= 0.5.0)
     rerun (0.10.0)
       listen (~> 2.7, >= 2.7.3)
-    roda (2.5.0)
+    roda (2.26.0)
       rack
     rollbar (2.11.3)
       multi_json
@@ -171,12 +171,12 @@ DEPENDENCIES
   msgpack
   mutations
   puma
-  rack (~> 1.6.4)
+  rack (~> 2.0.0)
   rack-attack
   rack-test
   random_token
   rerun
-  roda (~> 2.5.0)
+  roda (~> 2.26.0)
   rollbar
   rspec (~> 3.3.0)
   simplecov

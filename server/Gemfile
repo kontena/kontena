@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
-gem 'rack', '~> 1.6.4'
-gem 'roda', '~> 2.5.0'
+gem 'rack', '~> 2.0.0'
+gem 'roda', '~> 2.26.0'
 gem 'celluloid', '~> 0.17.3'
 gem 'tilt-jbuilder'
 gem 'mutations'
