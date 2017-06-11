@@ -2,11 +2,11 @@ class GridServiceHealthCheck
   include Mongoid::Document
 
   field :uri, type: String, default: '/'
-  field :timeout, type: Fixnum, default: 10
-  field :interval, type: Fixnum, default: 60
-  field :initial_delay, type: Fixnum, default: 10
+  field :timeout, type: Integer, default: 10
+  field :interval, type: Integer, default: 60
+  field :initial_delay, type: Integer, default: 10
   field :protocol, type: String
-  field :port, type: Fixnum
+  field :port, type: Integer
 
   embedded_in :grid_service
 
