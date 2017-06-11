@@ -93,7 +93,7 @@ GEM
     mutations (0.7.2)
       activesupport
     origin (2.3.0)
-    puma (3.6.0)
+    puma (3.9.1)
     rack (1.6.4)
     rack-attack (5.0.1)
       rack
