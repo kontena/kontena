@@ -79,28 +79,34 @@ module GridServices
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
 
+      embeds_changed = false
+
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(
           self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
         )
+        embeds_changed ||= attributes[:grid_service_links] != self.grid_service.grid_service_links.to_a
       end
 
       if self.hooks
         attributes[:hooks] = self.build_grid_service_hooks(self.grid_service.hooks.to_a)
+        embeds_changed ||= attributes[:hooks] != self.grid_service.hooks.to_a
       end
 
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
+        embeds_changed ||= attributes[:secrets] != self.grid_service.secrets.to_a
       end
       if self.volumes
         attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
           self.grid_service.grid, self.grid_service.stack
         )
+        embeds_changed ||= attributes[:service_volumes] != self.grid_service.service_volumes.to_a
       end
       grid_service.attributes = attributes
 
-      if grid_service.changed?
+      if grid_service.changed? || embeds_changed
         info "updating service #{grid_service.to_path} with changes: #{changed(grid_service)}"
         grid_service.revision += 1
       else

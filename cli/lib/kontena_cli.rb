@@ -1,4 +1,4 @@
-require 'logger'
+require 'kontena/autoload_core'
 
 $KONTENA_START_TIME = Time.now.to_f
 at_exit do
@@ -9,6 +9,7 @@ end
 module Kontena
   module Cli
     autoload :Config, 'kontena/cli/config'
+    autoload :ShellSpinner, 'kontena/cli/spinner'
     autoload :Spinner, 'kontena/cli/spinner'
     autoload :Common, 'kontena/cli/common'
     autoload :TableGenerator, 'kontena/cli/table_generator'
@@ -34,7 +35,7 @@ module Kontena
     else
       command = cmdline
     end
-    logger.debug { "Running Kontena.run(#{command.inspect}" }
+    logger.debug { "Running Kontena.run(#{command.inspect})" }
     result = Kontena::MainCommand.new(File.basename(__FILE__)).run(command)
     logger.debug { "Command completed, result: #{result.inspect} status: 0" }
     result
@@ -173,8 +174,7 @@ end
 require 'retriable'
 Retriable.configure do |c|
   c.on_retry = Proc.new do |exception, try, elapsed_time, next_interval|
-    return true unless ENV["DEBUG"]
-    puts "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}"
+    Kontena.logger.debug { "Retriable retry: #{try} - Exception: #{exception.class.name} - #{exception.message}. Elapsed: #{elapsed_time} Next interval: #{next_interval}" }
   end
 end
 

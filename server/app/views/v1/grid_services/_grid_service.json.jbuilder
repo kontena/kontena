@@ -34,7 +34,7 @@ json.stack do
   json.name grid_service.stack.name
 end
 json.links grid_service.grid_service_links.map { |s|
-  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name } if s.linked_grid_service
+  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.qualified_name } if s.linked_grid_service
 }.compact
 json.log_driver grid_service.log_driver
 json.log_opts grid_service.log_opts

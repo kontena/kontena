@@ -59,7 +59,7 @@ describe Registries::Create do
       expect(outcome.errors[:url]).not_to be_nil
     end
 
-    it 'requires correct url format' do
+    it 'rejects invalid url format' do
       outcome = described_class.new(
         grid: grid,
         username: 'john',
@@ -67,7 +67,20 @@ describe Registries::Create do
         email: 'john@example.org',
         url: 'example.org',
       ).run
-      expect(outcome.errors.message['url']).to eq('Url isn\'t in the right format')
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'url' => "Url isn't in the right format"
+    end
+
+    it 'rejects invalid multi-line url ' do
+      outcome = described_class.new(
+        grid: grid,
+        username: 'john',
+        password: 'password',
+        email: 'john@example.org',
+        url: "foo\nhttps://registry.example.org",
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'url' => "Url isn't in the right format"
     end
 
     it 'creates a new grid registry' do

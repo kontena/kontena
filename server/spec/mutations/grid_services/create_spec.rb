@@ -61,6 +61,17 @@ describe GridServices::Create do
       expect(outcome.errors.message.keys).to include('name')
     end
 
+    it 'does not allow newlines in name' do
+      outcome = described_class.new(
+        grid: grid,
+        image: 'redis:2.8',
+        name: "foo\nbar",
+        stateful: true
+      ).run
+      expect(outcome).to_not be_success
+      expect(outcome.errors.symbolic).to eq 'name' => :matches
+    end
+
     it 'does not allow a name that is too long' do
       outcome = described_class.new(
         grid: grid,

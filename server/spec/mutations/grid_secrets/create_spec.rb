@@ -19,6 +19,28 @@ describe GridSecrets::Create do
     service
   }
 
+  it "rejects invalid name with special chars" do
+    outcome = described_class.run(
+      grid: grid,
+      name: 'foo/bar',
+      value: 'asdf',
+    )
+
+    expect(outcome).to_not be_success
+    expect(outcome.errors.symbolic).to eq 'name' => :matches
+  end
+
+  it "rejects invalid name with newlines" do
+    outcome = described_class.run(
+      grid: grid,
+      name: "foo\nbar",
+      value: 'asdf',
+    )
+
+    expect(outcome).to_not be_success
+    expect(outcome.errors.symbolic).to eq 'name' => :matches
+  end
+
   describe '#run' do
     it 'creates a new grid secret' do
       expect {

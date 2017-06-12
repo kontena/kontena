@@ -48,7 +48,7 @@ describe 'stack install' do
       with_fixture_dir("stack/links") do
         k = run 'kontena stack install broken.yml'
         expect(k.code).to eq(1)
-        expect(k.out).to match /services:\s*a:\s*links: Linked service 'nope' does not exist/m
+        expect(k.out).to match /service a has missing links: nope/m
       end
     end
   end

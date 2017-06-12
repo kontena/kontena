@@ -46,6 +46,7 @@ class AuthProvider
   attr_accessor :cloud_api_url
   attr_accessor :ignore_invalid_ssl
   attr_accessor :provider_is_kontena
+  attr_accessor :uuid
 
   def self.instance
     new(Configuration.decrypt_all)
@@ -69,6 +70,7 @@ class AuthProvider
     @cloud_api_url = config['cloud.api_url'] || 'https://cloud-api.kontena.io'
     @ignore_invalid_ssl = config['cloud.ignore_invalid_ssl'].to_s == 'true'
     @provider_is_kontena = config['cloud.provider_is_kontena'].to_s == "true"
+    @uuid = config['server.uuid']
   end
 
   def is_kontena?
@@ -98,7 +100,8 @@ class AuthProvider
       data: {
         attributes: {
           'redirect-uri' => callback_url,
-          'url'          => self.root_url
+          'url'          => self.root_url,
+          'uuid'         => self.uuid
         }
       }
     }
@@ -226,14 +229,14 @@ class AuthProvider
       client.force_basic_auth = true
     end
 
+    headers = { 'Accept' => 'application/json' }
+    headers['Content-Type'] = self.token_post_content_type unless token_method == :get
+
     response = client.request(
       token_method,
       self.token_endpoint,
       follow_redirect: false,
-      header: {
-        'Accept' => 'application/json',
-        'Content-Type' => self.token_post_content_type
-      },
+      header: headers,
       body: body,
       query: query
     )

@@ -55,7 +55,7 @@ describe Kontena::Workers::HealthCheckWorker do
     it 'terminates worker if it exist' do
       worker = spy(:worker, :alive? => true)
       subject.workers[container.id] = worker
-      expect(Celluloid::Actor).to receive(:kill).with(worker)
+      expect(worker).to receive(:terminate)
       subject.stop_container_check(container.id)
     end
   end

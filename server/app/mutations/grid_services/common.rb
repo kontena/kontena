@@ -256,7 +256,7 @@ module GridServices
           array :cap_drop do
             string
           end
-          string :net, matches: /^(bridge|host|container:.+)$/
+          string :net, matches: /\A(bridge|host|container:.+)\z/
           hash :log_opts do
             string :*
           end
@@ -264,7 +264,7 @@ module GridServices
           array :devices do
             string
           end
-          string :pid, matches: /^(host)$/
+          string :pid, in: ['host']
           hash :hooks do
             optional do
               array :post_start do
@@ -282,7 +282,7 @@ module GridServices
           hash :health_check do
             required do
               integer :port, nils: true
-              string :protocol, matches: /^(http|tcp)$/, nils: true
+              string :protocol, in: ['http', 'tcp'], nils: true
             end
             optional do
               string :uri

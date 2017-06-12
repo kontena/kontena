@@ -1,21 +1,44 @@
 require 'forwardable'
+require 'kontena_cli'
 
 module Kontena
+  autoload :Client, 'kontena/client'
+
   module Cli
+    autoload :ShellSpinner, 'kontena/cli/spinner'
+    autoload :Spinner, 'kontena/cli/spinner'
+    autoload :Config, 'kontena/cli/config'
+
     module Common
       extend Forwardable
 
-      def_delegators :Kontena, :pastel, :prompt, :logger
       def_delegators :prompt, :ask, :yes?
       def_delegators :config,
         :current_grid=, :require_current_grid, :current_master,
         :current_master=, :require_current_master, :require_current_account,
         :current_account
-      def_delegator Kontena::Cli::Spinner, :spin, :spinner
-      def_delegator Kontena::Cli::Config, :instance, :config
-      def_delegator Kontena::Cli::Config, :instance, :settings
       def_delegator :config, :config_filename, :settings_filename
       def_delegator :client, :server_version, :api_url_version
+
+      def logger
+        Kontena.logger
+      end
+
+      def prompt
+        Kontena.prompt
+      end
+
+      def pastel
+        Kontena.pastel
+      end
+
+      def spinner(msg, &block)
+         Kontena::Cli::Spinner.spin(msg, &block)
+      end
+
+      def config
+        Kontena::Cli::Config.instance
+      end
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
       # @param [String] message
@@ -248,14 +271,44 @@ module Kontena
       def any_key_to_continue_with_timeout(timeout=9)
         return nil if running_silent?
         return nil unless $stdout.tty?
-        prompt.keypress("Press any key to continue or ctrl-c to cancel (Automatically continuing in :countdown seconds) ...", timeout: timeout)
+        start_time = Time.now.to_i
+        end_time   = start_time + timeout
+        Thread.main['any_key.timed_out']   = false
+        msg = "Press any key to continue or ctrl-c to cancel.. (Automatically continuing in ? seconds)"
+
+        reader_thread = Thread.new do
+          Thread.main['any_key.char'] = $stdin.getch
+        end
+
+        countdown_thread = Thread.new do
+          time_left = timeout
+          while time_left > 0 && Thread.main['any_key.char'].nil?
+            print "\r#{pastel.bright_white("#{msg.sub("?", time_left.to_s)}")} "
+            time_left = end_time - Time.now.to_i
+            sleep 0.1
+          end
+          print "\r#{' ' * msg.length}  \r"
+          reader_thread.kill if reader_thread.alive?
+        end
+
+        countdown_thread.join
+
+        if Thread.main['any_key.char'] == "\u0003"
+          error "Canceled"
+        end
       end
 
       def any_key_to_continue(timeout = nil)
         return nil if running_silent?
         return nil unless $stdout.tty?
         return any_key_to_continue_with_timeout(timeout) if timeout
-        prompt.keypress("Press any key to continue or ctrl-c to cancel..")
+        msg = "Press any key to continue or ctrl-c to cancel.. "
+        print pastel.bright_cyan("#{msg}")
+        char = $stdin.getch
+        print "\r#{' ' * msg.length}\r"
+        if char == "\u0003"
+          error "Canceled"
+        end
       end
 
       def display_account_login_info

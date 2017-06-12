@@ -19,6 +19,19 @@ describe Volumes::Create do
       }.to change {Volume.count}. by 0
     end
 
+    it 'fails validation on invalid name with newlines' do
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          name: "foo\nbar",
+          driver: 'local',
+          scope: 'instance'
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.symbolic).to eq 'name' => :matches
+      }.to_not change{Volume.count}
+    end
+
     it 'creates new grid volume' do
       expect {
         outcome = Volumes::Create.run(
@@ -54,6 +67,17 @@ describe Volumes::Create do
         scope: 'instance'
       )
       expect(outcome.success?).to be_falsey
+    end
+
+    it 'fails to create with invalid scope prefix' do
+      outcome = Volumes::Create.run(
+        grid: grid,
+        name: 'foo',
+        driver: 'local',
+        scope: 'foo-instance'
+      )
+      expect(outcome).to_not be_success
+      expect(outcome.errors.symbolic).to eq 'scope' => :in
     end
 
     it 'fails to create volume with same name' do

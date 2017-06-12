@@ -26,7 +26,6 @@ module Kontena::Cli::Stacks
     def fields
       return ['name'] if quiet?
       {
-        '  ' => 'health_icon',
         name: 'name',
         stack: 'stack',
         services: 'services_count',
@@ -38,7 +37,7 @@ module Kontena::Cli::Stacks
     def execute
       print_table(stacks) do |row|
         next if quiet?
-        row['health_icon'] = health_icon(stack_health(row))
+        row['name'] = health_icon(stack_health(row)) + " " + row['name']
         row['stack'] = "#{row['stack']}:#{row['version']}"
         row['services_count'] = row['services'].size
         row['ports'] = stack_ports(row).join(',')
