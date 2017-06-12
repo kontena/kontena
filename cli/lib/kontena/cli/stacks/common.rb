@@ -2,6 +2,7 @@ require_relative 'yaml/reader'
 require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
 require_relative '../../stacks_client'
+require 'yaml'
 
 module Kontena::Cli::Stacks
   module Common

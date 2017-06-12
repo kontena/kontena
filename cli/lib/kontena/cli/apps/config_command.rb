@@ -1,5 +1,5 @@
 require_relative 'common'
-require 'pp'
+require 'yaml'
 
 module Kontena::Cli::Apps
   class ConfigCommand < Kontena::Command
