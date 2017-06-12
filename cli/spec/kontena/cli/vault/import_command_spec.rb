@@ -23,7 +23,7 @@ describe Kontena::Cli::Vault::ImportCommand do
   end
 
   it 'dies if the yml contains something odd' do
-    expect(File).to receive(:read).with('foo.yml').and_return({foo: 'bar', bar: { foo: ["bar"] }}.to_yaml)
+    expect(File).to receive(:read).with('foo.yml').and_return("foo: bar\nbar:\n  foo:\n    - bar\n")
     expect(subject).to receive(:exit_with_error).with(/Invalid value/).and_call_original
     expect{subject.run(['--force', 'foo.yml'])}.to exit_with_error
   end
