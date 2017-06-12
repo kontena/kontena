@@ -37,7 +37,7 @@ module Kontena
         minimal_deps: true
       )
       plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
-      without_safe { cmd.install(prefix(plugin_name), plugin_version) }
+      cmd.install(prefix(plugin_name), plugin_version)
       cmd.installed_gems
     end
 
@@ -110,7 +110,7 @@ module Kontena
       options = []
       options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
       cmd.handle_options options
-      without_safe { cmd.execute }
+      cmd.execute
     rescue Gem::SystemExitException => e
       return true if e.exit_code == 0
       raise
@@ -135,14 +135,6 @@ module Kontena
     end
 
     private
-
-    # Execute block without SafeYAML. Gem does security internally.
-    def without_safe(&block)
-      SafeYAML::OPTIONS[:default_mode] = :unsafe if Object.const_defined?(:SafeYAML)
-      yield
-    ensure
-      SafeYAML::OPTIONS[:default_mode] = :safe if Object.const_defined?(:SafeYAML)
-    end
 
     def plugin_debug?
       @plugin_debug ||= ENV['DEBUG'] == 'plugin'

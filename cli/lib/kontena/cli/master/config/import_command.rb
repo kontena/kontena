@@ -40,8 +40,6 @@ module Kontena::Cli::Master::Config
         require 'json'
         JSON.parse(data)
       when 'yaml', 'yml'
-        require "safe_yaml"
-        SafeYAML::OPTIONS[:default_mode] = :safe
         YAML.safe_load(data)
       else
         exit_with_error "Unknown input format '#{self.format}'"

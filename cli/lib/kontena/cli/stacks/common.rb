@@ -3,9 +3,6 @@ require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
 require_relative '../../stacks_client'
 
-require "safe_yaml"
-SafeYAML::OPTIONS[:default_mode] = :safe
-
 module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
@@ -64,12 +61,12 @@ module Kontena::Cli::Stacks
       @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil)
+    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil, action: nil)
       reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, values: values, defaults: defaults)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
-      set_env_variables(name || reader.stack_name, current_grid)
+      set_env_variables(name || reader.stack_name, current_grid, action)
       reader
     end
 
@@ -94,13 +91,13 @@ module Kontena::Cli::Stacks
       stack
     end
 
-    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil, action: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults, action: action)
       stack_from_reader(reader)
     end
 
-    def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+    def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil, action: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults, action: action)
       stack = stack_from_reader(reader)
       dump_variables(reader) if values_to
       stack
@@ -130,9 +127,10 @@ module Kontena::Cli::Stacks
       end
     end
 
-    def set_env_variables(stack, grid)
+    def set_env_variables(stack, grid, action)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
+      ENV['ACTION'] = action
     end
 
     # @return [String]
