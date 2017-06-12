@@ -1,6 +1,6 @@
 # stdlib
 autoload :JSON, 'json'
-autoload :YAML, 'safe_yaml'
+autoload :YAML, 'yaml'
 autoload :URI, 'uri'
 autoload :Logger, 'logger'
 autoload :FileUtils, 'fileutils'
