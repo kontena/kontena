@@ -3,7 +3,7 @@
 set -uex
 
 ## docker-compose
-DOCKER_COMPOSE_VERSION=1.11.1
+DOCKER_COMPOSE_VERSION=1.13.0
 
 [ -d /opt/bin ] || sudo install -d /opt/bin
 
