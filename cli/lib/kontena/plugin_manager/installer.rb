@@ -45,7 +45,7 @@ module Kontena
         raise "Plugin #{plugin_name} not installed" unless installed
         latest = rubygems_client.latest_version(plugin_name, pre: pre)
         if latest > installed.version
-          install(plugin_name, version: latest.to_s)
+          Installer.new(plugin_name, version: latest.to_s).install
         end
       end
     end
