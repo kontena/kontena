@@ -17,4 +17,11 @@ module ContainerHelper
     end
   end
 
+  # Finds containers id based on name
+  # @param [String] name
+  def container_id(name)
+    k = run("kontena container list -q")
+    k.out.match("^(.+\/#{name})")[1]
+  end
+
 end
