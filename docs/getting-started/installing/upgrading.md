@@ -38,8 +38,8 @@ $ sudo apt-get update
 $ sudo apt-get upgrade
 ```
 
-Kontena Master and Agent versions must match at least on `major.major` versions, although it's recommended to keep versions exactly in sync.
+Kontena Master and Agent versions must match at least on `major.minor` versions, although it's recommended to keep versions exactly in sync.
 
 ## Docker Compose
 
-Kontena Master & Agent can be updated just by changing image tag and restarting services. Kontena Master and Agent versions must match at least on `major.major` versions, although it's recommended to keep versions exactly in sync.
+Kontena Master & Agent can be updated just by changing image tag and restarting services. Kontena Master and Agent versions must match at least on `major.minor` versions, although it's recommended to keep versions exactly in sync.
