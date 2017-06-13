@@ -20,7 +20,8 @@ module Kontena::Cli::Plugins
           rescue => ex
             $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
             logger.error(ex)
-            spin.fail!
+            spin.fail
+            ex
           end
         end
 
@@ -34,10 +35,13 @@ module Kontena::Cli::Plugins
           rescue => ex
             $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
             logger.error(ex)
-            spin.fail!
+            spin.fail
+            ex
           end
         end
       end
+
+      exit_with_error "Install failed: #{installed.message}" if installed.respond_to?(:message)
 
       Array(installed).each do |gem|
         if gem.name.start_with?('kontena-plugin-')
