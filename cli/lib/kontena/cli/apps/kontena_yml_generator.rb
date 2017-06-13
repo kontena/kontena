@@ -1,6 +1,4 @@
 require_relative 'common'
-require "safe_yaml"
-SafeYAML::OPTIONS[:default_mode] = :safe
 
 module Kontena::Cli::Apps
   class KontenaYmlGenerator

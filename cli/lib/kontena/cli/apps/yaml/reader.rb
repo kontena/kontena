@@ -1,5 +1,3 @@
-require "safe_yaml"
-SafeYAML::OPTIONS[:default_mode] = :safe
 require_relative 'service_extender'
 require_relative 'validator'
 require_relative 'validator_v2'

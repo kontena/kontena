@@ -7,7 +7,6 @@ module Kontena::Cli::Plugins
     include Kontena::PluginManager::Common
 
     parameter 'NAME', 'Plugin name'
-    option "--force", :flag, "Force remove", default: false, attribute_name: :forced
 
     def uninstaller
       Kontena::PluginManager::Uninstaller.new(name)
@@ -15,7 +14,7 @@ module Kontena::Cli::Plugins
 
     def execute
       exit_with_error "Plugin #{name} has not been installed" unless installed?(name)
-      confirm unless forced?
+
       spinner "Uninstalling plugin #{pastel.cyan(name)}" do |spin|
         begin
           uninstaller.uninstall
