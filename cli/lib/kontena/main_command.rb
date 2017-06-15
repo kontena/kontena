@@ -32,7 +32,6 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "app", "App specific commands", load_subcommand('app_command')
   subcommand "plugin", "Plugin specific commands", load_subcommand('plugin_command')
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
-  subcommand "logout", "Logout from Kontena Masters or Kontena Cloud accounts", load_subcommand('logout_command')
   subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
 
   def execute
@@ -52,6 +51,9 @@ class Kontena::MainCommand < Kontena::Command
     elsif name == 'login'
       exit_with_error "Use 'kontena master login' to log into a Kontena Master\n"+
              "         or 'kontena cloud login' for logging into your Kontena Cloud account"
+    elsif name == 'logout'
+      exit_with_error "Use 'kontena master logout' to log out from a Kontena Master\n"+
+             "         or 'kontena cloud logout' for logging out from your Kontena Cloud account"
     end
     super
   end
