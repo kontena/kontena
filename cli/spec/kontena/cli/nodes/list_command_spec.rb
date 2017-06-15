@@ -111,6 +111,46 @@ describe Kontena::Cli::Nodes::ListCommand do
         end
       end
 
+      context "with two online nodes and one initializing node" do
+        before do
+          allow(client).to receive(:get).with('grids/test-grid/nodes').and_return(
+            { "nodes" => [
+                {
+                  "connected" => true,
+                  "name" => "node-1",
+                  "node_number" => 1,
+                  "initial_member" => true,
+                  'agent_version' => '1.1-dev',
+                },
+                {
+                  "connected" => true,
+                  "name" => "node-2",
+                  "node_number" => 2,
+                  "initial_member" => true,
+                  'agent_version' => '1.1-dev',
+                },
+                # node has just connected, but not sent any node_info yet
+                {
+                  "connected" => false,
+                  "name" => nil,
+                  "node_number" => nil,
+                  "initial_member" => false,
+                  'agent_version' => nil,
+                },
+              ]
+            }
+          )
+        end
+
+        it "outputs two nodes with warning and one initializing" do
+          expect{subject.run([])}.to output_table [
+            [':warning node-1', '1.1-dev', 'online',  '1 / 3', '-'],
+            [':warning node-2', '1.1-dev', 'online',  '2 / 3', '-'],
+            [':offline ', '', 'offline', '-', '-'],
+          ]
+        end
+      end
+
       context "with two online nodes and one offline node" do
         before do
           allow(client).to receive(:get).with('grids/test-grid/nodes').and_return(
