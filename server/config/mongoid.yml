@@ -2,6 +2,8 @@ development:
   clients:
     default:
       uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_development' %>
+      options:
+        max_pool_size: 25
   options:
     use_utc: true
     raise_not_found_error: false
