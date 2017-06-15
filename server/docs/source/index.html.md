@@ -286,8 +286,7 @@ follow | Stream logs
 
 ```json
 {
-	"id": "mygrid/misty-sun-87",
-	"node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
+	"id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
 	"name": "misty-sun-87",
 	"connected": "true",
 	"created_at": "",
@@ -417,7 +416,7 @@ Update a node details.
 
 ### Endpoint
 
-`PUT /v1/nodes/{node_id}`
+`PUT /v1/nodes/{grid_id}/{node_name}`
 
 ## Get a node details
 
@@ -431,7 +430,7 @@ Get a node details.
 
 ### Endpoint
 
-`GET /v1/nodes/{node_id}`
+`GET /v1/nodes/{grid_id}/{node_name}`
 
 ## Delete a node
 
@@ -445,7 +444,7 @@ Delete a node from a grid. Does not actually terminate virtual/physical host nod
 
 ### Endpoint
 
-`DELETE /v1/nodes/{node_id}`
+`DELETE /v1/nodes/{grid_id}/{node_name}`
 
 ## Get node stats
 
