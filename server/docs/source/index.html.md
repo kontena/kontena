@@ -293,7 +293,7 @@ follow | Stream logs
 	"updated_at": "",
 	"last_seen_at": "",
 	"node_number": 1,
-	"initial_node": true,
+	"initial_member": true,
 	"agent_version": "1.0.0",
 	"docker_version": "1.11.2",
 	"os": "CoreOS 1185.3.0 (MoreOS)",
