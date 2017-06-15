@@ -146,7 +146,7 @@ describe Kontena::Cli::Nodes::ListCommand do
           expect{subject.run([])}.to output_table [
             [':warning node-1', '1.1-dev', 'online',  '1 / 3', '-'],
             [':warning node-2', '1.1-dev', 'online',  '2 / 3', '-'],
-            [':offline ', '', 'offline', '-', '-'],
+            [':offline (initializing)', '', 'offline', '-', '-'],
           ]
         end
       end
