@@ -133,7 +133,7 @@ class GridServiceInstanceDeployer
 
   # @param [HostNode] node
   # @raise [RpcClient::TimeoutError]
-  def notify_node(node, timeout: 2.0)
+  def notify_node(node, timeout: 5.0)
     rpc_client = RpcClient.new(node.node_id, timeout)
     rpc_client.request('/service_pods/notify_update', [])
   end

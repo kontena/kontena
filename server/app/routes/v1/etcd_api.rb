@@ -16,7 +16,7 @@ module V1
         node = grid.host_nodes.connected.first
         halt_request(404, {error: 'Not connected to any nodes'}) if !node
 
-        client = node.rpc_client(2)
+        client = node.rpc_client(5)
 
         r.get do
           r.is do
