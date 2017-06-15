@@ -66,7 +66,7 @@ module Kontena::Cli::Nodes
         unless quiet?
           grid_health = grid_health(grid, grid_nodes)
           grid_nodes.each do |node|
-            node['name'] = health_icon(node_health(node, grid_health)) + " " + node['name']
+            node['name'] = health_icon(node_health(node, grid_health)) + " " + (node['name'] || '(initializing)')
           end
         end
 
