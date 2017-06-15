@@ -17,6 +17,7 @@ toc_order: 2
 - `AUTH_API_URL`: specifies authentication server url (default: https://auth.kontena.io)
 - `WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
 - `KONTENA_CLOCK_SKEW`: acceptable clock skew for connecting agents (default: 1.0s)
+- `PORT`: server port (default: 9292)
 - `EVENT_LOGS_CAPPED_SIZE`: max size of the event logs collection in megabytes (default: 100)
 - `CONTAINER_LOGS_CAPPED_SIZE`: max size of the container logs collection in megabytes (default: 1000)
 - `CONTAINER_STATS_CAPPED_SIZE`: max size of the event logs collection in megabytes (default: 500)
