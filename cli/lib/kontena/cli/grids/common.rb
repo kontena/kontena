@@ -117,5 +117,68 @@ module Kontena::Cli::Grids
         exit_with_error "No grid given or selected"
       end
     end
+
+    module Parameters
+      def self.included(base)
+        base.class_eval do
+          option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+          option "--no-default-affinity", :flag, "Unset grid default affinity"
+          option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
+          option "--no-statsd-server", :flag, "Unset statsd server setting"
+          option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
+          option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
+        end
+      end
+
+      def validate_log_opts
+        if !log_opt_list.empty? && log_forwarder.nil?
+          raise Kontena::Errors::StandardError.new(1, "Need to specify --log-forwarder when using --log-opt")
+        end
+      end
+
+      def parse_log_opts
+        opts = {}
+        log_opt_list.each do |opt|
+          key, value = opt.split('=')
+          opts[key.to_sym] = value
+        end
+        opts
+      end
+
+      def validate_grid_parameters
+        validate_log_opts
+      end
+
+      def build_grid_parameters(payload)
+        if statsd_server
+          server, port = statsd_server.split(':')
+          payload[:stats] = {
+            statsd: {
+              server: server,
+              port: port || 8125
+            }
+          }
+        end
+
+        if no_statsd_server?
+          payload[:stats] = { statsd:  nil }
+        end
+
+        if log_forwarder
+          payload[:logs] = {
+            forwarder: log_forwarder,
+            opts: parse_log_opts
+          }
+        end
+
+        unless default_affinity_list.empty?
+          payload[:default_affinity] = default_affinity_list
+        end
+
+        if no_default_affinity?
+          payload[:default_affinity] = []
+        end
+      end
+    end
   end
 end
