@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.3.1](https://github.com/kontena/kontena/releases/tag/v1.3.1) (2017-06-16)
+
+**Master & Agents:**
+
+- Allow server port to be set via env (#2455)
+- Increase RpcClient timeouts from 2s to 5s (#2461)
+- Fix oauth2 api request body www-form decoding (#2485)
+
+**CLI:**
+
+- Fix plugin installation SafeYAML errors (#2462)
+- Fix exit code when plugin install fails (#2471)
+- Show an initializing node name as (initializing) instead of nil error in node list (#2478)
+- Add a "Getting started" banner to main command help (#2385)
+
+**Other:**
+
+- Tests: Upgrade agent test vagrant docker-compose to version 1.13 (#2463)
+- Tests: Update test kommando to fix missing bash failures (#2475)
+- Tests: Fix container specs to use quiet option and with proper regexp (#2467)
+- Tests: bundle update Gemfile.lock with kommando 0.1.2, safe_yaml changes (#2481)
+- Docs: Add capped collection size envs (#2464)
+- Docs: add nodes to summary (#2473)
+- Docs: fix upgrading major.major typo (#2472)
+- Master-dev: Bump mongoid pool size (#2477)
+
 ## [1.3.0](https://github.com/kontena/kontena/releases/tag/v1.3.0) (2017-06-09)
 
 ### Highlights
