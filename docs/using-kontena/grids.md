@@ -40,10 +40,10 @@ The grid token is used when provisioning nodes using the Kontena plugins or `kon
 
 The grid token is used to both grant access to the Kontena master, as well as the shared secret used for the overlay networking encryption.
 
-## Update options
-These options can be set using `kontena grid update` while the grid is running.
+### Update options
+These options can be set using `kontena grid create`, or later using `kontena grid update` while the grid is running.
 
-### Default Affinity
+#### Default Affinity
 
 The `kontena grid create --default-affinity=AFFINITY-FILTER` option acts as if each Kontena service were configured with the given service affinity by default.
 This can be used to avoid deploying services to specific grid nodes by default, using a per-service affinity to only deploy specific services to those grid nodes.
@@ -55,22 +55,23 @@ This will re-schedule the grid services, and may cause service instances to be m
 
 To disable any previously set grid default affinity use `kontena grid update --no-default-affinity grid_name`.
 
-### `statsd` Server
+#### `statsd` Server
 
-The `kontena grid update --statsd-server HOST:PORT` option configures each host node to send stats metrics for each host node and service container to a remote statsd receiver using the UDP StatsD protocol.
+The `kontena grid create --statsd-server HOST:PORT` option configures each host node to send stats metrics for each host node and service container to a remote statsd receiver using the UDP StatsD protocol.
 
+This option can be changed using `kontena grid update --statsd-server`.
 To disable previously set statsd setting use `kontena grid update --no-statsd-server grid_name`.
 
 See the [Statistics](stats.md#exporting-stats) documentation for further details.
 
-### Logging options
+#### Logging options
 
-The `kontena grid update --log-forwarder fluentd --log-opt fluentd-server=xyz:22445` options configures each host node to send container logs to a remote log collection service.
+The `kontena grid create --log-forwarder fluentd --log-opt fluentd-server=xyz:22445` options configures each host node to send container logs to a remote log collection service.
 
+This option can be changed using `kontena grid update --log-forwarder --log-opt`.
 Use `kontena grid update --log-forwarder none` to disable log forwarding.
 
 See the [Logs](logs.md) documentation for further details.
-
 
 ## Initial Nodes
 
