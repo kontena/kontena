@@ -120,14 +120,12 @@ module Kontena::Cli::Grids
 
     module Parameters
       def self.included(base)
-        base.class_eval do
-          option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
-          option "--no-default-affinity", :flag, "Unset grid default affinity"
-          option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
-          option "--no-statsd-server", :flag, "Unset statsd server setting"
-          option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
-          option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
-        end
+        base.option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
+        base.option "--no-default-affinity", :flag, "Unset grid default affinity"
+        base.option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
+        base.option "--no-statsd-server", :flag, "Unset statsd server setting"
+        base.option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
+        base.option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
       end
 
       def validate_log_opts
