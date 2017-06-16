@@ -24,9 +24,9 @@ class Watchdog
 
   # @param subject [String] used for logging, describe what is pinging this watchdog
   # @param thread [Thread] thread to trace and abort on watchdog timeouts
-  # @param interval [Fixnum] expect to get a ping every interval seconds
-  # @param threshold [Fixnum] log warnings if pings interval goes above threshold seconds
-  # @param timeout [Fixnum] log fatal if ping interval goes above timeout seconds
+  # @param interval [Integer] expect to get a ping every interval seconds
+  # @param threshold [Integer] log warnings if pings interval goes above threshold seconds
+  # @param timeout [Integer] log fatal if ping interval goes above timeout seconds
   # @param abort [Boolean] abort thread on timeout by raising Watchdog::Abort
   def initialize(subject, thread, interval: INTERVAL, threshold: THRESHOLD, timeout: TIMEOUT, abort: ABORT, start: true)
     @logger = self.class.logger(subject)
