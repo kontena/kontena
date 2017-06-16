@@ -164,8 +164,8 @@ Attribute        | Example                 | Description
 ---------------- | ----------------------- | ------------
 default_affinity | `[ "label!=reserved" ]` |
 trusted_subnets  | `[ "192.168.66.0/24" ]` |
-stats            | `{ "statsd": { "server": "127.0.0.1", "port": 8125 } }` |
-logs             | `{ "forwarder": "fluentd", "opts": { "fluentd-address": "127.0.0.1" } }` |
+stats            | `{ "statsd": { "server": "127.0.0.1", "port": 8125 } }` | To disable statsd exporting, use `{ "statsd": null }`
+logs             | `{ "forwarder": "fluentd", "opts": { "fluentd-address": "127.0.0.1" } }` | To disable logs exporting, use `{ "forwarder": "none" }`
 
 ## Get a Grid
 
