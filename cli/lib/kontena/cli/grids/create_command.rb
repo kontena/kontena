@@ -34,9 +34,8 @@ module Kontena::Cli::Grids
 
       build_grid_parameters(payload)
 
-      grid = nil
-      spinner "Creating #{pastel.cyan(name)} grid " do
-        grid = client.post('grids', payload)
+      grid = spinner "Creating #{pastel.cyan(name)} grid " do
+        client.post('grids', payload)
       end
       if grid
         spinner "Switching scope to #{pastel.cyan(name)} grid " do
