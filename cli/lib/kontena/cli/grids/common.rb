@@ -121,9 +121,7 @@ module Kontena::Cli::Grids
     module Parameters
       def self.included(base)
         base.option "--default-affinity", "[AFFINITY]", "Default affinity rule for the grid", multivalued: true
-        base.option "--no-default-affinity", :flag, "Unset grid default affinity"
         base.option "--statsd-server", "STATSD_SERVER", "Statsd server address (host:port)"
-        base.option "--no-statsd-server", :flag, "Unset statsd server setting"
         base.option "--log-forwarder", "LOG_FORWARDER", "Set grid wide log forwarder (set to 'none' to disable)"
         base.option "--log-opt", "[LOG_OPT]", "Set log options (key=value)", multivalued: true
       end
@@ -158,10 +156,6 @@ module Kontena::Cli::Grids
           }
         end
 
-        if no_statsd_server?
-          payload[:stats] = { statsd:  nil }
-        end
-
         if log_forwarder
           payload[:logs] = {
             forwarder: log_forwarder,
@@ -171,10 +165,6 @@ module Kontena::Cli::Grids
 
         unless default_affinity_list.empty?
           payload[:default_affinity] = default_affinity_list
-        end
-
-        if no_default_affinity?
-          payload[:default_affinity] = []
         end
       end
     end
