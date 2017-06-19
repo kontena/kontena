@@ -22,7 +22,7 @@ describe Kontena::Cli::Stacks::ShowCommand do
 
       it 'outputs a yaml of the stack variables and values' do
         expect(client).to receive(:get).with('stacks/test-grid/test-stack').and_return(stack_response)
-        expect{subject.run(['--variables', 'test-stack'])}.to output(/^foo: bar$/).to_stdout
+        expect{subject.run(['--values', 'test-stack'])}.to output(/^foo: bar$/).to_stdout
       end
     end
   end

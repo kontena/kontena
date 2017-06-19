@@ -13,7 +13,7 @@ module Kontena::Cli::Stacks
     requires_current_master
     requires_current_master_token
 
-    option '--variables', :flag, 'Output the variable-value pairs as YAML'
+    option '--values', :flag, 'Output the variable-value pairs as YAML'
 
     def execute
       variables? ? show_variables : show_stack
