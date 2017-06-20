@@ -29,7 +29,7 @@ module Kontena::Cli::Containers
       end
       ws.on :open do
         ws.text(cmd)
-        stdin_reader = self.stream_stdin_to_ws(ws) if self.interactive?
+        stdin_reader = self.stream_stdin_to_ws(ws, tty: self.tty?) if self.interactive?
       end
       ws.on :close do |e|
         if e.reason.include?('code: 404')
