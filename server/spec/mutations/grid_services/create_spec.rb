@@ -352,6 +352,40 @@ describe GridServices::Create do
       expect(outcome.success?).to be(false)
     end
 
+    it 'fails to save health_check, port 0' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            protocol: 'tcp',
+            interval: 10,
+            timeout: 5,
+            initial_delay: 10,
+            port: 0
+          }
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
+    it 'fails to save health_check, port over range' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            protocol: 'tcp',
+            interval: 10,
+            timeout: 5,
+            initial_delay: 10,
+            port: 70000
+          }
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
     it 'fails validating secret existence' do
       outcome = described_class.new(
           grid: grid,
