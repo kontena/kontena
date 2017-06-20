@@ -206,7 +206,7 @@ describe '/v1/grids', celluloid: true do
       end
     end
 
-    describe '/nodes' do
+    describe 'GET /nodes' do
       it 'returns grid nodes' do
         grid = david.grids.first
 
@@ -216,6 +216,24 @@ describe '/v1/grids', celluloid: true do
         expect(json_response['nodes'].size).to eq(1)
       end
     end
+
+    describe 'POST /nodes' do
+      it 'creates and returns grid node' do
+        grid = david.grids.first
+
+        expect {
+          post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
+          expect(response.status).to eq(201)
+        }.to change{ grid.reload.host_nodes.count }.by(1)
+
+        expect(json_response).to match hash_including(
+          'id' => 'terminal-a/test-1',
+          'name' => 'test-1',
+          'token' => /[A-Za-z0-9\/=]+/,
+        )
+      end
+    end
+
 
     describe '/users' do
       it 'returns grid users' do

@@ -16,5 +16,23 @@ module HostNodes
       plugger = Agent::NodePlugger.new(grid, node)
       plugger.send_node_info
     end
+
+    def self.included(base)
+      base.extend(ClassMethods)
+    end
+
+    module ClassMethods
+      # Common inputs
+      def common_inputs
+        optional do
+          array :labels
+        end
+      end
+    end
+
+    # @param node [HostNode]
+    def set_common_params(host_node)
+      host_node.labels = self.labels if self.labels
+    end
   end
 end
