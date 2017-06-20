@@ -1,6 +1,5 @@
 require 'net/http'
 require_relative '../models/node'
-require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 require_relative '../helpers/rpc_helper'
 
@@ -10,7 +9,6 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Observable
-    include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
 
