@@ -307,6 +307,18 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
 
+          client = subject.client_for_id(node_id)
+
+          expect(client).to_not be_nil
+          expect(client).to match({
+            ws: client_ws,
+            id: node_id,
+            node_id: host_node.id,
+            grid_id: grid.id,
+            created_at: Time,
+            connected_at: Time,
+          })
+
           # XXX: racy via mongo pubsub
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1')]])
@@ -328,6 +340,18 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
+
+          client = subject.client_for_id(node_id)
+
+          expect(client).to_not be_nil
+          expect(client).to match({
+            ws: client_ws,
+            id: node_id,
+            node_id: host_node.id,
+            grid_id: grid.id,
+            created_at: Time,
+            connected_at: Time,
+          })
 
           # XXX: racy via mongo pubsub
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])

@@ -116,6 +116,8 @@ class WebsocketBackend
         if initializing_node
           logger.info "new node #{node} connected using node token with node_id #{node_id}"
 
+          node.reload
+
         else
           logger.warn "node #{node} connected using node token with node_id #{node_id}, but expected node_id #{node.node_id}"
 
