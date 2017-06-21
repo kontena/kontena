@@ -17,7 +17,6 @@ module Kontena::Cli::Nodes
       node = client.get("nodes/#{current_grid}/#{name}")
 
       puts "KONTENA_URI=#{grid_uri}"
-      puts "KONTENA_NODE_ID=#{node['id']}"
       puts "KONTENA_NODE_TOKEN=#{node['token']}"
     end
   end
