@@ -50,7 +50,7 @@ class HostNode
   index({ node_id: 1 })
   index({ labels: 1 })
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
-  index({ grid_id: 1, token: 1 }, { unique: true })
+  index({ token: 1 }, { unique: true })
 
   scope :connected, -> { where(connected: true) }
 
