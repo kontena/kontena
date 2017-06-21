@@ -167,7 +167,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
-          expect(subject.logger).to receive(:warn).with('node node-1 token was used with incorrect node_id nodeXYZ, expected nodeABC')
+          expect(subject.logger).to receive(:warn).with('node node-1 connected using node token with node_id nodeXYZ, but expected node_id nodeABC')
           expect(subject.logger).to receive(:warn).with('reject websocket connection: Incorrect node token, already used by a different node')
           expect(client_ws).to receive(:close).with(4003, 'Incorrect node token, already used by a different node')
 
