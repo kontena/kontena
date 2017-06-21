@@ -29,7 +29,7 @@ describe HostNodes::Create do
     expect(outcome.result).to be_a HostNode
     expect(outcome.result.grid).to eq grid
     expect(outcome.result.name).to eq 'foobar'
-    expect(outcome.result.node_id).to eq 'test/foobar'
+    expect(outcome.result.node_id).to be_nil
     expect(outcome.result.token).to be_a String
     expect(outcome.result.token).to_not be_empty
     expect(outcome.result.labels).to eq []
