@@ -19,6 +19,14 @@ class WebsocketBackend
   QUEUE_WATCH_PERIOD = 60 # once in a minute
   QUEUE_DROP_NOTIFICATIONS_LIMIT = (QUEUE_SIZE * 0.8)
 
+  class CloseError < StandardError
+    attr_reader :code
+
+    def initialize(code)
+      @code = code
+    end
+  end
+
   attr_reader :logger
 
   def initialize(app)
@@ -67,29 +75,65 @@ class WebsocketBackend
     end
   end
 
+  # Authenticate and lookup HostNode for websocket connection
+  #
+  # @param [Rack::Request] req
+  # @raise [CloseError]
+  # @return [HostNode]
+  def find_node(req)
+    node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+    node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
+
+    if grid_token = req.env['HTTP_KONTENA_GRID_TOKEN']
+      # check grid
+      grid = Grid.find_by(token: grid_token.to_s)
+
+      raise CloseError.new(4001), "Invalid grid token" unless grid
+
+      node = grid.host_nodes.find_by(node_id: node_id)
+
+      if node
+        logger.debug "node #{node} connected using grid token"
+      else
+        node = grid.host_nodes.create!(node_id: node_id, labels: node_labels)
+
+        logger.info "new node #{node} connected using grid token"
+      end
+
+      return node
+
+    elsif node_token = req.env['HTTP_KONTENA_NODE_TOKEN']
+      node = HostNode.find_by(token: node_token.to_s)
+
+      raise CloseError.new(4002), "Invalid node token" unless node
+
+      if node.node_id.nil?
+        logger.info "new node #{node} connected using node token with node_id #{node_id}"
+
+        node.set(node_id: node_id)
+
+      elsif node.node_id != node_id
+        logger.warn "node #{node} token was used with incorrect node_id #{node_id}, expected #{node.node_id}"
+
+        raise CloseError.new(4003), "Incorrect node token, already used by a different node"
+
+      else
+        logger.debug "node #{node} connected using node token with node_id #{node_id}"
+      end
+
+      return node
+    else
+      raise CloseError.new(4004), "Missing token"
+    end
+  end
+
   ##
   # On websocket connection open
   #
   # @param [Faye::WebSocket] ws
   # @param [Rack::Request] req
   def on_open(ws, req)
-    # check grid
-    grid = Grid.find_by(token: req.env['HTTP_KONTENA_GRID_TOKEN'].to_s)
-    unless grid
-      logger.error 'invalid grid token, closing connection'
-      ws.close(4001, "Invalid grid token")
-      return
-    end
-
-    # check host node
-    node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
-    labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
-
-    node = grid.host_nodes.find_by(node_id: node_id)
-
-    unless node
-      node = grid.host_nodes.create!(node_id: node_id, labels: labels)
-    end
+    node = find_node(req)
 
     # check version
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
@@ -119,15 +163,20 @@ class WebsocketBackend
 
     client = {
         ws: ws,
-        id: node_id.to_s,
+        id: node.node_id.to_s,
         node_id: node.id,
-        grid_id: grid.id,
+        grid_id: node.grid.id,
         created_at: Time.now,
         connected_at: connected_at,
     }
     @clients << client
 
     EM.defer { Agent::NodePlugger.new(node).plugin! connected_at }
+
+  rescue CloseError => exc
+    logger.warn "reject websocket connection: #{exc}"
+    ws.close(exc.code, exc.message)
+
   rescue => exc
     logger.error exc
   end
