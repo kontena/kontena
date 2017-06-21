@@ -227,9 +227,9 @@ describe '/v1/grids', celluloid: true do
         }.to change{ grid.reload.host_nodes.count }.by(1)
 
         expect(json_response).to match hash_including(
-          'id' => 'terminal-a/test-1',
+          'id' => nil,
           'name' => 'test-1',
-          'token' => /[A-Za-z0-9\/=]+/,
+          'token' => String,
         )
       end
     end
