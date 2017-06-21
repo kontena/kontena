@@ -23,11 +23,11 @@ module Rpc
     end
 
     # @param [Hash] data
-    def update(data)
-      node = @grid.host_nodes.find_by(node_id: data['ID'])
-      if !node
-        node = @grid.host_nodes.build
-      end
+    def update(node_id, data)
+      node = @grid.host_nodes.find_by(node_id: node_id)
+
+      raise "Missing HostNode: #{node_id}" unless node
+
       node.attributes_from_docker(data)
       node.save!
     end
