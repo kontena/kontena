@@ -45,6 +45,7 @@ describe HostNodes::Create do
     expect(outcome.result).to be_a HostNode
     expect(outcome.result.token).to eq 'asdf'
   end
+
   it 'creates with labels' do
     outcome = described_class.run(
       grid: grid,
@@ -53,5 +54,38 @@ describe HostNodes::Create do
     )
     expect(outcome).to be_success
     expect(outcome.result.labels).to eq ['test=yes']
+  end
+
+  context 'with an existing node in the same grid' do
+    let(:node) do
+      grid.host_nodes.create!(
+        name: 'test-1',
+      )
+    end
+
+    before do
+      node
+    end
+
+    it 'fails with a duplicate name' do
+      outcome = described_class.run(
+        grid: grid,
+        name: 'test-1',
+      )
+
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'name' => 'Node with name test-1 already exists'
+    end
+
+    it 'fails with a duplicate token' do
+      outcome = described_class.run(
+        grid: grid,
+        name: 'test-2',
+        token: node.token,
+      )
+
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'token' => 'Node with token already exists'
+    end
   end
 end

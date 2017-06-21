@@ -15,6 +15,15 @@ module HostNodes
 
     common_inputs
 
+    def validate
+      if self.grid.host_nodes.find_by(name: self.name)
+        add_error(:name, :duplicate, "Node with name #{self.name} already exists")
+      end
+      if token && HostNode.find_by(token: self.token)
+        add_error(:token, :duplicate, "Node with token already exists")
+      end
+    end
+
     # @return [HostNode]
     def build_host_node
       host_node = HostNode.new(
