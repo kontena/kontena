@@ -71,7 +71,6 @@ class HostNode
   # @param [Hash] attrs
   def attributes_from_docker(attrs)
     self.attributes = {
-      node_id: attrs['ID'],
       os: attrs['OperatingSystem'],
       docker_root_dir: attrs['DockerRootDir'],
       driver: attrs['Driver'],
