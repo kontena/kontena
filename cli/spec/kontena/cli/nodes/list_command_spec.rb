@@ -133,7 +133,7 @@ describe Kontena::Cli::Nodes::ListCommand do
                 {
                   "connected" => false,
                   "name" => nil,
-                  "node_number" => nil,
+                  "node_number" => 3,
                   "initial_member" => false,
                   'agent_version' => nil,
                 },
@@ -146,7 +146,7 @@ describe Kontena::Cli::Nodes::ListCommand do
           expect{subject.run([])}.to output_table [
             [':warning node-1', '1.1-dev', 'online',  '1 / 3', '-'],
             [':warning node-2', '1.1-dev', 'online',  '2 / 3', '-'],
-            [':offline (initializing)', '', 'offline', '-', '-'],
+            [':offline (initializing)', 'offline', '-', '-'], # missing agent_version
           ]
         end
       end
