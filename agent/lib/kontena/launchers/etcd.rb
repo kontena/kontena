@@ -90,7 +90,12 @@ module Kontena::Launchers
       cluster_state = 'new'
       weave_ip = node.overlay_ip
 
-      container = Docker::Container.get('kontena-etcd') rescue nil
+      container = nil
+      begin
+        container = Docker::Container.get('kontena-etcd')
+      rescue Docker::Error::NotFoundError
+        info "etcd container does not exist"
+      end
       if container && container.info['Config']['Image'] != image
         container.delete(force: true)
       elsif container && container.running?

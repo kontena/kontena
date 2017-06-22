@@ -128,9 +128,7 @@ describe Kontena::Launchers::Etcd do
 
         expect(subject.instance_variable_get(:@running)).to eq(true)
       end
-    end
 
-    describe '#create_container' do
       it 'deletes and recreates the container' do
         container = double(id: 'foo')
         allow(Docker::Container).to receive(:get).and_return(container)
@@ -168,7 +166,7 @@ describe Kontena::Launchers::Etcd do
 
       it 'creates new container' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(nil)
+        allow(Docker::Container).to receive(:get).and_raise(Docker::Error::NotFoundError)
         allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
         expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
 
@@ -198,6 +196,14 @@ describe Kontena::Launchers::Etcd do
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
         subject.create_container('etcd', node)
+      end
+
+      it 'lets random Docker errors fall through' do
+        expect(Docker::Container).to receive(:get).and_raise(Docker::Error::ServerError)
+        expect {
+          # Call through wrapped object to avoid nasty traces in rspec output
+          subject.wrapped_object.create_container('etcd', node)
+        }.to raise_error(Docker::Error::ServerError)
       end
     end
 
