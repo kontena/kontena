@@ -75,6 +75,61 @@ class WebsocketBackend
     end
   end
 
+  # @param node_id [String] request header Kontena-Node-Id
+  # @param grid_token [String] request header Kontena-Grid-Token
+  # @param init_attrs [Hash] initialize attributes on new node
+  # @raise [CloseError]
+  # @return [HostNode] with node_id set
+  def find_node_by_grid_token(node_id, grid_token, init_attrs)
+    # check grid
+    grid = Grid.find_by(token: grid_token.to_s)
+
+    raise CloseError.new(4001), "Invalid grid token" unless grid
+
+    node = grid.host_nodes.find_by(node_id: node_id)
+
+    if node
+      logger.debug "node #{node} connected using grid token"
+    else
+      node = grid.host_nodes.create!(node_id: node_id, **init_attrs)
+
+      logger.info "new node #{node} connected using grid token"
+    end
+
+    return node
+  end
+
+  # @param node_id [String] request header Kontena-Node-Id
+  # @param node_token [String] request header Kontena-Node-Token
+  # @param init_attrs [Hash] initialize attributes on new node
+  # @raise [CloseError]
+  # @return [HostNode] with node_id set
+  def find_node_by_node_token(node_id, node_token, init_attrs)
+    node = HostNode.find_by(token: node_token.to_s)
+
+    raise CloseError.new(4002), "Invalid node token" unless node
+
+    if node.node_id == node_id
+      logger.debug "node #{node} connected using node token with node_id #{node_id}"
+    else
+      initializing_node = HostNode.where(:id => node.id, :node_id => nil)
+        .find_one_and_update(:$set => {node_id: node_id, **init_attrs})
+
+      if initializing_node
+        logger.info "new node #{node} connected using node token with node_id #{node_id}"
+
+        node.reload
+
+      else
+        logger.warn "node #{node} connected using node token with node_id #{node_id}, but expected node_id #{node.node_id}"
+
+        raise CloseError.new(4003), "Incorrect node token, already used by a different node"
+      end
+    end
+
+    return node
+  end
+
   # Authenticate and lookup HostNode for websocket connection
   #
   # @param [Rack::Request] req
@@ -83,49 +138,16 @@ class WebsocketBackend
   def find_node(req)
     node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
     node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
+    init_attrs = {
+      labels: node_labels,
+    }
 
     if grid_token = req.env['HTTP_KONTENA_GRID_TOKEN']
-      # check grid
-      grid = Grid.find_by(token: grid_token.to_s)
-
-      raise CloseError.new(4001), "Invalid grid token" unless grid
-
-      node = grid.host_nodes.find_by(node_id: node_id)
-
-      if node
-        logger.debug "node #{node} connected using grid token"
-      else
-        node = grid.host_nodes.create!(node_id: node_id, labels: node_labels)
-
-        logger.info "new node #{node} connected using grid token"
-      end
-
-      return node
+      return find_node_by_grid_token(node_id, grid_token, init_attrs)
 
     elsif node_token = req.env['HTTP_KONTENA_NODE_TOKEN']
-      node = HostNode.find_by(token: node_token.to_s)
+      return find_node_by_node_token(node_id, node_token, init_attrs)
 
-      raise CloseError.new(4002), "Invalid node token" unless node
-
-      if node.node_id == node_id
-        logger.debug "node #{node} connected using node token with node_id #{node_id}"
-      else
-        initializing_node = HostNode.where(:id => node.id, :node_id => nil)
-          .find_one_and_update(:$set => {node_id: node_id})
-
-        if initializing_node
-          logger.info "new node #{node} connected using node token with node_id #{node_id}"
-
-          node.reload
-
-        else
-          logger.warn "node #{node} connected using node token with node_id #{node_id}, but expected node_id #{node.node_id}"
-
-          raise CloseError.new(4003), "Incorrect node token, already used by a different node"
-        end
-      end
-
-      return node
     else
       raise CloseError.new(4004), "Missing token"
     end

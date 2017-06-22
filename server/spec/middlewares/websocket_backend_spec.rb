@@ -81,7 +81,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     let(:grid_token) { nil }
     let(:node_token) { nil }
     let(:node_id) { 'nodeABC' }
-    let(:node_labels) { 'test1,test2' }
+    let(:node_labels) { 'test=yes' }
     let(:node_version) { '0.9.1' }
     let(:connected_at) { 1.second.ago.utc }
 
@@ -271,6 +271,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           host_node = grid.host_nodes.first
 
           expect(host_node.node_id).to eq node_id
+          expect(host_node.labels).to eq ['test=yes']
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
 
@@ -304,6 +305,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           host_node.reload
 
           expect(host_node.node_id).to eq node_id
+          expect(host_node.labels).to eq ['test=yes']
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
 
@@ -328,7 +330,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         end
 
         it 'accepts the connection if the node ID matches' do
-          host_node.set(node_id: node_id)
+          host_node.set(node_id: node_id, labels: ['test=yes', 'test2=no'])
 
           expect(subject.logger).to receive(:info).with(/node node-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
 
@@ -338,6 +340,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           host_node.reload
 
+          expect(host_node.labels).to eq ['test=yes', 'test2=no'] # do not replace existing labels
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
 
