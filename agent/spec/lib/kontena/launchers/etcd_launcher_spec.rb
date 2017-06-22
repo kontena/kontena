@@ -122,7 +122,7 @@ describe Kontena::Launchers::Etcd do
         allow(container).to receive(:running?).and_return(false)
         allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
         expect(subject.wrapped_object).to receive(:add_dns)
-        expect(container).to receive(:start)
+        expect(container).to receive(:start!)
 
         subject.create_container('etcd', node)
 
@@ -157,7 +157,7 @@ describe Kontena::Launchers::Etcd do
             'RestartPolicy' => {'Name' => 'always'},
             'VolumesFrom' => ['kontena-etcd-data']
           })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start)
+        expect(etcd_container).to receive(:start!)
         allow(etcd_container).to receive(:id).and_return('12345')
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
@@ -191,7 +191,7 @@ describe Kontena::Launchers::Etcd do
             'RestartPolicy' => {'Name' => 'always'},
             'VolumesFrom' => ['kontena-etcd-data']
           })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start)
+        expect(etcd_container).to receive(:start!)
         allow(etcd_container).to receive(:id).and_return('12345')
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
 
@@ -320,7 +320,7 @@ describe Kontena::Launchers::Etcd do
             'RestartPolicy' => {'Name' => 'always'},
             'VolumesFrom' => ['kontena-etcd-data']
           })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start)
+        expect(etcd_container).to receive(:start!)
         allow(etcd_container).to receive(:id).and_return('12345')
         expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.2', name: 'etcd.kontena.local'})
 

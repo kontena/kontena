@@ -105,7 +105,7 @@ module Kontena::Launchers
         return container
       elsif container && !container.running?
         info 'etcd container exists but not running, starting it'
-        container.start
+        container.start!
         @running = true
         add_dns(container.id, weave_ip)
         return container
@@ -150,7 +150,7 @@ module Kontena::Launchers
           'VolumesFrom' => ['kontena-etcd-data']
         }
       )
-      container.start
+      container.start!
       add_dns(container.id, weave_ip)
       info 'started etcd service'
       @running = true
