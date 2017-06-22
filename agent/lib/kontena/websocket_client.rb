@@ -27,7 +27,8 @@ module Kontena
     delegate :on, to: :ws
 
     # @param [String] api_uri
-    # @param [String] api_token
+    # @param [String] grid_token
+    # @param [String] node_token
     def initialize(api_uri, grid_token: nil, node_token: nil)
       @api_uri = api_uri
       @grid_token = grid_token
@@ -39,7 +40,14 @@ module Kontena
       @connected = false
       @connecting = false
       @ping_timer = nil
-      info "initialized"
+
+      if @grid_token
+        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{host_id}"
+      elsif @node_token
+        info "initialized with node token #{@node_token[0..8]}..., node ID #{host_id}"
+      else
+        fail "Missing grid, node token"
+      end
     end
 
     def ensure_connect
