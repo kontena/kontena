@@ -218,22 +218,36 @@ describe '/v1/grids', celluloid: true do
     end
 
     describe 'POST /nodes' do
-      it 'creates and returns grid node' do
+      it 'fails without grid admin role' do
         grid = david.grids.first
 
         expect {
           post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
-          expect(response.status).to eq(201)
-        }.to change{ grid.reload.host_nodes.count }.by(1)
+          expect(response.status).to eq(403)
+        }.to_not change{ grid.reload.host_nodes.count }
+      end
 
-        expect(json_response).to match hash_including(
-          'id' => nil,
-          'name' => 'test-1',
-          'token' => String,
-        )
+      context "for a grid admin user" do
+        before do
+          david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+        end
+
+        it 'creates and returns grid node' do
+          grid = david.grids.first
+
+          expect {
+            post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
+            expect(response.status).to eq(201)
+          }.to change{ grid.reload.host_nodes.count }.by(1)
+
+          expect(json_response).to match hash_including(
+            'id' => nil,
+            'name' => 'test-1',
+            'token' => String,
+          )
+        end
       end
     end
-
 
     describe '/users' do
       it 'returns grid users' do

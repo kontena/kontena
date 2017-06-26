@@ -9,6 +9,8 @@ V1::GridsApi.route('grid_nodes') do |r|
   end
 
   r.post do
+    halt_request(403, {error: 'Access denied'}) unless current_user.can_update?(@grid)
+
     r.is do
       data = parse_json_body
       params = { grid: @grid }
