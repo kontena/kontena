@@ -122,6 +122,7 @@ Create a new node named `test-node` in the current grid:
 
 ```
 $ kontena node create test-node
+ [done] Creating test-node node      
 ```
 
 The server will generate a new node token by default, if not using `--token` to supply a pre-generated node token.
@@ -152,6 +153,9 @@ Also see `kontena grid env` if using grid tokens for provisioning.
 
 ```
 $ kontena node rm test-node
+Destructive command. To proceed, type "test-node" or re-run this command with --force option.
+> Enter 'test-node' to confirm:  test-node
+ [done] Removing test-node node from development grid      
 ```
 
 The node must already be offline.
