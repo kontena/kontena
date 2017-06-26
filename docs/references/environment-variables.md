@@ -27,7 +27,8 @@ toc_order: 2
 ## Kontena Agent
 
 - `KONTENA_URI`: Kontena Master websocket uri (required)
-- `KONTENA_TOKEN`: Kontena Grid token (required)
+- `KONTENA_TOKEN`: Kontena [Grid token](../using-kontena/grids.md#Grid Token) (required)
+- `KONTENA_NODE_TOKEN`: Kontena [Node token](../using-kontena/nodes.md#Node Token) token (required)
 - `KONTENA_PEER_INTERFACE`: network interface for peer/private communication (default: eth1)
 - `KONTENA_PUBLIC_IP`: specify node public ip, overrides default resolving
 - `KONTENA_PRIVATE_IP`: specify node private ip, overrides default resolving

@@ -8,13 +8,38 @@ Each node is a machine running the `kontena-agent`. The nodes connect to the Kon
 
 ### Provisioning nodes
 
-Nodes do not need to be explicitly created. The Kontena Master will automatically create new grid nodes for any `kontena-agent` connecting to the Kontena Master with the correct [grid token](grids.md#Grid Token).
+There are two methods for provisioning new nodes, which differ in terms of how the `kontena-agent` websocket connections are authenticated, and how the nodes are managed.
 
-Nodes are identified by their Docker Engine ID, as shown in `docker info`:
+This documentation applies to custom node installs.
+See [Installing Kontena](../getting-started/installing/) for platform-specific documentation on installing new nodes using the Kontena CLI plugins, which automates the process.
 
-```
- ID: 44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7
-```
+#### Node Token
+
+Nodes can be provisioned with unique node tokens using the `KONTENA_NODE_TOKEN=` environment variable.
+
+Nodes provisioned with a Node token must be created beforehand using `kontena node create`.
+The server will generate a new token for the node (unless using `--token` to provide a pre-generated token).
+Use the CLI `kontena node env` command to generate the environment variables required for configuring `kontena-agent` on the new node, including the `KONTENA_NODE_TOKEN`.
+
+The Kontena Master will use the node token provided by the agent to associate the connection with an existing grid node, as authenticated by the node token.
+The grid node will be associated with the Node ID provided by the first agent to connect using the node token.
+
+The same node token cannot be used by any other agent with a different Node ID.
+Attempting to provision multiple nodes with the same node token will result in connection errors: `Incorrect node token, already used by a different node`
+
+Decomissioning a node using `kontena node rm` will also revoke the node token, preventing further agent connections to the master using the node token that the node was provisioned with.
+
+#### Grid Token
+
+Nodes can be provisioned with a shared [grid token](grids.md#Grid Token) using the `KONTENA_TOKEN=` environment variable.
+
+Nodes provisioned with a Grid token do not need to be explicitly created beforehand.
+Use the CLI `kontena grid env` command to generate the environment variables required for configuring `kontena-agent` on the new node, including the `KONTENA_TOKEN`.
+
+The Kontena Master will use the Node ID provided by the agent to associate the connection with a node in the correct grid, as authenticated by the grid token.
+The master will automatically create a new grid node if a new `kontena-agent` connects with a valid grid token and previously unknown Node ID.
+
+The grid token cannot be revoked.
 
 ### Online nodes
 
@@ -54,6 +79,20 @@ Any service instances deployed to a removed node will be invalidated, and can be
 This happens automatically for stateless services, similar to behavior of offline nodes, but without the grace period.
 For stateful services, any instances on removed nodes will be re-scheduled on the next service deploy, and the replacement service instances will lose their state.
 
+## Node ID
+Nodes are uniquely identified by their Docker Engine ID, as shown in `docker info`:
+
+```
+ ID: 44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7
+```
+
+### Node ID Conflicts
+Provisioning multiple nodes with the same Node ID / Docker ID will cause the agents to interfere with eachother, as the server will consider each of the connecting agents to be the same `kontena-agent` process running on the same node.
+
+In case of node ID conflicts, the agents will get disconnected from the master with errors: `connection closed with code 4041: host node ... connection conflict with new connection at ...`
+
+This can happen when using cloned disk images to provision nodes, where the cloned disk images already have Docker pre-installed.
+
 ## Node labels
 
 Host nodes can have arbitrary labels of the form `label` or `label=value`. These labels can be used for [service affinity filters](deploy.md#affinity). Some special labels are also set by the node provisioning plugins, and are recognized by Kontena itself.
@@ -74,3 +113,47 @@ Nodes labeled as `ephemeral` will automatically be removed by the Kontena Master
 The nodes should not be [initial nodes](grids.md#initial-nodes), and they should not have any stateful services deployed on them.
 
 Ephemeral nodes are intended to be used for autoscaled nodes, which may be provisioned automatically, and then cleaned up once terminated.
+
+## Manage Nodes
+
+#### Create a new Node
+
+Create a new node named `test-node` in the current grid:
+
+```
+$ kontena node create test-node
+```
+
+The server will generate a new node token by default, if not using `--token` to supply a pre-generated node token.
+
+#### List Nodes
+
+```
+$ kontena node list
+NAME          VERSION     STATUS    INITIAL   LABELS
+⊝ test-node               offline   -
+⊛ core-02     1.4.0.dev   online    -         test=label
+⊛ core-01     1.4.0.dev   online    1 / 1     test
+```
+
+#### Generate `kontena-agent` configuration
+
+Generate environment variables required for provisioning the `kontena-agent`:
+
+```
+$ kontena node env test-node
+KONTENA_URI=ws://192.168.66.1:9292/
+KONTENA_NODE_TOKEN=yempbjWHbZLhc66gB0mAFXKS8HzS/daDwCfnHC+UfrJo5wkhQ6hpr8XKY5nUdH+h6CH81Y9bQIc4IgTcEEjQCQ==
+```
+
+Also see `kontena grid env` if using grid tokens for provisioning.
+
+#### Remove a Node
+
+```
+$ kontena node rm test-node
+```
+
+The node must already be offline.
+
+The node token generated during `kontena node create` will be invalidated.
