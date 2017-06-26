@@ -1,7 +1,6 @@
 module Scheduler
   module Filter
     class VolumePlugin
-      include Logging
 
       ##
       # Filters nodes that have the needed volume driver plugins
@@ -19,7 +18,13 @@ module Scheduler
         }.compact
 
         nodes = nodes.select { |node|
-          volume_drivers = node.volume_drivers.map { |v| v['name'] }
+          volume_drivers = node.volume_drivers.map { |v|
+            if v['version']
+              "#{v['name']}:#{v['version']}"
+            else
+              v['name']
+            end
+          }
           (needed_drivers - volume_drivers).empty?
         }
 
@@ -29,7 +34,6 @@ module Scheduler
 
         nodes
       end
-
     end
   end
 end
