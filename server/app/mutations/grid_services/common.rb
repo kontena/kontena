@@ -266,7 +266,7 @@ module GridServices
           end
           hash :health_check do
             required do
-              integer :port, nils: true
+              integer :port, nils: true, min: 1, max: 65535
               string :protocol, in: ['http', 'tcp'], nils: true
             end
             optional do
