@@ -21,4 +21,10 @@ describe Kontena::Cli::Nodes::EnvCommand do
       'KONTENA_NODE_TOKEN=TPnBKanfXJpi47CCvuv+Gq319AXvXBi0LL/8grXrhPr9MyqcXHsWbUy0Q3stmPGHhjaqubi5ZCwa7LbnSvZ/Iw==',
     ]
   end
+
+  it 'shows the --token' do
+    expect{subject.run(['--token', 'node-4'])}.to output_lines [
+      'TPnBKanfXJpi47CCvuv+Gq319AXvXBi0LL/8grXrhPr9MyqcXHsWbUy0Q3stmPGHhjaqubi5ZCwa7LbnSvZ/Iw==',
+    ]
+  end
 end
