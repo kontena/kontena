@@ -352,6 +352,40 @@ describe GridServices::Create do
       expect(outcome.success?).to be(false)
     end
 
+    it 'fails to save health_check, port 0' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            protocol: 'tcp',
+            interval: 10,
+            timeout: 5,
+            initial_delay: 10,
+            port: 0
+          }
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
+    it 'fails to save health_check, port over range' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          health_check: {
+            protocol: 'tcp',
+            interval: 10,
+            timeout: 5,
+            initial_delay: 10,
+            port: 70000
+          }
+      ).run
+      expect(outcome.success?).to be(false)
+    end
+
     it 'fails validating secret existence' do
       outcome = described_class.new(
           grid: grid,
@@ -365,18 +399,58 @@ describe GridServices::Create do
       expect(outcome.success?).to be(false)
     end
 
-    it 'validates secret existence' do
-      secret = GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
-      outcome = described_class.new(
-          grid: grid,
-          image: 'redis:2.8',
-          name: 'redis',
-          stateful: false,
-          secrets: [
-            {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
-          ]
-      ).run
-      expect(outcome.success?).to be(true)
+    context 'with a grid secret' do
+      let :secret do
+        GridSecret.create!(grid: grid, name: 'EXISTING_SECRET', value: 'secret')
+      end
+
+      before do
+        secret
+      end
+
+      it 'saves service secret' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            secrets: [
+              {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'}
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.secrets.map{|s| s.attributes}).to match [hash_including(
+            'secret' => 'EXISTING_SECRET',
+            'type' => 'env',
+            'name' => 'SOME_SECRET',
+        )]
+      end
+
+      it 'maps the same service secret twice' do
+        outcome = described_class.new(
+            grid: grid,
+            image: 'redis:2.8',
+            name: 'redis',
+            stateful: false,
+            secrets: [
+              {secret: 'EXISTING_SECRET', name: 'SOME_SECRET'},
+              {secret: 'EXISTING_SECRET', name: 'SOME_SECRET2'},
+            ]
+        ).run
+        expect(outcome.success?).to be(true)
+        expect(outcome.result.secrets.map{|s| s.attributes}).to match [
+          hash_including(
+            'secret' => 'EXISTING_SECRET',
+            'type' => 'env',
+            'name' => 'SOME_SECRET',
+          ),
+          hash_including(
+            'secret' => 'EXISTING_SECRET',
+            'type' => 'env',
+            'name' => 'SOME_SECRET2',
+          ),
+        ]
+      end
     end
 
     it 'validates env syntax' do

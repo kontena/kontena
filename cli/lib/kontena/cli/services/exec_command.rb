@@ -131,7 +131,7 @@ module Kontena::Cli::Services
       end
       ws.on :open do
         ws.text(cmd)
-        stdin_stream = self.stream_stdin_to_ws(ws)
+        stdin_stream = self.stream_stdin_to_ws(ws, tty: self.tty?)
       end
       ws.on :close do |e|
         if e.code != 1000
