@@ -31,12 +31,12 @@ module Kontena::Launchers
       begin
         self.start_etcd(node)
       rescue Docker::Error::ServerError => exc
+        log_error(exc)
         if retries < 4
           retries += 1
           sleep 0.25
           retry
         end
-        log_error(exc)
       rescue => exc
         log_error(exc)
       end
