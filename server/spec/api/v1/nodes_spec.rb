@@ -45,7 +45,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET /token' do
     let(:node) do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', token: 'asdf')
+      node = grid.host_nodes.create!(name: 'abc', token: 'asdf')
     end
 
     it "returns 403 without admin role" do
@@ -61,7 +61,7 @@ describe '/v1/nodes', celluloid: true do
       it "returns node token" do
         get "/v1/nodes/#{node.to_path}/token", nil, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['id']).to eq('a:b:c')
+        expect(json_response['id']).to eq(nil)
         expect(json_response['token']).to eq('asdf')
       end
     end

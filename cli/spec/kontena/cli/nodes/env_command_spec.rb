@@ -7,13 +7,12 @@ describe Kontena::Cli::Nodes::EnvCommand do
   let :node do
     {
       "id" => nil,
-      "name" => 'node-4',
       "token" => 'TPnBKanfXJpi47CCvuv+Gq319AXvXBi0LL/8grXrhPr9MyqcXHsWbUy0Q3stmPGHhjaqubi5ZCwa7LbnSvZ/Iw=='
     }
   end
 
   before do
-    expect(client).to receive(:get).with('nodes/test-grid/node-4').and_return(node)
+    expect(client).to receive(:get).with('nodes/test-grid/node-4/token').and_return(node)
   end
 
   it 'shows the node env' do

@@ -14,10 +14,10 @@ module Kontena::Cli::Nodes
     end
 
     def execute
-      node = client.get("nodes/#{current_grid}/#{name}")
+      token_node = client.get("nodes/#{current_grid}/#{name}/token")
 
       puts "KONTENA_URI=#{grid_uri}"
-      puts "KONTENA_NODE_TOKEN=#{node['token']}"
+      puts "KONTENA_NODE_TOKEN=#{token_node['token']}"
     end
   end
 end
