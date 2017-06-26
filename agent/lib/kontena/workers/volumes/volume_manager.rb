@@ -111,9 +111,10 @@ module Kontena::Workers::Volumes
       begin
         debug "volume #{volume_name} exists"
         volume = Docker::Volume.get(volume_name)
-        if volume && volume.info['Driver'] == driver
+        drivers_match = drivers_match?(driver, volume.info['Driver'])
+        if volume && drivers_match
           return true
-        elsif volume && volume.info['Driver'] != driver
+        elsif volume && !drivers_match
           raise DriverMismatchError.new("Volume driver not as expected. Expected #{driver}, existing volume has #{volume.info['Driver']}")
         end
       rescue Docker::Error::NotFoundError
@@ -122,6 +123,10 @@ module Kontena::Workers::Volumes
       rescue => error
         abort error
       end
+    end
+
+    def drivers_match?(expected, actual)
+      expected.split(':', 2)[0] == actual.split(':', 2)[0]
     end
 
     def terminate_volumes(current_ids)
