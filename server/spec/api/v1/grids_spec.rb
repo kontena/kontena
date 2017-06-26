@@ -243,7 +243,6 @@ describe '/v1/grids', celluloid: true do
           expect(json_response).to match hash_including(
             'id' => nil,
             'name' => 'test-1',
-            'token' => String,
           )
         end
       end
