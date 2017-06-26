@@ -84,18 +84,16 @@ module Kontena::Launchers
 
     # @param [String] image
     # @param [Node] node
+    # @raise [Docker::Error] Unexpected Docker errors will fall through. Most probably they are
+    #        Docker::ErrorServerError from either trying to get the container or in starting it.
     def create_container(image, node)
       cluster_size = node.grid['initial_size']
       node_number = node.node_number
       cluster_state = 'new'
       weave_ip = node.overlay_ip
 
-      container = nil
-      begin
-        container = Docker::Container.get('kontena-etcd')
-      rescue Docker::Error::NotFoundError
-        info "etcd container does not exist"
-      end
+      container = self.get_container
+
       if container && container.info['Config']['Image'] != image
         container.delete(force: true)
       elsif container && container.running?
@@ -155,6 +153,18 @@ module Kontena::Launchers
       info 'started etcd service'
       @running = true
       container
+    end
+
+    # Gets kontena-etcd container
+    # @return [Docker::Container, nil] The container or nil if not found
+    # @raise [Docker::Error] Lets unexpected Docker errors fall through
+    def get_container
+      begin
+        Docker::Container.get('kontena-etcd')
+      rescue Docker::Error::NotFoundError
+        info "etcd container does not exist"
+        nil
+      end
     end
 
     # Removes possible previous member with the same IP

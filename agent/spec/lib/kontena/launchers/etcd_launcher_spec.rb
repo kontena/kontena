@@ -118,7 +118,7 @@ describe Kontena::Launchers::Etcd do
 
       it 'starts if etcd already exists but not running' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
         allow(container).to receive(:running?).and_return(false)
         allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
         expect(subject.wrapped_object).to receive(:add_dns)
@@ -131,7 +131,7 @@ describe Kontena::Launchers::Etcd do
 
       it 'deletes and recreates the container' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
         allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
         allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
         expect(container).to receive(:delete)
@@ -166,7 +166,7 @@ describe Kontena::Launchers::Etcd do
 
       it 'creates new container' do
         container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_raise(Docker::Error::NotFoundError)
+        expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
         allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
         expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
 
@@ -199,7 +199,7 @@ describe Kontena::Launchers::Etcd do
       end
 
       it 'lets random Docker errors fall through' do
-        expect(Docker::Container).to receive(:get).and_raise(Docker::Error::ServerError)
+        expect(subject.wrapped_object).to receive(:get_container).and_raise(Docker::Error::ServerError)
         expect {
           # Call through wrapped object to avoid nasty traces in rspec output
           subject.wrapped_object.create_container('etcd', node)
@@ -344,6 +344,26 @@ describe Kontena::Launchers::Etcd do
       expect(excon).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.1:2380"]}'))
 
       subject.add_membership(excon, 'http://10.81.0.1:2380')
+    end
+  end
+
+  describe '#get_container' do
+    it 'returns kontena-etcd container' do
+      etcd = double
+      expect(Docker::Container).to receive(:get).and_return(etcd)
+      expect(subject.get_container).to eq(etcd)
+    end
+
+    it 'returns nil if kontena-etcd does not exist' do
+      expect(Docker::Container).to receive(:get).and_raise(Docker::Error::NotFoundError)
+      expect(subject.get_container).to eq(nil)
+    end
+
+    it 'raises if docker raises' do
+      expect(Docker::Container).to receive(:get).and_raise(Docker::Error::ServerError)
+      expect {
+        subject.wrapped_object.get_container
+      }.to raise_error(Docker::Error::ServerError)
     end
   end
 end
