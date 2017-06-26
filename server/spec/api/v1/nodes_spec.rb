@@ -23,12 +23,12 @@ describe '/v1/nodes', celluloid: true do
   end
 
   describe 'GET' do
-    it 'returns node with valid id and token' do
+    it 'returns node with valid id' do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', token: 'asdf')
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['id']).to eq('a:b:c')
-      expect(json_response['token']).to eq('asdf')
+      expect(json_response).to_not include 'token'
     end
 
     it 'returns error with invalid id' do
@@ -40,6 +40,30 @@ describe '/v1/nodes', celluloid: true do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
       get "/v1/nodes/#{node.to_path}", nil, {}
       expect(response.status).to eq(403)
+    end
+  end
+
+  describe 'GET /token' do
+    let(:node) do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', token: 'asdf')
+    end
+
+    it "returns 403 without admin role" do
+      get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+      expect(response.status).to eq(403)
+    end
+
+    context "for a user with an admin role" do
+      before do
+        david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+      end
+
+      it "returns node token" do
+        get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['id']).to eq('a:b:c')
+        expect(json_response['token']).to eq('asdf')
+      end
     end
   end
 

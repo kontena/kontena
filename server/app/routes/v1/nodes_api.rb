@@ -34,6 +34,13 @@ module V1
             render('host_nodes/show')
           end
 
+          # GET /v1/nodes/:grid/:node/token
+          r.on 'token' do
+            halt_request(403, {error: 'Access denied'}) unless current_user.can_update?(@grid)
+
+            render('host_nodes/token')
+          end
+
           # GET /v1/nodes/:grid/:node/health
           r.on 'health' do
             rpc_client = @node.rpc_client(10)
