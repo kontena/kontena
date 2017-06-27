@@ -80,11 +80,17 @@ describe Scheduler::Filter::VolumePlugin do
       end
 
       let(:bar_volume) do
-        grid.volumes.create!(name: 'bar', driver: 'bar:latest', scope: 'instance')
+        grid.volumes.create!(name: 'bar', driver: 'bar', scope: 'instance')
       end
 
       let(:service) do
         grid.grid_services.create!(name: 'redis', image_name: 'redis', volumes: ['foo:/data'])
+      end
+
+      it 'returns node with matching driver without matching driver version' do
+        service.service_volumes << ServiceVolume.new(volume: bar_volume, path: '/data')
+        service.service_volumes << ServiceVolume.new(bind_mount: '/var/lib', path: '/data')
+        expect(subject.for_service(service, 1, nodes).map{|n| n.name}).to eq(['node-3'])
       end
 
       it 'returns all nodes with needed single driver' do
@@ -103,6 +109,12 @@ describe Scheduler::Filter::VolumePlugin do
         service.service_volumes << ServiceVolume.new(volume: local_volume, path: '/data')
         service.service_volumes << ServiceVolume.new(volume: foo_volume, path: '/data')
         service.service_volumes << ServiceVolume.new(volume: bar_volume, path: '/data')
+        expect{subject.for_service(service, 1, nodes)}.to raise_error(Scheduler::Error)
+      end
+
+      it 'raises if no nodes with matching driver & version' do
+        vol = grid.volumes.create!(name: 'foo', driver: 'foo:2.2', scope: 'instance')
+        service.service_volumes << ServiceVolume.new(volume: vol, path: '/data')
         expect{subject.for_service(service, 1, nodes)}.to raise_error(Scheduler::Error)
       end
     end
