@@ -10,7 +10,7 @@ class GridServiceHook
 
   embedded_in :grid_service
 
-  # @param [Fixnum, String] instance_number
+  # @param [Integer, String] instance_number
   # @return [Boolean]
   def done_for?(instance_number)
     return false unless self.oneshot

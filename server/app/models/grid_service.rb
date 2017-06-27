@@ -12,14 +12,14 @@ class GridService
   field :name, type: String
   field :stateful, type: Boolean, default: false
   field :user, type: String
-  field :container_count, type: Fixnum, default: 1
+  field :container_count, type: Integer, default: 1
   field :cmd, type: Array
   field :entrypoint, type: String
   field :ports, type: Array, default: []
   field :env, type: Array, default: []
-  field :memory, type: Fixnum
-  field :memory_swap, type: Fixnum
-  field :cpu_shares, type: Fixnum
+  field :memory, type: Integer
+  field :memory_swap, type: Integer
+  field :cpu_shares, type: Integer
   field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
   field :privileged, type: Boolean
@@ -34,8 +34,8 @@ class GridService
 
   field :deploy_requested_at, type: DateTime
   field :deployed_at, type: DateTime
-  field :revision, type: Fixnum, default: 1
-  field :stack_revision, type: Fixnum
+  field :revision, type: Integer, default: 1
+  field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
 
   belongs_to :grid

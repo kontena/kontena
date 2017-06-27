@@ -1,8 +1,5 @@
-require_relative 'fixnum_helper'
-
 module Rpc
   class NodeHandler
-    include FixnumHelper
 
     def initialize(grid)
       @grid = grid
@@ -36,7 +33,6 @@ module Rpc
     def stats(data)
       node = @grid.host_nodes.find_by(node_id: data['id'])
       return unless node
-      data = fixnums_to_float(data)
       time = data['time'] ? Time.parse(data['time']) : Time.now.utc
 
       stat = {
