@@ -5,6 +5,10 @@ require 'kontena/cli/common'
 describe Kontena::Cli::TableGenerator do
   let(:data) { [{'a' => 'a1', 'b' => 'b1', 'c' => 'c1'}, {'a' => 'a2', 'b' => 'b2', 'c' => 'c2'}] }
 
+  before do
+    Kontena.pastel.resolver.color.disable!
+  end
+
   context Kontena::Cli::TableGenerator::Helper do
     let(:klass) { Class.new(Kontena::Command) }
 
