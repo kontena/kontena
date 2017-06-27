@@ -70,7 +70,7 @@ module Kontena::Cli::Nodes
           end
         end
 
-        grid_nodes.sort { |n| n['node_number'] }
+        grid_nodes.sort_by { |n| n['node_number'] }
       end
     end
 

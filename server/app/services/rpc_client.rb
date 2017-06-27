@@ -65,7 +65,7 @@ class RpcClient
   end
 
   ##
-  # @param [Fixnum] request_id
+  # @param [Integer] request_id
   # @param [Array] resp
   # @return [MongoPubsub::Subscription]
   def subscribe_to_response(request_id, resp)
@@ -106,7 +106,7 @@ class RpcClient
   end
 
   ##
-  # @return [Fixnum]
+  # @return [Integer]
   def request_id
     rand(2_147_483_647)
   end

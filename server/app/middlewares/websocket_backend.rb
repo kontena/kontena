@@ -436,14 +436,14 @@ class WebsocketBackend
   end
 
   # @param [Hash] client
-  # @param [Fixnum] delay
+  # @param [Integer] delay
   def on_client_timeout(client, delay)
     logger.warn "Close node %s connection after %.2fs timeout" % [client[:id], delay]
     close_client(client, 4030, "ping timeout after %.2fs" % [delay])
   end
 
   # @param [Hash] client
-  # @param [Fixnum] delay
+  # @param [Integer] delay
   def on_pong(client, delay)
     if delay > PING_TIMEOUT / 2
       logger.warn "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]]
