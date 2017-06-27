@@ -59,8 +59,9 @@ describe 'stack upgrade' do
       expect(k.code).to eq(0), k.out
 
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack upgrade --no-deploy external-linked_2.yml'
+        k = run 'kontena stack upgrade --no-deploy links-external-linked external-linked_2.yml'
         expect(k.code).to_not eq(0), k.out
+        expect(k.out).to match /Cannot delete service that is linked to another service/
       end
     end
 
@@ -74,8 +75,9 @@ describe 'stack upgrade' do
       expect(k.code).to eq(0), k.out
 
       with_fixture_dir("stack/links") do
-        k = run 'kontena stack deploy links-external-linked external-linked_2.yml'
+        k = run 'kontena stack deploy links-external-linked'
         expect(k.code).to_not eq(0), k.out
+        expect(k.out).to match /deploy failed/
       end
     end
   end
