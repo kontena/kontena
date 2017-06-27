@@ -64,9 +64,11 @@ module OutputHelpers
           end
         end
       else
-        @errors << "expected #{@expected.size} lines but got #{@real.size} lines instead:\n"
-          + " Expected:\n#{@expected.map(&:inspect).join("\n")}"
-          + " Received:\n#{@real.map(&:inspect).join("\n")}"
+        @errors << [
+          "expected #{@expected.size} lines but got #{@real.size} lines instead:",
+          " Expected:", @expected.map{|l| l.inspect},
+          " Received:", @real.map{|l| l.split(/\s{2,}/).inspect},
+        ].join("\n")
       end
       @errors.empty?
     end
