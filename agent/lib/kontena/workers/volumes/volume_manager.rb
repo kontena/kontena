@@ -126,7 +126,11 @@ module Kontena::Workers::Volumes
     end
 
     def drivers_match?(expected, actual)
-      expected.split(':', 2)[0] == actual.split(':', 2)[0]
+      if expected.include?(':')
+        expected == actual
+      else
+        expected.split(':', 2)[0] == actual.split(':', 2)[0]
+      end
     end
 
     def terminate_volumes(current_ids)
