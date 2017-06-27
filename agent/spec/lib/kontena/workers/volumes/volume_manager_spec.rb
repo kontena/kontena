@@ -154,6 +154,11 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
       expect(subject.volume_exist?('foo', 'rexray/s3fs:latest')).to be_truthy
     end
 
+    it 'return true if volume exists with plugin version and requested volume does not specify version' do
+      expect(Docker::Volume).to receive(:get).with('foo').and_return(double(:volume, :info => {'Driver' => 'rexray/s3fs:latest'}))
+      expect(subject.volume_exist?('foo', 'rexray/s3fs')).to be_truthy
+    end
+
   end
 
   describe '#terminate_volumes' do
