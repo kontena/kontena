@@ -66,7 +66,7 @@ module Scheduler
 
       # @param [Scheduler::Node] node
       # @param [GridService] grid_service
-      # @param [Fixnum] instance_number
+      # @param [Integer] instance_number
       # @return [Float]
       def instance_rank(node, grid_service, instance_number)
         prev_instance = node.grid_service_instances.find_by(
@@ -92,7 +92,7 @@ module Scheduler
 
       # @param [Scheduler::Node] node
       # @param [Array<HostNode>] nodes
-      # @return [FixNum]
+      # @return [Integer]
       def availability_zone_count(node, nodes)
         nodes_in_zone = nodes.select{|n|
           node.availability_zone == n.availability_zone

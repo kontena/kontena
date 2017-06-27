@@ -139,7 +139,7 @@ helper.logger.debug { "Completing #{words.inspect}" }
 
 begin
   completion = []
-  completion.push %w(cloud logout grid app service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
+  completion.push %w(cloud grid app service stack vault certificate node master vpn registry container etcd external-registry whoami plugin version) if words.size < 2
   if words.size > 0
     case words[0]
       when 'plugin'

@@ -63,7 +63,7 @@ services:
     image: registry.kontena.local/galera:latest
     environment:
       - KONTENA_LB_MODE=tcp
-      - KONTENA_LB_BALANCE=leastcon
+      - KONTENA_LB_BALANCE=leastconn
       - KONTENA_LB_EXTERNAL_PORT=3306
       - KONTENA_LB_INTERNAL_PORT=3306
     links:
@@ -233,7 +233,7 @@ In some cases it is required to have somewhat customized cipher suite to cater s
 These options are defined on the services that are balanced through Kontena Load Balancer.
 
 * `KONTENA_LB_MODE`: mode of load balancing; possible values: http (default), tcp
-* `KONTENA_LB_BALANCE`: load-balancing algorithm to use; possible values: roundrobin (default), source, leastcon
+* `KONTENA_LB_BALANCE`: load-balancing algorithm to use; possible values: roundrobin (default), source, leastconn
 * `KONTENA_LB_INTERNAL_PORT`: service port that is attached to load balancer
 * `KONTENA_LB_EXTERNAL_PORT`: service port that load balancer starts to listen (only for tcp mode)
 * `KONTENA_LB_VIRTUAL_HOSTS`: comma-separated list of virtual hosts, if you would like to access your service through the vpn, you'll need to add that as a virtual host as well (only for http mode)

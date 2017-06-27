@@ -1,5 +1,6 @@
 require "kontena/cli/apps/config_command"
 require 'ruby_dig'
+require 'yaml'
 
 describe Kontena::Cli::Apps::ConfigCommand do
   include FixturesHelpers

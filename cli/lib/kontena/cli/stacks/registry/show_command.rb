@@ -14,8 +14,6 @@ module Kontena::Cli::Stacks::Registry
 
     def execute
       require 'semantic'
-      require "safe_yaml"
-      SafeYAML::OPTIONS[:default_mode] = :safe
       unless versions?
         stack = ::YAML.safe_load(stacks_client.show(stack_name, stack_version))
         puts "#{stack['stack']}:"

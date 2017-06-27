@@ -5,10 +5,10 @@ module Kontena::Cli::Helpers
 
     # @param [WebSocket::Client::Simple] ws
     # @return [Thread]
-    def stream_stdin_to_ws(ws)
+    def stream_stdin_to_ws(ws, tty: nil)
       require 'io/console'
       Thread.new {
-        if STDIN.tty?
+        if tty
           STDIN.raw {
             while char = STDIN.readpartial(1024)
               ws.text(JSON.dump({ stdin: char }))

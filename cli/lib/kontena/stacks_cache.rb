@@ -8,8 +8,6 @@ module Kontena
       attr_accessor :version
 
       def initialize(stack, version = nil)
-        require "safe_yaml"
-        SafeYAML::OPTIONS[:default_mode] = :safe
         unless version
           stack, version = stack.split(':', 2)
         end
