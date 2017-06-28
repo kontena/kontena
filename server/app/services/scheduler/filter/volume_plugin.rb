@@ -1,7 +1,6 @@
 module Scheduler
   module Filter
     class VolumePlugin
-      include Logging
 
       ##
       # Filters nodes that have the needed volume driver plugins
@@ -14,13 +13,13 @@ module Scheduler
 
         needed_drivers = service.service_volumes.map { |sv|
           if sv.volume
-            sv.volume.driver
+            driver, version = sv.volume.driver.split(':', 2)
+            {'name' => driver, 'version' => version}
           end
         }.compact
 
         nodes = nodes.select { |node|
-          volume_drivers = node.volume_drivers.map { |v| v['name'] }
-          (needed_drivers - volume_drivers).empty?
+          all_drivers_present?(needed_drivers, node)
         }
 
         if nodes.empty?
@@ -30,6 +29,20 @@ module Scheduler
         nodes
       end
 
+      # Checks if all needed drivers are present on a node
+      # @param [Hash] needed_drivers
+      # @param [HostNode] node
+      def all_drivers_present?(needed_drivers, node)
+        needed_drivers.all? { |nd|
+          node.volume_drivers.any? { |vd|
+            if nd['version']
+              vd['name'] == nd['name'] && vd['version'] == nd['version']
+            else
+              vd['name'] == nd['name']
+            end
+          }
+        }
+      end
     end
   end
 end
