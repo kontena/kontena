@@ -64,6 +64,10 @@ class HostNode
     "#{self.grid.try(:name)}/#{self.name}"
   end
 
+  def volume_driver(name)
+    self.volume_drivers.find_by(name: name)
+  end
+
   ##
   # @param [Hash] attrs
   def attributes_from_docker(attrs)

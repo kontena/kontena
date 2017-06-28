@@ -174,7 +174,7 @@ module Rpc
               name: volume_name,
               path: sv.path,
               flags: sv.flags,
-              driver: sv.volume.driver,
+              driver: sv.volume.driver_for_node(service_instance.host_node),
               driver_opts: sv.volume.driver_opts
           }
         else
@@ -188,5 +188,6 @@ module Rpc
 
       volume_specs
     end
+
   end
 end
