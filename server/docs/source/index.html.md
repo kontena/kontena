@@ -295,9 +295,12 @@ follow | Stream logs
 
 ## Node
 
+The `id` field is deprecated, use the `node_id` field available in Kontena 1.4 instead.
+
 ```json
 {
-	"id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
+	"id": "...",
+	"node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
 	"name": "misty-sun-87",
 	"connected": "true",
 	"created_at": "2017-06-14T12:33:05.139Z",
