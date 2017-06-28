@@ -129,7 +129,7 @@ module Kontena::Workers::Volumes
       if expected.include?(':')
         expected == actual
       else
-        expected.split(':', 2)[0] == actual.split(':', 2)[0]
+        expected == actual.split(':', 2)[0]
       end
     end
 
