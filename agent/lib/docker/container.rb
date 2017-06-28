@@ -221,7 +221,7 @@ module Docker
     #
     # @return [Integer]
     def stop_grace_period
-      (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+      (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
     end
 
     private
