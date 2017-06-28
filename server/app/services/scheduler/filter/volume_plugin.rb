@@ -33,15 +33,15 @@ module Scheduler
       # @param [Hash] needed_drivers
       # @param [HostNode] node
       def all_drivers_present?(needed_drivers, node)
-        needed_drivers.reject { |nd|
-          !node.volume_drivers.find_index { |vd|
+        needed_drivers.all? { |nd|
+          node.volume_drivers.any? { |vd|
             if nd['version']
               vd['name'] == nd['name'] && vd['version'] == nd['version']
             else
               vd['name'] == nd['name']
             end
-          }.nil?
-        }.empty?
+          }
+        }
       end
     end
   end
