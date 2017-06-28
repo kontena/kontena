@@ -6,7 +6,7 @@ RUN apk update && apk --update add tzdata ruby ruby-irb ruby-bigdecimal \
 
 ADD Gemfile Gemfile.lock /app/
 
-RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-dev && \
+RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-dev libffi-dev && \
     gem install bundler --no-ri --no-rdoc && \
     cd /app ; bundle install --without development test && \
     apk del build-dependencies

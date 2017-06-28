@@ -104,6 +104,10 @@ GEM
     rb-fsevent (0.9.4)
     rb-inotify (0.9.5)
       ffi (>= 0.5.0)
+    rbtrace (0.4.8)
+      ffi (>= 1.0.6)
+      msgpack (>= 0.4.3)
+      trollop (>= 1.16.2)
     rerun (0.10.0)
       listen (~> 2.7, >= 2.7.3)
     roda (2.26.0)
@@ -139,6 +143,7 @@ GEM
       tilt (<= 1.5.0)
     timers (4.1.2)
       hitimes
+    trollop (2.1.2)
     tzinfo (1.2.3)
       thread_safe (~> 0.1)
     url_safe_base64 (0.2.2)
@@ -175,6 +180,7 @@ DEPENDENCIES
   rack-attack
   rack-test
   random_token
+  rbtrace
   rerun
   roda (~> 2.26.0)
   rollbar
