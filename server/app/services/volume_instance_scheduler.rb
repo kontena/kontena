@@ -2,7 +2,7 @@ class VolumeInstanceDeployer
 
   # @param node [HostNode]
   # @param service_volume [ServiceVolume]
-  # @param instance_number [Fixnum]
+  # @param instance_number [Integer]
   # @raise [RpcClient::Error]
   def deploy(node, service_volume, instance_number)
     volume_name = service_volume.volume.name_for_service(service_volume.grid_service, instance_number)

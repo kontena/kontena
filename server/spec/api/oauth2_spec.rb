@@ -2,6 +2,7 @@
 describe 'OAuth2 API' do
   let(:david) { User.create(email: 'david@example.com') }
   let(:json_header) { { 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json' } }
+  let(:form_header) { { 'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'HTTP_ACCEPT' => 'application/json' } }
   let(:auth_provider) { double(:auth_provider) }
 
   context '/authenticate when AP not configured' do
@@ -136,6 +137,23 @@ describe 'OAuth2 API' do
             code: coded_token.code
           }.to_json,
           json_header
+        )
+
+        expect(response.status).to eq(201)
+        result = JSON.parse(response.body)
+        expect(result['access_token']).to match /^[a-z0-9]{6,}$/
+      end
+
+      it 'returns a token in exchange when given a valid code using POST form parameters' do
+        coded_token = AccessToken.create(user: david, with_code: true, scopes: ['user'])
+
+        post(
+          '/oauth2/token',
+          URI.encode_www_form({
+            grant_type: 'authorization_code',
+            code: coded_token.code
+          }),
+          form_header
         )
 
         expect(response.status).to eq(201)
@@ -278,5 +296,3 @@ describe 'OAuth2 API' do
     end
   end
 end
-
-

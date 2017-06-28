@@ -31,12 +31,12 @@ module Kontena::Launchers
       begin
         self.start_etcd(node)
       rescue Docker::Error::ServerError => exc
+        log_error(exc)
         if retries < 4
           retries += 1
           sleep 0.25
           retry
         end
-        log_error(exc)
       rescue => exc
         log_error(exc)
       end
@@ -84,13 +84,16 @@ module Kontena::Launchers
 
     # @param [String] image
     # @param [Node] node
+    # @raise [Docker::Error] Unexpected Docker errors will fall through. Most probably they are
+    #        Docker::ErrorServerError from either trying to get the container or in starting it.
     def create_container(image, node)
       cluster_size = node.grid['initial_size']
       node_number = node.node_number
       cluster_state = 'new'
       weave_ip = node.overlay_ip
 
-      container = Docker::Container.get('kontena-etcd') rescue nil
+      container = self.get_container
+
       if container && container.info['Config']['Image'] != image
         container.delete(force: true)
       elsif container && container.running?
@@ -100,7 +103,7 @@ module Kontena::Launchers
         return container
       elsif container && !container.running?
         info 'etcd container exists but not running, starting it'
-        container.start
+        container.start!
         @running = true
         add_dns(container.id, weave_ip)
         return container
@@ -145,11 +148,23 @@ module Kontena::Launchers
           'VolumesFrom' => ['kontena-etcd-data']
         }
       )
-      container.start
+      container.start!
       add_dns(container.id, weave_ip)
       info 'started etcd service'
       @running = true
       container
+    end
+
+    # Gets kontena-etcd container
+    # @return [Docker::Container, nil] The container or nil if not found
+    # @raise [Docker::Error] Lets unexpected Docker errors fall through
+    def get_container
+      begin
+        Docker::Container.get('kontena-etcd')
+      rescue Docker::Error::NotFoundError
+        info "etcd container does not exist"
+        nil
+      end
     end
 
     # Removes possible previous member with the same IP

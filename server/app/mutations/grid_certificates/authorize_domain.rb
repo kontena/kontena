@@ -30,9 +30,11 @@ module GridCertificates
       else
         authz = GridDomainAuthorization.new(grid: self.grid, domain: self.domain, challenge: challenge.to_h, challenge_opts: challenge_opts)
       end
-      
+
       authz.save
       authz
+    rescue Acme::Client::Error::Unauthorized
+      add_error(:acme_client, :unauthorized, "Registration probably missing for LE")
     end
   end
 end

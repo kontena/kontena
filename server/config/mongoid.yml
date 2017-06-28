@@ -13,8 +13,6 @@ test:
       uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_test' %>
       options:
         max_pool_size: 25
-        read: 
-          mode: :primary
         write:
           w: 1
   options:
@@ -25,8 +23,6 @@ production:
     default:
       options:
         max_pool_size: 40
-        read: 
-          mode: :primary
         write:
           w: 1
       uri: <%= ENV['MONGODB_URI'] || ENV['MONGOHQ_URL'] %>
