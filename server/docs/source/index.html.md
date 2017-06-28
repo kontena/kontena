@@ -121,10 +121,17 @@ Grid can be only created by users with master_admin role.
 
 ### JSON Attributes
 
-Attribute | Description
----------- | -------
-name | (required) A user provided name
-initial_size | Initial (minimum) number of nodes in the grid (initial members are part of etcd cluster)
+Attribute        | Default          | Example  | Description
+---------------- | ---------------- | ---------
+name             | (required)       | `"test"`    | user provided name
+initial_size     | (required)       | `3`         | Initial (minimum) number of nodes in the grid ([Grids / Initial Nodes](http://www.kontena.io/docs/using-kontena/grids.html#initial-nodes))
+token            | (generated)      | `"J6d...ArKg=="` |(optional) Use a fixed grid token instead of having the server generate a new one
+subnet           | `"10.81.0.0/16"` | |
+supernet         | `"10.80.0.0/12"` | |
+default_affinity | `[]`             | `[ "label!=reserved" ]` |
+trusted_subnets  | `[]`             | `[ "192.168.66.0/24" ]` |
+stats            | `{}`             | `{ "statsd": { "server": "127.0.0.1", "port": 8125 } }` |
+logs             | `null`           | `{ "forwarder": "fluentd", "opts": { "fluentd-address": "127.0.0.1" } }` |
 
 ## Update a Grid
 
@@ -151,10 +158,14 @@ Only `master_admin` or `grid_admin` roles can modify a grid.
 
 ### JSON Attributes
 
-Attribute | Description
----------- | -------
-stats | Statsd export endpoint
-trusted_subnets | Initial (minimum) number of nodes in the grid (initial members are part of etcd cluster)
+All attributes are optional. Only the given grid parameters are updated, omitted attributes are left as-is.
+
+Attribute        | Example                 | Description
+---------------- | ----------------------- | ------------
+default_affinity | `[ "label!=reserved" ]` |
+trusted_subnets  | `[ "192.168.66.0/24" ]` |
+stats            | `{ "statsd": { "server": "127.0.0.1", "port": 8125 } }` | To disable statsd exporting, use `{ "statsd": null }`
+logs             | `{ "forwarder": "fluentd", "opts": { "fluentd-address": "127.0.0.1" } }` | To disable logs exporting, use `{ "forwarder": "none" }`
 
 ## Get a Grid
 
@@ -301,8 +312,8 @@ follow | Stream logs
 	"kernel_version": "4.7.3-coreos-r2",
 	"driver": "overlay",
 	"network_drivers": [
-		{"name": "bridge"}, 
-		{"name": "host"}, 
+		{"name": "bridge"},
+		{"name": "host"},
 		{"name": "null"}
 	],
 	"volume_drivers": [

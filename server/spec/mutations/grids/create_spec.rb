@@ -100,6 +100,46 @@ describe Grids::Create, celluloid: true do
         expect(outcome.result.name).to eq('test-grid')
       end
 
+      context "with optional parameter defaults" do
+        subject do
+          described_class.new(
+            user: user,
+            name: "test-grid",
+          )
+        end
+
+        it "creates grid with the default subnet and supernet" do
+          outcome = subject.run
+          expect(outcome).to be_success
+          expect(outcome.result.subnet).to eq('10.81.0.0/16')
+          expect(outcome.result.supernet).to eq('10.80.0.0/12')
+        end
+
+        it "creates grid with empty default affinity" do
+          outcome = subject.run
+          expect(outcome).to be_success
+          expect(outcome.result.default_affinity).to eq []
+        end
+
+        it "creates grid with empty trusted subnets" do
+          outcome = subject.run
+          expect(outcome).to be_success
+          expect(outcome.result.trusted_subnets).to eq []
+        end
+
+        it "creates grid with empty stats hash" do
+          outcome = subject.run
+          expect(outcome).to be_success
+          expect(outcome.result.stats).to eq({})
+        end
+
+        it "creates grid with nil logs opts" do
+          outcome = subject.run
+          expect(outcome).to be_success
+          expect(outcome.result.grid_logs_opts).to eq nil
+        end
+      end
+
       context "when subnet is provided" do
         it "creates grid with the given subnet" do
           outcome = described_class.new(
@@ -122,14 +162,45 @@ describe Grids::Create, celluloid: true do
         end
       end
 
-      context "when subnet is not provided" do
-        it "creates grid with the default subnet" do
-          outcome = described_class.new(
-              user: user,
-              name: "test-grid",
-            ).run
+      context "when default_affinity is provided" do
+        subject do
+          described_class.new(
+            user: user,
+            name: "test-grid",
+            default_affinity: [ 'label!=reserved' ],
+          )
+        end
+
+        it "creates grid with default_affinity" do
+          outcome = subject.run
           expect(outcome).to be_success
-          expect(outcome.result.subnet).to eq('10.81.0.0/16')
+          expect(outcome.result.default_affinity).to eq [ 'label!=reserved' ]
+        end
+      end
+
+      context "when trusted_subnets is provided" do
+        subject do
+          described_class.new(
+            user: user,
+            name: "test-grid",
+            trusted_subnets: [ '192.168.0.0/24' ]
+          )
+        end
+
+        it "rejects invalid values" do
+          outcome = described_class.run(
+            user: user,
+            name: "test-grid",
+            trusted_subnets: [ '192.256.0.0/24' ]
+          )
+          expect(outcome).to_not be_success
+          expect(outcome.errors.message).to eq 'trusted_subnets' => 'Invalid trusted_subnet 192.256.0.0/24'
+        end
+
+        it "creates grid with trusted_subnets" do
+          outcome = subject.run
+          expect(outcome).to be_success
+          expect(outcome.result.trusted_subnets).to eq [ '192.168.0.0/24' ]
         end
       end
     end
