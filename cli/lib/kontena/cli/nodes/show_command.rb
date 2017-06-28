@@ -13,7 +13,7 @@ module Kontena::Cli::Nodes
 
       node = client(token).get("nodes/#{current_grid}/#{node_id}")
       puts "#{node['name']}:"
-      puts "  id: #{node['id']}"
+      puts "  id: #{node['node_id']}"
       puts "  agent version: #{node['agent_version']}"
       puts "  docker version: #{node['docker_version']}"
       puts "  connected: #{node['connected'] ? 'yes': 'no'}"

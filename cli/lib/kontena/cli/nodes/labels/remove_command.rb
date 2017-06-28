@@ -12,7 +12,7 @@ module Kontena::Cli::Nodes::Labels
     def execute
       node = client.get("nodes/#{current_grid}/#{node_id}")
       data = { labels: Array(node['labels']).reject {|label| label_list.include?(label) } }
-      client.put("nodes/#{current_grid}/#{node['id']}", data)
+      client.put("nodes/#{current_grid}/#{node['name']}", data)
     end
   end
 end
