@@ -10,8 +10,9 @@ describe 'container exec' do
   end
 
   it 'returns error if container does not exist' do
-    k = run("kontena container exec invalid-id")
+    k = run("kontena container exec invalid-id ls -la")
     expect(k.code).to eq(1)
+    expect(k.out).to match /Not found/
   end
 
   it 'runs a command inside a container with tty' do

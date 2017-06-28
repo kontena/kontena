@@ -3,6 +3,7 @@ describe 'service unlink' do
     %w(test-1 test-2).each do |s|
       run "kontena service rm --force #{s}"
     end
+    run "kontena stack rm --force simple"
   end
 
   it 'unlinks service to target' do
