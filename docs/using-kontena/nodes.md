@@ -131,10 +131,10 @@ The server will generate a new node token by default, if not using `--token` to 
 
 ```
 $ kontena node list
-NAME          VERSION     STATUS    INITIAL   LABELS
-⊝ test-node               offline   -
-⊛ core-02     1.4.0.dev   online    -         test=label
-⊛ core-01     1.4.0.dev   online    1 / 1     test
+NAME        VERSION     STATUS    INITIAL   LABELS
+⊛ core-01   1.4.0.dev   online    1 / 1     test
+⊛ core-02   1.4.0.dev   online    -         test=label
+⊝ core-03   1.4.0.dev   offline   -         -
 ```
 
 #### Generate `kontena-agent` configuration
