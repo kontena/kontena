@@ -86,7 +86,7 @@ describe '/v1/services' do
         instances cmd entrypoint ports env memory memory_swap cpu_shares
         volumes volumes_from cap_add cap_drop state grid links log_driver log_opts
         strategy deploy_opts pid instance_counts net dns hooks secrets revision
-        stack_revision stop_grace_period
+        stack_revision stop_grace_period read_only
       ).sort
 
   describe 'GET /:id' do

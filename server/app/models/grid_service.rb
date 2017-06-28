@@ -31,6 +31,7 @@ class GridService
   field :log_opts, type: Hash, default: {}
   field :devices, type: Array, default: []
   field :pid, type: String
+  field :read_only, type: Boolean, default: false
 
   field :deploy_requested_at, type: DateTime
   field :deployed_at, type: DateTime
