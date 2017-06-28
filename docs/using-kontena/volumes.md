@@ -24,7 +24,7 @@ Volumes can be managed from the Kontena CLI using the `kontena volume xyz` comma
 
 See volume [scopes](#volume-scopes) for details on the different scopes.
 
-The driver has to be specified **without** a version tag, i.e. `rexray/s3fs:latest` for is **not** supported. This is because using a hard version info on volume specification will make running multiple volume plugin versions within the grid impossible and also makes upgrading volume plugins really hard. Kontena will match the reported plugin version automatically and thus is able to create and manage the volumes.
+The driver has to be specified **without** a version tag, i.e. `rexray/s3fs:latest` is **not** supported. This is because using a hard version info on volume specification will make running multiple volume plugin versions within the grid impossible and also makes upgrading volume plugins really hard. Kontena will match the reported plugin version automatically and thus is able to create and manage the volumes.
 
 ### Listing volumes
 
