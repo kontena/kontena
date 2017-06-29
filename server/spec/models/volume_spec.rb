@@ -32,4 +32,28 @@ describe Volume do
       expect(vol.name_for_service(service, 1)).to eq('stack.a-volume')
     end
   end
+
+  describe '#driver_for_node' do
+    let(:node) do
+      grid.host_nodes.create!(name: 'node-1')
+    end
+
+    it 'returns plain driver when no driver on node' do
+      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'instance', driver: 'foo')
+      expect(vol.driver_for_node(node)).to eq('foo')
+    end
+
+    it 'returns plain driver when driver on node has no version' do
+      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'instance', driver: 'local')
+      node.volume_drivers.create(name: 'local', version: nil)
+      expect(vol.driver_for_node(node)).to eq('local')
+    end
+
+    it 'returns versioned driver when driver on node has version' do
+      vol = Volume.create!(grid: grid, name: 'a-volume', scope: 'instance', driver: 'local')
+      node.volume_drivers.create(name: 'local', version: '1.2.3')
+      expect(vol.driver_for_node(node)).to eq('local:1.2.3')
+    end
+
+  end
 end

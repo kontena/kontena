@@ -12,4 +12,8 @@ class VolumeInstance
 
   index({ host_node_id: 1 })
   index({ volume_id: 1 })
+
+  def driver
+    self.volume.driver_for_node(self.host_node)
+  end
 end
