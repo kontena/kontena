@@ -4,8 +4,10 @@ describe Kontena::Cli::Nodes::UpdateCommand do
   include ClientHelpers
   include OutputHelpers
 
-  it 'does not PUTs with empty parameters by default' do
-    expect{subject.run(['test-node'])}.to output(/Nothing to update?/).to_stderr
+  it 'PUTs with empty parameters by default' do
+    expect(client).to receive(:put).with('nodes/test-grid/test-node', {})
+
+    subject.run(['test-node'])
   end
 
   it 'PUTs with labels' do
@@ -22,12 +24,14 @@ describe Kontena::Cli::Nodes::UpdateCommand do
 
   it 'PUTs token' do
     expect(client).to receive(:put).with('nodes/test-grid/test-node/token', {token: 'asdf'})
+    expect(client).to receive(:put).with('nodes/test-grid/test-node', {})
 
     subject.run(['--token=asdf', 'test-node'])
   end
 
   it 'PUTs to generate token' do
     expect(client).to receive(:put).with('nodes/test-grid/test-node/token', {})
+    expect(client).to receive(:put).with('nodes/test-grid/test-node', {})
 
     subject.run(['--generate-token', 'test-node'])
   end

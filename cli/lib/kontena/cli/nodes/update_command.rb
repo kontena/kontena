@@ -33,12 +33,8 @@ module Kontena::Cli::Nodes
       data[:labels] = self.label_list unless self.label_list.empty?
       data[:labels] = [] if self.clear_labels?
 
-      if data.empty?
-        warn "Nothing to update?"
-      else
-        spinner "Updating #{name.colorize(:cyan)} node " do
-          client.put("nodes/#{current_grid}/#{name}", data)
-        end
+      spinner "Updating #{name.colorize(:cyan)} node " do
+        client.put("nodes/#{current_grid}/#{name}", data)
       end
     end
   end
