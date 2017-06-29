@@ -116,6 +116,7 @@ class WebsocketBackend
     node_by_id = HostNode.find_by(node_id: node_id)
 
     if !node_by_id
+      # atomically initialize the node_id
       initializing_node = HostNode.where(:id => node.id, :node_id => nil)
         .find_one_and_update(:$set => {node_id: node_id, **init_attrs})
 
@@ -125,13 +126,14 @@ class WebsocketBackend
         node.reload
 
       else
-        logger.warn "node #{node} connected using node token with node_id #{node_id}, but expected node_id #{node.node_id}"
+        logger.warn "new node #{node} connected using node token with node_id #{node_id}, but the node token was already used by #{node} with node ID #{node.node_id}"
 
-        raise CloseError.new(4003), "Incorrect node token, already used by a different node"
+        raise CloseError.new(4003), "Invalid node token, already used by a different node"
       end
 
-    elsif node == node_by_id
+    elsif node.id == node_by_id.id
       logger.debug "node #{node} connected using node token with node_id #{node_id}"
+
     else
       logger.warn "node #{node} connected using node token with node_id #{node_id}, but that node ID already exists for #{node_by_id}"
 
