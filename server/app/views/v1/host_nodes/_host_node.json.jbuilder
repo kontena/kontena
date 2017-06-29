@@ -1,4 +1,5 @@
 json.id node.node_id
+json.api_id node.to_path
 json.node_id node.node_id
 json.connected node.connected
 json.created_at node.created_at

@@ -300,6 +300,7 @@ The `id` field is deprecated, use the `node_id` field available in Kontena 1.4 i
 ```json
 {
 	"id": "...",
+	"api_id": "mygrid/misty-sun-87",
 	"node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
 	"name": "misty-sun-87",
 	"connected": "true",

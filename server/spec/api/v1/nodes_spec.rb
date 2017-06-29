@@ -27,7 +27,11 @@ describe '/v1/nodes', celluloid: true do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
-      expect(json_response['id']).to eq('a:b:c')
+      expect(json_response).to match hash_including(
+        'id' => 'a:b:c', # deprecated
+        'api_id' => 'test/abc',
+        'node_id' => 'a:b:c',
+      )
     end
 
     it 'returns error with invalid id' do
