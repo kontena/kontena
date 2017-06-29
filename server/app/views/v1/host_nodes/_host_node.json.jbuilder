@@ -4,6 +4,7 @@ json.created_at node.created_at
 json.updated_at node.updated_at
 json.connected_at node.connected_at
 json.last_seen_at node.last_seen_at
+json.has_token !node.token.nil?
 json.name node.name
 json.os node.os
 json.engine_root_dir node.docker_root_dir

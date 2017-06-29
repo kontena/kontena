@@ -94,7 +94,7 @@ describe '/v1/grids', celluloid: true do
       expect(grid.trusted_subnets).to eq [ '192.168.0.0/24' ]
       expect(grid.stats).to eq 'statsd' => { 'server' => '127.0.0.1', 'port' => 8125 }
       expect(grid.grid_logs_opts.forwarder).to eq 'fluentd'
-      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1' 
+      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1'
     end
 
     it 'a new grid has a generated token unless supplied' do
@@ -289,6 +289,7 @@ describe '/v1/grids', celluloid: true do
           expect(json_response).to match hash_including(
             'id' => nil,
             'name' => 'test-1',
+            'has_token' => true,
           )
         end
       end

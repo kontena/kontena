@@ -23,12 +23,22 @@ describe '/v1/nodes', celluloid: true do
   end
 
   describe 'GET' do
-    it 'returns node with valid id' do
+    it 'returns node with valid id and has_token' do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', token: 'asdf')
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response['id']).to eq('a:b:c')
       expect(json_response).to_not include 'token'
+      expect(json_response['has_token']).to eq true
+    end
+
+    it 'returns node without has_token' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      get "/v1/nodes/#{node.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response['id']).to eq('a:b:c')
+      expect(json_response).to_not include 'token'
+      expect(json_response['has_token']).to eq false
     end
 
     it 'returns error with invalid id' do
