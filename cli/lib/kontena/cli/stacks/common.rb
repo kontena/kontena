@@ -128,10 +128,9 @@ module Kontena::Cli::Stacks
       end
     end
 
-    def set_env_variables(stack, grid, action)
+    def set_env_variables(stack, grid)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
-      ENV['ACTION'] = action
     end
 
     # @return [String]
