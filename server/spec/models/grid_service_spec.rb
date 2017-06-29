@@ -216,8 +216,13 @@ describe GridService do
   end
 
   describe '#load_balancer?' do
-    it 'returns true if official kontena/lb image' do
+    it 'returns true if latest official kontena/lb image' do
       subject.image_name = 'kontena/lb:latest'
+      expect(subject.load_balancer?).to eq(true)
+    end
+
+    it 'returns true if official kontena/lb image' do
+      subject.image_name = 'kontena/lb:edge'
       expect(subject.load_balancer?).to eq(true)
     end
 
@@ -225,6 +230,11 @@ describe GridService do
       subject.image_name = 'custom/lb:latest'
       subject.env << 'KONTENA_SERVICE_ROLE=lb'
       expect(subject.load_balancer?).to eq(true)
+    end
+
+    it 'returns false if not official kontena/lb image' do
+      subject.image_name = 'acme/lb:latest'
+      expect(subject.load_balancer?).to eq(false)
     end
 
     it 'returns false by default' do
