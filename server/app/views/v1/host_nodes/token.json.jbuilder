@@ -1,2 +1,2 @@
-json.id @node.node_id
+json.id @node.to_path
 json.token @node.token

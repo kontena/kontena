@@ -71,8 +71,10 @@ describe '/v1/nodes', celluloid: true do
       it "returns node token" do
         get "/v1/nodes/#{node.to_path}/token", nil, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['id']).to eq(nil)
-        expect(json_response['token']).to eq('asdf')
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdf',
+        })
       end
     end
   end
@@ -95,16 +97,20 @@ describe '/v1/nodes', celluloid: true do
       it "generates new node token" do
         put "/v1/nodes/#{node.to_path}/token", {}.to_json, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['id']).to eq(nil)
-        expect(json_response['token']).to be_a String
+        expect(json_response).to match({
+            'id' => 'test/abc',
+            'token' => String,
+        })
         expect(json_response['token']).to_not eq 'asdf'
       end
 
       it "updates given token" do
         put "/v1/nodes/#{node.to_path}/token", { 'token' => 'asdf2' }.to_json, request_headers
         expect(response.status).to eq(200)
-        expect(json_response['id']).to eq(nil)
-        expect(json_response['token']).to eq 'asdf2'
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdf2',
+        })
       end
     end
   end

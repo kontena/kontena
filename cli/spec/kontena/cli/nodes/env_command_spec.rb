@@ -7,7 +7,7 @@ describe Kontena::Cli::Nodes::EnvCommand do
   context 'for a node created with a token' do
     let :node_token do
       {
-        "id" => nil,
+        "id" => 'test-grid/node-4',
         "token" => 'TPnBKanfXJpi47CCvuv+Gq319AXvXBi0LL/8grXrhPr9MyqcXHsWbUy0Q3stmPGHhjaqubi5ZCwa7LbnSvZ/Iw=='
       }
     end
