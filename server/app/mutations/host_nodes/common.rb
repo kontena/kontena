@@ -17,6 +17,11 @@ module HostNodes
       plugger.send_node_info
     end
 
+    # @return [String]
+    def generate_token
+      SecureRandom.base64(64)
+    end
+
     def self.included(base)
       base.extend(ClassMethods)
     end

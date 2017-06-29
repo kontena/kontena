@@ -24,11 +24,6 @@ module HostNodes
       end
     end
 
-    # @return [String]
-    def generate_token
-      SecureRandom.base64(64)
-    end
-
     # @return [HostNode]
     def build_host_node
       host_node = HostNode.new(
