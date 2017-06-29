@@ -19,10 +19,23 @@ write_files:
       fs.inotify.max_user_instances = 8192
 coreos:
   units:
-    - name: 50-docker.network
-      mask: true
-    - name: 50-docker-veth.network
-      mask: true
+    - name: 50-weave.network
+      content: |
+        [Match]
+        Name=weave datapath vxlan-6784
+
+        [Network]
+        Description=Network interfaces managed by weave
+
+        [Link]
+        Unmanaged=true
+    - name: 90-dummy.network
+      content: |
+        [Match]
+        Name=dummy0
+
+        [Link]
+        Unmanaged=true
     - name: zz-default.network
       content: |
         # default should not match virtual Docker/weave bridge/veth network interfaces

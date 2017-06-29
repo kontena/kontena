@@ -214,7 +214,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
         expect(host_node.node_id).to eq node_id
         expect(host_node.connected).to eq true
-        expect(host_node.connected_at.to_s).to eq connected_at.to_datetime.to_s
+        expect(host_node.connected_at.to_s).to eq connected_at.to_s
 
         # XXX: racy via mongo pubsub
         expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])

@@ -24,4 +24,25 @@ describe Kontena::Cli::Stacks::DeployCommand do
       subject.run(['test-stack'])
     end
   end
+
+  it 'exits with error if the stack deploy fails to start' do
+    expect(client).to receive(:post).with('stacks/test-grid/test-stack/deploy', {}).once.and_return({
+        'id' => '59524bd753caed000801b6a3',
+        'stack_id' => 'test-grid/test-stack',
+        'created_at' => '2017-06-27T12:13:11.181Z',
+        'state' => 'created',
+        'service_deploys' => [],
+    })
+
+    expect(client).to receive(:get).with('stacks/test-grid/test-stack/deploys/59524bd753caed000801b6a3').once.and_return({
+        'id' => '59524bd753caed000801b6a3',
+        'stack_id' => 'test-grid/test-stack',
+        'created_at' => '2017-06-27T12:13:11.181Z',
+        'state' => 'error',
+        'service_deploys' => [],
+    })
+    expect(subject).to receive(:sleep).once
+
+    expect{subject.run(['test-stack'])}.to exit_with_error.and output(/deploy failed/).to_stderr
+  end
 end

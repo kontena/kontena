@@ -4,7 +4,7 @@ class GridService
   include Mongoid::Timestamps
   include EventStream
 
-  LB_IMAGE = 'kontena/lb:latest'
+  LB_IMAGE = 'kontena/lb'
 
   field :image_name, type: String
   field :labels, type: Hash, default: {}
@@ -63,7 +63,7 @@ class GridService
   validates_presence_of :name, :image_name, :grid_id, :stack_id
   validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
 
-  scope :load_balancer, -> { where(image_name: LB_IMAGE) }
+  scope :load_balancer, -> { where(image_name: /^#{LB_IMAGE}:.+/) }
 
   before_validation :ensure_stack
 
