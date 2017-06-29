@@ -17,28 +17,16 @@ module Kontena::Cli::Plugins
 
     def execute
       if installed?(name)
-        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do |spin|
-          begin
-            installer.upgrade
-          rescue => ex
-            $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-            logger.error(ex)
-            spin.fail!
-          end
+        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do
+          installer.upgrade
         end
 
         spinner "Running cleanup" do |spin|
           Kontena::PluginManager::Cleaner.new(name).cleanup
         end
       else
-        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
-          begin
-            installer.install
-          rescue => ex
-            $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-            logger.error(ex)
-            spin.fail!
-          end
+        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do
+          installer.install
         end
       end
 
