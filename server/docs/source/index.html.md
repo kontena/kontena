@@ -307,7 +307,7 @@ The `id` field is deprecated, use the `node_id` field available in Kontena 1.4 i
 	"created_at": "2017-06-14T12:33:05.139Z",
 	"updated_at": "2017-06-14T13:37:36.968Z",
 	"last_seen_at": "2017-06-14T13:38:03.785Z",
-	"connected_at": "2017-06-14T12:33:05.084+00:00",
+	"connected_at": "2017-06-14T12:33:05.084Z",
 	"node_number": 1,
 	"initial_member": true,
 	"agent_version": "1.0.0",
