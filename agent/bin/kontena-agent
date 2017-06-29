@@ -20,11 +20,7 @@ if api_uri.match(/^http.*/)
   api_uri = api_uri.sub('http', 'ws')
 end
 
-if grid_token && !grid_token.empty?
-
-elsif node_token && !node_token.empty?
-
-else
+unless (grid_token && !grid_token.empty?) || (node_token && !node_token.empty?)
   abort('Configuration error: The KONTENA_TOKEN or KONTENA_NODE_TOKEN env is required')
 end
 
