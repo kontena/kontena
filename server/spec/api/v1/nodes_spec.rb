@@ -62,21 +62,6 @@ describe '/v1/nodes', celluloid: true do
       get "/v1/nodes/#{node.to_path}/token", nil, request_headers
       expect(response.status).to eq(403)
     end
-
-    context "for a user with an admin role" do
-      before do
-        david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
-      end
-
-      it "returns node token" do
-        get "/v1/nodes/#{node.to_path}/token", nil, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response).to eq({
-            'id' => 'test/abc',
-            'token' => 'asdf',
-        })
-      end
-    end
   end
 
   describe 'PUT /token' do
@@ -88,10 +73,31 @@ describe '/v1/nodes', celluloid: true do
       put "/v1/nodes/#{node.to_path}/token", nil, request_headers
       expect(response.status).to eq(403)
     end
+  end
 
-    context "for a user with an admin role" do
-      before do
-        david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+  context "for a user with an admin role" do
+    before do
+      david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+    end
+
+    describe 'GET /token' do
+      let(:node) do
+        node = grid.host_nodes.create!(name: 'abc', token: 'asdf')
+      end
+
+      it "returns node token" do
+        get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdf',
+        })
+      end
+    end
+
+    describe 'PUT /token' do
+      let(:node) do
+        node = grid.host_nodes.create!(name: 'abc', token: 'asdf')
       end
 
       it "generates new node token" do
