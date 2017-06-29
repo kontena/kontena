@@ -132,6 +132,28 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
     end
 
+    context "with a grid token and node ID that has a node token " do
+      let(:host_node) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeABC', token: 'secret') }
+
+      let(:grid_token) { 'secret123' }
+      let(:node_token) { nil }
+
+      before do
+        host_node
+      end
+
+      describe '#on_open' do
+        it 'closes the connection without connecting the node' do
+          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid grid token, node was created using a node token')
+          expect(client_ws).to receive(:close).with(4005, 'Invalid grid token, node was created using a node token')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{host_node.reload}
+        end
+      end
+    end
+
     context "with the wrong node token" do
       let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'secret') }
 

@@ -88,12 +88,16 @@ class WebsocketBackend
 
     node = grid.host_nodes.find_by(node_id: node_id)
 
-    if node
-      logger.debug "node #{node} connected using grid token"
-    else
+    if !node
       node = grid.host_nodes.create!(node_id: node_id, **init_attrs)
 
       logger.info "new node #{node} connected using grid token"
+
+    elsif node.token
+      raise CloseError.new(4005), "Invalid grid token, node was created using a node token"
+
+    else
+      logger.debug "node #{node} connected using grid token"
     end
 
     return node
