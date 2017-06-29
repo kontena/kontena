@@ -20,16 +20,21 @@ Volumes can be managed from the Kontena CLI using the `kontena volume xyz` comma
 
 ### Creating volumes
 
-`kontena volume create --driver rexray --scope instance my-volume`
+`kontena volume create --driver rexray/s3fs --scope instance my-volume`
 
 See volume [scopes](#volume-scopes) for details on the different scopes.
+
+The driver has to be specified **without** a version tag, i.e. `rexray/s3fs:latest` is **not** supported. This is because using a hard version info on volume specification will make running multiple volume plugin versions within the grid impossible and also makes upgrading volume plugins really hard. Kontena will match the reported plugin version automatically and thus is able to create and manage the volumes.
+
+**NOTE:**
+There should be always only one version of a v2 volume plugin installed on a node at any given time. Having multiple versions installed will make volumes seen multiple times on a node and thus makes the automatic selection of correct volume and driver impossible. If not using the default latest version, then it is advisable to install the plugins with `--alias`, as that allows smoother (and less confusing) upgrades of the plugins.
 
 ### Listing volumes
 
 ```
 $ kontena volume ls
 
-NAME                      SCOPE                     DRIVER                    CREATED AT               
+NAME                      SCOPE                     DRIVER                    CREATED AT
 redis-data                grid                      local                     2017-04-06T06:57:34.374Z
 test-s3fs                 grid                      rexray/s3fs               2017-04-05T13:06:26.252Z
 ```

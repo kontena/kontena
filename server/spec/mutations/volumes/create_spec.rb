@@ -32,6 +32,19 @@ describe Volumes::Create do
       }.to_not change{Volume.count}
     end
 
+    it 'does not allow tag in driver' do
+      expect {
+        outcome = Volumes::Create.run(
+          grid: grid,
+          name: "foobar",
+          driver: 'foo/bar:latest',
+          scope: 'instance'
+        )
+        expect(outcome).to_not be_success
+        expect(outcome.errors.symbolic).to eq 'driver' => :tag
+      }.to_not change{Volume.count}
+    end
+
     it 'creates new grid volume' do
       expect {
         outcome = Volumes::Create.run(

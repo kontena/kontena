@@ -44,11 +44,57 @@ describe '/v1/grids', celluloid: true do
       allow(GridAuthorizer).to receive(:creatable_by?).with(david).and_return(true)
     end
 
-    it 'creates a new grid' do
+    it 'creates a new grid with default values' do
       expect {
-        post '/v1/grids', {}.to_json, request_headers
+        post '/v1/grids', {name: 'foo'}.to_json, request_headers
         expect(response.status).to eq(201)
       }.to change{ david.reload.grids.count }.by(1)
+
+      grid = Grid.find_by(name: 'foo')
+
+      expect(grid.subnet).to eq '10.81.0.0/16'
+      expect(grid.supernet).to eq '10.80.0.0/12'
+      expect(grid.default_affinity).to eq []
+      expect(grid.trusted_subnets).to eq []
+      expect(grid.stats).to eq({})
+      expect(grid.grid_logs_opts).to eq(nil)
+    end
+
+    it 'creates a new grid with supplied parameters' do
+      params = {
+        name: 'foo',
+        subnet: '10.8.0.0/16',
+        supernet: '10.8.0.0/12',
+        default_affinity: [ 'label!=reserved' ],
+        trusted_subnets: [ '192.168.0.0/24' ],
+        stats: {
+          statsd: {
+            server: '127.0.0.1',
+            port: 8125,
+          },
+        },
+        logs: {
+          forwarder: 'fluentd',
+          opts: {
+            'fluentd-address' => '127.0.0.1',
+          },
+        },
+      }
+
+      expect {
+        post '/v1/grids', params.to_json, request_headers
+        expect(response.status).to eq(201)
+      }.to change{ david.reload.grids.count }.by(1)
+
+      grid = Grid.find_by(name: 'foo')
+
+      expect(grid.subnet).to eq '10.8.0.0/16'
+      expect(grid.supernet).to eq '10.8.0.0/12'
+      expect(grid.default_affinity).to eq [ 'label!=reserved' ]
+      expect(grid.trusted_subnets).to eq [ '192.168.0.0/24' ]
+      expect(grid.stats).to eq 'statsd' => { 'server' => '127.0.0.1', 'port' => 8125 }
+      expect(grid.grid_logs_opts.forwarder).to eq 'fluentd'
+      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1' 
     end
 
     it 'a new grid has a generated token unless supplied' do
