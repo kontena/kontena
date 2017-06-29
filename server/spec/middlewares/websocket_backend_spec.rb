@@ -200,6 +200,32 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
     end
 
+    context "with a duplicate node ID" do
+      let(:host_node1) { grid.host_nodes.create!(name: 'node-1', token: 'secret1', node_id: 'nodeABC') }
+      let(:host_node2) { grid.host_nodes.create!(name: 'node-2', token: 'secret2') }
+
+      let(:grid_token) { nil }
+      let(:node_token) { 'secret2' }
+      let(:node_id) { 'nodeABC' }
+
+      before do
+        host_node1
+        host_node2
+      end
+
+      describe '#on_open' do
+        it 'closes the connection without connecting the node' do
+          expect(subject.logger).to receive(:warn).with('node node-2 connected using node token with node_id nodeABC, but that node ID already exists for node-1')
+          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid node ID, already used by a different node')
+          expect(client_ws).to receive(:close).with(4006, 'Invalid node ID, already used by a different node')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{host_node1.reload}.and not_change{host_node2.reload}
+        end
+      end
+    end
+
     context "with the wrong version" do
       let(:grid_token) { 'secret123' }
       let(:node_version) { '0.8.0' }

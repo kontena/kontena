@@ -113,9 +113,9 @@ class WebsocketBackend
 
     raise CloseError.new(4002), "Invalid node token" unless node
 
-    if node.node_id == node_id
-      logger.debug "node #{node} connected using node token with node_id #{node_id}"
-    else
+    node_by_id = HostNode.find_by(node_id: node_id)
+
+    if !node_by_id
       initializing_node = HostNode.where(:id => node.id, :node_id => nil)
         .find_one_and_update(:$set => {node_id: node_id, **init_attrs})
 
@@ -129,6 +129,13 @@ class WebsocketBackend
 
         raise CloseError.new(4003), "Incorrect node token, already used by a different node"
       end
+
+    elsif node == node_by_id
+      logger.debug "node #{node} connected using node token with node_id #{node_id}"
+    else
+      logger.warn "node #{node} connected using node token with node_id #{node_id}, but that node ID already exists for #{node_by_id}"
+
+      raise CloseError.new(4006), "Invalid node ID, already used by a different node"
     end
 
     return node
