@@ -16,6 +16,9 @@ module Volumes
       if self.grid.volumes.find_by(name: self.name)
         add_error(:name, :already_exists, "Volume with given name already exists")
       end
+      if self.driver.include?(':')
+        add_error(:driver, :tag, "Driver version tag cannot be used")
+      end
     end
 
     def execute
