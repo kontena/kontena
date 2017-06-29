@@ -12,7 +12,7 @@ class HostNode
   field :node_id, type: String
   field :node_number, type: Integer
   field :name, type: String
-  field :token, type: String, default: ->{ SecureRandom.base64(64) }
+  field :token, type: String
   field :os, type: String
   field :docker_root_dir, type: String
   field :driver, type: String
@@ -50,7 +50,7 @@ class HostNode
   index({ node_id: 1 })
   index({ labels: 1 })
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
-  index({ token: 1 }, { unique: true })
+  index({ token: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
 

@@ -23,7 +23,7 @@ describe HostNode do
   it { should have_index_for(grid_id: 1) }
   it { should have_index_for(grid_id: 1, node_number: 1).with_options(sparse: true, unique: true) }
   it { should have_index_for(node_id: 1) }
-
+  it { should have_index_for(token: 1).with_options(sparse: true, unique: true) }
 
   describe '#connected?' do
     it 'returns true when connected' do
@@ -300,6 +300,44 @@ describe HostNode do
     it 'returns nil for unknown driver' do
       driver = node.volume_driver('foo')
       expect(driver).to be_nil
+    end
+  end
+
+  describe '#token' do
+    let(:grid) { Grid.create!(name: 'test') }
+
+    it 'allows multiple nodes without node tokens' do
+      node1 = HostNode.create!(name: 'node-1', grid: grid)
+      node2 = HostNode.create!(name: 'node-2', grid: grid)
+
+      expect(node1.token).to be_nil
+      expect(node2.token).to be_nil
+    end
+
+    context 'with a node that has a node token' do
+      let(:node1) { HostNode.create!(name: 'node-1', grid: grid, token: 'asdf') }
+
+      before do
+        node1
+      end
+
+      it 'has a node token' do
+        expect(node1.token).to eq 'asdf'
+
+        expect(HostNode.find_by(token: 'asdf').id).to eq node1.id
+      end
+
+      it 'does not allow multiple nodes to share the same token' do
+        expect{HostNode.create!(name: 'node-2', grid: grid, token: 'asdf')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdf" }/)
+      end
+
+      context 'with a second grid' do
+        let(:grid2) { Grid.create!(name: 'test2') }
+
+        it 'does not allow nodes to share the same token' do
+          expect{HostNode.create!(name: 'node-2', grid: grid2, token: 'asdf')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdf" }/)
+        end
+      end
     end
   end
 end

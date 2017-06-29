@@ -60,6 +60,7 @@ describe HostNodes::Create do
     let(:node) do
       grid.host_nodes.create!(
         name: 'test-1',
+        token: 'asdfasdf',
       )
     end
 

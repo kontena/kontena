@@ -24,13 +24,18 @@ module HostNodes
       end
     end
 
+    # @return [String]
+    def generate_token
+      SecureRandom.base64(64)
+    end
+
     # @return [HostNode]
     def build_host_node
       host_node = HostNode.new(
         grid: self.grid,
         name: self.name,
+        token: self.token || self.generate_token,
       )
-      host_node.token = self.token if self.token
       host_node
     end
 
