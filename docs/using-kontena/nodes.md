@@ -28,6 +28,7 @@ The same node token cannot be used by any other agent with a different Node ID.
 Attempting to provision multiple nodes with the same node token will result in connection errors: `Incorrect node token, already used by a different node`
 
 Decomissioning a node using `kontena node rm` will also revoke the node token, preventing further agent connections to the master using the node token that the node was provisioned with.
+If the agent is still connected, removing the node will forcibly disconnect the agent within the next keepalive interval (0-30s): `ERROR -- Kontena::WebsocketClient: master indicates that this agent should not reconnect: host node UXTT:TPWP:6OQM:3UKS:EPB4:MOQD:DYYT:N42X:VSR5:IIM3:VDCP:22IC has been removed`
 
 #### Grid Token
 
@@ -40,6 +41,8 @@ The Kontena Master will use the Node ID provided by the agent to associate the c
 The master will automatically create a new grid node if a new `kontena-agent` connects with a valid grid token and previously unknown Node ID.
 
 The grid token cannot be revoked.
+Nodes provisioned using grid tokens that are still online cannot be removed using `kontena node rm`, as the agent would quickly reconnect and the node would get re-created by the server.
+If an offline node using a grid token is removed, and the agent later reconnects, the node will re-appear in the grid.
 
 ### Online nodes
 
@@ -69,9 +72,15 @@ The re-scheduling of grid services will happen after the node offline grace peri
 
 ### Decomissioning nodes
 
-To decomission a node, you must first terminate it, and you can then remove the offline node from the Kontena Master.
+Use the `kontena node rm` command to decomission a node.
 
-The `kontena node rm` command can not be used to remove an online node.
+If the node was provisioned using a grid token, then the node must first be terminated to stop the agent and force it to disconnect from the master, and then the `kontena node rm` command can be used to remove the offline node.
+The `kontena node rm` command will refuse to remove an online node that was provisioned with a grid token.
+
+Nodes created using `kontena node create` and provisioned using a node token can be removed using `kontena node rm`, even if they are online.
+The agent will be disconnected and will be unable to reconnect, as the node token will be invalidated.
+This can be used as a security feature to isolate compromised nodes from the grid.
+
 Use the `kontena <provider> node terminate` plugin commands to terminate nodes and remove them from the Kontena Master.
 Alternatively, power off and destroy the node instance directly from the provider's control panel, and wait for the nodes to be offline before removing them from the CLI.
 
