@@ -62,12 +62,12 @@ module Kontena::Cli::Stacks
       @stack_name ||= self.name || stack_name_from_yaml(filename)
     end
 
-    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil, action: nil)
+    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil)
       reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, values: values, defaults: defaults)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
-      set_env_variables(name || reader.stack_name, current_grid, action)
+      set_env_variables(name || reader.stack_name, current_grid)
       reader
     end
 
@@ -92,13 +92,13 @@ module Kontena::Cli::Stacks
       stack
     end
 
-    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil, action: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults, action: action)
+    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack_from_reader(reader)
     end
 
-    def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil, action: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults, action: action)
+    def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
       stack = stack_from_reader(reader)
       dump_variables(reader) if values_to
       stack
