@@ -17,6 +17,10 @@ module Kontena::Cli::Nodes
     def execute
       token_node = client.get("nodes/#{current_grid}/#{name}/token")
 
+      unless token_node['token']
+        exit_with_error "Node #{name} was not created with a node token. Use `kontena grid env` instead"
+      end
+
       if self.token?
         puts token_node['token']
       else
