@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.2.rc1) (2017-06-29)
+
+**Master & Agents:**
+
+- Server: Fix GridServices::Update with multiple names for the same service secret (#2506)
+- Fix LE cert authorization mutation to fail gracefully if not yet registered (#2497)
+- Fix healtcheck port validation to check port in unix port range (#2496)
+- Fix Etcd launcher to tolerate docker errors better (#2509)
+- Automatically determine volume driver version from installed plugins (#2526)
+- Fix any versioned kontena/lb:* image to resolve as an LB service, not just latest (#2530)
+
+**CLI:**
+
+- Only use STDIN.raw for tty-mode execs (#2499)
+- Fix cli node list sorting, specs (#2512)
+
 ## [1.3.1](https://github.com/kontena/kontena/releases/tag/v1.3.1) (2017-06-16)
 
 **Master & Agents:**
