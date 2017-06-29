@@ -392,9 +392,6 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
   context "with a connected client" do
     let(:client_ws) { instance_double(Faye::WebSocket) }
     let(:connected_at) { 1.minute.ago }
-    let(:client) do
-      { id: 'aa', ws: client_ws, connected_at: connected_at }
-    end
 
     let(:grid) do
       Grid.create!(name: 'test')
@@ -404,6 +401,16 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid,
         connected: true, connected_at: connected_at,
       )
+    end
+
+    let(:client) do
+      {
+        ws: client_ws,
+        id: 'aa',
+        node_id: node.id,
+        grid_id: grid.id,
+        connected_at: connected_at,
+       }
     end
 
     before do
@@ -439,8 +446,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     describe '#unplug_client' do
-      it "logs a warning if the host node is not found" do
-        node.set(node_id: 'bb')
+      it "logs a warning if the host node is missing" do
+        node.delete
 
         expect(subject.logger).to receive(:warn).with('skip unplug of missing node aa')
 
@@ -474,10 +481,11 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     describe '#on_pong' do
-      it 'closes the websocket if client is not found' do
-        client[:id] = 'bb'
-        expect(subject.logger).to receive(:warn).with('Close connection of removed node bb')
-        expect(client_ws).to receive(:close).with(4040, 'host node bb has been removed')
+      it 'closes the websocket if node is missing' do
+        node.delete
+
+        expect(subject.logger).to receive(:warn).with('Close connection of removed node aa')
+        expect(client_ws).to receive(:close).with(4040, 'host node aa has been removed')
         expect(subject).to receive(:unplug_client).with(client)
 
         subject.on_pong(client, 0.1)

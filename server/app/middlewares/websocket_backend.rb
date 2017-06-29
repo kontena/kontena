@@ -307,7 +307,7 @@ class WebsocketBackend
   #
   # @param [Hash] client
   def unplug_client(client)
-    node = HostNode.find_by(node_id: client[:id])
+    node = HostNode.find_by(id: client[:node_id])
     if node
       Agent::NodeUnplugger.new(node).unplug! client[:connected_at]
     else
@@ -455,7 +455,7 @@ class WebsocketBackend
       logger.debug { "keepalive ping %.2fs of %.2fs timeout from client %s" % [delay, PING_TIMEOUT, client[:id]] }
     end
 
-    node = HostNode.find_by(node_id: client[:id])
+    node = HostNode.find_by(id: client[:node_id])
 
     if node
       connected_node = HostNode.where(id: node.id, connected_at: client[:connected_at])
