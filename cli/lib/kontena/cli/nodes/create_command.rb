@@ -13,8 +13,9 @@ module Kontena::Cli::Nodes
 
     def execute
       data = { name: name }
+
       data[:token] = token if token
-      data[:labels] = label_list if label_list
+      data[:labels] = label_list
 
       spinner "Creating #{name.colorize(:cyan)} node " do
         client.post("grids/#{current_grid}/nodes", data)
