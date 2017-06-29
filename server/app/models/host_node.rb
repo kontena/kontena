@@ -47,7 +47,7 @@ class HostNode
   after_save :reserve_node_number, :ensure_unique_name
 
   index({ grid_id: 1 })
-  index({ node_id: 1 })
+  index({ node_id: 1 }, { unique: true, sparse: true })
   index({ labels: 1 })
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
   index({ token: 1 }, { unique: true, sparse: true })
