@@ -167,6 +167,6 @@ Destructive command. To proceed, type "core-03" or re-run this command with --fo
  [done] Removing test-node node from development grid      
 ```
 
-The node must already be offline.
-
-The node token generated during `kontena node create` will be invalidated.
+The node must already be offline if it was provisioned using a grid token.
+If the node was created using `kontena node create`, then the node token will be invalidated.
+See [Decomissioning nodes](#decomissioning-nodes).
