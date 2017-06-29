@@ -127,11 +127,11 @@ Ephemeral nodes are intended to be used for autoscaled nodes, which may be provi
 
 #### Create a new Node
 
-Create a new node named `test-node` in the current grid:
+Create a new node named `core-03` in the current grid:
 
 ```
-$ kontena node create test-node
- [done] Creating test-node node      
+$ kontena node create core-03
+ [done] Creating core-03 node      
 ```
 
 The server will generate a new node token by default, if not using `--token` to supply a pre-generated node token.
@@ -141,9 +141,9 @@ The server will generate a new node token by default, if not using `--token` to 
 ```
 $ kontena node list
 NAME        VERSION     STATUS    INITIAL   LABELS
-⊛ core-01   1.4.0.dev   online    1 / 1     test
-⊛ core-02   1.4.0.dev   online    -         test=label
-⊝ core-03   1.4.0.dev   offline   -         -
+⊛ core-01   1.4.0       online    1 / 1     provider=vagrant
+⊛ core-02   1.4.0       online    -         provider=vagrant
+⊝ core-03   1.4.0       offline   -         -
 ```
 
 #### Generate `kontena-agent` configuration
@@ -151,7 +151,7 @@ NAME        VERSION     STATUS    INITIAL   LABELS
 Generate environment variables required for provisioning the `kontena-agent`:
 
 ```
-$ kontena node env test-node
+$ kontena node env core-03
 KONTENA_URI=ws://192.168.66.1:9292/
 KONTENA_NODE_TOKEN=yempbjWHbZLhc66gB0mAFXKS8HzS/daDwCfnHC+UfrJo5wkhQ6hpr8XKY5nUdH+h6CH81Y9bQIc4IgTcEEjQCQ==
 ```
@@ -161,9 +161,9 @@ Also see `kontena grid env` if using grid tokens for provisioning.
 #### Remove a Node
 
 ```
-$ kontena node rm test-node
-Destructive command. To proceed, type "test-node" or re-run this command with --force option.
-> Enter 'test-node' to confirm:  test-node
+$ kontena node rm core-03
+Destructive command. To proceed, type "core-03" or re-run this command with --force option.
+> Enter 'core-03' to confirm:  test-node
  [done] Removing test-node node from development grid      
 ```
 
