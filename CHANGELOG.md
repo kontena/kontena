@@ -1,13 +1,6 @@
 # Changelog
 
-## [1.3.2.rc2](https://github.com/kontena/kontena/releases/tag/v1.3.2.rc2) (2017-06-30)
-
-**Master & Agents:**
-
-- Fix mongoid last sort (#2534)
-
-
-## [1.3.2.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.2.rc1) (2017-06-29)
+## [1.3.2](https://github.com/kontena/kontena/releases/tag/v1.3.2) (2017-06-30)
 
 **Master & Agents:**
 
@@ -17,6 +10,7 @@
 - Fix Etcd launcher to tolerate docker errors better (#2509)
 - Automatically determine volume driver version from installed plugins (#2526)
 - Fix any versioned kontena/lb:* image to resolve as an LB service, not just latest (#2530)
+- Fix mongoid last sort (#2534)
 
 **CLI:**
 
