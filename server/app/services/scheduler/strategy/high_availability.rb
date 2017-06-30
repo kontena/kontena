@@ -82,7 +82,7 @@ module Scheduler
       # @param [Scheduler::Node] node
       # @return [Float]
       def memory_rank(node)
-        stats = node.host_node_stats.asc(:id).last
+        stats = node.host_node_stats.latest
         if stats
           stats.memory['used'].to_f / node.mem_total.to_f
         else
