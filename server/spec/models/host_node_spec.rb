@@ -24,6 +24,39 @@ describe HostNode do
   it { should have_index_for(grid_id: 1, node_number: 1).with_options(sparse: true, unique: true) }
   it { should have_index_for(node_id: 1) }
 
+  let(:grid) { Grid.create!(name: 'test') }
+
+  context 'for an initializing node without any name' do
+    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ') }
+
+    describe '#to_s' do
+      it "uses the node ID" do
+        expect(node.to_s).to eq 'ABC:XYZ'
+      end
+    end
+
+    describe '#to_path' do
+      it 'uses the node ID' do
+        expect(node.to_path).to eq 'test/ABC:XYZ'
+      end
+    end
+  end
+
+  context 'for an updated node with a name' do
+    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ', name: 'node') }
+
+    describe '#to_s' do
+      it "uses the node ID" do
+        expect(node.to_s).to eq 'node'
+      end
+    end
+
+    describe '#to_path' do
+      it 'uses the node ID' do
+        expect(node.to_path).to eq 'test/node'
+      end
+    end
+  end
 
   describe '#connected?' do
     it 'returns true when connected' do
@@ -37,7 +70,6 @@ describe HostNode do
   end
 
   describe '#stateful?' do
-    let(:grid) { Grid.create!(name: 'test') }
     let(:stateful_service) {
       GridService.create!(name: 'stateful', image_name: 'foo/bar:latest', grid: grid, stateful: true)
     }
