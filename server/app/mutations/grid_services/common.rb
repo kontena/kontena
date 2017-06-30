@@ -275,6 +275,7 @@ module GridServices
               integer :initial_delay, default: 10
             end
           end
+          string :stop_grace_period, matches: Duration::VALIDATION_PATTERN
         end
       end
     end

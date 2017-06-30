@@ -153,7 +153,7 @@ module Kontena
 
       # @param [Docker::Container] container
       def cleanup_container(container)
-        container.stop('timeout' => 10)
+        container.stop('timeout' => container.stop_grace_period)
         container.wait
         container.delete(v: true)
       end

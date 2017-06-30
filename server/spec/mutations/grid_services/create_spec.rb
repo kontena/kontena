@@ -466,6 +466,27 @@ describe GridServices::Create do
       expect(outcome).to_not be_success
       expect(outcome.errors.message).to eq 'env' => [ "Env[0] isn't in the right format" ]
     end
+    
+    it 'saves stop_grace_period with default if not given' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false
+      ).run
+      expect(outcome.result.stop_grace_period).to eq(10)
+    end
+
+    it 'fails to save with unknown grace_period' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: false,
+          stop_grace_period: 'foo'
+      ).run
+      expect(outcome).not_to be_success
+    end
 
     context 'volumes' do
       let(:volume) do

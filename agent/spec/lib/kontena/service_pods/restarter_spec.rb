@@ -7,7 +7,7 @@ describe Kontena::ServicePods::Restarter do
   describe '#perform' do
 
     let(:container) do
-      double(:container, :running? => true, :name_for_humans => 'foo/bar-1')
+      double(:container, :running? => true, :name_for_humans => 'foo/bar-1', :stop_grace_period => 10)
     end
 
     before(:each) do
