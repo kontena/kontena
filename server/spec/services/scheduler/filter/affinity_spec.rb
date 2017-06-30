@@ -18,8 +18,17 @@ describe Scheduler::Filter::Affinity do
     it "returns three parts for eq" do
       expect(subject.split_affinity('foo==bar')).to eq ['foo', '==', 'bar']
     end
-    it "returns three partsfor neq" do
+
+    it "returns three parts for soft eq" do
+      expect(subject.split_affinity('foo==~bar')).to eq ['foo', '==~', 'bar']
+    end
+
+    it "returns three parts for neq" do
       expect(subject.split_affinity('foo!=bar')).to eq ['foo', '!=', 'bar']
+    end
+
+    it "returns three parts for soft neq" do
+      expect(subject.split_affinity('foo!=~bar')).to eq ['foo', '!=~', 'bar']
     end
   end
 
