@@ -11,7 +11,7 @@ class Metrics
     results = containers.map { |container|
       {
           container: container,
-          stats: container.container_stats.asc(:id).last
+          stats: container.container_stats.latest
       }
     }.sort_by { |stat|
       num = 0
