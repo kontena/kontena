@@ -19,7 +19,7 @@ Kontena's key features include:
 * Log and statistics aggregation with streaming
 * Access control and roles for Kontena users
 
-Kontena is administered via the Kontena command line interface, **Kontena CLI**. **[Kontena Cloud](https://cloud.kontena.io)** provides hosted Graphical UI for monitoring, analyzing and operating Kontena Platforms.
+Kontena is administered via the Kontena command-line interface, **Kontena CLI**. **[Kontena Cloud](https://www.kontena.io/cloud)** provides a hosted graphical user interface for monitoring, analyzing and operating Kontena Platforms.
 
 ## Learn More
 
