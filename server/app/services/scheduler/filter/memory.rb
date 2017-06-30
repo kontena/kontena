@@ -13,7 +13,7 @@ module Scheduler
         unless memory
           container = service.containers.first
           if container
-            stats = container.container_stats.last
+            stats = container.container_stats.asc(:id).last
             memory = stats.memory['usage'] * 1.25 if stats
           end
         end
@@ -38,7 +38,7 @@ module Scheduler
         return false if candidate.containers.service_instance(service, instance_number).first
         return true if candidate.mem_total.to_i < memory
 
-        node_stat = candidate.host_node_stats.last
+        node_stat = candidate.host_node_stats.asc(:id).last
         return false if node_stat.nil?
 
         all_used = node_stat.memory['total'] - node_stat.memory['free']
