@@ -38,6 +38,7 @@ module Kontena::Cli::Nodes
         version: 'agent_version',
         status:  'status',
         initial: 'initial',
+        availability: 'availability',
         labels:  'labels'
       }
     end
