@@ -1,4 +1,4 @@
-json.id @node.node_id
+json.id @node.to_path
 json.name @node.name
 json.node_number @node.node_number
 json.initial_member @node.initial_member?
