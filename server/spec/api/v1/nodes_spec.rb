@@ -28,8 +28,7 @@ describe '/v1/nodes', celluloid: true do
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response).to match hash_including(
-        'id' => 'a:b:c', # deprecated
-        'api_id' => 'test/abc',
+        'id' => 'test/abc',
         'node_id' => 'a:b:c',
       )
     end

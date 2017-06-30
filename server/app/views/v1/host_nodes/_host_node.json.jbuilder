@@ -1,5 +1,4 @@
-json.id node.node_id # deprecated, should be node.to_path
-json.api_id node.to_path # replacement for deprecated "id"
+json.id node.to_path
 json.node_id node.node_id
 json.connected node.connected
 json.created_at node.created_at
