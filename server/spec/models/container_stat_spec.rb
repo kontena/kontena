@@ -13,6 +13,21 @@ describe ContainerStat do
   it { should have_index_for(grid_service_id: 1).with_options(background: true) }
   it { should have_index_for(created_at: 1).with_options(background: true) }
 
+  describe '.latest' do
+    let(:grid) { Grid.create!(name: 'test-grid') }
+    let(:container) { Container.create!(grid: grid, name: 'test-1') }
+
+    it 'returns latest stat item' do
+      container.container_stats.create
+      last = container.container_stats.create
+      expect(described_class.latest).to eq(last)
+    end
+
+    it 'returns nil if no stats' do
+      expect(described_class.latest).to be_nil
+    end
+  end
+
   describe 'methods' do
     let(:stat) { ContainerStat.new({
         spec: {

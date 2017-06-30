@@ -11,6 +11,21 @@ describe HostNodeStat do
   it { should have_index_for(host_node_id: 1).with_options(background: true) }
   it { should have_index_for(host_node_id:1, created_at: 1).with_options(background: true) }
 
+  describe '.latest' do
+    let(:grid) { Grid.create!(name: 'test-grid') }
+    let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
+
+    it 'returns latest stat item' do
+      node.host_node_stats.create
+      last = node.host_node_stats.create
+      expect(described_class.latest).to eq(last)
+    end
+
+    it 'returns nil if no stats' do
+      expect(described_class.latest).to be_nil
+    end
+  end
+
   describe 'aggregations' do
     let(:grid) { Grid.create!(name: 'test-grid') }
     let(:other_grid) { Grid.create!(name: 'other-grid') }
