@@ -11,9 +11,9 @@ module Scheduler
         candidates = nodes.dup
         memory = service.memory || service.memory_swap
         unless memory
-          container = service.containers.first
+          container = service.containers.asc(:id).first
           if container
-            stats = container.container_stats.last
+            stats = container.container_stats.latest
             memory = stats.memory['usage'] * 1.25 if stats
           end
         end
@@ -38,7 +38,7 @@ module Scheduler
         return false if candidate.containers.service_instance(service, instance_number).first
         return true if candidate.mem_total.to_i < memory
 
-        node_stat = candidate.host_node_stats.last
+        node_stat = candidate.host_node_stats.latest
         return false if node_stat.nil?
 
         all_used = node_stat.memory['total'] - node_stat.memory['free']

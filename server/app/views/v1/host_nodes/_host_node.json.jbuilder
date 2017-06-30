@@ -51,7 +51,7 @@ json.grid do
   end
 end
 json.resource_usage do
-  stats = node.host_node_stats.last
+  stats = node.host_node_stats.latest
   if stats
     json.memory stats.memory
     json.load stats.load
