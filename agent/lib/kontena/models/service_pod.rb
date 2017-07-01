@@ -19,6 +19,7 @@ module Kontena
                   :entrypoint,
                   :memory,
                   :memory_swap,
+                  :cpus,
                   :cpu_shares,
                   :privileged,
                   :pid,
@@ -64,6 +65,7 @@ module Kontena
         @entrypoint = attrs['entrypoint']
         @memory = attrs['memory']
         @memory_swap = attrs['memory_swap']
+        @cpus = attrs['cpus']
         @cpu_shares = attrs['cpu_shares']
         @privileged = attrs['privileged'] || false
         @cap_add = attrs['cap_add']
@@ -208,6 +210,10 @@ module Kontena
         end
         if self.can_expose_ports? && self.ports
           host_config['PortBindings'] = self.build_port_bindings
+        end
+        if self.cpus
+          host_config['CpuPeriod'] = 100000
+          host_config['CpuQuota'] = host_config['CpuPeriod'] * self.cpus
         end
 
         host_config['NetworkMode'] = self.net

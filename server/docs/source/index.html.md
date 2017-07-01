@@ -870,6 +870,7 @@ follow | Stream logs
   ],
   "memory": 1024000000,
   "memory_swap": 4096000000,
+  "cpus": 1.5,
   "cpu_shares": 1024,
   "volumes": [
     "/data"
@@ -918,6 +919,7 @@ env | List of user-defined environment variables to set on the instances of the 
 secrets | Array of mapped secrets from Kontena Vault
 memory | Memory limit (excluding optional swap)
 memory_swap | Allowed memory (including swap)
+cpus | Specify how much of the available CPU resources (CPU cores) a service instance can use.
 cpu_shares | Relative cpu shares (0-1024)
 volumes | A list of volumes
 volumes_from | A list of volumes to mount from other services

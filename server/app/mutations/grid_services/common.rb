@@ -230,6 +230,7 @@ module GridServices
           array :volumes_from do
             string
           end
+          float :cpus
           integer :cpu_shares, min: 0, max: 1024
           integer :memory
           integer :memory_swap

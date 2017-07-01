@@ -27,6 +27,7 @@ module Kontena::Cli::Stacks::YAML
         'cap_add' => optional('array'),
         'cap_drop' => optional('array'),
         'command' => optional('string'),
+        'cpus' => optional('float'),
         'cpu_shares' => optional('integer'),
         'external_links' => optional('array'),
         'mem_limit' => optional('string'),

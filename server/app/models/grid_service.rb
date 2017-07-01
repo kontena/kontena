@@ -19,6 +19,7 @@ class GridService
   field :env, type: Array, default: []
   field :memory, type: Integer
   field :memory_swap, type: Integer
+  field :cpus, type: Float
   field :cpu_shares, type: Integer
   field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
