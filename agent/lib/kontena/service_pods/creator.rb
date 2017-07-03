@@ -65,6 +65,8 @@ module Kontena
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
+        self.run_hooks(service_container, 'post_start')
+
         if service_pod.wait_for_port
           info "waiting for port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} to respond"
           log_service_pod_event("service:create_instance", "waiting for #{service_pod.name_for_humans} port #{service_pod.wait_for_port} to respond")
@@ -72,7 +74,6 @@ module Kontena
           info "port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} is responding"
           log_service_pod_event("service:create_instance", "#{service_pod.name_for_humans} port #{service_pod.wait_for_port} is responding")
         end
-        self.run_hooks(service_container, 'post_start')
 
         service_container
       end

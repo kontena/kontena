@@ -161,6 +161,13 @@ affinity:
 
 **post_start**
 
+`post_start` hooks define commands that are executed after a container is started on a node. If multiple hooks are provided they are executed in the order defined. Note that these commands are executed *before* `wait_for_port` check.
+
+- `name`: unique name for hook
+- `cmd`: command to be executed
+- `instances`: comma separated list of instance numbers where hook is executed (`*` for all instances)
+- `oneshot`: should this hook be executed only once in service lifetime (default: `false`)
+
 ```
 hooks:
   post_start:
@@ -173,6 +180,9 @@ hooks:
 **pre_build**
 
 `pre_build` hooks define executables that are executed before the actual Docker image is built. If multiple hooks are provided they are executed in the order defined. If any of the commands fail the build is aborted.
+
+- `name`: unique name for hook
+- `cmd`: command to be executed locally
 
 ```
 hooks:
@@ -596,7 +606,7 @@ variables:
     to:
       vault: EXAMPLE_MYSQL_ROOT_PASSWORD
   app_domain:
-    type: string 
+    type: string
     default: www.my-app.com
     from:
       prompt: App domain
