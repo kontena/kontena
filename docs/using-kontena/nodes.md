@@ -74,3 +74,5 @@ Nodes labeled as `ephemeral=yes` will automatically be removed by the Kontena Ma
 The nodes should not be [initial nodes](grids.md#initial-nodes), and they should not have any stateful services deployed on them.
 
 Ephemeral nodes are intended to be used for autoscaled nodes, which may be provisioned automatically, and then cleaned up once terminated.
+
+Ephemeral nodes will not be available for sheduling of stateful services as the service state is only persisted on local disk.
