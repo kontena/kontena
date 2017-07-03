@@ -134,7 +134,7 @@ describe Kontena::NetworkAdapters::Weave do
       )
       weave_config = {
         'Image' => valid_image,
-        'Cmd' => ['--trusted-subnets', '']
+        'Cmd' => ['--trusted-subnets', '', '--conn-limit', '0']
       }
       weave = double(:weave, config: weave_config)
       expect(subject.config_changed?(weave, node)).to be_falsey
@@ -166,6 +166,34 @@ describe Kontena::NetworkAdapters::Weave do
         'Cmd' => ['--trusted-subnets', '']
       }
 
+      weave = double(:weave, config: weave_config)
+      expect(subject.config_changed?(weave, node)).to be_truthy
+    end
+
+    it 'returns false if connection limit is same' do
+      node = Node.new(
+        'grid' => {
+          'trusted_subnets' => []
+        }
+      )
+      weave_config = {
+        'Image' => valid_image,
+        'Cmd' => ['--trusted-subnets', '', '--conn-limit', '0']
+      }
+      weave = double(:weave, config: weave_config)
+      expect(subject.config_changed?(weave, node)).to be_falsey
+    end
+
+    it 'returns true if connection limit is not used' do
+      node = Node.new(
+        'grid' => {
+          'trusted_subnets' => []
+        }
+      )
+      weave_config = {
+        'Image' => valid_image,
+        'Cmd' => ['--trusted-subnets', '']
+      }
       weave = double(:weave, config: weave_config)
       expect(subject.config_changed?(weave, node)).to be_truthy
     end
