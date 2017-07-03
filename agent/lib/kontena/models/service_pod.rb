@@ -41,7 +41,8 @@ module Kontena
                   :secrets,
                   :networks,
                   :wait_for_port,
-                  :volume_specs
+                  :volume_specs,
+                  :stop_grace_period
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -82,6 +83,7 @@ module Kontena
         @secrets = attrs['secrets'] || []
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
+        @stop_grace_period = attrs['stop_grace_period']
       end
 
       # @return [Boolean]
@@ -181,6 +183,7 @@ module Kontena
         labels['io.kontena.container.service_revision'] = self.service_revision.to_s
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
         labels['io.kontena.service.exposed'] = '1' if self.exposed
+        labels['io.kontena.container.stop_grace_period'] = self.stop_grace_period.to_s
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
         #docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?

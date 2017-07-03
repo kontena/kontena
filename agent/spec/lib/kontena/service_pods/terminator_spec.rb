@@ -6,11 +6,11 @@ describe Kontena::ServicePods::Terminator do
 
   describe '#perform' do
     it 'terminates service instance' do
-      service_container = double(:service, :load_balanced? => false, :name => 'foo.bar-1', :name_for_humans => 'foo/bar-1')
+      service_container = double(:service, :load_balanced? => false, :name => 'foo.bar-1', :name_for_humans => 'foo/bar-1', :stop_grace_period => 15)
       allow(subject).to receive(:get_container).with(service_id, 1).and_return(service_container)
       allow(subject).to receive(:get_container).with(service_id, 1, 'volume')
 
-      expect(service_container).to receive(:stop).with({'timeout' => 10})
+      expect(service_container).to receive(:stop).with({'timeout' => 15})
       expect(service_container).to receive(:wait)
       expect(service_container).to receive(:delete).with({v: true})
       subject.perform

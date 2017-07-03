@@ -59,6 +59,17 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.affinity }.to(['az==b1'])
     end
 
+    it 'updates stop_grace_period' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service,
+            stop_grace_period: '1m23s'
+        ).run
+      }.to change{ redis_service.reload.stop_grace_period }.to(83)
+    end
+
     context 'deploy_opts' do
       it 'updates wait_for_port' do
         described_class.new(

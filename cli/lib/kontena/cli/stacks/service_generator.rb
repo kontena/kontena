@@ -63,6 +63,7 @@ module Kontena::Cli::Stacks
       data['secrets'] = options['secrets'] if options['secrets']
       data['build'] = parse_build_options(options) if options['build']
       data['health_check'] = parse_health_check(options)
+      data['stop_grace_period'] = options['stop_grace_period'] if options['stop_grace_period']
       data
     end
 

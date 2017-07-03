@@ -27,8 +27,7 @@ module Kontena
             self.service_id, self.instance_number,
             "service:remove_instance", "removing service instance #{service_container.name_for_humans}"
           )
-
-          service_container.stop('timeout' => 10)
+          service_container.stop('timeout' => service_container.stop_grace_period)
           service_container.wait
           service_container.delete(v: true)
 

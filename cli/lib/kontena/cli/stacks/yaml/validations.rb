@@ -74,7 +74,8 @@ module Kontena::Cli::Stacks::YAML
           'timeout' => optional('integer'),
           'interval' => optional('integer'),
           'initial_delay' => optional('integer')
-        })
+        }),
+        'stop_grace_period' => optional(/(\d+(?:\.\d+)?)([hms])/)
       }
     end
 
