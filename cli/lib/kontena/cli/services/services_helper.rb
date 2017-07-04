@@ -52,6 +52,7 @@ module Kontena
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
           puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
+          puts "  read_only: #{service['read_only'] == true ? 'yes' : 'no'}"
           puts "  stop_grace_period: #{service['stop_grace_period']}s"
           puts "  deploy_opts:"
           if service['deploy_opts']['min_health']
