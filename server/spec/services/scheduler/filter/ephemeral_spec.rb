@@ -46,6 +46,15 @@ describe Scheduler::Filter::Ephemeral do
         filtered = subject.for_service(stateful_service, 1, nodes)
         expect(filtered).to eq(nodes[1..2])
       end
+
+      it 'returns also ephemeral if theres existing instance on it' do
+        nodes[0].labels = ['ephemeral=true']
+        nodes[0].grid_service_instances.create!(grid_service: stateful_service, instance_number: 1)
+        nodes[2].labels = ['ephemeral=true']
+        filtered = subject.for_service(stateful_service, 1, nodes)
+        expect(filtered).to eq(nodes[0..1])
+      end
+
     end
   end
 

@@ -12,7 +12,7 @@ module Scheduler
       def for_service(service, instance_number, nodes)
         return nodes unless service.stateful?
 
-        nodes = nodes.reject{|n| n.ephemeral?}
+        nodes = nodes.reject{|n| n.ephemeral? && !n.grid_service_instances.find_by(grid_service: service, instance_number: instance_number)}
 
         if nodes.empty?
           raise Scheduler::Error, "Did not find any non-ephemeral nodes for stateful service"
