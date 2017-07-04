@@ -1,0 +1,6 @@
+stack: simple
+version: 1.0.0
+services:
+  redis:
+    image: redis:alpine
+    read_only: true
