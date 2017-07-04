@@ -26,7 +26,7 @@ module Kontena::Cli::Etcd
         nodes = client.get("grids/#{current_grid}/nodes")['nodes']
 
         nodes.each do |node|
-          node_health = client.get("nodes/#{current_grid}/#{node['name']}/health")
+          node_health = client.get("nodes/#{node['id']}/health")
 
           if !show_node_health(node_health)
             health = false
