@@ -133,6 +133,14 @@ Some providers may provide user information through a token info endpoint that t
 
 **Example:** `https://api.example.com/tokeninfo/:access_token`
 
+#### `oauth2.userinfo_requires_basic_auth`
+
+When false (default) the obtained access token is used as bearer token authentication when requesting userinfo from the authentication provider.
+
+Some providers require you to use the client_id and client_secret as basic authentication username and password. Usually this also means that you must use the `:access_token` url interpolation in `oauth2.userinfo_endpoint` to supply the access token.
+
+**Example:** `false`
+
 #### `oauth2.token_method`
 
 The HTTP method to use when requesting access tokens from the token endpoint. Normally it's `POST`; however, some providers only support `GET` with an authorization code as a query parameter in the URL.
