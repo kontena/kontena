@@ -2,7 +2,7 @@ module Kontena::Cli::Nodes::Labels
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
 
-    parameter "NODE_ID", "Node id"
+    parameter "NODE", "Node"
 
     # the command outputs id info only anyway, this is here strictly for ignoring purposes
     option ['-q', '--quiet'], :flag, "Output the identifying column only", hidden: true
@@ -12,7 +12,7 @@ module Kontena::Cli::Nodes::Labels
     requires_current_grid
 
     def execute
-      node = client.get("nodes/#{current_grid}/#{node_id}")
+      node = client.get("nodes/#{current_grid}/#{self.node}")
       puts Array(node['labels']).join("\n")
     end
   end
