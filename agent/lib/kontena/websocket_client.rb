@@ -41,10 +41,10 @@ module Kontena
       @connecting = false
       @ping_timer = nil
 
-      if @grid_token
-        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{host_id}"
-      elsif @node_token
+      if @node_token
         info "initialized with node token #{@node_token[0..8]}..., node ID #{host_id}"
+      elsif @grid_token
+        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{host_id}"
       else
         fail "Missing grid, node token"
       end
@@ -82,8 +82,13 @@ module Kontena
           'Kontena-Node-Labels' => labels,
           'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
-      headers['Kontena-Grid-Token'] = @grid_token.to_s if @grid_token
-      headers['Kontena-Node-Token'] = @node_token.to_s if @node_token
+      if @node_token
+        headers['Kontena-Node-Token'] = @node_token.to_s
+      elsif @grid_token
+        headers['Kontena-Grid-Token'] = @grid_token.to_s
+      else
+        fail "Missing grid, node token"
+      end
 
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
