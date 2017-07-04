@@ -90,21 +90,10 @@ module OutputHelpers
     supports_block_expectations
 
     match do |block|
-      stdout = lines.flatten.join("\n") + "\n"
+      @expected = lines.flatten
+      @actual = CaptureStdoutLines.capture(block)
 
-      begin
-        expect{@return = block.call}.to output(stdout).to_stdout
-      rescue Exception => error
-        @error = error
-
-        return false
-      else
-        return true
-      end
-    end
-
-    failure_message do |block|
-      return @error
+      values_match?(@actual, @expected)
     end
   end
 
