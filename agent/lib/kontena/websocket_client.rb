@@ -90,7 +90,10 @@ module Kontena
         fail "Missing grid, node token"
       end
 
-      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
+      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {
+        headers: headers,
+        tls: { verify_peer: true },
+      })
 
       notify_actors('websocket:connect', self)
 
