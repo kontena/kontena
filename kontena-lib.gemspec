@@ -1,3 +1,5 @@
+# TODO: version from ./VERSION
+
 Gem::Specification.new do |s|
   s.name          = 'kontena-lib'
   s.version       = '1.4.0.dev'
@@ -8,6 +10,7 @@ Gem::Specification.new do |s|
   s.homepage      = "https://www.kontena.io"
   s.license       = "Apache-2.0"
 
+  #s.files        = TODO
   s.executables   = []
   s.require_paths = ['lib']
 
