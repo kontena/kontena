@@ -3,9 +3,9 @@ require 'forwardable'
 require 'socket'
 require 'openssl'
 
-require './client/connection'
-
 class Kontena::Websocket::Client
+  require_relative './client/connection'
+
   extend Forwardable
 
   attr_reader :uri
