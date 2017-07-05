@@ -1,5 +1,6 @@
 source 'https://rubygems.org'
 
+gem 'kontena-lib', path: '..'
 gem 'docker-api', '~> 1.32.0'
 gem 'eventmachine', '~> 1.2.3'
 gem 'faye-websocket', '~> 0.10.7'

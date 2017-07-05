@@ -22,15 +22,15 @@ services:
   agent:
     container_name: kontena-agent
     build:
-      context: agent
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.agent
     env_file: agent/.env
     environment:
       - KONTENA_URI=ws://localhost:9292
     network_mode: "host"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./agent:/app
+      - ./agent:/opt/kontena/agent
     depends_on:
       - api
 
