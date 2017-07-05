@@ -4,15 +4,16 @@ MAINTAINER Kontena, Inc. <info@kontena.io>
 RUN apk update && apk --update add tzdata ruby ruby-irb ruby-bigdecimal \
     ruby-io-console ruby-json ca-certificates libssl1.0 openssl libstdc++
 
-ADD Gemfile /app/
-ADD Gemfile.lock /app/
+ADD kontena-lib.gemspec /opt/kontena/
+ADD agent/Gemfile agent/Gemfile.lock /opt/kontena/agent/
 
 RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-dev && \
     gem install bundler --no-ri --no-rdoc && \
-    cd /app ; bundle install --without development test && \
+    cd /opt/kontena/agent/ ; bundle install --without development test && \
     apk del build-dependencies
 
-WORKDIR /app
-ADD . /app
+ADD lib /opt/kontena/lib
+ADD agent /opt/kontena/agent
 
-CMD ["/app/bin/kontena-agent"]
+WORKDIR /opt/kontena/agent
+CMD bundle exec /opt/kontena/agent/bin/kontena-agent

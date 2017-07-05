@@ -1,7 +1,7 @@
 agent:
   container_name: kontena-agent
-  build: .
-  dockerfile: Dockerfile
+  build: ..
+  dockerfile: Dockerfile.agent
   env_file: .env
   net: host
   environment:

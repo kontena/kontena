@@ -1,3 +1,8 @@
+PATH
+  remote: ..
+  specs:
+    kontena-lib (1.4.0.dev)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -93,6 +98,7 @@ DEPENDENCIES
   eventmachine (~> 1.2.3)
   faye-websocket (~> 0.10.7)
   fluent-logger (~> 0.6.2)
+  kontena-lib!
   msgpack (~> 1.0.3)
   rake
   rspec
