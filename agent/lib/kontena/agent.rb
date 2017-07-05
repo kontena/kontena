@@ -9,10 +9,6 @@ module Kontena
     def initialize(opts)
       info "initializing agent (version #{VERSION})"
       @opts = opts
-      @client = Kontena::WebsocketClient.new(@opts[:api_uri],
-        grid_token: @opts[:grid_token],
-        node_token: @opts[:node_token],
-      )
       @supervisor = Celluloid::Supervision::Container.run!
       self.supervise_state
       self.supervise_launchers
@@ -23,8 +19,7 @@ module Kontena
 
     # Connect to master server
     def connect!
-      start_em
-      @client.ensure_connect
+      self.supervise_client
     end
 
     def run!
@@ -73,6 +68,17 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
         as: :node_info_worker
+      )
+    end
+
+    def supervise_client
+      @supervisor.supervise(
+        type: Kontena::WebsocketClient,
+        as: :websocket_client,
+        args: [@opts[:api_uri], {
+          grid_token: @opts[:grid_token],
+          node_token: @opts[:node_token],
+        }]
       )
     end
 
@@ -158,15 +164,6 @@ module Kontena
         type: Kontena::LoadBalancers::Registrator,
         as: :lb_registrator
       )
-    end
-
-    def start_em
-      EM.epoll
-      Thread.new {
-        Thread.current.abort_on_exception = true
-        EventMachine.run
-      } unless EventMachine.reactor_running?
-      sleep 0.01 until EventMachine.reactor_running?
     end
   end
 end

@@ -3,16 +3,15 @@ require_relative 'logging'
 require_relative 'rpc_server'
 require_relative 'rpc_client'
 
-module Faye::WebSocket::Client::Connection
-  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
-  # force connection to close without waiting if the send buffer is full
-  def close_connection_after_writing
-    close_connection
-  end
-end
-
+# Celluloid::Notifications:
+#   websocket:connect [Kontena::WebsocketClient] connecting, not yet connected
+#   websocket:open [Kontena::WebsocketClient] connected, websocket open
+#   websocket:disconnect [Kontena::WebsocketClient] websocket closing
+#   websocket:close [Kontena::WebsocketClient] websocket closed
 module Kontena
   class WebsocketClient
+    include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
 
     STRFTIME = '%F %T.%NZ'
@@ -24,19 +23,14 @@ module Kontena
                 :rpc_server,
                 :ping_timer
 
-    delegate :on, to: :ws
-
     # @param [String] api_uri
     # @param [String] grid_token
     # @param [String] node_token
-    def initialize(api_uri, grid_token: nil, node_token: nil)
+    def initialize(api_uri, grid_token: nil, node_token: nil, autostart: true)
       @api_uri = api_uri
       @grid_token = grid_token
       @node_token = node_token
 
-      @rpc_server = Kontena::RpcServer.supervise(as: :rpc_server)
-      @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
-      @abort = false
       @connected = false
       @connecting = false
       @ping_timer = nil
@@ -48,17 +42,12 @@ module Kontena
       else
         fail "Missing grid, node token"
       end
-    end
 
-    def ensure_connect
-      EM::PeriodicTimer.new(1) {
-        connect unless connected?
-      }
-      EM::PeriodicTimer.new(KEEPALIVE_INTERVAL) {
-        if connected?
-          EM.next_tick { verify_connection }
-        end
-      }
+      # XXX:
+      @rpc_server = Kontena::RpcServer.supervise(as: :rpc_server)
+      @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
+
+      self.start if autostart
     end
 
     # @return [Boolean]
@@ -71,10 +60,17 @@ module Kontena
       @connecting
     end
 
+    def start
+      every(1.0) do
+        connect if !connected? unless connecting?
+      end
+
+      every(KEEPALIVE_INTERVAL) do
+        keepalive if connected?
+      end
+    end
+
     def connect
-      return if connecting?
-      @connected = false
-      @connecting = true
       info "connecting to master at #{api_uri}"
       headers = {
           'Kontena-Node-Id' => host_id.to_s,
@@ -90,39 +86,50 @@ module Kontena
         fail "Missing grid, node token"
       end
 
-      @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {
+      @ws = Kontena::Websocket::Client.new(self.api_uri,
         headers: headers,
-        tls: { verify_peer: true },
-      })
+        ssl_verify: true,
+      )
 
-      notify_actors('websocket:connect', self)
-
+      # XXX: these should become async actor calls?
       @ws.on :open do |event|
-        on_open(event)
+        self.on_open(event)
       end
       @ws.on :message do |event|
-        on_message(event)
+        self.on_message(event)
       end
       @ws.on :close do |event|
-        on_close(event)
+        self.on_close(event)
       end
       @ws.on :error do |event|
-        on_error(event)
+        self.on_error(event)
       end
+
+      ws.connect!
+
+      # service the websocket reads, and emit events
+      async.read_ws @ws
+
+      @connecting = true
+
+      publish('websocket:connect', self)
+    end
+
+    # @param ws [Kontena::Websocket::Client]
+    def read_ws(ws)
+      # run the blocking websocket client read in a separate thread
+      # raises on errors, crashing the actor
+      defer {
+        ws.read
+      }
     end
 
     ##
     # @param [String, Array] msg
     def send_message(msg)
-      EM.next_tick {
-        begin
-          @ws.send(msg) if @ws
-        rescue
-          error "failed to send message"
-        end
-      }
-    rescue => exc
-      error "failed to send message: #{exc.message}"
+      fail "not connected" unless @ws
+
+      @ws.send(msg)
     end
 
     # @param [String] method
@@ -130,8 +137,6 @@ module Kontena
     def send_notification(method, params)
       data = MessagePack.dump([2, method, params]).bytes
       send_message(data)
-    rescue => exc
-      error "failed to send notification: #{exc.message}"
     end
 
     # @param [Integer] id
@@ -140,20 +145,18 @@ module Kontena
     def send_request(id, method, params)
       data = MessagePack.dump([0, id, method, params]).bytes
       send_message(data)
-    rescue => exc
-      error "failed to send request: #{exc.message}"
     end
 
-    # @param [Faye::WebSocket::API::Event] event
+    # @param [WebSocket::Driver::OpenEvent] event
     def on_open(event)
       ping_timer.cancel if ping_timer
       info 'connection established'
       @connected = true
       @connecting = false
-      notify_actors('websocket:open', event)
+      publish('websocket:open', self)
     end
 
-    # @param [Faye::WebSocket::API::Event] event
+    # @param [WebSocket::Driver::MessageEvent] event.data
     def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
@@ -163,25 +166,25 @@ module Kontena
       elsif notification_message?(data)
         Celluloid::Actor[:rpc_server].async.handle_notification(data)
       end
-    rescue => exc
-      error exc.message
     end
 
-    def on_error(event)
-      debug event.message.inspect
+    # @param [Exception]
+    def on_error(exc)
+      debug exc.inspect
 
-      if event.message == Errno::EINVAL
+      case exc
+      when Errno::EINVAL
         error "invalid URI: #{api_uri}"
-      elsif event.message == Errno::ECONNREFUSED
+      when Errno::ECONNREFUSED
         error "connection refused: #{api_uri}"
-      elsif event.message == Errno::EPROTO
+      when Errno::EPROTO
         error "protocol error, check ws/wss: #{api_uri}"
       else
         error "connection error: #{event.message}"
       end
     end
 
-    # @param [Faye::WebSocket::API::Event] event
+    # @param [WebSocket::Driver::CloseEvent] event.code, event.reason
     def on_close(event)
       @ping_timer = nil
       @connected = false
@@ -198,25 +201,23 @@ module Kontena
       else
         warn "connection closed with code #{event.code}: #{event.reason}"
       end
-      notify_actors('websocket:close', nil)
-    rescue => exc
-      error exc.message
+      publish('websocket:close', nil)
     end
 
     def handle_invalid_token
       error 'master does not accept our token, shutting down ...'
-      EM.next_tick { abort('Shutting down ...') }
+      Kernel.abort('Shutting down ...')
     end
 
     def handle_invalid_version(reason)
       agent_version = Kontena::Agent::VERSION
       error "master does not accept our version (#{agent_version}): #{reason}"
-      EM.next_tick { abort("Shutting down ...") }
+      Kernel.abort("Shutting down ...")
     end
 
     def handle_invalid_connection(reason)
       error "master indicates that this agent should not reconnect: #{reason}"
-      EM.next_tick { abort("Shutting down ...") }
+      Kernel.abort("Shutting down ...")
     end
 
     # @param [Array] msg
@@ -251,7 +252,7 @@ module Kontena
       return if @ping_timer
 
       ping_time = Time.now
-      @ping_timer = EM::Timer.new(PING_TIMEOUT) do
+      @ping_timer = after(PING_TIMEOUT) do
         delay = Time.now - ping_time
 
         # @ping_timer remains nil until re-connected to prevent further keepalives while closing
@@ -260,7 +261,7 @@ module Kontena
           close
         end
       end
-      ws.ping {
+      @ws.ping {
         @ping_timer.cancel
         @ping_timer = nil
 
@@ -272,21 +273,15 @@ module Kontena
           debug "keepalive ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
         end
       }
-    rescue => exc
-      error exc.message
     end
 
     # Abort the connection, closing the websocket, with a timeout
     def close
       # stop sending messages, queue them up until reconnected
-      notify_actors('websocket:disconnect', nil)
+      publish('websocket:disconnect', self)
 
       # send close frame; this has a 30s timeout
-      ws.close
-    end
-
-    def notify_actors(event, value)
-      Celluloid::Notifications.publish(event, value)
+      @ws.close
     end
   end
 end

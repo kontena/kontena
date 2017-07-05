@@ -1,8 +1,5 @@
 require 'docker'
-require 'faye/websocket'
-require 'eventmachine'
 require 'thread'
-
 require 'statsd'
 require 'celluloid/current'
 require 'celluloid/autostart'
@@ -10,6 +7,7 @@ require 'active_support/core_ext/time'
 require 'active_support/core_ext/module/delegation'
 
 require 'kontena-lib'
+require 'kontena-websocket-client'
 
 require_relative 'ipaddr_helpers'
 

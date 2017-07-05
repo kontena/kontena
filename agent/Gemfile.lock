@@ -40,11 +40,7 @@ GEM
     dotenv (1.0.2)
     etcd (0.3.0)
       mixlib-log
-    eventmachine (1.2.3)
     excon (0.54.0)
-    faye-websocket (0.10.7)
-      eventmachine (>= 0.12.0)
-      websocket-driver (>= 0.5.1)
     fluent-logger (0.6.2)
       msgpack (>= 0.5.6, < 2)
     hitimes (1.2.3)
@@ -95,8 +91,6 @@ DEPENDENCIES
   docker-api (~> 1.32.0)
   dotenv
   etcd
-  eventmachine (~> 1.2.3)
-  faye-websocket (~> 0.10.7)
   fluent-logger (~> 0.6.2)
   kontena-lib!
   msgpack (~> 1.0.3)
@@ -106,6 +100,7 @@ DEPENDENCIES
   statsd-ruby
   vmstat
   webmock
+  websocket-driver (~> 0.6.5)
 
 BUNDLED WITH
    1.15.1
