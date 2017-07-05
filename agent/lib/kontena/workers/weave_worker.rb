@@ -1,5 +1,4 @@
 require 'docker'
-require_relative '../logging'
 require_relative '../helpers/weave_helper'
 
 module Kontena::Workers

@@ -1,7 +1,6 @@
 require 'docker'
 require 'celluloid'
 require_relative 'common'
-require_relative '../logging'
 require_relative '../helpers/weave_helper'
 require_relative '../helpers/port_helper'
 require_relative '../helpers/rpc_helper'

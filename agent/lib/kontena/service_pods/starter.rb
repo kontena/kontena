@@ -1,6 +1,5 @@
 require 'docker'
 require_relative 'common'
-require_relative '../logging'
 
 module Kontena
   module ServicePods

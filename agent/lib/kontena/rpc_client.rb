@@ -1,4 +1,3 @@
-require_relative 'logging'
 require_relative 'helpers/wait_helper'
 
 

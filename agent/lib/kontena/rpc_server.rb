@@ -4,7 +4,6 @@ require_relative 'rpc/etcd_api'
 require_relative 'rpc/service_pods_api'
 require_relative 'rpc/lb_api'
 require_relative 'rpc/volumes_api'
-require_relative 'logging'
 
 module Kontena
   class RpcServer

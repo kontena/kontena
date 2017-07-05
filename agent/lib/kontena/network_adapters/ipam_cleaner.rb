@@ -1,5 +1,3 @@
-require_relative '../logging'
-
 module Kontena::NetworkAdapters
   class IpamCleaner
     include Celluloid

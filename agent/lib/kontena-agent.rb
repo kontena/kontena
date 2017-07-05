@@ -10,6 +10,7 @@ require 'active_support/core_ext/time'
 require 'active_support/core_ext/module/delegation'
 
 require 'kontena-lib'
+require 'kontena-logging'
 
 require_relative 'ipaddr_helpers'
 
@@ -17,7 +18,6 @@ require_relative 'docker/version'
 require_relative 'docker/container'
 require_relative 'etcd/health'
 require_relative 'etcd/client_patch'
-require_relative 'kontena/logging'
 require_relative 'kontena/websocket_client'
 
 require_relative 'kontena/models/node'

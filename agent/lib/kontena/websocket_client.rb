@@ -1,5 +1,4 @@
 require 'msgpack'
-require_relative 'logging'
 require_relative 'rpc_server'
 require_relative 'rpc_client'
 
