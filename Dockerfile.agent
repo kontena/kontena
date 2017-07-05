@@ -4,7 +4,7 @@ MAINTAINER Kontena, Inc. <info@kontena.io>
 RUN apk update && apk --update add tzdata ruby ruby-irb ruby-bigdecimal \
     ruby-io-console ruby-json ca-certificates libssl1.0 openssl libstdc++
 
-ADD kontena-lib.gemspec /opt/kontena/
+ADD common/kontena-common.gemspec /opt/kontena/common/
 ADD agent/Gemfile agent/Gemfile.lock /opt/kontena/agent/
 
 RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-dev && \
@@ -12,7 +12,7 @@ RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-de
     cd /opt/kontena/agent/ ; bundle install --without development test && \
     apk del build-dependencies
 
-ADD lib /opt/kontena/lib
+ADD common /opt/kontena/common
 ADD agent /opt/kontena/agent
 
 WORKDIR /opt/kontena/agent

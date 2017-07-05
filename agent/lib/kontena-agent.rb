@@ -9,7 +9,7 @@ require 'celluloid/autostart'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/module/delegation'
 
-require 'kontena-lib'
+gem 'kontena-common'
 require 'kontena-logging'
 require 'kontena-wait'
 
