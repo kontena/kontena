@@ -134,10 +134,11 @@ class Kontena::Websocket::Client
       begin
         data = @socket.readpartial(FRAME_SIZE)
       rescue EOFError
+        # XXX: fail @driver?
         break
       end
 
-      @client.parse(data)
+      @driver.parse(data)
     end
   end
 
