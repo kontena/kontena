@@ -27,8 +27,8 @@ module Kontena
           )
           service_container.restart!('timeout' => service_container.stop_grace_period)
           log_service_pod_event(
-            self.service_id, self.instance_number,		
-            "service:start_instance", "service instance #{service_container.name_for_humans} started successfully"		
+            self.service_id, self.instance_number,
+            "service:start_instance", "service instance #{service_container.name_for_humans} started successfully"
           )
         end
 

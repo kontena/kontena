@@ -11,6 +11,7 @@ require 'active_support/core_ext/module/delegation'
 
 require 'kontena-lib'
 require 'kontena-logging'
+require 'kontena-wait'
 
 require_relative 'ipaddr_helpers'
 

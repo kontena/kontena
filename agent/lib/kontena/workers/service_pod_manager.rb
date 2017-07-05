@@ -7,8 +7,8 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Observer
+    include Kontena::Wait::Helper
     include Kontena::Helpers::RpcHelper
-    include Kontena::Helpers::WaitHelper
 
     attr_reader :workers, :node
 

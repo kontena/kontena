@@ -1,11 +1,8 @@
-require_relative 'helpers/wait_helper'
-
-
 module Kontena
   class RpcClient
     include Celluloid
     include Kontena::Logging
-    include Kontena::Helpers::WaitHelper
+    include Kontena::Wait::Helper
 
     REQUEST_ID_RANGE = 1..2**31
 
