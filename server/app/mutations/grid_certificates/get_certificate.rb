@@ -25,9 +25,11 @@ module GridCertificates
         domain_authz = get_authz_for_domain(self.grid, domain)
 
         if domain_authz
-          # Check that the expected DNS record is already in place
-          unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
-            add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
+          if domain_authz.authorization_type == 'dns-01'
+            # Check that the expected DNS record is already in place
+            unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
+              add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
+            end
           end
         else
           add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
@@ -91,21 +93,6 @@ module GridCertificates
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n") if exc.backtrace
       add_error(:acme_client, :error, exc.message)
-    end
-
-    def upsert_secret(name, value)
-      cert_secret = self.grid.grid_secrets.find_by(name: name)
-      if cert_secret
-        outcome = GridSecrets::Update.run(grid_secret: cert_secret, value: value)
-      else
-        outcome = GridSecrets::Create.run(grid: self.grid, name: name, value: value)
-      end
-
-      unless outcome.success?
-        add_error(:cert_store, :failure, "Certificate storing to vault failed: #{outcome.errors.message}")
-        return
-      end
-      outcome.result
     end
 
     def validate_dns_record(domain, expected_record)

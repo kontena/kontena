@@ -9,6 +9,9 @@ class GridDomainAuthorization
   field :domain, type: String
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
+  field :authorization_type, type: String
+
+  has_one :grid_service
 
   index({ grid_id: 1 })
   index({ domain: 1 })

@@ -43,6 +43,8 @@ class GridService
   belongs_to :grid
   belongs_to :image
   belongs_to :stack
+  belongs_to :grid_domain_authorization
+
   has_many :grid_service_instances, dependent: :destroy
   has_many :containers
   has_many :container_logs
