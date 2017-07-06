@@ -34,6 +34,8 @@ require_relative '../server'
 require 'rack/test'
 require 'mongoid-rspec'
 
+require_relative '../lib/celluloid_tracer' # after celluloid require
+
 require_relative '../app/services/mongodb/migrator'
 
 Celluloid.logger = nil
