@@ -13,14 +13,17 @@ module Kontena::Cli::Certificate
     def execute
       require_api_url
       token = require_token
-
+      raise "LB Link has to be given if tls-sni-01 authorization type is used" if (self.auth_type == 'tls-sni-01' && self.lb_link.nil?)
       data = {domain: self.domain, authorization_type: self.auth_type, lb_link: self.lb_link}
-      response = client(token).post("certificates/#{current_grid}/authorize", data)
+
+      response = client(token).put("domain_authorizations/#{current_grid}/#{self.domain}", data)
+
       puts "Authorization successfully created. Use the following details to create necessary validations:"
       if self.auth_type == 'dns-01'
-        puts "Record name: #{response['record_name']}.#{domain}"
-        puts "Record type: #{response['record_type']}"
-        puts "Record content: #{response['record_content']}"
+        challenge_opts = response['challenge_opts']
+        puts "Record name: #{challenge_opts['record_name']}.#{domain}"
+        puts "Record type: #{challenge_opts['record_type']}"
+        puts "Record content: #{challenge_opts['record_content']}"
       elsif self.auth_type == 'tls-sni-01'
         puts "Point the public DNS A record of #{self.domain} to the public IP address(es) of the #{self.lb_link}"
       end

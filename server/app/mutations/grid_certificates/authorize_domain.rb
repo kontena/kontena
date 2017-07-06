@@ -66,12 +66,13 @@ module GridCertificates
       challenge = authorization.tls_sni01
       verification_cert = [challenge.certificate.to_pem, challenge.private_key.to_pem].join
       secret_name = [LE_TLS_SNI_PREFIX, domain_to_vault_key(self.domain)].join('_')
+      puts "************** #{secret_name}"
       tls_sni_secret = upsert_secret(secret_name, verification_cert)
-      debug "upserted tls-sni secret: #{tls_sni_secret.name}"
       if tls_sni_secret.nil?
         add_error(:tls_sni_secret, :error, "Failed to store the needed tls-sni-01 secret")
         return
       end
+      debug "upserted tls-sni secret: #{tls_sni_secret.name}"
       add_secret_to_service(tls_sni_secret, @lb_service) if @lb_service
       challenge
     end

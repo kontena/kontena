@@ -36,7 +36,7 @@ module GridCertificates
     end
 
     def domain_to_vault_key(domain)
-      domain.sub('.', '_')
+      domain.gsub('.', '_')
     end
 
     def get_authz_for_domain(grid, domain)
