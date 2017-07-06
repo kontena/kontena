@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.3.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.3.rc1) (2017-07-6)
+## [1.3.3](https://github.com/kontena/kontena/releases/tag/v1.3.3) (2017-07-06)
 
 **Master & Agents:**
 
