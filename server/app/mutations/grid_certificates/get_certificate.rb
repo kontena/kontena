@@ -7,6 +7,7 @@ module GridCertificates
   class GetCertificate < Mutations::Command
     include Common
     include Logging
+    include WaitHelper
 
     LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
 
@@ -56,10 +57,8 @@ module GridCertificates
           end
         end
 
-        Timeout::timeout(30) {
-          info 'waiting for DNS validation...'
-          sleep 1 until challenge.verify_status == 'valid'
-          info 'DNS validation complete'
+        wait_until!("domain verification for #{domain} is valid", interval: 1, timeout: 30, threshold: 10) {
+          challenge.verify_status == 'valid'
         }
 
         domain_authz.state = :validated
@@ -81,11 +80,13 @@ module GridCertificates
 
 
       secrets = []
-      secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
-      secrets << upsert_secret("#{self.secret_name}_CERTIFICATE", cert)
-      secrets << upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join)
+      private_key_secret = upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
+      cert_secret = upsert_secret("#{self.secret_name}_CERTIFICATE", cert)
+      bundle_secret = upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join)
 
-      secrets
+      cert_model = upsert_certificate(self.grid, self.domains, certificate, private_key_secret, cert_secret, bundle_secret, self.cert_type)
+
+      cert_model
     rescue Timeout::Error
       warn 'timeout while waiting for DNS verfication status'
       add_error(:challenge_verify, :timeout, 'Challenge verification timeout')
@@ -93,6 +94,30 @@ module GridCertificates
       error "#{exc.class.name}: #{exc.message}"
       error exc.backtrace.join("\n") if exc.backtrace
       add_error(:acme_client, :error, exc.message)
+    end
+
+    def upsert_certificate(grid, domains, certificate, private_key_secret, certificate_secret, bundle_secret, certificate_type)
+      cert = self.grid.certificates.find_by(subject: certificate.x509.subject.to_s)
+      if cert
+        cert.domains = domains
+        cert.valid_until = certificate.x509.not_after
+        cert.cert_type = certificate_type
+        cert.private_key = private_key_secret
+        cert.certificate = certificate_secret
+        cert.certificate_bundle = bundle_secret
+        cert.save
+      else
+        Certificate.create!(
+          grid: grid,
+          subject: certificate.x509.subject.to_s,
+          valid_until: certificate.x509.not_after,
+          domains: domains,
+          cert_type: certificate_type,
+          private_key: private_key_secret,
+          certificate: certificate_secret,
+          certificate_bundle: bundle_secret
+        )
+      end
     end
 
     def validate_dns_record(domain, expected_record)

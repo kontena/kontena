@@ -28,7 +28,6 @@ module V1
             if outcome.success?
               @authorization = outcome.result
               response.status = 200
-              # TODO Render something
               render('domain_authorizations/show')
             else
               response.status = 422

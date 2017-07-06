@@ -81,13 +81,14 @@ describe '/v1/domain_authorizations' do
 
   describe 'PUT' do
     it 'creates new auth request' do
+      auth = GridDomainAuthorization.create!(grid: grid, domain: 'foo.bar.com')
       data = {
         domain: 'foo.bar.com',
         auth_type: 'tls-sni-01'
       }
       outcome = double({
         :success? => true,
-        :result => {}
+        :result => auth
       })
       expect(GridCertificates::AuthorizeDomain).to receive(:run).and_return(outcome)
 

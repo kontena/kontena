@@ -2,8 +2,7 @@
 describe GridCertificates::AuthorizeDomain do
 
   let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid
+    Grid.create!(name: 'test-grid')
   }
 
   context 'dns01 validation' do

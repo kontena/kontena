@@ -1,4 +1,4 @@
-class Configuration
+class Certificate
   include Mongoid::Document
 
   field :subject, type: String
@@ -7,6 +7,7 @@ class Configuration
 
   field :cert_type, type: String
 
+  # Need to have references to the secrets to know which ones to automatically update
   has_one :private_key, class_name: 'GridSecret'
   has_one :certificate, class_name: 'GridSecret'
   has_one :certificate_bundle, class_name: 'GridSecret'

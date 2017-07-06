@@ -4,8 +4,7 @@ describe GridCertificates::GetCertificate do
   let(:subject) { described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com']) }
 
   let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid
+    Grid.create!(name: 'test-grid')
   }
 
   let(:authz) {
@@ -13,7 +12,7 @@ describe GridCertificates::GetCertificate do
       'record_name' => '_acme-challenge',
       'record_content' => '1234567890'
     }
-    authz = GridDomainAuthorization.create(grid: grid, domain: 'example.com', challenge: {}, challenge_opts: challenge_opts)
+    authz = GridDomainAuthorization.create(grid: grid, domain: 'example.com', challenge: {}, challenge_opts: challenge_opts, authorization_type: 'dns-01')
     authz
   }
 
@@ -69,7 +68,7 @@ describe GridCertificates::GetCertificate do
       expect(challenge).to receive(:request_verification).and_return(true)
       expect(challenge).to receive(:verify_status).and_return('valid')
       expect(subject).to receive(:upsert_secret).exactly(3).times.and_return(double({success?: true}))
-
+      expect(subject).to receive(:upsert_certificate)
       subject.execute
     end
 
@@ -92,7 +91,7 @@ describe GridCertificates::GetCertificate do
       expect(challenge).to receive(:request_verification).and_return(true)
       expect(challenge).to receive(:verify_status).and_return('valid')
       expect(subject).to receive(:upsert_secret).exactly(3).times.and_return(double({success?: true}))
-
+      expect(subject).to receive(:upsert_certificate)
       subject.execute
     end
 
@@ -115,6 +114,7 @@ describe GridCertificates::GetCertificate do
       expect(challenge).to receive(:request_verification).and_return(true)
       expect(challenge).to receive(:verify_status).and_return('valid')
       expect(subject).to receive(:upsert_secret).exactly(3).times.and_return(double({success?: true}))
+      expect(subject).to receive(:upsert_certificate)
 
       subject.execute
     end
@@ -193,6 +193,48 @@ describe GridCertificates::GetCertificate do
       expect(GridSecrets::Create).to receive(:run).and_return(double({success?: false, errors: double({message:'error'})}))
       expect(subject).to receive(:add_error)
       subject.upsert_secret('foo', 'cert_content')
+    end
+  end
+
+  describe '#upsert_certificate' do
+    it 'updates existing certificate model' do
+      secret = GridSecret.create!(name: 'secret', value: 'secret')
+      cert = Certificate.create!(
+        grid: grid,
+        subject: '/CN=bar.com',
+        valid_until: DateTime.now,
+        domains: ['bar.com', 'foo.bar.com'],
+        cert_type: 'fullchain',
+        private_key: secret,
+        certificate: secret,
+        certificate_bundle: secret
+      )
+      expect {
+        subject.upsert_certificate(
+          grid,
+          ['bar.com', 'foo.bar.com'],
+          double(:certificate, {:x509 => double({:subject => double({:to_s => '/CN=bar.com'}), :not_after => DateTime.now + 90})}),
+          secret,
+          secret,
+          secret,
+          'fullchain'
+        )
+      }.to change{cert.reload.valid_until}
+    end
+
+    it 'creates new certificate model' do
+      secret = GridSecret.create!(name: 'secret', value: 'secret')
+      expect {
+        subject.upsert_certificate(
+          grid,
+          ['bar.com', 'foo.bar.com'],
+          double(:certificate, {:x509 => double({:subject => double({:to_s => '/CN=bar.com'}), :not_after => DateTime.now + 90})}),
+          secret,
+          secret,
+          secret,
+          'fullchain'
+        )
+      }.to change{Certificate.count}.by (1)
     end
   end
 

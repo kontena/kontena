@@ -33,10 +33,10 @@ module V1
         data[:grid] = @grid
         outcome = GridCertificates::GetCertificate.run(data)
         if outcome.success?
-          @cert_secrets = outcome.result
+          cert = outcome.result
           response.status = 201
 
-          @cert_secrets.collect { |s| s.name}
+          [cert.private_key.name, cert.certificate.name, cert.certificate_bundle.name]
         else
           response.status = 422
           {error: outcome.errors.message}
