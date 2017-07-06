@@ -167,6 +167,58 @@ describe '/v1/grids', celluloid: true do
       end
     end
 
+    EXPECTED_CERT_KEYS = %w(certificate_bundle_secret certificate_secret certificate_type domain id private_key_Secret alt_names valid_until).sort
+
+    describe '/:id/certificates' do
+
+      it 'creates new certificate' do
+        grid = david.grids.first
+        payload = {
+
+        }
+        secret = GridSecret.create!(name: 'secret', value: 'secret')
+        cert = Certificate.create!(
+          grid: grid,
+          domain: 'bar.com',
+          valid_until: DateTime.now,
+          alt_names: ['foo.bar.com'],
+          cert_type: 'fullchain',
+          private_key: secret,
+          certificate: secret,
+          certificate_bundle: secret
+        )
+        outcome = double(:outcome, {
+          success?: true,
+          result: cert
+        })
+        expect(GridCertificates::GetCertificate).to receive(:run).and_return(outcome)
+        post "/v1/grids/#{grid.to_path}/certificates", payload.to_json, request_headers
+        expect(response.status).to eq(201)
+        expect(json_response.keys.sort).to eq(EXPECTED_CERT_KEYS)
+        expect(json_response['domain']).to eq('bar.com')
+        expect(json_response['alt_names']).to eq(['foo.bar.com'])
+      end
+
+      it 'fails to create new certificate' do
+        grid = david.grids.first
+        payload = {
+
+        }
+
+        outcome = double(:outcome, {
+          success?: false,
+          result: nil,
+          errors: double({message: 'ERROR'})
+        })
+        expect(GridCertificates::GetCertificate).to receive(:run).and_return(outcome)
+        post "/v1/grids/#{grid.to_path}/certificates", payload.to_json, request_headers
+        expect(response.status).to eq(422)
+        expect(json_response['error']).to eq('ERROR')
+
+      end
+
+    end
+
   end
 
   describe 'GET /' do
@@ -404,16 +456,16 @@ describe '/v1/grids', celluloid: true do
         memory: {
           total: 1000,
           used: 100
-      	},
-      	filesystem: [{
+          },
+          filesystem: [{
           total: 1000,
           used: 10
         }],
-      	cpu: {
+          cpu: {
           num_cores: 2,
           system: 5.5,
           user: 10.0
-      	},
+          },
         network: {
           internal: {
             interfaces: ["weave", "vethwe123"],

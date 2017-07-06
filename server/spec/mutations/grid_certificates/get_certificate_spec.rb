@@ -201,9 +201,9 @@ describe GridCertificates::GetCertificate do
       secret = GridSecret.create!(name: 'secret', value: 'secret')
       cert = Certificate.create!(
         grid: grid,
-        subject: '/CN=bar.com',
+        domain: 'bar.com',
         valid_until: DateTime.now,
-        domains: ['bar.com', 'foo.bar.com'],
+        alt_names: ['foo.bar.com'],
         cert_type: 'fullchain',
         private_key: secret,
         certificate: secret,
@@ -235,6 +235,10 @@ describe GridCertificates::GetCertificate do
           'fullchain'
         )
       }.to change{Certificate.count}.by (1)
+      cert = grid.certificates.first
+      expect(cert.domain).to eq('bar.com')
+      expect(cert.alt_names).to eq(['foo.bar.com'])
+      expect(cert.to_path).to eq("#{grid.name}/bar.com")
     end
   end
 

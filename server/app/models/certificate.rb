@@ -1,9 +1,9 @@
 class Certificate
   include Mongoid::Document
 
-  field :subject, type: String
+  field :domain, type: String
   field :valid_until, type: DateTime
-  field :domains, type: Array
+  field :alt_names, type: Array
 
   field :cert_type, type: String
 
@@ -14,6 +14,10 @@ class Certificate
 
   belongs_to :grid
 
-  index({ 'subject' => 1 }, { unique: true })
+  index({ 'domain' => 1 }, { unique: true })
+
+  def to_path
+    "#{self.grid.name}/#{self.domain}"
+  end
 
 end

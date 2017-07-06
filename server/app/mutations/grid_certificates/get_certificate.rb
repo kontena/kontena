@@ -97,9 +97,10 @@ module GridCertificates
     end
 
     def upsert_certificate(grid, domains, certificate, private_key_secret, certificate_secret, bundle_secret, certificate_type)
-      cert = self.grid.certificates.find_by(subject: certificate.x509.subject.to_s)
+      cert = self.grid.certificates.find_by(domain: domains[0])
       if cert
-        cert.domains = domains
+        cert.domain = domains[0]
+        cert.alt_names = domains[1..-1]
         cert.valid_until = certificate.x509.not_after
         cert.cert_type = certificate_type
         cert.private_key = private_key_secret
@@ -109,9 +110,9 @@ module GridCertificates
       else
         Certificate.create!(
           grid: grid,
-          subject: certificate.x509.subject.to_s,
+          domain: domains[0],
           valid_until: certificate.x509.not_after,
-          domains: domains,
+          alt_names: domains[1..-1],
           cert_type: certificate_type,
           private_key: private_key_secret,
           certificate: certificate_secret,
