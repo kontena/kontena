@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.3.rc1) (2017-07-6)
+
+**Master & Agents:**
+
+- Use latest HostNodeStat entry when serializing host node (#2555)
+- Run post_start hooks before wait for port (#2543)
+
+
 ## [1.3.2](https://github.com/kontena/kontena/releases/tag/v1.3.2) (2017-06-30)
 
 **Master & Agents:**
