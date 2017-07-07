@@ -311,6 +311,14 @@ describe '/v1/nodes', celluloid: true do
       expect(node.reload.labels).to eq(labels)
     end
 
+    it 'saves availability' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', labels: ['foo=bar'])
+      put "/v1/nodes/#{node.to_path}", {availability: 'drain', labels: ['foo=bar']}.to_json, request_headers
+      expect(response.status).to eq(200), response.body
+      expect(node.reload.labels).to eq(['foo=bar'])
+      expect(node.reload.availability).to eq('drain')
+    end
+
     it 'returns error with invalid id' do
       put "/v1/nodes/#{grid.name}/abc", {labels: []}.to_json, request_headers
       expect(response.status).to eq(404)
@@ -321,24 +329,12 @@ describe '/v1/nodes', celluloid: true do
       put "/v1/nodes/#{node.to_path}", {labels: []}.to_json, {}
       expect(response.status).to eq(403)
     end
-  end
 
-  describe 'POST' do
-    let(:node) {grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')}
-    describe 'availability' do
-      it 'runs availability mutation' do
-        outcome = double(:outcome, {:success? => true, :result => double({:availability => 'drain'})})
-        expect(HostNodes::Availability).to receive(:run).and_return(outcome)
-        post "/v1/nodes/#{node.to_path}/availability", {availability: 'drain'}.to_json, request_headers
-        expect(response.status).to eq(200)
-        expect(json_response['availability']).to eq('drain')
-      end
-      it 'returns 422 if mutation fails' do
-        expect(HostNodes::Availability).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
-        post "/v1/nodes/#{node.to_path}/availability", {}, request_headers
-        expect(response.status).to eq(422)
-      end
-
+    it 'returns 422 if mutation fails' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      expect(HostNodes::Update).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
+      put "/v1/nodes/#{node.to_path}", {}, request_headers
+      expect(response.status).to eq(422)
     end
   end
 

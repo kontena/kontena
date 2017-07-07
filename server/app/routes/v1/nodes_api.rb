@@ -114,6 +114,7 @@ module V1
             data = parse_json_body
             params = { host_node: @node }
             params[:labels] = data['labels'] if data['labels']
+            params[:availability] = data['availability'] if data['availability']
             outcome = HostNodes::Update.run(params)
             if outcome.success?
               @node = outcome.result
