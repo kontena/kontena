@@ -78,7 +78,7 @@ The re-scheduling of grid services will happen after the node offline grace peri
 
 ### Node availability
 
-Node availablity for scheduling services can be controlled with `kontena node availablity` command. The current supported states are: `drain`and `active`.
+Node availablity for scheduling services can be controlled with `kontena node update --availability` command. The current supported states are: `drain` and `active`.
 
 Nodes availablity status can be seen using `kontena node show xyz`:
 ```
@@ -96,15 +96,15 @@ moby:
 
 #### Active
 
-Kontena scheduler can assign tasks into any node marked as `active` availability. `active` is also the default state for all nodes. To re-activate a node use `kontena node availability xyz active`
+Kontena scheduler can assign tasks into any node marked as `active` availability. `active` is also the default state for all nodes. To re-activate a node use `kontena node update --availability active moby`
 
 #### Drain
 
-For a planned maintenance or node decommisioning it is a good idea to first drain the node so there are minimal disruptions on the services running. To drain the services from a node use `kontena node availability xyz drain`
+For a planned maintenance or node decommisioning it is a good idea to first drain the node so there are minimal disruptions on the services running. To drain the services from a node use `kontena node update --availability drain moby`
 
 Node draining means that all the stateless services will be re-scheduled immediately out from the node. Any stateful services running on that node will be stopped.
 
-Once the maintenance is over and a node can be put back to work it can be put into active state using `kontena node availability xyz dactive` command. This marks the node back in a `active` state where it will get new deployments as Kontena scheduler will see this node back in the available nodes list.
+Once the maintenance is over and a node can be put back to work it can be put into active state using `kontena node update --availability active moby` command. This marks the node back in a `active` state where it will get new deployments as Kontena scheduler will see this node back in the available nodes list.
 
 ### Decomissioning nodes
 
