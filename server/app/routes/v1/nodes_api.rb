@@ -125,21 +125,6 @@ module V1
           end
         end
 
-        r.post do
-          # POST /v1/nodes/:grid/:node/availability
-          r.on 'availability' do
-            data = parse_json_body
-            params = { host_node: @node }
-            params[:availability] = data['availability']
-            outcome = HostNodes::Availability.run(params)
-            if outcome.success?
-              {availability: outcome.result.availability}
-            else
-              halt_request(422, {error: outcome.errors.message})
-            end
-          end
-        end
-
         r.delete do
           r.is do
             audit_event(r, @grid, @node, 'remove node')
