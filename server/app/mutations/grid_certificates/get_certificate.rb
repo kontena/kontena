@@ -108,7 +108,7 @@ module GridCertificates
         cert.certificate_bundle = bundle_secret
         cert.save
       else
-        Certificate.create!(
+        cert = Certificate.create!(
           grid: grid,
           domain: domains[0],
           valid_until: certificate.x509.not_after,
@@ -119,6 +119,7 @@ module GridCertificates
           certificate_bundle: bundle_secret
         )
       end
+      cert
     end
 
     def validate_dns_record(domain, expected_record)
