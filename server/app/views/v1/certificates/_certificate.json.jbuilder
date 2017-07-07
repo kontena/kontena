@@ -1,4 +1,4 @@
-json.id certificate.id
+json.id certificate.to_path
 json.created_at certificate.created_at
 json.updated_at certificate.updated_at
 json.domain certificate.domain

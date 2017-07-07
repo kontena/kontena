@@ -197,6 +197,7 @@ describe '/v1/grids', celluloid: true do
         expect(json_response.keys.sort).to eq(EXPECTED_CERT_KEYS)
         expect(json_response['domain']).to eq('bar.com')
         expect(json_response['alt_names']).to eq(['foo.bar.com'])
+        expect(json_response['id']).to eq("#{grid.name}/bar.com")
       end
 
       it 'fails to create new certificate' do
