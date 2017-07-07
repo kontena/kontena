@@ -1,4 +1,6 @@
 json.id certificate.id
+json.created_at certificate.created_at
+json.updated_at certificate.updated_at
 json.domain certificate.domain
 json.valid_until certificate.valid_until.to_s
 json.alt_names certificate.alt_names

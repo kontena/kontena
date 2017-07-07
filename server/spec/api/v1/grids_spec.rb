@@ -167,7 +167,7 @@ describe '/v1/grids', celluloid: true do
       end
     end
 
-    EXPECTED_CERT_KEYS = %w(certificate_bundle_secret certificate_secret certificate_type domain id private_key_secret alt_names valid_until).sort
+    EXPECTED_CERT_KEYS = %w(certificate_bundle_secret certificate_secret certificate_type domain id private_key_secret alt_names valid_until created_at updated_at).sort
 
     describe '/:id/certificates' do
 

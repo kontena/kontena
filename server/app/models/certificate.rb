@@ -1,5 +1,6 @@
 class Certificate
   include Mongoid::Document
+  include Mongoid::Timestamps
 
   field :domain, type: String
   field :valid_until, type: DateTime
