@@ -22,7 +22,7 @@ module V1
 
         node
       end
-      
+
       r.on ':grid_name/:node_id' do |grid_name, node_id|
         validate_access_token
         require_current_user
@@ -132,8 +132,7 @@ module V1
             params[:availability] = data['availability']
             outcome = HostNodes::Availability.run(params)
             if outcome.success?
-              # TODO Return current availability after update
-              {}
+              {availability: outcome.result.availability}
             else
               halt_request(422, {error: outcome.errors.message})
             end

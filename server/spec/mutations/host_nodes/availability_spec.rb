@@ -24,7 +24,7 @@ describe HostNodes::Availability do
       desired_state: 'running'
     )
   }
-  
+
   describe '#run' do
     context 'drain' do
       it 'updates availability to drain' do
@@ -35,7 +35,7 @@ describe HostNodes::Availability do
           ).run
         }.to change{ node.availability }.from('active').to('drain')
       end
-      
+
       it 'starts re-scheduling when draining' do
         mutation = described_class.new(
           host_node: node,
@@ -59,8 +59,20 @@ describe HostNodes::Availability do
         }.to change{ node.availability }.from('drain').to('active')
       end
 
-      
+
     end
+
+    it 'triggers actions only when availability changes' do
+      node.availability = 'drain'
+      expect(node).not_to receive(:set)
+      expect {
+        described_class.new(
+          host_node: node,
+          availability: 'drain'
+        ).run
+      }.not_to change{ node }
+    end
+
   end
 
   describe '#re_deploy_needed_services' do

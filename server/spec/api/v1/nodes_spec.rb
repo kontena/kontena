@@ -232,16 +232,16 @@ describe '/v1/nodes', celluloid: true do
           inactive: 600,
           cached: 40,
           buffers: 60
-      	},
-      	filesystem: [{
+          },
+          filesystem: [{
           total: 1000,
           used: 10
         }],
-      	cpu: {
+          cpu: {
           num_cores: 2,
           system: 5.5,
           user: 10.0
-      	},
+          },
         network: {
           internal: {
             interfaces: ["weave", "vethwe123"],
@@ -327,16 +327,18 @@ describe '/v1/nodes', celluloid: true do
     let(:node) {grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')}
     describe 'availability' do
       it 'runs availability mutation' do
-        expect(HostNodes::Availability).to receive(:run).and_return(double({:success? => true}))
+        outcome = double(:outcome, {:success? => true, :result => double({:availability => 'drain'})})
+        expect(HostNodes::Availability).to receive(:run).and_return(outcome)
         post "/v1/nodes/#{node.to_path}/availability", {availability: 'drain'}.to_json, request_headers
         expect(response.status).to eq(200)
+        expect(json_response['availability']).to eq('drain')
       end
       it 'returns 422 if mutation fails' do
         expect(HostNodes::Availability).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
         post "/v1/nodes/#{node.to_path}/availability", {}, request_headers
         expect(response.status).to eq(422)
       end
-    
+
     end
   end
 

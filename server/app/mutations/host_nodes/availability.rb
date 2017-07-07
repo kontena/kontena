@@ -6,23 +6,25 @@ module HostNodes
 
     required do
       model :host_node
-      string :availability, matches: /^(active|drain)$/
+      string :availability, in: ['active', 'drain']
     end
 
     def execute
-      self.host_node.set(:availability => self.availability)
+      # Trigger actions only if the availability really changes
+      if self.host_node.availability != self.availability
 
-      # TODO check if availability has really changed and trigger actions only if it has
+        self.host_node.set(:availability => self.availability)
 
-      case self.availability
-      when 'active'
-        start_stateful_services(self.host_node)
-        # TODO Should this also trigger full re-scheduling or just wait for the next loop to do it?
-      when 'drain'
-        re_deploy_needed_services(self.host_node)
-        stop_stateful_services(self.host_node)
+        case self.availability
+        when 'active'
+          start_stateful_services(self.host_node)
+          # TODO Should this also trigger full re-scheduling or just wait for the next loop to do it?
+        when 'drain'
+          re_deploy_needed_services(self.host_node)
+          stop_stateful_services(self.host_node)
+        end
       end
-      
+      self.host_node.reload
     end
 
     # Re-deploy needed services, new deployments will filter out evacuated node
@@ -35,13 +37,13 @@ module HostNodes
 
     # Finds stateless services on a given node
     def find_services(host_node)
-      services = host_node.grid_service_instances.map { |instance| 
+      services = host_node.grid_service_instances.map { |instance|
         instance.grid_service unless instance.grid_service.stateful?
       }.compact.uniq
     end
 
     def stop_stateful_services(host_node)
-      host_node.grid_service_instances.each do |instance| 
+      host_node.grid_service_instances.each do |instance|
         if instance.grid_service.stateful?
           info "setting desired state to stopped for instance #{instance.grid_service.to_path}-#{instance.instance_number}"
           instance.set(desired_state: 'stopped')
