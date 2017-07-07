@@ -27,20 +27,35 @@ The email is needed for Let's Encrypt to notify when certificates are about to e
 
 ## Create domain authorization
 
-To be able to request certificates for a domain you must first prove that you are in charge of that domain. For this, Kontena certificate management supports DNS-based authorization.
+To be able to request certificates for a domain you must first prove that you are in charge of that domain. For this, Kontena certificate management supports DNS-based and TLS-SNI based authorizations.
+
+### DNS based authorization
+
+To create a challenge for DNS based authorization use:
 
 ```bash
-$ kontena certificate authorize api.example.com
-Record name:_acme-challenge
-Record type:TXT
-Record content:5m1FCaNvneLduTN4AcPqAbyuQhBQA4ESisAQfEYvXIE
+$ kontena certificate authorize --auth-type dns-01 api.example.com
+Authorization successfully created. Use the following details to create necessary validations:
+Record name: _acme-challenge.api.example.com
+Record type: TXT
+Record content: jEeBHU0WtHhnf0ZRXBbN0nYnjcBWlSS7TFiXvjFs62k
 ```
 
 To verify that you really control the requested domain, create a DNS TXT record for the domain `_acme-challenge.api.example.com` with content specified in the response.
 
+### TLS-SNI based authorization
+
+When using `tls-sni-0` verification method, Kontena will interact with Let's Encrypt and creates a specially crafted self-signed certificate. Once that certificate is bundled to a loadbalancer, Let's Encrypt can verify the DNS control for the domain. So remember to point the DNS records of the domain, for which the certificate is being created on, to the loadbalancer public IP addresses. When creating the auhtorization Kontena will automatically attach the special self-signed certificate to the given loadbalancer service through using a secret.
+
+```bash
+$ kontena certificate authorize --auth-type tls-sni-01 --lb-link infra/lb  api.example.com
+Authorization successfully created. Use the following details to create necessary validations:
+Point the public DNS A record of api.example.com to the public IP address(es) of the infra/lb
+```
+
 ## Get actual certificate
 
-Once you have created the necessary DNS proof of domain control you can request the actual certificate.
+Once you have created the necessary proof of domain control you can request the actual certificate.
 
 ```
 $ kontena certificate get --secret-name SSL_CERT_LE_TEST api.example.com
