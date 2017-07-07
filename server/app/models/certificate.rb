@@ -8,9 +8,9 @@ class Certificate
   field :cert_type, type: String
 
   # Need to have references to the secrets to know which ones to automatically update
-  has_one :private_key, class_name: 'GridSecret'
-  has_one :certificate, class_name: 'GridSecret'
-  has_one :certificate_bundle, class_name: 'GridSecret'
+  field :private_key, type: String
+  field :certificate, type: String
+  field :certificate_bundle, type: String
 
   belongs_to :grid
 

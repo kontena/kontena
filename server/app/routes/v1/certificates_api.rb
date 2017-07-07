@@ -62,11 +62,13 @@ module V1
 
         r.post do
 
+          # DEPRECATED
           r.on 'authorize' do
             data = parse_json_body
             authorize_domain(data)
           end
 
+          # DEPRECATED
           r.on 'certificate' do
             data = parse_json_body
             get_certificate(data)

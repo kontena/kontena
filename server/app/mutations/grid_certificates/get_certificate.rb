@@ -80,9 +80,9 @@ module GridCertificates
 
 
       secrets = []
-      private_key_secret = upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
-      cert_secret = upsert_secret("#{self.secret_name}_CERTIFICATE", cert)
-      bundle_secret = upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join)
+      private_key_secret = upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key).name
+      cert_secret = upsert_secret("#{self.secret_name}_CERTIFICATE", cert).name
+      bundle_secret = upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join).name
 
       cert_model = upsert_certificate(self.grid, self.domains, certificate, private_key_secret, cert_secret, bundle_secret, self.cert_type)
 

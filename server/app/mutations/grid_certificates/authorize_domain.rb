@@ -62,11 +62,12 @@ module GridCertificates
       add_error(:acme_client, :unauthorized, "Registration probably missing for LE")
     end
 
+    # Creates the self-signed cert from authorization object, puts that in vault and attaches it to the given service
+    # @return [Acme::Client::Resources::Challenges::DNS01, Acme::Client::Resources::Challenges::TLSSNI01] the actual challenge
     def authorize_tls_sni(authorization)
       challenge = authorization.tls_sni01
       verification_cert = [challenge.certificate.to_pem, challenge.private_key.to_pem].join
       secret_name = [LE_TLS_SNI_PREFIX, domain_to_vault_key(self.domain)].join('_')
-      puts "************** #{secret_name}"
       tls_sni_secret = upsert_secret(secret_name, verification_cert)
       if tls_sni_secret.nil?
         add_error(:tls_sni_secret, :error, "Failed to store the needed tls-sni-01 secret")
@@ -77,6 +78,7 @@ module GridCertificates
       challenge
     end
 
+    # Adds the tls-sni secret to the service
     def add_secret_to_service(secret, grid_service)
       unless grid_service.secrets.index {|s| s['secret'] == secret.name}
         info "adding tls-sni secret to service: #{grid_service.qualified_name}"

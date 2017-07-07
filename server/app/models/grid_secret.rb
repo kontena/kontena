@@ -7,8 +7,6 @@ class GridSecret
   field :name, type: String
   field :encrypted_value, type: String, encrypted: true
 
-  belongs_to :certificate
-
   validates_presence_of :name, :encrypted_value
   validates_uniqueness_of :name, scope: [:grid_id]
 
