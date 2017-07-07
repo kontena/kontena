@@ -14,7 +14,6 @@ module V1
         load_grid(grid)
         r.is do
           r.get do
-            puts "******** GET /v1/domain_authorizations/#{grid}"
             @authorizations = @grid.grid_domain_authorizations
             response.status = 200
             render('domain_authorizations/index')
@@ -35,8 +34,6 @@ module V1
             end
           end
           r.get do
-            puts "******** GET /v1/domain_authorizations/#{grid}/#{domain}"
-            puts "*** #{@grid.grid_domain_authorizations.count}"
             @authorization = @grid.grid_domain_authorizations.find_by(domain: domain)
             if @authorization
               response.status = 200

@@ -33,7 +33,7 @@ describe '/v1/domain_authorizations' do
     AccessToken.create!(user: david, scopes: ['user'])
   end
 
-  EXPECTED_KEYS = %w(challenge domain authorization_type).sort
+  EXPECTED_KEYS = %w(challenge domain authorization_type challenge_opts).sort
 
   describe 'GET /' do
     it 'gets domain auth list' do
