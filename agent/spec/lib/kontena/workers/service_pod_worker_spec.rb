@@ -272,12 +272,20 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.container_outdated?(service_container)).to be_falsey
     end
 
-    it 'fails if service_pod updated_at is in the future' do
+    it 'fails if service_pod updated_at is too far in the future' do
       service_container = double(:service_container,
         info: { 'Created' => (Time.now.utc - 20).to_s }
       )
-      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 60).to_s)
+      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 60.0).to_s)
       expect{subject.container_outdated?(service_container)}.to raise_error(/service updated_at .* is in the future/)
+    end
+
+    it 'returns true if service_pod updated_at is slightly in the future' do
+      service_container = double(:service_container,
+        info: { 'Created' => (Time.now.utc - 0.5).to_s }
+      )
+      allow(service_pod).to receive(:updated_at).and_return((Time.now.utc + 0.5).to_s)
+      expect(subject.container_outdated?(service_container)).to be_truthy
     end
   end
 

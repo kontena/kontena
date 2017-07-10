@@ -13,6 +13,8 @@ module Kontena::Workers
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::EventLogHelper
 
+    CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.0) # seconds
+
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
 
@@ -190,7 +192,7 @@ module Kontena::Workers
       updated_at = DateTime.parse(service_pod.updated_at)
       created = DateTime.parse(service_container.info['Created'])
 
-      if updated_at > DateTime.now
+      if updated_at > Time.now + CLOCK_SKEW
         fail "service updated_at #{updated_at} is in the future"
       elsif created < updated_at
         info "service updated at #{updated_at} after service container created at #{created}"
