@@ -5,57 +5,77 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
+    include Kontena::Cli::TableGenerator::Helper
 
-    option ["--all"], :flag, "List nodes for all grids", default: false
+    option ['-a', '--all'], :flag, 'List nodes for all grids', default: false
+
+    requires_current_master
+    requires_current_master_token
+    requires_current_grid
+
+    def node_name(node, grid)
+      return node['name'] unless all?
+      "#{grid['name']}/#{node['name']}"
+    end
+
+    def node_status(node)
+      node['connected'] ? pastel.green('online') : pastel.red('offline')
+    end
 
     def node_initial(node, grid)
-      if node['initial_member']
-        return "#{node['node_number']} / #{grid['initial_size']}"
-      else
-        return "-"
-      end
+      return '-' unless node['initial_member']
+      "#{node['node_number']} / #{grid['initial_size']}"
     end
 
     def node_labels(node)
-      (node['labels'] || ['-']).join(",")
+      (node['labels'] || ['-']).join(',')
     end
 
-    def show_grid_nodes(grid, nodes, multi: false)
-      grid_health = grid_health(grid, nodes)
+    def fields
+      return ['name'] if quiet?
+      {
+        name:    'name',
+        version: 'agent_version',
+        status:  'status',
+        initial: 'initial',
+        labels:  'labels'
+      }
+    end
 
-      nodes = nodes.sort_by{|n| n['node_number'] }
-      nodes.each do |node|
-        puts [
-          "%s" % health_icon(node_health(node, grid_health)),
-          "%-70.70s" % [multi ? "#{grid['name']}/#{node['name']}" : node['name']],
-          "%-10s" % node['agent_version'],
-          "%-10s" % (node['connected'] ? "online" : "offline"),
-          "%-10s" % node_initial(node, grid),
-          "%s" % [node_labels(node)],
-        ].join ' '
+    def grids
+      all? ? client.get("grids")['grids'] : [client.get("grids/#{current_grid}")]
+    end
+
+    def grid_nodes(grid_name)
+      client.get("grids/#{grid_name}/nodes")['nodes']
+    end
+
+    def node_data
+      grids.flat_map do |grid|
+        grid_nodes = []
+
+        grid_nodes(grid['id']).each do |node|
+          node['name'] = node_name(node, grid)
+          grid_nodes << node
+          next if quiet?
+          node['initial'] = node_initial(node, grid)
+          node['status'] = node_status(node)
+          node['labels'] = node_labels(node)
+        end
+
+        unless quiet?
+          grid_health = grid_health(grid, grid_nodes)
+          grid_nodes.each do |node|
+            node['name'] = health_icon(node_health(node, grid_health)) + " " + (node['name'] || '(initializing)')
+          end
+        end
+
+        grid_nodes.sort_by { |n| n['node_number'] }
       end
     end
 
     def execute
-      require_api_url
-      require_current_grid
-      token = require_token
-
-      puts "%s %-70s %-10s %-10s %-10s %-s" % [health_icon(nil), "Name", "Version", "Status", "Initial", "Labels"]
-
-      if all?
-        grids = client(token).get("grids")
-        grids['grids'].each do |grid|
-          nodes = client(require_token).get("grids/#{grid['id']}/nodes")['nodes']
-
-          show_grid_nodes(grid, nodes, multi: true)
-        end
-      else
-        grid = client(token).get("grids/#{current_grid}")
-        nodes = client(require_token).get("grids/#{current_grid}/nodes")['nodes']
-
-        show_grid_nodes(grid, nodes)
-      end
+      print_table(node_data)
     end
   end
 end

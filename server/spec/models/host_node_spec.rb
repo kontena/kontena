@@ -284,4 +284,22 @@ describe HostNode do
     end
 
   end
+
+  describe '#volume_driver' do
+    let(:grid) { Grid.create!(name: 'test') }
+    let(:node) { HostNode.create(name: 'node-1', grid: grid)}
+
+    it 'returns correct volume driver' do
+      node.volume_drivers.create!(name: 'foo', version: '1')
+
+      driver = node.volume_driver('foo')
+      expect(driver['name']).to eq('foo')
+      expect(driver['version']).to eq('1')
+    end
+
+    it 'returns nil for unknown driver' do
+      driver = node.volume_driver('foo')
+      expect(driver).to be_nil
+    end
+  end
 end

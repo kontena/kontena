@@ -216,6 +216,14 @@ module Docker
       self.overlay_cidr.split('/')[1] if self.overlay_cidr
     end
 
+    # How long to wait when attempting to stop a container if it doesn’t handle
+    # SIGTERM (or whatever stop signal has been specified with stop_signal), before sending SIGKILL
+    #
+    # @return [Integer]
+    def stop_grace_period
+      (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
     private
 
     # @return [Hash]

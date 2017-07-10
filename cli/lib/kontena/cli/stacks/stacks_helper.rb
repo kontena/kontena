@@ -4,10 +4,9 @@ module Kontena::Cli::Stacks
     def wait_for_deployment_to_start(deployment, timeout = 600)
       started = false
       Timeout::timeout(timeout) do
-        until started
-          deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
-          started = true if deployment['service_deploys'].size > 0
+        while deployment['state'] == 'created'
           sleep 1
+          deployment = client.get("stacks/#{deployment['stack_id']}/deploys/#{deployment['id']}")
         end
         if deployment['state'] == 'error'
           deployment['service_deploys'].each do |service_deploy|

@@ -1,8 +1,8 @@
-require 'yaml'
 require_relative '../services/services_helper'
 require_relative './service_generator'
 require_relative './service_generator_v2'
 require_relative './yaml/reader'
+require 'yaml'
 
 module Kontena::Cli::Apps
   module Common

@@ -1,24 +1,37 @@
 module Kontena::Cli::Vault
   class ListCommand < Kontena::Command
+    include Kontena::Util
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
+    include Kontena::Cli::TableGenerator::Helper
 
     option '--return', :flag, "Return the keys", hidden: true
+    option ['--[no-]long', '-l'], :flag, "Show full dates", default: !$stdout.tty?
+
+    requires_current_master
+    requires_current_master_token
+    requires_current_grid
+
+    def secrets
+      client.get("grids/#{current_grid}/secrets")['secrets'].sort_by { |s| s['name'] }
+    end
+
+    def fields
+      return['name'] if quiet?
+      %w(name created_at updated_at)
+    end
 
     def execute
-      require_api_url
-      require_current_grid
-
-      token = require_token
-      result = client(token).get("grids/#{current_grid}/secrets")
-
-      return result['secrets'].map { |s| s['name'] } if return?
-
-      column_width_paddings = '%-54s %-25.25s %-25.25s'
-      puts column_width_paddings % ['NAME', 'CREATED AT', 'UPDATED AT']
-      result['secrets'].sort_by { |s| s['name'] }.each do |secret|
-        puts column_width_paddings % [secret['name'], secret['created_at'], secret['updated_at']]
+      return secrets.map { |s| s['name'] } if return?
+      print_table(secrets) do |row|
+        next if quiet? || long?
+        row['updated_at'] = updated?(row) ? pastel.blue('never') : time_ago(row['updated_at'])
+        row['created_at'] = time_ago(row['created_at'])
       end
+    end
+
+    def updated?(row)
+      row['created_at'] == row['updated_at']
     end
   end
 end

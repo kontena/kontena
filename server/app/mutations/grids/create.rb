@@ -1,23 +1,24 @@
+require_relative 'common'
 require_relative '../../helpers/random_name_helper'
 
 module Grids
   class Create < Mutations::Command
+    include Common
     include RandomNameHelper
 
     required do
       model :user
-      string :name, nils: true, min_length: 3, matches: /^(\w|-)+$/
+      string :name, nils: true, min_length: 3, matches: /\A(\w|-)+\z/
       integer :initial_size, default: 1, min: 1, max: 7
     end
 
     optional do
       string :token
-      array :default_affinity do
-        string
-      end
       string :subnet
       string :supernet
     end
+
+    common_validations
 
     def validate
       add_error(:user, :invalid, 'Operation not allowed') unless user.can_create?(Grid)
@@ -31,6 +32,8 @@ module Grids
       if self.supernet
         @supernet = IPAddr.new(self.supernet) rescue add_error(:supernet, :invalid, $!.message)
       end
+
+      validate_common
     end
 
     def execute
@@ -39,10 +42,11 @@ module Grids
         name: self.name,
         initial_size: self.initial_size,
         token: self.token,
-        default_affinity: self.default_affinity.to_a
       )
       grid.subnet = self.subnet if self.subnet
       grid.supernet = self.supernet if self.supernet
+      execute_common(grid)
+
       unless grid.save
         grid.errors.each do |key, message|
           add_error(key, :invalid, message)

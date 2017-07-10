@@ -70,7 +70,9 @@ The `az` label is used by the [`ha` deployment strategy](deploy.md#high-availabi
 
 ### `ephemeral`
 
-Nodes labeled as `ephemeral` will automatically be removed by the Kontena Master after they have been offline for longer than six hours (6h).
+Nodes labeled as `ephemeral=yes` will automatically be removed by the Kontena Master after they have been offline for longer than six hours (6h).
 The nodes should not be [initial nodes](grids.md#initial-nodes), and they should not have any stateful services deployed on them.
 
 Ephemeral nodes are intended to be used for autoscaled nodes, which may be provisioned automatically, and then cleaned up once terminated.
+
+Ephemeral nodes will not be available for scheduling of stateful services as the service state is only persisted on local disk.

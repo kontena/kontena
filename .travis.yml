@@ -36,10 +36,10 @@ matrix:
       env: TEST_DIR=agent
     - rvm: 2.2.6
       env: TEST_DIR=server
+    - rvm: 2.3.3
+      env: TEST_DIR=server
     - rvm: 2.4.1
       env: TEST_DIR=agent
-    - rvm: 2.4.1
-      env: TEST_DIR=server
 script: ./build/travis/test.sh
 deploy:
   - provider: script

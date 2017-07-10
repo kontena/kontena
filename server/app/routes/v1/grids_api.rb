@@ -32,9 +32,12 @@ module V1
               name: data['name'],
               initial_size: data['initial_size'] || 1,
               token: data['token'],
-              default_affinity: data['default_affinity'],
               subnet: data['subnet'],
               supernet: data['supernet'],
+              default_affinity: data['default_affinity'],
+              trusted_subnets: data['trusted_subnets'],
+              stats: data['stats'],
+              logs: data['logs'],
           )
 
           if outcome.success?

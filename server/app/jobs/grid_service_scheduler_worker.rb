@@ -56,8 +56,8 @@ class GridServiceSchedulerWorker
   def fetch_deploy_item
     GridServiceDeploy.any_of({:queued_at => nil}, {:queued_at.lt => 30.seconds.ago, :started_at => nil, :finished_at => nil})
       .asc(:created_at)
-      .find_and_modify({:$set => {:queued_at => Time.now.utc}}, {new: true})
-  rescue Moped::Errors::OperationFailure
+      .find_one_and_update({:$set => {queued_at: Time.now.utc}}, {return_document: :after})
+  rescue Mongo::Error::OperationFailure
     nil
   end
 

@@ -2,6 +2,14 @@ require 'singleton'
 
 module Kontena
   class PluginManager
+    autoload :RubygemsClient, 'kontena/plugin_manager/rubygems_client'
+    Gem.autoload :DependencyInstaller, 'rubygems/dependency_installer'
+    Gem.autoload :Requirement, 'rubygems/requirement'
+    Gem.autoload :Uninstaller, 'rubygems/uninstaller'
+    Gem.autoload :Commands, 'rubygems/command'
+    Gem.autoload :DefaultUserInteraction, 'rubygems/user_interaction'
+    Gem.autoload :StreamUI, 'rubygems/user_interaction'
+    Gem::Commands.autoload :CleanupCommand, 'rubygems/commands/cleanup_command'
 
     include Singleton
 
@@ -22,9 +30,6 @@ module Kontena
     # @param pre [Boolean] install a prerelease version if available
     # @param version [String] install a specific version
     def install_plugin(plugin_name, pre: false, version: nil)
-      require 'rubygems/dependency_installer'
-      require 'rubygems/requirement'
-
       cmd = Gem::DependencyInstaller.new(
         document: false,
         force: true,
@@ -32,7 +37,7 @@ module Kontena
         minimal_deps: true
       )
       plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
-      without_safe { cmd.install(prefix(plugin_name), plugin_version) }
+      cmd.install(prefix(plugin_name), plugin_version)
       cmd.installed_gems
     end
 
@@ -42,7 +47,6 @@ module Kontena
       installed = installed(plugin_name)
       raise "Plugin #{plugin_name} not installed" unless installed
 
-      require 'rubygems/uninstaller'
       cmd = Gem::Uninstaller.new(
         installed.name,
         all: true,
@@ -56,31 +60,13 @@ module Kontena
     # Search rubygems for kontena plugins
     # @param pattern [String] optional search pattern
     def search_plugins(pattern = nil)
-      client = Excon.new('https://rubygems.org')
-      response = client.get(
-        path: "/api/v1/search.json?query=#{prefix(pattern)}",
-        headers: {
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json'
-        }
-      )
-
-      JSON.parse(response.body) rescue nil
+      RubygemsClient.new.search(prefix(pattern))
     end
 
     # Retrieve plugin versions from rubygems
     # @param plugin_name [String]
     def gem_versions(plugin_name)
-      client = Excon.new('https://rubygems.org')
-      response = client.get(
-        path: "/api/v1/versions/#{prefix(plugin_name)}.json",
-        headers: {
-          'Content-Type' => 'application/json',
-          'Accept' => 'application/json'
-        }
-      )
-      versions = JSON.parse(response.body)
-      versions.map { |version| Gem::Version.new(version["number"]) }.sort.reverse
+      RubygemsClient.new.versions(prefix(plugin_name))
     end
 
     # Get the latest version number from rubygems
@@ -120,12 +106,11 @@ module Kontena
     # Runs gem cleanup, removes remains from previous versions
     # @param plugin_name [String]
     def cleanup_plugin(plugin_name)
-      require 'rubygems/commands/cleanup_command'
       cmd = Gem::Commands::CleanupCommand.new
       options = []
       options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
       cmd.handle_options options
-      without_safe { cmd.execute }
+      cmd.execute
     rescue Gem::SystemExitException => e
       return true if e.exit_code == 0
       raise
@@ -151,12 +136,8 @@ module Kontena
 
     private
 
-    # Execute block without SafeYAML. Gem does security internally.
-    def without_safe(&block)
-      SafeYAML::OPTIONS[:default_mode] = :unsafe if Object.const_defined?(:SafeYAML)
-      yield
-    ensure
-      SafeYAML::OPTIONS[:default_mode] = :safe if Object.const_defined?(:SafeYAML)
+    def plugin_debug?
+      @plugin_debug ||= ENV['DEBUG'] == 'plugin'
     end
 
     def load_plugins
@@ -167,8 +148,27 @@ module Kontena
           if File.exist?(plugin) && !plugins.find{ |p| p.name == spec.name }
             begin
               if spec_has_valid_dependency?(spec)
-                ENV["DEBUG"] && $stderr.puts("Loading plugin #{spec.name}")
-                load(plugin)
+
+                loaded_features_before = $LOADED_FEATURES.dup
+                load_path_before = $LOAD_PATH.dup
+
+                Kontena.logger.debug { "Activating plugin #{spec.name}" } if plugin_debug?
+                spec.activate
+                spec.activate_dependencies
+
+                Kontena.logger.debug { "Loading plugin #{spec.name}" }
+                require(plugin)
+                Kontena.logger.debug { "Loaded plugin #{spec.name}" } if plugin_debug?
+
+                if plugin_debug?
+                  added_features = ($LOADED_FEATURES - loaded_features_before).map {|feat| "- #{feat}"}
+                  added_paths = ($LOAD_PATH - load_path_before).map {|feat| "- #{feat}"}
+                  Kontena.logger.debug { "Plugin manager loaded features for #{spec.name}:" } unless added_features.empty?
+                  added_features.each { |feat| Kontena.logger.debug { feat } }
+                  Kontena.logger.debug { "Plugin manager load paths added for #{spec.name}:" } unless added_paths.empty?
+                  added_paths.each { |path| Kontena.logger.debug { path } }
+                end
+
                 plugins << spec
               else
                 plugin_name = spec.name.sub('kontena-plugin-', '')
@@ -176,8 +176,8 @@ module Kontena
                 $stderr.puts "         To update the plugin, run 'kontena plugin install #{plugin_name}'"
               end
             rescue ScriptError, StandardError => ex
-              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name}\n\tRerun the command with environment DEBUG=true set to get the full exception."
-              ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+              warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name} from #{spec.gem_dir}\n\tRerun the command with environment DEBUG=true set to get the full exception."
+              Kontena.logger.error(ex)
             end
           end
         end
@@ -185,7 +185,7 @@ module Kontena
       plugins
     rescue => ex
       $stderr.puts Kontena.pastel.red(ex.message)
-      ENV['DEBUG'] && $stderr.puts("#{ex.class.name} : #{ex.message}\n#{ex.backtrace.join("\n  ")}")
+      Kontena.logger.error(ex)
     end
 
     def prefix(plugin_name)
@@ -198,7 +198,6 @@ module Kontena
     end
 
     def use_dummy_ui
-      require 'rubygems/user_interaction'
       Gem::DefaultUserInteraction.ui = dummy_ui
     end
 

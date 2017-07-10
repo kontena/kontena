@@ -9,12 +9,14 @@ module Kontena::Cli::Master
 
     def execute
       params = []
-      params << "--join #{self.invite_code.shellescape}"
+      params += ["--join", self.invite_code]
       params << "--remote" if self.remote?
-      params << "--name #{self.name.shellescape}" if self.name
+      params += ["--name", self.name] if self.name
       params << "--verbose" if self.verbose?
 
-      Kontena.run("master login #{params.join(' ')} #{self.url.shellescape}")
+      cmd = ['master', 'login'] + params
+      cmd << url
+      Kontena.run!(cmd)
     end
   end
 end

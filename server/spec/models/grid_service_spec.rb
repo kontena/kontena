@@ -5,7 +5,7 @@ describe GridService do
                           :net, :log_driver, :pid).of_type(String) }
   it { should have_fields(:container_count, :memory,
                           :memory_swap, :cpu_shares,
-                          :revision, :stack_revision).of_type(Fixnum) }
+                          :revision, :stack_revision).of_type(Integer) }
   it { should have_fields(:affinity, :cmd, :ports, :env, :volumes_from,
                           :cap_add, :cap_drop).of_type(Array) }
   it { should have_fields(:labels, :log_opts).of_type(Hash) }
@@ -216,8 +216,13 @@ describe GridService do
   end
 
   describe '#load_balancer?' do
-    it 'returns true if official kontena/lb image' do
+    it 'returns true if latest official kontena/lb image' do
       subject.image_name = 'kontena/lb:latest'
+      expect(subject.load_balancer?).to eq(true)
+    end
+
+    it 'returns true if official kontena/lb image' do
+      subject.image_name = 'kontena/lb:edge'
       expect(subject.load_balancer?).to eq(true)
     end
 
@@ -225,6 +230,11 @@ describe GridService do
       subject.image_name = 'custom/lb:latest'
       subject.env << 'KONTENA_SERVICE_ROLE=lb'
       expect(subject.load_balancer?).to eq(true)
+    end
+
+    it 'returns false if not official kontena/lb image' do
+      subject.image_name = 'acme/lb:latest'
+      expect(subject.load_balancer?).to eq(false)
     end
 
     it 'returns false by default' do
@@ -310,16 +320,15 @@ describe GridService do
       expect(subject).to receive(:env).and_return(
         [
           'FOO=bar',
+          'FOO=BAR=bar',
           'BAR=',
-          'BAZ\=BUZ=foo',
           'DOG'
         ]
       )
       expect(subject.env_hash).to eq(
         {
-          'FOO' => 'bar',
+          'FOO' => 'BAR=bar',
           'BAR' => '',
-          'BAZ\=BUZ' => 'foo',
           'DOG' => nil
         }
       )

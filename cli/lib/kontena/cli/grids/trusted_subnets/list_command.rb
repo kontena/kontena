@@ -1,17 +1,18 @@
+require 'kontena/cli/grids/common'
+
 module Kontena::Cli::Grids::TrustedSubnets
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
+    include Kontena::Cli::GridOptions
+    include Kontena::Cli::Grids::Common
 
-    parameter "NAME", "Grid name"
+    # the command outputs id info only anyway, this is here strictly for ignoring purposes
+    option ['-q', '--quiet'], :flag, "Output the identifying column only", hidden: true
+
+    requires_current_master
 
     def execute
-      require_api_url
-      token = require_token
-      grid = client(token).get("grids/#{current_grid}")
-      trusted_subnets = grid['trusted_subnets'] || []
-      trusted_subnets.each do |subnet|
-        puts subnet
-      end
+      Array(get_grid['trusted_subnets']).map(&method(:puts))
     end
   end
 end

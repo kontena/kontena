@@ -1,28 +1,28 @@
 development:
-  sessions:
+  clients:
     default:
       uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_development' %>
+      options:
+        max_pool_size: 25
   options:
     use_utc: true
     raise_not_found_error: false
 test:
-  sessions:
+  clients:
     default:
+      uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_test' %>
       options:
-        pool_size: 25
-        read: :primary
+        max_pool_size: 25
         write:
           w: 1
-      uri: <%= ENV['MONGODB_URI'] || 'mongodb://localhost:27017/kontena_test' %>
   options:
     use_utc: true
     raise_not_found_error: false
 production:
-  sessions:
+  clients:
     default:
       options:
-        pool_size: 40
-        read: :primary
+        max_pool_size: 40
         write:
           w: 1
       uri: <%= ENV['MONGODB_URI'] || ENV['MONGOHQ_URL'] %>

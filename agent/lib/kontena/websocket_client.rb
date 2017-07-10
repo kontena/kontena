@@ -15,6 +15,7 @@ module Kontena
   class WebsocketClient
     include Kontena::Logging
 
+    STRFTIME = '%F %T.%NZ'
     KEEPALIVE_INTERVAL = 30.0 # seconds
     PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5)
 
@@ -31,7 +32,7 @@ module Kontena
     def initialize(api_uri, api_token)
       @api_uri = api_uri
       @api_token = api_token
-      @rpc_server = Kontena::RpcServer.pool
+      @rpc_server = Kontena::RpcServer.supervise(as: :rpc_server)
       @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
       @abort = false
       @connected = false
@@ -70,7 +71,8 @@ module Kontena
           'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
           'Kontena-Version' => Kontena::Agent::VERSION,
-          'Kontena-Node-Labels' => labels
+          'Kontena-Node-Labels' => labels,
+          'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
@@ -136,11 +138,11 @@ module Kontena
     def on_message(event)
       data = MessagePack.unpack(event.data.pack('c*'))
       if request_message?(data)
-        rpc_server.async.handle_request(self, data)
+        Celluloid::Actor[:rpc_server].async.handle_request(self, data)
       elsif response_message?(data)
         Celluloid::Actor[:rpc_client].async.handle_response(data)
       elsif notification_message?(data)
-        rpc_server.async.handle_notification(data)
+        Celluloid::Actor[:rpc_server].async.handle_notification(data)
       end
     rescue => exc
       error exc.message
@@ -166,12 +168,17 @@ module Kontena
       @connected = false
       @connecting = false
       @ws = nil
-      if event.code == 4001
+
+      case event.code
+      when 4001
         handle_invalid_token
-      elsif event.code == 4010
-        handle_invalid_version
+      when 4010
+        handle_invalid_version(event.reason)
+      when 4040, 4041
+        handle_invalid_connection(event.reason)
+      else
+        warn "connection closed with code #{event.code}: #{event.reason}"
       end
-      info "connection closed with code #{event.code}"
       notify_actors('websocket:close', nil)
     rescue => exc
       error exc.message
@@ -182,9 +189,14 @@ module Kontena
       EM.next_tick { abort('Shutting down ...') }
     end
 
-    def handle_invalid_version
+    def handle_invalid_version(reason)
       agent_version = Kontena::Agent::VERSION
-      error "master does not accept our version (#{agent_version}), shutting down ..."
+      error "master does not accept our version (#{agent_version}): #{reason}"
+      EM.next_tick { abort("Shutting down ...") }
+    end
+
+    def handle_invalid_connection(reason)
+      error "master indicates that this agent should not reconnect: #{reason}"
       EM.next_tick { abort("Shutting down ...") }
     end
 

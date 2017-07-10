@@ -12,9 +12,17 @@ module Volumes
     end
 
     def execute
+      nodes = self.volume.volume_instances.map { |instance| instance.host_node}.uniq
       self.volume.destroy
+      notify_nodes(nodes)
     end
 
+    def notify_nodes(nodes)
+      nodes.each do |node|
+        RpcClient.new(node.node_id).notify('/volumes/notify_update', 'remove') if node.connected?
+      end
+    end
+    
   end
 
 end

@@ -26,6 +26,17 @@ describe 'service link' do
     expect(k.out.match(/^\s+\- simple\/redis\s*$/)).to be_truthy
   end
 
+  it 'links stack service with existing links to service' do
+    with_fixture_dir("stack/links") do
+      run 'kontena stack install --no-deploy links.yml'
+    end
+    run "kontena service create test-1 redis:3.0"
+    k = run "kontena service link simple/bar test-1"
+    expect(k.code).to eq(0)
+    k = run "kontena service show simple/bar"
+    expect(k.out.match(/^\s+\- test-1\s*$/)).to be_truthy
+  end
+
   it 'returns error if target does not exist' do
     run "kontena service create test-1 redis:3.0"
     k = run "kontena service link test-1 foo"

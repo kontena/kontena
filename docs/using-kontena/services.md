@@ -24,6 +24,7 @@ Kontena monitors the state of each Service instance and actively manages it to e
 * [Stop Service](services.md#stop-service)
 * [Start Service](services.md#start-service)
 * [Restart Service](services.md#restart-service)
+* [Exec](services.md#exec)
 * [Show Details](services.md#show-service-details)
 * [Show Logs](services.md#show-service-logs)
 * [Show Event Logs](services.md#show-service-event-logs)
@@ -361,4 +362,26 @@ $ kontena service remove <name>
 
 ```
 --grid GRID                   Specify Grid to use
+```
+
+### Exec
+
+Run a command in a running service instance(s).
+
+```
+$ kontena service exec <name>
+```
+
+**Options:**
+
+```
+--grid GRID                   Specify grid to use
+--instance INSTANCE           Exec on given numbered instance, default first running
+-a, --all                     Exec on all running instances
+--shell                       Execute as a shell command
+-i, --interactive             Keep stdin open
+-t, --tty                     Allocate a pseudo-TTY
+--skip                        Skip failed instances when executing --all
+--silent                      Do not show exec status
+--verbose                     Show exec status
 ```

@@ -4,7 +4,7 @@ class GridService
   include Mongoid::Timestamps
   include EventStream
 
-  LB_IMAGE = 'kontena/lb:latest'
+  LB_IMAGE = 'kontena/lb'
 
   field :image_name, type: String
   field :labels, type: Hash, default: {}
@@ -12,14 +12,14 @@ class GridService
   field :name, type: String
   field :stateful, type: Boolean, default: false
   field :user, type: String
-  field :container_count, type: Fixnum, default: 1
+  field :container_count, type: Integer, default: 1
   field :cmd, type: Array
   field :entrypoint, type: String
   field :ports, type: Array, default: []
   field :env, type: Array, default: []
-  field :memory, type: Fixnum
-  field :memory_swap, type: Fixnum
-  field :cpu_shares, type: Fixnum
+  field :memory, type: Integer
+  field :memory_swap, type: Integer
+  field :cpu_shares, type: Integer
   field :volumes, type: Array, default: []
   field :volumes_from, type: Array, default: []
   field :privileged, type: Boolean
@@ -31,12 +31,14 @@ class GridService
   field :log_opts, type: Hash, default: {}
   field :devices, type: Array, default: []
   field :pid, type: String
+  field :read_only, type: Boolean, default: false
 
   field :deploy_requested_at, type: DateTime
   field :deployed_at, type: DateTime
-  field :revision, type: Fixnum, default: 1
-  field :stack_revision, type: Fixnum
+  field :revision, type: Integer, default: 1
+  field :stack_revision, type: Integer
   field :strategy, type: String, default: 'ha'
+  field :stop_grace_period, type: Fixnum, default: 10
 
   belongs_to :grid
   belongs_to :image
@@ -63,7 +65,7 @@ class GridService
   validates_presence_of :name, :image_name, :grid_id, :stack_id
   validates_uniqueness_of :name, scope: [:grid_id, :stack_id]
 
-  scope :load_balancer, -> { where(image_name: LB_IMAGE) }
+  scope :load_balancer, -> { where(image_name: /^#{LB_IMAGE}:.+/) }
 
   before_validation :ensure_stack
 
@@ -191,7 +193,7 @@ class GridService
   # @return [Hash]
   def env_hash
     if @env_hash.nil?
-      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split(/(?<!\\)=/, 2) }]
+      @env_hash = Hash[Array(self.env).map { |kv_pair| kv_pair.split('=', 2) }]
     end
 
     @env_hash
@@ -251,10 +253,10 @@ class GridService
   # @return [Boolean]
   def depending_on_other_services?
     if self.affinity
-      if self.affinity.any?{|a| a.match(/^service(!=|==).+/)}
+      if self.affinity.any?{|a| a.match(/\Aservice(!=|==).+/)}
         return true
       end
-      if self.affinity.any?{|a| a.match(/^container(!=|==).+/)}
+      if self.affinity.any?{|a| a.match(/\Acontainer(!=|==).+/)}
         return true
       end
     end
@@ -263,7 +265,7 @@ class GridService
       return true if self.volumes_from.size > 0
     end
 
-    return true if self.net.to_s.match(/^container:.+/)
+    return true if self.net.to_s.match(/\Acontainer:.+/)
 
     false
   end

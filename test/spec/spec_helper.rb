@@ -55,10 +55,14 @@ RSpec.configure do |config|
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
   include Shell
+  include ContainerHelper
 
   config.before :each do
     k = Kommando.run "kontena grid use e2e"
-    abort "e2e grid does not exist" unless k.code == 0
+    unless k.code == 0
+      STDERR.puts(k.out)
+      abort "e2e grid does not exist"
+    end
   end
 
 # The settings below are suggested to provide a good initial experience

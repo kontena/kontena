@@ -3,13 +3,14 @@ require_relative 'common'
 module GridServices
   class Create < Mutations::Command
     include Common
+    include Duration
 
     common_validations
 
     required do
       model :grid, class: Grid
       string :image
-      string :name, matches: /^(?!-)(\w|-)+$/ # do not allow "-" as a first character
+      string :name, matches: /\A(?!-)(\w|-)+\z/ # do not allow "-" as a first character
       boolean :stateful
     end
 
@@ -23,25 +24,22 @@ module GridServices
       if self.stateful && self.volumes_from && self.volumes_from.size > 0
         add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
       end
-      if self.links
-        validate_links(self.grid, self.stack, self.links)
-      end
+      validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
-      if self.secrets
-        validate_secrets_exist(self.grid, self.secrets)
-      end
-      validate_volumes(self.volumes)
+      validate_secrets
+      validate_volumes
     end
 
     def execute
       attributes = self.inputs.clone
       attributes[:image_name] = attributes.delete(:image)
       attributes[:container_count] = attributes.delete(:instances) if attributes[:instances]
+      attributes[:stop_grace_period] = parse_duration(attributes.delete(:stop_grace_period)) if attributes[:stop_grace_period]
 
       attributes.delete(:links)
       if self.links

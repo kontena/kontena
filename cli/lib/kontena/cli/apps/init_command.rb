@@ -4,7 +4,6 @@ require_relative 'dockerfile_generator'
 require_relative 'docker_compose_generator'
 require_relative 'kontena_yml_generator'
 
-
 module Kontena::Cli::Apps
   class InitCommand < Kontena::Command
     include Kontena::Cli::Common

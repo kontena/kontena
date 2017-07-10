@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative 'service_extender'
 require_relative 'validator'
 require_relative 'validator_v2'

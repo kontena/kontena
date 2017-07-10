@@ -22,6 +22,7 @@ module Kontena
         heads << "Accept: #{params[:headers]['Accept']}" if params[:headers]['Accept']
         heads << "Content-Type: #{params[:headers]['Content-Type']}" if params[:headers]['Content-Type']
         heads << "Authorization: #{params[:headers]['Authorization'].split(' ', 2).first}" if params[:headers]['Authorization']
+        heads << "X-Kontena-Version: #{params[:headers]['X-Kontena-Version']}" if params[:headers]['X-Kontena-Version']
         str << heads.join(', ')
         str << "} "
         result << str
@@ -50,17 +51,17 @@ module Kontena
           end
         end
         result << str
+      elsif params[:error]
+        result << params[:error]
       end
 
-      if $stderr.tty?
-        if direction == 'Request'
-          $stderr.puts(Kontena.pastel.blue("[API Client #{direction}]: #{result.join(" | ")}"))
-        else
-          $stderr.puts(Kontena.pastel.magenta("[API Client #{direction}]: #{result.join(" | ")}"))
-        end
-      else
-        $stderr.puts("[API Client #{direction}]: #{result.join(" | ")}")
-      end
+      color = case direction
+              when 'Request' then :blue
+              when 'Response' then :magenta
+              else :red
+              end
+
+      Kontena.logger.debug("CLIENT") { Kontena.pastel.send(color, "[#{direction}]: #{result.join(" | ")}") }
 
       if block_given?
         yield

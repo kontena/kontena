@@ -52,6 +52,8 @@ module Kontena
           puts "  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
           puts "  scaling: #{service['instances'] }"
           puts "  strategy: #{service['strategy']}"
+          puts "  read_only: #{service['read_only'] == true ? 'yes' : 'no'}"
+          puts "  stop_grace_period: #{service['stop_grace_period']}s"
           puts "  deploy_opts:"
           if service['deploy_opts']['min_health']
             puts "    min_health: #{service['deploy_opts']['min_health']}"
@@ -357,23 +359,16 @@ module Kontena
         # @param [Array<String>] port_options
         # @return [Array<Hash>]
         def parse_ports(port_options)
-          port_options.map{|p|
-            port, protocol = p.split('/')
-            protocol ||= 'tcp'
-            port_elements = port.split(':')
-            container_port = port_elements[-1]
-            node_port = port_elements[-2]
-            ip = port_elements[-3] || '0.0.0.0'
-            if node_port.nil? || container_port.nil?
-              raise ArgumentError.new("Invalid port value #{p}")
-            end
+          port_regex = Regexp.new(/\A(?<ip>\d+\.\d+\.\d+\.\d+)?:?(?<node_port>\d+)\:(?<container_port>\d+)\/?(?<protocol>\w+)?\z/)
+          port_options.map do |p|
+            match_data = port_regex.match(p.to_s)
+            raise ArgumentError, "Invalid port value #{p}" unless match_data
+
             {
-              ip: ip,
-              container_port: container_port,
-              node_port: node_port,
-              protocol: protocol
-            }
-          }
+              ip: '0.0.0.0',
+              protocol: 'tcp'
+            }.merge(match_data.names.map { |name| [name.to_sym, match_data[name]] }.to_h.reject { |_,v| v.nil? })
+          end
         end
 
         # @param [Array<String>] link_options

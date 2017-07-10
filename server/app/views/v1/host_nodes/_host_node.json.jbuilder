@@ -2,6 +2,7 @@ json.id node.node_id
 json.connected node.connected
 json.created_at node.created_at
 json.updated_at node.updated_at
+json.connected_at node.connected_at
 json.last_seen_at node.last_seen_at
 json.name node.name
 json.os node.os
@@ -50,7 +51,7 @@ json.grid do
   end
 end
 json.resource_usage do
-  stats = node.host_node_stats.last
+  stats = node.host_node_stats.latest
   if stats
     json.memory stats.memory
     json.load stats.load

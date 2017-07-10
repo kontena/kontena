@@ -21,11 +21,13 @@ describe Kontena::ServicePods::Starter do
     end
 
     it 'restarts container if not running' do
+      expect(container).to receive(:stop_grace_period).and_return(10)
       expect(container).to receive(:restart!).with({'timeout' => 10})
       subject.perform
     end
 
     it 'fails if container restart fails' do
+      expect(container).to receive(:stop_grace_period).and_return(10)
       expect(container).to receive(:restart!).with({'timeout' => 10}).and_raise(Docker::Error::ServerError, "failed")
       expect{subject.perform}.to raise_error(Docker::Error::ServerError)
     end

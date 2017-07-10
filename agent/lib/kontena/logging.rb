@@ -24,26 +24,46 @@ module Kontena
 
     # Send a debug message
     # @param [String] string
-    def debug(string)
-      logger.debug(self.class.name) { string }
+    # @yield optionally set the message using a block
+    def debug(string = nil, &block)
+      if block_given?
+        logger.debug(self.class.name, &block)
+      else
+        logger.debug(self.class.name) { string }
+      end
     end
 
     # Send a info message
     # @param [String] string
-    def info(string)
-      logger.info(self.class.name) { string }
+    # @yield optionally set the message using a block
+    def info(string = nil, &block)
+      if block_given?
+        logger.debug(self.class.name, &block)
+      else
+        logger.info(self.class.name) { string }
+      end
     end
 
     # Send a warning message
     # @param [String] string
-    def warn(string)
-      logger.warn(self.class.name) { string }
+    # @yield optionally set the message using a block
+    def warn(string = nil, &block)
+      if block_given?
+        logger.warn(self.class.name, &block)
+      else
+        logger.warn(self.class.name) { string }
+      end
     end
 
     # Send an error message
     # @param [String] string
-    def error(string)
-      logger.error(self.class.name) { string }
+    # @yield optionally set the message using a block
+    def error(string = nil, &block)
+      if block_given?
+        logger.error(self.class.name, &block)
+      else
+        logger.error(self.class.name) { string }
+      end
     end
   end
 end

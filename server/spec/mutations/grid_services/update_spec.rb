@@ -59,6 +59,17 @@ describe GridServices::Update do
       }.to change{ redis_service.reload.affinity }.to(['az==b1'])
     end
 
+    it 'updates stop_grace_period' do
+      redis_service.stop_grace_period = 15
+      redis_service.save
+      expect {
+        described_class.new(
+            grid_service: redis_service,
+            stop_grace_period: '1m23s'
+        ).run
+      }.to change{ redis_service.reload.stop_grace_period }.to(83)
+    end
+
     context 'deploy_opts' do
       it 'updates wait_for_port' do
         described_class.new(
@@ -195,7 +206,7 @@ describe GridServices::Update do
           }.to change{service.reload.revision}.and change{service.reload.updated_at}
         end
 
-        skip 'removes secrets' do
+        it 'removes secrets' do
           subject = described_class.new(
               grid_service: service,
               secrets: [
@@ -207,6 +218,50 @@ describe GridServices::Update do
           }.to change{service.reload.revision}.and change{service.reload.updated_at}
 
           expect(service.reload.secrets.map{|gss| gss.secret}).to eq ['SECRET1']
+        end
+      end
+
+      context 'for a service with multiple names for the same secret' do
+        let(:secret1) { GridSecret.create!(grid: grid, name: 'SECRET1', value: 'secret') }
+
+        let(:service) {
+          GridService.create(grid: grid, stack: stack, name: 'redis',
+            image_name: 'redis:2.8',
+            secrets: [
+              {secret: secret1.name, name: 'SECRET1'},
+              {secret: secret1.name, name: 'SECRET2'},
+            ],
+          )
+        }
+
+        it 'keeps both secret names' do
+          subject = described_class.new(
+              grid_service: service,
+              secrets: [
+                {secret: secret1.name, name: 'SECRET1'},
+                {secret: secret1.name, name: 'SECRET2'},
+              ]
+          )
+          outcome = nil
+          expect {
+            outcome = subject.run
+
+            expect(outcome).to be_success
+          }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+
+          expect(outcome.result.secrets.map{|s| s.attributes}).to match [
+            hash_including(
+              'secret' => 'SECRET1',
+              'type' => 'env',
+              'name' => 'SECRET1',
+            ),
+            hash_including(
+              'secret' => 'SECRET1',
+              'type' => 'env',
+              'name' => 'SECRET2',
+            ),
+          ]
+
         end
       end
     end
@@ -316,7 +371,7 @@ describe GridServices::Update do
           expect(service.service_volumes.map{|sv| sv.to_s}).to eq ['/foo:/foo', '/foo2:/foo2']
         end
 
-        skip 'deletes volumes' do
+        it 'deletes volumes' do
           subject = described_class.new(
               grid_service: service,
               volumes: [
@@ -336,7 +391,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             volumes: ['/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.first.path).to eq('/foo')
         end
 
@@ -346,7 +401,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             volumes: ['foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.first.volume).to eq(volume)
         end
 
@@ -355,7 +410,7 @@ describe GridServices::Update do
             grid_service: redis_service,
             volumes: ['/foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.first.path).to eq('/foo')
           expect(outcome.result.service_volumes.first.bind_mount).to eq('/foo')
         end
@@ -376,7 +431,9 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: ['/data', '/foo']
           ).run
-          expect(outcome.success?).to be_falsey
+          expect(outcome).to_not be_success
+          expect(outcome.errors.message).to eq({ 'volumes' => ["Adding a new anonymous volume (/foo) to a stateful service is not supported"] })
+
         end
 
         it 'allows to add named volume' do
@@ -384,7 +441,7 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: ['/data', 'foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.count).to eq(2)
         end
 
@@ -393,7 +450,7 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: ['/data', '/foo:/foo']
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.count).to eq(2)
         end
 
@@ -402,7 +459,7 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes: []
           ).run
-          expect(outcome.success?).to be_truthy
+          expect(outcome).to be_success
           expect(outcome.result.service_volumes.count).to eq(0)
         end
       end
@@ -431,7 +488,8 @@ describe GridServices::Update do
             grid_service: stateful_service,
             volumes_from: ['data-1']
           ).run
-          expect(outcome.success?).to be_falsey
+          expect(outcome).to_not be_success
+          expect(outcome.errors.message).to eq({ 'volumes_from' => "Cannot combine stateful & volumes_from" })
         end
       end
     end
@@ -464,7 +522,7 @@ describe GridServices::Update do
           }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
         end
 
-        skip 'clears links' do
+        it 'clears links' do
           subject = described_class.new(
               grid_service: service,
               links: [ ],
@@ -474,7 +532,7 @@ describe GridServices::Update do
           }.to change{service.reload.revision}.and change{service.reload.updated_at}.and change{service.reload.grid_service_links.count}.from(1).to(0)
         end
 
-        skip 'deletes links' do
+        it 'deletes links' do
           service.link_to(linked_service3)
           expect(service.grid_service_links.count).to eq 2
 

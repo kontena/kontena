@@ -41,7 +41,9 @@ module Kontena
                   :secrets,
                   :networks,
                   :wait_for_port,
-                  :volume_specs
+                  :volume_specs,
+                  :read_only,
+                  :stop_grace_period
 
       # @param [Hash] attrs
       def initialize(attrs = {})
@@ -82,6 +84,8 @@ module Kontena
         @secrets = attrs['secrets'] || []
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
+        @read_only = attrs['read_only']
+        @stop_grace_period = attrs['stop_grace_period']
       end
 
       # @return [Boolean]
@@ -181,6 +185,7 @@ module Kontena
         labels['io.kontena.container.service_revision'] = self.service_revision.to_s
         labels['io.kontena.service.instance_number'] = self.instance_number.to_s
         labels['io.kontena.service.exposed'] = '1' if self.exposed
+        labels['io.kontena.container.stop_grace_period'] = self.stop_grace_period.to_s
         docker_opts['Labels'] = labels
         docker_opts['HostConfig'] = self.service_host_config
         #docker_opts['NetworkingConfig'] = build_networks unless self.networks.empty?
@@ -214,6 +219,7 @@ module Kontena
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0
         host_config['PidMode'] = self.pid if self.pid
+        host_config['ReadonlyRootfs'] = true if self.read_only
 
         log_opts = self.build_log_opts
         host_config['LogConfig'] = log_opts unless log_opts.empty?

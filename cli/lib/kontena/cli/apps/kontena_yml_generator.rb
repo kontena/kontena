@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative 'common'
 
 module Kontena::Cli::Apps

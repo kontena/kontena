@@ -73,8 +73,6 @@ class AccessToken
     #
     # Returns the marked access token or nil
     #
-    # TODO find_and_modify is deprecated in mongoid 5
-    #
     # @param [String] refresh_token
     # @return [AccessToken] access_token
     def find_internal_by_refresh_token(refresh_token)
@@ -82,7 +80,7 @@ class AccessToken
         refresh_token: self.digest(refresh_token),
         deleted_at: nil,
         internal: true
-      ).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
+      ).find_one_and_update({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless old_token
 
@@ -103,14 +101,14 @@ class AccessToken
         token: self.digest(access_token),
         deleted_at: nil,
         internal: true
-      ).find_and_modify({ '$set' => { updated_at: Time.now.utc } })
+      ).find_one_and_update({ '$set' => { updated_at: Time.now.utc } })
     end
    
     # Since we don't know the original saved tokens, we just delete the old one and generate a duplicate with the same scope + user
     #
     # TODO consider hashing codes.
     def find_internal_by_code(code)
-      coded_token = AccessToken.where(code: code, deleted_at: nil).find_and_modify({ '$set' => { deleted_at: Time.now.utc } })
+      coded_token = AccessToken.where(code: code, deleted_at: nil).find_one_and_update({ '$set' => { deleted_at: Time.now.utc } })
 
       return nil unless coded_token
 

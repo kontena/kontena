@@ -44,11 +44,13 @@ module Rpc
         log_opts: service.log_opts,
         pid: service.pid,
         wait_for_port: service.deploy_opts.wait_for_port,
+        stop_grace_period: service.stop_grace_period,
         env: build_env,
         secrets: build_secrets,
         labels: build_labels,
         hooks: build_hooks,
-        networks: build_networks
+        networks: build_networks,
+        read_only: service.read_only
       }
     end
 
@@ -174,7 +176,7 @@ module Rpc
               name: volume_name,
               path: sv.path,
               flags: sv.flags,
-              driver: sv.volume.driver,
+              driver: sv.volume.driver_for_node(service_instance.host_node),
               driver_opts: sv.volume.driver_opts
           }
         else
@@ -188,5 +190,6 @@ module Rpc
 
       volume_specs
     end
+
   end
 end

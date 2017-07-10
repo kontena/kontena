@@ -1,6 +1,9 @@
+require_relative 'concerns/sortable_stat'
+
 class ContainerStat
   include Mongoid::Document
   include Mongoid::Timestamps::Created
+  include SortableStat
 
   field :spec, type: Hash
   field :cpu, type: Hash
@@ -39,47 +42,47 @@ class ContainerStat
     # Then each resulting record is processed by Ruby code outside mongo.
     self.collection.aggregate([
     {
-      '$match': {
+      '$match' => {
         grid_service_id: service_id,
         created_at: {
-          '$gte': from_time,
-          '$lte': to_time
+          '$gte' => from_time,
+          '$lte' => to_time
         }
       }
     },
     {
-      '$group': {
+      '$group' => {
         _id: {
-          year: { '$year': '$created_at' },
-          month: { '$month': '$created_at' },
-          day: { '$dayOfMonth': '$created_at' },
-          hour: { '$hour': '$created_at' },
-          minute: { '$minute': '$created_at' },
+          year: { '$year' => '$created_at' },
+          month: { '$month' => '$created_at' },
+          day: { '$dayOfMonth' => '$created_at' },
+          hour: { '$hour' => '$created_at' },
+          minute: { '$minute' => '$created_at' },
           host_node_id: '$host_node_id',
           container_id: '$container_id'
         },
-        created_at: { '$first': '$created_at' },
+        created_at: { '$first' => '$created_at' },
 
-        cpu_mask: { '$first': '$spec.cpu.mask' },
-        cpu_percent_used: { '$avg': '$cpu.usage_pct' },
+        cpu_mask: { '$first' => '$spec.cpu.mask' },
+        cpu_percent_used: { '$avg' => '$cpu.usage_pct' },
 
-        memory_used: { '$avg': '$memory.usage' },
-        memory_total: { '$first': '$spec.memory.limit' },
+        memory_used: { '$avg' => '$memory.usage' },
+        memory_total: { '$first' => '$spec.memory.limit' },
 
-        network_internal_interfaces: { '$first': '$network.internal.interfaces' },
-        network_internal_rx_bytes: { '$avg': '$network.internal.rx_bytes' },
-        network_internal_rx_bytes_per_second: { '$avg': '$network.internal.rx_bytes_per_second' },
-        network_internal_tx_bytes: { '$avg': '$network.internal.tx_bytes' },
-        network_internal_tx_bytes_per_second: { '$avg': '$network.internal.tx_bytes_per_second' },
-        network_external_interfaces: { '$first': '$network.external.interfaces' },
-        network_external_rx_bytes: { '$avg': '$network.external.rx_bytes' },
-        network_external_rx_bytes_per_second: { '$avg': '$network.external.rx_bytes_per_second' },
-        network_external_tx_bytes: { '$avg': '$network.external.tx_bytes' },
-        network_external_tx_bytes_per_second: { '$avg': '$network.external.tx_bytes_per_second' }
+        network_internal_interfaces: { '$first' => '$network.internal.interfaces' },
+        network_internal_rx_bytes: { '$avg' => '$network.internal.rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$avg' => '$network.internal.rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$avg' => '$network.internal.tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$avg' => '$network.internal.tx_bytes_per_second' },
+        network_external_interfaces: { '$first' => '$network.external.interfaces' },
+        network_external_rx_bytes: { '$avg' => '$network.external.rx_bytes' },
+        network_external_rx_bytes_per_second: { '$avg' => '$network.external.rx_bytes_per_second' },
+        network_external_tx_bytes: { '$avg' => '$network.external.tx_bytes' },
+        network_external_tx_bytes_per_second: { '$avg' => '$network.external.tx_bytes_per_second' }
       }
     },
     {
-      '$group': {
+      '$group' => {
         _id: {
           year: '$_id.year',
           month: '$_id.month',
@@ -87,36 +90,36 @@ class ContainerStat
           hour: '$_id.hour',
           minute: '$_id.minute'
         },
-        created_at: { '$first': '$created_at' },
+        created_at: { '$first' => '$created_at' },
 
         cpu: {
-          '$push': {
+          '$push' => {
             host_node_id: '$_id.host_node_id',
             mask: '$cpu_mask',
             percent_used: '$cpu_percent_used',
           }
         },
 
-        memory_used: { '$sum': '$memory_used' },
-        memory_total: { '$sum': '$memory_total' },
+        memory_used: { '$sum' => '$memory_used' },
+        memory_total: { '$sum' => '$memory_total' },
 
-        network_internal_interfaces: { '$first': '$network_internal_interfaces' },
-        network_internal_rx_bytes: { '$sum': '$network_internal_rx_bytes' },
-        network_internal_rx_bytes_per_second: { '$sum': '$network_internal_rx_bytes_per_second' },
-        network_internal_tx_bytes: { '$sum': '$network_internal_tx_bytes' },
-        network_internal_tx_bytes_per_second: { '$sum': '$network_internal_tx_bytes_per_second' },
-        network_external_interfaces: { '$first': '$network_external_interfaces' },
-        network_external_rx_bytes: { '$sum': '$network_external_rx_bytes' },
-        network_external_rx_bytes_per_second: { '$sum': '$network_external_rx_bytes_per_second' },
-        network_external_tx_bytes: { '$sum': '$network_external_tx_bytes' },
-        network_external_tx_bytes_per_second: { '$sum': '$network_external_tx_bytes_per_second' }
+        network_internal_interfaces: { '$first' => '$network_internal_interfaces' },
+        network_internal_rx_bytes: { '$sum' => '$network_internal_rx_bytes' },
+        network_internal_rx_bytes_per_second: { '$sum' => '$network_internal_rx_bytes_per_second' },
+        network_internal_tx_bytes: { '$sum' => '$network_internal_tx_bytes' },
+        network_internal_tx_bytes_per_second: { '$sum' => '$network_internal_tx_bytes_per_second' },
+        network_external_interfaces: { '$first' => '$network_external_interfaces' },
+        network_external_rx_bytes: { '$sum' => '$network_external_rx_bytes' },
+        network_external_rx_bytes_per_second: { '$sum' => '$network_external_rx_bytes_per_second' },
+        network_external_tx_bytes: { '$sum' => '$network_external_tx_bytes' },
+        network_external_tx_bytes_per_second: { '$sum' => '$network_external_tx_bytes_per_second' }
       }
     },
     {
-      '$sort': { 'created_at': 1 }
+      '$sort' => { 'created_at' => 1 }
     },
     {
-      '$project': {
+      '$project' => {
         _id: 0,
         timestamp: '$_id',
         cpu: '$cpu',

@@ -4,6 +4,7 @@ module GridServices
   class Update < Mutations::Command
     include Common
     include Logging
+    include Duration
 
     common_validations
 
@@ -13,38 +14,32 @@ module GridServices
 
     optional do
       string :image
-      model :grid, class: Grid
-      model :stack, class: Stack
+    end
+
+    def grid
+      self.grid_service.grid
+    end
+    def stack
+      self.grid_service.stack
     end
 
     def validate
-      if self.links
-        validate_links(self.grid_service.grid, self.grid_service.stack, self.links)
-      end
+      validate_links
       if self.strategy && !self.strategies[self.strategy]
         add_error(:strategy, :invalid_strategy, 'Strategy not supported')
       end
       if self.health_check && self.health_check[:interval] < self.health_check[:timeout]
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
-      if self.secrets
-        validate_secrets_exist(self.grid_service.grid, self.secrets)
-      end
+      validate_secrets
       if self.grid_service.stateful?
         if self.volumes_from && self.volumes_from.size > 0
           add_error(:volumes_from, :invalid, 'Cannot combine stateful & volumes_from')
         end
-        if self.volumes
-          changed_volumes = self.volumes.select { |v|
-            vols = self.grid_service.service_volumes.map { |sv| sv.to_s }
-            !vols.include?(v)
-          }
-          if changed_volumes.any? { |v| !v.include?(':') }
-            add_error(:volumes, :invalid, 'Adding a non-named volume is not supported to a stateful service')
-          end
-        end
+        validate_volumes(stateful_volumes: self.grid_service.service_volumes.select{|v| v.anonymous? })
+      else
+        validate_volumes()
       end
-      validate_volumes(self.volumes)
     end
 
     # List changed fields of model
@@ -80,29 +75,37 @@ module GridServices
       attributes[:deploy_opts] = self.deploy_opts if self.deploy_opts
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
+      attributes[:stop_grace_period] = parse_duration(self.stop_grace_period) if self.stop_grace_period
+      attributes[:read_only] = self.read_only unless self.read_only.nil?
+
+      embeds_changed = false
 
       if self.links
         attributes[:grid_service_links] = build_grid_service_links(
           self.grid_service.grid_service_links.to_a,
           self.grid_service.grid, grid_service.stack, self.links
         )
+        embeds_changed ||= attributes[:grid_service_links] != self.grid_service.grid_service_links.to_a
       end
 
       if self.hooks
         attributes[:hooks] = self.build_grid_service_hooks(self.grid_service.hooks.to_a)
+        embeds_changed ||= attributes[:hooks] != self.grid_service.hooks.to_a
       end
 
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets(self.grid_service.secrets.to_a)
+        embeds_changed ||= attributes[:secrets] != self.grid_service.secrets.to_a
       end
       if self.volumes
         attributes[:service_volumes] = self.build_service_volumes(self.grid_service.service_volumes.to_a,
           self.grid_service.grid, self.grid_service.stack
         )
+        embeds_changed ||= attributes[:service_volumes] != self.grid_service.service_volumes.to_a
       end
       grid_service.attributes = attributes
 
-      if grid_service.changed?
+      if grid_service.changed? || embeds_changed
         info "updating service #{grid_service.to_path} with changes: #{changed(grid_service)}"
         grid_service.revision += 1
       else

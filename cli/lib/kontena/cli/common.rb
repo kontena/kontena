@@ -1,25 +1,43 @@
-require 'tty-prompt'
-require 'pastel'
-require 'uri'
-require 'io/console'
-
-require 'kontena/cli/config'
-require 'kontena/cli/spinner'
+require 'forwardable'
+require 'kontena_cli'
 
 module Kontena
+  autoload :Client, 'kontena/client'
+
   module Cli
+    autoload :ShellSpinner, 'kontena/cli/spinner'
+    autoload :Spinner, 'kontena/cli/spinner'
+    autoload :Config, 'kontena/cli/config'
+
     module Common
+      extend Forwardable
+
+      def_delegators :prompt, :ask, :yes?
+      def_delegators :config,
+        :current_grid=, :require_current_grid, :current_master,
+        :current_master=, :require_current_master, :require_current_account,
+        :current_account
+      def_delegator :config, :config_filename, :settings_filename
+      def_delegator :client, :server_version, :api_url_version
 
       def logger
-        return @logger if @logger
-        @logger = Logger.new(ENV["DEBUG"] ? $stderr : $stdout)
-        @logger.level = ENV["DEBUG"].nil? ? Logger::INFO : Logger::DEBUG
-        @logger.progname = 'COMMON'
-        @logger
+        Kontena.logger
+      end
+
+      def prompt
+        Kontena.prompt
       end
 
       def pastel
-        @pastel ||= Pastel.new(enabled: $stdout.tty?)
+        Kontena.pastel
+      end
+
+      def spinner(msg, &block)
+         Kontena::Cli::Spinner.spin(msg, &block)
+      end
+
+      def config
+        Kontena::Cli::Config.instance
       end
 
       # Read from STDIN. If stdin is a console, use prompt to ask.
@@ -41,6 +59,10 @@ module Kontena
 
       def running_verbose?
         self.respond_to?(:verbose?) && self.verbose?
+      end
+
+      def running_quiet?
+        self.respond_to?(:quiet?) && self.quiet?
       end
 
       # Puts that puts even when self.silent?
@@ -87,9 +109,19 @@ module Kontena
       def vspinner(msg, &block)
         return vfakespinner(msg) unless block_given?
 
-        if running_verbose?
+        if running_verbose? && $stdout.tty?
           spinner(msg, &block)
         else
+          logger.debug { msg }
+          yield
+        end
+      end
+
+      def spin_if(obj_or_proc, message, &block)
+        if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
+          spinner(message, &block)
+        else
+          logger.debug { message }
           yield
         end
       end
@@ -97,7 +129,7 @@ module Kontena
       # Like vspinner but without actually running any block
       def vfakespinner(msg, success: true)
         if !running_verbose?
-          logger.debug msg
+          logger.debug { msg }
           return
         end
         puts " [#{ success ? 'done'.colorize(:green) : 'fail'.colorize(:red)}] #{msg}"
@@ -113,10 +145,7 @@ module Kontena
         $stderr.puts " [#{error}] #{msg}"
         exit code
       end
-
-      def config
-        Kontena::Cli::Config.instance
-      end
+      module_function :exit_with_error
 
       def require_api_url
         config.require_current_master.url
@@ -148,20 +177,8 @@ module Kontena
         logger.debug "Refreshing failed: #{ex.class.name} : #{ex.message}"
       end
 
-      def require_current_master
-        config.require_current_master
-      end
-
-      def require_current_account
-        config.require_current_account
-      end
-
-      def current_account
-        config.current_account
-      end
-
       def kontena_account
-        @kontena_account ||= config.find_account(ENV['KONTENA_ACCOUNT'] || 'kontena')
+        @kontena_account ||= config.current_account
       end
 
       def cloud_auth?
@@ -169,10 +186,6 @@ module Kontena
         return false unless kontena_account.token
         return false unless kontena_account.token.access_token
         true
-      end
-
-      def api_url_version
-        client.server_version
       end
 
       def cloud_client
@@ -184,11 +197,13 @@ module Kontena
       end
 
       def client(token = nil, api_url = nil)
+        return @client if @client
+
         if token.kind_of?(String)
           token = Kontena::Cli::Config::Token.new(access_token: token)
         end
 
-        @client ||= Kontena::Client.new(
+        @client = Kontena::Client.new(
           api_url || require_current_master.url,
           token || require_current_master.token
         )
@@ -198,24 +213,8 @@ module Kontena
         @client = nil
       end
 
-      def settings_filename
-        config.config_filename
-      end
-
-      def settings
-        config
-      end
-
       def api_url
         config.require_current_master.url
-      end
-
-      def current_grid=(grid)
-        config.current_grid=(grid)
-      end
-
-      def require_current_grid
-        config.require_current_grid
       end
 
       def clear_current_grid
@@ -231,29 +230,9 @@ module Kontena
         config.find_server_index(require_current_master.name)
       end
 
-      def current_master
-        config.current_master
-      end
-
-      def current_master=(master_alias)
-        config.current_master = master_alias
-      end
-
       def error(message = "Error")
         prompt.error(message)
         exit(1)
-      end
-
-      def ask(question = "")
-        prompt.ask(question)
-      end
-
-      def yes?(question = "")
-        prompt.yes?(question)
-      end
-
-      def prompt
-        ::Kontena.prompt
       end
 
       def confirm_command(name, message = nil)
@@ -287,10 +266,6 @@ module Kontena
 
       def add_master(server_name, master_info)
         config.add_server(master_info.merge('name' => server_name))
-      end
-
-      def spinner(msg, &block)
-        Kontena::Cli::Spinner.spin(msg, &block)
       end
 
       def any_key_to_continue_with_timeout(timeout=9)
@@ -382,6 +357,7 @@ module Kontena
       def display_logo
         puts File.read(File.expand_path('../../../../LOGO', __FILE__))
       end
+      module_function :display_logo
     end
   end
 end

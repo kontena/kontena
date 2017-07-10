@@ -24,8 +24,12 @@ module Shell
     "\x03".freeze
   end
 
+  def fixture_dir(dir)
+    "./spec/fixtures/#{dir}/"
+  end
+
   def with_fixture_dir(dir)
-    Dir.chdir("./spec/fixtures/#{dir}/") do
+    Dir.chdir(fixture_dir(dir)) do
       yield
     end
   end

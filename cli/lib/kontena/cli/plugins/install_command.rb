@@ -14,28 +14,16 @@ module Kontena::Cli::Plugins
       installed_version = Kontena::PluginManager.instance.installed(name)
 
       if installed_version
-        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do |spin|
-          begin
-            Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
-          rescue => ex
-            $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-            ENV["DEBUG"] && $stderr.puts(ex.backtrace.join("\n  "))
-            spin.fail!
-          end
+        installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do
+          Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
         end
 
-        spinner "Running cleanup" do |spin|
+        spinner "Running cleanup" do
           Kontena::PluginManager.instance.cleanup_plugin(name)
         end
       else
-        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do |spin|
-          begin
-            Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
-          rescue => ex
-            $stderr.puts pastel.red("#{ex.class.name} : #{ex.message}")
-            ENV["DEBUG"] && $stderr.puts(ex.backtrace.join("\n  "))
-            spin.fail!
-          end
+        installed = spinner "Installing plugin #{name.colorize(:cyan)}" do
+          Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
         end
       end
 

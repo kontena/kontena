@@ -1,4 +1,5 @@
 require_relative 'rpc/container_handler'
+require_relative 'rpc/container_exec_handler'
 require_relative 'rpc/node_handler'
 require_relative 'rpc/node_service_pod_handler'
 
@@ -8,6 +9,7 @@ class RpcServer
 
   HANDLERS = {
     'containers' => Rpc::ContainerHandler,
+    'container_exec' => Rpc::ContainerExecHandler,
     'nodes' => Rpc::NodeHandler,
     'node_service_pods' => Rpc::NodeServicePodHandler,
     'node_volumes' => Rpc::NodeVolumeHandler

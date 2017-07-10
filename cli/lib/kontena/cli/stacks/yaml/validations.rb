@@ -43,7 +43,7 @@ module Kontena::Cli::Stacks::YAML
               )
             end
           elsif value.is_a?(Array)
-            value.all? { |v| v.kind_of?(String) && v =~ /\A\S+(?<!\\)=.*/ }
+            value.all? { |v| v.kind_of?(String) && v =~ /\A[^=]+=/ }
           else
             false
           end
@@ -51,7 +51,7 @@ module Kontena::Cli::Stacks::YAML
         'env_file' => optional(-> (value) { value.is_a?(String) || value.is_a?(Array) }),
         'instances' => optional('integer'),
         'links' => optional(-> (value) { value.is_a?(Array) || value.nil? }),
-        'ports' => optional('array'),
+        'ports' => optional(-> (value) { value.is_a?(Array) && value.all? { |v| v.is_a?(String) && v.match(/\A(\d+\.\d+\.\d+\.\d+)?:?(\d+)\:(\d+)\/?(\w+)?\z/) } }),
         'pid' => optional('string'),
         'privileged' => optional('boolean'),
         'user' => optional('string'),
@@ -74,7 +74,9 @@ module Kontena::Cli::Stacks::YAML
           'timeout' => optional('integer'),
           'interval' => optional('integer'),
           'initial_delay' => optional('integer')
-        })
+        }),
+        'stop_grace_period' => optional(/(\d+(?:\.\d+)?)([hms])/),
+        'read_only' => optional('boolean')
       }
     end
 

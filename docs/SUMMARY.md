@@ -30,6 +30,7 @@
 * [Stacks](using-kontena/stacks.md)
 * [Services](using-kontena/services.md)
   * [Deployment Strategies](using-kontena/deploy.md)
+* [Nodes](using-kontena/nodes.md)
 * [Secrets Management](using-kontena/vault.md)
 * [Load Balancer](using-kontena/loadbalancer.md)
 * [Certificate Management](using-kontena/certificates.md)

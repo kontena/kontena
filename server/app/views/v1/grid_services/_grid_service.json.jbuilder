@@ -34,13 +34,14 @@ json.stack do
   json.name grid_service.stack.name
 end
 json.links grid_service.grid_service_links.map { |s|
-  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.name } if s.linked_grid_service
+  { id: s.linked_grid_service.to_path, alias: s.alias, name: s.linked_grid_service.qualified_name } if s.linked_grid_service
 }.compact
 json.log_driver grid_service.log_driver
 json.log_opts grid_service.log_opts
 json.strategy grid_service.strategy
 json.deploy_opts grid_service.deploy_opts
 json.pid grid_service.pid
+json.read_only grid_service.read_only
 json.instance_counts do
   if defined? instance_counts
     json.total instance_counts[:total]
@@ -54,13 +55,14 @@ json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
 json.revision grid_service.revision
 json.stack_revision grid_service.stack_revision
 if grid_service.health_check && grid_service.health_check.protocol
-	json.health_check do
-		json.protocol grid_service.health_check.protocol
-		json.uri grid_service.health_check.uri
-		json.port grid_service.health_check.port
-		json.timeout grid_service.health_check.timeout
-		json.initial_delay grid_service.health_check.initial_delay
-		json.interval grid_service.health_check.interval
-	end
-	json.health_status grid_service.health_status
+    json.health_check do
+        json.protocol grid_service.health_check.protocol
+        json.uri grid_service.health_check.uri
+        json.port grid_service.health_check.port
+        json.timeout grid_service.health_check.timeout
+        json.initial_delay grid_service.health_check.initial_delay
+        json.interval grid_service.health_check.interval
+    end
+    json.health_status grid_service.health_status
 end
+json.stop_grace_period grid_service.stop_grace_period
