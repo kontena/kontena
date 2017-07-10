@@ -272,7 +272,7 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.container_outdated?(service_container)).to be_falsey
     end
 
-    it 'fails if service_pod updated_at is too far in the future' do
+    it 'fails if service_pod updated_at is too far in the future', log_celluloid_actor_crashes: false do
       service_container = double(:service_container,
         info: { 'Created' => (Time.now.utc - 20).to_s }
       )
