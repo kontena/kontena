@@ -3,7 +3,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NODE", "Node"
+    parameter "NODE", "Node name"
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
 
     def execute

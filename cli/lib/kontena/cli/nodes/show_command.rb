@@ -4,7 +4,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::GridOptions
     include Kontena::Cli::BytesHelper
 
-    parameter "NODE", "Node"
+    parameter "NODE", "Node name"
 
     def execute
       require_api_url
