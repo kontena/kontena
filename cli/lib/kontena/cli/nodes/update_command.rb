@@ -3,7 +3,7 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
-    parameter "NODE_ID", "Node id"
+    parameter "NODE", "Node name"
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
 
     def execute
@@ -13,8 +13,8 @@ module Kontena::Cli::Nodes
 
       data = {}
       data[:labels] = label_list if label_list
-      spinner "Updating #{node_id.colorize(:cyan)} node " do
-        client.put("nodes/#{current_grid}/#{node_id}", data)
+      spinner "Updating #{self.node.colorize(:cyan)} node " do
+        client.put("nodes/#{current_grid}/#{self.node}", data)
       end
     end
   end

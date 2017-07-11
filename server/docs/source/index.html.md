@@ -301,11 +301,12 @@ follow | Stream logs
 	"node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
 	"name": "misty-sun-87",
 	"connected": "true",
-	"created_at": "",
-	"updated_at": "",
-	"last_seen_at": "",
+	"created_at": "2017-06-14T12:33:05.139Z",
+	"updated_at": "2017-06-14T13:37:36.968Z",
+	"last_seen_at": "2017-06-14T13:38:03.785Z",
+	"connected_at": "2017-06-14T12:33:05.084Z",
 	"node_number": 1,
-	"initial_node": true,
+	"initial_member": true,
 	"agent_version": "1.0.0",
 	"docker_version": "1.11.2",
 	"os": "CoreOS 1185.3.0 (MoreOS)",
@@ -428,7 +429,7 @@ Update a node details.
 
 ### Endpoint
 
-`PUT /v1/nodes/{node_id}`
+`PUT /v1/nodes/{id}`
 
 ## Get a node details
 
@@ -442,7 +443,7 @@ Get a node details.
 
 ### Endpoint
 
-`GET /v1/nodes/{node_id}`
+`GET /v1/nodes/:id`
 
 ## Delete a node
 
@@ -456,7 +457,7 @@ Delete a node from a grid. Does not actually terminate virtual/physical host nod
 
 ### Endpoint
 
-`DELETE /v1/nodes/{node_id}`
+`DELETE /v1/nodes/:id`
 
 ## Get node stats
 
@@ -470,7 +471,7 @@ Get all containers running on the node with latest statistics (cpu/memory/networ
 
 ### HTTP Request
 
-`GET /v1/nodes/:grid_id/:id/stats`
+`GET /v1/nodes/:id/stats`
 
 ### Query Parameters
 
@@ -492,7 +493,7 @@ Gets aggregated statistics for a node (cpu, memory, network, disk usage) for a g
 
 ### HTTP Request
 
-`GET /v1/nodes/:grid_id/:id/metrics `
+`GET /v1/nodes/:id/metrics `
 
 ### Query Parameters
 

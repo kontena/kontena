@@ -1,0 +1,93 @@
+{
+   "initial_member" : true,
+   "peer_ips" : [
+      "192.168.66.102"
+   ],
+   "last_seen_at" : "2017-07-04T08:36:02.280Z",
+   "updated_at" : "2017-07-04T08:35:09.455Z",
+   "node_number" : 1,
+   "volume_drivers" : [
+      {
+         "version" : null,
+         "name" : "local"
+      }
+   ],
+   "resource_usage" : {
+      "memory" : {
+         "free" : 194068480,
+         "inactive" : 225415168,
+         "buffers" : 37978112,
+         "cached" : 390828032,
+         "total" : 1045561344,
+         "used" : 851492864,
+         "active" : 521949184
+      },
+      "cpu" : null,
+      "usage" : null,
+      "load" : {
+         "5m" : 0.33642578125,
+         "1m" : 1.48779296875,
+         "15m" : 0.10888671875
+      },
+      "filesystem" : [
+         {
+            "total" : 16718393344,
+            "used" : 3104915456,
+            "name" : "/var/lib/docker",
+            "free" : 13613477888,
+            "available" : 12730281984
+         }
+      ]
+   },
+   "overlay_ip" : "10.81.0.1",
+   "labels" : [
+      "test"
+   ],
+   "engine_root_dir" : "/var/lib/docker",
+   "cpus" : 1,
+   "os" : "Container Linux by CoreOS 1409.5.0 (Ladybug)",
+   "public_ip" : "91.150.10.190",
+   "kernel_version" : "4.11.6-coreos-r1",
+   "node_id" : "XI4K:NPOL:EQJ4:S4V7:EN3B:DHC5:KZJD:F3U2:PCAN:46EV:IO4A:63S5",
+   "created_at" : "2016-10-27T08:15:31.084Z",
+   "id" : "development/core-01",
+   "name" : "core-01",
+   "network_drivers" : [
+      {
+         "version" : null,
+         "name" : "bridge"
+      },
+      {
+         "version" : null,
+         "name" : "host"
+      },
+      {
+         "version" : null,
+         "name" : "overlay"
+      },
+      {
+         "name" : "null",
+         "version" : null
+      }
+   ],
+   "driver" : "overlay",
+   "mem_limit" : 0,
+   "docker_version" : "1.12.6",
+   "agent_version" : "1.4.0.dev",
+   "private_ip" : "192.168.66.101",
+   "connected_at" : "2017-07-04T08:36:02.235Z",
+   "grid" : {
+      "supernet" : "10.80.0.0/12",
+      "trusted_subnets" : [],
+      "stats" : {
+         "statsd" : null
+      },
+      "token" : "tBsoco4sBClMtIOD/bHeIqS1KYM0kZMG7B960jNWWQXMOxqhOf8W1QgiNJlW9u6B/qS+rfS2ZLpC/ZJsyPNj0A==",
+      "id" : "development",
+      "name" : "development",
+      "subnet" : "10.81.0.0/16",
+      "initial_size" : 1
+   },
+   "mem_total" : 1045032960,
+   "connected" : true
+}
