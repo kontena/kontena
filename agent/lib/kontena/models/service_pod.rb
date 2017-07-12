@@ -42,6 +42,7 @@ module Kontena
                   :networks,
                   :wait_for_port,
                   :volume_specs,
+                  :read_only,
                   :stop_grace_period
 
       # @param [Hash] attrs
@@ -83,6 +84,7 @@ module Kontena
         @secrets = attrs['secrets'] || []
         @networks = attrs['networks'] || []
         @wait_for_port = attrs['wait_for_port']
+        @read_only = attrs['read_only']
         @stop_grace_period = attrs['stop_grace_period']
       end
 
@@ -217,6 +219,7 @@ module Kontena
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0
         host_config['PidMode'] = self.pid if self.pid
+        host_config['ReadonlyRootfs'] = true if self.read_only
 
         log_opts = self.build_log_opts
         host_config['LogConfig'] = log_opts unless log_opts.empty?

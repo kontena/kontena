@@ -209,7 +209,7 @@ module Kontena::NetworkAdapters
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-          '--password', ENV['KONTENA_TOKEN']
+          '--password', ENV['KONTENA_TOKEN'], '--conn-limit', '0'
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         @executor_pool.execute(exec_params)
@@ -277,7 +277,7 @@ module Kontena::NetworkAdapters
       return true if weave.config['Image'].split(':')[1] != WEAVE_VERSION
       cmd = Hash[*weave.config['Cmd'].flatten(1)]
       return true if cmd['--trusted-subnets'] != node.grid['trusted_subnets'].to_a.join(',')
-
+      return true if cmd['--conn-limit'].nil?
       false
     end
 

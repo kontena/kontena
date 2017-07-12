@@ -69,7 +69,7 @@ class HostNodeSerializer < KontenaJsonSerializer
   end
 
   def resource_usage
-    stats = object.host_node_stats.last
+    stats = object.host_node_stats.latest
     if stats
       {
         memory: stats.memory,

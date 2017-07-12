@@ -64,7 +64,7 @@ class HostNode
   end
 
   def to_path
-    "#{self.grid.try(:name)}/#{self.name}"
+    "#{self.grid.try(:name)}/#{self.name || self.node_id}"
   end
 
   # @param [String] name Name of the volume driver

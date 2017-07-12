@@ -16,6 +16,11 @@ describe Kontena::Cli::Nodes::SshCommand do
     allow(client).to receive(:get).with('nodes/test-grid/test-node').and_return(node)
   end
 
+  it "fails if using both --any and a node name as a command" do
+    expect(subject).to_not receive(:exec)
+    expect{subject.run(['--any', 'ls', '-l'])}.to exit_with_error.and output(/Cannot combine --any with a node name/).to_stderr
+  end
+
   it "uses the public IP by default" do
     expect(subject).to receive(:exec).with('ssh', 'core@192.0.2.10')
     subject.run ['test-node']

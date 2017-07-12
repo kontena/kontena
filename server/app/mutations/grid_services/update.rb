@@ -76,6 +76,7 @@ module GridServices
       attributes[:health_check] = self.health_check if self.health_check
       attributes[:volumes_from] = self.volumes_from if self.volumes_from
       attributes[:stop_grace_period] = parse_duration(self.stop_grace_period) if self.stop_grace_period
+      attributes[:read_only] = self.read_only unless self.read_only.nil?
 
       embeds_changed = false
 

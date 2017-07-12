@@ -49,7 +49,8 @@ module Rpc
         secrets: build_secrets,
         labels: build_labels,
         hooks: build_hooks,
-        networks: build_networks
+        networks: build_networks,
+        read_only: service.read_only
       }
     end
 

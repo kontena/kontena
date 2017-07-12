@@ -287,7 +287,7 @@ describe '/v1/grids', celluloid: true do
           }.to change{ grid.reload.host_nodes.count }.by(1)
 
           expect(json_response).to match hash_including(
-            'id' => nil,
+            'id' => 'terminal-a/test-1',
             'name' => 'test-1',
             'has_token' => true,
           )

@@ -249,6 +249,7 @@ module GridServices
             string
           end
           string :pid, in: ['host']
+          boolean :read_only
           hash :hooks do
             optional do
               array :post_start do

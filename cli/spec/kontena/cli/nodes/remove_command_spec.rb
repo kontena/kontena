@@ -7,7 +7,7 @@ describe Kontena::Cli::Nodes::RemoveCommand do
   context 'for an offline node without a node token' do
     let :node do
       {
-        "id" => nil,
+        "id" => 'test-grid/node-1',
         "name" => 'node-1',
         "has_token" => false,
         "connected" => false,
@@ -28,7 +28,7 @@ describe Kontena::Cli::Nodes::RemoveCommand do
   context 'for an online node without a node token' do
     let :node do
       {
-        "id" => nil,
+        "id" => 'test-grid/node-1',
         "name" => 'node-1',
         "has_token" => false,
         "connected" => true,
@@ -49,7 +49,7 @@ describe Kontena::Cli::Nodes::RemoveCommand do
   context 'for an online node with a node token' do
     let :node do
       {
-        "id" => nil,
+        "id" => 'test-grid/node-1',
         "name" => 'node-1',
         "has_token" => true,
         "connected" => true,

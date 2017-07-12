@@ -7,21 +7,20 @@ module Kontena::Cli::Nodes
     requires_current_master_token
     requires_current_grid
 
-    parameter "NAME", "Node name"
-
-    option ["--token"], "TOKEN", "Node token"
-    option "--generate-token", :flag, "Generate new node token"
+    parameter "NODE", "Node name"
 
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
     option "--clear-labels", :flag, "Clear node labels"
+    option ["--token"], "TOKEN", "Node token"
+    option "--generate-token", :flag, "Generate new node token"
 
     def update_token
       data = {}
 
       data[:token] = self.token if self.token
 
-      spinner "Updating node #{name.colorize(:cyan)} token" do
-        client.put("nodes/#{current_grid}/#{name}/token", data)
+      spinner "Updating node #{self.node.colorize(:cyan)} token" do
+        client.put("nodes/#{current_grid}/#{self.node}/token", data)
       end
     end
 
@@ -33,8 +32,8 @@ module Kontena::Cli::Nodes
       data[:labels] = self.label_list unless self.label_list.empty?
       data[:labels] = [] if self.clear_labels?
 
-      spinner "Updating #{name.colorize(:cyan)} node " do
-        client.put("nodes/#{current_grid}/#{name}", data)
+      spinner "Updating #{self.node.colorize(:cyan)} node " do
+        client.put("nodes/#{current_grid}/#{self.node}", data)
       end
     end
   end
