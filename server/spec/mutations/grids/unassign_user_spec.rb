@@ -9,20 +9,20 @@ describe Grids::UnassignUser do
     grid
   }
 
-  context 'for an authorized user' do
-    before do
-      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
-    end
-
-    it 'validates that current user belongs to grid' do
-      grid.users.delete_all
-
-      outcome = described_class.new(
+  it 'validates that current user has permission to unassign users' do
+    expect(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(false)
+    outcome = described_class.new(
         current_user: current_user,
         user: user,
         grid: grid
-      ).run
-      expect(outcome.errors.message).to eq 'grid' => "Invalid grid"
+    ).run
+    expect(outcome).to_not be_success
+    expect(outcome.errors.message).to eq 'grid' => "Operation not allowed"
+  end
+
+  context 'for an authorized user' do
+    before do
+      allow(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(true)
     end
 
     it 'unassigns a user from grid' do
