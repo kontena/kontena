@@ -2,6 +2,7 @@
 describe Grids::UnassignUser do
   let(:current_user) { User.create!(email: 'jane@domain.com') }
   let(:user) { User.create!(email: 'joe@domain.com')}
+  let(:user2) { User.create!(email: 'joe2@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid.users << current_user
@@ -13,7 +14,7 @@ describe Grids::UnassignUser do
     expect(UserAuthorizer).to receive(:assignable_by?).with(current_user, {to: grid}).and_return(false)
     outcome = described_class.new(
         current_user: current_user,
-        user: user,
+        user: user2,
         grid: grid
     ).run
     expect(outcome).to_not be_success

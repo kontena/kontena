@@ -9,6 +9,7 @@ module Grids
     def validate
       unless current_user.can_assign?(self.user, {to: self.grid})
         add_error(:grid, :invalid, 'Operation not allowed')
+        return
       end
 
       unless grid.users.include?(user)
