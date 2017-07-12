@@ -7,8 +7,6 @@ describe Kontena::Cli::Nodes::ListCommand do
   let(:subject) { described_class.new("kontena") }
 
   before do
-    Kontena.pastel.resolver.color.disable!
-
     allow(subject).to receive(:health_icon) {|health| health.inspect }
     allow(subject).to receive(:client).and_return(client)
   end
