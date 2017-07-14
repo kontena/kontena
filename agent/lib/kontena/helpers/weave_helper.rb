@@ -12,21 +12,6 @@ module Kontena
       WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
       WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
-      # @return [String]
-      def weave_version
-        WEAVE_VERSION
-      end
-
-      # @return [String]
-      def weave_image
-        "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
-      end
-
-      # @return [String]
-      def weaveexec_image
-        "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
-      end
-
       # @param [Docker::Container] container
       # @return [Boolean]
       def adapter_container?(container)
@@ -38,29 +23,35 @@ module Kontena
       # @param [String] image
       # @return [Boolean]
       def adapter_image?(image)
-        image.to_s.include?(WEAVEEXEC_IMAGE)
-      rescue
-        false
+        image.split(':').first == WEAVEEXEC_IMAGE
       end
 
       # @param [String] image
       # @return [Boolean]
       def router_image?(image)
-        image.to_s == "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
-      rescue
-        false
+        image.split(':').first == WEAVE_IMAGE
       end
 
       def network_adapter
         Celluloid::Actor[:network_adapter]
       end
 
+      def weaveexec_pool
+        Celluloid::Actor[:weave_exec_pool]
+      end
+
+      def weaveexec!(*cmd, &block)
+        weaveexec_pool.weaveexec!(*cmd, &block)
+      end
+
+      # XXX
       def wait_weave_running?
         wait_until!("weave running", timeout: 300) {
           network_adapter.running?
         }
       end
 
+      # XXX
       def wait_network_ready?
         wait_until!("network ready", timeout: 300) {
           network_adapter.network_ready?

@@ -93,6 +93,9 @@ module Kontena
     end
 
     def supervise_network_adapter
+      @supervisor.pool(Kontena::NetworkAdapters::WeaveExec,
+        as: :weave_exec_pool
+      )
       @supervisor.supervise(
         type: Kontena::NetworkAdapters::Weave,
         as: :network_adapter
@@ -126,7 +129,7 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::WeaveWorker,
-        as: :overlay_worker
+        as: :weave_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::ImageCleanupWorker,

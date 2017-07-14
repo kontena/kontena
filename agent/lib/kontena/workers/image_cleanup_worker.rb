@@ -6,8 +6,8 @@ module Kontena::Workers
     CLEANUP_INTERVAL = 60
     CLEANUP_DELAY = (60*60)
     IGNORE_IMAGES = [
-      "#{Kontena::NetworkAdapters::Weave::WEAVEEXEC_IMAGE}:#{Kontena::NetworkAdapters::Weave::WEAVE_VERSION}",
-      "#{Kontena::NetworkAdapters::Weave::WEAVE_IMAGE}:#{Kontena::NetworkAdapters::Weave::WEAVE_VERSION}",
+      "#{Kontena::Launchers::Weave::WEAVEEXEC_IMAGE}:#{Kontena::Launchers::Weave::WEAVE_VERSION}",
+      "#{Kontena::Launchers::Weave::WEAVE_IMAGE}:#{Kontena::Launchers::Weave::WEAVE_VERSION}",
       "#{Kontena::Launchers::Etcd::ETCD_IMAGE}:#{Kontena::Launchers::Etcd::ETCD_VERSION}",
       "#{Kontena::Launchers::Cadvisor::CADVISOR_IMAGE}:#{Kontena::Launchers::Cadvisor::CADVISOR_VERSION}",
     ]

@@ -1,3 +1,6 @@
+require_relative '../helpers/weave_helper'
+require_relative '../helpers/launcher_helper'
+
 module Kontena::Launchers
   # Manage the weave router container and host weave bridge, routing
   class Weave
@@ -5,7 +8,10 @@ module Kontena::Launchers
     include Kontena::Logging
     include Kontena::Observer
     include Kontena::Observable
-    include Kontena::NetworkAdapters::WeaveExec
+    include Kontena::Helpers::WeaveHelper
+    include Kontena::Helpers::LauncherHelper
+
+    IMAGE = "#{WEAVE_IMAGE}:#{WEAVE_VERSION}"
 
     CONTAINER_NAME = 'weave'
 
@@ -21,14 +27,18 @@ module Kontena::Launchers
     def start
       info "start..."
 
+      self.ensure_image(IMAGE)
+      self.ensure_image(Kontena::NetworkAdapters::WeaveExec::IMAGE)
+
       observe(Actor[:node_info_worker]) do |node|
-        launch(node)
+        update(node)
       end
     end
 
+    # XXX: exclusive!
     # @param node [Node]
-    def launch(node)
-      state = up(node)
+    def update(node)
+      state = self.ensure(node)
 
       update_observable(state)
 
@@ -42,13 +52,11 @@ module Kontena::Launchers
     #
     # @param node [Node]
     # @return [Hash] observable state
-    def up(node)
+    def ensure(node)
       info "up..."
 
       state = {}
-
-      state.merge! self.ensure_image(self.weave_image)
-      state.merge! self.ensure(self.weave_image,
+      state.merge! self.ensure_container(IMAGE,
         password: self.weave_password,
         trusted_subnets: node.grid_trusted_subnets
       )
@@ -56,29 +64,6 @@ module Kontena::Launchers
       state.merge! self.ensure_exposed(node.overlay_cidr)
 
       return state
-    end
-
-    # @param [String] image:version
-    # @return [Hash] { image }
-    def ensure_image(name)
-      unless image = Docker::Image.exist?(name)
-        debug "ensure_image: create #{name}"
-
-        image = Docker::Image.create('fromImage' => name)
-      end
-
-      return {
-        image: name,
-      }
-    end
-
-    ## The weaver container and weave bridge
-
-    # @return [Docker::Container] nil if not found
-    def inspect_container
-      Docker::Container.get(CONTAINER_NAME)
-    rescue Docker::Error::NotFoundError => error
-      nil
     end
 
     # Extract given --option from running container command
@@ -110,11 +95,11 @@ module Kontena::Launchers
 
     # @return [Hash] {image, running, options} or nil if not exists
     def inspect
-      return nil unless container = self.inspect_container
+      return nil unless container = inspect_container(CONTAINER_NAME)
 
       return {
         image: container.config['Image'],
-        container: container,
+        container: container, # XXX: just container.id?
         running: container.running?,
         options: {
           password: self.inspect_weave_password(container),
@@ -124,7 +109,7 @@ module Kontena::Launchers
     end
 
     # @return [Hash{image: String, options: Hash{password, trusted_subnets}}]
-    def ensure(image, options)
+    def ensure_container(image, options)
       state = self.inspect
 
       if state && state[:image] == image && state[:running] && state[:options] == options
@@ -144,7 +129,7 @@ module Kontena::Launchers
         options: options,
       }
 
-    rescue WeaveExecError => error
+    rescue Kontena::NetworkAdapters::WeaveExec::WeaveExecError => error
       warn "Reset weave on error: #{error}"
 
       weaveexec_reset!
@@ -174,12 +159,17 @@ module Kontena::Launchers
 
     ## The weave bridge's host overlay address and routing
 
+    # Current host addresses exposed on the weave bridge.
+    #
+    # @raise [WeaveExecError]
     # @return [Array<String>, nil] exposed CIDRs
     def inspect_exposed
-      weaveexec_ps('weave:expose') do |name, mac, *cidrs|
-        return cidrs
+      exposed = nil
+      weaveexec_pool.ps!('weave:expose') do |name, mac, *cidrs|
+        # XXX: can't return because this is a celluloid block call
+        exposed = cidrs
       end
-      return nil
+      return exposed
     end
 
     # Ensure that the host weave bridge is exposed using the given CIDR address,
@@ -271,7 +261,7 @@ module Kontena::Launchers
     # @raise [Docker::Error]
     def weaveexec_reset!
       weaveexec!('reset')
-    rescue WeaveExecError => error
+    rescue Kontena::NetworkAdapters::WeaveExec::WeaveExecError => error
       warn "Failed to reset weave: #{error}"
     end
   end

@@ -1,7 +1,14 @@
+require_relative '../helpers/weave_helper'
+
 module Kontena::NetworkAdapters
-  module WeaveExec
+  class WeaveExec
+    include Celluloid
+    include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::WeaveHelper
+
+    WEAVE_DEBUG = ENV['WEAVE_DEBUG']
+    IMAGE = "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
 
     class WeaveExecError < StandardError
       def initialize(command, status_code, output)
@@ -32,9 +39,9 @@ module Kontena::NetworkAdapters
     # @raise [Docker::Error]
     # @raise [WeaveExecError]
     # @yield [line] Each line of output
-    def weaveexec!(*cmd, &block)
+    def run(*cmd, &block)
       container = Docker::Container.create(
-        'Image' => weaveexec_image,
+        'Image' => IMAGE,
         'Cmd' => ['--local'] + cmd,
         'Volumes' => {
           '/var/run/docker.sock' => {},
@@ -45,8 +52,8 @@ module Kontena::NetworkAdapters
         },
         'Env' => [
           'HOST_ROOT=/host',
-          "VERSION=#{weave_version}",
-          "WEAVE_DEBUG=#{ENV['WEAVE_DEBUG']}",
+          "VERSION=#{WEAVE_VERSION}",
+          "WEAVE_DEBUG=#{WEAVE_DEBUG}",
         ],
         'HostConfig' => {
           'Privileged' => true,
@@ -81,12 +88,19 @@ module Kontena::NetworkAdapters
       container.delete(force: true, v: true) if container
     end
 
+    # Wrapper that aborts celluloid calls on exceptions
+    def weaveexec!(*cmd, &block)
+      run(*cmd, &block)
+    rescue => exc
+      abort exc
+    end
+
     # Wrapper that does not raise exceptions
     #
     # @see #weavexec!
     # @return [Boolean]
     def weaveexec(*cmd, &block)
-      weaveexec!(*cmd, &block)
+      run(*cmd, &block)
     rescue Docker::Error => exc
       error "weaveexec #{cmd}: #{exc}"
       return false
@@ -103,8 +117,8 @@ module Kontena::NetworkAdapters
     # @yield [name, mac, *cidrs]
     # @yieldparam [Array<String>] cidrs
     # @return [Boolean]
-    def weaveexec_ps(*what)
-      weaveexec('ps', *what) do |line|
+    def ps!(*what)
+      weaveexec!('ps', *what) do |line|
         yield *line.split()
       end
     end
