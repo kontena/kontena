@@ -75,6 +75,10 @@ module Kontena
 
     def supervise_launchers
       @supervisor.supervise(
+        type: Kontena::Launchers::Weave,
+        as: :weave_launcher
+      )
+      @supervisor.supervise(
         type: Kontena::Launchers::IpamPlugin,
         as: :ipam_plugin_launcher
       )

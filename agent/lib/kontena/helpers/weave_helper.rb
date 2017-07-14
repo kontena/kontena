@@ -23,7 +23,7 @@ module Kontena
       end
 
       # @return [String]
-      def weave_exec_image
+      def weaveexec_image
         "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
       end
 

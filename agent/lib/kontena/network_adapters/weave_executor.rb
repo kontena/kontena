@@ -20,7 +20,7 @@ module Kontena::NetworkAdapters
     def execute(cmd, &block)
       begin
         container = Docker::Container.create(
-          'Image' => weave_exec_image,
+          'Image' => weaveexec_image,
           'Cmd' => cmd,
           'Volumes' => {
             '/var/run/docker.sock' => {},
