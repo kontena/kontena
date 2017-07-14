@@ -10,6 +10,7 @@ module HostNodes
 
     optional do
       string :token
+      boolean :reset_connection
     end
 
     def validate
@@ -18,8 +19,18 @@ module HostNodes
       end
     end
 
+    def update_token(node)
+      node.token = self.token || self.generate_token
+    end
+
+    def reset_node_connection(node)
+      # forces WebsocketBackend to close connection on the next keepalive interval
+      node.connected = false
+    end
+
     def execute
-      self.host_node.token = self.token || self.generate_token
+      self.update_token(self.host_node)
+      self.reset_node_connection(self.host_node) if self.reset_connection
 
       unless self.host_node.save
         self.host_node.errors.each do |key, message|

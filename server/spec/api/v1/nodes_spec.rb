@@ -103,7 +103,7 @@ describe '/v1/nodes', celluloid: true do
 
     describe 'PUT /token' do
       let(:node) do
-        node = grid.host_nodes.create!(name: 'abc', token: 'asdf')
+        node = grid.host_nodes.create!(name: 'abc', token: 'asdf', connected: true)
       end
 
       it "generates new node token" do
@@ -114,11 +114,25 @@ describe '/v1/nodes', celluloid: true do
             'token' => String,
         })
         expect(json_response['token']).to_not eq 'asdf'
+
+        expect(node.reload).to be_connected
       end
 
       it "updates given token" do
         put "/v1/nodes/#{node.to_path}/token", { 'token' => 'asdf2' }.to_json, request_headers
         expect(response.status).to eq(200)
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdf2',
+        })
+      end
+
+      it "resets node connection" do
+        expect{
+          put "/v1/nodes/#{node.to_path}/token", { 'token' => 'asdf2', 'reset_connection' => true }.to_json, request_headers
+          expect(response.status).to eq(200)
+        }.to change{node.reload.connected?}.from(true).to(false)
+
         expect(json_response).to eq({
             'id' => 'test/abc',
             'token' => 'asdf2',

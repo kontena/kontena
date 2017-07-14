@@ -91,4 +91,33 @@ describe HostNodes::UpdateToken do
       end
     end
   end
+
+  context "with an existing host node that is connected" do
+    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdf', connected: true)}
+
+    before do
+      node
+    end
+
+    it 'does not reset the connection by default' do
+      outcome = described_class.run(
+        host_node: node,
+      )
+
+      expect(outcome).to be_success
+      expect(outcome.result.token).to_not eq 'asdf'
+      expect(outcome.result).to be_connected
+    end
+
+    it 'resets the node connection' do
+      outcome = described_class.run(
+        host_node: node,
+        reset_connection: true,
+      )
+
+      expect(outcome).to be_success
+      expect(outcome.result.token).to_not eq 'asdf'
+      expect(outcome.result).to_not be_connected
+    end
+  end
 end

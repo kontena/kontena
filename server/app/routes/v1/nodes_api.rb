@@ -44,6 +44,7 @@ module V1
               outcome = HostNodes::UpdateToken.run(
                 host_node: @node,
                 token: data['token'],
+                reset_connection: data['reset_connection'],
               )
               if outcome.success?
                 @node = outcome.result
