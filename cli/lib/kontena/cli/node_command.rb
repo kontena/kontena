@@ -5,10 +5,11 @@ class Kontena::Cli::NodeCommand < Kontena::Command
   subcommand "ssh", "Ssh into node", load_subcommand('nodes/ssh_command')
   subcommand "create", "Create node", load_subcommand('nodes/create_command')
   subcommand "update", "Update node", load_subcommand('nodes/update_command')
+  subcommand "reset", "Reset node token for agent websocket connection", load_subcommand('nodes/reset_command')
   subcommand ["remove","rm"], "Remove node", load_subcommand('nodes/remove_command')
   subcommand "label", "Node label specific commands", load_subcommand('nodes/label_command')
   subcommand "health", "Check node health", load_subcommand('nodes/health_command')
-  subcommand "env", "Generate node kontena-agent.env", load_subcommand('nodes/env_command')
+  subcommand "env", "Generate kontena-agent.env configuration", load_subcommand('nodes/env_command')
 
   def execute
   end
