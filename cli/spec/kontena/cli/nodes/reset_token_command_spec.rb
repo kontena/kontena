@@ -1,6 +1,6 @@
-require 'kontena/cli/nodes/reset_command'
+require 'kontena/cli/nodes/reset_token_command'
 
-describe Kontena::Cli::Nodes::ResetCommand do
+describe Kontena::Cli::Nodes::ResetTokenCommand do
   include ClientHelpers
   include OutputHelpers
 

@@ -26,7 +26,7 @@ The grid node will be associated with the Node ID provided by the first agent to
 The same node token cannot be used by any other agent with a different Node ID.
 Attempting to provision multiple nodes with the same node token will result in connection errors: `Incorrect node token, already used by a different node`
 
-The node token can also be reset using `kontena node reset`.
+The node token can also be reset using `kontena node reset-token`.
 This will force the agent to disconnect (unless using `--no-reset-connection`), and require the agent `/etc/kontena-agent.env` configuration to be updated using the new `KONTENA_NODE_TOKEN=` from `kontena node env` before it will be able to reconnect.
 
 Decomissioning a node using `kontena node rm` will also revoke the node token, preventing further agent connections to the master using the node token that the node was provisioned with.
@@ -46,9 +46,9 @@ The grid token cannot be revoked.
 Nodes provisioned using grid tokens that are still online cannot be removed using `kontena node rm`, as the agent would quickly reconnect and the node would get re-created by the server.
 If an offline node using a grid token is removed, and the agent later reconnects, the node will re-appear in the grid.
 
-Existing nodes configured to connect with grid tokens can be upgraded to use node tokens using `kontena node reset` to generate a node token.
+Existing nodes configured to connect with grid tokens can be upgraded to use node tokens using `kontena node reset-token` to generate a node token.
 This will force the agent to disconnect, and require the agent `/etc/kontena-agent.env` configuration to be updated using the new `KONTENA_NODE_TOKEN=` from `kontena node env` before it will be able to reconnect.
-The `kontena node reset --clear-token` command can be used to revert back to the grid token.
+The `kontena node reset-token --clear-token` command can be used to revert back to the grid token.
 
 ### Online nodes
 

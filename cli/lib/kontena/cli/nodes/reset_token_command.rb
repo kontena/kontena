@@ -1,5 +1,5 @@
 module Kontena::Cli::Nodes
-  class ResetCommand < Kontena::Command
+  class ResetTokenCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
