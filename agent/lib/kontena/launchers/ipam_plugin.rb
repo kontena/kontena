@@ -80,7 +80,7 @@ module Kontena::Launchers
         return container
       elsif container && !container.running?
         info 'container is stopped, starting it'
-        container.start
+        container.start!
         return container
       else
         info "container does not yet exist"

@@ -77,7 +77,7 @@ module Kontena::NetworkAdapters
       elsif block
         stderr = container.streaming_logs(stderr: true)
         stdout = container.streaming_logs(stdout: true)
-        debug "weaveexec stream #{command}: #{stderr}"
+        debug "weaveexec stream #{command}:\n#{stderr}"
         stdout.each_line &block # TODO: fixes #1639?
       else
         output = container.streaming_logs(stdout: true, stderr: true)

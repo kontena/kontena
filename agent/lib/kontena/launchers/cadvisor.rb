@@ -88,7 +88,7 @@ module Kontena::Launchers
           'RestartPolicy' => {'Name' => 'always'}
         }
       )
-      container.start
+      container.start # XXX: start!
     end
 
     # @param [Exception] exc

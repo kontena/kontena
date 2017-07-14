@@ -65,6 +65,7 @@ module Docker
 
     # @return [Boolean]
     def running?
+      # XXX: extra API calls
       self.state['Running'] && !self.state['Restarting']
     rescue
       false
