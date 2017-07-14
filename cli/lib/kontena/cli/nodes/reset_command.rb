@@ -10,7 +10,7 @@ module Kontena::Cli::Nodes
     parameter "NODE", "Node name"
 
     option ["--token"], "TOKEN", "Use given node token instead of generating a random token"
-    option ["--clear-token"], :flag, "Clear token"
+    option ["--clear-token"], :flag, "Clear node token, reverting to grid token"
     option "--[no-]reset-connection", :flag, "Reset agent websocket connection", default: true
     option "--force", :flag, "Force token update"
 
