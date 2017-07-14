@@ -100,6 +100,25 @@ module V1
           r.route 'grid_event_logs'
         end
 
+        r.on 'token' do
+          r.post do
+            r.is do
+              data = parse_json_body
+              data[:grid] = @grid
+              data[:user] = current_user
+              outcome = Grids::UpdateToken.run(data)
+              if outcome.success?
+                @grid = outcome.result
+                audit_event(r, @grid, @grid, 'update-token')
+                response.status = 201
+              else
+                response.status = 422
+                {error: outcome.errors.message}
+              end
+            end
+          end
+        end
+
         r.get do
           r.is do
             render('grids/show')
