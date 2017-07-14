@@ -1,3 +1,5 @@
+require 'ipaddress'
+
 class Node
 
   attr_reader :id,
@@ -5,7 +7,6 @@ class Node
               :updated_at,
               :name,
               :labels,
-              :overlay_ip,
               :peer_ips,
               :node_number,
               :initial_member,
@@ -27,5 +28,25 @@ class Node
 
   def statsd_conf
     grid.dig('stats', 'statsd') || {}
+  end
+
+  # @return [IPAddress] 10.81.0.0/16
+  def grid_subnet
+    IPAddress.parse(@grid['subnet'])
+  end
+
+  # @return [Array<String>] 192.168.66.0/24
+  def grid_trusted_subnets
+    @grid['trusted_subnets']
+  end
+
+  # @return [IPAddress] 10.81.0.X
+  def overlay_ip
+    IPAddress.parse(@overlay_ip)
+  end
+
+  # @return [String]
+  def overlay_cidr
+    "#{overlay_ip}/#{grid_subnet.prefix}"
   end
 end

@@ -10,6 +10,7 @@ gem 'etcd'
 gem 'statsd-ruby'
 gem 'vmstat'
 gem 'fluent-logger', '~>0.6.2'
+gem 'ipaddress', '~>0.8.3'
 
 group :development, :test do
   gem 'rake', require: false

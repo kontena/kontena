@@ -44,6 +44,7 @@ GEM
       msgpack (>= 0.5.6, < 2)
     hitimes (1.2.3)
     i18n (0.7.0)
+    ipaddress (0.8.3)
     json (1.8.3)
     minitest (5.5.0)
     mixlib-log (1.6.0)
@@ -93,6 +94,7 @@ DEPENDENCIES
   eventmachine (~> 1.2.3)
   faye-websocket (~> 0.10.7)
   fluent-logger (~> 0.6.2)
+  ipaddress (~> 0.8.3)
   msgpack (~> 1.0.3)
   rake
   rspec
@@ -102,4 +104,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.14.3
+   1.15.1
