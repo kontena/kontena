@@ -1,7 +1,7 @@
 require_relative 'common'
 
 module Grids
-  class Update < Mutations::Command
+  class UpdateToken < Mutations::Command
     include Common
 
     required do
@@ -9,16 +9,20 @@ module Grids
       model :user
     end
 
-    common_validations
-
     def validate
       add_error(:user, :invalid, 'Operation not allowed') unless user.can_update?(grid)
+    end
 
-      validate_common
+    def generate_secret
+      SecureRandom.base64(64)
+    end
+
+    def update_weave_secret(grid)
+      grid.weave_secret = self.generate_secret
     end
 
     def execute
-      execute_common(self.grid)
+      update_weave_secret(self.grid)
 
       unless self.grid.save
         self.grid.errors.each do |key, message|
@@ -28,8 +32,7 @@ module Grids
       end
 
       Celluloid::Future.new do
-        self.notify_nodes(self.grid)
-        self.reschedule_grid(self.grid)
+        notify_nodes(self.grid)
       end
 
       self.grid

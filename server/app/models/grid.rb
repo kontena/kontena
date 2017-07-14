@@ -18,6 +18,7 @@ class Grid
   field :default_affinity, type: Array, default: []
   field :subnet, type: String, default: SUBNET
   field :supernet, type: String, default: SUPERNET
+  field :weave_secret, type: String
 
   has_many :host_nodes, dependent: :destroy
   has_many :host_node_stats

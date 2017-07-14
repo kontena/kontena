@@ -10,6 +10,7 @@ module Rpc
     attribute :supernet
     attribute :stats
     attribute :logs
+    attribute :weave
 
     def id
       object.to_path
@@ -28,6 +29,12 @@ module Rpc
           opts: object.grid_logs_opts.opts,
         }
       end
+    end
+
+    def weave
+      {
+        secret: object.weave_secret,
+      }
     end
   end
 end
