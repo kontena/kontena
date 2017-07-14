@@ -53,6 +53,18 @@ describe HostNodes::UpdateToken do
       expect(outcome.result.token).to_not eq 'asdf'
     end
 
+    it 'generates a new node token with explicit nil' do
+      outcome = described_class.run(
+        host_node: node,
+        token: nil,
+      )
+
+      expect(outcome).to be_success
+      expect(outcome.result.token).to be_a String
+      expect(outcome.result.token).to_not be_empty
+      expect(outcome.result.token).to_not eq 'asdf'
+    end
+
     it 'updates given node token' do
       outcome = described_class.run(
         host_node: node,
@@ -61,6 +73,16 @@ describe HostNodes::UpdateToken do
 
       expect(outcome).to be_success
       expect(outcome.result.token).to eq 'asdf2'
+    end
+
+    it 'clears the node token' do
+      outcome = described_class.run(
+        host_node: node,
+        token: '',
+      )
+
+      expect(outcome).to be_success
+      expect(outcome.result.token).to be nil
     end
 
     context "with a different host node without a node token" do

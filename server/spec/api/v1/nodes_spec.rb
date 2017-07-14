@@ -107,7 +107,7 @@ describe '/v1/nodes', celluloid: true do
       end
 
       it "generates new node token" do
-        put "/v1/nodes/#{node.to_path}/token", {}.to_json, request_headers
+        put "/v1/nodes/#{node.to_path}/token", { 'token' => nil }.to_json, request_headers
         expect(response.status).to eq(200)
         expect(json_response).to match({
             'id' => 'test/abc',
@@ -124,6 +124,15 @@ describe '/v1/nodes', celluloid: true do
         expect(json_response).to eq({
             'id' => 'test/abc',
             'token' => 'asdf2',
+        })
+      end
+
+      it "clears token" do
+        put "/v1/nodes/#{node.to_path}/token", { 'token' => '' }.to_json, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => nil,
         })
       end
 

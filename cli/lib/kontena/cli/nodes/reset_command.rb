@@ -10,6 +10,7 @@ module Kontena::Cli::Nodes
     parameter "NODE", "Node name"
 
     option ["--token"], "TOKEN", "Use given node token instead of generating a random token"
+    option ["--clear-token"], :flag, "Clear token"
     option "--[no-]reset-connection", :flag, "Reset agent websocket connection", default: true
     option "--force", :flag, "Force token update"
 
@@ -18,7 +19,8 @@ module Kontena::Cli::Nodes
 
       data = {}
 
-      data[:token] = self.token if self.token
+      data[:token] = self.token
+      data[:token] = '' if self.clear_token?
       data[:reset_connection] = self.reset_connection?
 
       spinner "Resetting node #{self.node.colorize(:cyan)} websocket connection token" do
