@@ -29,8 +29,8 @@ toc_order: 2
 The `KONTENA_URI` and either of `KONTENA_TOKEN` or `KONTENA_NODE_TOKEN` is required.
 
 - `KONTENA_URI`: Kontena Master websocket uri, `ws://...` or `wss://...` (required)
-- `KONTENA_TOKEN`: Kontena [Grid token](../using-kontena/nodes.md#Grid Token)
-- `KONTENA_NODE_TOKEN`: Kontena [Node token](../using-kontena/nodes.md#Node Token)
+- `KONTENA_TOKEN`: Kontena [Grid token](../using-kontena/nodes.md#grid-token)
+- `KONTENA_NODE_TOKEN`: Kontena [Node token](../using-kontena/nodes.md#node-token)
 - `KONTENA_PEER_INTERFACE`: network interface for peer/private communication (default: eth1)
 - `KONTENA_PUBLIC_IP`: specify node public ip, overrides default resolving
 - `KONTENA_PRIVATE_IP`: specify node private ip, overrides default resolving
