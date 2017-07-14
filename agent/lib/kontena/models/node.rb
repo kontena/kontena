@@ -23,6 +23,7 @@ class Node
     @node_number = data['node_number']
     @initial_member = data['initial_member']
     @grid = data['grid']
+    @weave = data['grid']['weave']
   end
 
   def statsd_conf
@@ -47,6 +48,11 @@ class Node
   # @return [String]
   def grid_supernet
     @grid['supernet']
+  end
+
+  # @return [String]
+  def weave_secret
+    @weave['secret']
   end
 
   # @return [IPAddress] 10.81.0.X
