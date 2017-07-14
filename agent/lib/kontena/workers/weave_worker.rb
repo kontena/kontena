@@ -22,7 +22,7 @@ module Kontena::Workers
     end
 
     def on_dns_add(topic, event)
-      wait_started!
+      wait!
       weave_client.add_dns(event[:id], event[:ip], event[:name])
     rescue => exc
       error exc
@@ -30,7 +30,7 @@ module Kontena::Workers
 
     # Spin waiting until ready
     # @raise [Timeout::Error]
-    def wait_started!
+    def wait!
       wait_until!("weave started") { @started }
     end
 

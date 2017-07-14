@@ -38,8 +38,6 @@ module Kontena
 
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
 
-        wait_network_ready?
-
         if service_container
           info "removing previous version of service: #{service_pod.name_for_humans}"
           self.cleanup_container(service_container)

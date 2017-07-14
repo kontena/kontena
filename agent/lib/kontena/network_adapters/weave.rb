@@ -1,6 +1,7 @@
 require_relative '../logging'
-require_relative '../helpers/weave_helper'
+require_relative '../helpers/iface_helper'
 require_relative '../helpers/wait_helper'
+require_relative '../helpers/weave_helper'
 
 module Kontena::NetworkAdapters
   # Configure containers and manage the overlay IPAM
@@ -8,6 +9,7 @@ module Kontena::NetworkAdapters
   class Weave
     include Celluloid
     include Celluloid::Notifications
+    include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Helpers::WaitHelper
     include Kontena::Logging
@@ -46,10 +48,10 @@ module Kontena::NetworkAdapters
       reset_observable
     end
 
-    # Spin waiting until ready
+    # Wait until ready
     # @raise [Timeout::Error]
-    def wait_observable!
-      wait_until!("weave started") { observable? }
+    def wait!
+      wait_until!("weave started") { @started }
     end
 
     def start
@@ -81,9 +83,9 @@ module Kontena::NetworkAdapters
     # IP of local weave DNS resolver
     #
     # @return [String]
-    def weavedns_ip
+    def weave_dns_ip
       # always listens on the docker0 IP
-      @dns_ip ||= interface_ip('docker0') # XXX: fail on errors?
+      @weave_dns_ip ||= interface_ip('docker0') # XXX: fail on errors?
     end
 
     # Modify container create options to use weavewait + reserve overlay network address for later attach.
@@ -93,12 +95,12 @@ module Kontena::NetworkAdapters
     # @param opts [Hash] container create options
     # @return [Hash]
     def modify_container_opts(opts)
-      wait_observable!
+      wait!
 
       container_image = inspect_container_image(opts)
       entrypoint, cmd = build_container_entrypoint(opts, container_image)
       overlay_network, overlay_cidr = reserve_container_address(opts)
-      dns_ip = self.weavedns_ip
+      dns_ip = self.weave_dns_ip
 
       host_config = opts['HostConfig'] ||= {}
       host_config['VolumesFrom'] ||= []
@@ -171,11 +173,11 @@ module Kontena::NetworkAdapters
     # @param pool [String] IPAM pool ID from io.kontena.container.overlay_network
     # @param cidr [String] IPAM overlay CIDR from io.kontena.container.overlay_cidr
     def release_container_address(container_id, pool, cidr)
-      wait_observable!
+      wait!
 
       info "Release address for container=#{container_id} in pool=#{pool}: #{cidr}"
 
-      ipam_client.release_address(overlay_network, overlay_cidr)
+      ipam_client.release_address(pool, cidr)
     rescue IpamError => error
       # Cleanup will take care of these later on
       warn "Failed to release address for container=#{container_id} in pool=#{pool} at cidr=#{cidr}: #{error}"
