@@ -18,14 +18,16 @@ See [Installing Kontena](../getting-started/installing/) for platform-specific d
 Nodes can be provisioned with unique node tokens using the `KONTENA_NODE_TOKEN=` environment variable.
 
 Nodes provisioned with a Node token must be created beforehand using `kontena node create`.
-The server will generate a new token for the node (unless using `--token` to provide a pre-generated token).
-Use the CLI `kontena node env` command to generate the environment variables required for configuring `kontena-agent` on the new node, including the `KONTENA_NODE_TOKEN`.
+The server will generate a new token for the node, or `--token` can be used to provide an unique pre-generated token.
+Use the CLI `kontena node env` command to generate the `/etc/kontena-agent.env` configuration required for the `kontena-agent` on the new node, including the `KONTENA_NODE_TOKEN?`.
 
 The Kontena Master will use the node token provided by the agent to associate the connection with an existing grid node, as authenticated by the node token.
 The grid node will be associated with the Node ID provided by the first agent to connect using the node token.
-
 The same node token cannot be used by any other agent with a different Node ID.
 Attempting to provision multiple nodes with the same node token will result in connection errors: `Incorrect node token, already used by a different node`
+
+The node token can also be reset using `kontena node reset`.
+This will force the agent to disconnect (unless using `--no-reset-connection`), and require the agent `/etc/kontena-agent.env` configuration to be updated using the new `KONTENA_NODE_TOKEN=` from `kontena node env` before it will be able to reconnect.
 
 Decomissioning a node using `kontena node rm` will also revoke the node token, preventing further agent connections to the master using the node token that the node was provisioned with.
 If the agent is still connected, removing the node will forcibly disconnect the agent within the next keepalive interval (0-30s): `ERROR -- Kontena::WebsocketClient: master indicates that this agent should not reconnect: host node UXTT:TPWP:6OQM:3UKS:EPB4:MOQD:DYYT:N42X:VSR5:IIM3:VDCP:22IC has been removed`
@@ -43,6 +45,10 @@ The master will automatically create a new grid node if a new `kontena-agent` co
 The grid token cannot be revoked.
 Nodes provisioned using grid tokens that are still online cannot be removed using `kontena node rm`, as the agent would quickly reconnect and the node would get re-created by the server.
 If an offline node using a grid token is removed, and the agent later reconnects, the node will re-appear in the grid.
+
+Existing nodes configured to connect with grid tokens can be upgraded to use node tokens using `kontena node reset`.
+This will force the agent to disconnect, and require the agent `/etc/kontena-agent.env` configuration to be updated using the new `KONTENA_NODE_TOKEN=` from `kontena node env` before it will be able to reconnect.
+The `kontena node reset --clear-token` command can be used to revert back to the grid token.
 
 ### Online nodes
 
