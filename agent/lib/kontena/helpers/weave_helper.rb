@@ -44,18 +44,8 @@ module Kontena
         weaveexec_pool.weaveexec!(*cmd, &block)
       end
 
-      # XXX
-      def wait_weave_running?
-        wait_until!("weave running", timeout: 300) {
-          network_adapter.running?
-        }
-      end
-
-      # XXX
-      def wait_network_ready?
-        wait_until!("network ready", timeout: 300) {
-          network_adapter.network_ready?
-        }
+      def weave_client
+        @weave_client ||= Kontena::NetworkAdapters::WeaveClient.new
       end
     end
   end

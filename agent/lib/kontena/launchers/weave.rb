@@ -53,7 +53,7 @@ module Kontena::Launchers
     # @param node [Node]
     # @return [Hash] observable state
     def ensure(node)
-      info "up..."
+      info "ensure..."
 
       state = {}
       state.merge! self.ensure_container(IMAGE,
@@ -62,6 +62,8 @@ module Kontena::Launchers
       )
       state.merge! self.ensure_peers(node.peer_ips)
       state.merge! self.ensure_exposed(node.overlay_cidr)
+
+      state.merge! self.query_status
 
       return state
     end
@@ -200,6 +202,16 @@ module Kontena::Launchers
 
       return {
         exposed: [ cidr ],
+      }
+    end
+
+    # Query weave status
+    #
+    # @raise [Excon::Error]
+    # @return [Hash{status: String}]
+    def query_status
+      {
+        status: weave_client.status,
       }
     end
 

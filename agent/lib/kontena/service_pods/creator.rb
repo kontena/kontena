@@ -166,7 +166,7 @@ module Kontena
         service_config = service_pod.service_config
 
         unless service_pod.net == 'host'
-          network_adapter.modify_create_opts(service_config)
+          network_adapter.modify_container_opts(service_config)
         end
 
         service_config

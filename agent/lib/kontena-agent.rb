@@ -26,6 +26,7 @@ require_relative 'kontena/models/volume'
 require_relative 'kontena/observable'
 require_relative 'kontena/observer'
 
+require_relative 'kontena/network_adapters/weave_client'
 require_relative 'kontena/network_adapters/weave_exec'
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/ipam_client'

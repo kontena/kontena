@@ -23,6 +23,14 @@ module Kontena::NetworkAdapters
       @connection = Excon.new(ipam_url || IPAM_URL)
     end
 
+    # Test if /Plugin.Active succeeds
+    # @return [Hash] nil on error
+    def activate?
+      activate
+    rescue IpamError
+      nil
+    end
+
     def activate
       response = @connection.post(:path => '/Plugin.Activate', :headers => HEADERS, :expects => [200])
       JSON.parse(response.body)

@@ -1,5 +1,4 @@
 require 'docker'
-require_relative '../logging'
 require_relative '../helpers/weave_helper'
 
 module Kontena::Workers
@@ -7,56 +6,61 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
     include Kontena::Helpers::WeaveHelper
 
-    def initialize
+    def initialize(start: true)
       info 'initialized'
 
-      subscribe('dns:add', :on_dns_add)
-
-      @migrate_containers = nil # initialized by #start
+      @migrate_containers = nil # initialized by #ensure_containers_attached
 
       @started = false # to prevent handling of container events before migration scan
       subscribe('container:event', :on_container_event)
-      subscribe('network_adapter:restart', :on_weave_restart)
+      subscribe('dns:add', :on_dns_add)
 
-      if network_adapter.already_started?
-        self.start
-      else
-        subscribe('network_adapter:start', :on_weave_start)
-      end
+      async.start if start
     end
 
-    def on_weave_start(topic, data)
-      info "attaching network to existing containers"
-      self.start
+    def on_dns_add(topic, event)
+      wait_started!
+      weave_client.add_dns(event[:id], event[:ip], event[:name])
+    rescue => exc
+      error exc
     end
-    def on_weave_restart(topic, data)
-      info "re-attaching network to existing containers after weave restart"
-      self.start
+
+    # Spin waiting until ready
+    # @raise [Timeout::Error]
+    def wait_started!
+      wait_until!("weave started") { @started }
     end
 
     def start
-      @migrate_containers = network_adapter.get_containers
-      debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
+      info "start..."
 
-      @started = true
+      observe(Actor[:weave_launcher]) do |weave|
+        # TODO: re-ensure based on @containers?
+        unless @started
+          ensure_containers_attached
+          @started = true
+        end
+      end
+    end
+
+    def ensure_containers_attached
+      @migrate_containers = self.inspect_containers
+
+      debug "Scanned #{@migrate_containers.size} existing containers for potential migration: #{@migrate_containers}"
 
       Docker::Container.all(all: false).each do |container|
         self.start_container(container)
       end
     end
 
-    def on_dns_add(topic, event)
-      wait_weave_running?
-      add_dns(event[:id], event[:ip], event[:name])
-    end
-
     # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
-      # cannot run start_container before start has populated @migrate_containers
-      return unless started?
+      # cannot run start_container before ensure_containers_attached has populated @migrate_containers
+      return unless @started
 
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
@@ -67,17 +71,27 @@ module Kontena::Workers
         end
       elsif event.status == 'restart'
         if router_image?(event.from)
-          wait_weave_running?
-
-          self.start
+          # XXX: wait?
+          self.ensure_containers_attached
         end
       elsif event.status == 'destroy'
         self.on_container_destroy(event)
       end
     end
 
-    def started?
-      @started
+    # Inspect current state of attached containers.
+    #
+    # @return [Hash<String, String>] container_id[0..12] => [overlay_cidr]
+    def inspect_containers
+      containers = { }
+
+      weaveexec_pool.ps! do |id, mac, *cidrs|
+        next if id == 'weave:expose'
+
+        containers[id] = cidrs
+      end
+
+      containers
     end
 
     # Ensure weave network for container
@@ -87,10 +101,8 @@ module Kontena::Workers
       overlay_cidr = container.overlay_cidr
 
       if overlay_cidr
-        wait_weave_running?
-
         register_container_dns(container)
-        attach_overlay(container)
+        start_container_overlay(container)
       else
         debug "skip start for container=#{container.name} without overlay_cidr"
       end
@@ -109,9 +121,8 @@ module Kontena::Workers
       overlay_cidr = event.Actor.attributes['io.kontena.container.overlay_cidr']
 
       if overlay_network && overlay_cidr
-        wait_network_ready?
-
-        network_adapter.remove_container(container_id, overlay_network, overlay_cidr)
+        # release from IPAM
+        network_adapter.release_container_address(container_id, overlay_network, overlay_cidr)
       end
     rescue => exc
       error "failed to remove container: #{exc.class.name}: #{exc.message}"
@@ -122,7 +133,7 @@ module Kontena::Workers
 
     # @param [String] container_id
     # @param [String] overlay_cidr
-    def attach_overlay(container)
+    def start_container_overlay(container)
       if container.overlay_network.nil?
         # overlay network migration for 0.16 compat
         # override overlay network /19 -> /16 suffix for existing containers that may need to be migrated
@@ -132,18 +143,47 @@ module Kontena::Workers
         if migrate_cidrs = @migrate_containers[container.id[0...12]]
           debug "Migrate container=#{container.name} with overlay_cidr=#{container.overlay_cidr} from #{migrate_cidrs} to #{overlay_cidr}"
 
-          network_adapter.migrate_container(container.id, overlay_cidr, migrate_cidrs)
+          migrate_container(container.id, overlay_cidr, migrate_cidrs)
 
           # mark container as migrated
           @migrate_containers.delete(container.id[0...12])
         else
           debug "Migrate container=#{container.name} with overlay_cidr=#{container.overlay_cidr} (not attached) -> #{overlay_cidr}"
 
-          network_adapter.attach_container(container.id, overlay_cidr)
+          attach_container(container.id, overlay_cidr)
         end
       else
-        network_adapter.attach_container(container.id, container.overlay_cidr)
+        attach_container(container.id, container.overlay_cidr)
       end
+    end
+
+    # Attach container to weave with given CIDR address, first detaching any existing mismatching addresses
+    #
+    # @param [String] container_id
+    # @param [String] overlay_cidr '10.81.X.Y/16'
+    # @param [Array<String>] migrate_cidrs ['10.81.X.Y/19']
+    def migrate_container(container_id, cidr, attached_cidrs)
+      # first remove any existing addresses
+      # this is required, since weave will not attach if the address already exists, but with a different netmask
+      attached_cidrs.each do |attached_cidr|
+        if cidr != attached_cidr
+          warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
+          weaveexec_pool.weaveexec! 'detach', attached_cidr, container_id
+        end
+      end
+
+      # attach with the correct address
+      attach_container(container_id, cidr)
+    end
+
+    # Attach container to weave with given CIDR address
+    #
+    # @param [String] container_id
+    # @param [String] overlay_cidr '10.81.X.Y/16'
+    def attach_container(container_id, cidr)
+      info "Attach container=#{container_id} at cidr=#{cidr}"
+
+      weaveexec_pool.weaveexec! 'attach', cidr, '--rewrite-hosts', container_id
     end
 
     # @param [Docker::Container]
@@ -172,7 +212,7 @@ module Kontena::Workers
         end
       end
       dns_names.each do |name|
-        add_dns(container.id, container.overlay_ip, name)
+        weave_client.add_dns(container.id, container.overlay_ip, name)
       end
     end
 
@@ -208,52 +248,6 @@ module Kontena::Workers
         domain_name,
         "#{stack}-#{instance_number}.#{base_domain}"
       ]
-    end
-
-    # @param [String] container_id
-    # @param [String] ip
-    # @param [String] name
-    def add_dns(container_id, ip, name)
-      retries = 0
-      begin
-        dns_client.put(
-          path: "/name/#{container_id}/#{ip}",
-          body: URI.encode_www_form('fqdn' => name),
-          headers: { "Content-Type" => "application/x-www-form-urlencoded" }
-        )
-      rescue Docker::Error::NotFoundError
-
-      rescue Excon::Errors::SocketError => exc
-        @dns_client = nil
-        retries += 1
-        if retries < 20
-          sleep 0.1
-          retry
-        end
-        raise exc
-      end
-    end
-
-    # @param [String] container_id
-    def remove_dns(container_id)
-      retries = 0
-      begin
-        dns_client.delete(path: "/name/#{container_id}")
-      rescue Docker::Error::NotFoundError
-
-      rescue Excon::Errors::SocketError => exc
-        @dns_client = nil
-        retries += 1
-        if retries < 20
-          sleep 0.1
-          retry
-        end
-        raise exc
-      end
-    end
-
-    def dns_client
-      @dns_client ||= Excon.new("http://127.0.0.1:6784")
     end
   end
 end
