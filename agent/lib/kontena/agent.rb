@@ -79,16 +79,16 @@ module Kontena
         as: :weave_launcher
       )
       @supervisor.supervise(
-        type: Kontena::Launchers::IpamPlugin,
-        as: :ipam_plugin_launcher
-      )
-      @supervisor.supervise(
         type: Kontena::Launchers::Cadvisor,
         as: :cadvisor_launcher
       )
       @supervisor.supervise(
         type: Kontena::Launchers::Etcd,
         as: :etcd_launcher
+      )
+      @supervisor.supervise(
+        type: Kontena::Launchers::IpamPlugin,
+        as: :ipam_plugin_launcher
       )
     end
 

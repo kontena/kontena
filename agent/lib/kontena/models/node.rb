@@ -9,7 +9,6 @@ class Node
               :labels,
               :peer_ips,
               :node_number,
-              :initial_member,
               :grid
 
   # @param [Hash] data
@@ -40,6 +39,16 @@ class Node
     @grid['trusted_subnets']
   end
 
+  # @return [Integer]
+  def grid_initial_size
+    @grid['initial_size']
+  end
+
+  # @return [String]
+  def grid_supernet
+    @grid['supernet']
+  end
+
   # @return [IPAddress] 10.81.0.X
   def overlay_ip
     IPAddress.parse(@overlay_ip)
@@ -48,5 +57,10 @@ class Node
   # @return [String]
   def overlay_cidr
     "#{overlay_ip}/#{grid_subnet.prefix}"
+  end
+
+  # @return [Boolean]
+  def initial_member?
+    @initial_member
   end
 end

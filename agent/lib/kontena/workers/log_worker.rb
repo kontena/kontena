@@ -53,7 +53,7 @@ module Kontena::Workers
     end
 
     def start
-      sleep 1 until Actor[:etcd_launcher].running?
+      sleep 1 until Actor[:etcd_launcher].observable?
       Docker::Container.all.each do |container|
         begin
           self.stream_container_logs(container) unless container.skip_logs?

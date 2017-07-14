@@ -10,6 +10,12 @@ module Kontena
       @observable_value
     end
 
+    # Obsevable has updated, as has not reset
+    # @return [Boolean]
+    def observable?
+      !!@observable_value
+    end
+
     # Registered Observers
     #
     # @return [Hash{Observe => Celluloid::Proxy::Cell<Observer>}]
