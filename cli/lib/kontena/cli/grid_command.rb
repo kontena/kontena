@@ -3,6 +3,7 @@ class Kontena::Cli::GridCommand < Kontena::Command
   subcommand ["list","ls"], "List all grids", load_subcommand('grids/list_command')
   subcommand "create", "Create a new grid", load_subcommand('grids/create_command')
   subcommand "update", "Update grid", load_subcommand('grids/update_command')
+  subcommand "reset-token", "Reset grid tokens", load_subcommand('grids/reset_token_command')
   subcommand "use", "Switch to use specific grid", load_subcommand('grids/use_command')
   subcommand "show", "Show grid details", load_subcommand('grids/show_command')
   subcommand "logs", "Show logs from grid containers", load_subcommand('grids/logs_command')
