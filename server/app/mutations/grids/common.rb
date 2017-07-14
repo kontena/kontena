@@ -4,6 +4,21 @@ module Grids
       base.extend(ClassMethods)
     end
 
+    def reschedule_grid(grid)
+      GridScheduler.new(grid).reschedule
+    end
+
+    def notify_nodes(grid)
+      grid.host_nodes.connected.each do |node|
+        plugger = Agent::NodePlugger.new(node)
+        plugger.send_node_info
+      end
+    rescue => exc
+      Logging.logger.error(self.class.name) { exc }
+    else
+      Logging.logger.info(self.class.name) { "notified grid #{grid.to_path} nodes" }
+    end
+
     module ClassMethods
       def common_validations
         # common inputs for both create + update
