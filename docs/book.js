@@ -12,7 +12,7 @@ module.exports = {
       url: "https://github.com/kontena/kontena/"
     },
     ga: {
-      token: process.env.GA_CODE
+      token: process.env.GA_CODE || ""
     },
     scripts: {
       files: [
@@ -20,7 +20,7 @@ module.exports = {
       ]
     },
     hs: {
-      code: process.env.HUBSPOT_CODE
+      code: process.env.HUBSPOT_CODE || ""
     }
   },
   variables: {
