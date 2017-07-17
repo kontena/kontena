@@ -3,8 +3,14 @@ json.name @node.name
 json.node_number @node.node_number
 json.initial_member @node.initial_member?
 
+json.status @node.status
+json.connected_at @node.connected_at
+json.disconnected_at @node.disconnected_at
 json.connected @node.connected
+
 json.etcd_health do
-  json.health @etcd_health[:health]
-  json.error @etcd_health[:error]
+  json.health @node_health.dig(:etcd_health, :health)
+  json.error @node_health.dig(:etcd_health, :error)
 end
+
+json.errors @node_errors if @node_errors

@@ -64,13 +64,14 @@ module V1
 
           # GET /v1/nodes/:grid/:node/health
           r.on 'health' do
-            rpc_client = @node.rpc_client(10)
+            outcome = HostNodes::HealthCheck.run(host_node: @node)
 
-            begin
-              @etcd_health = rpc_client.request("/etcd/health")
-            rescue RpcClient::TimeoutError => error
-              # overlap with any agent-side errors
-              @etcd_health = {error: error.message}
+            if outcome.success?
+              @node_health = outcome.result
+              @node_errors = nil
+            else
+              @node_health = {}
+              @node_errors = outcome.errors.message
             end
 
             render('host_nodes/health')
