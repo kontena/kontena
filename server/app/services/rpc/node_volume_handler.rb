@@ -8,9 +8,8 @@ module Rpc
       @node = node
     end
 
-    # @param [String] id
     # @return [Array<Hash>]
-    def list(id)
+    def list
       volumes = @node.volume_instances.map { |v|
         VolumeSerializer.new(v).to_hash
       }.compact
@@ -18,9 +17,8 @@ module Rpc
       { volumes: volumes }
     end
 
-    # @param [String] id
     # @param [Hash] volume
-    def set_state(id, data)
+    def set_state(data)
       volume_instance = @node.volume_instances.find_by(id: data['volume_instance_id'])
       unless volume_instance
         volume_id = data['volume_id']
