@@ -13,9 +13,6 @@ module Kontena::Cli::Etcd
     requires_current_grid
 
     def execute
-      require_api_url
-      token = require_token
-
       health = true
 
       if self.node
@@ -39,20 +36,16 @@ module Kontena::Cli::Etcd
 
     # @return [Boolean]
     def show_node_health(node_health)
-      etcd_health = node_health['etcd_health']
-
       if !node_health['connected']
         puts "#{health_icon :offline} Node #{node_health['name']} is offline"
         return false
-      elsif etcd_health['health']
-        puts "#{health_icon :ok} Node #{node_health['name']} is healthy"
-        return true
-      elsif etcd_health['error']
-        puts "#{health_icon :error} Node #{node_health['name']} is unhealthy: #{etcd_health['error']}"
-        return false
+
       else
-        puts "#{health_icon :error} Node #{node_health['name']} is unhealthy"
-        return false
+        etcd_health, status = node_etcd_health(node_health)
+
+        puts "#{health_icon etcd_health} Node #{node_health['name']} etcd is #{status}"
+
+        return etcd_health == :ok
       end
     end
   end

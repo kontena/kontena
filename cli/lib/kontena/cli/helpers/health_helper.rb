@@ -50,6 +50,24 @@ module Kontena::Cli::Helpers
       end
     end
 
+    # @return [Symbol]
+    # @return [String]
+    def node_etcd_health(node_health)
+      etcd_health = node_health['etcd_health']
+
+      if !node_health['connected']
+        return :offline, "unknown"
+      elsif node_health['errors'] && node_health['errors']['etcd_health']
+        return :offline, "error: #{node_health['errors']['etcd_health']}"
+      elsif etcd_health['health']
+        return :ok, "healthy"
+      elsif etcd_health['error']
+        return :error, "unhealthy: #{etcd_health['error']}"
+      else
+        return :error, "unhealthy"
+      end
+    end
+
     # Return an approximation of how long ago the given time was.
     # @param time [String]
     # @param terse [Boolean] very terse output (2-3 chars wide)
