@@ -9,39 +9,103 @@ describe Kontena::Cli::Nodes::HealthCommand do
   end
 
   before do
-    allow(client).to receive(:get).with('nodes/test-grid/node').and_return(node)
+    allow(client).to receive(:get).with('nodes/test-grid/node/health').and_return(node_health)
   end
 
   context "for an online node" do
-    let :node do
+    let :node_health do
       {
         "name" => "node",
         "node_number" => 4,
         "initial_member" => false,
+        'status' => 'online',
+        'connected_at' => (Time.now - 50.0).to_s,
         "connected" => true,
+        'etcd_health' => {
+          'health' => true,
+          'error' => nil,
+        },
       }
     end
 
     it "outputs ok" do
       expect{subject.run(['node'])}.to output_lines [
-        ":ok Node is online",
+        ":ok Node is online for 50s",
+        ":ok Node node etcd is healthy",
       ]
     end
   end
 
   context "for an offline node" do
-    let :node do
+    let :node_health do
       {
         "name" => "node",
         "node_number" => 4,
         "initial_member" => false,
+        'status' => 'offline',
+        'connected_at' => (Time.now - 60.0).to_s,
+        'disconnected_at' => (Time.now - 50.0).to_s,
         "connected" => false,
+        'etcd_health' => { },
+        'errors' => {
+          'connection' => "Websocket disconnected at 2017-07-12 12:28:10 UTC with code 4030: ping timeout after 5.00s",
+        }
       }
     end
 
     it "fails as error" do
       expect{subject.run(['node'])}.to exit_with_error.and output_lines [
-        ":offline Node is offline",
+        ":error Node is offline for 50s",
+        ":warning Node node connection error: Websocket disconnected at 2017-07-12 12:28:10 UTC with code 4030: ping timeout after 5.00s",
+        ":offline Node node etcd is unknown",
+      ]
+    end
+  end
+
+  context "for an online initial node in an ok grid" do
+    let :node_health do
+      {
+        "name" => "node",
+        "node_number" => 1,
+        "initial_member" => true,
+        'status' => 'online',
+        'connected_at' => (Time.now - 50.0).to_s,
+        "connected" => true,
+        'etcd_health' => {
+          'health' => true,
+          'error' => nil,
+        },
+      }
+    end
+
+    it "outputs ok" do
+      expect{subject.run(['node'])}.to output_lines [
+        ":ok Node is online for 50s",
+        ":ok Node node etcd is healthy",
+      ]
+    end
+  end
+
+  context "for an online node in an grid with broken etcd" do
+    let :node_health do
+      {
+        "name" => "node",
+        "node_number" => 4,
+        "initial_member" => false,
+        'status' => 'online',
+        'connected_at' => (Time.now - 50.0).to_s,
+        "connected" => true,
+        'etcd_health' => {
+          'health' => false,
+          'error' => "no peers reachable",
+        },
+      }
+    end
+
+    it "fails with etcd errro" do
+      expect{subject.run(['node'])}.to exit_with_error.and output_lines [
+        ":ok Node is online for 50s",
+        ":error Node node etcd is unhealthy: no peers reachable",
       ]
     end
   end
