@@ -148,10 +148,10 @@ The server will generate a new node token by default, if not using `--token` to 
 
 ```
 $ kontena node list
-NAME        VERSION     STATUS    INITIAL   LABELS
-⊛ core-01   1.4.0       online    1 / 1     provider=vagrant
-⊛ core-02   1.4.0       online    -         provider=vagrant
-⊝ core-03   1.4.0       offline   -         -
+NAME        VERSION     STATUS       INITIAL   LABELS
+⊛ core-01   1.4.0       online       1 / 1     provider=vagrant
+⊛ core-02   1.4.0       online       -         provider=vagrant
+⊝ core-03   1.4.0       connecting   -         -
 ```
 
 #### Generate `kontena-agent` configuration
