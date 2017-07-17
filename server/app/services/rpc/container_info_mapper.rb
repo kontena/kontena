@@ -13,7 +13,7 @@ module Rpc
       info = data['container']
       labels = info['Config']['Labels'] || {}
       container_id = data['container']['Id']
-      container = grid.containers.unscoped.find_by(container_id: container_id)
+      container = @node.containers.unscoped.find_by(container_id: container_id)
       if container
         self.update_service_container(container, info)
       elsif !labels['io.kontena.service.id'].nil?

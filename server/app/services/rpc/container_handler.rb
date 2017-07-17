@@ -142,7 +142,7 @@ module Rpc
         container = @cached_containers[id]
       else
         container = @db_session[:containers].find(
-            grid_id: @grid.id, container_id: id
+            host_node_id: @node.node_id, container_id: id
           ).limit(1).first
         @cached_containers[id] = container if container
       end
