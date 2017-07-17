@@ -81,7 +81,7 @@ module Grids
     def notify_nodes
       Celluloid::Future.new {
         grid.host_nodes.connected.each do |node|
-          plugger = Agent::NodePlugger.new(grid, node)
+          plugger = Agent::NodePlugger.new(node)
           plugger.send_node_info
         end
         GridScheduler.new(grid).reschedule
