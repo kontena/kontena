@@ -42,7 +42,7 @@ class RpcServer
       @counter += 1
 
       node_id, rpc_message, ws_client = data
-      if ws
+      if rpc_message[0] == 0
         handle_request(node_id, rpc_message, ws_client)
       else
         handle_notification(node_id, rpc_message)
@@ -57,7 +57,7 @@ class RpcServer
   # @return [Array]
   def handle_request(node_id, rpc_message, ws_client)
     msg_type, msg_id, rpc_method, rpc_args = rpc_message
-    handler, method = rpc_method.split('/', 2)
+    root, handler, method = rpc_method.split('/')
 
     if instance = handling_instance(node_id, handler)
       begin
@@ -82,9 +82,9 @@ class RpcServer
   # @param [Array] message msgpack-rpc notification array
   def handle_notification(node_id, rpc_message)
     msg_type, rpc_method, rpc_args = rpc_message
-    handler, method = rpc_method.split('/', 2)
+    root, handler, method = rpc_method.split('/')
 
-    if instance = handling_instance(grid_id, handler)
+    if instance = handling_instance(node_id, handler)
       begin
         instance.send(method, *rpc_args)
       rescue => exc
