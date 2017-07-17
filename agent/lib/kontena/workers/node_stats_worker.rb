@@ -42,7 +42,7 @@ module Kontena::Workers
     end
 
     def configure(node)
-      if !@node || @node.statsd_conf != node.statsd_conf
+      unless @node && @node.statsd_conf == node.statsd_conf
         @statsd = self.configure_statsd(node)
       end
 
