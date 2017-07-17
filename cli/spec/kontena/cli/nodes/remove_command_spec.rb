@@ -19,6 +19,13 @@ describe Kontena::Cli::Nodes::RemoveCommand do
     end
 
     it 'removes the node' do
+      expect(subject).to receive(:confirm_command).with('node-1')
+      expect(client).to receive(:delete).with('nodes/test-grid/node-1')
+
+      subject.run(['node-1'])
+    end
+
+    it 'removes the node with --force' do
       expect(client).to receive(:delete).with('nodes/test-grid/node-1')
 
       subject.run(['--force', 'node-1'])
