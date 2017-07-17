@@ -29,12 +29,12 @@ describe Rpc::NodeHandler do
       expect{subject.update({'ID' => 'b'})}.to raise_error 'Missing HostNode: b'
     end
 
-    it 'calls attributes_from_docker and sets updated' do
+    it 'calls attributes_from_docker and sets updated, changing the node status to online' do
       expect_any_instance_of(HostNode).to receive(:attributes_from_docker)
 
       expect{
         subject.update({'ID' => 'a'})
-      }.to change{node.reload.updated}.from(false).to(true)
+      }.to change{node.reload.updated}.from(false).to(true).and change{node.reload.status}.from(:connecting).to(:online)
     end
   end
 

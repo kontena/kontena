@@ -27,46 +27,97 @@ describe HostNode do
 
   let(:grid) { Grid.create!(name: 'test') }
 
-  context 'for an initializing node without any name' do
-    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ') }
+  context 'for a newly created node' do
+    subject { described_class.new(grid: grid, name: 'node') }
 
     describe '#to_s' do
-      it "uses the node ID" do
-        expect(node.to_s).to eq 'ABC:XYZ'
+      it "uses the node name" do
+        expect(subject.to_s).to eq 'node'
       end
     end
 
     describe '#to_path' do
-      it 'uses the node ID' do
-        expect(node.to_path).to eq 'test/ABC:XYZ'
-      end
-    end
-  end
-
-  context 'for an updated node with a name' do
-    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ', name: 'node') }
-
-    describe '#to_s' do
-      it "uses the node ID" do
-        expect(node.to_s).to eq 'node'
+      it 'uses the node name' do
+        expect(subject.to_path).to eq 'test/node'
       end
     end
 
-    describe '#to_path' do
-      it 'uses the node ID' do
-        expect(node.to_path).to eq 'test/node'
-      end
-    end
-  end
-
-  describe '#connected?' do
-    it 'returns true when connected' do
-      subject.connected = true
-      expect(subject.connected?).to eq(true)
-    end
-
-    it 'returns false when not connected' do
+    it 'is not connected' do
       expect(subject.connected?).to eq(false)
+    end
+    it 'is not updated' do
+      expect(subject.updated?).to eq(false)
+    end
+    it 'is status=created' do
+      expect(subject.status).to eq :created
+    end
+  end
+
+  context 'for an initializing node that has just connected, but is not yet connected or updated' do
+    subject { described_class.new(grid: grid, node_id: 'ABC:XYZ', connected: false, updated: false) }
+
+    describe '#to_s' do
+      it "uses the node ID" do
+        expect(subject.to_s).to eq 'ABC:XYZ'
+      end
+    end
+
+    describe '#to_path' do
+      it 'uses the node ID' do
+        expect(subject.to_path).to eq 'test/ABC:XYZ'
+      end
+    end
+
+    it 'is status=offline' do
+      expect(subject.status).to eq :offline
+    end
+  end
+
+  context 'for an connecting node that has not yet updated' do
+    subject { described_class.new(grid: grid, node_id: 'ABC:XYZ', connected: true, updated: false) }
+
+    it 'is connected' do
+      expect(subject.connected?).to eq true
+    end
+
+    it 'is status=connecting' do
+      expect(subject.status).to eq :connecting
+    end
+  end
+
+  context 'for an connected node that has updated' do
+    subject { described_class.new(grid: grid, node_id: 'ABC:XYZ', connected: true, updated: true, name: 'node') }
+
+    describe '#to_s' do
+      it "uses the node name" do
+        expect(subject.to_s).to eq 'node'
+      end
+    end
+
+    describe '#to_path' do
+      it 'uses the node name' do
+        expect(subject.to_path).to eq 'test/node'
+      end
+    end
+
+    it 'is connected' do
+      expect(subject.connected?).to eq true
+    end
+
+    it 'is status=connected' do
+      expect(subject.status).to eq :online
+    end
+  end
+
+  context 'for a disconnected node' do
+    subject { described_class.new(grid: grid, node_id: 'ABC:XYZ', connected: false, updated: true) }
+
+    it 'is not connected' do
+      expect(subject.connected?).to eq false
+    end
+
+    it 'is status=ofline' do
+      expect(subject.status).to eq :offline
     end
   end
 

@@ -280,8 +280,8 @@ describe '/v1/grids', celluloid: true do
 
         it 'creates and returns grid node' do
           grid = david.grids.first
-
           expect {
+
             post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
             expect(response.status).to eq(201)
           }.to change{ grid.reload.host_nodes.count }.by(1)
@@ -291,6 +291,7 @@ describe '/v1/grids', celluloid: true do
             'name' => 'test-1',
             'connected' => false,
             'updated' => false,
+            'status' => 'created',
             'has_token' => true,
           )
         end

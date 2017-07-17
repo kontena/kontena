@@ -104,6 +104,19 @@ class HostNode
     end
   end
 
+  # @return [Symbol]
+  def status
+    if self.node_id.nil?
+      return :created # node created with token, but agent has not yet connected
+    elsif !self.connected
+      return :offline # not yet connected by NodePlugger, or disconnected by NodeUnplugger
+    elsif !self.updated
+      return :connecting # connected by NodePlugger, waiting for /nodes/update RPC
+    else
+      return :online # connected by NodePlugger, updated by /nodes/update RPC
+    end
+  end
+
   # @return [Boolean]
   def connected?
     self.connected == true

@@ -7,6 +7,7 @@ json.updated_at node.updated_at
 json.connected_at node.connected_at
 json.last_seen_at node.last_seen_at
 json.disconnected_at node.disconnected_at
+json.status node.status
 json.has_token !node.token.nil?
 json.name node.name
 json.os node.os

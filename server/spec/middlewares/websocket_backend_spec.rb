@@ -344,8 +344,27 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         end
 
         it 'accepts the connection and sets the node ID' do
+          expect(host_node.status).to eq :created
+
           expect(subject.logger).to receive(:info).with('new node node-1 connected using node token with node_id nodeABC')
           expect(subject.logger).to receive(:info).with(/node node-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+
+          # sync defer { NodePlugger#plugin! }
+          allow(EM).to receive(:defer) do |&block|
+            host_node.reload # after #find_node_by_node_token
+
+            expect(host_node.connected).to eq false
+            expect(host_node.updated).to eq false
+            expect(host_node.status).to eq :offline
+
+            block.call
+
+            host_node.reload # after NodePlugger#plugin!
+
+            expect(host_node.connected).to eq true
+            expect(host_node.updated).to eq false
+            expect(host_node.status).to eq :connecting
+          end
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -359,6 +378,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_s
           expect(host_node.updated).to eq false
+          expect(host_node.status).to eq :connecting
 
           client = subject.client_for_id(node_id)
 

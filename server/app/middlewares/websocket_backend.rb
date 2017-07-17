@@ -117,10 +117,10 @@ class WebsocketBackend
 
     if !node_by_id
       # atomically initialize the node_id
-      initializing_node = HostNode.where(:id => node.id, :node_id => nil)
+      created_node = HostNode.where(:id => node.id, :node_id => nil)
         .find_one_and_update(:$set => {node_id: node_id, **init_attrs})
 
-      if initializing_node
+      if created_node
         logger.info "new node #{node} connected using node token with node_id #{node_id}"
 
         node.reload
