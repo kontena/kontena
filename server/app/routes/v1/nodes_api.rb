@@ -29,6 +29,34 @@ module V1
 
         @node = load_grid_node(grid_name, node_id)
 
+        r.on 'token' do
+          halt_request(403, {error: 'Access denied'}) unless current_user.can_update?(@grid)
+
+          r.is do
+            # GET /v1/nodes/:grid/:node/token
+            r.get do
+              render('host_nodes/token')
+            end
+
+            # PUT /v1/nodes/:grid/:node/token
+            r.put do
+              data = parse_json_body
+              outcome = HostNodes::UpdateToken.run(
+                host_node: @node,
+                token: data['token'],
+                reset_connection: data['reset_connection'],
+              )
+              if outcome.success?
+                @node = outcome.result
+                response.status = 200
+                render('host_nodes/token')
+              else
+                halt_request(422, {error: outcome.errors.message})
+              end
+            end
+          end
+        end
+
         r.get do
           r.is do
             render('host_nodes/show')

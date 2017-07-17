@@ -27,10 +27,6 @@ describe Kontena::Cli::Containers::LogsCommand do
       ]
     end
 
-    before(:each) do
-      Kontena.pastel.resolver.color.disable!
-    end
-
     it "shows all logs" do
       allow(client).to receive(:get).with('containers/test-grid/node-1/test-mysql-1/logs', {
         limit: 100,

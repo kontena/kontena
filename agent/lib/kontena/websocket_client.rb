@@ -20,7 +20,6 @@ module Kontena
     PING_TIMEOUT = Kernel::Float(ENV['WEBSOCKET_TIMEOUT'] || 5)
 
     attr_reader :api_uri,
-                :api_token,
                 :ws,
                 :rpc_server,
                 :ping_timer
@@ -28,17 +27,27 @@ module Kontena
     delegate :on, to: :ws
 
     # @param [String] api_uri
-    # @param [String] api_token
-    def initialize(api_uri, api_token)
+    # @param [String] grid_token
+    # @param [String] node_token
+    def initialize(api_uri, grid_token: nil, node_token: nil)
       @api_uri = api_uri
-      @api_token = api_token
+      @grid_token = grid_token
+      @node_token = node_token
+
       @rpc_server = Kontena::RpcServer.supervise(as: :rpc_server)
       @rpc_client = Kontena::RpcClient.supervise(as: :rpc_client, args: [self])
       @abort = false
       @connected = false
       @connecting = false
       @ping_timer = nil
-      info "initialized with token #{@api_token[0..10]}..."
+
+      if @node_token
+        info "initialized with node token #{@node_token[0..8]}..., node ID #{host_id}"
+      elsif @grid_token
+        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{host_id}"
+      else
+        fail "Missing grid, node token"
+      end
     end
 
     def ensure_connect
@@ -68,12 +77,19 @@ module Kontena
       @connecting = true
       info "connecting to master at #{api_uri}"
       headers = {
-          'Kontena-Grid-Token' => self.api_token.to_s,
           'Kontena-Node-Id' => host_id.to_s,
           'Kontena-Version' => Kontena::Agent::VERSION,
           'Kontena-Node-Labels' => labels,
           'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
+      if @node_token
+        headers['Kontena-Node-Token'] = @node_token.to_s
+      elsif @grid_token
+        headers['Kontena-Grid-Token'] = @grid_token.to_s
+      else
+        fail "Missing grid, node token"
+      end
+
       @ws = Faye::WebSocket::Client.new(self.api_uri, nil, {headers: headers})
 
       notify_actors('websocket:connect', self)
