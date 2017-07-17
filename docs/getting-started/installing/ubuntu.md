@@ -18,9 +18,9 @@ Kontena requires [Docker Engine](https://docs.docker.com/engine/) to be installe
 
 The `kontena-server` and `kontena-agent` packages are compatible with Docker 1.12 and later versions. They have been tested with the following package variants and versions:
 
-* `docker.io` `1.12.*`
-* `docker-engine` `1.12.*` - `17.05.*`
-* `docker-ce` `1.12.*` - `17.06.*`
+* `docker.io` `1.12.6`
+* `docker-engine` `1.12.6` - `17.05.0`
+* `docker-ce` `1.12.6` - `17.06.0`
 
 #### Ubuntu Xenial (16.04)
 
