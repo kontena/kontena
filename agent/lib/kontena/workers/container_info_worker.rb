@@ -68,7 +68,6 @@ module Kontena::Workers
       return if labels['io.kontena.container.skip_logs']
 
       data = {
-        node: self.node_info['ID'],
         container: data
       }
       rpc_client.async.request('/containers/save', [data])
@@ -87,11 +86,6 @@ module Kontena::Workers
         time: event.time
       }
       rpc_client.async.request('/containers/event', [data])
-    end
-
-    # @return [Hash]
-    def node_info
-      @node_info ||= Docker.info
     end
   end
 end
