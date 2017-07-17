@@ -150,9 +150,10 @@ class WebsocketBackend
   # @return [HostNode]
   def find_node(req)
     node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
-    node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
+
     init_attrs = {
-      labels: node_labels,
+      labels: req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(','),
+      agent_version: req.env['HTTP_KONTENA_VERSION'].to_s,
     }
 
     if grid_token = req.env['HTTP_KONTENA_GRID_TOKEN']
