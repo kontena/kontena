@@ -2,14 +2,10 @@
 describe Kontena::Workers::ContainerInfoWorker, celluloid: true do
   include RpcClientMocks
 
-  let(:subject) { described_class.new(false) }
+  let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
+  let(:subject) { described_class.new(node_id, false) }
 
   before(:each) do
-    allow(Docker).to receive(:info).and_return({
-      'Name' => 'node-1',
-      'Labels' => nil,
-      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS'
-    })
     mock_rpc_client
   end
 
@@ -82,9 +78,8 @@ describe Kontena::Workers::ContainerInfoWorker, celluloid: true do
     it 'publishes valid message' do
       container = double(:container, json: {'Config' => {}})
       expect(rpc_client).to receive(:request).once.with(
-        '/containers/save', [hash_including(node: 'host_id')]
+        '/containers/save', [hash_including(node: node_id, container: Hash)]
       )
-      allow(subject.wrapped_object).to receive(:node_info).and_return({'ID' => 'host_id'})
       subject.publish_info(container)
     end
   end
