@@ -33,7 +33,9 @@ Kontena::Logging.initialize_logger(STDOUT, log_level)
 
 agent = Kontena::Agent.new(
   api_uri: api_uri,
+  node_id: ENV['KONTENA_NODE_ID'],
   grid_token: grid_token,
   node_token: node_token,
+  node_labels: ENV['KONTENA_NODE_LABELS'],
 )
 agent.run!

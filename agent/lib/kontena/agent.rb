@@ -4,11 +4,27 @@ module Kontena
   class Agent
     include Logging
 
+    NODE_ID_REGEXP = /\A[A-Z0-9]{4}(:[A-Z0-9]{4}){11}\z/
     VERSION = File.read('./VERSION').strip
 
     def initialize(opts)
       info "initializing agent (version #{VERSION})"
       @opts = opts
+
+      if node_id = opts[:node_id]
+        raise ArgumentError, "Invalid KONTENA_NODE_ID: #{node_id}" unless node_id.match(NODE_ID_REGEXP)
+
+        @node_id = node_id
+      else
+        @node_id = Docker.info['ID']
+      end
+
+      if node_labels = opts[:node_labels]
+        @node_labels = node_labels.split()
+      else
+        @node_labels = Docker.info['Labels']
+      end
+
       @client = Kontena::WebsocketClient.new(@opts[:api_uri], self.node_id,
         grid_token: @opts[:grid_token],
         node_token: @opts[:node_token],
@@ -24,12 +40,12 @@ module Kontena
 
     # @return [String]
     def node_id
-      @node_id ||= Docker.info['ID']
+      @node_id
     end
 
     # @return [Array<String>]
     def node_labels
-      @node_labels ||= Docker.info['Labels']
+      @node_labels
     end
 
     # Connect to master server
