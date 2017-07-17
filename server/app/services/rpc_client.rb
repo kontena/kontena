@@ -69,7 +69,7 @@ class RpcClient
   # @param [Array] resp
   # @return [MongoPubsub::Subscription]
   def subscribe_to_response(request_id, resp)
-    MongoPubsub.subscribe("#{RPC_CHANNEL}:#{request_id}") do |msg|
+    MongoPubsub.subscribe("#{RPC_CHANNEL}/#{node_id}/#{request_id}") do |msg|
       resp_message = msg['message']
       if resp_message && resp_message[0] == 1 && resp_message[1] == request_id
         error = resp_message[2]
