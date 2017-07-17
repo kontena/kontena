@@ -1,35 +1,32 @@
 module Rpc
   class ContainerInfoMapper
 
-    attr_reader :grid
+    attr_reader :node
 
     # @param [Grid] grid
-    def initialize(grid)
-      @grid = grid
+    def initialize(node)
+      @node = node
     end
 
     # @param [Hash] data
     def from_agent(data)
       info = data['container']
       labels = info['Config']['Labels'] || {}
-      node_id = data['node']
       container_id = data['container']['Id']
       container = grid.containers.unscoped.find_by(container_id: container_id)
       if container
-        self.update_service_container(node_id, container, info)
+        self.update_service_container(container, info)
       elsif !labels['io.kontena.service.id'].nil?
-        self.create_service_container(node_id, info)
+        self.create_service_container(info)
       else
-        self.create_container(node_id, info)
+        self.create_container(info)
       end
     end
 
-    # @param [String] node_id
     # @param [Container] container
     # @param [Hash] info
-    def update_service_container(node_id, container, info)
-      node = grid.host_nodes.find_by(node_id: node_id)
-      container.host_node = node if node
+    def update_service_container(container, info)
+      container.host_node = @node
       self.update_container_attributes(container, info)
     end
 
@@ -41,7 +38,7 @@ module Rpc
       if container.new_record?
         container.save
       else
-        attributes[:host_node_id] = container.host_node.try(:id)
+        attributes[:host_node_id] = @node.id
         container.with(write: {w: 0, j: false, fsync: false}).set(attributes)
         container.publish_update_event
       end
@@ -49,16 +46,15 @@ module Rpc
 
     # @param [String] node_id
     # @param [Hash] info
-    def create_service_container(node_id, info)
+    def create_service_container(info)
       labels = info['Config']['Labels'] || {}
       container_id = info['Id']
-      node = grid.host_nodes.find_by(node_id: node_id)
-      container = grid.containers.build(
+      container = @node.containers.build(
+        grid_id: @node.grid_id,
         container_id: container_id,
         name: labels['io.kontena.container.name'],
         container_type: labels['io.kontena.container.type'] || 'container',
         grid_service_id: labels['io.kontena.service.id'],
-        host_node: node
       )
       if labels['io.kontena.container.id']
         container.id = BSON::ObjectId.from_string(labels['io.kontena.container.id'])
@@ -69,14 +65,13 @@ module Rpc
 
     # @param [String] node_id
     # @param [Hash] info
-    def create_container(node_id, info)
+    def create_container(info)
       container_id = info['Id']
-      node = grid.host_nodes.find_by(node_id: node_id)
-      container = grid.containers.build(
+      container = @node.containers.build(
+        grid_id: @node.grid_id,
         container_id: container_id,
         name: info['Name'].split("/")[1],
         container_type: 'container',
-        host_node: node
       )
       self.update_container_attributes(container, info)
     end

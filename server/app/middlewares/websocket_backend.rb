@@ -276,7 +276,7 @@ class WebsocketBackend
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
   def handle_rpc_request(client, data)
-    @queue << [client[:ws], client[:grid_id], data]
+    @queue << [client[:node_id].to_s, data, client[:ws]]
   end
 
   # @param [Faye::WebSocket::Event] ws
@@ -287,7 +287,7 @@ class WebsocketBackend
       return
     end
 
-    @queue << [client[:grid_id].to_s, data]
+    @queue << [client[:node_id].to_s, data]
   end
 
   # Unplug client on websocket connection close.

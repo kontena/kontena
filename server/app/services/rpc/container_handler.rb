@@ -7,8 +7,9 @@ module Rpc
     attr_accessor :logs_buffer_size
     attr_accessor :stats_buffer_size
 
-    def initialize(grid)
-      @grid = grid
+    # @params [HostNode] node
+    def initialize(node)
+      @node = node
       @logs = []
       @stats = []
       @cached_containers = {}
@@ -24,7 +25,7 @@ module Rpc
 
     # @param [Hash] data
     def save(data)
-      info_mapper = ContainerInfoMapper.new(@grid)
+      info_mapper = ContainerInfoMapper.new(@node)
       info_mapper.from_agent(data)
 
       {}
@@ -33,13 +34,9 @@ module Rpc
     # @param [String] node_id
     # @param [Array<String>] ids
     def cleanup(node_id, ids)
-      node = @grid.host_nodes.find_by(node_id: node_id)
-      if node
-        @grid.containers.unscoped.where(
-          :host_node_id => node.id,
-          :container_id.in => ids
-        ).destroy
-      end
+      @node.containers.unscoped.where(
+        :container_id.in => ids
+      ).destroy
     end
 
     # @param [Hash] data
@@ -52,8 +49,8 @@ module Rpc
           created_at = Time.now.utc
         end
         @logs << {
-          grid_id: @grid.id,
-          host_node_id: container['host_node_id'],
+          grid_id: @node.grid_id,
+          host_node_id: @node.id,
           grid_service_id: container['grid_service_id'],
           instance_number: container['instance_number'],
           container_id: container['_id'],
@@ -72,7 +69,7 @@ module Rpc
     # @param [Hash] data
     def health(data)
       container = Container.find_by(
-        grid_id: @grid.id, container_id: data['id']
+        node_id: @node.id, container_id: data['id']
       )
       if container
         container.set_health_status(data['status'])
@@ -90,8 +87,8 @@ module Rpc
       if container
         time = data['time'] ? Time.parse(data['time']) : Time.now.utc
         @stats << {
-          grid_id: @grid.id,
-          host_node_id: container['host_node_id'],
+          grid_id: @node.grid_id,
+          host_node_id: @node.id,
           grid_service_id: container['grid_service_id'],
           container_id: container['_id'],
           spec: data['spec'],
