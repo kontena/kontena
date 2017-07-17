@@ -27,6 +27,20 @@ describe Agent::NodePlugger do
         expect(node.status).to eq :connecting
       end
     end
+
+    describe '#reject!' do
+      it 'marks node with the connection error' do
+        subject.reject! connected_at, 1006, "asdf"
+
+        node.reload
+
+        expect(node.status).to eq :offline
+        expect(node.connected).to be false
+        expect(node.connection_error_code).to eq 1006
+        expect(node.connection_error).to eq "asdf"
+
+      end
+    end
   end
 
   context 'for an existing node' do
@@ -34,19 +48,22 @@ describe Agent::NodePlugger do
       HostNode.create!(
         node_id: 'xyz',
         grid: grid, name: 'test-node', labels: ['region=ams2'],
-        connected: false,
+        connected: false, updated: true,
+        connection_error: "fail!", connection_error_code: 1337,
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
     }
 
     describe '#plugin!' do
-      it 'marks node as connected' do
+      it 'marks node as connected and clears connection error' do
         expect(subject).to receive(:publish_update_event)
         expect(subject).to receive(:send_node_info)
         expect {
           subject.plugin! connected_at
         }.to change{ node.reload.connected? }.to be_truthy
         expect(node.status).to eq :connecting
+        expect(node.connection_error).to be_nil
+        expect(node.connection_error_code).to be_nil
       end
     end
 
@@ -81,10 +98,18 @@ describe Agent::NodePlugger do
         expect(subject).to_not receive(:publish_update_event)
         expect(subject).to_not receive(:send_master_info)
         expect(subject).to_not receive(:send_node_info)
-        
+
         expect {
           subject.plugin! connected_at
         }.to_not change{ node.reload.connected_at }
+      end
+    end
+
+    describe '#reject!' do
+      it 'does not update node' do
+        expect {
+          subject.reject! connected_at, 1006, "asdf"
+        }.to_not change{ node.reload }
       end
     end
   end

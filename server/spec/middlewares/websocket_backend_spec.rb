@@ -107,8 +107,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'closes the connection without creating the node' do
-          expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing token')
           expect(subject).not_to receive(:send_master_info).with(client_ws)
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node <nil>: Missing token')
           expect(client_ws).to receive(:close).with(4004, 'Missing token')
 
           expect{
@@ -123,8 +123,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'closes the connection without creating the node' do
-          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid grid token')
           expect(subject).not_to receive(:send_master_info).with(client_ws)
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: Invalid grid token')
           expect(client_ws).to receive(:close).with(4001, 'Invalid grid token')
 
           expect{
@@ -146,7 +146,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
-          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid grid token, node was created using a node token')
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: Invalid grid token, node was created using a node token')
           expect(client_ws).to receive(:close).with(4005, 'Invalid grid token, node was created using a node token')
 
           expect{
@@ -168,8 +168,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
-          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid node token')
           expect(subject).not_to receive(:send_master_info).with(client_ws)
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: Invalid node token')
           expect(client_ws).to receive(:close).with(4002, 'Invalid node token')
 
           expect{
@@ -193,8 +193,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
           expect(subject.logger).to receive(:warn).with('new node node-1 connected using node token with node_id nodeXYZ, but the node token was already used by node-1 with node ID nodeABC')
-          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid node token, already used by a different node')
           expect(subject).not_to receive(:send_master_info).with(client_ws)
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeXYZ: Invalid node token, already used by a different node')
           expect(client_ws).to receive(:close).with(4003, 'Invalid node token, already used by a different node')
 
           expect{
@@ -220,7 +220,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       describe '#on_open' do
         it 'closes the connection without connecting the node' do
           expect(subject.logger).to receive(:warn).with('node node-2 connected using node token with node_id nodeABC, but that node ID already exists for node-1')
-          expect(subject.logger).to receive(:warn).with('reject websocket connection: Invalid node ID, already used by a different node')
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: Invalid node ID, already used by a different node')
           expect(client_ws).to receive(:close).with(4006, 'Invalid node ID, already used by a different node')
 
           expect{
@@ -235,18 +235,11 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       let(:node_version) { '0.8.0' }
       let(:connected_at) { nil }
 
-      before do
-        # force sync close
-        allow(EventMachine::Timer).to receive(:new) do |timeout, &block|
-          block.call
-        end
-      end
-
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
           expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
-          expect(subject.logger).to receive(:warn).with('node nodeABC agent version 0.8.0 is not compatible with server version 0.9.1')
           expect(subject).to receive(:send_master_info).with(client_ws)
+          expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: agent version 0.8.0 is not compatible with server version 0.9.1')
           expect(client_ws).to receive(:close).with(4010, 'agent version 0.8.0 is not compatible with server version 0.9.1')
 
           expect{
@@ -263,9 +256,9 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
           expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
-          expect(subject.logger).to receive(:warn).with(/node nodeABC connected too far in the past at #{connected_at}, \d+\.\d+s ago/)
           expect(subject).to receive(:send_master_info).with(client_ws)
-          expect(client_ws).to receive(:close).with(4020, /agent clock offset \d+\.\d+s exceeds threshold/)
+          expect(subject.logger).to receive(:warn).with(/reject websocket connection for node nodeABC: agent connected too far in the past, clock offset \d+\.\d+s exceeds threshold/)
+          expect(client_ws).to receive(:close).with(4020, /agent connected too far in the past, clock offset \d+\.\d+s exceeds threshold/)
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -287,8 +280,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         it 'creates the node, but does not connect it' do
           expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
           expect(subject).to receive(:send_master_info).with(client_ws)
-          expect(subject.logger).to receive(:warn).with(/node nodeABC connected too far in the future at #{connected_at}, \d+\.\d+s ahead/)
-          expect(client_ws).to receive(:close).with(4020, /agent clock offset -\d+\.\d+s exceeds threshold/)
+          expect(subject.logger).to receive(:warn).with(/reject websocket connection for node nodeABC: agent connected too far in the future, clock offset -\d+\.\d+s exceeds threshold/)
+          expect(client_ws).to receive(:close).with(4020, /agent connected too far in the future, clock offset -\d+\.\d+s exceeds threshold/)
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -303,15 +296,15 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     describe '#on_open' do
-      before do
-        # force sync plugin
-        allow(EM).to receive(:defer) do |&block|
-          block.call
-        end
-      end
-
       context 'with a valid grid token' do
         let(:grid_token) { 'secret123' }
+
+        before do
+          # force sync plugin
+          allow(EM).to receive(:defer) do |&block|
+            block.call
+          end
+        end
 
         it 'accepts the connection and creates a new host node' do
           expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
@@ -411,6 +404,11 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           expect(subject).to receive(:send_master_info).with(client_ws)
           expect(subject.logger).to receive(:info).with(/node node-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
 
+          # sync defer { NodePlugger#plugin! }
+          allow(EM).to receive(:defer) do |&block|
+            block.call
+          end
+
           expect{
             subject.on_open(client_ws, rack_req)
           }.to not_change{grid.reload.host_nodes.count}.and not_change{host_node.reload.node_id}
@@ -482,27 +480,26 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       it "logs a warning if the client is not found" do
         subject.instance_variable_get('@clients').clear
 
-        expect(subject.logger).to receive(:debug).with('ignore close of unplugged client')
+        expect(subject.logger).to receive(:debug).with('ignore close of unplugged client with code 1006: asdf')
 
-        subject.on_close(client_ws)
+        subject.on_close(client_ws, 1006, "asdf")
       end
 
       it "calls unplug_client" do
-        expect(subject.logger).to receive(:info).with('node aa connection closed')
+        expect(subject.logger).to receive(:info).with('node aa connection closed with code 1006: asdf')
 
-        expect(subject).to receive(:unplug_client).with(client)
+        expect(subject).to receive(:unplug_client).with(client, 1006, "asdf")
 
-        subject.on_close(client_ws)
+        subject.on_close(client_ws, 1006, "asdf")
       end
 
       it "rescues errors" do
-        expect(subject).to receive(:unplug_client).and_raise("failed")
+        expect(subject).to receive(:unplug_client).with(client, 1006, "asdf").and_raise("failed")
 
-        expect(subject.logger).to receive(:info).with('node aa connection closed')
-        expect(subject.logger).to receive(:error).with('on_close: failed')
-        expect(subject.logger).to receive(:error)
+        expect(subject.logger).to receive(:info).with('node aa connection closed with code 1006: asdf')
+        expect(subject.logger).to receive(:error).with(RuntimeError)
 
-        subject.on_close(client_ws)
+        subject.on_close(client_ws, 1006, "asdf")
       end
     end
 
@@ -512,20 +509,20 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
         expect(subject.logger).to receive(:warn).with('skip unplug of missing node aa')
 
-        subject.unplug_client(client)
+        subject.unplug_client(client, 1006, "asdf")
       end
 
       it "does not disconnect the node if another connection is active" do
         node.set(connected_at: Time.now)
 
         expect {
-          subject.unplug_client(client)
+          subject.unplug_client(client, 1006, "asdf")
         }.to not_change{node.reload; [node.connected, node.connected_at]}
       end
 
       it "disconnects the node" do
         expect {
-          subject.unplug_client(client)
+          subject.unplug_client(client, 1006, "asdf")
         }.to change{node.reload.connected}.to be_falsey
       end
     end
@@ -535,7 +532,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         expect(subject.logger).to receive(:warn).with(/Close node aa connection after \d+\.\d+s timeout/)
 
         expect(client_ws).to receive(:close).with(4030, /ping timeout after \d+\.\d+s/)
-        expect(subject).to receive(:unplug_client).with(client)
+        expect(subject).to receive(:unplug_client).with(client, 4030, String)
 
         subject.on_client_timeout(client, 0.1)
       end
@@ -547,7 +544,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
         expect(subject.logger).to receive(:warn).with('Close connection of removed node aa')
         expect(client_ws).to receive(:close).with(4040, 'host node aa has been removed')
-        expect(subject).to receive(:unplug_client).with(client)
+        expect(subject).to receive(:unplug_client).with(client, 4040, String)
 
         subject.on_pong(client, 0.1)
       end
@@ -556,7 +553,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         node.set(connected: false)
         expect(subject.logger).to receive(:warn).with('Close connection of disconnected node test-node')
         expect(client_ws).to receive(:close).with(4031, 'host node test-node has been disconnected')
-        expect(subject).to receive(:unplug_client).with(client)
+        expect(subject).to receive(:unplug_client).with(client, 4031, String)
 
         subject.on_pong(client, 0.1)
       end

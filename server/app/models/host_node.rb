@@ -33,6 +33,8 @@ class HostNode
   field :connected_at, type: Time
   field :disconnected_at, type: Time
   field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
+  field :connection_error_code, type: Integer
+  field :connection_error, type: String
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
@@ -116,6 +118,22 @@ class HostNode
       return :online # connected by NodePlugger, updated by /nodes/update RPC
     end
   end
+
+  # @return [String]
+  def websocket_error
+    if self.connected
+      return nil
+    elsif !self.connection_error_code
+      return "Websocket is not connected"
+    elsif self.connected_at > self.disconnected_at
+      # WebsocketBackend#on_open -> Agent::NodePlugger.reject!
+      return "Websocket connection rejected at #{self.connected_at} with code #{self.connection_error_code}: #{self.connection_error}"
+    else
+      # WebsocketBackend#on_close -> Agent::NodeUnplugger.unplug!
+      return "Websocket disconnected at #{self.disconnected_at} with code #{self.connection_error_code}: #{self.connection_error}"
+    end
+  end
+
 
   # @return [Boolean]
   def connected?

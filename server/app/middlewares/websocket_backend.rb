@@ -65,7 +65,7 @@ class WebsocketBackend
       end
 
       ws.on :close do |event|
-        self.on_close(ws)
+        self.on_close(ws, event.code, event.reason)
       end
 
       # Return async Rack response
@@ -173,32 +173,28 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [Rack::Request] req
   def on_open(ws, req)
+    node_id = req.env['HTTP_KONTENA_NODE_ID']
+    agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
+    connected_at = req.env['HTTP_KONTENA_CONNECTED_AT']
+    connected_at = Time.parse(connected_at) if connected_at
+
     node = find_node(req)
 
     send_master_info(ws)
 
     # check version
-    agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
-
     unless self.valid_agent_version?(agent_version)
-      logger.warn "node #{node} agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
-      handle_invalid_agent_version(ws, node, agent_version)
-      return
+      raise CloseError.new(4010), "agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
     end
 
     # check clock after version check, because older agent versions do not send this header
-    connected_at = Time.parse(req.env['HTTP_KONTENA_CONNECTED_AT'])
     connected_dt = Time.now - connected_at
 
     if connected_dt > PING_TIMEOUT + CLOCK_SKEW
-      logger.warn "node #{node} connected too far in the past at #{connected_at}, #{'%.2fs' % connected_dt} ago"
-      handle_invalid_agent_clock(ws, node, connected_dt)
-      return
+      raise CloseError.new(4020), "agent connected too far in the past, clock offset #{'%.2fs' % connected_dt} exceeds threshold"
 
     elsif connected_dt < -CLOCK_SKEW
-      logger.warn "node #{node} connected too far in the future at #{connected_at}, #{'%.2fs' % -connected_dt} ahead"
-      handle_invalid_agent_clock(ws, node, connected_dt)
-      return
+      raise CloseError.new(4020), "agent connected too far in the future, clock offset #{'%.2fs' % connected_dt} exceeds threshold"
     end
 
     logger.info "node #{node} agent version #{agent_version} connected at #{connected_at}, #{'%.2fs' % connected_dt} ago"
@@ -216,15 +212,14 @@ class WebsocketBackend
     EM.defer { Agent::NodePlugger.new(node).plugin! connected_at }
 
   rescue CloseError => exc
-    logger.warn "reject websocket connection: #{exc}"
+    logger.warn "reject websocket connection for node #{node || node_id || '<nil>'}: #{exc}"
     ws.close(exc.code, exc.message)
+
+    # XXX: this only applies to the version/clock skew errors, not the token -> node errors
+    Agent::NodePlugger.new(node).reject!(connected_at, exc.code, exc.message) if node
 
   rescue => exc
     logger.error exc
-  end
-
-  def handle_invalid_agent_clock(ws, node, connected_dt)
-    ws.close(4020, "agent clock offset #{'%.2fs' % connected_dt} exceeds threshold")
   end
 
   ##
@@ -299,17 +294,18 @@ class WebsocketBackend
   # The client may have already been unplugged, if we closed the connection.
   #
   # @param [Faye::WebSocket] ws
-  def on_close(ws)
+  # @param [Integer] code
+  # @param [String] reason
+  def on_close(ws, code, reason)
     client = @clients.find{|c| c[:ws] == ws}
     if client
-      logger.info "node #{client[:id]} connection closed"
-      unplug_client(client)
+      logger.info "node #{client[:id]} connection closed with code #{code}: #{reason}"
+      unplug_client(client, code, reason)
     else
-      logger.debug "ignore close of unplugged client"
+      logger.debug "ignore close of unplugged client with code #{code}: #{reason}"
     end
   rescue => exc
-    logger.error "on_close: #{exc.message}"
-    logger.error exc.backtrace.join("\n") if exc.backtrace
+    logger.error exc
   end
 
   # Mark client HostNode as disconnected, and remove from @clients.
@@ -318,10 +314,10 @@ class WebsocketBackend
   # The client HostNode may not exist anymore.
   #
   # @param [Hash] client
-  def unplug_client(client)
+  def unplug_client(client, code, reason)
     node = HostNode.find_by(id: client[:node_id])
     if node
-      Agent::NodeUnplugger.new(node).unplug! client[:connected_at]
+      Agent::NodeUnplugger.new(node).unplug!(client[:connected_at], code, reason)
     else
       logger.warn "skip unplug of missing node #{client[:id]}"
     end
@@ -354,12 +350,6 @@ class WebsocketBackend
     version = "#{major}.#{minor}.0"
     version << ".#{extension}" if extension
     version
-  end
-
-  # @param [Faye::WebSocket] ws
-  # @param [HostNode] node
-  def handle_invalid_agent_version(ws, node, version)
-    ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
   end
 
   # Send master_info RPC notification directly, without looping through the normal RPC mechanisms
@@ -490,7 +480,7 @@ class WebsocketBackend
   # @param [Hash] client
   def close_client(client, code, reason)
     # immediately remove from @clients and mark as disconnected
-    unplug_client(client)
+    unplug_client(client, code, reason)
 
     # triggers on :close later, or after 30s timeout, but the client will already be gone
     client[:ws].close(code, reason)

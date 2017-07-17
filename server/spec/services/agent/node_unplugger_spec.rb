@@ -16,10 +16,12 @@ describe Agent::NodeUnplugger do
         expect(subject).to receive(:update_node_containers)
 
         expect {
-          subject.unplug! connected_at
+          subject.unplug! connected_at, 1006, "Agent closed connection"
         }.to change{ node.reload.connected? }.from(true).to(false)
 
         expect(node.status).to eq :offline
+        expect(node.connection_error).to eq "Agent closed connection"
+        expect(node.connection_error_code).to eq 1006
       end
     end
   end
@@ -39,7 +41,7 @@ describe Agent::NodeUnplugger do
         expect(subject).to_not receive(:update_node_containers)
 
         expect {
-          subject.unplug! connected_at
+          subject.unplug! connected_at, 1006, ""
         }.to_not change{ node.reload.connected? }.from(true)
 
         expect(node.status).to eq :online
