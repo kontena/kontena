@@ -57,7 +57,7 @@ module Kontena::Workers
         'Volume' => volume_drivers,
         'Network' => network_drivers
       }
-      rpc_client.async.request('/nodes/update', [@node_id, node_info])
+      rpc_client.request('/nodes/update', [@node_id, node_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end
