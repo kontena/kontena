@@ -15,7 +15,7 @@ module Kontena::Workers
       subscribe('container:publish_info', :on_container_publish_info)
       subscribe('websocket:connected', :on_websocket_connected)
       info 'initialized'
-      @container_coroner = Kontena::Actors::ContainerCoroner.new(self.node_info['ID'], autostart)
+      @container_coroner = Kontena::Actors::ContainerCoroner.new(autostart)
       async.start if autostart
     end
 

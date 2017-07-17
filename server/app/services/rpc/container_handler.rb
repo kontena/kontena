@@ -31,9 +31,8 @@ module Rpc
       {}
     end
 
-    # @param [String] node_id
     # @param [Array<String>] ids
-    def cleanup(node_id, ids)
+    def cleanup(ids)
       @node.containers.unscoped.where(
         :container_id.in => ids
       ).destroy

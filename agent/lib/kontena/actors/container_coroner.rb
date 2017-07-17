@@ -6,10 +6,8 @@ module Kontena::Actors
 
     INVESTIGATION_PERIOD = 20
 
-    # @param [String] node_id
     # @param [Boolean] autostart
-    def initialize(node_id, autostart = true)
-      @node_id = node_id
+    def initialize(autostart = true)
       async.process if autostart
     end
 
@@ -30,7 +28,7 @@ module Kontena::Actors
     end
 
     def report(data)
-      rpc_request('/containers/cleanup', [@node_id, data])
+      rpc_request('/containers/cleanup', [data])
     rescue => exc
       warn "failed to send report: #{exc.message}"
       sleep 1
