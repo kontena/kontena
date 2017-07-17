@@ -3,16 +3,21 @@ module Kontena::Cli::Nodes
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
 
+    requires_current_master
+    requires_current_master_token
+    requires_current_grid
+
     parameter "NODE", "Node name"
+
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
+    option "--clear-labels", :flag, "Clear node labels"
 
     def execute
-      require_api_url
-      require_current_grid
-      token = require_token
-
       data = {}
-      data[:labels] = label_list if label_list
+
+      data[:labels] = self.label_list unless self.label_list.empty?
+      data[:labels] = [] if self.clear_labels?
+
       spinner "Updating #{self.node.colorize(:cyan)} node " do
         client.put("nodes/#{current_grid}/#{self.node}", data)
       end

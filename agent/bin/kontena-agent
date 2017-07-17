@@ -9,17 +9,19 @@ Docker.validate_version!
 $stdout.sync = true
 $0 = 'kontena-agent'
 
-api_token = ENV['KONTENA_TOKEN']
 api_uri = ENV['KONTENA_URI']
+grid_token = ENV['KONTENA_TOKEN']
+node_token = ENV['KONTENA_NODE_TOKEN']
 
-if api_token.nil? || api_token.empty?
-  abort('Configuration error: The KONTENA_TOKEN env is required')
-end
 if api_uri.nil? || api_uri.empty?
   abort('Configuration error: The KONTENA_URI env is required')
 end
 if api_uri.match(/^http.*/)
   api_uri = api_uri.sub('http', 'ws')
+end
+
+unless (grid_token && !grid_token.empty?) || (node_token && !node_token.empty?)
+  abort('Configuration error: The KONTENA_TOKEN or KONTENA_NODE_TOKEN env is required')
 end
 
 if ENV['LOG_LEVEL']
@@ -31,6 +33,7 @@ Kontena::Logging.initialize_logger(STDOUT, log_level)
 
 agent = Kontena::Agent.new(
   api_uri: api_uri,
-  api_token: api_token
+  grid_token: grid_token,
+  node_token: node_token,
 )
 agent.run!

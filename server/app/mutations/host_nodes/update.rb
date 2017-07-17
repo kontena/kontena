@@ -7,11 +7,13 @@ module HostNodes
 
     required do
       model :host_node
-      array :labels, nils: true
     end
 
+    common_inputs
+
     def execute
-      self.host_node.labels = self.labels if self.labels
+      set_common_params(self.host_node)
+
       self.host_node.save
 
       notify_grid(self.host_node.grid)

@@ -4,6 +4,12 @@ describe Kontena::Cli::Nodes::UpdateCommand do
   include ClientHelpers
   include OutputHelpers
 
+  it 'PUTs with empty parameters by default' do
+    expect(client).to receive(:put).with('nodes/test-grid/test-node', {})
+
+    subject.run(['test-node'])
+  end
+
   it 'PUTs with labels' do
     expect(client).to receive(:put).with('nodes/test-grid/test-node', {labels: ['test1=yes', 'test2=no']})
 
@@ -13,6 +19,6 @@ describe Kontena::Cli::Nodes::UpdateCommand do
   it 'PUTs with empty labels' do
     expect(client).to receive(:put).with('nodes/test-grid/test-node', {labels: []})
 
-    subject.run(['test-node'])
+    subject.run(['--clear-labels', 'test-node'])
   end
 end

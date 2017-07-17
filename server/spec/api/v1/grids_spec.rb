@@ -94,7 +94,7 @@ describe '/v1/grids', celluloid: true do
       expect(grid.trusted_subnets).to eq [ '192.168.0.0/24' ]
       expect(grid.stats).to eq 'statsd' => { 'server' => '127.0.0.1', 'port' => 8125 }
       expect(grid.grid_logs_opts.forwarder).to eq 'fluentd'
-      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1' 
+      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1'
     end
 
     it 'a new grid has a generated token unless supplied' do
@@ -252,7 +252,7 @@ describe '/v1/grids', celluloid: true do
       end
     end
 
-    describe '/nodes' do
+    describe 'GET /nodes' do
       it 'returns grid nodes' do
         grid = david.grids.first
 
@@ -260,6 +260,38 @@ describe '/v1/grids', celluloid: true do
         get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)
+      end
+    end
+
+    describe 'POST /nodes' do
+      it 'fails without grid admin role' do
+        grid = david.grids.first
+
+        expect {
+          post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
+          expect(response.status).to eq(403)
+        }.to_not change{ grid.reload.host_nodes.count }
+      end
+
+      context "for a grid admin user" do
+        before do
+          david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+        end
+
+        it 'creates and returns grid node' do
+          grid = david.grids.first
+
+          expect {
+            post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
+            expect(response.status).to eq(201)
+          }.to change{ grid.reload.host_nodes.count }.by(1)
+
+          expect(json_response).to match hash_including(
+            'id' => 'terminal-a/test-1',
+            'name' => 'test-1',
+            'has_token' => true,
+          )
+        end
       end
     end
 
