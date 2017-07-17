@@ -93,7 +93,6 @@ module Kontena::Workers
       @stats_since = Time.now
 
       data = {
-        id: docker_info['ID'],
         memory: calculate_memory,
         usage: {
           container_seconds: container_seconds
