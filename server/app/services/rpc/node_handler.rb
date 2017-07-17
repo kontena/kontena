@@ -10,21 +10,25 @@ module Rpc
       )
     end
 
-    def get(id)
-      node = @grid.host_nodes.find_by(node_id: id)
-      if node
-        HostNodeSerializer.new(node).to_hash
-      else
-        {}
-      end
-    end
-
-    # @param [Hash] data
-    def update(node_id, data)
+    def get_node(node_id)
       node = @grid.host_nodes.find_by(node_id: node_id)
 
       raise "Missing HostNode: #{node_id}" unless node
 
+      return node
+    end
+
+    # @param [String] node_id
+    def get(node_id)
+      node = get_node(node_id)
+
+      HostNodeSerializer.new(node).to_hash
+    end
+
+    # @param [String] node_id
+    # @param [Hash] data
+    def update(node_id, data)
+      node = get_node(node_id)
       node.attributes_from_docker(data)
       node.save!
     end

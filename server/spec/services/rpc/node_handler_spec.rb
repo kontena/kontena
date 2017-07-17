@@ -8,6 +8,10 @@ describe Rpc::NodeHandler do
   end
 
   describe '#get' do
+    it 'fails if the node_id is not found' do
+      expect{subject.get('b')}.to raise_error 'Missing HostNode: b'
+    end
+
     it 'returns correct peer ips' do
       HostNode.create!(
         node_id: 'b', grid: grid, name: 'test-node-2', labels: ['region=ams2'],
