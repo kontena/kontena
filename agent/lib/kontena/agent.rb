@@ -9,9 +9,10 @@ module Kontena
     def initialize(opts)
       info "initializing agent (version #{VERSION})"
       @opts = opts
-      @client = Kontena::WebsocketClient.new(@opts[:api_uri],
+      @client = Kontena::WebsocketClient.new(@opts[:api_uri], self.node_id,
         grid_token: @opts[:grid_token],
         node_token: @opts[:node_token],
+        node_labels: self.node_labels,
       )
       @supervisor = Celluloid::Supervision::Container.run!
       self.supervise_state
@@ -19,6 +20,16 @@ module Kontena
       self.supervise_network_adapter
       self.supervise_lb
       self.supervise_workers
+    end
+
+    # @return [String]
+    def node_id
+      @node_id ||= Docker.info['ID']
+    end
+
+    # @return [Array<String>]
+    def node_labels
+      @node_labels ||= Docker.info['Labels']
     end
 
     # Connect to master server

@@ -1,15 +1,20 @@
-
 describe Kontena::WebsocketClient do
   let(:api_uri) { 'http://test' }
+  let(:node_id) { 'ABCD' }
   let(:grid_token) { 'test' }
   let(:node_token) { nil }
+  let(:node_labels) { ['region=test'] }
 
-  let(:subject) { described_class.new(api_uri, grid_token: grid_token, node_token: node_token)}
+  let(:subject) {
+    described_class.new(api_uri, node_id,
+      grid_token: grid_token,
+      node_token: node_token,
+      node_labels: node_labels,
+    )
+  }
 
   before(:each) {
     Celluloid.boot
-    allow_any_instance_of(described_class).to receive(:host_id).and_return('ABCD')
-    allow_any_instance_of(described_class).to receive(:labels).and_return(['region=test'])
   }
   after(:each) { Celluloid.shutdown }
 
@@ -71,7 +76,7 @@ describe Kontena::WebsocketClient do
   describe '#on_error' do
     context "For a server that is ECONNREFUSED" do
       subject do
-        described_class.new('ws://127.0.0.1:1337', grid_token: 'test-token')
+        described_class.new('ws://127.0.0.1:1337', node_id, grid_token: 'test-token')
       end
 
       it "logs an error", :em => false do
