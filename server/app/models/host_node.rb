@@ -32,6 +32,7 @@ class HostNode
   field :docker_version, type: String
   field :connected_at, type: Time
   field :disconnected_at, type: Time
+  field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
@@ -106,6 +107,13 @@ class HostNode
   # @return [Boolean]
   def connected?
     self.connected == true
+  end
+
+  # attributes are up to date
+  #
+  # @return [Boolean]
+  def updated?
+    self.connected && self.updated
   end
 
   # @return [Boolean]

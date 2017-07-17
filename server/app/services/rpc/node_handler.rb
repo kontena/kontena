@@ -27,6 +27,7 @@ module Rpc
       raise "Missing HostNode: #{node_id}" unless node
 
       node.attributes_from_docker(data)
+      node.updated = true # connection handshake complete after NodePlugger#plugin!
       node.save!
     end
 

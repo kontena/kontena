@@ -289,6 +289,8 @@ describe '/v1/grids', celluloid: true do
           expect(json_response).to match hash_including(
             'id' => 'terminal-a/test-1',
             'name' => 'test-1',
+            'connected' => false,
+            'updated' => false,
             'has_token' => true,
           )
         end

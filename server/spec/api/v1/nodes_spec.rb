@@ -152,7 +152,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET /health' do
     let :node do
-      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', connected: true, updated: true)
     end
 
     let :rpc_client do

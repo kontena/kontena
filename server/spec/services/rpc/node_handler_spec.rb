@@ -4,6 +4,7 @@ describe Rpc::NodeHandler do
   let(:node) do
     HostNode.create!(
       node_id: 'a', grid: grid, name: 'test-node', labels: ['region=ams2'],
+      connected: true, updated: false,
     )
   end
 
@@ -20,6 +21,20 @@ describe Rpc::NodeHandler do
       json = subject.get(node.node_id)
       expect(json[:peer_ips]).to include('10.12.1.3')
       expect(json[:peer_ips]).to include('146.185.176.0')
+    end
+  end
+
+  describe '#update' do
+    it 'fails if the node_id is wrong' do
+      expect{subject.update({'ID' => 'b'})}.to raise_error 'Missing HostNode: b'
+    end
+
+    it 'calls attributes_from_docker and sets updated' do
+      expect_any_instance_of(HostNode).to receive(:attributes_from_docker)
+
+      expect{
+        subject.update({'ID' => 'a'})
+      }.to change{node.reload.updated}.from(false).to(true)
     end
   end
 
