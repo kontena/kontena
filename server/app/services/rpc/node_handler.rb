@@ -20,8 +20,7 @@ module Rpc
     end
 
     # @param [Hash] data
-    def update(data)
-      node_id = data['ID']
+    def update(node_id, data)
       node = @grid.host_nodes.find_by(node_id: node_id)
 
       raise "Missing HostNode: #{node_id}" unless node

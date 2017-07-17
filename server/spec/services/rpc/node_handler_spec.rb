@@ -23,6 +23,22 @@ describe Rpc::NodeHandler do
     end
   end
 
+  describe '#update' do
+    it 'fails if the node_id is wrong' do
+      expect{subject.update('b', {'ID' => 'b'})}.to raise_error 'Missing HostNode: b'
+    end
+
+    it 'calls attributes_from_docker and sets updated, changing the node status to online' do
+      expect_any_instance_of(HostNode).to receive(:attributes_from_docker).with(hash_including('AgentVersion' => '1.4.0.dev')).and_call_original
+
+      expect{
+        subject.update('a', {'ID' => 'a', 'AgentVersion' => '1.4.0.dev'})
+      }.to change{node.reload.updated_at}
+
+      expect(node.agent_version).to eq '1.4.0.dev'
+    end
+  end
+
   describe '#stats' do
     it 'saves host_node_stat item' do
       node

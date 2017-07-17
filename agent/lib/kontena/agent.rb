@@ -83,7 +83,8 @@ module Kontena
     def supervise_state
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
-        as: :node_info_worker
+        as: :node_info_worker,
+        args: [self.node_id],
       )
     end
 

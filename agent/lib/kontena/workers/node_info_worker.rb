@@ -16,8 +16,11 @@ module Kontena::Workers
 
     PUBLISH_INTERVAL = 60
 
+    # @param [String] node_id
     # @param [Boolean] autostart
-    def initialize(autostart = true)
+    def initialize(node_id, autostart = true)
+      @node_id = node_id
+
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
       info 'initialized'
@@ -54,7 +57,7 @@ module Kontena::Workers
         'Volume' => volume_drivers,
         'Network' => network_drivers
       }
-      rpc_client.async.request('/nodes/update', [node_info])
+      rpc_client.async.request('/nodes/update', [@node_id, node_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end
