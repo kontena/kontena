@@ -48,8 +48,7 @@ describe Rpc::NodeHandler do
       node
 
       expect {
-        subject.stats({
-          'id' => node.node_id,
+        subject.stats(node.node_id, {
           'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
           'memory' => {},
           'filesystems' => [],
@@ -63,8 +62,7 @@ describe Rpc::NodeHandler do
     it 'creates timestamps' do
       node
 
-      subject.stats({
-        'id' => node.node_id,
+      subject.stats(node.node_id, {
         'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
         'memory' => {},
         'filesystems' => [],
@@ -81,8 +79,7 @@ describe Rpc::NodeHandler do
 
       time = '2017-02-28 00:00:00 -0500'
 
-      subject.stats({
-        'id' => node.node_id,
+      subject.stats(node.node_id, {
         'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
         'memory' => {},
         'filesystems' => [],

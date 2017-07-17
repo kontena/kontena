@@ -33,10 +33,10 @@ module Rpc
       node.save!
     end
 
+    # @param [String] node_id
     # @param [Hash] data
-    def stats(data)
-      node = @grid.host_nodes.find_by(node_id: data['id'])
-      return unless node
+    def stats(node_id, data)
+      node = get_node(node_id)
       time = data['time'] ? Time.parse(data['time']) : Time.now.utc
 
       stat = {

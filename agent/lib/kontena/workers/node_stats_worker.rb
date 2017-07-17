@@ -93,7 +93,6 @@ module Kontena::Workers
       @stats_since = Time.now
 
       data = {
-        id: docker_info['ID'],
         memory: calculate_memory,
         usage: {
           container_seconds: container_seconds
@@ -116,7 +115,7 @@ module Kontena::Workers
         network: network_traffic,
         time: Time.now.utc.to_s
       }
-      rpc_client.async.notification('/nodes/stats', [data])
+      rpc_client.async.notification('/nodes/stats', [@node.id, data])
       send_statsd_metrics(data)
     end
 

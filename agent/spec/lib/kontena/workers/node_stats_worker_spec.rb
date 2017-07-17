@@ -59,15 +59,6 @@ describe Kontena::Workers::NodeStatsWorker, celluloid: true do
     end
   end
 
-  describe '#publish_node_stats' do
-    it 'sends node stats via rpc' do
-      expect(rpc_client).to receive(:notification).once.with(
-        '/nodes/stats', [hash_including(id: 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
-      )
-      subject.publish_node_stats
-    end
-  end
-
   describe '#calculate_container_time' do
     context 'container is running' do
       it 'calculates container time since last check' do
@@ -138,12 +129,13 @@ describe Kontena::Workers::NodeStatsWorker, celluloid: true do
   describe '#publish_node_stats' do
 
     before(:each) do
+      subject.instance_variable_set('@node', node)
       allow(rpc_client).to receive(:notification)
     end
 
     it 'sends stats via rpc' do
       expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
-        [hash_including(id: String, memory: Hash, usage: Hash, load: Hash,
+        [node.id, hash_including(memory: Hash, usage: Hash, load: Hash,
                         filesystem: Array, cpu: Hash, network: Hash, time: String)])
       subject.publish_node_stats
     end
