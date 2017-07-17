@@ -21,9 +21,8 @@ module Rpc
       }
     end
 
-    # @param [String] id
     # @return [Array<Hash>]
-    def list(id)
+    def list
       start = Time.now.to_f
 
       raise 'Migration not done' unless migration_done?
@@ -36,9 +35,8 @@ module Rpc
       { service_pods: service_pods }
     end
 
-    # @param [String] id
     # @param [Hash] pod
-    def set_state(id, pod)
+    def set_state(pod)
       service_instance = @node.grid_service_instances.find_by(
         grid_service_id: pod['service_id'], instance_number: pod['instance_number']
       )
@@ -52,9 +50,8 @@ module Rpc
       {}
     end
 
-    # @param [String] id
     # @param [Hash] event
-    def event(id, event)
+    def event(event)
       service = GridService.where(id: event['service_id'], grid_id: @node.grid_id).first
       return unless service
 

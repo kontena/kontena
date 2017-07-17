@@ -42,14 +42,14 @@ module Kontena::Workers
     end
 
     def on_pod_event(_, event)
-      rpc_client.async.notification("/node_service_pods/event", [node.id, event])
+      rpc_client.async.notification("/node_service_pods/event", [event])
     rescue => exc
       error "sending event to master failed: #{exc.message}"
     end
 
     def populate_workers_from_master
       exclusive {
-        response = rpc_request("/node_service_pods/list", [node.id])
+        response = rpc_request("/node_service_pods/list", [])
 
         # sanity-check
         unless response['service_pods'].is_a?(Array)

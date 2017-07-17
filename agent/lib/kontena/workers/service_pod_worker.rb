@@ -13,11 +13,10 @@ module Kontena::Workers
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::EventLogHelper
 
-    attr_reader :node, :prev_state, :service_pod
+    attr_reader :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
 
-    def initialize(node, service_pod)
-      @node = node
+    def initialize(service_pod)
       @service_pod = service_pod
       @prev_state = nil # sync'd to master
       @container_state_changed = true
@@ -262,7 +261,7 @@ module Kontena::Workers
       }
 
       if state != @prev_state
-        rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
+        rpc_client.async.request('/node_service_pods/set_state', [state])
         @prev_state = state
       end
     end
