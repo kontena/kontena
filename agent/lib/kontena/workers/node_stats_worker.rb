@@ -14,7 +14,7 @@ module Kontena::Workers
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::StatsHelper
 
-    attr_reader :statsd, :stats_since
+    attr_reader :node, :statsd, :stats_since
 
     PUBLISH_INTERVAL = 60
 
@@ -33,32 +33,34 @@ module Kontena::Workers
 
     def start
       observe(Actor[:node_info_worker]) do |node|
-        configure_statsd(node)
-        @node = node
+        configure(node)
       end
 
-      start_publish_loop
-    end
-
-    def start_publish_loop
-      loop do
-        sleep PUBLISH_INTERVAL
+      every(PUBLISH_INTERVAL) do
         self.publish_node_stats
       end
     end
 
-    # @param [Node] node
-    def configure_statsd(node)
-      return if @node && @node.statsd_conf == node.statsd_conf
+    def configure(node)
+      if !@node || @node.statsd_conf != node.statsd_conf
+        @statsd = self.configure_statsd(node)
+      end
 
+      @node = node
+    end
+
+    # @param [Node] node
+    # @return [Statsd]
+    def configure_statsd(node)
       statsd_conf = node.statsd_conf
       if statsd_conf && statsd_conf['server']
         info "exporting stats via statsd to udp://#{statsd_conf['server']}:#{statsd_conf['port']}"
-        @statsd = Statsd.new(
+
+        return Statsd.new(
           statsd_conf['server'], statsd_conf['port'].to_i || 8125
         ).tap{ |sd| sd.namespace = node.grid['name'] }
       else
-        @statsd = nil
+        return nil
       end
     rescue => exc
       error "failed to configure statsd: #{exc.message}"
@@ -77,6 +79,14 @@ module Kontena::Workers
     end
 
     def publish_node_stats
+      stats = collect_node_stats
+
+      send_node_stats(stats) if @node
+      send_statsd_metrics(stats) if @statsd
+    end
+
+    # @return [Hash]
+    def collect_node_stats
       disk = Vmstat.disk('/')
       load_avg = Vmstat.load_average
       current_cpu = Vmstat.cpu
@@ -92,7 +102,7 @@ module Kontena::Workers
       container_seconds = calculate_containers_time + container_partial_seconds
       @stats_since = Time.now
 
-      data = {
+      {
         memory: calculate_memory,
         usage: {
           container_seconds: container_seconds
@@ -115,13 +125,15 @@ module Kontena::Workers
         network: network_traffic,
         time: Time.now.utc.to_s
       }
+    end
+
+    # @param [Hash] data
+    def send_node_stats(data)
       rpc_client.async.notification('/nodes/stats', [@node.id, data])
-      send_statsd_metrics(data)
     end
 
     # @param [Hash] event
     def send_statsd_metrics(event)
-      return unless statsd
       key_base = "#{docker_info['Name']}"
       statsd.gauge("#{key_base}.cpu.load.1m", event[:load][:'1m'])
       statsd.gauge("#{key_base}.cpu.load.5m", event[:load][:'5m'])

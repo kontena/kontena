@@ -1,61 +1,222 @@
 describe Kontena::Workers::NodeStatsWorker, celluloid: true do
   include RpcClientMocks
 
+  let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
   let(:subject) { described_class.new(false) }
-  let(:statsd) { double(:statsd) }
-  let(:node) do
-    Node.new(
-      'id' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
-      'instance_number' => 1,
-      'grid' => {
 
-      }
-    )
-  end
+  let(:node) { instance_double(Node, id: node_id,
+    grid: { 'name' => 'test' },
+    statsd_conf: {},
+  ) }
+  let(:statsd_node) { instance_double(Node, id: node_id,
+    grid: { 'name' => 'test' },
+    statsd_conf: {
+      'server' => '192.168.24.33',
+      'port' => 8125,
+    },
+  ) }
+  let(:statsd2_node) { instance_double(Node, id: node_id,
+    grid: { 'name' => 'test' },
+    statsd_conf: {
+      'server' => '192.168.24.34',
+      'port' => 8125,
+    },
+  ) }
+  let(:statsd) { instance_double(Statsd) }
+  let(:statsd2) { instance_double(Statsd) }
+
+  let(:stats) { double() }
 
   before(:each) do
     mock_rpc_client
-    allow(Docker).to receive(:info).and_return({
-      'Name' => 'node-1',
-      'Labels' => nil,
-      'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
-      'Plugins' => {
-        'Network' => ['bridge', 'host'],
-        'Volume' => ['local']
-      }
-    })
-    allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
-    allow(rpc_client).to receive(:request)
-    allow(rpc_client).to receive(:notification)
-    allow(rpc_client).to receive(:connected?).and_return(true)
+  end
+
+  describe '#start' do
+    it 'calls publish_node_stats on every, configure on observe' do
+      allow(subject.wrapped_object).to receive(:every) do |&block|
+        expect(subject.wrapped_object).to receive(:publish_node_stats)
+        block.call
+      end
+
+      allow(subject.wrapped_object).to receive(:observe) do |actor, &block|
+        expect(subject.wrapped_object).to receive(:configure).with(node)
+        block.call(node)
+      end
+    end
+  end
+
+  context 'without a configured node' do
+    describe '#configure' do
+      it 'configures the node without statsd' do
+        expect(subject.wrapped_object).to receive(:configure_statsd).with(node)
+
+        subject.configure(node)
+
+        expect(subject.node).to eq node
+        expect(subject.statsd).to be nil
+      end
+
+      it 'configures the node with statsd' do
+        expect(subject.wrapped_object).to receive(:configure_statsd).with(statsd_node).and_return(statsd)
+
+        subject.configure(statsd_node)
+
+        expect(subject.node).to eq statsd_node
+        expect(subject.statsd).to eq statsd
+      end
+    end
+
+    describe '#publish_node_stats' do
+      before do
+        allow(subject.wrapped_object).to receive(:collect_node_stats).and_return(:stats)
+      end
+
+      it 'does not send any stats' do
+        expect(subject.wrapped_object).to_not receive(:send_node_stats)
+        expect(subject.wrapped_object).to_not receive(:send_statsd_metrics)
+
+        subject.publish_node_stats
+      end
+    end
   end
 
   describe '#configure_statsd' do
-    it 'initializes statsd client if node has statsd config' do
-      node = Node.new(
-        'grid' => {
-          'stats' => {
-            'statsd' => {
-              'server' => '192.168.24.33',
-              'port' => 8125
-            }
-          }
-        }
-      )
-      expect {
-        subject.configure_statsd(node)
-      }.to change { subject.statsd }
+    it 'initializes statsd client with node statsd config' do
+      expect(statsd).to receive(:namespace=).with('test')
+      expect(Statsd).to receive(:new).with('192.168.24.33', 8125).and_return(statsd)
+
+      expect(subject.configure_statsd(statsd_node)).to eq statsd
     end
 
-    it 'does not initialize statsd if no statsd config exists' do
-      node = Node.new(
-        'grid' => {
-          'stats' => {}
+    it 'does not initialize statsd if no statsd configured' do
+      expect(Statsd).to_not receive(:new)
+
+      expect(subject.configure_statsd(node)).to be nil
+    end
+  end
+
+  context 'with a configured node without statsd' do
+    before do
+      allow(subject.wrapped_object).to receive(:configure_statsd).with(node).and_return(nil)
+
+      subject.configure node
+    end
+
+    describe '#configure' do
+      it 'reconfigures the node with statsd' do
+        expect(subject.wrapped_object).to receive(:configure_statsd).with(statsd_node).and_return(statsd)
+
+        subject.configure(statsd_node)
+
+        expect(subject.node).to eq statsd_node
+        expect(subject.statsd).to eq statsd
+      end
+    end
+
+    describe '#publish_node_stats' do
+      before do
+        allow(subject.wrapped_object).to receive(:collect_node_stats).and_return(:stats)
+      end
+
+      it 'sends rpc stats' do
+        expect(subject.wrapped_object).to receive(:send_node_stats)
+        expect(subject.wrapped_object).to_not receive(:send_statsd_metrics)
+
+        subject.publish_node_stats
+      end
+    end
+
+    describe '#send_node_stats' do
+      it 'sends stats via rpc' do
+        expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [node.id, stats])
+
+        subject.send_node_stats(stats)
+      end
+    end
+  end
+
+  context 'with a configured node with statsd' do
+    before do
+      expect(subject.wrapped_object).to receive(:configure_statsd).with(statsd_node).and_return(statsd)
+
+      subject.configure statsd_node
+    end
+
+    describe '#configure' do
+      it 'does not reconfigure statsd if the config is the same' do
+        expect(subject.wrapped_object).to_not receive(:configure_statsd)
+
+        subject.configure(statsd_node)
+
+        expect(subject.node).to eq statsd_node
+        expect(subject.statsd).to eq statsd
+      end
+
+      it 'reconfigure statsd if the config changes' do
+        expect(subject.wrapped_object).to receive(:configure_statsd).with(statsd2_node).and_return(statsd2)
+
+        subject.configure(statsd2_node)
+
+        expect(subject.node).to eq statsd2_node
+        expect(subject.statsd).to eq statsd2
+      end
+    end
+
+    describe '#publish_node_stats' do
+      before do
+        allow(subject.wrapped_object).to receive(:collect_node_stats).and_return(:stats)
+      end
+
+      it 'sends rpc and statsd stats' do
+        expect(subject.wrapped_object).to receive(:send_node_stats)
+        expect(subject.wrapped_object).to receive(:send_statsd_metrics)
+
+        subject.publish_node_stats
+      end
+    end
+
+    describe '#send_statsd_metrics' do
+      let(:stats) { spy() } # used for recursive lookups
+
+      before do
+        allow(subject.wrapped_object).to receive(:docker_info).and_return({
+          'Name' => 'test,'
+        })
+      end
+
+      it 'sends stats to statsd' do
+        # Will be called 15 times if there are no file systems
+        expect(statsd).to receive(:gauge).at_least(15).times
+
+        subject.send_statsd_metrics(stats)
+      end
+    end
+  end
+
+  describe '#collect_node_stats' do
+    before do
+      allow(Docker).to receive(:info).and_return({
+        'Name' => 'node-1',
+        'Labels' => nil,
+        'ID' => node_id,
+        'Plugins' => {
+          'Network' => ['bridge', 'host'],
+          'Volume' => ['local']
         }
+      })
+      allow(subject.wrapped_object).to receive(:calculate_containers_time).and_return(100)
+    end
+
+    it 'returns hash of stats' do
+      expect(subject.collect_node_stats).to match hash_including(
+        memory: Hash,
+        usage: Hash,
+        load: Hash,
+        filesystem: Array,
+        cpu: Hash,
+        network: Hash,
+        time: String,
       )
-      expect {
-        subject.configure_statsd(node)
-      }.not_to change { subject.statsd }
     end
   end
 
@@ -123,29 +284,6 @@ describe Kontena::Workers::NodeStatsWorker, celluloid: true do
         expect(subject.wrapped_object).not_to receive(:calculate_container_time)
         subject.on_container_event('on_container_event', event)
       end
-    end
-  end
-
-  describe '#publish_node_stats' do
-
-    before(:each) do
-      subject.instance_variable_set('@node', node)
-      allow(rpc_client).to receive(:notification)
-    end
-
-    it 'sends stats via rpc' do
-      expect(rpc_client).to receive(:notification).once.with('/nodes/stats',
-        [node.id, hash_including(memory: Hash, usage: Hash, load: Hash,
-                        filesystem: Array, cpu: Hash, network: Hash, time: String)])
-      subject.publish_node_stats
-    end
-
-    it 'sends stats to statsd' do
-      subject.instance_variable_set("@statsd", statsd)
-
-      # Will be called 18 times if there is one file system
-      expect(statsd).to receive(:gauge).at_least(18).times
-      subject.publish_node_stats
     end
   end
 
