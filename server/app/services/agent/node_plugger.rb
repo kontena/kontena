@@ -20,7 +20,6 @@ module Agent
       )
       info "Connected node #{@node.to_path} at #{connected_at}"
       self.publish_update_event
-      self.send_master_info
       self.send_node_info
     rescue => exc
       error exc
@@ -41,10 +40,6 @@ module Agent
 
     def send_node_info
       rpc_client.notify('/agent/node_info', Rpc::HostNodeSerializer.new(node).to_hash)
-    end
-
-    def send_master_info
-      rpc_client.notify('/agent/master_info', {version: Server::VERSION})
     end
 
     private

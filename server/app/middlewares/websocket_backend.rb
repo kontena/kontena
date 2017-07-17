@@ -175,6 +175,8 @@ class WebsocketBackend
   def on_open(ws, req)
     node = find_node(req)
 
+    send_master_info(ws)
+
     # check version
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
 
@@ -357,7 +359,6 @@ class WebsocketBackend
   # @param [Faye::WebSocket] ws
   # @param [HostNode] node
   def handle_invalid_agent_version(ws, node, version)
-    send_master_info(ws)
     ws.close(4010, "agent version #{version} is not compatible with server version #{Server::VERSION}")
   end
 

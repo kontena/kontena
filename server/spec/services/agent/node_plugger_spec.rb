@@ -42,18 +42,11 @@ describe Agent::NodePlugger do
     describe '#plugin!' do
       it 'marks node as connected' do
         expect(subject).to receive(:publish_update_event)
-        expect(subject).to receive(:send_master_info)
         expect(subject).to receive(:send_node_info)
         expect {
           subject.plugin! connected_at
         }.to change{ node.reload.connected? }.to be_truthy
-      end
-    end
-
-    describe '#send_master_info' do
-      it "sends version" do
-        expect(rpc_client).to receive(:notify).with('/agent/master_info', hash_including(version: String))
-        subject.send_master_info
+        expect(node.status).to eq :connecting
       end
     end
 
