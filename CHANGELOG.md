@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.3.4](https://github.com/kontena/kontena/releases/tag/v1.3.4) (2017-07-19)
+
+### Known issues
+
+* Ubuntu kontena-agent package is not compatible with Docker 17.06 #2588
+
+    This has been fixed for the 1.3 releases by marking the Ubuntu packages as incompatible with the newest `docker-ce` 17.06 packages.
+
+    The 1.4 release will support the Docker 17.06 release, but will also bump the minimum Docker version from 1.10 to 1.12.
+
+### Fixed issues
+
+* `kontena grid update` does not notify nodes #2584
+* Grid non-admin user can remove other users from grid #2578
+
+### Changes
+
+## Master
+
+* Fix server grids update notify (#2585)
+* Fix grid user remove access check (#2579)
+* Fix Ubuntu kontena-server/kontena-agent packages to be incompatible with docker 17.06 (#2593)
+
+## Agents
+* Fix Ubuntu kontena-server/kontena-agent packages to be incompatible with docker 17.06 (#2593)
+
 ## [1.3.3](https://github.com/kontena/kontena/releases/tag/v1.3.3) (2017-07-06)
 
 **Master & Agents:**
