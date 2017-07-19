@@ -2,7 +2,7 @@ Package: kontena-agent
 Version: VERSION
 Maintainer: info@kontena.io
 Architecture: all
-Depends: docker-engine (>= 1.10) | docker-ce | docker-ee, resolvconf
+Depends: docker-engine (>= 1.12) | docker-ce | docker-ee, resolvconf
 Provides: kontena-weave, kontena-etcd
 Conflicts: kontena-weave, kontena-etcd
 Replaces: kontena-weave, kontena-etcd
