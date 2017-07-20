@@ -19,7 +19,7 @@ module Kontena::Cli::Containers
     def execute
       Kontena::Websocket::Logging.initialize_logger(STDERR, Logger::DEBUG)
 
-      exit_status = container_exec(current_grid, self.container_id, interactive: interactive?, shell: shell?, tty: tty?)
+      exit_status = container_exec(current_grid, self.container_id, self.cmd_list, interactive: interactive?, shell: shell?, tty: tty?)
 
       exit exit_status unless exit_status.zero?
     end
