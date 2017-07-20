@@ -39,11 +39,11 @@ module Kontena::Cli::Helpers
     end
 
     # @return [String]
-    def websocket_url(path, query)
+    def websocket_url(path, query = nil)
       url = URI.parse(require_current_master.url)
       url.scheme = url.scheme.sub('http', 'ws')
       url.path = '/v1/' + path
-      url.query = URI.encode_www_form(query)
+      url.query = query ? URI.encode_www_form(query) : nil
       url.to_s
     end
 
