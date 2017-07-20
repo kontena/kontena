@@ -24,9 +24,9 @@ module Kontena::Cli::Services
 
     option ["--instance"], "INSTANCE", "Exec on given numbered instance, default first running" do |value| Integer(value) end
     option ["-a", "--all"], :flag, "Exec on all running instances"
-    option ["--shell"], :flag, "Execute as a shell command"
-    option ["-i", "--interactive"], :flag, "Keep stdin open"
-    option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY"
+    option ["--shell"], :flag, "Execute as a shell command", default: false
+    option ["-i", "--interactive"], :flag, "Keep stdin open", default: false
+    option ["-t", "--tty"], :flag, "Allocate a pseudo-TTY", default: false
     option ["--skip"], :flag, "Skip failed instances when executing --all"
     option ["--silent"], :flag, "Do not show exec status"
     option ["--verbose"], :flag, "Show exec status"
@@ -69,6 +69,7 @@ module Kontena::Cli::Services
       end
     end
 
+    # Run block with spinner if desired
     def maybe_spinner(msg, &block)
       if (all? || verbose?) && !silent?
         spinner(msg, &block)
