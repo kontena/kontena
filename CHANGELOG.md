@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.4.rc1](https://github.com/kontena/kontena/releases/tag/v1.3.4.rc1) (2017-07-19)
+## [1.3.4](https://github.com/kontena/kontena/releases/tag/v1.3.4) (2017-07-20)
 
 ### Known issues
 
