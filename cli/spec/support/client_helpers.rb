@@ -9,6 +9,8 @@ module ClientHelpers
       instance_double(Kontena::Client, :client)
     end
 
+    base.let(:master_url) { 'http://someurl.example.com/' }
+
     base.let(:token) do
       '1234567'
     end
@@ -21,8 +23,8 @@ module ClientHelpers
       {'current_server' => 'alias',
        'current_account' => 'kontena',
        'servers' => [
-           {'name' => 'some_master', 'url' => 'http://someurl.example.com'},
-           {'name' => 'alias', 'url' => 'http://someurl.example.com/', 'token' => token, 'account' => 'master', 'grid' => current_grid},
+           {'name' => 'some_master', 'url' => master_url },
+           {'name' => 'alias', 'url' => master_url, 'token' => token, 'account' => 'master', 'grid' => current_grid},
        ]
       }
     end
@@ -31,7 +33,7 @@ module ClientHelpers
       RSpec::Mocks.space.proxy_for(File).reset
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:current_grid).and_return(current_grid)
-      allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena/certs/someurl.example.com.pem')).and_return(false)
+      allow(File).to receive(:exist?).with(File.join(Dir.home, ".kontena/certs/#{URI(master_url).host}.pem")).and_return(false)
       allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
       allow(File).to receive(:readable?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
       allow(File).to receive(:read).and_call_original
