@@ -123,7 +123,7 @@ module Kontena::Cli::Helpers
         },
       }
 
-      logger.debug { "websocket exec connect: #{url} #{options}"}
+      logger.debug { "websocket exec connect: #{url}" }
 
       # we do not expect CloseError, because the server will send an 'exit' message first,
       # and we return before seeing the close frame
@@ -157,12 +157,11 @@ module Kontena::Cli::Helpers
 
     # Execute command on container using websocket API.
     #
-    # @param grid [String] Grid ID
-    # @param id [String] Container ID (host/name)
+    # @param id [String] Container ID (grid/host/name)
     # @param cmd [Array<String>] command to execute
     # @return [Integer] exit code
-    def container_exec(grid, id, cmd, **exec_options)
-      websocket_exec("containers/#{grid}/#{id}/exec", cmd, **exec_options)
+    def container_exec(id, cmd, **exec_options)
+      websocket_exec("containers/#{id}/exec", cmd, **exec_options)
     end
   end
 end
