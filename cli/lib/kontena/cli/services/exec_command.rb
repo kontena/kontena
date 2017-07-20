@@ -10,6 +10,15 @@ module Kontena::Cli::Services
     include Kontena::Cli::Helpers::ExecHelper
     include ServicesHelper
 
+    class ExecExit < StandardError
+      attr_reader :exit_status
+
+      def initialize(exit_status, message = nil)
+        super(message)
+        @exit_status = exit_status
+      end
+    end
+
     parameter "NAME", "Service name"
     parameter "CMD ...", "Command"
 
@@ -39,7 +48,7 @@ module Kontena::Cli::Services
         ret = true
         service_containers.each do |container|
           if container['status'] == 'running'
-            if !exec_container(container)
+            if !execute_container(container)
               ret = false
             end
           else
@@ -52,105 +61,43 @@ module Kontena::Cli::Services
           exit_with_error "Service #{name} does not have container instance #{instance}"
         elsif container['status'] != 'running'
           exit_with_error "Service #{name} container #{container['name']} is not running, it is #{container['status']}"
-        elsif interactive?
-          interactive_exec(container)
         else
-          exec_container(container)
+          execute_container(container)
         end
       else
-        if interactive?
-          interactive_exec(running_containers.first)
-        else
-          exec_container(running_containers.first)
-        end
+        execute_container(running_containers.first)
       end
     end
 
-    # Exits if exec returns with non-zero
-    # @param [Hash] container
-    def exec_container(container)
-      exit_status = nil
-      if !silent? && (verbose? || all?)
-        spinner "Executing command on #{container['name']}" do
-          exit_status = normal_exec(container)
-
-          raise Kontena::Cli::SpinAbort if exit_status != 0
-        end
+    def maybe_spinner(msg, &block)
+      if (all? || verbose?) && !silent?
+        spinner(msg, &block)
       else
-        exit_status = normal_exec(container)
+        yield
       end
-
-      exit exit_status if exit_status != 0 && !skip?
-
-      return exit_status == 0
     end
 
     # @param [Hash] container
-    # @return [Boolean]
-    def normal_exec(container)
-      base = self
-      cmd = JSON.dump({ cmd: cmd_list })
-      exit_status = nil
-      token = require_token
-      ws = connect(url(container['id']), token)
-      ws.on :message do |msg|
-        data = base.parse_message(msg)
-        if data
-          if data['exit']
-            exit_status = data['exit'].to_i
-          elsif data['stream'] == 'stdout'
-            $stdout << data['chunk']
-          else
-            $stderr << data['chunk']
-          end
-        end
+    # @raise [SystemExit] if exec exits with non-zero status, and not --skip
+    # @return [true] exit exit status zero
+    # @return [false] exit exit status non-zero and --skip
+    def execute_container(container)
+      maybe_spinner "Executing command on #{container['name']}" do
+        exit_status = container_exec(container['id'], self.cmd_list,
+          interactive: interactive?,
+          shell: shell?,
+          tty: tty?,
+        )
+        raise ExecExit.new(exit_status) unless exit_status.zero?
       end
-      ws.on :open do
-        ws.text(cmd)
+    rescue ExecExit => exc
+      if skip?
+        return false
+      else
+        exit exc.exit_status
       end
-      ws.on :close do |e|
-        exit_status = 1 if exit_status.nil? && e.code != 1000
-      end
-      ws.connect
-
-      sleep 0.01 until !exit_status.nil?
-
-      exit_status
-    end
-
-    # @param [Hash] container
-    def interactive_exec(container)
-      token = require_token
-      cmd = JSON.dump({ cmd: cmd_list })
-      queue = Queue.new
-      stdin_stream = nil
-      ws = connect(url(container['id']), token)
-      ws.on :message do |msg|
-        data = self.parse_message(msg)
-        queue << data if data.is_a?(Hash)
-      end
-      ws.on :open do
-        ws.text(cmd)
-        stdin_stream = self.stream_stdin_to_ws(ws, tty: self.tty?)
-      end
-      ws.on :close do |e|
-        if e.code != 1000
-          queue << {'exit' => 1}
-        else
-          queue << {'exit' => 0}
-        end
-      end
-      ws.connect
-      while msg = queue.pop
-        self.handle_message(msg)
-      end
-    rescue SystemExit
-      stdin_stream.kill if stdin_stream
-      raise
-    end
-
-    def url(container_id)
-      ws_url(container_id, shell: shell?, interactive: interactive?, tty: tty?)
+    else
+      return true
     end
   end
 end
