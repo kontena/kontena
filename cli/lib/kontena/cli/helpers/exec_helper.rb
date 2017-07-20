@@ -18,20 +18,22 @@ module Kontena::Cli::Helpers
     # @param tty [Boolean] read stdin in raw mode, sending tty escapes for remote pty
     # @raise [ArgumentError] not a tty
     # @yield [data]
-    # @yieldparam data [String, nil] nil on EOF
+    # @yieldparam data [String] data from stdin
     # @raise [ArgumentError] not a tty
-    # @return [Thread]
+    # @return EOF on stdin (!tty)
     def read_stdin(tty: nil)
-      raise ArgumentError, "the input device is not a TTY" if tty && !STDIN.tty?
-
       if tty
-        STDIN.raw {
-          # XXX: raises EOF?
-          while data = STDIN.readpartial(1024)
-            yield data
+        raise ArgumentError, "the input device is not a TTY" unless STDIN.tty?
+
+        STDIN.raw { |io|
+          # we do not expect EOF on a TTY, ^D sends a tty escape to close the pty instead
+          loop do
+            # raises EOFError, SyscallError or IOError
+            yield io.readpartial(1024)
           end
         }
       else
+        # line-buffered
         while line = STDIN.gets
           yield line
         end
@@ -77,7 +79,7 @@ module Kontena::Cli::Helpers
     end
 
     # Start thread to read from stdin, and write to websocket.
-    # Logs stdin read errors.
+    # Closes websocket on stdin read errors.
     #
     # @param ws [Kontena::Websocket::Client]
     # @param tty [Boolean]
@@ -91,6 +93,7 @@ module Kontena::Cli::Helpers
           websocket_exec_write(ws, 'stdin' => nil) # EOF
         rescue => exc
           logger.error exc
+          ws.close(1001, "stdin read #{exc.class}: #{exc}")
         end
       end
     end
@@ -128,7 +131,7 @@ module Kontena::Cli::Helpers
       # we do not expect CloseError, because the server will send an 'exit' message first,
       # and we return before seeing the close frame
       # TODO: handle HTTP 404 errors
-      exit_status = Kontena::Websocket::Client.connect(url, **options) do |ws|
+      Kontena::Websocket::Client.connect(url, **options) do |ws|
         # first frame contains exec command
         websocket_exec_write(ws, 'cmd' => cmd)
 
@@ -136,7 +139,9 @@ module Kontena::Cli::Helpers
         write_thread = websocket_exec_write_thread(ws, tty: tty)
 
         # blocks reading from websocket, returns with exec exit code
-        websocket_exec_read(ws)
+        exit_status = websocket_exec_read(ws)
+
+        fail ws.close_reason unless exit_status
       end
 
     rescue Kontena::Websocket::Error => exc
