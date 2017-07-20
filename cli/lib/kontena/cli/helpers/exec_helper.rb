@@ -45,7 +45,7 @@ module Kontena::Cli::Helpers
       url = URI.parse(require_current_master.url)
       url.scheme = url.scheme.sub('http', 'ws')
       url.path = '/v1/' + path
-      url.query = query ? URI.encode_www_form(query) : nil
+      url.query = (query && !query.empty?) ? URI.encode_www_form(query) : nil
       url.to_s
     end
 
@@ -108,6 +108,7 @@ module Kontena::Cli::Helpers
     # @param tty [Boolean] TTY on/of
     # @return [Integer] exit code
     def websocket_exec(path, cmd, interactive: false, shell: false, tty: false)
+      exit_status = nil
       write_thread = nil
 
       query = {}
@@ -121,6 +122,7 @@ module Kontena::Cli::Helpers
         headers: {
           'Authorization' => "Bearer #{token.access_token}"
         },
+        # TODO: ssl_hostname, ca_file
         ssl_params: {
           verify_mode: ENV['SSL_IGNORE_ERRORS'].to_s == 'true' ? OpenSSL::SSL::VERIFY_NONE : OpenSSL::SSL::VERIFY_PEER,
         },
@@ -135,8 +137,10 @@ module Kontena::Cli::Helpers
         # first frame contains exec command
         websocket_exec_write(ws, 'cmd' => cmd)
 
-        # start new thread to write from stdin to websocket
-        write_thread = websocket_exec_write_thread(ws, tty: tty)
+        if interactive
+          # start new thread to write from stdin to websocket
+          write_thread = websocket_exec_write_thread(ws, tty: tty)
+        end
 
         # blocks reading from websocket, returns with exec exit code
         exit_status = websocket_exec_read(ws)
@@ -146,7 +150,7 @@ module Kontena::Cli::Helpers
 
     rescue Kontena::Websocket::Error => exc
       logger.warn { "websocket exec error: #{exc}" }
-      return 1
+      raise
 
     rescue => exc
       logger.error { "websocket exec error: #{exc}" }

@@ -13,16 +13,12 @@ describe Kontena::Cli::Helpers::ExecHelper do
   end
   subject { described_class.new }
 
-  let(:websocket_url) { 'ws://master.example.com' }
+  let(:logger) { instance_double(Logger) }
 
-  def respond_ok(ws_client)
-    ws_client.receive_message({'stream' => 'stdout', 'chunk' => "ok\n"})
-    ws_client.receive_message({'exit' => 0})
-  end
-
-  def respond_error(ws_client)
-    ws_client.receive_message({'stream' => 'stderr', 'chunk' => "error\n"})
-    ws_client.receive_message({'exit' => 1})
+  before do
+    allow(subject).to receive(:logger).and_return(logger)
+    allow(logger).to receive(:debug)
+    Thread.abort_on_exception = true
   end
 
   describe '#read_stdin' do
@@ -59,6 +55,154 @@ describe Kontena::Cli::Helpers::ExecHelper do
           "oo",
           "\n",
         ).and raise_error(EOFError)
+      end
+    end
+  end
+
+  describe '#websocket_exec' do
+    let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec' }
+    let(:websocket_options) { {
+        headers: { 'Authorization' => 'Bearer 1234567' },
+        ssl_params: {
+          verify_mode: OpenSSL::SSL::VERIFY_PEER,
+        },
+    }}
+    let(:websocket_client) { instance_double(Kontena::Websocket::Client) }
+    let(:write_thread) { instance_double(Thread) }
+
+    before do
+      allow(Kontena::Websocket::Client).to receive(:connect).with(websocket_url, websocket_options).and_yield(websocket_client)
+    end
+
+    it 'connects and reads messages to stdout until exit success' do
+      expect(websocket_client).to receive(:send).with('{"cmd":["test"]}')
+      expect(websocket_client).to receive(:read) do |&block|
+        block.call('{"stream": "stdout", "chunk": "test\n"}')
+        block.call('{"exit": 0}')
+      end
+
+      expect{
+        exit_status = subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test' ])
+
+        expect(exit_status).to eq 0
+      }.to output("test\n").to_stdout
+    end
+
+    it 'connects and reads messages to stderr until exit error' do
+      expect(websocket_client).to receive(:send).with('{"cmd":["test-error"]}')
+      expect(websocket_client).to receive(:read) do |&block|
+        block.call('{"stream": "stderr", "chunk": "error\n"}')
+        block.call('{"exit": 1}')
+      end
+
+      expect{
+        exit_status = subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-error' ])
+
+        expect(exit_status).to eq 1
+      }.to output("error\n").to_stderr
+    end
+
+    context 'with shell' do
+      let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec?shell=true' }
+
+      it 'connects with the shell query param' do
+        expect(websocket_client).to receive(:send).with('{"cmd":["test-shell"]}')
+        expect(subject).to receive(:websocket_exec_read).and_return(0)
+
+        subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-shell' ], shell: true)
+      end
+    end
+
+    context 'with interactive' do
+      let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec?interactive=true' }
+
+      it 'connects and sends messages from stdin' do
+        stdin_eof = false
+
+        expect(STDIN).to receive(:gets).once.and_return "test 1\n"
+        expect(STDIN).to receive(:gets).once.and_return "test 2\n"
+        expect(STDIN).to receive(:gets).once.and_return nil
+        expect(STDIN).to_not receive(:gets)
+
+        expect(websocket_client).to receive(:send).with('{"cmd":["test-interactive"]}')
+        expect(websocket_client).to receive(:send).with('{"stdin":"test 1\n"}')
+        expect(websocket_client).to receive(:send).with('{"stdin":"test 2\n"}')
+        expect(websocket_client).to receive(:send).with('{"stdin":null}') do
+          stdin_eof = true
+        end
+
+        expect(websocket_client).to receive(:read) do |&block|
+          sleep 0.1 until stdin_eof
+          block.call('{"exit": 0}')
+        end
+
+        exit_status = subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-interactive' ], interactive: true)
+
+        expect(exit_status).to eq 0
+      end
+    end
+
+    context 'with interactive tty' do
+      let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec?interactive=true&tty=true' }
+
+      it 'connects and sends messages from stdin' do
+        stdin_eol = false
+
+        expect(subject).to receive(:read_stdin).with(tty: true) do |&block|
+          block.call 'f'
+          block.call 'oo'
+          block.call "\n"
+          sleep 1
+        end
+
+        expect(websocket_client).to receive(:send).with('{"cmd":["test-tty"]}')
+        expect(websocket_client).to receive(:send).with('{"stdin":"f"}')
+        expect(websocket_client).to receive(:send).with('{"stdin":"oo"}')
+        expect(websocket_client).to receive(:send).with('{"stdin":"\n"}') do
+          stdin_eol = true
+        end
+
+        expect(websocket_client).to receive(:read) do |&block|
+          sleep 0.1 until stdin_eol
+          block.call('{"stream": "stdout", "chunk": "ok\n"}')
+          block.call('{"exit": 0}')
+        end
+
+        expect{
+          exit_status = subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-tty' ], interactive: true, tty: true)
+
+          expect(exit_status).to eq 0
+        }.to output("ok\n").to_stdout
+      end
+    end
+
+    context 'with stdin read errors' do
+      let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec?interactive=true' }
+
+      it 'closes websocket and raises from connect block' do
+        stdin_err = false
+
+        expect(websocket_client).to receive(:send).with('{"cmd":["test-close"]}')
+
+        expect(STDIN).to receive(:gets).once.and_return "test\n"
+        expect(websocket_client).to receive(:send).with('{"stdin":"test\n"}')
+
+        expect(STDIN).to receive(:gets).once.and_raise Errno::EIO
+        expect(logger).to receive(:error).with(Errno::EIO)
+        expect(websocket_client).to receive(:close).with(1001, "stdin read Errno::EIO: Input/output error") do
+          stdin_err = true
+        end
+        expect(STDIN).to_not receive(:gets)
+
+        expect(websocket_client).to receive(:read) do |&block|
+          sleep 0.1 until stdin_err
+        end
+        expect(websocket_client).to receive(:close_reason).and_return "stdin read Errno::EIO: Input/output error"
+        expect(logger).to receive(:error)
+
+        expect{
+          subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-close' ], interactive: true)
+        }.to raise_error(RuntimeError, "stdin read Errno::EIO: Input/output error")
       end
     end
   end
