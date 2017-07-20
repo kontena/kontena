@@ -86,10 +86,9 @@ module Kontena::Cli::Helpers
       Thread.new do
         begin
           read_stdin(tty: tty) do |stdin|
-            logger.debug "websocket exec write: #{stdin.inspect}"
-            websocket_exec_write(ws, stdin: stdin)
+            websocket_exec_write(ws, 'stdin' => stdin)
           end
-          websocket_exec_write(ws, stdin: nil) # EOF
+          websocket_exec_write(ws, 'stdin' => nil) # EOF
         rescue => exc
           logger.error exc
         end
@@ -126,11 +125,12 @@ module Kontena::Cli::Helpers
 
       logger.debug { "websocket exec connect: #{url} #{options}"}
 
-      # we do not expect CloseError, because the server will send an 'exit' message first, which causes us to exit before seeing the close frame.
+      # we do not expect CloseError, because the server will send an 'exit' message first,
+      # and we return before seeing the close frame
       # TODO: handle HTTP 404 errors
       exit_status = Kontena::Websocket::Client.connect(url, **options) do |ws|
         # first frame contains exec command
-        websocket_exec_write(ws, cmd: cmd)
+        websocket_exec_write(ws, 'cmd' => cmd)
 
         # start new thread to write from stdin to websocket
         write_thread = websocket_exec_write_thread(ws, tty: tty)
