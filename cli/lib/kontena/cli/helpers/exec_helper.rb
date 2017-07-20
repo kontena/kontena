@@ -4,6 +4,16 @@ require 'kontena-websocket-client'
 module Kontena::Cli::Helpers
   module ExecHelper
 
+    websocket_log_level = if ENV["DEBUG"] == 'websocket'
+      Logger::DEBUG
+    elsif ENV["DEBUG"]
+      Logger::INFO
+    else
+      Logger::WARN
+    end
+
+    Kontena::Websocket::Logging.initialize_logger(STDERR, websocket_log_level)
+
     # @param ws [Kontena::Websocket::Client]
     # @param tty [Boolean] read stdin in raw mode, sending tty escapes for remote pty
     # @raise [ArgumentError] not a tty
