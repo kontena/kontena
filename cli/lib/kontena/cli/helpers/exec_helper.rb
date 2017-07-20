@@ -9,27 +9,23 @@ module Kontena::Cli::Helpers
     # @raise [ArgumentError] not a tty
     # @yield [data]
     # @yieldparam data [String, nil] nil on EOF
-    # XXX: errors
+    # @raise [ArgumentError] not a tty
     # @return [Thread]
-    def websocket_exec_write_thread(ws, tty: nil)
+    def read_stdin(tty: nil)
       raise ArgumentError, "the input device is not a TTY" if tty && !STDIN.tty?
 
-      Thread.new {
-        if tty
-          STDIN.raw {
-            # XXX: raise EOF?
-            while data = STDIN.readpartial(1024)
-              ws.send(JSON.dump({ stdin: data }))
-            end
-            ws.send(JSON.dump({ stdin: nil }))
-          }
-        else
-          while line = STDIN.gets
-            ws.send(JSON.dump({ stdin: line }))
+      if tty
+        STDIN.raw {
+          # XXX: raises EOF?
+          while data = STDIN.readpartial(1024)
+            yield data
           end
-          ws.send(JSON.dump({ stdin: nil }))
+        }
+      else
+        while line = STDIN.gets
+          yield line
         end
-      }
+      end
     end
 
     # @return [String]
@@ -47,6 +43,8 @@ module Kontena::Cli::Helpers
       ws.read do |msg|
         msg = JSON.parse(msg)
 
+        logger.debug "websocket exec read: #{msg.inspect}"
+
         if msg.has_key?('exit')
           # breaks the read loop
           return msg['exit'].to_i
@@ -56,6 +54,34 @@ module Kontena::Cli::Helpers
           else
             $stderr << msg['chunk']
           end
+        end
+      end
+    end
+
+    # @param ws [Kontena::Websocket::Client]
+    # @param msg [Hash]
+    def websocket_exec_write(ws, msg)
+      logger.debug "websocket exec write: #{msg.inspect}"
+
+      ws.send(JSON.dump(msg))
+    end
+
+    # Start thread to read from stdin, and write to websocket.
+    # Logs stdin read errors.
+    #
+    # @param ws [Kontena::Websocket::Client]
+    # @param tty [Boolean]
+    # @return [Thread]
+    def websocket_exec_write_thread(ws, tty: nil)
+      Thread.new do
+        begin
+          read_stdin(tty: tty) do |stdin|
+            logger.debug "websocket exec write: #{stdin.inspect}"
+            websocket_exec_write(ws, stdin: stdin)
+          end
+          websocket_exec_write(ws, stdin: nil) # EOF
+        rescue => exc
+          logger.error exc
         end
       end
     end
@@ -88,20 +114,33 @@ module Kontena::Cli::Helpers
         },
       }
 
+      logger.debug { "websocket exec connect: #{url} #{options}"}
+
       # we do not expect CloseError, because the server will send an 'exit' message first, which causes us to exit before seeing the close frame.
       # TODO: handle HTTP 404 errors
-      Kontena::Websocket::Client.connect(url, **options) do |ws|
-        ws.send(JSON.dump({cmd: cmd}))
+      exit_status = Kontena::Websocket::Client.connect(url, **options) do |ws|
+        # first frame contains exec command
+        websocket_exec_write(ws, cmd: cmd)
 
         # start new thread to write from stdin to websocket
         write_thread = websocket_exec_write_thread(ws, tty: tty)
 
-        # blocks reading from websocket, returns once exec exits
+        # blocks reading from websocket, returns with exec exit code
         websocket_exec_read(ws)
       end
-      
+
+    rescue Kontena::Websocket::Error => exc
+      logger.warn { "websocket exec error: #{exc}" }
+      return 1
+
     rescue => exc
-      logger.error exc
+      logger.error { "websocket exec error: #{exc}" }
+      raise
+
+    else
+      logger.debug { "websocket exec exit: #{exit_status}"}
+      return exit_status
+
     ensure
       write_thread.kill if write_thread
     end

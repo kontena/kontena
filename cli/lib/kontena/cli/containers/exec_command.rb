@@ -17,7 +17,7 @@ module Kontena::Cli::Containers
     requires_current_grid
 
     def execute
-      Kontena::Websocket::Logging.initialize_logger(STDERR, Logger::DEBUG)
+      Kontena::Websocket::Logging.initialize_logger(STDERR, Logger::WARN)
 
       exit_status = container_exec(current_grid, self.container_id, self.cmd_list, interactive: interactive?, shell: shell?, tty: tty?)
 
