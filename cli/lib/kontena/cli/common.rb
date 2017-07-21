@@ -170,7 +170,10 @@ module Kontena
         return unless server.token
         return unless server.token.refresh_token
         return if server.token.expired?
-        client = Kontena::Client.new(server.url, server.token)
+        client = Kontena::Client.new(server.url, server.token,
+          ssl_cert_path: server.ssl_cert_path,
+          ssl_subject_cn: server.ssl_subject_cn,
+        )
         logger.debug "Trying to invalidate refresh token on #{server.name}"
         client.refresh_token
       rescue => ex
@@ -205,7 +208,9 @@ module Kontena
 
         @client = Kontena::Client.new(
           api_url || require_current_master.url,
-          token || require_current_master.token
+          token || require_current_master.token,
+          ssl_cert_path: require_current_master.ssl_cert_path,
+          ssl_subject_cn: require_current_master.ssl_subject_cn,
         )
       end
 

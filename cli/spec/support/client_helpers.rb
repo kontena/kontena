@@ -30,10 +30,11 @@ module ClientHelpers
     end
 
     base.before(:each) do
+      master_host = URI(master_url).host
       RSpec::Mocks.space.proxy_for(File).reset
       allow(subject).to receive(:client).and_return(client)
       allow(subject).to receive(:current_grid).and_return(current_grid)
-      allow(File).to receive(:exist?).with(File.join(Dir.home, ".kontena/certs/#{URI(master_url).host}.pem")).and_return(false)
+      allow(File).to receive(:exist?).with(File.join(Dir.home, ".kontena/certs/#{master_host}.pem")).and_return(false)
       allow(File).to receive(:exist?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
       allow(File).to receive(:readable?).with(File.join(Dir.home, '.kontena_client.json')).and_return(true)
       allow(File).to receive(:read).and_call_original
