@@ -12,6 +12,7 @@ describe Kontena::Cli::Helpers::ExecHelper do
     end
   end
   subject { described_class.new }
+  let(:default_options) { Kontena::Cli::Helpers::ExecHelper::WEBSOCKET_CLIENT_OPTIONS }
 
   let(:logger) { instance_double(Logger) }
 
@@ -71,6 +72,7 @@ describe Kontena::Cli::Helpers::ExecHelper do
           ca_file: nil,
         },
         ssl_hostname: nil,
+        **default_options
     }}
     let(:websocket_client) { instance_double(Kontena::Websocket::Client) }
     let(:write_thread) { instance_double(Thread) }
@@ -136,6 +138,7 @@ describe Kontena::Cli::Helpers::ExecHelper do
             ca_file: nil,
           },
           ssl_hostname: nil,
+          **default_options
       } }
 
       before do
@@ -161,6 +164,7 @@ describe Kontena::Cli::Helpers::ExecHelper do
               ca_file: '~/.kontena/certs/test.pem',
             },
             ssl_hostname: 'Test',
+            **default_options
         } }
 
         it 'uses the cert' do
@@ -181,6 +185,7 @@ describe Kontena::Cli::Helpers::ExecHelper do
               ca_file: nil,
             },
             ssl_hostname: nil,
+            **default_options
         } }
 
         before do

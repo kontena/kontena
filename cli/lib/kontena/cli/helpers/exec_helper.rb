@@ -14,6 +14,15 @@ module Kontena::Cli::Helpers
 
     Kontena::Websocket::Logging.initialize_logger(STDERR, websocket_log_level)
 
+    WEBSOCKET_CLIENT_OPTIONS = {
+      connect_timeout: ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_f : 5.0,
+      open_timeout:    ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_f : 5.0,
+      ping_interval:   ENV["EXCON_READ_TIMEOUT"]    ? ENV["EXCON_READ_TIMEOUT"].to_f    : 30.0,
+      ping_timeout:    ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_f : 5.0,
+      close_timeout:   ENV["EXCON_CONNECT_TIMEOUT"] ? ENV["EXCON_CONNECT_TIMEOUT"].to_f : 5.0,
+      write_timeout:   ENV["EXCON_WRITE_TIMEOUT"]   ? ENV["EXCON_WRITE_TIMEOUT"].to_f   : 5.0,
+    }
+
     # @param ws [Kontena::Websocket::Client]
     # @param tty [Boolean] read stdin in raw mode, sending tty escapes for remote pty
     # @raise [ArgumentError] not a tty
@@ -119,16 +128,15 @@ module Kontena::Cli::Helpers
       server = require_current_master
       url = websocket_url(path, query)
       token = require_token
-      options = {
-        headers: {
+      options = WEBSOCKET_CLIENT_OPTIONS.dup
+      options[:headers] = {
           'Authorization' => "Bearer #{token.access_token}"
-        },
-        ssl_params: {
+      }
+      options[:ssl_params] = {
           verify_mode: ENV['SSL_IGNORE_ERRORS'].to_s == 'true' ? OpenSSL::SSL::VERIFY_NONE : OpenSSL::SSL::VERIFY_PEER,
           ca_file: server.ssl_cert_path,
-        },
-        ssl_hostname: server.ssl_subject_cn,
       }
+      options[:ssl_hostname] = server.ssl_subject_cn
 
       logger.debug { "websocket exec connect... #{url}" }
 
