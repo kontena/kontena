@@ -189,18 +189,21 @@ describe Kontena::Cli::Helpers::ExecHelper do
       it 'connects and sends messages from stdin' do
         stdin_eol = false
 
-        expect(subject).to receive(:read_stdin).with(tty: true) do |&block|
-          block.call 'f'
-          block.call 'oo'
-          block.call "\n"
-          sleep 1
-        end
+        expect(websocket_client).to receive(:send).once.with('{"cmd":["test-tty"]}')
 
-        expect(websocket_client).to receive(:send).with('{"cmd":["test-tty"]}')
-        expect(websocket_client).to receive(:send).with('{"stdin":"f"}')
-        expect(websocket_client).to receive(:send).with('{"stdin":"oo"}')
-        expect(websocket_client).to receive(:send).with('{"stdin":"\n"}') do
+        expect(subject).to receive(:read_stdin).once.with(tty: true) do |&block|
+          expect(websocket_client).to receive(:send).once.with('{"stdin":"f"}')
+          block.call 'f'
+
+          expect(websocket_client).to receive(:send).once.with('{"stdin":"oo"}')
+          block.call 'oo'
+
+          expect(websocket_client).to receive(:send).once.with('{"stdin":"\n"}')
+          block.call "\n"
+
+          expect(websocket_client).to_not receive(:send)
           stdin_eol = true
+          sleep
         end
 
         expect(websocket_client).to receive(:read) do |&block|
@@ -217,7 +220,7 @@ describe Kontena::Cli::Helpers::ExecHelper do
       end
     end
 
-    context 'with stdin read errors' do
+    context 'with interactive stdin read errors' do
       let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec?interactive=true' }
 
       it 'closes websocket and raises from connect block' do

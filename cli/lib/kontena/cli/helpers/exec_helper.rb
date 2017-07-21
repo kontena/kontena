@@ -161,7 +161,10 @@ module Kontena::Cli::Helpers
       return exit_status
 
     ensure
-      write_thread.kill if write_thread
+      if write_thread
+        write_thread.kill
+        write_thread.join
+      end
     end
 
     # Execute command on container using websocket API.
