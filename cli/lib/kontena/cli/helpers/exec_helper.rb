@@ -130,12 +130,14 @@ module Kontena::Cli::Helpers
         ssl_hostname: server.ssl_subject_cn,
       }
 
-      logger.debug { "websocket exec connect: #{url}" }
+      logger.debug { "websocket exec connect... #{url}" }
 
       # we do not expect CloseError, because the server will send an 'exit' message first,
       # and we return before seeing the close frame
       # TODO: handle HTTP 404 errors
       Kontena::Websocket::Client.connect(url, **options) do |ws|
+        logger.debug { "websocket exec open" }
+
         # first frame contains exec command
         websocket_exec_write(ws, 'cmd' => cmd)
 
@@ -151,8 +153,7 @@ module Kontena::Cli::Helpers
       end
 
     rescue Kontena::Websocket::Error => exc
-      logger.warn { "websocket exec error: #{exc}" }
-      raise
+      exit_with_error(exc)
 
     rescue => exc
       logger.error { "websocket exec error: #{exc}" }

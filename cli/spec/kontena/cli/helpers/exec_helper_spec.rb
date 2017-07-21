@@ -145,11 +145,10 @@ describe Kontena::Cli::Helpers::ExecHelper do
 
       it 'verifies SSL by default' do
         expect(Kontena::Websocket::Client).to receive(:connect).with(websocket_url, websocket_options).and_raise(Kontena::Websocket::SSLVerifyError.new(OpenSSL::X509::V_OK, nil, nil, "..."))
-        expect(logger).to receive(:warn)
 
         expect{
           subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-ssl' ])
-        }.to raise_error(Kontena::Websocket::SSLVerifyError, "certificate verify failed: ...")
+        }.to exit_with_error.and output(/certificate verify failed/).to_stderr
       end
 
       context 'with a kontena cli cert' do
@@ -165,12 +164,11 @@ describe Kontena::Cli::Helpers::ExecHelper do
         } }
 
         it 'uses the cert' do
-          expect(Kontena::Websocket::Client).to receive(:connect).with(websocket_url, websocket_options).and_raise(Kontena::Websocket::Error)
-          expect(logger).to receive(:warn)
+          expect(Kontena::Websocket::Client).to receive(:connect).with(websocket_url, websocket_options).and_raise(Kontena::Websocket::Error, 'testing')
 
           expect{
             subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-ssl' ])
-          }.to raise_error(Kontena::Websocket::Error)
+          }.to exit_with_error.and output(/testing/).to_stderr
         end
       end
 
