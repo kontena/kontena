@@ -116,16 +116,18 @@ module Kontena::Cli::Helpers
       query[:shell] = shell if shell
       query[:tty] = tty if tty
 
+      server = require_current_master
       url = websocket_url(path, query)
       token = require_token
       options = {
         headers: {
           'Authorization' => "Bearer #{token.access_token}"
         },
-        # TODO: ssl_hostname, ca_file
         ssl_params: {
           verify_mode: ENV['SSL_IGNORE_ERRORS'].to_s == 'true' ? OpenSSL::SSL::VERIFY_NONE : OpenSSL::SSL::VERIFY_PEER,
+          ca_file: server.ssl_cert_path,
         },
+        ssl_hostname: server.ssl_subject_cn,
       }
 
       logger.debug { "websocket exec connect: #{url}" }

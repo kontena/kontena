@@ -60,13 +60,17 @@ describe Kontena::Cli::Helpers::ExecHelper do
   end
 
   describe '#websocket_exec' do
-    let(:websocket_ssl_params) { {
-      verify_mode: OpenSSL::SSL::VERIFY_PEER,
-    } }
     let(:websocket_url) { 'ws://master.example.com/v1/containers/test-grid/host-node/service-1/exec' }
+    let(:websocket_headers) { {
+      'Authorization' => 'Bearer 1234567',
+    }}
     let(:websocket_options) { {
-        headers: { 'Authorization' => 'Bearer 1234567' },
-        ssl_params: websocket_ssl_params,
+        headers: websocket_headers,
+        ssl_params: {
+          verify_mode: OpenSSL::SSL::VERIFY_PEER,
+          ca_file: nil,
+        },
+        ssl_hostname: nil,
     }}
     let(:websocket_client) { instance_double(Kontena::Websocket::Client) }
     let(:write_thread) { instance_double(Thread) }
@@ -116,13 +120,26 @@ describe Kontena::Cli::Helpers::ExecHelper do
 
     context 'with https master' do
       let(:master_url) { 'https://master.example.com/' }
-      let(:websocket_url) { 'wss://master.example.com/v1/containers/test-grid/host-node/service-1/exec' }
+      let(:ssl_cert_path) { nil }
+      let(:ssl_subject_cn) { nil }
+      let(:master) { double(:master,
+        url: master_url,
+        ssl_cert_path: ssl_cert_path,
+        ssl_subject_cn: ssl_subject_cn,
+      ) }
 
-      let(:websocket_ssl_params) { {
-        verify_mode: OpenSSL::SSL::VERIFY_PEER,
+      let(:websocket_url) { 'wss://master.example.com/v1/containers/test-grid/host-node/service-1/exec' }
+      let(:websocket_options) { {
+          headers: websocket_headers,
+          ssl_params: {
+            verify_mode: OpenSSL::SSL::VERIFY_PEER,
+            ca_file: nil,
+          },
+          ssl_hostname: nil,
       } }
 
       before do
+        allow(subject).to receive(:require_current_master).and_return(master)
         allow(ENV).to receive(:[]).with('SSL_IGNORE_ERRORS').and_return(nil)
       end
 
@@ -135,11 +152,38 @@ describe Kontena::Cli::Helpers::ExecHelper do
         }.to raise_error(Kontena::Websocket::SSLVerifyError, "certificate verify failed: ...")
       end
 
-      context 'with SSL_IGNORE_ERRORS' do
-        let(:websocket_ssl_params) { {
-          verify_mode: OpenSSL::SSL::VERIFY_NONE,
+      context 'with a kontena cli cert' do
+        let(:ssl_cert_path) { '~/.kontena/certs/test.pem' }
+        let(:ssl_subject_cn) { 'Test' }
+        let(:websocket_options) { {
+            headers: websocket_headers,
+            ssl_params: {
+              verify_mode: OpenSSL::SSL::VERIFY_PEER,
+              ca_file: '~/.kontena/certs/test.pem',
+            },
+            ssl_hostname: 'Test',
         } }
+
+        it 'uses the cert' do
+          expect(Kontena::Websocket::Client).to receive(:connect).with(websocket_url, websocket_options).and_raise(Kontena::Websocket::Error)
+          expect(logger).to receive(:warn)
+
+          expect{
+            subject.websocket_exec('containers/test-grid/host-node/service-1/exec', [ 'test-ssl' ])
+          }.to raise_error(Kontena::Websocket::Error)
+        end
+      end
+
+      context 'with SSL_IGNORE_ERRORS' do
         let(:websocket_url) { 'wss://master.example.com/v1/containers/test-grid/host-node/service-1/exec' }
+        let(:websocket_options) { {
+            headers: websocket_headers,
+            ssl_params: {
+              verify_mode: OpenSSL::SSL::VERIFY_NONE,
+              ca_file: nil,
+            },
+            ssl_hostname: nil,
+        } }
 
         before do
           allow(ENV).to receive(:[]).with('SSL_IGNORE_ERRORS').and_return('true')
