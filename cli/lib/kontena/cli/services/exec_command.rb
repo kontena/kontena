@@ -69,7 +69,8 @@ module Kontena::Cli::Services
       end
     end
 
-    # Run block with spinner if desired
+    # Run block with spinner by default if --all, or when using --verbose.
+    # Do not use spinner if --silent.
     def maybe_spinner(msg, &block)
       if (all? || verbose?) && !silent?
         spinner(msg, &block)
