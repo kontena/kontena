@@ -15,4 +15,4 @@ RUN apk --update add --virtual build-dependencies ruby-dev build-base openssl-de
 WORKDIR /app
 ADD . /app
 
-CMD ["bundle", "exec", "/app/bin/kontena-agent"]
+CMD ["/app/bin/kontena-agent"]

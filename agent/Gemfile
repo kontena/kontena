@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'kontena-websocket-client', git: 'https://github.com/kontena/kontena-websocket-client.git'
+gem 'kontena-websocket-client', '~> 0.1.0'
 gem 'docker-api', '~> 1.32.0'
 gem 'msgpack', '~> 1.0.3'
 gem 'activesupport', '~> 4.2.0'
