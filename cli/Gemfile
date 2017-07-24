@@ -1,10 +1,7 @@
 source 'https://rubygems.org'
 
-gem 'kontena-websocket-client', git: 'https://github.com/kontena/kontena-websocket-client.git'
-
 # Specify your gem's dependencies in kontena-cli.gemspec
 gemspec
-
 group :development, :test do
   gem "rspec"
   gem 'simplecov', :require => false, :group => :test
