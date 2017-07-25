@@ -12,7 +12,7 @@ describe 'container exec' do
   it 'returns error if container does not exist' do
     k = run("kontena container exec invalid-id ls -la")
     expect(k.code).to eq(1)
-    expect(k.out).to match /Not found/
+    expect(k.out).to match /Error during WebSocket handshake: Unexpected response code: 404/
   end
 
   it 'runs a command inside a container with tty' do
