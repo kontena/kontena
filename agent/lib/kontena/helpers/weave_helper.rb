@@ -1,12 +1,10 @@
 require 'docker'
 require_relative 'iface_helper'
-require_relative 'wait_helper'
-
 
 module Kontena
   module Helpers
     module WeaveHelper
-      include WaitHelper
+      include Kontena::Wait::Helper
 
       WEAVE_VERSION = ENV['WEAVE_VERSION'] || '1.9.3'
       WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'

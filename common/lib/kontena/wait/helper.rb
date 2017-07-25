@@ -1,4 +1,6 @@
-module Kontena::Helpers::WaitHelper
+require 'timeout' # XXX: only for Timeout::Error
+
+module Kontena::Wait::Helper
   include Kontena::Logging
 
   WAIT_TIMEOUT = 300 # seconds

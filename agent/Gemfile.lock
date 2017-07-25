@@ -1,3 +1,8 @@
+PATH
+  remote: ../common
+  specs:
+    kontena-common (1.4.0.dev)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -93,6 +98,7 @@ DEPENDENCIES
   eventmachine (~> 1.2.3)
   faye-websocket (~> 0.10.7)
   fluent-logger (~> 0.6.2)
+  kontena-common!
   msgpack (~> 1.0.3)
   rake
   rspec
@@ -102,4 +108,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.14.3
+   1.15.1

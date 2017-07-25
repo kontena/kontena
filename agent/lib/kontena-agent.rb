@@ -9,13 +9,16 @@ require 'celluloid/autostart'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/module/delegation'
 
+gem 'kontena-common'
+require 'kontena-logging'
+require 'kontena-wait'
+
 require_relative 'ipaddr_helpers'
 
 require_relative 'docker/version'
 require_relative 'docker/container'
 require_relative 'etcd/health'
 require_relative 'etcd/client_patch'
-require_relative 'kontena/logging'
 require_relative 'kontena/websocket_client'
 
 require_relative 'kontena/models/node'

@@ -1,7 +1,9 @@
-describe Kontena::Helpers::WaitHelper do
+require 'kontena-wait'
+
+describe Kontena::Wait::Helper do
 
   let(:klass) {
-    Class.new { include Kontena::Helpers::WaitHelper }
+    Class.new { include Kontena::Wait::Helper }
   }
 
   let(:subject) {

@@ -1,5 +1,3 @@
-require_relative '../../../lib/kontena/helpers/wait_helper'
-
 describe Kontena::Observer do
   let :observable_class do
     Class.new do
@@ -170,7 +168,7 @@ describe Kontena::Observer do
 
     it "crashing allows it to re-observe the existing value immediately after restarting", :log_celluloid_actor_crashes => false do
       expect{@observer_actor.crash}.to raise_error(RuntimeError)
-      Kontena::Helpers::WaitHelper.wait_until! { @observer_actor.dead? }
+      Kontena::Wait::Helper.wait_until! { @observer_actor.dead? }
 
       # simulate supervisor
       @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
@@ -181,7 +179,7 @@ describe Kontena::Observer do
 
     it "restarts after the observable crashes and waits for it to update", :log_celluloid_actor_crashes => false do
       expect{@observable_actor.crash}.to raise_error(RuntimeError)
-      Kontena::Helpers::WaitHelper.wait_until! { @observable_actor.dead? && @observer_actor.dead? }
+      Kontena::Wait::Helper.wait_until! { @observable_actor.dead? && @observer_actor.dead? }
 
       # simulate supervisor restart in the wrong order
       expect{supervised_observer_class.new(:observable_test)}.to raise_error(Celluloid::DeadActorError)

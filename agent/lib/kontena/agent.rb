@@ -1,8 +1,6 @@
-require_relative 'logging'
-
 module Kontena
   class Agent
-    include Logging
+    include Kontena::Logging
 
     VERSION = File.read('./VERSION').strip
 

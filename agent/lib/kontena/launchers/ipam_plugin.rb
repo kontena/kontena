@@ -1,5 +1,4 @@
 require_relative '../helpers/image_helper'
-require_relative '../helpers/wait_helper'
 
 module Kontena::Launchers
   class IpamPlugin
@@ -7,7 +6,7 @@ module Kontena::Launchers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::ImageHelper
-    include Kontena::Helpers::WaitHelper
+    include Kontena::Wait::Helper
 
     IPAM_SERVICE_NAME = 'kontena-ipam-plugin'.freeze
 

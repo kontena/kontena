@@ -1,4 +1,3 @@
-require_relative '../logging'
 require_relative '../helpers/image_helper'
 require_relative '../helpers/iface_helper'
 
