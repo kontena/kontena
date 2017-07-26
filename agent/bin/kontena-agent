@@ -31,9 +31,12 @@ else
 end
 Kontena::Logging.initialize_logger(STDOUT, log_level)
 
-agent = Kontena::Agent.new(
+agent = Kontena::Agent.instance
+agent.configure(
   api_uri: api_uri,
   grid_token: grid_token,
   node_token: node_token,
+  ssl_verify: ENV['KONTENA_SSL_VERIFY'],
+  ssl_hostname: ENV['KONTENA_SSL_HOSTNAME'],
 )
 agent.run!
