@@ -3,6 +3,9 @@ set -e
 unset BUILD_ID
 cd cli/omnibus
 
+sudo mkdir -p /opt/kontena
+sudo chown travis /opt/kontena
+
 sudo apt-get install -y -q libgecode-dev
 
 # faster bundle install
@@ -15,11 +18,11 @@ bundle install
 bundle exec omnibus build kontena --log-level info
 
 # install github-release
-curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 | sudo tar -xjO > /usr/local/bin/github-release
-sudo chmod +x /usr/local/bin/github-release
+curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 | tar -xjO > /tmp/github-release
+chmod +x /tmp/github-release
 
 # upload kontena pkg to github
-/usr/local/bin/github-release upload \
+/tmp/github-release upload \
     --user kontena \
     --repo kontena \
     --tag $GIT_TAG_NAME \
