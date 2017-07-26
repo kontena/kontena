@@ -19,7 +19,7 @@ module Kontena::Cli::Nodes
         exit_with_error "Node #{node['name']} is still connected using a grid token. You must terminate the node before removing it."
       end
 
-      confirm_command(node_id) unless forced?
+      confirm_command(self.node) unless forced?
 
       spinner "Removing #{self.node.colorize(:cyan)} node from #{current_grid.colorize(:cyan)} grid " do
         client(token).delete("nodes/#{node['id']}")

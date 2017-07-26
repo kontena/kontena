@@ -1,14 +1,26 @@
+require 'singleton'
 require_relative 'logging'
 
 module Kontena
   class Agent
+    include Singleton
     include Logging
 
     NODE_ID_REGEXP = /\A[A-Z0-9]{4}(:[A-Z0-9]{4}){11}\z/
     VERSION = File.read('./VERSION').strip
 
-    def initialize(opts)
+    # Called from other actors
+    def self.shutdown
+      instance.write_signal('shutdown')
+    end
+
+    def initialize
       info "initializing agent (version #{VERSION})"
+
+      @read_pipe, @write_pipe = IO.pipe
+    end
+
+    def configure(opts)
       @opts = opts
 
       if node_id = opts[:node_id]
@@ -24,18 +36,6 @@ module Kontena
       else
         @node_labels = Docker.info['Labels']
       end
-
-      @client = Kontena::WebsocketClient.new(@opts[:api_uri], self.node_id,
-        grid_token: @opts[:grid_token],
-        node_token: @opts[:node_token],
-        node_labels: self.node_labels,
-      )
-      @supervisor = Celluloid::Supervision::Container.run!
-      self.supervise_state
-      self.supervise_launchers
-      self.supervise_network_adapter
-      self.supervise_lb
-      self.supervise_workers
     end
 
     # @return [String]
@@ -48,52 +48,82 @@ module Kontena
       @node_labels
     end
 
-    # Connect to master server
-    def connect!
-      start_em
-      @client.ensure_connect
+    def ssl_verify?
+      return false if @opts[:ssl_verify].nil?
+      return false if @opts[:ssl_verify].empty?
+      return true
+    end
+
+    def ssl_params
+      {
+        verify_mode: self.ssl_verify? ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE,
+      }
+    end
+
+    def ssl_hostname
+      @opts[:ssl_hostname]
+    end
+
+    def write_signal(sig)
+      @write_pipe.puts(sig)
     end
 
     def run!
-      self_read, self_write = IO.pipe
-
-      %w(TERM TTIN).each do |sig|
-        trap sig do
-          self_write.puts(sig)
-        end
+      trap 'TERM' do
+        write_signal('shutdown')
+      end
+      trap 'TTIN' do
+        write_signal('trace')
       end
 
-      begin
-        connect!
+      self.supervise
 
-        while readable_io = IO.select([self_read])
-          signal = readable_io.first[0].gets.strip
-          handle_signal(signal)
-        end
-      rescue Interrupt
-        exit(0)
+      while line = @read_pipe.gets
+        handle_signal line.strip
       end
+    rescue Interrupt
+      exit(0)
     end
 
     # @param [String] signal
     def handle_signal(signal)
       info "Got signal #{signal}"
       case signal
-      when 'TERM'
-        info "Shutting down..."
-        EM.stop
-        @supervisor.shutdown
-        raise Interrupt
-      when 'TTIN'
-        Thread.list.each do |thread|
-          warn "Thread #{thread.object_id.to_s(36)} #{thread['label']}"
-          if thread.backtrace
-            warn thread.backtrace.join("\n")
-          else
-            warn "no backtrace available"
-          end
+      when 'shutdown'
+        self.handle_shutdown
+      when 'trace'
+        self.handle_trace
+      end
+    end
+
+    def handle_shutdown
+      info "Shutting down..."
+      @supervisor.shutdown # shutdown all actors
+      @write_pipe.close # let run! break and return
+    end
+
+    def handle_trace
+      info "Dump thread trace..."
+
+      Thread.list.each do |thread|
+        warn "Thread #{thread.object_id.to_s(36)} #{thread['label']}"
+        if thread.backtrace
+          warn thread.backtrace.join("\n")
+        else
+          warn "no backtrace available"
         end
       end
+    end
+
+    def supervise
+      @supervisor = Celluloid::Supervision::Container.run!
+
+      self.supervise_state
+      self.supervise_rpc
+      self.supervise_launchers
+      self.supervise_network_adapter
+      self.supervise_lb
+      self.supervise_workers
     end
 
     def supervise_state
@@ -101,6 +131,28 @@ module Kontena
         type: Kontena::Workers::NodeInfoWorker,
         as: :node_info_worker,
         args: [self.node_id],
+      )
+    end
+
+    def supervise_rpc
+      @supervisor.supervise(
+        type: Kontena::RpcServer,
+        as: :rpc_server,
+      )
+      @supervisor.supervise(
+        type: Kontena::RpcClient,
+        as: :rpc_client,
+      )
+      @supervisor.supervise(
+        type: Kontena::WebsocketClient,
+        as: :websocket_client,
+        args: [@opts[:api_uri], @node_id,
+          grid_token: @opts[:grid_token],
+          node_token: @opts[:node_token],
+          node_labels: @node_labels,
+          ssl_params: self.ssl_params,
+          ssl_hostname: self.ssl_hostname,
+        ],
       )
     end
 
@@ -187,15 +239,6 @@ module Kontena
         type: Kontena::LoadBalancers::Registrator,
         as: :lb_registrator
       )
-    end
-
-    def start_em
-      EM.epoll
-      Thread.new {
-        Thread.current.abort_on_exception = true
-        EventMachine.run
-      } unless EventMachine.reactor_running?
-      sleep 0.01 until EventMachine.reactor_running?
     end
   end
 end
