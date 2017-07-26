@@ -4,4 +4,6 @@
 # after package is uninstalled.
 #
 
+rm -f /usr/local/bin/kontena
+
 exit 0
