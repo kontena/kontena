@@ -4,6 +4,4 @@
 # after package is uninstalled.
 #
 
-echo "Kontena has been uninstalled!"
-
 exit 0
