@@ -33,5 +33,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "semantic", "~> 1.5"
   spec.add_runtime_dependency "liquid", "~> 4.0.0"
   spec.add_runtime_dependency "tty-table", "~> 0.8.0"
-  spec.add_runtime_dependency "websocket-driver-kontena", "0.6.5"
+  spec.add_runtime_dependency "kontena-websocket-client", "~> 0.1.0"
 end

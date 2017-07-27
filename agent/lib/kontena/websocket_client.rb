@@ -29,23 +29,28 @@ module Kontena
                 :ping_timer
 
     # @param [String] api_uri
+    # @param [String] node_id
     # @param [String] grid_token
     # @param [String] node_token
-    # @param [Boolean] ssl_verify
-    def initialize(api_uri, grid_token: nil, node_token: nil, ssl_params: {}, ssl_hostname: nil, autostart: true)
+    # @param [Array<String>] node_labels
+    # @param [Hash] ssl_params
+    # @param [String] ssl_hostname
+      def initialize(api_uri, node_id, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
       @api_uri = api_uri
-      @ssl_params = ssl_params
-      @ssl_hostname = ssl_hostname
+      @node_id = node_id
       @grid_token = grid_token
       @node_token = node_token
+      @node_labels = node_labels
+      @ssl_params = ssl_params
+      @ssl_hostname = ssl_hostname
 
       @connected = false
       @connecting = false
 
       if @node_token
-        info "initialized with node token #{@node_token[0..8]}..., node ID #{host_id}"
+        info "initialized with node token #{@node_token[0..8]}..., node ID #{@node_id}"
       elsif @grid_token
-        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{host_id}"
+        info "initialized with grid token #{@grid_token[0..8]}..., node ID #{@node_id}"
       else
         fail "Missing grid, node token"
       end
@@ -81,9 +86,9 @@ module Kontena
 
       info "connecting to master at #{api_uri}"
       headers = {
-          'Kontena-Node-Id' => host_id.to_s,
+          'Kontena-Node-Id' => @node_id.to_s,
           'Kontena-Version' => Kontena::Agent::VERSION,
-          'Kontena-Node-Labels' => labels.join(','),
+          'Kontena-Node-Labels' => @node_labels.join(','),
           'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),
       }
 
@@ -329,16 +334,6 @@ module Kontena
     # @return [Boolean]
     def response_message?(msg)
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
-    end
-
-    # @return [String]
-    def host_id
-      Docker.info['ID']
-    end
-
-    # @return [Array<String>]
-    def labels
-      Docker.info['Labels'].to_a
     end
 
     def on_pong(delay)
