@@ -1,10 +1,11 @@
 describe Kontena::Workers::NodeInfoWorker, celluloid: true do
   include RpcClientMocks
 
-  let(:subject) { described_class.new(false) }
+  let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
+  let(:subject) { described_class.new(node_id, false) }
   let(:node) do
     Node.new(
-      'id' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+      'id' => node_id,
       'instance_number' => 1,
       'grid' => {
 
@@ -64,21 +65,21 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
 
     it 'contains docker id' do
       expect(rpc_client).to receive(:request).once.with(
-        '/nodes/update', [hash_including('ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
+        '/nodes/update', [node_id, hash_including('ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
       )
       subject.publish_node_info
     end
 
     it 'contains public ip' do
       expect(rpc_client).to receive(:request).once.with(
-        '/nodes/update', [hash_including('PublicIp' => '8.8.8.8')]
+        '/nodes/update', [node_id, hash_including('PublicIp' => '8.8.8.8')]
       )
       subject.publish_node_info
     end
 
     it 'contains private ip' do
       expect(rpc_client).to receive(:request).once.with(
-        '/nodes/update', [hash_including('PrivateIp' => '192.168.66.2')]
+        '/nodes/update', [node_id, hash_including('PrivateIp' => '192.168.66.2')]
       )
       subject.publish_node_info
     end

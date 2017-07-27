@@ -9,13 +9,15 @@ module Kontena::Workers
 
     attr_reader :container_coroner
 
+    # @param [String] node_id
     # @param [Boolean] autostart
-    def initialize(autostart = true)
+    def initialize(node_id, autostart = true)
+      @node_id = node_id
       subscribe('container:event', :on_container_event)
       subscribe('container:publish_info', :on_container_publish_info)
       subscribe('websocket:connected', :on_websocket_connected)
       info 'initialized'
-      @container_coroner = Kontena::Actors::ContainerCoroner.new(self.node_info['ID'], autostart)
+      @container_coroner = Kontena::Actors::ContainerCoroner.new(node_id, autostart)
       async.start if autostart
     end
 
@@ -68,7 +70,7 @@ module Kontena::Workers
       return if labels['io.kontena.container.skip_logs']
 
       data = {
-        node: self.node_info['ID'],
+        node: @node_id,
         container: data
       }
       rpc_client.async.request('/containers/save', [data])
@@ -87,11 +89,6 @@ module Kontena::Workers
         time: event.time
       }
       rpc_client.async.request('/containers/event', [data])
-    end
-
-    # @return [Hash]
-    def node_info
-      @node_info ||= Docker.info
     end
   end
 end

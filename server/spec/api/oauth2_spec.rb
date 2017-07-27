@@ -105,7 +105,7 @@ describe 'OAuth2 API' do
         expect(response.status).to eq(403)
       end
 
-      it 'returns an invite if user is admin' do
+      it 'returns an invite if user is master_admin' do
         david.roles << Role.create!(name: 'master_admin', description: 'foo')
         post(
           '/oauth2/authorize',
@@ -120,6 +120,20 @@ describe 'OAuth2 API' do
         result = JSON.parse(response.body)
         expect(result['invite_code']).to match /^[a-z0-9]{6,}$/
         expect(result['email']).to eq "foo@example.com"
+      end
+
+      it 'returns an invite if user is user_admin' do
+        david.roles << Role.create!(name: 'user_admin', description: 'foo')
+        post(
+          '/oauth2/authorize',
+          {
+            response_type: 'invite',
+            email: 'foo@example.com'
+          }.to_json,
+          json_header.merge('HTTP_AUTHORIZATION' => "Bearer #{token.token_plain}")
+        )
+
+        expect(response.status).to eq(201)
       end
     end
   end
