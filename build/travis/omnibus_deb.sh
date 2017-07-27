@@ -1,15 +1,12 @@
 #!/bin/sh
-set -e
+set -ue
 unset BUILD_ID
 cd cli/omnibus
 
 sudo mkdir -p /opt/kontena
 sudo chown travis /opt/kontena
 
-sudo apt-get install -y -q fakeroot libgecode-dev
-
-# faster bundle install
-export USE_SYSTEM_GECODE=1
+sudo apt-get install -y -q fakeroot
 
 # install omnibus bundle
 bundle install
@@ -25,6 +22,6 @@ chmod +x /tmp/github-release
 /tmp/github-release upload \
     --user kontena \
     --repo kontena \
-    --tag $GIT_TAG_NAME \
-    --name "kontena_${GIT_TAG_NAME}_amd64.deb" \
+    --tag $TRAVIS_TAG \
+    --name "kontena_${TRAVIS_TAG}_amd64.deb" \
     --file pkg/kontena-*.deb
