@@ -61,7 +61,7 @@ deploy:
     on:
       tags: true
       condition: $TEST_DIR = server && $TRAVIS_OS_NAME = linux
-      rvm: 2.3.3
+      rvm: 2.4.1
       repo: kontena/kontena
   - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy_docs.sh"
