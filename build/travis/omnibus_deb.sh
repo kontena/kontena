@@ -6,7 +6,7 @@ cd cli/omnibus
 sudo mkdir -p /opt/kontena
 sudo chown travis /opt/kontena
 
-sudo apt-get install -y -q libgecode-dev
+sudo apt-get install -y -q fakeroot libgecode-dev
 
 # faster bundle install
 export USE_SYSTEM_GECODE=1
