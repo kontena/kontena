@@ -11,6 +11,10 @@ describe Kontena::Cli::Nodes::ListCommand do
     allow(subject).to receive(:client).and_return(client)
   end
 
+  def time_ago(offset)
+    (Time.now.utc - offset).strftime('%FT%T.%NZ')
+  end
+
   context "For a initial_size=1 grid" do
     before do
       allow(client).to receive(:get).with('grids/test-grid').and_return(
@@ -32,7 +36,7 @@ describe Kontena::Cli::Nodes::ListCommand do
                 "id" => 'test-grid/node-1',
                 "node_id" => 'AAAA:AAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -74,8 +78,8 @@ describe Kontena::Cli::Nodes::ListCommand do
                 "id" => 'test-grid/node-4',
                 "node_id" => 'DDDD:DDDD',
                 "connected" => true,
-                'connected_at' => (Time.now - 8.0).to_s,
-                'disconnected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => false,
                 "status" => "connecting",
                 "name" => "node-4",
@@ -90,10 +94,10 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs nodes" do
         expect{subject.run([])}.to output_table [
-          [':ok node-1',      '1.4.0.dev', 'online 50s',    '1 / 1', '-'],
+          [':ok node-1',      '1.4.0.dev', 'online 1m',    '1 / 1', '-'],
           [':offline node-2', '-',         'created',       '-',     '-'],
           [':ok CCCC:CCCC',   '1.4.0.dev', 'offline',       '-',     '-'],
-          [':ok node-4',      '1.4.0.dev', 'connecting 8s', '-',     '-'],
+          [':ok node-4',      '1.4.0.dev', 'connecting 1m', '-',     '-'],
         ]
       end
     end
@@ -119,7 +123,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s, # XXX: flaky spec if this rolls over
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -135,7 +139,7 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs node with error" do
         expect{subject.run([])}.to output_table [
-          [':error node-1', '1.1-dev', 'online 50s', '1 / 3', '-'],
+          [':error node-1', '1.1-dev', 'online 1m', '1 / 3', '-'],
         ]
       end
     end
@@ -147,7 +151,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -159,8 +163,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testBBB',
                 "connected" => false,
-                'connected_at' => (Time.now - 50.0).to_s,
-                'disconnected_at' => (Time.now - 10.0).to_s,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => false,
                 "status" => "offline",
                 "name" => "node-2",
@@ -175,8 +179,8 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs online node with error" do
         expect{subject.run([])}.to output_table [
-          [':error node-1', '1.1-dev', 'online 50s', '1 / 3', '-'],
-          [':offline node-2', '1.1-dev', 'offline 10s', '2 / 3', '-'],
+          [':error node-1', '1.1-dev', 'online 1m', '1 / 3', '-'],
+          [':offline node-2', '1.1-dev', 'offline 2m', '2 / 3', '-'],
         ]
       end
     end
@@ -188,7 +192,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -200,8 +204,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testBBB',
                 "connected" => true,
-                'connected_at' => (Time.now - 10.0).to_s,
-                'disconnected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => true,
                 "status" => "online",
                 "name" => "node-2",
@@ -216,8 +220,8 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs both nodes with warning" do
         expect{subject.run([])}.to output_table [
-          [':warning node-1', '1.1-dev', 'online 50s', '1 / 3', '-'],
-          [':warning node-2', '1.1-dev', 'online 10s', '2 / 3', '-'],
+          [':warning node-1', '1.1-dev', 'online 1m', '1 / 3', '-'],
+          [':warning node-2', '1.1-dev', 'online 1m', '2 / 3', '-'],
         ]
       end
     end
@@ -229,7 +233,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -241,8 +245,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testBBB',
                 "connected" => true,
-                'connected_at' => (Time.now - 10.0).to_s,
-                'disconnected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => true,
                 "status" => "online",
                 "name" => "node-2",
@@ -253,8 +257,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testCCC',
                 "connected" => false,
-                'connected_at' => (Time.now - 50.0).to_s,
-                'disconnected_at' => (Time.now - 10.0).to_s,
+                'connected_at' => time_ago(360.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => true,
                 "status" => "offline",
                 "name" => "node-3",
@@ -269,9 +273,9 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs two nodes with warning and one offline" do
         expect{subject.run([])}.to output_table [
-          [':warning node-1', '1.1-dev', 'online 50s',  '1 / 3', '-'],
-          [':warning node-2', '1.1-dev', 'online 10s',  '2 / 3', '-'],
-          [':offline node-3', '1.1-dev', 'offline 10s', '3 / 3', '-'],
+          [':warning node-1', '1.1-dev', 'online 1m',  '1 / 3', '-'],
+          [':warning node-2', '1.1-dev', 'online 1m',  '2 / 3', '-'],
+          [':offline node-3', '1.1-dev', 'offline 2m', '3 / 3', '-'],
         ]
       end
     end
@@ -284,7 +288,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -296,8 +300,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testBBB',
                 "connected" => true,
-                'connected_at' => (Time.now - 10.0).to_s,
-                'disconnected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => true,
                 "status" => "online",
                 "name" => "node-2",
@@ -308,7 +312,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testDDD',
                 "connected" => true,
-                'connected_at' => (Time.now - 30.0).to_s,
+                'connected_at' => time_ago(120.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -324,9 +328,9 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs two nodes with warning and one online" do
         expect{subject.run([])}.to output_table [
-          [':warning node-1', '1.1-dev', 'online 50s',  '1 / 3', '-'],
-          [':warning node-2', '1.1-dev', 'online 10s',  '2 / 3', '-'],
-          [':ok node-4', '1.1-dev', 'online 30s', '-', '-'],
+          [':warning node-1', '1.1-dev', 'online 1m',  '1 / 3', '-'],
+          [':warning node-2', '1.1-dev', 'online 1m',  '2 / 3', '-'],
+          [':ok node-4', '1.1-dev', 'online 2m', '-', '-'],
         ]
       end
     end
@@ -339,7 +343,7 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testAAA',
                 "connected" => true,
-                'connected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
                 'disconnected_at' => nil,
                 "updated" => true,
                 "status" => "online",
@@ -351,8 +355,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testBBB',
                 "connected" => true,
-                'connected_at' => (Time.now - 10.0).to_s,
-                'disconnected_at' => (Time.now - 50.0).to_s,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => time_ago(120.0),
                 "updated" => true,
                 "status" => "online",
                 "name" => "node-2",
@@ -363,8 +367,8 @@ describe Kontena::Cli::Nodes::ListCommand do
               {
                 "id" => 'testCCC',
                 "connected" => true,
-                'connected_at' => (Time.now - 3630.0).to_s,
-                'disconnected_at' => (Time.now - 7203.0).to_s,
+                'connected_at' => time_ago(3630.0),
+                'disconnected_at' => time_ago(7203.0),
                 "updated" => true,
                 "status" => "online",
                 "name" => "node-3",
@@ -379,8 +383,8 @@ describe Kontena::Cli::Nodes::ListCommand do
 
       it "outputs three nodes with ok" do
         expect{subject.run([])}.to output_table [
-          [':ok node-1', '1.1-dev', 'online 50s', '1 / 3', '-'],
-          [':ok node-2', '1.1-dev', 'online 10s', '2 / 3', '-'],
+          [':ok node-1', '1.1-dev', 'online 1m', '1 / 3', '-'],
+          [':ok node-2', '1.1-dev', 'online 1m', '2 / 3', '-'],
           [':ok node-3', '1.1-dev', 'online 1h', '3 / 3', '-'],
         ]
       end
