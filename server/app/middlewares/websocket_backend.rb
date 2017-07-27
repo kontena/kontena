@@ -216,7 +216,7 @@ class WebsocketBackend
     ws.close(exc.code, exc.message)
 
     if !connected_at || connected_at > Time.now.utc
-      # override invalid agent timestamp
+      # override invalid agent timestamp, as this would prevent the agent from later reconnecting with the correct timestamp
       connected_at = Time.now.utc
     end
 
