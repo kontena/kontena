@@ -215,6 +215,11 @@ class WebsocketBackend
     logger.warn "reject websocket connection for node #{node || node_id || '<nil>'}: #{exc}"
     ws.close(exc.code, exc.message)
 
+    if !connected_at || connected_at > Time.now.utc
+      # override invalid agent timestamp
+      connected_at = Time.now.utc
+    end
+
     # XXX: this only applies to the version/clock skew errors, not the token -> node errors
     Agent::NodePlugger.new(node).reject!(connected_at, exc.code, exc.message) if node
 

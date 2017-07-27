@@ -242,9 +242,14 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           expect(subject.logger).to receive(:warn).with('reject websocket connection for node nodeABC: agent version 0.8.0 is not compatible with server version 0.9.1')
           expect(client_ws).to receive(:close).with(4010, 'agent version 0.8.0 is not compatible with server version 0.9.1')
 
+          host_node = nil
+
           expect{
             subject.on_open(client_ws, rack_req)
-          }.to change{grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+          }.to change{host_node = grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+
+          expect(host_node.status).to eq :offline
+          expect(host_node.websocket_error).to match /Websocket connection rejected at .* with code 4010: agent version 0.8.0 is not compatible with server version 0.9.1/
         end
       end
     end
@@ -268,6 +273,9 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           expect(host_node.node_id).to eq node_id
           expect(host_node.connected).to eq false
+          expect(host_node.connected_at).to be < Time.now.utc
+          expect(host_node.status).to eq :offline
+          expect(host_node.websocket_error).to match /Websocket connection rejected at .* with code 4020: agent connected too far in the past,.*/
         end
       end
     end
@@ -291,6 +299,9 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           expect(host_node.node_id).to eq node_id
           expect(host_node.connected).to eq false
+          expect(host_node.connected_at).to be < Time.now.utc
+          expect(host_node.status).to eq :offline
+          expect(host_node.websocket_error).to match /Websocket connection rejected at .* with code 4020: agent connected too far in the future, .*/
         end
       end
     end

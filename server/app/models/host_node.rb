@@ -125,7 +125,7 @@ class HostNode
       return nil
     elsif !self.connection_error_code
       return "Websocket is not connected"
-    elsif self.connected_at > self.disconnected_at
+    elsif !self.disconnected_at || self.connected_at > self.disconnected_at
       # WebsocketBackend#on_open -> Agent::NodePlugger.reject!
       return "Websocket connection rejected at #{self.connected_at} with code #{self.connection_error_code}: #{self.connection_error}"
     else
