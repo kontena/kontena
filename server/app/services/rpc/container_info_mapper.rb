@@ -8,11 +8,10 @@ module Rpc
       @node = node
     end
 
-    # @param [Hash] data
-    def from_agent(data)
-      info = data['container']
+    # @param [Hash] info
+    def from_agent(info)
+      container_id = info['Id']
       labels = info['Config']['Labels'] || {}
-      container_id = data['container']['Id']
       container = @node.containers.unscoped.find_by(container_id: container_id)
       if container
         self.update_service_container(container, info)

@@ -67,9 +67,6 @@ module Kontena::Workers
       labels = data['Config']['Labels'] || {}
       return if labels['io.kontena.container.skip_logs']
 
-      data = {
-        container: data
-      }
       rpc_client.async.request('/containers/save', [data])
     rescue Docker::Error::NotFoundError
     rescue => exc
