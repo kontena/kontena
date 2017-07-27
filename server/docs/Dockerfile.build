@@ -1,0 +1,17 @@
+FROM alpine:3.6
+
+RUN apk --update add \
+  ruby ruby-io-console \
+  ruby-dev \
+  build-base \
+  libffi-dev libxml2-dev libxslt-dev \
+  nodejs
+RUN gem install bundler --no-ri --no-rdoc
+
+ADD Gemfile Gemfile.lock /home/build/
+WORKDIR /home/build
+
+RUN bundle config build.nokogiri --use-system-libraries
+RUN bundle install
+
+CMD "bundle exec middleman build"
