@@ -1,7 +1,9 @@
 describe Kontena::WebsocketClient, :celluloid => true do
   let(:url) { 'ws://socket.example.com' }
+  let(:node_id) { 'ABCD' }
   let(:grid_token) { 'secret' }
   let(:node_token) { nil }
+  let(:node_labels) { ['region=test'] }
   let(:ssl_params) { {} }
   let(:options) {  {} }
 
@@ -14,9 +16,10 @@ describe Kontena::WebsocketClient, :celluloid => true do
   end
 
   let(:actor) {
-    described_class.new(url,
+    described_class.new(url, node_id,
       grid_token: grid_token,
       node_token: node_token,
+      node_labels: node_labels,
       ssl_params: ssl_params,
       autostart: false,
       **options

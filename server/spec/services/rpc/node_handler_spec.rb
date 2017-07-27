@@ -8,6 +8,10 @@ describe Rpc::NodeHandler do
   end
 
   describe '#get' do
+    it 'fails if the node_id is not found' do
+      expect{subject.get('b')}.to raise_error 'Missing HostNode: b'
+    end
+
     it 'returns correct peer ips' do
       HostNode.create!(
         node_id: 'b', grid: grid, name: 'test-node-2', labels: ['region=ams2'],
@@ -23,13 +27,28 @@ describe Rpc::NodeHandler do
     end
   end
 
+  describe '#update' do
+    it 'fails if the node_id is wrong' do
+      expect{subject.update('b', {'ID' => 'b'})}.to raise_error 'Missing HostNode: b'
+    end
+
+    it 'calls attributes_from_docker and sets updated, changing the node status to online' do
+      expect_any_instance_of(HostNode).to receive(:attributes_from_docker).with(hash_including('AgentVersion' => '1.4.0.dev')).and_call_original
+
+      expect{
+        subject.update('a', {'ID' => 'a', 'AgentVersion' => '1.4.0.dev'})
+      }.to change{node.reload.updated_at}
+
+      expect(node.agent_version).to eq '1.4.0.dev'
+    end
+  end
+
   describe '#stats' do
     it 'saves host_node_stat item' do
       node
 
       expect {
-        subject.stats({
-          'id' => node.node_id,
+        subject.stats(node.node_id, {
           'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
           'memory' => {},
           'filesystems' => [],
@@ -43,8 +62,7 @@ describe Rpc::NodeHandler do
     it 'creates timestamps' do
       node
 
-      subject.stats({
-        'id' => node.node_id,
+      subject.stats(node.node_id, {
         'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
         'memory' => {},
         'filesystems' => [],
@@ -61,8 +79,7 @@ describe Rpc::NodeHandler do
 
       time = '2017-02-28 00:00:00 -0500'
 
-      subject.stats({
-        'id' => node.node_id,
+      subject.stats(node.node_id, {
         'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
         'memory' => {},
         'filesystems' => [],

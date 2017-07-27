@@ -6,6 +6,7 @@ module Kontena
     include Singleton
     include Logging
 
+    NODE_ID_REGEXP = /\A[A-Z0-9]{4}(:[A-Z0-9]{4}){11}\z/
     VERSION = File.read('./VERSION').strip
 
     # Called from other actors
@@ -21,6 +22,30 @@ module Kontena
 
     def configure(opts)
       @opts = opts
+
+      if node_id = opts[:node_id]
+        raise ArgumentError, "Invalid KONTENA_NODE_ID: #{node_id}" unless node_id.match(NODE_ID_REGEXP)
+
+        @node_id = node_id
+      else
+        @node_id = Docker.info['ID']
+      end
+
+      if node_labels = opts[:node_labels]
+        @node_labels = node_labels.split()
+      else
+        @node_labels = Docker.info['Labels']
+      end
+    end
+
+    # @return [String]
+    def node_id
+      @node_id
+    end
+
+    # @return [Array<String>]
+    def node_labels
+      @node_labels
     end
 
     def ssl_verify?
@@ -104,7 +129,8 @@ module Kontena
     def supervise_state
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
-        as: :node_info_worker
+        as: :node_info_worker,
+        args: [self.node_id],
       )
     end
 
@@ -120,9 +146,10 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::WebsocketClient,
         as: :websocket_client,
-        args: [@opts[:api_uri],
+        args: [@opts[:api_uri], @node_id,
           grid_token: @opts[:grid_token],
           node_token: @opts[:node_token],
+          node_labels: @node_labels,
           ssl_params: self.ssl_params,
           ssl_hostname: self.ssl_hostname,
         ],
@@ -162,7 +189,8 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerInfoWorker,
-        as: :container_info_worker
+        as: :container_info_worker,
+        args: [@node_id],
       )
       @supervisor.supervise(
         type: Kontena::Workers::EventWorker,
