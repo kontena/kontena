@@ -88,6 +88,10 @@ class User
     self.email == 'admin' || self.in_role?(Role::MASTER_ADMIN_ROLE)
   end
 
+  def user_admin?
+    self.master_admin? || self.in_role?(Role::USER_ADMIN_ROLE)
+  end
+
   def grid_admin?(grid)
     self.master_admin? || (self.in_role?(Role::GRID_ADMIN_ROLE) && self.grids.include?(grid))
   end

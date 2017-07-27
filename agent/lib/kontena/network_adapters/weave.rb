@@ -1,5 +1,4 @@
 require_relative '../logging'
-require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 require_relative '../helpers/weave_helper'
 
@@ -7,7 +6,6 @@ module Kontena::NetworkAdapters
   class Weave
     include Celluloid
     include Celluloid::Notifications
-    include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Logging

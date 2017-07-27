@@ -59,16 +59,8 @@ module Kontena
         require 'kontena/debug_instrumentor'
         excon_opts[:instrumentor] = Kontena::DebugInstrumentor
       end
-
-      cert_file = File.join(Dir.home, "/.kontena/certs/#{uri.host}.pem")
-      if File.exist?(cert_file) && File.readable?(cert_file)
-        excon_opts[:ssl_ca_file] = cert_file
-        key = OpenSSL::X509::Certificate.new(File.read(cert_file))
-        if key.issuer.to_s == "/C=FI/O=Test/OU=Test/CN=Test"
-          debug { "Key looks like a self-signed cert made by Kontena CLI, setting verify_peer_host to 'Test'" }
-          excon_opts[:ssl_verify_peer_host] = 'Test'
-        end
-      end
+      excon_opts[:ssl_ca_file] = @options[:ssl_cert_path]
+      excon_opts[:ssl_verify_peer_host] = @options[:ssl_subject_cn]
 
       debug { "Excon opts: #{excon_opts.inspect}" }
 

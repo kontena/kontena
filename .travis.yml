@@ -50,6 +50,13 @@ deploy:
       rvm: 2.3.3
       repo: kontena/kontena
   - provider: script
+    script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/omnibus_deb.sh"
+    on:
+      tags: true
+      condition: $TEST_DIR = cli && $TRAVIS_OS_NAME = linux
+      rvm: 2.3.3
+      repo: kontena/kontena
+  - provider: script
     script: "rvm $TRAVIS_RUBY_VERSION do $TRAVIS_BUILD_DIR/build/travis/deploy.sh"
     on:
       tags: true

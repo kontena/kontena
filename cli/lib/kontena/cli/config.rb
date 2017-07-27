@@ -507,6 +507,39 @@ module Kontena
           super
           @table[:account] ||= 'master'
         end
+
+        def uri
+          @uri ||= URI.parse(self.url)
+        end
+
+        # @return [String, nil] path to ~/.kontena/certs/*.pem
+        def ssl_cert_path
+          path = File.join(Dir.home, '.kontena', 'certs', "#{self.uri.host}.pem")
+
+          if File.exist?(path) && File.readable?(path)
+            return path
+          else
+            return nil
+          end
+        end
+
+        # @return [OpenSSL::X509::Certificate, nil]
+        def ssl_cert
+          if path = self.ssl_cert_path
+            return OpenSSL::X509::Certificate.new(File.read(path))
+          else
+            return nil
+          end
+        end
+
+        # @return [String, nil] ssl cert subject CN=
+        def ssl_subject_cn
+          if cert = self.ssl_cert
+            return cert.subject.to_a.select{|name, data, type| name == 'CN' }.map{|name, data, type| data }.first
+          else
+            nil
+          end
+        end
       end
 
       class Token < OpenStruct

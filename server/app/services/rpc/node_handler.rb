@@ -11,8 +11,7 @@ module Rpc
       )
     end
 
-    # @param [String] node_id
-    def get(node_id)
+    def get()
       HostNodeSerializer.new(@node).to_hash
     end
 

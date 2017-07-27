@@ -164,9 +164,10 @@ class Kontena::Command < Clamp::Command
     retried ||= false
     Kontena::Cli::Config.instance.require_current_master_token
   rescue Kontena::Cli::Config::TokenExpiredError
-    success = Kontena::Client.new(
-      Kontena::Cli::Config.instance.current_master.url,
-      Kontena::Cli::Config.instance.current_master.token
+    server = Kontena::Cli::Config.instance.current_master
+    success = Kontena::Client.new(server.url, server.token,
+      ssl_cert_path: server.ssl_cert_path,
+      ssl_subject_cn: server.ssl_subject_cn,
     ).refresh_token
     if success && !retried
       retried = true

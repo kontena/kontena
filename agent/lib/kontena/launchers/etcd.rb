@@ -1,4 +1,3 @@
-require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 
 module Kontena::Launchers
