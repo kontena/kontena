@@ -14,4 +14,5 @@ WORKDIR /home/build
 RUN bundle config build.nokogiri --use-system-libraries
 RUN bundle install
 
-CMD "bundle exec middleman build"
+VOLUME /home/build # expect -v $PWD:/home/build
+CMD middleman build
