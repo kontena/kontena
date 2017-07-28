@@ -485,6 +485,8 @@ Accept: application/json
 
 Get a node token, used to configure the agent `KONTENA_NODE_TOKEN` env.
 
+Returns HTTP 404 if the node does not have a node token.
+
 ### Endpoint
 
 `GET /v1/nodes/:id/token`

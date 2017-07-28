@@ -35,6 +35,8 @@ module V1
           r.is do
             # GET /v1/nodes/:grid/:node/token
             r.get do
+              halt_request(404, {error: "Host node does not have a node token"}) unless @node.token
+
               render('host_nodes/token')
             end
 

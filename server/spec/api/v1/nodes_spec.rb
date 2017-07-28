@@ -110,6 +110,14 @@ describe '/v1/nodes', celluloid: true do
             'token' => 'asdfasdfasdfasdf',
         })
       end
+
+      it "returns 404 if node does not have a token" do
+        node.token = nil
+        node.save!
+
+        get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+        expect(response.status).to eq(404)
+      end
     end
 
     describe 'PUT /token' do
