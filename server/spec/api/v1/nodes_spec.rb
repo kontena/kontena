@@ -81,6 +81,17 @@ describe '/v1/nodes', celluloid: true do
     end
   end
 
+  describe 'DELETE /token' do
+    let(:node) do
+      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+    end
+
+    it "returns 403 without admin role" do
+      delete "/v1/nodes/#{node.to_path}/token", {}.to_json, request_headers
+      expect(response.status).to eq(403)
+    end
+  end
+
   context "for a user with an admin role" do
     before do
       david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
@@ -151,8 +162,11 @@ describe '/v1/nodes', celluloid: true do
         node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf', connected: true)
       end
 
-      it "clears token" do
-        delete "/v1/nodes/#{node.to_path}/token", { }.to_json, request_headers
+      it "clears token with connection reset" do
+        expect{
+          delete "/v1/nodes/#{node.to_path}/token", { 'reset_connection' => true }.to_json, request_headers
+        }.to change{node.reload.connected?}.from(true).to(false)
+
         expect(response.status).to eq(200)
         expect(json_response).to eq({})
       end
