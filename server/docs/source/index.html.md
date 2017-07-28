@@ -305,6 +305,7 @@ follow | Stream logs
 	"updated_at": "2017-06-14T13:37:36.968Z",
 	"last_seen_at": "2017-06-14T13:38:03.785Z",
 	"connected_at": "2017-06-14T12:33:05.084Z",
+	"has_token": false,
 	"node_number": 1,
 	"initial_member": true,
 	"agent_version": "1.0.0",
@@ -379,6 +380,7 @@ Attribute | Description
 ---------- | -------
 id | A unique id for the node
 name | A unique name (within a grid) for the node
+has_token | Does the node have a node token
 connected | Is the node connected to the master (boolean)
 node_number | A sequential number for the node
 initial_member | Is the node part of initial grid members (boolean)
@@ -431,6 +433,27 @@ Update a node details.
 
 `PUT /v1/nodes/{id}`
 
+## Reset node token
+
+```http
+PUT /v1/nodes/mygrid/misty-sun-87/token HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+Content-Type: application/json
+
+{
+	"reset_connection": true
+}
+```
+
+Update node token. The optional `reset_connection` parameter causes any currently connected agent to be force-disconnected at the next keepalive interval. The agent will not be able to reconnect using the old node token.
+
+Use the optional `token` parameter to use a pre-generated token instead of having the server generate a new token. The node token must be between 16 and 64 bytes long.
+
+### Endpoint
+
+`PUT /v1/nodes/{id}/token`
+
 ## Get a node details
 
 ```http
@@ -444,6 +467,46 @@ Get a node details.
 ### Endpoint
 
 `GET /v1/nodes/:id`
+
+## Get node token
+
+```http
+GET /v1/nodes/my-grid/misty-sun-87/token HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+```json
+{
+   "id" : "my-grid/misty-sun-87",
+   "token" : "ZxeA2iQ1MT61oT808BG/ty6aKtSnsD4f1cUub+DHWTfKoCBLTVYuP/WrRyDvjZAWdHZ3jBf/mhjGMiWhJ4YpSg=="
+}
+```
+
+Get a node token, used to configure the agent `KONTENA_NODE_TOKEN` env.
+
+### Endpoint
+
+`GET /v1/nodes/:id/token`
+
+## Clear node token
+
+```http
+DELETE /v1/nodes/my-grid/misty-sun-87/token HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Content-Type: application/json
+Accept: application/json
+
+{
+  "reset_connection": true
+}
+```
+
+Clear node token. Prevents the agent from reconnecting using the old node token. The agent can reconnect using the grid token.
+
+### Endpoint
+
+`DELETE /v1/nodes/:id/token`
 
 ## Delete a node
 
