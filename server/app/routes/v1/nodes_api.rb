@@ -54,6 +54,20 @@ module V1
                 halt_request(422, {error: outcome.errors.message})
               end
             end
+
+            r.delete do
+              data = parse_json_body
+              outcome = HostNodes::UpdateToken.run(
+                host_node: @node,
+                clear_token: true,
+                reset_connection: data['reset_connection'],
+              )
+              if outcome.success?
+                {}
+              else
+                halt_request(422, {error: outcome.errors.message})
+              end
+            end
           end
         end
 
