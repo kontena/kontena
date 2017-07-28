@@ -19,12 +19,15 @@ module Kontena::Cli::Nodes
 
       data = {}
 
-      data[:token] = self.token
-      data[:token] = '' if self.clear_token?
+      data[:token] = self.token unless self.clear_token?
       data[:reset_connection] = self.reset_connection?
 
       spinner "Resetting node #{self.node.colorize(:cyan)} websocket connection token" do
-        client.put("nodes/#{current_grid}/#{self.node}/token", data)
+        if self.clear_token?
+          client.delete("nodes/#{current_grid}/#{self.node}/token", data)
+        else
+          client.put("nodes/#{current_grid}/#{self.node}/token", data)
+        end
       end
     end
   end
