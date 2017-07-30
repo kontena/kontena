@@ -122,7 +122,10 @@ module Kontena::Workers
           workers[service_pod.id].async.update(service_pod)
         end
       rescue Celluloid::DeadActorError
+        error "tried to call dead worker: #{service_pod.name}"
         workers.delete(service_pod.id)
+        info "recreating worker for: #{service_pod.name}"
+        ensure_service_worker(service_pod)
       end
     end
 
