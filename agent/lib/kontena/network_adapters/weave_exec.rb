@@ -23,7 +23,7 @@ module Kontena::NetworkAdapters
     end
 
     # @param [Array<String>] cmd
-    def censor_weaveexec_password(command)
+    def censor_password(command)
       if command.include?('--password')
         cmd = command.dup
         passwd_index = cmd.index('--password')
@@ -68,7 +68,7 @@ module Kontena::NetworkAdapters
       container.start!
       response = container.wait
 
-      command = censor_weaveexec_password(cmd)
+      command = censor_password(cmd)
       status_code = response["StatusCode"]
 
       if status_code != 0
