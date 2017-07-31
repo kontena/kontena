@@ -16,9 +16,13 @@ describe Kontena::Workers::LogWorker do
   after(:each) { Celluloid.shutdown }
 
   describe '#start' do
+    let(:etcd_launcher) { instance_double(Kontena::Launchers::Etcd) }
+
     before(:each) do
-      allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(double(running?: true))
+      allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(etcd_launcher)
+      allow(etcd_launcher).to receive(:observable?).and_return(true)
     end
+
     it 'starts log streaming for container' do
       expect(Docker::Container).to receive(:all).and_return([double(skip_logs?: false)])
       expect(subject.wrapped_object).to receive(:stream_container_logs)
