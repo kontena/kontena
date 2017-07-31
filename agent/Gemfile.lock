@@ -1,9 +1,8 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (4.2.0)
+    activesupport (4.2.9)
       i18n (~> 0.7)
-      json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
@@ -35,18 +34,16 @@ GEM
     dotenv (1.0.2)
     etcd (0.3.0)
       mixlib-log
-    eventmachine (1.2.3)
     excon (0.54.0)
-    faye-websocket (0.10.7)
-      eventmachine (>= 0.12.0)
-      websocket-driver (>= 0.5.1)
     fluent-logger (0.6.2)
       msgpack (>= 0.5.6, < 2)
     hitimes (1.2.3)
-    i18n (0.7.0)
+    i18n (0.8.6)
     ipaddress (0.8.3)
-    json (1.8.3)
-    minitest (5.5.0)
+    json (1.8.6)
+    kontena-websocket-client (0.1.0)
+      websocket-driver (~> 0.6.5)
+    minitest (5.10.3)
     mixlib-log (1.6.0)
     msgpack (1.0.3)
     rake (10.4.2)
@@ -69,10 +66,10 @@ GEM
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.0)
     statsd-ruby (1.3.0)
-    thread_safe (0.3.4)
+    thread_safe (0.3.6)
     timers (4.1.1)
       hitimes
-    tzinfo (1.2.2)
+    tzinfo (1.2.3)
       thread_safe (~> 0.1)
     vmstat (2.1.0)
     webmock (1.21.0)
@@ -91,10 +88,9 @@ DEPENDENCIES
   docker-api (~> 1.32.0)
   dotenv
   etcd
-  eventmachine (~> 1.2.3)
-  faye-websocket (~> 0.10.7)
   fluent-logger (~> 0.6.2)
   ipaddress (~> 0.8.3)
+  kontena-websocket-client (~> 0.1.0)
   msgpack (~> 1.0.3)
   rake
   rspec
@@ -104,4 +100,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.15.1
+   1.15.3

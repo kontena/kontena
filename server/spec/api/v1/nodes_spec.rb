@@ -23,13 +23,27 @@ describe '/v1/nodes', celluloid: true do
   end
 
   describe 'GET' do
-    it 'returns node with valid id and token' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+    it 'returns node with valid id and has_token' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', token: 'asdfasdfasdfasdf')
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
+      expect(json_response).to_not include 'token'
       expect(json_response).to match hash_including(
         'id' => 'test/abc',
         'node_id' => 'a:b:c',
+        'has_token' => true,
+      )
+    end
+
+    it 'returns node without has_token' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      get "/v1/nodes/#{node.to_path}", nil, request_headers
+      expect(response.status).to eq(200)
+      expect(json_response).to_not include 'token'
+      expect(json_response).to match hash_including(
+        'id' => 'test/abc',
+        'node_id' => 'a:b:c',
+        'has_token' => false,
       )
     end
 
@@ -42,6 +56,128 @@ describe '/v1/nodes', celluloid: true do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
       get "/v1/nodes/#{node.to_path}", nil, {}
       expect(response.status).to eq(403)
+    end
+  end
+
+  describe 'GET /token' do
+    let(:node) do
+      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+    end
+
+    it "returns 403 without admin role" do
+      get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+      expect(response.status).to eq(403)
+    end
+  end
+
+  describe 'PUT /token' do
+    let(:node) do
+      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+    end
+
+    it "returns 403 without admin role" do
+      put "/v1/nodes/#{node.to_path}/token", nil, request_headers
+      expect(response.status).to eq(403)
+    end
+  end
+
+  describe 'DELETE /token' do
+    let(:node) do
+      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+    end
+
+    it "returns 403 without admin role" do
+      delete "/v1/nodes/#{node.to_path}/token", {}.to_json, request_headers
+      expect(response.status).to eq(403)
+    end
+  end
+
+  context "for a user with an admin role" do
+    before do
+      david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+    end
+
+    describe 'GET /token' do
+      let(:node) do
+        node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+      end
+
+      it "returns node token" do
+        get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdfasdfasdfasdf',
+        })
+      end
+
+      it "returns 404 if node does not have a token" do
+        node.token = nil
+        node.save!
+
+        get "/v1/nodes/#{node.to_path}/token", nil, request_headers
+        expect(response.status).to eq(404)
+      end
+    end
+
+    describe 'PUT /token' do
+      let(:node) do
+        node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf', connected: true)
+      end
+
+      it "generates new node token" do
+        put "/v1/nodes/#{node.to_path}/token", { 'token' => nil }.to_json, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to match({
+            'id' => 'test/abc',
+            'token' => String,
+        })
+        expect(json_response['token']).to_not eq 'asdfasdfasdfasdf'
+
+        expect(node.reload).to be_connected
+      end
+
+      it "updates given token" do
+        put "/v1/nodes/#{node.to_path}/token", { 'token' => 'asdfasdfasdfasdf2' }.to_json, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdfasdfasdfasdf2',
+        })
+      end
+
+      it "fails with empty token" do
+        put "/v1/nodes/#{node.to_path}/token", { 'token' => '' }.to_json, request_headers
+        expect(response.status).to eq(422)
+        expect(json_response).to eq 'error' => { 'token' => "Token can't be blank" }
+      end
+
+      it "resets node connection" do
+        expect{
+          put "/v1/nodes/#{node.to_path}/token", { 'token' => 'asdfasdfasdfasdf2', 'reset_connection' => true }.to_json, request_headers
+          expect(response.status).to eq(200)
+        }.to change{node.reload.connected?}.from(true).to(false)
+
+        expect(json_response).to eq({
+            'id' => 'test/abc',
+            'token' => 'asdfasdfasdfasdf2',
+        })
+      end
+    end
+
+    describe 'DELETE /token' do
+      let(:node) do
+        node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf', connected: true)
+      end
+
+      it "clears token with connection reset" do
+        expect{
+          delete "/v1/nodes/#{node.to_path}/token", { 'reset_connection' => true }.to_json, request_headers
+        }.to change{node.reload.connected?}.from(true).to(false)
+
+        expect(response.status).to eq(200)
+        expect(json_response).to eq({})
+      end
     end
   end
 

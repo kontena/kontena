@@ -1,8 +1,7 @@
 source 'https://rubygems.org'
 
+gem 'kontena-websocket-client', '~> 0.1.0'
 gem 'docker-api', '~> 1.32.0'
-gem 'eventmachine', '~> 1.2.3'
-gem 'faye-websocket', '~> 0.10.7'
 gem 'msgpack', '~> 1.0.3'
 gem 'activesupport', '~> 4.2.0'
 gem 'celluloid', '~> 0.17.3'

@@ -94,7 +94,7 @@ describe '/v1/grids', celluloid: true do
       expect(grid.trusted_subnets).to eq [ '192.168.0.0/24' ]
       expect(grid.stats).to eq 'statsd' => { 'server' => '127.0.0.1', 'port' => 8125 }
       expect(grid.grid_logs_opts.forwarder).to eq 'fluentd'
-      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1' 
+      expect(grid.grid_logs_opts.opts).to eq 'fluentd-address' => '127.0.0.1'
     end
 
     it 'a new grid has a generated token unless supplied' do
@@ -252,7 +252,7 @@ describe '/v1/grids', celluloid: true do
       end
     end
 
-    describe '/nodes' do
+    describe 'GET /nodes' do
       it 'returns grid nodes' do
         grid = david.grids.first
 
@@ -263,9 +263,42 @@ describe '/v1/grids', celluloid: true do
       end
     end
 
-    describe '/users' do
-      it 'returns grid users' do
+    describe 'POST /nodes' do
+      it 'fails without grid admin role' do
         grid = david.grids.first
+
+        expect {
+          post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
+          expect(response.status).to eq(403)
+        }.to_not change{ grid.reload.host_nodes.count }
+      end
+
+      context "for a grid admin user" do
+        before do
+          david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+        end
+
+        it 'creates and returns grid node' do
+          grid = david.grids.first
+
+          expect {
+            post "/v1/grids/#{grid.to_path}/nodes", { name: 'test-1' }.to_json, request_headers
+            expect(response.status).to eq(201)
+          }.to change{ grid.reload.host_nodes.count }.by(1)
+
+          expect(json_response).to match hash_including(
+            'id' => 'terminal-a/test-1',
+            'name' => 'test-1',
+            'has_token' => true,
+          )
+        end
+      end
+    end
+
+    describe '/users' do
+      let(:grid) { david.grids.first }
+
+      it 'returns grid users' do
         get "/v1/grids/#{grid.to_path}/users", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['users'].size).to eq(1)
@@ -454,34 +487,45 @@ describe '/v1/grids', celluloid: true do
       post "/v1/grids/#{grid.to_path}/users", {email: 'invalid@domain.com'}.to_json, request_headers
       expect(response.status).to eq(404)
     end
-    it 'assigns user to grid' do
+
+    it 'does not allow non-admins to add users' do
       grid = david.grids.first
-      expect(UserAuthorizer).to receive(:assignable_by?).with(david, {to: grid}).and_return(true)
-      post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
-      expect(grid.reload.users.size).to eq(2)
-      expect(emily.reload.grids.include?(grid)).to be_truthy
+      post "/v1/grids/#{grid.to_path}/users", {email: thomas.email}.to_json, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response['error']).to eq 'grid' => 'Operation not allowed'
     end
 
-    it 'creates audit log entry' do
-      grid = david.grids.first
-      allow(UserAuthorizer).to receive(:assignable_by?).with(david, {to: grid}).and_return(true)
-      expect {
+    context 'for a grid admin' do
+      before do
+        david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+      end
+
+      let(:grid) { david.grids.first }
+
+      it 'assigns user to grid' do
         post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
-      }.to change{ AuditLog.count }.by(1)
-      audit_log = AuditLog.last
-      expect(audit_log.event_name).to eq('assign user')
-      expect(audit_log.resource_id).to eq(emily.id.to_s)
-      expect(audit_log.grid).to eq(grid)
-    end
+        expect(response.status).to eq(201)
+        expect(grid.reload.users.size).to eq(2)
+        expect(emily.reload.grids.include?(grid)).to be_truthy
+      end
 
-    it 'returns array of grid users' do
-      grid = david.grids.first
-      allow(UserAuthorizer).to receive(:assignable_by?).with(david, {to: grid}).and_return(true)
-      post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
-      expect(response.status).to eq(201)
-      expect(json_response['users'].size).to eq(2)
-    end
+      it 'creates audit log entry' do
+        expect {
+          post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
+          expect(response.status).to eq(201)
+        }.to change{ AuditLog.count }.by(1)
+        audit_log = AuditLog.last
+        expect(audit_log.event_name).to eq('assign user')
+        expect(audit_log.resource_id).to eq(emily.id.to_s)
+        expect(audit_log.grid).to eq(grid)
+      end
 
+      it 'returns array of grid users' do
+        post "/v1/grids/#{grid.to_path}/users", {email: emily.email}.to_json, request_headers
+        expect(response.status).to eq(201)
+        expect(json_response['users'].size).to eq(2)
+      end
+    end
   end
 
   describe 'DELETE /:name/users/:email' do
@@ -491,54 +535,67 @@ describe '/v1/grids', celluloid: true do
       expect(response.status).to eq(403)
     end
 
-    it 'validates that unassigned user belongs to grid' do
-      grid = david.grids.first
-      grid.users << thomas
-      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
-      expect(response.status).to eq(422)
-    end
-
-    it 'validates that user cannot remove last user from grid' do
-      grid = david.grids.first
-
-      delete "/v1/grids/#{grid.to_path}/users/#{david.email}", nil, request_headers
-      expect(response.status).to eq(422)
-    end
-
     it 'requires existing email' do
       grid = david.grids.first
       delete "/v1/grids/#{grid.to_path}/users/invalid@domain.com", nil, request_headers
       expect(response.status).to eq(404)
     end
 
-    it 'unassigns user from grid' do
+    it 'does not allow non-admins to remove users' do
       grid = david.grids.first
-      grid.users << emily
-      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
-      expect(grid.reload.users.size).to eq(1)
-      expect(emily.reload.grids.include?(grid)).to be_falsey
+      grid.users << thomas
+      delete "/v1/grids/#{grid.to_path}/users/#{thomas.email}", nil, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response['error']).to eq 'grid' => 'Operation not allowed'
     end
 
-    it 'creates audit log entry' do
-      grid = david.grids.first
-      grid.users << emily
-      expect {
+    context 'for a grid admin' do
+      let(:grid) { david.grids.first }
+
+      before do
+        david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
+        grid.users << emily
+      end
+
+      it 'validates that unassigned user belongs to grid' do
+        delete "/v1/grids/#{grid.to_path}/users/#{thomas.email}", nil, request_headers
+        expect(response.status).to eq(422)
+        expect(json_response['error']).to eq 'user' => 'Invalid user'
+      end
+
+      it 'unassigns user from grid' do
         delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
-      }.to change{ AuditLog.count }.by(1)
-      audit_log = AuditLog.last
-      expect(audit_log.event_name).to eq('unassign user')
-      expect(audit_log.resource_id).to eq(emily.id.to_s)
-      expect(audit_log.grid).to eq(grid)
+        expect(response.status).to eq(200)
+        expect(grid.reload.users.size).to eq(1)
+        expect(thomas.reload.grids.include?(grid)).to be_falsey
+      end
+
+      it 'creates audit log entry' do
+        expect {
+          delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
+          expect(response.status).to eq(200)
+        }.to change{ AuditLog.count }.by(1)
+        audit_log = AuditLog.last
+        expect(audit_log.event_name).to eq('unassign user')
+        expect(audit_log.resource_id).to eq(emily.id.to_s)
+        expect(audit_log.grid).to eq(grid)
+      end
+
+      it 'returns array of grid users' do
+        delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['users'].size).to eq(1)
+      end
     end
 
-    it 'returns array of grid users' do
+    it 'validates that user cannot remove last user from grid' do
       grid = david.grids.first
-      grid.users << emily
-      delete "/v1/grids/#{grid.to_path}/users/#{emily.email}", nil, request_headers
-      expect(response.status).to eq(200)
-      expect(json_response['users'].size).to eq(1)
-    end
+      david.roles << Role.create(name: 'grid_admin', description: 'Grid admin')
 
+      delete "/v1/grids/#{grid.to_path}/users/#{david.email}", nil, request_headers
+      expect(response.status).to eq(422)
+      expect(json_response['error']).to eq 'grid' => 'Cannot remove last user'
+    end
   end
 
 

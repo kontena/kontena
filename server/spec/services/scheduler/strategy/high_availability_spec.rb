@@ -10,8 +10,8 @@ describe Scheduler::Strategy::HighAvailability do
       2.times do |i|
         instance = i + 1
         nodes << HostNode.create!(
-          node_id: "node#{instance}",
-          name: "node-#{instance}",
+          node_id: "node#{instance}#{az}",
+          name: "node-#{instance}#{az}",
           connected: true,
           grid: grid,
           labels: ['region=eu-west-1', "az=#{az}"]

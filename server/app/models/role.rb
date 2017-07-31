@@ -6,6 +6,7 @@ class Role
   has_and_belongs_to_many :users
 
   MASTER_ADMIN_ROLE = 'master_admin'
+  USER_ADMIN_ROLE = 'user_admin'
   GRID_ADMIN_ROLE = 'grid_admin'
 
   field :name, type: String
@@ -19,6 +20,10 @@ class Role
 
   def master_admin?
     self.name == MASTER_ADMIN_ROLE
+  end
+
+  def user_admin?
+    self.name == USER_ADMIN_ROLE
   end
 
   def self.master_admin

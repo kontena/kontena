@@ -26,8 +26,15 @@ toc_order: 2
 
 ## Kontena Agent
 
-- `KONTENA_URI`: Kontena Master websocket uri (required)
-- `KONTENA_TOKEN`: Kontena Grid token (required)
+The `KONTENA_URI` and either of `KONTENA_TOKEN` or `KONTENA_NODE_TOKEN` is required.
+
+- `KONTENA_URI`: Kontena Master websocket uri, `ws://...` or `wss://...` (required)
+- `KONTENA_SSL_VERIFY`: Verify `wss://` server SSL certificate (default: no verification)
+- `KONTENA_SSL_HOSTNAME`: Override hostname for SSL SNI and certificate subject verification
+- `KONTENA_TOKEN`: Kontena [Grid token](../using-kontena/nodes.md#grid-token)
+- `KONTENA_NODE_TOKEN`: Kontena [Node token](../using-kontena/nodes.md#node-token)
+- `KONTENA_NODE_ID`: Override node ID (default: `docker info` -> `ID`)
+- `KONTENA_NODE_LABELS`: Override initial node labels (default: `docker info` -> `Labels`)
 - `KONTENA_PEER_INTERFACE`: network interface for peer/private communication (default: eth1)
 - `KONTENA_PUBLIC_IP`: specify node public ip, overrides default resolving
 - `KONTENA_PRIVATE_IP`: specify node private ip, overrides default resolving
@@ -41,6 +48,8 @@ toc_order: 2
 - `WEAVEEXEC_IMAGE`: weave exec image (default: weaveworks/weaveexec)
 - `WEAVE_VERSION`: weave net version
 - `WEBSOCKET_TIMEOUT`: websocket timeout in seconds (default: 5.0)
+- `SSL_CERT_FILE`: path to SSL CA cert bundle file
+- `SSL_CERT_PATH`: path to SSL CA cert bundle directory
 
 ## Kontena CLI
 

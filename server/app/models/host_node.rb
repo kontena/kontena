@@ -1,4 +1,5 @@
 require 'ipaddr'
+require 'securerandom'
 require_relative 'event_stream'
 
 class HostNode
@@ -11,6 +12,7 @@ class HostNode
   field :node_id, type: String
   field :node_number, type: Integer
   field :name, type: String
+  field :token, type: String
   field :os, type: String
   field :docker_root_dir, type: String
   field :driver, type: String
@@ -42,12 +44,14 @@ class HostNode
   has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
+  validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
   after_save :reserve_node_number, :ensure_unique_name
 
   index({ grid_id: 1 })
-  index({ node_id: 1 })
+  index({ node_id: 1 }, { unique: true, sparse: true })
   index({ labels: 1 })
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
+  index({ token: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
 
@@ -74,7 +78,6 @@ class HostNode
   # @param [Hash] attrs
   def attributes_from_docker(attrs)
     self.attributes = {
-      node_id: attrs['ID'],
       os: attrs['OperatingSystem'],
       docker_root_dir: attrs['DockerRootDir'],
       driver: attrs['Driver'],
