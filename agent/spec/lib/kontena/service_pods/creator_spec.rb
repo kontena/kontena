@@ -45,7 +45,7 @@ describe Kontena::ServicePods::Creator do
       subject.get_container('service_id', 2)
     end
   end
-  
+
 
   describe '#config_container' do
     let(:network_adapter) { instance_double(Kontena::NetworkAdapters::Weave) }
@@ -82,7 +82,7 @@ describe Kontena::ServicePods::Creator do
       subject { described_class.new(service_pod) }
 
       it 'does not include weave-wait' do
-        expect(network_adapter).to_not receive(:modify_create_opts)
+        expect(network_adapter).to_not receive(:modify_container_opts)
 
         config = subject.config_container(service_pod)
 
@@ -118,11 +118,11 @@ describe Kontena::ServicePods::Creator do
 
       subject { described_class.new(service_pod) }
 
-      it 'does not include weave-wait' do
-        expect(network_adapter).to receive(:modify_create_opts)
+      it 'includes weave-wait' do
+        expect(network_adapter).to receive(:modify_container_opts)
 
         config = subject.config_container(service_pod)
-        
+
       end
     end
   end
