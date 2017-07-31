@@ -14,10 +14,15 @@ module Kontena::Cli::Nodes
       grid_uri = self.current_master['url'].sub('http', 'ws')
     end
 
-    def execute
-      token_node = client.get("nodes/#{current_grid}/#{name}/token")
+    def get_node_token
+      return client.get("nodes/#{current_grid}/#{name}/token")
+    rescue Kontena::Errors::StandardError => exc
+      raise unless exc.status == 404
+      return nil
+    end
 
-      unless token_node['token']
+    def execute
+      unless token_node = get_node_token()
         exit_with_error "Node #{name} was not created with a node token. Use `kontena grid env` instead"
       end
 

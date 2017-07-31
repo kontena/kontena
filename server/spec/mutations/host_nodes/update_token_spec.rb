@@ -19,24 +19,45 @@ describe HostNodes::UpdateToken do
       expect(node.token).to eq outcome.result.token
     end
 
+    it 'fails with an empty token' do
+      outcome = described_class.run(
+        host_node: node,
+        token: '',
+      )
+
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'token' => "Token can't be blank"
+    end
+
+    it 'fails with a short token' do
+      outcome = described_class.run(
+        host_node: node,
+        token: 'asdf',
+      )
+
+      expect(outcome).to_not be_success
+      expect(outcome.errors.message).to eq 'token' => "is too short (minimum is 16 characters)"
+    end
+
+
     it 'updates given node token' do
       outcome = described_class.run(
         host_node: node,
-        token: 'asdf'
+        token: 'asdfasdfasdfasdf'
       )
 
       expect(outcome).to be_success
-      expect(outcome.result.token).to eq 'asdf'
+      expect(outcome.result.token).to eq 'asdfasdfasdfasdf'
 
       node.reload
 
       expect(outcome.result).to eq node
-      expect(node.token).to eq 'asdf'
+      expect(node.token).to eq 'asdfasdfasdfasdf'
     end
   end
 
   context "with an existing host node with a token" do
-    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdf')}
+    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf')}
 
     before do
       node
@@ -50,7 +71,7 @@ describe HostNodes::UpdateToken do
       expect(outcome).to be_success
       expect(outcome.result.token).to be_a String
       expect(outcome.result.token).to_not be_empty
-      expect(outcome.result.token).to_not eq 'asdf'
+      expect(outcome.result.token).to_not eq 'asdfasdfasdfasdf'
     end
 
     it 'generates a new node token with explicit nil' do
@@ -62,23 +83,23 @@ describe HostNodes::UpdateToken do
       expect(outcome).to be_success
       expect(outcome.result.token).to be_a String
       expect(outcome.result.token).to_not be_empty
-      expect(outcome.result.token).to_not eq 'asdf'
+      expect(outcome.result.token).to_not eq 'asdfasdfasdfasdf'
     end
 
     it 'updates given node token' do
       outcome = described_class.run(
         host_node: node,
-        token: 'asdf2'
+        token: 'asdfasdfasdfasdf2'
       )
 
       expect(outcome).to be_success
-      expect(outcome.result.token).to eq 'asdf2'
+      expect(outcome.result.token).to eq 'asdfasdfasdfasdf2'
     end
 
     it 'clears the node token' do
       outcome = described_class.run(
         host_node: node,
-        token: '',
+        clear_token: true,
       )
 
       expect(outcome).to be_success
@@ -105,7 +126,7 @@ describe HostNodes::UpdateToken do
       it 'fails to update to a duplicate token' do
         outcome = described_class.run(
           host_node: node2,
-          token: 'asdf'
+          token: 'asdfasdfasdfasdf'
         )
 
         expect(outcome).to_not be_success
@@ -115,7 +136,7 @@ describe HostNodes::UpdateToken do
   end
 
   context "with an existing host node that is connected" do
-    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdf', connected: true)}
+    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf', connected: true)}
 
     before do
       node
@@ -127,7 +148,7 @@ describe HostNodes::UpdateToken do
       )
 
       expect(outcome).to be_success
-      expect(outcome.result.token).to_not eq 'asdf'
+      expect(outcome.result.token).to_not eq 'asdfasdfasdfasdf'
       expect(outcome.result).to be_connected
     end
 
@@ -138,7 +159,7 @@ describe HostNodes::UpdateToken do
       )
 
       expect(outcome).to be_success
-      expect(outcome.result.token).to_not eq 'asdf'
+      expect(outcome.result.token).to_not eq 'asdfasdfasdfasdf'
       expect(outcome.result).to_not be_connected
     end
   end

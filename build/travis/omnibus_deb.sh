@@ -24,4 +24,4 @@ chmod +x /tmp/github-release
     --repo kontena \
     --tag $TRAVIS_TAG \
     --name "kontena_${TRAVIS_TAG}_amd64.deb" \
-    --file pkg/kontena-*.deb
+    --file pkg/kontena_*.deb
