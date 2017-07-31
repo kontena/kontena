@@ -31,15 +31,8 @@ describe Kontena::Cli::Nodes::EnvCommand do
   end
 
   context 'for a node without any token' do
-    let :node_token do
-      {
-        "id" => nil,
-        "token" => nil,
-      }
-    end
-
     before do
-      expect(client).to receive(:get).with('nodes/test-grid/node-1/token').and_return(node_token)
+      expect(client).to receive(:get).with('nodes/test-grid/node-1/token').and_raise(Kontena::Errors::StandardError.new(404, "Host node does not have a node token"))
     end
 
     it 'uses the grid token' do
