@@ -88,7 +88,7 @@ module Kontena
       id = rand(REQUEST_ID_RANGE)
 
       while @requests.has_key?(id)
-        sleep 0.001
+        sleep 0.01
         id = rand(REQUEST_ID_RANGE)
       end
 
