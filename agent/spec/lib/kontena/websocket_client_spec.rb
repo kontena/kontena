@@ -30,6 +30,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   before do
     allow(subject).to receive(:async).and_return(async)
+    allow(actor).to receive(:async).and_return(async)
   end
 
   before do
@@ -333,6 +334,27 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
         expect(subject.connecting?).to be false
         expect(subject.connected?).to be false
+      end
+
+      it 'handles websocket pongs as async calls' do
+        expect(ws_client).to receive(:connect)
+        expect(subject).to receive(:on_open)
+        expect(ws_client).to receive(:read) do |&block|
+          expect(@on_pong).to_not be_nil
+
+          expect(async).to receive(:on_pong).with(1.0)
+
+          @on_pong.call(1.0)
+
+          allow(ws_client).to receive(:close_code).and_return(1000)
+          allow(ws_client).to receive(:close_reason).and_return ''
+        end
+        expect(subject).to_not receive(:on_error)
+        expect(subject).to receive(:on_close).with(1000, '')
+
+        expect(ws_client).to receive(:disconnect)
+
+        actor.connect_client(ws_client)
       end
     end
 
