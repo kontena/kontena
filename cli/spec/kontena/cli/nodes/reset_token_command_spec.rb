@@ -30,9 +30,15 @@ describe Kontena::Cli::Nodes::ResetTokenCommand do
     subject.run(['--force', '--no-reset-connection', 'test-node'])
   end
 
-  it 'PUTs to clear token without reset_connection' do
-    expect(client).to receive(:put).with('nodes/test-grid/test-node/token', {token: '', reset_connection: false})
+  it 'DELETEs to clear token without reset_connection' do
+    expect(client).to receive(:delete).with('nodes/test-grid/test-node/token', {reset_connection: false})
 
     subject.run(['--force', '--no-reset-connection', '--clear-token', 'test-node'])
+  end
+
+  it 'DELETEs to clear token with reset_connection' do
+    expect(client).to receive(:delete).with('nodes/test-grid/test-node/token', {reset_connection: true})
+
+    subject.run(['--force', '--clear-token', 'test-node'])
   end
 end

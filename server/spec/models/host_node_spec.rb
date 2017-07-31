@@ -347,28 +347,33 @@ describe HostNode do
       expect(node2.token).to be_nil
     end
 
+    it 'does not allow empty tokens' do
+      expect{HostNode.create!(grid: grid, name: 'node-1', token: '')}.to raise_error(Mongoid::Errors::Validations)
+    end
+
     context 'with a node that has a node token' do
-      let(:node1) { HostNode.create!(name: 'node-1', grid: grid, token: 'asdf') }
+      let(:token) { 'asdf'* 4 }
+      let(:node1) { HostNode.create!(name: 'node-1', grid: grid, token: token) }
 
       before do
         node1
       end
 
       it 'has a node token' do
-        expect(node1.token).to eq 'asdf'
+        expect(node1.token).to eq 'asdfasdfasdfasdf'
 
-        expect(HostNode.find_by(token: 'asdf').id).to eq node1.id
+        expect(HostNode.find_by(token: token).id).to eq node1.id
       end
 
       it 'does not allow multiple nodes to share the same token' do
-        expect{HostNode.create!(name: 'node-2', grid: grid, token: 'asdf')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdf" }/)
+        expect{HostNode.create!(name: 'node-2', grid: grid, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
       end
 
       context 'with a second grid' do
         let(:grid2) { Grid.create!(name: 'test2') }
 
         it 'does not allow nodes to share the same token' do
-          expect{HostNode.create!(name: 'node-2', grid: grid2, token: 'asdf')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdf" }/)
+          expect{HostNode.create!(name: 'node-2', grid: grid2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
         end
       end
     end
