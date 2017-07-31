@@ -40,7 +40,7 @@ class ContainerStat
     # The aggregation takes the average CPU values for a given time slice
     # and puts in an array, one for each container instance.
     # Then each resulting record is processed by Ruby code outside mongo.
-    self.collection.aggregate([
+    self.collection.with( read: { mode: :secondary_preferred } ).aggregate([
     {
       '$match' => {
         grid_service_id: service_id,

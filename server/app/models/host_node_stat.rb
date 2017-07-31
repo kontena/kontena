@@ -21,7 +21,7 @@ class HostNodeStat
   index({ grid_id: 1, created_at: 1 }, { background: true })
 
   def self.get_aggregate_stats_for_node(node_id, from_time, to_time)
-    self.collection.aggregate([
+    self.collection.with( read: { mode: :secondary_preferred } ).aggregate([
     {
       '$match' => {
         host_node_id: node_id,
@@ -138,7 +138,7 @@ class HostNodeStat
   end
 
   def self.get_aggregate_stats_for_grid(grid_id, from_time, to_time)
-    self.collection.aggregate([
+    self.collection.with( read: { mode: :secondary_preferred } ).aggregate([
     {
       '$match' => {
         grid_id: grid_id,
