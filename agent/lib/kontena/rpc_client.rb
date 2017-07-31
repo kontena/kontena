@@ -48,7 +48,7 @@ module Kontena
     #
     # @param [String] method
     # @param [Array] params
-    # @param [Fixnum] timeout seconds
+    # @param [Float] timeout seconds
     # @raise abort
     # @return [Object]
     def request(method, params, timeout: 30)
@@ -83,7 +83,7 @@ module Kontena
       @requests[msgid] = [result, error]
     end
 
-    # @return [Fixnum]
+    # @return [Integer]
     def request_id
       id = rand(REQUEST_ID_RANGE)
 
