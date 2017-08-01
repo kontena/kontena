@@ -5,6 +5,7 @@
 #
 
 name "kontena"
+package_name "kontena-cli"
 friendly_name "Kontena CLI"
 maintainer "Kontena, Inc."
 homepage "https://kontena.io"
@@ -20,7 +21,7 @@ build_iteration 1
 dependency "preparation"
 
 # kontena dependencies/components
-dependency "kontena"
+dependency "kontena-cli"
 
 # Version manifest file
 dependency "version-manifest"
