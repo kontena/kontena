@@ -18,10 +18,10 @@ bundle exec omnibus build kontena --log-level info
 curl -sL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 | tar -xjO > /tmp/github-release
 chmod +x /tmp/github-release
 
-# upload kontena pkg to github
+# upload kontena deb to github
 /tmp/github-release upload \
     --user kontena \
     --repo kontena \
     --tag $TRAVIS_TAG \
-    --name "kontena_${TRAVIS_TAG}_amd64.deb" \
-    --file pkg/kontena_*.deb
+    --name "kontena-cli_${TRAVIS_TAG#v}_amd64.deb" \
+    --file pkg/kontena-cli_*.deb
