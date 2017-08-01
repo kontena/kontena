@@ -33,3 +33,8 @@ package :pkg do
   identifier "io.kontena.cli.pkg.kontena"
   signing_identity "Developer ID Installer: Kontena Oy (JJ22T2W355)"
 end
+
+package :deb do
+  vendor "Kontena, Inc <info@kontena.io>"
+  license "Apache 2.0" # XXX: only the kontena-cli code, not the dependencies?
+end
