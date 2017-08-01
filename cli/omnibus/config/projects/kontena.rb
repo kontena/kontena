@@ -7,6 +7,7 @@
 name "kontena"
 package_name "kontena-cli"
 friendly_name "Kontena CLI"
+description "Command-line tool for the Kontena Platform"
 maintainer "Kontena, Inc."
 homepage "https://kontena.io"
 
