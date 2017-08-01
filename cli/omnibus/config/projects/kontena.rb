@@ -36,5 +36,4 @@ end
 
 package :deb do
   vendor "Kontena, Inc <info@kontena.io>"
-  license "Apache 2.0" # XXX: only the kontena-cli code, not the dependencies?
 end
