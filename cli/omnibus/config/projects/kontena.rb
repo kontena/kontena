@@ -35,6 +35,7 @@ package :pkg do
   signing_identity "Developer ID Installer: Kontena Oy (JJ22T2W355)"
 end
 
+project_location_dir = name
 package :msi do
   fast_msi true
   upgrade_code '6f4303b0-f273-43b5-9bed-0d979553d5eb'
