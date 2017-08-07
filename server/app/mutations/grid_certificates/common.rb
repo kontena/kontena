@@ -56,7 +56,7 @@ module GridCertificates
       end
 
       unless outcome.success?
-        add_error(:cert_store, :failure, "Certificate storing to vault failed: #{outcome.errors.message}")
+        add_error(:cert_store, outcome.errors)
         return
       end
       outcome.result

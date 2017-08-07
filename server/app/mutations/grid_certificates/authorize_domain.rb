@@ -86,7 +86,7 @@ module GridCertificates
         secrets << {secret: secret.name, name: 'SSL_CERTS', type: 'env'}
         outcome = GridServices::Update.run(grid_service: grid_service, secrets: secrets)
         unless outcome.success?
-          add_error(:tls_sni_secret, :error, outcome.errors.message)
+          add_error(:tls_sni_secret, outcome.errors)
         end
       else
         info "no need to add tls-sni secret, it already exists on service #{grid_service.qualified_name}"
