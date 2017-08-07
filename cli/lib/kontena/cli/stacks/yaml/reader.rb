@@ -59,16 +59,20 @@ module Kontena::Cli::Stacks
         stream.read
       end
 
+      def default_envs
+        {
+          'GRID' => env['GRID'],
+          'STACK' => env['STACK']
+        }
+      end
+
       def internals_interpolated_yaml
         @internals_interpolated_yaml ||= ::YAML.safe_load(
           replace_dollar_dollars(
             interpolate(
               raw_content,
               use_opto: false,
-              substitutions: {
-                'GRID' => env['GRID'],
-                'STACK' => env['STACK']
-              },
+              substitutions: default_envs,
               warnings: false
             )
           )
@@ -104,7 +108,7 @@ module Kontena::Cli::Stacks
       def variables
         return @variables if @variables
         @variables = ::Opto::Group.new(
-          (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}),
+          (internals_interpolated_yaml['variables'] || {}).merge(default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }),
           defaults: {
             from: :env,
             to: :env
