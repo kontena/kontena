@@ -114,7 +114,7 @@ module Kontena::Workers
     def ensure_service_worker(service_pod)
       begin
         unless workers[service_pod.id]
-          worker = ServicePodWorker.new(node, service_pod)
+          worker = ServicePodWorker.new(service_pod)
           self.link worker
           workers[service_pod.id] = worker
           worker.async.apply
