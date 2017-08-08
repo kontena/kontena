@@ -17,14 +17,17 @@ module Kontena::Cli::Nodes
     def execute
       confirm("Resetting the node token will disconnect the agent (unless using --no-reset-connection), and require you to reconfigure the kontena-agent using the new `kontena node env` values before it will be able to reconnect. Are you sure?")
 
-      data = {}
-
-      data[:token] = self.token
-      data[:token] = '' if self.clear_token?
-      data[:reset_connection] = self.reset_connection?
-
       spinner "Resetting node #{self.node.colorize(:cyan)} websocket connection token" do
-        client.put("nodes/#{current_grid}/#{self.node}/token", data)
+        if self.clear_token?
+          client.delete("nodes/#{current_grid}/#{self.node}/token",
+            reset_connection: self.reset_connection?,
+          )
+        else
+          client.put("nodes/#{current_grid}/#{self.node}/token",
+            token: self.token,
+            reset_connection: self.reset_connection?,
+          )
+        end
       end
     end
   end

@@ -20,6 +20,17 @@ describe HostNodes::Create do
     expect(outcome.errors.message).to eq 'name' => "Name isn't in the right format"
   end
 
+  it 'fails with an empty token' do
+    outcome = described_class.run(
+      grid: grid,
+      name: 'foo',
+      token: '',
+    )
+
+    expect(outcome).to_not be_success
+    expect(outcome.errors.message).to eq 'token' => "Token can't be blank"
+  end
+
   it 'creates with defaults' do
     outcome = described_class.run(
       grid: grid,
@@ -40,11 +51,11 @@ describe HostNodes::Create do
     outcome = described_class.run(
       grid: grid,
       name: 'foobar',
-      token: 'asdf',
+      token: 'asdfasdfasdfasdf',
     )
     expect(outcome).to be_success
     expect(outcome.result).to be_a HostNode
-    expect(outcome.result.token).to eq 'asdf'
+    expect(outcome.result.token).to eq 'asdfasdfasdfasdf'
   end
 
   it 'creates with labels' do
@@ -61,7 +72,7 @@ describe HostNodes::Create do
     let(:node) do
       grid.host_nodes.create!(
         name: 'test-1',
-        token: 'asdfasdf',
+        token: 'asdfasdfasdfasdf',
       )
     end
 

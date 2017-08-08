@@ -9,7 +9,8 @@ module HostNodes
     end
 
     optional do
-      string :token, nils: true, empty: true
+      string :token, nils: true
+      boolean :clear_token
       boolean :reset_connection
     end
 
@@ -20,12 +21,12 @@ module HostNodes
     end
 
     def update_token(node)
-      if self.token.nil?
-        node.token = self.generate_token
-      elsif self.token.empty?
+      if self.clear_token
         node.token = nil
-      else
+      elsif self.token
         node.token = self.token
+      else
+        node.token = self.generate_token
       end
     end
 

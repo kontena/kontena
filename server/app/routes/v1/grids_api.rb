@@ -106,7 +106,11 @@ module V1
           end
 
           r.on 'container_logs' do
-            scope = @grid.container_logs.includes(:host_node, :grid, :grid_service)
+            scope = @grid.container_logs.includes(
+              :host_node, :grid, :grid_service
+            ).with(
+              read: { mode: :secondary_preferred }
+            )
 
             unless r['containers'].nil?
               container_names = r['containers'].split(',')
@@ -134,7 +138,9 @@ module V1
 
           r.on 'audit_log' do
             limit = (1..3000).cover?(request.params['limit'].to_i) ? request.params['limit'].to_i : 500
-            @logs = @grid.audit_logs.order(created_at: :desc).limit(limit).to_a.reverse
+            @logs = @grid.audit_logs.with(
+              read: { mode: :secondary_preferred }
+            ).order(created_at: :desc).limit(limit).to_a.reverse
             render('audit_logs/index')
           end
         end

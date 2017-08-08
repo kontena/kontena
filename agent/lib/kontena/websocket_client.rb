@@ -133,7 +133,8 @@ module Kontena
       # run the blocking websocket client connect+read in a separate thread
       defer {
         ws.on_pong do |delay|
-          actor.on_pong(delay)
+          # XXX: called with the client mutex locked, do not block
+          actor.async.on_pong(delay)
         end
 
         # blocks until open, raises on errors

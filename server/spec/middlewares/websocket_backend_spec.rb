@@ -135,7 +135,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a grid token and node ID that has a node token " do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeABC', token: 'secret') }
+      let(:host_node) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { 'secret123' }
       let(:node_token) { nil }
@@ -157,7 +157,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node token" do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'secret') }
+      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'the wrong secret' }
@@ -180,10 +180,10 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node ID" do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'secret', node_id: 'nodeABC') }
+      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
 
       let(:grid_token) { nil }
-      let(:node_token) { 'secret' }
+      let(:node_token) { 'asdfasdfasdfasdf' }
       let(:node_id) { 'nodeXYZ' }
 
       before do
@@ -205,11 +205,11 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a duplicate node ID" do
-      let(:host_node1) { grid.host_nodes.create!(name: 'node-1', token: 'secret1', node_id: 'nodeABC') }
-      let(:host_node2) { grid.host_nodes.create!(name: 'node-2', token: 'secret2') }
+      let(:host_node1) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
+      let(:host_node2) { grid.host_nodes.create!(name: 'node-2', token: 'asdfasdfasdfasdf2') }
 
       let(:grid_token) { nil }
-      let(:node_token) { 'secret2' }
+      let(:node_token) { 'asdfasdfasdfasdf2' }
       let(:node_id) { 'nodeABC' }
 
       before do
@@ -343,10 +343,10 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
 
       context 'with a valid node token' do
-        let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'test token') }
+        let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf') }
 
         let(:grid_token) { nil }
-        let(:node_token) { 'test token' }
+        let(:node_token) { 'asdfasdfasdfasdf' }
 
         before do
           host_node
