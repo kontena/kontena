@@ -23,6 +23,9 @@ module Rpc
 
     # @return [Array<Hash>]
     def list
+      node = HostNode.find(@node.id)
+      raise "Node not found" unless node
+
       start = Time.now.to_f
 
       raise 'Migration not done' unless migration_done?
@@ -37,8 +40,10 @@ module Rpc
 
     # @param [Hash] pod
     def set_state(pod)
-      service_instance = @node.grid_service_instances.find_by(
-        grid_service_id: pod['service_id'], instance_number: pod['instance_number']
+      service_instance = GridServiceInstance.find_by(
+        host_node_id: @node.id,
+        grid_service_id: pod['service_id'],
+        instance_number: pod['instance_number'],
       )
       raise 'Instance not found' unless service_instance
 
