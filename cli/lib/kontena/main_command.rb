@@ -29,7 +29,6 @@ class Kontena::MainCommand < Kontena::Command
   subcommand "registry", "Registry specific commands", load_subcommand('registry_command')
   subcommand "external-registry", "External registry specific commands", load_subcommand('external_registry_command')
   subcommand "volume", "Volume specific commands [EXPERIMENTAL]", load_subcommand('volume_command')
-  subcommand "app", "App specific commands", load_subcommand('app_command')
   subcommand "plugin", "Plugin specific commands", load_subcommand('plugin_command')
   subcommand "whoami", "Shows current logged in user", load_subcommand('whoami_command')
   subcommand "version", "Show CLI and current master version", load_subcommand('version_command')
@@ -54,6 +53,9 @@ class Kontena::MainCommand < Kontena::Command
     elsif name == 'logout'
       exit_with_error "Use 'kontena master logout' to log out from a Kontena Master\n"+
              "         or 'kontena cloud logout' for logging out from your Kontena Cloud account"
+    elsif name == 'app'
+      exit_with_error "The deprecated app subcommand has been moved into a plugin. You can install\n" +
+             "         it by using 'kontena plugin install app-command'"
     end
     super
   end
