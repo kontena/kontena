@@ -19,7 +19,7 @@ describe Scheduler::Filter::Availability do
     end
 
     it 'returns only unevacuated nodes' do
-      nodes[2].availability = 'drain'
+      nodes[2].availability = HostNode::Availability::DRAIN
       filtered = subject.for_service(service, 1, nodes)
       expect(filtered).not_to include(nodes[2])
     end

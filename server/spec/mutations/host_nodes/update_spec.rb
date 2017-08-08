@@ -42,17 +42,17 @@ describe HostNodes::Update, celluloid: true do
           expect {
             outcome = described_class.new(
               host_node: node,
-              availability: 'drain',
+              availability: HostNode::Availability::DRAIN,
               labels: []
             ).run
             expect(outcome.success?).to be_truthy
-          }.to change{ node.reload.availability }.from('active').to('drain')
+          }.to change{ node.reload.availability }.from(HostNode::Availability::ACTIVE).to(HostNode::Availability::DRAIN)
         end
 
         it 'starts re-scheduling when draining' do
           mutation = described_class.new(
             host_node: node,
-            availability: 'drain',
+            availability: HostNode::Availability::DRAIN,
             labels: []
           )
           expect(mutation).to receive(:re_deploy_needed_services)
@@ -64,24 +64,24 @@ describe HostNodes::Update, celluloid: true do
 
       context 'active' do
         it 'updates availability to active' do
-          node.availability = 'drain'
+          node.availability = HostNode::Availability::DRAIN
           expect {
             described_class.new(
               host_node: node,
-              availability: 'active',
+              availability: HostNode::Availability::ACTIVE,
               labels: []
             ).run
-          }.to change{ node.availability }.from('drain').to('active')
+          }.to change{ node.availability }.from(HostNode::Availability::DRAIN).to(HostNode::Availability::ACTIVE)
         end
       end
 
       it 'triggers actions only when availability changes' do
-        node.availability = 'drain'
+        node.availability = HostNode::Availability::DRAIN
         expect(node).not_to receive(:set)
         expect {
           described_class.new(
             host_node: node,
-            availability: 'drain',
+            availability: HostNode::Availability::DRAIN,
             labels: []
           ).run
         }.not_to change{ node }

@@ -11,9 +11,9 @@ module HostNodes
     end
 
     optional do
-      string :availability, in: ['active', 'drain']
+      string :availability, in: [HostNode::Availability::ACTIVE, HostNode::Availability::DRAIN]
     end
-    
+
     common_inputs
 
     def execute
@@ -29,10 +29,10 @@ module HostNodes
         self.host_node.set(:availability => self.availability)
 
         case self.availability
-        when 'active'
+        when HostNode::Availability::ACTIVE
           start_stateful_services(self.host_node)
           # TODO Should this also trigger full re-scheduling or just wait for the next loop to do it?
-        when 'drain'
+        when HostNode::Availability::DRAIN
           re_deploy_needed_services(self.host_node)
           stop_stateful_services(self.host_node)
         end

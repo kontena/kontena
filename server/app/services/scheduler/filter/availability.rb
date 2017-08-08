@@ -9,11 +9,11 @@ module Scheduler
       # @raise [Scheduler::Error]
       def for_service(service, instance_number, nodes)
 
-        nodes = nodes.select { |n| 
+        nodes = nodes.select { |n|
           case n.availability
-          when 'active'
+          when HostNode::Availability::ACTIVE
             true
-          when 'drain'
+          when HostNode::Availability::DRAIN
             false
           end
         }
