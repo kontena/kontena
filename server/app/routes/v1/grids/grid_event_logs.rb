@@ -3,7 +3,7 @@ V1::GridsApi.route('grid_event_logs') do |r|
   # GET /v1/grids/:id/event_logs
   r.get do
     r.is do
-      scope = @grid.event_logs
+      scope = @grid.event_logs.with(read: { mode: :secondary_preferred })
 
       unless r['nodes'].nil?
         nodes = r['nodes'].split(',').map { |name|

@@ -34,7 +34,7 @@ module Kontena
       if node_labels = opts[:node_labels]
         @node_labels = node_labels.split()
       else
-        @node_labels = Docker.info['Labels']
+        @node_labels = Docker.info['Labels'].to_a
       end
     end
 

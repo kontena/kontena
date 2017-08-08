@@ -35,6 +35,8 @@ module V1
           r.is do
             # GET /v1/nodes/:grid/:node/token
             r.get do
+              halt_request(404, {error: "Host node does not have a node token"}) unless @node.token
+
               render('host_nodes/token')
             end
 
@@ -50,6 +52,20 @@ module V1
                 @node = outcome.result
                 response.status = 200
                 render('host_nodes/token')
+              else
+                halt_request(422, {error: outcome.errors.message})
+              end
+            end
+
+            r.delete do
+              data = parse_json_body
+              outcome = HostNodes::UpdateToken.run(
+                host_node: @node,
+                clear_token: true,
+                reset_connection: data['reset_connection'],
+              )
+              if outcome.success?
+                {}
               else
                 halt_request(422, {error: outcome.errors.message})
               end

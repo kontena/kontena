@@ -44,7 +44,7 @@ $ kontena vault write REGISTRY_STORAGE_S3_SECRETKEY <secret_key>
 Create registry service:
 
 ```
-$ kontena registry create --s3-bucket=<bucket_name> --s3-region=<optional_aws_region>
+$ kontena registry create --s3-bucket=<bucket_name> --s3-region=<optional_aws_region> --s3-v4auth
 ```
 
 #### Azure storage backend
