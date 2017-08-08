@@ -49,21 +49,22 @@ module Kontena::Workers
 
     def publish_node_info
       debug 'publishing node information'
-      node_info = docker_info.dup
+      node_info = Docker.info()
       node_info['PublicIp'] = self.public_ip
       node_info['PrivateIp'] = self.private_ip
       node_info['AgentVersion'] = Kontena::Agent::VERSION
       node_info['Drivers'] = {
-        'Volume' => volume_drivers,
-        'Network' => network_drivers
+        'Volume' => volume_drivers(node_info),
+        'Network' => network_drivers(node_info),
       }
       rpc_client.request('/nodes/update', [@node_id, node_info])
     rescue => exc
       error "publish_node_info: #{exc.message}"
     end
 
+    # @param docker_info [Hash]
     # @return [Array<Hash>]
-    def volume_drivers
+    def volume_drivers(docker_info)
       drivers = []
       plugins.each do |plugin|
         config = plugin['Config']
@@ -79,8 +80,9 @@ module Kontena::Workers
       drivers
     end
 
+    # @param docker_info [Hash]
     # @return [Array<Hash>]
-    def network_drivers
+    def network_drivers(docker_info)
       drivers = []
       plugins.each do |plugin|
         config = plugin['Config']
@@ -133,11 +135,6 @@ module Kontena::Workers
     # @return [String]
     def private_interface
       ENV['KONTENA_PEER_INTERFACE'] || 'eth1'
-    end
-
-    # @return [Hash]
-    def docker_info
-      @docker_info ||= Docker.info
     end
 
     # @return [Hash]
