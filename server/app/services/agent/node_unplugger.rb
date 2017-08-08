@@ -16,8 +16,10 @@ module Agent
       self.update_node!(connected_at,
         connected: false,
         disconnected_at: Time.now.utc,
-        connection_error_code: code,
-        connection_error: reason
+        websocket_connection: {
+          close_code: code,
+          close_reason: reason
+        },
       )
       self.update_node_containers
       self.publish_update_event

@@ -20,8 +20,9 @@ describe Agent::NodeUnplugger do
         }.to change{ node.reload.connected? }.from(true).to(false)
 
         expect(node.status).to eq :offline
-        expect(node.connection_error).to eq "Agent closed connection"
-        expect(node.connection_error_code).to eq 1006
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.close_code).to eq 1006
+        expect(node.websocket_connection.close_reason).to eq "Agent closed connection"
       end
     end
   end

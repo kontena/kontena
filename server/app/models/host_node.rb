@@ -33,11 +33,10 @@ class HostNode
   field :connected_at, type: Time
   field :disconnected_at, type: Time
   field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
-  field :connection_error_code, type: Integer
-  field :connection_error, type: String
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
+  embeds_one :websocket_connection, class_name: 'HostNodeConnection'
 
   belongs_to :grid
   has_many :grid_service_instances, dependent: :nullify
@@ -124,14 +123,14 @@ class HostNode
   def websocket_error
     if self.connected
       return nil
-    elsif !self.connection_error_code
+    elsif !self.websocket_connection
       return "Websocket is not connected"
     elsif !self.disconnected_at || self.connected_at > self.disconnected_at
       # WebsocketBackend#on_open -> Agent::NodePlugger.reject!
-      return "Websocket connection rejected at #{self.connected_at} with code #{self.connection_error_code}: #{self.connection_error}"
+      return "Websocket connection rejected at #{self.connected_at} with code #{self.websocket_connection.close_code}: #{self.websocket_connection.close_reason}"
     else
       # WebsocketBackend#on_close -> Agent::NodeUnplugger.unplug!
-      return "Websocket disconnected at #{self.disconnected_at} with code #{self.connection_error_code}: #{self.connection_error}"
+      return "Websocket disconnected at #{self.disconnected_at} with code #{self.websocket_connection.close_code}: #{self.websocket_connection.close_reason}"
     end
   end
 

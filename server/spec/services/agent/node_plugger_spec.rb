@@ -24,7 +24,11 @@ describe Agent::NodePlugger do
         expect {
           subject.plugin! connected_at
         }.to change{ node.reload.connected? }.to be_truthy
+
         expect(node.status).to eq :connecting
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.close_code).to be_nil
+        expect(node.websocket_connection.close_reason).to be_nil
       end
     end
 
@@ -36,9 +40,9 @@ describe Agent::NodePlugger do
 
         expect(node.status).to eq :offline
         expect(node.connected).to be false
-        expect(node.connection_error_code).to eq 1006
-        expect(node.connection_error).to eq "asdf"
-
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.close_code).to eq 1006
+        expect(node.websocket_connection.close_reason).to eq "asdf"
       end
     end
   end
@@ -49,7 +53,7 @@ describe Agent::NodePlugger do
         node_id: 'xyz',
         grid: grid, name: 'test-node', labels: ['region=ams2'],
         connected: false, updated: true,
-        connection_error: "fail!", connection_error_code: 1337,
+        websocket_connection: {close_code: 1337, close_reason: "fail!" },
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
     }
@@ -62,8 +66,10 @@ describe Agent::NodePlugger do
           subject.plugin! connected_at
         }.to change{ node.reload.connected? }.to be_truthy
         expect(node.status).to eq :connecting
-        expect(node.connection_error).to be_nil
-        expect(node.connection_error_code).to be_nil
+
+        expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.close_code).to be_nil
+        expect(node.websocket_connection.close_reason).to be_nil
       end
     end
 

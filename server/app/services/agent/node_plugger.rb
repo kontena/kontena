@@ -17,8 +17,7 @@ module Agent
         connected: true,
         updated: false,
         last_seen_at: Time.now.utc,
-        connection_error_code: nil,
-        connection_error: nil,
+        websocket_connection: {},
       )
       info "Connected node #{@node.to_path} at #{connected_at}"
       self.publish_update_event
@@ -36,8 +35,10 @@ module Agent
       self.update_node!(connected_at,
         connected: false,
         updated: false,
-        connection_error_code: code,
-        connection_error: reason,
+        websocket_connection: {
+          close_code: code,
+          close_reason: reason,
+        },
       )
       info "Rejected connection for node #{@node.to_path} at #{connected_at} with code #{code}: #{reason}"
     rescue => exc
