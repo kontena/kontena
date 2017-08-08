@@ -11,14 +11,21 @@ module Rpc
       )
     end
 
+    def node
+      HostNode.find(@node.id).tap do |node|
+        fail "Missing HostNode: #{@node.node_id}" unless node
+      end
+    end
+
     def get()
-      HostNodeSerializer.new(@node).to_hash
+      HostNodeSerializer.new(self.node).to_hash
     end
 
     # @param [Hash] data
     def update(data)
-      @node.attributes_from_docker(data)
-      @node.save!
+      node = self.node
+      node.attributes_from_docker(data)
+      node.save!
     end
 
     # @param [Hash] data
