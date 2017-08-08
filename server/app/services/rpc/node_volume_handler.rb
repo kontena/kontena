@@ -10,6 +10,10 @@ module Rpc
 
     # @return [Array<Hash>]
     def list
+      node = HostNode.find(@node.id)
+
+      raise "Node not found" unless node
+      
       volumes = @node.volume_instances.map { |v|
         VolumeSerializer.new(v).to_hash
       }.compact
@@ -25,7 +29,7 @@ module Rpc
         if volume_id
           volume = @node.grid.volumes.find_by(id: volume_id)
           if volume
-            volume_instance = VolumeInstance.create!(host_node: node, volume: volume, name: data['name'])
+            volume_instance = VolumeInstance.create!(host_node: @node, volume: volume, name: data['name'])
           else
             raise "Could not find volume with id: #{volume_id}"
           end
