@@ -1,17 +1,13 @@
-describe Kontena::Workers::ServicePodWorker do
+describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   include RpcClientMocks
 
-  let(:node) { Node.new('id' => 'aa') }
   let(:service_pod) do
     Kontena::Models::ServicePod.new(
       'id' => 'foo/2', 'instance_number' => 2,
       'updated_at' => Time.now.to_s, 'deploy_rev' => Time.now.to_s
     )
   end
-  let(:subject) { described_class.new(node, service_pod) }
-
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+  let(:subject) { described_class.new(service_pod) }
 
   describe '#ensure_desired_state' do
     before(:each) do
@@ -123,7 +119,7 @@ describe Kontena::Workers::ServicePodWorker do
     it 'sends correct data' do
       expect(rpc_client).to receive(:request).with(
         '/node_service_pods/set_state',
-        [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
+        [hash_including(state: 'running', rev: service_pod.deploy_rev)]
       )
       subject.sync_state_to_master('running')
     end
@@ -131,7 +127,7 @@ describe Kontena::Workers::ServicePodWorker do
     it 'sends error' do
       expect(rpc_client).to receive(:request).with(
         '/node_service_pods/set_state',
-        [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
+        [hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
       )
       subject.sync_state_to_master('missing', Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
     end
@@ -273,7 +269,7 @@ describe Kontena::Workers::ServicePodWorker do
     end
   end
 
-  describe '#image_outdated?' do 
+  describe '#image_outdated?' do
     it 'returns true if image id does not match to container' do
       image = double(:image, id: 'abc')
       service_container = double(:service_container,

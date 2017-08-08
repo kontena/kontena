@@ -128,7 +128,7 @@ describe Kontena::Workers::NodeStatsWorker, celluloid: true do
 
     describe '#send_node_stats' do
       it 'sends stats via rpc' do
-        expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [node.id, stats])
+        expect(rpc_client).to receive(:notification).once.with('/nodes/stats', [stats])
 
         subject.send_node_stats(stats)
       end
