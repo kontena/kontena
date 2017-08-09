@@ -49,7 +49,7 @@ module Kontena::Workers
 
     def publish_node_info
       debug 'publishing node information'
-      node_info = Docker.info()
+      node_info = Docker.info
       node_info['PublicIp'] = self.public_ip
       node_info['PrivateIp'] = self.private_ip
       node_info['AgentVersion'] = Kontena::Agent::VERSION
