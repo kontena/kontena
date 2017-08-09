@@ -28,12 +28,11 @@ module HostNodes
 
         self.host_node.set(:availability => self.availability)
 
+        # Trigger needed action for stateful services, scheduling loop handles stateles services
         case self.availability
         when HostNode::Availability::ACTIVE
           start_stateful_services(self.host_node)
-          # TODO Should this also trigger full re-scheduling or just wait for the next loop to do it?
         when HostNode::Availability::DRAIN
-          re_deploy_needed_services(self.host_node)
           stop_stateful_services(self.host_node)
         end
       end

@@ -49,13 +49,12 @@ describe HostNodes::Update, celluloid: true do
           }.to change{ node.reload.availability }.from(HostNode::Availability::ACTIVE).to(HostNode::Availability::DRAIN)
         end
 
-        it 'starts re-scheduling when draining' do
+        it 'stops stateful services when draining' do
           mutation = described_class.new(
             host_node: node,
             availability: HostNode::Availability::DRAIN,
             labels: []
           )
-          expect(mutation).to receive(:re_deploy_needed_services)
           expect(mutation).to receive(:stop_stateful_services)
 
           mutation.run
@@ -66,11 +65,14 @@ describe HostNodes::Update, celluloid: true do
         it 'updates availability to active' do
           node.availability = HostNode::Availability::DRAIN
           expect {
-            described_class.new(
+
+            mutation = described_class.new(
               host_node: node,
               availability: HostNode::Availability::ACTIVE,
               labels: []
-            ).run
+            )
+            expect(mutation).to receive(:start_stateful_services)
+            mutation.run
           }.to change{ node.availability }.from(HostNode::Availability::DRAIN).to(HostNode::Availability::ACTIVE)
         end
       end
