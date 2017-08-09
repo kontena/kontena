@@ -46,8 +46,11 @@ describe Kontena::Launchers::Weave, :celluloid => true do
     overlay_ip: '10.81.0.1',
     overlay_cidr: '10.81.0.2/16',
   )}
+  let(:node_info_actor) { instance_double(Kontena::Workers::NodeInfoWorker) }
 
   before do
+    allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_actor)
+
     allow(subject).to receive(:weaveexec_pool).and_return(weaveexec_pool)
     allow(subject).to receive(:weave_client).and_return(weave_client)
     allow(subject).to receive(:inspect_container).with('weave').and_return(container)
@@ -56,6 +59,21 @@ describe Kontena::Launchers::Weave, :celluloid => true do
       weave_exposed.each do |args|
         block.call(*args)
       end
+    end
+  end
+
+  describe '#start' do
+    it 'ensures images and observes' do
+      expect(subject).to receive(:ensure_image).with('weaveworks/weave:1.9.3')
+      expect(subject).to receive(:ensure_image).with('weaveworks/weaveexec:1.9.3')
+
+      expect(subject).to receive(:observe).with(node_info_actor) do |&block|
+        expect(subject).to receive(:update).with(node_info)
+
+        block.call(node_info)
+      end
+
+      subject.start
     end
   end
 
