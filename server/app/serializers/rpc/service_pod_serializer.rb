@@ -73,6 +73,7 @@ module Rpc
       env << "KONTENA_SERVICE_ID=#{service.id.to_s}"
       env << "KONTENA_SERVICE_NAME=#{service.name}"
       env << "KONTENA_GRID_NAME=#{service.grid.try(:name)}"
+      env << "KONTENA_PLATFORM_NAME=#{service.grid.try(:name)}"
       env << "KONTENA_STACK_NAME=#{service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{service_instance.host_node.name}"
       env << "KONTENA_SERVICE_INSTANCE_NUMBER=#{service_instance.instance_number}"
@@ -84,7 +85,8 @@ module Rpc
         'io.kontena.service.id' => service.id.to_s,
         'io.kontena.service.name' => service.name.to_s,
         'io.kontena.stack.name' => service.stack.name.to_s,
-        'io.kontena.grid.name' => service.grid.try(:name)
+        'io.kontena.grid.name' => service.grid.try(:name),
+        'io.kontena.platform.name' => service.grid.try(:name)
       }
       if service.linked_to_load_balancer?
         lb = service.linked_to_load_balancers[0]
