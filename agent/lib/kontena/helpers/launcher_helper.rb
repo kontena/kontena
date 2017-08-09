@@ -25,8 +25,11 @@ module Kontena
       # @param name [String]
       # @return [Docker::Container] nil if not found
       def inspect_container(name)
-        Docker::Container.get(name)
+        container = Docker::Container.get(name)
+        debug "Inspect container #{name}: #{container.id}"
+        container
       rescue Docker::Error::NotFoundError
+        debug "Inspect container #{name}: not found"
         nil
       end
     end
