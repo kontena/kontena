@@ -20,8 +20,17 @@ describe Kontena::Cli::Master::InitCloudCommand do
   end
 
   it 'runs the invite self after deploy callback' do
+    allow(subject).to receive(:already_cloud_enabled?).and_return(false)
     expect(Kontena).to receive(:run!).with(%w(cloud master add --current --force)).and_return(true)
     expect_any_instance_of(Kontena::Callbacks::InviteSelfAfterDeploy).to receive(:after).and_return(true)
     subject.run(['--force'])
+  end
+
+  it 'exits with error if master is already registered to use cloud' do
+    expect(subject.client).to receive(:get).with('config').and_return(
+      'cloud.enabled' => true,
+      'cloud.provider_is_kontena' => 'true'
+    )
+    expect{subject.run(['--force'])}.to exit_with_error.and output(/already registered/).to_stderr
   end
 end
