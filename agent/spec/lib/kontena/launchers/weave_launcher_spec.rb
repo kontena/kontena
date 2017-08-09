@@ -73,13 +73,13 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         block.call(node_info)
       end
 
-      subject.start
+      actor.start
     end
   end
 
   describe '#inspect' do
     it 'returns a hash' do
-      expect(subject.inspect).to eq(
+      expect(actor.inspect).to eq(
         image: 'weaveworks/weave:1.9.3',
         container: container,
         running: true,
@@ -98,7 +98,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
       expect(weaveexec_pool).to receive(:weaveexec!).with('expose', 'ip:10.81.0.2/16')
       expect(weave_client).to receive(:status).and_return("Version: 1.9.3")
 
-      expect(subject.ensure(node_info)).to eq(
+      expect(actor.ensure(node_info)).to eq(
         image: 'weaveworks/weave:1.9.3',
         options: {
           password: '4vtTNwkfl1hxthi5HDBit5rbyinpxJS3dZ13BNZ3/ur8ZHLnJU8VkH5yZTXvfIanrCE5d1VVqFN3itx+BIldxQ==',
@@ -110,11 +110,11 @@ describe Kontena::Launchers::Weave, :celluloid => true do
       )
     end
 
-    it 'resets weave if attach fails' do
+    it 'resets weave if attach fails', :log_celluloid_actor_crashes => false do
       expect(weaveexec_pool).to receive(:weaveexec!).with('attach-router').and_raise(Kontena::NetworkAdapters::WeaveExec::WeaveExecError.new('attach-router', 1, 'weave is not running'))
       expect(weaveexec_pool).to receive(:weaveexec!).with('reset')
 
-      expect{subject.ensure(node_info)}.to raise_error(Kontena::NetworkAdapters::WeaveExec::WeaveExecError)
+      expect{actor.ensure(node_info)}.to raise_error(Kontena::NetworkAdapters::WeaveExec::WeaveExecError)
     end
   end
 
@@ -123,7 +123,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
 
     describe '#inspect' do
       it 'returns nil' do
-        expect(subject.inspect).to be_nil
+        expect(actor.inspect).to be_nil
       end
     end
 
@@ -134,7 +134,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(weaveexec_pool).to receive(:weaveexec!).with('expose', 'ip:10.81.0.2/16')
         expect(weave_client).to receive(:status).and_return("Version: 1.9.3")
 
-        expect(subject.ensure(node_info)).to eq(
+        expect(actor.ensure(node_info)).to eq(
           image: 'weaveworks/weave:1.9.3',
           options: {
             password: '4vtTNwkfl1hxthi5HDBit5rbyinpxJS3dZ13BNZ3/ur8ZHLnJU8VkH5yZTXvfIanrCE5d1VVqFN3itx+BIldxQ==',
@@ -153,7 +153,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
 
     describe '#inspect' do
       it 'returns running => false' do
-        expect(subject.inspect).to match hash_including(
+        expect(actor.inspect).to match hash_including(
           running: false,
         )
       end
@@ -164,7 +164,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(container).to receive(:remove).with(force: true)
         expect(weaveexec_pool).to receive(:weaveexec!).with('launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local', '--password', grid_token, '--trusted-subnets', '')
 
-        subject.ensure_container('weaveworks/weave:1.9.3',
+        actor.ensure_container('weaveworks/weave:1.9.3',
           password: grid_token,
           trusted_subnets: grid_trusted_subnets,
         )
@@ -180,7 +180,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(container).to receive(:remove).with(force: true)
         expect(weaveexec_pool).to receive(:weaveexec!).with('launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local', '--password', grid_token, '--trusted-subnets', '192.168.66.0/24')
 
-        subject.ensure_container('weaveworks/weave:1.9.3',
+        actor.ensure_container('weaveworks/weave:1.9.3',
           password: grid_token,
           trusted_subnets: grid_trusted_subnets,
         )
@@ -194,7 +194,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
 
     describe '#inspect' do
       it 'returns the trusted subnets' do
-        expect(subject.inspect).to match hash_including(
+        expect(actor.inspect).to match hash_including(
           options: hash_including(
             trusted_subnets: [ '192.168.66.0/24'],
           ),
@@ -207,7 +207,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(container).not_to receive(:remove)
         expect(weaveexec_pool).to receive(:weaveexec!).with('attach-router')
 
-        subject.ensure_container('weaveworks/weave:1.9.3',
+        actor.ensure_container('weaveworks/weave:1.9.3',
           password: grid_token,
           trusted_subnets: grid_trusted_subnets,
         )
@@ -221,7 +221,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
 
     describe '#inspect' do
       it 'returns the trusted subnets' do
-        expect(subject.inspect).to match hash_including(
+        expect(actor.inspect).to match hash_including(
           options: hash_including(
             trusted_subnets: [ '192.168.66.0/24', '192.168.67.0/24'],
           ),
@@ -234,7 +234,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(container).to receive(:remove).with(force: true)
         expect(weaveexec_pool).to receive(:weaveexec!).with('launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local', '--password', grid_token, '--trusted-subnets', '192.168.66.0/24')
 
-        subject.ensure_container('weaveworks/weave:1.9.3',
+        actor.ensure_container('weaveworks/weave:1.9.3',
           password: grid_token,
           trusted_subnets: grid_trusted_subnets,
         )
@@ -250,7 +250,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(container).to receive(:remove).with(force: true)
         expect(weaveexec_pool).to receive(:weaveexec!).with('launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local', '--password', grid_token, '--trusted-subnets', '')
 
-        subject.ensure_container('weaveworks/weave:1.9.3',
+        actor.ensure_container('weaveworks/weave:1.9.3',
           password: grid_token,
           trusted_subnets: grid_trusted_subnets,
         )
@@ -268,7 +268,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         expect(weaveexec_pool).to receive(:weaveexec!).with('expose', 'ip:10.81.0.2/16')
         expect(weaveexec_pool).to receive(:weaveexec!).with('hide', '10.81.0.2/19') # XXX: ip: prefix?
 
-        subject.ensure_exposed('10.81.0.2/16')
+        actor.ensure_exposed('10.81.0.2/16')
       end
     end
   end
