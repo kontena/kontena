@@ -187,6 +187,10 @@ module Kontena
         type: Kontena::NetworkAdapters::Weave,
         as: :network_adapter
       )
+      @supervisor.supervise(
+        type: Kontena::NetworkAdapters::IpamCleaner,
+        as: :ipam_cleaner
+      )
     end
 
     def supervise_workers

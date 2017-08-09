@@ -22,7 +22,6 @@ module Kontena::Launchers
     def initialize(autostart = true)
       info 'initialized'
       async.start if autostart
-      Kontena::NetworkAdapters::IpamCleaner.supervise as: :ipam_cleaner
     end
 
     def ipam_client
