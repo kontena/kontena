@@ -220,7 +220,7 @@ module Kontena::Launchers
     # @param container [Docker::Container]
     # @raise [Docker::Error]
     def destroy!(container)
-      container.delete(force: true)
+      container.remove(force: true)
     end
 
     # Start the weaver container and weave bridge

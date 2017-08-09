@@ -91,6 +91,13 @@ describe Kontena::Launchers::Weave, :celluloid => true do
         status: "Version: 1.9.3",
       )
     end
+
+    it 'resets weave if attach fails' do
+      expect(weaveexec_pool).to receive(:weaveexec!).with('attach-router').and_raise(Kontena::NetworkAdapters::WeaveExec::WeaveExecError.new('attach-router', 1, 'weave is not running'))
+      expect(weaveexec_pool).to receive(:weaveexec!).with('reset')
+
+      expect{subject.ensure(node_info)}.to raise_error(Kontena::NetworkAdapters::WeaveExec::WeaveExecError)
+    end
   end
 
   context 'with the container missing' do
