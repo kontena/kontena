@@ -38,11 +38,11 @@ module Kontena::Launchers
       ensure_image(IMAGE)
 
       observe(Actor[:node_info_worker], Actor[:etcd_launcher]) do |node, etcd|
+        # XXX: exclusive update
         self.update(node)
       end
     end
 
-    # XXX: exclusive!
     # @param node [Node]
     def update(node)
       state = self.ensure(node)
@@ -69,23 +69,26 @@ module Kontena::Launchers
     # @return [Docker::Container]
     def ensure_container(image, node)
       container = inspect_container(CONTAINER)
-      container_image = container.info['Config']['Image']
 
-      if container && container_image != image
-        info "container is outdated, upgrading to #{image} from #{container_image}"
-        container.delete(force: true)
-      elsif container && container.running?
-        info 'container is already running'
-        return container
-      elsif container && !container.running?
-        info 'container is stopped, starting it'
-        container.start!
-        return container
+      if container
+        container_image = container.info['Config']['Image']
+
+        if container_image != image
+          info "container is outdated, upgrading to #{image} from #{container_image}"
+          container.delete(force: true)
+        elsif container.running?
+          info 'container is already running'
+          return container
+        else
+          info 'container is stopped, starting it'
+          container.start!
+          return container
+        end
       else
         info "container does not yet exist"
       end
 
-      create_container(image,
+      return create_container(image,
         env: [
           "LOG_LEVEL=#{LOG_LEVEL}",
           "ETCD_ENDPOINT=#{ETCD_ENDPOINT}",

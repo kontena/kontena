@@ -1,6 +1,5 @@
 
 describe Kontena::Launchers::Etcd, :celluloid => true do
-
   let(:actor) { described_class.new(false) }
   let(:subject) { actor.wrapped_object }
 
@@ -91,7 +90,7 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
     end
 
     it 'passes through unexpected Docker errors', :log_celluloid_actor_crashes => false do
-      expect(subject.wrapped_object).to receive(:inspect_container).and_raise(Docker::Error::ServerError)
+      expect(subject).to receive(:inspect_container).and_raise(Docker::Error::ServerError)
 
       expect{ actor.ensure(node_info) }.to raise_error(Docker::Error::ServerError)
     end
