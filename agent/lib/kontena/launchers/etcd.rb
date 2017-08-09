@@ -24,11 +24,12 @@ module Kontena::Launchers
       ensure_image(IMAGE)
 
       observe(Actor[:node_info_worker], Actor[:weave_launcher]) do |node, weave|
+        # TODO: only update after both node-info and weave-launcher have updated?
+        # XXX: exclusive updates...
         self.update(node)
       end
     end
 
-    # XXX: exclusive!
     # @param node [Node]
     def update(node)
       state = self.ensure(node)

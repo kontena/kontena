@@ -27,11 +27,11 @@ module Kontena::Launchers
       self.ensure_image(Kontena::NetworkAdapters::WeaveExec::IMAGE)
 
       observe(Actor[:node_info_worker]) do |node|
+        # XXX: exclusive updates
         update(node)
       end
     end
 
-    # XXX: exclusive!
     # @param node [Node]
     def update(node)
       state = self.ensure(node)
