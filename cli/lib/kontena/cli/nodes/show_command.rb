@@ -43,9 +43,10 @@ module Kontena::Cli::Nodes
         mem_used = mem['used'] - (mem['cached'] + mem['buffers'])
         puts "    memory: #{to_gigabytes(mem_used, 2)} of #{to_gigabytes(mem['total'], 2)} GB"
       end
-      if node['resource_usage']['filesystem']
+      fs = node.dig('resource_usage','filesystem')
+      if fs
         puts "    filesystem:"
-        node['resource_usage']['filesystem'].each do |filesystem|
+        fs.each do |filesystem|
           puts "      - #{filesystem['name']}: #{to_gigabytes(filesystem['used'], 2)} of #{to_gigabytes(filesystem['total'], 2)} GB"
         end
       end
