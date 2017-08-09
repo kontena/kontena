@@ -40,21 +40,6 @@ module HostNodes
       self.host_node.reload
     end
 
-    # Re-deploy needed services, new deployments will filter out evacuated node
-    def re_deploy_needed_services(host_node)
-      services = find_services(host_node)
-      services.each do |service|
-        GridServiceDeploy.create!(grid_service: service)
-      end
-    end
-
-    # Finds stateless services on a given node
-    def find_services(host_node)
-      services = host_node.grid_service_instances.map { |instance|
-        instance.grid_service unless instance.grid_service.stateful?
-      }.compact.uniq
-    end
-
     def stop_stateful_services(host_node)
       host_node.grid_service_instances.each do |instance|
         if instance.grid_service.stateful?
