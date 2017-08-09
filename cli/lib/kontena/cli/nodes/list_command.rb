@@ -19,7 +19,11 @@ module Kontena::Cli::Nodes
     end
 
     def node_status(node)
-      node['connected'] ? pastel.green('online') : pastel.red('offline')
+      if node['connected']
+        node['availability'] == 'drain' ? pastel.yellow('drain') : pastel.green('online')
+      else
+        pastel.red('offline')
+      end
     end
 
     def node_initial(node, grid)
@@ -38,7 +42,6 @@ module Kontena::Cli::Nodes
         version: 'agent_version',
         status:  'status',
         initial: 'initial',
-        availability: 'availability',
         labels:  'labels'
       }
     end

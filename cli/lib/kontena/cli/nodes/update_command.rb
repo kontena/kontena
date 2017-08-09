@@ -11,7 +11,7 @@ module Kontena::Cli::Nodes
 
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
     option "--clear-labels", :flag, "Clear node labels"
-    option "--availability", "AVAILABILITY", "Node scheduling availability"
+    option "--availability", "active|drain", "Node scheduling availability"
 
     def execute
       data = {}
