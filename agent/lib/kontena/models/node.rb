@@ -29,6 +29,11 @@ class Node
     grid.dig('stats', 'statsd') || {}
   end
 
+  # @return [String]
+  def grid_token
+    @grid['token']
+  end
+
   # @return [IPAddress] 10.81.0.0/16
   def grid_subnet
     IPAddress.parse(@grid['subnet'])
