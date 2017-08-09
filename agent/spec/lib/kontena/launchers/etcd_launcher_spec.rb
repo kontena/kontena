@@ -1,369 +1,439 @@
 
-describe Kontena::Launchers::Etcd do
+describe Kontena::Launchers::Etcd, :celluloid => true do
 
-  let(:subject) { described_class.new(false) }
+  let(:actor) { described_class.new(false) }
+  let(:subject) { actor.wrapped_object }
 
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
+  let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
+  let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
+  let(:node_info) { instance_double(Node,
+    node_number: 1,
+    overlay_ip: '10.81.0.1',
+    grid_subnet: IPAddress.parse('10.81.0.0/16'),
+    grid_initial_size: 3,
+    grid_initial_nodes: [ IPAddress.parse('10.81.0.1'), IPAddress.parse('10.81.0.2'), IPAddress.parse('10.81.0.3') ],
+    grid: {
+      'name' => 'test',
+    },
+    initial_member?: true,
+  ) }
+
+  let(:container_id) { 'd8bcc8b4adfa72673d44d9fa4d2e9520f6286b8bab62f3351bd9fae500fc0856' }
+  let(:container_image) { 'kontena/etcd:2.3.7' }
+  let(:container_running?) { true }
+  let(:data_container) { double(Docker::Container,
+
+  )}
+  let(:etcd_container) { double(Docker::Container,
+    id: container_id,
+    info: {
+      'Config' => {
+        'Image' => container_image,
+      }
+    },
+    running?: container_running?,
+  )}
+
+  before do
+    allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_worker)
+    allow(Celluloid::Actor).to receive(:[]).with(:weave_launcher).and_return(weave_launcher)
+
+    allow(subject).to receive(:inspect_container).with('kontena-etcd-data').and_return(data_container)
+    allow(subject).to receive(:inspect_container).with('kontena-etcd').and_return(etcd_container)
+
+    allow(subject).to receive(:docker_gateway).and_return('172.17.0.1')
+  end
 
   describe '#initialize' do
     it 'calls #start by default' do
       expect_any_instance_of(described_class).to receive(:start)
-      subject = described_class.new
-      sleep 0.01
-    end
-
-    it 'subscribes to network_adapter:start event' do
-      expect(subject.wrapped_object).to receive(:on_overlay_start)
-      Celluloid::Notifications.publish('network_adapter:start', {})
-      sleep 0.01
+      described_class.new()
     end
   end
 
   describe '#start' do
-    it 'pulls image' do
-      expect(subject.wrapped_object).to receive(:pull_image)
-      subject.start
-    end
-  end
+    it 'ensures image and observes' do
+      expect(subject).to receive(:ensure_image).with('kontena/etcd:2.3.7')
+      expect(subject).to receive(:observe).with(node_info_worker, weave_launcher) do |&block|
+        expect(subject).to receive(:update).with(node_info)
 
-  describe '#on_overlay_start' do
-    let(:node) { Node.new({}) }
-
-    it 'starts etcd' do
-      expect(subject.wrapped_object).to receive(:start_etcd).and_return(true)
-      subject.on_overlay_start('topic', node)
-    end
-
-    it 'retries 4 times if Docker::Error::ServerError is raised' do
-      allow(subject.wrapped_object).to receive(:start_etcd) do
-        raise Docker::Error::ServerError
+        block.call(node_info)
       end
-      expect(subject.wrapped_object).to receive(:start_etcd).exactly(5).times
-      subject.on_overlay_start('topic', node)
+
+      actor.start
     end
   end
 
-  describe '#start_etcd' do
-    let(:node) { Node.new({}) }
+  describe '#update' do
+    it 'ensures etcd and updates observable' do
+      expect(subject).to receive(:ensure).with(node_info).and_return({ running: true })
+      expect(subject).to receive(:update_observable).with(running: true)
 
-    it 'creates etcd containers after image is pulled' do
-      allow(subject.wrapped_object).to receive(:image_pulled?).and_return(true)
-      expect(subject.wrapped_object).to receive(:create_data_container)
-      expect(subject.wrapped_object).to receive(:create_container)
-      subject.start_etcd(node)
+      actor.update(node_info)
     end
 
-    it 'waits for image pull' do
-      expect(subject.wrapped_object).not_to receive(:create_data_container)
-      expect {
-        Timeout.timeout(0.1) do
-          subject.start_etcd(node)
+    it 'logs errors and resets observable' do
+      expect(subject).to receive(:ensure).with(node_info).and_raise(RuntimeError, 'test')
+      expect(subject).to receive(:error).with(RuntimeError)
+      expect(subject).to receive(:reset_observable)
+
+      actor.update(node_info)
+    end
+  end
+
+  describe '#ensure' do
+    it 'recognizes existing data, etcd containers' do
+      expect(subject).to_not receive(:update_membership)
+      expect(subject).to_not receive(:create_container)
+      expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
+
+      actor.ensure(node_info)
+    end
+
+    it 'passes through unexpected Docker errors', :log_celluloid_actor_crashes => false do
+      expect(subject.wrapped_object).to receive(:inspect_container).and_raise(Docker::Error::ServerError)
+
+      expect{ actor.ensure(node_info) }.to raise_error(Docker::Error::ServerError)
+    end
+  end
+
+  context 'with missing containers' do
+    let(:data_container) { nil }
+    let(:etcd_container) { nil }
+    let(:create_container) { double(Docker::Container,
+      id: container_id,
+      running?: true,
+    ) }
+
+    describe '#ensure' do
+      it 'creates the data and etcd containers' do
+        expect(Docker::Container).to receive(:create).with(
+          'name' => 'kontena-etcd-data',
+          'Image' => 'kontena/etcd:2.3.7',
+          'Volumes' => { '/var/lib/etcd' => {}},
+        )
+        expect(subject).to receive(:update_membership).and_return(:new)
+        expect(Docker::Container).to receive(:create).with(
+          'name' => 'kontena-etcd',
+          'Image' => 'kontena/etcd:2.3.7',
+          'Cmd' => [
+            '--name', 'node-1',
+            '--data-dir', '/var/lib/etcd',
+            '--listen-client-urls', 'http://127.0.0.1:2379,http://10.81.0.1:2379,http://172.17.0.1:2379',
+            "--initial-cluster",  "node-1=http://10.81.0.1:2380,node-2=http://10.81.0.2:2380,node-3=http://10.81.0.3:2380",
+            "--listen-peer-urls", "http://10.81.0.1:2380",
+            "--advertise-client-urls", "http://10.81.0.1:2379",
+            "--initial-advertise-peer-urls", "http://10.81.0.1:2380",
+            "--initial-cluster-token", 'test',
+            "--initial-cluster-state", 'new',
+          ],
+          'HostConfig' => {
+            'NetworkMode' => 'host',
+            'RestartPolicy' => {'Name' => 'always'},
+            'VolumesFrom' => ['kontena-etcd-data']
+          },
+        ).and_return(create_container)
+        expect(create_container).to receive(:start!)
+
+        expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
+
+        actor.ensure(node_info)
+      end
+    end
+  end
+
+  context 'with a stopped container' do
+    let(:container_running?) { false }
+
+    describe '#ensure' do
+      it 'starts the etcd container' do
+        expect(etcd_container).to receive(:start!)
+        expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
+
+        actor.ensure(node_info)
+      end
+    end
+  end
+
+  context 'with an outdated image' do
+    let(:container_image) { 'kontena/etcd:2.3.6' }
+
+    describe '#ensure' do
+      it 're-creates the etcd container' do
+        expect(etcd_container).to receive(:delete).with(force: true)
+        expect(subject).to receive(:update_membership).and_return(:new)
+        expect(subject).to receive(:create_container).with('kontena/etcd:2.3.7', Hash).and_return(double(Docker::Container,
+          id: container_id,
+          running?: true,
+        ))
+        expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
+
+        actor.ensure(node_info)
+      end
+    end
+  end
+
+  context "for a non-initial node" do
+    let(:node_info) { instance_double(Node,
+      node_number: 2,
+      overlay_ip: '10.81.0.2',
+      grid_subnet: IPAddress.parse('10.81.0.0/16'),
+      grid_initial_size: 1,
+      grid_initial_nodes: [ IPAddress.parse('10.81.0.1') ],
+      grid: {
+        'name' => 'test',
+      },
+      initial_member?: false,
+    ) }
+
+    describe '#ensure_container' do
+      let(:etcd_container) { nil }
+      let(:create_container) { double(Docker::Container,
+        id: container_id,
+        running?: true,
+      ) }
+
+      it 'creates the container in proxy mode' do
+        expect(Docker::Container).to receive(:create).with(
+          'name' => 'kontena-etcd',
+          'Image' => 'kontena/etcd:2.3.7',
+          'Cmd' => [
+            '--name', 'node-2',
+            '--data-dir', '/var/lib/etcd',
+            '--listen-client-urls', "http://127.0.0.1:2379,http://10.81.0.2:2379,http://172.17.0.1:2379",
+            '--initial-cluster', 'node-1=http://10.81.0.1:2380',
+            '--proxy', 'on'
+          ],
+          'HostConfig' => {
+            'NetworkMode' => 'host',
+            'RestartPolicy' => {'Name' => 'always'},
+            'VolumesFrom' => ['kontena-etcd-data'],
+          },
+        ).and_return(create_container)
+
+        expect(create_container).to receive(:start!)
+
+        subject.ensure_container('kontena/etcd:2.3.7', node_info)
+      end
+    end
+  end
+
+  describe '#find_etcd_node' do
+    let(:excon_connection1) { double(:node1) }
+    let(:excon_connection2) { double(:node2) }
+    let(:excon_connection3) { double(:node3) }
+    let(:etcd_members) { {
+      "members" => [
+        {
+          "id" => "4e12ae023cc6f88d",
+          "name" => "node-1",
+          "peerURLs" => ["http://10.81.0.1:2380"],
+          "clientURLs" => ["http://10.81.0.1:2379"]
+        }
+      ]
+    } }
+
+    before do
+      allow(Excon).to receive(:new).with('http://10.81.0.1:2379/v2/members').and_return(excon_connection1)
+      allow(Excon).to receive(:new).with('http://10.81.0.2:2379/v2/members').and_return(excon_connection2)
+      allow(Excon).to receive(:new).with('http://10.81.0.3:2379/v2/members').and_return(excon_connection3)
+    end
+
+    it 'returns connection to first etcd node' do
+      expect(excon_connection3).to receive(:get).and_return(double(body: etcd_members.to_json))
+
+      expect(subject.find_etcd_node(node_info)).to eq excon_connection3
+    end
+
+    it 'returns connection to second etcd node' do
+      expect(excon_connection3).to receive(:get).and_raise(Excon::Errors::Error)
+      expect(excon_connection2).to receive(:get).and_return(double(body: etcd_members.to_json))
+
+      expect(subject.find_etcd_node(node_info)).to eq excon_connection2
+    end
+
+    it 'tries each grid initial node on errors' do
+      expect(excon_connection3).to receive(:get).and_raise(Excon::Errors::Error)
+      expect(excon_connection2).to receive(:get).and_raise(Excon::Errors::Error)
+      expect(excon_connection1).to receive(:get).and_raise(Excon::Errors::Error)
+
+      expect(subject.find_etcd_node(node_info)).to be nil
+    end
+  end
+
+  describe '#update_membership' do
+    let(:excon_connection) { double() }
+
+    before do
+      allow(subject).to receive(:find_etcd_node).and_return(excon_connection)
+    end
+
+    context "for the first initial node in a three-node grid" do
+      let(:node_info) { instance_double(Node,
+        node_number: 1,
+        overlay_ip: '10.81.0.1',
+        grid_subnet: IPAddress.parse('10.81.0.0/16'),
+        grid_initial_size: 3,
+        grid_initial_nodes: [ IPAddress.parse('10.81.0.1'), IPAddress.parse('10.81.0.2'), IPAddress.parse('10.81.0.3') ],
+        grid: {
+          'name' => 'test',
+        },
+        initial_member?: true,
+      ) }
+
+      let(:excon_connection) { nil }
+
+      it 'joins as the initial member' do
+        expect(subject.update_membership(node_info)).to eq('new')
+      end
+    end
+
+    context "for the second initial node in a three-node grid" do
+      let(:node_info) { instance_double(Node,
+        node_number: 2,
+        overlay_ip: '10.81.0.2',
+        grid_initial_size: 3,
+        grid_subnet: IPAddress.parse('10.81.0.0/16'),
+        grid: {
+          'name' => 'test',
+        },
+        initial_member?: true,
+      ) }
+
+      context 'with an already initialized cluster' do
+        let(:etcd_members) { {
+          "members" => [
+            {
+              "id" => "4e12ae023cc6f88d",
+              "name" => "node-1",
+              "peerURLs" => ["http://10.81.0.1:2380"],
+              "clientURLs" => ["http://10.81.0.1:2379"],
+            },
+            {
+              "id" => "bdcf7d2220de7f8e",
+              "name" => "node-2",
+              "peerURLs" => ["http://10.81.0.2:2380"],
+              "clientURLs" => ["http://10.81.0.2:2379"],
+            },
+            {
+              "id" => "cc6f88dbdcf7d222",
+              "name" => "node-3",
+              "peerURLs" => ["http://10.81.0.3:2380"],
+              "clientURLs" => ["http://10.81.0.3:2379"],
+            },
+          ]
+        } }
+
+        before do
+          allow(excon_connection).to receive(:get).and_return(double(body: etcd_members.to_json))
         end
-      }.to raise_error(Timeout::Error)
-    end
-  end
 
-  describe '#pull_image' do
-    it 'does nothing if image already exists' do
-      image = 'kontena/etcd:2.2.4'
-      allow(Docker::Image).to receive(:exist?).with(image).and_return(true)
-      expect(Docker::Image).not_to receive(:create)
-      subject.pull_image(image)
-    end
+        it 'replaces the existing node' do
+          expect(subject.wrapped_object).to receive(:delete_membership).with(excon_connection, 'bdcf7d2220de7f8e')
+          expect(subject.wrapped_object).to receive(:add_membership).with(excon_connection, 'http://10.81.0.2:2380')
 
-    it 'sets image_pulled flag if image already exists' do
-      image = 'kontena/etcd:2.2.4'
-      allow(Docker::Image).to receive(:exist?).with(image).and_return(true)
-      subject.pull_image(image)
-      expect(subject.image_pulled?).to be_truthy
-    end
-
-    it 'pulls image if it does not exist' do
-      image = 'kontena/etcd:2.2.4'
-      allow(Docker::Image).to receive(:exist?).with(image).and_return(false)
-      expect(Docker::Image).to receive(:create).with({'fromImage' => image})
-      subject.after(0.01) {
-        allow(Docker::Image).to receive(:exist?).with(image).and_return(true)
-      }
-      subject.pull_image(image)
-    end
-  end
-
-  context "for the first initial node in a three-node grid" do
-    let :node do
-      Node.new(
-        'node_number' => 1,
-        'overlay_ip' => '10.81.0.1',
-        'grid' => {
-          'name' => 'some_grid',
-          'initial_size' => 3,
-          'subnet' => '10.81.0.0/16',
-        }
-      )
-    end
-
-    describe '#create_container' do
-      it 'returns if etcd already running' do
-        container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(container)
-        allow(container).to receive(:running?).and_return(true)
-        allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
-        expect(subject.wrapped_object).to receive(:add_dns)
-
-        subject.create_container('etcd', node)
-
-        expect(subject.instance_variable_get(:@running)).to eq(true)
+          expect(subject.update_membership(node_info)).to eq('existing')
+        end
       end
 
-      it 'starts if etcd already exists but not running' do
-        container = double(id: 'foo')
-        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
-        allow(container).to receive(:running?).and_return(false)
-        allow(container).to receive(:info).and_return({'Config' => {'Image' => 'etcd'}})
-        expect(subject.wrapped_object).to receive(:add_dns)
-        expect(container).to receive(:start!)
+      context 'with an initializing cluster' do
+        let(:etcd_members) { {
+          "members" => [
+            {
+              "id" => "4e12ae023cc6f88d",
+              "name" => "node-1",
+              "peerURLs" => ["http://10.81.0.1:2380"],
+              "clientURLs" => ["http://10.81.0.1:2379"],
+            },
+            {
+              "id" => "bdcf7d2220de7f8e",
+              "name" => "node-2",
+              "peerURLs" => ["http://10.81.0.2:2380"],
+              "clientURLs" => [""],
+            },
+            {
+              "id" => "cc6f88dbdcf7d222",
+              "name" => "node-3",
+              "peerURLs" => ["http://10.81.0.3:2380"],
+              "clientURLs" => [""],
+            },
+          ]
+        } }
 
-        subject.create_container('etcd', node)
+        before do
+          allow(excon_connection).to receive(:get).and_return(double(body: etcd_members.to_json))
+        end
 
-        expect(subject.instance_variable_get(:@running)).to eq(true)
-      end
+        it 'joins as a new node' do
+          expect(subject.wrapped_object).not_to receive(:delete_membership)
+          expect(subject.wrapped_object).not_to receive(:add_membership)
 
-      it 'deletes and recreates the container' do
-        container = double(id: 'foo')
-        expect(subject.wrapped_object).to receive(:get_container).and_return(container)
-        allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
-        allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
-        expect(container).to receive(:delete)
-
-        expected_cmd = [
-          '--name', 'node-1', '--data-dir', '/var/lib/etcd',
-          '--listen-client-urls', "http://127.0.0.1:2379,http://10.81.0.1:2379,http://172.17.0.1:2379",
-          '--initial-cluster', 'node-1=http://10.81.0.1:2380,node-2=http://10.81.0.2:2380,node-3=http://10.81.0.3:2380',
-          '--listen-client-urls', "http://127.0.0.1:2379,http://10.81.0.1:2379,http://172.17.0.1:2379",
-          '--listen-peer-urls', "http://10.81.0.1:2380",
-          '--advertise-client-urls', "http://10.81.0.1:2379",
-          '--initial-advertise-peer-urls', "http://10.81.0.1:2380",
-          '--initial-cluster-token', 'some_grid',
-          '--initial-cluster-state', 'new'
-        ]
-        etcd_container = double
-        expect(Docker::Container).to receive(:create).with(hash_including(
-          'name' => 'kontena-etcd',
-          'Image' => 'etcd',
-          'Cmd' => expected_cmd,
-          'HostConfig' => {
-            'NetworkMode' => 'host',
-            'RestartPolicy' => {'Name' => 'always'},
-            'VolumesFrom' => ['kontena-etcd-data']
-          })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start!)
-        allow(etcd_container).to receive(:id).and_return('12345')
-        expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
-
-        subject.create_container('etcd', node)
-      end
-
-      it 'creates new container' do
-        container = double(id: 'foo')
-        expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
-        allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
-        expect(subject.wrapped_object).to receive(:update_membership).and_return('existing')
-
-        expected_cmd = [
-          '--name', 'node-1', '--data-dir', '/var/lib/etcd',
-          '--listen-client-urls', "http://127.0.0.1:2379,http://10.81.0.1:2379,http://172.17.0.1:2379",
-          '--initial-cluster', 'node-1=http://10.81.0.1:2380,node-2=http://10.81.0.2:2380,node-3=http://10.81.0.3:2380',
-          '--listen-client-urls', "http://127.0.0.1:2379,http://10.81.0.1:2379,http://172.17.0.1:2379",
-          '--listen-peer-urls', "http://10.81.0.1:2380",
-          '--advertise-client-urls', "http://10.81.0.1:2379",
-          '--initial-advertise-peer-urls', "http://10.81.0.1:2380",
-          '--initial-cluster-token', 'some_grid',
-          '--initial-cluster-state', 'existing'
-        ]
-        etcd_container = double
-        expect(Docker::Container).to receive(:create).with(hash_including(
-          'name' => 'kontena-etcd',
-          'Image' => 'etcd',
-          'Cmd' => expected_cmd,
-          'HostConfig' => {
-            'NetworkMode' => 'host',
-            'RestartPolicy' => {'Name' => 'always'},
-            'VolumesFrom' => ['kontena-etcd-data']
-          })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start!)
-        allow(etcd_container).to receive(:id).and_return('12345')
-        expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.1', name: 'etcd.kontena.local'})
-
-        subject.create_container('etcd', node)
-      end
-
-      it 'lets random Docker errors fall through' do
-        expect(subject.wrapped_object).to receive(:get_container).and_raise(Docker::Error::ServerError)
-        expect {
-          # Call through wrapped object to avoid nasty traces in rspec output
-          subject.wrapped_object.create_container('etcd', node)
-        }.to raise_error(Docker::Error::ServerError)
+          expect(subject.update_membership(node_info)).to eq('new')
+        end
       end
     end
 
-    describe '#find_etcd_node' do
-      it 'retries 3 times if Excon error connecting to etcd' do
-        excon = double
-        allow(Excon).to receive(:new).and_return(excon)
-        allow(excon).to receive(:get).and_raise(Excon::Errors::Error)
-        expect(excon).to receive(:get).exactly(3).times
+    context "for the third initial node in a three-node grid" do
+      let(:node_info) { instance_double(Node,
+        node_number: 3,
+        overlay_ip: '10.81.0.3',
+        grid_initial_size: 3,
+        grid_subnet: IPAddress.parse('10.81.0.0/16'),
+        grid: {
+          'name' => 'test',
+        },
+        initial_member?: true,
+      ) }
 
-        expect(subject.find_etcd_node(node)).to eq(nil)
-      end
+      context 'with an already initialized cluster missing the third node' do
+        let(:etcd_members) { {
+          "members" => [
+            {
+              "id" => "4e12ae023cc6f88d",
+              "name" => "node-1",
+              "peerURLs" => ["http://10.81.0.1:2380"],
+              "clientURLs" => ["http://10.81.0.1:2379"],
+            },
+            {
+              "id" => "bdcf7d2220de7f8e",
+              "name" => "node-2",
+              "peerURLs" => ["http://10.81.0.2:2380"],
+              "clientURLs" => ["http://10.81.0.2:2379"],
+            },
+          ]
+        } }
 
-      it 'returns connection to working etcd node' do
-        excon = double
-        allow(Excon).to receive(:new).and_return(excon)
-        expect(excon).to receive(:get).exactly(1).times
-        response = double
-        allow(excon).to receive(:get).and_return(response)
-        allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
+        before do
+          allow(excon_connection).to receive(:get).and_return(double(body: etcd_members.to_json))
+        end
 
-        expect(subject.find_etcd_node(node)).to eq(excon)
-      end
-    end
+        it 'adds new membership' do
+          expect(subject.wrapped_object).not_to receive(:delete_membership)
+          expect(subject.wrapped_object).to receive(:add_membership).with(excon_connection, 'http://10.81.0.3:2380')
 
-    describe '#update_membership' do
-      it 'deletes and adds when matching peer and client URL found from etcd' do
-        excon = double
-        allow(subject.wrapped_object).to receive(:find_etcd_node).and_return(excon)
-        response = double
-        allow(excon).to receive(:get).and_return(response)
-        allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
-        expect(subject.wrapped_object).to receive(:delete_membership).with(excon, '4e12ae023cc6f88d')
-        expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.1:2380')
-
-        expect(subject.update_membership(node)).to eq('existing')
-      end
-
-      it 'return new when matching peer found from etcd' do
-        excon = double
-        allow(subject.wrapped_object).to receive(:find_etcd_node).and_return(excon)
-        response = double
-        allow(excon).to receive(:get).and_return(response)
-        allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":[]}]}')
-        expect(subject.wrapped_object).not_to receive(:delete_membership)
-        expect(subject.wrapped_object).not_to receive(:add_membership)
-
-        expect(subject.update_membership(node)).to eq('new')
-      end
-    end
-  end
-
-  context "for the third initial node in a three-node grid" do
-    let :node do
-      Node.new(
-        'node_number' => 3,
-        'overlay_ip' => '10.81.0.3',
-        'grid' => {
-          'name' => 'some_grid',
-          'initial_size' => 3,
-          'subnet' => '10.81.0.0/16',
-        }
-      )
-    end
-
-    describe '#update_membership' do
-      it 'only adds when no matching peer found from etcd' do
-        excon = double
-        allow(subject.wrapped_object).to receive(:find_etcd_node).and_return(excon)
-        response = double
-        allow(excon).to receive(:get).and_return(response)
-        allow(response).to receive(:body).and_return('{"members":[{"id":"4e12ae023cc6f88d","name":"node-1","peerURLs":["http://10.81.0.1:2380"],"clientURLs":["http://10.81.0.1:2379"]}]}')
-        expect(subject.wrapped_object).not_to receive(:delete_membership)
-        expect(subject.wrapped_object).to receive(:add_membership).with(excon, 'http://10.81.0.3:2380')
-
-        expect(subject.update_membership(node)).to eq('new')
-      end
-    end
-  end
-
-  context "for the second node in an --inital-size=1 grid" do
-    let :node do
-      Node.new(
-        'node_number' => 2,
-        'overlay_ip' => '10.81.0.2',
-        'grid' => {
-          'initial_size' => 1,
-          'name' => 'some_grid',
-          'subnet' => '10.81.0.0/16',
-        }
-      )
-    end
-
-    describe '#create_container' do
-      it 'deletes and recreates the container in proxy mode' do
-        container = double(id: 'foo')
-        allow(Docker::Container).to receive(:get).and_return(container)
-        allow(container).to receive(:info).and_return({'Config' => {'Image' => 'foobar'}})
-        allow(subject.wrapped_object).to receive(:docker_gateway).and_return('172.17.0.1')
-        expect(container).to receive(:delete)
-        expected_cmd = [
-          '--name', 'node-2', '--data-dir', '/var/lib/etcd',
-          '--listen-client-urls', "http://127.0.0.1:2379,http://10.81.0.2:2379,http://172.17.0.1:2379",
-          '--initial-cluster', 'node-1=http://10.81.0.1:2380',
-          '--proxy', 'on'
-        ]
-        etcd_container = double
-        expect(Docker::Container).to receive(:create).with(hash_including(
-          'name' => 'kontena-etcd',
-          'Image' => 'etcd',
-          'Cmd' => expected_cmd,
-          'HostConfig' => {
-            'NetworkMode' => 'host',
-            'RestartPolicy' => {'Name' => 'always'},
-            'VolumesFrom' => ['kontena-etcd-data']
-          })).and_return(etcd_container)
-        expect(etcd_container).to receive(:start!)
-        allow(etcd_container).to receive(:id).and_return('12345')
-        expect(subject.wrapped_object).to receive(:publish).with('dns:add', {id: etcd_container.id, ip: '10.81.0.2', name: 'etcd.kontena.local'})
-
-        subject.create_container('etcd', node)
+          expect(subject.update_membership(node_info)).to eq('new')
+        end
       end
     end
   end
 
   describe '#delete_membership' do
-    it 'sends DELETE request to etcd members api' do
-      excon = double
-      expect(excon).to receive(:delete).with(hash_including(:path => "/v2/members/12345"))
+    let(:excon_connection) { double() }
 
-      subject.delete_membership(excon, '12345')
+    it 'sends DELETE request to etcd members api' do
+      expect(excon_connection).to receive(:delete).with(hash_including(:path => "/v2/members/12345"))
+
+      subject.delete_membership(excon_connection, '12345')
     end
   end
 
   describe '#add_membership' do
+    let(:excon_connection) { double() }
+
     it 'sends POST request to etcd members api' do
-      excon = double
-      expect(excon).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.1:2380"]}'))
+      expect(excon_connection).to receive(:post).with(hash_including(:body => '{"peerURLs":["http://10.81.0.1:2380"]}'))
 
-      subject.add_membership(excon, 'http://10.81.0.1:2380')
-    end
-  end
-
-  describe '#get_container' do
-    it 'returns kontena-etcd container' do
-      etcd = double
-      expect(Docker::Container).to receive(:get).and_return(etcd)
-      expect(subject.get_container).to eq(etcd)
-    end
-
-    it 'returns nil if kontena-etcd does not exist' do
-      expect(Docker::Container).to receive(:get).and_raise(Docker::Error::NotFoundError)
-      expect(subject.get_container).to eq(nil)
-    end
-
-    it 'raises if docker raises' do
-      expect(Docker::Container).to receive(:get).and_raise(Docker::Error::ServerError)
-      expect {
-        subject.wrapped_object.get_container
-      }.to raise_error(Docker::Error::ServerError)
+      subject.add_membership(excon_connection, 'http://10.81.0.1:2380')
     end
   end
 end

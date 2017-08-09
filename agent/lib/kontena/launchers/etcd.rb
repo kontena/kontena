@@ -16,7 +16,6 @@ module Kontena::Launchers
     IMAGE = "#{ETCD_IMAGE}:#{ETCD_VERSION}"
 
     def initialize(autostart = true)
-      @running = false
       info 'initialized'
       async.start if autostart
     end
@@ -45,7 +44,7 @@ module Kontena::Launchers
     # @param [Node] node
     # @return [Hash{running: true}]
     def ensure(node)
-      create_data_container(IMAGE)
+      ensure_data_container(IMAGE)
       container = ensure_container(IMAGE, node)
 
       add_dns(container.id, node.overlay_ip)
@@ -57,7 +56,7 @@ module Kontena::Launchers
 
     # @param [String] image
     # @return [Docker::Container]
-    def create_data_container(image)
+    def ensure_data_container(image)
       unless data_container = inspect_container('kontena-etcd-data')
         info "creating new etcd data container"
 
@@ -75,18 +74,21 @@ module Kontena::Launchers
     # @return [Docker::Container]
     def ensure_container(image, node)
       container = self.inspect_container('kontena-etcd')
-      container_image = container.info['Config']['Image']
 
-      if container && container_image != image
-        info "etcd is outdated, upgrading to #{image} from #{container_image}"
-        container.delete(force: true)
-      elsif container && container.running?
-        info 'etcd is already running'
-        return container
-      elsif container && !container.running?
-        info 'etcd is stopped, starting it'
-        container.start!
-        return container
+      if container
+        container_image = container.info['Config']['Image']
+
+        if container_image != image
+          info "etcd is outdated, upgrading to #{image} from #{container_image}"
+          container.delete(force: true)
+        elsif !container.running?
+          info 'etcd is stopped, starting it'
+          container.start!
+          return container
+        else
+          info 'etcd is already running'
+          return container
+        end
       else
         info "etcd does not yet exist"
       end
@@ -108,7 +110,7 @@ module Kontena::Launchers
         docker_ip: docker_gateway,
         cluster_token: node.grid['name'],
         cluster_state: cluster_state,
-        initial_cluster: initial_cluster(node.grid_subnet, node.grid_initial_size),
+        initial_cluster: initial_cluster(node),
       }
 
       info "creating etcd service: #{options.inspect}"
@@ -132,7 +134,7 @@ module Kontena::Launchers
           '--advertise-client-urls', "http://#{overlay_ip}:2379",
           '--initial-advertise-peer-urls', "http://#{overlay_ip}:2380",
           '--initial-cluster-token', cluster_token,
-          '--initial-cluster-state', cluster_state
+          '--initial-cluster-state', cluster_state.to_s,
         ]
       else
         cmd = cmd + ['--proxy', 'on']
@@ -189,30 +191,28 @@ module Kontena::Launchers
     end
 
     ##
-    # Finds a working etcd node from set of initial nodes
+    # Finds a working etcd node from the set of initial grid nodes
     #
-    # @param [Node] node
-    # @return [Hash] The cluster members as given by etcd API
+    # @param [Node] node info
+    # @return [Excon] Client connection
     def find_etcd_node(node)
-      grid_subnet = IPAddr.new(node.grid['subnet'])
-      tries = node.grid['initial_size']
-      begin
-        etcd_host = "http://#{grid_subnet[tries]}:2379/v2/members"
+      node.grid_initial_nodes.reverse_each do |host|
+        begin
+          etcd_host = "http://#{host}:2379/v2/members"
 
-        info "connecting to existing etcd at #{etcd_host}"
-        connection = Excon.new(etcd_host)
-        members = JSON.parse(connection.get.body)
+          info "connecting to existing etcd at #{etcd_host}..."
+          connection = Excon.new(etcd_host)
+          connection.get
 
-        return connection
-      rescue Excon::Errors::Error => exc
-        tries -= 1
-        if tries > 0
-          info 'retrying next etcd host'
-          retry
-        else
-          info 'no online etcd host found, we\'re probably bootstrapping first node'
+          return connection
+        rescue Excon::Errors::Error => exc
+          info "retrying next etcd host on error: #{exc}"
+          next
         end
       end
+
+      info "no working initial nodes found, we're probably bootstrapping the first node"
+
       nil
     end
 
@@ -242,12 +242,11 @@ module Kontena::Launchers
       publish('dns:add', {id: container_id, ip: weave_ip, name: 'etcd.kontena.local'})
     end
 
-    # @param grid_subnet [IPAddress]
-    # @param initial_size [Integer]
+    # @param node [Node]
     # @return [Array<String>]
-    def initial_cluster(grid_subnet, initial_size)
-      (1..initial_size).map { |i|
-        grid_subnet.host_at(i)
+    def initial_cluster(node)
+      node.grid_initial_nodes.map.with_index { |host, i|
+        "node-#{i+1}=http://#{host}:2380"
       }
     end
 
@@ -255,12 +254,6 @@ module Kontena::Launchers
     # @return [String, NilClass]
     def docker_gateway
       interface_ip('docker0')
-    end
-
-    # @param [Exception] exc
-    def log_error(exc)
-      error "#{exc.class.name}: #{exc.message}"
-      error exc.backtrace.join("\n")
     end
   end
 end

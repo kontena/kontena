@@ -49,6 +49,15 @@ class Node
     @grid['initial_size']
   end
 
+  # @return [Array<IPAddress>]
+  def grid_initial_nodes
+    grid_subnet = self.grid_subnet
+
+    (1..self.grid_initial_size).map { |i|
+      grid_subnet.host_at(i)
+    }
+  end
+
   # @return [String]
   def grid_supernet
     @grid['supernet']
