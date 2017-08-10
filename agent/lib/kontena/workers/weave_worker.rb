@@ -117,8 +117,8 @@ module Kontena::Workers
       overlay_cidr = container.overlay_cidr
 
       if overlay_cidr
-        register_container_dns(container)
         start_container_overlay(container)
+        register_container_dns(container)
       else
         debug "skip start for container=#{container.name} without overlay_cidr"
       end
