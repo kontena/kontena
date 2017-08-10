@@ -1,4 +1,4 @@
-module Kontena::NetworkAdapters
+module Kontena::Workers
   class IpamCleaner
     include Celluloid
     include Celluloid::Notifications
@@ -8,11 +8,15 @@ module Kontena::NetworkAdapters
     CLEANUP_INTERVAL = (3*60) # Run cleanup every 3mins
     CLEANUP_DELAY = 30
 
-    def initialize
+    def initialize(start: true)
       info 'initialized'
 
+      async.start if start
+    end
+
+    def start
       observe(Actor[:ipam_plugin_launcher]) do |status|
-        self.async.start unless @running
+        async.run unless @running
       end
     end
 
@@ -20,7 +24,7 @@ module Kontena::NetworkAdapters
       @ipam_client ||= Kontena::NetworkAdapters::IpamClient.new
     end
 
-    def start
+    def run
       @running = true
 
       every(CLEANUP_INTERVAL) do
