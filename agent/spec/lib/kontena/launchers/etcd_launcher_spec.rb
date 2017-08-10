@@ -84,9 +84,12 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
     it 'recognizes existing data, etcd containers' do
       expect(subject).to_not receive(:update_membership)
       expect(subject).to_not receive(:create_container)
-      expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
 
-      actor.ensure(node_info)
+      expect(actor.ensure(node_info)).to eq(
+        container_id: container_id,
+        overlay_ip: '10.81.0.1',
+        dns_name: 'etcd.kontena.local',
+      )
     end
 
     it 'passes through unexpected Docker errors', :log_celluloid_actor_crashes => false do
@@ -101,7 +104,6 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
     let(:etcd_container) { nil }
     let(:create_container) { double(Docker::Container,
       id: container_id,
-      running?: true,
     ) }
 
     describe '#ensure' do
@@ -134,9 +136,11 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
         ).and_return(create_container)
         expect(create_container).to receive(:start!)
 
-        expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
-
-        actor.ensure(node_info)
+        expect(actor.ensure(node_info)).to eq(
+          container_id: container_id,
+          overlay_ip: '10.81.0.1',
+          dns_name: 'etcd.kontena.local',
+        )
       end
     end
   end
@@ -147,27 +151,33 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
     describe '#ensure' do
       it 'starts the etcd container' do
         expect(etcd_container).to receive(:start!)
-        expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
 
-        actor.ensure(node_info)
+        expect(actor.ensure(node_info)).to eq(
+          container_id: container_id,
+          overlay_ip: '10.81.0.1',
+          dns_name: 'etcd.kontena.local',
+        )
       end
     end
   end
 
   context 'with an outdated image' do
     let(:container_image) { 'kontena/etcd:2.3.6' }
+    let(:container_id2) { '177999311adb7a207c083590235d86158ec5e25b72877f08689b0a1bd5a80a69' }
 
     describe '#ensure' do
       it 're-creates the etcd container' do
         expect(etcd_container).to receive(:delete).with(force: true)
         expect(subject).to receive(:update_membership).and_return(:new)
         expect(subject).to receive(:create_container).with('kontena/etcd:2.3.7', Hash).and_return(double(Docker::Container,
-          id: container_id,
-          running?: true,
+          id: container_id2,
         ))
-        expect(subject).to receive(:add_dns).with(container_id, '10.81.0.1')
 
-        actor.ensure(node_info)
+        expect(actor.ensure(node_info)).to eq(
+          container_id: container_id2,
+          overlay_ip: '10.81.0.1',
+          dns_name: 'etcd.kontena.local',
+        )
       end
     end
   end
@@ -189,7 +199,6 @@ describe Kontena::Launchers::Etcd, :celluloid => true do
       let(:etcd_container) { nil }
       let(:create_container) { double(Docker::Container,
         id: container_id,
-        running?: true,
       ) }
 
       it 'creates the container in proxy mode' do

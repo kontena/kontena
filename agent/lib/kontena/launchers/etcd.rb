@@ -48,10 +48,10 @@ module Kontena::Launchers
       ensure_data_container(IMAGE)
       container = ensure_container(IMAGE, node)
 
-      add_dns(container.id, node.overlay_ip)
-
       {
-        running: container.running?
+        container_id: container.id,
+        overlay_ip: node.overlay_ip,
+        dns_name: 'etcd.kontena.local',
       }
     end
 
@@ -69,6 +69,8 @@ module Kontena::Launchers
       end
     end
 
+    # TODO: inspect --listen-client-urls and ensure node.overlay_ip, docker_ip matches (#1893)
+    #
     # @param [String] image
     # @param [Node] node
     # @raise [Docker::Error]
@@ -235,12 +237,6 @@ module Kontena::Launchers
       info "Adding new etcd membership info with peer URL #{peer_url}"
       connection.post(:body => JSON.generate(peerURLs: [peer_url]),
                       :headers => { 'Content-Type' => 'application/json' })
-    end
-
-    # @param [String] container_id
-    # @param [String] weave_ip
-    def add_dns(container_id, weave_ip)
-      publish('dns:add', {id: container_id, ip: weave_ip, name: 'etcd.kontena.local'})
     end
 
     # @param node [Node]
