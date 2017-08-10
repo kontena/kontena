@@ -28,8 +28,9 @@ module Kontena::Workers
         # TODO: re-ensure based on @containers?
         ensure_containers_attached unless containers_attached?
 
-        # XXX: this fails if the etcd container restarts, weave will forget the DNS name
-        #      it should be ensured from container events instead
+        # XXX: this fails if the etcd container restarts, weave will forget the DNS name...
+        # XXX: this also fails if the weave container restarts... on_container_event -> ensure_* does not have access to the observed etcd state
+        # TODO: the DNS names should be ensured from container events instead...
         ensure_etcd_dns(etcd)
       end
 
@@ -73,6 +74,7 @@ module Kontena::Workers
         end
       elsif event.status == 'restart'
         if router_image?(event.from)
+          # XXX: should update the observer instead, to also ensure etcd...
           self.ensure_containers_attached
         end
       elsif event.status == 'destroy'
