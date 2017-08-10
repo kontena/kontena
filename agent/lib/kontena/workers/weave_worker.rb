@@ -1,4 +1,3 @@
-require 'docker'
 require_relative '../helpers/weave_helper'
 
 module Kontena::Workers
@@ -14,38 +13,39 @@ module Kontena::Workers
 
       @migrate_containers = nil # initialized by #ensure_containers_attached
 
-      @started = false # to prevent handling of container events before migration scan
-      subscribe('container:event', :on_container_event)
-      subscribe('dns:add', :on_dns_add)
-
       async.start if start
     end
 
-    def on_dns_add(topic, event)
-      wait!
-      weave_client.add_dns(event[:id], event[:ip], event[:name])
-    rescue => exc
-      error exc
-    end
-
-    # Spin waiting until ready
-    # @raise [Timeout::Error]
-    def wait!
-      wait_until!("weave started") { @started }
+    def ipam_client
+      @ipam_client ||= Kontena::NetworkAdapters::IpamClient.new
     end
 
     def start
       info "start..."
 
-      observe(Actor[:weave_launcher]) do |weave|
+      observe(Actor[:weave_launcher], Actor[:etcd_launcher]) do |weave, etcd|
+        # Only attach once
         # TODO: re-ensure based on @containers?
-        unless @started
-          ensure_containers_attached
-          @started = true
-        end
+        ensure_containers_attached unless containers_attached?
+
+        # XXX: this fails if the etcd container restarts, weave will forget the DNS name
+        #      it should be ensured from container events instead
+        ensure_etcd_dns(etcd)
       end
+
+      subscribe('container:event', :on_container_event)
     end
 
+    # Ensure DNS name for Kontena::Launchers::Etcd
+    #
+    # @param etcd [Hash{container_id: String, overlay_ip: String, dns_name: String}]
+    def ensure_etcd_dns(etcd)
+      weave_client.add_dns(etcd[:container_id], etcd[:overlay_ip], etcd[:dns_name])
+    end
+
+    def containers_attached?
+      !!@containers_attached
+    end
     def ensure_containers_attached
       @migrate_containers = self.inspect_containers
 
@@ -54,13 +54,15 @@ module Kontena::Workers
       Docker::Container.all(all: false).each do |container|
         self.start_container(container)
       end
+
+      @containers_attached = true
     end
 
     # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
-      # cannot run start_container before ensure_containers_attached has populated @migrate_containers
-      return unless @started
+      # cannot start_container before ensure_containers_attached has populated @migrate_containers
+      return unless containers_attached?
 
       if event.status == 'start'
         container = Docker::Container.get(event.id) rescue nil
@@ -71,12 +73,17 @@ module Kontena::Workers
         end
       elsif event.status == 'restart'
         if router_image?(event.from)
-          # XXX: wait?
           self.ensure_containers_attached
         end
       elsif event.status == 'destroy'
         self.on_container_destroy(event)
       end
+    end
+
+    # @param [String] image
+    # @return [Boolean]
+    def router_image?(image)
+      image.split(':').first == WEAVE_IMAGE
     end
 
     # Inspect current state of attached containers.
@@ -122,7 +129,7 @@ module Kontena::Workers
 
       if overlay_network && overlay_cidr
         # release from IPAM
-        network_adapter.release_container_address(container_id, overlay_network, overlay_cidr)
+        async.release_container_address(container_id, overlay_network, overlay_cidr)
       end
     rescue => exc
       error "failed to remove container: #{exc.class.name}: #{exc.message}"
@@ -184,6 +191,20 @@ module Kontena::Workers
       info "Attach container=#{container_id} at cidr=#{cidr}"
 
       weaveexec_pool.weaveexec! 'attach', cidr, '--rewrite-hosts', container_id
+    end
+
+    # Release container overlay network address from IPAM.
+    #
+    # @param container_id [String] may not exist anymore
+    # @param pool [String] IPAM pool ID from io.kontena.container.overlay_network
+    # @param cidr [String] IPAM overlay CIDR from io.kontena.container.overlay_cidr
+    def release_container_address(container_id, pool, cidr)
+      info "Release address for container=#{container_id} in pool=#{pool}: #{cidr}"
+
+      ipam_client.release_address(pool, cidr)
+    rescue Kontena::NetworkAdapters::IpamError => error
+      # Cleanup will take care of these later on
+      warn "Failed to release address for container=#{container_id} in pool=#{pool} at cidr=#{cidr}: #{error}"
     end
 
     # @param [Docker::Container]

@@ -11,7 +11,7 @@ module Kontena
     class Creator
       include Kontena::Logging
       include Common
-      include Kontena::Helpers::WeaveHelper
+      include Kontena::Helpers::WaitHelper
       include Kontena::Helpers::PortHelper
       include Kontena::Helpers::RpcHelper
 
@@ -21,6 +21,15 @@ module Kontena
       def initialize(service_pod)
         @service_pod = service_pod
         @image_credentials = service_pod.image_credentials
+      end
+
+      # @return [Celluloid::Proxy::Cell<Kontena::NetworkAdapters::Weave>]
+      def network_adapter
+        network_adapter = Celluloid::Actor[:network_adapter]
+
+        wait_until!("network ready") { network_adapter.observable? }
+
+        network_adapter
       end
 
       # @return [Docker::Container]

@@ -89,6 +89,12 @@ module Kontena::Workers
       error "#{exc.class.name}: #{exc.message}"
     end
 
+    # @param [String] image
+    # @return [Boolean]
+    def adapter_image?(image)
+      image.split(':').first == WEAVEEXEC_IMAGE
+    end
+
     def stop_processing
       @processing = false
     end
