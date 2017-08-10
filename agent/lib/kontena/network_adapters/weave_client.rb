@@ -7,7 +7,7 @@ module Kontena::NetworkAdapters
     URL = 'http://127.0.0.1:6784'
 
     def initialize(url = URL)
-      @connection = Excon.new("http://127.0.0.1:6784",
+      @connection = Excon.new(url,
         :connect_timeout => 5,
         :read_timeout => 5,
       )
@@ -20,13 +20,11 @@ module Kontena::NetworkAdapters
       nil
     end
 
-    # @raise [Excon::Errors]
+    # @raise [Excon::Errors::Error]
     # @return [String] text form
     def status
       response = @connection.get(:path => '/status', :expects => [200])
       response.body
-    rescue Excon::Errors::HTTPStatusError => error
-      handle_error_response(error)
     end
 
     # @param [String] container_id
