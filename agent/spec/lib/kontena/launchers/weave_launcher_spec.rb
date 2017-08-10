@@ -39,7 +39,6 @@ describe Kontena::Launchers::Weave, :celluloid => true do
   let(:grid_token) { '4vtTNwkfl1hxthi5HDBit5rbyinpxJS3dZ13BNZ3/ur8ZHLnJU8VkH5yZTXvfIanrCE5d1VVqFN3itx+BIldxQ==' }
   let(:grid_trusted_subnets) { [] }
   let(:node_info) { instance_double(Node,
-    grid_token: grid_token,
     grid_trusted_subnets: grid_trusted_subnets,
     peer_ips: [ '192.168.66.102' ],
     node_number: 2,
@@ -49,6 +48,7 @@ describe Kontena::Launchers::Weave, :celluloid => true do
   let(:node_info_actor) { instance_double(Kontena::Workers::NodeInfoWorker) }
 
   before do
+    allow(ENV).to receive(:[]).with('KONTENA_TOKEN').and_return(grid_token)
     allow(Celluloid::Actor).to receive(:[]).with(:node_info_worker).and_return(node_info_actor)
 
     allow(subject).to receive(:weaveexec_pool).and_return(weaveexec_pool)

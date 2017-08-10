@@ -15,6 +15,10 @@ module Kontena::Launchers
 
     CONTAINER_NAME = 'weave'
 
+    def weave_password
+      ENV['KONTENA_TOKEN']
+    end
+
     # @param node_info [Kontena::Actor::Observable<Kontena::Models::NodeInfo>]
     def initialize(start: true)
       async.start if start
@@ -53,7 +57,7 @@ module Kontena::Launchers
 
       state = {}
       state.merge! self.ensure_container(IMAGE,
-        password: node.grid_token,
+        password: self.weave_password,
         trusted_subnets: node.grid_trusted_subnets
       )
       state.merge! self.ensure_peers(node.peer_ips)
