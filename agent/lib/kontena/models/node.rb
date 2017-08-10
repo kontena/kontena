@@ -29,9 +29,19 @@ class Node
     grid.dig('stats', 'statsd') || {}
   end
 
-  # @return [IPAddress] 10.81.0.0/16
+  # @return [String] 10.81.0.0/16
   def grid_subnet
-    IPAddress.parse(@grid['subnet'])
+    @grid['subnet']
+  end
+
+  # Compute IP address range for dynamic IPAM allocations
+  #
+  # @return [String] 10.81.128.0/17
+  def grid_iprange
+    grid_subnet = IPAddress.parse(@grid['subnet'])
+    lower, upper = grid_subnet.split(2)
+
+    upper.to_string
   end
 
   # @return [Array<String>] 192.168.66.0/24
@@ -44,12 +54,12 @@ class Node
     @grid['initial_size']
   end
 
-  # @return [Array<IPAddress>]
+  # @return [Array<String>]
   def grid_initial_nodes
     grid_subnet = self.grid_subnet
 
     (1..self.grid_initial_size).map { |i|
-      grid_subnet.host_at(i)
+      grid_subnet.host_at(i).to_s
     }
   end
 
@@ -58,13 +68,15 @@ class Node
     @grid['supernet']
   end
 
-  # @return [IPAddress] 10.81.0.X
+  # @return [String] 10.81.0.X
   def overlay_ip
-    IPAddress.parse(@overlay_ip)
+    @overlay_ip
   end
 
   # @return [String]
   def overlay_cidr
+    grid_subnet = IPAddress.parse(@grid['subnet'])
+
     "#{overlay_ip}/#{grid_subnet.prefix}"
   end
 
