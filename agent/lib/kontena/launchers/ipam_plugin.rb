@@ -1,5 +1,4 @@
 require_relative '../helpers/launcher_helper'
-require_relative '../helpers/wait_helper'
 
 module Kontena::Launchers
   class IpamPlugin
@@ -9,7 +8,6 @@ module Kontena::Launchers
     include Kontena::Observer
     include Kontena::Observable
     include Kontena::Helpers::LauncherHelper
-    include Kontena::Helpers::WaitHelper
 
     IPAM_VERSION = ENV['IPAM_VERSION'] || '0.2.2'
     IPAM_IMAGE = ENV['IPAM_IMAGE'] || 'kontena/ipam-plugin'
