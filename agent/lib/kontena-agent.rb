@@ -7,7 +7,6 @@ require 'active_support/core_ext/time'
 require 'active_support/core_ext/module/delegation'
 require 'kontena-websocket-client'
 
-require_relative 'ipaddr_helpers'
 require_relative 'ipaddress_patch'
 
 require_relative 'docker/version'
