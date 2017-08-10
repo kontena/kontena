@@ -70,7 +70,9 @@ describe Kontena::NetworkAdapters::IpamClient do
               :headers=>{"Content-Type"=>"application/json"},
               :expects=>[200, 201]})
         .and_return(double(:body => '{"Address":"10.81.128.100/16"}', :status => {}))
-      expect(subject.reserve_address('kontena')).to eq("10.81.128.100/16")
+      expect(subject.reserve_address('kontena')).to eq(
+        'Address' => "10.81.128.100/16",
+      )
     end
 
     it 'handles error' do
