@@ -1,4 +1,4 @@
-describe Kontena::Workers::IpamCleaner do
+describe Kontena::Workers::IpamCleaner, :celluloid => true do
   let(:actor) { described_class.new(start: false) }
   subject { actor.wrapped_object }
   let(:subject_async) { instance_double(described_class) }
