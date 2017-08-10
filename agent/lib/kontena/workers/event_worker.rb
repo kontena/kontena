@@ -1,5 +1,4 @@
 require_relative '../helpers/rpc_helper'
-require_relative '../helpers/weave_helper'
 
 module Kontena::Workers
   class EventWorker
@@ -7,7 +6,6 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
-    include Kontena::Helpers::WeaveHelper
 
     EVENT_NAME = 'container:event'
 
@@ -92,7 +90,7 @@ module Kontena::Workers
     # @param [String] image
     # @return [Boolean]
     def adapter_image?(image)
-      image.split(':').first == WEAVEEXEC_IMAGE
+      image.split(':').first == Kontena::NetworkAdapters::WeaveExec::WEAVEEXEC_IMAGE
     end
 
     def stop_processing
