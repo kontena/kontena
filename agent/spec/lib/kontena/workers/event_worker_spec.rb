@@ -133,11 +133,21 @@ describe Kontena::Workers::EventWorker do
     end
 
     it 'does not publish event if source is from network adapter' do
-      event = spy(:event)
-      allow(subject.wrapped_object).to receive(:adapter_image?).and_return(true)
+      event = double(:event, from: 'weaveworks/weaveexec:test')
+
       expect(rpc_client).not_to receive(:request)
       expect(subject.wrapped_object).not_to receive(:publish)
       subject.publish_event(event)
+    end
+  end
+
+  describe '#adapter_image' do
+    it 'returns true if weave exec container' do
+      expect(subject.adapter_image?('weaveworks/weaveexec:latest')).to be_truthy
+    end
+
+    it 'returns false if not weave exec container' do
+      expect(subject.adapter_image?('redis:latest')).to be_falsey
     end
   end
 end
