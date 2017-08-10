@@ -1,5 +1,6 @@
 require_relative 'container_log_worker'
 require_relative '../helpers/rpc_helper'
+require_relative '../helpers/wait_helper'
 
 module Kontena::Workers
   class LogWorker
@@ -7,6 +8,7 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::WaitHelper
 
     attr_reader :queue, :etcd, :workers
 
@@ -53,7 +55,8 @@ module Kontena::Workers
     end
 
     def start
-      sleep 1 until Actor[:etcd_launcher].observable?
+      wait_until!("etcd ready") { Actor[:etcd_launcher].observable? }
+      
       Docker::Container.all.each do |container|
         begin
           self.stream_container_logs(container) unless container.skip_logs?
