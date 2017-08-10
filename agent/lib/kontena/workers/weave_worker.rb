@@ -59,6 +59,14 @@ module Kontena::Workers
       @containers_attached = true
     end
 
+    # @param event [Docker::Event]
+    # @return [Docker::Container]
+    def get_event_container(event)
+      return Docker::Container.get(event.id)
+    rescue Docker::Error::NotFoundError
+      return nil
+    end
+
     # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
@@ -66,8 +74,7 @@ module Kontena::Workers
       return unless containers_attached?
 
       if event.status == 'start'
-        container = Docker::Container.get(event.id) rescue nil
-        if container
+        if container = get_event_container(event)
           self.start_container(container)
         else
           warn "skip start event for missing container=#{event.id}"
@@ -115,7 +122,8 @@ module Kontena::Workers
       else
         debug "skip start for container=#{container.name} without overlay_cidr"
       end
-    rescue Docker::Error::NotFoundError
+
+    rescue Docker::Error::NotFoundError # XXX: because Docker::Container methods re-query the API
       debug "skip start for missing container=#{container.id}"
 
     rescue => exc
