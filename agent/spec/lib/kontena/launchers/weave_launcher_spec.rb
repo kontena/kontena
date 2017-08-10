@@ -77,20 +77,6 @@ describe Kontena::Launchers::Weave, :celluloid => true do
     end
   end
 
-  describe '#inspect' do
-    it 'returns a hash' do
-      expect(actor.inspect).to eq(
-        image: 'weaveworks/weave:1.9.3',
-        container: container,
-        running: true,
-        options: {
-          password: '4vtTNwkfl1hxthi5HDBit5rbyinpxJS3dZ13BNZ3/ur8ZHLnJU8VkH5yZTXvfIanrCE5d1VVqFN3itx+BIldxQ==',
-          trusted_subnets: [],
-        },
-      )
-    end
-  end
-
   describe '#ensure' do
     it 'attaches, connects and exposes weave' do
       expect(weaveexec_pool).to receive(:weaveexec!).with('attach-router')
@@ -121,12 +107,6 @@ describe Kontena::Launchers::Weave, :celluloid => true do
   context 'with the container missing' do
     let(:container) { nil }
 
-    describe '#inspect' do
-      it 'returns nil' do
-        expect(actor.inspect).to be_nil
-      end
-    end
-
     describe '#ensure' do
       it 'launches, connects and exposes weave' do
         expect(weaveexec_pool).to receive(:weaveexec!).with('launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local', '--password', grid_token, '--trusted-subnets', '')
@@ -150,14 +130,6 @@ describe Kontena::Launchers::Weave, :celluloid => true do
 
   context 'with a stopped container' do
     let(:container_running?) { false }
-
-    describe '#inspect' do
-      it 'returns running => false' do
-        expect(actor.inspect).to match hash_including(
-          running: false,
-        )
-      end
-    end
 
     describe '#ensure_container' do
       it 're-launches weave' do
@@ -192,16 +164,6 @@ describe Kontena::Launchers::Weave, :celluloid => true do
     let(:container_cmd_trusted_subnets) { "192.168.66.0/24" }
     let(:grid_trusted_subnets) { [ '192.168.66.0/24'] }
 
-    describe '#inspect' do
-      it 'returns the trusted subnets' do
-        expect(actor.inspect).to match hash_including(
-          options: hash_including(
-            trusted_subnets: [ '192.168.66.0/24'],
-          ),
-        )
-      end
-    end
-
     describe '#ensure_container' do
       it 'does not re-launche weave' do
         expect(container).not_to receive(:remove)
@@ -218,16 +180,6 @@ describe Kontena::Launchers::Weave, :celluloid => true do
   context 'with multiple --trusted-subnets' do
     let(:container_cmd_trusted_subnets) { "192.168.66.0/24,192.168.67.0/24" }
     let(:grid_trusted_subnets) { [ '192.168.66.0/24'] }
-
-    describe '#inspect' do
-      it 'returns the trusted subnets' do
-        expect(actor.inspect).to match hash_including(
-          options: hash_including(
-            trusted_subnets: [ '192.168.66.0/24', '192.168.67.0/24'],
-          ),
-        )
-      end
-    end
 
     describe '#ensure_container' do
       it 're-launches weave with fewer trusted subnets' do

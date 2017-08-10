@@ -95,36 +95,42 @@ module Kontena::Launchers
       end
     end
 
-    # @return [Hash] {image, running, options} or nil if not exists
-    def inspect
-      return nil unless container = inspect_container(CONTAINER_NAME)
-
-      return {
-        image: container.config['Image'],
-        container: container, # XXX: just container.id?
-        running: container.running?,
-        options: {
-          password: self.inspect_weave_password(container),
-          trusted_subnets: self.inspect_trusted_subnets(container),
-        },
-      }
-    end
-
     # @return [Hash{image: String, options: Hash{password, trusted_subnets}}]
     def ensure_container(image, options)
-      state = self.inspect
+      container = inspect_container(CONTAINER_NAME)
 
-      if state && state[:image] == image && state[:running] && state[:options] == options
-        info "Attaching existing weave..."
-        weaveexec_attach!
-      elsif state
-        info "Restarting weave..."
-        destroy! state[:container]
-        launch! **options
+      if !container
+        info "container does not exist, launching"
       else
-        info "Launching weave..."
-        launch! **options
+        container_image = container.config['Image']
+        container_options = {
+          password: self.inspect_weave_password(container),
+          trusted_subnets: self.inspect_trusted_subnets(container),
+        }
+
+        if container_image != image
+          info "container image #{container_image} outdated, upgrading to #{image}"
+          destroy! container
+        elsif container_options != options
+          info "container outdated, re-configuring"
+          debug "container options: #{container_options}"
+          debug "ensure options: #{options}"
+          destroy! container
+        elsif !container.running?
+          info "container stopped, re-launching"
+          destroy! container
+        else
+          info "container running, attaching"
+          weaveexec_attach!
+
+          return {
+            image: container_image,
+            options: container_options,
+          }
+        end
       end
+
+      launch! **options
 
       return {
         image: image,
