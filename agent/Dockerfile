@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.6
 MAINTAINER Kontena, Inc. <info@kontena.io>
 
 RUN apk update && apk --update add tzdata ruby ruby-irb ruby-bigdecimal \

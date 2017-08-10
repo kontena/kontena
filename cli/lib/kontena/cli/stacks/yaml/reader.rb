@@ -60,9 +60,10 @@ module Kontena::Cli::Stacks
       end
 
       def default_envs
-        {
+        @default_envs ||= {
           'GRID' => env['GRID'],
-          'STACK' => env['STACK']
+          'STACK' => env['STACK'],
+          'PLATFORM' => env['PLATFORM']
         }
       end
 
@@ -148,7 +149,7 @@ module Kontena::Cli::Stacks
           result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
           unless skip_variables?
             result[:variables]     = variables.to_h(values_only: true).reject do |k,_|
-              k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
+              default_envs.keys.include?(k) || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
             end
           end
           result[:volumes]       = errors.count.zero? ? parse_volumes : {}

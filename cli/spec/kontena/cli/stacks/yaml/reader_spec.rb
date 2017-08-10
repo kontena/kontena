@@ -41,7 +41,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
   before(:each) do
     allow_any_instance_of(described_class).to receive(:env)
-      .and_return( { 'STACK' => 'test', 'GRID' => 'test-grid' } )
+      .and_return( { 'STACK' => 'test', 'GRID' => 'test-grid', 'PLATFORM' => 'test-grid' } )
   end
 
   describe '#initialize' do
@@ -174,6 +174,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           {
             'STACK' => 'test',
             'GRID' => 'test-grid',
+            'PLATFORM' => 'test-grid',
             'TAG' => '4.1'
           }
         )
@@ -186,6 +187,13 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         result = subject.execute
         services = result[:services]
         expect(services['wordpress']['image']).to eq('wordpress:4.1')
+      end
+
+      it 'interpolates default variables' do
+        result = subject.execute
+        services = result[:services]
+
+        expect(services['wordpress']['environment']).to include('STACK=test', 'GRID=test-grid', 'PLATFORM=test-grid')
       end
 
       it 'interpolates ${VAR} variables' do
