@@ -1,4 +1,4 @@
-describe Kontena::NetworkAdapters::WeaveExec, :celluloid => true do
+describe Kontena::NetworkAdapters::WeaveExecutor, :celluloid => true do
   let(:actor) { described_class.new() }
   subject { actor.wrapped_object }
 
@@ -16,7 +16,7 @@ describe Kontena::NetworkAdapters::WeaveExec, :celluloid => true do
     let(:docker_container) { double(:docker_container) }
 
     before do
-      stub_const('Kontena::NetworkAdapters::WeaveExec::WEAVE_VERSION', '1.9.3')
+      stub_const('Kontena::NetworkAdapters::WeaveExecutor::WEAVE_VERSION', '1.9.3')
     end
 
     it "runs command in container and logs output" do
@@ -58,7 +58,7 @@ describe Kontena::NetworkAdapters::WeaveExec, :celluloid => true do
       expect(docker_container).to receive(:streaming_logs).with(stdout: true, stderr: true).and_return('error')
       expect(docker_container).to receive(:delete).with(force: true, v: true)
 
-      expect{subject.run('test', '--opt')}.to raise_error(Kontena::NetworkAdapters::WeaveExec::WeaveExecError, 'weaveexec exit 1: ["test", "--opt"]' + "\n" + 'error')
+      expect{subject.run('test', '--opt')}.to raise_error(Kontena::NetworkAdapters::WeaveExecError, 'weaveexec exit 1: ["test", "--opt"]' + "\n" + 'error')
     end
 
     it "runs command in container and yields lines from stdout" do
@@ -92,9 +92,9 @@ describe Kontena::NetworkAdapters::WeaveExec, :celluloid => true do
     end
 
     it 'aborts on errors' do
-      expect(subject).to receive(:run).with('test', '--opt').and_raise(Kontena::NetworkAdapters::WeaveExec::WeaveExecError.new(['test', '--opt'], 1, "error"))
+      expect(subject).to receive(:run).with('test', '--opt').and_raise(Kontena::NetworkAdapters::WeaveExecError.new(['test', '--opt'], 1, "error"))
 
-      expect{actor.weaveexec! 'test', '--opt'}.to raise_error(Kontena::NetworkAdapters::WeaveExec::WeaveExecError)
+      expect{actor.weaveexec! 'test', '--opt'}.to raise_error(Kontena::NetworkAdapters::WeaveExecError)
       expect(actor).to_not be_dead
     end
 

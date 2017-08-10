@@ -28,7 +28,7 @@ module Kontena::Launchers
       info "start..."
 
       self.ensure_image(IMAGE)
-      self.ensure_image(Kontena::NetworkAdapters::WeaveExec::IMAGE)
+      self.ensure_image(Kontena::NetworkAdapters::WeaveExecutor::IMAGE)
 
       observe(Actor[:node_info_worker]) do |node|
         # XXX: exclusive updates
@@ -137,7 +137,7 @@ module Kontena::Launchers
         options: options,
       }
 
-    rescue Kontena::NetworkAdapters::WeaveExec::WeaveExecError => error
+    rescue Kontena::NetworkAdapters::WeaveExecError => error
       warn "Reset weave on error: #{error}"
 
       weaveexec_reset!
@@ -173,7 +173,7 @@ module Kontena::Launchers
     # @return [Array<String>, nil] exposed CIDRs
     def inspect_exposed
       exposed = nil
-      weaveexec_pool.ps!('weave:expose') do |name, mac, *cidrs|
+      weave_executor.ps!('weave:expose') do |name, mac, *cidrs|
         # XXX: can't return because this is a celluloid block call
         exposed = cidrs
       end
@@ -279,7 +279,7 @@ module Kontena::Launchers
     # @raise [Docker::Error]
     def weaveexec_reset!
       weaveexec!('reset')
-    rescue Kontena::NetworkAdapters::WeaveExec::WeaveExecError => error
+    rescue Kontena::NetworkAdapters::WeaveExecError => error
       warn "Failed to reset weave: #{error}"
     end
   end

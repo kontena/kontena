@@ -1,7 +1,19 @@
 require_relative '../helpers/weave_helper'
 
 module Kontena::NetworkAdapters
-  class WeaveExec
+  class WeaveExecError < StandardError
+    def initialize(command, status_code, output)
+      @command = command
+      @status_code = status_code
+      @output = output
+    end
+
+    def to_s
+      "weaveexec exit #{@status_code}: #{@command}\n#{@output}"
+    end
+  end
+
+  class WeaveExecutor
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
@@ -9,18 +21,6 @@ module Kontena::NetworkAdapters
 
     WEAVE_DEBUG = ENV['WEAVE_DEBUG']
     IMAGE = "#{WEAVEEXEC_IMAGE}:#{WEAVE_VERSION}"
-
-    class WeaveExecError < StandardError
-      def initialize(command, status_code, output)
-        @command = command
-        @status_code = status_code
-        @output = output
-      end
-
-      def to_s
-        "weaveexec exit #{@status_code}: #{@command}\n#{@output}"
-      end
-    end
 
     # @param [Array<String>] cmd
     def censor_password(command)

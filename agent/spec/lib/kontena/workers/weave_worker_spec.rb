@@ -3,7 +3,7 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
   subject { actor.wrapped_object }
   let(:subject_async) { instance_double(described_class) }
 
-  let(:weaveexec_pool) { instance_double(Kontena::NetworkAdapters::WeaveExec) }
+  let(:weave_executor) { instance_double(Kontena::NetworkAdapters::WeaveExecutor) }
   let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
   let(:weave_info) { {} }
   let(:etcd_launcher) { instance_double(Kontena::Launchers::Etcd) }
@@ -17,7 +17,7 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
     allow(Celluloid::Actor).to receive(:[]).with(:weave_launcher).and_return(weave_launcher)
     allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(etcd_launcher)
 
-    allow(subject).to receive(:weaveexec_pool).and_return(weaveexec_pool)
+    allow(subject).to receive(:weave_executor).and_return(weave_executor)
     allow(subject).to receive(:weave_client).and_return(weave_client)
   end
 
@@ -152,7 +152,7 @@ describe Kontena::Workers::WeaveWorker, :celluloid => true do
     ] }
 
     before do
-      allow(weaveexec_pool).to receive(:ps!) do |&block|
+      allow(weave_executor).to receive(:ps!) do |&block|
         weave_ps.each do |args|
           block.call(*args)
         end

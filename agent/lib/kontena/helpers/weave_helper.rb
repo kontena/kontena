@@ -5,12 +5,12 @@ module Kontena
       WEAVE_IMAGE = ENV['WEAVE_IMAGE'] || 'weaveworks/weave'
       WEAVEEXEC_IMAGE = ENV['WEAVEEXEC_IMAGE'] || 'weaveworks/weaveexec'
 
-      def weaveexec_pool
-        Celluloid::Actor[:weave_exec_pool]
+      def weave_executor
+        Celluloid::Actor[:weave_executor]
       end
 
       def weaveexec!(*cmd, &block)
-        weaveexec_pool.weaveexec!(*cmd, &block)
+        weave_executor.weaveexec!(*cmd, &block)
       end
 
       def weave_client

@@ -101,7 +101,7 @@ module Kontena::Workers
     def inspect_containers
       containers = { }
 
-      weaveexec_pool.ps! do |id, mac, *cidrs|
+      weave_executor.ps! do |id, mac, *cidrs|
         next if id == 'weave:expose'
 
         containers[id] = cidrs
@@ -185,7 +185,7 @@ module Kontena::Workers
       attached_cidrs.each do |attached_cidr|
         if cidr != attached_cidr
           warn "Migrate container=#{container_id} from cidr=#{attached_cidr}"
-          weaveexec_pool.weaveexec! 'detach', attached_cidr, container_id
+          weaveexec! 'detach', attached_cidr, container_id
         end
       end
 
@@ -200,7 +200,7 @@ module Kontena::Workers
     def attach_container(container_id, cidr)
       info "Attach container=#{container_id} at cidr=#{cidr}"
 
-      weaveexec_pool.weaveexec! 'attach', cidr, '--rewrite-hosts', container_id
+      weaveexec! 'attach', cidr, '--rewrite-hosts', container_id
     end
 
     # Release container overlay network address from IPAM.
