@@ -1,6 +1,7 @@
 module Volumes
   class PluginInstall < Mutations::Command
 
+
     required do
       model :grid, class: Grid
       string :name
@@ -11,16 +12,18 @@ module Volumes
       array :config do
         string
       end
+      string :label
     end
 
     def validate
-      
+
     end
 
     def execute
-      puts "****** install mutation"
-      self.grid.host_nodes.connected.each do |node|
-        puts "installing plugin #{self.name} to node #{node.name}"
+      # TODO
+      # - Should each node be installed in parallel?
+      # - Collect node results
+      self.grid.host_nodes.connected.reject { |node| self.label && !node.labels.include?(self.label) }.each do |node|
         begin
           response = RpcClient.new(node.node_id).request('/plugins/install', self.name, self.config, self.alias_name)
           if response.key?('error')
@@ -29,7 +32,7 @@ module Volumes
         rescue => exc
           add_error(:install, :failed, "Plugin #{self.name} installation failed on node #{node.name}: #{exc.message}")
         end
-        
+
       end
     end
 
