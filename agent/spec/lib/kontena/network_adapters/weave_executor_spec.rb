@@ -113,8 +113,8 @@ describe Kontena::NetworkAdapters::WeaveExecutor, :celluloid => true do
     end
 
     it 'returns false on errors' do
-      expect(subject).to receive(:run).with('test', '--opt').and_raise(Kontena::NetworkAdapters::WeaveExec::WeaveExecError.new(['test', '--opt'], 1, "error"))
-      expect(subject).to receive(:error).with(Kontena::NetworkAdapters::WeaveExec::WeaveExecError)
+      expect(subject).to receive(:run).with('test', '--opt').and_raise(Kontena::NetworkAdapters::WeaveExecError.new(['test', '--opt'], 1, "error"))
+      expect(subject).to receive(:error).with(Kontena::NetworkAdapters::WeaveExecError)
 
       expect(actor.weaveexec 'test', '--opt').to be false
 
