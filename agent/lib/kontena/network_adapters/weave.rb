@@ -43,6 +43,26 @@ module Kontena::NetworkAdapters
       !!@updated
     end
 
+    # @raise [Docker::Error]
+    # @return [Docker::Container]
+    def ensure_weavewait
+      unless container = inspect_container(WEAVEWAIT_NAME)
+        container = Docker::Container.create(
+          'name' => WEAVEWAIT_NAME,
+          'Image' => Kontena::NetworkAdapters::WeaveExec::IMAGE,
+          'Entrypoint' => ['/bin/false'],
+          'Labels' => {
+            'weavevolumes' => ''
+          },
+          'Volumes' => {
+            '/w' => {},
+            '/w-noop' => {},
+            '/w-nomcast' => {}
+          }
+        )
+      end
+    end
+
     # @param node [Node]
     def update(node)
       state = self.ensure(node)
@@ -65,28 +85,9 @@ module Kontena::NetworkAdapters
       @default_ipam_pool = self.ensure_default_pool(node.grid_subnet, node.grid_iprange)
 
       {
-        pool_id: @default_ipam_pool['PoolID'],
-        pool_subnet: @default_ipam_pool['Pool'],
+        ipam_pool: @default_ipam_pool['PoolID'],
+        ipam_subnet: @default_ipam_pool['Pool'],
       }
-    end
-
-    # @raise [Docker::Error]
-    def ensure_weavewait
-      unless container = inspect_container(WEAVEWAIT_NAME)
-        container = Docker::Container.create(
-          'name' => WEAVEWAIT_NAME,
-          'Image' => WEAVEEXEC_IMAGE,
-          'Entrypoint' => ['/bin/false'],
-          'Labels' => {
-            'weavevolumes' => ''
-          },
-          'Volumes' => {
-            '/w' => {},
-            '/w-noop' => {},
-            '/w-nomcast' => {}
-          }
-        )
-      end
     end
 
     # TODO: retry on temporary IPAM errors?
@@ -117,18 +118,20 @@ module Kontena::NetworkAdapters
     # Lookup Docker image used for container.
     #
     # @param opts [Hash] container create options
+    # @return [Hash] Docker::Image.info
     def inspect_container_image(opts)
       image = Docker::Image.get(opts['Image'])
+      image.info
     end
 
     # Wrap container entrypoint/command to use the weavewait entrypoint, based on image config.
     #
     # @param opts [Hash] container create options
-    # @param image [Docker::Image]
+    # @param image_info [Hash] Docker::Image.info
     # @param entrypoint [Array<String>]
     # @return [String, String] entrypoint, cmd
-    def build_container_entrypoint(opts, image, entrypoint = '/w/w')
-      image_config = image.info['Config']
+    def build_container_entrypoint(opts, image_info, entrypoint = '/w/w')
+      image_config = image_info['Config']
 
       cmd = []
       if opts['Entrypoint']
@@ -173,15 +176,15 @@ module Kontena::NetworkAdapters
     # @param opts [Hash] container create options
     # @return [Hash]
     def modify_container_opts(opts)
-      container_image = inspect_container_image(opts)
-      entrypoint, cmd = build_container_entrypoint(opts, container_image)
+      image_info = inspect_container_image(opts)
+      entrypoint, cmd = build_container_entrypoint(opts, image_info)
       overlay_network, overlay_cidr = reserve_container_address(opts)
       dns_ip = self.weave_dns_ip
 
       host_config = opts['HostConfig'] ||= {}
       host_config['VolumesFrom'] ||= []
       host_config['VolumesFrom'] << "#{WEAVEWAIT_NAME}:ro"
-      host_config['Dns'] = [dns_ip] if dns_ip unless host_config['NetworkMode'].to_s == 'host'
+      host_config['Dns'] = [dns_ip]
 
       labels = opts['Labels'] ||= {}
       labels['io.kontena.container.overlay_network'] = overlay_network

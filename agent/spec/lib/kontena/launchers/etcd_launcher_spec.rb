@@ -1,7 +1,7 @@
 
 describe Kontena::Launchers::Etcd, :celluloid => true do
   let(:actor) { described_class.new(false) }
-  let(:subject) { actor.wrapped_object }
+  subject { actor.wrapped_object }
 
   let(:node_info_worker) { instance_double(Kontena::Workers::NodeInfoWorker) }
   let(:weave_launcher) { instance_double(Kontena::Launchers::Weave) }
