@@ -232,16 +232,16 @@ describe '/v1/nodes', celluloid: true do
           inactive: 600,
           cached: 40,
           buffers: 60
-      	},
-      	filesystem: [{
+          },
+          filesystem: [{
           total: 1000,
           used: 10
         }],
-      	cpu: {
+          cpu: {
           num_cores: 2,
           system: 5.5,
           user: 10.0
-      	},
+          },
         network: {
           internal: {
             interfaces: ["weave", "vethwe123"],
@@ -311,6 +311,14 @@ describe '/v1/nodes', celluloid: true do
       expect(node.reload.labels).to eq(labels)
     end
 
+    it 'saves availability' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', labels: ['foo=bar'])
+      put "/v1/nodes/#{node.to_path}", {availability: 'drain', labels: ['foo=bar']}.to_json, request_headers
+      expect(response.status).to eq(200), response.body
+      expect(node.reload.labels).to eq(['foo=bar'])
+      expect(node.reload.availability).to eq('drain')
+    end
+
     it 'returns error with invalid id' do
       put "/v1/nodes/#{grid.name}/abc", {labels: []}.to_json, request_headers
       expect(response.status).to eq(404)
@@ -320,6 +328,13 @@ describe '/v1/nodes', celluloid: true do
       node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
       put "/v1/nodes/#{node.to_path}", {labels: []}.to_json, {}
       expect(response.status).to eq(403)
+    end
+
+    it 'returns 422 if mutation fails' do
+      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      expect(HostNodes::Update).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
+      put "/v1/nodes/#{node.to_path}", {}, request_headers
+      expect(response.status).to eq(422)
     end
   end
 

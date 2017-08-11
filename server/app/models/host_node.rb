@@ -7,6 +7,11 @@ class HostNode
   include Mongoid::Timestamps
   include EventStream
 
+  module Availability
+    ACTIVE = 'active'.freeze
+    DRAIN = 'drain'.freeze
+  end
+
   Error = Class.new(StandardError)
 
   field :node_id, type: String
@@ -31,6 +36,7 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
   field :connected_at, type: Time
+  field :availability, type: String, default: Availability::ACTIVE
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
