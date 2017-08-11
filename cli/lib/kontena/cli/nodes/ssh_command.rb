@@ -21,7 +21,8 @@ module Kontena::Cli::Nodes
         node = client.get("nodes/#{current_grid}/#{self.node}")
       elsif any?
         nodes = client.get("grids/#{current_grid}/nodes")['nodes']
-        node = nodes.select{ |node| node['connected'] }.first
+        node = nodes.find{ |node| node['connected'] }
+        exit_with_error "There are no online nodes" if node.nil?
       else
         exit_with_error "No node name given. Use --any to connect to the first available node"
       end
