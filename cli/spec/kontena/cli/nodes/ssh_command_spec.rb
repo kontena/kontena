@@ -16,17 +16,23 @@ describe Kontena::Cli::Nodes::SshCommand do
     allow(client).to receive(:get).with('nodes/test-grid/test-node').and_return(node)
   end
 
-  context '--any' do
-    it "fails if using both --any and a node name as a command" do
-      expect(subject).to_not receive(:exec)
-      expect{subject.run(['--any', 'ls', '-l'])}.to exit_with_error.and output(/Cannot combine --any with a node name/).to_stderr
+  describe '--any flag' do
+    context 'used together with a node name' do
+      it "fails and outputs an error message" do
+        expect(subject).to_not receive(:exec)
+        expect{subject.run(['--any', 'ls', '-l'])}.to exit_with_error.and output(/Cannot combine --any with a node name/).to_stderr
+      end
     end
 
-    it "fails if using --any and there are no connected nodes" do
-      expect(subject.client).to receive(:get).with("grids/test-grid/nodes").and_return(
-        'nodes' => [ { 'connected' => false } ]
-      )
-      expect{subject.run(['--any'])}.to exit_with_error.and output(/no online nodes/).to_stderr
+    context 'used when there are no connected nodes' do
+      before do
+        expect(subject.client).to receive(:get).with("grids/test-grid/nodes").and_return('nodes' => [ { 'connected' => false } ])
+      end
+
+      it "fails and outputs an error message" do
+        expect(subject).to_not receive(:exec)
+        expect{subject.run(['--any'])}.to exit_with_error.and output(/no online nodes/).to_stderr
+      end
     end
   end
 
