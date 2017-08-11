@@ -58,6 +58,7 @@ describe Kontena::Cli::Nodes::ShowCommand do
       '  connected: yes',
       '  last connect: 2017-07-04T08:36:02.235Z',
       '  last seen: 2017-07-04T08:36:02.280Z',
+      '  availability: active',
       '  public ip: 91.150.10.190',
       '  private ip: 192.168.66.101',
       '  overlay ip: 10.81.0.1',
