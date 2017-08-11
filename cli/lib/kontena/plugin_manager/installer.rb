@@ -39,6 +39,7 @@ module Kontena
       # @param plugin_name [String]
       # @param pre [Boolean] upgrade to a prerelease version if available. Will happen always when the installed version is a prerelease version.
       def upgrade
+        return install if version
         installed = installed(plugin_name)
         pre = installed.version.prerelease?
 
