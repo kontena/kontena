@@ -22,7 +22,7 @@ module Kontena
         options = []
         options += ['-q', '--no-verbose'] unless ENV["DEBUG"]
         command.handle_options options
-        without_safe { command.execute }
+        command.execute
         true
       rescue Gem::SystemExitException => e
         raise unless e.exit_code.zero?

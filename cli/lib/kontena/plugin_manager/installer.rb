@@ -31,7 +31,7 @@ module Kontena
       # Install a plugin
       def install
         plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
-        without_safe { command.install(prefix(plugin_name), plugin_version) }
+        command.install(prefix(plugin_name), plugin_version)
         command.installed_gems
       end
 

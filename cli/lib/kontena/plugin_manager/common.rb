@@ -6,15 +6,6 @@ module Kontena
       Gem.autoload :DefaultUserInteraction, 'rubygems/user_interaction'
       Gem.autoload :StreamUI, 'rubygems/user_interaction'
 
-      # Execute block without SafeYAML. Rubygems YAML readerdoes security internally.
-      def without_safe(&block)
-        SafeYAML::OPTIONS[:default_mode] = :unsafe if Object.const_defined?(:SafeYAML)
-        yield
-      ensure
-        SafeYAML::OPTIONS[:default_mode] = :safe if Object.const_defined?(:SafeYAML)
-      end
-      module_function :without_safe
-
       # @return [Boolean] is the CLI in plugin debugging mode?
       def plugin_debug?
         @plugin_debug ||= ENV['DEBUG'] == 'plugin'
