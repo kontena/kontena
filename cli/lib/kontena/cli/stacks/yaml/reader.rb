@@ -67,7 +67,8 @@ module Kontena::Cli::Stacks
               use_opto: false,
               substitutions: {
                 'GRID' => env['GRID'],
-                'STACK' => env['STACK']
+                'STACK' => env['STACK'],
+                'PLATFORM' => env['PLATFORM']
               },
               warnings: false
             )
@@ -104,7 +105,7 @@ module Kontena::Cli::Stacks
       def variables
         return @variables if @variables
         @variables = ::Opto::Group.new(
-          (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}),
+          (internals_interpolated_yaml['variables'] || {}).merge('STACK' => { type: :string, value: env['STACK']}, 'GRID' => {type: :string, value: env['GRID']}, 'PLATFORM' => {type: :string, value: env['PLATFORM']}),
           defaults: {
             from: :env,
             to: :env
@@ -144,7 +145,7 @@ module Kontena::Cli::Stacks
           result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
           unless skip_variables?
             result[:variables]     = variables.to_h(values_only: true).reject do |k,_|
-              k == 'GRID' || k == 'STACK' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
+              k == 'GRID' || k == 'STACK' || k == 'PLATFORM' || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
             end
           end
           result[:volumes]       = errors.count.zero? ? parse_volumes : {}

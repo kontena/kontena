@@ -11,6 +11,7 @@ module Kontena::Cli::Nodes
 
     option ["-l", "--label"], "LABEL", "Node label", multivalued: true
     option "--clear-labels", :flag, "Clear node labels"
+    option "--availability", "active|drain", "Node scheduling availability"
 
     def execute
       data = {}
@@ -18,6 +19,7 @@ module Kontena::Cli::Nodes
       data[:labels] = self.label_list unless self.label_list.empty?
       data[:labels] = [] if self.clear_labels?
 
+      data[:availability] = availability if availability
       spinner "Updating #{self.node.colorize(:cyan)} node " do
         client.put("nodes/#{current_grid}/#{self.node}", data)
       end

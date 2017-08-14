@@ -20,6 +20,10 @@ module Kontena
       @read_pipe, @write_pipe = IO.pipe
     end
 
+    def docker_info
+      @docker_info ||= Docker.info
+    end
+
     def configure(opts)
       @opts = opts
 
@@ -28,13 +32,13 @@ module Kontena
 
         @node_id = node_id
       else
-        @node_id = Docker.info['ID']
+        @node_id = docker_info['ID']
       end
 
       if node_labels = opts[:node_labels]
         @node_labels = node_labels.split()
       else
-        @node_labels = Docker.info['Labels'].to_a
+        @node_labels = docker_info['Labels'].to_a
       end
     end
 

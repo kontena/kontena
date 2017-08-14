@@ -7,6 +7,11 @@ class HostNode
   include Mongoid::Timestamps
   include EventStream
 
+  module Availability
+    ACTIVE = 'active'.freeze
+    DRAIN = 'drain'.freeze
+  end
+
   Error = Class.new(StandardError)
 
   field :node_id, type: String
@@ -33,6 +38,7 @@ class HostNode
   field :connected_at, type: Time
   field :disconnected_at, type: Time
   field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
+  field :availability, type: String, default: Availability::ACTIVE
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
@@ -106,6 +112,16 @@ class HostNode
     end
   end
 
+  # @return [Boolean]
+  def active?
+    self.availability == Availability::ACTIVE
+  end
+
+  # @return [Boolean]
+  def drain?
+    self.availability == Availability::DRAIN
+  end
+
   # @return [Symbol]
   def status
     if self.node_id.nil?
@@ -114,6 +130,8 @@ class HostNode
       return :offline # not yet connected by NodePlugger, or disconnected by NodeUnplugger
     elsif !self.updated
       return :connecting # connected by NodePlugger, waiting for /nodes/update RPC
+    elsif self.drain?
+      return :drain
     else
       return :online # connected by NodePlugger, updated by /nodes/update RPC
     end
