@@ -5,35 +5,12 @@ require_relative '../logging'
 require_relative './rpc_server'
 require_relative '../../helpers/current_leader'
 
-module Faye::WebSocket::Client::Connection
-  # Workaround https://github.com/faye/faye-websocket-ruby/issues/103
-  # force connection to close without waiting if the send buffer is full
-  def close_connection_after_writing
-    close_connection
-  end
-end
 
 module Cloud
   class WebsocketClient
     include CurrentLeader
-    class Config
-      attr_accessor :api_uri
-      def initialize
-        @api_uri = nil
-      end
-    end
-
-    def self.configure(&block)
-      config = Config.new
-      yield config
-      @@api_uri = config.api_uri
-    end
-
-    def self.api_uri
-      @@api_uri
-    end
-
     include Logging
+
     KEEPALIVE_TIME = 30
 
 
@@ -53,8 +30,8 @@ module Cloud
     # @param [String] api_uri
     # @param [String] client_id
     # @param [String] client_secret
-    def initialize(client_id, client_secret)
-      @api_uri = self.class.api_uri
+    def initialize(api_uri, client_id: , client_secret: nil)
+      @api_uri = api_uri
       @client_id = client_id
       @client_secret = client_secret
       @rpc_server = RpcServer.new
