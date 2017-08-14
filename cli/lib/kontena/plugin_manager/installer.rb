@@ -35,12 +35,30 @@ module Kontena
 
       # Install a plugin
       def install
+        return install_uri if plugin_name.include?('://')
         plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
         command.install(prefix(plugin_name), plugin_version)
         command.installed_gems
       end
 
-      def available_upgrade
+      def install_uri
+        require 'tempfile'
+        require 'open-uri'
+        file = Tempfile.new(['kontena_plugin', '.gem'])
+        open(plugin_name) do |input|
+          file.write input.read
+          file.close
+        end
+        self.class.new(file.path).install
+      ensure
+        file.unlink
+      end
+
+      # Upgrade an installed plugin
+      # @param plugin_name [String]
+      # @param pre [Boolean] upgrade to a prerelease version if available. Will happen always when the installed version is a prerelease version.
+      def upgrade
+        return install if version
         installed = installed(plugin_name)
         return false unless installed
 
@@ -48,15 +66,6 @@ module Kontena
         latest = rubygems_client.latest_version(prefix(plugin_name), pre: pre? || pre)
         if latest > installed.version
           latest.to_s
-        end
-      end
-
-      # Upgrade an installed plugin
-      def upgrade
-        return install if version
-        upgrade_to = available_upgrade
-        if upgrade_to
-          Installer.new(plugin_name, version: upgrade_to).install
         end
       end
     end
