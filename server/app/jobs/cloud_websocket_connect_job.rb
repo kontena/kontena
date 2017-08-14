@@ -24,7 +24,10 @@ class CloudWebsocketConnectJob
 
   def update_connection
     if cloud_enabled?
-      connect(config)
+      connect(socket_api_uri,
+        client_id: config['oauth2.client_id'],
+        client_secret: config['oauth2.client_secret'],
+      )
     else
       disconnect
     end
@@ -49,26 +52,27 @@ class CloudWebsocketConnectJob
   def socket_api_uri?
     !config['cloud.socket_uri'].to_s.empty?
   end
+  def socket_api_uri
+    "#{config['cloud.socket_uri']}/platform"
+  end
 
   def oauth_app_credentials?
     config['oauth2.client_id'] && config['oauth2.client_secret']
   end
 
-  def connect(config)
+  def connect(uri, options)
     if @client.nil?
-      @client = Cloud::WebsocketClient.new(config['cloud.socket_uri'],
-        client_id: config['oauth2.client_id'],
-        client_secret: config['oauth2.client_secret'],
-      )
-      @client.ensure_connect
+      # TODO: link to restart on crash
+      @client = Cloud::WebsocketClient.new(uri, **options)
+      @client.start
     end
     @client
   end
 
   def disconnect
     if @client
-      @client.disconnect
-      @client = nil
+      @client.stop
+      @client = nil # actor terminates itself
     end
   end
 
