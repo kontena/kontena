@@ -91,29 +91,6 @@ describe GridCertificates::AuthorizeDomain do
 
     end
 
-    it 'sends verification request and updates needed service' do
-      lb_service = grid.grid_services.create!(name: 'lb', image_name: 'kontena/lb')
-      subject = described_class.new(grid: grid, domain: 'example.com', authorization_type: 'tls-sni-01', lb_link: 'null/lb')
-      subject.validate
-      acme = double
-      allow(subject).to receive(:acme_client).and_return(acme)
-      auth = double({
-        tls_sni01: double(
-          {
-            certificate: double({:to_pem => "foo"}),
-            private_key: double({:to_pem => "bar"}),
-            to_h: {}
-          })
-      })
-      expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
-
-      expect {
-        subject.execute
-      }.to change{GridDomainAuthorization.count}.by(1)
-      expect(GridSecret.find_by(name: 'LE_TLS_SNI_example_com').value).to eq('foobar')
-      expect(lb_service.reload.secrets[0]['secret']).to eq('LE_TLS_SNI_example_com')
-
-    end
   end
 
 

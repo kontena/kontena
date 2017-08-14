@@ -1,1 +1,0 @@
-json.partial! 'app/views/v1/domain_authorizations/domain_auth', authorization: @authorization
