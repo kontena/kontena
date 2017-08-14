@@ -63,13 +63,16 @@ module GridCertificates
 
         if challenge.verify_status == 'valid'
           domain_authz.state = :validated
+          domain_authz.save
         elsif challenge.verify_status == 'invalid'
-          domain_authz.state = :invalid
-          add_error(:challenge, :invalid, challenge.error['detail'])
+          domain_authz.state = :error
+          domain_authz.save
+          add_error(:challenge, :verification_error, challenge.error['detail'])
+          return # No point to continue
         end
 
 
-        domain_authz.save
+
 
       end
 

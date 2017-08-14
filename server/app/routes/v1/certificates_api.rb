@@ -17,11 +17,16 @@ module V1
         if outcome.success?
           @authorization = outcome.result
           response.status = 201
-          {
-            'record_name' => @authorization.challenge_opts['record_name'],
-            'record_type' => @authorization.challenge_opts['record_type'],
-            'record_content' => @authorization.challenge_opts['record_content']
-          }
+          if data[:authorization_type] == 'dns-01'
+            {
+              'record_name' => @authorization.challenge_opts['record_name'],
+              'record_type' => @authorization.challenge_opts['record_type'],
+              'record_content' => @authorization.challenge_opts['record_content']
+            }
+          else
+            #TODO FIXME XXX
+            {}
+          end
 
         else
           response.status = 422
@@ -36,7 +41,7 @@ module V1
           cert = outcome.result
           response.status = 201
 
-          [cert.private_key.name, cert.certificate.name, cert.certificate_bundle.name]
+          [cert.private_key, cert.certificate, cert.certificate_bundle]
         else
           response.status = 422
           {error: outcome.errors.message}
@@ -62,13 +67,11 @@ module V1
 
         r.post do
 
-          # DEPRECATED
           r.on 'authorize' do
             data = parse_json_body
             authorize_domain(data)
           end
 
-          # DEPRECATED
           r.on 'certificate' do
             data = parse_json_body
             get_certificate(data)

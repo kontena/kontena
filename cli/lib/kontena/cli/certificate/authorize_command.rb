@@ -15,7 +15,7 @@ module Kontena::Cli::Certificate
 
       data = {domain: self.domain, authorization_type: self.auth_type}
 
-      response = client(token).put("domain_authorizations/#{current_grid}/#{self.domain}", data)
+      response = client(token).post("certificates/#{current_grid}/authorize", data)
 
       puts "Authorization successfully created. Use the following details to create necessary validations:"
       if self.auth_type == 'dns-01'
