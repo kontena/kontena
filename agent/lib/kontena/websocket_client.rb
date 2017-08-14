@@ -16,6 +16,7 @@ module Kontena
 
     STRFTIME = '%F %T.%NZ'
 
+    CONNECT_INTERVAL = 1.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -23,10 +24,7 @@ module Kontena
     CLOSE_TIMEOUT = 10.0
     WRITE_TIMEOUT = 10.0 # this one is a little odd
 
-    attr_reader :api_uri,
-                :ws,
-                :rpc_server,
-                :ping_timer
+    attr_reader :api_uri
 
     # @param [String] api_uri
     # @param [String] node_id
@@ -78,7 +76,7 @@ module Kontena
     end
 
     def start
-      every(1.0) do
+      every(CONNECT_INTERVAL) do
         connect! if !connected? unless connecting?
       end
     end
