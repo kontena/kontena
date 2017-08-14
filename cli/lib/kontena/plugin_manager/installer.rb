@@ -30,9 +30,23 @@ module Kontena
 
       # Install a plugin
       def install
+        return install_uri if plugin_name.include?('://')
         plugin_version = version.nil? ? Gem::Requirement.default : Gem::Requirement.new(version)
         command.install(prefix(plugin_name), plugin_version)
         command.installed_gems
+      end
+
+      def install_uri
+        require 'tempfile'
+        require 'open-uri'
+        file = Tempfile.new(['kontena_plugin', '.gem'])
+        open(plugin_name) do |input|
+          file.write input.read
+          file.close
+        end
+        self.class.new(file.path).install
+      ensure
+        file.unlink
       end
 
       # Upgrade an installed plugin

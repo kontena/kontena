@@ -26,7 +26,7 @@ module Kontena
 
       # Prefix a plugin name into a gem name (hello to kontena-plugin-hello)
       def prefix(plugin_name)
-        return plugin_name if plugin_name.to_s.start_with?('kontena-plugin-')
+        return plugin_name if plugin_name.to_s.start_with?('kontena-plugin-') || plugin_name.include?('.')
         "kontena-plugin-#{plugin_name}"
       end
       module_function :prefix
