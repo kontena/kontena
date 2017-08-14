@@ -1,96 +1,92 @@
 
 describe CloudWebsocketConnectJob, celluloid: true do
-
   let(:subject) { described_class.new(false) }
-  let(:config) { spy }
+
+  let(:config) { double() }
+  let(:config_cloud_uri) { 'wss://socket.kontena.io' }
+  let(:config_client_id) { 'asdf' }
+  let(:config_client_secret) { 'secret' }
+
   before(:each) {
-    allow(subject).to receive(:start_em).and_return(true)
     allow(subject.wrapped_object).to receive(:config).and_return(config)
+    allow(config).to receive(:[]).with('cloud.socket_uri').and_return(config_cloud_uri)
+    allow(config).to receive(:[]).with('oauth2.client_id').and_return(config_client_id)
+    allow(config).to receive(:[]).with('oauth2.client_secret').and_return(config_client_secret)
   }
 
   describe '#perform' do
-
-    context 'when cloud enabled' do
-      before(:each) do
-        allow(subject.wrapped_object).to receive(:running?).and_return(true, false)
-        allow(subject.wrapped_object).to receive(:cloud_enabled).and_return(true)
-        allow(subject.wrapped_object).to receive(:sleep).and_return(true)
+    before do
+      allow(subject.wrapped_object).to receive(:every) do |&block|
+        block.call
       end
+    end
 
-      it 'update connection' do
-        expect(subject.wrapped_object).to receive(:update_connection).once
-        subject.perform
-      end
+    it 'calls update_connection' do
+      expect(subject.wrapped_object).to receive(:update_connection).once
+      subject.perform
     end
   end
 
   describe '#update_connection' do
-    before(:each) do
-      allow(subject.wrapped_object).to receive(:running?).and_return(true, false)
-      allow(subject.wrapped_object).to receive(:cloud_enabled).and_return(true)
-      allow(subject.wrapped_object).to receive(:sleep).and_return(true)
-    end
-
     context 'when cloud is enabled' do
-      it 'connects to websocket server' do
+      before(:each) do
         allow(subject.wrapped_object).to receive(:cloud_enabled?).and_return(true)
-        expect(subject.wrapped_object).to receive(:connect).once
+      end
+
+      it 'connects to websocket server' do
+        expect(subject.wrapped_object).to receive(:connect).once.with('wss://socket.kontena.io/platform',
+          client_id: 'asdf',
+          client_secret: 'secret',
+        )
         subject.update_connection
       end
     end
 
     context 'when cloud is disabled' do
-      it 'disconnects from websocket server' do
+      before(:each) do
         allow(subject.wrapped_object).to receive(:cloud_enabled?).and_return(false)
+      end
+
+      it 'disconnects from websocket server' do
         expect(subject.wrapped_object).to receive(:disconnect).once
         subject.update_connection
       end
     end
 
     describe '#connect' do
-      it 'inits CloudWebSocketClient with client_id, client_secret from config' do
-        allow(subject.wrapped_object).to receive(:config).and_return({
-          'oauth2.client_id' => 'client_id',
-          'oauth2.client_secret' => 'client_secret'
-        })
-        expect(subject.wrapped_object).to receive(:init_ws_client)
-          .with('client_id', 'client_secret')
-          .and_return(spy)
-        subject.connect
-      end
+      let(:websocket_client) { instance_double(Cloud::WebsocketClient) }
+      it 'initializes and starts websocket client from config' do
+        expect(Cloud::WebsocketClient).to receive(:new).with('wss://socket.kontena.io/platform',
+          client_id: 'asdf',
+          client_secret: 'secret',
+        ).and_return(websocket_client)
+        expect(websocket_client).to receive(:start)
 
-      it 'request websocket client to ensure connect' do
-        allow(subject.wrapped_object).to receive(:config).and_return({
-          'oauth2.client_id' => 'client_id',
-          'oauth2.client_secret' => 'client_secret'
-        })
-        client = double
-        allow(subject.wrapped_object).to receive(:init_ws_client)
-          .with('client_id', 'client_secret')
-          .and_return(client)
-        expect(client).to receive(:ensure_connect).once
-        subject.connect
+        expect(subject.connect('wss://socket.kontena.io/platform',
+          client_id: 'asdf',
+          client_secret: 'secret',
+        )).to eq websocket_client
       end
     end
 
     describe '#disconnect' do
-      it 'request websocket client to disconnect' do
-        client = spy
-        allow(subject.wrapped_object).to receive(:init_ws_client)
-          .and_return(client)
-        subject.connect
-        expect(client).to receive(:disconnect)
+      let(:client) { instance_double(Cloud::WebsocketClient) }
+      before do
+        subject.wrapped_object.instance_variable_set('@client', client)
+      end
+
+      it 'stops the websocket client' do
+        expect(client).to receive(:stop)
+
         subject.disconnect
       end
 
       it 'sets client to nil' do
-        client = spy
-        allow(subject.wrapped_object).to receive(:init_ws_client)
-          .and_return(client)
-        subject.connect
+        allow(client).to receive(:stop)
+
         subject.disconnect
-        client = subject.send(:client)
-        expect(client).to be_nil
+
+        expect(subject.send :client).to be nil
       end
     end
 

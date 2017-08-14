@@ -11,15 +11,9 @@ class CloudWebsocketConnectJob
   end
 
   def perform
-    sleep 0.1
-    while running?
+    every(30.0) do
       update_connection
-      sleep 30
     end
-  end
-
-  def running? # we can mock this in tests to return false
-    true
   end
 
   def update_connection
