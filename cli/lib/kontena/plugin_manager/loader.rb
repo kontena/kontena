@@ -41,12 +41,13 @@ module Kontena
         Kontena.logger.debug { "Loaded plugin #{spec.name}" } if plugin_debug?
 
         report_tracking
-        loaded_plugins << spec
         true
-      rescue LoadError, ScriptError => ex
+      rescue => ex
         warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name} from #{spec.gem_dir}\n\tRerun the command with environment DEBUG=true set to get the full exception."
         Kontena.logger.error(ex)
         false
+      ensure
+        loaded_plugins << spec
       end
 
       def activate(spec)
