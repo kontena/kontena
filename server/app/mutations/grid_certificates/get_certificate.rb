@@ -58,10 +58,17 @@ module GridCertificates
         end
 
         wait_until!("domain verification for #{domain} is valid", interval: 1, timeout: 30, threshold: 10) {
-          challenge.verify_status == 'valid'
+          challenge.verify_status != 'pending'
         }
 
-        domain_authz.state = :validated
+        if challenge.verify_status == 'valid'
+          domain_authz.state = :validated
+        elsif challenge.verify_status == 'invalid'
+          domain_authz.state = :invalid
+          add_error(:challenge, :invalid, challenge.error['detail'])
+        end
+
+
         domain_authz.save
 
       end
