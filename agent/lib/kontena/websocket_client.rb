@@ -16,6 +16,7 @@ module Kontena
 
     STRFTIME = '%F %T.%NZ'
 
+    CONNECT_INTERVAL = 1.0
     CONNECT_TIMEOUT = 10.0
     OPEN_TIMEOUT = 10.0
     PING_INTERVAL = 30.0 # seconds
@@ -25,8 +26,7 @@ module Kontena
 
     attr_reader :api_uri,
                 :ws,
-                :rpc_server,
-                :ping_timer
+                :rpc_server
 
     # @param [String] api_uri
     # @param [String] node_id
@@ -76,7 +76,7 @@ module Kontena
     end
 
     def start
-      every(1.0) do
+      every(CONNECT_INTERVAL) do
         connect if !connected? unless connecting?
       end
     end
@@ -260,7 +260,7 @@ module Kontena
       end
     end
 
-    # @param exc [Exception]
+    # @param exc [Kontena::Websocket::Error]
     def on_error(exc)
       case exc
       when Kontena::Websocket::SSLVerifyError
