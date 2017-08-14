@@ -8,13 +8,12 @@ module Kontena::Cli::Certificate
     parameter "DOMAIN", "Domain to authorize"
 
     option "--auth-type", "AUTH_TYPE", "Authorization type, either dns-01 or tls-sni-01", default: 'dns-01'
-    option ["--lb", "--loadbalancer"], "LB", "Link to loadbalancer where the certificate will be used on"
 
     def execute
       require_api_url
       token = require_token
-      raise "LB Link has to be given if tls-sni-01 authorization type is used" if (self.auth_type == 'tls-sni-01' && self.lb.nil?)
-      data = {domain: self.domain, authorization_type: self.auth_type, lb_link: self.lb}
+
+      data = {domain: self.domain, authorization_type: self.auth_type}
 
       response = client(token).put("domain_authorizations/#{current_grid}/#{self.domain}", data)
 
@@ -25,7 +24,8 @@ module Kontena::Cli::Certificate
         puts "Record type: #{challenge_opts['record_type']}"
         puts "Record content: #{challenge_opts['record_content']}"
       elsif self.auth_type == 'tls-sni-01'
-        puts "Point the public DNS A record of #{self.domain} to the public IP address(es) of the #{self.lb}"
+        puts "Point the public DNS record of #{self.domain} to the public IP address(es) of the loadbalancer used"
+        puts "Link #{['LE_TLS_SNI_', self.domain.gsub('.', '_')].join('_')} secret to the loadbalancer used."
       end
     end
   end

@@ -17,8 +17,4 @@ class Certificate
 
   index({ 'domain' => 1 }, { unique: true })
 
-  def to_path
-    "#{self.grid.name}/#{self.domain}"
-  end
-
 end

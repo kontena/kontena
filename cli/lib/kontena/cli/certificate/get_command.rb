@@ -19,13 +19,12 @@ module Kontena::Cli::Certificate
         secret_name: secret,
         cert_type: self.cert_type
       }
-      response = client(token).post("grids/#{current_grid}/certificates", data)
+      response = client(token).post("certificates/#{current_grid}/certificate", data)
       puts "Certificate successfully received and stored into vault with keys:"
-      puts response['private_key_secret'].colorize(:green)
-      puts response['certificate_secret'].colorize(:green)
-      puts response['certificate_bundle_secret'].colorize(:green)
+      response.each do |secret|
+        puts secret.colorize(:green)
+      end
 
-      puts "\n Certificate is valid until: #{response['valid_until']}"
       puts "Use the #{secret}_BUNDLE with Kontena loadbalancer!"
     end
   end
