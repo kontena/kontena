@@ -42,7 +42,7 @@ module Kontena
 
         report_tracking
         true
-      rescue => ex
+      rescue ScriptError, LoadError, StandardError => ex
         warn " [#{Kontena.pastel.red('error')}] Failed to load plugin: #{spec.name} from #{spec.gem_dir}\n\tRerun the command with environment DEBUG=true set to get the full exception."
         Kontena.logger.error(ex)
         false
