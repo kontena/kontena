@@ -9,6 +9,7 @@ module Kontena
     include Kontena::Helpers::WaitHelper
 
     REQUEST_ID_RANGE = 1..2**31
+    REQUEST_WARN_TRESHOLD = 0.5
 
     class Error < StandardError
       attr_reader :code
@@ -52,20 +53,27 @@ module Kontena
     # @raise abort
     # @return [Object]
     def request(method, params, timeout: 30)
-      id = request_id
-      @requests[id] = nil
-
       if !wait_until("websocket client is connected", timeout: timeout, threshold: 10.0, interval: 0.1) { connected? }
         raise TimeoutError.new(500, 'WebsocketClient is not connected')
       end
 
+      id = request_id
+      cond = Celluloid::Condition.new
+      @requests[id] = cond
+
+      start = Time.now
       websocket_client.send_request(id, method, params)
 
-      if !wait_until("request #{method} has response wth id=#{id}", timeout: timeout, interval: 0.01) { @requests[id] }
+      begin
+        cond.wait(timeout)
+      rescue Celluloid::ConditionError
+        warn "request timeout after waiting #{timeout} seconds"
         raise TimeoutError.new(500, 'Request timed out')
       end
-
       result, error = @requests.delete(id)
+
+      timing = (Time.now - start).to_f
+      warn "request #{method} took #{timing.round(3)} seconds" if timing.to_f > REQUEST_WARN_TRESHOLD
 
       if error
         raise Error.new(error['code'], error['message'])
@@ -79,8 +87,11 @@ module Kontena
 
     # Sent by the Kontena::WebsocketClient actor
     def handle_response(response)
-      type, msgid, error, result = response
-      @requests[msgid] = [result, error]
+      _, msgid, error, result = response
+      if cond = @requests[msgid]
+        @requests[msgid] = [result, error]
+        cond.signal
+      end
     end
 
     # @return [Integer]
