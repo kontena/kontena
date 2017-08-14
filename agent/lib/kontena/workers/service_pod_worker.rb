@@ -207,9 +207,7 @@ module Kontena::Workers
     # @return [Boolean]
     def recreate_service_container?(service_container)
       state = service_container.state
-      service_container.autostart? &&
-          !service_container.running? &&
-          (!state['Error'].empty? || state['ExitCode'].to_i != 0)
+      !service_container.running? && (!state['Error'].empty? || state['ExitCode'].to_i != 0)
     end
 
     # @param [Docker::Container] service_container
