@@ -13,6 +13,8 @@ module Kontena::Workers
 
     finalizer :log_exit
 
+    Event = Struct.new(:service_id, :instance_number, :health)
+
     # @param [Docker::Container] container
     def initialize(container)
       @container = container
@@ -53,10 +55,16 @@ module Kontena::Workers
       if msg['status'] == 'unhealthy'
         name = @container.labels['io.kontena.container.name']
         # Restart the container, master will handle re-scheduling logic
-        info "About to restart container #{name} as it's reported to be unhealthy"
-        emit_service_pod_event("service:health_check", "restarting #{name} because it's reported as unhealthy", Logger::WARN)
-        
-        restart_container
+        info "#{name} is unhealthy"
+        emit_service_pod_event("service:health_check", "#{name} is unhealthy", Logger::WARN)
+
+        publish('container:health_check', Event.new(
+          @container.service_id, @container.instance_number, 'unhealthy'.freeze
+        ))
+      elsif msg['status'] == 'healthy'
+        publish('container:health_check', Event.new(
+          @container.service_id, @container.instance_number, 'healthy'.freeze
+        ))
       end
     end
 
@@ -104,10 +112,6 @@ module Kontena::Workers
         data['status'] = 'unhealthy'
       end
       data
-    end
-
-    def restart_container
-      Kontena::ServicePods::Restarter.new(@container.service_id, @container.instance_number).perform
     end
 
     # @param [String] type

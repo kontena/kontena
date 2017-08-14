@@ -50,6 +50,7 @@ module Rpc
       service_instance.set(
         rev: pod['rev'],
         state: pod['state'],
+        health: pod['health'],
         error: pod['error'],
       )
       {}

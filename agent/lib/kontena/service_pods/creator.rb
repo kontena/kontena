@@ -23,10 +23,11 @@ module Kontena
         @image_credentials = service_pod.image_credentials
       end
 
+      # @param [Boolean] pull
       # @return [Docker::Container]
-      def perform
+      def perform(pull: true)
         info "creating service: #{service_pod.name}"
-        ensure_image(service_pod.image_name)
+        ensure_image(service_pod.image_name) if pull
         if service_pod.stateful?
           data_container = self.ensure_data_container(service_pod)
           service_pod.volumes_from << data_container.id
