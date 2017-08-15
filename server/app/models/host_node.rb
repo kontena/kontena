@@ -183,13 +183,12 @@ class HostNode
   end
 
   # Before saving, add unique suffix to self.name
-  def ensure_unique_name
+  def ensure_unique_name(suffix: 1)
     name = self.name
-    suffix = 1
 
     while self.grid.host_nodes.unscoped.where(name: self.name).exists?
       self.name = "#{name}-#{suffix}"
-      suffix += 1
+      suffix = suffix.succ
     end
   end
 
