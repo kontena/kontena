@@ -18,8 +18,9 @@ module Kontena::Workers
 
     # @param [String] node_id
     # @param [Boolean] autostart
-    def initialize(node_id, autostart = true)
+    def initialize(node_id, node_name: , autostart: true)
       @node_id = node_id
+      @node_name = node_name
 
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
@@ -50,6 +51,7 @@ module Kontena::Workers
     def publish_node_info
       debug 'publishing node information'
       node_info = Docker.info
+      node_info['Name'] = @node_name
       node_info['PublicIp'] = self.public_ip
       node_info['PrivateIp'] = self.private_ip
       node_info['AgentVersion'] = Kontena::Agent::VERSION

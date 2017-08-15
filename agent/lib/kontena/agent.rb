@@ -35,11 +35,23 @@ module Kontena
         @node_id = docker_info['ID']
       end
 
+      if node_name = opts[:node_name]
+        raise ArgumentError, "Invalid KONTENA_NODE_NAME: #{node_name}" if node_name.empty?
+        @node_name = node_name
+      else
+        @node_name = docker_info['Name']
+      end
+
       if node_labels = opts[:node_labels]
         @node_labels = node_labels.split()
       else
         @node_labels = docker_info['Labels'].to_a
       end
+    end
+
+    # @return [String]
+    def node_name
+      @node_name
     end
 
     # @return [String]
@@ -134,7 +146,9 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
         as: :node_info_worker,
-        args: [self.node_id],
+        args: [self.node_id,
+          node_name: self.node_name,
+        ],
       )
     end
 
