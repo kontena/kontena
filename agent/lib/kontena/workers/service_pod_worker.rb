@@ -3,6 +3,7 @@ require_relative '../service_pods/starter'
 require_relative '../service_pods/stopper'
 require_relative '../service_pods/terminator'
 require_relative '../helpers/event_log_helper'
+require_relative 'service_pod_manager'
 
 module Kontena::Workers
   class ServicePodWorker
@@ -15,8 +16,6 @@ module Kontena::Workers
 
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
-
-    MAX_RESTART_BACKOFF = Kontena::Workers::ServicePodManager::LOOP_INTERVAL
 
     def initialize(node, service_pod)
       @node = node
@@ -83,8 +82,9 @@ module Kontena::Workers
       cancel_restart_timers
 
       # backoff restarts
+      max_restart_backoff = Kontena::Workers::ServicePodManager::LOOP_INTERVAL
       backoff = @restarts ** 2
-      backoff = MAX_RESTART_BACKOFF if backoff > MAX_RESTART_BACKOFF
+      backoff = max_restart_backoff if backoff > max_restart_backoff
       if backoff == 0
         info "restarting #{@service_pod.name_for_humans} because it has stopped"
       else
