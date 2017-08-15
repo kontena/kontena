@@ -16,7 +16,6 @@ module Kontena::Workers
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
 
-    DIE_EVENTS = ['die', 'kill'].freeze
     MAX_RESTART_BACKOFF = Kontena::Workers::ServicePodManager::LOOP_INTERVAL
 
     def initialize(node, service_pod)
@@ -67,7 +66,7 @@ module Kontena::Workers
       if attrs['io.kontena.service.id'] == @service_pod.service_id &&
           attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number
         @container_state_changed = true
-        handle_restart_on_die if DIE_EVENTS.include?(e.status)
+        handle_restart_on_die if e.status == 'die'.freeze
       end
     end
 
