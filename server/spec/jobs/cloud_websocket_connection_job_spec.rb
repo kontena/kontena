@@ -61,6 +61,7 @@ describe CloudWebsocketConnectJob, celluloid: true do
           client_secret: 'secret',
         ).and_return(websocket_client)
         expect(websocket_client).to receive(:start)
+        expect(subject.wrapped_object).to receive(:link).with(websocket_client)
 
         expect(subject.connect('wss://socket.kontena.io/platform',
           client_id: 'asdf',
@@ -69,24 +70,26 @@ describe CloudWebsocketConnectJob, celluloid: true do
       end
     end
 
-    describe '#disconnect' do
+    context 'with a connected client' do
       let(:client) { instance_double(Cloud::WebsocketClient) }
       before do
         subject.wrapped_object.instance_variable_set('@client', client)
       end
 
-      it 'stops the websocket client' do
-        expect(client).to receive(:stop)
+      describe '#disconnect' do
+        it 'stops the websocket client' do
+          expect(client).to receive(:stop)
 
-        subject.disconnect
+          subject.disconnect
+        end
       end
 
-      it 'sets client to nil' do
-        allow(client).to receive(:stop)
+      describe '#on_actor_exit' do
+        it 'sets client to nil' do
+          subject.send :on_actor_exit, client, RuntimeError.new('test')
 
-        subject.disconnect
-
-        expect(subject.send :client).to be nil
+          expect(subject.send :client).to be nil
+        end
       end
     end
 

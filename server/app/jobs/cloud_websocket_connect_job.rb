@@ -6,6 +6,8 @@ class CloudWebsocketConnectJob
   include Logging
   include ConfigHelper # adds a .config method
 
+  trap_exit :on_actor_exit
+
   def initialize(perform = true)
     async.perform if perform
   end
@@ -56,17 +58,17 @@ class CloudWebsocketConnectJob
 
   def connect(uri, options)
     if @client.nil?
-      # TODO: link to restart on crash
       @client = Cloud::WebsocketClient.new(uri, **options)
       @client.start
+
+      self.link @client
     end
     @client
   end
 
   def disconnect
     if @client
-      @client.stop
-      @client = nil # actor terminates itself
+      @client.stop # actor terminates itself
     end
   end
 
@@ -76,4 +78,12 @@ class CloudWebsocketConnectJob
     @client
   end
 
+  def on_actor_exit(actor, reason)
+    if actor == @client
+      @client = nil
+      info "Client exited: #{reason}"
+    else
+      warn "Unknown actor #{actor} crash: #{reason}"
+    end
+  end
 end
