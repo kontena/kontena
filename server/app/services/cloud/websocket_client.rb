@@ -143,6 +143,7 @@ module Cloud
       @ws = nil
 
       ws.disconnect
+      unsubscribe_events
     end
 
     def on_open
@@ -206,10 +207,6 @@ module Cloud
       else
         info "cloud connection closed with code #{code}: #{reason}"
       end
-
-      unsubscribe_events
-    rescue => exc
-      error exc
     end
 
     # @param exc [Kontena::Websocket::Error]
@@ -217,10 +214,17 @@ module Cloud
       error "websocket error: #{exc}"
     end
 
+     # @return [Kontena::Websocket::Client]
+    def ws
+      @ws.tap do |ws|
+        fail "not connected" unless ws
+      end
+    end
+
     ##
     # @param [String, Array] msg
     def send_message(msg)
-      @ws.send(msg)
+      ws.send(msg)
     rescue => exc
       warn "failed to send message: #{exc.message}"
     end
