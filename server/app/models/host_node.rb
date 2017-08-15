@@ -51,11 +51,12 @@ class HostNode
   has_and_belongs_to_many :images
 
   validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
-  after_save :reserve_node_number, :ensure_unique_name
+  after_save :reserve_node_number
 
   index({ grid_id: 1 })
   index({ node_id: 1 }, { unique: true, sparse: true })
   index({ labels: 1 })
+  index({ grid_id: 1, name: 1 }, { unique: true })
   index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
   index({ token: 1 }, { unique: true, sparse: true })
 
@@ -196,16 +197,6 @@ class HostNode
       self.update_attribute(:node_number, node_number)
     rescue Mongo::Error::OperationFailure
       retry
-    end
-  end
-
-  def ensure_unique_name
-    return if self.name.to_s.empty?
-    return unless self.grid
-    return unless self.grid.respond_to?(:host_nodes)
-
-    if self.grid.host_nodes.unscoped.where(:id.ne => self.id, name: self.name).count > 0
-      self.set(name: "#{self.name}-#{self.node_number}")
     end
   end
 end
