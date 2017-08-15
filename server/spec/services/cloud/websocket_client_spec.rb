@@ -1,4 +1,4 @@
-describe Cloud::WebsocketClient do
+describe Cloud::WebsocketClient, :celluloid => true do
   let(:api_uri) { 'wss://socket.kontena.io/platform' }
   let(:client_id) { 'client_id'}
   let(:client_secret) { 'client_secret' }
