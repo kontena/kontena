@@ -1,5 +1,5 @@
 
-describe CloudWebsocketConnectJob, celluloid: true do
+describe CloudWebsocketClientManager, celluloid: true do
   let(:subject) { described_class.new(false) }
 
   let(:config) { double() }
