@@ -366,6 +366,38 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           sleep 0.1
           EM.run_deferred_callbacks
         end
+
+        context "with a duplicate node name" do
+          let(:host_node1) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeXYZ') }
+
+          before do
+            host_node1
+          end
+
+          describe '#on_open' do
+            it 'creates the node with a suffixed name' do
+              host_node = nil
+
+              expect(subject.logger).to receive(:warn).with('rename node nodeABC on name collision: node-1-1')
+              expect(subject.logger).to receive(:info).with('new node node-1-1 connected using grid token')
+              expect(subject.logger).to receive(:info)
+
+              expect{
+                subject.on_open(client_ws, rack_req)
+              }.to change{host_node = grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+
+              expect(host_node.node_id).to eq node_id
+              expect(host_node.name).to eq 'node-1-1'
+
+              # XXX: racy via mongo pubsub
+              expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
+              expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1-1')]])
+
+              sleep 0.1
+              EM.run_deferred_callbacks
+            end
+          end
+        end
       end
 
       context 'with a valid node token' do

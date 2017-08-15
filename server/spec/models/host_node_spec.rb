@@ -292,22 +292,28 @@ describe HostNode do
     end
   end
 
-  describe '#name' do
-    let(:grid) { Grid.create!(name: 'test') }
+  it 'does not allow an empty name' do
+    expect{HostNode.create!(grid: grid, name: '')}.to raise_error(Mongoid::Errors::Validations, /Name can't be blank/)
+  end
 
-    it 'does not allow an empty name' do
-      expect{HostNode.create!(grid: grid, name: '')}.to raise_error(Mongoid::Errors::Validations, /Name can't be blank/)
+  context 'with another node' do
+    let(:another_node) { HostNode.create!(grid: grid, name: 'test-1') }
+
+    before do
+      another_node
     end
 
-    context 'with another node' do
-      let(:another_node) { HostNode.create!(grid: grid, name: 'test-1') }
+    it 'does not allow duplicate names' do
+      expect{HostNode.create!(grid: grid, name: 'test-1')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
+    end
 
-      before do
-        another_node
-      end
+    describe '#ensure_unique_name' do
+      it 'adds a suffix' do
+        node = HostNode.new(grid: grid, name: 'test-1')
 
-      it 'does not allow duplicate names' do
-        expect{HostNode.create!(grid: grid, name: 'test-1')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
+        expect{node.ensure_unique_name}.to change{node.name}.to('test-1-1')
+
+        node.save!
       end
     end
   end

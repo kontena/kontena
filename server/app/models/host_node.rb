@@ -182,6 +182,17 @@ class HostNode
     (IPAddr.new(self.grid.subnet) | self.node_number).to_s
   end
 
+  # Before saving, add unique suffix to self.name
+  def ensure_unique_name
+    name = self.name
+    suffix = 1
+
+    while self.grid.host_nodes.unscoped.where(name: self.name).exists?
+      self.name = "#{name}-#{suffix}"
+      suffix += 1
+    end
+  end
+
   private
 
   def reserve_node_number

@@ -75,6 +75,25 @@ class WebsocketBackend
     end
   end
 
+  # @param grid [Grid]
+  # @param node_id [String]
+  # @param name [String]
+  # @param attrs [Hash]
+  # @raise [Mongo::Error::OperationFailure] concurrent race
+  # @return [HostNode]
+  def create_node(grid, node_id, name, attrs)
+    node = grid.host_nodes.new(node_id: node_id, name: name, **attrs)
+    node.ensure_unique_name
+
+    if node.name != name
+      logger.warn "rename node #{node_id} on name collision: #{node.name}"
+    end
+
+    # XXX: this can still race with concurrent creates, and result in unique name index conflicts
+    node.save!
+    node
+  end
+
   # @param node_id [String] request header Kontena-Node-Id
   # @param grid_token [String] request header Kontena-Grid-Token
   # @param node_name [String] initialize name for new node
@@ -90,7 +109,7 @@ class WebsocketBackend
     node = grid.host_nodes.find_by(node_id: node_id)
 
     if !node
-      node = grid.host_nodes.create!(node_id: node_id, name: node_name, **init_attrs)
+      node = create_node(grid, node_id, node_name, init_attrs)
 
       logger.info "new node #{node} connected using grid token"
 
