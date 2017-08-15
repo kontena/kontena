@@ -82,7 +82,6 @@ module Kontena::Workers
       cancel_restart_timers
 
       # backoff restarts
-      max_restart_backoff = Kontena::Workers::ServicePodManager::LOOP_INTERVAL
       backoff = @restarts ** 2
       backoff = max_restart_backoff if backoff > max_restart_backoff
       if backoff == 0
@@ -94,6 +93,10 @@ module Kontena::Workers
         apply_restart if @container_state_changed
       }
       @restarts += 1
+    end
+
+    def max_restart_backoff
+      Kontena::Workers::ServicePodManager::LOOP_INTERVAL
     end
 
     def cancel_restart_timers
