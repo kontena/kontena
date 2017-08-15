@@ -58,8 +58,13 @@ RSpec.configure do |config|
   include ContainerHelper
 
   config.before :context, :subcommand => :app do
-    # TODO: remove version restriction when 1.4.0+ non-pre is out
-    k = Kommando.run "kontena plugin install --version 0.1.0.rc1 app-command"
+    version = Kommando.run("kontena --version").out[/kontena-cli (\d+.+?) /, 1]
+    if Gem::Version.new(version) >= Gem::Version.new('1.4.0')
+      k = Kommando.run "kontena plugin install app-command"
+    else
+      k = Kommando.run "kontena plugin install --version 0.1.0.rc1 app-command"
+    end
+
     unless k.code == 0
       STDERR.puts(k.out)
       abort "Unable to install app-command plugin"
