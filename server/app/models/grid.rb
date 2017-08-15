@@ -7,6 +7,7 @@ class Grid
   include Authority::Abilities
   include EventStream
 
+  NODE_NUMBERS = (1..254)
   SUBNET = '10.81.0.0/16'
   SUPERNET = '10.80.0.0/12'
 
@@ -55,7 +56,40 @@ class Grid
   # @return [Array<Integer>]
   def free_node_numbers
     reserved_numbers = self.host_nodes.map{|node| node.node_number }.flatten
-    (1..254).to_a - reserved_numbers
+    NODE_NUMBERS.to_a - reserved_numbers
+  end
+
+  # @param name [String]
+  # @param ensure_unique_name [Boolean] rename node with suffix on name conflicts
+  # @raise [RuntimeError]
+  # @raise [Mongoid::Errors::ValidationsError]
+  # @raise [Mongo::Error::OperationFailure]
+  # @return [HostNode] with unique name, node_number
+  def create_node!(name, ensure_unique_name: false, **attrs)
+    node = HostNode.new(grid: self, name: name, **attrs)
+
+    begin
+      unless node.node_number = self.free_node_numbers.first
+        raise 'Node numbers not available. Grid is full?'
+      end
+
+      node.save!
+
+      return node
+
+    rescue Mongo::Error::OperationFailure => exc
+      if self.host_nodes.where(node_number: node.node_number).exists?
+        warn "retry node #{name} node_number allocation on error: #{exc}"
+        node.name = name
+        retry
+      elsif ensure_unique_name && self.host_nodes.where(name: node.name).exists?
+        warn "rename node #{name} on name conflict: #{exc}"
+        node.name = "#{name}-#{node.node_number}"
+        retry
+      else
+        raise
+      end
+    end
   end
 
   # Does grid have all the initial nodes created?

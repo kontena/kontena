@@ -23,6 +23,9 @@ describe Grid do
 
   it { should have_index_for(token: 1).with_options(unique: true) }
 
+  let(:initial_size) { 3 }
+  subject { Grid.create!(name: 'test', initial_size: initial_size) }
+
   describe '.after_create' do
     it 'creates default stack automatically' do
       expect {
@@ -43,6 +46,16 @@ describe Grid do
       HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 5)
       available = (1..254).to_a - [1, 5]
       expect(grid.free_node_numbers).to eq(available)
+    end
+  end
+
+  describe '#create_node!' do
+    it 'creates and returns node with assigned node_number' do
+      node = subject.create_node!('test-node')
+
+      expect(node).to be_a HostNode
+      expect(node.name).to eq 'test-node'
+      expect(node.node_number).to eq 1
     end
   end
 
