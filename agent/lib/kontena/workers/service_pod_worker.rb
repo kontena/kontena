@@ -260,7 +260,9 @@ module Kontena::Workers
     # @return [Boolean]
     def recreate_service_container?(service_container)
       state = service_container.state
-      !service_container.running? && (!state['Error'].empty? || state['ExitCode'].to_i != 0)
+
+      # this indicates usually a docker engine error, which might get fixed if container is recreated
+      !service_container.running? && !state['Error'].empty?
     end
 
     # @param [Docker::Container] service_container

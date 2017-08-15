@@ -348,33 +348,23 @@ describe Kontena::Workers::ServicePodWorker do
   end
 
   describe '#recreate_service_container?' do
-    it 'returns false if RestartPolicy=no' do
-      service_container = spy(:service_container,
-        state: {},
-        restart_policy: {'Name' => 'no'}
-      )
-      expect(subject.recreate_service_container?(service_container)).to be_falsey
-    end
-
     it 'returns false if container is running' do
       service_container = spy(:service_container,
-        state: {'Running' => true},
-        restart_policy: {'Name' => 'always'}
+        state: {'Running' => true}
       )
       expect(subject.recreate_service_container?(service_container)).to be_falsey
     end
 
-    it 'returns false if RestartPolicy=always and container is stopped without error message' do
+    it 'returns false if container is stopped without error message' do
       service_container = spy(:service_container,
-        state: {'Running' => false, 'Error' => ''},
-        restart_policy: {'Name' => 'always'}
+        state: {'Running' => false, 'Error' => ''}
       )
       expect(subject.recreate_service_container?(service_container)).to be_falsey
     end
 
-    it 'returns true if RestartPolicy=always and container is stopped with error message' do
+    it 'returns true if container is stopped with error message' do
       service_container = spy(:service_container,
-        autostart?: true, running?: false,
+        running?: false,
         state: {'Running' => false, 'Error' => 'oh noes'}
       )
       expect(subject.recreate_service_container?(service_container)).to be_truthy
