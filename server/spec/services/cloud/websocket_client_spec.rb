@@ -120,21 +120,15 @@ describe Cloud::WebsocketClient do
 
           block.call 'test'
 
-          allow(ws).to receive(:close_code).and_return(1000)
-          allow(ws).to receive(:close_reason).and_return ''
+          raise Kontena::Websocket::CloseError.new(1337, 'testing')
         end
         expect(subject.wrapped_object).to_not receive(:on_error)
-        expect(subject.wrapped_object).to receive(:on_close).with(1000, '')
+        expect(subject.wrapped_object).to receive(:on_close).with(1337, 'testing')
 
         expect(ws).to receive(:disconnect)
-        expect(subject.wrapped_object).to receive(:unsubscribe_events)
 
         subject.connect_client(ws)
-
-        expect(subject.connecting?).to be false
-        expect(subject.connected?).to be false
       end
-
     end
 
     describe '#on_open' do
@@ -162,8 +156,7 @@ describe Cloud::WebsocketClient do
     before do
       subject.wrapped_object.instance_variable_set('@connected', true)
       subject.wrapped_object.instance_variable_set('@ws', ws)
-
-      allow(MongoPubsub).to receive(:subscribe).with(EventStream.channel).and_return(subscription)
+      subject.wrapped_object.instance_variable_set('@subscription', subscription)
     end
 
     it 'is not connecting' do
@@ -199,6 +192,23 @@ describe Cloud::WebsocketClient do
             subject.on_message(msg)
           end
         end
+      end
+    end
+
+    describe '#on_close' do
+      it 'marks client as disconnected' do
+        expect(subject.wrapped_object).to receive(:unsubscribe_events)
+
+        subject.on_close(1337, 'testing')
+
+        expect(subject.connecting?).to be false
+        expect(subject.connected?).to be false
+      end
+
+      it 'cleans up subscription' do
+        expect(MongoPubsub).to receive(:unsubscribe).with(subscription)
+
+        subject.on_close(1337, 'testing')
       end
     end
 

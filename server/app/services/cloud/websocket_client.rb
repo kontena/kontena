@@ -55,7 +55,7 @@ module Cloud
     # Called from CloudWebsocketConnectJob
     def stop
       @ws.close
-      self.terminate
+      self.terminate # TODO: wait for close?
     end
 
     # @return [Boolean]
@@ -128,22 +128,21 @@ module Cloud
 
     rescue Kontena::Websocket::Error => exc
       # handle known errors, will reconnect
-      on_error exc
+      on_close(1006, exc.message)
 
     rescue => exc
       # TODO: crash instead of reconnecting on unknown errors?
       error exc
+      on_close(1006, exc.message)
 
     else
+      # client closed, not going to happen
       on_close(ws.close_code, ws.close_reason)
 
     ensure
-      @connected = false
-      @connecting = false
       @ws = nil
 
       ws.disconnect
-      unsubscribe_events
     end
 
     def on_open
@@ -201,17 +200,17 @@ module Cloud
     # @param code [Integer]
     # @param reason [String]
     def on_close(code, reason)
+      @connected = false
+      @connecting = false
+
       case code
       when 1002
         error 'cloud does not accept our access token'
       else
         info "cloud connection closed with code #{code}: #{reason}"
       end
-    end
 
-    # @param exc [Kontena::Websocket::Error]
-    def on_error(exc)
-      error "websocket error: #{exc}"
+      unsubscribe_events
     end
 
      # @return [Kontena::Websocket::Client]
