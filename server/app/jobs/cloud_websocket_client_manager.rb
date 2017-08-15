@@ -1,7 +1,7 @@
 require_relative '../services/logging'
 require_relative '../services/auth_provider'
 
-class CloudWebsocketConnectJob
+class CloudWebsocketClientManager
   include Celluloid
   include Logging
   include ConfigHelper # adds a .config method
