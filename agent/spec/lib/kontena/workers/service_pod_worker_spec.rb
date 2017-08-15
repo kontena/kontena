@@ -196,7 +196,7 @@ describe Kontena::Workers::ServicePodWorker do
       })
     end
     let(:event) do
-      double(:event, actor: actor)
+      double(:event, actor: actor, status: 'running')
     end
 
     it 'marks container state changed if service id and instance number matches' do
@@ -212,6 +212,31 @@ describe Kontena::Workers::ServicePodWorker do
       expect {
         subject.on_container_event('container:event', event)
       }.not_to change { subject.container_state_changed }
+    end
+
+    it 'triggers restart logic if event is die' do
+      allow(event).to receive(:status).and_return('die')
+      expect(subject.wrapped_object).to receive(:handle_restart_on_die).once
+      subject.on_container_event('container:event', event)
+    end
+  end
+
+  describe '#handle_restart_on_die' do
+    it 'triggers restart without backoff by default if service_pod state is running' do
+      allow(service_pod).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:after).with(0).once
+      subject.handle_restart_on_die
+    end
+
+    it 'does not trigger restart if service_pod state is not running' do
+      expect(subject.wrapped_object).not_to receive(:after)
+      subject.handle_restart_on_die
+    end
+
+    it 'does not trigger restart if apply is in progress' do
+      allow(subject.wrapped_object).to receive(:apply_in_progress?).and_return(true)
+      expect(subject.wrapped_object).not_to receive(:after)
+      subject.handle_restart_on_die
     end
   end
 
@@ -273,7 +298,7 @@ describe Kontena::Workers::ServicePodWorker do
     end
   end
 
-  describe '#image_outdated?' do 
+  describe '#image_outdated?' do
     it 'returns true if image id does not match to container' do
       image = double(:image, id: 'abc')
       service_container = double(:service_container,
