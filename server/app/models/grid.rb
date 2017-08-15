@@ -79,6 +79,8 @@ class Grid
       return node
 
     rescue Mongo::Error::OperationFailure => exc
+      raise unless exc.message =~ /^E11000 duplicate key error/
+
       if self.host_nodes.where(node_number: node.node_number).exists?
         warn "retry node #{name} node_number allocation on error: #{exc}"
         node.name = name
