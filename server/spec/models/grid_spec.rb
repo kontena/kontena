@@ -57,6 +57,28 @@ describe Grid do
       expect(node.name).to eq 'test-node'
       expect(node.node_number).to eq 1
     end
+
+    context 'with an existing node' do
+      let(:other_node) { subject.create_node!('test-node') }
+
+      before do
+        other_node
+      end
+
+      it 'fails with a duplicate name' do
+        expect{subject.create_node!('test-node')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error/)
+      end
+
+      describe 'ensure_unique_name' do
+        it 'creates and node with suffixed name' do
+          node = subject.create_node!('test-node', ensure_unique_name: true)
+
+          expect(node).to be_a HostNode
+          expect(node.name).to eq 'test-node-2'
+          expect(node.node_number).to eq 2
+        end
+      end
+    end
   end
 
   describe '#has_initial_nodes?' do

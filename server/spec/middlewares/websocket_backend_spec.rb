@@ -391,7 +391,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
               # XXX: racy via mongo pubsub
               expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
-              expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1-1')]])
+              expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1-2')]])
 
               sleep 0.1
               EM.run_deferred_callbacks

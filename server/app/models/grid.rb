@@ -56,7 +56,7 @@ class Grid
 
   # @return [Array<Integer>]
   def free_node_numbers
-    reserved_numbers = self.host_nodes.map{|node| node.node_number }.flatten
+    reserved_numbers = HostNode.where(grid: self).distinct(:node_number)
     NODE_NUMBERS.to_a - reserved_numbers
   end
 
