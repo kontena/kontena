@@ -165,6 +165,7 @@ module Kontena
         type: Kontena::WebsocketClient,
         as: :websocket_client,
         args: [@opts[:api_uri], @node_id,
+          node_name: self.node_name,
           grid_token: @opts[:grid_token],
           node_token: @opts[:node_token],
           node_labels: @node_labels,
