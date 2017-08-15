@@ -17,7 +17,7 @@ module Kontena::Workers
     attr_accessor :service_pod, :container_state_changed
 
     DIE_EVENTS = ['die', 'kill'].freeze
-    MAX_RESTART_BACKOFF = 60
+    MAX_RESTART_BACKOFF = Kontena::Workers::ServicePodManager::LOOP_INTERVAL
 
     def initialize(node, service_pod)
       @node = node
