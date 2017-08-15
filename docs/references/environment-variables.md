@@ -34,6 +34,7 @@ The `KONTENA_URI` and either of `KONTENA_TOKEN` or `KONTENA_NODE_TOKEN` is requi
 - `KONTENA_TOKEN`: Kontena [Grid token](../using-kontena/nodes.md#grid-token)
 - `KONTENA_NODE_TOKEN`: Kontena [Node token](../using-kontena/nodes.md#node-token)
 - `KONTENA_NODE_ID`: Override node ID (default: `docker info` -> `ID`)
+- `KONTENA_NODE_NAME`: Override node name (default: `docker info` -> `Name` from hostname)
 - `KONTENA_NODE_LABELS`: Override initial node labels (default: `docker info` -> `Labels`)
 - `KONTENA_PEER_INTERFACE`: network interface for peer/private communication (default: eth1)
 - `KONTENA_PUBLIC_IP`: specify node public ip, overrides default resolving

@@ -35,6 +35,7 @@ agent = Kontena::Agent.instance
 agent.configure(
   api_uri: api_uri,
   node_id: ENV['KONTENA_NODE_ID'],
+  node_name: ENV['KONTENA_NODE_NAME'],
   grid_token: grid_token,
   node_token: node_token,
   node_labels: ENV['KONTENA_NODE_LABELS'],
