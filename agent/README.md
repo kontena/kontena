@@ -21,7 +21,6 @@ Set development env variables to .env file:
 ```
 KONTENA_URI=ws://kontena.local:4040
 KONTENA_TOKEN=secret_grid_token
-AGENT_NAME=vagrant_agent_1
 ```
 
 Start agent using Docker Compose:
