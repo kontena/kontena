@@ -6,6 +6,7 @@ class Grid
   include Mongoid::Timestamps
   include Authority::Abilities
   include EventStream
+  include Logging
 
   NODE_NUMBERS = (1..254)
   SUBNET = '10.81.0.0/16'

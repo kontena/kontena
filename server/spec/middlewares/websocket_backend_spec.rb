@@ -378,7 +378,6 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
             it 'creates the node with a suffixed name' do
               host_node = nil
 
-              expect(subject.logger).to receive(:warn).with('rename node nodeABC on name collision: node-1-1')
               expect(subject.logger).to receive(:info).with('new node node-1-2 connected using grid token')
               expect(subject.logger).to receive(:info)
 
