@@ -15,14 +15,14 @@ describe CloudWebsocketConnectJob, celluloid: true do
   }
 
   describe '#perform' do
-    before do
-      allow(subject.wrapped_object).to receive(:every) do |&block|
+    it 'calls update_connection at start, and then every' do
+      expect(subject.wrapped_object).to receive(:update_connection).once
+      expect(subject.wrapped_object).to receive(:every) do |&block|
+        expect(subject.wrapped_object).to receive(:update_connection).once
+
         block.call
       end
-    end
 
-    it 'calls update_connection' do
-      expect(subject.wrapped_object).to receive(:update_connection).once
       subject.perform
     end
   end

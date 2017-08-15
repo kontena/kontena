@@ -13,6 +13,7 @@ class CloudWebsocketConnectJob
   end
 
   def perform
+    update_connection
     every(30.0) do
       update_connection
     end
