@@ -4,7 +4,8 @@ describe CreateGridServiceInstance do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:node) do
     HostNode.create!(
-      node_id: SecureRandom.uuid, grid: grid, connected: true
+      node_id: SecureRandom.uuid, grid: grid, name: 'node-1', node_number: 1,
+      connected: true
     )
   end
   let(:service) do

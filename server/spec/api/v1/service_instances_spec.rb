@@ -60,7 +60,7 @@ describe '/v1/services/:id/event_logs' do
 
   describe 'DELETE /:id' do
     it 'removes service instance' do
-      node = HostNode.create(grid: grid, node_id: 'a')
+      node = HostNode.create(grid: grid, node_id: 'a', name: 'node')
       instance = redis_service.grid_service_instances.create!(
         instance_number: 2,
         deploy_rev: Time.now.utc.to_s,

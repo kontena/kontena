@@ -3,9 +3,9 @@ describe Scheduler::Filter::Port do
 
   let(:nodes) do
     nodes = []
-    nodes << HostNode.create!(node_id: 'node1')
-    nodes << HostNode.create!(node_id: 'node2')
-    nodes << HostNode.create!(node_id: 'node3')
+    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', node_number: 1)
+    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', node_number: 2)
+    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', node_number: 3)
     nodes
   end
 

@@ -39,8 +39,8 @@ describe Grid do
 
     it 'returns only available numbers' do
       grid = Grid.create!(name: 'test')
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 5)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 5)
       available = (1..254).to_a - [1, 5]
       expect(grid.free_node_numbers).to eq(available)
     end
@@ -50,22 +50,22 @@ describe Grid do
     let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
 
     it 'returns true if initial nodes are created' do
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
-      HostNode.create(grid: grid, node_id: 'cc', node_number: 3)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 2)
+      HostNode.create!(grid: grid, node_id: 'cc', name: 'node-3', node_number: 3)
       expect(grid.has_initial_nodes?).to eq(true)
     end
 
     it 'returns false if nodes are missing' do
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 2)
       expect(grid.has_initial_nodes?).to eq(false)
     end
 
     it 'returns false if there are enough nodes but initial node is missing' do
-      HostNode.create(grid: grid, node_id: 'aa', node_number: 1)
-      HostNode.create(grid: grid, node_id: 'bb', node_number: 2)
-      HostNode.create(grid: grid, node_id: 'cc', node_number: 4)
+      HostNode.create!(grid: grid, node_id: 'aa', name: 'node-1', node_number: 1)
+      HostNode.create!(grid: grid, node_id: 'bb', name: 'node-2', node_number: 2)
+      HostNode.create!(grid: grid, node_id: 'cc', name: 'node-4', node_number: 4)
       expect(grid.has_initial_nodes?).to eq(false)
     end
   end
@@ -74,12 +74,12 @@ describe Grid do
     let(:grid) { Grid.create!(name: 'test', initial_size: 3) }
 
     it 'returns true if node is initial member' do
-      node = HostNode.create(grid: grid, node_id: 'aa', node_number: 2)
+      node = HostNode.create!(grid: grid, node_id: 'aa', name: 'node-2', node_number: 2)
       expect(grid.initial_node?(node)).to be_truthy
     end
 
     it 'returns false if node is not initial member' do
-      node = HostNode.create(grid: grid, node_id: 'aa', node_number: 4)
+      node = HostNode.create!(grid: grid, node_id: 'aa', name: 'node-4',  node_number: 4)
       expect(grid.initial_node?(node)).to be_falsey
     end
   end

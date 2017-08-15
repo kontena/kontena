@@ -340,7 +340,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'PUT (legacy)' do
     it 'saves node labels' do
-      node = grid.host_nodes.create!(node_id: 'abc')
+      node = grid.host_nodes.create!(node_id: 'abc', name: 'node')
       labels = ['foo=1', 'bar=2']
       put '/v1/nodes/abc', {labels: labels}.to_json, legacy_request_headers
       expect(response.status).to eq(200)
@@ -353,7 +353,7 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'returns error with invalid token' do
-      grid.host_nodes.create!(node_id: 'abc')
+      grid.host_nodes.create!(node_id: 'abc', name: 'node')
       put '/v1/nodes/abc', {labels: []}.to_json, {}
       expect(response.status).to eq(404)
     end

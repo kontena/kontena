@@ -256,7 +256,7 @@ describe '/v1/grids', celluloid: true do
       it 'returns grid nodes' do
         grid = david.grids.first
 
-        grid.host_nodes.create!(node_id: SecureRandom.uuid)
+        grid.host_nodes.create!(node_id: SecureRandom.uuid, name: 'test-1' )
         get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)

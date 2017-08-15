@@ -10,7 +10,7 @@ describe Agent::NodePlugger do
 
   context 'for a brand new node' do
     let(:node) {
-      HostNode.create!(node_id: 'xyz')
+      HostNode.create!(node_id: 'xyz', name: 'test-node')
     }
 
     it 'marks node as connected' do
@@ -81,7 +81,7 @@ describe Agent::NodePlugger do
         expect(subject).to_not receive(:publish_update_event)
         expect(subject).to_not receive(:send_master_info)
         expect(subject).to_not receive(:send_node_info)
-        
+
         expect {
           subject.plugin! connected_at
         }.to_not change{ node.reload.connected_at }
