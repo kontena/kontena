@@ -149,11 +149,15 @@ class WebsocketBackend
   # @raise [CloseError]
   # @return [HostNode]
   def find_node(req)
-    node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+    node_id = req.env['HTTP_KONTENA_NODE_ID']
     node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
     init_attrs = {
       labels: node_labels,
     }
+
+    if node_id.nil? || node_id.empty?
+      raise CloseError.new(4000), "Missing Kontena-Node-ID"
+    end
 
     if grid_token = req.env['HTTP_KONTENA_GRID_TOKEN']
       return find_node_by_grid_token(node_id, grid_token, init_attrs)

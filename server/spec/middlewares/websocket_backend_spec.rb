@@ -103,12 +103,44 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "without any token" do
-      let(:rack_req) { instance_double(Rack::Request, env: {})}
+      let(:rack_req) { instance_double(Rack::Request, env: {
+        'HTTP_KONTENA_NODE_ID' => node_id,
+      })}
 
       describe '#on_open' do
         it 'closes the connection without creating the node' do
           expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing token')
           expect(client_ws).to receive(:close).with(4004, 'Missing token')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{grid.reload.host_nodes}
+        end
+      end
+    end
+
+    context "without a node ID" do
+      let(:node_id) { nil }
+
+      describe '#on_open' do
+        it 'closes the connection without creating the node' do
+          expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing Kontena-Node-ID')
+          expect(client_ws).to receive(:close).with(4000, 'Missing Kontena-Node-ID')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{grid.reload.host_nodes}
+        end
+      end
+    end
+
+    context "with an empty node ID" do
+      let(:node_id) { "" }
+
+      describe '#on_open' do
+        it 'closes the connection without creating the node' do
+          expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing Kontena-Node-ID')
+          expect(client_ws).to receive(:close).with(4000, 'Missing Kontena-Node-ID')
 
           expect{
             subject.on_open(client_ws, rack_req)
