@@ -18,7 +18,7 @@ describe HostNodeNameIndex do
   }
   let(:node3) {
     node = HostNode.create!(grid: grid, node_id: SecureRandom.uuid,
-      name: 'test-0',
+      name: 'test-0', node_number: 3,
       connected: true
     )
     node.unset(:name, :node_number)
@@ -37,6 +37,6 @@ describe HostNodeNameIndex do
 
     expect(node1.reload.name).to eq 'test-1'
     expect(node2.reload.name).to eq 'node-2'
-    expect(node3.reload.name).to eq 'unknown-node'
+    expect(node3.reload.name).to eq 'node-3'
   end
 end

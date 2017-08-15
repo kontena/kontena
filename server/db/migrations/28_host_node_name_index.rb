@@ -1,18 +1,16 @@
 class HostNodeNameIndex < Mongodb::Migration
   def self.up
     HostNode.each do |node|
-      next if node.name
-
-      if node.node_number
-        node.name = "node-#{node.node_number}"
-      else
-        node.name = "unknown-node"
-        node.ensure_unique_name
+      unless node.node_number
+        node.set(node_number: node.grid.free_node_numbers.first)
       end
 
-      node.save!
+      unless node.name
+        node.set(name: "node-#{node.node_number}")
+      end
     end
 
+    HostNode.collection.indexes.drop_one('grid_id_1_node_number_1') rescue nil
     HostNode.create_indexes
   end
 end
