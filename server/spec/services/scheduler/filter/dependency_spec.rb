@@ -4,9 +4,9 @@ describe Scheduler::Filter::Dependency do
   let(:grid) { Grid.create(name: 'test') }
   let(:nodes) do
     nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1', labels: ['az-1', 'ssd'], grid: grid)
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2', labels: ['az-1', 'hdd'], grid: grid)
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3', labels: ['az-2', 'ssd'], grid: grid)
+    nodes << grid.create_node!('node-1', node_id: 'node1', labels: ['az-1', 'ssd'], grid: grid)
+    nodes << grid.create_node!('node-2', node_id: 'node2', labels: ['az-1', 'hdd'], grid: grid)
+    nodes << grid.create_node!('node-3', node_id: 'node3', labels: ['az-2', 'ssd'], grid: grid)
     nodes
   end
   let(:default_stack) {

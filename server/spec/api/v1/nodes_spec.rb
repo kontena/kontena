@@ -24,7 +24,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET' do
     it 'returns node with valid id and has_token' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', token: 'asdfasdfasdfasdf')
+      node = grid.create_node!('abc', node_id: 'a:b:c', token: 'asdfasdfasdfasdf')
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response).to_not include 'token'
@@ -36,7 +36,7 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'returns node without has_token' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      node = grid.create_node!('abc', node_id: 'a:b:c')
       get "/v1/nodes/#{node.to_path}", nil, request_headers
       expect(response.status).to eq(200)
       expect(json_response).to_not include 'token'
@@ -53,7 +53,7 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'returns error with invalid token' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      node = grid.create_node!('abc', node_id: 'a:b:c')
       get "/v1/nodes/#{node.to_path}", nil, {}
       expect(response.status).to eq(403)
     end
@@ -61,7 +61,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET /token' do
     let(:node) do
-      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+      node = grid.create_node!('abc', token: 'asdfasdfasdfasdf')
     end
 
     it "returns 403 without admin role" do
@@ -72,7 +72,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'PUT /token' do
     let(:node) do
-      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+      node = grid.create_node!('abc', token: 'asdfasdfasdfasdf')
     end
 
     it "returns 403 without admin role" do
@@ -83,7 +83,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'DELETE /token' do
     let(:node) do
-      node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+      node = grid.create_node!('abc', token: 'asdfasdfasdfasdf')
     end
 
     it "returns 403 without admin role" do
@@ -99,7 +99,7 @@ describe '/v1/nodes', celluloid: true do
 
     describe 'GET /token' do
       let(:node) do
-        node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf')
+        node = grid.create_node!('abc', token: 'asdfasdfasdfasdf')
       end
 
       it "returns node token" do
@@ -122,7 +122,7 @@ describe '/v1/nodes', celluloid: true do
 
     describe 'PUT /token' do
       let(:node) do
-        node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf', connected: true)
+        node = grid.create_node!('abc', token: 'asdfasdfasdfasdf', connected: true)
       end
 
       it "generates new node token" do
@@ -167,7 +167,7 @@ describe '/v1/nodes', celluloid: true do
 
     describe 'DELETE /token' do
       let(:node) do
-        node = grid.host_nodes.create!(name: 'abc', token: 'asdfasdfasdfasdf', connected: true)
+        node = grid.create_node!('abc', token: 'asdfasdfasdfasdf', connected: true)
       end
 
       it "clears token with connection reset" do
@@ -183,7 +183,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET /health' do
     let :node do
-      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      grid.create_node!('abc', node_id: 'a:b:c')
     end
 
     let :rpc_client do
@@ -218,7 +218,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'GET /metrics' do
     let :node do
-      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      grid.create_node!('abc', node_id: 'a:b:c')
     end
 
     before do
@@ -304,7 +304,7 @@ describe '/v1/nodes', celluloid: true do
 
   describe 'PUT' do
     it 'saves node labels' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      node = grid.create_node!('abc', node_id: 'a:b:c')
       labels = ['foo=1', 'bar=2']
       put "/v1/nodes/#{node.to_path}", {labels: labels}.to_json, request_headers
       expect(response.status).to eq(200)
@@ -312,7 +312,7 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'saves availability' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c', labels: ['foo=bar'])
+      node = grid.create_node!('abc', node_id: 'a:b:c', labels: ['foo=bar'])
       put "/v1/nodes/#{node.to_path}", {availability: 'drain', labels: ['foo=bar']}.to_json, request_headers
       expect(response.status).to eq(200), response.body
       expect(node.reload.labels).to eq(['foo=bar'])
@@ -325,13 +325,13 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'returns error with invalid token' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      node = grid.create_node!('abc', node_id: 'a:b:c')
       put "/v1/nodes/#{node.to_path}", {labels: []}.to_json, {}
       expect(response.status).to eq(403)
     end
 
     it 'returns 422 if mutation fails' do
-      node = grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      node = grid.create_node!('abc', node_id: 'a:b:c')
       expect(HostNodes::Update).to receive(:run).and_return(double({:success? => false, :errors => double({:message => 'boom'})}))
       put "/v1/nodes/#{node.to_path}", {}, request_headers
       expect(response.status).to eq(422)
@@ -339,8 +339,10 @@ describe '/v1/nodes', celluloid: true do
   end
 
   describe 'PUT (legacy)' do
+    let(:node) { grid.create_node!('node', node_id: 'abc') }
+
     it 'saves node labels' do
-      node = grid.host_nodes.create!(node_id: 'abc', name: 'node')
+      node
       labels = ['foo=1', 'bar=2']
       put '/v1/nodes/abc', {labels: labels}.to_json, legacy_request_headers
       expect(response.status).to eq(200)
@@ -353,7 +355,7 @@ describe '/v1/nodes', celluloid: true do
     end
 
     it 'returns error with invalid token' do
-      grid.host_nodes.create!(node_id: 'abc', name: 'node')
+      node
       put '/v1/nodes/abc', {labels: []}.to_json, {}
       expect(response.status).to eq(404)
     end

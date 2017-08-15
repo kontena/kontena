@@ -3,15 +3,15 @@ describe GridServiceDeployer do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
   let(:grid_service_deploy) { GridServiceDeploy.create(grid_service: grid_service, started_at: Time.now.utc) }
-  let(:node1) { HostNode.create!(node_id: SecureRandom.uuid, grid: grid, name: 'node-1', node_number: 1) }
+  let(:node1) { grid.create_node!('node-1', node_id: SecureRandom.uuid, node_number: 1) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy, grid_service_deploy, grid.host_nodes.to_a) }
   let(:deploy_rev) { Time.now.utc.to_s }
 
   describe '#selected_nodes' do
     before(:each) do
-      HostNode.create!(node_id: SecureRandom.uuid, grid: grid, name: 'node-1', node_number: 1, labels: ['foo'])
-      HostNode.create!(node_id: SecureRandom.uuid, grid: grid, name: 'node-2', node_number: 2, labels: ['foo'])
+      grid.create_node!('node-1', node_id: SecureRandom.uuid, labels: ['foo'])
+      grid.create_node!('node-2', node_id: SecureRandom.uuid, labels: ['foo'])
     end
 
     it 'returns instance_count amount of nodes by default' do
@@ -37,9 +37,9 @@ describe GridServiceDeployer do
 
     context 'with labled nodes' do
       before do
-        HostNode.create!(node_id: SecureRandom.uuid, grid: grid, name: 'node-1', node_number: 1, labels: ['foo'])
-        HostNode.create!(node_id: SecureRandom.uuid, grid: grid, name: 'node-2', node_number: 2, labels: ['foo'])
-        HostNode.create!(node_id: SecureRandom.uuid, grid: grid, name: 'node-3', node_number: 3, labels: ['bar'])
+        grid.create_node!('node-1', node_id: SecureRandom.uuid, labels: ['foo'])
+        grid.create_node!('node-2', node_id: SecureRandom.uuid, labels: ['foo'])
+        grid.create_node!('node-3', node_id: SecureRandom.uuid, labels: ['bar'])
       end
 
       it 'returns count based on filtered nodes if strategy is daemon' do
@@ -85,8 +85,8 @@ describe GridServiceDeployer do
 
   context "for a grid with host nodes" do
     before(:each) do
-      grid.host_nodes.create!(name: 'node1', node_id: SecureRandom.uuid)
-      grid.host_nodes.create!(name: 'node2', node_id: SecureRandom.uuid)
+      grid.create_node!('node1', node_id: SecureRandom.uuid)
+      grid.create_node!('node2', node_id: SecureRandom.uuid)
     end
 
     describe '#deploy_service_instance' do

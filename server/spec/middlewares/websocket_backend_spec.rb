@@ -168,7 +168,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a grid token and node ID that has a node token " do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
+      let(:host_node) { grid.create_node!('node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { 'secret123' }
       let(:node_token) { nil }
@@ -190,7 +190,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node token" do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf') }
+      let(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'the wrong secret' }
@@ -212,7 +212,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node ID" do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
+      let(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'asdfasdfasdfasdf' }
@@ -236,8 +236,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a duplicate node ID" do
-      let(:host_node1) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
-      let(:host_node2) { grid.host_nodes.create!(name: 'node-2', token: 'asdfasdfasdfasdf2') }
+      let(:host_node1) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
+      let(:host_node2) { grid.create_node!('node-2', token: 'asdfasdfasdfasdf2') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'asdfasdfasdfasdf2' }
@@ -368,7 +368,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         end
 
         context "with a duplicate node name" do
-          let(:host_node1) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeXYZ') }
+          let(:host_node1) { grid.create_node!('node-1', node_id: 'nodeXYZ') }
 
           before do
             host_node1
@@ -379,7 +379,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
               host_node = nil
 
               expect(subject.logger).to receive(:warn).with('rename node nodeABC on name collision: node-1-1')
-              expect(subject.logger).to receive(:info).with('new node node-1-1 connected using grid token')
+              expect(subject.logger).to receive(:info).with('new node node-1-2 connected using grid token')
               expect(subject.logger).to receive(:info)
 
               expect{
@@ -387,7 +387,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
               }.to change{host_node = grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
 
               expect(host_node.node_id).to eq node_id
-              expect(host_node.name).to eq 'node-1-1'
+              expect(host_node.node_number).to eq 2
+              expect(host_node.name).to eq 'node-1-2'
 
               # XXX: racy via mongo pubsub
               expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
@@ -401,7 +402,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       end
 
       context 'with a valid node token' do
-        let(:host_node) { grid.host_nodes.create!(name: 'test-1', token: 'asdfasdfasdfasdf') }
+        let(:host_node) { grid.create_node!('test-1', token: 'asdfasdfasdfasdf') }
 
         let(:grid_token) { nil }
         let(:node_token) { 'asdfasdfasdfasdf' }
@@ -493,7 +494,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     let(:node) do
-      HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid,
+      grid.create_node!('test-node', node_id: 'aa',
         connected: true, connected_at: connected_at,
       )
     end

@@ -3,13 +3,12 @@ describe GridScheduler do
 
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:nodes) do
-    nodes = []
-    3.times { |i|
-      nodes << HostNode.create!(
-        name: "node-#{i + 1}", node_id: SecureRandom.uuid, grid: grid, connected: true
+    (1..3).map { |i|
+      grid.create_node!("node-#{i + 1}",
+        node_id: SecureRandom.uuid,
+        connected: true,
       )
     }
-    nodes
   end
   let(:service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid, container_count: 2) }
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
