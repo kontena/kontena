@@ -50,6 +50,7 @@ class HostNode
   has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
+  validates :name, presence: true
   validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
   after_save :reserve_node_number
 
@@ -102,9 +103,6 @@ class HostNode
       volume_drivers: attrs.dig('Drivers', 'Volume') || [],
       network_drivers: attrs.dig('Drivers', 'Network') || [],
     }
-    if self.name.nil?
-      self.name = attrs['Name']
-    end
     if self.labels.nil? || self.labels.size == 0
       self.labels = attrs['Labels']
     end

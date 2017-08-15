@@ -26,22 +26,7 @@ describe HostNode do
   it { should have_index_for(token: 1).with_options(sparse: true, unique: true) }
 
   let(:grid) { Grid.create!(name: 'test') }
-
-  context 'for an initializing node without any name' do
-    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ') }
-
-    describe '#to_s' do
-      it "uses the node ID" do
-        expect(node.to_s).to eq 'ABC:XYZ'
-      end
-    end
-
-    describe '#to_path' do
-      it 'uses the node ID' do
-        expect(node.to_path).to eq 'test/ABC:XYZ'
-      end
-    end
-  end
+  subject { HostNode.new(grid: grid, name: 'node-1') }
 
   context 'for an updated node with a name' do
     let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ', name: 'node') }
@@ -119,14 +104,7 @@ describe HostNode do
   end
 
   describe '#attributes_from_docker' do
-    it 'sets name' do
-      expect {
-        subject.attributes_from_docker({'Name' => 'node-3'})
-      }.to change{ subject.name }.to('node-3')
-    end
-
     it 'does not set name if name is already set' do
-      subject.name = 'foobar'
       expect {
         subject.attributes_from_docker({'Name' => 'node-3'})
       }.not_to change{ subject.name }
@@ -184,33 +162,11 @@ describe HostNode do
     end
 
     it 'reserves node number successfully after race condition error' do
-      HostNode.create!(node_id: 'aa', node_number: 1, grid_id: 1)
+      HostNode.create!(name: 'test-1', node_number: 1, grid_id: 1)
       allow(subject).to receive(:grid).and_return(grid)
       subject.attributes = {node_id: 'bb', grid_id: 1}
       subject.save!
       expect(subject.node_number).to eq(2)
-    end
-
-    it 'appends node_number to name if name is not unique' do
-      grid = Grid.create!(name: 'test')
-      HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
-
-      subject.attributes = {name: 'node', grid: grid}
-      subject.save
-      expect(subject.name).to eq('node-2')
-
-      subject.name = 'foo'
-      subject.save
-      expect(subject.name).to eq('foo')
-    end
-
-    it 'does not append node_number to name if name is empty' do
-      grid = Grid.create!(name: 'test')
-      HostNode.create!(node_id: 'aa', node_number: 1, grid: grid)
-
-      subject.attributes = {grid: grid}
-      subject.save
-      expect(subject.name).to be_nil
     end
   end
 
@@ -295,7 +251,7 @@ describe HostNode do
       GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false)
     }
     let(:node) { HostNode.create(name: 'node-1', grid: grid)}
-    let(:another_node) { HostNode.create(name: 'node-1', grid: grid)}
+    let(:another_node) { HostNode.create(name: 'node-2', grid: grid)}
 
     it 'destroys all containers from a node' do
 
@@ -333,6 +289,26 @@ describe HostNode do
     it 'returns nil for unknown driver' do
       driver = node.volume_driver('foo')
       expect(driver).to be_nil
+    end
+  end
+
+  describe '#name' do
+    let(:grid) { Grid.create!(name: 'test') }
+
+    it 'does not allow an empty name' do
+      expect{HostNode.create!(grid: grid, name: '')}.to raise_error(Mongoid::Errors::Validations, /Name can't be blank/)
+    end
+
+    context 'with another node' do
+      let(:another_node) { HostNode.create!(grid: grid, name: 'test-1') }
+
+      before do
+        another_node
+      end
+
+      it 'does not allow duplicate names' do
+        expect{HostNode.create!(grid: grid, name: 'test-1')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
+      end
     end
   end
 
