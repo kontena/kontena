@@ -1,7 +1,7 @@
 
 describe HostNodes::Update, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
-  let(:node) { HostNode.create!(name: 'node-1', grid: grid, node_id: 'AA') }
+  let(:node) { grid.create_node!('node-1', node_id: 'AA') }
 
   describe '#run' do
     context 'labels' do

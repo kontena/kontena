@@ -1,15 +1,11 @@
 
 describe Scheduler::Filter::Memory do
-
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(node_id: 'node1', name: 'node-1')
-    nodes << HostNode.create!(node_id: 'node2', name: 'node-2')
-    nodes << HostNode.create!(node_id: 'node3', name: 'node-3')
-    nodes
-  end
-
   let(:grid) { Grid.create(name: 'test') }
+  let(:nodes) { [
+    grid.create_node!('node-1', node_id: 'node1'),
+    grid.create_node!('node-2', node_id: 'node2'),
+    grid.create_node!('node-3', node_id: 'node3'),
+  ] }
 
   let(:test_service) {
     GridService.create(name: 'test-service', grid: grid, image_name: 'test-service:latest')

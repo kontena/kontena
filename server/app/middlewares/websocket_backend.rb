@@ -77,10 +77,11 @@ class WebsocketBackend
 
   # @param node_id [String] request header Kontena-Node-Id
   # @param grid_token [String] request header Kontena-Grid-Token
+  # @param node_name [String] initialize name for new node
   # @param init_attrs [Hash] initialize attributes on new node
   # @raise [CloseError]
   # @return [HostNode] with node_id set
-  def find_node_by_grid_token(node_id, grid_token, init_attrs)
+  def find_node_by_grid_token(node_id, grid_token, node_name:, **init_attrs)
     # check grid
     grid = Grid.find_by(token: grid_token.to_s)
 
@@ -89,7 +90,9 @@ class WebsocketBackend
     node = grid.host_nodes.find_by(node_id: node_id)
 
     if !node
-      node = grid.host_nodes.create!(node_id: node_id, **init_attrs)
+      node = grid.create_node!(node_name, ensure_unique_name: true,
+        node_id: node_id, **init_attrs
+      )
 
       logger.info "new node #{node} connected using grid token"
 
@@ -149,14 +152,22 @@ class WebsocketBackend
   # @raise [CloseError]
   # @return [HostNode]
   def find_node(req)
-    node_id = req.env['HTTP_KONTENA_NODE_ID'].to_s
+    node_id = req.env['HTTP_KONTENA_NODE_ID']
+    node_name = req.env['HTTP_KONTENA_NODE_NAME']
     node_labels = req.env['HTTP_KONTENA_NODE_LABELS'].to_s.split(',')
     init_attrs = {
       labels: node_labels,
     }
 
+    if node_id.nil? || node_id.empty?
+      raise CloseError.new(4000), "Missing Kontena-Node-ID"
+    end
+    if node_name.nil? || node_name.empty?
+      raise CloseError.new(4000), "Missing Kontena-Node-Name"
+    end
+
     if grid_token = req.env['HTTP_KONTENA_GRID_TOKEN']
-      return find_node_by_grid_token(node_id, grid_token, init_attrs)
+      return find_node_by_grid_token(node_id, grid_token, node_name: node_name, **init_attrs)
 
     elsif node_token = req.env['HTTP_KONTENA_NODE_TOKEN']
       return find_node_by_node_token(node_id, node_token, init_attrs)

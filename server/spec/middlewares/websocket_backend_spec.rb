@@ -81,6 +81,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     let(:grid_token) { nil }
     let(:node_token) { nil }
     let(:node_id) { 'nodeABC' }
+    let(:node_name) { 'node-1' }
     let(:node_labels) { 'test=yes' }
     let(:node_version) { '0.9.1' }
     let(:connected_at) { 1.second.ago.utc }
@@ -90,6 +91,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       'HTTP_KONTENA_GRID_TOKEN' => grid_token,
       'HTTP_KONTENA_NODE_TOKEN' => node_token,
       'HTTP_KONTENA_NODE_ID' => node_id,
+      'HTTP_KONTENA_NODE_NAME' => node_name,
       'HTTP_KONTENA_NODE_LABELS' => node_labels,
       'HTTP_KONTENA_VERSION' => node_version,
       'HTTP_KONTENA_CONNECTED_AT' => connected_at ? connected_at.strftime('%F %T.%NZ') : nil,
@@ -103,12 +105,45 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "without any token" do
-      let(:rack_req) { instance_double(Rack::Request, env: {})}
+      let(:rack_req) { instance_double(Rack::Request, env: {
+        'HTTP_KONTENA_NODE_ID' => node_id,
+        'HTTP_KONTENA_NODE_NAME' => node_name,
+      })}
 
       describe '#on_open' do
         it 'closes the connection without creating the node' do
           expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing token')
           expect(client_ws).to receive(:close).with(4004, 'Missing token')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{grid.reload.host_nodes}
+        end
+      end
+    end
+
+    context "without a node ID" do
+      let(:node_id) { nil }
+
+      describe '#on_open' do
+        it 'closes the connection without creating the node' do
+          expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing Kontena-Node-ID')
+          expect(client_ws).to receive(:close).with(4000, 'Missing Kontena-Node-ID')
+
+          expect{
+            subject.on_open(client_ws, rack_req)
+          }.to not_change{grid.reload.host_nodes}
+        end
+      end
+    end
+
+    context "with an empty node ID" do
+      let(:node_id) { "" }
+
+      describe '#on_open' do
+        it 'closes the connection without creating the node' do
+          expect(subject.logger).to receive(:warn).with('reject websocket connection: Missing Kontena-Node-ID')
+          expect(client_ws).to receive(:close).with(4000, 'Missing Kontena-Node-ID')
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -133,7 +168,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a grid token and node ID that has a node token " do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
+      let(:host_node) { grid.create_node!('node-1', node_id: 'nodeABC', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { 'secret123' }
       let(:node_token) { nil }
@@ -155,7 +190,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node token" do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf') }
+      let(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'the wrong secret' }
@@ -177,7 +212,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with the wrong node ID" do
-      let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
+      let(:host_node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf', node_id: 'nodeABC') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'asdfasdfasdfasdf' }
@@ -201,8 +236,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     context "with a duplicate node ID" do
-      let(:host_node1) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
-      let(:host_node2) { grid.host_nodes.create!(name: 'node-2', token: 'asdfasdfasdfasdf2') }
+      let(:host_node1) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf1', node_id: 'nodeABC') }
+      let(:host_node2) { grid.create_node!('node-2', token: 'asdfasdfasdfasdf2') }
 
       let(:grid_token) { nil }
       let(:node_token) { 'asdfasdfasdfasdf2' }
@@ -240,8 +275,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
-          expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
-          expect(subject.logger).to receive(:warn).with('node nodeABC agent version 0.8.0 is not compatible with server version 0.9.1')
+          expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
+          expect(subject.logger).to receive(:warn).with('node node-1 agent version 0.8.0 is not compatible with server version 0.9.1')
           expect(client_ws).to receive(:close).with(4010, 'agent version 0.8.0 is not compatible with server version 0.9.1')
 
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
@@ -259,8 +294,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
-          expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
-          expect(subject.logger).to receive(:warn).with(/node nodeABC connected too far in the past at #{connected_at}, \d+\.\d+s ago/)
+          expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
+          expect(subject.logger).to receive(:warn).with(/node node-1 connected too far in the past at #{connected_at}, \d+\.\d+s ago/)
           expect(client_ws).to receive(:close).with(4020, /agent clock offset \d+\.\d+s exceeds threshold/)
 
           expect{
@@ -281,8 +316,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
-          expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
-          expect(subject.logger).to receive(:warn).with(/node nodeABC connected too far in the future at #{connected_at}, \d+\.\d+s ahead/)
+          expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
+          expect(subject.logger).to receive(:warn).with(/node node-1 connected too far in the future at #{connected_at}, \d+\.\d+s ahead/)
           expect(client_ws).to receive(:close).with(4020, /agent clock offset -\d+\.\d+s exceeds threshold/)
 
           expect{
@@ -309,8 +344,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         let(:grid_token) { 'secret123' }
 
         it 'accepts the connection and creates a new host node' do
-          expect(subject.logger).to receive(:info).with('new node nodeABC connected using grid token')
-          expect(subject.logger).to receive(:info).with(/node nodeABC agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+          expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
+          expect(subject.logger).to receive(:info).with(/node node-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -318,22 +353,55 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           host_node = grid.host_nodes.first
 
-          expect(host_node.node_id).to eq node_id
+          expect(host_node.node_id).to eq 'nodeABC'
+          expect(host_node.name).to eq 'node-1'
           expect(host_node.labels).to eq ['test=yes']
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_s
 
           # XXX: racy via mongo pubsub
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
-          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => nil)]])
+          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1')]])
 
           sleep 0.1
           EM.run_deferred_callbacks
         end
+
+        context "with a duplicate node name" do
+          let(:host_node1) { grid.create_node!('node-1', node_id: 'nodeXYZ') }
+
+          before do
+            host_node1
+          end
+
+          describe '#on_open' do
+            it 'creates the node with a suffixed name' do
+              host_node = nil
+
+              expect(subject.logger).to receive(:info).with('new node node-1-2 connected using grid token')
+              expect(subject.logger).to receive(:info)
+
+              expect{
+                subject.on_open(client_ws, rack_req)
+              }.to change{host_node = grid.host_nodes.find_by(node_id: node_id)}.from(nil).to(HostNode)
+
+              expect(host_node.node_id).to eq node_id
+              expect(host_node.node_number).to eq 2
+              expect(host_node.name).to eq 'node-1-2'
+
+              # XXX: racy via mongo pubsub
+              expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
+              expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1-2')]])
+
+              sleep 0.1
+              EM.run_deferred_callbacks
+            end
+          end
+        end
       end
 
       context 'with a valid node token' do
-        let(:host_node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf') }
+        let(:host_node) { grid.create_node!('test-1', token: 'asdfasdfasdfasdf') }
 
         let(:grid_token) { nil }
         let(:node_token) { 'asdfasdfasdfasdf' }
@@ -343,8 +411,8 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         end
 
         it 'accepts the connection and sets the node ID' do
-          expect(subject.logger).to receive(:info).with('new node node-1 connected using node token with node_id nodeABC')
-          expect(subject.logger).to receive(:info).with(/node node-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+          expect(subject.logger).to receive(:info).with('new node test-1 connected using node token with node_id nodeABC')
+          expect(subject.logger).to receive(:info).with(/node test-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -353,6 +421,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
           host_node.reload
 
           expect(host_node.node_id).to eq node_id
+          expect(host_node.name).to eq 'test-1' # the agent-provided Kontena-Node-Name: node-1 header is ignored
           expect(host_node.labels).to eq ['test=yes']
           expect(host_node.connected).to eq true
           expect(host_node.connected_at.to_s).to eq connected_at.to_s
@@ -371,7 +440,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           # XXX: racy via mongo pubsub
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
-          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1')]])
+          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'test-1')]])
 
           sleep 0.1
           EM.run_deferred_callbacks
@@ -380,7 +449,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
         it 'accepts the connection if the node ID matches' do
           host_node.set(node_id: node_id, labels: ['test=yes', 'test2=no'])
 
-          expect(subject.logger).to receive(:info).with(/node node-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
+          expect(subject.logger).to receive(:info).with(/node test-1 agent version 0.9.1 connected at #{connected_at}, \d+\.\d+s ago/)
 
           expect{
             subject.on_open(client_ws, rack_req)
@@ -406,7 +475,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
 
           # XXX: racy via mongo pubsub
           expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/master_info', [{ 'version' => '0.9.1'}]])
-          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'node-1')]])
+          expect(subject).to receive(:send_message).with(client_ws, [2, '/agent/node_info', [hash_including('id' => 'nodeABC', 'name' => 'test-1')]])
 
           sleep 0.1
           EM.run_deferred_callbacks
@@ -424,7 +493,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
     end
 
     let(:node) do
-      HostNode.create!(name: 'test-node', node_id: 'aa', grid: grid,
+      grid.create_node!('test-node', node_id: 'aa',
         connected: true, connected_at: connected_at,
       )
     end
