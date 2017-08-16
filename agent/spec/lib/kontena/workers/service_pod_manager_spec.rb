@@ -1,4 +1,4 @@
-describe Kontena::Workers::ServicePodManager do
+describe Kontena::Workers::ServicePodManager, :celluloid => true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
@@ -11,11 +11,9 @@ describe Kontena::Workers::ServicePodManager do
   end
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
     allow(subject.wrapped_object).to receive(:node).and_return(node)
   end
-  after(:each) { Celluloid.shutdown }
 
   describe '#populate_workers_from_master' do
     before(:each) do
@@ -24,7 +22,7 @@ describe Kontena::Workers::ServicePodManager do
     end
 
     it 'calls terminate_workers' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
+      allow(rpc_client).to receive(:request).with('/node_service_pods/list', []).and_return(
         {
           'service_pods' => [
             { 'id' => 'a/1', 'instance_number' => 1}
@@ -36,7 +34,7 @@ describe Kontena::Workers::ServicePodManager do
     end
 
     it 'does not call terminate_workers if master returns something weird' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
+      allow(rpc_client).to receive(:request).with('/node_service_pods/list', []).and_return(
         {
           'service_pods' => 'lolwtf'
         }
@@ -49,7 +47,7 @@ describe Kontena::Workers::ServicePodManager do
     end
 
     it 'does not call terminate_workers if RPC fails' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_raise(
+      allow(rpc_client).to receive(:request).with('/node_service_pods/list', []).and_raise(
         Kontena::RpcClient::Error.new(500, "random failure")
       )
       expect(subject.wrapped_object).to receive(:warn).with(/failed to get list of service pods from master/)
@@ -60,7 +58,7 @@ describe Kontena::Workers::ServicePodManager do
     end
 
     it 'calls ensure_service_worker for each service pod' do
-      allow(rpc_client).to receive(:request).with('/node_service_pods/list', [node.id]).and_return(
+      allow(rpc_client).to receive(:request).with('/node_service_pods/list', []).and_return(
         {
           'service_pods' => [
             { 'id' => 'a/1', 'instance_number' => 1},
@@ -92,8 +90,8 @@ describe Kontena::Workers::ServicePodManager do
   describe '#terminate_workers' do
     it 'terminates workers that are not included in passed array' do
       workers = {
-        'a/1' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod)),
-        'b/3' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod))
+        'a/1' => Kontena::Workers::ServicePodWorker.new(double(:service_pod)),
+        'b/3' => Kontena::Workers::ServicePodWorker.new(double(:service_pod))
       }
       allow(subject.wrapped_object).to receive(:workers).and_return(workers)
       expect(workers['a/1'].wrapped_object).to receive(:destroy).once
@@ -106,8 +104,8 @@ describe Kontena::Workers::ServicePodManager do
   describe '#finalize' do
     it 'terminates all workers' do
       workers = {
-        'a/1' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod)),
-        'b/3' => Kontena::Workers::ServicePodWorker.new(node, double(:service_pod))
+        'a/1' => Kontena::Workers::ServicePodWorker.new(double(:service_pod)),
+        'b/3' => Kontena::Workers::ServicePodWorker.new(double(:service_pod))
       }
       allow(subject.wrapped_object).to receive(:workers).and_return(workers)
       subject.finalize

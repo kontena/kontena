@@ -38,7 +38,7 @@ module Kontena::Workers::Volumes
 
     def populate_volumes_from_master
       exclusive {
-        response = rpc_request("/node_volumes/list", [node.id])
+        response = rpc_request("/node_volumes/list", [])
 
         # sanity-check
         unless response['volumes'].is_a?(Array)
@@ -96,7 +96,7 @@ module Kontena::Workers::Volumes
       }
       # Only send "managed" volumes to server
       if volume['volume_instance_id']
-        rpc_client.async.request('/node_volumes/set_state', [node.id, volume])
+        rpc_client.async.request('/node_volumes/set_state', [volume])
       else
         debug "Skip sending un-managed volume: #{volume['name']}"
       end

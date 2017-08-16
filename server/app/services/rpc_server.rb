@@ -40,36 +40,37 @@ class RpcServer
     @processing = true
     while @processing && data = @queue.pop
       @counter += 1
-      size = data.size
-      if size == 2
-        handle_notification(data[0], data[1])
-      elsif size == 3
-        handle_request(data[0], data[1], data[2])
+
+      node_id, rpc_message, ws_client = data
+      if rpc_message[0] == 0
+        handle_request(node_id, rpc_message, ws_client)
+      else
+        handle_notification(node_id, rpc_message)
       end
       Thread.pass
     end
   end
 
   # @param [Faye::Websocket] ws_client
-  # @param [String] grid_id
+  # @param [String] node_id
   # @param [Array] message msgpack-rpc request array
   # @return [Array]
-  def handle_request(ws_client, grid_id, message)
-    msg_id = message[1]
-    handler = message[2].split('/')[1]
-    method = message[2].split('/')[2]
-    if instance = handling_instance(grid_id, handler)
+  def handle_request(node_id, rpc_message, ws_client)
+    msg_type, msg_id, rpc_method, rpc_args = rpc_message
+    root, handler, method = rpc_method.split('/')
+
+    if instance = handling_instance(node_id, handler)
       begin
-        result = instance.send(method, *message[3])
+        result = instance.send(method, *rpc_args)
         send_message(ws_client, [1, msg_id, nil, result])
       rescue RpcServer::Error => exc
         send_message(ws_client, [1, msg_id, {code: exc.code, message: exc.message}, nil])
-        @handlers[grid_id].delete(handler)
+        @handlers[node_id].delete(handler)
       rescue => exc
         error "#{exc.class.name}: #{exc.message}"
         debug exc.backtrace.join("\n")
         send_message(ws_client, [1, msg_id, {code: 500, message: "#{exc.class.name}: #{exc.message}"}, nil])
-        @handlers[grid_id].delete(handler)
+        @handlers[node_id].delete(handler)
       end
     else
       warn "handler #{handler} not implemented"
@@ -77,39 +78,40 @@ class RpcServer
     end
   end
 
-  # @param [String] grid_id
+  # @param [String] node_id
   # @param [Array] message msgpack-rpc notification array
-  def handle_notification(grid_id, message)
-    handler = message[1].split('/')[1]
-    method = message[1].split('/')[2]
-    if instance = handling_instance(grid_id, handler)
+  def handle_notification(node_id, rpc_message)
+    msg_type, rpc_method, rpc_args = rpc_message
+    root, handler, method = rpc_method.split('/')
+
+    if instance = handling_instance(node_id, handler)
       begin
-        instance.send(method, *message[2])
+        instance.send(method, *rpc_args)
       rescue => exc
         error "#{exc.class.name}: #{exc.message}"
         error exc.backtrace.join("\n")
-        @handlers[grid_id].delete(handler)
+        @handlers[node_id].delete(handler)
       end
     else
       warn "handler #{handler} not implemented"
     end
   end
 
-  # @param [String] grid_id
-  # @param [String] name
+  # @param [String] node_id
+  # @param [String] handler
   # @return [Object]
-  def handling_instance(grid_id, name)
+  def handling_instance(node_id, name)
     return unless HANDLERS[name]
 
-    @handlers[grid_id] ||= {}
-    unless @handlers[grid_id][name]
-      grid = Grid.find(grid_id)
-      if grid
-        @handlers[grid_id][name] = HANDLERS[name].new(grid)
+    @handlers[node_id] ||= {}
+    unless @handlers[node_id][name]
+      node = HostNode.find(node_id)
+      if node
+        @handlers[node_id][name] = HANDLERS[name].new(node)
       end
     end
 
-    @handlers[grid_id][name]
+    @handlers[node_id][name]
   end
 
   # @param [Faye::Websocket] ws

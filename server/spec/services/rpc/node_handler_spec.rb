@@ -1,15 +1,17 @@
 describe Rpc::NodeHandler do
   let(:grid) { Grid.create! }
-  let(:subject) { described_class.new(grid) }
   let(:node) do
     HostNode.create!(
       node_id: 'a', grid: grid, name: 'test-node', labels: ['region=ams2'],
     )
   end
+  let(:subject) { described_class.new(node) }
 
   describe '#get' do
-    it 'fails if the node_id is not found' do
-      expect{subject.get('b')}.to raise_error 'Missing HostNode: b'
+    it 'fails if the node is removed' do
+      node.destroy
+
+      expect{subject.get()}.to raise_error 'Missing HostNode: a'
     end
 
     it 'returns correct peer ips' do
@@ -21,22 +23,24 @@ describe Rpc::NodeHandler do
         node_id: 'c', grid: grid, name: 'test-node-3', labels: ['region=ams3'],
         private_ip: '10.23.1.4', public_ip: '146.185.176.0'
       )
-      json = subject.get(node.node_id)
+      json = subject.get()
       expect(json[:peer_ips]).to include('10.12.1.3')
       expect(json[:peer_ips]).to include('146.185.176.0')
     end
   end
 
   describe '#update' do
-    it 'fails if the node_id is wrong' do
-      expect{subject.update('b', {'ID' => 'b'})}.to raise_error 'Missing HostNode: b'
+    it 'fails if the node is removed' do
+      node.destroy
+
+      expect{subject.update({'ID' => 'a'})}.to raise_error 'Missing HostNode: a'
     end
 
     it 'calls attributes_from_docker and sets updated, changing the node status to online' do
       expect_any_instance_of(HostNode).to receive(:attributes_from_docker).with(hash_including('AgentVersion' => '1.4.0.dev')).and_call_original
 
       expect{
-        subject.update('a', {'ID' => 'a', 'AgentVersion' => '1.4.0.dev'})
+        subject.update({'ID' => 'a', 'AgentVersion' => '1.4.0.dev'})
       }.to change{node.reload.updated_at}
 
       expect(node.agent_version).to eq '1.4.0.dev'
@@ -48,7 +52,7 @@ describe Rpc::NodeHandler do
       node
 
       expect {
-        subject.stats(node.node_id, {
+        subject.stats({
           'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
           'memory' => {},
           'filesystems' => [],
@@ -62,7 +66,7 @@ describe Rpc::NodeHandler do
     it 'creates timestamps' do
       node
 
-      subject.stats(node.node_id, {
+      subject.stats({
         'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
         'memory' => {},
         'filesystems' => [],
@@ -79,7 +83,7 @@ describe Rpc::NodeHandler do
 
       time = '2017-02-28 00:00:00 -0500'
 
-      subject.stats(node.node_id, {
+      subject.stats({
         'load' => {'1m' => 0.1, '5m' => 0.2, '15m' => 0.1},
         'memory' => {},
         'filesystems' => [],

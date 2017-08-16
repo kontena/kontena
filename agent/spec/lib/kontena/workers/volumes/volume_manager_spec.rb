@@ -25,7 +25,7 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
 
   describe '#populate_volumes_from_master' do
     it 'fails with a warning if no proper response from master' do
-      expect(rpc_client).to receive(:request).with('/node_volumes/list', [node.id]).and_return(
+      expect(rpc_client).to receive(:request).with('/node_volumes/list', []).and_return(
         {
           'volumes' => 'foo'
         }
@@ -36,7 +36,7 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
 
     it 'calls terminate and ensure with volumes from master' do
       expect(subject.wrapped_object).to receive(:terminate_volumes).with(['123', '456'])
-      expect(rpc_client).to receive(:request).with('/node_volumes/list', [node.id]).and_return(
+      expect(rpc_client).to receive(:request).with('/node_volumes/list', []).and_return(
         {
           'volumes' => [
             {'name' => 'foo', 'volume_instance_id' => '123'},
@@ -110,7 +110,7 @@ describe Kontena::Workers::Volumes::VolumeManager, :celluloid => true do
     it 'sends volume data to master' do
       expect(rpc_client).to receive(:request).with(
         '/node_volumes/set_state',
-        [node.id, hash_including('name' => 'foo', 'volume_id' => '123', 'volume_instance_id' => '456')]
+        [hash_including('name' => 'foo', 'volume_id' => '123', 'volume_instance_id' => '456')]
       )
       docker_volume = double(:volume, 'id' => 'foo', 'info' => {
         'Name' => 'foo',

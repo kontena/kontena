@@ -207,8 +207,7 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerInfoWorker,
-        as: :container_info_worker,
-        args: [@node_id],
+        as: :container_info_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::EventWorker,

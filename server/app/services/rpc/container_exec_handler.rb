@@ -1,9 +1,10 @@
-module Rpc 
+module Rpc
   class ContainerExecHandler
     include Logging
 
-    def initialize(grid)
-      @grid = grid
+    # @params [HostNode] node
+    def initialize(node)
+      @node = node
     end
 
     def output(uuid, stream, chunk)

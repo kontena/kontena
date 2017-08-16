@@ -129,7 +129,7 @@ module Kontena::Workers
 
     # @param [Hash] data
     def send_node_stats(data)
-      rpc_client.async.notification('/nodes/stats', [@node.id, data])
+      rpc_client.async.notification('/nodes/stats', [data])
     end
 
     # @param [Hash] event

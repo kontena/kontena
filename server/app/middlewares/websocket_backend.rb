@@ -230,15 +230,20 @@ class WebsocketBackend
   def on_message(ws, event)
     data = MessagePack.unpack(event.data.pack('c*'))
     @msg_counter += 1
+
+    unless client = client_for_ws(ws)
+      fail "Message from unplugged client: #{ws}"
+    end
+
     if rpc_notification?(data)
-      handle_rpc_notification(ws, data)
+      handle_rpc_notification(client, data)
     elsif rpc_request?(data)
-      handle_rpc_request(ws, data)
+      handle_rpc_request(client, data)
     elsif rpc_response?(data)
-      handle_rpc_response(data)
+      handle_rpc_response(client, data)
     end
   rescue => exc
-    logger.error "Cannot unpack message, reason #{exc.message}"
+    logger.error "on_message #{exc.message}"
   end
 
   ##
@@ -264,31 +269,25 @@ class WebsocketBackend
 
   ##
   # @param [Array] data
-  def handle_rpc_response(data)
-    MongoPubsub.publish_async("rpc_client:#{data[1]}", {message: data})
+  def handle_rpc_response(client, data)
+    MongoPubsub.publish_async("rpc_client/#{client[:id]}/#{data[1]}", {message: data})
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
-  def handle_rpc_request(ws, data)
-    client = client_for_ws(ws)
-    if client
-      @queue << [ws, client[:grid_id].to_s, data]
-    end
+  def handle_rpc_request(client, data)
+    @queue << [client[:node_id].to_s, data, client[:ws]]
   end
 
   # @param [Faye::WebSocket::Event] ws
   # @param [Array] data
-  def handle_rpc_notification(ws, data)
+  def handle_rpc_notification(client, data)
     if @queue.size > QUEUE_DROP_NOTIFICATIONS_LIMIT # too busy to handle notifications
       @msg_dropped += 1
       return
     end
 
-    client = client_for_ws(ws)
-    if client
-      @queue << [client[:grid_id].to_s, data]
-    end
+    @queue << [client[:node_id].to_s, data]
   end
 
   # Unplug client on websocket connection close.

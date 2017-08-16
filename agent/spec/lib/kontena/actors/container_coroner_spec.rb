@@ -1,6 +1,6 @@
 
 describe Kontena::Actors::ContainerCoroner, celluloid: true do
-  let(:subject) { described_class.new('id', false) }
+  let(:subject) { described_class.new(false) }
 
   describe '#report' do
     it 'retries if request throws error' do

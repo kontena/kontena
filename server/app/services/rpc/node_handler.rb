@@ -1,8 +1,9 @@
 module Rpc
   class NodeHandler
 
-    def initialize(grid)
-      @grid = grid
+    # @params [HostNode] node
+    def initialize(node)
+      @node = node
       @db_session = HostNode.collection.client.with(
         write: {
           w: 0, fsync: false, j: false
@@ -10,38 +11,30 @@ module Rpc
       )
     end
 
-    def get_node(node_id)
-      node = @grid.host_nodes.find_by(node_id: node_id)
-
-      raise "Missing HostNode: #{node_id}" unless node
-
-      return node
+    def node
+      HostNode.find(@node.id).tap do |node|
+        fail "Missing HostNode: #{@node.node_id}" unless node
+      end
     end
 
-    # @param [String] node_id
-    def get(node_id)
-      node = get_node(node_id)
-
-      HostNodeSerializer.new(node).to_hash
+    def get()
+      HostNodeSerializer.new(self.node).to_hash
     end
 
-    # @param [String] node_id
     # @param [Hash] data
-    def update(node_id, data)
-      node = get_node(node_id)
+    def update(data)
+      node = self.node
       node.attributes_from_docker(data)
       node.save!
     end
 
-    # @param [String] node_id
     # @param [Hash] data
-    def stats(node_id, data)
-      node = get_node(node_id)
+    def stats(data)
       time = data['time'] ? Time.parse(data['time']) : Time.now.utc
 
       stat = {
-        grid_id: @grid.id,
-        host_node_id: node.id,
+        grid_id: @node.grid_id,
+        host_node_id: @node.id,
         memory: data['memory'],
         load: data['load'],
         filesystem: data['filesystem'],
