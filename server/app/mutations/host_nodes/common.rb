@@ -3,11 +3,9 @@ module HostNodes
 
     # @param [Grid] grid
     def notify_grid(grid)
-      Celluloid::Future.new {
-        grid.host_nodes.connected.each do |node|
-          notify_node(grid, node)
-        end
-      }
+      grid.host_nodes.connected.each do |node|
+        notify_node(grid, node)
+      end
     end
 
     # @param [Grid] grid

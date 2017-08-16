@@ -2,6 +2,7 @@ require_relative 'common'
 
 module Grids
   class Update < Mutations::Command
+    include AsyncHelper
     include Common
 
     required do
@@ -27,19 +28,19 @@ module Grids
         return
       end
 
-      self.notify_nodes
+      async_thread do
+        self.notify_nodes
+      end
 
       self.grid
     end
 
     def notify_nodes
-      Celluloid::Future.new {
-        grid.host_nodes.connected.each do |node|
-          plugger = Agent::NodePlugger.new(node)
-          plugger.send_node_info
-        end
-        GridScheduler.new(grid).reschedule
-      }
+      grid.host_nodes.connected.each do |node|
+        plugger = Agent::NodePlugger.new(node)
+        plugger.send_node_info
+      end
+      GridScheduler.new(grid).reschedule
     end
   end
 end
