@@ -67,13 +67,17 @@ describe Kontena::Workers::ContainerHealthCheckWorker do
   end
 
   describe '#handle_action' do
-    it 'does nothing when healthy' do
-      expect(subject.wrapped_object).not_to receive(:restart_container)
+    before(:each) do
+      allow(subject.wrapped_object).to receive(:publish)
+    end
+
+    it 'published event when healthy' do
+      expect(subject.wrapped_object).to receive(:publish).with('container:health_check', instance_of(described_class::Event)).once
       subject.handle_action({'status' => 'healthy'})
     end
 
-    it 'restarts container when unhealthy' do
-      expect(subject.wrapped_object).to receive(:restart_container)
+    it 'publishes event when unhealthy' do
+      expect(subject.wrapped_object).to receive(:publish).with('container:health_check', instance_of(described_class::Event)).once
       expect(container).to receive(:labels).and_return({})
       subject.handle_action({'status' => 'unhealthy'})
     end
