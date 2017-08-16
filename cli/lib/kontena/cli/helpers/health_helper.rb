@@ -50,19 +50,13 @@ module Kontena::Cli::Helpers
       end
     end
 
-    # @return [Symbol]
-    # @return [String]
-    def node_etcd_health(node_health)
-      etcd_health = node_health['etcd_health']
-
-      if !node_health['connected']
-        return :offline, "unknown"
-      elsif node_health['errors'] && node_health['errors']['etcd_health']
-        return :offline, "error: #{node_health['errors']['etcd_health']}"
-      elsif etcd_health['health']
+    # @param node_etcd_health [Hash{health: String, error: String}]
+    # @return [Symbol, String]
+    def node_etcd_health(node_etcd_health)
+      if node_etcd_health['health']
         return :ok, "healthy"
-      elsif etcd_health['error']
-        return :error, "unhealthy: #{etcd_health['error']}"
+      elsif node_etcd_health['error']
+        return :error, "unhealthy: #{node_etcd_health['error']}"
       else
         return :error, "unhealthy"
       end

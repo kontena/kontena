@@ -14,32 +14,34 @@ module Kontena::Cli::Nodes
     requires_current_grid
 
     def execute
-      node_health = client.get("nodes/#{current_grid}/#{self.node}/health")
-
-      return show_node_health(node_health)
+      return show_node_health("#{current_grid}/#{self.node}")
     end
 
+    # @param id [String] :grid/:node
     # @return [Boolean] true if healthy
-    def show_node_health(node_health)
+    def show_node_health(id)
+      node_health = client.get("nodes/#{id}/health")
+
       if node_health['status'] == 'online'
         puts "#{health_icon(:ok)} Node is online for #{time_since(node_health['connected_at'])}"
-      elsif node_health['status'] == 'offline'
-        puts "#{health_icon(:error)} Node is offline for #{time_since(node_health['disconnected_at'])}"
       else
         puts "#{health_icon(:warning)} Node is #{node_health['status']}"
       end
 
-      if node_health['errors']
-        node_health['errors'].each do |what, error|
-          puts "#{health_icon :warning} Node #{node_health['name']} #{what} error: #{error}"
-        end
-      end
-
-      etcd_health, etcd_status = node_etcd_health(node_health)
+      etcd_health, etcd_status = node_etcd_health(node_health['etcd_health'])
 
       puts "#{health_icon etcd_health} Node #{node_health['name']} etcd is #{etcd_status}"
 
       return etcd_health == :ok
+
+    rescue Kontena::Errors::StandardErrorHash => exc
+      raise unless exc.status == 422
+
+      exc.errors.each do |what, error|
+        puts "#{health_icon :offline} Node #{id} #{what} error: #{error}"
+      end
+
+      return false
     end
   end
 end

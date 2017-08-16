@@ -8,32 +8,14 @@ describe Kontena::Cli::Etcd::HealthCommand do
     allow(subject).to receive(:health_icon) {|health| health.inspect }
   end
 
-  let :node1_health do
+  let :node1_errors do
     {
-      "id" => 'test-grid/node-1',
-      "name" => "node-1",
-      "connected" => false,
-      'etcd_health' => {
-        'health' => nil,
-        'error' => nil,
-      },
-      'errors' => {
-        'connected' => "Host node is offline",
-      },
+      'connection' => "Websocket disconnected at 2017-08-16 14:50:46 UTC with code 1006: ",
     }
   end
-  let :node2_health do
+  let :node2_errors do
     {
-      "id" => 'test-grid/node-2',
-      "name" => "node-2",
-      "connected" => true,
-      'etcd_health' => {
-        'health' => nil,
-        'error' => nil,
-      },
-      'errors' => {
-        'etcd_health' => "RPC timeout",
-      },
+      'etcd_health' => "RPC timeout",
     }
   end
   let :node3_health do
@@ -71,8 +53,8 @@ describe Kontena::Cli::Etcd::HealthCommand do
   end
 
   before do
-    allow(client).to receive(:get).with('nodes/test-grid/node-1/health').and_return(node1_health)
-    allow(client).to receive(:get).with('nodes/test-grid/node-2/health').and_return(node2_health)
+    allow(client).to receive(:get).with('nodes/test-grid/node-1/health').and_raise(Kontena::Errors::StandardErrorHash.new(422, "", node1_errors))
+    allow(client).to receive(:get).with('nodes/test-grid/node-2/health').and_raise(Kontena::Errors::StandardErrorHash.new(422, "", node2_errors))
     allow(client).to receive(:get).with('nodes/test-grid/node-3/health').and_return(node3_health)
     allow(client).to receive(:get).with('nodes/test-grid/node-4/health').and_return(node4_health)
     allow(client).to receive(:get).with('nodes/test-grid/node-5/health').and_return(node5_health)
@@ -81,7 +63,7 @@ describe Kontena::Cli::Etcd::HealthCommand do
   context "For an offline node-1" do
     it "shows offline and returns false" do
       expect{subject.run(['node-1'])}.to exit_with_error.and output_lines [
-        ":offline Node node-1 is offline",
+        ":offline Node test-grid/node-1 connection error: Websocket disconnected at 2017-08-16 14:50:46 UTC with code 1006: ",
       ]
     end
   end
@@ -89,7 +71,7 @@ describe Kontena::Cli::Etcd::HealthCommand do
   context "For a node-2 with RPC errors" do
     it "shows errored and returns false" do
       expect{subject.run(['node-2'])}.to exit_with_error.and output_lines [
-        ":offline Node node-2 etcd is error: RPC timeout",
+        ":offline Node test-grid/node-2 etcd_health error: RPC timeout",
       ]
     end
   end
@@ -147,8 +129,8 @@ describe Kontena::Cli::Etcd::HealthCommand do
 
     it 'shows all nodes and exits with an error' do
       expect{subject.run([])}.to exit_with_error.and output_lines [
-        ":offline Node node-1 is offline",
-        ":offline Node node-2 etcd is error: RPC timeout",
+        ":offline Node test-grid/node-1 connection error: Websocket disconnected at 2017-08-16 14:50:46 UTC with code 1006: ",
+        ":offline Node test-grid/node-2 etcd_health error: RPC timeout",
         ":error Node node-3 etcd is unhealthy",
         ":error Node node-4 etcd is unhealthy: proxy: zero endpoints currently available",
         ":ok Node node-5 etcd is healthy",
