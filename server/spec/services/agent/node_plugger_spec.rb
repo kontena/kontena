@@ -27,13 +27,14 @@ describe Agent::NodePlugger do
 
         expect(node.status).to eq :connecting
         expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.opened).to be true
         expect(node.websocket_connection.close_code).to be_nil
         expect(node.websocket_connection.close_reason).to be_nil
       end
     end
 
     describe '#reject!' do
-      it 'marks node with the connection error' do
+      it 'marks node websocket connection as non-opened' do
         subject.reject! connected_at, 1006, "asdf"
 
         node.reload
@@ -41,6 +42,7 @@ describe Agent::NodePlugger do
         expect(node.status).to eq :offline
         expect(node.connected).to be false
         expect(node.websocket_connection).to_not be_nil
+        expect(node.websocket_connection.opened).to be false
         expect(node.websocket_connection.close_code).to eq 1006
         expect(node.websocket_connection.close_reason).to eq "asdf"
       end

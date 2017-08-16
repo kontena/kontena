@@ -53,6 +53,12 @@ describe HostNode do
     it 'is status=created' do
       expect(subject.status).to eq :created
     end
+
+    describe '#websocket_error' do
+      it 'is not connected' do
+        expect(subject.websocket_error).to match 'Websocket is not connected'
+      end
+    end
   end
 
   context 'when the node exists' do
@@ -87,6 +93,12 @@ describe HostNode do
     it 'is status=connecting' do
       expect(subject.status).to eq :connecting
     end
+
+    describe '#websocket_error' do
+      it 'is nil' do
+        expect(subject.websocket_error).to be nil
+      end
+    end
   end
 
   context 'for an connected node that has updated' do
@@ -102,14 +114,38 @@ describe HostNode do
   end
 
   context 'for a disconnected node' do
-    let(:attributes) { {node_id: 'ABC:XYZ', connected: false, updated: true} }
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: false, updated: true, websocket_connection: { opened: true, close_code: 1337, close_reason: "testing" }} }
 
     it 'is not connected' do
       expect(subject.connected?).to eq false
     end
 
-    it 'is status=ofline' do
+    it 'is status=offline' do
       expect(subject.status).to eq :offline
+    end
+
+    describe '#websocket_error' do
+      it 'was disconnected' do
+        expect(subject.websocket_error).to match /Websocket disconnected at .* with code 1337: testing/
+      end
+    end
+  end
+
+  context 'for a rejected node' do
+    let(:attributes) { {node_id: 'ABC:XYZ', connected: false, updated: false, websocket_connection: { opened: false, close_code: 1337, close_reason: "testing" }} }
+
+    it 'is not connected' do
+      expect(subject.connected?).to eq false
+    end
+
+    it 'is status=offline' do
+      expect(subject.status).to eq :offline
+    end
+
+    describe '#websocket_error' do
+      it 'was rejected' do
+        expect(subject.websocket_error).to match /Websocket connection rejected at .* with code 1337: testing/
+      end
     end
   end
 

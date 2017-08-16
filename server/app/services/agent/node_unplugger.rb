@@ -17,6 +17,7 @@ module Agent
         connected: false,
         disconnected_at: Time.now.utc,
         websocket_connection: {
+          opened: @node.websocket_connection.opened,
           close_code: code,
           close_reason: reason
         },

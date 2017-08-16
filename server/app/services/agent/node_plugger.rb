@@ -17,7 +17,9 @@ module Agent
         connected: true,
         updated: false,
         last_seen_at: Time.now.utc,
-        websocket_connection: {},
+        websocket_connection: {
+          opened: true,
+        },
       )
       info "Connected node #{@node.to_path} at #{connected_at}"
       self.publish_update_event
@@ -36,6 +38,7 @@ module Agent
         connected: false,
         updated: false,
         websocket_connection: {
+          opened: false,
           close_code: code,
           close_reason: reason,
         },
