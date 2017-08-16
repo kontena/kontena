@@ -101,6 +101,36 @@ describe Kontena::Cli::Nodes::ListCommand do
         ]
       end
     end
+
+    context "with a draining node" do
+      before do
+        allow(client).to receive(:get).with('grids/test-grid/nodes').and_return(
+          { "nodes" => [
+              # draining node
+              {
+                "id" => 'test-grid/node-1',
+                "node_id" => 'AAAA:AAAA',
+                "connected" => true,
+                'connected_at' => time_ago(60.0),
+                'disconnected_at' => nil,
+                "updated" => true,
+                "status" => "drain",
+                "name" => "node-1",
+                "node_number" => 1,
+                "initial_member" => true,
+                'agent_version' => '1.4.0.dev',
+              },
+            ]
+          }
+        )
+      end
+
+      it "outputs nodes" do
+        expect{subject.run([])}.to output_table [
+          [':ok node-1',      '1.4.0.dev', 'drain',      '1 / 1', '-'],
+        ]
+      end
+    end
   end
 
   context "For a initial_size=3 grid" do

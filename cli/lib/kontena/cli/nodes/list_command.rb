@@ -27,7 +27,7 @@ module Kontena::Cli::Nodes
       when 'online'
         "#{pastel.green('online')} #{time_since(node['connected_at'], terse: true)}"
       when 'drain'
-        "#{pastel.yellow('drain')} #{time_since(node['connected_at'], terse: true)}"
+        "#{pastel.yellow('drain')}"
       when 'offline'
         "#{pastel.red('offline')} #{time_since(node['disconnected_at'], terse: true)}"
       else
