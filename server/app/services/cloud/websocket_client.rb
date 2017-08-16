@@ -228,9 +228,8 @@ module Cloud
     # @raise [RuntimeError] not connected
     # @return [Kontena::Websocket::Client]
     def ws
-      @ws.tap do |ws|
-        fail "not connected" unless ws
-      end
+      fail "not connected" unless @ws
+      @ws
     end
 
     ##
