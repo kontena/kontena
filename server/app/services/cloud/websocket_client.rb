@@ -213,7 +213,20 @@ module Cloud
       unsubscribe_events
     end
 
-     # @return [Kontena::Websocket::Client]
+    # @param [Array] msg
+    # @return [Boolean]
+    def request_message?(msg)
+      msg.is_a?(Array) && msg.size == 4 && msg[0] == 0
+    end
+
+    # @param [Array] msg
+    # @return [Boolean]
+    def notification_message?(msg)
+      msg.is_a?(Array) && msg.size == 3 && msg[0] == 2
+    end
+
+    # @raise [RuntimeError] not connected
+    # @return [Kontena::Websocket::Client]
     def ws
       @ws.tap do |ws|
         fail "not connected" unless ws
@@ -259,6 +272,11 @@ module Cloud
       end
     end
 
+    def invalidate_users_cache
+      debug 'invalidate user cache'
+      @users = {}
+    end
+
     # @param [String] channel
     def subscribe_events(channel)
       @subscription = MongoPubsub.subscribe(channel) do |message|
@@ -271,23 +289,6 @@ module Cloud
 
     def unsubscribe_events
       MongoPubsub.unsubscribe(@subscription) if @subscription
-    end
-
-    # @param [Array] msg
-    # @return [Boolean]
-    def request_message?(msg)
-      msg.is_a?(Array) && msg.size == 4 && msg[0] == 0
-    end
-
-    def invalidate_users_cache
-      debug 'invalidate user cache'
-      @users = {}
-    end
-
-    # @param [Array] msg
-    # @return [Boolean]
-    def notification_message?(msg)
-      msg.is_a?(Array) && msg.size == 3 && msg[0] == 2
     end
   end
 end
