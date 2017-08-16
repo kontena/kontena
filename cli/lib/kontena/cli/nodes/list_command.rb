@@ -1,10 +1,12 @@
 require_relative '../helpers/health_helper'
+require_relative '../helpers/time_helper'
 
 module Kontena::Cli::Nodes
   class ListCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
+    include Kontena::Cli::Helpers::TimeHelper
     include Kontena::Cli::TableGenerator::Helper
 
     option ['-a', '--all'], :flag, 'List nodes for all grids', default: false

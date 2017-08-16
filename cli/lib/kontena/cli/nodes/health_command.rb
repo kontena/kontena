@@ -1,10 +1,12 @@
 require 'kontena/cli/helpers/health_helper'
+require 'kontena/cli/helpers/time_helper'
 
 module Kontena::Cli::Nodes
   class HealthCommand < Kontena::Command
     include Kontena::Cli::Common
     include Kontena::Cli::GridOptions
     include Kontena::Cli::Helpers::HealthHelper
+    include Kontena::Cli::Helpers::TimeHelper
 
     parameter "NODE", "Node name"
 
