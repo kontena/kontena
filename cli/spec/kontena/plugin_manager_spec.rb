@@ -2,7 +2,7 @@ require 'kontena_cli'
 
 describe Kontena::PluginManager do
 
-  let(:subject) { described_class.instance }
+  let(:subject) { described_class }
 
   before(:each) { subject.init }
   describe '#load_plugins' do
@@ -19,9 +19,9 @@ describe Kontena::PluginManager do
     end
   end
 
-  describe 'spec_has_valid_dependency?' do
+  context 'Loader' do
     before(:each) do
-      stub_const('Kontena::PluginManager::MIN_CLI_VERSION', '0.15.99999')
+      stub_const('Kontena::PluginManager::Loader::MIN_CLI_VERSION', '0.15.99999')
     end
 
     it 'returns true if spec dependency > than MIN_CLI_VERSION' do
@@ -30,7 +30,7 @@ describe Kontena::PluginManager do
         s.version     = '0.1.0'
         s.add_runtime_dependency 'kontena-cli', '>= 0.16.0'
       end
-      expect(subject.send(:spec_has_valid_dependency?, spec)).to be_truthy
+      expect(Kontena::PluginManager::Loader.new.send(:spec_has_valid_dependency?, spec)).to be_truthy
     end
 
     it 'returns true if spec dependency > than MIN_CLI_VERSION and is prerelease' do
@@ -39,7 +39,7 @@ describe Kontena::PluginManager do
         s.version     = '0.1.0'
         s.add_runtime_dependency 'kontena-cli', '>= 0.16.0.pre2'
       end
-      expect(subject.send(:spec_has_valid_dependency?, spec)).to be_truthy
+      expect(Kontena::PluginManager::Loader.new.send(:spec_has_valid_dependency?, spec)).to be_truthy
     end
 
     it 'returns false if spec dependency < than MIN_CLI_VERSION' do
@@ -48,7 +48,7 @@ describe Kontena::PluginManager do
         s.version     = '0.1.0'
         s.add_runtime_dependency 'kontena-cli', '>= 0.15.0'
       end
-      expect(subject.send(:spec_has_valid_dependency?, spec)).to be_falsey
+      expect(Kontena::PluginManager::Loader.new.send(:spec_has_valid_dependency?, spec)).to be_falsey
     end
 
     it 'returns false if spec dependency < than MIN_CLI_VERSION and is prerelease' do
@@ -57,7 +57,7 @@ describe Kontena::PluginManager do
         s.version     = '0.1.0'
         s.add_runtime_dependency 'kontena-cli', '>= 0.15.0.beta1'
       end
-      expect(subject.send(:spec_has_valid_dependency?, spec)).to be_falsey
+      expect(Kontena::PluginManager::Loader.new.send(:spec_has_valid_dependency?, spec)).to be_falsey
     end
   end
 end
