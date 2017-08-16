@@ -171,7 +171,7 @@ module Cloud
         info "Connected to #{@ws.url} without ssl"
       end
 
-      subscribe_events(EventStream.channel)
+      subscribe_events
     end
 
     # @param [String, Array] msg
@@ -278,10 +278,12 @@ module Cloud
     end
 
     # @param [String] channel
-    def subscribe_events(channel)
+    def subscribe_events(channel = EventStream.channel)
+      actor = Actor.current
+
       @subscription = MongoPubsub.subscribe(channel) do |message|
         if leader?
-          send_notification_message(message)
+          actor.send_notification_message(message)
         end
       end
       @subscription

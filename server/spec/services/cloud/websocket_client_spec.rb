@@ -151,12 +151,9 @@ describe Cloud::WebsocketClient, :celluloid => true do
   end
 
   context 'for a connected client' do
-    let(:subscription) { double() }
-
     before do
       subject.wrapped_object.instance_variable_set('@connected', true)
       subject.wrapped_object.instance_variable_set('@ws', ws)
-      subject.wrapped_object.instance_variable_set('@subscription', subscription)
     end
 
     it 'is not connecting' do
@@ -196,6 +193,12 @@ describe Cloud::WebsocketClient, :celluloid => true do
     end
 
     describe '#on_close' do
+      let(:subscription) { instance_double(MongoPubsub::Subscription) }
+
+      before do
+        subject.wrapped_object.instance_variable_set('@subscription', subscription)
+      end
+
       it 'marks client as disconnected' do
         expect(subject.wrapped_object).to receive(:unsubscribe_events)
 
@@ -310,6 +313,47 @@ describe Cloud::WebsocketClient, :celluloid => true do
             end
 
             subject.send_notification_message(message)
+          end
+        end
+      end
+    end
+
+    describe '#subscribe_events' do
+      let(:event) do
+        {
+          type: 'Test',
+          event: 'test',
+          object: {"name": "test", "grid": {}}
+        }
+      end
+
+      context 'with an active subscription' do
+        before do
+          expect(subject.subscribe_events).to be_a MongoPubsub::Subscription
+        end
+
+        after do
+          subject.unsubscribe_events
+        end
+
+        context 'for a leader' do
+          before do
+            allow(subject.wrapped_object).to receive(:leader?).and_return(true)
+          end
+
+          it 'sends notifications for published events' do
+            @ok = false
+
+            expect(subject.wrapped_object).to receive(:send_notification_message).with(event) do
+              expect(Celluloid.actor?).to be_truthy
+              expect(Celluloid.current_actor).to eq subject
+
+              @ok = true
+            end
+
+            MongoPubsub.publish(EventStream.channel, event)
+
+            WaitHelper.wait_until!(timeout: 1.0, interval: 0.1) { @ok }
           end
         end
       end
