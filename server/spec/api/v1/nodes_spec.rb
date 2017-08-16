@@ -198,13 +198,9 @@ describe '/v1/nodes', celluloid: true do
       node.set(:connected => false)
       expect(rpc_client).to_not receive(:request)
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
-      expect(response.status).to eq(200)
+      expect(response.status).to eq(422)
       expect(json_response).to match hash_including(
-        'name' => 'abc',
-        'connected' => false,
-        'status' => 'offline',
-        'etcd_health' => {'health' => nil, 'error' => nil},
-        'errors' => {'connection' => "Websocket is not connected"},
+        'error' => { 'connection' => "Websocket is not connected" },
       )
     end
 
@@ -218,7 +214,6 @@ describe '/v1/nodes', celluloid: true do
         'status' => 'online',
         'etcd_health' => {'health' => true, 'error' => nil},
       )
-      expect(json_response).to_not include 'errors'
     end
 
     it "returns etcd error when RPC returns error" do
@@ -231,19 +226,14 @@ describe '/v1/nodes', celluloid: true do
         'status' => 'online',
         'etcd_health' => {'health' => nil, 'error' => "unhealthy"},
       )
-      expect(json_response).to_not include 'errors'
     end
 
     it "returns error when RPC fails" do
       expect(rpc_client).to receive(:request).with('/etcd/health').and_raise(RpcClient::TimeoutError.new(503, "Timeout after 10.0s"))
       get "/v1/nodes/#{node.to_path}/health", nil, request_headers
-      expect(response.status).to eq(200)
+      expect(response.status).to eq(422)
       expect(json_response).to match hash_including(
-        'name' => 'abc',
-        'connected' => true,
-        'status' => 'online',
-        'etcd_health' => {'health' => nil, 'error' => nil},
-        'errors' => { 'etcd_health' => "Timeout after 10.0s" },
+        'error' => { 'etcd_health' => "Timeout after 10.0s" },
       )
     end
   end

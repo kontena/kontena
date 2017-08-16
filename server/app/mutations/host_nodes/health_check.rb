@@ -23,7 +23,7 @@ module HostNodes
       rescue RpcClient::TimeoutError => error
         add_error(:etcd_health, :timeout, error.message)
 
-        return {health: nil, error: nil}
+        return nil
       end
     end
 

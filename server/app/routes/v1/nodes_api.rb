@@ -82,13 +82,11 @@ module V1
 
             if outcome.success?
               @node_health = outcome.result
-              @node_errors = nil
-            else
-              @node_health = {}
-              @node_errors = outcome.errors.message
-            end
 
-            render('host_nodes/health')
+              render('host_nodes/health')
+            else
+              halt_request(422, {error: outcome.errors.message})
+            end
           end
 
           # GET /v1/nodes/:grid/:node/stats
