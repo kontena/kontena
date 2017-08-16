@@ -74,7 +74,7 @@ GEM
       hitimes
     tzinfo (1.2.3)
       thread_safe (~> 0.1)
-    vmstat (2.1.0)
+    vmstat (2.3.0)
     webmock (3.0.1)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
