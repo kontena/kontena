@@ -15,7 +15,7 @@ A simple way to pass secrets to a Kontena Service is to use environment variable
 * [Read a Secret](vault.md#read-a-secret)
 * [Update Secret](vault.md#update-secret)
 * [Remove a Secret](vault.md#remove-a-secret)
-* [Using Secrets with Applications](vault.md#using-secrets-with-applications)
+* [Using Secrets with Stacks](vault.md#using-secrets-with-stacks)
 
 
 ### List Secrets
@@ -50,7 +50,7 @@ $ kontena vault update <name> <value>
 $ kontena vault rm <name>
 ```
 
-### Using Secrets with Applications
+### Using Secrets with Stacks
 
 ```
 services:
@@ -65,4 +65,4 @@ services:
         type: env
 ```
 
-In the above example, Kontena will read the secret `MYSQL_ADMIN_PASSWORD` from Vault and inject it as an environment variable `MYSQL_PASSWORD` to the Service when it is deployed to Nodes using `kontena app deploy`.
+In the above example, Kontena will read the secret `MYSQL_ADMIN_PASSWORD` from Vault and inject it as an environment variable `MYSQL_PASSWORD` to the Service when it is deployed to Nodes using `kontena stack deploy`.

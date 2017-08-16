@@ -15,7 +15,7 @@ describe VolumeInstance do
   end
 
   let(:node) do
-    grid.host_nodes.create!(name: 'node-1', node_id: 'abc')
+    grid.create_node!('node-1', node_id: 'abc')
   end
 
   it 'deletes volume instances when node is terminated' do

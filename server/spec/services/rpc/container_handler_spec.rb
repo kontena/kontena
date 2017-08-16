@@ -54,7 +54,7 @@ describe Rpc::ContainerHandler do
 
   describe '#cleanup' do
     it 'removes given containers ids' do
-      node = grid.host_nodes.create!(node_id: 'aa', name: 'node-1')
+      node = grid.create_node!('node-1', node_id: 'aa')
       containers = []
       containers << grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', host_node: node)
       containers << grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-2', host_node: node)
@@ -249,5 +249,5 @@ describe Rpc::ContainerHandler do
 
 
   end
-  
+
 end

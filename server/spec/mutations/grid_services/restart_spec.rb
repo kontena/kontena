@@ -2,7 +2,7 @@
 describe GridServices::Restart, celluloid: true do
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:redis_service) { GridService.create(grid: grid, name: 'redis', image_name: 'redis:2.8')}
-  let(:node) { HostNode.create!(name: 'node-1', grid: grid)}
+  let(:node) { grid.create_node!('node-1') }
 
   describe '#run' do
     it 'sends restart' do

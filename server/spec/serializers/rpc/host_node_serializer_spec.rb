@@ -6,12 +6,10 @@ describe Rpc::HostNodeSerializer do
 
   context "for a minimal host node" do
     let(:host_node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         created_at: now,
         updated_at: now,
         node_id: 'wxyz',
-        grid: grid,
-        name: 'test-node',
       )
     }
 

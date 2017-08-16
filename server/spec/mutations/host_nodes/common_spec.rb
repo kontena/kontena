@@ -1,9 +1,9 @@
 
 describe HostNodes::Common, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
-  let(:node_a) { HostNode.create!(name: 'node-a', grid: grid, node_id: 'AA', connected: true) }
-  let(:node_b) { HostNode.create!(name: 'node-b', grid: grid, node_id: 'BB', connected: true) }
-  let(:node_c) { HostNode.create!(name: 'node-c', grid: grid, node_id: 'CC', connected: false) }
+  let(:node_a) { grid.create_node!('node-a', node_id: 'AA', connected: true) }
+  let(:node_b) { grid.create_node!('node-b', node_id: 'BB', connected: true) }
+  let(:node_c) { grid.create_node!('node-c', node_id: 'CC', connected: false) }
   let(:described_class) {
     Class.new do
       include HostNodes::Common

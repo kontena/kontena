@@ -3,10 +3,11 @@ describe GridServiceScheduler do
 
   let(:grid) { Grid.create!(name: 'test-grid') }
   let(:grid_service) { GridService.create!(image_name: 'kontena/redis:2.8', name: 'redis', grid: grid) }
+  let(:grid_nodes) do
+    (1..3).map { |i| HostNode.create!(node_id: SecureRandom.uuid, name: "node-#{i}", node_number: i) }
+  end
   let(:nodes) do
-    nodes = []
-    3.times { nodes << HostNode.create!(node_id: SecureRandom.uuid) }
-    nodes.map { |n| Scheduler::Node.new(n) }
+    grid_nodes.map { |n| Scheduler::Node.new(n) }
   end
   let(:strategy) { Scheduler::Strategy::HighAvailability.new }
   let(:subject) { described_class.new(strategy) }

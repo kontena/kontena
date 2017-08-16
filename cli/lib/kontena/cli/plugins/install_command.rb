@@ -1,29 +1,32 @@
-require 'open3'
+require 'kontena/plugin_manager'
 
 module Kontena::Cli::Plugins
   class InstallCommand < Kontena::Command
     include Kontena::Util
     include Kontena::Cli::Common
+    include Kontena::PluginManager::Common
 
     parameter 'NAME', 'Plugin name'
 
     option ['-v', '--version'], 'VERSION', 'Specify version of plugin to install'
     option '--pre', :flag, 'Allow pre-release of a plugin to be installed', default: false
 
-    def execute
-      installed_version = Kontena::PluginManager.instance.installed(name)
+    def installer
+      Kontena::PluginManager::Installer.new(name, pre: pre?, version: version)
+    end
 
-      if installed_version
+    def execute
+      if installed?(name)
         installed = spinner "Upgrading plugin #{name.colorize(:cyan)}" do
-          Kontena::PluginManager.instance.upgrade_plugin(name, pre: pre?)
+          installer.upgrade
         end
 
-        spinner "Running cleanup" do
-          Kontena::PluginManager.instance.cleanup_plugin(name)
+        spinner "Running cleanup" do |spin|
+          Kontena::PluginManager::Cleaner.new(name).cleanup
         end
       else
         installed = spinner "Installing plugin #{name.colorize(:cyan)}" do
-          Kontena::PluginManager.instance.install_plugin(name, pre: pre?, version: version)
+          installer.install
         end
       end
 

@@ -35,7 +35,7 @@ describe Volume do
 
   describe '#driver_for_node' do
     let(:node) do
-      grid.host_nodes.create!(name: 'node-1')
+      grid.create_node!('node-1')
     end
 
     it 'returns plain driver when no driver on node' do

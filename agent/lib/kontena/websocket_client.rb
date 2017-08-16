@@ -30,14 +30,16 @@ module Kontena
 
     # @param [String] api_uri
     # @param [String] node_id
+    # @param [String] node_name
     # @param [String] grid_token
     # @param [String] node_token
     # @param [Array<String>] node_labels
     # @param [Hash] ssl_params
     # @param [String] ssl_hostname
-      def initialize(api_uri, node_id, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
+      def initialize(api_uri, node_id, node_name:, grid_token: nil, node_token: nil, node_labels: [], ssl_params: {}, ssl_hostname: nil, autostart: true)
       @api_uri = api_uri
       @node_id = node_id
+      @node_name = node_name
       @grid_token = grid_token
       @node_token = node_token
       @node_labels = node_labels
@@ -87,6 +89,7 @@ module Kontena
       info "connecting to master at #{api_uri}"
       headers = {
           'Kontena-Node-Id' => @node_id.to_s,
+          'Kontena-Node-Name' => @node_name,
           'Kontena-Version' => Kontena::Agent::VERSION,
           'Kontena-Node-Labels' => @node_labels.join(','),
           'Kontena-Connected-At' => Time.now.utc.strftime(STRFTIME),

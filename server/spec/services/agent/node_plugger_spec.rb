@@ -10,7 +10,7 @@ describe Agent::NodePlugger do
 
   context 'for an initializing node' do
     let(:node) {
-      HostNode.create!(grid: grid, node_id: 'xyz')
+      grid.create_node!('test-node', node_id: 'xyz')
     }
 
     before do
@@ -49,9 +49,9 @@ describe Agent::NodePlugger do
 
   context 'for an existing node' do
     let(:node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         node_id: 'xyz',
-        grid: grid, name: 'test-node', labels: ['region=ams2'],
+        labels: ['region=ams2'],
         connected: false, updated: true,
         websocket_connection: {close_code: 1337, close_reason: "fail!" },
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
@@ -91,9 +91,9 @@ describe Agent::NodePlugger do
     let(:reconnected_at) { 2.seconds.ago }
     let(:connected_at) { 10.seconds.ago }
     let(:node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         node_id: 'xyz',
-        grid: grid, name: 'test-node', labels: ['region=ams2'],
+        labels: ['region=ams2'],
         connected: true, connected_at: reconnected_at, updated: true,
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
