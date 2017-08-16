@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'app subcommand' do
   context 'with the app-command plugin', subcommand: :app do
-    describe 'app deploy'
+    describe 'app deploy' do
       it 'deploys a simple app' do
         with_fixture_dir('app/simple') do
           k = run('kontena app deploy')
