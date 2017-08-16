@@ -55,9 +55,13 @@ class Grid
   end
 
   # @return [Array<Integer>]
+  def reserved_node_numbers
+    self.host_nodes.distinct(:node_number)
+  end
+
+  # @return [Array<Integer>]
   def free_node_numbers
-    reserved_numbers = HostNode.where(grid: self).distinct(:node_number)
-    NODE_NUMBERS.to_a - reserved_numbers
+    NODE_NUMBERS.to_a - self.reserved_node_numbers
   end
 
   # @param name [String]
@@ -68,10 +72,15 @@ class Grid
   # @return [HostNode] with unique name, node_number
   def create_node!(name, ensure_unique_name: false, **attrs)
     node = HostNode.new(grid: self, name: name, **attrs)
+    duplicate_name = false
 
     begin
       unless node.node_number = self.free_node_numbers.first
         raise 'Node numbers not available. Grid is full?'
+      end
+
+      if duplicate_name
+        node.name = "#{name}-#{node.node_number}"
       end
 
       node.save!
@@ -83,11 +92,10 @@ class Grid
 
       if self.host_nodes.where(node_number: node.node_number).exists?
         warn "retry node #{name} node_number allocation on error: #{exc}"
-        node.name = name
         retry
       elsif ensure_unique_name && self.host_nodes.where(name: node.name).exists?
         warn "rename node #{name} on name conflict: #{exc}"
-        node.name = "#{name}-#{node.node_number}"
+        duplicate_name = true
         retry
       else
         raise

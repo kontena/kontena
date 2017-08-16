@@ -69,13 +69,33 @@ describe Grid do
         expect{subject.create_node!('test-node')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error/)
       end
 
-      describe 'ensure_unique_name' do
-        it 'creates and node with suffixed name' do
+      it 'retries on node_number race condition' do
+        expect(subject).to receive(:reserved_node_numbers).once.and_return([])
+        expect(subject).to receive(:reserved_node_numbers).once.and_call_original
+
+        node = subject.create_node!('test-node2')
+        expect(node.name).to eq 'test-node2'
+        expect(node.node_number).to eq 2
+      end
+
+      describe 'with (ensure_unique_name: true)' do
+        it 'renames on name conflict' do
           node = subject.create_node!('test-node', ensure_unique_name: true)
 
           expect(node).to be_a HostNode
           expect(node.name).to eq 'test-node-2'
           expect(node.node_number).to eq 2
+        end
+
+        it 'retries with a different node_number after name conflict' do
+          expect(subject).to receive(:warn).with(/rename node test-node on name conflict/) do
+            HostNode.create!(grid: subject, name: 'other-node', node_number: 2)
+          end
+
+          node = subject.create_node!('test-node', ensure_unique_name: true)
+
+          expect(node.name).to eq 'test-node-3'
+          expect(node.node_number).to eq 3
         end
       end
     end
