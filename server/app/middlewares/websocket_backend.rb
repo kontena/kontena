@@ -232,8 +232,10 @@ class WebsocketBackend
       connected_at = Time.now.utc
     end
 
-    # XXX: this only applies to the version/clock skew errors, not the token -> node errors
-    Agent::NodePlugger.new(node).reject!(connected_at, exc.code, exc.message) if node
+    if node
+      # this only applies to the version/clock skew errors, not any of the early token -> node errors
+      Agent::NodePlugger.new(node).reject!(connected_at, exc.code, exc.message)
+    end
 
   rescue => exc
     logger.error exc
