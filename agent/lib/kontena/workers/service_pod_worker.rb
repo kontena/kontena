@@ -115,6 +115,10 @@ module Kontena::Workers
       }
     end
 
+    def restarting?
+      @restarts > 0
+    end
+
     def destroy
       @service_pod.mark_as_terminated
       apply
@@ -300,7 +304,7 @@ module Kontena::Workers
 
       if service_container.running?
         'running'
-      elsif service_container.restarting?
+      elsif restarting?
         'restarting'
       else
         'stopped'

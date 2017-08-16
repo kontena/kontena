@@ -101,9 +101,10 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.current_state).to eq('running')
     end
 
-    it 'returns restarting if container is restarting' do
-      container = double(:container, :running? => false, :restarting? => true)
+    it 'returns restarting if restart is in progress' do
+      container = double(:container, :running? => false)
       allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
       expect(subject.current_state).to eq('restarting')
     end
 
