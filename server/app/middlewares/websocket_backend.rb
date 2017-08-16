@@ -185,20 +185,21 @@ class WebsocketBackend
   # @param [Rack::Request] req
   def on_open(ws, req)
     node_id = req.env['HTTP_KONTENA_NODE_ID']
-    agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
-    connected_at = req.env['HTTP_KONTENA_CONNECTED_AT']
-    connected_at = Time.parse(connected_at) if connected_at
+    connected_at = nil
 
     node = find_node(req)
 
     send_master_info(ws)
 
     # check version
+    agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
+
     unless self.valid_agent_version?(agent_version)
       raise CloseError.new(4010), "agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
     end
 
     # check clock after version check, because older agent versions do not send this header
+    connected_at = Time.parse(req.env['HTTP_KONTENA_CONNECTED_AT'])
     connected_dt = Time.now - connected_at
 
     if connected_dt > PING_TIMEOUT + CLOCK_SKEW
