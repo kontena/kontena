@@ -17,6 +17,8 @@ module Kontena::Workers
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
 
+    finalizer :shutdown
+
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
@@ -327,6 +329,13 @@ module Kontena::Workers
     # @param [Integer] severity
     def log_service_pod_event(type, data, severity = Logger::INFO)
       super(service_pod.service_id, service_pod.instance_number, type, data, severity)
+    end
+
+    private
+
+    def shutdown
+      @restart_backoff_timer.cancel if @restart_backoff_timer
+      @restart_counter_reset_timer.cancel if @restart_counter_reset_timer
     end
   end
 end
