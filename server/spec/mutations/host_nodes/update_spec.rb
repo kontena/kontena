@@ -1,7 +1,13 @@
-
-describe HostNodes::Update, celluloid: true do
+describe HostNodes::Update do
   let(:grid) { Grid.create!(name: 'test') }
   let(:node) { HostNode.create!(name: 'node-1', grid: grid, node_id: 'AA') }
+
+  before do
+    # test async blocks by running them sync
+    allow(subject).to receive(:async_thread) do |&block|
+      block.call
+    end
+  end
 
   describe '#run' do
     context 'labels' do
