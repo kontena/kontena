@@ -1,3 +1,5 @@
+require 'kontena/plugin_manager'
+
 module Kontena::Cli::Master
   class SshCommand < Kontena::Command
 
@@ -25,7 +27,7 @@ module Kontena::Cli::Master
     end
 
     def vagrant_plugin_installed?
-      Kontena::PluginManager.instance.plugins.any? { |plugin| plugin.name == 'kontena-plugin-vagrant' }
+      Kontena::PluginManager::Common.installed?('vagrant')
     end
 
     def master_is_vagrant?
