@@ -1,5 +1,6 @@
+describe GridServices::Start do
+  include AsyncMock
 
-describe GridServices::Start, celluloid: true do
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid
@@ -13,14 +14,13 @@ describe GridServices::Start, celluloid: true do
       container = redis_service.containers.create!(name: 'redis-1', container_id: '34')
       expect(subject).to receive(:start_service_instances).and_return(true)
 
-      subject.run.result.value
+      outcome = subject.run
     end
 
     it 'sets service state to running' do
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       allow(subject).to receive(:start_service_instances).and_return(true)
       outcome = subject.run
-      outcome.result.value
       expect(redis_service.reload.state).to eq('running')
     end
 
@@ -29,10 +29,8 @@ describe GridServices::Start, celluloid: true do
       redis_service.containers.create!(name: 'redis-1', container_id: '34')
       subject = described_class.new(grid_service: redis_service)
       expect(subject).to receive(:start_service_instances).and_raise(StandardError.new('error'))
-      outcome = subject.run
-      expect(outcome.success?).to be_truthy
       expect {
-        outcome.result.value
+        outcome = subject.run
       }.to raise_exception(StandardError)
       expect(redis_service.state).to eq(prev_state)
     end

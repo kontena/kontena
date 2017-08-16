@@ -1,17 +1,12 @@
 describe Grids::Update do
+  include AsyncMock
+
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid.users << user
     grid
   }
-
-  before do
-    # test async blocks by running them sync
-    allow(subject).to receive(:async_thread) do |&block|
-      block.call
-    end
-  end
 
   describe '#run' do
     before(:each) do
