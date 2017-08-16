@@ -13,11 +13,12 @@ module Agent
     # @param [Integer] code websocket close
     # @param [String] reason websocket close
     def unplug!(connected_at, code, reason)
+      connection = @node.websocket_connection
       self.update_node!(connected_at,
         connected: false,
         disconnected_at: Time.now.utc,
         websocket_connection: {
-          opened: @node.websocket_connection.opened,
+          opened: connection && connection.opened,
           close_code: code,
           close_reason: reason
         },
