@@ -3,36 +3,40 @@ module Kontena
   module Observer
     include Kontena::Logging
 
+    # @param observable [Celluloid::Proxy::Cell<Observable>, Observable]
+    # @return [Observable]
+    def self.unwrap_observable(observable)
+      # #is_a? is also proxied
+      Celluloid::Proxy.class_of(observable) == Celluloid::Proxy::Cell ? observable.wrapped_object : observable
+    end
+
+    def self.describe_observable(observable)
+      "Observable<#{unwrap_observable(observable).class.name}>"
+    end
+
     # Observer is observing some Observables, and tracking their values.
     # This object is passed to each Observer, which then passes it back to us for updates.
     class Observe
-      # @param observable [Celluloid::Proxy::Cell<Observable>, Observable]
-      # @return [Observable]
-      def unwrap_observable(observable)
-        # XXX: is_a? doesn't work?
-        observable.is_a?(Celluloid::Proxy::Cell) ? observable.wrapped_object : observable
-      end
-
       # @param cls [Class] used to identify the observer for logging
-      # @param observables [Array<Observable>] Observable objects (NOT PROXIES)
+      # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>] Observable objects, or celluloid actor proxies
       def initialize(cls, observables)
         @class = cls
-        @observables = observables #XXX .map{|observable| unwrap_observable(observable) }
+        @observables = observables.map{|observable| Kontena::Observer.unwrap_observable(observable) }
 
         @values = Hash[@observables.map{|observable| [observable, nil]}]
-
-        $stderr.puts "@values=#{@values.inspect}"
       end
 
-      # For debugging purposes...
+      # Describe the observables for debug logging
       #
       # @return [Array<String>]
-      def observables
-        @observables.map{|observable| observable.__klass__}
+      def describe_observables
+        observables = @observables.map{|observable| observable.class.name }
+
+        "Observable<#{observables.join(', ')}>"
       end
 
-      # Called by the Observer actor for logging
-      # Must be threadsafe and local
+      # Describe the observer for debug logging
+      # Called by the Observer actor, must be threadsafe and atomic
       def to_s
         "Observer<#{@class.name}>"
       end
@@ -42,8 +46,8 @@ module Kontena
       # @raise [RuntimeError]
       # @return value
       def set(observable, value)
-        #XXX observable = unwrap_observable(observable)
-        raise "unknown observable: #{observable}" unless @values.has_key? observable
+        observable = Kontena::Observer.unwrap_observable(observable)
+        raise "unknown observable: #{observable.inspect}" unless @values.has_key? observable
         @values[observable] = value
       end
 
@@ -123,7 +127,7 @@ module Kontena
     # Updates the Observe, and calls if ready.
     def register_observer_handler
       @observer_handler ||= Thread.current[:celluloid_actor].handle(Kontena::Observable::Message) do |message|
-        debug "observe Observable<#{message.observable.class.name}> -> #{message.value}"
+        debug "observe #{Kontena::Observer.describe_observable(message.observable)}-> #{message.value}"
 
         observe = message.observe
         observe.set(message.observable, message.value) if message.observable # XXX: skip for direct observe_async call
@@ -167,6 +171,8 @@ module Kontena
       # unique handle to identify this observe loop
       observe = Observe::Async.new(self.class, observables, &block)
 
+      debug "observe #{observe.describe_observables}..."
+
       # sync setup of each observable
       observables.each do |observable|
         # register for async.update_observe(...)
@@ -176,9 +182,9 @@ module Kontena
           # store value for initial call, or nil to block
           observe.set(observable, value)
 
-          debug "observe Observable<#{observable.__klass__}> = #{value}"
+          debug "observe #{Kontena::Observer.describe_observable(observable)} = #{value}"
         else
-          debug "observe Observable<#{observable.__klass__}>..."
+          debug "observe #{Kontena::Observer.describe_observable(observable)}..."
         end
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
@@ -212,29 +218,29 @@ module Kontena
 
       observables.each do |observable|
         if value = observable.add_observer(actor, observe, persistent: false)
-          debug "wait Observable<#{observable.__klass__}> = #{value}"
+          debug "wait #{Kontena::Observer.describe_observable(observable)} = #{value}"
 
           observe.set(observable, value)
         else
-          debug "wait Observable<#{observable.__klass__}>..."
+          debug "wait #{Kontena::Observer.describe_observable(observable)}..."
         end
       end
 
       unless observe.ready?
-        debug "wait Observable<#{observe.observables.join(', ')}>... (timeout=#{timeout})"
+        debug "wait #{observe.describe_observables}... (timeout=#{timeout})"
 
         Thread.current[:celluloid_actor].timeout(timeout) do
           begin
             wakeup = task.suspend(:observe)
           rescue Celluloid::TaskTimeout => exc
-            raise Timeout::Error, "timeout after waiting #{'%.2fs' % timeout} until: Observable<#{observe.observables.join(', ')}>"
+            raise Timeout::Error, "timeout after waiting #{'%.2fs' % timeout} until: #{observe.describe_observables}"
           end
 
           fail "spurious task wakeup: #{wakeup.inspect}" unless wakeup == observe
         end
       end
 
-      debug "wait Observable<#{observe.observables.join(', ')}> -> #{observe.values.join(', ')}"
+      debug "wait #{observe.describe_observables} -> #{observe.values.join(', ')}"
 
       if observables.length == 1
         return observe.values.first

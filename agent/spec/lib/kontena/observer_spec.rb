@@ -65,6 +65,13 @@ describe Kontena::Observer, :celluloid => true do
     let(:observable) { observable_class.new }
     let(:object) { double(:test) }
 
+    describe '#unwrap_observable' do
+      it 'returns the wrapped object' do
+        expect(described_class.unwrap_observable(observable)).to be_a TestObservable
+        expect(described_class.unwrap_observable(observable).class).to eq TestObservable
+      end
+    end
+
     describe '#observe' do
       it "does not observe any value if not yet updated" do
         subject.test_observe(observable)
@@ -258,6 +265,39 @@ describe Kontena::Observer, :celluloid => true do
 
       expect(@observer_actor).to be_ready
       expect(@observer_actor.values).to eq [2]
+    end
+  end
+
+  context 'for a standalone Observable' do
+    let :actor_class do
+      ActorClass = Class.new do
+        include Celluloid
+      end
+    end
+    let :standaone_observable_class do
+      StandaloneObservable = Class.new do
+        include Kontena::Observable
+      end
+    end
+
+    let(:actor) { actor_class.new }
+    let(:observable) { standaone_observable_class.new }
+    let(:value) { double() }
+
+    describe '#unwrap_observable' do
+      it 'returns the object' do
+        expect(described_class.unwrap_observable(observable)).to be_a StandaloneObservable
+        expect(described_class.unwrap_observable(observable).class).to eq StandaloneObservable
+      end
+    end
+
+    it 'is observable' do
+      observable
+      actor.after(0.05) {
+        observable.update_observable(value)
+      }
+
+      expect(subject.observe(observable, timeout: 1.0)).to eq value
     end
   end
 end

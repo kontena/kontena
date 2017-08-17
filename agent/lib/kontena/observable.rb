@@ -92,7 +92,7 @@ module Kontena
         if observe.active? && mailbox.alive?
           debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
-          mailbox << Message.new(observe, self.current_actor, @observable_value)
+          mailbox << Message.new(observe, self, @observable_value)
         else
           debug "dead: #{observe}"
 
