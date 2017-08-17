@@ -26,6 +26,10 @@ module Kontena
         @values = Hash[@observables.map{|observable| [observable, nil]}]
       end
 
+      def inspect
+        return "#{self.class.name}<#{@class.name}, #{describe_observables}>"
+      end
+
       # Describe the observables for debug logging
       #
       # @return [Array<String>]
@@ -46,7 +50,6 @@ module Kontena
       # @raise [RuntimeError]
       # @return value
       def set(observable, value)
-        observable = Kontena::Observer.unwrap_observable(observable)
         raise "unknown observable: #{observable.inspect}" unless @values.has_key? observable
         @values[observable] = value
       end
@@ -127,10 +130,16 @@ module Kontena
     # Updates the Observe, and calls if ready.
     def register_observer_handler
       @observer_handler ||= Thread.current[:celluloid_actor].handle(Kontena::Observable::Message) do |message|
-        debug "observe #{Kontena::Observer.describe_observable(message.observable)}-> #{message.value}"
-
         observe = message.observe
-        observe.set(message.observable, message.value) if message.observable # XXX: skip for direct observe_async call
+
+        if message.observable
+          debug "observe Observable<#{message.observable.class.name}> -> #{message.value}"
+
+          observe.set(message.observable, message.value)
+        else
+          debug "observe!"
+        end
+
         observe.call if observe.ready?
       end
     end
@@ -180,7 +189,7 @@ module Kontena
 
         if value
           # store value for initial call, or nil to block
-          observe.set(observable, value)
+          observe.set(Kontena::Observer.unwrap_observable(observable), value)
 
           debug "observe #{Kontena::Observer.describe_observable(observable)} = #{value}"
         else
@@ -196,6 +205,7 @@ module Kontena
         # trigger immediate update if all observables were ready
         actor.mailbox << Kontena::Observable::Message.new(observe, nil, nil) # XXX: fake it; can't create tasks inside of tasks
       end
+
       observe
     end
 
@@ -220,7 +230,7 @@ module Kontena
         if value = observable.add_observer(actor, observe, persistent: false)
           debug "wait #{Kontena::Observer.describe_observable(observable)} = #{value}"
 
-          observe.set(observable, value)
+          observe.set(Kontena::Observer.unwrap_observable(observable), value)
         else
           debug "wait #{Kontena::Observer.describe_observable(observable)}..."
         end

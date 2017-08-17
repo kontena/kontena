@@ -28,7 +28,7 @@ describe Kontena::Observable, :celluloid => true do
   end
 
   let :observer_class do
-    Class.new do
+    TestObserver = Class.new do
       include Celluloid
       include Kontena::Observer
 
