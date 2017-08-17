@@ -46,6 +46,8 @@ module Kontena
           log_service_pod_event("service:create_instance", "removed previous version of service #{service_pod.name_for_humans} instance")
         end
 
+        self.run_pre_start_hooks
+
         service_config = config_container(service_pod)
 
         debug "creating container: #{service_pod.name}"
@@ -65,7 +67,7 @@ module Kontena
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
-        self.run_hooks(service_container, 'post_start')
+        self.run_post_start_hooks(service_container)
 
         if service_pod.wait_for_port
           info "waiting for port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} to respond"
@@ -78,21 +80,23 @@ module Kontena
         service_container
       end
 
-      # @param [Docker::Container] service_container
-      # @param [String] type
       # @return [Boolean]
-      def run_hooks(service_container, type)
-        service_pod.hooks.each do |hook|
-          if hook['type'] == type
-            info "running #{type} hook: #{hook['cmd']}"
-            command = ['/bin/sh', '-c', hook['cmd']]
-            log_hook_output(service_container.id, ["running #{type} hook: #{hook['cmd']}"], 'stdout')
-            stdout, stderr, exit_code = service_container.exec(command)
-            log_hook_output(service_container.id, stdout, 'stdout')
-            log_hook_output(service_container.id, stderr, 'stderr')
-            if exit_code != 0
-              raise "Failed to execute hook: #{hook['cmd']}"
+      def run_pre_start_hooks
+        hooks_for('pre_start').each do |hook|
+          service_config = config_container(service_pod.dup)
+          service_config['Cmd'] = ['/bin/sh', '-c', hook['cmd']]
+          service_container = nil
+          begin
+            service_container = create_container(service_config)
+            info "running pre_start hook: #{hook['cmd']}"
+            service_container.tap(&:start).attach { |stream, chunk|
+              log_hook_output(service_container.id, [chunk], stream)
+            }
+            if service_container.state['ExitCode'] != 0
+              raise "Failed to execute pre_start hook: #{hook['cmd']}, exit code: #{service_container.state['ExitCode']}"
             end
+          ensure
+            cleanup_container(service_container) if service_container
           end
         end
         true
@@ -100,6 +104,33 @@ module Kontena
         log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
         error exc.message
         false
+      end
+
+      # @param [Docker::Container] service_container
+      # @return [Boolean]
+      def run_post_start_hooks(service_container)
+        hooks_for('post_start').each do |hook|
+          info "running post_start hook: #{hook['cmd']}"
+          command = ['/bin/sh', '-c', hook['cmd']]
+          log_hook_output(service_container.id, ["running #{type} hook: #{hook['cmd']}"], 'stdout')
+          _, _, exit_code = service_container.exec(command) { |stream, chunk|
+            log_hook_output(service_container.id, [chunk], stream)
+          }
+          if exit_code != 0
+            raise "Failed to execute post_start hook: #{hook['cmd']}"
+          end
+        end
+        true
+      rescue => exc
+        log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
+        error exc.message
+        false
+      end
+
+      # @param [String] type
+      # @return [Array<Hash>]
+      def hooks_for(type)
+        service_pod.hooks.select{ |h| h['type'] == type }
       end
 
       # @param [String] id

@@ -11,13 +11,17 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
       end
 
       value.keys.each do |hook|
-        unless %w(pre_build post_start).include?(hook)
+        unless %w(pre_build pre_start post_start).include?(hook)
           errors[key] = "invalid hook #{hook}"
         end
       end
 
       if value['pre_build']
         validate_pre_build_hooks(key, value['pre_build'], errors)
+      end
+
+      if value['pre_start']
+        validate_pre_start_hooks(key, value['pre_start'], errors)
       end
 
       if value['post_start']
@@ -37,6 +41,23 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
       validator = HashValidator.validator_for(pre_build_validation)
       pre_build_hooks.each do |pre_build|
         validator.validate('hooks.pre_build', pre_build, pre_build_validation, errors)
+      end
+    end
+
+    def validate_pre_start_hooks(key, pre_start_hooks, errors)
+      unless pre_start_hooks.is_a?(Array)
+        errors[key] = { 'pre_start' => 'must be an array' }
+        return
+      end
+      pre_start_validation = {
+        'name' => 'string',
+        'instances' => (-> (value) { value.is_a?(Integer) || value == '*' }),
+        'cmd' => 'string',
+        'oneshot' => HashValidator.optional('boolean')
+      }
+      validator = HashValidator.validator_for(post_start_validation)
+      pre_start_hooks.each do |pre_start|
+        validator.validate('hooks.pre_start', pre_start, pre_start_validation, errors)
       end
     end
 
