@@ -101,17 +101,17 @@ describe Kontena::Observer, :celluloid => true do
       end
     end
 
-    describe '#wait_observable' do
+    describe '#observe_sync' do
       it 'raises timeout if the observable is not ready' do
         expect{
-          subject.wait_observable!(observable, timeout: 0.01)
+          subject.observe(observable, timeout: 0.01)
         }.to raise_error(Timeout::Error, 'timeout after waiting 0.01s until: Observable<TestObservable>')
       end
 
       it 'immediately returns value if updated' do
         observable.update_observable(object)
 
-        expect(subject.wait_observable!(observable)).to eq object
+        expect(subject.observe(observable)).to eq object
 
         observable.reset_observable
       end
@@ -122,7 +122,7 @@ describe Kontena::Observer, :celluloid => true do
         # NOTE: the class must include the WaitHelper, so that it uses Celluloid#sleep
         #       if the wait_until! uses Kernel#sleep and blocks the actor thread,
         #       then this spec will fail, because the delayed update doesn't have a chance to run
-        expect(subject.wait_observable!(observable, timeout: 1.0)).to eq object
+        expect(subject.observe(observable, timeout: 1.0)).to eq object
       end
 
       it 'does not lose wait messages' do
@@ -132,7 +132,7 @@ describe Kontena::Observer, :celluloid => true do
 
         observable.async.spam_updates(1..1000, duration: 0.5, interval: 0.01, delay: 0.1)
 
-        expect(subject.wait_observable!(observable, timeout: 1.0)).to be_a Integer
+        expect(subject.observe(observable, timeout: 1.0)).to be_a Integer
       end
     end
 

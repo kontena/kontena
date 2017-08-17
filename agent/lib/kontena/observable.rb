@@ -30,16 +30,9 @@ module Kontena
       !!@observable_value
     end
 
-    # Registered one-shot observes
+    # Registered observers
     #
     # @return [Hash{Kontena::Observer::Observe => Celluloid::Mailbox}]
-    def waiters
-      @waiters ||= {}
-    end
-
-    # Registered continuous observes
-    #
-    # @return [Hash{Kontena::Observer::Observe => Celluloid::Proxy::Cell<Observer>}]
     def observers
       @observers ||= {}
     end
@@ -70,23 +63,6 @@ module Kontena
       notify_observers
     end
 
-    # @param observer [Celluloid::Proxy::Cell<Observer>]
-    # @param observe [Observer::Observe]
-    # @return [Object, nil] possible existing value
-    def add_waiter(observer, observe)
-      if value = @observable_value
-        debug "waiter: #{observe} = #{@observable_value.inspect[0..64] + '...'}"
-
-        return value
-      else
-        debug "waiter: #{observe}..."
-
-        waiters[observe] = observer
-
-        return nil
-      end
-    end
-
     # Observer actor is observing this Actor's @value.
     # Updates to value will send to update_observe on given actor.
     # Returns current value.
@@ -94,31 +70,31 @@ module Kontena
     # @param observer [Celluloid::Proxy::Cell<Observer>]
     # @param observe [Observer::Observe]
     # @return [Object, nil] possible existing value
-    def add_observer(observer, observe)
-      debug "observer: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
+    def add_observer(observer, observe, persistent: true)
+      if value = @observable_value
+        debug "observer: #{observe} <= #{value.inspect[0..64] + '...'}"
 
-      observers[observe] = observer
+        observers[observe] = observer.mailbox if persistent
 
-      return @observable_value
+        return @observable_value
+      else
+        debug "observer: #{observe}..."
+
+        observers[observe] = observer.mailbox
+
+        return nil
+      end
     end
 
     # Update @value to each Observer::Observe
     def notify_observers
-      waiters.each do |observe, observer|
-        debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
-
-        observer.mailbox << Message.new(observe, self, @observable_value)
-      end
-      waiters.clear # XXX: is this really atomic with all the mailbox << ... calls?
-
-      observers.each do |observe, observer|
-        if observer.alive?
+      observers.each do |observe, mailbox|
+        if observe.active? && mailbox.alive?
           debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
-          # XXX: is the Observable's Celluloid.current_actor guranteed to match the Actor[:node_info_worker] Celluloid::Proxy::Cell by identity?
-          observer.async.update_observe(observe, Celluloid.current_actor, @observable_value)
+          mailbox << Message.new(observe, self.current_actor, @observable_value)
         else
-          debug "observer died: #{observe}"
+          debug "dead: #{observe}"
 
           observers.delete(observe)
         end
