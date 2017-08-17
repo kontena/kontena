@@ -126,7 +126,7 @@ module Kontena
         debug "observe Observable<#{message.observable.class.name}> -> #{message.value}"
 
         observe = message.observe
-        observe.set(message.observable, message.value)
+        observe.set(message.observable, message.value) if message.observable # XXX: skip for direct observe_async call
         observe.call if observe.ready?
       end
     end
@@ -186,8 +186,10 @@ module Kontena
         self.monitor observable
       end
 
-      # immediate async update if all observables were ready
-      observe.call if observe.ready?
+      if observe.ready?
+        # trigger immediate update if all observables were ready
+        actor.mailbox << Kontena::Observable::Message.new(observe, nil, nil) # XXX: fake it; can't create tasks inside of tasks
+      end
       observe
     end
 
