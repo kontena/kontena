@@ -55,7 +55,7 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
         'cmd' => 'string',
         'oneshot' => HashValidator.optional('boolean')
       }
-      validator = HashValidator.validator_for(post_start_validation)
+      validator = HashValidator.validator_for(pre_start_validation)
       pre_start_hooks.each do |pre_start|
         validator.validate('hooks.pre_start', pre_start, pre_start_validation, errors)
       end
