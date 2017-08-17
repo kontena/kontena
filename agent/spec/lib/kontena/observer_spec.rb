@@ -1,25 +1,31 @@
 require_relative '../../../lib/kontena/helpers/wait_helper'
 
-describe Kontena::Observer do
+describe Kontena::Observer, :celluloid => true do
   let :observable_class do
-    Class.new do
+    TestObservable = Class.new do
       include Celluloid
       include Kontena::Observable
 
       def crash
         fail
       end
+
+      def delay_update(value, delay: )
+        after(delay) do
+          update_observable value
+        end
+      end
     end
   end
 
   let :observer_class do
-    Class.new do
+    TestObserver = Class.new do
       include Celluloid
       include Kontena::Observer
 
       attr_reader :state, :values
 
-      def initialize(*observables)
+      def test_observe(*observables)
         @state = observe(*observables) do |*values|
           @values = values
         end
@@ -35,45 +41,76 @@ describe Kontena::Observer do
     end
   end
 
+  subject { observer_class.new() }
+
   it "raises synchronously if given an invalid actor", :celluloid => true, :log_celluloid_actor_crashes => false do
-    expect{observer_class.new('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
+    expect{subject.test_observe('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
   end
 
   context "For a single observable" do
     let(:observable) { observable_class.new }
-
-    subject { observer_class.new(observable) }
-
     let(:object) { double(:test) }
 
-    it "does not observe any value if not yet updated", :celluloid => true do
-      expect(subject).to_not be_ready
+    describe '#observe' do
+      it "does not observe any value if not yet updated" do
+        subject.test_observe(observable)
+
+        expect(subject).to_not be_ready
+      end
+
+      it "immediately yields an updated value" do
+        observable.update_observable object
+
+        subject.test_observe(observable)
+
+        expect(subject).to be_ready
+        expect(subject.values).to eq [object]
+      end
+
+      it "later yields after updating value" do
+        subject.test_observe(observable)
+
+        expect(subject).to_not be_ready
+
+        observable.update_observable object
+
+        expect(subject).to be_ready
+        expect(subject.values).to eq [object]
+      end
+
+      it "crashes if the observable does", :log_celluloid_actor_crashes => false do
+        subject.test_observe(observable)
+
+        expect{observable.crash}.to raise_error(RuntimeError)
+
+        expect{subject.ready?}.to raise_error(Celluloid::DeadActorError)
+      end
     end
 
-    it "immediately yields an updated value", :celluloid => true do
-      observable.update_observable object
+    describe '#wait_observable' do
+      it 'raises timeout if the observable is not ready' do
+        expect{
+          subject.wait_observable!(observable, timeout: 0.01)
+        }.to raise_error(Timeout::Error, /until: Observable<TestObservable> is ready/)
+      end
 
-      subject
+      it 'immediately returns value if updated' do
+        observable.update_observable(object)
 
-      expect(subject).to be_ready
-      expect(subject.values).to eq [object]
-    end
+        expect(subject.wait_observable!(observable)).to eq object
 
-    it "later yields after updating value", :celluloid => true do
-      subject
+        observable.reset_observable
+      end
 
-      expect(subject).to_not be_ready
 
-      observable.update_observable object
+      it 'blocks until observable' do
+        observable.delay_update(object, delay: 0.5)
 
-      expect(subject).to be_ready
-      expect(subject.values).to eq [object]
-    end
-
-    it "crashes if the observable does", :celluloid => true, :log_celluloid_actor_crashes => false do
-      expect{observable.crash}.to raise_error(RuntimeError)
-
-      expect{subject.ready?}.to raise_error(Celluloid::DeadActorError)
+        # NOTE: the class must include the WaitHelper, so that it uses Celluloid#sleep
+        #       if the wait_until! uses Kernel#sleep and blocks the actor thread,
+        #       then this spec will fail, because the delayed update doesn't have a chance to run
+        expect(subject.wait_observable!(observable, timeout: 1.0)).to eq object
+      end
     end
 
     context "Which later updates" do
@@ -82,17 +119,19 @@ describe Kontena::Observer do
       before do
         observable.update_observable object
 
+        subject.test_observe(observable)
+
         expect(subject).to be_ready
         expect(subject.values).to eq [object]
       end
 
-      it "yields with the updated value", :celluloid => true do
+      it "yields with the updated value" do
         observable.update_observable object2
 
         expect(subject.values).to eq [object2]
       end
 
-      it "does not yield after a reset", :celluloid => true do
+      it "does not yield after a reset" do
         observable.reset_observable
 
         expect(subject.values).to eq [object]
@@ -101,11 +140,9 @@ describe Kontena::Observer do
     end
   end
 
-  context "For two observables", :celluloid => true do
+  context "For two observables" do
     let(:observable1) { observable_class.new }
     let(:observable2) { observable_class.new }
-
-    subject { observer_class.new(observable1, observable2) }
 
     let(:object1) { double(:test1) }
     let(:object2) { double(:test2) }
@@ -115,6 +152,8 @@ describe Kontena::Observer do
       observable1.update_observable object1
       observable2.update_observable object2
 
+      subject.test_observe(observable1, observable2)
+
       expect(subject).to be_ready
       expect(subject.values).to eq [object1, object2]
     end
@@ -122,6 +161,8 @@ describe Kontena::Observer do
     it "does not yield after a reset" do
       observable1.update_observable object1
       observable2.update_observable object2
+
+      subject.test_observe(observable1, observable2)
 
       expect(subject.values).to eq [object1, object2]
 
@@ -132,7 +173,7 @@ describe Kontena::Observer do
     end
   end
 
-  context "For a supervised observer that observes a supervised actor by name", :celluloid => true do
+  context "For a supervised observer that observes a supervised actor by name" do
     let :supervised_observer_class do
       Class.new do
         include Celluloid

@@ -1,11 +1,17 @@
-describe Kontena::Observable do
+describe Kontena::Observable, :celluloid => true do
   let :observable_class do
-    Class.new do
+    TestObservable = Class.new do
       include Celluloid
       include Kontena::Observable
 
       def crash
         fail
+      end
+
+      def delay_update(value, delay: )
+        after(delay) do
+          update_observable value
+        end
       end
 
       def spam_updates(enum, interval: false)
@@ -69,11 +75,57 @@ describe Kontena::Observable do
 
   let(:object) { double(:test) }
 
-  it "rejects a nil update", :celluloid => true, :log_celluloid_actor_crashes => false do
-    expect{subject.update_observable nil}.to raise_error(ArgumentError)
+  describe '#update_observable' do
+    it "rejects a nil update", :log_celluloid_actor_crashes => false do
+      expect{subject.update_observable nil}.to raise_error(ArgumentError)
+    end
   end
 
-  it "stops notifying any crashed observers", :celluloid => true, :log_celluloid_actor_crashes => false do
+  context 'when initialized' do
+    it 'is not observable?' do
+      expect(subject).to_not be_observable
+    end
+
+    describe '#observable_value' do
+      it 'returns nil' do
+        expect(subject.observable_value).to be nil
+      end
+    end
+  end
+
+  context 'when updated' do
+    before do
+      subject.update_observable object
+    end
+
+    it 'is observable?' do
+      expect(subject).to be_observable
+    end
+
+    describe '#observable_value' do
+      it 'returns the value' do
+        expect(subject.observable_value).to eq object
+      end
+    end
+
+    context 'when reset' do
+      before do
+        subject.reset_observable
+      end
+
+      it 'is not observable?' do
+        expect(subject).to_not be_observable
+      end
+
+      describe '#observable_value' do
+        it 'returns nil' do
+          expect(subject.observable_value).to be nil
+        end
+      end
+    end
+  end
+
+  it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
     observer = observer_class.new(subject)
     expect(subject.observers).to_not be_empty
 
@@ -88,7 +140,7 @@ describe Kontena::Observable do
     expect(subject.observers).to be_empty
   end
 
-  it "delivers updates in the right order", :celluloid => true do
+  it "delivers updates in the right order" do
     observer = observer_class.new(subject)
 
     update_count = 150
@@ -99,7 +151,7 @@ describe Kontena::Observable do
     expect(observer.ordered?).to be_truthy
   end
 
-  it "handles concurrent observers", :celluloid => true do
+  it "handles concurrent observers" do
     observer_count = 20
     update_count = 10
 
@@ -151,16 +203,18 @@ describe Kontena::Observable do
       end
     end
 
-    it "propagates the observed value", :celluloid => true do
-      chaining = chaining_class.new(subject)
-      observer = observer_class.new(chaining)
+    describe '#observe => #update_observable' do
+      it "propagates the observed value" do
+        chaining = chaining_class.new(subject)
+        observer = observer_class.new(chaining)
 
-      subject.update_observable "test"
+        subject.update_observable "test"
 
-      chaining.ping # wait for intermediate actor to handle update
+        chaining.ping # wait for intermediate actor to handle update
 
-      expect(observer).to be_ready
-      expect(observer.value).to eq "chained: test"
+        expect(observer).to be_ready
+        expect(observer.value).to eq "chained: test"
+      end
     end
   end
 end

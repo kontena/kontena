@@ -6,8 +6,22 @@ module Kontena
   module Observable
     include Kontena::Logging
 
+    # @return [Object, nil] last updated value, or nil if not observable?
     def observable_value
       @observable_value
+    end
+
+    # Obsevable has updated, as has not reset
+    # @return [Boolean]
+    def observable?
+      !!@observable_value
+    end
+
+    # Registered Waiters
+    #
+    # @return [Hash{Wait => Celluloid::Mailbox}]
+    def waiters
+      @waiters ||= {}
     end
 
     # Registered Observers
@@ -43,6 +57,23 @@ module Kontena
       notify_observers
     end
 
+    # @param observer [Celluloid::Proxy::Cell<Observer>]
+    # @param observe [Observer::Wait]
+    # @return [Object, nil] possible existing value
+    def add_waiter(observer, wait)
+      if value = @observable_value
+        debug "waiter: #{wait} = #{@observable_value.inspect[0..64] + '...'}"
+
+        return value
+      else
+        debug "waiter: #{wait}..."
+
+        waiters[wait] = observer
+
+        return nil
+      end
+    end
+
     # Observer actor is observing this Actor's @value.
     # Updates to value will send to update_observe on given actor.
     # Returns current value.
@@ -60,6 +91,14 @@ module Kontena
 
     # Update @value to each Observer::Observe
     def notify_observers
+      waiters.each do |wait, observer|
+        debug "notify: #{wait} <- #{@observable_value.inspect[0..64] + '...'}"
+
+        wait.value = @observable_value
+        observer.mailbox << wait
+      end
+      waiters.clear # XXX: is this really atomic with all the mailbox << ... calls?
+
       observers.each do |observe, observer|
         if observer.alive?
           debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
