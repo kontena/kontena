@@ -55,8 +55,8 @@ module Kontena::Workers
     end
 
     def start
-      wait_until!("etcd ready") { Actor[:etcd_launcher].observable? }
-      
+      Actor[:etcd_launcher].wait_observable!(timeout: 300.0)
+
       Docker::Container.all.each do |container|
         begin
           self.stream_container_logs(container) unless container.skip_logs?

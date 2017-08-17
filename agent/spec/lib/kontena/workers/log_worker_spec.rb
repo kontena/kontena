@@ -1,5 +1,5 @@
 
-describe Kontena::Workers::LogWorker do
+describe Kontena::Workers::LogWorker, :celluloid => true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
@@ -7,20 +7,18 @@ describe Kontena::Workers::LogWorker do
   let(:etcd) { spy(:etcd) }
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
     allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
     allow(subject.wrapped_object).to receive(:finalize)
   end
 
-  after(:each) { Celluloid.shutdown }
-
   describe '#start' do
     let(:etcd_launcher) { instance_double(Kontena::Launchers::Etcd) }
+    let(:etcd_state) { double() }
 
     before(:each) do
       allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(etcd_launcher)
-      allow(etcd_launcher).to receive(:observable?).and_return(true)
+      allow(etcd_launcher).to receive(:wait_observable!).and_return(etcd_state)
     end
 
     it 'starts log streaming for container' do
