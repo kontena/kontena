@@ -63,8 +63,7 @@ module Kontena::Cli::Stacks
         @default_envs ||= {
           'GRID' => env['GRID'],
           'STACK' => env['STACK'],
-          'PLATFORM' => env['PLATFORM']
-        }
+        }.merge(env['PLATFORM'].to_s.empty? ? {} : { 'PLATFORM' => env['PLATFORM'] })
       end
 
       def internals_interpolated_yaml
