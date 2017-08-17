@@ -11,6 +11,7 @@ class Kontena::Cli::NodeCommand < Kontena::Command
   subcommand "health", "Check node health", load_subcommand('nodes/health_command')
   subcommand "env", "Generate kontena-agent.env configuration", load_subcommand('nodes/env_command')
 
+
   def execute
   end
 end

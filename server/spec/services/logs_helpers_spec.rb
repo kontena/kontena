@@ -18,7 +18,7 @@ describe LogsHelpers do
 
   let(:nodes) do
     {
-      node1: grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid),
+      node1: grid.create_node!('node-1', node_id: SecureRandom.uuid),
 
     }
   end

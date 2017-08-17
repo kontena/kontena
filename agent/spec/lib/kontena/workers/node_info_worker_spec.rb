@@ -2,7 +2,8 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
   include RpcClientMocks
 
   let(:node_id) { 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS' }
-  let(:subject) { described_class.new(node_id, false) }
+  let(:node_name) { 'test-1' }
+  let(:subject) { described_class.new(node_id, node_name: node_name, autostart: false) }
   let(:node) do
     Node.new(
       'id' => node_id,
@@ -15,7 +16,7 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
   let(:docker_info) { {
     'Name' => 'node-1',
     'Labels' => nil,
-    'ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS',
+    'ID' => '44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7',
     'Plugins' => {
       'Network' => ['bridge', 'host'],
       'Volume' => ['local']
@@ -64,9 +65,16 @@ describe Kontena::Workers::NodeInfoWorker, celluloid: true do
       subject.publish_node_info
     end
 
-    it 'contains docker id' do
+    it 'contains node id' do
       expect(rpc_client).to receive(:request).once.with(
-        '/nodes/update', [node_id, hash_including('ID' => 'U3CZ:W2PA:2BRD:66YG:W5NJ:CI2R:OQSK:FYZS:NMQQ:DIV5:TE6K:R6GS')]
+        '/nodes/update', [node_id, hash_including('ID' => '44C7:P5OM:NBJT:WXHV:6EDU:67T5:YDMX:4YPU:PF6D:VUH5:7LE7:5RC7')]
+      )
+      subject.publish_node_info
+    end
+
+    it 'contains node name' do
+      expect(rpc_client).to receive(:request).once.with(
+        '/nodes/update', [node_id, hash_including('Name' => 'test-1')]
       )
       subject.publish_node_info
     end

@@ -256,7 +256,7 @@ describe '/v1/grids', celluloid: true do
       it 'returns grid nodes' do
         grid = david.grids.first
 
-        grid.host_nodes.create!(node_id: SecureRandom.uuid)
+        grid.create_node!('test-1', node_id: SecureRandom.uuid)
         get "/v1/grids/#{grid.to_path}/nodes", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['nodes'].size).to eq(1)
@@ -309,7 +309,7 @@ describe '/v1/grids', celluloid: true do
       before do
         @grid = david.grids.first
 
-        node = @grid.host_nodes.create!(name: 'node-1', node_id: SecureRandom.uuid)
+        node = @grid.create_node!('node-1', node_id: SecureRandom.uuid)
 
         foo_service = @grid.grid_services.create!(name: 'foo', image_name: 'foo/bar')
         bar_service = @grid.grid_services.create!(name: 'bar', image_name: 'bar/foo')
@@ -395,7 +395,7 @@ describe '/v1/grids', celluloid: true do
     end
 
     let :node do
-      grid.host_nodes.create!(name: 'abc', node_id: 'a:b:c')
+      grid.create_node!('abc', node_id: 'a:b:c')
     end
 
     before do

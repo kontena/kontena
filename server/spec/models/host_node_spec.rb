@@ -21,41 +21,38 @@ describe HostNode do
   it { should have_many(:volume_instances) }
 
   it { should have_index_for(grid_id: 1) }
-  it { should have_index_for(grid_id: 1, node_number: 1).with_options(sparse: true, unique: true) }
+  it { should have_index_for(grid_id: 1, node_number: 1).with_options(unique: true) }
+  it { should have_index_for(grid_id: 1, name: 1).with_options(unique: true) }
   it { should have_index_for(node_id: 1) }
   it { should have_index_for(token: 1).with_options(sparse: true, unique: true) }
 
-  let(:grid) { Grid.create!(name: 'test') }
+  let(:grid) { Grid.create!(name: 'test', initial_size: 1) }
+  subject { HostNode.new(grid: grid, node_number: 1, name: 'node-1') }
+  let(:node2) { HostNode.create!(grid: grid, name: 'node-2', node_number: 2)}
 
-  context 'for an initializing node without any name' do
-    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ') }
-
-    describe '#to_s' do
-      it "uses the node ID" do
-        expect(node.to_s).to eq 'ABC:XYZ'
-      end
-    end
-
-    describe '#to_path' do
-      it 'uses the node ID' do
-        expect(node.to_path).to eq 'test/ABC:XYZ'
-      end
+  describe '#to_s' do
+    it "uses the node name" do
+      expect(subject.to_s).to eq 'node-1'
     end
   end
 
-  context 'for an updated node with a name' do
-    let(:node) { grid.host_nodes.create!(node_id: 'ABC:XYZ', name: 'node') }
+  describe '#to_path' do
+    it 'uses the node name' do
+      expect(subject.to_path).to eq 'test/node-1'
+    end
+  end
 
-    describe '#to_s' do
-      it "uses the node ID" do
-        expect(node.to_s).to eq 'node'
-      end
+  context 'when the node exists' do
+    before do
+      subject.save!
     end
 
-    describe '#to_path' do
-      it 'uses the node ID' do
-        expect(node.to_path).to eq 'test/node'
-      end
+    it 'does not allow duplicate names' do
+      expect{HostNode.create!(grid: grid, node_number: 2, name: 'node-1')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
+    end
+
+    it 'does not allow duplicate node numbers' do
+      expect{HostNode.create!(grid: grid, node_number: 1, name: 'node-2')}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index/)
     end
   end
 
@@ -77,56 +74,40 @@ describe HostNode do
     let(:stateless_service) {
       GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false)
     }
-    let(:node) { HostNode.create(name: 'node-1', grid: grid)}
 
     it 'returns false by default' do
       expect(subject.stateful?).to be_falsey
     end
 
     it 'returns true if node has stateful service' do
-      stateful_service.containers.create!(name: 'stateful-1', host_node: node)
-      expect(node.stateful?).to be_truthy
+      stateful_service.containers.create!(name: 'stateful-1', host_node: subject)
+      expect(subject.stateful?).to be_truthy
     end
 
     it 'returns false if node has stateless service' do
-      stateless_service.containers.create!(name: 'stateless-1', host_node: node)
-      expect(node.stateful?).to be_falsey
+      stateless_service.containers.create!(name: 'stateless-1', host_node: subject)
+      expect(subject.stateful?).to be_falsey
     end
 
     it 'returns true if node has stateful and stateless service' do
-      stateful_service.containers.create!(name: 'stateful-1', host_node: node)
-      stateless_service.containers.create!(name: 'stateless-1', host_node: node)
-      expect(node.stateful?).to be_truthy
+      stateful_service.containers.create!(name: 'stateful-1', host_node: subject)
+      stateless_service.containers.create!(name: 'stateless-1', host_node: subject)
+      expect(subject.stateful?).to be_truthy
     end
   end
 
   describe '#initial_member?' do
-    let(:grid) { Grid.create!(name: 'test', initial_size: 1) }
-    let(:node_1) { HostNode.create(name: 'node-1', grid: grid, node_number: 1)}
-    let(:node_2) { HostNode.create(name: 'node-2', grid: grid, node_number: 2)}
-
     it 'returns true if initial_member' do
-      expect(node_1.initial_member?).to be_truthy
+      expect(subject.initial_member?).to be_truthy
     end
 
     it 'returns false if not initial_member' do
-      expect(node_2.initial_member?).to be_falsey
-    end
-
-    it 'returns false if node_number is not set' do
-      expect(subject.initial_member?).to be_falsey
+      expect(node2.initial_member?).to be_falsey
     end
   end
 
   describe '#attributes_from_docker' do
-    it 'sets name' do
-      expect {
-        subject.attributes_from_docker({'Name' => 'node-3'})
-      }.to change{ subject.name }.to('node-3')
-    end
-
     it 'does not set name if name is already set' do
-      subject.name = 'foobar'
       expect {
         subject.attributes_from_docker({'Name' => 'node-3'})
       }.not_to change{ subject.name }
@@ -170,47 +151,6 @@ describe HostNode do
       expect(subject.volume_drivers.first.name).to eq('local')
       expect(subject.volume_drivers.last.name).to eq('foobar')
       expect(subject.volume_drivers.last.version).to eq('latest')
-    end
-  end
-
-  describe '#save!' do
-    let(:grid) { Grid.create!(name: 'test') }
-
-    it 'reserves node number' do |variable|
-      allow(subject).to receive(:grid).and_return(grid)
-      subject.attributes = {node_id: 'bb', grid_id: 1}
-      subject.save!
-      expect(subject.node_number).to eq(1)
-    end
-
-    it 'reserves node number successfully after race condition error' do
-      HostNode.create!(node_id: 'aa', node_number: 1, grid_id: 1)
-      allow(subject).to receive(:grid).and_return(grid)
-      subject.attributes = {node_id: 'bb', grid_id: 1}
-      subject.save!
-      expect(subject.node_number).to eq(2)
-    end
-
-    it 'appends node_number to name if name is not unique' do
-      grid = Grid.create!(name: 'test')
-      HostNode.create!(name: 'node', node_id: 'aa', node_number: 1, grid: grid)
-
-      subject.attributes = {name: 'node', grid: grid}
-      subject.save
-      expect(subject.name).to eq('node-2')
-
-      subject.name = 'foo'
-      subject.save
-      expect(subject.name).to eq('foo')
-    end
-
-    it 'does not append node_number to name if name is empty' do
-      grid = Grid.create!(name: 'test')
-      HostNode.create!(node_id: 'aa', node_number: 1, grid: grid)
-
-      subject.attributes = {grid: grid}
-      subject.save
-      expect(subject.name).to be_nil
     end
   end
 
@@ -294,25 +234,22 @@ describe HostNode do
     let(:stateless_service) {
       GridService.create!(name: 'stateless', image_name: 'foo/bar:latest', grid: grid, stateful: false)
     }
-    let(:node) { HostNode.create(name: 'node-1', grid: grid)}
-    let(:another_node) { HostNode.create(name: 'node-1', grid: grid)}
 
     it 'destroys all containers from a node' do
-
       stateful_service.containers.create!(
-        name: 'redis-1', host_node: node, instance_number: 1
+        name: 'redis-1', host_node: subject, instance_number: 1
       )
       stateful_service.containers.create!(
-        name: 'redis-1-volumes', host_node: node, instance_number: 1, container_type: 'volume'
+        name: 'redis-1-volumes', host_node: subject, instance_number: 1, container_type: 'volume'
       )
       stateful_service.containers.create!(
-        name: 'redis-2', host_node: another_node, instance_number: 2
+        name: 'redis-2', host_node: node2, instance_number: 2
       )
       stateful_service.containers.create!(
-        name: 'redis-2-volumes', host_node: another_node, instance_number: 2, container_type: 'volume'
+        name: 'redis-2-volumes', host_node: node2, instance_number: 2, container_type: 'volume'
       )
       expect {
-        node.destroy
+        subject.destroy
       }.to change{Container.unscoped.count}.by (-2)
     end
 
@@ -320,40 +257,44 @@ describe HostNode do
 
   describe '#volume_driver' do
     let(:grid) { Grid.create!(name: 'test') }
-    let(:node) { HostNode.create(name: 'node-1', grid: grid)}
 
     it 'returns correct volume driver' do
-      node.volume_drivers.create!(name: 'foo', version: '1')
+      subject.save!
+      subject.volume_drivers.create!(name: 'foo', version: '1')
 
-      driver = node.volume_driver('foo')
+      driver = subject.volume_driver('foo')
       expect(driver['name']).to eq('foo')
       expect(driver['version']).to eq('1')
     end
 
     it 'returns nil for unknown driver' do
-      driver = node.volume_driver('foo')
+      driver = subject.volume_driver('foo')
       expect(driver).to be_nil
     end
+  end
+
+  it 'does not allow an empty name' do
+    expect{HostNode.create!(grid: grid, name: '')}.to raise_error(Mongoid::Errors::Validations, /Name can't be blank/)
   end
 
   describe '#token' do
     let(:grid) { Grid.create!(name: 'test') }
 
     it 'allows multiple nodes without node tokens' do
-      node1 = HostNode.create!(name: 'node-1', grid: grid)
-      node2 = HostNode.create!(name: 'node-2', grid: grid)
+      node1 = HostNode.create!(grid: grid, name: 'node-1', node_number: 1)
+      node2 = HostNode.create!(grid: grid, name: 'node-2', node_number: 2)
 
       expect(node1.token).to be_nil
       expect(node2.token).to be_nil
     end
 
     it 'does not allow empty tokens' do
-      expect{HostNode.create!(grid: grid, name: 'node-1', token: '')}.to raise_error(Mongoid::Errors::Validations)
+      expect{HostNode.create!(grid: grid, name: 'node-1', node_number: 1, token: '')}.to raise_error(Mongoid::Errors::Validations)
     end
 
     context 'with a node that has a node token' do
       let(:token) { 'asdf'* 4 }
-      let(:node1) { HostNode.create!(name: 'node-1', grid: grid, token: token) }
+      let(:node1) { HostNode.create!(grid: grid, name: 'node-1', node_number: 1, token: token) }
 
       before do
         node1
@@ -366,14 +307,14 @@ describe HostNode do
       end
 
       it 'does not allow multiple nodes to share the same token' do
-        expect{HostNode.create!(name: 'node-2', grid: grid, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
+        expect{HostNode.create!(grid: grid, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
       end
 
       context 'with a second grid' do
         let(:grid2) { Grid.create!(name: 'test2') }
 
         it 'does not allow nodes to share the same token' do
-          expect{HostNode.create!(name: 'node-2', grid: grid2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
+          expect{HostNode.create!(grid: grid2, name: 'node-2', node_number: 2, token: token)}.to raise_error(Mongo::Error::OperationFailure, /E11000 duplicate key error index: kontena_test.host_nodes.\$token_1 dup key: { : "asdfasdfasdfasdf" }/)
         end
       end
     end

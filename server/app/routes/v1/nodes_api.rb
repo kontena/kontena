@@ -26,9 +26,7 @@ module V1
       r.on ':grid_name/:node_id' do |grid_name, node_id|
         validate_access_token
         require_current_user
-
         @node = load_grid_node(grid_name, node_id)
-
         r.on 'token' do
           halt_request(403, {error: 'Access denied'}) unless current_user.can_update?(@grid)
 
@@ -116,6 +114,7 @@ module V1
             data = parse_json_body
             params = { host_node: @node }
             params[:labels] = data['labels'] if data['labels']
+            params[:availability] = data['availability'] if data['availability']
             outcome = HostNodes::Update.run(params)
             if outcome.success?
               @node = outcome.result

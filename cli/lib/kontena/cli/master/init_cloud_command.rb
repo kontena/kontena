@@ -14,7 +14,26 @@ module Kontena::Cli::Master
     requires_current_master_token
     requires_current_account_token
 
+    def master_config
+      @master_config ||= client.get('config')
+    end
+
+    def current_master_cloud_config
+      return @cloud_config if @cloud_config
+      master_client_id = master_config['oauth2.client_id']
+      @cloud_config = cloud_client.get('user/masters')['data'].find { |cm| cm['attributes']['client-id'] == master_client_id }
+    end
+
+    def current_master_cloud_name
+      @cloud_name ||= current_master_cloud_config.nil? ? nil : current_master_cloud_config['attributes']['name']
+    end
+
+    def already_cloud_enabled?
+      !current_master_cloud_config.nil?
+    end
+
     def execute
+      exit_with_error "Current master is already registered to use Kontena Cloud as #{pastel.cyan(current_master_cloud_name)}" if already_cloud_enabled?
       args = ["--current"]
       args << "--force" if self.force?
       args += ["--cloud-master-id", self.cloud_master_id.shellescape] if self.cloud_master_id

@@ -58,9 +58,9 @@ describe ContainerStat do
   describe 'aggregations' do
     let(:grid_1) { Grid.create!(name: 'grid_1') }
     let(:grid_2) { Grid.create!(name: 'grid_2') }
-    let(:grid_1_node_1) { HostNode.create!(grid: grid_1, name: 'grid_1_node_1')}
-    let(:grid_1_node_2) { HostNode.create!(grid: grid_1, name: 'grid_1_node_2')}
-    let(:grid_2_node_1) { HostNode.create!(grid: grid_2, name: 'grid_2_node_1')}
+    let(:grid_1_node_1) { grid_1.create_node!('grid_1_node_1') }
+    let(:grid_1_node_2) { grid_1.create_node!('grid_1_node_2') }
+    let(:grid_2_node_1) { grid_2.create_node!('grid_2_node_1') }
     let(:grid_1_service_1) { GridService.create!(grid: grid_1, name: 'grid_1_service_1', image_name: 'i1') }
     let(:grid_1_service_2) { GridService.create!(grid: grid_1, name: 'grid_1_service_2', image_name: 'i2') }
     let(:grid_2_service_1) { GridService.create!(grid: grid_2, name: 'grid_2_service_1', image_name: 'i1') }

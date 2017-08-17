@@ -1,8 +1,8 @@
 
 describe HostNodes::Remove, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
-  let(:node_a) { HostNode.create!(name: 'node-a', grid: grid, node_id: 'AA') }
-  let(:node_b) { HostNode.create!(name: 'node-b', grid: grid, node_id: 'BB') }
+  let(:node_a) { grid.create_node!('node-a', node_id: 'AA') }
+  let(:node_b) { grid.create_node!('node-b', node_id: 'BB') }
 
   describe '#run' do
     let(:subject) { described_class.new(host_node: node_a) }

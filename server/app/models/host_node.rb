@@ -7,6 +7,11 @@ class HostNode
   include Mongoid::Timestamps
   include EventStream
 
+  module Availability
+    ACTIVE = 'active'.freeze
+    DRAIN = 'drain'.freeze
+  end
+
   Error = Class.new(StandardError)
 
   field :node_id, type: String
@@ -31,6 +36,7 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
   field :connected_at, type: Time
+  field :availability, type: String, default: Availability::ACTIVE
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
@@ -44,13 +50,15 @@ class HostNode
   has_many :volume_instances, dependent: :destroy
   has_and_belongs_to_many :images
 
+  validates :node_number, presence: true
+  validates :name, presence: true
   validates_length_of :token, minimum: 16, maximum: 256, allow_nil: true
-  after_save :reserve_node_number, :ensure_unique_name
 
   index({ grid_id: 1 })
   index({ node_id: 1 }, { unique: true, sparse: true })
   index({ labels: 1 })
-  index({ grid_id: 1, node_number: 1 }, { unique: true, sparse: true })
+  index({ grid_id: 1, name: 1 }, { unique: true })
+  index({ grid_id: 1, node_number: 1 }, { unique: true })
   index({ token: 1 }, { unique: true, sparse: true })
 
   scope :connected, -> { where(connected: true) }
@@ -95,9 +103,6 @@ class HostNode
       volume_drivers: attrs.dig('Drivers', 'Volume') || [],
       network_drivers: attrs.dig('Drivers', 'Network') || [],
     }
-    if self.name.nil?
-      self.name = attrs['Name']
-    end
     if self.labels.nil? || self.labels.size == 0
       self.labels = attrs['Labels']
     end
@@ -121,9 +126,7 @@ class HostNode
   end
 
   def initial_member?
-    return false if self.node_number.nil?
-    return true if self.node_number <= self.grid.initial_size
-    false
+    self.node_number <= self.grid.initial_size
   end
 
   # @param label [String] match label name before =
@@ -175,31 +178,5 @@ class HostNode
   # @return [String] Overlay IP, without subnet mask
   def overlay_ip
     (IPAddr.new(self.grid.subnet) | self.node_number).to_s
-  end
-
-  private
-
-  def reserve_node_number
-    return unless self.node_number.nil?
-    return if self.grid.nil?
-
-    free_numbers = self.grid.free_node_numbers
-    begin
-      node_number = free_numbers.shift
-      raise Error.new('Node numbers not available. Grid is full?') if node_number.nil?
-      self.update_attribute(:node_number, node_number)
-    rescue Mongo::Error::OperationFailure
-      retry
-    end
-  end
-
-  def ensure_unique_name
-    return if self.name.to_s.empty?
-    return unless self.grid
-    return unless self.grid.respond_to?(:host_nodes)
-
-    if self.grid.host_nodes.unscoped.where(:id.ne => self.id, name: self.name).count > 0
-      self.set(name: "#{self.name}-#{self.node_number}")
-    end
   end
 end

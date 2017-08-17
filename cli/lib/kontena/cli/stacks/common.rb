@@ -131,6 +131,7 @@ module Kontena::Cli::Stacks
     def set_env_variables(stack, grid)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
+      ENV['PLATFORM'] = grid
     end
 
     # @return [String]

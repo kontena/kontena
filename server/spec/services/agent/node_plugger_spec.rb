@@ -10,7 +10,7 @@ describe Agent::NodePlugger do
 
   context 'for a brand new node' do
     let(:node) {
-      HostNode.create!(node_id: 'xyz')
+      grid.create_node!('test-node', node_id: 'xyz')
     }
 
     it 'marks node as connected' do
@@ -24,9 +24,9 @@ describe Agent::NodePlugger do
 
   context 'for an existing node' do
     let(:node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         node_id: 'xyz',
-        grid: grid, name: 'test-node', labels: ['region=ams2'],
+        labels: ['region=ams2'],
         connected: false,
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
@@ -68,9 +68,9 @@ describe Agent::NodePlugger do
     let(:reconnected_at) { 2.seconds.ago }
     let(:connected_at) { 10.seconds.ago }
     let(:node) {
-      HostNode.create!(
+      grid.create_node!('test-node',
         node_id: 'xyz',
-        grid: grid, name: 'test-node', labels: ['region=ams2'],
+        labels: ['region=ams2'],
         connected: true, connected_at: reconnected_at,
         private_ip: '10.12.1.2', public_ip: '80.240.128.3',
       )
@@ -81,7 +81,7 @@ describe Agent::NodePlugger do
         expect(subject).to_not receive(:publish_update_event)
         expect(subject).to_not receive(:send_master_info)
         expect(subject).to_not receive(:send_node_info)
-        
+
         expect {
           subject.plugin! connected_at
         }.to_not change{ node.reload.connected_at }

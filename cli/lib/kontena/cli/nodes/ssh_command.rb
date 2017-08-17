@@ -1,3 +1,5 @@
+require 'kontena/plugin_manager'
+
 module Kontena::Cli::Nodes
   class SshCommand < Kontena::Command
     include Kontena::Cli::Common
@@ -21,7 +23,8 @@ module Kontena::Cli::Nodes
         node = client.get("nodes/#{current_grid}/#{self.node}")
       elsif any?
         nodes = client.get("grids/#{current_grid}/nodes")['nodes']
-        node = nodes.select{ |node| node['connected'] }.first
+        node = nodes.find{ |node| node['connected'] }
+        exit_with_error "There are no online nodes" if node.nil?
       else
         exit_with_error "No node name given. Use --any to connect to the first available node"
       end
@@ -29,7 +32,7 @@ module Kontena::Cli::Nodes
       provider = Array(node["labels"]).find{ |l| l.start_with?('provider=')}.to_s.split('=').last
 
       if provider == 'vagrant'
-        unless Kontena::PluginManager.instance.plugins.find { |plugin| plugin.name == 'kontena-plugin-vagrant' }
+        unless Kontena::PluginManager::Common.installed?('vagrant')
           exit_with_error 'You need to install vagrant plugin to ssh into this node. Use kontena plugin install vagrant'
         end
         cmd = ['vagrant', 'node', 'ssh', node['name']] + commands_list

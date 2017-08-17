@@ -104,8 +104,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-	"name": "my-grid",
-	"initial_size": 3
+    "name": "my-grid",
+    "initial_size": 3
 }
 ```
 
@@ -142,7 +142,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-	"trusted_subnets": ["10.240.0.0/16"]
+    "trusted_subnets": ["10.240.0.0/16"]
 }
 ```
 
@@ -297,79 +297,79 @@ follow | Stream logs
 
 ```json
 {
-	"id": "mygrid/misty-sun-87",
-	"node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
-	"name": "misty-sun-87",
-	"connected": "true",
+    "id": "mygrid/misty-sun-87",
+    "node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
+    "name": "misty-sun-87",
+    "connected": "true",
 	"created_at": "2017-06-14T12:33:05.139Z",
 	"updated_at": "2017-06-14T13:37:36.968Z",
 	"last_seen_at": "2017-06-14T13:38:03.785Z",
 	"connected_at": "2017-06-14T12:33:05.084Z",
 	"has_token": false,
-	"node_number": 1,
+    "node_number": 1,
 	"initial_member": true,
-	"agent_version": "1.0.0",
-	"docker_version": "1.11.2",
-	"os": "CoreOS 1185.3.0 (MoreOS)",
-	"kernel_version": "4.7.3-coreos-r2",
-	"driver": "overlay",
-	"network_drivers": [
-		{"name": "bridge"},
-		{"name": "host"},
-		{"name": "null"}
-	],
-	"volume_drivers": [
-		{"name": "local"}
-	],
-	"cpus": 2,
-	"mem_total": 0.0,
-	"mem_limit": 0.0,
-	"public_ip": "52.30.169.34",
-	"private_ip": "172.31.7.179",
-	"engine_root_dir": "/var/lib/docker",
-	"labels": [
-		"region=eu-west-1",
-		"az=a",
-		"type=m4.large"
-	],
-	"peer_ips": [
-		"172.31.7.172"
-	],
-	"resource_usage": {
-		"memory": {
-			"used": 0.0,
-			"cached": 0.0,
-			"buffers": 0.0,
-			"total": 0.0
-		},
-		"load": {
-			"1m": 0.4,
-			"5m": 0.3,
-			"15m": 0.6
-		},
-		"filesystem": {
-			"name": "docker",
-			"used": 0.0,
-			"total": 0.0
-		},
-		"cpu": {
-			"usage_pct": 0.0
-		},
-	    "usage": {
-	      "container_seconds": 0
-    	}
-	},
-	"grid": {
-		"id": "my-grid",
-		"name": "my-grid",
-		"initial_size": 3,
-		"stats": {
-			"statsd": null
-		},
-		"trusted_subnets": [
-			"172.31.0.0/16"
-		]
-	}
+    "agent_version": "1.0.0",
+    "docker_version": "1.11.2",
+    "os": "CoreOS 1185.3.0 (MoreOS)",
+    "kernel_version": "4.7.3-coreos-r2",
+    "driver": "overlay",
+    "network_drivers": [
+        {"name": "bridge"},
+        {"name": "host"},
+        {"name": "null"}
+    ],
+    "volume_drivers": [
+        {"name": "local"}
+    ],
+    "cpus": 2,
+    "mem_total": 0.0,
+    "mem_limit": 0.0,
+    "public_ip": "52.30.169.34",
+    "private_ip": "172.31.7.179",
+    "engine_root_dir": "/var/lib/docker",
+    "labels": [
+        "region=eu-west-1",
+        "az=a",
+        "type=m4.large"
+    ],
+    "peer_ips": [
+        "172.31.7.172"
+    ],
+    "resource_usage": {
+        "memory": {
+            "used": 0.0,
+            "cached": 0.0,
+            "buffers": 0.0,
+            "total": 0.0
+        },
+        "load": {
+            "1m": 0.4,
+            "5m": 0.3,
+            "15m": 0.6
+        },
+        "filesystem": {
+            "name": "docker",
+            "used": 0.0,
+            "total": 0.0
+        },
+        "cpu": {
+            "usage_pct": 0.0
+        },
+        "usage": {
+          "container_seconds": 0
+        }
+    },
+    "grid": {
+        "id": "my-grid",
+        "name": "my-grid",
+        "initial_size": 3,
+        "stats": {
+            "statsd": null
+        },
+        "trusted_subnets": [
+            "172.31.0.0/16"
+        ]
+    }
 }
 ```
 
@@ -399,6 +399,7 @@ labels | A list of user defined labels for the node
 peer_ips | A list of peer ip addresses. Used for creating an overlay network between nodes in the sam grid.
 resource_usage | Resource usage stats for the node
 grid | A grid object where the node is connected.
+availability | The scheduling availability status
 
 
 ## List nodes
@@ -423,7 +424,8 @@ Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"labels": ["foo=bar", "bar=baz"]
+    "labels": ["foo=bar", "bar=baz"],
+    "availability": "drain"
 }
 ```
 
@@ -581,63 +583,63 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "registry": "https://stack-registry.kontena.io",
   "expose": "peer",
   "services": [
-  	{
-  		"name": "arbiter",
-  		"image": "mongo:3.2",
-  		"stateful": true,
-  		"replicas": 1,
-  		"cmd": "--replset kontena --smallfiles",
-  		"health_check": {
-  			"protocol": "tcp",
-  			"port": 27017
-  		}
-  	},
-  	{
-  		"name": "peer",
-  		"image": "mongo:3.2",
-  		"stateful": true,
-  		"replicas": 3,
-  		"cmd": "--replset kontena --smallfiles",
-		"stop_grace_period": "1m23s",
-  		"health_check": {
-  			"protocol": "tcp",
-  			"port": 27017
-  		},
-  		"hooks": {
-  			"post_start": [
-  				{
-  					"name": "sleep",
-  					"cmd": "sleep 10",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_initiate",
-  					"cmd": "mongo --eval \"printjson(rs.initiate());\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_add1",
-  					"cmd": "mongo --eval \"printjson(rs.add('peer-1'))\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_add2",
-  					"cmd": "mongo --eval \"printjson(rs.add('peer-2'))\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_add_arbited",
-  					"cmd": "mongo --eval \"printjson(rs.addArb('arbiter-1'))\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  			]
-  		}
-  	}
+      {
+          "name": "arbiter",
+          "image": "mongo:3.2",
+          "stateful": true,
+          "replicas": 1,
+          "cmd": "--replset kontena --smallfiles",
+          "health_check": {
+              "protocol": "tcp",
+              "port": 27017
+          }
+      },
+      {
+          "name": "peer",
+          "image": "mongo:3.2",
+          "stateful": true,
+          "replicas": 3,
+          "cmd": "--replset kontena --smallfiles",
+        "stop_grace_period": "1m23s",
+          "health_check": {
+              "protocol": "tcp",
+              "port": 27017
+          },
+          "hooks": {
+              "post_start": [
+                  {
+                      "name": "sleep",
+                      "cmd": "sleep 10",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_initiate",
+                      "cmd": "mongo --eval \"printjson(rs.initiate());\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_add1",
+                      "cmd": "mongo --eval \"printjson(rs.add('peer-1'))\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_add2",
+                      "cmd": "mongo --eval \"printjson(rs.add('peer-2'))\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_add_arbited",
+                      "cmd": "mongo --eval \"printjson(rs.addArb('arbiter-1'))\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+              ]
+          }
+      }
   ],
   "volumes": [
     {
@@ -677,11 +679,11 @@ Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"name": "redis",
-	"stack": "my/redis",
-	"version": "0.1.0",
-	"registry": "file://",
-	"services": []
+    "name": "redis",
+    "stack": "my/redis",
+    "version": "0.1.0",
+    "registry": "file://",
+    "services": []
 }
 ```
 
@@ -699,10 +701,10 @@ Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"stack": "my/redis",
-	"version": "0.1.1",
-	"registry": "file://",
-	"services": []
+    "stack": "my/redis",
+    "version": "0.1.1",
+    "registry": "file://",
+    "services": []
 }
 ```
 
@@ -884,6 +886,11 @@ follow | Stream logs
   "log_opts": null,
   "hooks": [],
   "health_check": {},
+  "health_status": {
+      "healthy": 1,
+      "unhealthy": 0,
+      "total": 1
+  },
   "instances": {
     "total": 1,
     "running": 1
@@ -922,6 +929,7 @@ log_opts | Log driver options (object)
 hooks | Commands to be executed when service instance is deployed
 instance_counts | Stats about how many instances this service currently has
 stop_grace_period | How long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with the image), before sending SIGKILL.
+health_status | Health status of the service instances. Only counted if there is a health check defined for the service.
 
 ### Deploy Opt attributes
 
@@ -955,16 +963,16 @@ oneshot | Boolean, if enabled hook is executed only once in a service lifetime
 
 ```json
 {
-	"hooks": {
-		"post_start": [
-			{
-				"name": "hello",
-				"cmd": "echo 'hello world'",
-				"instances": "*",
-				"oneshot": false
-			}
-		]
-	}
+    "hooks": {
+        "post_start": [
+            {
+                "name": "hello",
+                "cmd": "echo 'hello world'",
+                "instances": "*",
+                "oneshot": false
+            }
+        ]
+    }
 }
 ```
 
@@ -1015,9 +1023,9 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"name": "redis",
-	"image": "redis:3.0",
-	"stateful": true
+    "name": "redis",
+    "image": "redis:3.0",
+    "stateful": true
 }
 ```
 
@@ -1036,7 +1044,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"image": "redis:3.2"
+    "image": "redis:3.2"
 }
 ```
 
@@ -1123,7 +1131,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"instances": 5
+    "instances": 5
 }
 ```
 
@@ -1256,10 +1264,10 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
 ```json
 {
-	"id": "my-grid/SECRET_PWD",
-	"name": "SECRET_PWD",
-	"created_at": "",
-	"value": "T0Ps3crT"
+    "id": "my-grid/SECRET_PWD",
+    "name": "SECRET_PWD",
+    "created_at": "",
+    "value": "T0Ps3crT"
 }
 ```
 
@@ -1293,8 +1301,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"name": "SECRET_PWD",
-	"value": "T0Ps3crT"
+    "name": "SECRET_PWD",
+    "value": "T0Ps3crT"
 }
 ```
 
@@ -1314,8 +1322,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"value": "T0Ps3crT",
-	"upsert": false
+    "value": "T0Ps3crT",
+    "upsert": false
 }
 ```
 
@@ -1360,11 +1368,11 @@ Delete a secret.
 
 ```json
 {
-	"id": "my-grid/registry.domain.com",
-	"name": "registry.domain.com",
-	"url": "https://registry.domain.com/",
-	"username": "a_bot",
-	"email": "a_bot@domain.com"
+    "id": "my-grid/registry.domain.com",
+    "name": "registry.domain.com",
+    "url": "https://registry.domain.com/",
+    "username": "a_bot",
+    "email": "a_bot@domain.com"
 }
 ```
 
@@ -1391,10 +1399,10 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"url": "https://registry.domain.com/",
-	"username": "a_bot",
-	"email": "a_bot@domain.com",
-	"password": "xyz123"
+    "url": "https://registry.domain.com/",
+    "username": "a_bot",
+    "email": "a_bot@domain.com",
+    "password": "xyz123"
 }
 ```
 
@@ -1431,7 +1439,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"email": "john.doe@domain.com"
+    "email": "john.doe@domain.com"
 }
 ```
 
@@ -1450,7 +1458,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"domain": "foo.domain.com"
+    "domain": "foo.domain.com"
 }
 ```
 
@@ -1478,9 +1486,9 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"secret_name": "FOO_DOMAIN_COM",
-	"domains": ["foo.domain.com"],
-	"cert_type": "fullchain"
+    "secret_name": "FOO_DOMAIN_COM",
+    "domains": ["foo.domain.com"],
+    "cert_type": "fullchain"
 }
 ```
 
@@ -1588,8 +1596,8 @@ Accept: application/json
 
 ```json
 {
-	"config.key.name": "value",
-	"config.another.name": "another_value"
+    "config.key.name": "value",
+    "config.another.name": "another_value"
 }
 ```
 
@@ -1619,8 +1627,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"foo.bar": "bar",
-	"bar.baz": "baz"
+    "foo.bar": "bar",
+    "bar.baz": "baz"
 }
 ```
 
@@ -1639,8 +1647,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"foo.bar": "bar",
-	"bar.baz": "baz"
+    "foo.bar": "bar",
+    "bar.baz": "baz"
 }
 ```
 
@@ -1727,17 +1735,17 @@ Standard OAuth2 authorize endpoint. Create access token or code.
 
 ```json
 {
-	"id": "09348203840328023948",
-	"token_type": "bearer",
-	"access_token_last_four": "dufy",
-	"refresh_token_last_four": "isdf",
-	"expires_in": 7200,
-	"scopes": "user",
-	"user": {
-		"id": "987983749274",
-		"email": "john.doe@domain.com",
-		"name": "john"
-	}
+    "id": "09348203840328023948",
+    "token_type": "bearer",
+    "access_token_last_four": "dufy",
+    "refresh_token_last_four": "isdf",
+    "expires_in": 7200,
+    "scopes": "user",
+    "user": {
+        "id": "987983749274",
+        "email": "john.doe@domain.com",
+        "name": "john"
+    }
 }
 ```
 

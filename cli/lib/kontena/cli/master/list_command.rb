@@ -13,7 +13,7 @@ module Kontena::Cli::Master
 
     def mark_if_current(row)
       unless quiet?
-        row.name.insert(0, pastel.yellow('* ')) if row.name == current_master_name
+        row.name.to_s.insert(0, pastel.yellow('* ')) if row.name == current_master_name
       end
     end
 

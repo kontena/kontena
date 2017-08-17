@@ -2,7 +2,7 @@ describe HostNodes::UpdateToken do
   let(:grid) { Grid.create!(name: 'test') }
 
   context "with an existing host node without a node token" do
-    let(:node) { grid.host_nodes.create!(name: 'node-1')}
+    let(:node) { grid.create_node!('node-1')}
 
     it 'generates a node token' do
       outcome = described_class.run(
@@ -57,7 +57,7 @@ describe HostNodes::UpdateToken do
   end
 
   context "with an existing host node with a token" do
-    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf')}
+    let(:node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf')}
 
     before do
       node
@@ -107,7 +107,7 @@ describe HostNodes::UpdateToken do
     end
 
     context "with a different host node without a node token" do
-      let(:node2) { grid.host_nodes.create!(name: 'node-2')}
+      let(:node2) { grid.create_node!('node-2')}
 
       before do
         node2
@@ -136,7 +136,7 @@ describe HostNodes::UpdateToken do
   end
 
   context "with an existing host node that is connected" do
-    let(:node) { grid.host_nodes.create!(name: 'node-1', token: 'asdfasdfasdfasdf', connected: true)}
+    let(:node) { grid.create_node!('node-1', token: 'asdfasdfasdfasdf', connected: true)}
 
     before do
       node

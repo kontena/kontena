@@ -2,13 +2,11 @@
 describe Scheduler::Filter::VolumeInstance do
 
   let(:grid) { Grid.create(name: 'test') }
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(grid: grid, node_id: 'node1', name: 'node-1', labels: ['az-1', 'ssd'])
-    nodes << HostNode.create!(grid: grid, node_id: 'node2', name: 'node-2', labels: ['az-1', 'hdd'])
-    nodes << HostNode.create!(grid: grid, node_id: 'node3', name: 'node-3', labels: ['az-2', 'ssd'])
-    nodes
-  end
+  let(:nodes) { [
+    grid.create_node!('node-1', node_id: 'node1'),
+    grid.create_node!('node-2', node_id: 'node2'),
+    grid.create_node!('node-3', node_id: 'node3'),
+  ] }
 
   let(:volume) do
     grid.volumes.create!(name: 'foo', driver: 'local', scope: 'instance')

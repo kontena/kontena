@@ -1,6 +1,7 @@
 describe Kontena::WebsocketClient, :celluloid => true do
   let(:url) { 'ws://socket.example.com' }
   let(:node_id) { 'ABCD' }
+  let(:node_name) { 'test-1' }
   let(:grid_token) { 'secret' }
   let(:node_token) { nil }
   let(:node_labels) { ['region=test'] }
@@ -17,6 +18,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   let(:actor) {
     described_class.new(url, node_id,
+      node_name: node_name,
       grid_token: grid_token,
       node_token: node_token,
       node_labels: node_labels,
@@ -74,6 +76,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       expect(subject.ws.instance_variable_get('@headers')).to match(
         'Kontena-Grid-Token' => 'secret',
         'Kontena-Node-Id' => 'ABCD',
+        'Kontena-Node-Name' => 'test-1',
         'Kontena-Version' => Kontena::Agent::VERSION,
         'Kontena-Node-Labels' => 'region=test',
         'Kontena-Connected-At' => String,
@@ -97,6 +100,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject.ws.instance_variable_get('@headers')).to match(
           'Kontena-Node-Token' => 'node-secret',
           'Kontena-Node-Id' => 'ABCD',
+          'Kontena-Node-Name' => 'test-1',
           'Kontena-Version' => Kontena::Agent::VERSION,
           'Kontena-Node-Labels' => 'region=test',
           'Kontena-Connected-At' => String,
