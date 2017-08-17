@@ -11,6 +11,7 @@ module Kontena
     class Creator
       include Kontena::Logging
       include Common
+      include Kontena::Observer
       include Kontena::Helpers::WaitHelper
       include Kontena::Helpers::PortHelper
       include Kontena::Helpers::RpcHelper
@@ -26,7 +27,7 @@ module Kontena
       # @return [Celluloid::Proxy::Cell<Kontena::NetworkAdapters::Weave>]
       def network_adapter
         network_adapter = Celluloid::Actor[:network_adapter]
-        network_adapter.wait_observable!(timeout: 300.0)
+        wait_observable!(network_adapter, timeout: 300.0)
         network_adapter
       end
 

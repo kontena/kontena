@@ -7,6 +7,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
+    include Kontena::Observer
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::WaitHelper
 
@@ -55,7 +56,7 @@ module Kontena::Workers
     end
 
     def start
-      Actor[:etcd_launcher].wait_observable!(timeout: 300.0)
+      wait_observable!(Actor[:etcd_launcher], timeout: 300.0)
 
       Docker::Container.all.each do |container|
         begin
