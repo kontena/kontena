@@ -6,26 +6,47 @@ module Kontena
     # Observer is observing some Observables, and tracking their values.
     # This object is passed to each Observer, which then passes it back to us for updates.
     class Observe
-      # @param class_name [String] used for logging
-      # @param observables [Array<Observable>] Observable actors
+      # @param observable [Celluloid::Proxy::Cell<Observable>, Observable]
+      # @return [Observable]
+      def unwrap_observable(observable)
+        # XXX: is_a? doesn't work?
+        observable.is_a?(Celluloid::Proxy::Cell) ? observable.wrapped_object : observable
+      end
+
+      # @param cls [Class] used to identify the observer for logging
+      # @param observables [Array<Observable>] Observable objects (NOT PROXIES)
+      # @param task [Celluloid::Task] Observing task
       # @param block [Block] Observing block
-      def initialize(class_name, observables, block)
-        @class_name = class_name
-        @observables = observables
+      def initialize(cls, observables, task = nil, &block)
+        @class = cls
+        @observables = observables #XXX .map{|observable| unwrap_observable(observable) }
+        @task = task
         @block = block
-        @values = { }
+        @values = Hash[@observables.map{|observable| [observable, nil]}]
+
+        $stderr.puts "@values=#{@values.inspect}"
+      end
+
+      # For debugging purposes...
+      #
+      # @return [Array<String>]
+      def observables
+        @observables.map{|observable| observable.class.name}
       end
 
       # Called by the Observer actor for logging
       # Must be threadsafe and local
       def to_s
-        "Observer<#{@class_name}>"
+        "Observer<#{@class.name}>"
       end
 
       # Set value for observable
       #
+      # @raise [RuntimeError]
       # @return value
       def set(observable, value)
+        #XXX observable = unwrap_observable(observable)
+        raise "unknown observable: #{observable}" unless @values.has_key? observable
         @values[observable] = value
       end
 
@@ -45,29 +66,13 @@ module Kontena
 
       # Yield to block with values
       def call
-        @block.call(*values)
-      end
-    end
-
-    # Observer is waiting on some Observable.
-    # This object is passed to the Observable, which then sends on the mailbox.
-    class Wait
-      attr_reader :value
-
-      def initialize(cls)
-        @class = cls
-      end
-
-      # Called by the Observable actor for logging
-      # Must be atomic: threadsafe, non-yielding and non-raising
-      def to_s
-        "Observer<#{@class.name}>"
-      end
-
-      # Called by the Observable actor
-      # Must be atomic: threadsafe, non-yielding and non-raising
-      def value=(value)
-        @value = value
+        if @block
+          @block.call(*values)
+        elsif @task
+          @task.resume(self)
+        else
+          abort
+        end
       end
     end
 
@@ -89,6 +94,19 @@ module Kontena
 
       observe.set(observable, value)
       observed(observe)
+    end
+
+    # Register celluloid actor handler for Kontena::Observable::Message.
+    #
+    # Updates the Observe, and calls if ready.
+    def register_observer_handler
+      @observer_handler ||= Thread.current[:celluloid_actor].handle(Kontena::Observable::Message) do |message|
+        debug "observe Observable<#{message.observable.class.name}> -> #{message.value}"
+
+        observe = message.observe
+        observe.set(message.observable, message.value)
+        observe.call if observe.ready?
+      end
     end
 
     # Observe values from Observables, yielding each value to block.
@@ -113,17 +131,21 @@ module Kontena
     # @yield [*values] all Observables are ready
     def observe(*observables, &block)
       # unique handle to identify this observe loop
-      observe = Observe.new(self.class.name, observables, block)
+      observe = Observe.new(self.class, observables, &block)
 
       # sync setup of each observable
       observables.each do |observable|
         # register for async.update_observe(...)
         value = observable.add_observer(Celluloid.current_actor, observe)
 
-        # store value for initial call, or nil to block
-        observe.set(observable, value)
+        if value
+          # store value for initial call, or nil to block
+          observe.set(observable, value)
 
-        debug "observe Observable<#{observable.__klass__}> = #{value}"
+          debug "observe Observable<#{observable.__klass__}> = #{value}"
+        else
+          debug "observe Observable<#{observable.__klass__}>..."
+        end
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
         # this is not a bidrectional link: our crashes do not propagate to the observable
@@ -144,25 +166,43 @@ module Kontena
     # @param timeout [Float] optional timeout in seconds
     # @raise [Timeout::Error]
     # @return [Object]
-    def wait_observable!(observable, timeout: nil)
-      actor = self.current_actor
-      wait = Wait.new(self.class)
+    def wait_observable!(*observables, timeout: nil)
+      self.register_observer_handler
 
-      if value = observable.add_waiter(actor, wait)
-        debug "wait Observable<#{observable.__klass__}> = #{value}"
+      actor = Celluloid.current_actor
+      task = Celluloid::Task.current
+      observe = Observe.new(self.class, observables.map{|proxy| proxy.wrapped_object}, task)
 
-        return value
-      else
-        debug "wait Observable<#{observable.__klass__}>... (timeout=#{timeout})"
+      observables.each do |observable|
+        if value = observable.add_waiter(Celluloid.current_actor, observe)
+          debug "wait Observable<#{observable.__klass__}> = #{value}"
 
-        # XXX: this is racy on Observable#add_waiter -> Observable#notify_observers -> actor.receive
-        unless actor.receive(timeout) { |msg| msg == wait }
-          abort Timeout::Error.new("timeout waiting #{'%.2fs' % timeout} until: Observable<#{observable.__klass__}> is ready")
+          observe.set(observable.wrapped_object, value)
+        else
+          debug "wait Observable<#{observable.__klass__}>..."
         end
+      end
 
-        debug "wait Observable<#{observable.__klass__}> -> #{wait.value}"
+      unless observe.ready?
+        debug "wait Observable<#{observe.observables.join(', ')}>... (timeout=#{timeout})"
 
-        return wait.value
+        Thread.current[:celluloid_actor].timeout(timeout) do
+          begin
+            wakeup = task.suspend(:observe)
+          rescue Celluloid::TaskTimeout => exc
+            raise Timeout::Error, "timeout after waiting #{'%.2fs' % timeout} until: Observable<#{observe.observables.join(', ')}>"
+          end
+
+          fail "spurious task wakeup: #{wakeup.inspect}" unless wakeup == observe
+        end
+      end
+
+      debug "wait Observable<#{observe.observables.join(', ')}> -> #{observe.values.join(', ')}"
+
+      if observables.length == 1
+        return observe.values.first
+      else
+        return observe.values
       end
     end
   end

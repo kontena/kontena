@@ -6,6 +6,19 @@ module Kontena
   module Observable
     include Kontena::Logging
 
+    class Message
+      attr_reader :observe, :observable, :value
+
+      # @param observe [Kontena::Observable::Observe]
+      # @param observable [Kontena::Observable]
+      # @param value [Object, nil]
+      def initialize(observe, observable, value)
+        @observe = observe
+        @observable = observable
+        @value = value
+      end
+    end
+
     # @return [Object, nil] last updated value, or nil if not observable?
     def observable_value
       @observable_value
@@ -17,16 +30,16 @@ module Kontena
       !!@observable_value
     end
 
-    # Registered Waiters
+    # Registered one-shot observes
     #
-    # @return [Hash{Wait => Celluloid::Mailbox}]
+    # @return [Hash{Kontena::Observer::Observe => Celluloid::Mailbox}]
     def waiters
       @waiters ||= {}
     end
 
-    # Registered Observers
+    # Registered continuous observes
     #
-    # @return [Hash{Observe => Celluloid::Proxy::Cell<Observer>}]
+    # @return [Hash{Kontena::Observer::Observe => Celluloid::Proxy::Cell<Observer>}]
     def observers
       @observers ||= {}
     end
@@ -58,17 +71,17 @@ module Kontena
     end
 
     # @param observer [Celluloid::Proxy::Cell<Observer>]
-    # @param observe [Observer::Wait]
+    # @param observe [Observer::Observe]
     # @return [Object, nil] possible existing value
-    def add_waiter(observer, wait)
+    def add_waiter(observer, observe)
       if value = @observable_value
-        debug "waiter: #{wait} = #{@observable_value.inspect[0..64] + '...'}"
+        debug "waiter: #{observe} = #{@observable_value.inspect[0..64] + '...'}"
 
         return value
       else
-        debug "waiter: #{wait}..."
+        debug "waiter: #{observe}..."
 
-        waiters[wait] = observer
+        waiters[observe] = observer
 
         return nil
       end
@@ -91,11 +104,10 @@ module Kontena
 
     # Update @value to each Observer::Observe
     def notify_observers
-      waiters.each do |wait, observer|
-        debug "notify: #{wait} <- #{@observable_value.inspect[0..64] + '...'}"
+      waiters.each do |observe, observer|
+        debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
-        wait.value = @observable_value
-        observer.mailbox << wait
+        observer.mailbox << Message.new(observe, self, @observable_value)
       end
       waiters.clear # XXX: is this really atomic with all the mailbox << ... calls?
 
