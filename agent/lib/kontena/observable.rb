@@ -4,8 +4,10 @@ module Kontena
   # Once the value is first updated, then other Actors will be able to observe it
   # When the value later updated, other Actors will also observe those changes
   module Observable
+    include Kontena::Helpers::WaitHelper
     include Kontena::Logging
 
+    # @return [Object, nil] last updated value, or nil if not observable?
     def observable_value
       @observable_value
     end
@@ -14,6 +16,15 @@ module Kontena
     # @return [Boolean]
     def observable?
       !!@observable_value
+    end
+
+    # @param timeout [Float] optional timeout in seconds
+    # @raise [Celluloid::Abort<Timeout::Error>]
+    # @return [Object]
+    def wait_observable!(timeout: nil)
+      return wait_until!("Observable<#{self.class.name}> is ready", timeout: timeout) { observable_value }
+    rescue Timeout::Error => exc
+      abort exc
     end
 
     # Registered Observers
