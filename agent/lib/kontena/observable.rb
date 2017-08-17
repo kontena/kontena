@@ -6,19 +6,6 @@ module Kontena
   module Observable
     include Kontena::Logging
 
-    class Wait
-      attr_reader :value
-
-      def initialize(mailbox)
-        @mailbox = mailbox
-      end
-
-      def <<(value)
-        @value = value
-        @mailbox << self
-      end
-    end
-
     # @return [Object, nil] last updated value, or nil if not observable?
     def observable_value
       @observable_value
@@ -30,36 +17,11 @@ module Kontena
       !!@observable_value
     end
 
-    # @param timeout [Float] optional timeout in seconds
-    # @raise [Celluloid::Abort<Timeout::Error>]
-    # @return [Object]
-    def wait_observable!(timeout: nil)
-      if value = @observable_value
-        debug "wait = #{value}"
-
-        return value
-      end
-
-      actor = Celluloid.current_actor
-      wait = Wait.new(actor.mailbox)
-      waiters << wait
-
-      debug "wait #{wait}... (timeout=#{timeout})"
-
-      unless actor.receive(timeout) { |msg| msg == wait }
-        abort Timeout::Error.new("timeout waiting #{'%.2fs' % timeout} until: Observable<#{self.class.name}> is ready")
-      end
-
-      debug "wait #{wait} -> #{value}"
-
-      return wait.value
-    end
-
     # Registered Waiters
     #
     # @return [Hash{Wait => Celluloid::Mailbox}]
     def waiters
-      @waiters ||= []
+      @waiters ||= {}
     end
 
     # Registered Observers
@@ -95,6 +57,23 @@ module Kontena
       notify_observers
     end
 
+    # @param observer [Celluloid::Proxy::Cell<Observer>]
+    # @param observe [Observer::Wait]
+    # @return [Object, nil] possible existing value
+    def add_waiter(observer, wait)
+      if value = @observable_value
+        debug "waiter: #{wait} = #{@observable_value.inspect[0..64] + '...'}"
+
+        return value
+      else
+        debug "waiter: #{wait}..."
+
+        waiters[wait] = observer
+
+        return nil
+      end
+    end
+
     # Observer actor is observing this Actor's @value.
     # Updates to value will send to update_observe on given actor.
     # Returns current value.
@@ -112,11 +91,13 @@ module Kontena
 
     # Update @value to each Observer::Observe
     def notify_observers
-      waiters.each do |wait, _|
+      waiters.each do |wait, observer|
         debug "notify: #{wait} <- #{@observable_value.inspect[0..64] + '...'}"
-        wait << @observable_value
+
+        wait.value = @observable_value
+        observer.mailbox << wait
       end
-      waiters.clear
+      waiters.clear # XXX: is this really atomic with all the mailbox << ... calls?
 
       observers.each do |observe, observer|
         if observer.alive?

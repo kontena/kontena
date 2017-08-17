@@ -91,12 +91,6 @@ describe Kontena::Observable, :celluloid => true do
         expect(subject.observable_value).to be nil
       end
     end
-
-    describe '#wait_observable' do
-      it 'raises timeout' do
-        expect{subject.wait_observable!(timeout: 0.01)}.to raise_error(Timeout::Error, /until: Observable<TestObservable> is ready/)
-      end
-    end
   end
 
   context 'when updated' do
@@ -111,12 +105,6 @@ describe Kontena::Observable, :celluloid => true do
     describe '#observable_value' do
       it 'returns the value' do
         expect(subject.observable_value).to eq object
-      end
-    end
-
-    describe '#wait_observable' do
-      it 'returns the value' do
-        expect(subject.wait_observable!(timeout: 0.01)).to eq object
       end
     end
 
@@ -194,17 +182,6 @@ describe Kontena::Observable, :celluloid => true do
 
     # also expect this...
     expect(observers.map{|obs| obs.ordered?}).to eq [true] * observer_count
-  end
-
-  describe '#wait_observable' do
-    it 'blocks until observable' do
-      subject.delay_update(object, delay: 0.5)
-
-      # NOTE: the class must include the WaitHelper, so that it uses Celluloid#sleep
-      #       if the wait_until! uses Kernel#sleep and blocks the actor thread,
-      #       then this spec will fail, because the delayed update doesn't have a chance to run
-      expect(subject.wait_observable!(timeout: 1.0)).to eq object
-    end
   end
 
   context "For chained observables" do

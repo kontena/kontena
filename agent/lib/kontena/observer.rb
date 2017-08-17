@@ -49,6 +49,28 @@ module Kontena
       end
     end
 
+    # Observer is waiting on some Observable.
+    # This object is passed to the Observable, which then sends on the mailbox.
+    class Wait
+      attr_reader :value
+
+      def initialize(cls)
+        @class = cls
+      end
+
+      # Called by the Observable actor for logging
+      # Must be atomic: threadsafe, non-yielding and non-raising
+      def to_s
+        "Observer<#{@class.name}>"
+      end
+
+      # Called by the Observable actor
+      # Must be atomic: threadsafe, non-yielding and non-raising
+      def value=(value)
+        @value = value
+      end
+    end
+
     # Observe has been updated, call if ready.
     # Called from observe as an async task.
     #
@@ -101,7 +123,7 @@ module Kontena
         # store value for initial call, or nil to block
         observe.set(observable, value)
 
-        debug "observe Observable<#{observable.__klass__}> -> #{value}"
+        debug "observe Observable<#{observable.__klass__}> = #{value}"
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
         # this is not a bidrectional link: our crashes do not propagate to the observable
@@ -112,6 +134,35 @@ module Kontena
       async.observed(observe)
 
       observe
+    end
+
+    # Blocking observe.
+    #
+    # This suspends the current celluloid actor task if the observable is not yet ready.
+    #
+    # @param observable [Observable]
+    # @param timeout [Float] optional timeout in seconds
+    # @raise [Timeout::Error]
+    # @return [Object]
+    def wait_observable!(observable, timeout: nil)
+      actor = self.current_actor
+      wait = Wait.new(self.class)
+
+      if value = observable.add_waiter(actor, wait)
+        debug "wait Observable<#{observable.__klass__}> = #{value}"
+
+        return value
+      else
+        debug "wait Observable<#{observable.__klass__}>... (timeout=#{timeout})"
+
+        unless actor.receive(timeout) { |msg| msg == wait }
+          abort Timeout::Error.new("timeout waiting #{'%.2fs' % timeout} until: Observable<#{observable.__klass__}> is ready")
+        end
+
+        debug "wait Observable<#{observable.__klass__}> -> #{wait.value}"
+
+        return wait.value
+      end
     end
   end
 end
