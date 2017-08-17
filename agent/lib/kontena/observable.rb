@@ -4,19 +4,18 @@ module Kontena
   # Once the value is first updated, then other Actors will be able to observe it
   # When the value later updated, other Actors will also observe those changes
   module Observable
-    include Celluloid
     include Kontena::Logging
 
     class Wait
       attr_reader :value
 
-      def initialize(task)
-        @task = task
+      def initialize(mailbox)
+        @mailbox = mailbox
       end
 
       def <<(value)
         @value = value
-        @task.resume(self)
+        @mailbox << self
       end
     end
 
@@ -36,28 +35,31 @@ module Kontena
     # @return [Object]
     def wait_observable!(timeout: nil)
       if value = @observable_value
+        debug "wait = #{value}"
+
         return value
       end
 
-      task = Celluloid::Task.current
-      wait = Wait.new(task)
-      waiters[wait] = task
+      actor = Celluloid.current_actor
+      wait = Wait.new(actor.mailbox)
+      waiters << wait
 
-      self.timeout(timeout) do
-        abort unless wait == task.suspend(:wait_observable)
+      debug "wait #{wait}... (timeout=#{timeout})"
+
+      unless actor.receive(timeout) { |msg| msg == wait }
+        abort Timeout::Error.new("timeout waiting #{'%.2fs' % timeout} until: Observable<#{self.class.name}> is ready")
       end
 
+      debug "wait #{wait} -> #{value}"
+
       return wait.value
-    rescue Celluloid::TaskTimeout => exc
-      waiters.delete(wait)
-      abort Timeout::Error.new("timeout waiting #{'%.2fs' % timeout} until: Observable<#{self.class.name}> is ready")
     end
 
     # Registered Waiters
     #
     # @return [Hash{Wait => Celluloid::Mailbox}]
     def waiters
-      @waiters ||= {}
+      @waiters ||= []
     end
 
     # Registered Observers
@@ -111,6 +113,7 @@ module Kontena
     # Update @value to each Observer::Observe
     def notify_observers
       waiters.each do |wait, _|
+        debug "notify: #{wait} <- #{@observable_value.inspect[0..64] + '...'}"
         wait << @observable_value
       end
       waiters.clear
