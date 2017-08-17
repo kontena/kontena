@@ -155,6 +155,7 @@ module Kontena
       else
         debug "wait Observable<#{observable.__klass__}>... (timeout=#{timeout})"
 
+        # XXX: this is racy on Observable#add_waiter -> Observable#notify_observers -> actor.receive
         unless actor.receive(timeout) { |msg| msg == wait }
           abort Timeout::Error.new("timeout waiting #{'%.2fs' % timeout} until: Observable<#{observable.__klass__}> is ready")
         end

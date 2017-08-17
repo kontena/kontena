@@ -15,6 +15,20 @@ describe Kontena::Observer, :celluloid => true do
           update_observable value
         end
       end
+
+      def spam_updates(values, delay:, duration: , interval: )
+        until_time = Time.now + duration
+
+        sleep delay
+
+        for value in values
+          break if Time.now >= until_time
+
+          update_observable(value)
+
+          sleep interval
+        end
+      end
     end
   end
 
@@ -102,7 +116,6 @@ describe Kontena::Observer, :celluloid => true do
         observable.reset_observable
       end
 
-
       it 'blocks until observable' do
         observable.delay_update(object, delay: 0.5)
 
@@ -110,6 +123,16 @@ describe Kontena::Observer, :celluloid => true do
         #       if the wait_until! uses Kernel#sleep and blocks the actor thread,
         #       then this spec will fail, because the delayed update doesn't have a chance to run
         expect(subject.wait_observable!(observable, timeout: 1.0)).to eq object
+      end
+
+      it 'does not lose wait messages' do
+        allow(subject.wrapped_object).to receive(:debug) do |msg|
+          sleep 0.2
+        end
+
+        observable.async.spam_updates(1..1000, duration: 0.5, interval: 0.01, delay: 0.1)
+
+        expect(subject.wait_observable!(observable, timeout: 1.0)).to be_a Integer
       end
     end
 
