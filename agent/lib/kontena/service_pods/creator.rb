@@ -102,8 +102,7 @@ module Kontena
         true
       rescue => exc
         log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
-        error exc.message
-        false
+        raise exc
       end
 
       # @param [Docker::Container] service_container
