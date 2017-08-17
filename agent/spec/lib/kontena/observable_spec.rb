@@ -75,6 +75,50 @@ describe Kontena::Observable, :celluloid => true do
     end
   end
 
+  context 'when initialized' do
+    it 'is not observable?' do
+      expect(subject).to_not be_observable
+    end
+
+    describe '#observable_value' do
+      it 'returns nil' do
+        expect(subject.observable_value).to be nil
+      end
+    end
+  end
+
+  context 'when updated' do
+    before do
+      subject.update_observable object
+    end
+
+    it 'is observable?' do
+      expect(subject).to be_observable
+    end
+
+    describe '#observable_value' do
+      it 'returns the value' do
+        expect(subject.observable_value).to eq object
+      end
+    end
+
+    context 'when reset' do
+      before do
+        subject.reset_observable
+      end
+
+      it 'is not observable?' do
+        expect(subject).to_not be_observable
+      end
+
+      describe '#observable_value' do
+        it 'returns nil' do
+          expect(subject.observable_value).to be nil
+        end
+      end
+    end
+  end
+
   it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
     observer = observer_class.new(subject)
     expect(subject.observers).to_not be_empty
