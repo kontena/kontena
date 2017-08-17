@@ -84,8 +84,15 @@ module Kontena::NetworkAdapters
         debug "weaveexec ok: #{command}\n#{output}"
       end
     ensure
-      # XXX: rescue cleanup errors
-      container.delete(force: true, v: true) if container
+      begin
+        container.delete(force: true, v: true) if container
+      rescue Docker::Error::DockerError => exc
+        # known cases of storage driver errors causing container delete to fail (#1631)
+        # can't do anything sensible to recover from delete errors
+        # no reason to have the weavexec command itself fail either
+        # TODO: separate task to cleanup orphaned containers?
+        warn "weaveexec container cleanup failed: #{exc}"
+      end
     end
 
     # Wrapper that aborts celluloid calls on exceptions

@@ -82,6 +82,23 @@ describe Kontena::NetworkAdapters::WeaveExecutor, :celluloid => true do
 
       expect{|b| subject.run('test', '--opt', &b)}.to yield_successive_args("test1\n", "test2\n")
     end
+
+    it "recovers from exec container delete errors" do
+      expect(Docker::Container).to receive(:create).with(hash_including(
+        'Image' => 'weaveworks/weaveexec:1.9.3',
+        'Cmd' => ['--local', 'test', '--opt'],
+      )).and_return(docker_container)
+
+      expect(docker_container).to receive(:start!)
+      expect(docker_container).to receive(:wait).and_return(
+        'StatusCode' => 0,
+      )
+      expect(docker_container).to receive(:streaming_logs).with(stdout: true, stderr: true)
+      expect(subject.wrapped_object).to receive(:warn).with /weaveexec container cleanup failed/
+      expect(docker_container).to receive(:delete).with(force: true, v: true).and_raise(Docker::Error::ServerError, "testing")
+
+      subject.run('test', '--opt')
+    end
   end
 
   describe '#weavexec!' do
