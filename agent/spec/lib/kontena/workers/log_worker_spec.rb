@@ -18,7 +18,7 @@ describe Kontena::Workers::LogWorker, :celluloid => true do
 
     before(:each) do
       allow(Celluloid::Actor).to receive(:[]).with(:etcd_launcher).and_return(etcd_launcher)
-      allow(subject.wrapped_object).to receive(:wait_observable!).with(etcd_launcher, timeout: Float).and_return(etcd_state)
+      allow(subject.wrapped_object).to receive(:observe).with(etcd_launcher, timeout: Float).and_return(etcd_state)
     end
 
     it 'starts log streaming for container' do

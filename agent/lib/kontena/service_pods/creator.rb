@@ -27,7 +27,7 @@ module Kontena
       # @return [Celluloid::Proxy::Cell<Kontena::NetworkAdapters::Weave>]
       def network_adapter
         network_adapter = Celluloid::Actor[:network_adapter]
-        wait_observable!(network_adapter, timeout: 300.0)
+        network_adapter_state = observe(network_adapter, timeout: 300.0)
         network_adapter
       end
 
