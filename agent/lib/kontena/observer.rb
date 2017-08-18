@@ -100,6 +100,7 @@ module Kontena
         def initialize(cls, &block)
           super(cls)
           @block = block
+          @active = false
         end
 
         # Persistent, expected to be updated multiple times
@@ -113,7 +114,13 @@ module Kontena
         #
         # @return [Boolean]
         def active?
-          true
+          @active
+        end
+
+        # All observables have been added, ready for update calls.
+        #
+        def active!
+          @active = true
         end
 
         def call
@@ -289,6 +296,8 @@ module Kontena
         # this is not a bidrectional link: our crashes do not propagate to the observable
         self.monitor observable
       end
+
+      observe.active!
 
       if observe.ready?
         debug "observe async #{observe.describe_observables}: #{observe.values.join(', ')}"

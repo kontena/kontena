@@ -13,11 +13,15 @@ class TestObserver
 
   def test_observe_async(*observables)
     @observe_state = observe(*observables) do |*values|
+      @initial_values ||= values
       @observed_values = values
     end
   end
   def observed?
     !@observed_values.nil?
+  end
+  def initial_values
+    @initial_values
   end
   def observed_values
     @observed_values
@@ -207,6 +211,18 @@ describe Kontena::Observer, :celluloid => true do
         observable1.reset_observable
         observable2.update_observable object3
 
+        expect(subject.observed_values).to eq [object1, object2]
+      end
+
+      it "accepts update for first value while requesting second value" do
+        expect(observable2.wrapped_object).to receive(:add_observer) do |mailbox, observe|
+          observable1.update_observable object1
+          Kontena::Observable::Message.new(observe, observable2.wrapped_object, object2)
+        end
+
+        subject.test_observe_async(observable1, observable2)
+
+        expect(subject.initial_values).to eq [object1, object2]
         expect(subject.observed_values).to eq [object1, object2]
       end
     end
