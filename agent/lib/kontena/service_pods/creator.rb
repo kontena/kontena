@@ -89,9 +89,7 @@ module Kontena
           begin
             service_container = create_container(service_config)
             info "running pre_start hook: #{hook['cmd']}"
-            service_container.tap(&:start).attach { |stream, chunk|
-              log_hook_output(service_container.id, [chunk], stream)
-            }
+            service_container.tap(&:start).attach
             if service_container.state['ExitCode'] != 0
               raise "Failed to execute pre_start hook: #{hook['cmd']}, exit code: #{service_container.state['ExitCode']}"
             end
