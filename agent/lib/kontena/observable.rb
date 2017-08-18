@@ -17,6 +17,11 @@ module Kontena
         @observable = observable
         @value = value
       end
+
+      # @return [String]
+      def describe_observable
+        "Observable<#{@observable.class.name}>"
+      end
     end
 
     # @return [Object, nil] last updated value, or nil if not observable?
@@ -67,23 +72,21 @@ module Kontena
     # Updates to value will send to update_observe on given actor.
     # Returns current value.
     #
-    # @param observer [Celluloid::Proxy::Cell<Observer>]
+    # @param mailbox [Celluloid::Mailbox]
     # @param observe [Observer::Observe]
-    # @return [Object, nil] possible existing value
-    def add_observer(observer, observe, persistent: true)
+    # @return [Kontena::Observable::Message] with current value
+    def add_observer(mailbox, observe, persistent: true)
       if value = @observable_value
         debug "observer: #{observe} <= #{value.inspect[0..64] + '...'}"
 
-        observers[observe] = observer.mailbox if persistent
-
-        return @observable_value
+        observers[observe] = mailbox if persistent
       else
         debug "observer: #{observe}..."
 
-        observers[observe] = observer.mailbox
-
-        return nil
+        observers[observe] = mailbox
       end
+
+      return Message.new(observe, self, @observable_value)
     end
 
     # Update @value to each Observer::Observe

@@ -7,27 +7,15 @@ module Kontena
   module Observer
     include Kontena::Logging
 
-    # @param observable [Celluloid::Proxy::Cell<Observable>, Observable]
-    # @return [Observable]
-    def self.unwrap_observable(observable)
-      # #is_a? is also proxied
-      Celluloid::Proxy.class_of(observable) == Celluloid::Proxy::Cell ? observable.wrapped_object : observable
-    end
-
-    def self.describe_observable(observable)
-      "Observable<#{unwrap_observable(observable).class.name}>"
-    end
-
     # Observer is observing some Observables, and tracking their values.
     # This object is passed to each Observer, which then passes it back to us for updates.
     class Observe
       # @param cls [Class] used to identify the observer for logging
-      # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>] Observable objects, or celluloid actor proxies
-      def initialize(cls, observables)
+      def initialize(cls)
         @class = cls
-        @observables = observables.map{|observable| Kontena::Observer.unwrap_observable(observable) }
 
-        @values = Hash[@observables.map{|observable| [observable, nil]}]
+        @observables = []
+        @values = {}
       end
 
       def inspect
@@ -54,6 +42,15 @@ module Kontena
       # Called by the Observer actor, must be threadsafe and atomic
       def to_s
         "Observer<#{@class.name}>"
+      end
+
+      # Add Observable with initial value
+      #
+      # @param observable [Observable]
+      # @param value [Object] nil if not yet ready
+      def add(observable, value = nil)
+        @observables << observable
+        @values[observable] = value
       end
 
       # Set value for observable
@@ -99,10 +96,9 @@ module Kontena
       end
 
       class Async < Observe
-        # @param actor [Celluloid::Proxy::Cell] Observing actor
         # @param block [Block] Observing block
-        def initialize(cls, observables, &block)
-          super(cls, observables)
+        def initialize(cls, &block)
+          super(cls)
           @block = block
         end
 
@@ -128,8 +124,8 @@ module Kontena
       end
 
       class Sync < Observe
-        def initialize(cls, observables)
-          super(cls, observables)
+        def initialize(cls)
+          super(cls)
           @task = nil
           @alive = true
         end
@@ -218,7 +214,7 @@ module Kontena
       observe = message.observe
 
       if message.observable
-        debug "observe update Observable<#{message.observable.class.name}> -> #{message.value}"
+        debug "observe update #{message.describe_observable} -> #{message.value}"
 
         observe.set(message.observable, message.value)
       end
@@ -271,20 +267,22 @@ module Kontena
       actor = Celluloid.current_actor
 
       # unique handle to identify this observe loop
-      observe = Observe::Async.new(self.class, observables, &block)
+      observe = Observe::Async.new(self.class, &block)
 
       # sync setup of each observable
       observables.each do |observable|
-        # register for async.update_observe(...)
-        value = observable.add_observer(actor, observe)
+        # register for observable updates
+        # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
+        message = observable.add_observer(actor.mailbox, observe)
 
-        if value
-          # store value for initial call, or nil to block
-          observe.set(Kontena::Observer.unwrap_observable(observable), value)
+        if message.value
+          debug "observe async #{message.describe_observable} => #{message.value}"
 
-          debug "observe async #{Kontena::Observer.describe_observable(observable)} => #{value}"
+          observe.add(message.observable, message.value)
         else
-          debug "observe async #{Kontena::Observer.describe_observable(observable)}..."
+          debug "observe async #{message.describe_observable}..."
+
+          observe.add(message.observable)
         end
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
@@ -318,15 +316,22 @@ module Kontena
       self.register_observer_handler
 
       actor = Celluloid.current_actor
-      observe = Observe::Sync.new(self.class, observables)
+      observe = Observe::Sync.new(self.class)
 
       observables.each do |observable|
-        if value = observable.add_observer(actor, observe, persistent: false)
-          debug "observe sync #{Kontena::Observer.describe_observable(observable)} => #{value}"
+        # query for initial Observable state, and subscribe for updates if not yet ready
+        # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
+        message = observable.add_observer(actor.mailbox, observe, persistent: false)
 
-          observe.set(Kontena::Observer.unwrap_observable(observable), value)
+        if message.value
+          debug "observe sync #{message.describe_observable} => #{message.value}"
+
+          observe.add(message.observable, message.value)
+
         else
-          debug "observe sync #{Kontena::Observer.describe_observable(observable)}..."
+          debug "observe sync #{message.describe_observable}..."
+
+          observe.add(message.observable)
         end
       end
 

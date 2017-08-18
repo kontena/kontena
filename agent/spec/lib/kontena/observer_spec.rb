@@ -69,26 +69,6 @@ describe Kontena::Observer, :celluloid => true do
     expect{subject.test_observe_async('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
   end
 
-  describe '#unwrap_observable' do
-    context 'for an observable actor' do
-      let(:observable) { TestObservable.new }
-
-      it 'returns the wrapped object' do
-        expect(described_class.unwrap_observable(observable)).to be_a TestObservable
-        expect(described_class.unwrap_observable(observable).class).to eq TestObservable
-      end
-    end
-
-    context 'for a standalone observable' do
-      let(:observable) { TestObservableStandalone.new }
-
-      it 'returns the object' do
-        expect(described_class.unwrap_observable(observable)).to be_a TestObservableStandalone
-        expect(described_class.unwrap_observable(observable).class).to eq TestObservableStandalone
-      end
-    end
-  end
-
   context "For a single observable" do
     let(:observable) { observable_class.new }
     let(:object) { double(:test) }
@@ -261,9 +241,9 @@ describe Kontena::Observer, :celluloid => true do
       end
 
       it "accepts update for first value while requesting second value" do
-        expect(observable2.wrapped_object).to receive(:add_observer) do
+        expect(observable2.wrapped_object).to receive(:add_observer) do |mailbox, observe, persistent: |
           observable1.update_observable object1
-          object2
+          Kontena::Observable::Message.new(observe, observable2.wrapped_object, object2)
         end
 
         expect(subject.observe(observable1, observable2)).to eq [object1, object2]
