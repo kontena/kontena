@@ -40,7 +40,7 @@ describe Kontena::Observable, :celluloid => true do
   let(:observer_class) { TestObserver }
 
   subject { observable_class.new }
-
+  let(:observer) { observer_class.new }
   let(:object) { double(:test) }
 
   describe '#update_observable' do
@@ -94,7 +94,6 @@ describe Kontena::Observable, :celluloid => true do
   end
 
   it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
-    observer = observer_class.new
     observer.test_observe_async(subject)
 
     expect(subject.observers).to_not be_empty
@@ -111,7 +110,6 @@ describe Kontena::Observable, :celluloid => true do
   end
 
   it "delivers updates in the right order" do
-    observer = observer_class.new
     observer.test_ordering(subject)
 
     update_count = 150
@@ -154,6 +152,27 @@ describe Kontena::Observable, :celluloid => true do
 
     # also expect this...
     expect(observers.map{|obs| obs.ordered?}).to eq [true] * observer_count
+  end
+
+  context 'for a standalone Observable' do
+    let :actor_class do
+      ActorClass = Class.new do
+        include Celluloid
+      end
+    end
+
+    let(:actor) { actor_class.new }
+    let(:subject) { TestObservableStandalone.new }
+    let(:value) { double() }
+
+    it 'is observable' do
+      subject
+      actor.after(0.05) {
+        subject.update_observable(value)
+      }
+
+      expect(observer.observe(subject, timeout: 1.0)).to eq value
+    end
   end
 
   context "For chained observables" do

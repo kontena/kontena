@@ -55,6 +55,10 @@ class TestObserver
   end
 end
 
+class TestObserverStandalone
+  include Kontena::Observer
+end
+
 describe Kontena::Observer, :celluloid => true do
   let(:observable_class) { TestObservable }
   let(:observer_class) { TestObserver }
@@ -65,16 +69,30 @@ describe Kontena::Observer, :celluloid => true do
     expect{subject.test_observe_async('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
   end
 
-  context "For a single observable" do
-    let(:observable) { observable_class.new }
-    let(:object) { double(:test) }
+  describe '#unwrap_observable' do
+    context 'for an observable actor' do
+      let(:observable) { TestObservable.new }
 
-    describe '#unwrap_observable' do
       it 'returns the wrapped object' do
         expect(described_class.unwrap_observable(observable)).to be_a TestObservable
         expect(described_class.unwrap_observable(observable).class).to eq TestObservable
       end
     end
+
+    context 'for a standalone observable' do
+      let(:observable) { TestObservableStandalone.new }
+
+      it 'returns the object' do
+        expect(described_class.unwrap_observable(observable)).to be_a TestObservableStandalone
+        expect(described_class.unwrap_observable(observable).class).to eq TestObservableStandalone
+      end
+    end
+  end
+
+  context "For a single observable" do
+    let(:observable) { observable_class.new }
+    let(:object) { double(:test) }
+
 
     describe '#observe' do
       it "does not observe any value if not yet updated" do
@@ -253,6 +271,41 @@ describe Kontena::Observer, :celluloid => true do
     end
   end
 
+  describe "standalone" do
+    context "with a single observable and observer" do
+      let :actor_class do
+        Class.new do
+          include Celluloid
+
+          def initialize
+            @observer = TestObserverStandalone.new
+          end
+
+          def test_observe_sync(*observables, **options)
+            return @observer.observe(*observables, **options)
+          end
+        end
+      end
+
+      subject { actor_class.new }
+
+      let(:observable) { TestObservable.new }
+      let(:object) { double(:test) }
+
+      describe '#observe_async' do
+        # XXX: this is probably not a good idea?
+      end
+
+      describe '#observe_sync' do
+        it "observes updates" do
+          observable.delay_update(object, delay: 0.1)
+
+          expect(subject.test_observe_sync(observable, timeout: 0.5)).to eq object
+        end
+      end
+    end
+  end
+
   context "For a supervised observer that observes a supervised actor by name" do
     let :supervised_observer_class do
       Class.new do
@@ -315,35 +368,6 @@ describe Kontena::Observer, :celluloid => true do
 
       expect(@observer_actor).to be_ready
       expect(@observer_actor.values).to eq [2]
-    end
-  end
-
-  context 'for a standalone Observable' do
-    let :actor_class do
-      ActorClass = Class.new do
-        include Celluloid
-      end
-    end
-    let(:standaone_observable_class) { TestObservableStandalone }
-
-    let(:actor) { actor_class.new }
-    let(:observable) { standaone_observable_class.new }
-    let(:value) { double() }
-
-    describe '#unwrap_observable' do
-      it 'returns the object' do
-        expect(described_class.unwrap_observable(observable)).to be_a standaone_observable_class
-        expect(described_class.unwrap_observable(observable).class).to eq standaone_observable_class
-      end
-    end
-
-    it 'is observable' do
-      observable
-      actor.after(0.05) {
-        observable.update_observable(value)
-      }
-
-      expect(subject.observe(observable, timeout: 1.0)).to eq value
     end
   end
 end
