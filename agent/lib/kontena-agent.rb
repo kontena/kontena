@@ -14,7 +14,6 @@ require_relative 'docker/container'
 require_relative 'etcd/health'
 require_relative 'etcd/client_patch'
 require_relative 'kontena/logging'
-require_relative 'kontena/websocket_client'
 
 require_relative 'kontena/models/node'
 require_relative 'kontena/models/service_pod'
@@ -23,7 +22,10 @@ require_relative 'kontena/models/volume'
 require_relative 'kontena/observable'
 require_relative 'kontena/observer'
 
+require_relative 'kontena/websocket_client'
+
 require_relative 'kontena/network_adapters/weave_client'
+require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/weave_executor'
 require_relative 'kontena/network_adapters/weave'
 require_relative 'kontena/network_adapters/ipam_client'
