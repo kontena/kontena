@@ -146,6 +146,8 @@ describe Kontena::Observer, :celluloid => true do
 
         observable.async.spam_updates(1..1000, duration: 0.5, interval: 0.01, delay: 0.1)
 
+        # XXX: this is likely to be a an old value, because the observable messages queue up,
+        # and the first one resumes the waiting task
         expect(subject.observe(observable, timeout: 1.0)).to be_a Integer
       end
     end

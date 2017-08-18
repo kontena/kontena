@@ -136,8 +136,6 @@ module Kontena
           debug "observe Observable<#{message.observable.class.name}> -> #{message.value}"
 
           observe.set(message.observable, message.value)
-        else
-          debug "observe!"
         end
 
         observe.call if observe.ready?
@@ -180,8 +178,6 @@ module Kontena
       # unique handle to identify this observe loop
       observe = Observe::Async.new(self.class, observables, &block)
 
-      debug "observe #{observe.describe_observables}..."
-
       # sync setup of each observable
       observables.each do |observable|
         # register for async.update_observe(...)
@@ -202,8 +198,12 @@ module Kontena
       end
 
       if observe.ready?
+        debug "observe #{observe.describe_observables} => #{observe.values.join(', ')}"
+
         # trigger immediate update if all observables were ready
         actor.mailbox << Kontena::Observable::Message.new(observe, nil, nil) # XXX: fake it; can't create tasks inside of tasks
+      else
+        debug "observe #{observe.describe_observables}..."
       end
 
       observe
