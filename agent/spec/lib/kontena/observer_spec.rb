@@ -109,7 +109,7 @@ describe Kontena::Observer, :celluloid => true do
     end
 
     describe '#observe_sync' do
-      it 'raises timeout if the observable is not ready' do
+      it 'raises timeout if the observable is not ready', :log_celluloid_actor_crashes => false do
         expect{
           subject.observe(observable, timeout: 0.01)
         }.to raise_error(Timeout::Error, 'timeout after waiting 0.01s until: Observable<TestObservable>')
@@ -123,12 +123,15 @@ describe Kontena::Observer, :celluloid => true do
         observable.reset_observable
       end
 
-      it 'blocks until observable' do
+      it 'blocks until observable without timeout' do
         observable.delay_update(object, delay: 0.5)
 
-        # NOTE: the class must include the WaitHelper, so that it uses Celluloid#sleep
-        #       if the wait_until! uses Kernel#sleep and blocks the actor thread,
-        #       then this spec will fail, because the delayed update doesn't have a chance to run
+        expect(subject.observe(observable)).to eq object
+      end
+
+      it 'blocks until observable with timeout' do
+        observable.delay_update(object, delay: 0.5)
+
         expect(subject.observe(observable, timeout: 1.0)).to eq object
       end
 

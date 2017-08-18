@@ -239,14 +239,21 @@ module Kontena
       unless observe.ready?
         debug "wait #{observe.describe_observables}... (timeout=#{timeout})"
 
-        Thread.current[:celluloid_actor].timeout(timeout) do
-          begin
-            wakeup = task.suspend(:observe)
-          rescue Celluloid::TaskTimeout => exc
-            raise Timeout::Error, "timeout after waiting #{'%.2fs' % timeout} until: #{observe.describe_observables}"
+        if timeout
+          timer = Thread.current[:celluloid_actor].timers.after(timeout) do
+            task.resume Celluloid::TaskTimeout.new
           end
+        else
+          timer = nil
+        end
 
+        begin
+          wakeup = task.suspend(:observe)
           fail "spurious task wakeup: #{wakeup.inspect}" unless wakeup == observe
+        rescue Celluloid::TaskTimeout => exc
+          raise Timeout::Error, "timeout after waiting #{'%.2fs' % timeout} until: #{observe.describe_observables}"
+        ensure
+          timer.cancel if timer
         end
       end
 
