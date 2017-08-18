@@ -116,7 +116,7 @@ describe Kontena::Observer, :celluloid => true do
       it 'raises timeout if the observable is not ready', :log_celluloid_actor_crashes => false do
         expect{
           subject.observe(observable, timeout: 0.01)
-        }.to raise_error(Timeout::Error, 'timeout after waiting 0.01s until: Observable<!TestObservable>')
+        }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Observable<!TestObservable>')
       end
 
       it 'immediately returns value if updated' do

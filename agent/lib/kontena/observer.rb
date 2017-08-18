@@ -63,7 +63,7 @@ module Kontena
 
       # Each observable has a value?
       #
-      # @return [Boolean]
+      # @return [Boolean] false => block calls on updates
       def ready?
         !@values.any? { |observable, value| value.nil? }
       end
@@ -75,8 +75,16 @@ module Kontena
         @observables.map{|observable| @values[observable] }
       end
 
-      # Still accepting updates?
-      # @return [Boolean]
+      # Accepting updates from Observables?
+      #
+      # @return [Boolean] false => delete from Observable#observers
+      def alive?
+        fail NotImplementedError
+      end
+
+      # Accepting calls from Observer?
+      #
+      # @return [Boolean] false => block calls on updates
       def active?
         fail NotImplementedError
       end
@@ -95,6 +103,14 @@ module Kontena
         end
 
         # Persistent, expected to be updated multiple times
+        #
+        # @return [Boolean]
+        def alive?
+          true
+        end
+
+        # Persistent, expected to be updated multiple times
+        #
         # @return [Boolean]
         def active?
           true
@@ -108,24 +124,52 @@ module Kontena
       end
 
       class Sync < Observe
-        # @param task [Celluloid::Task] Observing task
-        def initialize(cls, observables, task)
+        def initialize(cls, observables)
           super(cls, observables)
-          @task = task
+          @task = nil
+          @alive = true
         end
 
-        # The observe is expecting an update.
+        # Expect updates from Observables even when we are not yet waiting.
+        #
+        # @return [Boolean]
+        def alive?
+          @alive
+        end
+
+        # The observe is callable.
         #
         # @return [Boolean]
         def active?
           !!@task
         end
 
-        # Cancel any further calls, the task is no longer expecting updates.
+        # Sets observe as active and suspend task waiting for call()
         #
-        # Safe to call multiple times, prevents any further task resumes.
-        def cancel
+        # @param timeout [Float, nil]
+        # @raise Celluloid::TaskTimeout
+        def wait(timeout: nil)
+          task = Celluloid::Task.current
+
+          if timeout
+            timer = Thread.current[:celluloid_actor].timers.after(timeout) do
+              task.resume Celluloid::TaskTimeout.new
+            end
+          else
+            timer = nil
+          end
+
+          # suspend task and wait for call()
+          @task = task
+
+          wakeup = task.suspend(:observe)
+
+          fail "spurious task wakeup: #{wakeup.inspect}" unless wakeup == self
+
+        ensure
+          # no longer expecting call()
           @task = nil
+          timer.cancel if timer
         end
 
         # Resume waiting task
@@ -141,6 +185,12 @@ module Kontena
           else
             fail "observe is not active"
           end
+        end
+
+        # No longer expecting updates.
+        #
+        def kill
+          @alive = false
         end
       end
     end
@@ -158,7 +208,9 @@ module Kontena
           observe.set(message.observable, message.value)
         end
 
-        if !observe.active?
+        if !observe.alive?
+          debug "observe dead: #{observe.describe_observables}"
+        elsif !observe.active?
           debug "observe inactive: #{observe.describe_observables}"
         elsif observe.ready?
           debug "observe ready: #{observe.describe_observables}"
@@ -251,8 +303,7 @@ module Kontena
       self.register_observer_handler
 
       actor = Celluloid.current_actor
-      task = Celluloid::Task.current
-      observe = Observe::Sync.new(self.class, observables, task)
+      observe = Observe::Sync.new(self.class, observables)
 
       observables.each do |observable|
         if value = observable.add_observer(actor, observe, persistent: false)
@@ -269,21 +320,10 @@ module Kontena
       else
         debug "observe wait #{observe.describe_observables}... (timeout=#{timeout})"
 
-        if timeout
-          timer = Thread.current[:celluloid_actor].timers.after(timeout) do
-            task.resume Celluloid::TaskTimeout.new
-          end
-        else
-          timer = nil
-        end
-
         begin
-          wakeup = task.suspend(:observe)
-          fail "spurious task wakeup: #{wakeup.inspect}" unless wakeup == observe
-        rescue Celluloid::TaskTimeout => exc
-          raise Timeout::Error, "timeout after waiting #{'%.2fs' % timeout} until: #{observe.describe_observables}"
-        ensure
-          timer.cancel if timer
+          observe.wait(timeout: timeout)
+        rescue Celluloid::TaskTimeout
+          raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{observe.describe_observables}"
         end
 
         debug "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}"
@@ -295,7 +335,7 @@ module Kontena
         return observe.values
       end
     ensure
-      observe.cancel if observe # no longer interested in updates, the Observable can forget about us
+      observe.kill if observe
     end
   end
 end

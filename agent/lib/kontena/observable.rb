@@ -89,7 +89,7 @@ module Kontena
     # Update @value to each Observer::Observe
     def notify_observers
       observers.each do |observe, mailbox|
-        if observe.active? && mailbox.alive?
+        if observe.alive? && mailbox.alive?
           debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
 
           mailbox << Message.new(observe, self, @observable_value)
