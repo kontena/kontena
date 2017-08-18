@@ -13,6 +13,9 @@ class Certificate
   field :certificate, type: String
   field :certificate_bundle, type: String
 
+  # The secret prefix given by user in first request
+  field :secret_prefix, type: String
+
   belongs_to :grid
 
   index({ 'domain' => 1 }, { unique: true })

@@ -16,4 +16,8 @@ class GridSecret
   def to_path
     "#{self.grid.try(:name)}/#{self.name}"
   end
+
+  def linked_services
+    self.grid.grid_services.where(:'secrets.secret' => self.name)
+  end
 end

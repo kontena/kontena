@@ -71,9 +71,6 @@ module GridCertificates
           return # No point to continue
         end
 
-
-
-
       end
 
       certificate = client.new_certificate(csr)
@@ -94,7 +91,7 @@ module GridCertificates
       cert_secret = upsert_secret("#{self.secret_name}_CERTIFICATE", cert).name
       bundle_secret = upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join).name
 
-      cert_model = upsert_certificate(self.grid, self.domains, certificate, private_key_secret, cert_secret, bundle_secret, self.cert_type)
+      cert_model = upsert_certificate(self.grid, self.domains, certificate, private_key_secret, cert_secret, bundle_secret, self.cert_type, self.secret_name)
 
       cert_model
     rescue Timeout::Error
@@ -106,7 +103,7 @@ module GridCertificates
       add_error(:acme_client, :error, exc.message)
     end
 
-    def upsert_certificate(grid, domains, certificate, private_key_secret, certificate_secret, bundle_secret, certificate_type)
+    def upsert_certificate(grid, domains, certificate, private_key_secret, certificate_secret, bundle_secret, certificate_type, secret_name)
       cert = self.grid.certificates.find_by(domain: domains[0])
       if cert
         cert.domain = domains[0]
@@ -116,6 +113,7 @@ module GridCertificates
         cert.private_key = private_key_secret
         cert.certificate = certificate_secret
         cert.certificate_bundle = bundle_secret
+        cert.secret_prefix = secret_name
         cert.save
       else
         cert = Certificate.create!(
@@ -126,7 +124,8 @@ module GridCertificates
           cert_type: certificate_type,
           private_key: private_key_secret,
           certificate: certificate_secret,
-          certificate_bundle: bundle_secret
+          certificate_bundle: bundle_secret,
+          secret_prefix: secret_name
         )
       end
       cert

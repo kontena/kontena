@@ -217,7 +217,8 @@ describe GridCertificates::GetCertificate do
           secret,
           secret,
           secret,
-          'fullchain'
+          'fullchain',
+          'prefix'
         )
       }.to change{cert.reload.valid_until}
     end
@@ -232,7 +233,8 @@ describe GridCertificates::GetCertificate do
           secret,
           secret,
           secret,
-          'fullchain'
+          'fullchain',
+          'prefix'
         )
       }.to change{Certificate.count}.by (1)
       cert = grid.certificates.first
