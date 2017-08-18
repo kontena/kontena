@@ -1,3 +1,7 @@
+class Celluloid::Actor
+  attr_accessor :observe_handler
+end
+
 module Kontena
   # An Actor that observes the value of other Obervable Actors
   module Observer
@@ -152,6 +156,8 @@ module Kontena
           task = Celluloid::Task.current
 
           if timeout
+            # register an Actor run loop Celluloid::Actor@timers timer
+            # the timeout block runs directly in the Actor thread, outside of any task context
             timer = Thread.current[:celluloid_actor].timers.after(timeout) do
               task.resume Celluloid::TaskTimeout.new
             end
@@ -195,30 +201,38 @@ module Kontena
       end
     end
 
-    # Register celluloid actor handler for Kontena::Observable::Message.
+    # Register handler for Kontena::Observable::Message on the Celluloid::Actor
     #
-    # Updates the Observe, and calls if ready.
     def register_observer_handler
-      @observer_handler ||= Thread.current[:celluloid_actor].handle(Kontena::Observable::Message) do |message|
-        observe = message.observe
+      actor = Thread.current[:celluloid_actor]
+      actor.observe_handler ||= actor.handle(Kontena::Observable::Message) do |message|
+        # This handler runs directly in the Actor thread, outside of any task context.
+        handle_observer_message(message)
+      end
+    end
 
-        if message.observable
-          debug "observe update Observable<#{message.observable.class.name}> -> #{message.value}"
+    # Update the Observe, and call it if ready, which will active the observe task.
+    #
+    # @param message [Kontena::Observable::Message]
+    def handle_observer_message(message)
+      observe = message.observe
 
-          observe.set(message.observable, message.value)
-        end
+      if message.observable
+        debug "observe update Observable<#{message.observable.class.name}> -> #{message.value}"
 
-        if !observe.alive?
-          debug "observe dead: #{observe.describe_observables}"
-        elsif !observe.active?
-          debug "observe inactive: #{observe.describe_observables}"
-        elsif observe.ready?
-          debug "observe ready: #{observe.describe_observables}"
+        observe.set(message.observable, message.value)
+      end
 
-          observe.call
-        else
-          debug "observe blocked: #{observe.describe_observables}"
-        end
+      if !observe.alive?
+        debug "observe dead: #{observe.describe_observables}"
+      elsif !observe.active?
+        debug "observe inactive: #{observe.describe_observables}"
+      elsif observe.ready?
+        debug "observe ready: #{observe.describe_observables}"
+
+        observe.call
+      else
+        debug "observe blocked: #{observe.describe_observables}"
       end
     end
 
@@ -253,6 +267,7 @@ module Kontena
     # @yield [*values] all Observables are ready
     def observe_async(*observables, &block)
       self.register_observer_handler
+
       actor = Celluloid.current_actor
 
       # unique handle to identify this observe loop
