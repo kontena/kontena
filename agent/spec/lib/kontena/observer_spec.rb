@@ -278,11 +278,12 @@ describe Kontena::Observer, :celluloid => true do
           include Celluloid
 
           def initialize
-            @observer = TestObserverStandalone.new
+            @observers = {}
           end
 
-          def test_observe_sync(*observables, **options)
-            return @observer.observe(*observables, **options)
+          def test_observe_sync(id, *observables, **options)
+            observer = @observers.fetch(id) { TestObserverStandalone.new }
+            return observer.observe(*observables, **options)
           end
         end
       end
@@ -300,7 +301,17 @@ describe Kontena::Observer, :celluloid => true do
         it "observes updates" do
           observable.delay_update(object, delay: 0.1)
 
-          expect(subject.test_observe_sync(observable, timeout: 0.5)).to eq object
+          expect(subject.test_observe_sync(:test, observable, timeout: 0.5)).to eq object
+        end
+
+        context 'with multiple observers' do
+          it "observes each update" do
+            observable.delay_update(object, delay: 0.1)
+
+            futures = ("test1".."test4").map{|id| subject.future.test_observe_sync(id, observable) }
+
+            expect(futures.map{|f| f.value}).to eq [object, object, object, object]
+          end
         end
       end
     end
