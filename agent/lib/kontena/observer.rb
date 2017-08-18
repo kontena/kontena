@@ -32,11 +32,16 @@ module Kontena
 
       # Describe the observables for debug logging
       #
-      # @return [Array<String>]
+      # @return [String]
       def describe_observables
         observables = @observables.map{|observable| observable.class.name }
 
         "Observable<#{observables.join(', ')}>"
+      end
+
+      # @return [String]
+      def describe_values
+        self.values.join(', ')
       end
 
       # Describe the observer for debug logging
@@ -105,22 +110,35 @@ module Kontena
         def initialize(cls, observables, task)
           super(cls, observables)
           @task = task
-          @done = false
         end
 
-        # Single-use
+        # The observe is expecting an update.
+        #
         # @return [Boolean]
         def active?
-          !@done
+          !!@task
         end
-        def done!
-          @done = true
+
+        # Cancel any further calls, the task is no longer expecting updates.
+        #
+        # Safe to call multiple times, prevents any further task resumes.
+        def cancel
           @task = nil
         end
 
-        # Run block or resume task
+        # Resume waiting task
+        #
+        # @raise [RuntimeError] wrong state
         def call
-          @task.resume(self)
+          fail "observe task is not suspended in observe: #{@task.status}" unless @task.status == :observe
+
+          if task = @task
+            # once we've resumed the task, we can no longer re-resume it
+            @task = nil
+            task.resume(self)
+          else
+            fail "observe is not active"
+          end
         end
       end
     end
@@ -138,7 +156,13 @@ module Kontena
           observe.set(message.observable, message.value)
         end
 
-        observe.call if observe.ready?
+        if !observe.active?
+          debug "observe inactive"
+        elsif observe.ready?
+          debug "observe: #{observe.describe_values}"
+
+          observe.call
+        end
       end
     end
 
@@ -265,7 +289,7 @@ module Kontena
         return observe.values
       end
     ensure
-      observe.done! if observe # no longer interested in updates, the Observable can forget about us
+      observe.cancel if observe # no longer interested in updates, the Observable can forget about us
     end
   end
 end
