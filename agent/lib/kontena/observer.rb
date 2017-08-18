@@ -34,7 +34,9 @@ module Kontena
       #
       # @return [String]
       def describe_observables
-        observables = @observables.map{|observable| observable.class.name }
+        observables = @observables.map{|observable|
+          "#{@values[observable] ? '' : '!'}#{observable.class.name}"
+        }
 
         "Observable<#{observables.join(', ')}>"
       end
@@ -151,17 +153,19 @@ module Kontena
         observe = message.observe
 
         if message.observable
-          debug "observe Observable<#{message.observable.class.name}> -> #{message.value}"
+          debug "observe update Observable<#{message.observable.class.name}> -> #{message.value}"
 
           observe.set(message.observable, message.value)
         end
 
         if !observe.active?
-          debug "observe inactive"
+          debug "observe inactive: #{observe.describe_observables}"
         elsif observe.ready?
-          debug "observe: #{observe.describe_values}"
+          debug "observe ready: #{observe.describe_observables}"
 
           observe.call
+        else
+          debug "observe blocked: #{observe.describe_observables}"
         end
       end
     end
@@ -211,9 +215,9 @@ module Kontena
           # store value for initial call, or nil to block
           observe.set(Kontena::Observer.unwrap_observable(observable), value)
 
-          debug "observe #{Kontena::Observer.describe_observable(observable)} = #{value}"
+          debug "observe async #{Kontena::Observer.describe_observable(observable)} => #{value}"
         else
-          debug "observe #{Kontena::Observer.describe_observable(observable)}..."
+          debug "observe async #{Kontena::Observer.describe_observable(observable)}..."
         end
 
         # crash if observed Actor crashes, otherwise we get stuck without updates
@@ -222,12 +226,12 @@ module Kontena
       end
 
       if observe.ready?
-        debug "observe #{observe.describe_observables} => #{observe.values.join(', ')}"
+        debug "observe async #{observe.describe_observables}: #{observe.values.join(', ')}"
 
         # trigger immediate update if all observables were ready
         actor.mailbox << Kontena::Observable::Message.new(observe, nil, nil) # XXX: fake it; can't create tasks inside of tasks
       else
-        debug "observe #{observe.describe_observables}..."
+        debug "observe async #{observe.describe_observables}..."
       end
 
       observe
@@ -252,16 +256,18 @@ module Kontena
 
       observables.each do |observable|
         if value = observable.add_observer(actor, observe, persistent: false)
-          debug "wait #{Kontena::Observer.describe_observable(observable)} = #{value}"
+          debug "observe sync #{Kontena::Observer.describe_observable(observable)} => #{value}"
 
           observe.set(Kontena::Observer.unwrap_observable(observable), value)
         else
-          debug "wait #{Kontena::Observer.describe_observable(observable)}..."
+          debug "observe sync #{Kontena::Observer.describe_observable(observable)}..."
         end
       end
 
-      unless observe.ready?
-        debug "wait #{observe.describe_observables}... (timeout=#{timeout})"
+      if observe.ready?
+        debug "observe sync #{observe.describe_observables}: #{observe.values.join(', ')}"
+      else
+        debug "observe wait #{observe.describe_observables}... (timeout=#{timeout})"
 
         if timeout
           timer = Thread.current[:celluloid_actor].timers.after(timeout) do
@@ -279,9 +285,9 @@ module Kontena
         ensure
           timer.cancel if timer
         end
-      end
 
-      debug "wait #{observe.describe_observables} -> #{observe.values.join(', ')}"
+        debug "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}"
+      end
 
       if observables.length == 1
         return observe.values.first

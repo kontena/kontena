@@ -116,7 +116,7 @@ describe Kontena::Observer, :celluloid => true do
       it 'raises timeout if the observable is not ready', :log_celluloid_actor_crashes => false do
         expect{
           subject.observe(observable, timeout: 0.01)
-        }.to raise_error(Timeout::Error, 'timeout after waiting 0.01s until: Observable<TestObservable>')
+        }.to raise_error(Timeout::Error, 'timeout after waiting 0.01s until: Observable<!TestObservable>')
       end
 
       it 'immediately returns value if updated' do
@@ -240,6 +240,15 @@ describe Kontena::Observer, :celluloid => true do
         observable2.update_observable object2
 
         expect(future.value).to eq [object1, object2]
+      end
+
+      it "accepts update for first value while requesting second value" do
+        expect(observable2.wrapped_object).to receive(:add_observer) do
+          observable1.update_observable object1
+          object2
+        end
+
+        expect(subject.observe(observable1, observable2)).to eq [object1, object2]
       end
     end
   end
