@@ -178,28 +178,60 @@ describe Kontena::Observer, :celluloid => true do
     let(:object2) { double(:test2) }
     let(:object3) { double(:test3) }
 
-    it "yields with both values" do
-      observable1.update_observable object1
-      observable2.update_observable object2
+    describe '#observe_async' do
+      it "yields with both values" do
+        observable1.update_observable object1
+        observable2.update_observable object2
 
-      subject.test_observe(observable1, observable2)
+        subject.test_observe(observable1, observable2)
 
-      expect(subject).to be_ready
-      expect(subject.values).to eq [object1, object2]
+        expect(subject).to be_ready
+        expect(subject.values).to eq [object1, object2]
+      end
+
+      it "does not yield after a reset" do
+        observable1.update_observable object1
+        observable2.update_observable object2
+
+        subject.test_observe(observable1, observable2)
+
+        expect(subject.values).to eq [object1, object2]
+
+        observable1.reset_observable
+        observable2.update_observable object3
+
+        expect(subject.values).to eq [object1, object2]
+      end
     end
 
-    it "does not yield after a reset" do
-      observable1.update_observable object1
-      observable2.update_observable object2
+    describe '#observe_sync' do
+      it "returns both values if immediately available" do
+        observable1.update_observable object1
+        observable2.update_observable object2
 
-      subject.test_observe(observable1, observable2)
+        expect(subject.observe(observable1, observable2, timeout: 0.5)).to eq [object1, object2]
+      end
 
-      expect(subject.values).to eq [object1, object2]
+      it "returns both values once available" do
+        future = subject.future.observe(observable1, observable2, timeout: 0.5)
 
-      observable1.reset_observable
-      observable2.update_observable object3
+        observable1.delay_update(object1, delay: 0.1)
+        observable2.delay_update(object2, delay: 0.1)
 
-      expect(subject.values).to eq [object1, object2]
+        expect(future.value).to eq [object1, object2]
+      end
+
+      it "waits for second value to become available" do
+        observable1.update_observable object1
+
+        future = subject.future.observe(observable1, observable2, timeout: 0.5)
+
+        expect(future).to_not be_ready
+
+        observable2.update_observable object2
+
+        expect(future.value).to eq [object1, object2]
+      end
     end
   end
 
