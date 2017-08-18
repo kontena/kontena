@@ -1,5 +1,10 @@
 module FiberTracer
   module ClassMethods
+    def new(*args)
+      $stderr.puts "FIBER CREATE #{self.name}: #{args.first.class.name} \n\t#{caller.join("\n\t")}\n"
+      super
+    end
+
     def yield(*args)
       $stderr.puts "FIBER YIELD #{self.name} <- #{args.first.class.name} \n\t#{caller.join("\n\t")}\n"
       out = super
