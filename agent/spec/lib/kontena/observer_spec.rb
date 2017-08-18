@@ -1,64 +1,68 @@
 require_relative '../../../lib/kontena/helpers/wait_helper'
 
+class TestObserver
+  include Celluloid
+  include Kontena::Observer
+  include Kontena::Logging
+
+  attr_reader :observe_state
+
+  def ping
+
+  end
+
+  def test_observe_async(*observables)
+    @observe_state = observe(*observables) do |*values|
+      @observed_values = values
+    end
+  end
+  def observed?
+    !@observed_values.nil?
+  end
+  def observed_values
+    @observed_values
+  end
+  def observe_ready?
+    @observe_state.ready?
+  end
+
+  def test_ordering(observable)
+    @observed_value = nil
+    @observed_values = []
+    @ordered = true
+    @value = nil
+    @observe_state = observe(observable) do |value|
+      if @observed_value && @observed_value > value
+        warn "unordered value=#{value} after #{@observed_value}"
+        @ordered = false
+      else
+        debug "observed #{@observed_value} -> #{value}"
+      end
+      @observed_value = value
+      @observed_values << value
+    end
+  end
+
+  def observed_value
+    @observed_value
+  end
+  def ordered?
+    @ordered
+  end
+
+  def crash
+    fail
+  end
+end
+
 describe Kontena::Observer, :celluloid => true do
-  let :observable_class do
-    TestObservable = Class.new do
-      include Celluloid
-      include Kontena::Observable
-
-      def crash
-        fail
-      end
-
-      def delay_update(value, delay: )
-        after(delay) do
-          update_observable value
-        end
-      end
-
-      def spam_updates(values, delay:, duration: , interval: )
-        until_time = Time.now + duration
-
-        sleep delay
-
-        for value in values
-          break if Time.now >= until_time
-
-          update_observable(value)
-
-          sleep interval
-        end
-      end
-    end
-  end
-
-  let :observer_class do
-    TestObserver = Class.new do
-      include Celluloid
-      include Kontena::Observer
-
-      attr_reader :state, :values
-
-      def test_observe(*observables)
-        @state = observe(*observables) do |*values|
-          @values = values
-        end
-      end
-
-      def ready?
-        @state.ready?
-      end
-
-      def crash
-        fail
-      end
-    end
-  end
+  let(:observable_class) { TestObservable }
+  let(:observer_class) { TestObserver }
 
   subject { observer_class.new() }
 
   it "raises synchronously if given an invalid actor", :celluloid => true, :log_celluloid_actor_crashes => false do
-    expect{subject.test_observe('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
+    expect{subject.test_observe_async('foo')}.to raise_error(NoMethodError, /undefined method `add_observer' for "foo":String/)
   end
 
   context "For a single observable" do
@@ -74,37 +78,37 @@ describe Kontena::Observer, :celluloid => true do
 
     describe '#observe' do
       it "does not observe any value if not yet updated" do
-        subject.test_observe(observable)
+        subject.test_observe_async(observable)
 
-        expect(subject).to_not be_ready
+        expect(subject).to_not be_observed
       end
 
       it "immediately yields an updated value" do
         observable.update_observable object
 
-        subject.test_observe(observable)
+        subject.test_observe_async(observable)
 
-        expect(subject).to be_ready
-        expect(subject.values).to eq [object]
+        expect(subject).to be_observed
+        expect(subject.observed_values).to eq [object]
       end
 
       it "later yields after updating value" do
-        subject.test_observe(observable)
+        subject.test_observe_async(observable)
 
-        expect(subject).to_not be_ready
+        expect(subject).to_not be_observed
 
         observable.update_observable object
 
-        expect(subject).to be_ready
-        expect(subject.values).to eq [object]
+        expect(subject).to be_observed
+        expect(subject.observed_values).to eq [object]
       end
 
       it "crashes if the observable does", :log_celluloid_actor_crashes => false do
-        subject.test_observe(observable)
+        subject.test_observe_async(observable)
 
         expect{observable.crash}.to raise_error(RuntimeError)
 
-        expect{subject.ready?}.to raise_error(Celluloid::DeadActorError)
+        expect{subject.observed?}.to raise_error(Celluloid::DeadActorError)
       end
     end
 
@@ -152,23 +156,23 @@ describe Kontena::Observer, :celluloid => true do
       before do
         observable.update_observable object
 
-        subject.test_observe(observable)
+        subject.test_observe_async(observable)
 
-        expect(subject).to be_ready
-        expect(subject.values).to eq [object]
+        expect(subject).to be_observed
+        expect(subject.observed_values).to eq [object]
       end
 
       it "yields with the updated value" do
         observable.update_observable object2
 
-        expect(subject.values).to eq [object2]
+        expect(subject.observed_values).to eq [object2]
       end
 
       it "does not yield after a reset" do
         observable.reset_observable
 
-        expect(subject.values).to eq [object]
-        expect(subject).to_not be_ready
+        expect(subject.observed_values).to eq [object]
+        expect(subject).to_not be_observe_ready
       end
     end
   end
@@ -186,24 +190,24 @@ describe Kontena::Observer, :celluloid => true do
         observable1.update_observable object1
         observable2.update_observable object2
 
-        subject.test_observe(observable1, observable2)
+        subject.test_observe_async(observable1, observable2)
 
-        expect(subject).to be_ready
-        expect(subject.values).to eq [object1, object2]
+        expect(subject).to be_observed
+        expect(subject.observed_values).to eq [object1, object2]
       end
 
       it "does not yield after a reset" do
         observable1.update_observable object1
         observable2.update_observable object2
 
-        subject.test_observe(observable1, observable2)
+        subject.test_observe_async(observable1, observable2)
 
-        expect(subject.values).to eq [object1, object2]
+        expect(subject.observed_values).to eq [object1, object2]
 
         observable1.reset_observable
         observable2.update_observable object3
 
-        expect(subject.values).to eq [object1, object2]
+        expect(subject.observed_values).to eq [object1, object2]
       end
     end
 
@@ -309,11 +313,7 @@ describe Kontena::Observer, :celluloid => true do
         include Celluloid
       end
     end
-    let :standaone_observable_class do
-      StandaloneObservable = Class.new do
-        include Kontena::Observable
-      end
-    end
+    let(:standaone_observable_class) { TestObservableStandalone }
 
     let(:actor) { actor_class.new }
     let(:observable) { standaone_observable_class.new }
@@ -321,8 +321,8 @@ describe Kontena::Observer, :celluloid => true do
 
     describe '#unwrap_observable' do
       it 'returns the object' do
-        expect(described_class.unwrap_observable(observable)).to be_a StandaloneObservable
-        expect(described_class.unwrap_observable(observable).class).to eq StandaloneObservable
+        expect(described_class.unwrap_observable(observable)).to be_a standaone_observable_class
+        expect(described_class.unwrap_observable(observable).class).to eq standaone_observable_class
       end
     end
 

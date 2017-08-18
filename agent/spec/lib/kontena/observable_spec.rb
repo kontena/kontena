@@ -1,75 +1,43 @@
+class TestObservable
+  include Celluloid
+  include Kontena::Observable
+
+  def ping
+
+  end
+
+  def crash
+    fail
+  end
+
+  def delay_update(value, delay: )
+    after(delay) do
+      update_observable value
+    end
+  end
+
+  def spam_updates(values, delay: nil, duration: nil, interval: nil)
+    deadline = Time.now + duration if duration
+
+    sleep delay if delay
+
+    for value in values
+      break if deadline && Time.now >= deadline
+
+      update_observable(value)
+
+      sleep interval if interval
+    end
+  end
+end
+
+class TestObservableStandalone
+  include Kontena::Observable
+end
+
 describe Kontena::Observable, :celluloid => true do
-  let :observable_class do
-    TestObservable = Class.new do
-      include Celluloid
-      include Kontena::Observable
-
-      def crash
-        fail
-      end
-
-      def delay_update(value, delay: )
-        after(delay) do
-          update_observable value
-        end
-      end
-
-      def spam_updates(enum, interval: false)
-        enum.each do |value|
-          sleep interval if interval
-          update_observable value
-        end
-      end
-
-      def ping
-
-      end
-    end
-  end
-
-  let :observer_class do
-    TestObserver = Class.new do
-      include Celluloid
-      include Kontena::Observer
-
-      attr_reader :state, :value, :first
-
-      def initialize(observable, start: true)
-        @observable = observable
-        @first = nil
-        @ordered = true
-        self.start if start
-      end
-
-      def start
-        @state = observe(@observable) do |value|
-          @first ||= value
-          if @value && @value > value
-            warn "unordered value=#{value} after #{@value}"
-            @ordered = false
-          else
-            debug "observed #{@value} -> #{value}"
-          end
-          @value = value
-        end
-      end
-
-      def ping
-
-      end
-
-      def ready?
-        !@value.nil?
-      end
-      def ordered?
-        @ordered
-      end
-
-      def crash
-        fail
-      end
-    end
-  end
+  let(:observable_class) { TestObservable }
+  let(:observer_class) { TestObserver }
 
   subject { observable_class.new }
 
@@ -126,7 +94,9 @@ describe Kontena::Observable, :celluloid => true do
   end
 
   it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
-    observer = observer_class.new(subject)
+    observer = observer_class.new
+    observer.test_observe_async(subject)
+
     expect(subject.observers).to_not be_empty
 
     expect{observer.crash}.to raise_error(RuntimeError)
@@ -141,13 +111,14 @@ describe Kontena::Observable, :celluloid => true do
   end
 
   it "delivers updates in the right order" do
-    observer = observer_class.new(subject)
+    observer = observer_class.new
+    observer.test_ordering(subject)
 
     update_count = 150
 
     subject.spam_updates(1..update_count, interval: false)
 
-    expect(observer.value).to eq update_count
+    expect(observer.observed_values.last).to eq update_count
     expect(observer.ordered?).to be_truthy
   end
 
@@ -157,11 +128,11 @@ describe Kontena::Observable, :celluloid => true do
 
     # setup
     observers = observer_count.times.map {
-      observer_class.new(subject, start: false)
+      observer_class.new
     }
 
-    observers.each do |obs|
-      obs.async.start
+    observers.each do |observer|
+      observer.async.test_ordering(subject)
     end
 
     # run updates sync while the observers are starting
@@ -175,10 +146,11 @@ describe Kontena::Observable, :celluloid => true do
     observers.each do |obs| obs.ping end # and maybe a second round for the async update
 
     # all observers got the final value
-    expect(observers.map{|obs| obs.value}).to eq [update_count] * observer_count
+    expect(observers.map{|obs| obs.observed_values.last}).to eq [update_count] * observer_count
 
+    # some observers only observed after the first update
     # this is potentially racy, but it's important, or this spec doesn't test what it should
-    expect(observers.map{|obs| obs.first}.max).to be > 1
+    expect(observers.map{|obs| obs.observed_values.first}.max).to be > 1
 
     # also expect this...
     expect(observers.map{|obs| obs.ordered?}).to eq [true] * observer_count
@@ -191,8 +163,8 @@ describe Kontena::Observable, :celluloid => true do
         include Kontena::Observer
         include Kontena::Observable
 
-        def initialize(observable)
-          @state = observe(observable) do |value|
+        def test_observe_chain(observable)
+          @observe_state = observe(observable) do |value|
             update_observable "chained: " + value
           end
         end
@@ -205,15 +177,17 @@ describe Kontena::Observable, :celluloid => true do
 
     describe '#observe => #update_observable' do
       it "propagates the observed value" do
-        chaining = chaining_class.new(subject)
-        observer = observer_class.new(chaining)
+        chaining = chaining_class.new
+        chaining.test_observe_chain(subject)
+        observer = observer_class.new
+        observer.test_observe_async(chaining)
 
         subject.update_observable "test"
 
         chaining.ping # wait for intermediate actor to handle update
 
-        expect(observer).to be_ready
-        expect(observer.value).to eq "chained: test"
+        expect(observer).to be_observe_ready
+        expect(observer.observed_values).to eq ["chained: test"]
       end
     end
   end
