@@ -297,6 +297,7 @@ module Kontena
         self.monitor observable
       end
 
+      # all observables have been added, ready to begin accepting updates
       observe.active!
 
       if observe.ready?
