@@ -16,6 +16,7 @@ module Kontena::Cli::Stacks
     include Common::StackValuesFromOption
 
     option '--online', :flag, "Enable connections to current master", default: false
+    option '--dependencies', :flag, "Show dependency tree"
 
     def execute
       unless online?
@@ -26,6 +27,12 @@ module Kontena::Cli::Stacks
 
       reader = reader_from_yaml(filename, name: name, values: values)
       outcome = reader.execute
+
+      if dependencies?
+        puts ::YAML.dump(outcome[:dependencies])
+        exit 0
+      end
+
       hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
       abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
 

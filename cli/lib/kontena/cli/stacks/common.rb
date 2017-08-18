@@ -59,17 +59,20 @@ module Kontena::Cli::Stacks
     end
 
     def stack_name
-      @stack_name ||= self.name || stack_name_from_yaml(filename)
+      @stack_name ||= (self.respond_to?(:name) && self.name) ? self.name : stack_name_from_yaml(filename)
     end
+    module_function :stack_name
 
-    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil)
+    def reader_from_yaml(filename, name: nil, values: nil, defaults: nil, skip_envs: false)
+      Kontena.logger.debug { "Reader from yaml for #{filename}" }
       reader = Kontena::Cli::Stacks::YAML::Reader.new(filename, values: values, defaults: defaults)
       if reader.stack_name.nil?
         exit_with_error "Stack MUST have stack name in YAML top level field 'stack'! Aborting."
       end
-      set_env_variables(name || reader.stack_name, current_grid)
+      set_env_variables(name || reader.stack_name, current_grid) unless skip_envs
       reader
     end
+    module_function :reader_from_yaml
 
     def stack_from_reader(reader)
       outcome = reader.execute
@@ -87,15 +90,18 @@ module Kontena::Cli::Stacks
         'registry' => outcome[:registry],
         'services' => kontena_services,
         'volumes' => kontena_volumes,
-        'variables' => outcome[:variables]
+        'variables' => outcome[:variables],
+        'dependencies' => outcome[:dependencies]
       }
       stack
     end
+    module_function :stack_from_reader
 
-    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil)
-      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
+    def stack_from_yaml(filename, name: nil, values: nil, defaults: nil, skip_envs: false)
+      reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults, skip_envs: skip_envs)
       stack_from_reader(reader)
     end
+    module_function :stack_from_yaml
 
     def stack_read_and_dump(filename, name: nil, values: nil, defaults: nil)
       reader = reader_from_yaml(filename, name: name, values: values, defaults: defaults)
@@ -119,6 +125,7 @@ module Kontena::Cli::Stacks
         config.merge('name' => name)
       end
     end
+    module_function :generate_volumes
 
     def generate_services(yaml_services)
       return [] unless yaml_services
@@ -127,32 +134,38 @@ module Kontena::Cli::Stacks
         ServiceGeneratorV2.new(config).generate.merge('name' => name)
       end
     end
+    module_function :generate_services
 
     def set_env_variables(stack, grid)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
       ENV['PLATFORM'] = grid
     end
+    module_function :set_env_variables
 
     # @return [String]
     def current_dir
       File.basename(Dir.getwd)
     end
+    module_function :current_dir
 
     def display_notifications(messages, color = :yellow)
       $stderr.puts(Kontena.pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
     end
+    module_function :display_notifications
 
     def hint_on_validation_notifications(errors)
       $stderr.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
       display_notifications(errors)
     end
+    module_function :hint_on_validation_notifications
 
     def abort_on_validation_errors(errors)
       $stderr.puts "YAML validation failed! Aborting.".colorize(:red)
       display_notifications(errors, :red)
       abort
     end
+    module_function :abort_on_validation_errors
 
     def stacks_client
       @stacks_client ||= Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)

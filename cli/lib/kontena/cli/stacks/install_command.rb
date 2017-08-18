@@ -23,6 +23,13 @@ module Kontena::Cli::Stacks
       stack = stack_read_and_dump(filename, name: name, values: values)
 
       stack['name'] = name if name
+
+      stack['dependencies'].each do |dependency|
+        target_name = "#{stack['name']}-#{dependency[:name]}"
+        puts "#{pastel.green('>')} Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)} #{pastel.green('..')}"
+        Kontena.run!('stack', 'install', '-n', target_name, dependency[:stack])
+      end
+
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
         create_stack(stack)
       end

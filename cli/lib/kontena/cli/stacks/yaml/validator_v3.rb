@@ -17,6 +17,7 @@ module Kontena::Cli::Stacks
         data
         description
         expose
+        depends
       )
 
       def initialize
@@ -129,6 +130,20 @@ module Kontena::Cli::Stacks
 
         if (yaml['volumes'].nil? || yaml['volumes'].empty?) && (yaml['services'].nil? || yaml['services'].empty?)
           result[:errors] << { 'file' => 'does not list any services or volumes' }
+        end
+
+        if yaml.key?('depends')
+          unless yaml['depends'].kind_of?(Hash)
+            result[:errors] << { 'depends' => "Must be a mapping, not #{yaml['depends'].class}" }
+          end
+
+          yaml['depends'].each do |name, dependency_options|
+            validator = validate_dependencies(dependency_options)
+            result[:errors] << { 'depends' => { name => validator.errors } } unless validator.valid?
+            if yaml.key?('services') && yaml['services'][name]
+              result[:errors] << { 'depends' => { name => 'is defined both as service and dependency name' } }
+            end
+          end
         end
         result
       end

@@ -93,9 +93,19 @@ module Kontena::Cli::Stacks::YAML
       HashValidator.validate(volume_config, volume_schema, true)
     end
 
+    def validate_dependencies(dependency_config)
+      HashValidator.validate(dependency_config, dependency_schema, true)
+    end
+
     def volume_schema
       {
         'external' => optional(-> (value) { value.is_a?(TrueClass) || (value.is_a?(Hash) && value['name'].is_a?(String)) })
+      }
+    end
+
+    def dependency_schema
+      {
+        'stack' => optional('string')
       }
     end
   end

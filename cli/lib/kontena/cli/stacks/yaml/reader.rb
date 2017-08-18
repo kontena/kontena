@@ -62,9 +62,8 @@ module Kontena::Cli::Stacks
       def default_envs
         @default_envs ||= {
           'GRID' => env['GRID'],
-          'STACK' => env['STACK'],
-          'PLATFORM' => env['PLATFORM']
-        }
+          'STACK' => env['STACK']
+        }.merge(env['PLATFORM'].to_s.empty? ? {} : { 'PLATFORM' => env['PLATFORM'] })
       end
 
       def internals_interpolated_yaml
@@ -109,7 +108,9 @@ module Kontena::Cli::Stacks
       def variables
         return @variables if @variables
         @variables = ::Opto::Group.new(
-          (internals_interpolated_yaml['variables'] || {}).merge(default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }),
+          (internals_interpolated_yaml['variables'] || {}).merge(
+            default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
+          ),
           defaults: {
             from: :env,
             to: :env
@@ -153,10 +154,20 @@ module Kontena::Cli::Stacks
             end
           end
           result[:volumes]       = errors.count.zero? ? parse_volumes : {}
+          result[:dependencies]  = dependencies
         end
         result
       end
 
+      def dependencies
+        @dependencies ||= internals_interpolated_yaml.fetch('depends', {}).map do |name, options|
+          nested_reader = Kontena::Cli::Stacks::Common.stack_from_yaml(options['stack'], name: "#{self.stack_name}-#{name}", skip_envs: true)
+          Kontena.logger.debug { nested_reader.inspect }
+          nested_dependencies = nested_reader['dependencies'] || {}
+          variables.build_option(name: name, type: :string, value: "#{self.stack_name}-#{name}")
+          options.merge(name: name, stack: options.delete('stack')).merge(nested_dependencies.empty? ? {} : { depends: nested_dependencies })
+        end
+      end
 
       def process_variables
         variables.run
