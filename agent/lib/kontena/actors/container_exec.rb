@@ -33,6 +33,9 @@ module Kontena::Actors
       @write_pipe = nil
     end
 
+    # @param [Hash] size
+    # @option size [Integer] width
+    # @option size [Integer] height
     def tty_resize(size)
       return unless @container_exec
 
@@ -103,6 +106,10 @@ module Kontena::Actors
       rpc_client.notification('/container_exec/error', [@uuid, "#{error.class.name}: #{error}"])
     end
 
+    # @param [Array<String>] command
+    # @param [Boolean] stdin
+    # @param [Boolean] tty
+    # @return [Docker::Exec]
     def build_exec(command, stdin: false, tty: false)
       opts = {
         'Container' => @container.id,
@@ -112,7 +119,7 @@ module Kontena::Actors
         'Tty' => tty,
         'Cmd' => command
       }
-      opts['Env'] = ['TERM=xterm'] if tty
+      opts['Env'] = ['TERM=xterm'] if tty && stdin
 
       # Create Exec Instance
       Docker::Exec.create(
@@ -121,8 +128,24 @@ module Kontena::Actors
       )
     end
 
+    # @param [Hash] options
+    # @option options [Boolean] tty
+    # @option options [IO] stdin
+    # @option options [Boolean] detach
     def start_exec(options, &block)
       @container_exec.start!(options, &block)
+    end
+
+    # @param [String] stream
+    # @param [String] chunk
+    def handle_stream_chunk(stream, chunk)
+      rpc_client.notification('/container_exec/output', [@uuid, stream, chunk.force_encoding(Encoding::UTF_8)])
+    end
+
+    # @param [Integer] exit_code
+    def shutdown(exit_code)
+      rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
+      self.terminate
     end
   end
 end
