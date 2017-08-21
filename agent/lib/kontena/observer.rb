@@ -151,13 +151,13 @@ module Kontena
           !!@task
         end
 
-        # Sets observe as active and suspend task waiting for call()
+        # Suspend task after setting observe as active.
+        # Cannot be called in Celluloid.exclusive? mode.
+        # Later mailbox -> handle -> call will resume the task
         #
         # @param timeout [Float, nil]
         # @raise Celluloid::TaskTimeout
-        def wait(timeout: nil)
-          task = Celluloid::Task.current
-
+        def suspend(task, timeout: nil)
           if timeout
             # register an Actor run loop Celluloid::Actor@timers timer
             # the timeout block runs directly in the Actor thread, outside of any task context
@@ -185,11 +185,12 @@ module Kontena
         #
         # @raise [RuntimeError] wrong state
         def call
-          fail "observe task is not suspended in observe: #{@task.status}" unless @task.status == :observe
-
           if task = @task
+            fail "observe task is not suspended in observe: #{task.status}" unless task.status == :observe
+
             # once we've resumed the task, we can no longer re-resume it
             @task = nil
+
             task.resume(self)
           else
             fail "observe is not active"
@@ -215,6 +216,8 @@ module Kontena
     end
 
     # Update the Observe, and call it if ready, which will active the observe task.
+    # This must run directly in the Actor thread, outside of any task context.
+    # Called from Celluloid::Actor#handle or Celluloid::Actor@timers.after
     #
     # @param message [Kontena::Observable::Message]
     def handle_observer_message(message)
@@ -232,10 +235,42 @@ module Kontena
         debug "observe inactive: #{observe.describe_observables}"
       elsif observe.ready?
         debug "observe ready: #{observe.describe_observables}"
-
         observe.call
       else
         debug "observe blocked: #{observe.describe_observables}"
+      end
+    end
+
+    # Block thread until mailbox receives update or times out.
+    # Must only be called in Celluloid.exclusive? mode.
+    # Returns once the observe is ready.
+    #
+    # @param observe [Observe]
+    # @param timeout [Float, nil]
+    # @raise Celluloid::TaskTimeout
+    def wait_observe(observe, mailbox, timeout: nil)
+      deadline = Time.now + timeout if timeout
+
+      while !observe.ready?
+        receive_timeout = deadline ? deadline - Time.now : nil
+
+        if receive_timeout && receive_timeout < 0
+          raise Celluloid::TaskTimeout.new("wait deadline exceeded")
+        end
+
+        message = mailbox.receive(receive_timeout) { |msg|
+          debug "observe receive #{msg.class.name}"
+
+          Kontena::Observable::Message === msg && msg.observe == observe
+        }
+
+        if message.is_a?(Celluloid::SystemEvent)
+          Thread.current[:celluloid_actor].handle_system_event(message)
+        else
+          debug "observe update #{message.describe_observable} -> #{message.value}"
+
+          observe.set(message.observable, message.value)
+        end
       end
     end
 
@@ -325,13 +360,13 @@ module Kontena
     def observe_sync(*observables, timeout: nil)
       self.register_observer_handler
 
-      actor = Celluloid.current_actor
+      mailbox = Celluloid.mailbox
       observe = Observe::Sync.new(self.class)
 
       observables.each do |observable|
         # query for initial Observable state, and subscribe for updates if not yet ready
         # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
-        message = observable.add_observer(actor.mailbox, observe, persistent: false)
+        message = observable.add_observer(mailbox, observe, persistent: false)
 
         if message.value
           debug "observe sync #{message.describe_observable} => #{message.value}"
@@ -348,10 +383,17 @@ module Kontena
       if observe.ready?
         debug "observe sync #{observe.describe_observables}: #{observe.values.join(', ')}"
       else
-        debug "observe wait #{observe.describe_observables}... (timeout=#{timeout})"
-
         begin
-          observe.wait(timeout: timeout)
+          task = Thread.current[:celluloid_task]
+          if task && !task.exclusive?
+            debug "observe wait #{observe.describe_observables}... (suspend timeout=#{timeout})"
+
+            observe.suspend(task, timeout: timeout)
+          else
+            debug "observe wait #{observe.describe_observables}... (wait timeout=#{timeout})"
+
+            wait_observe(observe, mailbox, timeout: timeout)
+          end
         rescue Celluloid::TaskTimeout
           raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{observe.describe_observables}"
         end

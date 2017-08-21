@@ -54,6 +54,12 @@ class TestObserver
     @ordered
   end
 
+  def test_exclusive_observe(*observables, **options)
+    exclusive {
+      return observe(*observables, **options)
+    }
+  end
+
   def crash
     fail
   end
@@ -75,8 +81,8 @@ describe Kontena::Observer, :celluloid => true do
 
   context "For a single observable" do
     let(:observable) { observable_class.new }
-    let(:object) { double(:test) }
 
+    let(:object) { double(:test) }
 
     describe '#observe' do
       it "does not observe any value if not yet updated" do
@@ -151,6 +157,20 @@ describe Kontena::Observer, :celluloid => true do
         # XXX: this is likely to be a an old value, because the observable messages queue up,
         # and the first one resumes the waiting task
         expect(subject.observe(observable, timeout: 1.0)).to be_a Integer
+      end
+
+      describe 'in exclusive mode' do
+        it 'waits until the observable updates' do
+          observable.delay_update(object, delay: 0.5)
+
+          expect(subject.test_exclusive_observe(observable)).to eq object
+        end
+
+        it 'times out on one observable' do
+          expect{
+            subject.test_exclusive_observe(observable, timeout: 0.01)
+          }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Observable<!TestObservable>')
+        end
       end
 
       pending 'aborts if the observable crashes' do
@@ -271,6 +291,24 @@ describe Kontena::Observer, :celluloid => true do
         end
 
         expect(subject.observe(observable1, observable2)).to eq [object1, object2]
+      end
+
+      describe 'in exclusive mode' do
+        it 'waits until both observables updates' do
+          observable1.delay_update(object1, delay: 0.5)
+          observable2.delay_update(object2, delay: 0.5)
+
+          expect(subject.test_exclusive_observe(observable1, observable2)).to eq [object1, object2]
+        end
+
+        it 'times out even if one observable updates' do
+          observable1.update_observable(0)
+          observable1.async.spam_updates((1..1000), interval: 0.01, duration: 0.5)
+
+          expect{
+            subject.test_exclusive_observe(observable1, observable2, timeout: 0.1)
+          }.to raise_error(Timeout::Error, 'observe timeout 0.10s: Observable<TestObservable, !TestObservable>')
+        end
       end
     end
   end
