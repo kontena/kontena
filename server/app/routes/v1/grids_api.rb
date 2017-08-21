@@ -127,8 +127,8 @@ module V1
             end
             unless r['services'].nil?
               services = r['services'].split(',').map do |service|
-                @grid.grid_services.find_by(name: service).try(:id)
-              end.delete_if{|s| s.nil?}
+                service.include?('/') ? service : @grid.grid_services.find_by(name: service).try(:id)
+              end.compact
 
               scope = scope.where(grid_service_id: {:$in => services})
             end

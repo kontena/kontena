@@ -340,8 +340,16 @@ describe '/v1/grids', celluloid: true do
         expect(json_response['logs'].first['data']).to eq('foo-1 1')
       end
 
-      it 'returns grid container logs for multiple services' do
+      it 'returns grid container logs for multiple services by service name' do
         get "/v1/grids/#{@grid.to_path}/container_logs?services=foo,bar", nil, request_headers
+        expect(response.status).to eq(200)
+        expect(json_response['logs'].size).to eq(2)
+        expect(json_response['logs'][0]['data']).to eq('foo-1 1')
+        expect(json_response['logs'][1]['data']).to eq('bar-1 1')
+      end
+
+      it 'returns grid container logs for multiple services by service id' do
+        get "/v1/grids/#{@grid.to_path}/container_logs?services=#{@grid.to_path}/foo,#{@grid.to_path}/bar", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(2)
         expect(json_response['logs'][0]['data']).to eq('foo-1 1')
