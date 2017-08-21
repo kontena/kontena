@@ -152,6 +152,14 @@ describe Kontena::Observer, :celluloid => true do
         # and the first one resumes the waiting task
         expect(subject.observe(observable, timeout: 1.0)).to be_a Integer
       end
+
+      pending 'aborts if the observable crashes' do
+        observable.async.crash(delay: 0.1)
+
+        future = subject.future.observe(observable, timeout: 0.5)
+
+        expect{future.value}.to raise_error(Celluloid::DeadActorError)
+      end
     end
 
     context "Which later updates" do

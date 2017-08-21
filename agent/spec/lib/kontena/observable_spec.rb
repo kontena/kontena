@@ -6,7 +6,8 @@ class TestObservable
 
   end
 
-  def crash
+  def crash(delay: nil)
+    sleep delay if delay
     fail
   end
 
