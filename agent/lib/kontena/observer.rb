@@ -157,6 +157,7 @@ module Kontena
         #
         # @param timeout [Float, nil]
         # @raise Celluloid::TaskTimeout
+        # @raise Celluloid::TaskTerminated actor shtudown
         def suspend(task, timeout: nil)
           if timeout
             # register an Actor run loop Celluloid::Actor@timers timer
@@ -296,11 +297,11 @@ module Kontena
     # It is only guaranteed to receive later Observable updates in the correct order,
     # and it may receive some Observable updates multiple times.
     #
-    # Setup happens sync, and will raise on invalid observables.
+    # Setup happens sync, and will raise on dead/invalid observables.
     # Crashes this Actor if any of the observed Actors crashes.
     #
     # @param observables [Array<Celluloid::Proxy::Cell<Observable>>]
-    # @raise failed to observe observables
+    # @raise [Celluloid::DeadActorError]
     # @return [Observer::Observe]
     # @yield [*values] all Observables are ready
     def observe_async(*observables, &block)
@@ -315,7 +316,7 @@ module Kontena
       observables.each do |observable|
         # register for observable updates
         # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
-        message = observable.add_observer(actor.mailbox, observe)
+        message = observable.add_observer(actor, observe)
 
         if message.value
           debug "observe async #{message.describe_observable} => #{message.value}"
@@ -326,10 +327,6 @@ module Kontena
 
           observe.add(message.observable)
         end
-
-        # crash if observed Actor crashes, otherwise we get stuck without updates
-        # this is not a bidrectional link: our crashes do not propagate to the observable
-        self.monitor observable
       end
 
       # all observables have been added, ready to begin accepting updates
@@ -356,17 +353,18 @@ module Kontena
     # @param observables [Array<Celluloid::Proxy::Cell<Observable>>]
     # @param timeout [Float] optional timeout in seconds
     # @raise [Timeout::Error]
+    # @raise [Celluloid::DeadActorError]
     # @return [*values]
     def observe_sync(*observables, timeout: nil)
       self.register_observer_handler
 
-      mailbox = Celluloid.mailbox
+      actor = Celluloid.current_actor
       observe = Observe::Sync.new(self.class)
 
       observables.each do |observable|
         # query for initial Observable state, and subscribe for updates if not yet ready
         # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
-        message = observable.add_observer(mailbox, observe, persistent: false)
+        message = observable.add_observer(actor, observe, persistent: false)
 
         if message.value
           debug "observe sync #{message.describe_observable} => #{message.value}"
@@ -392,8 +390,10 @@ module Kontena
           else
             debug "observe wait #{observe.describe_observables}... (wait timeout=#{timeout})"
 
-            wait_observe(observe, mailbox, timeout: timeout)
+            wait_observe(observe, actor.mailbox, timeout: timeout)
           end
+        rescue Celluloid::TaskTerminated
+          raise Celluloid::DeadActorError, "observe wait terminated: #{observe.describe_observables}"
         rescue Celluloid::TaskTimeout
           raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{observe.describe_observables}"
         end

@@ -111,12 +111,12 @@ describe Kontena::Observer, :celluloid => true do
         expect(subject.observed_values).to eq [object]
       end
 
-      it "crashes if the observable does", :log_celluloid_actor_crashes => false do
+      it "crashes if the observable does", :log_celluloid_actor_crashes => true do
         subject.test_observe_async(observable)
 
         expect{observable.crash}.to raise_error(RuntimeError)
 
-        expect{subject.observed?}.to raise_error(Celluloid::DeadActorError)
+        expect{subject.ping; subject.observed?}.to raise_error(Celluloid::DeadActorError)
       end
     end
 
@@ -173,7 +173,7 @@ describe Kontena::Observer, :celluloid => true do
         end
       end
 
-      pending 'aborts if the observable crashes' do
+      it 'aborts if the observable crashes' do
         observable.async.crash(delay: 0.1)
 
         future = subject.future.observe(observable, timeout: 0.5)
