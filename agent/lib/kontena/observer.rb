@@ -362,9 +362,9 @@ module Kontena
       observe = Observe::Sync.new(self.class)
 
       observables.each do |observable|
-        # query for initial Observable state, and subscribe for updates if not yet ready
+        # query for initial Observable state, and subscribe for updates
         # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
-        message = observable.add_observer(actor, observe, persistent: false)
+        message = observable.add_observer(actor, observe)
 
         if message.value
           debug "observe sync #{message.describe_observable} => #{message.value}"

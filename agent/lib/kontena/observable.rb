@@ -68,17 +68,16 @@ module Kontena
       notify_observers
     end
 
-    # Observer actor is observing this Actor's @value.
-    # Updates to value will send Kontena::Observable::Message to given actor.mailbox.
-    # Only observes if persistent: true, or not yet observable.
-    # Also links if observing actor, such that observable actor crashes propagate to the observer.
+    # Observer actor is observing this Actor's @observable_value.
+    # Subscribes actor for updates to our observable value, sending Kontena::Observable::Message to given actor.mailbox.
+    # Links actor, such that observable actor crashes propagate to the observer.
     # Returns Kontena::Observable::Message with current value.
+    # The observing actor will be unsubscribed/unlinked once the actor.mailbox or observe becomes !alive?.
     #
     # @param actor [Celluloid::Proxy::Cell<Actor>]
     # @param observe [Observer::Observe]
-    # @param persistent [Boolean] false => only add observer if no observable value to return
     # @return [Kontena::Observable::Message] with current value
-    def add_observer(actor, observe, persistent: true)
+    def add_observer(actor, observe)
       if Celluloid.current_actor != actor
         links = Celluloid.links
       end
@@ -89,19 +88,17 @@ module Kontena
         links << actor if links
         observers[observe] = actor
 
-      elsif persistent
+      else
         debug "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}..."
 
         links << actor if links
         observers[observe] = actor
-      else
-        debug "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}"
       end
 
       return Message.new(observe, self, @observable_value)
     end
 
-    # Update @value to each Observer::Observe
+    # Update @observable_value to each Kontena::Observer::Observe
     def notify_observers
       observers.each do |observe, actor|
         if observe.alive? && actor.mailbox.alive?

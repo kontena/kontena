@@ -284,8 +284,19 @@ describe Kontena::Observer, :celluloid => true do
         expect(future.value).to eq [object1, object2]
       end
 
+      it "updates first value while waiting for second value" do
+        observable1.update_observable(object1)
+
+        future = subject.future.observe(observable1, observable2, timeout: 0.5)
+
+        observable1.delay_update(object3, delay: 0.1)
+        observable2.delay_update(object2, delay: 0.2)
+
+        expect(future.value).to eq [object3, object2]
+      end
+
       it "accepts update for first value while requesting second value" do
-        expect(observable2.wrapped_object).to receive(:add_observer) do |mailbox, observe, persistent: |
+        expect(observable2.wrapped_object).to receive(:add_observer) do |mailbox, observe|
           observable1.update_observable object1
           Kontena::Observable::Message.new(observe, observable2.wrapped_object, object2)
         end
