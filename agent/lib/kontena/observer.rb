@@ -40,7 +40,7 @@ module Kontena
 
       # Describe the observer for debug logging
       # Called by the Observer actor, must be threadsafe and atomic
-      def to_s
+      def describe_observer
         "Observer<#{@class.name}>"
       end
 

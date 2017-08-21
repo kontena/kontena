@@ -77,11 +77,11 @@ module Kontena
     # @return [Kontena::Observable::Message] with current value
     def add_observer(mailbox, observe, persistent: true)
       if value = @observable_value
-        debug "observer: #{observe} <= #{value.inspect[0..64] + '...'}"
+        debug "observer: #{observe.describe_observer} <= #{value.inspect[0..64] + '...'}"
 
         observers[observe] = mailbox if persistent
       else
-        debug "observer: #{observe}..."
+        debug "observer: #{observe.describe_observer}..."
 
         observers[observe] = mailbox
       end
@@ -93,11 +93,11 @@ module Kontena
     def notify_observers
       observers.each do |observe, mailbox|
         if observe.alive? && mailbox.alive?
-          debug "notify: #{observe} <- #{@observable_value.inspect[0..64] + '...'}"
+          debug "notify: #{observe.describe_observer} <- #{@observable_value.inspect[0..64] + '...'}"
 
           mailbox << Message.new(observe, self, @observable_value)
         else
-          debug "dead: #{observe}"
+          debug "dead: #{observe.describe_observer}"
 
           observers.delete(observe)
         end
