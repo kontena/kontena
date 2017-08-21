@@ -3,12 +3,12 @@ class Celluloid::Actor
 end
 
 module Kontena
-  # An Actor that observes the value of other Obervable Actors
+  # An Actor that observes the value of other Obervables.
   module Observer
     include Kontena::Logging
 
     # Observer is observing some Observables, and tracking their values.
-    # This object is passed to each Observer, which then passes it back to us for updates.
+    # This object is passed to each Observable, which then sends it back via Kontena::Observable::Message for updates.
     class Observe
       # @param cls [Class] used to identify the observer for logging
       def initialize(cls)
@@ -323,6 +323,12 @@ module Kontena
       end
     end
 
+    # Observe values from Observables, either synchronously or asynchronously.
+    #
+    # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>]
+    # @param timeout [Float] optional timeout in seconds, only supported for sync mode
+    # @see [#observe_async] yields if block is given
+    # @see [#observe_sync] returns unless block is given
     def observe(*observables, timeout: nil, &block)
       if block
         raise "timeout not supported for async observe" if timeout
@@ -338,17 +344,19 @@ module Kontena
     #     configure(foo: test.foo)
     #   end
     #
-    # Yield happens once each Observable is ready, and whenever they are updated.
-    # Yields to block happens from different async tasks.
-    #
-    # The block must be idempotent: it is not guaranteed to receive every Observable update.
-    # It is only guaranteed to receive later Observable updates in the correct order,
-    # and it may receive some Observable updates multiple times.
-    #
-    # Setup happens sync, and will raise on dead/invalid observables.
+    # Returns the active Observe after subscribing to each Observable, or raises on dead/invalid observables.
+    # Yields from an async task once each Observable is ready, and again whenever any observable updates.
     # Crashes this Actor if any of the observed Actors crashes.
     #
-    # @param observables [Array<Celluloid::Proxy::Cell<Observable>>]
+    # Does not yield if any Observable resets, until all Observables are ready again.
+    # Does not yield if the previous async block task is still running.
+    # Yields again after the block returns, if any observables have updated during the execution of the block.
+    #
+    # The block must be idempotent: it is not guaranteed to receive every Observable update,
+    # and it may receive some Observable updates multiple times.
+    # It is guaranteed to receive Observable updates in the correct order.
+    #
+    # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>]
     # @raise [Celluloid::DeadActorError]
     # @return [Observer::Observe]
     # @yield [*values] all Observables are ready
@@ -396,9 +404,12 @@ module Kontena
     #
     #  test = observe(Actors[:test_actor])
     #
-    # This suspends the current celluloid task if any of the observables are not yet ready.
+    # Returns once all of the observables are ready, blocking the current thread or celluloid task.
+    # Returns the most recent value of each Observable.
+    # Raises with Timeout::Error if a timeout is given, and any observable is not yet ready.
+    # Crashes the actor if any observed actor crashes during the wait.
     #
-    # @param observables [Array<Celluloid::Proxy::Cell<Observable>>]
+    # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>]
     # @param timeout [Float] optional timeout in seconds
     # @raise [Timeout::Error]
     # @raise [Celluloid::DeadActorError]
