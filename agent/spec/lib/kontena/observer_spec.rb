@@ -30,12 +30,14 @@ class TestObserver
     @observe_state.ready?
   end
 
-  def test_ordering(observable)
+  def test_ordering(observable, rand_delay: nil)
     @observed_value = nil
     @observed_values = []
     @ordered = true
     @value = nil
     @observe_state = observe(observable) do |value|
+      sleep(rand() * rand_delay) if rand_delay
+
       if @observed_value && @observed_value > value
         warn "unordered value=#{value} after #{@observed_value}"
         @ordered = false
@@ -84,7 +86,7 @@ describe Kontena::Observer, :celluloid => true do
 
     let(:object) { double(:test) }
 
-    describe '#observe' do
+    describe '#observe_async' do
       it "does not observe any value if not yet updated" do
         subject.test_observe_async(observable)
 
@@ -117,6 +119,17 @@ describe Kontena::Observer, :celluloid => true do
         expect{observable.crash}.to raise_error(RuntimeError)
 
         expect{subject.ping; subject.observed?}.to raise_error(Celluloid::DeadActorError)
+      end
+
+      it "observes in order even if slow" do
+        subject.test_ordering(observable, rand_delay: 0.1)
+
+        observable.spam_updates(1..100, interval: 0.01, duration: 0.5)
+
+        subject.ping
+
+        #expect(subject.observed_values.last).to eq observable.observable_value
+        expect(subject.ordered?).to be_truthy
       end
     end
 

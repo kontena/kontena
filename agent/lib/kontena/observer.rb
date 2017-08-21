@@ -16,6 +16,7 @@ module Kontena
 
         @observables = []
         @values = {}
+        @pending = false
       end
 
       def inspect
@@ -60,6 +61,22 @@ module Kontena
       def set(observable, value)
         raise "unknown observable: #{observable.inspect}" unless @values.has_key? observable
         @values[observable] = value
+        pending!
+      end
+
+      # @return [Boolean] true => observable has pending changes
+      def pending?
+        @pending
+      end
+
+      # Have pending changes
+      def pending!
+        @pending = true
+      end
+
+      # Rsovle pending changes
+      def resolve!
+        @pending = false
       end
 
       # Each observable has a value?
@@ -110,7 +127,7 @@ module Kontena
           true
         end
 
-        # Persistent, expected to be updated multiple times
+        # Accepting calls?
         #
         # @return [Boolean]
         def active?
@@ -119,14 +136,43 @@ module Kontena
 
         # All observables have been added, ready for update calls.
         #
-        def active!
+        def start!
+          @active = true
+        end
+        def resume!
           @active = true
         end
 
+        # Pause calls.
+        #
+        def pause!
+          @active = false
+        end
+
         def call
+          pause! # prevent concurrent calls until task completes
+          resolve! # clear @pending state to detect concurrent updates during call
+
+          observed_values = self.values
           Thread.current[:celluloid_actor].task(:observe) do
-            @block.call(*values)
+            begin
+              @block.call(*observed_values)
+            ensure
+              resume! # allow next call
+
+              if pending?
+                # values changed during call and were blocked, reschedule
+                async_call(Celluloid::Actor.current)
+              end
+            end
           end
+        end
+
+        # Trigger a deferred call of the Observe via the actor mailbox
+        #
+        # @param actor [Celluloid::Proxy::Cell<Kontena::Observer]
+        def async_call(actor)
+          actor.mailbox << Kontena::Observable::Message.new(self, nil, nil)
         end
       end
 
@@ -189,6 +235,8 @@ module Kontena
           if task = @task
             fail "observe task is not suspended in observe: #{task.status}" unless task.status == :observe
 
+            resolve!
+
             # once we've resumed the task, we can no longer re-resume it
             @task = nil
 
@@ -233,7 +281,7 @@ module Kontena
       if !observe.alive?
         debug "observe dead: #{observe.describe_observables}"
       elsif !observe.active?
-        debug "observe inactive: #{observe.describe_observables}"
+        debug "observe paused: #{observe.describe_observables}"
       elsif observe.ready?
         debug "observe ready: #{observe.describe_observables}"
         observe.call
@@ -330,13 +378,13 @@ module Kontena
       end
 
       # all observables have been added, ready to begin accepting updates
-      observe.active!
+      observe.start!
 
       if observe.ready?
         debug "observe async #{observe.describe_observables}: #{observe.values.join(', ')}"
 
         # trigger immediate update if all observables were ready
-        actor.mailbox << Kontena::Observable::Message.new(observe, nil, nil) # XXX: fake it; can't create tasks inside of tasks
+        observe.async_call(actor)
       else
         debug "observe async #{observe.describe_observables}..."
       end
@@ -400,6 +448,8 @@ module Kontena
 
         debug "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}"
       end
+
+      observe.resolve!
 
       if observables.length == 1
         return observe.values.first
