@@ -127,7 +127,15 @@ module V1
             end
             unless r['services'].nil?
               services = r['services'].split(',').map do |service|
-                service.include?('/') ? service : @grid.grid_services.find_by(name: service).try(:id)
+                if service.include?('/')
+                  stack_name, service_name = service.split('/', 2)
+                  stack_id = @grid.stacks.where(name: stack_name).first.try(:id)
+                  if stack_id && service_name
+                    @grid.grid_services.where(stack_id: stack_id, name: service_name).first.try(:id)
+                  end
+                else
+                  @grid.grid_services.find_by(name: service).try(:id)
+                end
               end.compact
 
               scope = scope.where(grid_service_id: {:$in => services})
