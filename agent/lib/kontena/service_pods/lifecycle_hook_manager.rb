@@ -24,7 +24,7 @@ module Kontena
         service_container.start!
         pre_start_hooks.each do |hook|
           info "running pre_start hook: #{hook['cmd']}"
-          command = ['/bin/sh', '-c', hook['cmd']]
+          command = ['/w/w', '/bin/sh', '-c', hook['cmd']]
           log_hook_output(service_container.id, ["running pre_start hook: #{hook['cmd']}"], 'stdout')
           _, _, exit_code = service_container.exec(command) { |stream, chunk|
             log_hook_output(service_container.id, [chunk], stream)
@@ -46,7 +46,7 @@ module Kontena
       def on_post_start(service_container)
         hooks_for('post_start').each do |hook|
           info "running post_start hook: #{hook['cmd']}"
-          command = ['/bin/sh', '-c', hook['cmd']]
+          command = ['/w/w', '/bin/sh', '-c', hook['cmd']]
           log_hook_output(service_container.id, ["running post_start hook: #{hook['cmd']}"], 'stdout')
           _, _, exit_code = service_container.exec(command) { |stream, chunk|
             log_hook_output(service_container.id, [chunk], stream)
