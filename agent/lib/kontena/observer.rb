@@ -206,9 +206,9 @@ module Kontena
         # @raise Celluloid::TaskTerminated actor shtudown
         def suspend(task, timeout: nil)
           if timeout
-            # register an Actor run loop Celluloid::Actor@timers timer
-            # the timeout block runs directly in the Actor thread, outside of any task context
             timer = Thread.current[:celluloid_actor].timers.after(timeout) do
+              # the timer block runs directly in the Actor thread, outside of any task context
+              # raise TaskTimeout from task.suspend
               task.resume Celluloid::TaskTimeout.new
             end
           else
@@ -235,14 +235,12 @@ module Kontena
           if task = @task
             fail "observe task is not suspended in observe: #{task.status}" unless task.status == :observe
 
-            resolve!
-
-            # once we've resumed the task, we can no longer re-resume it
+            # once we've resumed the task, we must not re-resume it, as it will be suspended somewhere else
             @task = nil
 
             task.resume(self)
           else
-            fail "observe is not active"
+            fail "observe is not suspended in any task"
           end
         end
 
@@ -259,14 +257,14 @@ module Kontena
     def register_observer_handler
       actor = Thread.current[:celluloid_actor]
       actor.observe_handler ||= actor.handle(Kontena::Observable::Message) do |message|
-        # This handler runs directly in the Actor thread, outside of any task context.
+        # this handler runs directly in the Actor thread, outside of any task context.
         handle_observer_message(message)
       end
     end
 
     # Update the Observe, and call it if ready, which will active the observe task.
-    # This must run directly in the Actor thread, outside of any task context.
-    # Called from Celluloid::Actor#handle or Celluloid::Actor@timers.after
+    # Must be called from Celluloid::Actor#handle directly in the Actor thread.
+    # Do not call this from any task context.
     #
     # @param message [Kontena::Observable::Message]
     def handle_observer_message(message)
@@ -308,12 +306,12 @@ module Kontena
         end
 
         message = mailbox.receive(receive_timeout) { |msg|
-          debug "observe receive #{msg.class.name}"
-
           Kontena::Observable::Message === msg && msg.observe == observe
         }
 
         if message.is_a?(Celluloid::SystemEvent)
+          debug "observe receive #{msg.class.name}"
+
           Thread.current[:celluloid_actor].handle_system_event(message)
         else
           debug "observe update #{message.describe_observable} -> #{message.value}"
@@ -385,7 +383,7 @@ module Kontena
         end
       end
 
-      # all observables have been added, ready to begin accepting updates
+      # all observables have been added, allow block calls on updates
       observe.start!
 
       if observe.ready?
@@ -441,6 +439,7 @@ module Kontena
         debug "observe sync #{observe.describe_observables}: #{observe.values.join(', ')}"
       else
         begin
+          # @see Celluloid#suspend
           task = Thread.current[:celluloid_task]
           if task && !task.exclusive?
             debug "observe wait #{observe.describe_observables}... (suspend timeout=#{timeout})"
@@ -452,6 +451,7 @@ module Kontena
             wait_observe(observe, actor.mailbox, timeout: timeout)
           end
         rescue Celluloid::TaskTerminated
+          # XXX: just let this re-raise? Happens if the linking Observable crashes and the Observing actor shuts down
           raise Celluloid::DeadActorError, "observe wait terminated: #{observe.describe_observables}"
         rescue Celluloid::TaskTimeout
           raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{observe.describe_observables}"
@@ -460,7 +460,7 @@ module Kontena
         debug "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}"
       end
 
-      observe.resolve!
+      observe.resolve! # meaningless, do not expect to receive any more updates after killed
 
       if observables.length == 1
         return observe.values.first
