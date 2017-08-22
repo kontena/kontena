@@ -70,6 +70,36 @@ class TestWaiterActor
   end
 end
 
+class TestConditionActor
+  include Celluloid
+  include Kontena::Helpers::WaitHelper
+
+  def initialize(client)
+    @client = client
+    @requests = {}
+  end
+
+  # @return [Float] response delay
+  def request(id, timeout: 30.0)
+    condition = @requests[id] = Celluloid::Condition.new
+
+    @client.send(id, self.current_actor)
+
+    condition.wait(timeout)
+
+    t = @requests.delete(id)
+
+    return Time.now - t
+  end
+
+  def response(id, t)
+    if cond = @requests[id]
+      @requests[id] = t
+      cond.signal
+    end
+  end
+end
+
 class TestObserverActor
   include Celluloid
   include Kontena::Observer
@@ -104,6 +134,7 @@ N = 1000
 Benchmark.bm(12) do |bm|
   test_client = TestClient.new
   test_observer = TestObserverActor.new(test_client)
+  test_condition = TestConditionActor.new(test_client)
   test_waiter = TestWaiterActor.new(test_client)
 
   stats = {}
@@ -114,6 +145,15 @@ Benchmark.bm(12) do |bm|
     total_delay = futures.map{|f| f.value }.sum
 
     stats[:wait] = {
+      total_delay: total_delay
+    }
+  }
+  bm.report("condition") {
+    futures = (1..N).map{|id| sleep 0.001; test_condition.future.request(id) }
+
+    total_delay = futures.map{|f| f.value }.sum
+
+    stats[:condition] = {
       total_delay: total_delay
     }
   }
