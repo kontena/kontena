@@ -8,7 +8,7 @@ class TestObserver
   attr_reader :observe_state
 
   def ping
-
+    debug "ping"
   end
 
   def test_observe_async(*observables)
@@ -116,9 +116,13 @@ describe Kontena::Observer, :celluloid => true do
       it "crashes if the observable does", :log_celluloid_actor_crashes => true do
         subject.test_observe_async(observable)
 
+        # The Celluloid::Call::Sync sends the RuntimeError response first, before triggering the actor crash
+        # ping the crashed observable to make sure that it has a chance to send out the ExitEvent to linked actors
         expect{observable.crash}.to raise_error(RuntimeError)
+        expect{observable.ping}.to raise_error(Celluloid::DeadActorError)
 
-        expect{subject.ping; subject.observed?}.to raise_error(Celluloid::DeadActorError)
+        expect{subject.ping}.to raise_error(Celluloid::DeadActorError)
+        expect(subject.alive?).to be_falsey
       end
 
       it "observes in order even if slow" do
