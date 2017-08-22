@@ -5,10 +5,11 @@ class GridDomainAuthorization
 
   belongs_to :grid
 
-  enum :state, [:created, :requested, :validated], default: :created
+  enum :state, [:created, :requested, :validated, :error], default: :created
   field :domain, type: String
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
+  field :authorization_type, type: String
 
   index({ grid_id: 1 })
   index({ domain: 1 })
@@ -16,8 +17,4 @@ class GridDomainAuthorization
 
   validates_uniqueness_of :domain, scope: [:grid_id]
 
-  # @return [String]
-  def to_path
-    "#{self.grid.try(:name)}/#{self.name}"
-  end
 end

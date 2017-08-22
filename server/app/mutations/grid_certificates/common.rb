@@ -36,7 +36,7 @@ module GridCertificates
     end
 
     def domain_to_vault_key(domain)
-      domain.sub('.', '_')
+      domain.gsub('.', '_')
     end
 
     def get_authz_for_domain(grid, domain)
@@ -45,6 +45,29 @@ module GridCertificates
 
     def acme_endpoint
       ENV['ACME_ENDPOINT'] || ACME_ENDPOINT
+    end
+
+    def upsert_secret(name, value)
+      cert_secret = self.grid.grid_secrets.find_by(name: name)
+      if cert_secret
+        outcome = GridSecrets::Update.run(grid_secret: cert_secret, value: value)
+      else
+        outcome = GridSecrets::Create.run(grid: self.grid, name: name, value: value)
+      end
+
+      unless outcome.success?
+        add_error(:cert_store, outcome.errors)
+        return
+      end
+      outcome.result
+    end
+
+    def resolve_service(grid, service_name)
+      stack_name, service = service_name.split('/')
+      stack = grid.stacks.find_by(name: stack_name)
+      return nil if stack.nil?
+
+      stack.grid_services.find_by(name: service)
     end
   end
 end

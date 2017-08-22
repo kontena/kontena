@@ -14,12 +14,17 @@ module Kontena::Cli::Certificate
       require_api_url
       token = require_token
       secret = secret_name || "LE_CERTIFICATE_#{domain_list[0].gsub('.', '_')}"
-      data = {domains: domain_list, secret_name: secret}
+      data = {
+        domains: domain_list,
+        secret_name: secret,
+        cert_type: self.cert_type
+      }
       response = client(token).post("certificates/#{current_grid}/certificate", data)
       puts "Certificate successfully received and stored into vault with keys:"
       response.each do |secret|
         puts secret.colorize(:green)
       end
+
       puts "Use the #{secret}_BUNDLE with Kontena loadbalancer!"
     end
   end

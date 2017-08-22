@@ -7,6 +7,7 @@ module GridCertificates
   class GetCertificate < Mutations::Command
     include Common
     include Logging
+    include WaitHelper
 
     LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
 
@@ -25,9 +26,11 @@ module GridCertificates
         domain_authz = get_authz_for_domain(self.grid, domain)
 
         if domain_authz
-          # Check that the expected DNS record is already in place
-          unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
-            add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
+          if domain_authz.authorization_type == 'dns-01'
+            # Check that the expected DNS record is already in place
+            unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
+              add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
+            end
           end
         else
           add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
@@ -54,14 +57,19 @@ module GridCertificates
           end
         end
 
-        Timeout::timeout(30) {
-          info 'waiting for DNS validation...'
-          sleep 1 until challenge.verify_status == 'valid'
-          info 'DNS validation complete'
+        wait_until!("domain verification for #{domain} is valid", interval: 1, timeout: 30, threshold: 10) {
+          challenge.verify_status != 'pending'
         }
 
-        domain_authz.state = :validated
-        domain_authz.save
+        if challenge.verify_status == 'valid'
+          domain_authz.state = :validated
+          domain_authz.save
+        elsif challenge.verify_status == 'invalid'
+          domain_authz.state = :error
+          domain_authz.save
+          add_error(:challenge, :verification_error, challenge.error['detail'])
+          return # No point to continue
+        end
 
       end
 
@@ -79,11 +87,13 @@ module GridCertificates
 
 
       secrets = []
-      secrets << upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key)
-      secrets << upsert_secret("#{self.secret_name}_CERTIFICATE", cert)
-      secrets << upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join)
+      private_key_secret = upsert_secret("#{self.secret_name}_PRIVATE_KEY", cert_priv_key).name
+      cert_secret = upsert_secret("#{self.secret_name}_CERTIFICATE", cert).name
+      bundle_secret = upsert_secret("#{self.secret_name}_BUNDLE", [cert, cert_priv_key].join).name
 
-      secrets
+      cert_model = upsert_certificate(self.grid, self.domains, certificate, private_key_secret, cert_secret, bundle_secret, self.cert_type, self.secret_name)
+
+      cert_model
     rescue Timeout::Error
       warn 'timeout while waiting for DNS verfication status'
       add_error(:challenge_verify, :timeout, 'Challenge verification timeout')
@@ -93,19 +103,32 @@ module GridCertificates
       add_error(:acme_client, :error, exc.message)
     end
 
-    def upsert_secret(name, value)
-      cert_secret = self.grid.grid_secrets.find_by(name: name)
-      if cert_secret
-        outcome = GridSecrets::Update.run(grid_secret: cert_secret, value: value)
+    def upsert_certificate(grid, domains, certificate, private_key_secret, certificate_secret, bundle_secret, certificate_type, secret_name)
+      cert = self.grid.certificates.find_by(domain: domains[0])
+      if cert
+        cert.domain = domains[0]
+        cert.alt_names = domains[1..-1]
+        cert.valid_until = certificate.x509.not_after
+        cert.cert_type = certificate_type
+        cert.private_key = private_key_secret
+        cert.certificate = certificate_secret
+        cert.certificate_bundle = bundle_secret
+        cert.secret_prefix = secret_name
+        cert.save
       else
-        outcome = GridSecrets::Create.run(grid: self.grid, name: name, value: value)
+        cert = Certificate.create!(
+          grid: grid,
+          domain: domains[0],
+          valid_until: certificate.x509.not_after,
+          alt_names: domains[1..-1],
+          cert_type: certificate_type,
+          private_key: private_key_secret,
+          certificate: certificate_secret,
+          certificate_bundle: bundle_secret,
+          secret_prefix: secret_name
+        )
       end
-
-      unless outcome.success?
-        add_error(:cert_store, :failure, "Certificate storing to vault failed: #{outcome.errors.message}")
-        return
-      end
-      outcome.result
+      cert
     end
 
     def validate_dns_record(domain, expected_record)

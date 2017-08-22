@@ -17,11 +17,16 @@ module V1
         if outcome.success?
           @authorization = outcome.result
           response.status = 201
-          {
-            'record_name' => @authorization.challenge_opts['record_name'],
-            'record_type' => @authorization.challenge_opts['record_type'],
-            'record_content' => @authorization.challenge_opts['record_content']
-          }
+          if data[:authorization_type] == 'dns-01'
+            {
+              'record_name' => @authorization.challenge_opts['record_name'],
+              'record_type' => @authorization.challenge_opts['record_type'],
+              'record_content' => @authorization.challenge_opts['record_content']
+            }
+          else
+            #TODO FIXME XXX
+            {}
+          end
 
         else
           response.status = 422
@@ -33,10 +38,10 @@ module V1
         data[:grid] = @grid
         outcome = GridCertificates::GetCertificate.run(data)
         if outcome.success?
-          @cert_secrets = outcome.result
+          cert = outcome.result
           response.status = 201
 
-          @cert_secrets.collect { |s| s.name}
+          [cert.private_key, cert.certificate, cert.certificate_bundle]
         else
           response.status = 422
           {error: outcome.errors.message}

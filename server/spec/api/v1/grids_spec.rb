@@ -166,7 +166,6 @@ describe '/v1/grids', celluloid: true do
         expect(json_response['links'].first['alias']).to eq('mysql')
       end
     end
-
   end
 
   describe 'GET /' do
@@ -440,16 +439,16 @@ describe '/v1/grids', celluloid: true do
         memory: {
           total: 1000,
           used: 100
-      	},
-      	filesystem: [{
+          },
+          filesystem: [{
           total: 1000,
           used: 10
         }],
-      	cpu: {
+          cpu: {
           num_cores: 2,
           system: 5.5,
           user: 10.0
-      	},
+          },
         network: {
           internal: {
             interfaces: ["weave", "vethwe123"],
