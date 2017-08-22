@@ -95,8 +95,15 @@ module Kontena
 
       # Accepting updates from Observables?
       #
-      # @return [Boolean] false => delete from Observable#observers
+      # @return [Boolean] false => delete from Observable#observers before sending update
       def alive?
+        fail NotImplementedError
+      end
+
+      # Accepting multiple updates from Observables?
+      #
+      # @return [Boolean] false => delete from Observable#observers after sending update
+      def persistent?
         fail NotImplementedError
       end
 
@@ -124,6 +131,13 @@ module Kontena
         #
         # @return [Boolean]
         def alive?
+          true
+        end
+
+        # Persistent, expected to be updated multiple times
+        #
+        # @return [Boolean]
+        def persistent?
           true
         end
 
@@ -188,6 +202,13 @@ module Kontena
         # @return [Boolean]
         def alive?
           @alive
+        end
+
+        # One-shot, only expect a single update.
+        #
+        # @return [Boolean]
+        def persistent?
+          false
         end
 
         # The observe is callable.

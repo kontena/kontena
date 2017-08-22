@@ -83,16 +83,21 @@ module Kontena
       end
 
       if !observable?
+        # subscribe for future udpates, no value to return
         debug "observer: #{observe.describe_observer}..."
 
         links << actor if links
         observers[observe] = actor
 
-      else
+      elsif observe.persistent?
+        # return with immediate value, also subscribe for future updates
         debug "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}..."
 
         links << actor if links
         observers[observe] = actor
+      else
+        # return with immediate value, do not subscribe for future updates
+        debug "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}"
       end
 
       return Message.new(observe, self, @observable_value)
@@ -101,12 +106,14 @@ module Kontena
     # Update @observable_value to each Kontena::Observer::Observe
     def notify_observers
       observers.each do |observe, actor|
-        if observe.alive? && actor.mailbox.alive?
+        if alive = observe.alive? && actor.mailbox.alive?
           debug "notify: #{observe.describe_observer} <- #{@observable_value.inspect[0..64]}"
 
           actor.mailbox << Message.new(observe, self, @observable_value)
-        else
-          debug "dead: #{observe.describe_observer}"
+        end
+
+        unless alive && observe.persistent?
+          debug "drop: #{observe.describe_observer}"
 
           observers.delete(observe)
           Celluloid.links.delete(actor)
