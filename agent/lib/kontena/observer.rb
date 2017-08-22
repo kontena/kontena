@@ -203,7 +203,7 @@ module Kontena
         #
         # @param timeout [Float, nil]
         # @raise Celluloid::TaskTimeout
-        # @raise Celluloid::TaskTerminated actor shtudown
+        # @raise Celluloid::TaskTerminated observed actor crashed, and observing actor shuts down
         def suspend(task, timeout: nil)
           if timeout
             timer = Thread.current[:celluloid_actor].timers.after(timeout) do
@@ -294,7 +294,8 @@ module Kontena
     #
     # @param observe [Observe]
     # @param timeout [Float, nil]
-    # @raise Celluloid::TaskTimeout
+    # @raise [Celluloid::TaskTimeout]
+    # @raise [Exception] observed actor crash exceptions are re-raised
     def wait_observe(observe, mailbox, timeout: nil)
       deadline = Time.now + timeout if timeout
 
@@ -310,7 +311,7 @@ module Kontena
         }
 
         if message.is_a?(Celluloid::SystemEvent)
-          debug "observe receive #{msg.class.name}"
+          debug "observe receive #{message.class.name}"
 
           Thread.current[:celluloid_actor].handle_system_event(message)
         else
@@ -450,9 +451,6 @@ module Kontena
 
             wait_observe(observe, actor.mailbox, timeout: timeout)
           end
-        rescue Celluloid::TaskTerminated
-          # XXX: just let this re-raise? Happens if the linking Observable crashes and the Observing actor shuts down
-          raise Celluloid::DeadActorError, "observe wait terminated: #{observe.describe_observables}"
         rescue Celluloid::TaskTimeout
           raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{observe.describe_observables}"
         end

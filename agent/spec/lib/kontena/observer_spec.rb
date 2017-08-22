@@ -184,14 +184,32 @@ describe Kontena::Observer, :celluloid => true do
             subject.test_exclusive_observe(observable, timeout: 0.01)
           }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Observable<!TestObservable>')
         end
+
+        it 'raises if the observable crashes' do
+          observable.async.crash(delay: 0.1)
+
+          expect{
+            subject.test_exclusive_observe(observable)
+          }.to raise_error(RuntimeError)
+        end
+
+        describe 'with a timeout' do
+          it 'raises if the observable crashes' do
+            observable.async.crash(delay: 0.1)
+
+            expect{
+              subject.test_exclusive_observe(observable, timeout: 1.0)
+            }.to raise_error(RuntimeError)
+          end
+        end
       end
 
-      it 'aborts if the observable crashes' do
+      it 'terminates if the observable crashes' do
         observable.async.crash(delay: 0.1)
 
-        future = subject.future.observe(observable, timeout: 0.5)
-
-        expect{future.value}.to raise_error(Celluloid::DeadActorError)
+        expect{
+          subject.observe(observable, timeout: 1.0)
+        }.to raise_error(Celluloid::TaskTerminated)
       end
     end
 
