@@ -16,9 +16,10 @@ module Kontena
         pre_start_hooks = hooks_for('pre_start')
         return if pre_start_hooks.size == 0
 
-        service_config = config_container(service_pod.dup)
-        service_config['Entrypoint'] = '/bin/sh'
-        service_config['Cmd'] = ['-c', 'sleep 600']
+        pre_pod = service_pod.dup
+        pre_pod.entrypoint = '/bin/sh'
+        pre_pod.cmd = ['-c', 'sleep 600']
+        service_config = config_container(pre_pod)
         service_container = create_container(service_config)
         service_container.start!
         pre_start_hooks.each do |hook|

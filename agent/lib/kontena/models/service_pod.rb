@@ -15,8 +15,6 @@ module Kontena
                   :image_name,
                   :image_credentials,
                   :user,
-                  :cmd,
-                  :entrypoint,
                   :memory,
                   :memory_swap,
                   :cpus,
@@ -45,6 +43,7 @@ module Kontena
                   :volume_specs,
                   :read_only,
                   :stop_grace_period
+      attr_accessor :entrypoint, :cmd
 
       # @param [Hash] attrs
       def initialize(attrs = {})
