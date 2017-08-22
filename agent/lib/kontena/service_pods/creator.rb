@@ -1,8 +1,8 @@
 require 'docker'
 require 'celluloid'
 require_relative 'common'
+require_relative 'lifecycle_hook_manager'
 require_relative '../logging'
-require_relative '../helpers/weave_helper'
 require_relative '../helpers/port_helper'
 require_relative '../helpers/rpc_helper'
 
@@ -15,12 +15,13 @@ module Kontena
       include Kontena::Helpers::PortHelper
       include Kontena::Helpers::RpcHelper
 
-      attr_reader :service_pod, :image_credentials
+      attr_reader :service_pod, :image_credentials, :hook_manager
 
       # @param [ServicePod] service_pod
       def initialize(service_pod)
         @service_pod = service_pod
         @image_credentials = service_pod.image_credentials
+        @hook_manager = Kontena::ServicePods::LifecycleHookManager.new(service_pod)
       end
 
       # @return [Docker::Container]
@@ -42,11 +43,11 @@ module Kontena
 
         if service_container
           info "removing previous version of service: #{service_pod.name_for_humans}"
-          self.cleanup_container(service_container)
+          cleanup_container(service_container)
           log_service_pod_event("service:create_instance", "removed previous version of service #{service_pod.name_for_humans} instance")
         end
 
-        self.run_pre_start_hooks
+        hook_manager.on_pre_start
 
         service_config = config_container(service_pod)
 
@@ -67,7 +68,7 @@ module Kontena
         Celluloid::Notifications.publish('service_pod:start', service_pod.name)
         Celluloid::Notifications.publish('container:publish_info', service_container)
 
-        self.run_post_start_hooks(service_container)
+        hook_manager.on_post_start(service_container)
 
         if service_pod.wait_for_port
           info "waiting for port #{service_pod.name_for_humans}:#{service_pod.wait_for_port} to respond"
@@ -78,71 +79,6 @@ module Kontena
         end
 
         service_container
-      end
-
-      # @return [Boolean]
-      def run_pre_start_hooks
-        hooks_for('pre_start').each do |hook|
-          service_config = config_container(service_pod.dup)
-          service_config['Cmd'] = ['/bin/sh', '-c', hook['cmd']]
-          service_container = nil
-          begin
-            service_container = create_container(service_config)
-            info "running pre_start hook: #{hook['cmd']}"
-            service_container.tap(&:start).attach
-            if service_container.state['ExitCode'] != 0
-              raise "Failed to execute pre_start hook: #{hook['cmd']}, exit code: #{service_container.state['ExitCode']}"
-            end
-          ensure
-            cleanup_container(service_container) if service_container
-          end
-        end
-        true
-      rescue => exc
-        log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
-        raise exc
-      end
-
-      # @param [Docker::Container] service_container
-      # @return [Boolean]
-      def run_post_start_hooks(service_container)
-        hooks_for('post_start').each do |hook|
-          info "running post_start hook: #{hook['cmd']}"
-          command = ['/bin/sh', '-c', hook['cmd']]
-          log_hook_output(service_container.id, ["running #{type} hook: #{hook['cmd']}"], 'stdout')
-          _, _, exit_code = service_container.exec(command) { |stream, chunk|
-            log_hook_output(service_container.id, [chunk], stream)
-          }
-          if exit_code != 0
-            raise "Failed to execute post_start hook: #{hook['cmd']}"
-          end
-        end
-        true
-      rescue => exc
-        log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
-        error exc.message
-        false
-      end
-
-      # @param [String] type
-      # @return [Array<Hash>]
-      def hooks_for(type)
-        service_pod.hooks.select{ |h| h['type'] == type }
-      end
-
-      # @param [String] id
-      # @param [Array<String>] lines
-      # @param [String] type
-      def log_hook_output(id, lines, type)
-        lines.each do |chunk|
-          data = {
-              id: id,
-              time: Time.now.utc.xmlschema,
-              type: type,
-              data: chunk
-          }
-          rpc_client.async.notification('/containers/log', [data])
-        end
       end
 
       # @param [String] type
@@ -178,31 +114,6 @@ module Kontena
           end
         end
         true
-      end
-
-      # @param [Docker::Container] container
-      def cleanup_container(container)
-        container.stop('timeout' => container.stop_grace_period)
-        container.wait
-        container.delete(v: true)
-      end
-
-      # Docker create configuration for ServicePod
-      # @param [ServicePod] service_pod
-      # @return [Hash] Docker create API JSON object
-      def config_container(service_pod)
-        service_config = service_pod.service_config
-
-        unless service_pod.net == 'host'
-          network_adapter.modify_create_opts(service_config)
-        end
-
-        service_config
-      end
-
-      # @param [Hash] opts
-      def create_container(opts)
-        Docker::Container.create(opts)
       end
 
       # Make sure that image exists

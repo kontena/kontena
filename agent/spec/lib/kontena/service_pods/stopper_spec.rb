@@ -1,8 +1,8 @@
 
 describe Kontena::ServicePods::Stopper do
 
-  let(:service_id) { 'service-id' }
-  let(:subject) { described_class.new(service_id, 1) }
+  let(:service_pod) { double(:service_pod, service_id: 'service_id', instance_number: 1)}
+  let(:subject) { described_class.new(service_pod) }
 
   describe '#perform' do
 
