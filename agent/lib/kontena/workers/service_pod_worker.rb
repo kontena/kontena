@@ -184,9 +184,7 @@ module Kontena::Workers
     end
 
     def ensure_started
-      Kontena::ServicePods::Starter.new(
-        service_pod.service_id, service_pod.instance_number
-      ).perform
+      Kontena::ServicePods::Starter.new(service_pod).perform
     rescue => exc
       log_service_pod_event(
         "service:start_instance",
@@ -197,9 +195,7 @@ module Kontena::Workers
     end
 
     def ensure_stopped
-      Kontena::ServicePods::Stopper.new(
-        service_pod.service_id, service_pod.instance_number
-      ).perform
+      Kontena::ServicePods::Stopper.new(service_pod).perform
     rescue => exc
       log_service_pod_event(
         "service:stop_instance",
@@ -210,9 +206,7 @@ module Kontena::Workers
     end
 
     def ensure_terminated
-      Kontena::ServicePods::Terminator.new(
-        service_pod.service_id, service_pod.instance_number
-      ).perform
+      Kontena::ServicePods::Terminator.new(service_pod).perform
     rescue => exc
       log_service_pod_event(
         "service:remove_instance",
