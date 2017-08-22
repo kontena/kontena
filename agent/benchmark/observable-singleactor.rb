@@ -6,23 +6,38 @@ require 'active_support/core_ext/enumerable'
 
 Kontena::Logging.initialize_logger(STDERR, (ENV['LOG_LEVEL'] || Logger::WARN).to_i)
 
+def env(name, default = nil)
+  if value = ENV[name]
+    yield value
+  else
+    default
+  end
+end
+
 class TestClient
   include Celluloid
   include Kontena::Logging
 
-  DELAY_MIN = 0.0
-  DELAY_MAX = 1.0
+  DELAY_MIN = env('DELAY_MIN', 0.0) {|v| v.to_f}
+  DELAY_MAX = env('DELAY_MAX', 1.0) {|v| v.to_f}
 
   def send(id, actor)
-    delay = DELAY_MIN + rand() * (DELAY_MAX - DELAY_MIN)
+    delay = rand() * DELAY_MAX
+    delay = 0 if delay < DELAY_MIN
 
     #debug "request id=#{id} with delay=#{'%.2f' % delay}s"
 
-    after(delay) {
-      #debug "response id=#{id}..."
+    if delay > 0
+      after(delay) { respond(id, actor) }
+    else
+      respond(id, actor)
+    end
+  end
 
-      actor.response(id, Time.now)
-    }
+  def respond(id, actor)
+    #debug "respond id=#{id}... @ #{caller(0).join("\n\t")}"
+
+    actor.response(id, Time.now)
   end
 end
 
