@@ -168,11 +168,15 @@ def main
 end
 
 if profile = getenv('PROFILE')
-  result = RubyProf.profile(merge_fibers: true) do
+  measure_mode = getenv('PROFILE_MODE', RubyProf::WALL_TIME) { |x| RubyProf.const_get(x.upcase.to_sym) }
+  sort_method = getenv('PROFILE_SORT', :total_time) { |x| "#{x}_time".to_sym}
+  printer_cls = getenv('PROFILE_PRINTER', RubyProf::FlatPrinter) { |x| RubyProf.const_get("#{x.capitalize}Printer".to_sym) }
+
+  result = RubyProf.profile(measure_mode: measure_mode, merge_fibers: true) do
     main
   end
 
-  RubyProf::FlatPrinter.new(result).print(STDOUT)
+  printer_cls.new(result).print(STDOUT, sort_method: sort_method)
 else
   main
 end
