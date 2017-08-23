@@ -33,6 +33,8 @@ class TestWaiterActor
   include Celluloid
   include Kontena::Helpers::WaitHelper
 
+  WAIT_INTERVAL = getenv("WAIT_INTERVAL", 0.01) { |v| Float(v) }
+
   def initialize(client)
     @client = client
     @requests = {}
@@ -44,7 +46,7 @@ class TestWaiterActor
 
     @client.send(id, self.current_actor)
 
-    wait_until!("request has response with id=#{id}", timeout: timeout, interval: 0.01) { @requests[id] }
+    wait_until!("request has response with id=#{id}", timeout: timeout, interval: WAIT_INTERVAL) { @requests[id] }
 
     t = @requests.delete(id)
 

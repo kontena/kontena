@@ -33,10 +33,10 @@ class TestWaitActor
   include Celluloid
   include Kontena::Helpers::WaitHelper
 
-  WAIT_INTERVAL = 0.001
+  WAIT_INTERVAL = getenv("WAIT_INTERVAL", 0.01) { |v| Float(v) }
 
   def watch
-    ready = wait_until!("observable ready") { Actor[:test_observable].ready? }
+    ready = wait_until!("observable ready", interval: WAIT_INTERVAL) { Actor[:test_observable].ready? }
     Time.now - ready
   end
 end
