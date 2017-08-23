@@ -1,21 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'ruby-prof'
-require 'benchmark'
-require_relative '../lib/kontena-agent'
-require 'active_support/core_ext/enumerable'
-
-Kontena::Logging.initialize_logger(STDERR, (ENV['LOG_LEVEL'] || Logger::WARN).to_i)
-
-def getenv(name, default = nil)
-  if value = ENV[name]
-    value = yield value if block_given?
-  else
-    value = default
-  end
-
-  value
-end
+require_relative './benchmark-support'
 
 class TestClient
   include Celluloid
@@ -132,51 +117,13 @@ class TestObserverActor
   end
 end
 
-COUNT = getenv('COUNT', 1000) { |v| Integer(i) }
-BENCHMARK = getenv('BENCHMARK')
+test_client = TestClient.new
+test_wait = TestWaiterActor.new(test_client)
+test_condition = TestConditionActor.new(test_client)
+test_observer = TestObserverActor.new(test_client)
 
-def benchmark(bm, stats, name, count: COUNT)
-  return if BENCHMARK and name != BENCHMARK
-  bm.report(name) do
-    futures = (1..count).map{|id| sleep 0.001; yield id }
-
-    total_delay = futures.map{|f| f.value }.sum
-
-    stats[name] = {
-      total_delay: total_delay
-    }
-  end
-end
-
-def main
-  Benchmark.bm(12) do |bm|
-    test_client = TestClient.new
-    test_wait = TestWaiterActor.new(test_client)
-    test_condition = TestConditionActor.new(test_client)
-    test_observer = TestObserverActor.new(test_client)
-
-    stats = {}
-    benchmark(bm, stats, "wait") { |id| test_wait.future.request(id) }
-    benchmark(bm, stats, "condition") { |id| test_condition.future.request(id) }
-    benchmark(bm, stats, "observer") { |id| test_observer.future.request(id) }
-
-    puts "%-12s %12s" % ['', 'delay']
-    stats.each_pair do |what, stat|
-      puts '%-12s %12.6f' % [what, stat[:total_delay]]
-    end
-  end
-end
-
-if profile = getenv('PROFILE')
-  measure_mode = getenv('PROFILE_MODE', RubyProf::WALL_TIME) { |x| RubyProf.const_get(x.upcase.to_sym) }
-  sort_method = getenv('PROFILE_SORT', :total_time) { |x| "#{x}_time".to_sym}
-  printer_cls = getenv('PROFILE_PRINTER', RubyProf::FlatPrinter) { |x| RubyProf.const_get("#{x.capitalize}Printer".to_sym) }
-
-  result = RubyProf.profile(measure_mode: measure_mode, merge_fibers: true) do
-    main
-  end
-
-  printer_cls.new(result).print(STDOUT, sort_method: sort_method)
-else
-  main
-end
+benchmark(
+  'wait'      => ->(id) { test_wait.future.request(id) },
+  'condition' => ->(id) { test_condition.future.request(id) },
+  'observer'  => ->(id) { test_observer.future.request(id) },
+)
