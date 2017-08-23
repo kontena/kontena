@@ -15,3 +15,5 @@ json.variables latest_rev.variables
 json.services stack.grid_services.to_a do |grid_service|
   json.partial! 'app/views/v1/grid_services/grid_service', grid_service: grid_service
 end
+json.parent stack.initial? ? nil : { name: stack.parent_name }
+json.children stack.children.pluck(:name).map { |child_name| { name: child_name } }
