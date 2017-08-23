@@ -292,20 +292,20 @@ module Kontena
       observe = message.observe
 
       if message.observable
-        debug "observe update #{message.describe_observable} -> #{message.value}"
+        debug { "observe update #{message.describe_observable} -> #{message.value}" }
 
         observe.set(message.observable, message.value)
       end
 
       if !observe.alive?
-        debug "observe dead: #{observe.describe_observables}"
+        debug { "observe dead: #{observe.describe_observables}" }
       elsif !observe.active?
-        debug "observe paused: #{observe.describe_observables}"
+        debug { "observe paused: #{observe.describe_observables}" }
       elsif observe.ready?
-        debug "observe ready: #{observe.describe_observables}"
+        debug { "observe ready: #{observe.describe_observables}" }
         observe.call
       else
-        debug "observe blocked: #{observe.describe_observables}"
+        debug { "observe blocked: #{observe.describe_observables}" }
       end
     end
 
@@ -332,11 +332,11 @@ module Kontena
         }
 
         if message.is_a?(Celluloid::SystemEvent)
-          debug "observe receive #{message.class.name}"
+          debug { "observe receive #{message.class.name}" }
 
           Thread.current[:celluloid_actor].handle_system_event(message)
         else
-          debug "observe update #{message.describe_observable} -> #{message.value}"
+          debug { "observe update #{message.describe_observable} -> #{message.value}" }
 
           observe.set(message.observable, message.value)
         end
@@ -395,11 +395,11 @@ module Kontena
         message = observable.add_observer(actor, observe)
 
         if message.value
-          debug "observe async #{message.describe_observable} => #{message.value}"
+          debug { "observe async #{message.describe_observable} => #{message.value}" }
 
           observe.add(message.observable, message.value)
         else
-          debug "observe async #{message.describe_observable}..."
+          debug { "observe async #{message.describe_observable}..." }
 
           observe.add(message.observable)
         end
@@ -409,12 +409,12 @@ module Kontena
       observe.start!
 
       if observe.ready?
-        debug "observe async #{observe.describe_observables}: #{observe.values.join(', ')}"
+        debug { "observe async #{observe.describe_observables}: #{observe.values.join(', ')}" }
 
         # trigger immediate update if all observables were ready
         observe.async_call(actor)
       else
-        debug "observe async #{observe.describe_observables}..."
+        debug { "observe async #{observe.describe_observables}..." }
       end
 
       observe
@@ -446,29 +446,29 @@ module Kontena
         message = observable.add_observer(actor, observe)
 
         if message.value
-          debug "observe sync #{message.describe_observable} => #{message.value}"
+          debug { "observe sync #{message.describe_observable} => #{message.value}" }
 
           observe.add(message.observable, message.value)
 
         else
-          debug "observe sync #{message.describe_observable}..."
+          debug { "observe sync #{message.describe_observable}..." }
 
           observe.add(message.observable)
         end
       end
 
       if observe.ready?
-        debug "observe sync #{observe.describe_observables}: #{observe.values.join(', ')}"
+        debug { "observe sync #{observe.describe_observables}: #{observe.values.join(', ')}" }
       else
         begin
           # @see Celluloid#suspend
           task = Thread.current[:celluloid_task]
           if task && !task.exclusive?
-            debug "observe wait #{observe.describe_observables}... (suspend timeout=#{timeout})"
+            debug { "observe wait #{observe.describe_observables}... (suspend timeout=#{timeout})" }
 
             observe.suspend(task, timeout: timeout)
           else
-            debug "observe wait #{observe.describe_observables}... (wait timeout=#{timeout})"
+            debug { "observe wait #{observe.describe_observables}... (wait timeout=#{timeout})" }
 
             wait_observe(observe, actor.mailbox, timeout: timeout)
           end
@@ -476,7 +476,7 @@ module Kontena
           raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{observe.describe_observables}"
         end
 
-        debug "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}"
+        debug { "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}" }
       end
 
       observe.resolve! # meaningless, do not expect to receive any more updates after killed

@@ -53,7 +53,7 @@ module Kontena
     # @raise [ArgumentError] Update with nil value
     def update_observable(value)
       raise ArgumentError, "Update with nil value" if value.nil?
-      debug "update: #{value}"
+      debug { "update: #{value}" }
 
       @observable_value = value
 
@@ -84,20 +84,20 @@ module Kontena
 
       if !observable?
         # subscribe for future udpates, no value to return
-        debug "observer: #{observe.describe_observer}..."
+        debug { "observer: #{observe.describe_observer}..." }
 
         links << actor if links
         observers[observe] = actor
 
       elsif observe.persistent?
         # return with immediate value, also subscribe for future updates
-        debug "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}..."
+        debug { "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}..." }
 
         links << actor if links
         observers[observe] = actor
       else
         # return with immediate value, do not subscribe for future updates
-        debug "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}"
+        debug { "observer: #{observe.describe_observer} <= #{@observable_value.inspect[0..64]}" }
       end
 
       return Message.new(observe, self, @observable_value)
@@ -107,13 +107,13 @@ module Kontena
     def notify_observers
       observers.each do |observe, actor|
         if alive = observe.alive? && actor.mailbox.alive?
-          debug "notify: #{observe.describe_observer} <- #{@observable_value.inspect[0..64]}"
+          debug { "notify: #{observe.describe_observer} <- #{@observable_value.inspect[0..64]}" }
 
           actor.mailbox << Message.new(observe, self, @observable_value)
         end
 
         unless alive && observe.persistent?
-          debug "drop: #{observe.describe_observer}"
+          debug { "drop: #{observe.describe_observer}" }
 
           observers.delete(observe)
           Celluloid.links.delete(actor)
