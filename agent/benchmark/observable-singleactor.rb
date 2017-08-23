@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'ruby-prof'
 require 'benchmark'
 require_relative '../lib/kontena-agent'
 require 'active_support/core_ext/enumerable'
@@ -147,19 +148,31 @@ def benchmark(bm, stats, name, count: COUNT)
   end
 end
 
-Benchmark.bm(12) do |bm|
-  test_client = TestClient.new
-  test_wait = TestWaiterActor.new(test_client)
-  test_condition = TestConditionActor.new(test_client)
-  test_observer = TestObserverActor.new(test_client)
+def main
+  Benchmark.bm(12) do |bm|
+    test_client = TestClient.new
+    test_wait = TestWaiterActor.new(test_client)
+    test_condition = TestConditionActor.new(test_client)
+    test_observer = TestObserverActor.new(test_client)
 
-  stats = {}
-  benchmark(bm, stats, "wait") { |id| test_wait.future.request(id) }
-  benchmark(bm, stats, "condition") { |id| test_condition.future.request(id) }
-  benchmark(bm, stats, "observer") { |id| test_observer.future.request(id) }
+    stats = {}
+    benchmark(bm, stats, "wait") { |id| test_wait.future.request(id) }
+    benchmark(bm, stats, "condition") { |id| test_condition.future.request(id) }
+    benchmark(bm, stats, "observer") { |id| test_observer.future.request(id) }
 
-  puts "%-12s %12s" % ['', 'delay']
-  stats.each_pair do |what, stat|
-    puts '%-12s %12.6f' % [what, stat[:total_delay]]
+    puts "%-12s %12s" % ['', 'delay']
+    stats.each_pair do |what, stat|
+      puts '%-12s %12.6f' % [what, stat[:total_delay]]
+    end
   end
+end
+
+if profile = getenv('PROFILE')
+  result = RubyProf.profile(merge_fibers: true) do
+    main
+  end
+
+  RubyProf::FlatPrinter.new(result).print(STDOUT)
+else
+  main
 end
