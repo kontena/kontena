@@ -6,20 +6,22 @@ require 'active_support/core_ext/enumerable'
 
 Kontena::Logging.initialize_logger(STDERR, (ENV['LOG_LEVEL'] || Logger::WARN).to_i)
 
-def env(name, default = nil)
+def getenv(name, default = nil)
   if value = ENV[name]
-    yield value
+    value = yield value if block_given?
   else
-    default
+    value = default
   end
+
+  value
 end
 
 class TestClient
   include Celluloid
   include Kontena::Logging
 
-  DELAY_MIN = env('DELAY_MIN', 0.0) {|v| v.to_f}
-  DELAY_MAX = env('DELAY_MAX', 1.0) {|v| v.to_f}
+  DELAY_MIN = getenv('DELAY_MIN', 0.0) {|v| Float(v) }
+  DELAY_MAX = getenv('DELAY_MAX', 1.0) {|v| Float(v) }
 
   def send(id, actor)
     delay = rand() * DELAY_MAX
@@ -129,43 +131,32 @@ class TestObserverActor
   end
 end
 
-N = 1000
+COUNT = getenv('COUNT', 1000) { |v| Integer(i) }
+BENCHMARK = getenv('BENCHMARK')
+
+def benchmark(bm, stats, name, count: COUNT)
+  return if BENCHMARK and name != BENCHMARK
+  bm.report(name) do
+    futures = (1..count).map{|id| sleep 0.001; yield id }
+
+    total_delay = futures.map{|f| f.value }.sum
+
+    stats[name] = {
+      total_delay: total_delay
+    }
+  end
+end
 
 Benchmark.bm(12) do |bm|
   test_client = TestClient.new
-  test_observer = TestObserverActor.new(test_client)
+  test_wait = TestWaiterActor.new(test_client)
   test_condition = TestConditionActor.new(test_client)
-  test_waiter = TestWaiterActor.new(test_client)
+  test_observer = TestObserverActor.new(test_client)
 
   stats = {}
-
-  bm.report("wait") {
-    futures = (1..N).map{|id| sleep 0.001; test_waiter.future.request(id) }
-
-    total_delay = futures.map{|f| f.value }.sum
-
-    stats[:wait] = {
-      total_delay: total_delay
-    }
-  }
-  bm.report("condition") {
-    futures = (1..N).map{|id| sleep 0.001; test_condition.future.request(id) }
-
-    total_delay = futures.map{|f| f.value }.sum
-
-    stats[:condition] = {
-      total_delay: total_delay
-    }
-  }
-  bm.report("observer") {
-    futures = (1..N).map{|id| sleep 0.001; test_observer.future.request(id) }
-
-    total_delay = futures.map{|f| f.value }.sum
-
-    stats[:observer] = {
-      total_delay: total_delay
-    }
-  }
+  benchmark(bm, stats, "wait") { |id| test_wait.future.request(id) }
+  benchmark(bm, stats, "condition") { |id| test_condition.future.request(id) }
+  benchmark(bm, stats, "observer") { |id| test_observer.future.request(id) }
 
   puts "%-12s %12s" % ['', 'delay']
   stats.each_pair do |what, stat|
