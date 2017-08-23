@@ -116,7 +116,7 @@ module Kontena
           debug { "drop: #{observe.describe_observer}" }
 
           observers.delete(observe)
-          Celluloid.links.delete(actor)
+          Celluloid.links.delete(actor) # XXX: the same actor could have multiple active observes
         end
       end
     end
