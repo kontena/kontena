@@ -16,7 +16,7 @@ def getenv(name, default = nil)
   value
 end
 
-COUNT = getenv('COUNT', 1000) { |v| Integer(i) }
+COUNT = getenv('COUNT', 1000) { |v| Integer(v) }
 BENCHMARK = getenv('BENCHMARK')
 
 def benchmark_main(cases, count: COUNT, before_each: nil)
@@ -32,7 +32,8 @@ def benchmark_main(cases, count: COUNT, before_each: nil)
         total_delay = futures.map{|f| f.value }.sum
 
         stats[label] = {
-          total_delay: total_delay
+          total_delay: total_delay,
+          average_delay: total_delay / count,
         }
       end
     end
@@ -40,7 +41,7 @@ def benchmark_main(cases, count: COUNT, before_each: nil)
 
   puts "%-12s %12s" % ['', 'delay']
   stats.each_pair do |label, stat|
-    puts '%-12s %12.6f' % [label, stat[:total_delay]]
+    puts '%-12s %12.6f' % [label, stat[:average_delay]]
   end
 end
 
