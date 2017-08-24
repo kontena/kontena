@@ -19,6 +19,12 @@ module Kontena
         @pending = false
       end
 
+      # Describe the observer for debug logging
+      # Called by the Observer actor, must be threadsafe and atomic
+      def to_s
+        "#{self.class.name}<#{@class.name}>"
+      end
+
       def inspect
         return "#{self.class.name}<#{@class.name}, #{describe_observables}>"
       end
@@ -27,22 +33,12 @@ module Kontena
       #
       # @return [String]
       def describe_observables
-        observables = @observables.map{|observable|
-          "#{@values[observable] ? '' : '!'}#{observable.class.name}"
-        }
-
-        "Observable<#{observables.join(', ')}>"
+        @observables.map{|observable| "#{@values[observable] ? '' : '!'}#{observable}" }.join(', ')
       end
 
       # @return [String]
       def describe_values
         self.values.join(', ')
-      end
-
-      # Describe the observer for debug logging
-      # Called by the Observer actor, must be threadsafe and atomic
-      def describe_observer
-        "Observer<#{@class.name}>"
       end
 
       # Add Observable with initial value

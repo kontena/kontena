@@ -90,18 +90,18 @@ module Kontena
       @mutex.synchronize do
         if !@value
           # subscribe for future udpates, no value to return
-          debug { "observer: #{observe.describe_observer}..." }
+          debug { "observer: #{observe}..." }
 
           @observers[observe] = actor
 
         elsif observe.persistent?
           # return with immediate value, also subscribe for future updates
-          debug { "observer: #{observe.describe_observer} <= #{@value.inspect[0..64]}..." }
+          debug { "observer: #{observe} <= #{@value.inspect[0..64]}..." }
 
           @observers[observe] = actor
         else
           # return with immediate value, do not subscribe for future updates
-          debug { "observer: #{observe.describe_observer} <= #{@value.inspect[0..64]}" }
+          debug { "observer: #{observe} <= #{@value.inspect[0..64]}" }
         end
 
         return @value
@@ -115,13 +115,13 @@ module Kontena
 
         @observers.each do |observe, actor|
           if alive = observe.alive? && actor.mailbox.alive?
-            debug { "notify: #{observe.describe_observer} <- #{value.inspect[0..64]}" }
+            debug { "notify: #{observe} <- #{value.inspect[0..64]}" }
 
             actor.mailbox << Message.new(observe, self, value)
           end
 
           unless alive && observe.persistent?
-            debug { "drop: #{observe.describe_observer}" }
+            debug { "drop: #{observe}" }
 
             @observers.delete(observe)
           end
