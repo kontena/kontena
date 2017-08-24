@@ -6,8 +6,6 @@ require_relative 'rpc_client'
 # Celluloid::Notifications:
 #   websocket:connect [nil] connecting, not yet connected
 #   websocket:open [nil] connected, websocket open
-#   websocket:disconnect [nil] websocket closing
-#   websocket:close [nil] websocket closed
 module Kontena
   class WebsocketClient
     include Celluloid
@@ -164,7 +162,8 @@ module Kontena
       error exc
 
     else
-      on_close(ws.close_code, ws.close_reason)
+      # impossible: agent closed connection?!
+      info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
 
     ensure
       @connected = false
@@ -287,6 +286,8 @@ module Kontena
       end
     end
 
+    # Server closed websocket connection
+    #
     # @param code [Integer]
     # @param reason [String]
     def on_close(code, reason)
@@ -302,8 +303,6 @@ module Kontena
       else
         warn "connection closed with code #{code}: #{reason}"
       end
-
-      publish('websocket:close', nil)
     end
 
     def handle_invalid_token
@@ -346,15 +345,6 @@ module Kontena
       else
         debug "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]
       end
-    end
-
-    # Abort the connection, closing the websocket, with a timeout
-    def close
-      # stop sending messages, queue them up until reconnected
-      publish('websocket:disconnect', nil)
-
-      # send close frame with CLOSE_TIMEOUT
-      @ws.close
     end
   end
 end

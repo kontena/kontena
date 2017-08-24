@@ -250,8 +250,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
           allow(ws_client).to receive(:close_reason).and_return ''
         end
         expect(subject).to_not receive(:on_error)
-        expect(subject).to receive(:on_close).with(1000, '')
-
+        expect(subject).to receive(:disconnected!).and_call_original
         expect(ws_client).to receive(:disconnect)
 
         actor.connect_client(ws_client)
@@ -315,7 +314,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
           allow(ws_client).to receive(:close_code).and_return(1337)
           allow(ws_client).to receive(:close_reason).and_return 'testing'
         end
-        expect(subject).to receive(:on_close).with(1337, 'testing')
+        expect(subject).to receive(:info).with('Agent closed connection with code 1337: testing')
 
         expect(ws_client).to receive(:disconnect)
 
@@ -354,8 +353,8 @@ describe Kontena::WebsocketClient, :celluloid => true do
           allow(ws_client).to receive(:close_reason).and_return ''
         end
         expect(subject).to_not receive(:on_error)
-        expect(subject).to receive(:on_close).with(1000, '')
 
+        expect(subject).to receive(:disconnected!).and_call_original
         expect(ws_client).to receive(:disconnect)
 
         actor.connect_client(ws_client)
@@ -562,12 +561,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     end
 
     describe '#on_close' do
-      it 'publishes websocket:close' do
-        expect(subject).to receive(:publish).with('websocket:close', nil)
-
-        actor.on_close(1000, '')
-      end
-
       it 'aborts on 4001 error code', log_celluloid_actor_crashes: false do
         expect(subject).to receive(:handle_invalid_token).and_call_original
         expect(Kontena::Agent).to receive(:shutdown)
@@ -610,15 +603,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(subject).to receive(:warn).with(/server ping 3.20s of 5.00s timeout/)
 
         subject.on_pong(3.2)
-      end
-    end
-
-    describe '#close' do
-      it 'publishes event and closes websocket' do
-        expect(subject).to receive(:publish).with('websocket:disconnect', nil)
-        expect(ws_client).to receive(:close)
-
-        actor.close
       end
     end
   end
