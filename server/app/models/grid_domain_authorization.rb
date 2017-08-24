@@ -1,3 +1,5 @@
+require 'symmetric-encryption'
+
 class GridDomainAuthorization
   include Mongoid::Document
   include Mongoid::Timestamps
@@ -5,10 +7,17 @@ class GridDomainAuthorization
 
   belongs_to :grid
 
-  enum :state, [:created, :requested, :validated], default: :created
+  enum :state, [:created, :requested, :validated, :error], default: :created
+
   field :domain, type: String
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
+  field :authorization_type, type: String, default: 'tls-sni-01'
+  field :service_deploy_id, type: String
+
+  field :encrypted_tls_sni_certificate, type: String, encrypted: true
+
+  belongs_to :grid_service # Usually a LB service
 
   index({ grid_id: 1 })
   index({ domain: 1 })

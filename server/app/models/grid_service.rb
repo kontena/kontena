@@ -50,6 +50,7 @@ class GridService
   has_many :audit_logs
   has_many :grid_service_deploys, dependent: :destroy
   has_many :event_logs
+  has_many :grid_domain_authorizations
   has_and_belongs_to_many :networks
   embeds_many :grid_service_links
   embeds_many :hooks, class_name: 'GridServiceHook'

@@ -100,6 +100,11 @@ module V1
           r.route 'grid_event_logs'
         end
 
+        # /v1/grids/:name/domain_authorizations
+        r.on 'domain_authorizations' do
+          r.route 'grid_domain_authorizations'
+        end
+
         r.get do
           r.is do
             render('grids/show')
