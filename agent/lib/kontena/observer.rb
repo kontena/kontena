@@ -7,6 +7,20 @@ module Kontena
   module Observer
     include Kontena::Logging
 
+    class Error < StandardError
+      attr_reader :observable, :cause
+
+      def initialize(observable, cause)
+        super(cause.message)
+        @observable = observable
+        @cause = cause
+      end
+
+      def to_s
+        "#{@cause.class}@#{@observable}: #{super}"
+      end
+    end
+
     # Observer is observing some Observables, and tracking their values.
     # This object is passed to each Observable, which then sends it back via Kontena::Observable::Message for updates.
     class Observe
@@ -33,7 +47,18 @@ module Kontena
       #
       # @return [String]
       def describe_observables
-        @observables.map{|observable| "#{@values[observable] ? '' : '!'}#{observable}" }.join(', ')
+        @observables.map{|observable|
+          sym = (case value = @values[observable]
+          when nil
+            '?'
+          when Exception
+            '!'
+          else
+            ''
+          end)
+
+          "#{observable}#{sym}"
+        }.join(', ')
       end
 
       # @return [String]
@@ -75,6 +100,13 @@ module Kontena
         @pending = false
       end
 
+      # Any observable has an error?
+      #
+      # @return [Boolean] true => call to crash
+      def error?
+        @values.any? { |observable, value| Exception === value }
+      end
+
       # Each observable has a value?
       #
       # @return [Boolean] false => block calls on updates
@@ -87,6 +119,14 @@ module Kontena
       # @return [Array] values or nil
       def values
         @observables.map{|observable| @values[observable] }
+      end
+
+      # @return [Exception, nil]
+      def error
+        @values.each_pair{|observable, value|
+          return Error.new(observable, value) if Exception === value
+        }
+        return nil
       end
 
       # Accepting updates from Observables?
@@ -178,6 +218,11 @@ module Kontena
           end
         end
 
+        def crash
+          # crash the actor
+          raise self.error
+        end
+
         # Trigger a deferred call of the Observe via the actor mailbox
         #
         # @param actor [Celluloid::Proxy::Cell<Kontena::Observer]
@@ -219,8 +264,9 @@ module Kontena
         # Later mailbox -> handle -> call will resume the task
         #
         # @param timeout [Float, nil]
-        # @raise Celluloid::TaskTimeout
-        # @raise Celluloid::TaskTerminated observed actor crashed, and observing actor shuts down
+        # @raise [Kontena::Observer::Error]
+        # @raise [Celluloid::TaskTimeout]
+        # @raise [Celluloid::TaskTerminated] observed actor crashed, and observing actor shuts down
         def suspend(task, timeout: nil)
           if timeout
             timer = Thread.current[:celluloid_actor].timers.after(timeout) do
@@ -237,7 +283,11 @@ module Kontena
 
           wakeup = task.suspend(:observe)
 
-          fail "spurious task wakeup: #{wakeup.inspect}" unless wakeup == self
+          if Error === wakeup
+            raise wakeup
+          elsif wakeup != self
+            fail "spurious task wakeup: #{wakeup.inspect}"
+          end
 
         ensure
           # no longer expecting call()
@@ -256,6 +306,22 @@ module Kontena
             @task = nil
 
             task.resume(self)
+          else
+            fail "observe is not suspended in any task"
+          end
+        end
+
+        # Crash waiting task
+        #
+        # @raise [RuntimeError] wrong state
+        def crash
+          if task = @task
+            fail "observe task is not suspended in observe: #{task.status}" unless task.status == :observe
+
+            # once we've resumed the task, we must not re-resume it, as it will be suspended somewhere else
+            @task = nil
+
+            task.resume(self.error)
           else
             fail "observe is not suspended in any task"
           end
@@ -297,6 +363,9 @@ module Kontena
         debug { "observe dead: #{observe.describe_observables}" }
       elsif !observe.active?
         debug { "observe paused: #{observe.describe_observables}" }
+      elsif observe.error?
+        debug { "observe crashed: #{observe.describe_observables}" }
+        observe.crash
       elsif observe.ready?
         debug { "observe ready: #{observe.describe_observables}" }
         observe.call
@@ -336,6 +405,8 @@ module Kontena
 
           observe.set(message.observable, message.value)
         end
+
+        raise observe.error if observe.error?
       end
     end
 

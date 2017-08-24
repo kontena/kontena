@@ -7,12 +7,47 @@ module Kontena
   class Observable
     include Kontena::Logging
 
+    def self.registry
+      Celluloid::Actor[:observable_registry] || fail(DeadActorError, "Observable registry actor not running")
+    end
+
+    class Registry
+      include Celluloid
+      include Kontena::Logging
+
+      trap_exit :on_actor_crash
+
+      def initialize
+        info 'initialize'
+
+        @observables = {}
+      end
+
+      def register(observable, actor)
+        @observables[observable] = actor
+
+        debug "register #{observable}: #{actor.__klass__}"
+      end
+
+      def on_actor_crash(actor, reason)
+        debug "crash #{actor.__klass__}: #{reason}"
+
+        @observables.each_pair do |observable, observable_actor|
+          if observable_actor == actor
+            debug "crash #{observable}..."
+
+            observable.crash(reason)
+          end
+        end
+      end
+    end
+
     class Message
       attr_reader :observe, :observable, :value
 
       # @param observe [Kontena::Observable::Observe]
       # @param observable [Kontena::Observable]
-      # @param value [Object, nil]
+      # @param value [Object, nil, Exception]
       def initialize(observe, observable, value)
         @observe = observe
         @observable = observable
@@ -20,8 +55,19 @@ module Kontena
       end
     end
 
-    def initialize(owner = Celluloid.current_actor)
-      @class_name = owner.__klass__
+    # @return [Kontena::Observable]
+    def self.register(owner = Celluloid.current_actor, owner_links = Celluloid.links)
+      observable = self.new(owner.__klass__)
+
+      observable_registry = self.registry
+      observable_registry.register(observable, owner)
+      owner_links << observable_registry # registry monitors owner
+
+      observable
+    end
+
+    def initialize(owner_name = Celluloid.current_actor.__klass__)
+      @owner_name = owner_name
       @mutex = Thread::Mutex.new
       @observers = {}
       @value = nil
@@ -29,7 +75,7 @@ module Kontena
 
     # @return [String]
     def to_s
-      "#{self.class.name}<#{@class_name}>"
+      "#{self.class.name}<#{@owner_name}>"
     end
 
     # @return [Object, nil] last updated value, or nil if not observable?
@@ -42,6 +88,10 @@ module Kontena
     # @return [Boolean]
     def observable?
       !!@value
+    end
+
+    def crashed?
+      Exception === @value
     end
 
     # Observable has observers
@@ -63,6 +113,7 @@ module Kontena
     # @param value [Object]
     # @raise [ArgumentError] Update with nil value
     def update(value)
+      raise RuntimeError, "Observable crashed: #{@value}" if crashed?
       raise ArgumentError, "Update with nil value" if value.nil?
 
       debug { "update: #{value}" }
@@ -78,6 +129,13 @@ module Kontena
       set_and_notify(nil)
     end
 
+    # @param reason [Exception]
+    def crash(reason)
+      raise ArgumentError, "Crash with non-exception: #{reason.class.name}" unless Exception === reason
+
+      set_and_notify(reason)
+    end
+
     # Observer actor is observing this Actor's @observable_value.
     # Subscribes actor for updates to our observable value, sending Kontena::Observable::Message to given actor.mailbox.
     # Links actor, such that observable actor crashes propagate to the observer.
@@ -86,6 +144,7 @@ module Kontena
     #
     # @param observe [Observer::Observe]
     # @param actor [Celluloid::Proxy::Cell<Actor>]
+    # @raise [Exception]
     # @return [Object] current value
     def observe(observe, actor)
       @mutex.synchronize do
@@ -94,6 +153,9 @@ module Kontena
           debug { "observer: #{observe}..." }
 
           @observers[observe] = actor
+
+        elsif Exception === @value
+          raise @value
 
         elsif observe.persistent?
           # return with immediate value, also subscribe for future updates
@@ -110,6 +172,8 @@ module Kontena
     end
 
     # Update @value to each Kontena::Observer::Observe
+    #
+    # @param value [Object, nil, Exception]
     def set_and_notify(value)
       @mutex.synchronize do
         @value = value
@@ -130,4 +194,11 @@ module Kontena
       end
     end
   end
+end
+
+class Celluloid::Actor::System
+  ROOT_SERVICES << {
+    as: :observable_registry,
+    type: Kontena::Observable::Registry,
+  }
 end

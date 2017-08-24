@@ -4,16 +4,20 @@ class TestObservableActor
   attr_accessor :observable
 
   def initialize
-    @observable = Kontena::Observable.new
+    @observable = Kontena::Observable.register
   end
 
   def ping
 
   end
 
-  def crash(delay: nil)
+  def crash(msg = nil, delay: nil)
     sleep delay if delay
-    fail
+    if msg
+      fail msg
+    else
+      fail
+    end
   end
 
   def update(value)
@@ -159,7 +163,7 @@ describe Kontena::Observable, :celluloid => true do
 
     # also expect this...
     expect(observers.map{|obs| obs.ordered?}).to eq [true] * observer_count
-    
+
     # some observers only observed after the first update
     # this is potentially racy, but it's important, or this spec doesn't test what it should
     expect(observers.map{|obs| obs.observed_values.first}.max).to be > 1

@@ -118,6 +118,8 @@ describe Kontena::Observer, :celluloid => true do
         expect{observable_actor.crash}.to raise_error(RuntimeError)
         expect{observable_actor.ping}.to raise_error(Celluloid::DeadActorError)
 
+        Kontena::Observable.registry.wrapped_object # ping
+
         expect{subject.ping}.to raise_error(Celluloid::DeadActorError)
         expect(subject.alive?).to be_falsey
       end
@@ -138,7 +140,7 @@ describe Kontena::Observer, :celluloid => true do
       it 'raises timeout if the observable is not ready', :log_celluloid_actor_crashes => false do
         expect{
           subject.observe(observable, timeout: 0.01)
-        }.to raise_error(Timeout::Error, 'observe timeout 0.01s: !Kontena::Observable<TestObservableActor>')
+        }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Kontena::Observable<TestObservableActor>?')
       end
 
       it 'immediately returns value if updated' do
@@ -183,7 +185,7 @@ describe Kontena::Observer, :celluloid => true do
         it 'times out on one observable' do
           expect{
             subject.test_exclusive_observe(observable, timeout: 0.01)
-          }.to raise_error(Timeout::Error, 'observe timeout 0.01s: !Kontena::Observable<TestObservableActor>')
+          }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Kontena::Observable<TestObservableActor>?')
         end
 
         it 'raises if the observable crashes' do
@@ -191,7 +193,7 @@ describe Kontena::Observer, :celluloid => true do
 
           expect{
             subject.test_exclusive_observe(observable, timeout: 0.5)
-          }.to raise_error(RuntimeError)
+          }.to raise_error(Kontena::Observer::Error)
         end
 
         describe 'with a timeout' do
@@ -200,17 +202,17 @@ describe Kontena::Observer, :celluloid => true do
 
             expect{
               subject.test_exclusive_observe(observable, timeout: 1.0)
-            }.to raise_error(RuntimeError)
+            }.to raise_error(Kontena::Observer::Error)
           end
         end
       end
 
-      it 'terminates if the observable crashes' do
-        observable_actor.async.crash(delay: 0.1)
+      it 'raises if the observable crashes' do
+        observable_actor.async.crash('test', delay: 0.1)
 
         expect{
           subject.observe(observable, timeout: 1.0)
-        }.to raise_error(Celluloid::TaskTerminated)
+        }.to raise_error(Kontena::Observer::Error, /: test/)
       end
 
       it 'does not terminate if the observable crashes after updating' do
@@ -364,7 +366,7 @@ describe Kontena::Observer, :celluloid => true do
 
           expect{
             subject.test_exclusive_observe(observable1, observable2, timeout: 0.1)
-          }.to raise_error(Timeout::Error, 'observe timeout 0.10s: Kontena::Observable<TestObservableActor>, !Kontena::Observable<TestObservableActor>')
+          }.to raise_error(Timeout::Error, 'observe timeout 0.10s: Kontena::Observable<TestObservableActor>, Kontena::Observable<TestObservableActor>?')
         end
       end
     end
