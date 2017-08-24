@@ -292,7 +292,7 @@ module Kontena
       observe = message.observe
 
       if message.observable
-        debug { "observe update #{message.describe_observable} -> #{message.value}" }
+        debug { "observe update #{message.observable} -> #{message.value}" }
 
         observe.set(message.observable, message.value)
       end
@@ -336,7 +336,7 @@ module Kontena
 
           Thread.current[:celluloid_actor].handle_system_event(message)
         else
-          debug { "observe update #{message.describe_observable} -> #{message.value}" }
+          debug { "observe update #{message.observable} -> #{message.value}" }
 
           observe.set(message.observable, message.value)
         end
@@ -390,18 +390,15 @@ module Kontena
 
       # sync setup of each observable
       observables.each do |observable|
-        # register for observable updates
-        # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
-        message = observable.add_observer(actor, observe)
+        # register for observable updates, and set initial value
+        if value = observable.observe(observe, actor)
+          debug { "observe async #{observable} => #{value}" }
 
-        if message.value
-          debug { "observe async #{message.describe_observable} => #{message.value}" }
-
-          observe.add(message.observable, message.value)
+          observe.add(observable, value)
         else
-          debug { "observe async #{message.describe_observable}..." }
+          debug { "observe async #{observable}..." }
 
-          observe.add(message.observable)
+          observe.add(observable)
         end
       end
 
@@ -441,19 +438,15 @@ module Kontena
       observe = Observe::Sync.new(self.class)
 
       observables.each do |observable|
-        # query for initial Observable state, and subscribe for updates
-        # this MUST be atomic with the Observe#add, there cannot be any observe update message in between!
-        message = observable.add_observer(actor, observe)
+        # query for initial Observable state, or subscribe for updates
+        if value = observable.observe(observe, actor)
+          debug { "observe sync #{observable} => #{value}" }
 
-        if message.value
-          debug { "observe sync #{message.describe_observable} => #{message.value}" }
-
-          observe.add(message.observable, message.value)
-
+          observe.add(observable, value)
         else
-          debug { "observe sync #{message.describe_observable}..." }
+          debug { "observe sync #{observable}..." }
 
-          observe.add(message.observable)
+          observe.add(observable)
         end
       end
 
