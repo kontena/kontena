@@ -20,7 +20,8 @@ module Kontena
       end
     end
 
-    def initialize
+    def initialize(owner = Celluloid.current_actor)
+      @class_name = owner.__klass__
       @mutex = Thread::Mutex.new
       @observers = {}
       @value = nil
@@ -28,7 +29,7 @@ module Kontena
 
     # @return [String]
     def to_s
-      "#{self.class.name}"
+      "#{self.class.name}<#{@class_name}>"
     end
 
     # @return [Object, nil] last updated value, or nil if not observable?

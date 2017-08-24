@@ -138,7 +138,7 @@ describe Kontena::Observer, :celluloid => true do
       it 'raises timeout if the observable is not ready', :log_celluloid_actor_crashes => false do
         expect{
           subject.observe(observable, timeout: 0.01)
-        }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Observable<!TestObservable>')
+        }.to raise_error(Timeout::Error, 'observe timeout 0.01s: !Kontena::Observable<TestObservableActor>')
       end
 
       it 'immediately returns value if updated' do
@@ -183,7 +183,7 @@ describe Kontena::Observer, :celluloid => true do
         it 'times out on one observable' do
           expect{
             subject.test_exclusive_observe(observable, timeout: 0.01)
-          }.to raise_error(Timeout::Error, 'observe timeout 0.01s: Observable<!TestObservable>')
+          }.to raise_error(Timeout::Error, 'observe timeout 0.01s: !Kontena::Observable<TestObservableActor>')
         end
 
         it 'raises if the observable crashes' do
@@ -364,7 +364,7 @@ describe Kontena::Observer, :celluloid => true do
 
           expect{
             subject.test_exclusive_observe(observable1, observable2, timeout: 0.1)
-          }.to raise_error(Timeout::Error, 'observe timeout 0.10s: Observable<TestObservable, !TestObservable>')
+          }.to raise_error(Timeout::Error, 'observe timeout 0.10s: Kontena::Observable<TestObservableActor>, !Kontena::Observable<TestObservableActor>')
         end
       end
     end
