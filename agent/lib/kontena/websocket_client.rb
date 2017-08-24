@@ -6,6 +6,7 @@ require_relative 'rpc_client'
 # Celluloid::Notifications:
 #   websocket:connect [nil] connecting, not yet connected
 #   websocket:open [nil] connected, websocket open
+#   websocket:connected [nil] received /agent/master_info from server
 module Kontena
   class WebsocketClient
     include Celluloid
@@ -77,11 +78,11 @@ module Kontena
 
     def start
       every(1.0) do
-        connect if !connected? unless connecting?
+        connect! if !connected? unless connecting?
       end
     end
 
-    def connect
+    def connect!
       @connecting = true
 
       info "connecting to master at #{api_uri}"
@@ -150,11 +151,11 @@ module Kontena
       }
 
     rescue Kontena::Websocket::CloseError => exc
-      # handle known errors, will reconnect
+      # server closed connection
       on_close(exc.code, exc.reason)
 
     rescue Kontena::Websocket::Error => exc
-      # handle known errors, will reconnect
+      # handle known errors, will reconnect or shutdown
       on_error exc
 
     rescue => exc
@@ -166,17 +167,12 @@ module Kontena
       info "Agent closed connection with code #{ws.close_code}: #{ws.close_reason}"
 
     ensure
-      @connected = false
-      @connecting = false
-      @ws = nil
-
-      ws.disconnect
+      disconnected!
+      ws.disconnect # close socket
     end
 
+    # Websocket handshake complete.
     def on_open
-      @connected = true
-      @connecting = false
-
       ssl_verify = ws.ssl_verify?
 
       begin
@@ -203,6 +199,16 @@ module Kontena
         info "unsecure connection established without SSL"
       end
 
+      connected!
+    end
+
+    # The websocket is connected: @ws is now valid and wen can send message
+    def connected!
+      @connected = true
+      @connecting = false
+
+      # NOTE: the server may still reject the websocket connection by closing it after the open handshake
+      #       wait for the /agent/master_info RPC before emitting websocket:connected
       publish('websocket:open', nil)
     end
 
@@ -210,6 +216,13 @@ module Kontena
       fail "not connected" unless @ws
 
       @ws
+    end
+
+    # The websocket is disconnected: @ws is invalid and we can no longer send messages
+    def disconnected!
+      @ws = nil # prevent further send_message calls until reconnected
+      @connected = false
+      @connecting = false
     end
 
     # Called from RpcServer, does not crash the Actor on errors.
@@ -262,7 +275,9 @@ module Kontena
       end
     end
 
-    # @param exc [Exception]
+    # Websocket connection failed
+    #
+    # @param exc [Kontena::Websocket::Error]
     def on_error(exc)
       case exc
       when Kontena::Websocket::SSLVerifyError
@@ -339,6 +354,7 @@ module Kontena
       msg.is_a?(Array) && msg.size == 4 && msg[0] == 1
     end
 
+    # @param delay [Float]
     def on_pong(delay)
       if delay > PING_TIMEOUT / 2
         warn "server ping %.2fs of %.2fs timeout" % [delay, PING_TIMEOUT]

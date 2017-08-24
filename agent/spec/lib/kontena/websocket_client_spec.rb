@@ -54,7 +54,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
   describe '#start' do
     it 'connects' do
-      expect(subject).to receive(:connect)
+      expect(subject).to receive(:connect!)
 
       actor.start
     end
@@ -65,7 +65,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       expect(async).to receive(:connect_client)
       expect(subject).to receive(:publish).with('websocket:connect', nil)
 
-      actor.connect
+      actor.connect!
 
       expect(subject).to be_connecting
       expect(subject).to_not be_connected
@@ -89,7 +89,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       it 'creates a websocket client with Kontena-Node-Token header' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject).to be_connecting
         expect(subject).to_not be_connected
@@ -140,7 +140,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
           expect(err.message).to eq 'Invalid websocket URL: http://api.example.com'
         end
 
-        actor.connect
+        actor.connect!
 
         expect(subject.connecting?).to be false
       end
@@ -154,7 +154,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       it 'creates a websocket client with ssl, and ssl_verify' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'wss://socket.example.com'
@@ -172,7 +172,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
       it 'creates a websocket client with ssl and no ssl_verify' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'wss://socket.example.com'
@@ -186,11 +186,11 @@ describe Kontena::WebsocketClient, :celluloid => true do
     let(:url) { 'wss://socket.example.com' }
     let(:options) { { ssl_hostname: 'test'} }
 
-    describe '#connect' do
+    describe '#connect!' do
       it 'creates a websocket client with ssl and ssl_hostname' do
         expect(async).to receive(:connect_client)
 
-        actor.connect
+        actor.connect!
 
         expect(subject.ws).to be_a Kontena::Websocket::Client
         expect(subject.ws.url).to eq 'wss://socket.example.com'
@@ -219,7 +219,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#start' do
       it 'does not connect' do
-        expect(subject).not_to receive(:connect)
+        expect(subject).not_to receive(:connect!)
 
         actor.start
       end
@@ -489,7 +489,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
 
     describe '#start' do
       it 'does not connect' do
-        expect(subject).not_to receive(:connect)
+        expect(subject).not_to receive(:connect!)
 
         actor.start
       end
