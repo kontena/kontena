@@ -4,6 +4,7 @@ module Docker
   class Container
 
     SUSPICIOUS_EXIT_CODES = [137]
+    STREAMABLE_LOG_DRIVERS = ['json-file', 'journald']
 
     def name
       cached_json['Name']
@@ -175,6 +176,16 @@ module Docker
     # @return [Boolean]
     def skip_logs?
       self.labels['io.kontena.container.skip_logs'] == '1'
+    end
+
+    # @return [String,NilClass]
+    def log_driver
+      host_config.dig('LogConfig', 'Type')
+    end
+
+    # @return [Boolean]
+    def logs_streamable?
+      STREAMABLE_LOG_DRIVERS.include?(log_driver)
     end
 
     # Container IP address within the overlay network.
