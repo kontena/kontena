@@ -94,8 +94,7 @@ class TestObserverActor
   include Celluloid
   include Kontena::Observer
 
-  class RequestObservable
-    include Kontena::Observable
+  class RequestObservable < Kontena::Observable
   end
 
   def initialize(client)
@@ -115,7 +114,7 @@ class TestObserverActor
   end
 
   def response(id, t)
-    @requests.delete(id).update_observable(t)
+    @requests.delete(id).update(t)
   end
 end
 
