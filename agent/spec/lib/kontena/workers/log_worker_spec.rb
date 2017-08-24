@@ -1,5 +1,5 @@
 
-describe Kontena::Workers::LogWorker do
+describe Kontena::Workers::LogWorker, :celluloid => true do
   include RpcClientMocks
 
   let(:subject) { described_class.new(false) }
@@ -7,13 +7,10 @@ describe Kontena::Workers::LogWorker do
   let(:etcd) { spy(:etcd) }
 
   before(:each) do
-    Celluloid.boot
     mock_rpc_client
     allow(subject.wrapped_object).to receive(:etcd).and_return(etcd)
     allow(subject.wrapped_object).to receive(:finalize)
   end
-
-  after(:each) { Celluloid.shutdown }
 
   describe '#start' do
     before(:each) do
@@ -44,18 +41,16 @@ describe Kontena::Workers::LogWorker do
   end
 
   describe '#on_connect' do
-    it 'sets #queue_processing? to true' do
-      allow(subject.wrapped_object).to receive(:async).and_return(spy)
+    it 'starts' do
+      allow(subject.wrapped_object).to receive(:start)
       subject.on_connect('topic', {})
-      expect(subject.queue_processing?).to be_truthy
     end
   end
 
   describe '#on_disconnect' do
-    it 'sets #queue_processing? to false' do
-      allow(subject.wrapped_object).to receive(:async).and_return(spy)
+    it 'stops' do
+      allow(subject.wrapped_object).to receive(:stop)
       subject.on_disconnect('topic', {})
-      expect(subject.queue_processing?).to be_falsey
     end
   end
 
@@ -106,30 +101,32 @@ describe Kontena::Workers::LogWorker do
     it 'stops streaming on die' do
       expect(subject.wrapped_object).to receive(:stop_streaming_container_logs).once.with('foo')
       subject.on_container_event('topic', double(:event, id: 'foo', status: 'die'))
-      sleep 0.01
     end
 
-    it 'starts streaming on start' do
-      allow(Docker::Container).to receive(:get).and_return(container)
-      allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
-      expect(container).to receive(:skip_logs?).and_return(false)
-      expect(subject.wrapped_object).to receive(:stream_container_logs).once.with(container)
-      subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
-    end
+    context 'when running' do
+      before do
+        allow(subject.wrapped_object).to receive(:running?).and_return(true)
+      end
 
-    it 'does not start streaming on start if logs should be skipped' do
-      allow(Docker::Container).to receive(:get).and_return(container)
-      allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
-      expect(container).to receive(:skip_logs?).and_return(true)
-      expect(subject.wrapped_object).not_to receive(:stream_container_logs)
-      subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
-    end
+      it 'starts streaming on start' do
+        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(container).to receive(:skip_logs?).and_return(false)
+        expect(subject.wrapped_object).to receive(:stream_container_logs).once.with(container)
+        subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
+      end
 
-    it 'does not start streaming on create' do
-      allow(Docker::Container).to receive(:get).and_return(container)
-      allow(subject.wrapped_object).to receive(:queue_processing?).and_return(true)
-      expect(subject.wrapped_object).not_to receive(:stream_container_logs)
-      subject.on_container_event('topic', double(:event, id: 'foo', status: 'create'))
+      it 'does not start streaming on start if logs should be skipped' do
+        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(container).to receive(:skip_logs?).and_return(true)
+        expect(subject.wrapped_object).not_to receive(:stream_container_logs)
+        subject.on_container_event('topic', double(:event, id: 'foo', status: 'start'))
+      end
+
+      it 'does not start streaming on create' do
+        allow(Docker::Container).to receive(:get).and_return(container)
+        expect(subject.wrapped_object).not_to receive(:stream_container_logs)
+        subject.on_container_event('topic', double(:event, id: 'foo', status: 'create'))
+      end
     end
   end
 end
