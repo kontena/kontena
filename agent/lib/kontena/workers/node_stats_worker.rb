@@ -32,7 +32,7 @@ module Kontena::Workers
     end
 
     def start
-      observe(Actor[:node_info_worker]) do |node|
+      observe(Actor[:node_info_worker].observable) do |node|
         configure(node)
       end
 

@@ -21,7 +21,7 @@ module Kontena::Workers
     end
 
     def start
-      @node = observe(Actor[:node_info_worker], timeout: 300.0)
+      @node = observe(Actor[:node_info_worker].observable, timeout: 300.0)
 
       populate_workers_from_docker
 

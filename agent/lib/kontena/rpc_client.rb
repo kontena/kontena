@@ -8,11 +8,9 @@ module Kontena
     include Kontena::Observer
     include Kontena::Helpers::WaitHelper
 
-    class RequestObservable
-      include Kontena::Observable
-
+    class RequestObservable < Kontena::Observable
       def set_response(result, error)
-        update_observable([result, error])
+        update([result, error])
       end
     end
 
