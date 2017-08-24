@@ -7,6 +7,7 @@ require_relative 'rpc_client'
 #   websocket:connect [nil] connecting, not yet connected
 #   websocket:open [nil] connected, websocket open
 #   websocket:connected [nil] received /agent/master_info from server
+#   websocket:disconnected [nil] websocket disconnected
 module Kontena
   class WebsocketClient
     include Celluloid
@@ -223,6 +224,9 @@ module Kontena
       @ws = nil # prevent further send_message calls until reconnected
       @connected = false
       @connecting = false
+
+      # any queued up send_message calls will fail
+      publish('websocket:disconnected', nil)
     end
 
     # Called from RpcServer, does not crash the Actor on errors.
