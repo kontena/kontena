@@ -59,7 +59,7 @@ module Kontena
       # @raise [RuntimeError]
       # @return value
       def set(observable, value)
-        raise "unknown observable: #{observable.inspect}" unless @values.has_key? observable
+        raise "unknown observable: #{observable.class.name}" unless @values.has_key? observable
         @values[observable] = value
         pending!
       end
