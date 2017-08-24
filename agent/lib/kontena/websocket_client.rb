@@ -24,8 +24,6 @@ module Kontena
     CLOSE_TIMEOUT = 10.0
     WRITE_TIMEOUT = 10.0 # this one is a little odd
 
-    attr_reader :api_uri
-
     # @param [String] api_uri
     # @param [String] node_id
     # @param [String] node_name
@@ -84,7 +82,7 @@ module Kontena
     def connect!
       @connecting = true
 
-      info "connecting to master at #{api_uri}"
+      info "connecting to master at #{@api_uri}"
       headers = {
           'Kontena-Node-Id' => @node_id.to_s,
           'Kontena-Node-Name' => @node_name,
