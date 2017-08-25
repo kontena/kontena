@@ -25,7 +25,6 @@ module Kontena::Workers
       @prev_state = nil # sync'd to master
       @container_state_changed = true
       @deploy_rev_changed = false
-      @apply_in_progress = false
       @restarts = 0
       subscribe('container:event', :on_container_event)
     end
