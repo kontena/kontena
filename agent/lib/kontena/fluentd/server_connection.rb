@@ -17,12 +17,14 @@ module Kontena
       end
 
       def receive
-        unpacker = MessagePack::Unpacker.new(@connection)
-        unpacker.each do |data|
-          @queue << data
-        end
+        defer {
+          unpacker = MessagePack::Unpacker.new(@connection)
+          unpacker.each do |data|
+            @queue << data
+          end
 
-        terminate
+          terminate if alive?
+        }
       end
 
       def close
