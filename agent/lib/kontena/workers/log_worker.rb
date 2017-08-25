@@ -30,7 +30,8 @@ module Kontena::Workers
       @queue = Queue.new
       @workers = {}
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
-      @running = nil
+      @processing = false
+      @streaming = false
       subscribe('container:event', :on_container_event)
       subscribe('websocket:connected', :on_connect) # from master_info RPC
       subscribe('websocket:disconnected', :on_disconnect)
