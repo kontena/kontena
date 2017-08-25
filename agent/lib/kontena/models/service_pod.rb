@@ -314,16 +314,31 @@ module Kontena
       ##
       # @return [Hash]
       def build_log_opts
-        log_config = {}
-        return log_config if self.log_driver.nil?
-        log_config['Type'] = self.log_driver
-        log_config['Config'] = {}
-        if self.log_opts
-          self.log_opts.each { |key, value|
-            log_config['Config'][key.to_s] = value
+        if self.log_driver.nil?
+          log_config = {
+            'Type' => 'fluentd',
+            'Config' => {
+              'fluentd-async-connect' => 'true',
+              'labels' => [
+                'io.kontena.service.id',
+                'io.kontena.service.instance_number',
+                'io.kontena.stack.name',
+                'io.kontena.grid.name'
+              ].join(',')
+            }
           }
+          log_config
+        else
+          log_config = {}
+          log_config['Type'] = self.log_driver
+          log_config['Config'] = {}
+          if self.log_opts
+            self.log_opts.each { |key, value|
+              log_config['Config'][key.to_s] = value
+            }
+          end
+          log_config
         end
-        log_config
       end
 
       # @return [Array]

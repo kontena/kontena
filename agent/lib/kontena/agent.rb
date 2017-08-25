@@ -129,6 +129,7 @@ module Kontena
 
       self.supervise_state
       self.supervise_rpc
+      self.supervise_fluentd
       self.supervise_launchers
       self.supervise_network_adapter
       self.supervise_lb
@@ -197,7 +198,8 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::LogWorker,
-        as: :log_worker
+        as: :log_worker,
+        args: [false]
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerInfoWorker,
@@ -250,6 +252,13 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::LoadBalancers::Registrator,
         as: :lb_registrator
+      )
+    end
+
+    def supervise_fluentd
+      @supervisor.supervise(
+        type: Kontena::Fluentd::Server,
+        as: :syslog_server
       )
     end
   end

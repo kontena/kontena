@@ -1,5 +1,6 @@
 require_relative 'container_log_worker'
 require_relative '../helpers/rpc_helper'
+require_relative '../helpers/wait_helper'
 
 module Kontena::Workers
   class LogWorker
@@ -7,6 +8,7 @@ module Kontena::Workers
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
+    include Kontena::Helpers::WaitHelper
 
     attr_reader :queue, :etcd, :workers
 
@@ -22,6 +24,7 @@ module Kontena::Workers
     def initialize(autostart = true)
       @queue = Queue.new
       @workers = {}
+      @queue_processing = false
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
       subscribe('container:event', :on_container_event)
       subscribe('websocket:connected', :on_connect) # from master_info RPC
@@ -34,6 +37,8 @@ module Kontena::Workers
     # @param [String] topic
     # @param [Object] data
     def on_connect(topic, data)
+      return if queue_processing?
+
       @queue_processing = true
       async.start
       info 'started log streaming'
@@ -52,12 +57,12 @@ module Kontena::Workers
     end
 
     def start
-      sleep 1 until Actor[:etcd_launcher].running?
+      wait_until!('etcd running', timeout: 600, interval: 1) { Actor[:etcd_launcher].running? }
       Docker::Container.all.each do |container|
         begin
-          self.stream_container_logs(container) unless container.skip_logs?
+          self.stream_container_logs(container) if container.logs_streamable? && !container.skip_logs?
         rescue Docker::Error::NotFoundError
-          # Could be thrown since container.skip_logs? actually loads the container details
+          # Could be thrown since container.xxx? actually loads the container details
         end
       end
 
