@@ -1,5 +1,6 @@
+describe HostNodes::Update do
+  include AsyncMock
 
-describe HostNodes::Update, celluloid: true do
   let(:grid) { Grid.create!(name: 'test') }
   let(:node) { grid.create_node!('node-1', node_id: 'AA') }
 
