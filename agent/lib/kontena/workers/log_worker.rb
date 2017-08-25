@@ -21,6 +21,10 @@ module Kontena::Workers
     QUEUE_THROTTLE = (QUEUE_MAX_SIZE * 0.8)
     WATCH_INTERVAL = 10.0
 
+    def websocket_client
+      Celluloid::Actor[:websocket_client]
+    end
+
     # @param [Boolean] autostart
     def initialize(autostart = true)
       @queue = Queue.new
@@ -34,76 +38,9 @@ module Kontena::Workers
 
       if autostart
         async.watch_queue
-        async.start
-      end
-    end
-
-    # @return [Boolean]
-    def running?
-      !!@running
-    end
-
-    # @param [String] topic
-    # @param [Object] data
-    def on_connect(topic, data)
-      start unless running?
-    end
-
-    # @param [String] topic
-    # @param [Object] data
-    def on_disconnect(topic, data)
-      stop if running?
-    end
-
-    def start
-      @running = true
-
-      exclusive {
-        info 'start log streaming'
-
-        wait_until!("etcd running") { Actor[:etcd_launcher].running? }
-
-        Docker::Container.all.each do |container|
-          begin
-            self.stream_container_logs(container) unless container.skip_logs?
-          rescue Docker::Error::NotFoundError => exc
-            # Could be thrown since container.skip_logs? actually loads the container details
-            warn exc.message
-          rescue => exc
-            error exc
-          end
-        end
-
         async.process_queue
-      }
-    end
-
-    # Process items from @queue until nil
-    def process_queue
-      defer {
-        while data = @queue.pop
-          rpc_client.async.notification('/containers/log', [data])
-          if @queue.size > 100
-            sleep 0.001
-          else
-            sleep 0.05
-          end
-        end
-      }
-    end
-
-    def stop
-      @running = false
-
-      exclusive {
-        info 'stop log streaming'
-
-        @workers.keys.dup.each do |id|
-          self.stop_streaming_container_logs(id)
-          self.mark_timestamp(id, Time.now.to_i)
-        end
-        @queue << nil # stop process_queue loop
-      }
+        async.start if websocket_client && websocket_client.connected?
+      end
     end
 
     def watch_queue
@@ -118,19 +55,82 @@ module Kontena::Workers
       end
     end
 
-    def mark_timestamps
-      ts = Time.now.to_i
-      workers.keys.each do |id|
-        self.mark_timestamp(id, ts)
-      end
+    # Process items from @queue until nil
+    def process_queue
+      defer {
+        while data = @queue.pop
+          sleep 1 until @processing
+
+          rpc_client.async.notification('/containers/log', [data])
+          if @queue.size > 100
+            sleep 0.001
+          else
+            sleep 0.05
+          end
+        end
+      }
     end
 
-    # @param [String] container_id
-    # @param [Integer] timestamp
-    def mark_timestamp(container_id, timestamp)
-      etcd.set("#{ETCD_PREFIX}/#{container_id}", {value: timestamp, ttl: 60*60*24*7})
-    rescue
-      nil
+    # Process queued items
+    #
+    def resume_processing
+      @processing = true
+    end
+
+    # Stop processing items from the queue, and leave them enqueued until re-started.
+    #
+    def pause_processing
+      @processing = false
+    end
+
+    # @param [String] topic
+    # @param [Object] data
+    def on_connect(topic, data)
+      start
+    end
+
+    # @param [String] topic
+    # @param [Object] data
+    def on_disconnect(topic, data)
+      stop
+    end
+
+    def start
+      exclusive {
+        wait_until!("etcd running") { Actor[:etcd_launcher].running? }
+
+        start_streaming unless streaming?
+        resume_processing
+      }
+    end
+
+    def stop
+      exclusive {
+        pause_processing
+        stop_streaming if streaming?
+      }
+    end
+
+    def streaming?
+      !!@streaming
+    end
+
+    # requires etcd to be available to read log timestamps
+    def start_streaming
+      info 'start streaming logs from containers'
+
+      Docker::Container.all.each do |container|
+        begin
+          self.stream_container_logs(container) unless container.skip_logs?
+        rescue Docker::Error::NotFoundError => exc
+          # Could be thrown since container.skip_logs? actually loads the container details
+          warn exc.message
+        rescue => exc
+          error exc
+        end
+      end
+
+      @streaming = true
     end
 
     # @param [Docker::Container] container
@@ -158,6 +158,26 @@ module Kontena::Workers
       error exc
     end
 
+    # best-effort attempt to write etcd timestamps; may not be possible
+    def stop_streaming
+      @streaming = false
+
+      info 'stop log streaming'
+
+      @workers.keys.dup.each do |id|
+        self.stop_streaming_container_logs(id)
+        self.mark_timestamp(id, Time.now.to_i)
+      end
+    end
+
+    # @param [String] container_id
+    # @param [Integer] timestamp
+    def mark_timestamp(container_id, timestamp)
+      etcd.set("#{ETCD_PREFIX}/#{container_id}", {value: timestamp, ttl: 60*60*24*7})
+    rescue
+      nil
+    end
+
     # @param [String] topic
     # @param [Docker::Event] event
     def on_container_event(topic, event)
@@ -166,7 +186,7 @@ module Kontena::Workers
       elsif START_EVENTS.include?(event.status)
         container = Docker::Container.get(event.id) rescue nil
         debug "#{container.name}/#{container.labels}"
-        if container && running? && !container.skip_logs?
+        if container && streaming? && !container.skip_logs?
           exclusive {
             stream_container_logs(container)
           }
@@ -178,9 +198,14 @@ module Kontena::Workers
       error exc
     end
 
+    # Close the log queue, stopping processing once empty. It cannot be restarted anymore.
+    def close
+      @queue.close
+    end
+
     def finalize
-      workers.keys.each{ |id| stop_streaming_container_logs(id) }
-      self.mark_timestamps
+      stop_streaming if streaming?
+      close
     end
   end
 end
