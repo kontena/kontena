@@ -143,6 +143,19 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.needs_apply?(service_pod)).to be_truthy
     end
 
+    it 'returns false if restarting and desired_state or deploy_rev has not changed' do
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      expect(subject.needs_apply?(service_pod)).to be_falsey
+    end
+
+    it 'returns true if restarting and deploy_rev has changed' do
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      subject.container_state_changed = false
+      update = service_pod.dup
+      allow(update).to receive(:deploy_rev).and_return('new')
+      expect(subject.needs_apply?(update)).to be_truthy
+    end
+
     it 'returns false if container_state_changed is false and pod has not changed' do
       subject.container_state_changed = false
       expect(subject.needs_apply?(service_pod)).to be_falsey
@@ -155,7 +168,7 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.needs_apply?(update)).to be_truthy
     end
 
-    it 'returns true if container_state_changed is false and deploy_rev has changed' do
+    it 'returns true if container_state_changed is false and desired_state has changed' do
       subject.container_state_changed = false
       update = service_pod.dup
       allow(update).to receive(:desired_state).and_return('stopped')

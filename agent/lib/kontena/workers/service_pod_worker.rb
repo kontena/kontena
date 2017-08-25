@@ -17,8 +17,8 @@ module Kontena::Workers
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
 
-    finalizer :shutdown
-
+    # @param [Node] node
+    # @param [ServicePod] service_pod
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
@@ -44,9 +44,11 @@ module Kontena::Workers
     # @param [Kontena::Models::ServicePod] service_pod
     # @return [Boolean]
     def needs_apply?(service_pod)
-      @container_state_changed ||
-        @service_pod.desired_state != service_pod.desired_state ||
-          @service_pod.deploy_rev != service_pod.deploy_rev
+      return true if @service_pod.desired_state != service_pod.desired_state ||
+                     @service_pod.deploy_rev != service_pod.deploy_rev
+      return false if restarting?
+
+      @container_state_changed == true
     end
 
     # @param [Kontena::Models::ServicePod] service_pod
@@ -73,15 +75,8 @@ module Kontena::Workers
 
     # Handles events when container has died
     def handle_restart_on_die
-      unless @service_pod.running?
-        @restart_backoff_timer.cancel if @restart_backoff_timer
-        return
-      end
-
-      return if apply_in_progress?
-
-      # cancel counters because we are called again
       cancel_restart_timers
+      return unless @service_pod.running?
 
       # backoff restarts
       backoff = @restarts ** 2
@@ -91,8 +86,10 @@ module Kontena::Workers
       else
         info "restarting #{@service_pod.name_for_humans} because it has stopped (delay: #{backoff}s)"
       end
+      ts = Time.now.utc
       @restart_backoff_timer = after(backoff) {
-        apply_restart if @container_state_changed
+        debug "restart triggered (from #{ts})"
+        apply
       }
       @restarts += 1
     end
@@ -106,15 +103,6 @@ module Kontena::Workers
       @restart_backoff_timer.cancel if @restart_backoff_timer
     end
 
-    def apply_restart
-      apply
-      # reset restart counter if instance stays up 10s
-      @restart_counter_reset_timer = after(10) {
-        debug "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter"
-        @restarts = 0
-      }
-    end
-
     def restarting?
       @restarts > 0
     end
@@ -124,15 +112,16 @@ module Kontena::Workers
       apply
     end
 
-    def apply_in_progress?
-      @apply_in_progress == true
-    end
-
     def apply
+      cancel_restart_timers
       exclusive {
         begin
-          @apply_in_progress = true
           ensure_desired_state
+          # reset restart counter if instance stays up 10s
+          @restart_counter_reset_timer = after(10) {
+            info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter"
+            @restarts = 0
+          }
         rescue => error
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           warn error
@@ -144,8 +133,6 @@ module Kontena::Workers
           # Only terminate this actor after we have succesfully ensure_terminated the Docker container
           # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
           self.terminate if service_pod.terminated?
-        ensure
-          @apply_in_progress = false
         end
       }
     end
@@ -333,13 +320,6 @@ module Kontena::Workers
     # @param [Integer] severity
     def log_service_pod_event(type, data, severity = Logger::INFO)
       super(service_pod.service_id, service_pod.instance_number, type, data, severity)
-    end
-
-    private
-
-    def shutdown
-      @restart_backoff_timer.cancel if @restart_backoff_timer
-      @restart_counter_reset_timer.cancel if @restart_counter_reset_timer
     end
   end
 end
