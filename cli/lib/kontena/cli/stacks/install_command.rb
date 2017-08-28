@@ -44,7 +44,7 @@ module Kontena::Cli::Stacks
     def install_dependencies
       loader.dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency[:name]}"
-        puts "#{pastel.green('>')} Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)} #{pastel.green('..')}"
+        caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
         vals_from_opts = values.select do |key, _|
