@@ -66,7 +66,9 @@ module Kontena::Workers
     def on_container_event(topic, e)
       attrs = e.actor.attributes
       if attrs['io.kontena.service.id'] == @service_pod.service_id &&
-          attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number
+          attrs['io.kontena.container.type'] == 'service' &&
+          attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number &&
+          attrs['io.kontena.container.deploy_rev'].to_s == @service_pod.deploy_rev
         @container_state_changed = true
         handle_restart_on_die if e.status == 'die'.freeze
       end
@@ -86,11 +88,11 @@ module Kontena::Workers
         info "restarting #{@service_pod.name_for_humans} because it has stopped (delay: #{backoff}s)"
       end
       ts = Time.now.utc
+      @restarts += 1
       @restart_backoff_timer = after(backoff) {
         debug "restart triggered (from #{ts})"
         apply
       }
-      @restarts += 1
     end
 
     def max_restart_backoff
@@ -118,7 +120,7 @@ module Kontena::Workers
           ensure_desired_state
           # reset restart counter if instance stays up 10s
           @restart_counter_reset_timer = after(10) {
-            info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter"
+            info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter" if restarting?
             @restarts = 0
           }
         rescue => error
