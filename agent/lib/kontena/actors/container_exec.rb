@@ -20,11 +20,17 @@ module Kontena::Actors
 
     # @param [String] input
     def input(input)
-      if input.nil?
+      if !@write_pipe
+        warn "stdin write closed"
+      elsif input.nil?
         @write_pipe.close
       else
         @write_pipe.write(input)
       end
+    rescue Errno::EPIPE => exc
+      warn "stdin write error: #{exc}"
+      @write_pipe.close
+      @write_pipe = nil
     end
 
     # @param [String] cmd
