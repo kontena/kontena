@@ -60,7 +60,9 @@ describe Kontena::Workers::FluentdWorker do
       fluentd = instance_double(Fluent::Logger::FluentLogger)
       subject.wrapped_object.instance_variable_set('@fluentd', fluentd)
       subject.wrapped_object.instance_variable_set('@forwarding', true)
-      expect(fluentd).to receive(:post).with('web.nginx.1', {log: 'foo bar', source: 'stdout'})
+      subject.wrapped_object.instance_variable_set('@node', 'node-1')
+      subject.wrapped_object.instance_variable_set('@grid', 'terminal-a')
+      expect(fluentd).to receive(:post).with('web.nginx.1', {log: 'foo bar', source: 'stdout', node: 'node-1', grid: 'terminal-a', stack: 'web', service: 'nginx', instance_number: 1})
       subject.on_log_event(log_event)
     end
 

@@ -32,6 +32,9 @@ module Kontena::Workers
         fluentd_address = node.grid.dig('logs', 'opts', 'fluentd-address')
         info "starting fluentd log streaming to #{fluentd_address}"
         host, port = fluentd_address.split(':')
+        # grab node and grid names to be used later when enhancing log data
+        @node = node.name
+        @grid = node.grid['name']
         @fluentd = Fluent::Logger::FluentLogger
           .new("#{node.name}.#{node.grid['name']}",
               :host => host,
@@ -50,7 +53,12 @@ module Kontena::Workers
         tag = [log[:stack], log[:service], log[:instance]].join('.')
         record = {
           log: log[:data], # the actual log event
-          source: log[:type] # stdout/stderr
+          source: log[:type], # stdout/stderr
+          node: @node,
+          grid: @grid,
+          stack: log[:stack],
+          service: log[:service],
+          instance_number: log[:instance]
         }
         @fluentd.post(tag, record)
       end
