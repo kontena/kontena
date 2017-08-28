@@ -117,6 +117,10 @@ module Kontena
         end
       end
 
+      def caret(msg, dots: true)
+        puts "#{pastel.green('>')} #{msg}#{" #{pastel.green('..')}" if dots}"
+      end
+
       def spin_if(obj_or_proc, message, &block)
         if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
           spinner(message, &block)
@@ -244,8 +248,8 @@ module Kontena
         if self.respond_to?(:force?) && self.force?
           return
         end
-        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts message if message
+        exit_with_error 'Command requires --force' unless $stdout.tty? && $stdin.tty?
         puts "Destructive command. To proceed, type \"#{name}\" or re-run this command with --force option."
 
         ask("Enter '#{name}' to confirm: ") == name || error("Confirmation did not match #{name}. Aborted command.")

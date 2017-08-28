@@ -1,4 +1,5 @@
 require_relative 'common'
+require 'kontena/cli/stacks/yaml/stack_file_loader'
 
 module Kontena::Cli::Stacks
   class InstallCommand < Kontena::Command
@@ -16,28 +17,66 @@ module Kontena::Cli::Stacks
     include Common::StackValuesToOption
     include Common::StackValuesFromOption
 
+    option '--parent-name', '[PARENT_NAME]', "Set parent stack name", hidden: true
+    option '--skip-dependencies', :flag, "Do not install any stack dependencies"
+
     requires_current_master
     requires_current_master_token
 
     def execute
-      stack = stack_read_and_dump(filename, name: name, values: values)
+      install_dependencies unless skip_dependencies?
 
-      stack['name'] = name if name
+      set_env_variables(stack_name, current_grid)
 
-      stack['dependencies'].each do |dependency|
-        target_name = "#{stack['name']}-#{dependency[:name]}"
-        puts "#{pastel.green('>')} Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)} #{pastel.green('..')}"
-        Kontena.run!('stack', 'install', '-n', target_name, dependency[:stack])
-      end
+      hint_on_validation_notifications(stack[:notifications]) unless stack[:notifications].empty?
+      abort_on_validation_errors(stack[:errors]) unless stack[:errors].empty?
 
-      spinner "Creating stack #{pastel.cyan(stack['name'])} " do
-        create_stack(stack)
-      end
-      Kontena.run!(['stack', 'deploy', stack['name']]) if deploy?
+      dump_variables if values_to
+
+      create_stack
+      deploy_stack if deploy?
     end
 
-    def create_stack(stack)
-      client.post("grids/#{current_grid}/stacks", stack)
+    def values
+      @values ||= values_from_options
+    end
+
+    def install_dependencies
+      loader.dependencies.each do |dependency|
+        target_name = "#{stack_name}-#{dependency[:name]}"
+        puts "#{pastel.green('>')} Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)} #{pastel.green('..')}"
+        cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
+
+        vals_from_opts = values.select do |key, _|
+          key.start_with?(dependency[:name] + '.')
+        end.each_with_object({}) do |k, v, obj|
+          obj[k.sub(dependency[:name] + '.', '')] = v
+        end
+
+        dependency[:variables].merge(vals_from_opts).each do |key, value|
+          cmd.concat ['-v', "#{key}=#{value}"]
+        end
+
+        cmd << '--no-deploy' unless deploy?
+
+        cmd << dependency[:stack]
+        Kontena.run!(cmd)
+      end
+    end
+
+    def create_stack
+      spinner "Creating stack #{pastel.cyan(stack['name'])} " do
+        client.post("grids/#{current_grid}/stacks", stack.reject { |k, _| k == :errors || k == :notifications})
+      end
+    end
+
+    def deploy_stack
+      Kontena.run!(['stack', 'deploy', stack[:name]])
+    end
+
+    def update_stack_data
+      stack['name'] = name if name
+      stack['parent_name'] = parent_name if parent_name
     end
   end
 end
