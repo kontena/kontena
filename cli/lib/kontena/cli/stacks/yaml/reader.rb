@@ -1,5 +1,6 @@
 require 'kontena/cli/common'
 require 'kontena/util'
+require 'kontena/cli/stacks/yaml/stack_file_loader'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -22,48 +23,36 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
-      attr_reader :file, :raw_content, :errors, :notifications, :defaults, :values, :registry
+      attr_reader :file, :loader, :errors, :notifications
 
-      def initialize(file, skip_validation: false, skip_variables: false, variables: nil, values: nil, defaults: nil)
+      def initialize(file)
         require_relative 'service_extender'
         require_relative 'validator_v3'
         require_relative 'opto'
         require 'liquid'
 
-        @file = file
-
-        if from_registry?
-          require 'shellwords'
-          @raw_content = Kontena::StacksCache.pull(file)
-          @registry    = current_account.stacks_url
-        elsif from_url?
-          @raw_content = load_from_url(file)
-          @registry = 'file://'
+        if file.kind_of?(StackFileLoader)
+          @file = file.source
+          @loader = file
         else
-          @raw_content = File.read(File.expand_path(file))
-          @registry = 'file://'
+          @file = file
+          @loader = StackFileLoader.for(file)
         end
 
         @errors           = []
         @notifications    = []
-        @skip_validation  = skip_validation
-        @skip_variables   = skip_variables
-        @variables        = variables
-        @values           = values
-        @defaults         = defaults
       end
 
-      def load_from_url(url)
-        require 'open-uri'
-        stream = open(url)
-        stream.read
+      def variable_values
+        variables.to_h(values_only: true)
       end
 
       def default_envs
         @default_envs ||= {
           'GRID' => env['GRID'],
-          'STACK' => env['STACK']
-        }.merge(env['PLATFORM'].to_s.empty? ? {} : { 'PLATFORM' => env['PLATFORM'] })
+          'STACK' => env['STACK'],
+          'PLATFORM' => env['PLATFORM'] || env['GRID']
+        }
       end
 
       def internals_interpolated_yaml
@@ -83,13 +72,12 @@ module Kontena::Cli::Stacks
 
       def fully_interpolated_yaml
         return @fully_interpolated_yaml if @fully_interpolated_yaml
-        vars = variables.to_h(values_only: true)
         @fully_interpolated_yaml = ::YAML.safe_load(
           replace_dollar_dollars(
             interpolate(
               interpolate_liquid(
                 raw_content,
-                vars
+                variable_values
               ),
               use_opto: true,
               raise_on_unknown: true
@@ -100,78 +88,89 @@ module Kontena::Cli::Stacks
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
+      def raw_content
+        loader.content
+      end
+
       def raw_yaml
-        @raw_yaml ||= ::YAML.safe_load(raw_content) || {}
+        loader.yaml
+      end
+
+      def default_envs_to_options
+        default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
       end
 
       # @return [Opto::Group]
       def variables
-        return @variables if @variables
-        @variables = ::Opto::Group.new(
-          (internals_interpolated_yaml['variables'] || {}).merge(
-            default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
-          ),
-          defaults: {
-            from: :env,
-            to: :env
-          }
+        @variables ||= ::Opto::Group.new(
+          (internals_interpolated_yaml['variables'] || {}).merge(default_envs_to_options),
+          defaults: { from: :env, to: :env }
         )
-        if defaults
-          defaults.each do |key, val|
-            var = @variables.option(key)
-            var.default = val if var
-          end
-        end
+      end
 
-        if values
-          values.each do |key, val|
-            var = @variables.option(key)
-            var.set(val) if var
+      def set_variable_defaults(defaults)
+        defaults.each do |key, val|
+          var = variables.option(key)
+          var.default = val if var
+        end
+      end
+
+      def set_variable_values(values)
+        values.each do |key, val|
+          var = variables.option(key)
+          var.set(val) if var
+        end
+      end
+
+      def create_dependency_variables(dependencies, name)
+        dependencies.each do |options|
+          variables.build_option(name: options[:name].tr('-', '_'), type: :string, value: "#{name}-#{options[:name]}")
+          options[:depends].each do |child_deps|
+            create_dependency_variables(child_deps, "#{name}.#{options[:name]}")
           end
         end
-        @variables
+      end
+
+      def from_file?
+        loader.origin == 'file'
       end
 
       # @param [String] service_name
       # @return [Hash]
-      def execute(service_name = nil)
-        process_variables unless skip_variables?
-        validate unless skip_validation?
+      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, skip_variables: false, values: nil, defaults: nil)
+        unless skip_variables
+          set_variable_defaults(defaults) if defaults
+          set_variable_values(values) if values
+          create_dependency_variables(dependencies, name)
+          variables.run
+          raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
+        end
+
+        validate unless skip_validation
 
         result = {}
         Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
           result[:stack]         = raw_yaml['stack']
-          result[:version]       = self.stack_version
-          result[:name]          = self.stack_name
-          result[:registry]      = registry
+          result[:version]       = loader.stack_name.version || '0.0.1'
+          result[:name]          = name
+          result[:registry]      = loader.registry
           result[:expose]        = fully_interpolated_yaml['expose']
-          result[:errors]        = errors unless skip_validation?
+          result[:errors]        = errors unless skip_validation
           result[:notifications] = notifications
           result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
-          unless skip_variables?
-            result[:variables]     = variables.to_h(values_only: true).reject do |k,_|
-              default_envs.keys.include?(k) || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault)
-            end
-          end
           result[:volumes]       = errors.count.zero? ? parse_volumes : {}
           result[:dependencies]  = dependencies
+          result[:source]        = raw_content
+          unless skip_variables
+            result[:variables] = variable_values.reject { |k, _| default_envs[k] || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault) }
+          end
+          result[:parent_name]   = parent_name
         end
         result
       end
 
       def dependencies
-        @dependencies ||= internals_interpolated_yaml.fetch('depends', {}).map do |name, options|
-          nested_reader = Kontena::Cli::Stacks::Common.stack_from_yaml(options['stack'], name: "#{self.stack_name}-#{name}", skip_envs: true)
-          Kontena.logger.debug { nested_reader.inspect }
-          nested_dependencies = nested_reader['dependencies'] || {}
-          variables.build_option(name: name, type: :string, value: "#{self.stack_name}-#{name}")
-          options.merge(name: name, stack: options.delete('stack')).merge(nested_dependencies.empty? ? {} : { depends: nested_dependencies })
-        end
-      end
-
-      def process_variables
-        variables.run
-        raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
+        @dependencies ||= loader.dependencies
       end
 
       # @raise [Liquid::Error]
@@ -185,39 +184,11 @@ module Kontena::Cli::Stacks
         template.render!(vars, strict_variables: true, strict_filters: true)
       end
 
-      def stack_name
-        @stack_name ||= parse_stack_name(raw_yaml['stack'].to_s)[:stack]
-      end
-
-      def stack_version
-        @stack_version ||= raw_yaml['version'] || parse_stack_name(raw_yaml['stack'].to_s)[:version] || '0.0.1'
-      end
-
       # @return [Array] array of validation errors
       def validate
         result = validator.validate(fully_interpolated_yaml)
         store_failures(result)
         result
-      end
-
-      def skip_validation?
-        !!@skip_validation
-      end
-
-      def skip_variables?
-        !!@skip_variables
-      end
-
-      def from_registry?
-        file =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/ && !File.exist?(file)
-      end
-
-      def from_url?
-        file =~ /\A(?:http|https|ftp):\/\//
-      end
-
-      def from_file?
-        !from_registry? && !from_url?
       end
 
       # @return [Kontena::Cli::Stacks::YAML::ValidatorV3]
@@ -230,12 +201,12 @@ module Kontena::Cli::Stacks
           if process_hash?(config)
             volumes[name].delete('only_if')
             volumes[name].delete('skip_if')
-            volumes[name] = process_volume(config)
+            volumes[name] = process_volume(name, config)
           else
             volumes.delete(name)
           end
         end
-        volumes
+        volumes.map { |name, vol| vol.merge(name: name) }
       end
 
       ##
@@ -244,7 +215,7 @@ module Kontena::Cli::Stacks
       def parse_services(service_name = nil)
         if service_name.nil?
           services.each do |name, config|
-            services[name] = process_config(config)
+            services[name] = process_config(config, name)
             if process_hash?(config)
               services[name].delete('only_if')
               services[name].delete('skip_if')
@@ -252,10 +223,10 @@ module Kontena::Cli::Stacks
               services.delete(name)
             end
           end
-          services
+          services.map { |name, svc| svc.merge(name: name) }
         else
           raise ("Service '#{service_name}' not found in #{file}") unless services.has_key?(service_name)
-          process_config(services[service_name])
+          process_config(services[service_name], service_name)
         end
       end
 
@@ -282,7 +253,7 @@ module Kontena::Cli::Stacks
       end
 
       # @param [Hash] service_config
-      def process_config(service_config)
+      def process_config(service_config, name=nil)
         normalize_env_vars(service_config)
         merge_env_vars(service_config)
         expand_build_context(service_config)
@@ -291,10 +262,22 @@ module Kontena::Cli::Stacks
           service_config = extend_config(service_config)
           service_config.delete('extends')
         end
-        service_config
+        if name
+          exit_with_error("Image is missing for #{name}. Aborting.") unless service_config['image'] # why isn't this a validation?
+          ServiceGeneratorV2.new(service_config).generate.merge('name' => name)
+        else
+          ServiceGeneratorV2.new(service_config).generate
+        end
       end
 
-      def process_volume(volume_config)
+      def process_volume(name, volume_config)
+        return [] if volume_config.nil? || volume_config.empty?
+        if volume_config['external'].is_a?(TrueClass)
+          volume_config['external'] = name
+        elsif volume_config['external']['name']
+          volume_config['external'] = volume_config['external']['name']
+        end
+        volume_config['name'] = name
         volume_config
       end
 
@@ -308,7 +291,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename, skip_validation: skip_validation?, skip_variables: true, variables: variables, defaults: defaults, values: values).execute(service_name)
+        outcome = Reader.new(filename).execute(service_name, skip_validation: skip_validation?, skip_variables: true, variables: variables, defaults: defaults, values: values)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]
@@ -464,27 +447,6 @@ module Kontena::Cli::Stacks
           end
         end
       end
-
-      # Takes a stack name such as user/foo:1.0.0 and breaks it into components
-      # @param [String] stack_name
-      # @return [Hash] a hash with :user, :stack and :version
-      def parse_stack_name(stack_name)
-        return {} if stack_name.nil?
-        return {} if stack_name.empty?
-        name, version = stack_name.split(':', 2)
-        if name.include?('/')
-          user, stack = name.split('/', 2)
-        else
-          user = nil
-          stack = name
-        end
-        {
-          user: user,
-          stack: stack,
-          version: version
-        }
-      end
-
 
       def env
         ENV
