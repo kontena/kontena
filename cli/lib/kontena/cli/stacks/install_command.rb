@@ -73,10 +73,5 @@ module Kontena::Cli::Stacks
     def deploy_stack
       Kontena.run!(['stack', 'deploy', stack[:name]])
     end
-
-    def update_stack_data
-      stack['name'] = name if name
-      stack['parent_name'] = parent_name if parent_name
-    end
   end
 end

@@ -16,8 +16,12 @@ module Kontena::Cli::Stacks
       end
     end
 
+    def stack_name
+      [user, stack].join('/')
+    end
+
     def to_s
-      [[user, stack].join('/'), version].join(':')
+      version ? "#{stack_name}:#{version}" : stack_name
     end
     alias to_str to_s
 

@@ -23,6 +23,7 @@ module Kontena::Cli::Stacks
     def stack
       @stack ||= reader.execute(
         name: stack_name,
+        parent_name: self.respond_to?(:parent_name) ? self.parent_name : nil,
         values: (self.respond_to?(:values_from_options) ? self.values_from_options : {})
       )
     end
