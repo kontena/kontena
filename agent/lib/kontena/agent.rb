@@ -119,9 +119,21 @@ module Kontena
     end
 
     def handle_trace
-      info "Dump celluloid actor stacks..."
+      info "Dump celluloid actor and thread stacks..."
 
       Celluloid.dump
+
+      Thread.list.each do |thread|
+        next if thread[:celluloid_actor_system]
+
+        puts "Thread 0x#{thread.object_id.to_s(16)} <#{thread.name}>"
+        if backtrace = thread.backtrace
+          puts "\t#{backtrace.join("\n\t")}"
+        end
+        puts
+      end
+
+      info "Dump cellulooid actor and thread stacks: done"
     end
 
     def supervise
