@@ -36,14 +36,19 @@ module Kontena::Actors
       opts = {tty: tty}
       opts[:stdin] = @read_pipe if stdin
       defer {
-        if tty
-          _, _, exit_code = @container.exec(cmd, opts) do |chunk|
-            self.handle_stream_chunk('stdout'.freeze, chunk)
+        begin
+          if tty
+            _, _, exit_code = @container.exec(cmd, opts) do |chunk|
+              self.handle_stream_chunk('stdout'.freeze, chunk)
+            end
+          else
+            _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
+              self.handle_stream_chunk(stream, chunk)
+            end
           end
-        else 
-          _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
-            self.handle_stream_chunk(stream, chunk)
-          end
+        ensure
+          # the Docker::Container#exec leaves the stdin pipe open
+          @read_pipe.close # ensure any input() task will fail
         end
       }
     ensure 
