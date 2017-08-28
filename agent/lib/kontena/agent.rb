@@ -128,7 +128,7 @@ module Kontena
 
         puts "Thread 0x#{thread.object_id.to_s(16)} <#{thread.name}>"
         if backtrace = thread.backtrace
-          puts "\t#{thread.backtrace.join("\n\t")}"
+          puts "\t#{backtrace.join("\n\t")}"
         end
         puts
       end
