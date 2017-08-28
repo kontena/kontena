@@ -32,7 +32,7 @@ module Kontena::Actors
     # @param [Boolean] stdin
     def run(cmd, tty = false, stdin = false)
       info "starting command: #{cmd} (tty: #{tty}, stdin: #{stdin})"
-      exit_code = 0
+      exit_code = 128
       opts = {tty: tty}
       opts[:stdin] = @read_pipe if stdin
       defer {
