@@ -32,7 +32,7 @@ module Kontena::Actors
     # @param [Boolean] stdin
     def run(cmd, tty = false, stdin = false)
       info "starting command: #{cmd} (tty: #{tty}, stdin: #{stdin})"
-      exit_code = 128
+      exit_code = nil
       opts = {tty: tty}
       opts[:stdin] = @read_pipe if stdin
       defer {
@@ -46,9 +46,17 @@ module Kontena::Actors
           end
         end
       }
-    ensure 
-      info "command finished: #{cmd} with code #{exit_code}"
-      shutdown(exit_code)
+    rescue Docker::Error::DockerError => exc
+      warn "#{cmd} error: #{exc}"
+      handle_error(exc)
+    rescue Exception => exc
+      error exc
+      handle_error(exc)
+    else
+      info "#{cmd} exit with code #{exit_code}: #{cmd}"
+      handle_exit(exit_code)
+    ensure
+      self.terminate
     end
 
     # @param [String] stream
@@ -58,9 +66,13 @@ module Kontena::Actors
     end
 
     # @param [Integer] exit_code
-    def shutdown(exit_code)
+    def handle_exit(exit_code)
       rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
-      self.terminate
+    end
+
+    # @param [Exception] error
+    def handle_error(error)
+      rpc_client.notification('/container_exec/error', [@uuid, "#{error.class.name}: #{error}"])
     end
   end
 end
