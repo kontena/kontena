@@ -25,9 +25,14 @@ module Kontena::Workers
       end
     end
 
+    def processing?
+      !!@forwarding && !!@fluentd
+    end
+
     # @param [Node] node
     def configure(node)
       driver = node.grid.dig('logs', 'forwarder')
+
       if driver == 'fluentd'
         fluentd_address = node.grid.dig('logs', 'opts', 'fluentd-address')
         info "starting fluentd log streaming to #{fluentd_address}"
@@ -49,7 +54,7 @@ module Kontena::Workers
     end
 
     def on_log_event(log)
-      if @forwarding && @fluentd
+      if self.processing?
         tag = [log[:stack], log[:service], log[:instance]].join('.')
         record = {
           log: log[:data], # the actual log event
