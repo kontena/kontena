@@ -1489,14 +1489,14 @@ Accept: application/json
 ## Get domain authorization
 
 ```http
-GET /v1/domain_authorizations/foobar.com HTTP/1.1
+GET /v1/domain_authorizations/my-grid/foobar.com HTTP/1.1
 Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
 Accept: application/json
 ```
 
 ### Endpoint
 
-`GET /v1/domain_authorizations/foobar.com`
+`GET /v1/domain_authorizations/my-grid/foobar.com`
 
 
 # Certificates
