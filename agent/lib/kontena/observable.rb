@@ -31,15 +31,27 @@ module Kontena
         debug "register #{observable}: #{actor.__klass__}"
       end
 
-      def on_actor_crash(actor, reason)
-        debug "crash #{actor.__klass__}: #{reason}"
+      # @param observable [Kontena::Observable]
+      # @return [Boolean]
+      def registered?(observable)
+        @observables.has_key? observable
+      end
 
+      def each_observable_for_actor(actor)
         @observables.each_pair do |observable, observable_actor|
-          if observable_actor == actor
-            debug "crash #{observable}..."
+          yield observable if observable_actor == actor
+        end
+      end
 
-            observable.crash(reason)
-          end
+      def on_actor_crash(actor, reason)
+        warn "crashing observables owned by actor #{actor.__klass__}: #{reason}"
+
+        each_observable_for_actor(actor) do |observable|
+          @observables.delete(observable)
+
+          debug "crash #{observable}..."
+
+          observable.crash(reason)
         end
       end
     end

@@ -138,7 +138,8 @@ describe Kontena::Observable do
     end
   end
 
-  context 'owned by an Actor', :celluloid => true do
+  context 'registered by an Actor', :celluloid => true do
+    let(:registry) { Kontena::Observable.registry }
     let(:observable_actor) { TestObservableActor.new }
     subject { observable_actor.observable }
     let(:observer_actor) { TestObserverActor.new }
@@ -153,6 +154,18 @@ describe Kontena::Observable do
       observable_actor.delay_update(value, delay: 0.05)
 
       expect(observer_actor.observe(subject, timeout: 1.0)).to eq value
+    end
+
+    it "propagates crashes to observers and unregisters after crashing" do
+      subject
+
+      expect(registry.registered? subject).to be_truthy
+
+      observable_actor.async.crash('test', delay: 0.1)
+
+      expect{observer_actor.observe(subject)}.to raise_error(Kontena::Observer::Error, 'RuntimeError@Kontena::Observable<TestObservableActor>: test')
+
+      expect(registry.registered? subject).to be_falsey
     end
 
     it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
