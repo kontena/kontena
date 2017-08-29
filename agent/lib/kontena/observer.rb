@@ -21,20 +21,37 @@ module Kontena
     # This object is passed to each Observable, which then sends it back via Kontena::Observable::Message for updates.
     class Observe
       # @param cls [Class] used to identify the observer for logging
-      def initialize(cls)
+      def initialize(cls, persistent: true)
         @class = cls
+        @persistent = persistent
 
         @observables = []
         @values = {}
         @alive = true
       end
 
+    # Threadsafe API
       # Describe the observer for debug logging
       # Called by the Observer actor, must be threadsafe and atomic
       def to_s
         "#{self.class.name}<#{@class.name}>"
       end
 
+      # Accepting updates from Observables?
+      #
+      # @return [Boolean] false => delete from Observable#observers before sending update
+      def alive?
+        @alive
+      end
+
+      # Accepting multiple updates from each Observable, or unregister after first one?
+      #
+      # @return [Boolean]
+      def persistent?
+        @persistent
+      end
+
+    # Observer actor API
       def inspect
         return "#{self.class.name}<#{@class.name}, #{describe_observables}>"
       end
@@ -109,42 +126,10 @@ module Kontena
         return nil
       end
 
-      # Accepting updates from Observables?
-      #
-      # @return [Boolean] false => delete from Observable#observers before sending update
-      def alive?
-        @alive
-      end
-
       # No longer expecting updates.
       #
       def kill
         @alive = false
-      end
-
-      # Accepting multiple updates from Observables?
-      #
-      # @return [Boolean] false => delete from Observable#observers after sending update
-      def persistent?
-        fail NotImplementedError
-      end
-
-      class Async < Observe
-        # Persistent, expected to be updated multiple times
-        #
-        # @return [Boolean]
-        def persistent?
-          true
-        end
-      end
-
-      class Sync < Observe
-        # One-shot, only expect a single update.
-        #
-        # @return [Boolean]
-        def persistent?
-          false
-        end
       end
     end
 
@@ -182,12 +167,33 @@ module Kontena
     # @see [#observe_async] yields if block is given
     # @see [#observe_sync] returns unless block is given
     def observe(*observables, timeout: nil, &block)
+      observe = Observe.new(self.class,
+        persistent: !!block,
+      )
+      actor = Celluloid.current_actor
+
+      # atomic setup of observes, task must not suspend and allow mailbox to be processed before calling Celluloid.receive
+      observables.each do |observable|
+        # register for observable updates, and set initial value
+        if value = observable.observe(observe, actor)
+          debug { "observe async #{observable} => #{value}" }
+
+          observe.add(observable, value)
+        else
+          debug { "observe async #{observable}..." }
+
+          observe.add(observable)
+        end
+      end
+
       if block
         raise "timeout not supported for async observe" if timeout
-        observe_async(*observables, &block)
+        observe_async(observe, &block)
       else
-        return observe_sync(*observables, timeout: timeout)
+        return observe_sync(observe, timeout: timeout)
       end
+    ensure
+      observe.kill
     end
 
     # Observe values from Observables asynchronously, yielding the observed values:
@@ -208,30 +214,10 @@ module Kontena
     # and it may receive some Observable updates multiple times.
     # It is guaranteed to receive Observable updates in the correct order.
     #
-    # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>]
     # @raise [Celluloid::DeadActorError]
     # @return never
     # @yield [*values] all Observables are ready
-    def observe_async(*observables, &block)
-      actor = Celluloid.current_actor
-
-      # unique handle to identify this observe loop
-      observe = Observe::Async.new(self.class)
-
-      # atomic setup of observes, task must not suspend and allow mailbox to be processed before calling Celluloid.receive
-      observables.each do |observable|
-        # register for observable updates, and set initial value
-        if value = observable.observe(observe, actor)
-          debug { "observe async #{observable} => #{value}" }
-
-          observe.add(observable, value)
-        else
-          debug { "observe async #{observable}..." }
-
-          observe.add(observable)
-        end
-      end
-
+    def observe_async(observe, &block)
       while true
         if observe.ready?
           debug { "observe async #{observe.describe_observables}: #{observe.values.join(', ')}" }
@@ -254,8 +240,6 @@ module Kontena
 
         raise observe.error if observe.error?
       end
-    ensure
-      observe.kill if observe
     end
 
     # Observe values from Observables synchronously, returning the observed values:
@@ -267,29 +251,11 @@ module Kontena
     # Raises with Timeout::Error if a timeout is given, and any observable is not yet ready.
     # Crashes the actor if any observed actor crashes during the wait.
     #
-    # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>]
     # @param timeout [Float] optional timeout in seconds
     # @raise [Timeout::Error]
     # @raise [Celluloid::DeadActorError]
     # @return [*values]
-    def observe_sync(*observables, timeout: nil)
-      actor = Celluloid.current_actor
-      observe = Observe::Sync.new(self.class)
-
-      # atomic setup of observes, task must not suspend and allow mailbox to be processed before calling Celluloid.receive
-      observables.each do |observable|
-        # query for initial Observable state, or subscribe for updates
-        if value = observable.observe(observe, actor)
-          debug { "observe sync #{observable} => #{value}" }
-
-          observe.add(observable, value)
-        else
-          debug { "observe sync #{observable}..." }
-
-          observe.add(observable)
-        end
-      end
-
+    def observe_sync(observe, timeout: nil)
       while !observe.ready?
         debug { "observe wait #{observe.describe_observables}... (wait timeout=#{timeout})" }
 
@@ -315,13 +281,13 @@ module Kontena
         end
       end
 
-      if observables.length == 1
-        return observe.values.first
+      values = observe.values
+
+      if values.length == 1
+        return values.first
       else
-        return observe.values
+        return values
       end
-    ensure
-      observe.kill if observe
     end
   end
 end
