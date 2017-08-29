@@ -57,6 +57,17 @@ describe GridDomainAuthorizations::Authorize do
         expect(GridDomainAuthorization.find_by(domain: 'example.com').id).not_to eq(authz.id)
 
       end
+
+      it 'fails if LE gives no challenge' do
+        auth = double(dns01: nil)
+        expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
+
+        expect {
+          subject.execute
+          expect(subject.has_errors?).to be_truthy
+        }.not_to change{GridDomainAuthorization.count}
+
+      end
     end
 
 
@@ -69,7 +80,6 @@ describe GridDomainAuthorizations::Authorize do
       }.not_to change{GridDomainAuthorization.count}
 
     end
-
 
   end
 
@@ -97,6 +107,17 @@ describe GridDomainAuthorizations::Authorize do
       expect(auth.service_deploy_id).not_to be_nil
       expect(auth.tls_sni_certificate).to eq('CERTIFICATEPRIVATE_KEY')
     end
+
+    it 'fails if LE gives no challenge' do
+        auth = double(tls_sni01: nil)
+        expect(acme).to receive(:authorize).with(domain: 'example.com').and_return(auth)
+
+        expect {
+          subject.execute
+          expect(subject.has_errors?).to be_truthy
+        }.not_to change{GridDomainAuthorization.count}
+
+      end
   end
 
 end

@@ -35,6 +35,10 @@ module GridDomainAuthorizations
       when 'dns-01'
         debug "creating dns-01 challenge"
         challenge = authorization.dns01
+        if challenge.nil?
+          add_error(:challenge, :dns_01, "LE gave back empty dns-01 challenge!?!?")
+          return
+        end
         challenge_opts = {
           'record_name' => challenge.record_name,
           'record_type' => challenge.record_type,
@@ -43,6 +47,10 @@ module GridDomainAuthorizations
       when 'tls-sni-01'
         debug "creating tls-sni-01 challenge"
         challenge = authorization.tls_sni01
+        if challenge.nil?
+          add_error(:challenge, :tls_sni_01, "LE gave back empty tls-sni-01 challenge!?!?")
+          return
+        end
         verification_cert = [challenge.certificate.to_pem, challenge.private_key.to_pem].join
       end
 
