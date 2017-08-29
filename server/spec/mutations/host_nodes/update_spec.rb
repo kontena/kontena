@@ -6,7 +6,7 @@ describe HostNodes::Update do
   let(:rpc_client) { instance_double(RpcClient) }
 
   before do
-    allow(node).to receive(:rpc_client).and_return(rpc_client)
+    allow(RpcClient).to receive(:new).with(node.node_id, Integer).and_return(rpc_client)
   end
 
   describe '#run' do
@@ -59,17 +59,29 @@ describe HostNodes::Update do
           }.to change{ node.reload.availability }.from(HostNode::Availability::ACTIVE).to(HostNode::Availability::DRAIN)
         end
 
-        it 'stops stateful services when draining' do
-          outcome = described_class.run(
-            host_node: node,
-            availability: HostNode::Availability::DRAIN,
-            labels: []
-          )
-          expect(outcome).to be_success
+        context 'with a running stateful service instance' do
+          let!(:stack) { grid.stacks.find_by(name: 'null') }
+          let!(:stateful_service) { grid.grid_services.create!(stack: stack, name: 'redis', image_name: 'redis:latest', stateful: true, state: 'running') }
+          let!(:stateful_service_instance1) { stateful_service.grid_service_instances.create!(host_node: node, instance_number: 1, desired_state: 'running') }
+
+          it 'stops stateful services when draining' do
+            expect(rpc_client).to receive(:notify).with('/service_pods/notify_update', 'stop') do
+              expect(stateful_service_instance1.desired_state).to eq 'stopped'
+            end
+
+            expect{
+              outcome = described_class.run(
+                host_node: node,
+                availability: HostNode::Availability::DRAIN,
+                labels: []
+              )
+              expect(outcome).to be_success
+            }.to change{stateful_service_instance1.reload.desired_state}.from('running').to('stopped')
+          end
         end
       end
 
-      context 'for a drained node' do
+      context 'for a drained node with a stopped service instance' do
         before do
           node.set(availability: HostNode::Availability::DRAIN)
         end
@@ -83,6 +95,27 @@ describe HostNodes::Update do
             )
             expect(outcome).to be_success
           }.to change{ node.availability }.from(HostNode::Availability::DRAIN).to(HostNode::Availability::ACTIVE)
+        end
+
+        context 'with a stopped stateful service instance' do
+          let!(:stack) { grid.stacks.find_by(name: 'null') }
+          let!(:stateful_service) { grid.grid_services.create!(stack: stack, name: 'redis', image_name: 'redis:latest', stateful: true, state: 'running') }
+          let!(:stateful_service_instance1) { stateful_service.grid_service_instances.create!(host_node: node, instance_number: 1, desired_state: 'stopped') }
+
+          it 'starts and notifies the service instance' do
+            expect(rpc_client).to receive(:notify).with('/service_pods/notify_update', 'start') do
+              expect(stateful_service_instance1.desired_state).to eq 'running'
+            end
+
+            expect {
+              outcome = described_class.run(
+                host_node: node,
+                availability: HostNode::Availability::ACTIVE,
+                labels: []
+              )
+              expect(outcome).to be_success
+            }.to change{ stateful_service_instance1.reload.desired_state }.from('stopped').to('running')
+          end
         end
 
         it 'ignores update to drain' do
