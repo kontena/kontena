@@ -73,7 +73,7 @@ describe Kontena::Observer, :celluloid => true do
   subject { TestObserverActor.new() }
 
   it "raises synchronously if given an invalid actor", :celluloid => true, :log_celluloid_actor_crashes => false do
-    expect{subject.test_observe_async('foo')}.to raise_error(NoMethodError, /undefined method `observe' for "foo":String/)
+    expect{subject.test_observe_async('foo')}.to raise_error(NoMethodError, /undefined method `add_observe' for "foo":String/)
   end
 
   context "with an observable owned by a different actor" do
@@ -299,7 +299,7 @@ describe Kontena::Observer, :celluloid => true do
       end
 
       it "accepts update for first value while requesting second value" do
-        expect(observable2).to receive(:observe) do |observe, actor|
+        expect(observable2).to receive(:add_observe) do |observe, actor|
           observable_actor1.async.update object1 # XXX: can't suspend the observing task
           object2
         end
@@ -353,7 +353,7 @@ describe Kontena::Observer, :celluloid => true do
       end
 
       it "accepts update for first value while requesting second value" do
-        expect(observable2).to receive(:observe) do |observe, actor|
+        expect(observable2).to receive(:add_observe) do |observe, actor|
           observable_actor1.async.update object1 # XXX: can't suspend the observing task
           object2
         end
@@ -375,7 +375,7 @@ describe Kontena::Observer, :celluloid => true do
 
           expect{
             subject.test_exclusive_observe(observable1, observable2, timeout: 0.1)
-          }.to raise_error(Timeout::Error, 'observe timeout 0.10s: Kontena::Observable<TestObservableActor>, Kontena::Observable<TestObservableActor>?')
+          }.to raise_error(Timeout::Error, /observe timeout 0.\d+s: Kontena::Observable<TestObservableActor>, Kontena::Observable<TestObservableActor>\?/)
         end
       end
     end

@@ -125,7 +125,7 @@ module Kontena
     # @param actor [Celluloid::Proxy::Cell<Actor>]
     # @raise [Exception]
     # @return [Object] current value
-    def observe(observe, actor)
+    def add_observe(observe, actor)
       @mutex.synchronize do
         if !@value
           # subscribe for future udpates, no value to return

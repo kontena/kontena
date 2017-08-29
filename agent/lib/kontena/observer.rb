@@ -1,8 +1,6 @@
 module Kontena
   # An Actor that observes the value of other Obervables.
   module Observer
-    include Kontena::Logging
-
     class Error < StandardError
       attr_reader :observable, :cause
 
@@ -25,9 +23,11 @@ module Kontena
       attr_reader :logging_prefix
 
       # @param cls [Class] used to identify the observer for logging
+      # @param persistent [Boolean] false => only observe the first Observable value
       def initialize(cls, persistent: true)
         @class = cls
         @persistent = persistent
+        @deadline = nil
 
         @observables = []
         @values = {}
@@ -89,7 +89,13 @@ module Kontena
       #
       # @param observable [Observable]
       # @param value [Object] nil if not yet ready
-      def add(observable, value = nil)
+      def add_observable(observable, value = nil)
+        if value
+          debug { "add #{observable} => #{value}" }
+        else
+          debug { "add #{observable}..." }
+        end
+
         @observables << observable
         @values[observable] = value
       end
@@ -100,6 +106,7 @@ module Kontena
       # @return value
       def set(observable, value)
         raise "unknown observable: #{observable.class.name}" unless @values.has_key? observable
+
         @values[observable] = value
       end
 
@@ -112,26 +119,33 @@ module Kontena
         set(message.observable, message.value)
       end
 
-      # Receive observable update message sent to this actor, and update.
-      # Suspends the calling celluloid task until updated.
+      # Yield observable update message sent to this actor.
+      # Suspends the calling celluloid task in between message yields.
+      # Yields in exclusive mode to ensure that messages are not missed in between receives.
       #
-      # @param timeout [Float, nil] optional
       # @raise [Timeout::Error]
-      def receive_and_update(timeout: nil)
-        debug { "receive timeout=#{timeout}..." }
+      def receive
+        while alive?
+          timeout = @deadline ? @deadline - Time.now : nil
 
-        begin
-          # Celluloid.receive => Celluloid::Actor#receive => Celluloid::Internals::Receiver#receive returns nil on timeout
-          message = Celluloid.receive(timeout) { |msg| Kontena::Observable::Message === msg && msg.observe == self }
-        rescue Celluloid::TaskTimeout
-          # Celluloid.receive => Celluloid::Mailbox.receive raises TaskTimeout insstead
-          message = nil
-        end
+          debug { "receive timeout=#{timeout}..." }
 
-        if message
-          update(message)
-        else
-          raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{self.describe_observables}"
+          begin
+            # Celluloid.receive => Celluloid::Actor#receive => Celluloid::Internals::Receiver#receive returns nil on timeout
+            message = Celluloid.receive(timeout) { |msg| Kontena::Observable::Message === msg && msg.observe == self }
+          rescue Celluloid::TaskTimeout
+            # Celluloid.receive => Celluloid::Mailbox.receive raises TaskTimeout insstead
+            message = nil
+          end
+
+          if message
+            # prevent any intervening messages from being processed and discarded before we're back in Celluloid.receive()
+            Celluloid.exclusive {
+              yield message
+            }
+          else
+            raise Timeout::Error, "observe timeout #{'%.2fs' % timeout}: #{self.describe_observables}"
+          end
         end
       end
 
@@ -164,42 +178,40 @@ module Kontena
         return nil
       end
 
-      # Wait until observable is ready, or raise on error?
-      #
-      # @raise if error?
-      def wait(timeout: nil)
-        while alive?
-          if error?
-            raise self.error
-          elsif ready?
-            return
-          end
-
-          debug { "wait: #{self.describe_observables}" }
-
-          # XXX: timeout must be adjusted per deadline
-          receive_and_update(timeout: timeout)
-        end
-      end
-
       # Yield each set of observed values while alive, or raise on error?
       #
       # The yield is exclusive, because suspending the observing task would mean that
       # any observable messages would get discarded.
-      def each
-        while alive?
+      #
+      # @param timeout [Float] timeout between each yield
+      def observe(timeout: nil)
+        Celluloid.exclusive {
           if error?
             raise self.error
           elsif ready?
-            # prevent any intervening messages from being processed and discarded before we're back in receive()
-            Celluloid.exclusive {
-              yield *self.values
-            }
+            yield *self.values
           end
+        }
 
-          debug { "each: #{self.describe_observables}" }
+        @deadline = Time.now + timeout if timeout
 
-          receive_and_update
+        # yields in exclusive mode
+        receive do |message|
+          update(message)
+
+          if error?
+            debug { "crashed: #{self.describe_observables}" }
+
+            raise self.error
+          elsif ready?
+            debug { "ready: #{self.describe_observables}" }
+
+            yield *self.values
+
+            @deadline = Time.now + timeout if timeout
+          else
+            debug { "blocked: #{self.describe_observables}" }
+          end
         end
       end
 
@@ -249,50 +261,34 @@ module Kontena
     # @yield [*values] all Observables are ready (async mode only)
     # @return [*values] all Observables are ready (sync mode only)
     def observe(*observables, timeout: nil, &block)
-      raise ArgumentError, "timeout not supported for async observe" if timeout && block
-
-      observe = Observe.new(self.class,
-        persistent: !!block || observables.length > 1,
-      )
       actor = Celluloid.current_actor
+      observe = Observe.new(self.class,
+        persistent: !!block || observables.length > 1, # unless sync with a single observable
+      )
 
       # this block should not make any suspending calls, but use exclusive mode to guarantee that regardless
       # the task must not suspend and allow any Observable messages in the mailbox to be processed before calling Celluloid.receive
       Celluloid.exclusive {
         observables.each do |observable|
           # register for observable updates, and set initial value
-          if value = observable.observe(observe, actor)
-            debug { "observe #{observable} => #{value}" }
-
-            observe.add(observable, value)
+          if value = observable.add_observe(observe, actor)
+            observe.add_observable(observable, value)
           else
-            debug { "observe #{observable}..." }
-
-            observe.add(observable)
+            observe.add_observable(observable)
           end
         end
       }
 
       if block
-        observe.each do |*values|
-          debug { "observe async #{observe.describe_observables}: #{observe.values.join(', ')}" }
-
-          # prevent any intervening messages from getting discarded before we re-receive
-          Celluloid.exclusive {
-            yield *observe.values
-          }
-        end
+        observe.observe(timeout: timeout, &block)
       else
-        observe.wait(timeout: timeout)
-
-        debug { "observe sync #{observe.describe_observables}: #{observe.values.join(', ')}" }
-
-        values = observe.values
-
-        if values.length == 1
-          return values.first
-        else
-          return values
+        observe.observe(timeout: timeout) do |*values|
+          # workaround `return *observe.values` not working as expected
+          if observables.length > 1
+            return values
+          else
+            return values.first
+          end
         end
       end
     ensure
