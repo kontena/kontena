@@ -68,7 +68,7 @@ module Kontena
       observable
     end
 
-    def initialize(owner_name = Celluloid.current_actor.__klass__)
+    def initialize(owner_name = nil)
       @owner_name = owner_name
       @mutex = Thread::Mutex.new
       @observers = {}
