@@ -127,8 +127,9 @@ describe Kontena::Observer, :celluloid => true do
         expect(subject.alive?).to be_falsey
       end
 
-      pending "observes in order even if slow" do
-        subject.test_ordering(observable, rand_delay: 0.1)
+      it "observes in order even if slow" do
+        subject.async.test_ordering(observable, rand_delay: 0.1)
+        subject.ping
 
         observable_actor.spam_updates(1..100, interval: 0.01, duration: 0.5)
 
