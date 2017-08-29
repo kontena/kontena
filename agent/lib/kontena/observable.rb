@@ -14,7 +14,7 @@ module Kontena
 
     include Kontena::Logging
 
-    attr_reader :logging_prefix
+    attr_reader :logging_prefix # customize Kontena::Logging#logging_prefix by instance
 
     class Message
       attr_reader :observe, :observable, :value
@@ -40,19 +40,20 @@ module Kontena
       observable
     end
 
-    def initialize(owner_name = nil)
-      @owner_name = owner_name
+    # @param subject [Object] used to identify the Observable for logging purposes
+    def initialize(subject = nil)
+      @subject = subject
       @mutex = Thread::Mutex.new
       @observers = {}
       @value = nil
 
-      # include the name of the owning class in log messages
+      # include the subject (owning actor class, other resource) in log messages
       @logging_prefix = "#{self}"
     end
 
     # @return [String]
     def to_s
-      "#{self.class.name}<#{@owner_name}>"
+      "#{self.class.name}<#{@subject}>"
     end
 
     # @return [Object, nil] last updated value, or nil if not observable?
@@ -115,29 +116,28 @@ module Kontena
       set_and_notify(reason)
     end
 
-    # Observer actor is observing this Actor's @observable_value.
-    # Subscribes actor for updates to our observable value, sending Kontena::Observable::Message to given actor.mailbox.
-    # Links actor, such that observable actor crashes propagate to the observer.
+    # Observer is observing this Actor's @observable_value.
+    # Subscribes observer for updates to our observable value, sending Kontena::Observable::Message to observing mailbox.
     # Returns Kontena::Observable::Message with current value.
-    # The observing actor will be unsubscribed/unlinked once the actor.mailbox or observe becomes !alive?.
+    # The observer will be unsubscribed/unlinked once no longer alive?.
     #
-    # @param observe [Observer::Observe]
-    # @param actor [Celluloid::Proxy::Cell<Actor>]
+    # @param observer [Kontena::Observer]
+    # @param persistent [Boolean] always subscribe for future updates, otherwise only if no immediate value
     # @raise [Exception]
     # @return [Object] current value
-    def add_observe(observe, actor)
+    def add_observer(observer, persistent: true)
       @mutex.synchronize do
         if !@value
           # subscribe for future udpates, no value to return
-          @observers[observe] = actor
+          @observers[observer] = persistent
 
         elsif Exception === @value
           # raise with immediate value, no future updates to subscribe to
           raise @value
 
-        elsif observe.persistent?
+        elsif persistent
           # return with immediate value, also subscribe for future updates
-          @observers[observe] = actor
+          @observers[observer] = persistent
 
         else
           # return with immediate value, do not subscribe for future updates
@@ -147,32 +147,30 @@ module Kontena
       end
     end
 
-    # Update @value to each Kontena::Observer::Observe
+    # Send @value to each Kontena::Observer
     #
     # @param value [Object, nil, Exception]
     def set_and_notify(value)
       @mutex.synchronize do
         @value = value
 
-        @observers.each do |observe, actor|
-          alive = observe.alive? && actor.mailbox.alive?
-
-          if !alive
+        @observers.each do |observe, persistent|
+          if !observe.alive?
             debug { "dead: #{observe}" }
 
             @observers.delete(observe)
 
-          elsif !observe.persistent?
+          elsif !persistent
             debug { "notify and drop: #{observe} <- #{value}" }
 
-            actor.mailbox << Message.new(observe, self, value)
+            observe << Message.new(observe, self, value)
 
             @observers.delete(observe)
 
           else
             debug { "notify: #{observe} <- #{value}" }
 
-            actor.mailbox << Message.new(observe, self, value)
+            observe << Message.new(observe, self, value)
           end
         end
       end

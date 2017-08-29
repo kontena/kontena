@@ -70,55 +70,55 @@ module Kontena
     # @yield [*values] all Observables are ready (async mode only)
     # @return [*values] all Observables are ready (sync mode only)
     def self.observe(*observables, subject: nil, timeout: nil, &block)
-      actor = Celluloid.current_actor
-      observe = self.new(subject,
-        persistent: !!block || observables.length > 1, # unless sync with a single observable
-      )
+      observer = self.new(subject, Celluloid.current_actor.mailbox)
+
+      persistent = true
+      persistent = false if !block && observables.length == 1 # special case: sync observe of a single observable
 
       # this block should not make any suspending calls, but use exclusive mode to guarantee that regardless
       # the task must not suspend and allow any Observable messages in the mailbox to be processed before calling Celluloid.receive
       Celluloid.exclusive {
         observables.each do |observable|
           # register for observable updates, and set initial value
-          if value = observable.add_observe(observe, actor)
-            observe.add_observable(observable, value)
+          if value = observable.add_observer(observer, persistent: persistent)
+            observer.add_observable(observable, value)
           else
-            observe.add_observable(observable)
+            observer.add_observable(observable)
           end
         end
       }
 
       if block
-        observe.observe(timeout: timeout, &block)
+        observer.observe(timeout: timeout, &block)
       else
-        observe.observe(timeout: timeout) do |*values|
+        observer.observe(timeout: timeout) do |*values|
           # workaround `return *observe.values` not working as expected
           if observables.length > 1
-            return values
+            return observer.values
           else
-            return values.first
+            return observer.values.first
           end
         end
       end
     ensure
-      observe.kill
+      observer.kill
     end
 
     # @param subject [Object] used to identify the Observer for logging purposes
-    # @param persistent [Boolean] false => only observe the first Observable value
-    def initialize(subject = nil, persistent: true)
+    # @param mailbox [Celluloid::Mailbox] send/receive messages
+    def initialize(subject, mailbox)
       @subject = subject
-      @persistent = persistent
-      @deadline = nil
+      @mailbox = mailbox
 
       @observables = []
       @values = {}
       @alive = true
+      @deadline = nil
 
       @logging_prefix = "#{self}"
     end
 
-  # Threadsafe API
+  # threadsafe API
     # Describe the observer for debug logging
     # Called by the Observer actor, must be threadsafe and atomic
     def to_s
@@ -129,19 +129,18 @@ module Kontena
     #
     # @return [Boolean] false => delete from Observable#observers before sending update
     def alive?
-      @alive
+      @alive && @mailbox.alive?
     end
 
-    # Accepting multiple updates from each Observable, or unregister after first one?
-    #
-    # @return [Boolean]
-    def persistent?
-      @persistent
+    # Update Observer
+    # @param message [Kontena::Observable::Message]
+    def <<(message)
+      @mailbox << message
     end
 
-  # Observer actor API
+  # non-threadsafe API
     def inspect
-      return "#{self.class.name}<#{@class.name}, #{describe_observables}>"
+      return "#{self.class.name}<#{@subject}, #{describe_observables}>"
     end
 
     # Describe the observables for debug logging
@@ -201,7 +200,7 @@ module Kontena
       set(message.observable, message.value)
     end
 
-    # Yield observable update message sent to this actor.
+    # Yield observable messages sent to this actor from Observables using #<<
     # Suspends the calling celluloid task in between message yields.
     # Yields in exclusive mode to ensure that messages are not missed in between receives.
     #
