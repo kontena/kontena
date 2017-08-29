@@ -5,56 +5,16 @@ module Kontena
   #
   # @attr observers [Hash{Kontena::Observer::Observe => Celluloid::Proxy::Cell}]
   class Observable
-    include Kontena::Logging
+    require_relative './observable/registry'
 
-    attr_reader :logging_prefix
-
+    # @return [Celluloid::Proxy::Cell<Kontena::Observable::Registry>] system registry actor
     def self.registry
       Celluloid::Actor[:observable_registry] || fail(DeadActorError, "Observable registry actor not running")
     end
 
-    class Registry
-      include Celluloid
-      include Kontena::Logging
+    include Kontena::Logging
 
-      trap_exit :on_actor_crash
-
-      def initialize
-        info 'initialize'
-
-        @observables = {}
-      end
-
-      def register(observable, actor)
-        @observables[observable] = actor
-
-        debug "register #{observable}: #{actor.__klass__}"
-      end
-
-      # @param observable [Kontena::Observable]
-      # @return [Boolean]
-      def registered?(observable)
-        @observables.has_key? observable
-      end
-
-      def each_observable_for_actor(actor)
-        @observables.each_pair do |observable, observable_actor|
-          yield observable if observable_actor == actor
-        end
-      end
-
-      def on_actor_crash(actor, reason)
-        warn "crashing observables owned by actor #{actor.__klass__}: #{reason}"
-
-        each_observable_for_actor(actor) do |observable|
-          @observables.delete(observable)
-
-          debug "crash #{observable}..."
-
-          observable.crash(reason)
-        end
-      end
-    end
+    attr_reader :logging_prefix
 
     class Message
       attr_reader :observe, :observable, :value
@@ -218,11 +178,4 @@ module Kontena
       end
     end
   end
-end
-
-class Celluloid::Actor::System
-  ROOT_SERVICES << {
-    as: :observable_registry,
-    type: Kontena::Observable::Registry,
-  }
 end
