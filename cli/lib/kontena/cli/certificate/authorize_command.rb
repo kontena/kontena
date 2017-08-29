@@ -10,7 +10,7 @@ module Kontena::Cli::Certificate
     parameter "DOMAIN", "Domain to authorize"
 
     option '--type', 'AUTHORIZATION_TYPE', 'Authorization type, either tls-sni-01 or dns-01', default: 'dns-01'
-    option '--linked-service', "LINKED_SERVICE", 'A service (usually LB) where the tls-sni-01 certificate is bundled to'
+    option '--linked-service', "LINKED_SERVICE", 'A service (usually LB) where the tls-sni-01 challenge certificate is bundled to'
 
     def execute
       require_api_url
