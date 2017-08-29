@@ -341,8 +341,7 @@ describe Kontena::Observer, :celluloid => true do
         expect(future.value).to eq [object1, object2]
       end
 
-      # broken for non-persistent observes
-      pending "updates first value while waiting for second value" do
+      it "updates first value while waiting for second value" do
         observable_actor1.update(object1)
 
         future = subject.future.observe(observable1, observable2, timeout: 0.5)
@@ -490,7 +489,7 @@ describe Kontena::Observer, :celluloid => true do
       @observer_actor = supervised_observer_class.new
       @observer_actor.async.start(:observable_test)
       expect{@observer_actor.ping}.to raise_error(Celluloid::DeadActorError)
-      
+
       @observable_actor = Celluloid::Actor[:observable_test] = TestObservableActor.new
 
       @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new

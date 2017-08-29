@@ -168,7 +168,7 @@ module Kontena
     # @see [#observe_sync] returns unless block is given
     def observe(*observables, timeout: nil, &block)
       observe = Observe.new(self.class,
-        persistent: !!block,
+        persistent: !!block || observables.length > 1,
       )
       actor = Celluloid.current_actor
 
