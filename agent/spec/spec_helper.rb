@@ -63,6 +63,8 @@ RSpec.configure do |config|
 
   config.around :each, celluloid: true do |ex|
     Celluloid.boot
+    Kontena::Observable::Registry.supervise as: :observable_registry
+
     begin
       ex.run
     ensure

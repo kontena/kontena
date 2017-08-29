@@ -8,7 +8,7 @@ class Kontena::Observable::Registry
   trap_exit :on_actor_crash
 
   def initialize
-    info 'initialize'
+    info 'initialized'
 
     @observables = {}
   end
@@ -47,12 +47,4 @@ class Kontena::Observable::Registry
       observable.crash(reason)
     end
   end
-end
-
-class Celluloid::Actor::System
-  # register registry to be spawned on actor system startup
-  ROOT_SERVICES << {
-    as: :observable_registry,
-    type: Kontena::Observable::Registry,
-  }
 end

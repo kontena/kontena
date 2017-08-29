@@ -9,7 +9,7 @@ module Kontena
 
     # @return [Celluloid::Proxy::Cell<Kontena::Observable::Registry>] system registry actor
     def self.registry
-      Celluloid::Actor[:observable_registry] || fail(DeadActorError, "Observable registry actor not running")
+      Celluloid::Actor[:observable_registry] || fail(Celluloid::DeadActorError, "Observable registry actor not running")
     end
 
     include Kontena::Logging
