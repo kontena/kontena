@@ -49,10 +49,6 @@ class TestObservableActor
   end
 end
 
-class TestObservableStandalone < Kontena::Observable
-
-end
-
 describe Kontena::Observable do
   let(:value) { double(:value) }
 
@@ -234,7 +230,7 @@ describe Kontena::Observable do
       let :chaining_class do
         Class.new do
           include Celluloid
-          include Kontena::Observer
+          include Kontena::Observer::Helper
 
           attr_reader :observable
 

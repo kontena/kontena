@@ -2,7 +2,7 @@ require_relative '../../../lib/kontena/helpers/wait_helper'
 
 class TestObserverActor
   include Celluloid
-  include Kontena::Observer
+  include Kontena::Observer::Helper
   include Kontena::Logging
 
   attr_reader :observe_state
@@ -63,10 +63,6 @@ class TestObserverActor
   def crash
     fail
   end
-end
-
-class TestObserverStandalone
-  include Kontena::Observer
 end
 
 describe Kontena::Observer, :celluloid => true do
@@ -391,9 +387,8 @@ describe Kontena::Observer, :celluloid => true do
             @observers = {}
           end
 
-          def test_observe_sync(id, *observables, **options)
-            observer = @observers.fetch(id) { TestObserverStandalone.new }
-            return observer.observe(*observables, **options)
+          def test_observe_sync(*observables, **options)
+            Kontena::Observer.observe(*observables, **options)
           end
         end
       end
@@ -412,14 +407,14 @@ describe Kontena::Observer, :celluloid => true do
         it "observes updates" do
           observable_actor.delay_update(object, delay: 0.1)
 
-          expect(subject.test_observe_sync(:test, observable, timeout: 0.5)).to eq object
+          expect(subject.test_observe_sync(observable, timeout: 0.5)).to eq object
         end
 
         context 'with multiple observers' do
           it "observes each update" do
             observable_actor.delay_update(object, delay: 0.1)
 
-            futures = ("test1".."test4").map{|id| subject.future.test_observe_sync(id, observable) }
+            futures = (1..4).map{|id| subject.future.test_observe_sync(observable) }
 
             expect(futures.map{|f| f.value}).to eq [object, object, object, object]
           end
@@ -432,7 +427,7 @@ describe Kontena::Observer, :celluloid => true do
     let :supervised_observer_class do
       Class.new do
         include Celluloid
-        include Kontena::Observer
+        include Kontena::Observer::Helper
 
         attr_reader :state, :values
 
