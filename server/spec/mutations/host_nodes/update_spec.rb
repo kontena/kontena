@@ -93,7 +93,7 @@ describe HostNodes::Update do
         end
       end
 
-      context 'for a drained node with a stopped service instance' do
+      context 'for a drained node' do
         before do
           node.set(availability: HostNode::Availability::DRAIN)
         end
