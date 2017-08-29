@@ -21,22 +21,18 @@ module Kontena::Cli::Stacks
     def execute
       unless online?
         config.current_master = nil
-        values ||= {}
-        values.merge!('GRID' => 'validate')
+        set_env_variables(stack_name, 'validate', 'validate-platform')
       end
 
-      reader = reader_from_yaml(filename, name: name, values: values)
-      outcome = reader.execute
-
       if dependencies?
-        puts ::YAML.dump(outcome[:dependencies])
+        puts ::YAML.dump(JSON.parse(stack[:dependencies].to_json))
         exit 0
       end
 
-      hint_on_validation_notifications(outcome[:notifications]) unless outcome[:notifications].empty?
-      abort_on_validation_errors(outcome[:errors]) unless outcome[:errors].empty?
+      hint_on_validation_notifications(stack[:notifications]) unless stack[:notifications].empty?
+      abort_on_validation_errors(stack[:errors]) unless stack[:errors].empty?
 
-      dump_variables(reader) if values_to
+      dump_variables if values_to
 
       result = reader.fully_interpolated_yaml.merge(
         # simplest way to stringify keys in a hash

@@ -53,7 +53,7 @@ module Kontena::Cli::Stacks
       end
 
       def dump_variables
-        File.write(values_to, ::YAML.dump(reader.values))
+        File.write(values_to, ::YAML.dump(reader.variable_values))
       end
     end
 
@@ -64,7 +64,6 @@ module Kontena::Cli::Stacks
 
         where.option '--values-from', '[FILE]', 'Read variable values from YAML' do |filename|
           if filename
-            require_config_file(filename)
             values_from_options.merge!(::YAML.safe_load(File.read(filename)))
           end
           true
