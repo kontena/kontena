@@ -20,11 +20,17 @@ module Kontena::Actors
 
     # @param [String] input
     def input(input)
-      if input.nil?
+      if !@write_pipe
+        warn "stdin write closed"
+      elsif input.nil?
         @write_pipe.close
       else
         @write_pipe.write(input)
       end
+    rescue Errno::EPIPE => exc
+      warn "stdin write error: #{exc}"
+      @write_pipe.close
+      @write_pipe = nil
     end
 
     # @param [String] cmd
@@ -36,14 +42,19 @@ module Kontena::Actors
       opts = {tty: tty}
       opts[:stdin] = @read_pipe if stdin
       defer {
-        if tty
-          _, _, exit_code = @container.exec(cmd, opts) do |chunk|
-            self.handle_stream_chunk('stdout'.freeze, chunk)
+        begin
+          if tty
+            _, _, exit_code = @container.exec(cmd, opts) do |chunk|
+              self.handle_stream_chunk('stdout'.freeze, chunk)
+            end
+          else
+            _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
+              self.handle_stream_chunk(stream, chunk)
+            end
           end
-        else 
-          _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
-            self.handle_stream_chunk(stream, chunk)
-          end
+        ensure
+          # the Docker::Container#exec leaves the stdin pipe open
+          @read_pipe.close # ensure any input() task will fail
         end
       }
     ensure 
