@@ -27,6 +27,15 @@ class GridDomainAuthorization
 
   # @return [String]
   def to_path
-    "#{self.grid.try(:name)}/#{self.name}"
+    "#{self.grid.try(:name)}/#{self.domain}"
+  end
+
+  def service_deploy_state
+    if self.grid_service
+      deploy = self.grid_service.grid_service_deploys.find_by(id: self.service_deploy_id)
+      deploy.deploy_state
+    else
+      :not_linked
+    end
   end
 end
