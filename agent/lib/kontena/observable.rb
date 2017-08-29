@@ -7,6 +7,8 @@ module Kontena
   class Observable
     include Kontena::Logging
 
+    attr_reader :logging_prefix
+
     def self.registry
       Celluloid::Actor[:observable_registry] || fail(DeadActorError, "Observable registry actor not running")
     end
@@ -71,18 +73,14 @@ module Kontena
       @mutex = Thread::Mutex.new
       @observers = {}
       @value = nil
+
+      # include the name of the owning class in log messages
+      @logging_prefix = "#{self}"
     end
 
     # @return [String]
     def to_s
       "#{self.class.name}<#{@owner_name}>"
-    end
-
-    # Include the name of the owning class in log messages
-    #
-    # @return [String]
-    def logging_prefix
-      self.to_s
     end
 
     # @return [Object, nil] last updated value, or nil if not observable?
