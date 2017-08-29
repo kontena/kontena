@@ -140,6 +140,8 @@ module Kontena
     def crash(reason)
       raise ArgumentError, "Crash with non-exception: #{reason.class.name}" unless Exception === reason
 
+      debug { "crash: #{reason}" }
+
       set_and_notify(reason)
     end
 
@@ -157,21 +159,18 @@ module Kontena
       @mutex.synchronize do
         if !@value
           # subscribe for future udpates, no value to return
-          debug { "observer: #{observe}..." }
-
           @observers[observe] = actor
 
         elsif Exception === @value
+          # raise with immediate value, no future updates to subscribe to
           raise @value
 
         elsif observe.persistent?
           # return with immediate value, also subscribe for future updates
-          debug { "observer: #{observe} <= #{@value}..." }
-
           @observers[observe] = actor
+
         else
           # return with immediate value, do not subscribe for future updates
-          debug { "observer: #{observe} <= #{@value}" }
         end
 
         return @value
