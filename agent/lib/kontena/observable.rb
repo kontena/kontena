@@ -78,6 +78,13 @@ module Kontena
       "#{self.class.name}<#{@owner_name}>"
     end
 
+    # Include the name of the owning class in log messages
+    #
+    # @return [String]
+    def logging_prefix
+      self.to_s
+    end
+
     # @return [Object, nil] last updated value, or nil if not observable?
     def get
       @value
