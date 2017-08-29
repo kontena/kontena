@@ -32,13 +32,25 @@ describe HostNodes::Update do
         }.not_to change{ node.labels }
       end
 
-      it 'notifies grid nodes' do
-        mutation = described_class.new(
-          host_node: node,
-          labels: []
-        )
-        expect(mutation).to receive(:notify_grid).once.with(grid)
-        mutation.run
+      context 'with connected nodes' do
+        let(:node2) { grid.create_node!('node-2', node_id: 'BBB', connected: true) }
+        let(:rpc_client2) { instance_double(RpcClient) }
+
+        before do
+          node.set(connected: true)
+          allow(RpcClient).to receive(:new).with(node2.node_id, Integer).and_return(rpc_client2)
+        end
+
+        it 'notifies both grid nodes' do
+          expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(id: 'AA'))
+          expect(rpc_client2).to receive(:notify).with('/agent/node_info', hash_including(id: 'BBB'))
+
+          outcome = described_class.run(
+            host_node: node,
+            labels: []
+          )
+          expect(outcome).to be_success
+        end
       end
     end
 
