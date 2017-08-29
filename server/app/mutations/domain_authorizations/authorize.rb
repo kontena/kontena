@@ -46,8 +46,6 @@ module GridDomainAuthorizations
         verification_cert = [challenge.certificate.to_pem, challenge.private_key.to_pem].join
       end
 
-
-
       if authz = get_authz_for_domain(self.grid, self.domain)
         authz.destroy
       end
@@ -63,9 +61,13 @@ module GridDomainAuthorizations
 
       if self.authorization_type == 'tls-sni-01'
         # We need to deploy the linked service to get the certs in place
-        @linked_service.set(updated_at: Time.now.utc)
-        deploy = GridServiceDeploy.create(grid_service: @linked_service)
-        authz.set(service_deploy_id: deploy.id)
+        outcome = GridServices::Deploy.run(grid_service: @linked_service, force: true)
+        if outcome.success?
+          deploy = outcome.result
+          authz.set(service_deploy_id: deploy.id)
+        else
+          add_error(:linked_service, :deploy, outcome.errors.message)
+        end
       end
 
       authz
