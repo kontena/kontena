@@ -166,12 +166,12 @@ module Kontena
 
         elsif observe.persistent?
           # return with immediate value, also subscribe for future updates
-          debug { "observer: #{observe} <= #{@value.inspect[0..64]}..." }
+          debug { "observer: #{observe} <= #{@value}..." }
 
           @observers[observe] = actor
         else
           # return with immediate value, do not subscribe for future updates
-          debug { "observer: #{observe} <= #{@value.inspect[0..64]}" }
+          debug { "observer: #{observe} <= #{@value}" }
         end
 
         return @value
@@ -187,7 +187,7 @@ module Kontena
 
         @observers.each do |observe, actor|
           if alive = observe.alive? && actor.mailbox.alive?
-            debug { "notify: #{observe} <- #{value.inspect[0..64]}" }
+            debug { "notify: #{observe} <- #{value}" }
 
             actor.mailbox << Message.new(observe, self, value)
           end
