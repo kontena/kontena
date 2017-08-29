@@ -69,34 +69,31 @@ module Kontena
     # @raise [Kontena::Observer::Error] if any observable crashes
     # @yield [*values] all Observables are ready (async mode only)
     # @return [*values] all Observables are ready (sync mode only)
-    def self.observe(*observables, subject: nil, timeout: nil, &block)
+    def self.observe(*observables, subject: nil, timeout: nil)
       observer = self.new(subject, Celluloid.current_actor.mailbox)
 
       persistent = true
-      persistent = false if !block && observables.length == 1 # special case: sync observe of a single observable does not need updates
+      persistent = false if !block_given? && observables.length == 1 # special case: sync observe of a single observable does not need updates
 
-      # this block should not make any suspending calls, but use exclusive mode to guarantee that regardless
-      # the task must not suspend and allow any Observable messages in the mailbox to be processed before calling Celluloid.receive
+      # must not suspend in between observing and receiving!
       Celluloid.exclusive {
+        # this block should not make any suspending calls, but use exclusive mode to guarantee that regardless
         observables.each do |observable|
-          # register for observable updates, and set initial value
-          if value = observable.add_observer(observer, persistent: persistent)
-            observer.add(observable, value)
-          else
-            observer.add(observable)
-          end
+          observer.observe(observable)
         end
       }
 
-      if block
-        observer.each(timeout: timeout, &block)
-      else
-        observer.each(timeout: timeout) do |*values|
-          # workaround `return *observe.values` not working as expected
-          if observables.length > 1
-            return observer.values
+      # return or yield observed value
+      # NOTE: each yields in exclusive mode!
+      observer.each(timeout: timeout) do |*values|
+        if block_given?
+          yield *values
+        else
+          # workaround `return *values` not working as expected
+          if values.length > 1
+            return values
           else
-            return observer.values.first
+            return values.first
           end
         end
       end
@@ -166,17 +163,31 @@ module Kontena
       self.values.join(', ')
     end
 
+    # Observe observable: add Observer to Observable, and add Observable to Observer.
+    #
+    # NOTE: Must be called from exclusive mode, to ensure that any resulting Observable messages are nost lost before calling receive!
+    #
+    # @param observable [Observable]
+    def observe(observable, persistent: true)
+      fail "Must observe in exclusive mode" unless Celluloid.exclusive?
+
+      # register for observable updates, and set initial value
+      if value = observable.add_observer(self, persistent: persistent)
+        debug { "observe #{observable} => #{value}" }
+
+        add(observable, value)
+      else
+        debug { "observe #{observable}..." }
+
+        add(observable)
+      end
+    end
+
     # Add Observable with initial value
     #
     # @param observable [Observable]
     # @param value [Object] nil if not yet ready
     def add(observable, value = nil)
-      if value
-        debug { "add #{observable} => #{value}" }
-      else
-        debug { "add #{observable}..." }
-      end
-
       @observables << observable
       @values[observable] = value
     end
