@@ -81,9 +81,9 @@ module Kontena
         observables.each do |observable|
           # register for observable updates, and set initial value
           if value = observable.add_observer(observer, persistent: persistent)
-            observer.add_observable(observable, value)
+            observer.add(observable, value)
           else
-            observer.add_observable(observable)
+            observer.add(observable)
           end
         end
       }
@@ -170,7 +170,7 @@ module Kontena
     #
     # @param observable [Observable]
     # @param value [Object] nil if not yet ready
-    def add_observable(observable, value = nil)
+    def add(observable, value = nil)
       if value
         debug { "add #{observable} => #{value}" }
       else
