@@ -3,9 +3,14 @@ describe HostNodes::Update do
 
   let(:grid) { Grid.create!(name: 'test') }
   let(:node) { grid.create_node!('node-1', node_id: 'AA') }
+  let(:rpc_client) { instance_double(RpcClient) }
+
+  before do
+    allow(node).to receive(:rpc_client).and_return(rpc_client)
+  end
 
   describe '#run' do
-    context 'labels' do
+    describe 'labels' do
       it 'updates node labels' do
         node.labels = []
         labels = ['foo=bar', 'bar=baz']
@@ -37,8 +42,12 @@ describe HostNodes::Update do
       end
     end
 
-    context 'availability' do
-      context 'drain' do
+    describe 'availability' do
+      context 'for an active node' do
+        before do
+          node.set(availability: HostNode::Availability::ACTIVE) # default
+        end
+
         it 'updates availability to drain' do
           expect {
             outcome = described_class.new(
@@ -46,48 +55,47 @@ describe HostNodes::Update do
               availability: HostNode::Availability::DRAIN,
               labels: []
             ).run
-            expect(outcome.success?).to be_truthy
+            expect(outcome).to be_success
           }.to change{ node.reload.availability }.from(HostNode::Availability::ACTIVE).to(HostNode::Availability::DRAIN)
         end
 
         it 'stops stateful services when draining' do
-          mutation = described_class.new(
+          outcome = described_class.run(
             host_node: node,
             availability: HostNode::Availability::DRAIN,
             labels: []
           )
-          expect(mutation).to receive(:stop_stateful_services)
-
-          mutation.run
+          expect(outcome).to be_success
         end
       end
 
-      context 'active' do
-        it 'updates availability to active' do
-          node.availability = HostNode::Availability::DRAIN
-          expect {
+      context 'for a drained node' do
+        before do
+          node.set(availability: HostNode::Availability::DRAIN)
+        end
 
-            mutation = described_class.new(
+        it 'updates availability to active' do
+          expect {
+            outcome = described_class.run(
               host_node: node,
               availability: HostNode::Availability::ACTIVE,
               labels: []
             )
-            expect(mutation).to receive(:start_stateful_services)
-            mutation.run
+            expect(outcome).to be_success
           }.to change{ node.availability }.from(HostNode::Availability::DRAIN).to(HostNode::Availability::ACTIVE)
         end
-      end
 
-      it 'triggers actions only when availability changes' do
-        node.availability = HostNode::Availability::DRAIN
-        expect(node).not_to receive(:set)
-        expect {
-          described_class.new(
-            host_node: node,
-            availability: HostNode::Availability::DRAIN,
-            labels: []
-          ).run
-        }.not_to change{ node }
+        it 'ignores update to drain' do
+          expect(node).not_to receive(:set)
+          expect {
+            outcome = described_class.new(
+              host_node: node,
+              availability: HostNode::Availability::DRAIN,
+              labels: []
+            ).run
+            expect(outcome).to be_success
+          }.not_to change{ node }
+        end
       end
     end
   end
