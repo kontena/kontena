@@ -78,7 +78,7 @@ describe HostNodes::Update do
 
           it 'stops stateful services when draining' do
             expect(rpc_client).to receive(:notify).with('/service_pods/notify_update', 'stop') do
-              expect(stateful_service_instance1.desired_state).to eq 'stopped'
+              expect(stateful_service_instance1.reload.desired_state).to eq 'stopped'
             end
 
             expect{
@@ -116,7 +116,7 @@ describe HostNodes::Update do
 
           it 'starts and notifies the service instance' do
             expect(rpc_client).to receive(:notify).with('/service_pods/notify_update', 'start') do
-              expect(stateful_service_instance1.desired_state).to eq 'running'
+              expect(stateful_service_instance1.reload.desired_state).to eq 'running'
             end
 
             expect {
