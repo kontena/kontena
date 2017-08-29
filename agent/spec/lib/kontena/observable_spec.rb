@@ -169,7 +169,8 @@ describe Kontena::Observable do
     end
 
     it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
-      observer_actor.test_observe_async(subject)
+      observer_actor.async.test_observe_async(subject)
+      observer_actor.ping
 
       expect(subject).to be_observed
 
@@ -184,7 +185,7 @@ describe Kontena::Observable do
     end
 
     it "delivers updates in the right order" do
-      observer_actor.test_ordering(subject)
+      observer_actor.async.test_ordering(subject)
 
       update_count = 150
 
@@ -242,7 +243,7 @@ describe Kontena::Observable do
           end
 
           def test_observe_chain(observable)
-            @observe_state = observe(observable) do |value|
+            observe(observable) do |value|
               @observable.update "chained: " + value
             end
           end
@@ -257,14 +258,19 @@ describe Kontena::Observable do
       let(:observer_actor) { TestObserverActor.new }
 
       it "propagates the observed value" do
-        chaining_actor.test_observe_chain(subject)
-        observer_actor.test_observe_async(chaining_actor.observable)
+        chaining_actor.async.test_observe_chain(subject)
+        observer_actor.async.test_observe_async(chaining_actor.observable)
 
         observable_actor.update "test"
 
         chaining_actor.ping # wait for intermediate actor to handle update
+        chaining_actor.ping # wait for intermediate actor to handle update
+        observer_actor.ping # wait for observing actor to handle update
 
-        expect(observer_actor).to be_observe_ready
+        sleep 0.01
+
+        observer_actor.ping # wait for observing actor to handle update
+
         expect(observer_actor.observed_values).to eq ["chained: test"]
       end
     end

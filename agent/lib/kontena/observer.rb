@@ -1,7 +1,3 @@
-class Celluloid::Actor
-  attr_accessor :observe_handler
-end
-
 module Kontena
   # An Actor that observes the value of other Obervables.
   module Observer
@@ -30,6 +26,7 @@ module Kontena
 
         @observables = []
         @values = {}
+        @alive = true
       end
 
       # Describe the observer for debug logging
@@ -116,7 +113,13 @@ module Kontena
       #
       # @return [Boolean] false => delete from Observable#observers before sending update
       def alive?
-        fail NotImplementedError
+        @alive
+      end
+
+      # No longer expecting updates.
+      #
+      def kill
+        @alive = false
       end
 
       # Accepting multiple updates from Observables?
@@ -126,109 +129,22 @@ module Kontena
         fail NotImplementedError
       end
 
-      # Accepting calls from Observer?
-      #
-      # @return [Boolean] false => block calls on updates
-      def active?
-        fail NotImplementedError
-      end
-
-      # Run block or resume task
-      def call
-        fail NotImplementedError
-      end
-
       class Async < Observe
-        # @param block [Block] Observing block
-        def initialize(cls, &block)
-          super(cls)
-          @block = block
-          @active = false
-        end
-
-        # Persistent, expected to be updated multiple times
-        #
-        # @return [Boolean]
-        def alive?
-          true
-        end
-
         # Persistent, expected to be updated multiple times
         #
         # @return [Boolean]
         def persistent?
           true
         end
-
-        # Accepting calls?
-        #
-        # @return [Boolean]
-        def active?
-          @active
-        end
-
-        # All observables have been added, ready for update calls.
-        #
-        def start!
-          @active = true
-        end
-
-        def call
-          observed_values = self.values
-          Thread.current[:celluloid_actor].task(:observe) do
-            @block.call(*observed_values)
-          end
-        end
-
-        def crash
-          # crash the actor
-          raise self.error
-        end
-
-        # Trigger a deferred call of the Observe via the actor mailbox
-        #
-        # @param actor [Celluloid::Proxy::Cell<Kontena::Observer]
-        def async_call(actor)
-          actor.mailbox << Kontena::Observable::Message.new(self, nil, nil)
-        end
       end
 
       class Sync < Observe
-        def initialize(cls)
-          super(cls)
-          @task = nil
-          @alive = true
-        end
-
-        # Expect updates from Observables even when we are not yet waiting.
-        #
-        # @return [Boolean]
-        def alive?
-          @alive
-        end
-
         # One-shot, only expect a single update.
         #
         # @return [Boolean]
         def persistent?
           false
         end
-
-        # No longer expecting updates.
-        #
-        def kill
-          @alive = false
-        end
-      end
-    end
-
-    # Register handler for Kontena::Observable::Message on the Celluloid::Actor
-    #
-    def register_observer_handler
-      actor = Thread.current[:celluloid_actor]
-      actor.observe_handler ||= actor.handle(Kontena::Observable::Message) do |message|
-        # this handler runs directly in the Actor thread, outside of any task context.
-        handle_observer_message(message)
       end
     end
 
@@ -237,7 +153,7 @@ module Kontena
     # Do not call this from any task context.
     #
     # @param message [Kontena::Observable::Message]
-    def handle_observer_message(message)
+    def update_observe(message)
       observe = message.observe
 
       if message.observable
@@ -248,8 +164,6 @@ module Kontena
 
       if !observe.alive?
         debug { "observe dead: #{observe.describe_observables}" }
-      elsif !observe.active?
-        debug { "observe paused: #{observe.describe_observables}" }
       elsif observe.error?
         debug { "observe crashed: #{observe.describe_observables}" }
         observe.crash
@@ -282,9 +196,9 @@ module Kontena
     #     configure(foo: test.foo)
     #   end
     #
-    # Returns the active Observe after subscribing to each Observable, or raises on dead/invalid observables.
     # Yields from an async task once each Observable is ready, and again whenever any observable updates.
-    # Crashes this Actor if any of the observed Actors crashes.
+    # Raises if any of the observed Actors crashes.
+    # Does not return.
     #
     # Does not yield if any Observable resets, until all Observables are ready again.
     # Does not yield if the previous async block task is still running.
@@ -296,17 +210,15 @@ module Kontena
     #
     # @param observables [Array<Celluloid::Proxy::Cell<Observable>, Observable>]
     # @raise [Celluloid::DeadActorError]
-    # @return [Observer::Observe]
+    # @return never
     # @yield [*values] all Observables are ready
     def observe_async(*observables, &block)
-      self.register_observer_handler
-
       actor = Celluloid.current_actor
 
       # unique handle to identify this observe loop
-      observe = Observe::Async.new(self.class, &block)
+      observe = Observe::Async.new(self.class)
 
-      # sync setup of each observable
+      # atomic setup of observes, task must not suspend and allow mailbox to be processed before calling Celluloid.receive
       observables.each do |observable|
         # register for observable updates, and set initial value
         if value = observable.observe(observe, actor)
@@ -320,19 +232,30 @@ module Kontena
         end
       end
 
-      # all observables have been added, allow block calls on updates
-      observe.start!
+      while true
+        if observe.ready?
+          debug { "observe async #{observe.describe_observables}: #{observe.values.join(', ')}" }
 
-      if observe.ready?
+          # execute block and prevent any intervening messages from getting discarded before we re-receive
+          Celluloid.exclusive {
+            yield *observe.values
+          }
+        end
+
+        debug { "observe async #{observe.describe_observables}..." }
+
+        message = Celluloid.receive { |msg| Kontena::Observable::Message === msg && msg.observe == observe }
+
+        debug { "observe async #{message.observable} -> #{message.value}" }
+
+        observe.set(message.observable, message.value)
+
         debug { "observe async #{observe.describe_observables}: #{observe.values.join(', ')}" }
 
-        # trigger immediate update if all observables were ready
-        observe.async_call(actor)
-      else
-        debug { "observe async #{observe.describe_observables}..." }
+        raise observe.error if observe.error?
       end
-
-      observe
+    ensure
+      observe.kill if observe
     end
 
     # Observe values from Observables synchronously, returning the observed values:
@@ -353,7 +276,7 @@ module Kontena
       actor = Celluloid.current_actor
       observe = Observe::Sync.new(self.class)
 
-      # all of this must be atomic up to the Celluloid.receive, or observable upate messages may get lost
+      # atomic setup of observes, task must not suspend and allow mailbox to be processed before calling Celluloid.receive
       observables.each do |observable|
         # query for initial Observable state, or subscribe for updates
         if value = observable.observe(observe, actor)
@@ -367,17 +290,13 @@ module Kontena
         end
       end
 
-      observe_ready = observe.ready?
-
       while !observe.ready?
         debug { "observe wait #{observe.describe_observables}... (wait timeout=#{timeout})" }
 
         # XXX: timeout must be adjusted from deadline
         begin
           # XXX: Celluloid.receive => Celluloid::Actor#receive => Celluloid::Internals::Receiver#receive returns nil on timeout
-          message = Celluloid.receive(timeout) do |msg|
-            Kontena::Observable::Message === msg && msg.observe == observe
-          end
+          message = Celluloid.receive(timeout) { |msg| Kontena::Observable::Message === msg && msg.observe == observe }
         rescue Celluloid::TaskTimeout
           # XXX: Celluloid.receive => Celluloid::Mailbox.receive raises TaskTimeout insstead
           message = nil

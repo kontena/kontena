@@ -32,6 +32,11 @@ class Kontena::Observable::Registry
   end
 
   def on_actor_crash(actor, reason)
+    if reason.nil?
+      # reason is nil if actor terminated cleanly
+      reason = Celluloid::DeadActorError.new("Actor terminated")
+    end
+
     warn "crashing observables owned by actor #{actor.__klass__}: #{reason}"
 
     each_observable_for_actor(actor) do |observable|

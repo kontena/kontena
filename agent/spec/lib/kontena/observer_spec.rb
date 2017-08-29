@@ -12,7 +12,7 @@ class TestObserverActor
   end
 
   def test_observe_async(*observables)
-    @observe_state = observe(*observables) do |*values|
+    observe(*observables) do |*values|
       @initial_values ||= values
       @observed_values = values
     end
@@ -26,16 +26,14 @@ class TestObserverActor
   def observed_values
     @observed_values
   end
-  def observe_ready?
-    @observe_state.ready?
-  end
 
   def test_ordering(observable, rand_delay: nil)
     @observed_value = nil
     @observed_values = []
     @ordered = true
     @value = nil
-    @observe_state = observe(observable) do |value|
+
+    observe(observable) do |value|
       sleep(rand() * rand_delay) if rand_delay
 
       if @observed_value && @observed_value > value
@@ -85,23 +83,29 @@ describe Kontena::Observer, :celluloid => true do
 
     describe '#observe_async' do
       it "does not observe any value if not yet updated" do
-        subject.test_observe_async(observable)
+        subject.async.test_observe_async(observable)
+        subject.ping
 
+        expect(observable).to be_observed
         expect(subject).to_not be_observed
       end
 
       it "immediately yields an updated value" do
         observable_actor.update object
 
-        subject.test_observe_async(observable)
+        subject.async.test_observe_async(observable)
+        subject.ping
 
+        expect(observable).to be_observed
         expect(subject).to be_observed
         expect(subject.observed_values).to eq [object]
       end
 
       it "later yields after updating value" do
-        subject.test_observe_async(observable)
+        subject.async.test_observe_async(observable)
+        subject.ping
 
+        expect(observable).to be_observed
         expect(subject).to_not be_observed
 
         observable_actor.update object
@@ -111,7 +115,10 @@ describe Kontena::Observer, :celluloid => true do
       end
 
       it "crashes if the observable does", :log_celluloid_actor_crashes => true do
-        subject.test_observe_async(observable)
+        subject.async.test_observe_async(observable)
+        subject.ping
+
+        expect(observable).to be_observed
 
         # The Celluloid::Call::Sync sends the RuntimeError response first, before triggering the actor crash
         # ping the crashed observable to make sure that it has a chance to send out the ExitEvent to linked actors
@@ -232,7 +239,8 @@ describe Kontena::Observer, :celluloid => true do
       before do
         observable_actor.update object
 
-        subject.test_observe_async(observable)
+        subject.async.test_observe_async(observable)
+        subject.ping
 
         expect(subject).to be_observed
         expect(subject.observed_values).to eq [object]
@@ -248,7 +256,6 @@ describe Kontena::Observer, :celluloid => true do
         observable_actor.reset
 
         expect(subject.observed_values).to eq [object]
-        expect(subject).to_not be_observe_ready
       end
     end
   end
@@ -269,7 +276,8 @@ describe Kontena::Observer, :celluloid => true do
         observable_actor1.update object1
         observable_actor2.update object2
 
-        subject.test_observe_async(observable1, observable2)
+        subject.async.test_observe_async(observable1, observable2)
+        subject.ping
 
         expect(subject).to be_observed
         expect(subject.observed_values).to eq [object1, object2]
@@ -279,7 +287,8 @@ describe Kontena::Observer, :celluloid => true do
         observable_actor1.update object1
         observable_actor2.update object2
 
-        subject.test_observe_async(observable1, observable2)
+        subject.async.test_observe_async(observable1, observable2)
+        subject.ping
 
         expect(subject.observed_values).to eq [object1, object2]
 
@@ -291,11 +300,12 @@ describe Kontena::Observer, :celluloid => true do
 
       it "accepts update for first value while requesting second value" do
         expect(observable2).to receive(:observe) do |observe, actor|
-          observable_actor1.update object1
+          observable_actor1.async.update object1 # XXX: can't suspend the observing task
           object2
         end
 
-        subject.test_observe_async(observable1, observable2)
+        subject.async.test_observe_async(observable1, observable2)
+        subject.ping
 
         expect(subject.initial_values).to eq [object1, object2]
         expect(subject.observed_values).to eq [object1, object2]
@@ -427,14 +437,18 @@ describe Kontena::Observer, :celluloid => true do
 
         attr_reader :state, :values
 
-        def initialize(actor_name)
-          @state = observe(Celluloid::Actor[actor_name].observable) do |*values|
+        def start(actor_name)
+          observe(Celluloid::Actor[actor_name].observable) do |*values|
             @values = values
           end
         end
 
+        def ping
+
+        end
+
         def ready?
-          @state.ready?
+          !!@values
         end
 
         def crash
@@ -445,13 +459,14 @@ describe Kontena::Observer, :celluloid => true do
 
     before :each do
       @observable_actor = Celluloid::Actor[:observable_test] = TestObservableActor.new
-      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
+      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new
+      @observer_actor.async.start(:observable_test)
+      @observer_actor.ping
 
       expect(@observer_actor).to_not be_ready
 
       @observable_actor.update 1
 
-      expect(@observer_actor).to be_ready
       expect(@observer_actor.values).to eq [1]
     end
 
@@ -460,9 +475,10 @@ describe Kontena::Observer, :celluloid => true do
       Kontena::Helpers::WaitHelper.wait_until! { @observer_actor.dead? }
 
       # simulate supervisor
-      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
+      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new
+      @observer_actor.async.start(:observable_test)
+      @observer_actor.ping
 
-      expect(@observer_actor).to be_ready
       expect(@observer_actor.values).to eq [1]
     end
 
@@ -471,15 +487,20 @@ describe Kontena::Observer, :celluloid => true do
       Kontena::Helpers::WaitHelper.wait_until!(timeout: 0.5) { @observable_actor.dead? && @observer_actor.dead? }
 
       # simulate supervisor restart in the wrong order
-      expect{supervised_observer_class.new(:observable_test)}.to raise_error(Celluloid::DeadActorError)
+      @observer_actor = supervised_observer_class.new
+      @observer_actor.async.start(:observable_test)
+      expect{@observer_actor.ping}.to raise_error(Celluloid::DeadActorError)
+      
       @observable_actor = Celluloid::Actor[:observable_test] = TestObservableActor.new
-      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new(:observable_test)
+
+      @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new
+      @observer_actor.async.start(:observable_test)
+      @observer_actor.ping
 
       expect(@observer_actor).to_not be_ready
 
       @observable_actor.update 2
 
-      expect(@observer_actor).to be_ready
       expect(@observer_actor.values).to eq [2]
     end
   end
