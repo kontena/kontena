@@ -10,8 +10,9 @@ module Kontena::Workers
     include Kontena::Logging
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::RpcHelper
+    include Kontena::Observable::Helper
 
-    attr_reader :node, :observable
+    attr_reader :node
 
     PUBLISH_INTERVAL = 60
 
@@ -20,7 +21,6 @@ module Kontena::Workers
     def initialize(node_id, node_name: , autostart: true)
       @node_id = node_id
       @node_name = node_name
-      @observable = Kontena::Observable.new
 
       subscribe('websocket:connected', :on_websocket_connected)
       subscribe('agent:node_info', :on_node_info)
@@ -45,7 +45,7 @@ module Kontena::Workers
     # @param [Node] node
     def on_node_info(topic, node)
       @node = node
-      @observable.update(node)
+      self.observable.update(node)
     end
 
     def publish_node_info

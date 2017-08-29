@@ -29,15 +29,21 @@ module Kontena
       end
     end
 
-    # @return [Kontena::Observable]
-    def self.register(owner = Celluloid.current_actor, owner_links = Celluloid.links)
-      observable = self.new(owner.__klass__)
+    # mixin for Celluloid actor classes
+    module Helper
+      # Create a new Observable using the including class name as the subject.
+      # Register the Observable with the Kontena::Observable::Registry.
+      # Links to the registry to crash the Observable if the owning actor crashes.
+      #
+      # @return [Kontena::Observable]
+      def observable
+        @observable ||= Kontena::Observable.new(self.class.name).tap do |observable|
+          observable_registry = Kontena::Observable.registry
+          observable_registry.register(observable, self.current_actor)
 
-      observable_registry = self.registry
-      observable_registry.register(observable, owner)
-      owner_links << observable_registry # registry monitors owner
-
-      observable
+          self.links << observable_registry # registry monitors owner
+        end
+      end
     end
 
     # @param subject [Object] used to identify the Observable for logging purposes

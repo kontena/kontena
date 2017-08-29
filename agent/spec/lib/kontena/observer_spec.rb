@@ -5,8 +5,6 @@ class TestObserverActor
   include Kontena::Observer::Helper
   include Kontena::Logging
 
-  attr_reader :observe_state
-
   def ping
     debug "ping"
   end

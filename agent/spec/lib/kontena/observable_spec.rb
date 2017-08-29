@@ -1,11 +1,6 @@
 class TestObservableActor
   include Celluloid
-
-  attr_accessor :observable
-
-  def initialize
-    @observable = Kontena::Observable.register
-  end
+  include Kontena::Observable::Helper
 
   def ping
 
@@ -21,16 +16,16 @@ class TestObservableActor
   end
 
   def update(value)
-    @observable.update(value)
+    observable.update(value)
   end
 
   def reset
-    @observable.reset
+    observable.reset
   end
 
   def delay_update(value, delay: )
     after(delay) do
-      @observable.update(value)
+      observable.update(value)
     end
   end
 
@@ -42,7 +37,7 @@ class TestObservableActor
     for value in values
       break if deadline && Time.now >= deadline
 
-      @observable.update(value)
+      observable.update(value)
 
       sleep interval if interval
     end
