@@ -5,7 +5,7 @@ module Kontena::Workers
     include Celluloid
     include Celluloid::Notifications
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
 
     attr_reader :fluentd
 

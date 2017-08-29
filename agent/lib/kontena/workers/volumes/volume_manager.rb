@@ -6,7 +6,7 @@ module Kontena::Workers::Volumes
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
-    include Kontena::Observer
+    include Kontena::Observer::Helper
 
     class DriverMismatchError < StandardError
     end

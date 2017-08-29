@@ -5,7 +5,7 @@ module Kontena
   class RpcClient
     include Celluloid
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::WaitHelper
 
     class RequestObservable < Kontena::Observable
