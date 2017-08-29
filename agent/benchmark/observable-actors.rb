@@ -4,24 +4,19 @@ require_relative './benchmark-support'
 
 class TestActor
   include Celluloid
+  include Kontena::Observable::Helper
 
   DELAY = getenv('START_DELAY', 1.0) { |x| Float(x) }
 
-  attr_reader :observable
-
-  def initialize
-    @observable = Kontena::Observable.new
-  end
-
   def reset
     @ready = nil
-    @observable.reset
+    observable.reset
   end
 
   def start(delay: DELAY)
     sleep delay
     @ready = Time.now
-    @observable.update @ready
+    observable.update @ready
   end
 
   def ready?
@@ -31,7 +26,7 @@ end
 
 class TestObserverActor
   include Celluloid
-  include Kontena::Observer
+  include Kontena::Observer::Helper
 
   def initialize(observable)
     @observable = observable
@@ -59,6 +54,7 @@ class TestWaitActor
   end
 end
 
+supervise_registry = Kontena::Observable::Registry.supervise :as => :observable_registry
 test_actor = nil
 test_observable = nil
 

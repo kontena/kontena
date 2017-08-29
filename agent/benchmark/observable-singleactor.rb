@@ -92,9 +92,10 @@ end
 
 class TestObserverActor
   include Celluloid
-  include Kontena::Observer
+  include Kontena::Observer::Helper
 
   class RequestObservable < Kontena::Observable
+
   end
 
   def initialize(client)
@@ -104,7 +105,7 @@ class TestObserverActor
 
   # @return [Float] response delay
   def request(id, timeout: 30.0)
-    observable = @requests[id] = RequestObservable.new
+    observable = @requests[id] = RequestObservable.new(id)
 
     @client.send(id, self.current_actor)
 

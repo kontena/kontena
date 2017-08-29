@@ -25,7 +25,7 @@ def benchmark_main(cases, count: COUNT, before_each: nil)
 
   Benchmark.bm(label_width) do |bm|
     cases.each_pair do |label, block|
-      return if BENCHMARK and label != BENCHMARK
+      next if BENCHMARK and label != BENCHMARK
       before_each.call if before_each
       bm.report(label) do
         futures = (1..count).map{|id| sleep 0.001; block.call(id) }
