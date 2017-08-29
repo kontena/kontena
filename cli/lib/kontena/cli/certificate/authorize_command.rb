@@ -37,7 +37,9 @@ module Kontena::Cli::Certificate
           deployment = client(token).get("services/#{response['linked_service']}/deploys/#{response['service_deploy_id']}")
           wait_for_deploy_to_finish(token, deployment)
         end
-        puts "TLS-SNI certificate is deployed, you can now request the certificate"
+        puts "TLS-SNI challenge certificate is deployed, you can now request the actual certificate"
+      else
+        exit_with_error "Unknown authorization type: #{self.type}"
       end
 
     end
