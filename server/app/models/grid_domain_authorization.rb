@@ -33,7 +33,11 @@ class GridDomainAuthorization
   def service_deploy_state
     if self.grid_service
       deploy = self.grid_service.grid_service_deploys.find_by(id: self.service_deploy_id)
-      deploy.deploy_state
+      if deploy # Could be gone as deploys are on capped collection
+        deploy.deploy_state
+      else
+        :unknown
+      end
     else
       :not_linked
     end
