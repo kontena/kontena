@@ -345,7 +345,7 @@ describe Kontena::Observer, :celluloid => true do
 
       it "accepts update for first value while requesting second value" do
         expect(observable2).to receive(:observe) do |observe, actor|
-          observable_actor1.update object1
+          observable_actor1.async.update object1 # XXX: can't suspend the observing task
           object2
         end
 
