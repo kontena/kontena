@@ -186,16 +186,24 @@ module Kontena
         @value = value
 
         @observers.each do |observe, actor|
-          if alive = observe.alive? && actor.mailbox.alive?
+          alive = observe.alive? && actor.mailbox.alive?
+
+          if !alive
+            debug { "dead: #{observe}" }
+
+            @observers.delete(observe)
+
+          elsif !observe.persistent?
+            debug { "notify and drop: #{observe} <- #{value}" }
+
+            actor.mailbox << Message.new(observe, self, value)
+
+            @observers.delete(observe)
+
+          else
             debug { "notify: #{observe} <- #{value}" }
 
             actor.mailbox << Message.new(observe, self, value)
-          end
-
-          unless alive && observe.persistent?
-            debug { "drop: #{observe}" }
-
-            @observers.delete(observe)
           end
         end
       end
