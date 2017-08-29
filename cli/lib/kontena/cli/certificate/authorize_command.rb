@@ -22,7 +22,7 @@ module Kontena::Cli::Certificate
         domain: domain,
         authorization_type: self.type
       }
-      data['linked_service'] = self.linked_service if self.type == 'tls-sni-01'
+      data['linked_service'] = service_path(self.linked_service) if self.type == 'tls-sni-01'
 
       response = client(token).post("grids/#{current_grid}/domain_authorizations", data)
 
@@ -42,6 +42,14 @@ module Kontena::Cli::Certificate
         exit_with_error "Unknown authorization type: #{self.type}"
       end
 
+    end
+
+    def service_path(linked_service)
+      unless linked_service.include?('/')
+        "null/#{linked_service}"
+      else
+        linked_service
+      end
     end
   end
 end
