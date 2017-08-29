@@ -30,7 +30,6 @@ module Kontena
 
         @observables = []
         @values = {}
-        @pending = false
       end
 
       # Describe the observer for debug logging
@@ -82,22 +81,6 @@ module Kontena
       def set(observable, value)
         raise "unknown observable: #{observable.class.name}" unless @values.has_key? observable
         @values[observable] = value
-        pending!
-      end
-
-      # @return [Boolean] true => observable has pending changes
-      def pending?
-        @pending
-      end
-
-      # Have pending changes
-      def pending!
-        @pending = true
-      end
-
-      # Rsovle pending changes
-      def resolve!
-        @pending = false
       end
 
       # Any observable has an error?
@@ -189,32 +172,11 @@ module Kontena
         def start!
           @active = true
         end
-        def resume!
-          @active = true
-        end
-
-        # Pause calls.
-        #
-        def pause!
-          @active = false
-        end
 
         def call
-          pause! # prevent concurrent calls until task completes
-          resolve! # clear @pending state to detect concurrent updates during call
-
           observed_values = self.values
           Thread.current[:celluloid_actor].task(:observe) do
-            begin
-              @block.call(*observed_values)
-            ensure
-              resume! # allow next call
-
-              if pending?
-                # values changed during call and were blocked, reschedule
-                async_call(Celluloid::Actor.current)
-              end
-            end
+            @block.call(*observed_values)
           end
         end
 
@@ -538,8 +500,6 @@ module Kontena
 
         debug { "observe wait #{observe.describe_observables}: #{observe.values.join(', ')}" }
       end
-
-      observe.resolve! # meaningless, do not expect to receive any more updates after killed
 
       if observables.length == 1
         return observe.values.first
