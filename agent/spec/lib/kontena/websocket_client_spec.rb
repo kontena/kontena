@@ -331,7 +331,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
         expect(ws_client).to receive(:disconnect)
 
         expect(subject).not_to receive(:on_error)
-        expect(subject.logger).to receive(:error)
+        expect(subject).to receive(:error)
 
         actor.connect_client(ws_client)
 
