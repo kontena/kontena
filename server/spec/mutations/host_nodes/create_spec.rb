@@ -69,8 +69,7 @@ describe HostNodes::Create do
 
   context 'with an existing node in the same grid' do
     let(:node) do
-      grid.host_nodes.create!(
-        name: 'test-1',
+      grid.create_node!('test-1',
         token: 'asdfasdfasdfasdf',
       )
     end

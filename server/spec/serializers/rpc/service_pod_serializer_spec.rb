@@ -2,7 +2,7 @@ require_relative '../../spec_helper'
 
 describe Rpc::ServicePodSerializer do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:node) { HostNode.create!(name: 'node-1', node_id: 'a') }
+  let(:node) { grid.create_node!('node-1', node_id: 'a') }
   let(:lb) do
     GridService.create!(
       name: 'lb',

@@ -3,7 +3,7 @@ describe Agent::NodeUnplugger do
 
   let(:grid) { Grid.create! }
   let(:connected_at) { 1.minute.ago }
-  let(:node) { HostNode.create!(grid: grid, name: 'test-node', connected: true, connected_at: connected_at) }
+  let(:node) { grid.create_node!('test-node', connected: true, connected_at: connected_at) }
   let(:subject) { described_class.new(node) }
 
   context "For a connected node" do
@@ -25,7 +25,7 @@ describe Agent::NodeUnplugger do
   context "For a node that has reconnected" do
     let(:reconnected_at) { 10.seconds.ago }
 
-    let(:node) { HostNode.create!(grid: grid, name: 'test-node', connected: true, connected_at: reconnected_at) }
+    let(:node) { grid.create_node!('test-node', connected: true, connected_at: reconnected_at) }
     let(:subject) { described_class.new(node) }
 
     before do

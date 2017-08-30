@@ -1,10 +1,13 @@
 require_relative 'logging'
+require_relative '../helpers/async_helper.rb'
 
 class MongoPubsub
   include Celluloid
   include Logging
 
   class Subscription
+    include AsyncHelper
+
     attr_reader :channel
 
     # @param [String] channel
@@ -45,7 +48,7 @@ class MongoPubsub
 
     def process
       @process = true
-      Celluloid::Future.new {
+      async_thread do
         while @process == true && @stopped == false
           data = @queue.shift
           if data
@@ -54,7 +57,7 @@ class MongoPubsub
             @process = false
           end
         end
-      }
+      end
     end
 
     # @param [Hash] data

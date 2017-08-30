@@ -272,12 +272,13 @@ class GridService
 
   def health_status
     healthy = 0
-
+    unhealthy = 0
     self.containers.each do |c|
       healthy += 1 if c.health_status == 'healthy'
+      unhealthy += 1 if c.health_status == 'unhealthy'
     end
 
-    {healthy: healthy, total: self.containers.count}
+    {healthy: healthy, unhealthy: unhealthy, total: self.containers.count}
   end
 
   def ensure_stack

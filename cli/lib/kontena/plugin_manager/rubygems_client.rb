@@ -1,40 +1,59 @@
-require 'excon'
+require 'kontena_cli'
 require 'json'
+require 'uri'
+require 'net/https'
 
 module Kontena
-  class PluginManager
+  module PluginManager
     class RubygemsClient
 
-      RUBYGEMS_URL = 'https://rubygems.org'
-      HEADERS = {
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json'
-      }
-
-      attr_reader :client
-
-      def initialize
-        @client = Excon.new(RUBYGEMS_URL)
-      end
+      JSON_MIME  ='application/json'.freeze
+      ACCEPT = 'Accept'.freeze
+      HTTPOK = "200".freeze
 
       def search(pattern = nil)
-        response = client.get(
-          path: "/api/v1/search.json?query=#{pattern}",
-          headers: HEADERS
-        )
-
-        JSON.parse(response.body)
+        get('/api/v1/search.json', query: pattern)
       end
 
       def versions(gem_name)
-        response = client.get(
-          path: "/api/v1/versions/#{gem_name}.json",
-          headers: HEADERS
-        )
-        versions = JSON.parse(response.body)
-        versions.map { |version| Gem::Version.new(version["number"]) }.sort.reverse
+        response = get("/api/v1/versions/#{gem_name}.json")
+        response.map { |version| Gem::Version.new(version["number"]) }.sort.reverse
       end
 
+      # Get the latest version number from rubygems
+      # @param plugin_name [String]
+      # @param pre [Boolean] include prerelease versions
+      def latest_version(gem_name, pre: false)
+        return versions(gem_name).first if pre
+        versions(gem_name).find { |version| !version.prerelease? }
+      end
+
+      def client
+        return @client if @client
+        @client = Net::HTTP.new('rubygems.org', 443)
+        @client.use_ssl = true
+        @client
+      end
+
+      def request_path(path, query = nil)
+        uri = URI(path)
+        uri.query = URI.encode_www_form(query) if query
+        uri.to_s
+      end
+
+      def get_request(path)
+        request = Net::HTTP::Get.new(path)
+        request[ACCEPT] = JSON_MIME
+        request
+      end
+
+      def get(path, query = nil)
+        Kontena.logger.debug { "Requesting GET #{path}" }
+        response = client.request(get_request(request_path(path, query)))
+        Kontena.logger.debug { "Response #{response.code}" }
+        raise "Server responded with #{response.code} (#{response.class.name})" unless response.code == HTTPOK
+        JSON.parse(response.body)
+      end
     end
   end
 end
