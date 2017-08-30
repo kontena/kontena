@@ -189,12 +189,11 @@ class WebsocketBackend
 
     node = find_node(req)
 
-    send_master_info(ws)
-
     # check version
     agent_version = req.env['HTTP_KONTENA_VERSION'].to_s
 
     unless self.valid_agent_version?(agent_version)
+      send_master_info(ws)
       raise CloseError.new(4010), "agent version #{agent_version} is not compatible with server version #{Server::VERSION}"
     end
 
@@ -209,6 +208,7 @@ class WebsocketBackend
       raise CloseError.new(4020), "agent connected too far in the future, clock offset #{'%.2fs' % connected_dt} exceeds threshold"
     end
 
+    # connect
     logger.info "node #{node} agent version #{agent_version} connected at #{connected_at}, #{'%.2fs' % connected_dt} ago"
 
     client = {
@@ -220,6 +220,8 @@ class WebsocketBackend
         connected_at: connected_at,
     }
     @clients << client
+
+    send_master_info(ws)
 
     EM.defer { Agent::NodePlugger.new(node).plugin! connected_at }
 

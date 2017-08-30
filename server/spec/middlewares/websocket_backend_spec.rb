@@ -296,7 +296,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
           expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
-          expect(subject).to receive(:send_master_info).with(client_ws)
+          expect(subject).to_not receive(:send_master_info).with(client_ws)
           expect(subject.logger).to receive(:warn).with(/reject websocket connection for node node-1: agent connected too far in the past, clock offset \d+\.\d+s exceeds threshold/)
           expect(client_ws).to receive(:close).with(4020, /agent connected too far in the past, clock offset \d+\.\d+s exceeds threshold/)
 
@@ -322,7 +322,7 @@ describe WebsocketBackend, celluloid: true, eventmachine: true do
       describe '#on_open' do
         it 'creates the node, but does not connect it' do
           expect(subject.logger).to receive(:info).with('new node node-1 connected using grid token')
-          expect(subject).to receive(:send_master_info).with(client_ws)
+          expect(subject).to_not receive(:send_master_info).with(client_ws)
           expect(subject.logger).to receive(:warn).with(/reject websocket connection for node node-1: agent connected too far in the future, clock offset -\d+\.\d+s exceeds threshold/)
           expect(client_ws).to receive(:close).with(4020, /agent connected too far in the future, clock offset -\d+\.\d+s exceeds threshold/)
 
