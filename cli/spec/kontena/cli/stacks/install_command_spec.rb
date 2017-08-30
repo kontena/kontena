@@ -19,15 +19,12 @@ describe Kontena::Cli::Stacks::InstallCommand do
         services: array_including(hash_including('name', 'image')),
         variables: {},
         volumes: [],
-        dependencies: [],
+        dependencies: nil,
         source: /stack:/,
         parent_name: nil,
         expose: nil
       }
     end
-
-    let(:reader) { double(execute: stack) }
-    let(:loader) { double(reader: reader, stack_name: double(user: 'user', stack: 'stack-a', version: '1.0.0'), dependencies: []) }
 
     expect_to_require_current_master
     expect_to_require_current_master_token
