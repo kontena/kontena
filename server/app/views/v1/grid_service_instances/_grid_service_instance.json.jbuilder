@@ -4,6 +4,7 @@ json.updated_at service_instance.updated_at
 json.instance_number service_instance.instance_number
 json.desired_state service_instance.desired_state
 json.state service_instance.state
+json.health service_instance.health
 json.deploy_rev service_instance.deploy_rev
 json.rev service_instance.rev
 json.error service_instance.error

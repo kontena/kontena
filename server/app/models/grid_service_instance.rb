@@ -11,6 +11,7 @@ class GridServiceInstance
   # updated by agent
   field :rev, type: String
   field :state, type: String, default: 'initialized'.freeze
+  field :health, type: String, default: 'unknown'.freeze
   field :error, type: String
 
   validates_uniqueness_of :instance_number, scope: [:grid_service_id]

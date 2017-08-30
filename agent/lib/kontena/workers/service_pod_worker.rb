@@ -13,8 +13,33 @@ module Kontena::Workers
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::EventLogHelper
 
-    attr_reader :node, :prev_state, :service_pod
+    attr_reader :node, :prev_state, :service_pod, :health
     attr_accessor :service_pod, :container_state_changed
+
+    class Health
+      HEALTHY = 'healthy'.freeze
+      UNHEALTHY = 'unhealthy'.freeze
+
+      attr_reader :status, :count
+
+      def initialize
+        @status = 'unknown'.freeze
+      end
+
+      def status=(status)
+        if @status != status
+          @count = 1
+        else
+          @count += 1
+        end
+
+        @status = status
+      end
+
+      def unhealthy?
+        @status == UNHEALTHY
+      end
+    end
 
     def initialize(node, service_pod)
       @node = node
@@ -22,7 +47,9 @@ module Kontena::Workers
       @prev_state = nil # sync'd to master
       @container_state_changed = true
       @deploy_rev_changed = false
+      @health = Health.new
       subscribe('container:event', :on_container_event)
+      subscribe('container:health_check', :on_container_health_check)
     end
 
     # @param [Kontena::Models::ServicePod] service_pod
@@ -65,6 +92,16 @@ module Kontena::Workers
       end
     end
 
+    # @param [String] topic
+    # @param [ContainerHealthCheckWorker::Event] event
+    def on_container_health_check(topic, event)
+      return if event.service_id != @service_pod.service_id
+
+      @container_state_changed = true if health.status != event.health
+
+      health.status = event.health
+    end
+
     def destroy
       @service_pod.mark_as_terminated
       apply
@@ -95,6 +132,8 @@ module Kontena::Workers
       if service_pod.running? && service_container.nil?
         info "creating #{service_pod.name}"
         ensure_running
+      elsif service_pod.running? && (service_container && service_container.running? && health.unhealthy?)
+        ensure_healing
       elsif service_pod.running? && (service_container && service_container_outdated?(service_container))
         info "re-creating #{service_pod.name}"
         ensure_running
@@ -116,8 +155,8 @@ module Kontena::Workers
       end
     end
 
-    def ensure_running
-      Kontena::ServicePods::Creator.new(service_pod).perform
+    def ensure_running(pull: true)
+      Kontena::ServicePods::Creator.new(service_pod).perform(pull: pull)
     rescue => exc
       log_service_pod_event(
         "service:create_instance",
@@ -135,6 +174,32 @@ module Kontena::Workers
       log_service_pod_event(
         "service:start_instance",
         "Unexpected error while starting service instance #{service_pod.name_for_humans}: #{exc.message}",
+        Logger::ERROR
+      )
+      raise exc
+    end
+
+    def ensure_healing
+      if health.count < 5
+        info "restarting #{service_pod.name} because it's unhealthy"
+        restart_instance
+      elsif health.count == 5
+        info "re-creating #{service_pod.name} because it's unhealthy"
+        ensure_running(pull: false)
+      elsif health.count % 5 == 0
+        info "re-creating #{service_pod.name} because it's unhealthy"
+        ensure_running(pull: false)
+      end
+    end
+
+    def restart_instance
+      Kontena::ServicePods::Restarter.new(
+        service_pod.service_id, service_pod.instance_number
+      ).perform
+    rescue => exc
+      log_service_pod_event(
+        "service:restart_instance",
+        "Unexpected error while restarting service instance #{service_pod.name_for_humans}: #{exc.message}",
         Logger::ERROR
       )
       raise exc
@@ -258,6 +323,7 @@ module Kontena::Workers
         instance_number: service_pod.instance_number,
         rev: service_pod.deploy_rev,
         state: current_state,
+        health: health.status,
         error: error ? "#{error.class}: #{error}" : nil,
       }
 
