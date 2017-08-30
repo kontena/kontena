@@ -1,4 +1,5 @@
 require 'kontena/cli/stacks/stack_name'
+require 'yaml'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -12,16 +13,22 @@ module Kontena::Cli::Stacks
         @loaders ||= []
       end
 
-      def self.for(source)
-        loader = loaders.find { |l| l.match?(source) }
+      def self.for(source, parent = nil)
+        loader = loaders.find { |l| l.match?(source, parent) }
         raise "Can't determine stack file origin for '#{source}'" if loader.nil?
-        loader.new(source)
+        loader.new(source, parent)
       end
 
-      attr_reader :source
+      attr_reader :source, :parent
 
-      def initialize(source)
+      def initialize(source, parent)
         @source = source
+        @parent = parent
+        set_context
+      end
+
+      def set_context
+        #override in child
       end
 
       def yaml
@@ -48,12 +55,12 @@ module Kontena::Cli::Stacks
         return @dependencies if @dependencies
         depends = yaml['depends']
         if depends.nil? || depends.empty?
-          @dependencies = []
+          @dependencies = nil
         else
           @dependencies = depends.map do |name, dependency|
-            deps = { name: name, stack: dependency['stack'], variables: dependency['variables'] || {} }
+            reader = StackFileLoader.for(dependency['stack'], self)
+            deps = { name: name, stack: reader.source, variables: dependency['variables'] || {} }
             if recurse
-              reader = StackFileLoader.for(dependency['stack'])
               child_deps = reader.dependencies
               deps[:depends] = child_deps unless child_deps.nil?
             end

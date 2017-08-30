@@ -86,7 +86,14 @@ module Kontena::Cli::Stacks
     # @return [Array<Hash>]
     def parse_links(link_options)
       link_options.map{|l|
-        service_name, alias_name = l.split(':')
+        if l.kind_of?(String)
+          service_name, alias_name = l.split(':')
+        elsif l.kind_of?(Hash)
+          service_name = l['name']
+          alias_name = l['alias']
+        else
+          raise TypeError, "Invalid link type #{l.class.name}, expecting String or Hash"
+        end
         if service_name.nil?
           raise ArgumentError.new("Invalid link value #{l}")
         end

@@ -43,8 +43,15 @@ module Kontena::Cli::Stacks
         @notifications    = []
       end
 
-      def variable_values
-        variables.to_h(values_only: true)
+      def variable_values(without_defaults: false, without_vault: false)
+        result = variables.to_h(values_only: true)
+        if without_defaults
+          result.delete_if { |k, _| default_envs.key?(k) }
+        end
+        if without_vault
+          result.delete_if { |k, _| variables.option(k).from.include?(:vault) || variables.option(k).to.include?(:vault) }
+        end
+        result
       end
 
       def default_envs
@@ -123,11 +130,10 @@ module Kontena::Cli::Stacks
       end
 
       def create_dependency_variables(dependencies, name)
+        return if dependencies.nil?
         dependencies.each do |options|
           variables.build_option(name: options[:name].tr('-', '_'), type: :string, value: "#{name}-#{options[:name]}")
-          options[:depends].each do |child_deps|
-            create_dependency_variables(child_deps, "#{name}.#{options[:name]}")
-          end
+          create_dependency_variables(options[:depends], "#{name}.#{options[:name]}")
         end
       end
 
@@ -155,16 +161,16 @@ module Kontena::Cli::Stacks
           result[:name]          = name
           result[:registry]      = loader.registry
           result[:expose]        = fully_interpolated_yaml['expose']
-          result[:errors]        = errors unless skip_validation
-          result[:notifications] = notifications
           result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
           result[:volumes]       = errors.count.zero? ? parse_volumes : {}
           result[:dependencies]  = dependencies
           result[:source]        = raw_content
           unless skip_variables
-            result[:variables] = variable_values.reject { |k, _| default_envs[k] || variables.option(k).to.has_key?(:vault) || variables.option(k).from.has_key?(:vault) }
+            result[:variables] = variable_values(without_defaults: true, without_vault: true)
           end
           result[:parent_name]   = parent_name
+          result[:errors]        = errors unless skip_validation
+          result[:notifications] = notifications
         end
         result
       end
@@ -206,7 +212,7 @@ module Kontena::Cli::Stacks
             volumes.delete(name)
           end
         end
-        volumes.map { |name, vol| vol.merge(name: name) }
+        volumes.map { |name, vol| vol.merge('name' => name) }
       end
 
       ##
@@ -223,7 +229,7 @@ module Kontena::Cli::Stacks
               services.delete(name)
             end
           end
-          services.map { |name, svc| svc.merge(name: name) }
+          services.map { |name, svc| svc.merge('name' => name) }
         else
           raise ("Service '#{service_name}' not found in #{file}") unless services.has_key?(service_name)
           process_config(services[service_name], service_name)
@@ -291,7 +297,7 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename).execute(service_name, skip_validation: skip_validation?, skip_variables: true, variables: variables, defaults: defaults, values: values)
+        outcome = Reader.new(filename).execute(service_name)
         errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
         notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
         outcome[:services]

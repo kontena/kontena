@@ -1,8 +1,8 @@
 module Kontena::Cli::Stacks
   module YAML
     class RegistryLoader < StackFileLoader
-      def self.match?(source)
-        source =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/ && !File.exist?(source)
+      def self.match?(source, parent = nil)
+        source =~ /\A[a-zA-Z0-9\_\.\-]+\/[a-zA-Z0-9\_\.\-]+(?::.*)?\z/ && !FileLoader.match?(source, parent)
       end
 
       def read_content

@@ -42,15 +42,17 @@ module Kontena::Cli::Stacks
     end
 
     def install_dependencies
-      loader.dependencies.each do |dependency|
+      dependencies = loader.dependencies
+      return if dependencies.nil?
+      dependencies.each do |dependency|
         target_name = "#{stack_name}-#{dependency[:name]}"
         caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
         vals_from_opts = values.select do |key, _|
           key.start_with?(dependency[:name] + '.')
-        end.each_with_object({}) do |k, v, obj|
-          obj[k.sub(dependency[:name] + '.', '')] = v
+        end.each_with_object({}) do |var, obj|
+          obj[var.first.sub(dependency[:name] + '.', '')] = var.last
         end
 
         dependency[:variables].merge(vals_from_opts).each do |key, value|

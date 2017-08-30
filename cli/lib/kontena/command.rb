@@ -183,6 +183,12 @@ class Kontena::Command < Clamp::Command
     false
   end
 
+  def instance(arguments)
+    @arguments = arguments
+    parse @arguments
+    self
+  end
+
   def run(arguments)
     Kontena.logger.debug { "Running #{self.class.name} with #{arguments.inspect} -- callback matcher = '#{self.class.callback_matcher.nil? ? "nil" : self.class.callback_matcher.map(&:to_s).join(' ')}'" }
     @arguments = arguments

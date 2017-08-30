@@ -1,8 +1,8 @@
 module Kontena::Cli::Stacks
   module YAML
     class UriLoader < StackFileLoader
-      def self.match?(source)
-        source.include?('://') && !::File.exist?(source)
+      def self.match?(source, parent = nil)
+        source.include?('://') && !FileLoader.match?(source, parent)
       end
 
       def read_content

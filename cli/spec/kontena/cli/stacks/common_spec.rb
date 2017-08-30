@@ -2,101 +2,74 @@ require "kontena/cli/stacks/common"
 require "kontena/cli/stacks/yaml/reader"
 
 describe Kontena::Cli::Stacks::Common do
+  include FixturesHelpers
 
   let(:klass) do
     Class.new(Kontena::Command) do
       include Kontena::Cli::Stacks::Common
       include Kontena::Cli::Common
-      include Kontena::Cli::Stacks::Common::StackNameParam
       include Kontena::Cli::Stacks::Common::StackFileOrNameParam
       include Kontena::Cli::Stacks::Common::StackNameOption
       include Kontena::Cli::Stacks::Common::StackValuesToOption
       include Kontena::Cli::Stacks::Common::StackValuesFromOption
-    end
-  end
 
-  let(:subject) { klass.new('') }
-
-  context 'stack yaml reader methods' do
-    let(:reader) { double(:reader) }
-
-    before(:each) do
-      allow(reader).to receive(:execute).and_return({ errors: [], notifications: [] })
-      allow(reader).to receive(:raw_content).and_return("")
-      allow(reader).to receive(:stack_name).and_return('foo')
-      allow(subject).to receive(:set_env_variables).and_return(true)
-    end
-
-    describe '#stack_read_and_dump' do
-      it 'passes args to reader' do
-        expect(Kontena::Cli::Stacks::YAML::Reader).to receive(:new).with('foo', values: { 'value' => 'value' }, defaults: { 'default' => 'default' }).and_return(reader)
-        subject.stack_read_and_dump('foo', name: 'name', values: { 'value' => 'value' }, defaults: { 'default' => 'default' })
-      end
-
-      it 'returns a stack hash' do
-        expect(Kontena::Cli::Stacks::YAML::Reader).to receive(:new).and_return(reader)
-        expect(subject.stack_read_and_dump('foo')).to be_kind_of Hash
-      end
-    end
-
-    describe '#stack_from_yaml' do
-      it 'passes args to reader' do
-        expect(Kontena::Cli::Stacks::YAML::Reader).to receive(:new).with('foo', values: { 'value' => 'value' }, defaults: { 'default' => 'default' }).and_return(reader)
-        subject.stack_from_yaml('foo', name: 'name', values: { 'value' => 'value' }, defaults: { 'default' => 'default' })
-      end
-
-      it 'returns a stack hash' do
-        expect(Kontena::Cli::Stacks::YAML::Reader).to receive(:new).and_return(reader)
-        expect(subject.stack_from_yaml('foo')).to be_kind_of Hash
-      end
-    end
-
-    describe '#reader_from_yaml' do
-      it 'passes args to reader' do
-        expect(Kontena::Cli::Stacks::YAML::Reader).to receive(:new).with('foo', values: { 'value' => 'value' }, defaults: { 'default' => 'default' }).and_return(reader)
-        subject.reader_from_yaml('foo', name: 'name', values: { 'value' => 'value' }, defaults: { 'default' => 'default' })
-      end
-
-      it 'returns a reader' do
-        expect(Kontena::Cli::Stacks::YAML::Reader).to receive(:new).and_return(reader)
-        expect(subject.reader_from_yaml('foo')).to eq reader
+      def what
+        [source]
       end
     end
   end
 
-  describe '#stack_name' do
+  let(:subject) { klass.new('kontena') }
+
+  before do
+    allow(ENV).to receive(:[]).with('GRID').and_return('test-grid')
+    allow(ENV).to receive(:[]).with('STACK').and_return('test-stack')
   end
 
-  describe '#stack_from_reader' do
+  describe '#loader' do
+    it 'returns a loader' do
+      expect(subject.instance(['foo.yml']).loader).to respond_to(:reader)
+      expect(subject.instance(['foo.yml']).loader).to respond_to(:dependencies)
+      expect(subject.instance(['foo.yml']).loader).to respond_to(:stack_name)
+    end
   end
 
-  describe '#stack_from_yaml' do
+  describe '#reader' do
+    it 'returns a YAML reader for the stack file param' do
+      expect(subject.instance(['foo.yml']).reader).to respond_to(:execute)
+      expect(subject.instance(['foo.yml']).reader).to respond_to(:variable_values)
+    end
   end
 
-  describe '#require_config_file' do
+  describe '#stack' do
+    it 'returns a stack result' do
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).stack).to respond_to(:[])
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).stack[:name]).to eq ::YAML.safe_load(fixture('kontena_v3.yml'))['stack'].split('/').last
+    end
+
+    it 'sets the stack name' do
+      expect(subject.instance(['-n', 'foo', fixture_path('kontena_v3.yml')]).stack[:name]).to eq 'foo'
+    end
   end
 
-  describe '#generate_volumes' do
-  end
+  describe '#values_from_options' do
+    it 'is a hash that has key value pairs from -v params' do
+      expect(subject.instance(['-v', 'foo=bar', '-v', 'bar=baz', fixture_path('kontena_v3.yml')]).values_from_options).to match hash_including('foo' => 'bar', 'bar' => 'baz')
+    end
 
-  describe '#generate_services' do
-  end
+    context '--values-from' do
+      before do
+        allow(File).to receive(:exist?).with('vars.yml').and_return(true)
+        expect(File).to receive(:read).with('vars.yml').and_return(::YAML.dump('baz' => 'bag', 'bar' => 'boo'))
+      end
 
-  describe '#set_env_variables' do
-  end
+      it 'includes values read from --values-from file' do
+        expect(subject.instance(['--values-from', 'vars.yml', fixture_path('kontena_v3.yml')]).values_from_options).to match hash_including('baz' => 'bag', 'bar' => 'boo')
+      end
 
-  describe '#current_dir' do
-  end
-
-  describe '#display_notifications' do
-  end
-
-  describe '#hint_on_validation_notifications' do
-  end
-
-  describe '#abort_on_validation_errors' do
-  end
-
-  describe '#stacks_client' do
+      it 'includes values read from --values-from file, overriden by -v values' do
+        expect(subject.instance(['-v', 'foo=bar', '-v', 'bar=baz', '--values-from', 'vars.yml', fixture_path('kontena_v3.yml')]).values_from_options).to match hash_including('foo' => 'bar', 'bar' => 'baz', 'baz' => 'bag')
+      end
+    end
   end
 end

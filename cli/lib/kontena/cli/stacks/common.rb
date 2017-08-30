@@ -53,31 +53,36 @@ module Kontena::Cli::Stacks
       end
 
       def dump_variables
-        File.write(values_to, ::YAML.dump(reader.variable_values))
+        File.write(values_to, ::YAML.dump(reader.variable_values, without_defaults: true, without_vault: true))
       end
     end
 
     module StackValuesFromOption
-      attr_accessor :values
       def self.included(where)
         where.prepend InstanceMethods
 
         where.option '--values-from', '[FILE]', 'Read variable values from YAML' do |filename|
-          if filename
-            values_from_options.merge!(::YAML.safe_load(File.read(filename)))
-          end
+          values_from_file.merge!(::YAML.safe_load(File.read(filename)))
           true
         end
 
         where.option '-v', "VARIABLE=VALUE", "Set stack variable values, example: -v domain=example.com. Can be used multiple times.", multivalued: true, attribute_name: :var_option do |var_pair|
           var_name, var_value = var_pair.split('=', 2)
-          values_from_options.merge!(::YAML.safe_load(::YAML.dump(var_name => var_value)))
+          values_from_value_options.merge!(::YAML.safe_load(::YAML.dump(var_name => var_value)))
         end
       end
 
       module InstanceMethods
+        def values_from_file
+          @values_from_file ||= {}
+        end
+
+        def values_from_value_options
+          @values_from_value_options ||= {}
+        end
+
         def values_from_options
-          @values_from_options ||= {}
+          @values_from_options ||= values_from_file.merge(values_from_value_options)
         end
       end
     end
@@ -92,25 +97,21 @@ module Kontena::Cli::Stacks
     def current_dir
       File.basename(Dir.getwd)
     end
-    module_function :current_dir
 
     def display_notifications(messages, color = :yellow)
-      $stderr.puts(Kontena.pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
+      $stderr.puts(pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
     end
-    module_function :display_notifications
 
     def hint_on_validation_notifications(errors)
-      $stderr.puts "YAML contains the following unsupported options and they were rejected:".colorize(:yellow)
+      $stderr.puts pastel.yellow("YAML contains the following unsupported options and they were rejected:")
       display_notifications(errors)
     end
-    module_function :hint_on_validation_notifications
 
     def abort_on_validation_errors(errors)
-      $stderr.puts "YAML validation failed! Aborting.".colorize(:red)
+      $stderr.puts pastel.red("YAML validation failed! Aborting.")
       display_notifications(errors, :red)
       abort
     end
-    module_function :abort_on_validation_errors
 
     def stacks_client
       @stacks_client ||= Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)
