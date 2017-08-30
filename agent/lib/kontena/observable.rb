@@ -1,7 +1,10 @@
 module Kontena
-  # The value does not yet exist when initialized, it is nil.
-  # Once the value is first updated, then other Actors will be able to observe it.
-  # When the value later updated, observing Actors will be notified of those changes.
+  # The observable value is nil when initialized, and Observers will block waiting for it to become ready.
+  # Once the observable is first updated, then Observers will unblock and return/yield the updated value.
+  # When the observable is later updated, then Observers will return/yield the updated value.
+  # If the observable is crashed, then any Observers will also raise.
+  #
+  # TODO: are you allowed to reset an observable after crashing it, allowing observers to restart and re-observe?
   #
   # @attr observers [Hash{Kontena::Observer => Boolean}] stored value is the persistent? flag
   class Observable
@@ -67,34 +70,42 @@ module Kontena
       @value
     end
 
-    # Observable has updated, and has not reset
+    # Observable has updated, and has not reset. It might be crashed?
     #
     # @return [Boolean]
     def observable?
       !!@value
     end
 
+    # Observable has an exception set.
+    #
+    # Calls to `add_observer` will raise.
+    #
     def crashed?
       Exception === @value
     end
 
-    # Observable has observers
+    # Observable has observers.
+    #
+    # NOTE: dead observers will only get cleaned out on the next update
     #
     # @return [Boolean]
     def observed?
       !@observers.empty?
     end
 
-    # The Observable has a value. Propagate it to any observing Actors.
+    # The Observable has a value. Propagate it to any observers.
     #
-    # This will notify any Observers, causing them to yield if ready.
+    # This will notify any Observers, causing them to yield/return if ready.
     #
-    # The value must be safe for access by multiple threads, even after this update,
-    # and even after any later updates.
+    # The value must be immutable and threadsafe: it must remain valid for use by other threads
+    # both after this update, and after any other future updates. Do not send a mutable object
+    # that gets invalidated in between updates.
     #
     # TODO: automatically freeze the value?
     #
     # @param value [Object]
+    # @raise [RuntimeError] Observable crashed
     # @raise [ArgumentError] Update with nil value
     def update(value)
       raise RuntimeError, "Observable crashed: #{@value}" if crashed?
@@ -105,8 +116,9 @@ module Kontena
       set_and_notify(value)
     end
 
-    # Reset the observable value back into the initialized stte.
+    # Reset the observable value back into the initialized state.
     # This will notify any Observers, causing them to block until we update again.
+    #
     def reset
       debug { "reset" }
 
@@ -122,15 +134,17 @@ module Kontena
       set_and_notify(reason)
     end
 
-    # Observer is observing this Actor's @observable_value.
-    # Subscribes observer for updates to our observable value, sending Kontena::Observable::Message to observing mailbox.
-    # Returns Kontena::Observable::Message with current value.
-    # The observer will be unsubscribed/unlinked once no longer alive?.
+    # Observer is observing this Observable's value.
+    # Raises if observable has crashed.
+    # Returns current value, or nil if not yet ready.
+    # Subscribes observer for updates if persistent, or if not yet ready (returning nil).
+    #
+    # The observer will be dropped once no longer alive?.
     #
     # @param observer [Kontena::Observer]
-    # @param persistent [Boolean] always subscribe for future updates, otherwise only if no immediate value
+    # @param persistent [Boolean] false => either return immediate value, or return nil and subscribe for a single notification
     # @raise [Exception]
-    # @return [Object] current value
+    # @return [Object, nil] current value if ready
     def add_observer(observer, persistent: true)
       @mutex.synchronize do
         if !@value
@@ -153,7 +167,11 @@ module Kontena
       end
     end
 
-    # Send @value to each Kontena::Observer
+    # Send Message with given value to each Kontena::Observer that is still alive.
+    # Future calls to `add_observer` will also return the same value.
+    # Drops any observers that are dead or non-persistent.
+    #
+    # TODO: automatically clean out all observers when the observable crashes?
     #
     # @param value [Object, nil, Exception]
     def set_and_notify(value)
