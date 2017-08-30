@@ -223,7 +223,7 @@ module Kontena
 
       begin
         # Celluloid.receive => Celluloid::Actor#receive => Celluloid::Internals::Receiver#receive returns nil on timeout
-        message = Celluloid.receive(timeout) { |msg| Kontena::Observable::Message === msg && msg.observe == self }
+        message = Celluloid.receive(timeout) { |msg| Kontena::Observable::Message === msg && msg.observer == self }
       rescue Celluloid::TaskTimeout
         # Celluloid.receive => Celluloid::Mailbox.receive raises TaskTimeout insstead
         message = nil

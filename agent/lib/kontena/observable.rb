@@ -3,7 +3,7 @@ module Kontena
   # Once the value is first updated, then other Actors will be able to observe it.
   # When the value later updated, observing Actors will be notified of those changes.
   #
-  # @attr observers [Hash{Kontena::Observer::Observe => Celluloid::Proxy::Cell}]
+  # @attr observers [Hash{Kontena::Observer => Boolean}] stored value is the persistent? flag
   class Observable
     require_relative './observable/registry'
 
@@ -17,13 +17,13 @@ module Kontena
     attr_reader :logging_prefix # customize Kontena::Logging#logging_prefix by instance
 
     class Message
-      attr_reader :observe, :observable, :value
+      attr_reader :observer, :observable, :value
 
-      # @param observe [Kontena::Observable::Observe]
+      # @param observer [Kontena::Observer]
       # @param observable [Kontena::Observable]
       # @param value [Object, nil, Exception]
-      def initialize(observe, observable, value)
-        @observe = observe
+      def initialize(observer, observable, value)
+        @observer = observer
         @observable = observable
         @value = value
       end
@@ -160,23 +160,23 @@ module Kontena
       @mutex.synchronize do
         @value = value
 
-        @observers.each do |observe, persistent|
-          if !observe.alive?
-            debug { "dead: #{observe}" }
+        @observers.each do |observer, persistent|
+          if !observer.alive?
+            debug { "dead: #{observer}" }
 
-            @observers.delete(observe)
+            @observers.delete(observer)
 
           elsif !persistent
-            debug { "notify and drop: #{observe} <- #{value}" }
+            debug { "notify and drop: #{observer} <- #{value}" }
 
-            observe << Message.new(observe, self, value)
+            observer << Message.new(observer, self, value)
 
-            @observers.delete(observe)
+            @observers.delete(observer)
 
           else
-            debug { "notify: #{observe} <- #{value}" }
+            debug { "notify: #{observer} <- #{value}" }
 
-            observe << Message.new(observe, self, value)
+            observer << Message.new(observer, self, value)
           end
         end
       end
