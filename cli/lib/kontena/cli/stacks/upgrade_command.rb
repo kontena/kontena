@@ -23,12 +23,12 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def normalize_local_data(stack_data, parent_name)
-      return {} if stack_data.empty?
+      return nil if stack_data.nil? || stack_data.empty?
 
       depends = stack_data.delete(:depends) || []
       normalized_data = {
         parent_name => stack_data.merge(
-          loader: Kontena::Cli::Stacks::YAML::StackFileLoader.for(stack_data[:stack])
+          loader: loader_class.for(stack_data[:stack])
         )
       }
 
@@ -39,11 +39,16 @@ module Kontena::Cli::Stacks
       normalized_data
     end
 
-    def normalize_master_data(stack_name = name)
-      data = fetch_master_data(stack_name)
+    def normalize_master_data(stack_name)
+      begin
+        data = fetch_master_data(stack_name)
+      rescue Kontena::Errors::StandardError => ex
+        return nil if ex.status == 404
+        raise ex
+      end
       depends = data.delete('children') || []
 
-      normalized_data = { data['name'] => data }
+      normalized_data = { stack_name => data }
 
       depends.each do |stack|
         normalized_data.merge!(normalize_master_data(stack['name']))
@@ -53,13 +58,17 @@ module Kontena::Cli::Stacks
 
     def merge_data(local_data, remote_data)
       merged = {}
-      local_data.each do |key, data|
-        merged[key] ||= {}
-        merged[key][:local] = data
+      unless local_data.nil? || local_data.empty?
+        local_data.each do |key, data|
+          merged[key] ||= {}
+          merged[key][:local] = data
+        end
       end
-      remote_data.each do |key, data|
-        merged[key] ||= {}
-        merged[key][:remote] = data
+      unless remote_data.nil? || remote_data.empty?
+        remote_data.each do |key, data|
+          merged[key] ||= {}
+          merged[key][:remote] = data
+        end
       end
       merged
     end
@@ -70,13 +79,14 @@ module Kontena::Cli::Stacks
         normalize_local_data({stack: source, depends: loader.dependencies}, stack_name)
       end
 
-      remote = spinner "Reading stack data from master for #{pastel.cyan(name)}" do
-        normalize_master_data(name)
+      remote = spinner "Reading stack data from master for #{pastel.cyan(stack_name)}" do
+        normalize_master_data(stack_name)
       end
 
       merged = merge_data(local, remote)
 
       removes = merged.keys.select { |k| merged[k][:local].nil? }
+
       unless removes.empty?
         puts
         puts "Stacks to be removed because they are no longer depended on:"
@@ -98,7 +108,7 @@ module Kontena::Cli::Stacks
         merged.each do |stackname, data|
           next if data[:remote].nil?
           unless data[:local][:loader].stack_name.stack_name == data[:remote]['stack']
-            confirm "Replacing stack #{pastel.cyan(data[:remote]['stack'])} on master with #{pastel.cyan(data[:local][:stack])}. Are you sure?"
+            confirm "Replacing stack #{pastel.cyan(data[:remote]['stack'])} on master with #{pastel.cyan(data[:local][:loader].stack_name.stack_name)}. Are you sure?"
           end
         end
       end
