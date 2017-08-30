@@ -45,7 +45,7 @@ module Kontena::Cli::Stacks
         caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
-        dependency[:variables].merge(dependency_values_from_options(stack_name)).each do |key, value|
+        dependency[:variables].merge(dependency_values_from_options(dependency[:name])).each do |key, value|
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 

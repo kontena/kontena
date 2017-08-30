@@ -66,7 +66,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
       it 'installs all the dependencies' do
         expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep_1.dep_var=1', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')])
-        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "-v", "depvar=1", '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')])
+        expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "-v", "dep_var=1", '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')])
         expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including(stack: 'user/depstack1', name: 'deptest'))
         subject.run(['-n', 'deptest', '--no-deploy', '-v', 'dep_1.dep_1.dep_var=1', fixture_path('stack-with-dependencies.yml')])
       end
