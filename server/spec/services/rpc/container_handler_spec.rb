@@ -65,48 +65,45 @@ describe Rpc::ContainerHandler do
     end
   end
 
-  describe '#log' do
+  describe '#log_batch' do
     it 'creates new container log entry if container exists' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
       expect {
-        subject.log({
+        subject.log_batch([{
           'id' => container.container_id,
           'data' => 'foo',
           'type' => 'stderr'
-        })
-        subject.flush_logs
+        }])
       }.to change{ grid.container_logs.count }.by(1)
     end
 
     it 'saves container.name to log' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1')
-      subject.log({
+      subject.log_batch([{
         'id' => container.container_id,
         'data' => 'foo',
         'type' => 'stderr'
-      })
-      subject.flush_logs
+      }])
       expect(container.container_logs.last.name).to eq(container.name)
     end
 
     it 'saves container.instance_number to log' do
       container = grid.containers.create!(container_id: SecureRandom.hex(16), name: 'foo-1', instance_number: 1)
-      subject.log({
+      subject.log_batch([{
         'id' => container.container_id,
         'data' => 'foo',
         'type' => 'stderr'
-      })
-      subject.flush_logs
+      }])
       expect(container.container_logs.last.instance_number).to eq(container.instance_number)
     end
 
     it 'does not create entry if container does not exist' do
       expect {
-        subject.log({
+        subject.log_batch([{
           'id' => 'does_not_exist',
           'data' => 'foo',
           'type' => 'stderr'
-        })
+        }])
       }.to change{ grid.container_logs.count }.by(0)
     end
 
@@ -118,12 +115,16 @@ describe Rpc::ContainerHandler do
 
       start_time = Time.now.to_f
       bm = Benchmark.measure do
-        1_000.times do
-          subject.log({
-            'id' => containers[rand(0..9)],
-            'data' => 'foo',
-            'type' => 'stderr'
-          })
+        100.times do
+          logs = []
+          10.times do
+            logs << {
+              'id' => containers[rand(0..9)],
+              'data' => 'foo',
+              'type' => 'stderr'
+            }
+          end
+          subject.log_batch(logs)
         end
       end
       #puts bm
@@ -136,12 +137,6 @@ describe Rpc::ContainerHandler do
   describe '#stats_buffer_size' do
     it 'has a default buffer size greater than 1' do
       expect(subject.stats_buffer_size).to be > 1
-    end
-  end
-
-  describe '#logs_buffer_size' do
-    it 'has a default buffer size greater than 1' do
-      expect(subject.logs_buffer_size).to be > 1
     end
   end
 

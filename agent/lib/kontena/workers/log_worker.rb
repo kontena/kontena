@@ -29,6 +29,7 @@ module Kontena::Workers
     def initialize(autostart = true)
       @queue = Queue.new
       @workers = {}
+      @buffer = []
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
       @processing = false
       @streaming = false
@@ -46,6 +47,7 @@ module Kontena::Workers
 
     def watch_queue
       every(WATCH_INTERVAL) do
+        flush_buffer if force_flush_buffer?
         if @queue.size > QUEUE_MAX_SIZE
           warn "queue is full (size is #{@queue.size}), log lines are dropped until queue has free space"
         elsif @queue.size > QUEUE_THROTTLE
@@ -59,14 +61,18 @@ module Kontena::Workers
     # Process items from @queue until nil
     def process_queue
       defer {
+        @buffer_flushed_at = Time.now.to_i
         while data = @queue.pop
           sleep 1 until @processing
 
-          rpc_client.async.notification('/containers/log', [data])
-          if @queue.size > 100
-            sleep 0.001
-          else
-            sleep 0.05
+          @buffer << data
+          if @buffer.size > 10 || (Time.now.to_i - @buffer_flushed_at) >= 1
+            flush_buffer
+            if @queue.size > 100
+              sleep 0.001
+            else
+              sleep 0.01
+            end
           end
         end
       }
@@ -103,6 +109,20 @@ module Kontena::Workers
         start_streaming unless streaming?
         resume_processing
       }
+    end
+
+    # Should we force buffer flush?
+    #
+    # @return [Boolean]
+    def force_flush_buffer?
+      !@buffer_flushed_at.nil? && @buffer_flushed_at < (Time.now.to_i - WATCH_INTERVAL)
+    end
+
+    # Flush buffer (send logs to master)
+    def flush_buffer
+      rpc_client.notification('/containers/log_batch', [@buffer.dup])
+      @buffer.clear
+      @buffer_flushed_at = Time.now.to_i
     end
 
     def stop

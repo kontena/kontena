@@ -166,4 +166,25 @@ describe Kontena::Workers::LogWorker, :celluloid => true do
       end
     end
   end
+
+  describe '#force_flush_buffer?' do
+    it 'returns false by default' do
+      expect(subject.force_flush_buffer?).to be_falsey
+    end
+  end
+
+  describe '#flush_buffer' do
+    before(:each) do
+      allow(rpc_client).to receive(:notification)
+    end
+
+    it 'sends buffer to master' do
+      expect(rpc_client).to receive(:notification).once
+      subject.flush_buffer
+    end
+
+    it 'returns flush unix timestamp' do
+      expect(subject.flush_buffer).to be_instance_of(Fixnum)
+    end
+  end
 end
