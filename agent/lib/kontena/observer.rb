@@ -96,8 +96,12 @@ module Kontena
       observer.each(timeout: timeout) do |*values|
         # return or yield observed value
         if block_given?
+          observer.debug { "yield #{observer.describe_observables} => #{observer.describe_values}" }
+
           yield *values
         else
+          observer.debug { "return #{observer.describe_observables} => #{observer.describe_values}" }
+
           # workaround `return *values` not working as expected
           if values.length > 1
             return values
@@ -309,17 +313,15 @@ module Kontena
 
             raise self.error
           elsif ready?
-            debug { "yield: #{self.describe_observables}" }
-
             yield *self.values
 
             @deadline = Time.now + timeout if timeout
-          else
-            debug { "wait: #{self.describe_observables}" }
           end
         }
 
         # must be atomic!
+        debug { "wait: #{self.describe_observables}" }
+
         update(receive())
       end
     end
