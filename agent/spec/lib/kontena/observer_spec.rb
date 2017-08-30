@@ -294,6 +294,7 @@ describe Kontena::Observer, :celluloid => true do
       end
 
       it "accepts update for first value while requesting second value" do
+        # mock to simulate race condition
         expect(observable2).to receive(:add_observer) do |observer|
           observable_actor1.async.update object1 # XXX: can't suspend the observing task
           object2
@@ -301,6 +302,7 @@ describe Kontena::Observer, :celluloid => true do
 
         subject.async.test_observe_async(observable1, observable2)
 
+        subject.ping # wait for async observe setup to run
         observable_actor1.ping # wait for async update to finish
         subject.ping # wait for async observe to yield
 

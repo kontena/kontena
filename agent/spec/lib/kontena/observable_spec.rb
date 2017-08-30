@@ -1,9 +1,10 @@
 class TestObservableActor
   include Celluloid
   include Kontena::Observable::Helper
+  include Kontena::Logging
 
   def ping
-
+    debug "ping"
   end
 
   def crash(msg = nil, delay: nil)
