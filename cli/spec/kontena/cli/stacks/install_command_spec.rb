@@ -1,5 +1,4 @@
 require "kontena/cli/stacks/install_command"
-require 'kontena/cli/stacks/yaml/stack_file_loader'
 
 describe Kontena::Cli::Stacks::InstallCommand do
 
@@ -45,8 +44,8 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     it 'accepts a stack name as filename' do
       allow(File).to receive(:exist?).with('user/stack:1.0.0').at_least(:once).and_return(false)
-      expect(Kontena::Cli::Stacks::YAML::StackFileLoader).to receive(:for).with('user/stack:1.0.0').and_return(Kontena::Cli::Stacks::YAML::StackFileLoader.for(fixture_path('kontena_v3.yml')))
-      allow(Kontena::Cli::Stacks::YAML::StackFileLoader).to receive(:for).and_call_original
+      expect(subject.loader_class).to receive(:for).with('user/stack:1.0.0').and_return(subject.loader_class.for(fixture_path('kontena_v3.yml')))
+      allow(subject.loader_class).to receive(:for).and_call_original
       expect(client).to receive(:post).with(
         'grids/test-grid/stacks', hash_including(stack_expectation)
       )
