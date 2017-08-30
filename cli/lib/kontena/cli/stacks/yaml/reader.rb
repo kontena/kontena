@@ -149,7 +149,7 @@ module Kontena::Cli::Stacks
           set_variable_values(values) if values
           create_dependency_variables(dependencies, name)
           variables.run
-          raise RuntimeError, "Variable validation failed: #{variables.errors.inspect}" unless variables.valid?
+          raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid?
         end
 
         validate unless skip_validation

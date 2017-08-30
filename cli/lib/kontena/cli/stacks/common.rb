@@ -89,6 +89,19 @@ module Kontena::Cli::Stacks
         def values_from_options
           @values_from_options ||= values_from_file.merge(values_from_value_options)
         end
+
+        # Transforms a hash
+        # dependency_values_from_options('foo.bar' => 1, 'foo')
+        #  => { 'bar' => 1 }
+        # Used for dependency variable injection
+        def dependency_values_from_options(name)
+          new_vals = values_from_options.select do |key, _|
+            key.start_with?(name + '.')
+          end.each_with_object({}) do |var, obj|
+            obj[var.first.sub(name + '.', '')] = var.last
+          end
+          new_vals
+        end
       end
     end
 

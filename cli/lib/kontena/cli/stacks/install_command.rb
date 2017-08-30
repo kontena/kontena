@@ -37,10 +37,6 @@ module Kontena::Cli::Stacks
       deploy_stack if deploy?
     end
 
-    def values
-      @values ||= values_from_options
-    end
-
     def install_dependencies
       dependencies = loader.dependencies
       return if dependencies.nil?
@@ -49,13 +45,7 @@ module Kontena::Cli::Stacks
         caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
-        vals_from_opts = values.select do |key, _|
-          key.start_with?(dependency[:name] + '.')
-        end.each_with_object({}) do |var, obj|
-          obj[var.first.sub(dependency[:name] + '.', '')] = var.last
-        end
-
-        dependency[:variables].merge(vals_from_opts).each do |key, value|
+        dependency[:variables].merge(dependency_values_from_options(stack_name)).each do |key, value|
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 

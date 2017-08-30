@@ -18,6 +18,7 @@ module Kontena::Cli::Stacks
     option '--[no-]deploy', :flag, 'Trigger deploy after upgrade', default: true
 
     option '--force', :flag, 'Force upgrade'
+    option '--skip-dependencies', :flag, "Do not install any stack dependencies"
 
     requires_current_master
     requires_current_master_token
@@ -50,6 +51,8 @@ module Kontena::Cli::Stacks
 
       normalized_data = { stack_name => data }
 
+      return normalized_data if skip_dependencies?
+
       depends.each do |stack|
         normalized_data.merge!(normalize_master_data(stack['name']))
       end
@@ -75,11 +78,11 @@ module Kontena::Cli::Stacks
 
     def execute
 
-      local = spinner "Reading local stack data from #{pastel.cyan(source)}" do
-        normalize_local_data({stack: source, depends: loader.dependencies}, stack_name)
+      local = spinner "Parsing #{pastel.cyan(source)}" do
+        normalize_local_data({stack: source, depends: skip_dependencies? ? nil : loader.dependencies}, stack_name)
       end
 
-      remote = spinner "Reading stack data from master for #{pastel.cyan(stack_name)}" do
+      remote = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
         normalize_master_data(stack_name)
       end
 
@@ -115,21 +118,26 @@ module Kontena::Cli::Stacks
 
       merged.reverse_each do |stackname, data|
         set_env_variables(stackname, current_grid)
-        stack = data[:local][:loader].reader.execute(name: stackname, values: values_from_options, defaults: data.dig(:remote, 'variables'), parent_name: data.dig(:local, :parent_name))
+        stack = data[:local][:loader].reader.execute(
+          name: stackname,
+          values: (data.dig(:local, :variables) || {}).merge(dependency_values_from_options(stackname)),
+          defaults: data.dig(:remote, 'variables'),
+          parent_name: data.dig(:local, :parent_name)
+        )
 
         if data[:remote]
-          spinner "Upgrading stack #{pastel.cyan(name)}" do |spin|
-            update_stack(stackname, stack) || spin.fail!
+          spinner "Upgrading #{stack_name == stackname ? 'stack' : 'dependency'} #{pastel.cyan(stackname)}" do |spin|
+            update_stack(stackname, stack.reject { |k, _| [:errors, :notifications, :parent_name].include?(k) }) || spin.fail!
           end
         else
           cmd = ['stack', 'install', '--name', stackname]
           cmd.concat ['--parent-name', stack[:parent_name]] if stack[:parent_name]
-          stack[:variables].each do |k, v|
+          stack[:variables].merge(dependency_values_from_options(stackname)).each do |k, v|
             cmd.concat ['-v', "#{k}=#{v}"]
           end
-          cmd << '--skip-dependencies'
           cmd << '--no-deploy'
           cmd << data[:local][:loader].source
+          caret "Installing new dependency #{cmd.last} as #{stackname}"
           Kontena.run!(cmd)
         end
 

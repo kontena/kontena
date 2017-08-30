@@ -6,4 +6,3 @@ variables:
 services:
   cache:
     image: "image:$dep_var"
-

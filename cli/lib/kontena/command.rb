@@ -183,6 +183,11 @@ class Kontena::Command < Clamp::Command
     false
   end
 
+  # Returns an instance of the command, just like with Kontena.run! but before calling "execute"
+  # You can use it for specs or reuse of instancemethods.
+  # Example:
+  #   cmd = Kontena::FooCommand.instance(['-n', 'foo'])
+  #   cmd.fetch_stuff
   def instance(arguments)
     @arguments = arguments
     parse @arguments

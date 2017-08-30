@@ -5,4 +5,4 @@ variables:
     type: integer
 services:
   monitor:
-    image: "image:$ {dep_var}"
+    image: "image:${dep_var}"
