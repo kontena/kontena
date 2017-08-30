@@ -30,9 +30,12 @@ module Docker
 
     def subscribe_to_session
       @subscription = MongoPubsub.subscribe("container_exec:#{@exec_session['id']}") do |data|
-        if data.has_key?('exit')
+        if data.has_key?('error')
+          @ws.send(JSON.dump({ error: data['error'] }))
+          @ws.close(4000)
+        elsif data.has_key?('exit')
           @ws.send(JSON.dump({ exit: data['exit'] }))
-          @ws.close
+          @ws.close(1000)
         else
           @ws.send(JSON.dump({ stream: data['stream'], chunk: data['chunk'] }))
         end

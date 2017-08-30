@@ -59,6 +59,7 @@ module Kontena::Cli::Helpers
     end
 
     # @param ws [Kontena::Websocket::Client]
+    # @raise [RuntimeError] exec error
     # @return [Integer] exit code
     def websocket_exec_read(ws)
       ws.read do |msg|
@@ -66,7 +67,9 @@ module Kontena::Cli::Helpers
 
         logger.debug "websocket exec read: #{msg.inspect}"
 
-        if msg.has_key?('exit')
+        if msg.has_key?('error')
+          raise msg['error']
+        elsif msg.has_key?('exit')
           # breaks the read loop
           return msg['exit'].to_i
         elsif msg.has_key?('stream')
