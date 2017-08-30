@@ -1,6 +1,11 @@
 module Kontena
-  # Observer is observing some Observables, and tracking their values.
-  # This object is passed to each Observable, which then sends it back via Kontena::Observable::Message for updates.
+  # Observer is observing some Observables, and tracking their observed values.
+  #
+  # The initial observe => Observable.add_observer happens synchronously, protected by the Observable mutex.
+  # The future observable updates are sent as messages to the Observer mailbox.
+  # The observing task is responsible for reciving each observable update message.
+  #
+  # The Observable gets a reference to the Observer, which is used to receive the message from the correct observing task.
   class Observer
     include Kontena::Logging
 
@@ -20,8 +25,9 @@ module Kontena
       end
     end
 
-    # Mixin module providing the observe method
+    # Mixin module providing the #observe method
     module Helper
+
       # @see Kontena::Observe#observe
       #
       # Wrapper that defaults subject to the name of the including class.
@@ -62,9 +68,11 @@ module Kontena
     #   Yields in exclusive mode.
     #   Preserves Observable update ordering: each Observable update will be seen in order.
     #
+    #   TODO: spec async yield timeout
+    #
     # @param observables [Array<Observable>]
     # @param subject [String] identify the Observer for logging purposes
-    # @param timeout [Float] optional timeout in seconds, only supported for sync mode
+    # @param timeout [Float] (seconds) optional timeout for sync return
     # @raise [Timeout::Error] if not all observables are ready after timeout expires
     # @raise [Kontena::Observer::Error] if any observable crashes
     # @yield [*values] all Observables are ready (async mode only)
@@ -75,7 +83,7 @@ module Kontena
       persistent = true
       persistent = false if !block_given? && observables.length == 1 # special case: sync observe of a single observable does not need updates
 
-      # must not suspend in between observing and receiving!
+      # must not suspend and risk discarding any messages in between observing and receiving from each()!
       Celluloid.exclusive {
         # this block should not make any suspending calls, but use exclusive mode to guarantee that regardless
         observables.each do |observable|
@@ -83,9 +91,9 @@ module Kontena
         end
       }
 
-      # return or yield observed value
-      # NOTE: each yields in exclusive mode!
+      # NOTE: yields in exclusive mode!
       observer.each(timeout: timeout) do |*values|
+        # return or yield observed value
         if block_given?
           yield *values
         else
@@ -102,7 +110,7 @@ module Kontena
     end
 
     # @param subject [Object] used to identify the Observer for logging purposes
-    # @param mailbox [Celluloid::Mailbox] send/receive messages
+    # @param mailbox [Celluloid::Mailbox] Observable sends messages to mailbox, Observer receives messages from mailbox
     def initialize(subject, mailbox)
       @subject = subject
       @mailbox = mailbox
@@ -117,19 +125,24 @@ module Kontena
 
   # threadsafe API
     # Describe the observer for debug logging
-    # Called by the Observer actor, must be threadsafe and atomic
+    # Called by the Observer from other actors, must be threadsafe and atomic
     def to_s
       "#{self.class.name}<#{@subject}>"
     end
 
-    # Accepting updates from Observables?
+    # Still interested in updates from Observables?
+    # Any messages sent after no longer alive are harmless and will just be discarded.
     #
-    # @return [Boolean] false => delete from Observable#observers before sending update
+    # @return [Boolean] false => observed observables will drop this observer
     def alive?
       @alive && @mailbox.alive?
     end
 
-    # Update Observer
+    # Update Observer.
+    #
+    # If the Observer is dead by the time the message is sent to the mailbox, or
+    # before it gets processed, the message will be safely discarded.
+    #
     # @param message [Kontena::Observable::Message]
     def <<(message)
       @mailbox << message
@@ -141,6 +154,12 @@ module Kontena
     end
 
     # Describe the observables for debug logging
+    #
+    # Each Observable will include a symbol showing its current state:
+    #
+    # * Kontena::Observable<TestActor>   => ready
+    # * Kontena::Observable<TestActor>!  => crashed
+    # * Kontena::Observable<TestActor>?  => not ready
     #
     # @return [String]
     def describe_observables
@@ -167,7 +186,8 @@ module Kontena
     #
     # NOTE: Must be called from exclusive mode, to ensure that any resulting Observable messages are nost lost before calling receive!
     #
-    # @param observable [Observable]
+    # @param observable [Kontena::Observable]
+    # @param persistent [Boolean] false => only interested in current or initial value
     def observe(observable, persistent: true)
       fail "Must observe in exclusive mode" unless Celluloid.exclusive?
 
@@ -185,7 +205,7 @@ module Kontena
 
     # Add Observable with initial value
     #
-    # @param observable [Observable]
+    # @param observable [Kontena::Observable]
     # @param value [Object] nil if not yet ready
     def add(observable, value = nil)
       @observables << observable
@@ -202,7 +222,7 @@ module Kontena
       @values[observable] = value
     end
 
-    # Update observable value from message
+    # Update observed value from message
     #
     # @param message [Kontena::Observable::Message]
     def update(message)
@@ -238,25 +258,31 @@ module Kontena
 
     # Any observable has an error?
     #
-    # @return [Boolean] true => call to crash
+    # @return [Boolean] true => some observed value is an Exception
     def error?
       @values.any? { |observable, value| Exception === value }
     end
 
-    # Each observable has a value?
+    # Every observable has a value?
     #
-    # @return [Boolean] false => block calls on updates
+    # @return [Boolean] false => some observed values are still nil
     def ready?
       !@values.any? { |observable, value| value.nil? }
     end
 
-    # Map each observable to its value
+    # Map each observed observable to its value.
     #
-    # @return [Array] values or nil
+    # Should only be used once ready?
+    #
+    # @return [Array] observed values
     def values
       @observables.map{|observable| @values[observable] }
     end
 
+    # Return Error for first crashed observable.
+    #
+    # Should only be used if error?
+    #
     # @return [Exception, nil]
     def error
       @values.each_pair{|observable, value|
@@ -297,7 +323,9 @@ module Kontena
       end
     end
 
-    # No longer expecting updates.
+    # No longer expecting updates from any Observables.
+    # Any messages sent to our mailbox will just be discarded.
+    # All observed Observables will eventually notice we are dead, and drop us from their observers.
     #
     def kill
       @alive = false
