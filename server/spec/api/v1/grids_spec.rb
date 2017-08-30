@@ -343,12 +343,48 @@ describe '/v1/grids', celluloid: true do
         expect(json_response['logs'].first['data']).to eq('foo-1 1')
       end
 
-      it 'returns grid container logs for multiple services' do
+      it 'returns grid container logs for multiple services by service name' do
         get "/v1/grids/#{@grid.to_path}/container_logs?services=foo,bar", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['logs'].size).to eq(2)
         expect(json_response['logs'][0]['data']).to eq('foo-1 1')
         expect(json_response['logs'][1]['data']).to eq('bar-1 1')
+      end
+
+      context 'stack service' do
+        let(:stack) do
+          Stacks::Create.run(
+            current_user: david,
+            grid: @grid,
+            name: 'foostack',
+            stack: 'stack',
+            version: '0.1.1',
+            source: '...',
+            variables: { foo: 'bar' },
+            registry: 'file',
+            services: [
+              { name: 'app', image: 'my/app:latest', stateful: false },
+              { name: 'foo', image: 'my/app:latest', stateful: false },
+              { name: 'redis', image: 'redis:2.8', stateful: true }
+            ]
+          ).result
+        end
+
+        before do
+          node = @grid.create_node!('node-2', node_id: SecureRandom.uuid)
+          app_container = stack.grid_services.find_by(name: 'app').containers.create!(name: 'app-1', host_node: node, container_id: 'ddd')
+          app_container.container_logs.create!(name: "app-1", data: 'app-1 1', type: 'stdout', grid: @grid, host_node: node, grid_service: stack.grid_services[0])
+          foo_container = stack.grid_services.find_by(name: 'foo').containers.create!(name: 'foo-1', host_node: node, container_id: 'eee')
+          foo_container.container_logs.create!(name: "foo-1", data: 'foo-1 1', type: 'stdout', grid: @grid, host_node: node, grid_service: stack.grid_services[1])
+        end
+
+        it 'returns grid container logs for multiple services by service id' do
+          get "/v1/grids/#{@grid.to_path}/container_logs?services=foostack/app,foostack/foo,foostack/nonexist,nostack/app", nil, request_headers
+          expect(response.status).to eq(200)
+          expect(json_response['logs'].size).to eq(2)
+          expect(json_response['logs'][0]['data']).to eq('app-1 1')
+          expect(json_response['logs'][1]['data']).to eq('foo-1 1')
+        end
       end
 
       it 'returns grid container logs for a container' do
