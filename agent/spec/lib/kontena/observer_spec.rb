@@ -474,7 +474,8 @@ describe Kontena::Observer, :celluloid => true do
       # simulate supervisor
       @observer_actor = Celluloid::Actor[:observer_test] = supervised_observer_class.new
       @observer_actor.async.start(:observable_test)
-      @observer_actor.ping
+      @observer_actor.ping; @observable_actor.ping # wait for the Actor[...].observable
+      @observer_actor.ping # wait for the observe()
 
       expect(@observer_actor.values).to eq [1]
     end
