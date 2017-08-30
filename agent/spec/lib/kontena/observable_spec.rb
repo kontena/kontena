@@ -195,30 +195,35 @@ describe Kontena::Observable do
         TestObserverActor.new
       }
 
+      # start spamming updates while the observer actors are concurrently observing
+      future = observable_actor.future.spam_updates(1..update_count, delay: 0.005, interval: 0.001)
+
       observer_actors.each do |actor|
         actor.async.test_ordering(subject)
+        sleep 0.001
       end
 
-      # run updates sync while the observers are starting
-      observable_actor.spam_updates(1..update_count, interval: 0.001)
-
-      # wait for actor to notify all observers
-      observable_actor.ping
+      # wait for observable actor to notify all observers
+      future.value
 
       # wait for all observers to observe and update
       observer_actors.each do |actor|
         actor.ping
       end
 
-      # all observers got the final value
+      # all observers get the final value
       expect(observer_actors.map{|actor| actor.observed_values.last}).to eq [update_count] * observer_count
 
-      # also expect this...
+      # make sure they get the values in order
       expect(observer_actors.map{|actor| actor.ordered?}).to eq [true] * observer_count
 
-      # some observers only observed after the first update
-      # this is potentially racy, but it's important, or this spec doesn't test what it should
-      expect(observer_actors.map{|actor| actor.observed_values.first}.max).to be > 1
+      # some observers observed before the first update, some after
+      # this is potentially racy, but it's important, or this spec doesn't test what it should!
+      min_first = observer_actors.map{|actor| actor.observed_values.first}.min
+      max_first = observer_actors.map{|actor| actor.observed_values.first}.max
+
+      expect(min_first).to be < max_first
+      expect(max_first).to be > 1
     end
 
     describe "propagating observed updates" do
