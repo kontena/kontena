@@ -34,7 +34,7 @@ module Kontena::NetworkAdapters
 
     def start
       observe(Actor[:node_info_worker].observable) do |node|
-        launch(node)
+        async.launch(node)
       end
     end
 
