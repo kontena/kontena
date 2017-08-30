@@ -44,7 +44,7 @@ module Kontena
     #
     #     value1, value2 = observe(observable1, observable2)
     #
-    #   Returns once all of the observables are ready, blocking the current thread or celluloid task.
+    #   Returns once all of the observables are ready, suspending the current thread or celluloid task.
     #   Returns the most recent value of each Observable.
     #   Raises with Timeout::Error if a timeout is given, and any observable is not yet ready.
     #   Raises with Kontena::Observer::Error if any observable crashes during the wait.
@@ -65,6 +65,7 @@ module Kontena
     #   Raises if any of the observed Actors crashes.
     #   Does not return.
     #
+    #   Suspends the task in between yields.
     #   Yields in exclusive mode.
     #   Preserves Observable update ordering: each Observable update will be seen in order.
     #

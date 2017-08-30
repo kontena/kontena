@@ -1,8 +1,9 @@
 module Kontena
-  # The observable value is nil when initialized, and Observers will block waiting for it to become ready.
-  # Once the observable is first updated, then Observers will unblock and return/yield the updated value.
-  # When the observable is later updated, then Observers will return/yield the updated value.
-  # If the observable is crashed, then any Observers will also raise.
+  # The observable value is nil when initialized, and Observers will wait for it to become ready.
+  # Once the observable is first updated, then Observers will return/yield the initial value.
+  # When the observable is later updated, Observers will return/yield the updated value.
+  # If the observable already has a value, then observing that value will return/yield the immediate value.
+  # If the observable crashes, then any Observers will immediately raise.
   #
   # TODO: are you allowed to reset an observable after crashing it, allowing observers to restart and re-observe?
   #
@@ -124,7 +125,7 @@ module Kontena
     end
 
     # Reset the observable value back into the initialized state.
-    # This will notify any Observers, causing them to block until we update again.
+    # This will notify any Observers, causing them to wait until we update again.
     #
     def reset
       debug { "reset" }
