@@ -40,12 +40,19 @@ module Kontena
       #
       # @return [Kontena::Observable]
       def observable
-        @observable ||= Kontena::Observable.new(self.class.name).tap do |observable|
-          observable_registry = Kontena::Observable.registry
-          observable_registry.register(observable, self.current_actor)
+        return @observable if @observable
 
-          self.links << observable_registry # registry monitors owner
-        end
+        # the register can suspend this task, so other calls might get the observable before it gets registered
+        # shouldn't be a problem, unless the register/linking somehow fails and crashes this actor without crashing the
+        # observable?
+        @observable = Kontena::Observable.new(self.class.name)
+
+        observable_registry = Kontena::Observable.registry
+        observable_registry.register(@observable, self.current_actor)
+
+        self.links << observable_registry # registry monitors owner
+
+        @observable
       end
     end
 
