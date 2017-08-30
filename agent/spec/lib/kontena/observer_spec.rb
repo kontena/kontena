@@ -300,7 +300,9 @@ describe Kontena::Observer, :celluloid => true do
         end
 
         subject.async.test_observe_async(observable1, observable2)
-        subject.ping
+
+        observable_actor1.ping # wait for async update to finish
+        subject.ping # wait for async observe to yield
 
         expect(subject.initial_values).to eq [object1, object2]
         expect(subject.observed_values).to eq [object1, object2]
