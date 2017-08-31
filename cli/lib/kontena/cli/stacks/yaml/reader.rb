@@ -1,6 +1,11 @@
 require 'kontena/cli/common'
 require 'kontena/util'
 require 'kontena/cli/stacks/yaml/stack_file_loader'
+require 'kontena/cli/stacks/yaml/service_extender'
+require 'kontena/cli/stacks/service_generator_v2'
+require 'kontena/cli/stacks/yaml/validator_v3'
+require 'opto'
+require 'liquid'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -26,11 +31,6 @@ module Kontena::Cli::Stacks
       attr_reader :file, :loader, :errors, :notifications
 
       def initialize(file)
-        require_relative 'service_extender'
-        require_relative 'validator_v3'
-        require_relative 'opto'
-        require 'liquid'
-
         if file.kind_of?(StackFileLoader)
           @file = file.source
           @loader = file
