@@ -241,3 +241,103 @@ These options are defined on the services that are balanced through Kontena Load
 * `KONTENA_LB_KEEP_VIRTUAL_PATH`: if set to true, virtual path will be kept in request path (only for http mode). This is false by default.
 * `KONTENA_LB_CUSTOM_SETTINGS`: extra settings; each line will be appended to either the related backend section or the listen session in the HAProxy configuration file
 * `KONTENA_LB_COOKIE`: Enables cookie-based session stickiness. With empty value, it defaults to the load balancer-set cookie. Can be customized to use application cookies. See details at [HAProxy docs](https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4.2-cookie)
+
+## Custom Settings Examples and Use Cases
+
+Note: KONTENA_LB_CUSTOM_SETTINGS in the **loadbalancer** go to `defaults` section, in the **services** is appended to the related backend. 
+This is a important distinction because some settings cannot go to the defaults sections (like redirects) and vice-versa.
+
+Note: In the yaml file when you need multiple lines, use the syntax:
+
+```yaml
+environment:
+      KONTENA_LB_INTERNAL_PORT: 80
+      KONTENA_LB_VIRTUAL_HOSTS: www.kontena.io,kontena.io
+      KONTENA_LB_CUSTOM_SETTINGS: |
+        acl fonts_static path_end .eot .ttf .otf .woff
+        http-response add-header Access-Control-Allow-Origin "*" if fonts_static
+```
+
+**Wrong**:
+
+```yaml
+environment:
+      - KONTENA_LB_INTERNAL_PORT=80
+      - KONTENA_LB_VIRTUAL_HOSTS=www.kontena.io,kontena.io
+      - KONTENA_LB_CUSTOM_SETTINGS=
+         acl fonts_static path_end .eot .ttf .otf .woff
+         http-response add-header Access-Control-Allow-Origin "*" if fonts_static
+```
+
+The second file cause haproxy syntax problems, because the lines are combined when haproxy file is assembled.
+
+### Force https redirection
+
+Use `KONTENA_LB_CUSTOM_SETTINGS=redirect scheme https if !{ ssl_fc }` in the service:
+
+```yaml
+services:
+  internet_lb:
+    image: kontena/lb:latest
+    ports:
+      - 80:80
+
+  web:
+    image: nginx:latest
+    environment:
+      - KONTENA_LB_MODE=http
+      - KONTENA_LB_BALANCE=roundrobin
+      - KONTENA_LB_INTERNAL_PORT=80
+      - KONTENA_LB_VIRTUAL_HOSTS=www.kontena.io,kontena.io
+      - KONTENA_LB_CUSTOM_SETTINGS=redirect scheme https if !{ ssl_fc }
+    links:
+      - internet_lb
+```
+
+### CORS - Cross-origin Resource Sharing
+
+Enabling CORS using haproxy to add reponse header **Access-Control-Allow-Origin** if request is to a font (eot|ttf|otf|woff) file.
+This can be usefull for Content Delivery Networks (CDN)
+
+
+```yaml
+services:
+ internet_lb:
+    image: kontena/lb:latest
+    ports:
+      - 80:80
+  web:
+    image: nginx:latest
+    links:
+      - common/internet_lb
+    environment:
+      KONTENA_LB_INTERNAL_PORT: 80
+      KONTENA_LB_VIRTUAL_HOSTS: www.kontena.io,kontena.io
+      KONTENA_LB_CUSTOM_SETTINGS: |
+        acl fonts_static path_end .eot .ttf .otf .woff
+        http-response add-header Access-Control-Allow-Origin "*" if fonts_static
+      
+```
+
+Docs: https://www.haproxy.com/doc/aloha/7.0/haproxy/http_rewriting.html#rewriting-http-responses
+
+### Redirecting *.domain.com to domain.com
+
+```yaml
+services:
+ internet_lb:
+    image: kontena/lb:latest
+    ports:
+      - 80:80
+  web:
+    image: nginx:latest
+    links:
+      - common/internet_lb
+    environment:
+      KONTENA_LB_INTERNAL_PORT: 80
+      KONTENA_LB_VIRTUAL_HOSTS: *.domain.com
+      KONTENA_LB_CUSTOM_SETTINGS: |
+        acl wildcard hdr_reg(host) ^\w*\.domain.com\w*
+        redirect code 301 location domain.com%[capture.req.uri] if wildcard
+      
+```
