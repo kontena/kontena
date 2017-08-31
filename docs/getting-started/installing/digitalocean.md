@@ -10,6 +10,14 @@ title: DigitalOcean
 - [Installing Kontena Nodes](digitalocean.md#installing-kontena-nodes)
 - [DigitalOcean Plugin Command Reference](digitalocean.md#digitalocean-plugin-command-reference)
 
+## Caveats
+
+### Cannot update `cloud-config.yml` after node creation
+
+The Kontena DigitalOcean plugin creates CoreOS virtual machines for the master and nodes. CoreOS machines are configured using a configuration file called `cloud-config.yml`. On DigitalOcean, this configuration file is stored in [instance metadata](https://www.digitalocean.com/community/tutorials/an-introduction-to-droplet-metadata).
+
+DigitalOcean [provides no way to update instance metadata](https://www.digitalocean.com/community/questions/how-to-update-coreos-cloud-config), including `cloud-config.yml`, after the instance has been created. This means that if you want to, for example, update SSH keys or set `sysctl`s in a persistent fashion, you will need to create new nodes and decommission old ones.
+
 ## Prerequisites
 
 - [Kontena CLI](cli.md)
