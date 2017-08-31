@@ -16,7 +16,24 @@ module Kontena::Cli::Stacks
     include Common::StackValuesFromOption
 
     option '--online', :flag, "Enable connections to current master", default: false
-    option '--dependencies', :flag, "Show dependency tree"
+    option '--dependency-tree', :flag, "Show dependency tree"
+    option '--[no-]dependencies', :flag, "Validate dependencies", default: true
+
+    def validate_dependencies
+      dependencies = loader.dependencies
+      return if dependencies.nil?
+      dependencies.each do |dependency|
+        target_name = "#{stack_name}-#{dependency[:name]}"
+        cmd = ['stack', 'validate']
+        cmd << '--online' if online?
+
+        dependency[:variables].merge(dependency_values_from_options(dependency[:name])).each do |key, value|
+          cmd.concat ['-v', "#{key}=#{value}"]
+        end
+        cmd << dependency[:stack]
+        Kontena.run(cmd)
+      end
+    end
 
     def execute
       unless online?
@@ -24,13 +41,15 @@ module Kontena::Cli::Stacks
         set_env_variables(stack_name, 'validate', 'validate-platform')
       end
 
-      if dependencies?
-        puts ::YAML.dump(JSON.parse(stack[:dependencies].to_json))
+      if dependency_tree?
+        puts ::YAML.dump({'name' => stack_name, 'stack' => source, 'depends' => JSON.parse(stack[:dependencies].to_json)})
         exit 0
       end
 
-      hint_on_validation_notifications(stack[:notifications]) unless stack[:notifications].empty?
-      abort_on_validation_errors(stack[:errors]) unless stack[:errors].empty?
+      validate_dependencies if dependencies?
+
+      hint_on_validation_notifications(stack[:notifications], dependencies? ? loader.source : nil) unless stack[:notifications].empty?
+      abort_on_validation_errors(stack[:errors], dependencies? ? loader.source : nil) unless stack[:errors].empty?
 
       dump_variables if values_to
 
@@ -38,7 +57,11 @@ module Kontena::Cli::Stacks
         # simplest way to stringify keys in a hash
         'variables' => JSON.parse(reader.variables.to_h(with_values: true, with_errors: true).to_json)
       )
-      puts ::YAML.dump(result)
+      if dependencies?
+        puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source} :")
+      else
+        puts ::YAML.dump(result)
+      end
     end
   end
 end
