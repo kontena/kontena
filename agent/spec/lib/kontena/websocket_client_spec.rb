@@ -55,6 +55,8 @@ describe Kontena::WebsocketClient, :celluloid => true do
   describe '#start' do
     it 'connects' do
       expect(subject).to receive(:connect!)
+      expect(subject).to receive(:backoff_reconnect!)
+      expect(subject).to receive(:loop).and_yield
 
       actor.start
     end
@@ -220,6 +222,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
     describe '#start' do
       it 'does not connect' do
         expect(subject).not_to receive(:connect!)
+        expect(subject).to receive(:loop).and_yield
 
         actor.start
       end
@@ -490,6 +493,7 @@ describe Kontena::WebsocketClient, :celluloid => true do
     describe '#start' do
       it 'does not connect' do
         expect(subject).not_to receive(:connect!)
+        expect(subject).to receive(:loop).and_yield
 
         actor.start
       end
