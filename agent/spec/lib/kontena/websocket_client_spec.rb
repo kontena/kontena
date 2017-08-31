@@ -36,10 +36,8 @@ describe Kontena::WebsocketClient, :celluloid => true do
   end
 
   before do
-    # run timers immediately, once
-    allow(subject.wrapped_object).to receive(:every) do |&block|
-      block.call
-    end
+    # run connect loop immediately, once
+    allow(subject).to receive(:loop).and_yield
   end
 
   describe '#initialize' do
@@ -56,7 +54,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     it 'connects' do
       expect(subject).to receive(:connect!)
       expect(subject).to receive(:backoff_reconnect!)
-      expect(subject).to receive(:loop).and_yield
 
       actor.start
     end
@@ -222,7 +219,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     describe '#start' do
       it 'does not connect' do
         expect(subject).not_to receive(:connect!)
-        expect(subject).to receive(:loop).and_yield
 
         actor.start
       end
@@ -493,7 +489,6 @@ describe Kontena::WebsocketClient, :celluloid => true do
     describe '#start' do
       it 'does not connect' do
         expect(subject).not_to receive(:connect!)
-        expect(subject).to receive(:loop).and_yield
 
         actor.start
       end
