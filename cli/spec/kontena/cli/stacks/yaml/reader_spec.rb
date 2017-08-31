@@ -1,12 +1,9 @@
 require 'kontena/cli/stacks/yaml/reader'
-require 'liquid'
 
 describe Kontena::Cli::Stacks::YAML::Reader do
   include FixturesHelpers
 
-  let(:service_extender) do
-    spy
-  end
+  let(:service_extender) { spy("Kontena::Cli::Stacks::YAML::ServiceExtender") }
 
   let(:env_file) do
     ['APIKEY=12345
@@ -86,39 +83,37 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       described_class.new(fixture_path('kontena_v3.yml'))
     end
 
-    context 'when extending services' do
-      it 'extends services from external file' do
-        docker_compose_yml = YAML.load(fixture('docker-compose_v2.yml'))
-        wordpress_options = {
-          'extends' => {
-            'file' => 'docker-compose_v2.yml',
-            'service' => 'wordpress'
-          },
-          'stateful' => true,
-          'environment' => ['WORDPRESS_DB_PASSWORD=test_secret'],
-          'instances' => 2,
-          'deploy' => { 'strategy' => 'ha' }
-        }
-        mysql_options = {
-          'extends' => {
-            'file' => 'docker-compose_v2.yml',
-            'service' => 'mysql'
-          },
-          'stateful' => true,
-          'environment' => ['MYSQL_ROOT_PASSWORD=test_secret']
-        }
-        expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
-          .with(wordpress_options)
-          .once
-          .and_return(service_extender)
-        expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
-          .with(mysql_options)
-          .once
-          .and_return(service_extender)
-        expect(service_extender).to receive(:extend_from).with(docker_compose_yml['services']['wordpress'])
-        expect(service_extender).to receive(:extend_from).with(docker_compose_yml['services']['mysql'])
+    before do
+      [:exist?, :read].each do |meth|
+        allow(File).to receive(meth).with(fixture_path('docker-compose_v2.yml')).and_call_original
+        allow(File).to receive(meth).with(fixture_path('kontena_v3.yml')).and_call_original
+      end
+    end
 
-        subject.execute
+    context 'when extending services' do
+      it 'extends services from an external file' do
+        expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_call_original
+        expect(subject.execute[:services]).to match array_including(
+          hash_including(
+            "instances"=>2,
+            "image"=>"wordpress:4.1",
+            "env"=>["WORDPRESS_DB_PASSWORD=test_secret"],
+            "links"=>[{"name"=>"mysql", "alias"=>"mysql"}],
+            "ports"=>[{"ip"=>"0.0.0.0", "container_port"=>80, "node_port"=>80, "protocol"=>"tcp"}],
+            "stateful"=>true,
+            "strategy"=>"ha",
+            "name"=>"wordpress"
+          ),
+          hash_including(
+            "instances"=>nil,
+            "image"=>"mysql:5.6",
+            "env"=>["MYSQL_ROOT_PASSWORD=test_secret"],
+            "links"=>[],
+            "ports"=>[],
+            "stateful"=>true,
+            "name"=>"mysql"
+          )
+        )
       end
 
       it 'extends services from the same file' do
