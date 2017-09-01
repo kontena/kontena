@@ -77,7 +77,7 @@ module GridDomainAuthorizations
           deploy = outcome.result
           authz.set(service_deploy_id: deploy.id)
         else
-          add_error(:linked_service, :deploy, outcome.errors.message)
+          add_error(:linked_service, :deploy, outcome.errors)
         end
       end
 

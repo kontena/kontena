@@ -26,7 +26,6 @@ describe GridDomainAuthorizations::Authorize do
       GridSecret.find_by(name: 'LE_PRIVATE_KEY').destroy
       outcome = described_class.validate(grid: grid, domain: 'example.com', authorization_type: 'dns-01')
       expect(outcome).not_to be_success
-      puts outcome.errors.message
       expect(outcome.errors.message['le_registration']).to eq('Let\'s Encrypt registration missing')
     end
 
