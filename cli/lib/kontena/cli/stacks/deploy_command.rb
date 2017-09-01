@@ -10,6 +10,8 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Stack name"
 
+    option '--async', :flag, 'Do not wait service deployment', default: false
+
     requires_current_master
     requires_current_master_token
 
@@ -21,7 +23,9 @@ module Kontena::Cli::Stacks
       spinner "Waiting for deployment to start" do
         wait_for_deployment_to_start(deployment)
       end
-      wait_for_deploy_to_finish(deployment)
+      if !async?
+        wait_for_deploy_to_finish(deployment)
+      end
     end
 
     def deploy_stack(name)
