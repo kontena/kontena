@@ -28,16 +28,16 @@ describe Kontena::Cli::Stacks::Common do
 
   describe '#loader' do
     it 'returns a loader' do
-      expect(subject.instance(['foo.yml']).loader).to respond_to(:reader)
-      expect(subject.instance(['foo.yml']).loader).to respond_to(:dependencies)
-      expect(subject.instance(['foo.yml']).loader).to respond_to(:stack_name)
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).loader).to respond_to(:reader)
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).loader).to respond_to(:dependencies)
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).loader).to respond_to(:stack_name)
     end
   end
 
   describe '#reader' do
     it 'returns a YAML reader for the stack file param' do
-      expect(subject.instance(['foo.yml']).reader).to respond_to(:execute)
-      expect(subject.instance(['foo.yml']).reader).to respond_to(:variable_values)
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).reader).to respond_to(:execute)
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).reader).to respond_to(:variable_values)
     end
   end
 
