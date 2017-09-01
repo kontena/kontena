@@ -1,6 +1,7 @@
 require 'kontena/cli/stacks/stack_name'
 require 'yaml'
 require 'kontena/util'
+require 'kontena/cli/stacks/yaml/reader'
 
 module Kontena::Cli::Stacks
   module YAML
@@ -22,14 +23,10 @@ module Kontena::Cli::Stacks
 
       attr_reader :source, :parent
 
-      def initialize(source, parent)
+      def initialize(source, parent = nil)
         @source = source
         @parent = parent
-        set_context
-      end
-
-      def set_context
-        #override in child
+        set_context if respond_to?(:set_context)
       end
 
       def yaml
@@ -45,7 +42,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        @stack_name ||= Kontena::Cli::Stacks::StackName.new(yaml[:stack])
+        @stack_name ||= Kontena::Cli::Stacks::StackName.new(yaml[:stack], yaml[:version])
       end
 
       def reader(*args)

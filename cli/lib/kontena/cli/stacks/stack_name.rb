@@ -3,16 +3,16 @@ module Kontena::Cli::Stacks
 
     attr_reader :user, :stack, :version
 
-    def initialize(definition = nil)
+    def initialize(definition = nil, version = nil)
       if definition.kind_of?(Hash)
         @user = definition[:user] || definition['user']
         @stack = definition[:stack] || definition['stack']
-        @version = definition[:version] || definition['version']
+        @version = definition[:version] || definition['version'] || version
       elsif definition.kind_of?(String)
         parsed = parse(definition)
         @user = parsed[:user]
         @stack = parsed[:stack]
-        @version = parsed[:version]
+        @version = parsed[:version] || version
       end
     end
 

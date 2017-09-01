@@ -13,7 +13,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
       {
         name: 'stackname',
         stack: 'user/stackname',
-        version: '0.0.1',
+        version: '0.1.1',
         registry: 'file://',
         services: array_including(hash_including(:name, :image)),
         variables: {},
