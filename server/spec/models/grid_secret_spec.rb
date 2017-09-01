@@ -11,7 +11,7 @@ describe GridSecret do
     described_class.create!(
       grid: grid,
       name: 'test',
-      encrypted_value: '123456'
+      value: '123456'
     )
   end
 
