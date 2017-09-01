@@ -1,3 +1,14 @@
+module Celluloid
+  # XXX: allow Celluloid.exclusive { ... } to be used outside of actor context: it's a no-op
+  def exclusive(&block)
+    if task = Thread.current[:celluloid_task]
+      task.exclusive(&block)
+    else
+      yield
+    end
+  end
+end
+
 module Kontena
   # Observer is observing some Observables, and tracking their observed values.
   #
@@ -79,7 +90,7 @@ module Kontena
     # @yield [*values] all Observables are ready (async mode only)
     # @return [*values] all Observables are ready (sync mode only)
     def self.observe(*observables, subject: nil, timeout: nil)
-      observer = self.new(subject, Celluloid.current_actor.mailbox)
+      observer = self.new(subject, Celluloid.mailbox)
 
       persistent = true
       persistent = false if !block_given? && observables.length == 1 # special case: sync observe of a single observable does not need updates
@@ -194,8 +205,6 @@ module Kontena
     # @param observable [Kontena::Observable]
     # @param persistent [Boolean] false => only interested in current or initial value
     def observe(observable, persistent: true)
-      fail "Must observe in exclusive mode" unless Celluloid.exclusive?
-
       # register for observable updates, and set initial value
       if value = observable.add_observer(self, persistent: persistent)
         debug { "observe #{observable} => #{value}" }
