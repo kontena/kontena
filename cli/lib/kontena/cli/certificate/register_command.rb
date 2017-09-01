@@ -12,8 +12,14 @@ module Kontena::Cli::Certificate
       token = require_token
 
       data = {email: email}
-      response = client(token).post("certificates/#{current_grid}/register", data)
-      puts 'Email registered to LetsEncrypt'
+      puts "By registering, you agree on Let's Encrypt Terms of Service: https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf"
+      agree_tos = prompt.yes?("Continue?")
+      if agree_tos
+        response = client(token).post("certificates/#{current_grid}/register", data)
+        puts 'Email registered to LetsEncrypt'
+      else
+        puts "Registration canceled!".colorize(:red)
+      end
     end
   end
 end
