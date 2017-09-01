@@ -47,7 +47,7 @@ module Kontena::Cli::Certificate
         puts "Record content: #{response.dig('challenge_opts', 'record_content')}"
       when 'tls-sni-01'
         begin
-          spinner "Waiting for tls-sni-01 certificate to be deployed into #{response['linked_service'].colorize(:cyan)} " do
+          spinner "Waiting for tls-sni-01 certificate to be deployed into #{response.dig('linked_service', 'id').colorize(:cyan)} " do
             wait_for_domain_auth_deployed(token, response['id'])
           end
           puts "TLS-SNI challenge certificate is deployed, you can now request the actual certificate"
@@ -62,16 +62,8 @@ module Kontena::Cli::Certificate
 
     def wait_for_domain_auth_deployed(token, domain_auth_id)
       Timeout.timeout(300) {
-        deployed = false
-        until deployed
+        until client(token).get("domain_authorizations/#{domain_auth_id}")['state'] != 'deploying' do
           sleep 1
-          domain_auth = client(token).get("domain_authorizations/#{domain_auth_id}")
-          deploy_status = domain_auth['service_deploy_state']
-          if deploy_status == 'success'
-            deployed = true
-          elsif deploy_status == 'error'
-            raise DeployFailedError, "Linked service deploy failed. See service events for details"
-          end
         end
       }
     end

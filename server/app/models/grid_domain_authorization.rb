@@ -30,16 +30,19 @@ class GridDomainAuthorization
     "#{self.grid.try(:name)}/#{self.domain}"
   end
 
-  def service_deploy_state
-    if self.grid_service
-      deploy = self.grid_service.grid_service_deploys.find_by(id: self.service_deploy_id)
-      if deploy # Could be gone as deploys are on capped collection
-        deploy.deploy_state
-      else
-        :unknown
-      end
+  def computed_state
+    deploy = find_deploy
+    if deploy && !deploy.finished?
+      # Deploy still in progress
+      :deploying # So that CLI or other clients know to wait before requesting the cert
     else
-      :not_linked
+      self.state
     end
   end
+
+  def find_deploy
+    return self.grid_service.grid_service_deploys.find_by(id: self.service_deploy_id) if self.grid_service
+    nil
+  end
+
 end
