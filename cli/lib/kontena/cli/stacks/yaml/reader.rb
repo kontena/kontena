@@ -4,6 +4,7 @@ require 'kontena/cli/stacks/yaml/stack_file_loader'
 require 'kontena/cli/stacks/yaml/service_extender'
 require 'kontena/cli/stacks/service_generator_v2'
 require 'kontena/cli/stacks/yaml/validator_v3'
+require 'hashie'
 require 'opto'
 require 'liquid'
 
@@ -28,6 +29,11 @@ module Kontena::Cli::Stacks
       include Kontena::Util
       include Kontena::Cli::Common
 
+      class IndifferentHash < Hash
+        include Hashie::Extensions::MergeInitializer
+        include Hashie::Extensions::IndifferentAccess
+      end
+
       attr_reader :file, :loader, :errors, :notifications
 
       def initialize(file)
@@ -46,7 +52,7 @@ module Kontena::Cli::Stacks
       def variable_values(without_defaults: false, without_vault: false)
         result = variables.to_h(values_only: true)
         if without_defaults
-          result.delete_if { |k, _| default_envs.key?(k) }
+          result.delete_if { |k, _| default_envs.key?(k.to_s) }
         end
         if without_vault
           result.delete_if { |k, _| variables.option(k).from.include?(:vault) || variables.option(k).to.include?(:vault) }
@@ -63,34 +69,42 @@ module Kontena::Cli::Stacks
       end
 
       def internals_interpolated_yaml
-        @internals_interpolated_yaml ||= ::YAML.safe_load(
-          replace_dollar_dollars(
-            interpolate(
-              raw_content,
-              use_opto: false,
-              substitutions: default_envs,
-              warnings: false
+        @internals_interpolated_yaml ||= IndifferentHash.new(
+          Kontena::Util.symbolize_keys(
+            ::YAML.safe_load(
+              replace_dollar_dollars(
+                interpolate(
+                  raw_content,
+                  use_opto: false,
+                  substitutions: default_envs,
+                  warnings: false
+                )
+              )
             )
           )
-        ) || {}
+        )
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
       def fully_interpolated_yaml
         return @fully_interpolated_yaml if @fully_interpolated_yaml
-        @fully_interpolated_yaml = ::YAML.safe_load(
-          replace_dollar_dollars(
-            interpolate(
-              interpolate_liquid(
-                raw_content,
-                variable_values
-              ),
-              use_opto: true,
-              raise_on_unknown: true
+        @fully_interpolated_yaml = IndifferentHash.new(
+          Kontena::Util.symbolize_keys(
+            ::YAML.safe_load(
+              replace_dollar_dollars(
+                interpolate(
+                  interpolate_liquid(
+                    raw_content,
+                    variable_values
+                  ),
+                  use_opto: true,
+                  raise_on_unknown: true
+                )
+              )
             )
           )
-        ) || {}
+        )
       rescue Psych::SyntaxError => ex
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
@@ -104,27 +118,27 @@ module Kontena::Cli::Stacks
       end
 
       def default_envs_to_options
-        default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
+        default_envs.each_with_object(IndifferentHash.new) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
       end
 
       # @return [Opto::Group]
       def variables
         @variables ||= ::Opto::Group.new(
-          (internals_interpolated_yaml['variables'] || {}).merge(default_envs_to_options),
+          IndifferentHash.new(internals_interpolated_yaml.fetch(:variables, Hash.new)).merge(default_envs_to_options),
           defaults: { from: :env, to: :env }
         )
       end
 
       def set_variable_defaults(defaults)
         defaults.each do |key, val|
-          var = variables.option(key)
+          var = variables.option(key.to_s)
           var.default = val if var
         end
       end
 
       def set_variable_values(values)
         values.each do |key, val|
-          var = variables.option(key)
+          var = variables.option(key.to_s)
           var.set(val) if var
         end
       end
@@ -132,7 +146,7 @@ module Kontena::Cli::Stacks
       def create_dependency_variables(dependencies, name)
         return if dependencies.nil?
         dependencies.each do |options|
-          variables.build_option(name: options[:name].tr('-', '_'), type: :string, value: "#{name}-#{options[:name]}")
+          variables.build_option(name: options[:name].to_s, type: :string, value: "#{name}-#{options[:name]}")
           create_dependency_variables(options[:depends], "#{name}.#{options[:name]}")
         end
       end
@@ -143,36 +157,32 @@ module Kontena::Cli::Stacks
 
       # @param [String] service_name
       # @return [Hash]
-      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, skip_variables: false, values: nil, defaults: nil)
-        unless skip_variables
-          set_variable_defaults(defaults) if defaults
-          set_variable_values(values) if values
-          create_dependency_variables(dependencies, name)
-          variables.run
-          raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid?
-        end
+      def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil)
+        set_variable_defaults(defaults) if defaults
+        set_variable_values(values) if values
+        create_dependency_variables(dependencies, name)
+        variables.run
+        raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid? || skip_validation
 
         validate unless skip_validation
 
-        result = {}
-        Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
-          result[:stack]         = raw_yaml['stack']
-          result[:version]       = loader.stack_name.version || '0.0.1'
-          result[:name]          = name
-          result[:registry]      = loader.registry
-          result[:expose]        = fully_interpolated_yaml['expose']
-          result[:services]      = errors.count.zero? ? parse_services(service_name) : {}
-          result[:volumes]       = errors.count.zero? ? parse_volumes : {}
-          result[:dependencies]  = dependencies
-          result[:source]        = raw_content
-          unless skip_variables
-            result[:variables] = variable_values(without_defaults: true, without_vault: true)
+        IndifferentHash.new.tap do |result|
+          Dir.chdir(from_file? ? File.dirname(File.expand_path(file)) : Dir.pwd) do
+            result[:stack]         = raw_yaml[:stack]
+            result[:version]       = loader.stack_name.version || '0.0.1'
+            result[:name]          = name
+            result[:registry]      = loader.registry
+            result[:expose]        = fully_interpolated_yaml[:expose]
+            result[:services]      = errors.empty? ? parse_services(service_name) : IndifferentHash.new
+            result[:volumes]       = errors.empty? ? parse_volumes : IndifferentHash.new
+            result[:dependencies]  = dependencies
+            result[:source]        = raw_content
+            result[:variables]     = variable_values(without_defaults: true, without_vault: true)
+            result[:parent_name]   = parent_name
+            result[:errors]        = errors unless skip_validation
+            result[:notifications] = notifications
           end
-          result[:parent_name]   = parent_name
-          result[:errors]        = errors unless skip_validation
-          result[:notifications] = notifications
         end
-        result
       end
 
       def dependencies
@@ -205,14 +215,14 @@ module Kontena::Cli::Stacks
       def parse_volumes
         volumes.each do |name, config|
           if process_hash?(config)
-            volumes[name].delete('only_if')
-            volumes[name].delete('skip_if')
+            volumes[name].delete(:only_if)
+            volumes[name].delete(:skip_if)
             volumes[name] = process_volume(name, config)
           else
             volumes.delete(name)
           end
         end
-        volumes.map { |name, vol| vol.merge('name' => name) }
+        volumes.map { |name, vol| vol.merge(name: name) }
       end
 
       ##
@@ -223,15 +233,15 @@ module Kontena::Cli::Stacks
           services.each do |name, config|
             services[name] = process_config(config, name)
             if process_hash?(config)
-              services[name].delete('only_if')
-              services[name].delete('skip_if')
+              services[name].delete(:only_if)
+              services[name].delete(:skip_if)
             else
               services.delete(name)
             end
           end
-          services.map { |name, svc| svc.merge('name' => name) }
+          services.map { |name, svc| svc.merge(name: name) }
         else
-          raise ("Service '#{service_name}' not found in #{file}") unless services.has_key?(service_name)
+          raise ("Service '#{service_name}' not found in #{file}") unless services.key?(service_name)
           process_config(services[service_name], service_name)
         end
       end
@@ -241,11 +251,10 @@ module Kontena::Cli::Stacks
       # @param [Hash]
       # @return [Boolean]
       def process_hash?(hash)
-        return true unless hash['skip_if'] || hash['only_if']
-        return true if skip_variables? || variables.empty?
+        return true unless hash[:skip_if] || hash[:only_if]
 
-        skip_lambdas = normalize_ifs(hash['skip_if'])
-        only_lambdas = normalize_ifs(hash['only_if'])
+        skip_lambdas = normalize_ifs(hash[:skip_if])
+        only_lambdas = normalize_ifs(hash[:only_if])
 
         if skip_lambdas
           return false if skip_lambdas.any? { |s| s.call }
@@ -264,42 +273,42 @@ module Kontena::Cli::Stacks
         merge_env_vars(service_config)
         expand_build_context(service_config)
         normalize_build_args(service_config)
-        if service_config.has_key?('extends')
+        if service_config.key?(:extends)
           service_config = extend_config(service_config)
-          service_config.delete('extends')
+          service_config.delete(:extends)
         end
         if name
-          exit_with_error("Image is missing for #{name}. Aborting.") unless service_config['image'] # why isn't this a validation?
-          ServiceGeneratorV2.new(service_config).generate.merge('name' => name)
+          exit_with_error("Image is missing for #{name}. Aborting.") unless service_config[:image] # why isn't this a validation?
+          IndifferentHash.new(ServiceGeneratorV2.new(service_config).generate).merge(name: name)
         else
-          ServiceGeneratorV2.new(service_config).generate
+          IndifferentHash.new(ServiceGeneratorV2.new(service_config).generate)
         end
       end
 
       def process_volume(name, volume_config)
         return [] if volume_config.nil? || volume_config.empty?
-        if volume_config['external'].is_a?(TrueClass)
-          volume_config['external'] = name
-        elsif volume_config['external']['name']
-          volume_config['external'] = volume_config['external']['name']
+        if volume_config[:external].is_a?(TrueClass)
+          volume_config[:external] = name
+        elsif volume_config[:external][:name]
+          volume_config[:external] = volume_config[:external][:name]
         end
-        volume_config['name'] = name
+        volume_config[:name] = name
         volume_config
       end
 
       def volumes
-        @volumes ||= fully_interpolated_yaml['volumes'] || {}
+        @volumes ||= fully_interpolated_yaml.fetch(:volumes, IndifferentHash.new)
       end
 
       # @return [Hash] - services from YAML file
       def services
-        @services ||= fully_interpolated_yaml['services'] || {}
+        @services ||= fully_interpolated_yaml.fetch(:services, IndifferentHash.new)
       end
 
       def from_external_file(filename, service_name)
         outcome = Reader.new(filename).execute(service_name)
-        errors.concat outcome[:errors] unless errors.any? { |item| item.has_key?(filename) }
-        notifications.concat outcome[:notifications] unless notifications.any? { |item| item.has_key?(filename) }
+        errors.concat outcome[:errors] unless errors.any? { |item| item.key?(filename) }
+        notifications.concat outcome[:notifications] unless notifications.any? { |item| item.key?(filename) }
         outcome[:services]
       end
 
@@ -317,18 +326,17 @@ module Kontena::Cli::Stacks
               var = v.tr('${}', '')
 
               if use_opto
-                opt = variables.option(var)
+                opt = variables.option(var) || variables.option(var.to_sym)
                 if opt.nil?
-                  if variables.find { |opt| opt.to[:env][var] }
-                    val = env[var]
-                  else
-                    raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
-                  end
+                  raise RuntimeError, "Undeclared variable '#{var}' in #{file}:#{line_num} -- #{row}" if raise_on_unknown
                 else
                   val = opt.value
+                  if opt.to[:env]
+                    Array(opt.to[:env]).each { |env_var| env[env_var] = val.to_s }
+                  end
                 end
               else
-                val = substitutions[var]
+                val = substitutions[var] || substitutions[var.to_sym]
               end
 
               if val && !val.to_s.empty?
@@ -378,29 +386,20 @@ module Kontena::Cli::Stacks
       # @param [Hash] service_config
       # @return [Hash] updated service config
       def extend_config(service_config)
-        extended_service = extended_service(service_config['extends'])
-        return unless extended_service
-        filename  = service_config['extends']['file']
-        stackname = service_config['extends']['stack']
-        if filename
-          parent_config = from_external_file(filename, extended_service)
-        elsif stackname
-          parent_config = from_external_file(stackname, extended_service)
+        extends = service_config[:extends]
+        case extends
+        when NilClass
+          return
+        when String
+          raise ("Service '#{extends}' not found in #{file}") unless services.key?(extends)
+          parent_config = IndifferentHash.new(process_config(services[extends]))
+        when Hash, IndifferentHash
+          target = extends[:file] || extends[:stack]
+          parent_config = IndifferentHash.new(from_external_file(target, extends[:service]))
         else
-          raise ("Service '#{extended_service}' not found in #{file}") unless services.has_key?(extended_service)
-          parent_config = process_config(services[extended_service])
+          raise TypeError, "Extends must be a hash or string"
         end
-        ServiceExtender.new(service_config).extend_from(parent_config)
-      end
-
-      def extended_service(extend_config)
-        if extend_config.kind_of?(Hash)
-          extend_config['service']
-        elsif extend_config.kind_of?(String)
-          extend_config
-        else
-          nil
-        end
+        IndifferentHash.new(ServiceExtender.new(service_config).extend_from(parent_config))
       end
 
       def store_failures(data)
@@ -411,22 +410,22 @@ module Kontena::Cli::Stacks
 
       # @param [Hash] options - service config
       def normalize_env_vars(options)
-        if options['environment'].kind_of?(Hash)
-          options['environment'] = options['environment'].map { |k, v| "#{k}=#{v}" }
+        if options[:environment].kind_of?(Hash)
+          options[:environment] = options[:environment].map { |k, v| "#{k}=#{v}" }
         end
       end
 
       # @param [Hash] options
       def merge_env_vars(options)
-        return options['environment'] unless options['env_file']
+        return options[:environment] unless options[:env_file]
 
-        options['env_file'] = [options['env_file']] if options['env_file'].kind_of?(String)
-        options['environment'] = [] unless options['environment']
-        options['env_file'].each do |env_file|
-          options['environment'].concat(read_env_file(env_file))
+        options[:env_file] = [options[:env_file]] if options[:env_file].kind_of?(String)
+        options[:environment] = [] unless options[:environment]
+        options[:env_file].each do |env_file|
+          options[:environment].concat(read_env_file(env_file))
         end
-        options.delete('env_file')
-        options['environment'].uniq! { |s| s.split('=').first }
+        options.delete(:env_file)
+        options[:environment].uniq! { |s| s.split('=').first }
       end
 
       # @param [String] path
@@ -435,23 +434,24 @@ module Kontena::Cli::Stacks
       end
 
       def expand_build_context(options)
-        if options['build'].kind_of?(String)
-          options['build'] = File.expand_path(options['build'])
-        elsif context = safe_dig(options, 'build', 'context')
-          options['build']['context'] = File.expand_path(context)
+        if options[:build].kind_of?(String)
+          options[:build] = File.expand_path(options[:build])
+        elsif context = safe_dig(options, :build, :context)
+          options[:build][:context] = File.expand_path(context)
         end
       end
 
       # @param [Hash] options - service config
       def normalize_build_args(options)
-        if safe_dig(options, 'build', 'args').kind_of?(Array)
-          args = options['build']['args'].dup
-          options['build']['args'] = {}
-          args.each do |arg|
-            k,v = arg.split('=')
-            options['build']['args'][k] = v
-          end
-        end
+        build = options[:build] || options['build']
+        return unless build.kind_of?(Hash)
+        args = build[:args] || build['args']
+        return unless args
+        return unless args.kind_of?(Array)
+        build.delete('args') || build.delete(:args)
+        build['args'] = IndifferentHash.new(
+          args.map { |arg| arg.split('=', 2) }.to_h
+        )
       end
 
       def env

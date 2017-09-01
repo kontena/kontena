@@ -56,7 +56,7 @@ module Kontena::Cli::Stacks
       result = reader.fully_interpolated_yaml.merge(
         'variables' => reader.variables.to_h(with_values: true, with_errors: true)
       )
-      Kontena::Util.stringify_keys!(result)
+      result = Kontena::Util.stringify_keys(result)
       if dependencies?
         puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source}")
       else

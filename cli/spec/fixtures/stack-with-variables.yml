@@ -38,7 +38,7 @@ services:
     extends:
       file: docker-compose_v2.yml
       service: wordpress
-    image: "wordpress:$TAG"
+    image: "wordpress:$tag"
     stateful: true
     environment:
       - WORDPRESS_DB_PASSWORD=${STACK}_secret

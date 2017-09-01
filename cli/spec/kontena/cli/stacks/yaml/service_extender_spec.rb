@@ -50,6 +50,15 @@ describe Kontena::Cli::Stacks::YAML::ServiceExtender do
         expect(result['environment'].include?('FOO=bar')).to be_truthy
         expect(result['environment'].size).to eq 2
       end
+
+      it 'combines and overrides variables' do
+        from = { 'environment' => ['FOO=bar', 'BAR=buz'] }
+        to = { 'environment' => ['BAR=baz'] }
+        result = described_class.new(to).extend_from(from)
+        expect(result['environment'].include?('BAR=baz')).to be_truthy
+        expect(result['environment'].include?('FOO=bar')).to be_truthy
+        expect(result['environment'].size).to eq 2
+      end
     end
 
     context 'secrets' do
