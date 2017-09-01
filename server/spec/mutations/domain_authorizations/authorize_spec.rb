@@ -15,6 +15,21 @@ describe GridDomainAuthorizations::Authorize do
   end
 
   describe '#validate' do
+
+    before :each do
+
+      GridSecrets::Create.run(grid: grid, name: 'LE_PRIVATE_KEY', value: 'LE_PRIVATE_KEY')
+
+    end
+
+    it 'validate LE registration existence' do
+      GridSecret.find_by(name: 'LE_PRIVATE_KEY').destroy
+      outcome = described_class.validate(grid: grid, domain: 'example.com', authorization_type: 'dns-01')
+      expect(outcome).not_to be_success
+      puts outcome.errors.message
+      expect(outcome.errors.message['le_registration']).to eq('Let\'s Encrypt registration missing')
+    end
+
     it 'validates service existence when tls-sni used' do
       mutation = described_class.new(grid: grid, domain: 'example.com', linked_service: 'non/existing', authorization_type: 'tls-sni-01')
       expect(mutation.has_errors?).to be_truthy
@@ -68,17 +83,6 @@ describe GridDomainAuthorizations::Authorize do
         }.not_to change{GridDomainAuthorization.count}
 
       end
-    end
-
-
-    it 'fails gracefully if no LE registration' do
-      expect(acme).to receive(:authorize).and_raise(Acme::Client::Error::Unauthorized)
-
-      expect {
-        outcome = subject.run
-        expect(outcome.success?).to be_falsey
-      }.not_to change{GridDomainAuthorization.count}
-
     end
 
   end

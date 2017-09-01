@@ -24,8 +24,20 @@ module Kontena::Cli::Certificate
         authorization_type: self.type
       }
       data['linked_service'] = service_path(self.linked_service) if self.type == 'tls-sni-01'
-
-      response = client(token).post("grids/#{current_grid}/domain_authorizations", data)
+      retried = false
+      begin
+        response = client(token).post("grids/#{current_grid}/domain_authorizations", data)
+      rescue Kontena::Errors::StandardErrorHash => exc
+        if exc.errors.has_key?('le_registration') && !retried
+          puts "Let's Encrypt registration missing, creating one."
+          email = prompt.ask("Email for Let's Encrypt:")
+          Kontena.run!(['certificate', 'register', email])
+          retried = true # retry only once
+          retry
+        else
+          raise exc
+        end
+      end
 
       case self.type
       when 'dns-01'

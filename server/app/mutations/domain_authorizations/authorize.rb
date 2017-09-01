@@ -20,6 +20,9 @@ module GridDomainAuthorizations
     end
 
     def validate
+      unless grid.grid_secrets.find_by(name: LE_PRIVATE_KEY)
+        add_error(:le_registration, :missing, "Let's Encrypt registration missing")
+      end
       if self.authorization_type == 'tls-sni-01'
         add_error(:linked_service, :missing, "Service link needs to be given for tls-sni-01 authorization type") unless self.linked_service
       end
