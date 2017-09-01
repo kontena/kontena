@@ -1267,7 +1267,13 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
     "id": "my-grid/SECRET_PWD",
     "name": "SECRET_PWD",
     "created_at": "",
-    "value": "T0Ps3crT"
+    "value": "T0Ps3crT",
+    "services": [
+        {
+          "id": "big-one/null/app",
+          "name": "app"
+        }
+      ]
 }
 ```
 
@@ -1277,6 +1283,7 @@ id | An unique id for the secret
 created_at | A timestamp when the secret was created
 name | A name for the secret (unique within a grid)
 value | A value for the secret (encrypted in the database)
+services | A list of services that are consuming the secret
 
 ## List secrets
 
