@@ -46,13 +46,14 @@ module Kontena::Cli::Certificate
         puts "Record type: #{response.dig('challenge_opts', 'record_type')}"
         puts "Record content: #{response.dig('challenge_opts', 'record_content')}"
       when 'tls-sni-01'
-        begin
-          spinner "Waiting for tls-sni-01 certificate to be deployed into #{response.dig('linked_service', 'id').colorize(:cyan)} " do
-            wait_for_domain_auth_deployed(token, response['id'])
-          end
+        state = nil
+        spinner "Waiting for tls-sni-01 certificate to be deployed into #{response.dig('linked_service', 'id').colorize(:cyan)} " do
+          state = wait_for_domain_auth_deployed(token, response['id'])
+        end
+        if state == 'deploy_error'
+          puts "Linked services deploy failed. Check service events for details"
+        else
           puts "TLS-SNI challenge certificate is deployed, you can now request the actual certificate"
-        rescue DeployFailedError => exc
-          exit_with_error exc.message
         end
       else
         exit_with_error "Unknown authorization type: #{self.type}"
@@ -61,11 +62,11 @@ module Kontena::Cli::Certificate
     end
 
     def wait_for_domain_auth_deployed(token, domain_auth_id)
+      state = nil
       Timeout.timeout(300) {
-        until client(token).get("domain_authorizations/#{domain_auth_id}")['state'] != 'deploying' do
-          sleep 1
-        end
+        sleep 1 until (state = client(token).get("domain_authorizations/#{domain_auth_id}")['status']) != 'deploying'
       }
+      state
     end
 
     def service_path(linked_service)

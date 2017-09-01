@@ -30,11 +30,13 @@ class GridDomainAuthorization
     "#{self.grid.try(:name)}/#{self.domain}"
   end
 
-  def computed_state
+  def status
     deploy = find_deploy
     if deploy && !deploy.finished?
       # Deploy still in progress
       :deploying # So that CLI or other clients know to wait before requesting the cert
+    elsif deploy && deploy.finished? && deploy.error?
+      :deploy_error
     else
       self.state
     end

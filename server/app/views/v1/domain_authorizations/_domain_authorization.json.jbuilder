@@ -1,6 +1,6 @@
 json.id authorization.to_path
 json.domain authorization.domain
-json.state authorization.computed_state
+json.status authorization.status
 json.challenge authorization.challenge
 json.challenge_opts authorization.challenge_opts
 json.authorization_type authorization.authorization_type

@@ -439,7 +439,7 @@ describe '/v1/grids', celluloid: true do
         get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['domain_authorizations'].size).to eq(2)
-        expect(json_response['domain_authorizations'].find {|a| a['domain'] == 'foobar.com'}['linked_service']).to eq(db_service.to_path)
+        expect(json_response['domain_authorizations'].find {|a| a['domain'] == 'foobar.com'}['linked_service']['id']).to eq(db_service.to_path)
       end
     end
   end
