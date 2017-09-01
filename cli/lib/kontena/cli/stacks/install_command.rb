@@ -57,8 +57,8 @@ module Kontena::Cli::Stacks
     end
 
     def create_stack
-      spinner "Creating stack #{pastel.cyan(stack['name'])} " do
-        client.post("grids/#{current_grid}/stacks", stack.reject { |k, _| k == :errors || k == :notifications})
+      spinner "Creating stack #{pastel.cyan(stack[:name])} " do
+        client.post("grids/#{current_grid}/stacks", Kontena::Util.symbolize_keys(stack).reject { |k, _| k == :errors || k == :notifications})
       end
     end
 

@@ -19,6 +19,7 @@ module Kontena::Cli::Stacks
 
     option '--force', :flag, 'Force upgrade'
     option '--skip-dependencies', :flag, "Do not install any stack dependencies"
+    option '--dry-run', :flag, "Do not perform any uploading", hidden: true
 
     requires_current_master
     requires_current_master_token
@@ -47,14 +48,14 @@ module Kontena::Cli::Stacks
         return nil if ex.status == 404
         raise ex
       end
-      depends = data.delete('children') || []
+      depends = data.delete(:children) || []
 
       normalized_data = { stack_name => data }
 
       return normalized_data if skip_dependencies?
 
       depends.each do |stack|
-        normalized_data.merge!(normalize_master_data(stack['name']))
+        normalized_data.merge!(normalize_master_data(stack[:name]))
       end
       normalized_data
     end
@@ -110,8 +111,8 @@ module Kontena::Cli::Stacks
       unless force?
         merged.each do |stackname, data|
           next if data[:remote].nil?
-          unless data[:local][:loader].stack_name.stack_name == data[:remote]['stack']
-            confirm "Replacing stack #{pastel.cyan(data[:remote]['stack'])} on master with #{pastel.cyan(data[:local][:loader].stack_name.stack_name)}. Are you sure?"
+          unless data[:local][:loader].stack_name.stack_name == data[:remote][:stack]
+            confirm "Replacing stack #{pastel.cyan(data[:remote][:stack])} on master with #{pastel.cyan(data[:local][:loader].stack_name.stack_name)}. Are you sure?"
           end
         end
       end
@@ -121,18 +122,18 @@ module Kontena::Cli::Stacks
         stack = data[:local][:loader].reader.execute(
           name: stackname,
           values: (data.dig(:local, :variables) || {}).merge(dependency_values_from_options(stackname)),
-          defaults: data.dig(:remote, 'variables'),
+          defaults: data.dig(:remote, :variables),
           parent_name: data.dig(:local, :parent_name)
         )
 
         if data[:remote]
           spinner "Upgrading #{stack_name == stackname ? 'stack' : 'dependency'} #{pastel.cyan(stackname)}" do |spin|
-            update_stack(stackname, stack.reject { |k, _| [:errors, :notifications, :parent_name].include?(k) }) || spin.fail!
+            update_stack(stackname, Kontena::Util.symbolize_keys(stack).reject { |k, _| [:errors, :notifications, :parent_name].include?(k) }) || spin.fail!
           end
         else
           cmd = ['stack', 'install', '--name', stackname]
           cmd.concat ['--parent-name', stack[:parent_name]] if stack[:parent_name]
-          stack[:variables].merge(dependency_values_from_options(stackname)).each do |k, v|
+          Kontena::Util.stringify_keys(stack[:variables]).merge(dependency_values_from_options(stackname)).each do |k, v|
             cmd.concat ['-v', "#{k}=#{v}"]
           end
           cmd << '--no-deploy'
@@ -146,6 +147,7 @@ module Kontena::Cli::Stacks
     end
 
     def update_stack(name, data)
+      return true if dry_run?
       client.put(stack_url(name), data)
     end
 
@@ -154,7 +156,7 @@ module Kontena::Cli::Stacks
     end
 
     def fetch_master_data(stack_name)
-      client.get(stack_url(stack_name))
+      Kontena::Util.symbolize_keys(client.get(stack_url(stack_name)))
     end
   end
 end

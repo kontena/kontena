@@ -54,11 +54,11 @@ module Kontena::Cli::Stacks
       dump_variables if values_to
 
       result = reader.fully_interpolated_yaml.merge(
-        # simplest way to stringify keys in a hash
-        'variables' => JSON.parse(reader.variables.to_h(with_values: true, with_errors: true).to_json)
+        'variables' => reader.variables.to_h(with_values: true, with_errors: true)
       )
+      Kontena::Util.stringify_keys!(result)
       if dependencies?
-        puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source} :")
+        puts ::YAML.dump(result).sub(/\A---$/, "---\n# #{loader.source}")
       else
         puts ::YAML.dump(result)
       end

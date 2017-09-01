@@ -96,9 +96,9 @@ module Kontena::Cli::Stacks
         # Used for dependency variable injection
         def dependency_values_from_options(name)
           new_vals = values_from_options.select do |key, _|
-            key.start_with?(name + '.')
+            key.to_s.start_with?(name.to_s + '.')
           end.each_with_object({}) do |var, obj|
-            obj[var.first.sub(name + '.', '')] = var.last
+            obj[var.first.to_s.sub(name.to_s + '.', '')] = var.last
           end
           new_vals
         end

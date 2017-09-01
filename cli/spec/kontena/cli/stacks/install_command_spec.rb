@@ -15,7 +15,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
         stack: 'user/stackname',
         version: '0.0.1',
         registry: 'file://',
-        services: array_including(hash_including('name', 'image')),
+        services: array_including(hash_including(:name, :image)),
         variables: {},
         volumes: [],
         dependencies: nil,

@@ -79,77 +79,84 @@ describe Kontena::Cli::Stacks::YAML::Reader do
   end
 
   describe '#execute' do
-    subject do
-      described_class.new(fixture_path('kontena_v3.yml'))
-    end
-
-    before do
-      [:exist?, :read].each do |meth|
-        allow(File).to receive(meth).with(fixture_path('docker-compose_v2.yml')).and_call_original
-        allow(File).to receive(meth).with(fixture_path('kontena_v3.yml')).and_call_original
-      end
-    end
-
     context 'when extending services' do
-      it 'extends services from an external file' do
-        expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_call_original
-        expect(subject.execute[:services]).to match array_including(
-          hash_including(
-            "instances"=>2,
-            "image"=>"wordpress:4.1",
-            "env"=>["WORDPRESS_DB_PASSWORD=test_secret"],
-            "links"=>[{"name"=>"mysql", "alias"=>"mysql"}],
-            "ports"=>[{"ip"=>"0.0.0.0", "container_port"=>80, "node_port"=>80, "protocol"=>"tcp"}],
-            "stateful"=>true,
-            "strategy"=>"ha",
-            "name"=>"wordpress"
-          ),
-          hash_including(
-            "instances"=>nil,
-            "image"=>"mysql:5.6",
-            "env"=>["MYSQL_ROOT_PASSWORD=test_secret"],
-            "links"=>[],
-            "ports"=>[],
-            "stateful"=>true,
-            "name"=>"mysql"
+      context 'from external file' do
+        subject do
+          described_class.new(fixture_path('kontena_v3.yml'))
+        end
+
+        before do
+          [:exist?, :read].each do |meth|
+            allow(File).to receive(meth).with(fixture_path('docker-compose_v2.yml')).and_call_original
+            allow(File).to receive(meth).with(fixture_path('kontena_v3.yml')).and_call_original
+          end
+        end
+
+        it 'extends services from an external file' do
+          expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_call_original
+          expect(subject.execute[:services]).to match array_including(
+            hash_including(
+              "instances"=>2,
+              "image"=>"wordpress:4.1",
+              "env"=>["WORDPRESS_DB_PASSWORD=test_secret"],
+              "links"=>[{"name"=>"mysql", "alias"=>"mysql"}],
+              "ports"=>[{"ip"=>"0.0.0.0", "container_port"=>80, "node_port"=>80, "protocol"=>"tcp"}],
+              "stateful"=>true,
+              "strategy"=>"ha",
+              "name"=>"wordpress"
+            ),
+            hash_including(
+              "instances"=>nil,
+              "image"=>"mysql:5.6",
+              "env"=>["MYSQL_ROOT_PASSWORD=test_secret"],
+              "links"=>[],
+              "ports"=>[],
+              "stateful"=>true,
+              "name"=>"mysql"
+            )
           )
-        )
-      end
+        end
 
-      it 'extends services from the same file' do
-        subject = described_class.new(fixture_path('stack-internal-extend.yml'))
-
-        kontena_yml = YAML.load(fixture('stack-internal-extend.yml'))
-
-        expect(Kontena::Cli::Stacks::YAML::ServiceExtender).to receive(:new)
-          .with(kontena_yml['services']['app'])
-          .once
-          .and_return(service_extender)
-        expect(service_extender).to receive(:extend_from).with(kontena_yml['services']['base'])
-        subject.execute
-      end
-
-      it 'merges validation errors' do
-        allow(File).to receive(:read)
-          .with(fixture_path('kontena_v3.yml'))
-          .and_return(fixture('kontena_v3.yml'))
-        allow(File).to receive(:read)
-          .with(fixture_path('docker-compose_v2.yml'))
-          .and_return(fixture('docker-compose-invalid.yml'))
-        outcome = subject.execute
-        expect(outcome[:errors]).to eq([{
-          'docker-compose_v2.yml' =>[
-            {
-              'services' => {
-                'wordpress' => {
-                  'networks' => 'key not expected'
+        it 'merges validation errors' do
+          expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_return(fixture('docker-compose-invalid.yml'))
+          outcome = subject.execute
+          expect(outcome[:errors]).to eq([{
+            'docker-compose_v2.yml' =>[
+              {
+                'services' => {
+                  'wordpress' => {
+                    'networks' => 'key not expected'
+                  }
                 }
               }
-            }
-          ]
-        }])
+            ]
+          }])
+        end
       end
 
+      context 'from the same file' do
+        subject do
+          described_class.new(fixture_path('stack-internal-extend.yml'))
+        end
+
+        before do
+          [:exist?, :read].each do |meth|
+            allow(File).to receive(meth).with(fixture_path('stack-internal-extend.yml')).and_call_original
+          end
+        end
+
+        it 'extends services from the same file' do
+          expect(subject.execute[:services].find { |s| s['name'] == 'app' }).to match hash_including(
+            "image" => "base:latest",
+            "instances" => 2,
+            "env" => [
+              "TEST1=test1",
+              "TEST2=changed"
+            ],
+            "stateful" => true
+          )
+        end
+      end
     end
 
     context 'variable interpolation' do
