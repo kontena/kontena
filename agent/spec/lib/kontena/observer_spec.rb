@@ -254,18 +254,25 @@ describe Kontena::Observer, :celluloid => true do
       end
     end
 
-    describe "observed from a non-celluloid thread" do
-      it "returns an existing value" do
-        observable_actor.update object
+  end
 
-        expect(Kontena::Observer.observe(observable)).to eq object
-      end
+  describe "observed from a non-celluloid thread", :celluloid => false do
+    let(:observable) { Kontena::Observable.new }
+    let(:object) { double(:object) }
+    
+    it "returns an existing value" do
+      observable.update object
 
-      it "waits for an observable value" do
-        observable_actor.async.delay_update object, delay: 0.2
+      expect(Kontena::Observer.observe(observable)).to eq object
+    end
 
-        expect(Kontena::Observer.observe(observable)).to eq object
-      end
+    it "waits for an observable value" do
+      Thread.new {
+        sleep 0.2
+        observable.update object
+      }
+
+      expect(Kontena::Observer.observe(observable)).to eq object
     end
   end
 
