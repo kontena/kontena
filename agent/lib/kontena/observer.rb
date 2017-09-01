@@ -111,7 +111,7 @@ module Kontena
         end
       end
     ensure
-      observer.kill
+      observer.kill if observer
     end
 
     # @param subject [Object] used to identify the Observer for logging purposes
