@@ -25,18 +25,10 @@ module Kontena::Cli::Certificate
       }
       data['linked_service'] = service_path(self.linked_service) if self.type == 'tls-sni-01'
       retried = false
-      begin
+
+      response = nil
+      retry_on_le_registration do
         response = client(token).post("grids/#{current_grid}/domain_authorizations", data)
-      rescue Kontena::Errors::StandardErrorHash => exc
-        if exc.errors.has_key?('le_registration') && !retried
-          puts "Let's Encrypt registration missing, creating one."
-          email = prompt.ask("Email for Let's Encrypt:")
-          Kontena.run!(['certificate', 'register', email])
-          retried = true # retry only once
-          retry
-        else
-          raise exc
-        end
       end
 
       case self.type
@@ -75,6 +67,17 @@ module Kontena::Cli::Certificate
       else
         linked_service
       end
+    end
+
+    def retry_on_le_registration
+      yield
+    rescue Kontena::Errors::StandardErrorHash => exc
+      raise unless exc.errors.has_key?('le_registration')
+      # Run through registration
+      puts "Let's Encrypt registration missing, creating one."
+      email = prompt.ask("Email for Let's Encrypt:")
+      Kontena.run!(['certificate', 'register', email])
+      yield
     end
   end
 end
