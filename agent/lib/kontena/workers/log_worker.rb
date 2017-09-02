@@ -20,16 +20,16 @@ module Kontena::Workers
     QUEUE_MAX_SIZE = 2000
     QUEUE_THROTTLE = (QUEUE_MAX_SIZE * 0.8)
     WATCH_INTERVAL = 10.0
+    BATCH_SIZE = 10
 
     def websocket_client
       Celluloid::Actor[:websocket_client]
     end
 
-    # @param [Boolean] autostart
+    # @param autostart [Boolean]
     def initialize(autostart = true)
-      @queue = Queue.new
+      @queue = []
       @workers = {}
-      @buffer = []
       @etcd = Etcd.client(host: '127.0.0.1', port: 2379)
       @processing = false
       @streaming = false
@@ -45,9 +45,9 @@ module Kontena::Workers
       end
     end
 
+    # Watch queue and warn if it has grown too much
     def watch_queue
       every(WATCH_INTERVAL) do
-        flush_buffer if force_flush_buffer?
         if @queue.size > QUEUE_MAX_SIZE
           warn "queue is full (size is #{@queue.size}), log lines are dropped until queue has free space"
         elsif @queue.size > QUEUE_THROTTLE
@@ -58,24 +58,32 @@ module Kontena::Workers
       end
     end
 
-    # Process items from @queue until nil
+    # Process items from @queue
     def process_queue
-      defer {
-        @buffer_flushed_at = Time.now.to_i
-        while data = @queue.pop
-          sleep 1 until @processing
-
-          @buffer << data
-          if @buffer.size > 10 || (Time.now.to_i - @buffer_flushed_at) >= 1
-            flush_buffer
-            if @queue.size > 100
-              sleep 0.001
-            else
-              sleep 0.01
-            end
-          end
+      while buffer = @queue.shift(BATCH_SIZE)
+        sleep 1 until processing?
+        if buffer.size > 0
+          rpc_client.notification('/containers/log_batch', [buffer])
+          sleep 0.01
+        else
+          sleep 1
         end
+      end
+    end
+
+    # Start streaming and processing after etcd is running
+    def start
+      exclusive {
+        wait_until!("etcd running") { Actor[:etcd_launcher].running? }
+
+        start_streaming unless streaming?
+        resume_processing
       }
+    end
+
+    # @return [Boolean]
+    def processing?
+      !!@processing
     end
 
     # Process queued items
@@ -90,39 +98,16 @@ module Kontena::Workers
       @processing = false
     end
 
-    # @param [String] topic
-    # @param [Object] data
+    # @param topic [String]
+    # @param data [Object]
     def on_connect(topic, data)
       start
     end
 
-    # @param [String] topic
-    # @param [Object] data
+    # @param topic [String]
+    # @param data [Object]
     def on_disconnect(topic, data)
       stop
-    end
-
-    def start
-      exclusive {
-        wait_until!("etcd running") { Actor[:etcd_launcher].running? }
-
-        start_streaming unless streaming?
-        resume_processing
-      }
-    end
-
-    # Should we force buffer flush?
-    #
-    # @return [Boolean]
-    def force_flush_buffer?
-      !@buffer_flushed_at.nil? && @buffer_flushed_at < (Time.now.to_i - WATCH_INTERVAL)
-    end
-
-    # Flush buffer (send logs to master)
-    def flush_buffer
-      rpc_client.notification('/containers/log_batch', [@buffer.dup])
-      @buffer.clear
-      @buffer_flushed_at = Time.now.to_i
     end
 
     def stop
@@ -154,7 +139,7 @@ module Kontena::Workers
       @streaming = true
     end
 
-    # @param [Docker::Container] container
+    # @param container [Docker::Container]
     def stream_container_logs(container)
       unless workers[container.id]
         workers[container.id] = ContainerLogWorker.new(container, queue)
@@ -168,7 +153,7 @@ module Kontena::Workers
       end
     end
 
-    # @param [String] container_id
+    # @param container_id [String]
     def stop_streaming_container_logs(container_id)
       worker = workers.delete(container_id)
       if worker
@@ -191,16 +176,16 @@ module Kontena::Workers
       end
     end
 
-    # @param [String] container_id
-    # @param [Integer] timestamp
+    # @param container_id [String]
+    # @param timestamp [Integer]
     def mark_timestamp(container_id, timestamp)
       etcd.set("#{ETCD_PREFIX}/#{container_id}", {value: timestamp, ttl: 60*60*24*7})
     rescue
       nil
     end
 
-    # @param [String] topic
-    # @param [Docker::Event] event
+    # @param topic [String]
+    # @param event [Docker::Event]
     def on_container_event(topic, event)
       if STOP_EVENTS.include?(event.status)
         stop_streaming_container_logs(event.id)
@@ -219,14 +204,10 @@ module Kontena::Workers
       error exc
     end
 
-    # Close the log queue, stopping processing once empty. It cannot be restarted anymore.
-    def close
-      @queue.close
-    end
-
     def finalize
       stop_streaming if streaming?
-      close
+      sleep 1 until @queue.empty?
+      pause_processing
     end
   end
 end

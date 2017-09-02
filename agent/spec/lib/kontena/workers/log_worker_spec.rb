@@ -95,7 +95,7 @@ describe Kontena::Workers::LogWorker, :celluloid => true do
 
       it 'creates new container_log_worker actor' do
         worker = spy(:container_log_worker)
-        expect(Kontena::Workers::ContainerLogWorker).to receive(:new).with(container, Queue).and_return(worker)
+        expect(Kontena::Workers::ContainerLogWorker).to receive(:new).with(container, Array).and_return(worker)
         subject.stream_container_logs(container)
       end
     end
@@ -164,27 +164,6 @@ describe Kontena::Workers::LogWorker, :celluloid => true do
 
         subject.on_container_event('topic', double(:event, id: 'foo', status: 'create'))
       end
-    end
-  end
-
-  describe '#force_flush_buffer?' do
-    it 'returns false by default' do
-      expect(subject.force_flush_buffer?).to be_falsey
-    end
-  end
-
-  describe '#flush_buffer' do
-    before(:each) do
-      allow(rpc_client).to receive(:notification)
-    end
-
-    it 'sends buffer to master' do
-      expect(rpc_client).to receive(:notification).once
-      subject.flush_buffer
-    end
-
-    it 'returns flush unix timestamp' do
-      expect(subject.flush_buffer).to be_instance_of(Fixnum)
     end
   end
 end
