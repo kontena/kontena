@@ -155,10 +155,10 @@ describe '/v1/stacks', celluloid: true do
 
       it 'returns stack json including children names' do
         get "/v1/stacks/#{stack.to_path}", nil, request_headers
-        expect(json_response['children']).to match [
+        expect(json_response['children']).to match array_including(
           hash_including('name' => child_stack_1.name),
           hash_including('name' => child_stack_2.name)
-        ]
+        )
         get "/v1/stacks/#{child_stack_1.to_path}", nil, request_headers
         remove_instance_variable(:@json_response)
         expect(json_response['children']).to match [ hash_including('name' => child_stack_1_2.name) ]
