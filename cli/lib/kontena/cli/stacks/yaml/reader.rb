@@ -6,6 +6,7 @@ require 'kontena/cli/stacks/service_generator_v2'
 require 'kontena/cli/stacks/yaml/validator_v3'
 require 'opto'
 require 'liquid'
+require_relative 'opto'
 
 module Kontena::Cli::Stacks
   module YAML
