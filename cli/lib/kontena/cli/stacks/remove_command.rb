@@ -30,6 +30,12 @@ module Kontena::Cli::Stacks
       if stack['parent']
         puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack['parent']['name'])} depends on stack #{name}"
       end
+      if stack['children'] && !stack['children'].empty?
+        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} has dependencies that will be removed:"
+        stack['children'].each do |child|
+          puts "- #{pastel.yellow(child['name'])}"
+        end
+      end
       confirm_command(name)
     end
 
@@ -39,7 +45,7 @@ module Kontena::Cli::Stacks
       stack.fetch('children', Hash.new).each do |child_stack|
         caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
         cmd = ['stack', 'remove', '--ignore-not-found']
-        cmd << '--force' if forced?
+        cmd << '--force' # no need to prompt each separately
         cmd << child_stack['name']
         Kontena.run!(cmd)
       end
