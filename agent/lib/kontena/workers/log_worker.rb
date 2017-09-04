@@ -208,8 +208,11 @@ module Kontena::Workers
     def finalize
       stop_streaming if streaming?
       pause_processing
-      if @queue.size > 0 && rpc_client && rpc_client.alive?
-        rpc_client.notification('/containers/log_batch', [@queue])
+      if @queue.size > 0 && rpc_client
+        while @queue.size > 0 do
+          batch = @queue.shift(BATCH_SIZE * 10)
+          rpc_client.async.notification('/containers/log_batch', [batch])
+        end
       end
     end
   end
