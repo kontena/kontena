@@ -1,3 +1,0 @@
-wordpress:
-  image: wordpress:latest
-  instances: 2

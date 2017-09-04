@@ -11,7 +11,7 @@ describe VolumeInstanceDeployer do
     grid.grid_services.create!(name: 'redis', image_name: 'redis')
   end
 
-  let(:node) { HostNode.create!(node_id: SecureRandom.uuid) }
+  let(:node) { HostNode.create!(node_id: SecureRandom.uuid, name: 'node', node_number: 1) }
 
   it 'creates volume instance if needed' do
     expect_any_instance_of(RpcClient).to receive(:request).with('/volumes/notify_update', [])

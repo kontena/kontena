@@ -1,8 +1,8 @@
 
 describe Rpc::ContainerInfoMapper do
   let(:grid) { Grid.create! }
-  let(:node) { HostNode.create!(name: 'node-1', node_id: 'aaa', grid: grid) }
-  let(:node2) { HostNode.create!(name: 'node-2', node_id: 'bbb', grid: grid) }
+  let(:node) { grid.create_node!('node-1', node_id: 'aaa') }
+  let(:node2) { grid.create_node!('node-2', node_id: 'bbb') }
   let(:service) do
     GridService.create!(
       grid: grid,

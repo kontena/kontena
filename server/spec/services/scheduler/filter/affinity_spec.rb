@@ -2,13 +2,11 @@
 describe Scheduler::Filter::Affinity do
 
   let(:grid) { Grid.create(name: 'test') }
-  let(:nodes) do
-    nodes = []
-    nodes << HostNode.create!(grid: grid, node_id: 'node1', name: 'node-1', labels: ['az-1', 'ssd'])
-    nodes << HostNode.create!(grid: grid, node_id: 'node2', name: 'node-2', labels: ['az-1', 'hdd'])
-    nodes << HostNode.create!(grid: grid, node_id: 'node3', name: 'node-3', labels: ['az-2', 'ssd'])
-    nodes
-  end
+  let(:nodes) { [
+    grid.create_node!('node-1', node_id: 'node1', labels: ['az-1', 'ssd']),
+    grid.create_node!('node-2', node_id: 'node2', labels: ['az-1', 'hdd']),
+    grid.create_node!('node-3', node_id: 'node3', labels: ['az-2', 'ssd']),
+  ] }
 
   describe '#split_affinity' do
     it "raises for an invalid comperator" do

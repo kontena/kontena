@@ -249,7 +249,7 @@ describe GridService do
       unhealthy_container = grid_service.containers.create!(name: 'redis-2')
       unhealthy_container.update_attribute(:health_status, 'unhealthy')
 
-      expect(grid_service.health_status).to eq({healthy: 1, total: 2})
+      expect(grid_service.health_status).to eq({healthy: 1, unhealthy: 1, total: 2})
     end
 
     it 'returns nil if container is not found' do

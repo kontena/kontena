@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe Rpc::NodeServicePodHandler do
   let(:grid) { Grid.create! }
   let(:subject) { described_class.new(grid) }
-  let(:node) { HostNode.create!(grid: grid, name: 'test-node', node_id: 'abc') }
+  let(:node) { grid.create_node!('test-node', node_id: 'abc') }
 
   describe '#list' do
     before(:each) do
@@ -31,7 +31,7 @@ describe Rpc::NodeServicePodHandler do
     end
 
     it 'does not return service pods from other node' do
-      other_node = HostNode.create!(grid: grid, name: 'other-node', node_id: 'def')
+      other_node = grid.create_node!('other-node', node_id: 'def')
       service = grid.grid_services.create!(name: 'foo', image_name: 'foo/bar:latest')
       service.grid_service_instances.create!(instance_number: 1, host_node: node, desired_state: 'running')
       list = subject.list(other_node.node_id)

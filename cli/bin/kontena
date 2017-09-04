@@ -14,6 +14,6 @@ if ARGV[0] == 'complete'
 else
   ENV['DEBUG'] ||= "true" if ARGV.any? { |arg| arg == '-D' || arg == '--debug'}
   require 'kontena_cli'
-  Kontena::PluginManager.instance.init unless ENV['NO_PLUGINS']
+  Kontena::PluginManager.init unless ENV['NO_PLUGINS']
   Kontena::MainCommand.run
 end

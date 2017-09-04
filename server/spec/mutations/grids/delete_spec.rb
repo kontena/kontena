@@ -12,7 +12,7 @@ describe Grids::Delete do
   }
 
   let(:node) {
-    grid.host_nodes.create!(node_id: 'abc')
+    grid.host_nodes.create!(node_id: 'abc', name: 'node-1', node_number: 1)
   }
 
   describe '#run' do

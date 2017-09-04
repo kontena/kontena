@@ -16,11 +16,11 @@ describe Volumes::Delete do
   end
 
   let! :node1 do
-    HostNode.create!(grid: grid, id: 'foo', name: 'foo', connected: true)
+    grid.create_node!('foo', node_id: 'aaa', connected: true)
   end
 
   let! :node2 do
-    HostNode.create!(grid: grid, id: 'bar', name: 'bar', connected: false)
+    grid.create_node!('bar', node_id: 'bbb', connected: true)
   end
 
   describe '#run' do
@@ -33,8 +33,8 @@ describe Volumes::Delete do
 
     it 'deletes a volume that\'s not in use and notifies nodes where instances are' do
       rpc_client = double(:rpc_client)
-      expect(RpcClient).to receive(:new).and_return(rpc_client)
-      expect(rpc_client).to receive(:notify).once
+      allow(RpcClient).to receive(:new).and_return(rpc_client)
+      expect(rpc_client).to receive(:notify).twice
       volume.volume_instances.create!(name: 'foo1', host_node: node1)
       volume.volume_instances.create!(name: 'foo2', host_node: node2)
       expect {

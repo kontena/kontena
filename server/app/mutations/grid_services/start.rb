@@ -1,12 +1,14 @@
 module GridServices
   class Start < Mutations::Command
+    include AsyncHelper
+
     required do
       model :grid_service
     end
 
     def execute
       prev_state = self.grid_service.state
-      Celluloid::Future.new {
+      async_thread do
         begin
           self.grid_service.set_state('running')
           self.start_service_instances
@@ -14,7 +16,7 @@ module GridServices
           self.grid_service.set_state(prev_state)
           raise exc
         end
-      }
+      end
     end
 
     def start_service_instances

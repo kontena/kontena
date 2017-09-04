@@ -80,12 +80,12 @@ class Container
       'paused'.freeze
     elsif s['restarting']
       'restarting'.freeze
-    elsif s['oom_killed']
-      'oom_killed'.freeze
     elsif s['dead']
       'dead'.freeze
     elsif s['running']
       'running'.freeze
+    elsif s['oom_killed']
+      'oom_killed'.freeze
     else
       'stopped'.freeze
     end

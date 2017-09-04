@@ -886,6 +886,11 @@ follow | Stream logs
   "log_opts": null,
   "hooks": [],
   "health_check": {},
+  "health_status": {
+      "healthy": 1,
+      "unhealthy": 0,
+      "total": 1
+  },
   "instances": {
     "total": 1,
     "running": 1
@@ -924,6 +929,7 @@ log_opts | Log driver options (object)
 hooks | Commands to be executed when service instance is deployed
 instance_counts | Stats about how many instances this service currently has
 stop_grace_period | How long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with the image), before sending SIGKILL.
+health_status | Health status of the service instances. Only counted if there is a health check defined for the service.
 
 ### Deploy Opt attributes
 
@@ -1261,7 +1267,13 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
     "id": "my-grid/SECRET_PWD",
     "name": "SECRET_PWD",
     "created_at": "",
-    "value": "T0Ps3crT"
+    "value": "T0Ps3crT",
+    "services": [
+        {
+          "id": "big-one/null/app",
+          "name": "app"
+        }
+      ]
 }
 ```
 
@@ -1271,6 +1283,7 @@ id | An unique id for the secret
 created_at | A timestamp when the secret was created
 name | A name for the secret (unique within a grid)
 value | A value for the secret (encrypted in the database)
+services | A list of services that are consuming the secret
 
 ## List secrets
 

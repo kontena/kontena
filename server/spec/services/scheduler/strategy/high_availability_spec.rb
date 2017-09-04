@@ -9,11 +9,9 @@ describe Scheduler::Strategy::HighAvailability do
     availability_zones.each do |az|
       2.times do |i|
         instance = i + 1
-        nodes << HostNode.create!(
+        nodes << grid.create_node!("node-#{instance}#{az}",
           node_id: "node#{instance}#{az}",
-          name: "node-#{instance}#{az}",
           connected: true,
-          grid: grid,
           labels: ['region=eu-west-1', "az=#{az}"]
         )
       end
@@ -67,7 +65,7 @@ describe Scheduler::Strategy::HighAvailability do
       end
 
       it 'return nil if data volume node is not available' do
-        node4 = HostNode.create!(node_id: 'node4', name: 'node-4', connected: true, grid: grid)
+        node4 = grid.create_node!('node-4', node_id: 'node4', connected: true)
         stateful_service.grid_service_instances.create!(
           instance_number: 3, host_node: node4
         )

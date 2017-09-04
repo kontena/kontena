@@ -276,44 +276,14 @@ module Kontena
       def any_key_to_continue_with_timeout(timeout=9)
         return nil if running_silent?
         return nil unless $stdout.tty?
-        start_time = Time.now.to_i
-        end_time   = start_time + timeout
-        Thread.main['any_key.timed_out']   = false
-        msg = "Press any key to continue or ctrl-c to cancel.. (Automatically continuing in ? seconds)"
-
-        reader_thread = Thread.new do
-          Thread.main['any_key.char'] = $stdin.getch
-        end
-
-        countdown_thread = Thread.new do
-          time_left = timeout
-          while time_left > 0 && Thread.main['any_key.char'].nil?
-            print "\r#{pastel.bright_white("#{msg.sub("?", time_left.to_s)}")} "
-            time_left = end_time - Time.now.to_i
-            sleep 0.1
-          end
-          print "\r#{' ' * msg.length}  \r"
-          reader_thread.kill if reader_thread.alive?
-        end
-
-        countdown_thread.join
-
-        if Thread.main['any_key.char'] == "\u0003"
-          error "Canceled"
-        end
+        prompt.keypress("Press any key to continue or ctrl-c to cancel (Automatically continuing in :countdown seconds) ...", timeout: timeout)
       end
 
       def any_key_to_continue(timeout = nil)
         return nil if running_silent?
         return nil unless $stdout.tty?
         return any_key_to_continue_with_timeout(timeout) if timeout
-        msg = "Press any key to continue or ctrl-c to cancel.. "
-        print pastel.bright_cyan("#{msg}")
-        char = $stdin.getch
-        print "\r#{' ' * msg.length}\r"
-        if char == "\u0003"
-          error "Canceled"
-        end
+        prompt.keypress("Press any key to continue or ctrl-c to cancel.. ")
       end
 
       def display_account_login_info

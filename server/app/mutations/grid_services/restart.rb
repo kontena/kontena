@@ -1,13 +1,15 @@
 module GridServices
   class Restart < Mutations::Command
+    include AsyncHelper
+
     required do
       model :grid_service
     end
 
     def execute
-      Celluloid::Future.new{
+      async_thread do
         self.restart_service_instances
-      }
+      end
     end
 
     def restart_service_instances
