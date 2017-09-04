@@ -63,7 +63,7 @@ module Kontena::Workers
 
     # @param topic [String]
     # @param event [Docker::Event]
-    def on_container_event(topic, e)
+    def on_container_event(topic, event)
       attrs = event.actor.attributes
       if attrs['io.kontena.service.id'] == @service_pod.service_id &&
           attrs['io.kontena.container.type'] == 'container'.freeze &&

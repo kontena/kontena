@@ -207,8 +207,7 @@ describe Kontena::Workers::ServicePodWorker do
       double(:actor, attributes: {
         'io.kontena.service.id' => service_pod.service_id,
         'io.kontena.service.instance_number' => service_pod.instance_number,
-        'io.kontena.container.deploy_rev' => service_pod.deploy_rev,
-        'io.kontena.container.type' => 'service'
+        'io.kontena.container.type' => 'container'
       })
     end
     let(:event) do
