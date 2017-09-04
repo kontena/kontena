@@ -26,8 +26,6 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      require_config_file(filename)
-      stack = stack_read_and_dump(filename, name: name, values: values)
       services = stack['services']
 
       unless service_list.empty?

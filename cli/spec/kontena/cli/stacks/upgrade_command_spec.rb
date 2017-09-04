@@ -13,23 +13,21 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
     let(:stack_expectation) do
       {
-        name: 'stack-name',
-        stack: 'user/stackname',
-        version: '0.1.1',
-        registry: 'file://',
-        services: array_including(hash_including(:name, :image)),
-        variables: {},
-        volumes: [],
-        dependencies: nil,
-        source: /stack:/,
-        expose: nil
+        'name' => 'stack-name',
+        'stack' => 'user/stackname',
+        'version' => '0.1.1',
+        'registry' => 'file://',
+        'services' => array_including(hash_including('name', 'image')),
+        'variables' => {},
+        'volumes' => [],
+        'dependencies' => nil,
+        'source' => /stack:/,
+        'expose' => nil
       }
     end
 
     let(:stack_response) do
-      JSON.parse(
-        JSON.dump(stack_expectation.merge(services: [{name: 'foo', image: 'bar'}], source: 'foo'))
-      )
+      stack_expectation.merge('services' => [{'name' => 'foo', 'image' => 'bar'}], 'source' => 'foo')
     end
 
     before(:each) do
@@ -48,12 +46,12 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
     it 'sends stack to master' do
       expect(client).to receive(:get).with('stacks/test-grid/stack-a').and_return(stack_response)
-      expect(client).to receive(:put).with('stacks/test-grid/stack-a', hash_including(stack_expectation.merge(name: 'stack-a'))).and_return(true)
+      expect(client).to receive(:put).with('stacks/test-grid/stack-a', hash_including(stack_expectation.merge('name' => 'stack-a'))).and_return(true)
       subject.run(['--no-deploy', 'stack-a', fixture_path('kontena_v3.yml')])
     end
 
     it 'requires confirmation when master stack is different than input stack' do
-      expect(client).to receive(:get).with('stacks/test-grid/stack-b').and_return(stack_response.merge(stack: 'foo/otherstack'))
+      expect(client).to receive(:get).with('stacks/test-grid/stack-b').and_return(stack_response.merge('stack' => 'foo/otherstack'))
       expect(subject).to receive(:confirm).with(/Replacing stack foo\/otherstack on master with user\/stackname/).and_call_original
       expect{subject.run(['stack-b',  fixture_path('kontena_v3.yml')])}.to exit_with_error
     end
@@ -80,15 +78,15 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
     context 'with a stack including dependencies' do
 
-      let(:expectation)     {{ name: 'deptest', stack: 'user/depstack1' }}
-      let(:expectation_1)   {{ name: 'deptest-dep_1', stack: 'user/depstack1child1' }}
-      let(:expectation_1_1) {{ name: 'deptest-dep_1-dep_1', stack: 'user/depstack1child1child1', services: array_including(hash_including(image: 'image:2')) }}
-      let(:expectation_2)   {{ name: 'deptest-dep_2', stack: 'user/depstack1child2', services: array_including(hash_including(image: 'image:1')), variables: hash_including(dep_var: 1) }}
+      let(:expectation)     {{ 'name' => 'deptest', 'stack' => 'user/depstack1' }}
+      let(:expectation_1)   {{ 'name' => 'deptest-dep_1', 'stack' => 'user/depstack1child1' }}
+      let(:expectation_1_1) {{ 'name' => 'deptest-dep_1-dep_1', 'stack' => 'user/depstack1child1child1', 'services' => array_including(hash_including('image' => 'image:2')) }}
+      let(:expectation_2)   {{ 'name' => 'deptest-dep_2', 'stack' => 'user/depstack1child2', 'services' => array_including(hash_including('image' => 'image:1')), 'variables' => hash_including('dep_var' => 1) }}
 
-      let(:response)     { expectation.merge(parent: nil, children: [{name: 'deptest-dep_1'}, {name: 'deptest-dep_2'}]) }
-      let(:response_1)   { expectation_1.merge(parent: { name: 'deptest' }, children: [{name: 'deptest-dep_1-dep_1'}]) }
-      let(:response_1_1) { expectation_1_1.merge(parent: { name: 'deptest-dep_1' }, children: []) }
-      let(:response_2)   { expectation_2.merge(parent: { name: 'deptest' }, children: [], variables: {}, services: []) }
+      let(:response)     { expectation.merge('parent' => nil, 'children' => [{'name' => 'deptest-dep_1'}, {'name' => 'deptest-dep_2'}]) }
+      let(:response_1)   { expectation_1.merge('parent' => { 'name' => 'deptest' }, 'children' => [{'name' => 'deptest-dep_1-dep_1'}]) }
+      let(:response_1_1) { expectation_1_1.merge('parent' => { 'name' => 'deptest-dep_1' }, 'children' => []) }
+      let(:response_2)   { expectation_2.merge('parent' => { 'name' => 'deptest' }, 'children' => [], 'variables' => {}, 'services' => []) }
 
       before  do
         allow(subject).to receive(:fetch_master_data).with('deptest').and_return(response)

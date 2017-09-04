@@ -11,17 +11,17 @@ describe Kontena::Cli::Stacks::InstallCommand do
   describe '#execute' do
     let(:stack_expectation) do
       {
-        name: 'stackname',
-        stack: 'user/stackname',
-        version: '0.1.1',
-        registry: 'file://',
-        services: array_including(hash_including(:name, :image)),
-        variables: {},
-        volumes: [],
-        dependencies: nil,
-        source: /stack:/,
-        parent_name: nil,
-        expose: nil
+        'name' => 'stackname',
+        'stack' => 'user/stackname',
+        'version' => '0.1.1',
+        'registry' => 'file://',
+        'services' => array_including(hash_including('name', 'image')),
+        'variables' => {},
+        'volumes' => [],
+        'dependencies' => nil,
+        'source' => /stack:/,
+        'parent_name' => nil,
+        'expose' => nil
       }
     end
 
@@ -37,7 +37,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
     it 'allows to override stack name' do
       expect(client).to receive(:post).with(
-        'grids/test-grid/stacks', hash_including(stack_expectation.merge(name: 'stack-a'))
+        'grids/test-grid/stacks', hash_including(stack_expectation.merge('name' => 'stack-a'))
       )
       subject.run(['--no-deploy', '--name', 'stack-a', fixture_path('kontena_v3.yml')])
     end
@@ -67,7 +67,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
       it 'installs all the dependencies' do
         expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_1", "--parent-name", "deptest", '-v', 'dep_1.dep_var=1', '--no-deploy', fixture_path('stack-with-dependencies-dep-1.yml')])
         expect(Kontena).to receive(:run!).with(["stack", "install", "-n", "deptest-dep_2", "--parent-name", "deptest", "-v", "dep_var=1", '--no-deploy', fixture_path('stack-with-dependencies-dep-2.yml')])
-        expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including(stack: 'user/depstack1', name: 'deptest'))
+        expect(client).to receive(:post).with('grids/test-grid/stacks', hash_including('stack' => 'user/depstack1', 'name' => 'deptest'))
         subject.run(['-n', 'deptest', '--no-deploy', '-v', 'dep_1.dep_1.dep_var=1', fixture_path('stack-with-dependencies.yml')])
       end
     end

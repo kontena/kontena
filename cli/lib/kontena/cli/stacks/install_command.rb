@@ -28,8 +28,8 @@ module Kontena::Cli::Stacks
 
       set_env_variables(stack_name, current_grid)
 
-      hint_on_validation_notifications(stack[:notifications]) unless stack[:notifications].empty?
-      abort_on_validation_errors(stack[:errors]) unless stack[:errors].empty?
+      hint_on_validation_notifications(stack['notifications']) unless stack['notifications'].empty?
+      abort_on_validation_errors(stack['errors']) unless stack['errors'].empty?
 
       dump_variables if values_to
 
@@ -41,29 +41,29 @@ module Kontena::Cli::Stacks
       dependencies = loader.dependencies
       return if dependencies.nil?
       dependencies.each do |dependency|
-        target_name = "#{stack_name}-#{dependency[:name]}"
+        target_name = "#{stack_name}-#{dependency['name']}"
         caret "Installing dependency #{pastel.cyan(dependency[:stack])} as #{pastel.cyan(target_name)}"
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
-        dependency[:variables].merge(dependency_values_from_options(dependency[:name])).each do |key, value|
+        dependency['variables'].merge(dependency_values_from_options(dependency['name'])).each do |key, value|
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 
         cmd << '--no-deploy' unless deploy?
 
-        cmd << dependency[:stack]
+        cmd << dependency['stack']
         Kontena.run!(cmd)
       end
     end
 
     def create_stack
-      spinner "Creating stack #{pastel.cyan(stack[:name])} " do
-        client.post("grids/#{current_grid}/stacks", Kontena::Util.symbolize_keys(stack).reject { |k, _| k == :errors || k == :notifications})
+      spinner "Creating stack #{pastel.cyan(stack['name'])} " do
+        client.post("grids/#{current_grid}/stacks", stack.reject { |k, _| k == 'errors' || k == 'notifications'})
       end
     end
 
     def deploy_stack
-      Kontena.run!(['stack', 'deploy', stack[:name]])
+      Kontena.run!(['stack', 'deploy', stack['name']])
     end
   end
 end

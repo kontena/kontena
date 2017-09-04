@@ -16,11 +16,11 @@ module Kontena::Cli::Stacks::Registry
 
     def includes_local_dependencies?(dependencies = loader.dependencies)
       return false if dependencies.nil?
-      dependencies.any? { |dep| Kontena::Cli::Stacks::YAML::StackFileLoader.for(dep[:stack]).origin == 'file' || includes_local_dependencies(dep[:depends]) }
+      dependencies.any? { |dep| Kontena::Cli::Stacks::YAML::StackFileLoader.for(dep['stack']).origin == 'file' || includes_local_dependencies(dep['depends']) }
     end
 
     def includes_local_extends?
-      stack.fetch(:services) { {} }.any? { |svc| svc[:extends] && svc[:extends][:file] }
+      stack.fetch(:services) { {} }.any? { |svc| svc['extends'] && svc[:extends]['file'] }
     end
 
     def execute

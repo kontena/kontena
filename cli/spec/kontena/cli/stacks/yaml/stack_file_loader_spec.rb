@@ -59,8 +59,8 @@ describe Kontena::Cli::Stacks::YAML::StackFileLoader do
     end
 
     describe '#yaml' do
-      it 'returns a symbolized yaml from the file content' do
-        expect(subject.yaml[:stack]).to eq 'user/stackname'
+      it 'returns a yaml from the file content' do
+        expect(subject.yaml['stack']).to eq 'user/stackname'
       end
     end
 
@@ -81,21 +81,21 @@ describe Kontena::Cli::Stacks::YAML::StackFileLoader do
       it 'returns an array of hashes' do
         expect(subject.dependencies).to match array_including(
           hash_including(
-            name: :dep_1,
-            stack: /dep-1.yml$/,
-            variables: {},
-            depends: array_including(
+            'name' => 'dep_1',
+            'stack' => /dep-1.yml$/,
+            'variables' => {},
+            'depends' => array_including(
               hash_including(
-                name: :dep_1,
-                stack: /-1-1.yml$/,
-                variables: { dep_var: 2 }
+                'name' => 'dep_1',
+                'stack' => /-1-1.yml$/,
+                'variables' => { 'dep_var' => 2 }
               )
             )
           ),
           hash_including(
-            name: :dep_2,
-            stack: /dep-2.yml$/,
-            variables: { dep_var: 1 }
+            'name' => 'dep_2',
+            'stack' => /dep-2.yml$/,
+            'variables' => { 'dep_var' => 1 }
           )
         )
       end

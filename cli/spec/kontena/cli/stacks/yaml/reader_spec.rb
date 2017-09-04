@@ -49,7 +49,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'returns error' do
       outcome = subject.execute
-      expect(outcome[:errors].size).to eq(1)
+      expect(outcome['errors'].size).to eq(1)
     end
   end
 
@@ -62,7 +62,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     it 'returns result hash' do
       result = subject.execute
       expect(result).to be_kind_of(Hash)
-      %i(
+      %w(
         stack
         version
         name
@@ -94,7 +94,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
         it 'extends services from an external file' do
           expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_call_original
-          expect(subject.execute[:services]).to match array_including(
+          expect(subject.execute['services']).to match array_including(
             hash_including(
               "instances"=>2,
               "image"=>"wordpress:4.1",
@@ -120,7 +120,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         it 'merges validation errors' do
           expect(File).to receive(:read).with(fixture_path('docker-compose_v2.yml')).and_return(fixture('docker-compose-invalid.yml'))
           outcome = subject.execute
-          expect(outcome[:errors]).to eq([{
+          expect(outcome['errors']).to eq([{
             'docker-compose_v2.yml' =>[
               {
                 'services' => {
@@ -146,7 +146,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         end
 
         it 'extends services from the same file' do
-          app_svc = subject.execute[:services].find { |s| s['name'] == 'app' }
+          app_svc = subject.execute['services'].find { |s| s['name'] == 'app' }
           expect(app_svc).not_to be_nil
           puts app_svc.inspect
           expect(app_svc).to match hash_including(
@@ -189,11 +189,11 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
 
       it 'interpolates $VAR variables' do
-        expect(subject.execute[:services]).to match array_including(hash_including('image' => 'wordpress:4.1'))
+        expect(subject.execute['services']).to match array_including(hash_including('image' => 'wordpress:4.1'))
       end
 
       it 'interpolates default variables' do
-        expect(subject.execute[:services]).to match array_including(
+        expect(subject.execute['services']).to match array_including(
           hash_including(
             'name' => 'wordpress', 'environment' => array_including(
               'STACK=test', 'GRID=test-grid', 'PLATFORM=test-grid'
@@ -203,7 +203,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
 
       it 'interpolates ${VAR} variables' do
-        expect(subject.execute[:services]).to match array_including(hash_including('name' => 'mysql', 'image' => 'mariadb:latest'))
+        expect(subject.execute['services']).to match array_including(hash_including('name' => 'mysql', 'image' => 'mariadb:latest'))
       end
 
       it 'warns about empty variables' do
@@ -230,7 +230,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(ENV).to receive(:[]).with('TEST_ENV_VAR').and_return('foo')
         allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('foo')
 
-        expect(subject.execute[:services]).to match array_including(
+        expect(subject.execute['services']).to match array_including(
           hash_including('name' => 'mysql', 'environment' => array_including('INTERNAL_VAR=$INTERNAL_VAR'))
         )
       end
@@ -247,11 +247,11 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         end
 
         it 'converts env hash to array' do
-          expect(subject.execute[:services]).to match array_including(hash_including('name' => 'wordpress', 'environment' => ['WORDPRESS_DB_PASSWORD=test_secret']))
+          expect(subject.execute['services']).to match array_including(hash_including('name' => 'wordpress', 'environment' => ['WORDPRESS_DB_PASSWORD=test_secret']))
         end
 
         it 'does nothing to env array' do
-          expect(subject.execute[:services]).to match array_including(
+          expect(subject.execute['services']).to match array_including(
             hash_including('name' => 'mysql', 'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'])
           )
         end
@@ -289,7 +289,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         end
 
         it 'merges variables' do
-          expect(subject.execute[:services]).to match array_including(
+          expect(subject.execute['services']).to match array_including(
             hash_including(
               'name' => 'wordpress',
               'environment' => [
@@ -312,7 +312,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'expands build option to absolute path' do
       outcome = subject.execute
-      expect(outcome[:services]['webapp']['build']['context']).to eq(fixture_path(''))
+      expect(outcome['services']['webapp']['build']['context']).to eq(fixture_path(''))
     end
   end
 
@@ -323,7 +323,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it 'expands build context to absolute path' do
       outcome = subject.execute
-      expect(outcome[:services]['webapp']['build']['context']).to eq(fixture_path(''))
+      expect(outcome['services']['webapp']['build']['context']).to eq(fixture_path(''))
     end
   end
 
@@ -403,7 +403,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     it 'can read from a file' do
       subject = described_class.new(fixture_path('kontena_v3.yml'))
       expect(subject.loader.origin).to eq 'file'
-      expect(subject.execute[:registry]).to eq 'file://'
+      expect(subject.execute['registry']).to eq 'file://'
     end
 
     it 'can read from the registry' do
@@ -434,7 +434,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       end
 
       it 'interpolates variables into services' do
-        expect(subject.execute[:services].size).to eq 5
+        expect(subject.execute['services'].size).to eq 5
       end
     end
 
@@ -470,8 +470,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it "omits the env" do
       result = subject.execute
-      expect(result[:variables]).to match hash_including('asdf' => nil)
-      expect(result[:services]).to match array_including(
+      expect(result['variables']).to match hash_including('asdf' => nil)
+      expect(result['services']).to match array_including(
         hash_including('name' => 'test', 'environment' => nil)
       )
     end
@@ -488,8 +488,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
 
     it "defines the env" do
       outcome = subject.execute
-      expect(outcome[:variables]).to match hash_including('asdf' => 'test')
-      expect(outcome[:services]).to match array_including(
+      expect(outcome['variables']).to match hash_including('asdf' => 'test')
+      expect(outcome['services']).to match array_including(
         hash_including('name' => 'test', 'environment' => ['ASDF=test'])
       )
     end

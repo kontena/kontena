@@ -30,7 +30,7 @@ module Kontena::Cli::Stacks
       end
 
       def yaml
-        Kontena::Util.symbolize_keys(::YAML.safe_load(content))
+        ::YAML.safe_load(content)
       end
 
       def content
@@ -42,7 +42,7 @@ module Kontena::Cli::Stacks
       end
 
       def stack_name
-        @stack_name ||= Kontena::Cli::Stacks::StackName.new(yaml[:stack], yaml[:version])
+        @stack_name ||= Kontena::Cli::Stacks::StackName.new(yaml['stack'], yaml['version'])
       end
 
       def reader(*args)
@@ -51,16 +51,16 @@ module Kontena::Cli::Stacks
 
       def dependencies(recurse: true)
         return @dependencies if @dependencies
-        depends = yaml[:depends]
+        depends = yaml['depends']
         if depends.nil? || depends.empty?
           @dependencies = nil
         else
           @dependencies = depends.map do |name, dependency|
-            reader = StackFileLoader.for(dependency[:stack], self)
-            deps = { name: name, stack: reader.source, variables: dependency.fetch(:variables) { Hash.new } }
+            reader = StackFileLoader.for(dependency['stack'], self)
+            deps = { 'name' => name, 'stack' => reader.source, 'variables' => dependency.fetch('variables', Hash.new) }
             if recurse
               child_deps = reader.dependencies
-              deps[:depends] = child_deps unless child_deps.nil?
+              deps['depends'] = child_deps unless child_deps.nil?
             end
             deps
           end

@@ -27,16 +27,16 @@ module Kontena::Cli::Stacks
     def normalize_local_data(stack_data, parent_name)
       return nil if stack_data.nil? || stack_data.empty?
 
-      depends = stack_data.delete(:depends) || []
+      depends = stack_data.delete('depends') || []
       normalized_data = {
         parent_name => stack_data.merge(
-          loader: loader_class.for(stack_data[:stack])
+          'loader' => loader_class.for(stack_data['stack'])
         )
       }
 
       depends.each do |stack|
-        key = "#{parent_name}-#{stack[:name]}"
-        normalized_data.merge!(normalize_local_data(stack.merge(parent_name: parent_name), key))
+        key = "#{parent_name}-#{stack['name']}"
+        normalized_data.merge!(normalize_local_data(stack.merge('parent_name' => parent_name), key))
       end
       normalized_data
     end
@@ -48,14 +48,14 @@ module Kontena::Cli::Stacks
         return nil if ex.status == 404
         raise ex
       end
-      depends = data.delete(:children) || []
+      depends = data.delete('children') || []
 
       normalized_data = { stack_name => data }
 
       return normalized_data if skip_dependencies?
 
       depends.each do |stack|
-        normalized_data.merge!(normalize_master_data(stack[:name]))
+        normalized_data.merge!(normalize_master_data(stack['name']))
       end
       normalized_data
     end
@@ -80,7 +80,7 @@ module Kontena::Cli::Stacks
     def execute
 
       local = spinner "Parsing #{pastel.cyan(source)}" do
-        normalize_local_data({stack: source, depends: skip_dependencies? ? nil : loader.dependencies}, stack_name)
+        normalize_local_data({'stack' => source, 'depends' => skip_dependencies? ? nil : loader.dependencies}, stack_name)
       end
 
       remote = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
@@ -111,33 +111,33 @@ module Kontena::Cli::Stacks
       unless force?
         merged.each do |stackname, data|
           next if data[:remote].nil?
-          unless data[:local][:loader].stack_name.stack_name == data[:remote][:stack]
-            confirm "Replacing stack #{pastel.cyan(data[:remote][:stack])} on master with #{pastel.cyan(data[:local][:loader].stack_name.stack_name)}. Are you sure?"
+          unless data[:local]['loader'].stack_name.stack_name == data[:remote]['stack']
+            confirm "Replacing stack #{pastel.cyan(data[:remote]['stack'])} on master with #{pastel.cyan(data[:local]['loader'].stack_name.stack_name)}. Are you sure?"
           end
         end
       end
 
       merged.reverse_each do |stackname, data|
         set_env_variables(stackname, current_grid)
-        stack = data[:local][:loader].reader.execute(
+        stack = data[:local]['loader'].reader.execute(
           name: stackname,
-          values: (data.dig(:local, :variables) || {}).merge(dependency_values_from_options(stackname)),
-          defaults: data.dig(:remote, :variables),
-          parent_name: data.dig(:local, :parent_name)
+          values: (data.dig(:local, 'variables') || {}).merge(dependency_values_from_options(stackname)),
+          defaults: data.dig(:remote, 'variables'),
+          parent_name: data.dig(:local, 'parent_name')
         )
 
         if data[:remote]
           spinner "Upgrading #{stack_name == stackname ? 'stack' : 'dependency'} #{pastel.cyan(stackname)}" do |spin|
-            update_stack(stackname, Kontena::Util.symbolize_keys(stack).reject { |k, _| [:errors, :notifications, :parent_name].include?(k) }) || spin.fail!
+            update_stack(stackname, stack.reject { |k, _| ['errors', 'notifications', 'parent_name'].include?(k) }) || spin.fail!
           end
         else
           cmd = ['stack', 'install', '--name', stackname]
-          cmd.concat ['--parent-name', stack[:parent_name]] if stack[:parent_name]
-          Kontena::Util.stringify_keys(stack[:variables]).merge(dependency_values_from_options(stackname)).each do |k, v|
+          cmd.concat ['--parent-name', stack['parent_name']] if stack['parent_name']
+          stack['variables'].merge(dependency_values_from_options(stackname)).each do |k, v|
             cmd.concat ['-v', "#{k}=#{v}"]
           end
           cmd << '--no-deploy'
-          cmd << data[:local][:loader].source
+          cmd << data[:local]['loader'].source
           caret "Installing new dependency #{cmd.last} as #{stackname}"
           Kontena.run!(cmd)
         end
@@ -156,7 +156,7 @@ module Kontena::Cli::Stacks
     end
 
     def fetch_master_data(stack_name)
-      Kontena::Util.symbolize_keys(client.get(stack_url(stack_name)))
+      client.get(stack_url(stack_name))
     end
   end
 end

@@ -44,11 +44,11 @@ describe Kontena::Cli::Stacks::Common do
   describe '#stack' do
     it 'returns a stack result' do
       expect(subject.instance([fixture_path('kontena_v3.yml')]).stack).to respond_to(:[])
-      expect(subject.instance([fixture_path('kontena_v3.yml')]).stack[:name]).to eq ::YAML.safe_load(fixture('kontena_v3.yml'))['stack'].split('/').last
+      expect(subject.instance([fixture_path('kontena_v3.yml')]).stack['name']).to eq ::YAML.safe_load(fixture('kontena_v3.yml'))['stack'].split('/').last
     end
 
     it 'sets the stack name' do
-      expect(subject.instance(['-n', 'foo', fixture_path('kontena_v3.yml')]).stack[:name]).to eq 'foo'
+      expect(subject.instance(['-n', 'foo', fixture_path('kontena_v3.yml')]).stack['name']).to eq 'foo'
     end
   end
 

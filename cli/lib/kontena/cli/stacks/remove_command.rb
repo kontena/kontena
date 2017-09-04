@@ -17,7 +17,7 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def fetch_stack
-      Kontena::Util.symbolize_keys(client.get("stacks/#{current_grid}/#{name}"))
+      client.get("stacks/#{current_grid}/#{name}")
     rescue Kontena::Errors::StandardError => ex
       if ex.status == 404 && ignore_not_found?
         puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} does not exist."
@@ -27,8 +27,8 @@ module Kontena::Cli::Stacks
     end
 
     def confirm_remove(stack)
-      if stack[:parent]
-        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack[:parent][:name])} depends on stack #{name}"
+      if stack['parent']
+        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(stack['parent']['name'])} depends on stack #{name}"
       end
       confirm_command(name)
     end
@@ -36,11 +36,11 @@ module Kontena::Cli::Stacks
     def execute
       stack = fetch_stack
       confirm_remove(stack) unless forced?
-      stack.fetch(:children, Hash.new).each do |child_stack|
-        caret"Removing dependency #{pastel.cyan(child_stack[:name])}"
+      stack.fetch('children', Hash.new).each do |child_stack|
+        caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
         cmd = ['stack', 'remove', '--ignore-not-found']
         cmd << '--force' if forced?
-        cmd << child_stack[:name]
+        cmd << child_stack['name']
         Kontena.run!(cmd)
       end
 
