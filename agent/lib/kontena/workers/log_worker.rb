@@ -211,6 +211,7 @@ module Kontena::Workers
       if @queue.size > 0 && rpc_client
         while @queue.size > 0 do
           batch = @queue.shift(BATCH_SIZE * 10)
+          info "flushing #{batch.size} log items from queue"
           rpc_client.async.notification('/containers/log_batch', [batch])
         end
       end
