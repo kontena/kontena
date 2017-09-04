@@ -213,7 +213,7 @@ module Kontena
         end
         if self.cpus
           host_config['CpuPeriod'] = 100000
-          host_config['CpuQuota'] = host_config['CpuPeriod'] * self.cpus
+          host_config['CpuQuota'] = (host_config['CpuPeriod'] * self.cpus).to_i
         end
 
         host_config['NetworkMode'] = self.net
