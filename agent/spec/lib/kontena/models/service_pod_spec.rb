@@ -321,6 +321,16 @@ describe Kontena::Models::ServicePod do
       expect(host_config['CpuShares']).to eq(500)
     end
 
+    it 'does not include CpuQuota if cpus not defined' do
+      expect(host_config['CpuShares']).to be_nil
+    end
+
+    it 'includes CpuPeriod & CpuQuota if cpus is defined' do
+      data['cpus'] = 1.5
+      expect(host_config['CpuPeriod']).to eq(100_000)
+      expect(host_config['CpuQuota']).to eq(150_000)
+    end
+
     it 'sets PidMode if set' do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
