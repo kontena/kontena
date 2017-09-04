@@ -41,11 +41,11 @@ module Kontena::Cli::Stacks
       normalized_data
     end
 
-    def normalize_master_data(stack_name)
+    def normalize_master_data(stack_name, raise_not_found = false)
       begin
         data = fetch_master_data(stack_name)
       rescue Kontena::Errors::StandardError => ex
-        return nil if ex.status == 404
+        return nil if ex.status == 404 && !raise_not_found
         raise ex
       end
       depends = data.delete('children') || []
@@ -78,13 +78,12 @@ module Kontena::Cli::Stacks
     end
 
     def execute
-
       local = spinner "Parsing #{pastel.cyan(source)}" do
         normalize_local_data({'stack' => source, 'depends' => skip_dependencies? ? nil : loader.dependencies}, stack_name)
       end
 
       remote = spinner "Reading stack #{pastel.cyan(stack_name)} from master" do
-        normalize_master_data(stack_name)
+        normalize_master_data(stack_name, true)
       end
 
       merged = merge_data(local, remote)
