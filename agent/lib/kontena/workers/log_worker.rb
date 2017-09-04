@@ -60,8 +60,9 @@ module Kontena::Workers
 
     # Process items from @queue
     def process_queue
-      while buffer = @queue.shift(BATCH_SIZE)
+      loop do
         sleep 1 until processing?
+        buffer = @queue.shift(BATCH_SIZE)
         if buffer.size > 0
           rpc_client.notification('/containers/log_batch', [buffer])
           sleep 0.01
