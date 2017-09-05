@@ -81,4 +81,22 @@ describe 'stack install' do
       expect(k.out.match(/read_only: no/)).to be_truthy, k.out
     end
   end
+
+  context 'For a stack with dependencies' do
+
+    after do
+      run 'kontena stack ls -q|grep twemproxy|xargs -n1 kontena stack rm --force'
+    end
+
+    it 'installs all dependencies' do
+      with_fixture_dir("stack/depends") do
+        k = run 'kontena stack install'
+        expect(k.code).to eq (0)
+      end
+      k = run 'kontena stack ls -q'
+      expect(k.out).to match /^twemproxy$/m
+      expect(k.out).to match /^twemproxy-redis_from_registry$/m
+      expect(k.out).to match /^twemproxy-redis_from_yml$/m
+    end
+  end
 end

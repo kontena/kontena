@@ -27,4 +27,29 @@ describe 'stack remove' do
     k.run
     expect(k.code).to eq(0)
   end
+
+  context "for a stack that has dependencies" do
+    before do
+      with_fixture_dir("stack/depends") do
+        run 'kontena stack install'
+      end
+    end
+
+    after do
+      run 'kontena stack ls -q|grep twemproxy|xargs -n1 kontena stack rm --force'
+    end
+
+    it 'removes all the dependencies' do
+      k = run 'kontena stack ls -q'
+      expect(k.out).to match /^twemproxy-redis_from_registry$/m
+      expect(k.out).to match /^twemproxy-redis_from_yml$/m
+      expect(k.out).to match /^twemproxy$/m
+
+      k = run 'kontena stack rm --force twemproxy'
+      expect(k.code).to eq 0
+      expect(k.out).not_to match /^twemproxy-redis_from_registry$/m
+      expect(k.out).not_to match /^twemproxy-redis_from_yml$/m
+      expect(k.out).not_to match /^twemproxy$/m
+    end
+  end
 end
