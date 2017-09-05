@@ -182,7 +182,7 @@ module Kontena::NetworkAdapters
     def ensure_default_pool(grid_info)
       grid_subnet = IPAddr.new(grid_info['subnet'])
 
-      lower, upper = grid_subnet.split
+      _, upper = grid_subnet.split
 
       info "network and ipam ready, ensuring default network with subnet=#{grid_subnet.to_cidr} iprange=#{upper.to_cidr}"
       @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, grid_subnet.to_cidr, upper.to_cidr)
@@ -199,9 +199,9 @@ module Kontena::NetworkAdapters
         info "weave image or configuration has been changed, restarting"
         restarting = true
         weave.delete(force: true)
+        weave = nil
       end
 
-      weave = nil
       peer_ips = node.peer_ips || []
       trusted_subnets = node.grid['trusted_subnets']
       until weave && weave.running? do
@@ -223,7 +223,7 @@ module Kontena::NetworkAdapters
 
       attach_router unless interface_ip('weave')
       connect_peers(peer_ips)
-      info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
+      info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets.size > 0 && !already_started?
       post_start(node)
 
       if !already_started?

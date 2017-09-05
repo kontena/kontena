@@ -1,30 +1,30 @@
 require_relative '../services/logging'
 require_relative '../services/auth_provider'
 
-class CloudWebsocketConnectJob
+class CloudWebsocketClientManager
   include Celluloid
   include Logging
   include ConfigHelper # adds a .config method
+
+  trap_exit :on_actor_exit
 
   def initialize(perform = true)
     async.perform if perform
   end
 
   def perform
-    sleep 0.1
-    while running?
+    update_connection
+    every(30.0) do
       update_connection
-      sleep 30
     end
-  end
-
-  def running? # we can mock this in tests to return false
-    true
   end
 
   def update_connection
     if cloud_enabled?
-      connect
+      connect(socket_api_uri,
+        client_id: config['oauth2.client_id'],
+        client_secret: config['oauth2.client_secret'],
+      )
     else
       disconnect
     end
@@ -47,31 +47,29 @@ class CloudWebsocketConnectJob
   end
 
   def socket_api_uri?
-    !Cloud::WebsocketClient.api_uri.to_s.empty?
+    !config['cloud.socket_uri'].to_s.empty?
+  end
+  def socket_api_uri
+    "#{config['cloud.socket_uri']}/platform"
   end
 
   def oauth_app_credentials?
     config['oauth2.client_id'] && config['oauth2.client_secret']
   end
 
-  def connect
+  def connect(uri, options)
     if @client.nil?
-      @client = init_ws_client(config['oauth2.client_id'], config['oauth2.client_secret'])
-      @client.ensure_connect
+      @client = Cloud::WebsocketClient.new(uri, **options)
+      @client.start
+
+      self.link @client
     end
     @client
   end
 
-  ##
-  # return [Cloud::WebsocketClient]
-  def init_ws_client(client_id, client_secret)
-    Cloud::WebsocketClient.new(client_id, client_secret)
-  end
-
   def disconnect
     if @client
-      @client.disconnect
-      @client = nil
+      @client.stop # actor terminates itself
     end
   end
 
@@ -81,4 +79,12 @@ class CloudWebsocketConnectJob
     @client
   end
 
+  def on_actor_exit(actor, reason)
+    if actor == @client
+      @client = nil
+      info "Client exited: #{reason}"
+    else
+      warn "Unknown actor #{actor} crash: #{reason}"
+    end
+  end
 end

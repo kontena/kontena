@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'rbtrace' if ENV['RBTRACE'].to_s == 'true'
 require_relative '../lib/kontena-agent'
 
 Docker.options[:read_timeout] = (60*60)
