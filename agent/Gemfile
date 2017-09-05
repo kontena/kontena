@@ -9,6 +9,7 @@ gem 'etcd'
 gem 'statsd-ruby'
 gem 'vmstat'
 gem 'fluent-logger', '~>0.6.2'
+gem 'rbtrace', require: false
 
 group :development, :test do
   gem 'rake', require: false
