@@ -41,15 +41,19 @@ describe 'stack remove' do
 
     it 'removes all the dependencies' do
       k = run 'kontena stack ls -q'
-      expect(k.out).to match /^twemproxy-redis_from_registry$/m
-      expect(k.out).to match /^twemproxy-redis_from_yml$/m
-      expect(k.out).to match /^twemproxy$/m
+      expect(k.out.split(/[\r\n]/)).to match array_including(
+        'twemproxy-redis_from_registry',
+        'twemproxy-redis_from_yml',
+        'twemproxy'
+      )
 
       k = run 'kontena stack rm --force twemproxy'
       expect(k.code).to eq 0
-      expect(k.out).not_to match /^twemproxy-redis_from_registry$/m
-      expect(k.out).not_to match /^twemproxy-redis_from_yml$/m
-      expect(k.out).not_to match /^twemproxy$/m
+
+      k = run 'kontena stack ls -q'
+      expect(k.out).not_to match /twemproxy-redis_from_registry/
+      expect(k.out).not_to match /twemproxy-redis_from_yml/
+      expect(k.out).not_to match /twemproxy/
     end
   end
 end
