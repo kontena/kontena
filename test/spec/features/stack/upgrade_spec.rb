@@ -84,7 +84,10 @@ describe 'stack upgrade' do
 
   context "for a stack that has dependencies" do
     after do
-      run 'kontena stack ls -q|grep twemproxy|xargs -n1 kontena stack rm --force'
+      run('kontena stack ls -q').out.split(/[\r\n]/).each do |stack|
+        next unless stack.start_with?('twemproxy')
+        run "kontena stack rm --force #{stack}"
+      end
     end
 
     context "when a new dependency is added" do
@@ -94,12 +97,13 @@ describe 'stack upgrade' do
         end
 
         with_fixture_dir("stack/depends/monitor_added") do
-          k = run 'kontena stack upgrade --force'
+          k = run 'kontena stack upgrade --force twemproxy'
+          puts k.out unless k.code.zero?
           expect(k.code).to eq (0)
         end
 
         k = run 'kontena stack ls -q'
-        expect(k.out).to match /^twemproxy-redis_from_yml-monitor$/m
+        expect(k.out).to match /twemproxy-redis_from_yml-monitor/
       end
     end
 
@@ -110,15 +114,16 @@ describe 'stack upgrade' do
         end
 
         k = run 'kontena stack ls -q'
-        expect(k.out).to match /^twemproxy-redis_from_yml-monitor$/m
+        expect(k.out).to match /twemproxy-redis_from_yml-monitor/
 
         with_fixture_dir("stack/depends/monitor_removed") do
-          k = run 'kontena stack upgrade --force'
+          k = run 'kontena stack upgrade --force twemproxy'
+          puts k.out unless k.code.zero?
           expect(k.code).to eq (0)
         end
 
         k = run 'kontena stack ls -q'
-        expect(k.out).not_to match /^twemproxy-redis_from_yml-monitor$/m
+        expect(k.out).not_to match /twemproxy-redis_from_yml-monitor/
       end
     end
 
@@ -129,15 +134,16 @@ describe 'stack upgrade' do
         end
 
         k = run 'kontena stack show twemproxy-redis_from_yml'
-        expect(k.out).to match /^stack: test\/redis/m
+        expect(k.out).to match /stack: test\/redis/
 
         with_fixture_dir("stack/depends/second_redis_replaced") do
-          k = run 'kontena stack upgrade --force'
+          k = run 'kontena stack upgrade --force twemproxy'
+          puts k.out unless k.code.zero?
           expect(k.code).to eq (0)
         end
 
         k = run 'kontena stack show twemproxy-redis_from_yml'
-        expect(k.out).to match /^stack: kontena\/redis/m
+        expect(k.out).to match /stack: kontena\/redis/
       end
     end
   end
