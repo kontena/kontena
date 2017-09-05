@@ -68,6 +68,8 @@ GEM
     json-serializer (1.0.0)
     jsonpath (0.8.3)
       multi_json
+    kontena-websocket-client (0.1.1)
+      websocket-driver (~> 0.6.5)
     listen (2.8.3)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
@@ -169,6 +171,7 @@ DEPENDENCIES
   json-jwt (= 1.5.2)
   json-serializer
   jsonpath
+  kontena-websocket-client (~> 0.1.1)
   lru_redux (~> 1.1.0)
   mongoid (~> 5.2.1)
   mongoid-enum
@@ -192,4 +195,4 @@ DEPENDENCIES
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.14.3
+   1.15.3
