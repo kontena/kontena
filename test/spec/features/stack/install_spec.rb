@@ -85,7 +85,9 @@ describe 'stack install' do
   context 'For a stack with dependencies' do
 
     after do
-      run 'kontena stack ls -q|grep twemproxy|xargs -n1 kontena stack rm --force'
+      %w(twemproxy twemproxy-redis_from_registry twemproxy-redis_from_yml).each do |stack|
+        run "kontena stack rm --force #{stack}"
+      end
     end
 
     it 'installs all dependencies' do
@@ -94,9 +96,7 @@ describe 'stack install' do
         expect(k.code).to eq (0)
       end
       k = run 'kontena stack ls -q'
-      expect(k.out).to match /^twemproxy$/m
-      expect(k.out).to match /^twemproxy-redis_from_registry$/m
-      expect(k.out).to match /^twemproxy-redis_from_yml$/m
+      expect(k.out.split(/[\r\n]/)).to match array_including('twemproxy', 'twemproxy-redis_from_registry', 'twemproxy-redis_from_yml')
     end
   end
 end
