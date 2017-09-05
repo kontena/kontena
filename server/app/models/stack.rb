@@ -20,14 +20,6 @@ class Stack
   validates_presence_of :name
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  # this can't be here because child stacks are created before parents exist
-  #
-  # validates :parent_in_same_grid?, unless: lambda { |s| s.initial? }, message: "Parent stack must be in the same grid"
-
-  # def parent_in_same_grid?
-  #   parent.grid_id == grid_id
-  # end
-
   def initial?
     parent_name.nil?
   end
