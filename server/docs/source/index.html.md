@@ -1455,6 +1455,7 @@ Let's Encrypt domain authorization management for certificate handling.
 `status` can be any of the following:
 - `created`: authorization has been created, no firther actions yet taken
 - `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
+- `deploy_error`: The deployment of the linked service has errored out, more details can be found from the linked services event logs
 - `requested`: Authorization has been requested from Let's Encrypt
 - `validated`: Let's Encrypt has succesfully validated the challenge
 - `error`: Error has happened in the validation, re-authorization should be done
