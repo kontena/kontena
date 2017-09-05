@@ -58,6 +58,12 @@ class TestObserverActor
     }
   end
 
+  def observe_until(observable, min)
+    observe(observable) do |value|
+      return value if value >= min
+    end
+  end
+
   def crash
     fail
   end
@@ -135,6 +141,16 @@ describe Kontena::Observer, :celluloid => true do
 
         #expect(subject.observed_values.last).to eq observable.observable_value
         expect(subject.ordered?).to be_truthy
+      end
+
+      it "stops observing on return" do
+        observable_actor.async.spam_updates(1..10, delay: 0.01, interval: 0.01)
+
+        expect(subject.observe_until(observable, 10)).to be >= 10
+
+        observable_actor.update(11) # notice the dead observer
+
+        expect(observable).to_not be_observed
       end
     end
 
@@ -259,7 +275,7 @@ describe Kontena::Observer, :celluloid => true do
   describe "observed from a non-celluloid thread", :celluloid => false do
     let(:observable) { Kontena::Observable.new }
     let(:object) { double(:object) }
-    
+
     it "returns an existing value" do
       observable.update object
 
