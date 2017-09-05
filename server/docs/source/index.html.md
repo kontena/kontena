@@ -1434,20 +1434,30 @@ Let's Encrypt domain authorization management for certificate handling.
 
 ```json
 {
-  "domain": "web.52.57.23.91.xip.io",
-  "challenge": {
-    "token": "4caq-Qll7ksacYp0Wd_eW4VTQlLp28ODKfBWZrzNbeU",
-    "uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/0GL_fUeZGnbxilMGbcUoAS3UOz_dK8q4TdxDgeCrOs0/55065930",
-    "type": "tls-sni-01"
-  },
-  "challenge_opts": null,
-  "authorization_type": "tls-sni-01",
-  "linked_service": "e2e/null/lb",
-  "service_deploy_id": "599eac26af8cd3000995b36d"
+    "id": "e2e/kontena.io",
+    "domain": "kontena.io",
+	"status": "deploying",
+	"challenge": {
+		"token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
+		"uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
+		"type": "tls-sni-01"
+	},
+	"challenge_opts": null,
+	"authorization_type": "tls-sni-01",
+	"linked_service": {
+		"id": "e2e/null/lb"
+	}
 }
 ```
 
-`challenge_opts` are challenge type specific details. For example in `dns-01` challenges there will be some DNS TXT records details.
+`challenge_opts` are challenge type specific details. For example in `dns-01` challenges there will be the DNS TXT records details.
+
+`status` can be any of the following:
+- `created`: authorization has been created, no firther actions yet taken
+- `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
+- `requested`: Authorization has been requested from Let's Encrypt
+- `validated`: Let's Encrypt has succesfully validated the challenge
+- `error`: Error has happened in the validation, re-authorization should be done
 
 ## Authorize domain
 
