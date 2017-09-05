@@ -12,6 +12,8 @@ module Kontena::Workers
 
     attr_reader :workers, :node
 
+    LOOP_INTERVAL = 30
+
     trap_exit :on_worker_exit
     finalizer :finalize
 
@@ -33,7 +35,7 @@ module Kontena::Workers
       subscribe('service_pod:event', :on_pod_event)
       loop do
         populate_workers_from_master
-        sleep 30
+        sleep LOOP_INTERVAL
       end
     end
 

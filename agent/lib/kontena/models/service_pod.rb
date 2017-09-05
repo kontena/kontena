@@ -194,11 +194,7 @@ module Kontena
 
       # @return [Hash]
       def service_host_config
-        host_config = {
-          'RestartPolicy' => {
-            'Name' => 'unless-stopped'
-          }
-        }
+        host_config = {}
         bind_volumes = self.build_bind_volumes
         if bind_volumes.size > 0
           host_config['Binds'] = bind_volumes

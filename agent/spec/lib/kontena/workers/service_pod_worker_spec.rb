@@ -101,9 +101,10 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.current_state).to eq('running')
     end
 
-    it 'returns restarting if container is restarting' do
-      container = double(:container, :running? => false, :restarting? => true)
+    it 'returns restarting if restart is in progress' do
+      container = double(:container, :running? => false)
       allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
       expect(subject.current_state).to eq('restarting')
     end
 
@@ -142,6 +143,19 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.needs_apply?(service_pod)).to be_truthy
     end
 
+    it 'returns false if restarting and desired_state or deploy_rev has not changed' do
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      expect(subject.needs_apply?(service_pod)).to be_falsey
+    end
+
+    it 'returns true if restarting and deploy_rev has changed' do
+      allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
+      subject.container_state_changed = false
+      update = service_pod.dup
+      allow(update).to receive(:deploy_rev).and_return('new')
+      expect(subject.needs_apply?(update)).to be_truthy
+    end
+
     it 'returns false if container_state_changed is false and pod has not changed' do
       subject.container_state_changed = false
       expect(subject.needs_apply?(service_pod)).to be_falsey
@@ -154,7 +168,7 @@ describe Kontena::Workers::ServicePodWorker do
       expect(subject.needs_apply?(update)).to be_truthy
     end
 
-    it 'returns true if container_state_changed is false and deploy_rev has changed' do
+    it 'returns true if container_state_changed is false and desired_state has changed' do
       subject.container_state_changed = false
       update = service_pod.dup
       allow(update).to receive(:desired_state).and_return('stopped')
@@ -192,11 +206,12 @@ describe Kontena::Workers::ServicePodWorker do
     let(:actor) do
       double(:actor, attributes: {
         'io.kontena.service.id' => service_pod.service_id,
-        'io.kontena.service.instance_number' => service_pod.instance_number
+        'io.kontena.service.instance_number' => service_pod.instance_number,
+        'io.kontena.container.type' => 'container'
       })
     end
     let(:event) do
-      double(:event, actor: actor)
+      double(:event, actor: actor, status: 'running')
     end
 
     it 'marks container state changed if service id and instance number matches' do
@@ -212,6 +227,31 @@ describe Kontena::Workers::ServicePodWorker do
       expect {
         subject.on_container_event('container:event', event)
       }.not_to change { subject.container_state_changed }
+    end
+
+    it 'triggers restart logic if event is die' do
+      allow(event).to receive(:status).and_return('die')
+      expect(subject.wrapped_object).to receive(:handle_restart_on_die).once
+      subject.on_container_event('container:event', event)
+    end
+  end
+
+  describe '#handle_restart_on_die' do
+    it 'triggers restart without backoff by default if service_pod state is running' do
+      allow(service_pod).to receive(:running?).and_return(true)
+      expect(subject.wrapped_object).to receive(:after).with(0).once
+      subject.handle_restart_on_die
+    end
+
+    it 'does not trigger restart if service_pod state is not running' do
+      expect(subject.wrapped_object).not_to receive(:after)
+      subject.handle_restart_on_die
+    end
+
+    it 'does not trigger restart if apply is in progress' do
+      allow(subject.wrapped_object).to receive(:apply_in_progress?).and_return(true)
+      expect(subject.wrapped_object).not_to receive(:after)
+      subject.handle_restart_on_die
     end
   end
 
@@ -339,33 +379,23 @@ describe Kontena::Workers::ServicePodWorker do
   end
 
   describe '#recreate_service_container?' do
-    it 'returns false if RestartPolicy=no' do
-      service_container = spy(:service_container,
-        state: {},
-        restart_policy: {'Name' => 'no'}
-      )
-      expect(subject.recreate_service_container?(service_container)).to be_falsey
-    end
-
     it 'returns false if container is running' do
       service_container = spy(:service_container,
-        state: {'Running' => true},
-        restart_policy: {'Name' => 'always'}
+        state: {'Running' => true}
       )
       expect(subject.recreate_service_container?(service_container)).to be_falsey
     end
 
-    it 'returns false if RestartPolicy=always and container is stopped without error message' do
+    it 'returns false if container is stopped without error message' do
       service_container = spy(:service_container,
-        state: {'Running' => false, 'Error' => ''},
-        restart_policy: {'Name' => 'always'}
+        state: {'Running' => false, 'Error' => ''}
       )
       expect(subject.recreate_service_container?(service_container)).to be_falsey
     end
 
-    it 'returns true if RestartPolicy=always and container is stopped with error message' do
+    it 'returns true if container is stopped with error message' do
       service_container = spy(:service_container,
-        autostart?: true, running?: false,
+        running?: false,
         state: {'Running' => false, 'Error' => 'oh noes'}
       )
       expect(subject.recreate_service_container?(service_container)).to be_truthy

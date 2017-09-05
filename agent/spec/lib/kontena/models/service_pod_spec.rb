@@ -269,8 +269,8 @@ describe Kontena::Models::ServicePod do
   describe '#service_host_config' do
     let(:host_config) { subject.service_host_config }
 
-    it 'sets RestartPolicy' do
-      expect(host_config['RestartPolicy']['Name']).to eq('unless-stopped')
+    it 'does not set RestartPolicy' do
+      expect(host_config['RestartPolicy']).to be_nil
     end
 
     it 'does not include Binds if no volumes are defined' do

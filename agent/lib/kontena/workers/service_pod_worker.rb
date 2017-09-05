@@ -3,6 +3,7 @@ require_relative '../service_pods/starter'
 require_relative '../service_pods/stopper'
 require_relative '../service_pods/terminator'
 require_relative '../helpers/event_log_helper'
+require_relative 'service_pod_manager'
 
 module Kontena::Workers
   class ServicePodWorker
@@ -18,16 +19,19 @@ module Kontena::Workers
     attr_reader :node, :prev_state, :service_pod
     attr_accessor :service_pod, :container_state_changed
 
+    # @param node [Node]
+    # @param service_pod [ServicePod]
     def initialize(node, service_pod)
       @node = node
       @service_pod = service_pod
       @prev_state = nil # sync'd to master
       @container_state_changed = true
       @deploy_rev_changed = false
+      @restarts = 0
       subscribe('container:event', :on_container_event)
     end
 
-    # @param [Kontena::Models::ServicePod] service_pod
+    # @param service_pod [Kontena::Models::ServicePod]
     def update(service_pod)
       if needs_apply?(service_pod)
         check_deploy_rev(service_pod)
@@ -38,15 +42,17 @@ module Kontena::Workers
       end
     end
 
-    # @param [Kontena::Models::ServicePod] service_pod
+    # @param service_pod [Kontena::Models::ServicePod]
     # @return [Boolean]
     def needs_apply?(service_pod)
-      @container_state_changed ||
-        @service_pod.desired_state != service_pod.desired_state ||
-          @service_pod.deploy_rev != service_pod.deploy_rev
+      return true if @service_pod.desired_state != service_pod.desired_state ||
+                     @service_pod.deploy_rev != service_pod.deploy_rev
+      return false if restarting?
+
+      @container_state_changed == true
     end
 
-    # @param [Kontena::Models::ServicePod] service_pod
+    # @param service_pod [Kontena::Models::ServicePod]
     def check_deploy_rev(service_pod)
       return if @service_pod.deploy_rev.nil? || service_pod.deploy_rev.nil?
       @deploy_rev_changed = @service_pod.deploy_rev != service_pod.deploy_rev
@@ -57,14 +63,52 @@ module Kontena::Workers
       @deploy_rev_changed == true
     end
 
-    # @param [String] topic
-    # @param [Docker::Event] e
-    def on_container_event(topic, e)
-      attrs = e.actor.attributes
+    # @param topic [String]
+    # @param event [Docker::Event]
+    def on_container_event(topic, event)
+      attrs = event.actor.attributes
       if attrs['io.kontena.service.id'] == @service_pod.service_id &&
+          attrs['io.kontena.container.type'] == 'container'.freeze &&
           attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number
         @container_state_changed = true
+        handle_restart_on_die if event.status == 'die'.freeze
       end
+    end
+
+    # Handles events when container has died
+    def handle_restart_on_die
+      cancel_restart_timers
+      return unless @service_pod.running?
+
+      # backoff restarts
+      backoff = @restarts ** 2
+      backoff = max_restart_backoff if backoff > max_restart_backoff
+      if backoff == 0
+        info "restarting #{@service_pod.name_for_humans} because it has stopped"
+      else
+        info "restarting #{@service_pod.name_for_humans} because it has stopped (delay: #{backoff}s)"
+      end
+      ts = Time.now.utc
+      @restarts += 1
+      @restart_backoff_timer = after(backoff) {
+        debug "restart triggered (from #{ts})"
+        apply
+      }
+    end
+
+    # @return [Fixnum]
+    def max_restart_backoff
+      Kontena::Workers::ServicePodManager::LOOP_INTERVAL
+    end
+
+    def cancel_restart_timers
+      @restart_counter_reset_timer.cancel if @restart_counter_reset_timer
+      @restart_backoff_timer.cancel if @restart_backoff_timer
+    end
+
+    # @return [Boolean]
+    def restarting?
+      @restarts > 0
     end
 
     def destroy
@@ -73,9 +117,15 @@ module Kontena::Workers
     end
 
     def apply
+      cancel_restart_timers
       exclusive {
         begin
           ensure_desired_state
+          # reset restart counter if instance stays up 10s
+          @restart_counter_reset_timer = after(10) {
+            info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter" if restarting?
+            @restarts = 0
+          }
         rescue => error
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           warn error
@@ -168,7 +218,7 @@ module Kontena::Workers
       raise exc
     end
 
-    # @param [Docker::Container] service_container
+    # @param service_container [Docker::Container]
     # @return [Boolean]
     def service_container_outdated?(service_container)
       outdated = container_outdated?(service_container) ||
@@ -184,7 +234,7 @@ module Kontena::Workers
       image_outdated?(service_container)
     end
 
-    # @param [Docker::Container] service_container
+    # @param service_container [Docker::Container]
     # @raise [ArgumentError] invalid date
     # @raise [RuntimeError] service updated_at timestamp is in the future
     # @return [Boolean]
@@ -202,7 +252,7 @@ module Kontena::Workers
       end
     end
 
-    # @param [Docker::Container] service_container
+    # @param service_container [Docker::Container]
     # @return [Boolean]
     def image_outdated?(service_container)
       image = Docker::Image.get(service_pod.image_name) rescue nil
@@ -212,16 +262,16 @@ module Kontena::Workers
       false
     end
 
-    # @param [Docker::Container] service_container
+    # @param service_container [Docker::Container]
     # @return [Boolean]
     def recreate_service_container?(service_container)
       state = service_container.state
-      service_container.autostart? &&
-          !service_container.running? &&
-          (!state['Error'].empty? || state['ExitCode'].to_i != 0)
+
+      # this indicates usually a docker engine error, which might get fixed if container is recreated
+      !service_container.running? && !state['Error'].empty?
     end
 
-    # @param [Docker::Container] service_container
+    # @param service_container [Docker::Container]
     # @return [Boolean]
     def labels_outdated?(service_container)
       service_pod.labels['io.kontena.load_balancer.name'] != service_container.labels['io.kontena.load_balancer.name']
@@ -232,8 +282,8 @@ module Kontena::Workers
       Actor[:image_pull_worker]
     end
 
-    # @param [Kontena::Models::ServicePod] service_pod
-    # @param [Docker::Container] service_container
+    # @param service_pod [Kontena::Models::ServicePod]
+    # @param service_container [Docker::Container]
     # @return [Boolean]
     def state_in_sync?(service_pod, service_container)
       return true if service_pod.terminated? && service_container.nil?
@@ -252,7 +302,7 @@ module Kontena::Workers
 
       if service_container.running?
         'running'
-      elsif service_container.restarting?
+      elsif restarting?
         'restarting'
       else
         'stopped'
@@ -276,9 +326,9 @@ module Kontena::Workers
       end
     end
 
-    # @param [String] type
-    # @param [String] data
-    # @param [Integer] severity
+    # @param type [String]
+    # @param data [String]
+    # @param severity [Integer]
     def log_service_pod_event(type, data, severity = Logger::INFO)
       super(service_pod.service_id, service_pod.instance_number, type, data, severity)
     end
