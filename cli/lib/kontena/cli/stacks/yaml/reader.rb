@@ -138,6 +138,10 @@ module Kontena::Cli::Stacks
         end
       end
 
+      def create_parent_variable(parent_name)
+        puts variables.build_option(name: 'PARENT_STACK', type: :string, value: parent_name).inspect
+      end
+
       def from_file?
         loader.origin == 'file'
       end
@@ -148,6 +152,8 @@ module Kontena::Cli::Stacks
         set_variable_defaults(defaults) if defaults
         set_variable_values(values) if values
         create_dependency_variables(dependencies, name)
+        create_parent_variable(parent_name) if parent_name
+
         variables.run
         raise RuntimeError, "Variable validation failed: #{variables.errors.inspect} in #{file}" unless variables.valid? || skip_validation
 

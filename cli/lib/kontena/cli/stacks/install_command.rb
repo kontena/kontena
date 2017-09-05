@@ -46,6 +46,7 @@ module Kontena::Cli::Stacks
         cmd = ['stack', 'install', '-n', target_name, '--parent-name', stack_name]
 
         dependency['variables'].merge(dependency_values_from_options(dependency['name'])).each do |key, value|
+          next if key == 'PARENT_STACK'
           cmd.concat ['-v', "#{key}=#{value}"]
         end
 

@@ -133,6 +133,7 @@ module Kontena::Cli::Stacks
           cmd = ['stack', 'install', '--name', stackname]
           cmd.concat ['--parent-name', stack['parent_name']] if stack['parent_name']
           stack['variables'].merge(dependency_values_from_options(stackname)).each do |k, v|
+            next if k == 'PARENT_STACK'
             cmd.concat ['-v', "#{k}=#{v}"]
           end
           cmd << '--no-deploy'
