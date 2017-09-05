@@ -314,7 +314,7 @@ module Kontena
     def each(timeout: nil)
       @deadline = Time.now + timeout if timeout
 
-      while alive?
+      while true
         # prevent any intervening messages from being processed and discarded before we're back in Celluloid.receive()
         Celluloid.exclusive {
           if error?
