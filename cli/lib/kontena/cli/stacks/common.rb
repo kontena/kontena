@@ -40,7 +40,7 @@ module Kontena::Cli::Stacks
       end
 
       def dump_variables(reader)
-        vals = reader.variables.to_h(values_only: true).reject {|k,_| k == 'STACK' || k == 'GRID' }
+        vals = reader.variables.to_h(values_only: true).reject {|k,_| k == 'STACK' || k == 'GRID' || k == 'PLATFORM' }
         File.write(values_to, ::YAML.dump(vals))
       end
     end
