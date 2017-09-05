@@ -169,6 +169,10 @@ module Kontena
             puts "  memory_swap: #{int_to_filesize(service['memory_swap'])}"
           end
 
+          unless service['shm_size'].to_s.empty?
+            puts "  shm_size: #{int_to_filesize(service['shm_size'])}"
+          end
+
           unless service['pid'].to_s.empty?
             puts "  pid: #{service['pid']}"
           end

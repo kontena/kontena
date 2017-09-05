@@ -31,6 +31,7 @@ module Kontena::Cli::Stacks::YAML
         'external_links' => optional('array'),
         'mem_limit' => optional('string'),
         'mem_swaplimit' => optional('string'),
+        'shm_size' => optional('string'),
         'environment' => optional(-> (value) {
           if value.is_a?(Hash)
             value.all? do |k,v|

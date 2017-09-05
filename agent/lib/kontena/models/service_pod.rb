@@ -19,6 +19,7 @@ module Kontena
                   :entrypoint,
                   :memory,
                   :memory_swap,
+                  :shm_size,
                   :cpu_shares,
                   :privileged,
                   :pid,
@@ -64,6 +65,7 @@ module Kontena
         @entrypoint = attrs['entrypoint']
         @memory = attrs['memory']
         @memory_swap = attrs['memory_swap']
+        @shm_size = attrs['shm_size']
         @cpu_shares = attrs['cpu_shares']
         @privileged = attrs['privileged'] || false
         @cap_add = attrs['cap_add']
@@ -211,6 +213,7 @@ module Kontena
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
+        host_config['ShmSize'] = self.shm_size if self.shm_size
         host_config['Privileged'] = self.privileged if self.privileged
         host_config['CapAdd'] = self.cap_add if self.cap_add && self.cap_add.size > 0
         host_config['CapDrop'] = self.cap_drop if self.cap_drop && self.cap_drop.size > 0

@@ -61,6 +61,7 @@ module GridServices
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory
       attributes[:memory_swap] = self.memory_swap if self.memory_swap
+      attributes[:shm_size] = self.shm_size if self.shm_size
       attributes[:privileged] = self.privileged unless self.privileged.nil?
       attributes[:cap_add] = self.cap_add if self.cap_add
       attributes[:cap_drop] = self.cap_drop if self.cap_drop

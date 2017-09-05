@@ -20,6 +20,7 @@ json.env grid_service.env
 json.secrets grid_service.secrets.as_json(only: [:secret, :name, :type])
 json.memory grid_service.memory
 json.memory_swap grid_service.memory_swap
+json.shm_size grid_service.shm_size
 json.cpu_shares grid_service.cpu_shares
 json.volumes grid_service.service_volumes.map {|sv| sv.to_s}
 json.volumes_from grid_service.volumes_from

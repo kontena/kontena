@@ -233,6 +233,7 @@ module GridServices
           integer :cpu_shares, min: 0, max: 1024
           integer :memory
           integer :memory_swap
+          integer :shm_size
           boolean :privileged
           array :cap_add do
             string
