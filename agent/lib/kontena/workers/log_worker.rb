@@ -172,8 +172,10 @@ module Kontena::Workers
       info 'stop log streaming'
 
       @workers.keys.dup.each do |id|
+        queued_item = @queue.find { |i| i[:id] == id }
+        time = queued_item.nil? ? Time.now.to_i : Time.parse(queued_item[:time]).to_i
         self.stop_streaming_container_logs(id)
-        self.mark_timestamp(id, Time.now.to_i)
+        self.mark_timestamp(id, time)
       end
     end
 
@@ -206,15 +208,8 @@ module Kontena::Workers
     end
 
     def finalize
-      stop_streaming if streaming?
       pause_processing
-      if @queue.size > 0 && rpc_client
-        while @queue.size > 0 do
-          batch = @queue.shift(BATCH_SIZE * 10)
-          info "flushing #{batch.size} log items from queue"
-          rpc_client.async.notification('/containers/log_batch', [batch])
-        end
-      end
+      stop_streaming if streaming?
     end
   end
 end
