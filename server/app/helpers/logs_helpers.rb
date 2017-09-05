@@ -1,6 +1,7 @@
 module LogsHelpers
   LOGS_LIMIT_DEFAULT = 100
   LOGS_LIMIT_MAX = 10000
+  LOGS_STREAM_CHUNK = LOGS_LIMIT_DEFAULT * 3
 
   # @param r [Roda::RodaRequest]
   # @param scope [Mongoid::CriteriaMongoid::Criteria] of ContainerLog
@@ -21,7 +22,7 @@ module LogsHelpers
       stream(loop: true) do |out|
         if from
           # all items following a specific item
-          logs  = scope.where(:id.gt => from).order(:id => 1).limit(LOGS_LIMIT_MAX).to_a
+          logs  = scope.where(:id.gt => from).order(:id => 1).limit(LOGS_STREAM_CHUNK).to_a
         else
           # limit most recent logs
           logs = scope.order(:id => -1).limit(limit).to_a.reverse
@@ -32,6 +33,7 @@ module LogsHelpers
             out << render('container_logs/_container_log', locals: {log: log})
           end
           from = logs.last.id
+          sleep 0.1
         else
           # idle keepalive, trigger write errors on timeout
           out << ' '
@@ -71,7 +73,7 @@ module LogsHelpers
       stream(loop: true) do |out|
         if from
           # all items following a specific item
-          logs  = scope.where(:id.gt => from).order(:id => 1).limit(LOGS_LIMIT_MAX).to_a
+          logs  = scope.where(:id.gt => from).order(:id => 1).limit(LOGS_STREAM_CHUNK).to_a
         else
           # limit most recent logs
           logs = scope.order(:id => -1).limit(limit).to_a.reverse
@@ -82,6 +84,7 @@ module LogsHelpers
             out << render('event_logs/_event_log', locals: {event_log: log})
           end
           from = logs.last.id
+          sleep 0.1
         else
           # idle keepalive, trigger write errors on timeout
           out << ' '
