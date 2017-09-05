@@ -45,6 +45,7 @@ module Rpc
       batch_size = batch.size
       if batch_size > 0
         flush_logs(batch)
+        batch.clear
         gc_cache
       end
       { count: batch_size }
@@ -130,7 +131,6 @@ module Rpc
     # @param [Array<Hash>]
     def flush_logs(logs)
       @db_session[:container_logs].insert_many(logs)
-      logs.clear
     end
 
     def flush_stats
