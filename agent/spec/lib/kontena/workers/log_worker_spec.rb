@@ -67,6 +67,22 @@ describe Kontena::Workers::LogWorker, :celluloid => true do
 
       expect(subject).to_not be_streaming
     end
+
+    it 'marks timestamp from queue' do
+      time = Time.now.utc - 60
+      subject.queue << {
+        id: 'id1',
+        time: time.xmlschema
+      }
+      worker1 = subject.workers['id1'] = double(:worker1, alive?: true)
+
+      expect(Celluloid::Actor).to receive(:kill).with(worker1)
+      expect(etcd).to receive(:set).with('/kontena/log_worker/containers/id1', {value: time.to_i, ttl: Integer})
+
+      subject.stop_streaming
+
+      expect(subject).to_not be_streaming
+    end
   end
 
   describe '#mark_timestamp' do
@@ -95,7 +111,7 @@ describe Kontena::Workers::LogWorker, :celluloid => true do
 
       it 'creates new container_log_worker actor' do
         worker = spy(:container_log_worker)
-        expect(Kontena::Workers::ContainerLogWorker).to receive(:new).with(container, Queue).and_return(worker)
+        expect(Kontena::Workers::ContainerLogWorker).to receive(:new).with(container, Array).and_return(worker)
         subject.stream_container_logs(container)
       end
     end
