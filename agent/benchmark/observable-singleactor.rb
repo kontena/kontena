@@ -119,13 +119,48 @@ class TestObserverActor
   end
 end
 
+class TestFutureActor
+  include Celluloid
+  include Kontena::Observer::Helper
+
+  class Response
+    attr_reader :value
+
+    def initialize(value)
+      @value = value
+    end
+  end
+
+  def initialize(client)
+    @client = client
+    @requests = {}
+  end
+
+  # @return [Float] response delay
+  def request(id, timeout: 30.0)
+    future = @requests[id] = Celluloid::Future.new
+
+    @client.send(id, self.current_actor)
+
+    t = future.value
+
+    return Time.now - t
+  end
+
+  def response(id, t)
+    @requests.delete(id) << Response.new(t)
+  end
+end
+
 test_client = TestClient.new
 test_wait = TestWaiterActor.new(test_client)
 test_condition = TestConditionActor.new(test_client)
 test_observer = TestObserverActor.new(test_client)
+test_future = TestFutureActor.new(test_client)
 
 benchmark(
   'wait'      => ->(id) { test_wait.future.request(id) },
   'condition' => ->(id) { test_condition.future.request(id) },
   'observer'  => ->(id) { test_observer.future.request(id) },
+  'future'    => ->(id) { test_future.future.request(id) },
 )
