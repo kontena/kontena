@@ -136,10 +136,4 @@ namespace :release do
       sh("bundle exec rake release:push_ubuntu REV=#{PKG_REV} REPO=#{UBUNTU_REPO}")
     end
   end
-
-  task :push_docs do
-    Dir.chdir('docs') do
-      sh("rake release:push")
-    end
-  end
 end

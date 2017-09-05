@@ -6,5 +6,5 @@ class JobSupervisor < Celluloid::Supervision::Container
   supervise type: LeaderElectorJob, as: :leader_elector_job
   supervise type: TelemetryJob, as: :telemetry_job
   supervise type: GridServiceHealthMonitorJob, as: :service_health_monitor_job
-  supervise type: CloudWebsocketConnectJob, as: :cloud_websocket_connect_job
+  supervise type: CloudWebsocketClientManager, as: :cloud_websocket_client_manager
 end

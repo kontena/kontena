@@ -20,11 +20,17 @@ module Kontena::Actors
 
     # @param [String] input
     def input(input)
-      if input.nil?
+      if !@write_pipe
+        warn "stdin write closed"
+      elsif input.nil?
         @write_pipe.close
       else
         @write_pipe.write(input)
       end
+    rescue Errno::EPIPE => exc
+      warn "stdin write error: #{exc}"
+      @write_pipe.close
+      @write_pipe = nil
     end
 
     # @param [String] cmd
@@ -32,23 +38,36 @@ module Kontena::Actors
     # @param [Boolean] stdin
     def run(cmd, tty = false, stdin = false)
       info "starting command: #{cmd} (tty: #{tty}, stdin: #{stdin})"
-      exit_code = 0
+      exit_code = nil
       opts = {tty: tty}
       opts[:stdin] = @read_pipe if stdin
       defer {
-        if tty
-          _, _, exit_code = @container.exec(cmd, opts) do |chunk|
-            self.handle_stream_chunk('stdout'.freeze, chunk)
+        begin
+          if tty
+            _, _, exit_code = @container.exec(cmd, opts) do |chunk|
+              self.handle_stream_chunk('stdout'.freeze, chunk)
+            end
+          else
+            _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
+              self.handle_stream_chunk(stream, chunk)
+            end
           end
-        else 
-          _, _, exit_code = @container.exec(cmd, opts) do |stream, chunk|
-            self.handle_stream_chunk(stream, chunk)
-          end
+        ensure
+          # the Docker::Container#exec leaves the stdin pipe open
+          @read_pipe.close # ensure any input() task will fail
         end
       }
-    ensure 
-      info "command finished: #{cmd} with code #{exit_code}"
-      shutdown(exit_code)
+    rescue Docker::Error::DockerError => exc
+      warn "#{cmd} error: #{exc}"
+      handle_error(exc)
+    rescue Exception => exc
+      error exc
+      handle_error(exc)
+    else
+      info "#{cmd} exit with code #{exit_code}: #{cmd}"
+      handle_exit(exit_code)
+    ensure
+      self.terminate
     end
 
     # @param [String] stream
@@ -58,9 +77,13 @@ module Kontena::Actors
     end
 
     # @param [Integer] exit_code
-    def shutdown(exit_code)
+    def handle_exit(exit_code)
       rpc_client.notification('/container_exec/exit', [@uuid, exit_code])
-      self.terminate
+    end
+
+    # @param [Exception] error
+    def handle_error(error)
+      rpc_client.notification('/container_exec/error', [@uuid, "#{error.class.name}: #{error}"])
     end
   end
 end

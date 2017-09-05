@@ -33,6 +33,11 @@ RSpec.configure do |config|
     Kontena::Cli::Config.reset_instance
   end
 
+  # disable pastel colors for all specs, regardless of order
+  config.before(:all) do
+    Kontena.pastel.resolver.color.disable!
+  end
+
   config.after(:each) do
     RSpec::Mocks.space.proxy_for(File).reset
     RSpec::Mocks.space.proxy_for(Kontena::Cli::Config).reset

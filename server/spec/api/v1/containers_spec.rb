@@ -36,7 +36,7 @@ describe '/v1/containers' do
   end
 
   let(:host_node) do
-    david.grids.first.host_nodes.create!(node_id: 'abc', name: 'node-a')
+    david.grids.first.create_node!('node-a', node_id: 'abc')
   end
 
   let(:redis_service) do

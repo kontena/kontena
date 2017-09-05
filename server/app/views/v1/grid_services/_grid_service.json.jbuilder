@@ -41,6 +41,7 @@ json.log_opts grid_service.log_opts
 json.strategy grid_service.strategy
 json.deploy_opts grid_service.deploy_opts
 json.pid grid_service.pid
+json.read_only grid_service.read_only
 json.instance_counts do
   if defined? instance_counts
     json.total instance_counts[:total]
@@ -54,13 +55,14 @@ json.hooks grid_service.hooks.as_json(only: [:name, :type, :cmd, :oneshot])
 json.revision grid_service.revision
 json.stack_revision grid_service.stack_revision
 if grid_service.health_check && grid_service.health_check.protocol
-	json.health_check do
-		json.protocol grid_service.health_check.protocol
-		json.uri grid_service.health_check.uri
-		json.port grid_service.health_check.port
-		json.timeout grid_service.health_check.timeout
-		json.initial_delay grid_service.health_check.initial_delay
-		json.interval grid_service.health_check.interval
-	end
-	json.health_status grid_service.health_status
+    json.health_check do
+        json.protocol grid_service.health_check.protocol
+        json.uri grid_service.health_check.uri
+        json.port grid_service.health_check.port
+        json.timeout grid_service.health_check.timeout
+        json.initial_delay grid_service.health_check.initial_delay
+        json.interval grid_service.health_check.interval
+    end
+    json.health_status grid_service.health_status
 end
+json.stop_grace_period grid_service.stop_grace_period

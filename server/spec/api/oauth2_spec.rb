@@ -2,6 +2,7 @@
 describe 'OAuth2 API' do
   let(:david) { User.create(email: 'david@example.com') }
   let(:json_header) { { 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json' } }
+  let(:form_header) { { 'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'HTTP_ACCEPT' => 'application/json' } }
   let(:auth_provider) { double(:auth_provider) }
 
   context '/authenticate when AP not configured' do
@@ -104,7 +105,7 @@ describe 'OAuth2 API' do
         expect(response.status).to eq(403)
       end
 
-      it 'returns an invite if user is admin' do
+      it 'returns an invite if user is master_admin' do
         david.roles << Role.create!(name: 'master_admin', description: 'foo')
         post(
           '/oauth2/authorize',
@@ -119,6 +120,20 @@ describe 'OAuth2 API' do
         result = JSON.parse(response.body)
         expect(result['invite_code']).to match /^[a-z0-9]{6,}$/
         expect(result['email']).to eq "foo@example.com"
+      end
+
+      it 'returns an invite if user is user_admin' do
+        david.roles << Role.create!(name: 'user_admin', description: 'foo')
+        post(
+          '/oauth2/authorize',
+          {
+            response_type: 'invite',
+            email: 'foo@example.com'
+          }.to_json,
+          json_header.merge('HTTP_AUTHORIZATION' => "Bearer #{token.token_plain}")
+        )
+
+        expect(response.status).to eq(201)
       end
     end
   end
@@ -136,6 +151,23 @@ describe 'OAuth2 API' do
             code: coded_token.code
           }.to_json,
           json_header
+        )
+
+        expect(response.status).to eq(201)
+        result = JSON.parse(response.body)
+        expect(result['access_token']).to match /^[a-z0-9]{6,}$/
+      end
+
+      it 'returns a token in exchange when given a valid code using POST form parameters' do
+        coded_token = AccessToken.create(user: david, with_code: true, scopes: ['user'])
+
+        post(
+          '/oauth2/token',
+          URI.encode_www_form({
+            grant_type: 'authorization_code',
+            code: coded_token.code
+          }),
+          form_header
         )
 
         expect(response.status).to eq(201)
@@ -278,5 +310,3 @@ describe 'OAuth2 API' do
     end
   end
 end
-
-

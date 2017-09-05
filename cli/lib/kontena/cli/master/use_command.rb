@@ -18,8 +18,7 @@ module Kontena::Cli::Master
 
       master = config.find_server(name)
       if master.nil?
-        exit_with_error p"Could not resolve master by name '#{name}'." +
-              "\nFor a list of known masters please run: kontena master list"
+        exit_with_error "Could not resolve master by name '#{name}'. For a list of known masters please run: kontena master list"
       else
         config.current_master = master['name']
         config.write

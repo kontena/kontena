@@ -2,9 +2,7 @@ require_relative 'yaml/reader'
 require_relative '../services/services_helper'
 require_relative 'service_generator_v2'
 require_relative '../../stacks_client'
-
-require "safe_yaml"
-SafeYAML::OPTIONS[:default_mode] = :safe
+require 'yaml'
 
 module Kontena::Cli::Stacks
   module Common
@@ -133,6 +131,7 @@ module Kontena::Cli::Stacks
     def set_env_variables(stack, grid)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
+      ENV['PLATFORM'] = grid
     end
 
     # @return [String]

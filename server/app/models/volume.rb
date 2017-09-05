@@ -39,4 +39,17 @@ class Volume
     self.grid.grid_services.where("service_volumes.volume_id" => self.id)
   end
 
+  # Returns "fully qualified" driver name for the given node.
+  # I.e. adds version tag to the agent reported plugin/driver version.
+  # @param [HostNode] host_node
+  # @return [String] driver name with version tag (driver:version)
+  def driver_for_node(host_node)
+    nodes_driver = host_node.volume_driver(self.driver)
+    if nodes_driver && nodes_driver['version']
+      "#{self.driver}:#{nodes_driver['version']}"
+    else
+      self.driver
+    end
+  end
+
 end

@@ -11,12 +11,25 @@ describe HostNodeStat do
   it { should have_index_for(host_node_id: 1).with_options(background: true) }
   it { should have_index_for(host_node_id:1, created_at: 1).with_options(background: true) }
 
+  let(:grid) { Grid.create!(name: 'test-grid') }
+  let(:node) { grid.create_node!('test-node') }
+
+  describe '.latest' do
+    it 'returns latest stat item' do
+      node.host_node_stats.create
+      last = node.host_node_stats.create
+      expect(described_class.latest).to eq(last)
+    end
+
+    it 'returns nil if no stats' do
+      expect(described_class.latest).to be_nil
+    end
+  end
+
   describe 'aggregations' do
-    let(:grid) { Grid.create!(name: 'test-grid') }
     let(:other_grid) { Grid.create!(name: 'other-grid') }
-    let(:node) { HostNode.create!(grid: grid, name: 'test-node') }
-    let(:second_node) { HostNode.create!(grid: grid, name: 'second-node') }
-    let(:other_node) { HostNode.create!(grid: other_grid, name: 'other-node') }
+    let(:second_node) { grid.create_node!('second-node') }
+    let(:other_node) { other_grid.create_node!('other-node') }
     let(:stats) {
       HostNodeStat.create([
         { # 1) this record should be skipped

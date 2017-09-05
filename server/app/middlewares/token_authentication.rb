@@ -12,7 +12,6 @@ class TokenAuthentication
   # Use the option :soft_exclude to parse the token if it exists, but allow
   # request even without token
   attr_reader :opts
-  attr_reader :request
   attr_reader :excludes
   attr_reader :soft_excludes
   attr_reader :allow_expired
@@ -37,8 +36,6 @@ class TokenAuthentication
     if excluded_path?(env[PATH_INFO])
       return @app.call(env)
     end
-
-    @request = Rack::Request.new(env)
 
     auth = http_authorization(env)
 

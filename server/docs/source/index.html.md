@@ -104,8 +104,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-	"name": "my-grid",
-	"initial_size": 3
+    "name": "my-grid",
+    "initial_size": 3
 }
 ```
 
@@ -121,10 +121,17 @@ Grid can be only created by users with master_admin role.
 
 ### JSON Attributes
 
-Attribute | Description
----------- | -------
-name | (required) A user provided name
-initial_size | Initial (minimum) number of nodes in the grid (initial members are part of etcd cluster)
+Attribute        | Default          | Example  | Description
+---------------- | ---------------- | ---------
+name             | (required)       | `"test"`    | user provided name
+initial_size     | (required)       | `3`         | Initial (minimum) number of nodes in the grid ([Grids / Initial Nodes](http://www.kontena.io/docs/using-kontena/grids.html#initial-nodes))
+token            | (generated)      | `"J6d...ArKg=="` |(optional) Use a fixed grid token instead of having the server generate a new one
+subnet           | `"10.81.0.0/16"` | |
+supernet         | `"10.80.0.0/12"` | |
+default_affinity | `[]`             | `[ "label!=reserved" ]` |
+trusted_subnets  | `[]`             | `[ "192.168.66.0/24" ]` |
+stats            | `{}`             | `{ "statsd": { "server": "127.0.0.1", "port": 8125 } }` |
+logs             | `null`           | `{ "forwarder": "fluentd", "opts": { "fluentd-address": "127.0.0.1" } }` |
 
 ## Update a Grid
 
@@ -135,7 +142,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-	"trusted_subnets": ["10.240.0.0/16"]
+    "trusted_subnets": ["10.240.0.0/16"]
 }
 ```
 
@@ -151,10 +158,14 @@ Only `master_admin` or `grid_admin` roles can modify a grid.
 
 ### JSON Attributes
 
-Attribute | Description
----------- | -------
-stats | Statsd export endpoint
-trusted_subnets | Initial (minimum) number of nodes in the grid (initial members are part of etcd cluster)
+All attributes are optional. Only the given grid parameters are updated, omitted attributes are left as-is.
+
+Attribute        | Example                 | Description
+---------------- | ----------------------- | ------------
+default_affinity | `[ "label!=reserved" ]` |
+trusted_subnets  | `[ "192.168.66.0/24" ]` |
+stats            | `{ "statsd": { "server": "127.0.0.1", "port": 8125 } }` | To disable statsd exporting, use `{ "statsd": null }`
+logs             | `{ "forwarder": "fluentd", "opts": { "fluentd-address": "127.0.0.1" } }` | To disable logs exporting, use `{ "forwarder": "none" }`
 
 ## Get a Grid
 
@@ -286,77 +297,79 @@ follow | Stream logs
 
 ```json
 {
-	"id": "mygrid/misty-sun-87",
-	"node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
-	"name": "misty-sun-87",
-	"connected": "true",
-	"created_at": "",
-	"updated_at": "",
-	"last_seen_at": "",
-	"node_number": 1,
-	"initial_node": true,
-	"agent_version": "1.0.0",
-	"docker_version": "1.11.2",
-	"os": "CoreOS 1185.3.0 (MoreOS)",
-	"kernel_version": "4.7.3-coreos-r2",
-	"driver": "overlay",
-	"network_drivers": [
-		{"name": "bridge"}, 
-		{"name": "host"}, 
-		{"name": "null"}
-	],
-	"volume_drivers": [
-		{"name": "local"}
-	],
-	"cpus": 2,
-	"mem_total": 0.0,
-	"mem_limit": 0.0,
-	"public_ip": "52.30.169.34",
-	"private_ip": "172.31.7.179",
-	"engine_root_dir": "/var/lib/docker",
-	"labels": [
-		"region=eu-west-1",
-		"az=a",
-		"type=m4.large"
-	],
-	"peer_ips": [
-		"172.31.7.172"
-	],
-	"resource_usage": {
-		"memory": {
-			"used": 0.0,
-			"cached": 0.0,
-			"buffers": 0.0,
-			"total": 0.0
-		},
-		"load": {
-			"1m": 0.4,
-			"5m": 0.3,
-			"15m": 0.6
-		},
-		"filesystem": {
-			"name": "docker",
-			"used": 0.0,
-			"total": 0.0
-		},
-		"cpu": {
-			"usage_pct": 0.0
-		},
-	    "usage": {
-	      "container_seconds": 0
-    	}
-	},
-	"grid": {
-		"id": "my-grid",
-		"name": "my-grid",
-		"initial_size": 3,
-		"stats": {
-			"statsd": null
-		},
-		"trusted_subnets": [
-			"172.31.0.0/16"
-		]
-	}
+    "id": "mygrid/misty-sun-87",
+    "node_id": "RQKP:Y32W:SB4H:7TNG:5BKC:R6ZO:5B25:C2AV:3Z3Q:SVPX:A76C:WPBX",
+    "name": "misty-sun-87",
+    "connected": "true",
+	"created_at": "2017-06-14T12:33:05.139Z",
+	"updated_at": "2017-06-14T13:37:36.968Z",
+	"last_seen_at": "2017-06-14T13:38:03.785Z",
+	"connected_at": "2017-06-14T12:33:05.084Z",
+	"has_token": false,
+    "node_number": 1,
+	"initial_member": true,
+    "agent_version": "1.0.0",
+    "docker_version": "1.11.2",
+    "os": "CoreOS 1185.3.0 (MoreOS)",
+    "kernel_version": "4.7.3-coreos-r2",
+    "driver": "overlay",
+    "network_drivers": [
+        {"name": "bridge"},
+        {"name": "host"},
+        {"name": "null"}
+    ],
+    "volume_drivers": [
+        {"name": "local"}
+    ],
+    "cpus": 2,
+    "mem_total": 0.0,
+    "mem_limit": 0.0,
+    "public_ip": "52.30.169.34",
+    "private_ip": "172.31.7.179",
+    "engine_root_dir": "/var/lib/docker",
+    "labels": [
+        "region=eu-west-1",
+        "az=a",
+        "type=m4.large"
+    ],
+    "peer_ips": [
+        "172.31.7.172"
+    ],
+    "resource_usage": {
+        "memory": {
+            "used": 0.0,
+            "cached": 0.0,
+            "buffers": 0.0,
+            "total": 0.0
+        },
+        "load": {
+            "1m": 0.4,
+            "5m": 0.3,
+            "15m": 0.6
+        },
+        "filesystem": {
+            "name": "docker",
+            "used": 0.0,
+            "total": 0.0
+        },
+        "cpu": {
+            "usage_pct": 0.0
+        },
+        "usage": {
+          "container_seconds": 0
+        }
+    },
+    "grid": {
+        "id": "my-grid",
+        "name": "my-grid",
+        "initial_size": 3,
+        "stats": {
+            "statsd": null
+        },
+        "trusted_subnets": [
+            "172.31.0.0/16"
+        ]
+    }
 }
 ```
 
@@ -367,6 +380,7 @@ Attribute | Description
 ---------- | -------
 id | A unique id for the node
 name | A unique name (within a grid) for the node
+has_token | Does the node have a node token
 connected | Is the node connected to the master (boolean)
 node_number | A sequential number for the node
 initial_member | Is the node part of initial grid members (boolean)
@@ -385,6 +399,7 @@ labels | A list of user defined labels for the node
 peer_ips | A list of peer ip addresses. Used for creating an overlay network between nodes in the sam grid.
 resource_usage | Resource usage stats for the node
 grid | A grid object where the node is connected.
+availability | The scheduling availability status
 
 
 ## List nodes
@@ -409,7 +424,8 @@ Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"labels": ["foo=bar", "bar=baz"]
+    "labels": ["foo=bar", "bar=baz"],
+    "availability": "drain"
 }
 ```
 
@@ -417,7 +433,28 @@ Update a node details.
 
 ### Endpoint
 
-`PUT /v1/nodes/{node_id}`
+`PUT /v1/nodes/{id}`
+
+## Reset node token
+
+```http
+PUT /v1/nodes/mygrid/misty-sun-87/token HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+Content-Type: application/json
+
+{
+	"reset_connection": true
+}
+```
+
+Update node token. The optional `reset_connection` parameter causes any currently connected agent to be force-disconnected at the next keepalive interval. The agent will not be able to reconnect using the old node token.
+
+Use the optional `token` parameter to use a pre-generated token instead of having the server generate a new token. The node token must be between 16 and 64 bytes long.
+
+### Endpoint
+
+`PUT /v1/nodes/{id}/token`
 
 ## Get a node details
 
@@ -431,7 +468,49 @@ Get a node details.
 
 ### Endpoint
 
-`GET /v1/nodes/{node_id}`
+`GET /v1/nodes/:id`
+
+## Get node token
+
+```http
+GET /v1/nodes/my-grid/misty-sun-87/token HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+```json
+{
+   "id" : "my-grid/misty-sun-87",
+   "token" : "ZxeA2iQ1MT61oT808BG/ty6aKtSnsD4f1cUub+DHWTfKoCBLTVYuP/WrRyDvjZAWdHZ3jBf/mhjGMiWhJ4YpSg=="
+}
+```
+
+Get a node token, used to configure the agent `KONTENA_NODE_TOKEN` env.
+
+Returns HTTP 404 if the node does not have a node token.
+
+### Endpoint
+
+`GET /v1/nodes/:id/token`
+
+## Clear node token
+
+```http
+DELETE /v1/nodes/my-grid/misty-sun-87/token HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Content-Type: application/json
+Accept: application/json
+
+{
+  "reset_connection": true
+}
+```
+
+Clear node token. Prevents the agent from reconnecting using the old node token. The agent can reconnect using the grid token.
+
+### Endpoint
+
+`DELETE /v1/nodes/:id/token`
 
 ## Delete a node
 
@@ -445,7 +524,7 @@ Delete a node from a grid. Does not actually terminate virtual/physical host nod
 
 ### Endpoint
 
-`DELETE /v1/nodes/{node_id}`
+`DELETE /v1/nodes/:id`
 
 ## Get node stats
 
@@ -459,7 +538,7 @@ Get all containers running on the node with latest statistics (cpu/memory/networ
 
 ### HTTP Request
 
-`GET /v1/nodes/:grid_id/:id/stats`
+`GET /v1/nodes/:id/stats`
 
 ### Query Parameters
 
@@ -481,7 +560,7 @@ Gets aggregated statistics for a node (cpu, memory, network, disk usage) for a g
 
 ### HTTP Request
 
-`GET /v1/nodes/:grid_id/:id/metrics `
+`GET /v1/nodes/:id/metrics `
 
 ### Query Parameters
 
@@ -504,62 +583,63 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
   "registry": "https://stack-registry.kontena.io",
   "expose": "peer",
   "services": [
-  	{
-  		"name": "arbiter",
-  		"image": "mongo:3.2",
-  		"stateful": true,
-  		"replicas": 1,
-  		"cmd": "--replset kontena --smallfiles",
-  		"health_check": {
-  			"protocol": "tcp",
-  			"port": 27017
-  		}
-  	},
-  	{
-  		"name": "peer",
-  		"image": "mongo:3.2",
-  		"stateful": true,
-  		"replicas": 3,
-  		"cmd": "--replset kontena --smallfiles",
-  		"health_check": {
-  			"protocol": "tcp",
-  			"port": 27017
-  		},
-  		"hooks": {
-  			"post_start": [
-  				{
-  					"name": "sleep",
-  					"cmd": "sleep 10",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_initiate",
-  					"cmd": "mongo --eval \"printjson(rs.initiate());\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_add1",
-  					"cmd": "mongo --eval \"printjson(rs.add('peer-1'))\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_add2",
-  					"cmd": "mongo --eval \"printjson(rs.add('peer-2'))\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  				{
-  					"name": "rs_add_arbited",
-  					"cmd": "mongo --eval \"printjson(rs.addArb('arbiter-1'))\"",
-  					"instances": "3",
-  					"oneshot": true
-  				},
-  			]
-  		}
-  	}
+      {
+          "name": "arbiter",
+          "image": "mongo:3.2",
+          "stateful": true,
+          "replicas": 1,
+          "cmd": "--replset kontena --smallfiles",
+          "health_check": {
+              "protocol": "tcp",
+              "port": 27017
+          }
+      },
+      {
+          "name": "peer",
+          "image": "mongo:3.2",
+          "stateful": true,
+          "replicas": 3,
+          "cmd": "--replset kontena --smallfiles",
+        "stop_grace_period": "1m23s",
+          "health_check": {
+              "protocol": "tcp",
+              "port": 27017
+          },
+          "hooks": {
+              "post_start": [
+                  {
+                      "name": "sleep",
+                      "cmd": "sleep 10",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_initiate",
+                      "cmd": "mongo --eval \"printjson(rs.initiate());\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_add1",
+                      "cmd": "mongo --eval \"printjson(rs.add('peer-1'))\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_add2",
+                      "cmd": "mongo --eval \"printjson(rs.add('peer-2'))\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+                  {
+                      "name": "rs_add_arbited",
+                      "cmd": "mongo --eval \"printjson(rs.addArb('arbiter-1'))\"",
+                      "instances": "3",
+                      "oneshot": true
+                  },
+              ]
+          }
+      }
   ],
   "volumes": [
     {
@@ -599,11 +679,11 @@ Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"name": "redis",
-	"stack": "my/redis",
-	"version": "0.1.0",
-	"registry": "file://",
-	"services": []
+    "name": "redis",
+    "stack": "my/redis",
+    "version": "0.1.0",
+    "registry": "file://",
+    "services": []
 }
 ```
 
@@ -621,10 +701,10 @@ Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4a
 Accept: application/json
 
 {
-	"stack": "my/redis",
-	"version": "0.1.1",
-	"registry": "file://",
-	"services": []
+    "stack": "my/redis",
+    "version": "0.1.1",
+    "registry": "file://",
+    "services": []
 }
 ```
 
@@ -806,6 +886,11 @@ follow | Stream logs
   "log_opts": null,
   "hooks": [],
   "health_check": {},
+  "health_status": {
+      "healthy": 1,
+      "unhealthy": 0,
+      "total": 1
+  },
   "instances": {
     "total": 1,
     "running": 1
@@ -843,6 +928,8 @@ log_driver | Log driver (string)
 log_opts | Log driver options (object)
 hooks | Commands to be executed when service instance is deployed
 instance_counts | Stats about how many instances this service currently has
+stop_grace_period | How long to wait when attempting to stop a container if it doesn’t handle SIGTERM (or whatever stop signal has been specified with the image), before sending SIGKILL.
+health_status | Health status of the service instances. Only counted if there is a health check defined for the service.
 
 ### Deploy Opt attributes
 
@@ -876,16 +963,16 @@ oneshot | Boolean, if enabled hook is executed only once in a service lifetime
 
 ```json
 {
-	"hooks": {
-		"post_start": [
-			{
-				"name": "hello",
-				"cmd": "echo 'hello world'",
-				"instances": "*",
-				"oneshot": false
-			}
-		]
-	}
+    "hooks": {
+        "post_start": [
+            {
+                "name": "hello",
+                "cmd": "echo 'hello world'",
+                "instances": "*",
+                "oneshot": false
+            }
+        ]
+    }
 }
 ```
 
@@ -936,9 +1023,9 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"name": "redis",
-	"image": "redis:3.0",
-	"stateful": true
+    "name": "redis",
+    "image": "redis:3.0",
+    "stateful": true
 }
 ```
 
@@ -957,7 +1044,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"image": "redis:3.2"
+    "image": "redis:3.2"
 }
 ```
 
@@ -1044,7 +1131,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"instances": 5
+    "instances": 5
 }
 ```
 
@@ -1177,10 +1264,16 @@ to | The end date and time (example: `?to=2017-01-01T13:15:00.00Z`) | now
 
 ```json
 {
-	"id": "my-grid/SECRET_PWD",
-	"name": "SECRET_PWD",
-	"created_at": "",
-	"value": "T0Ps3crT"
+    "id": "my-grid/SECRET_PWD",
+    "name": "SECRET_PWD",
+    "created_at": "",
+    "value": "T0Ps3crT",
+    "services": [
+        {
+          "id": "big-one/null/app",
+          "name": "app"
+        }
+      ]
 }
 ```
 
@@ -1190,6 +1283,7 @@ id | An unique id for the secret
 created_at | A timestamp when the secret was created
 name | A name for the secret (unique within a grid)
 value | A value for the secret (encrypted in the database)
+services | A list of services that are consuming the secret
 
 ## List secrets
 
@@ -1214,8 +1308,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"name": "SECRET_PWD",
-	"value": "T0Ps3crT"
+    "name": "SECRET_PWD",
+    "value": "T0Ps3crT"
 }
 ```
 
@@ -1235,8 +1329,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"value": "T0Ps3crT",
-	"upsert": false
+    "value": "T0Ps3crT",
+    "upsert": false
 }
 ```
 
@@ -1281,11 +1375,11 @@ Delete a secret.
 
 ```json
 {
-	"id": "my-grid/registry.domain.com",
-	"name": "registry.domain.com",
-	"url": "https://registry.domain.com/",
-	"username": "a_bot",
-	"email": "a_bot@domain.com"
+    "id": "my-grid/registry.domain.com",
+    "name": "registry.domain.com",
+    "url": "https://registry.domain.com/",
+    "username": "a_bot",
+    "email": "a_bot@domain.com"
 }
 ```
 
@@ -1312,10 +1406,10 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"url": "https://registry.domain.com/",
-	"username": "a_bot",
-	"email": "a_bot@domain.com",
-	"password": "xyz123"
+    "url": "https://registry.domain.com/",
+    "username": "a_bot",
+    "email": "a_bot@domain.com",
+    "password": "xyz123"
 }
 ```
 
@@ -1352,7 +1446,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"email": "john.doe@domain.com"
+    "email": "john.doe@domain.com"
 }
 ```
 
@@ -1371,7 +1465,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"domain": "foo.domain.com"
+    "domain": "foo.domain.com"
 }
 ```
 
@@ -1399,9 +1493,9 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"secret_name": "FOO_DOMAIN_COM",
-	"domains": ["foo.domain.com"],
-	"cert_type": "fullchain"
+    "secret_name": "FOO_DOMAIN_COM",
+    "domains": ["foo.domain.com"],
+    "cert_type": "fullchain"
 }
 ```
 
@@ -1509,8 +1603,8 @@ Accept: application/json
 
 ```json
 {
-	"config.key.name": "value",
-	"config.another.name": "another_value"
+    "config.key.name": "value",
+    "config.another.name": "another_value"
 }
 ```
 
@@ -1540,8 +1634,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"foo.bar": "bar",
-	"bar.baz": "baz"
+    "foo.bar": "bar",
+    "bar.baz": "baz"
 }
 ```
 
@@ -1560,8 +1654,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-	"foo.bar": "bar",
-	"bar.baz": "baz"
+    "foo.bar": "bar",
+    "bar.baz": "baz"
 }
 ```
 
@@ -1648,17 +1742,17 @@ Standard OAuth2 authorize endpoint. Create access token or code.
 
 ```json
 {
-	"id": "09348203840328023948",
-	"token_type": "bearer",
-	"access_token_last_four": "dufy",
-	"refresh_token_last_four": "isdf",
-	"expires_in": 7200,
-	"scopes": "user",
-	"user": {
-		"id": "987983749274",
-		"email": "john.doe@domain.com",
-		"name": "john"
-	}
+    "id": "09348203840328023948",
+    "token_type": "bearer",
+    "access_token_last_four": "dufy",
+    "refresh_token_last_four": "isdf",
+    "expires_in": 7200,
+    "scopes": "user",
+    "user": {
+        "id": "987983749274",
+        "email": "john.doe@domain.com",
+        "name": "john"
+    }
 }
 ```
 

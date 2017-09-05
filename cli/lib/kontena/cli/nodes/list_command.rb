@@ -19,7 +19,11 @@ module Kontena::Cli::Nodes
     end
 
     def node_status(node)
-      node['connected'] ? pastel.green('online') : pastel.red('offline')
+      if node['connected']
+        node['availability'] == 'drain' ? pastel.yellow('drain') : pastel.green('online')
+      else
+        pastel.red('offline')
+      end
     end
 
     def node_initial(node, grid)
@@ -66,11 +70,11 @@ module Kontena::Cli::Nodes
         unless quiet?
           grid_health = grid_health(grid, grid_nodes)
           grid_nodes.each do |node|
-            node['name'] = health_icon(node_health(node, grid_health)) + " " + node['name']
+            node['name'] = health_icon(node_health(node, grid_health)) + " " + (node['name'] || '(initializing)')
           end
         end
 
-        grid_nodes.sort { |n| n['node_number'] }
+        grid_nodes.sort_by { |n| n['node_number'] }
       end
     end
 

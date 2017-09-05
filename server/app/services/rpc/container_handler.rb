@@ -1,9 +1,7 @@
-require_relative 'fixnum_helper'
 require_relative 'container_info_mapper'
 
 module Rpc
   class ContainerHandler
-    include FixnumHelper
     include Logging
 
     attr_accessor :logs_buffer_size
@@ -90,7 +88,6 @@ module Rpc
     def stat(data)
       container = cached_container(data['id'])
       if container
-        data = fixnums_to_float(data)
         time = data['time'] ? Time.parse(data['time']) : Time.now.utc
         @stats << {
           grid_id: @grid.id,

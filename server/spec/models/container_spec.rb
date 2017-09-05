@@ -63,6 +63,13 @@ describe Container do
       expect(subject.status).to eq('running')
     end
 
+    it 'returns running if docker state is running and oom_killed' do
+      subject.updated_at = Time.now
+      subject.state['running'] = true
+      subject.state['oom_killed'] = true
+      expect(subject.status).to eq('running')
+    end
+
     it 'returns restarting if docker state is restarting' do
       subject.updated_at = Time.now
       subject.state['restarting'] = true

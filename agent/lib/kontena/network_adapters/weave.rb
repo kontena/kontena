@@ -1,5 +1,4 @@
 require_relative '../logging'
-require_relative '../helpers/node_helper'
 require_relative '../helpers/iface_helper'
 require_relative '../helpers/weave_helper'
 
@@ -7,7 +6,6 @@ module Kontena::NetworkAdapters
   class Weave
     include Celluloid
     include Celluloid::Notifications
-    include Kontena::Helpers::NodeHelper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
@@ -184,7 +182,7 @@ module Kontena::NetworkAdapters
     def ensure_default_pool(grid_info)
       grid_subnet = IPAddr.new(grid_info['subnet'])
 
-      lower, upper = grid_subnet.split
+      _, upper = grid_subnet.split
 
       info "network and ipam ready, ensuring default network with subnet=#{grid_subnet.to_cidr} iprange=#{upper.to_cidr}"
       @default_pool = @ipam_client.reserve_pool(DEFAULT_NETWORK, grid_subnet.to_cidr, upper.to_cidr)
@@ -201,15 +199,15 @@ module Kontena::NetworkAdapters
         info "weave image or configuration has been changed, restarting"
         restarting = true
         weave.delete(force: true)
+        weave = nil
       end
 
-      weave = nil
       peer_ips = node.peer_ips || []
       trusted_subnets = node.grid['trusted_subnets']
       until weave && weave.running? do
         exec_params = [
           '--local', 'launch-router', '--ipalloc-range', '', '--dns-domain', 'kontena.local',
-          '--password', ENV['KONTENA_TOKEN']
+          '--password', ENV['KONTENA_TOKEN'], '--conn-limit', '0'
         ]
         exec_params += ['--trusted-subnets', trusted_subnets.join(',')] if trusted_subnets
         @executor_pool.execute(exec_params)
@@ -225,7 +223,7 @@ module Kontena::NetworkAdapters
 
       attach_router unless interface_ip('weave')
       connect_peers(peer_ips)
-      info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets && !already_started?
+      info "using trusted subnets: #{trusted_subnets.join(',')}" if trusted_subnets.size > 0 && !already_started?
       post_start(node)
 
       if !already_started?
@@ -277,7 +275,7 @@ module Kontena::NetworkAdapters
       return true if weave.config['Image'].split(':')[1] != WEAVE_VERSION
       cmd = Hash[*weave.config['Cmd'].flatten(1)]
       return true if cmd['--trusted-subnets'] != node.grid['trusted_subnets'].to_a.join(',')
-
+      return true if cmd['--conn-limit'].nil?
       false
     end
 

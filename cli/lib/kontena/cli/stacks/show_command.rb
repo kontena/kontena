@@ -57,6 +57,7 @@ module Kontena::Cli::Stacks
       puts "#{pad}  stateful: #{service['stateful'] == true ? 'yes' : 'no' }"
       puts "#{pad}  scaling: #{service['instances'] }"
       puts "#{pad}  strategy: #{service['strategy']}"
+      puts "#{pad}  read_only: #{service['read_only'] == true ? 'yes' : 'no'}"
       puts "#{pad}  deploy_opts:"
       puts "#{pad}    min_health: #{service['deploy_opts']['min_health']}"
       if service['deploy_opts']['wait_for_port']

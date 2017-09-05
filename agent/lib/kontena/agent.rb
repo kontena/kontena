@@ -1,75 +1,182 @@
+require 'singleton'
 require_relative 'logging'
 
 module Kontena
   class Agent
+    include Singleton
     include Logging
 
+    NODE_ID_REGEXP = /\A[A-Z0-9]{4}(:[A-Z0-9]{4}){11}\z/
     VERSION = File.read('./VERSION').strip
 
-    def initialize(opts)
-      info "initializing agent (version #{VERSION})"
-      @opts = opts
-      @client = Kontena::WebsocketClient.new(@opts[:api_uri], @opts[:api_token])
-      @supervisor = Celluloid::Supervision::Container.run!
-      self.supervise_state
-      self.supervise_launchers
-      self.supervise_network_adapter
-      self.supervise_lb
-      self.supervise_workers
+    # Called from other actors
+    def self.shutdown
+      instance.write_signal('shutdown')
     end
 
-    # Connect to master server
-    def connect!
-      start_em
-      @client.ensure_connect
+    def initialize
+      info "initializing agent (version #{VERSION})"
+
+      @read_pipe, @write_pipe = IO.pipe
+    end
+
+    def docker_info
+      @docker_info ||= Docker.info
+    end
+
+    def configure(opts)
+      @opts = opts
+
+      if node_id = opts[:node_id]
+        raise ArgumentError, "Invalid KONTENA_NODE_ID: #{node_id}" unless node_id.match(NODE_ID_REGEXP)
+
+        @node_id = node_id
+      else
+        @node_id = docker_info['ID']
+      end
+
+      if node_name = opts[:node_name]
+        raise ArgumentError, "Invalid KONTENA_NODE_NAME: #{node_name}" if node_name.empty?
+        @node_name = node_name
+      else
+        @node_name = docker_info['Name']
+      end
+
+      if node_labels = opts[:node_labels]
+        @node_labels = node_labels.split()
+      else
+        @node_labels = docker_info['Labels'].to_a
+      end
+    end
+
+    # @return [String]
+    def node_name
+      @node_name
+    end
+
+    # @return [String]
+    def node_id
+      @node_id
+    end
+
+    # @return [Array<String>]
+    def node_labels
+      @node_labels
+    end
+
+    def ssl_verify?
+      return false if @opts[:ssl_verify].nil?
+      return false if @opts[:ssl_verify].empty?
+      return true
+    end
+
+    def ssl_params
+      {
+        verify_mode: self.ssl_verify? ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE,
+      }
+    end
+
+    def ssl_hostname
+      @opts[:ssl_hostname]
+    end
+
+    def write_signal(sig)
+      @write_pipe.puts(sig)
     end
 
     def run!
-      self_read, self_write = IO.pipe
-
-      %w(TERM TTIN).each do |sig|
-        trap sig do
-          self_write.puts(sig)
-        end
+      trap 'TERM' do
+        write_signal('shutdown')
+      end
+      trap 'TTIN' do
+        write_signal('trace')
       end
 
-      begin
-        connect!
+      self.supervise
 
-        while readable_io = IO.select([self_read])
-          signal = readable_io.first[0].gets.strip
-          handle_signal(signal)
-        end
-      rescue Interrupt
-        exit(0)
+      while line = @read_pipe.gets
+        handle_signal line.strip
       end
+    rescue Interrupt
+      exit(0)
     end
 
     # @param [String] signal
     def handle_signal(signal)
       info "Got signal #{signal}"
       case signal
-      when 'TERM'
-        info "Shutting down..."
-        EM.stop
-        @supervisor.shutdown
-        raise Interrupt
-      when 'TTIN'
-        Thread.list.each do |thread|
-          warn "Thread #{thread.object_id.to_s(36)} #{thread['label']}"
-          if thread.backtrace
-            warn thread.backtrace.join("\n")
-          else
-            warn "no backtrace available"
-          end
-        end
+      when 'shutdown'
+        self.handle_shutdown
+      when 'trace'
+        self.handle_trace
       end
+    end
+
+    def handle_shutdown
+      info "Shutting down..."
+      @supervisor.shutdown # shutdown all actors
+      @write_pipe.close # let run! break and return
+    end
+
+    def handle_trace
+      info "Dump celluloid actor and thread stacks..."
+
+      Celluloid.dump
+
+      Thread.list.each do |thread|
+        next if thread[:celluloid_actor_system]
+
+        puts "Thread 0x#{thread.object_id.to_s(16)} <#{thread.name}>"
+        if backtrace = thread.backtrace
+          puts "\t#{backtrace.join("\n\t")}"
+        end
+        puts
+      end
+
+      info "Dump cellulooid actor and thread stacks: done"
+    end
+
+    def supervise
+      @supervisor = Celluloid::Supervision::Container.run!
+
+      self.supervise_state
+      self.supervise_rpc
+      self.supervise_launchers
+      self.supervise_network_adapter
+      self.supervise_lb
+      self.supervise_workers
     end
 
     def supervise_state
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
-        as: :node_info_worker
+        as: :node_info_worker,
+        args: [self.node_id,
+          node_name: self.node_name,
+        ],
+      )
+    end
+
+    def supervise_rpc
+      @supervisor.supervise(
+        type: Kontena::RpcServer,
+        as: :rpc_server,
+      )
+      @supervisor.supervise(
+        type: Kontena::RpcClient,
+        as: :rpc_client,
+      )
+      @supervisor.supervise(
+        type: Kontena::WebsocketClient,
+        as: :websocket_client,
+        args: [@opts[:api_uri], @node_id,
+          node_name: self.node_name,
+          grid_token: @opts[:grid_token],
+          node_token: @opts[:node_token],
+          node_labels: @node_labels,
+          ssl_params: self.ssl_params,
+          ssl_hostname: self.ssl_hostname,
+        ],
       )
     end
 
@@ -106,7 +213,8 @@ module Kontena
       )
       @supervisor.supervise(
         type: Kontena::Workers::ContainerInfoWorker,
-        as: :container_info_worker
+        as: :container_info_worker,
+        args: [@node_id],
       )
       @supervisor.supervise(
         type: Kontena::Workers::EventWorker,
@@ -155,15 +263,6 @@ module Kontena
         type: Kontena::LoadBalancers::Registrator,
         as: :lb_registrator
       )
-    end
-
-    def start_em
-      EM.epoll
-      Thread.new {
-        Thread.current.abort_on_exception = true
-        EventMachine.run
-      } unless EventMachine.reactor_running?
-      sleep 0.01 until EventMachine.reactor_running?
     end
   end
 end

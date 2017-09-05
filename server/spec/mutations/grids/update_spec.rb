@@ -1,5 +1,6 @@
+describe Grids::Update do
+  include AsyncMock
 
-describe Grids::Update, celluloid: true do
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')

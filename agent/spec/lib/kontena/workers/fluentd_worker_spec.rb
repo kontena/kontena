@@ -8,38 +8,42 @@ describe Kontena::Workers::FluentdWorker do
 
   after(:each) { Celluloid.shutdown }
 
-  describe '#configure' do
-
-    let(:info) do
-      Node.new(
-        'grid' => {
-          'logs' => {
-            'forwarder' => 'fluentd',
-            'opts' => {
-              'fluentd-address' => 'foo:12345'
-            }
+  let(:info) do
+    Node.new('name' => 'node-1',
+      'grid' => {
+        'name' => 'terminal-a',
+        'logs' => {
+          'forwarder' => 'fluentd',
+          'opts' => {
+            'fluentd-address' => 'foo:12345'
           }
         }
-      )
-    end
+      }
+    )
+  end
+
+  let(:fluentd) do
+    instance_double(Fluent::Logger::FluentLogger)
+  end
+
+  describe '#configure' do
 
     it 'creates fluentd logger and starts forwarding' do
+      expect(Fluent::Logger::FluentLogger).to receive(:new).and_return(fluentd)
+
       subject.configure(info)
-      expect(subject.wrapped_object.instance_variable_get('@fluentd')).not_to be_nil
-      expect(subject.wrapped_object.instance_variable_get('@forwarding')).to be_truthy
+      expect(subject.processing?).to be_truthy
     end
 
     context "after de-configuring the fluentd forwarder" do
-      before do
-        subject.configure(info)
-        info.grid['logs'] = { 'driver' => 'none'}
-      end
-
       it 'removes fluentd logger and stops forwarding' do
-        expect_any_instance_of(Fluent::Logger::FluentLogger).to receive(:close)
+        expect(Fluent::Logger::FluentLogger).to receive(:new).and_return(fluentd)
         subject.configure(info)
-        expect(subject.wrapped_object.instance_variable_get('@fluentd')).to be_nil
-        expect(subject.wrapped_object.instance_variable_get('@forwarding')).to be_falsey
+        expect(fluentd).to receive(:close)
+
+        info.grid['logs'] = { 'driver' => 'none'}
+        subject.configure(info)
+        expect(subject.processing?).to be_falsey
       end
     end
   end
@@ -56,26 +60,22 @@ describe Kontena::Workers::FluentdWorker do
         data: 'foo bar'
       }
     end
+
+    before :each do
+      expect(Fluent::Logger::FluentLogger).to receive(:new).and_return(fluentd)
+      subject.configure(info)
+    end
+
     it 'sends proper event to fluentd' do
-      fluentd = instance_double(Fluent::Logger::FluentLogger)
-      subject.wrapped_object.instance_variable_set('@fluentd', fluentd)
-      subject.wrapped_object.instance_variable_set('@forwarding', true)
-      expect(fluentd).to receive(:post).with('web.nginx.1', {log: 'foo bar', source: 'stdout'})
+      expect(fluentd).to receive(:post).with('web.nginx.1', {log: 'foo bar', source: 'stdout', node: 'node-1', grid: 'terminal-a', stack: 'web', service: 'nginx', instance_number: 1})
+
       subject.on_log_event(log_event)
     end
 
     it 'does not post event if not forwarding' do
-      fluentd = instance_double(Fluent::Logger::FluentLogger)
-      subject.wrapped_object.instance_variable_set('@fluentd', fluentd)
-      subject.wrapped_object.instance_variable_set('@forwarding', false)
       expect(fluentd).not_to receive(:post)
-      subject.on_log_event(log_event)
-    end
+      expect(subject.wrapped_object).to receive(:processing?).and_return(false)
 
-    it 'does not post event if no fluentd configured' do
-      subject.wrapped_object.instance_variable_set('@fluentd', nil)
-      subject.wrapped_object.instance_variable_set('@forwarding', true)
-      expect_any_instance_of(Fluent::Logger::FluentLogger).not_to receive(:post)
       subject.on_log_event(log_event)
     end
   end

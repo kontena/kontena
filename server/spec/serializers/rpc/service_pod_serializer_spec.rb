@@ -2,7 +2,7 @@ require_relative '../../spec_helper'
 
 describe Rpc::ServicePodSerializer do
   let(:grid) { Grid.create!(name: 'test-grid') }
-  let(:node) { HostNode.create!(name: 'node-1', node_id: 'a') }
+  let(:node) { grid.create_node!('node-1', node_id: 'a') }
   let(:lb) do
     GridService.create!(
       name: 'lb',
@@ -18,7 +18,8 @@ describe Rpc::ServicePodSerializer do
       container_count: 2,
       env: ['FOO=bar'],
       networks: [grid.networks.first],
-      service_volumes: [ServiceVolume.new(volume: volume, path:'/data'), ServiceVolume.new(volume: ext_vol, path: '/foo')]
+      service_volumes: [ServiceVolume.new(volume: volume, path:'/data'), ServiceVolume.new(volume: ext_vol, path: '/foo')],
+      stop_grace_period: 20
     )
   end
   let(:service_instance) do
@@ -146,6 +147,10 @@ describe Rpc::ServicePodSerializer do
       expect(subject.to_hash).to include(:networks => [{name: 'kontena', subnet: '10.81.0.0/16', multicast: true, internal: false}])
     end
 
+    it 'stop_grace_period' do
+      expect(subject.to_hash).to include(:stop_grace_period => 20)
+    end
+
     describe '[:env]' do
       let(:env) { subject.to_hash[:env] }
 
@@ -157,6 +162,7 @@ describe Rpc::ServicePodSerializer do
         expect(env).to include("KONTENA_SERVICE_ID=#{service.id.to_s}")
         expect(env).to include("KONTENA_SERVICE_NAME=#{service.name.to_s}")
         expect(env).to include("KONTENA_GRID_NAME=#{service.grid.name.to_s}")
+        expect(env).to include("KONTENA_PLATFORM_NAME=#{service.grid.name.to_s}")
         expect(env).to include("KONTENA_STACK_NAME=#{service.stack.name.to_s}")
         expect(env).to include("KONTENA_NODE_NAME=#{node.name.to_s}")
         expect(env).to include("KONTENA_SERVICE_INSTANCE_NUMBER=2")
@@ -171,6 +177,7 @@ describe Rpc::ServicePodSerializer do
         expect(labels).to include('io.kontena.service.name' => service.name)
         expect(labels).to include('io.kontena.stack.name' => service.stack.name)
         expect(labels).to include('io.kontena.grid.name' => grid.name)
+        expect(labels).to include('io.kontena.platform.name' => grid.name)
       end
 
       it 'does not include load balancer labels by default' do
