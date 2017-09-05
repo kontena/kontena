@@ -74,7 +74,7 @@ module Kontena::Cli::Cloud
         exit_with_error "Parsing remote login URL failed."
       end
 
-      puts "Please visit #{verification_uri.to_s.colorize(:cyan)} and enter the code"
+      puts "Please visit #{pastel.cyan(verification_uri.to_s)} and enter the code"
       puts
       puts "#{auth_request_response['user_code']}"
       puts

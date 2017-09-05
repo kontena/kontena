@@ -15,7 +15,7 @@ module Kontena::Cli::Vault
     end
 
     def execute
-      vspinner "Writing #{name.colorize(:cyan)} to the vault " do
+      vspinner "Writing #{pastel.cyan(name)} to the vault " do
         client.post("grids/#{current_grid}/secrets", { name: name, value: value })
       end
     end

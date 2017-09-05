@@ -21,7 +21,7 @@ module Kontena::Cli::Nodes
 
       confirm_command(self.node) unless forced?
 
-      spinner "Removing #{self.node.colorize(:cyan)} node from #{current_grid.colorize(:cyan)} grid " do
+      spinner "Removing #{pastel.cyan(self.node)} node from #{pastel.cyan(current_grid)} grid " do
         client(token).delete("nodes/#{node['id']}")
       end
     end

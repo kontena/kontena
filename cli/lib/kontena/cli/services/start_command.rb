@@ -11,7 +11,7 @@ module Kontena::Cli::Services
     def execute
       require_api_url
       token = require_token
-      spinner "Sending start signal to #{name.colorize(:cyan)} service " do
+      spinner "Sending start signal to #{pastel.cyan(name)} service " do
         start_service(token, name)
       end
     end

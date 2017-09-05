@@ -13,10 +13,10 @@ module Kontena::Cli::Grids::TrustedSubnets
       confirm_command(subnet) unless forced?
       trusted_subnets = grid['trusted_subnets'] || []
       unless trusted_subnets.delete(self.subnet)
-        exit_with_error("Grid #{current_grid.colorize(:cyan)} does not have trusted subnet #{subnet.colorize(:cyan)}")
+        exit_with_error("Grid #{pastel.cyan(current_grid)} does not have trusted subnet #{pastel.cyan(subnet)}")
       end
       data = {trusted_subnets: trusted_subnets}
-      spinner "Removing trusted subnet #{subnet.colorize(:cyan)} from #{current_grid.colorize(:cyan)} grid " do
+      spinner "Removing trusted subnet #{pastel.cyan(subnet)} from #{pastel.cyan(current_grid)} grid " do
         client.put("grids/#{current_grid}", data)
       end
     end

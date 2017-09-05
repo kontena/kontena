@@ -24,7 +24,7 @@ module Kontena::Cli::Certificate
       response = client(token).post("certificates/#{current_grid}/certificate", data)
       puts "Certificate successfully received and stored into vault with keys:"
       response.each do |secret|
-        puts secret.colorize(:green)
+        puts pastel.green(secret)
       end
       puts "Use the #{secret}_BUNDLE with Kontena loadbalancer!"
 

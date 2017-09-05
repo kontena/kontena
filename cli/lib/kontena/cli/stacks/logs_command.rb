@@ -28,7 +28,7 @@ module Kontena::Cli::Stacks
 
     def show_log(log)
       color = color_for_container(log['name'])
-      prefix = "#{log['created_at']} [#{log['name']}]:".colorize(color)
+      prefix = pastel.send(color, "#{log['created_at']} [#{log['name']}]:")
       puts "#{prefix} #{log['data']}"
     end
   end
