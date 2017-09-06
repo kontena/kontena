@@ -13,6 +13,8 @@ module Kontena::Workers
     include Kontena::ServicePods::Common
     include Kontena::Helpers::RpcHelper
     include Kontena::Helpers::EventLogHelper
+    include Kontena::Helpers::WaitHelper
+    include Kontena::Helpers::PortHelper
 
     CLOCK_SKEW = Kernel::Float(ENV['KONTENA_CLOCK_SKEW'] || 1.0) # seconds
 
@@ -128,15 +130,51 @@ module Kontena::Workers
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           warn error
           sync_state_to_master(@container, error)
+          return
         else
           @container_state_changed = false
-          sync_state_to_master(@container)
+        end
 
+        if service_pod.terminated?
           # Only terminate this actor after we have succesfully ensure_terminated the Docker container
           # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
-          self.terminate if service_pod.terminated?
+          self.terminate
+        elsif service_pod.running? && service_pod.wait_for_port
+          # delay sync_state_to_master until started
+          # XXX: apply() gets called twice for each deploy_rev, and this launches two wait_for_port tasks...
+          async.wait_for_port(service_pod, @container)
+        else
+          sync_state_to_master(@container)
         end
       }
+    end
+
+    def wait_for_port(service_pod, container, timeout: 300.0)
+      name = container.name
+      ip = container.overlay_ip
+      port = service_pod.wait_for_port
+
+      info "waiting for container #{name} port #{ip}:#{port} to respond"
+
+      wait_until!("container #{name} port #{ip}:#{port} is responding", interval: 1.0, timeout: timeout) {
+         raise "service stopped" if !@service_pod.running?
+         raise "service redeployed" if @service_pod.deploy_rev != service_pod.deploy_rev
+         raise "container recreated" if @container.id != container.id
+         raise "container restarted" if @container.started_at != container.started_at
+
+         port_open?(ip, port, timeout: 1.0)
+       }
+
+    rescue RuntimeError, Timeout::Error => exc
+      if @service_pod.deploy_rev == service_pod.deploy_rev
+        warn "wait_for_port failed: #{exc}"
+        sync_state_to_master(container, exc)
+      else
+        warn "wait_for_port aborted: #{exc}"
+      end
+    else
+      info "container #{name} port #{ip}:#{port} is responding"
+      sync_state_to_master(container)
     end
 
     # @return [Docker::Container, nil]
