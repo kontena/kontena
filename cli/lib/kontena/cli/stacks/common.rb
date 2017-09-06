@@ -95,7 +95,7 @@ module Kontena::Cli::Stacks
         where.prepend InstanceMethods
 
         where.option '--values-from', '[FILE]', 'Read variable values from YAML' do |filename|
-          values_from_file.merge!(::YAML.safe_load(File.read(filename)))
+          values_from_file.merge!(::YAML.safe_load(File.read(filename)), [], [], true, filename)
           true
         end
 
