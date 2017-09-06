@@ -29,6 +29,7 @@ module Rpc
         memory: service.memory,
         memory_swap: service.memory_swap,
         cpu_shares: service.cpu_shares,
+        cpus: service.cpus,
         privileged: service.privileged,
         cap_add: service.cap_add,
         cap_drop: service.cap_drop,

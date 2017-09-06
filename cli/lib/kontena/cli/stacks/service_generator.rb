@@ -33,6 +33,7 @@ module Kontena::Cli::Stacks
       data['ports'] = parse_stringified_ports(options['ports'] || [])
       data['memory'] = parse_memory(options['mem_limit'].to_s) if options['mem_limit']
       data['memory_swap'] = parse_memory(options['memswap_limit'].to_s) if options['memswap_limit']
+      data['cpus'] = options['cpus'] if options['cpus']
       data['cpu_shares'] = options['cpu_shares'] if options['cpu_shares']
       data['volumes'] = options['volumes'] || []
       data['volumes_from'] = options['volumes_from'] || []

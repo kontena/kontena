@@ -58,6 +58,7 @@ module GridServices
       attributes[:container_count] = self.container_count if self.container_count
       attributes[:container_count] = self.instances if self.instances
       attributes[:user] = self.user if self.user
+      attributes[:cpus] = self.cpus if self.cpus
       attributes[:cpu_shares] = self.cpu_shares if self.cpu_shares
       attributes[:memory] = self.memory if self.memory
       attributes[:memory_swap] = self.memory_swap if self.memory_swap
