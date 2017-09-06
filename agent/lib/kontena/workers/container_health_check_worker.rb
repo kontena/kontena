@@ -96,7 +96,7 @@ module Kontena::Workers
         'id' => @container.id
       }
       begin
-        response = container_port_open?(ip, port, timeout)
+        response = port_open?(ip, port, timeout: timeout)
         debug "got status: #{response}"
         data['status'] = response ? 'healthy' : 'unhealthy'
         data['status_code'] = response ? 'open' : 'closed'
