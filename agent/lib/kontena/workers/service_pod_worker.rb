@@ -167,7 +167,7 @@ module Kontena::Workers
       end
 
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
-      service_container.name # trigger cached_json
+      service_container.name if service_container # trigger cached_json
       service_container
     end
 
