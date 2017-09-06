@@ -139,7 +139,7 @@ module Kontena::Cli::Stacks
       end
 
       def create_parent_variable(parent_name)
-        puts variables.build_option(name: 'PARENT_STACK', type: :string, value: parent_name).inspect
+        variables.build_option(name: 'PARENT_STACK', type: :string, value: parent_name)
       end
 
       def from_file?
