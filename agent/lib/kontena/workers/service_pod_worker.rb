@@ -66,10 +66,8 @@ module Kontena::Workers
     # @param topic [String]
     # @param event [Docker::Event]
     def on_container_event(topic, event)
-      attrs = event.actor.attributes
-      if attrs['io.kontena.service.id'] == @service_pod.service_id &&
-          attrs['io.kontena.container.type'] == 'container'.freeze &&
-          attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number
+      if @container && event.id == @container.id
+        debug "container event: #{event.status}"
         @container_state_changed = true
         handle_restart_on_die if event.status == 'die'.freeze
       end
