@@ -120,7 +120,7 @@ module Kontena::Workers
       cancel_restart_timers
       exclusive {
         begin
-          ensure_desired_state
+          @container = ensure_desired_state
           # reset restart counter if instance stays up 10s
           @restart_counter_reset_timer = after(10) {
             info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter" if restarting?
@@ -141,6 +141,7 @@ module Kontena::Workers
       }
     end
 
+    # @return [Docker::Container, nil]
     def ensure_desired_state
       debug "state of #{service_pod.name}: #{service_pod.desired_state}"
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
@@ -166,8 +167,13 @@ module Kontena::Workers
       else
         warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
       end
+
+      service_container = get_container(service_pod.service_id, service_pod.instance_number)
+      service_container.cached_json
+      service_container
     end
 
+    # @return [Docker::Container]
     def ensure_running
       Kontena::ServicePods::Creator.new(service_pod).perform
     rescue => exc
