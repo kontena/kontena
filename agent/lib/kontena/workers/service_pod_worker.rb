@@ -129,10 +129,10 @@ module Kontena::Workers
         rescue => error
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           warn error
-          sync_state_to_master(current_state, error)
+          sync_state_to_master(@container, error)
         else
           @container_state_changed = false
-          sync_state_to_master(current_state)
+          sync_state_to_master(@container)
 
           # Only terminate this actor after we have succesfully ensure_terminated the Docker container
           # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
@@ -301,9 +301,9 @@ module Kontena::Workers
       false
     end
 
+    # @param service_container [Docker::Container]
     # @return [String]
-    def current_state
-      service_container = get_container(service_pod.service_id, service_pod.instance_number)
+    def current_state(service_container)
       return 'missing' unless service_container
 
       if service_container.running?
@@ -315,18 +315,19 @@ module Kontena::Workers
       end
     end
 
-    # @param current_state [String]
+    # @param service_container [Docker::Container]
     # @param error [Exception]
-    def sync_state_to_master(current_state, error = nil)
+    def sync_state_to_master(service_container, error = nil)
       state = {
         service_id: service_pod.service_id,
         instance_number: service_pod.instance_number,
         rev: service_pod.deploy_rev,
-        state: current_state,
+        state: self.current_state(service_container),
         error: error ? "#{error.class}: #{error}" : nil,
       }
 
       if state != @prev_state
+        debug "sync state update: #{state}"
         rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
         @prev_state = state
       end
