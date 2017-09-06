@@ -76,6 +76,11 @@ module Docker
       false
     end
 
+    # @return DatetTime
+    def started_at
+      DateTime.parse(cached_json['State']['StartedAt'])
+    end
+
     # @return [Boolean]
     def finished?
       DateTime.parse(self.state['FinishedAt']).year > 1
