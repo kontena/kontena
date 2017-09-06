@@ -74,8 +74,8 @@ module GridDomainAuthorizations
         # We need to deploy the linked service to get the certs in place
         outcome = GridServices::Deploy.run(grid_service: @linked_service, force: true)
         if outcome.success?
-          deploy = outcome.result
-          authz.set(service_deploy_id: deploy.id)
+          authz.grid_service_deploy = outcome.result
+          authz.save
         else
           add_error(:linked_service, :deploy, outcome.errors)
         end

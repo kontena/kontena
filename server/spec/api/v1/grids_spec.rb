@@ -435,7 +435,7 @@ describe '/v1/grids', celluloid: true do
 
       it 'returns all domain authorizations' do
         grid.grid_domain_authorizations.create!(domain: 'foo.com', challenge: {:foo => :bar})
-        grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service)
+        grid.grid_domain_authorizations.create!(domain: 'foobar.com', challenge: {:foo => :bar}, grid_service: db_service, grid_service_deploy: GridServiceDeploy.create!(grid_service: db_service))
         get "/v1/grids/#{grid.to_path}/domain_authorizations", nil, request_headers
         expect(response.status).to eq(200)
         expect(json_response['domain_authorizations'].size).to eq(2)

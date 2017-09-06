@@ -13,7 +13,8 @@ class GridDomainAuthorization
   field :challenge, type: Hash
   field :challenge_opts, type: Hash # TODO encrypt?
   field :authorization_type, type: String, default: 'tls-sni-01'
-  field :service_deploy_id, type: String
+
+  belongs_to :grid_service_deploy
 
   field :encrypted_tls_sni_certificate, type: String, encrypted: true
 
@@ -31,20 +32,14 @@ class GridDomainAuthorization
   end
 
   def status
-    deploy = find_deploy
-    if deploy && !deploy.finished?
+    if self.grid_service_deploy && !self.grid_service_deploy.finished?
       # Deploy still in progress
       :deploying # So that CLI or other clients know to wait before requesting the cert
-    elsif deploy && deploy.finished? && deploy.error?
+    elsif self.grid_service_deploy && self.grid_service_deploy.finished? && self.grid_service_deploy.error?
       :deploy_error
     else
       self.state
     end
-  end
-
-  def find_deploy
-    return self.grid_service.grid_service_deploys.find_by(id: self.service_deploy_id) if self.grid_service
-    nil
   end
 
 end

@@ -107,7 +107,7 @@ describe GridDomainAuthorizations::Authorize do
       subject.execute
 
       auth = grid.grid_domain_authorizations.find_by(domain: 'example.com')
-      expect(auth.service_deploy_id).not_to be_nil
+      expect(auth.grid_service_deploy).not_to be_nil
       expect(auth.tls_sni_certificate).to eq('CERTIFICATEPRIVATE_KEY')
     end
 
