@@ -4,17 +4,15 @@ describe GridCertificates::GetCertificate do
   let(:subject) { described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com']) }
 
   let(:grid) {
-    grid = Grid.create!(name: 'test-grid')
-    grid
+    Grid.create!(name: 'test-grid')
   }
 
   let(:authz) {
-    challenge_opts = {
+    opts = {
       'record_name' => '_acme-challenge',
       'record_content' => '1234567890'
     }
-    authz = GridDomainAuthorization.create(grid: grid, domain: 'example.com', challenge: {}, challenge_opts: challenge_opts)
-    authz
+    GridDomainAuthorization.create!(grid: grid, domain: 'example.com', authorization_type: 'dns-01', challenge: nil, challenge_opts: opts)
   }
 
   describe '#validate' do
@@ -34,18 +32,24 @@ describe GridCertificates::GetCertificate do
       expect(outcome.errors.symbolic).to eq 'cert_type' => :in
     end
 
-    it 'fails validation in domain challenge' do
-      authz
-      expect(subject).to receive(:validate_dns_record).and_return(false)
-      subject.validate
-      expect(subject.has_errors?).to be_truthy
+    context 'dns-01' do
+      it 'fails validation in domain challenge' do
+        authz
+        expect(subject).to receive(:validate_dns_record).and_return(false)
+        subject.validate
+        expect(subject.has_errors?).to be_truthy
+      end
+
+      it 'validates domain challenge' do
+        authz
+        expect(subject).to receive(:validate_dns_record).and_return(true)
+        outcome = subject.validate
+        expect(subject.has_errors?).to be_truthy
+      end
     end
 
-    it 'validates domain challenge' do
-      authz
-      expect(subject).to receive(:validate_dns_record).and_return(true)
-      outcome = subject.validate
-      expect(subject.has_errors?).to be_truthy
+    context 'tls-sni-01' do
+
     end
 
   end
@@ -67,7 +71,7 @@ describe GridCertificates::GetCertificate do
           fullchain_to_pem: 'fullchain'
         }))
       expect(challenge).to receive(:request_verification).and_return(true)
-      expect(challenge).to receive(:verify_status).and_return('valid')
+      expect(challenge).to receive(:verify_status).and_return('valid', 'valid')
       expect(subject).to receive(:upsert_secret).exactly(3).times.and_return(double({success?: true}))
 
       subject.execute
@@ -90,7 +94,7 @@ describe GridCertificates::GetCertificate do
           )
         }))
       expect(challenge).to receive(:request_verification).and_return(true)
-      expect(challenge).to receive(:verify_status).and_return('valid')
+      expect(challenge).to receive(:verify_status).and_return('valid', 'valid')
       expect(subject).to receive(:upsert_secret).exactly(3).times.and_return(double({success?: true}))
 
       subject.execute
@@ -113,7 +117,7 @@ describe GridCertificates::GetCertificate do
           chain_to_pem: 'chain'
         }))
       expect(challenge).to receive(:request_verification).and_return(true)
-      expect(challenge).to receive(:verify_status).and_return('valid')
+      expect(challenge).to receive(:verify_status).and_return('valid', 'valid')
       expect(subject).to receive(:upsert_secret).exactly(3).times.and_return(double({success?: true}))
 
       subject.execute

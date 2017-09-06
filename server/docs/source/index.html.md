@@ -1435,6 +1435,90 @@ Create an external registry.
 
 `DELETE /v1/grids/{grid_id}/external_registries`
 
+# Domain Authorizations
+
+Let's Encrypt domain authorization management for certificate handling.
+
+## Domain authorization
+
+```json
+{
+    "id": "e2e/kontena.io",
+    "domain": "kontena.io",
+	"status": "deploying",
+	"challenge": {
+		"token": "Z6Q1SxXphm0WuwU0Khs6nMtQ2HBZGC-kIKCq8g8",
+		"uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/rIxpgCmUlfthUME0an3fjZuxdNyNN0gOirk2lwo/561639",
+		"type": "tls-sni-01"
+	},
+	"challenge_opts": null,
+	"authorization_type": "tls-sni-01",
+	"linked_service": {
+		"id": "e2e/null/lb"
+	}
+}
+```
+
+`challenge_opts` are challenge type specific details. For example in `dns-01` challenges there will be the DNS TXT records details.
+
+`status` can be any of the following:
+- `created`: authorization has been created, no firther actions yet taken
+- `deploying`: The related tls-sni certificate is currently being deployed to linked service. Only valid for tls-sni type of authorizations
+- `deploy_error`: The deployment of the linked service has errored out, more details can be found from the linked services event logs
+- `requested`: Authorization has been requested from Let's Encrypt
+- `validated`: Let's Encrypt has succesfully validated the challenge
+- `error`: Error has happened in the validation, re-authorization should be done
+
+## Authorize domain
+
+```http
+POST /v1/grids/my-grid/domain_authorizations HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+Content-Type: application/json
+
+{
+    "domain": "foo.domain.com",
+    "authorization_type": "tls-sni-01",
+    "linked_service": "infra/lb"
+}
+```
+
+Authorize a domain with Let's Encrypt.
+
+Authorization types currently supported are `tls-sni-01` and `dns-01`
+
+If `tls-sni-01` authorization type is used, then also `linked_service` attribute must be given as the newly created `tls-sni-01` special purpose certificate is bundled with that service. Usually the linked service is a Kontena loadbalancer exposed to internet.
+
+### Endpoint
+
+`POST /v1/grids/my-grid/domain_authorizations`
+
+## Get domain authorizations
+
+```http
+GET /v1/grids/my-grid/domain_authorizations HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/grids/my-grid/domain_authorizations`
+
+## Get domain authorization
+
+```http
+GET /v1/domain_authorizations/my-grid/foobar.com HTTP/1.1
+Authorization: Bearer 8dqAd30DRrzzhJzbcSCG0Lb35csy5w0oNeT+8eDh4q2/NTeK3CmwMHuH4axcaxya+aNfSy1XMsqHP/NsTNy6mg==
+Accept: application/json
+```
+
+### Endpoint
+
+`GET /v1/domain_authorizations/my-grid/foobar.com`
+
+
 # Certificates
 
 Let's Encrypt certificate management.
@@ -1459,6 +1543,9 @@ Register email to Let's Encrypt.
 `POST /v1/certificates/{grid_id}/register`
 
 ## Authorize a domain
+
+**DEPRECATED**
+Use `POST /v1/grids/my-grid/domain_authorizations` instead.
 
 ```http
 POST /v1/certificates/my-grid/authorize HTTP/1.1

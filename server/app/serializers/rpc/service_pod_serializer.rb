@@ -66,6 +66,13 @@ module Rpc
         end
         secrets << item
       end
+
+      # Inject tls-sni based domain authz as secrets
+      # Why secrets? Well, secrets are already handled in a way they can be concatenated with same env names
+      service.grid_domain_authorizations.select {|d| d.authorization_type == 'tls-sni-01'}.each do |domain_auth|
+        secrets << {name: "SSL_CERTS", type: 'env', value: domain_auth.tls_sni_certificate}
+      end
+
       secrets
     end
 
@@ -78,6 +85,7 @@ module Rpc
       env << "KONTENA_STACK_NAME=#{service.stack.try(:name)}"
       env << "KONTENA_NODE_NAME=#{service_instance.host_node.name}"
       env << "KONTENA_SERVICE_INSTANCE_NUMBER=#{service_instance.instance_number}"
+
       env
     end
 
