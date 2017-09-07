@@ -49,7 +49,7 @@ class MongoPubsub
     end
   end
 
-  attr_accessor :collection, :subscriptions
+  attr_accessor :collection
 
   # @param [Mongoid::Document] model
   def initialize(model)
@@ -65,14 +65,14 @@ class MongoPubsub
       subscription.process
     }
   ensure
-    self.subscriptions.delete(subscription)
+    @subscriptions.delete(subscription)
   end
 
   # @param [String] channel
   # @return [Subscription]
   def subscribe(channel, block)
     subscription = Subscription.new(channel, block)
-    self.subscriptions << subscription
+    @subscriptions << subscription
 
     async.process_subscription(subscription)
 
@@ -97,9 +97,17 @@ class MongoPubsub
   # @param [String] channel
   # @param [Hash] data
   def queue_message(channel, data)
-    self.subscriptions.each do |subscription|
+    @subscriptions.each do |subscription|
       subscription.queue_message(data.dup) if subscription.channel == channel
     end
+  end
+
+  # Stop all subscribers
+  def clear!
+    @subscriptions.each do |subscription|
+      subscription.stop
+    end
+    @subscriptions = []
   end
 
   # @param [String] channel
@@ -135,15 +143,7 @@ class MongoPubsub
   end
 
   def self.clear!
-    actor = @supervisor.actors.first
-    actor.subscriptions.each do |subscription|
-      actor.unsubscribe(subscription)
-    end
-    actor.subscriptions = []
-  end
-
-  def self.subscriptions
-    @supervisor.actors.first.subscriptions
+    @supervisor.actors.first.clear!
   end
 
   private
