@@ -1,16 +1,20 @@
 describe Grids::Update do
-  include AsyncMock
-
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid.users << user
     grid
   }
+  let(:grid_scheduler_job) { instance_double(GridSchedulerJob) }
+
+  before do
+    allow(Celluloid::Actor).to receive(:[]).with(:grid_scheduler_job).and_return(grid_scheduler_job)
+  end
 
   describe '#run' do
     before(:each) do
       allow_any_instance_of(GridAuthorizer).to receive(:updatable_by?).with(user).and_return(true)
+      allow_any_instance_of(described_class).to receive(:reschedule_grid).with(grid)
     end
 
     it 'updates statsd settings' do
