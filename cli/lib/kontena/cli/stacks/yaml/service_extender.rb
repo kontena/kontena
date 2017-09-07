@@ -1,5 +1,3 @@
-require_relative '../../../util'
-
 module Kontena::Cli::Stacks
   module YAML
     class ServiceExtender

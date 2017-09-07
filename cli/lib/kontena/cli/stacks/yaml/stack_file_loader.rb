@@ -1,7 +1,6 @@
-require 'kontena/cli/stacks/stack_name'
+require_relative '../stack_name'
 require 'yaml'
-require 'kontena/util'
-require 'kontena/cli/stacks/yaml/reader'
+require_relative 'reader'
 
 module Kontena::Cli::Stacks
   module YAML

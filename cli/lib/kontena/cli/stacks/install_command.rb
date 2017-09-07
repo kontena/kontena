@@ -1,5 +1,5 @@
 require_relative 'common'
-require 'kontena/cli/stacks/yaml/stack_file_loader'
+require_relative 'yaml/stack_file_loader'
 
 module Kontena::Cli::Stacks
   class InstallCommand < Kontena::Command
