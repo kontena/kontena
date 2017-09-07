@@ -160,7 +160,7 @@ class MongoPubsub
           channel = item['channel']
           data = item['data']
 
-          actor.queue_message(channel, data)
+          actor.async.queue_message(channel, data)
         end
       rescue => exc
         error "error while tailing: #{exc.message}"
