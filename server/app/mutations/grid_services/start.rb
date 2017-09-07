@@ -14,13 +14,16 @@ module GridServices
     def start_service_instances
       self.grid_service.grid_service_instances.each do |i|
         i.set(desired_state: 'running')
-        notify_node(i.host_node) if i.host_node
+        notify_service_instance(i, 'start')
       end
     end
 
     # @param node [HostNode]
-    def notify_node(node)
-      node.rpc_client.notify('/service_pods/notify_update', 'start')
+    # @param action [String]
+    def notify_service_instance(service_instance, action)
+      if service_instance.host_node
+        service_instance.host_node.rpc_client.notify('/service_pods/notify_update', action)
+      end
     end
   end
 end
