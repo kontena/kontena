@@ -28,7 +28,7 @@ module Grids
       end
 
       self.notify_nodes
-      self.reschedule_grid(self.grid)
+      self.reschedule_grid(self.grid) if self.default_affinity
 
       self.grid
     end
