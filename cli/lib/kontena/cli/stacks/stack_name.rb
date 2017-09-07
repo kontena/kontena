@@ -17,7 +17,7 @@ module Kontena::Cli::Stacks
     end
 
     def stack_name
-      [user, stack].join('/')
+      [user, stack].compact.join('/')
     end
 
     def to_s
