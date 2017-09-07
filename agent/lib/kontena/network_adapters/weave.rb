@@ -95,33 +95,6 @@ module Kontena::NetworkAdapters
 
     # @param [Hash] opts
     def modify_create_opts(opts)
-      ensure_weave_wait
-
-      image = Docker::Image.get(opts['Image'])
-      image_config = image.info['Config']
-      cmd = []
-      if opts['Entrypoint']
-        if opts['Entrypoint'].is_a?(Array)
-          cmd = cmd + opts['Entrypoint']
-        else
-          cmd = cmd + [opts['Entrypoint']]
-        end
-      end
-      if !opts['Entrypoint'] && image_config['Entrypoint'] && image_config['Entrypoint'].size > 0
-        cmd = cmd + image_config['Entrypoint']
-      end
-      if opts['Cmd'] && opts['Cmd'].size > 0
-        if opts['Cmd'].is_a?(Array)
-          cmd = cmd + opts['Cmd']
-        else
-          cmd = cmd + [opts['Cmd']]
-        end
-      elsif image_config['Cmd'] && image_config['Cmd'].size > 0
-        cmd = cmd + image_config['Cmd']
-      end
-      opts['Entrypoint'] = ['/w/w']
-      opts['Cmd'] = cmd
-
       modify_host_config(opts)
 
       # IPAM
@@ -138,8 +111,6 @@ module Kontena::NetworkAdapters
     # @param [Hash] opts
     def modify_host_config(opts)
       host_config = opts['HostConfig'] || {}
-      host_config['VolumesFrom'] ||= []
-      host_config['VolumesFrom'] << "weavewait-#{WEAVE_VERSION}:ro"
       dns = interface_ip('docker0')
       if dns && host_config['NetworkMode'].to_s != 'host'.freeze
         host_config['Dns'] = [dns]
@@ -301,7 +272,7 @@ module Kontena::NetworkAdapters
     def attach_container(container_id, cidr)
       info "Attach container=#{container_id} at cidr=#{cidr}"
 
-      @executor_pool.async.attach(container_id, cidr)
+      @executor_pool.attach(container_id, cidr)
     end
 
     # Attach container to weave with given CIDR address, first detaching any existing mismatching addresses
@@ -340,7 +311,8 @@ module Kontena::NetworkAdapters
 
     def ensure_images
       images = [
-        weave_image
+        weave_image,
+        'kubernetes/pause:latest'
       ]
       images.each do |image|
         unless Docker::Image.exist?(image)
@@ -351,29 +323,6 @@ module Kontena::NetworkAdapters
         end
       end
       @images_exist = true
-    end
-
-
-    def ensure_weave_wait
-      sleep 1 until images_exist?
-
-      container_name = "weavewait-#{WEAVE_VERSION}"
-      weave_wait = Docker::Container.get(container_name) rescue nil
-      unless weave_wait
-        Docker::Container.create(
-          'name' => container_name,
-          'Image' => weave_exec_image,
-          'Entrypoint' => ['/bin/false'],
-          'Labels' => {
-            'weavevolumes' => ''
-          },
-          'Volumes' => {
-            '/w' => {},
-            '/w-noop' => {},
-            '/w-nomcast' => {}
-          }
-        )
-      end
     end
   end
 end

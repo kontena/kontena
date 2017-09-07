@@ -85,14 +85,21 @@ module Docker
 
     # @return [Boolean]
     def service_container?
-      self.labels['io.kontena.container.type'] == 'container'
+      self.labels['io.kontena.container.type'] == 'container'.freeze
+    rescue
+      false
+    end
+
+    # @return [Boolean]
+    def infra_container?
+      self.labels['io.kontena.container.type'] == 'infra'.freeze
     rescue
       false
     end
 
     # @return [Boolean]
     def volume_container?
-      self.labels['io.kontena.container.type'] == 'volume'
+      self.labels['io.kontena.container.type'] == 'volume'.freeze
     rescue
       false
     end

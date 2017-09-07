@@ -163,10 +163,6 @@ module Kontena
           'name' => self.name,
           'Image' => self.image_name
         }
-        if self.net.to_s != 'host'
-          docker_opts['Hostname'] = self.hostname
-          docker_opts['Domainname'] = self.domainname
-        end
         docker_opts['Env'] = self.build_env
         docker_opts['User'] = self.user if self.user
         docker_opts['Cmd'] = self.cmd if self.cmd
@@ -212,8 +208,11 @@ module Kontena
           host_config['CpuQuota'] = (host_config['CpuPeriod'] * self.cpus).to_i
         end
 
-        host_config['NetworkMode'] = self.net
-        host_config['DnsSearch'] = [self.domainname, self.domainname.split('.', 2)[1]]
+        if self.net == 'host'.freeze
+          host_config['NetworkMode'] = self.net
+        else
+          host_config['NetworkMode'] = "container:#{self.name}-infra"
+        end
         host_config['CpuShares'] = self.cpu_shares if self.cpu_shares
         host_config['Memory'] = self.memory if self.memory
         host_config['MemorySwap'] = self.memory_swap if self.memory_swap
@@ -253,6 +252,34 @@ module Kontena
             'io.kontena.container.type' => 'volume'
           }
         }
+      end
+
+      def infra_config
+        config = {
+          'Image' => 'kubernetes/pause:latest',
+          'name' => "#{self.name}-infra",
+          'Labels' => {
+            'io.kontena.container.name' => "#{self.name}-infra",
+            'io.kontena.container.pod' => self.name,
+            'io.kontena.container.hostname' => self.hostname,
+            'io.kontena.container.domainname' => self.domainname,
+            'io.kontena.service.id' => self.labels['io.kontena.service.id'],
+            'io.kontena.service.instance_number' => self.instance_number.to_s,
+            'io.kontena.service.name' => self.labels['io.kontena.service.name'],
+            'io.kontena.stack.name' => self.labels['io.kontena.stack.name'],
+            'io.kontena.grid.name' => self.labels['io.kontena.grid.name'],
+            'io.kontena.container.type' => 'infra'
+          }
+        }
+        config['Labels']['io.kontena.service.exposed'] = '1' if self.exposed
+        if self.net.to_s != 'host'
+          config['Hostname'] = self.hostname
+          config['Domainname'] = self.domainname
+          config['HostConfig'] = {
+            'DnsSearch' => [self.domainname, self.domainname.split('.', 2)[1]]
+          }
+        end
+        config
       end
 
       ##
