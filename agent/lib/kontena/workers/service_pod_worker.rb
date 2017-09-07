@@ -66,10 +66,8 @@ module Kontena::Workers
     # @param topic [String]
     # @param event [Docker::Event]
     def on_container_event(topic, event)
-      attrs = event.actor.attributes
-      if attrs['io.kontena.service.id'] == @service_pod.service_id &&
-          attrs['io.kontena.container.type'] == 'container'.freeze &&
-          attrs['io.kontena.service.instance_number'].to_i == @service_pod.instance_number
+      if @container && event.id == @container.id
+        debug "container event: #{event.status}"
         @container_state_changed = true
         handle_restart_on_die if event.status == 'die'.freeze
       end
@@ -120,7 +118,7 @@ module Kontena::Workers
       cancel_restart_timers
       exclusive {
         begin
-          ensure_desired_state
+          @container = ensure_desired_state
           # reset restart counter if instance stays up 10s
           @restart_counter_reset_timer = after(10) {
             info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter" if restarting?
@@ -129,10 +127,10 @@ module Kontena::Workers
         rescue => error
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           warn error
-          sync_state_to_master(current_state, error)
+          sync_state_to_master(@container, error)
         else
           @container_state_changed = false
-          sync_state_to_master(current_state)
+          sync_state_to_master(@container)
 
           # Only terminate this actor after we have succesfully ensure_terminated the Docker container
           # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
@@ -141,6 +139,7 @@ module Kontena::Workers
       }
     end
 
+    # @return [Docker::Container, nil]
     def ensure_desired_state
       debug "state of #{service_pod.name}: #{service_pod.desired_state}"
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
@@ -166,8 +165,13 @@ module Kontena::Workers
       else
         warn "unknown state #{service_pod.desired_state} for #{service_pod.name}"
       end
+
+      service_container = get_container(service_pod.service_id, service_pod.instance_number)
+      service_container.name if service_container # trigger cached_json
+      service_container
     end
 
+    # @return [Docker::Container]
     def ensure_running
       Kontena::ServicePods::Creator.new(service_pod).perform
     rescue => exc
@@ -295,9 +299,9 @@ module Kontena::Workers
       false
     end
 
+    # @param service_container [Docker::Container]
     # @return [String]
-    def current_state
-      service_container = get_container(service_pod.service_id, service_pod.instance_number)
+    def current_state(service_container)
       return 'missing' unless service_container
 
       if service_container.running?
@@ -309,18 +313,19 @@ module Kontena::Workers
       end
     end
 
-    # @param current_state [String]
+    # @param service_container [Docker::Container]
     # @param error [Exception]
-    def sync_state_to_master(current_state, error = nil)
+    def sync_state_to_master(service_container, error = nil)
       state = {
         service_id: service_pod.service_id,
         instance_number: service_pod.instance_number,
         rev: service_pod.deploy_rev,
-        state: current_state,
+        state: self.current_state(service_container),
         error: error ? "#{error.class}: #{error}" : nil,
       }
 
       if state != @prev_state
+        debug "sync state update: #{state}"
         rpc_client.async.request('/node_service_pods/set_state', [node.id, state])
         @prev_state = state
       end

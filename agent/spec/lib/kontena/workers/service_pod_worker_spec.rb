@@ -1,4 +1,4 @@
-describe Kontena::Workers::ServicePodWorker do
+describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   include RpcClientMocks
 
   let(:node) { Node.new('id' => 'aa') }
@@ -10,9 +10,6 @@ describe Kontena::Workers::ServicePodWorker do
   end
   let(:subject) { described_class.new(node, service_pod) }
 
-  before(:each) { Celluloid.boot }
-  after(:each) { Celluloid.shutdown }
-
   describe '#ensure_desired_state' do
     before(:each) do
       mock_rpc_client
@@ -20,50 +17,57 @@ describe Kontena::Workers::ServicePodWorker do
     end
 
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
-      allow(subject.wrapped_object).to receive(:get_container).and_return(nil)
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
       allow(service_pod).to receive(:running?).and_return(true)
       expect(subject.wrapped_object).to receive(:ensure_running)
-      subject.ensure_desired_state
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
     end
 
     it 'calls ensure_running if container is not running and service_pod desired_state is running' do
-      container = double(:container, :running? => false, :restarting? => false)
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      container = double(:container, :running? => false, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
       allow(subject.wrapped_object).to receive(:service_container_outdated?).and_return(false)
       allow(service_pod).to receive(:running?).and_return(true)
       expect(subject.wrapped_object).to receive(:ensure_started)
-      subject.ensure_desired_state
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
     end
 
     it 'calls ensure_running if updated_at is newer than container' do
       container = double(:container,
         :running? => true, :restarting? => false,
-        :info => { 'Created' => (Time.now - 30).to_s }
+        :info => { 'Created' => (Time.now - 30).to_s },
+        :name => 'foo-2',
       )
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
       allow(service_pod).to receive(:running?).and_return(true)
       allow(service_pod).to receive(:service_rev).and_return(1)
       expect(subject.wrapped_object).to receive(:ensure_running)
-      subject.ensure_desired_state
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
     end
 
     it 'calls ensure_stopped if container is running and service_pod desired_state is stopped' do
-      container = double(:container, :running? => true, :restarting? => false)
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
       allow(service_pod).to receive(:running?).and_return(false)
       allow(service_pod).to receive(:stopped?).and_return(true)
       expect(subject.wrapped_object).to receive(:ensure_stopped)
-      subject.ensure_desired_state
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
+      expect(subject.ensure_desired_state).to eq container
     end
 
     it 'calls ensure_terminated if container exist and service_pod desired_state is terminated' do
-      container = double(:container, :running? => true, :restarting? => false)
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
+      container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
+      expect(subject.wrapped_object).to receive(:get_container).and_return(container)
       allow(service_pod).to receive(:terminated?).and_return(true)
       allow(service_pod).to receive(:running?).and_return(false)
       allow(service_pod).to receive(:stopped?).and_return(false)
       expect(subject.wrapped_object).to receive(:ensure_terminated)
-      subject.ensure_desired_state
+      expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
+      expect(subject.ensure_desired_state).to be nil
     end
   end
 
@@ -91,31 +95,29 @@ describe Kontena::Workers::ServicePodWorker do
 
   describe '#current_state' do
     it 'returns missing if container is not found' do
-      allow(subject.wrapped_object).to receive(:get_container).and_return(nil)
-      expect(subject.current_state).to eq('missing')
+      expect(subject.current_state(nil)).to eq('missing')
     end
 
     it 'returns running if container is running' do
       container = double(:container, :running? => true)
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
-      expect(subject.current_state).to eq('running')
+      expect(subject.current_state(container)).to eq('running')
     end
 
     it 'returns restarting if restart is in progress' do
       container = double(:container, :running? => false)
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
       allow(subject.wrapped_object).to receive(:restarting?).and_return(true)
-      expect(subject.current_state).to eq('restarting')
+      expect(subject.current_state(container)).to eq('restarting')
     end
 
     it 'returns stopped if container is not running or restarting' do
       container = double(:container, :running? => false, :restarting? => false)
-      allow(subject.wrapped_object).to receive(:get_container).and_return(container)
-      expect(subject.current_state).to eq('stopped')
+      expect(subject.current_state(container)).to eq('stopped')
     end
   end
 
   describe '#sync_state_to_master' do
+    let(:container) { double(:container, :running? => true) }
+
     before(:each) do
       mock_rpc_client
       allow(rpc_client).to receive(:request)
@@ -126,7 +128,7 @@ describe Kontena::Workers::ServicePodWorker do
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
       )
-      subject.sync_state_to_master('running')
+      subject.sync_state_to_master(container)
     end
 
     it 'sends error' do
@@ -134,7 +136,7 @@ describe Kontena::Workers::ServicePodWorker do
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
       )
-      subject.sync_state_to_master('missing', Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+      subject.sync_state_to_master(nil, Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
     end
   end
 
@@ -203,36 +205,50 @@ describe Kontena::Workers::ServicePodWorker do
   end
 
   describe '#on_container_event' do
-    let(:actor) do
-      double(:actor, attributes: {
-        'io.kontena.service.id' => service_pod.service_id,
-        'io.kontena.service.instance_number' => service_pod.instance_number,
-        'io.kontena.container.type' => 'container'
-      })
-    end
-    let(:event) do
-      double(:event, actor: actor, status: 'running')
-    end
-
-    it 'marks container state changed if service id and instance number matches' do
+    before do
       subject.container_state_changed = false
-      expect {
-        subject.on_container_event('container:event', event)
-      }.to change { subject.container_state_changed }.from(false).to(true)
     end
 
-    it 'does not mark state changed if service id does not match' do
-      subject.container_state_changed = false
-      actor.attributes['io.kontena.service.id'] = 'wrong-one'
-      expect {
-        subject.on_container_event('container:event', event)
-      }.not_to change { subject.container_state_changed }
+    context 'without any active container' do
+      it 'ignores any events' do
+        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'start')
+
+        expect {
+          subject.on_container_event('container:event', event)
+        }.not_to change { subject.container_state_changed }
+      end
     end
 
-    it 'triggers restart logic if event is die' do
-      allow(event).to receive(:status).and_return('die')
-      expect(subject.wrapped_object).to receive(:handle_restart_on_die).once
-      subject.on_container_event('container:event', event)
+    context 'with an active container' do
+      let(:container) { double(:container, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025') }
+
+      before do
+        subject.instance_variable_set('@container', container)
+      end
+
+      it 'ignores a mismatching event' do
+        event = double(:event, id: 'f02a583a0dd44a685a14c445b9826b5f8a8c46555fabf003de3009180ff7a24c', status: 'start')
+
+        expect {
+          subject.on_container_event('container:event', event)
+        }.not_to change { subject.container_state_changed }
+      end
+
+      it 'marks container state as changed' do
+        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'start')
+
+        expect {
+          subject.on_container_event('container:event', event)
+        }.to change { subject.container_state_changed }.from(false).to(true)
+      end
+
+      it 'triggers restart logic on container die events' do
+        event = double(:event, id: '2b52d7ac3c70f4533a47d93cb81a8864eb2608705e0a986bdcced468f20e5025', status: 'die')
+
+        expect(subject.wrapped_object).to receive(:handle_restart_on_die)
+
+        subject.on_container_event('container:event', event)
+      end
     end
   end
 
