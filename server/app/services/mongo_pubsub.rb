@@ -1,69 +1,51 @@
 require_relative 'logging'
-require_relative '../helpers/async_helper.rb'
 
 class MongoPubsub
   include Celluloid
   include Logging
 
   class Subscription
-    include AsyncHelper
+    include Logging
 
     attr_reader :channel
 
     # @param [String] channel
+    # @param [Proc] block
     def initialize(channel, block)
       @channel = channel
       @block = block
-      @queue = []
-      @process = false
-      @stopped = false
-    end
-
-    def processing?
-      @process == true
+      @queue = Queue.new
     end
 
     def terminate
       stop
-      MongoPubsub.unsubscribe(self)
     end
 
     def stop
-      @stopped = true
-    end
-
-    def stopped?
-      @stopped == true
+      @queue.close
     end
 
     def queue_message(data)
-      return if stopped?
       @queue << data
-      unless processing?
-        process
+    rescue ClosedQueueError
+      nil
+    end
+
+    # returns once stopped, and queued messages have been processed
+    def process
+      while data = @queue.shift
+        send_message(data)
       end
     end
 
     private
 
-    def process
-      @process = true
-      async_thread do
-        while @process == true && @stopped == false
-          data = @queue.shift
-          if data
-            send_message(data)
-          else
-            @process = false
-          end
-        end
-      end
-    end
-
     # @param [Hash] data
     def send_message(data)
       payload = HashWithIndifferentAccess.new(MessagePack.unpack(data.data))
       @block.call(payload)
+    rescue => exc
+      error exc
     end
   end
 
@@ -77,19 +59,29 @@ class MongoPubsub
     async.tail!
   end
 
+  # @param [Subscription] subscription
+  def process_subscription(subscription)
+    defer {
+      subscription.process
+    }
+  ensure
+    self.subscriptions.delete(subscription)
+  end
+
   # @param [String] channel
   # @return [Subscription]
   def subscribe(channel, block)
     subscription = Subscription.new(channel, block)
     self.subscriptions << subscription
 
+    async.process_subscription(subscription)
+
     subscription
   end
 
   # @param [Subscription] subscription
   def unsubscribe(subscription)
-    subscription.stop unless subscription.stopped?
-    self.subscriptions.delete(subscription)
+    subscription.stop
   end
 
   # @param [String] channel
