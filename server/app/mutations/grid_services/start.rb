@@ -1,22 +1,14 @@
 module GridServices
   class Start < Mutations::Command
-    include AsyncHelper
-
     required do
       model :grid_service
     end
 
     def execute
-      prev_state = self.grid_service.state
-      async_thread do
-        begin
-          self.grid_service.set_state('running')
-          self.start_service_instances
-        rescue => exc
-          self.grid_service.set_state(prev_state)
-          raise exc
-        end
-      end
+      self.grid_service.set_state('running')
+      self.start_service_instances
+    rescue => exc
+      add_error(:start, :error, exc.message)
     end
 
     def start_service_instances
@@ -26,8 +18,9 @@ module GridServices
       end
     end
 
+    # @param node [HostNode]
     def notify_node(node)
-      RpcClient.new(node.node_id).notify('/service_pods/notify_update', 'start')
+      node.rpc_client.notify('/service_pods/notify_update', 'start')
     end
   end
 end
