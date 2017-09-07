@@ -46,10 +46,8 @@ module Kontena
           log_service_pod_event("service:create_instance", "removed previous version of service #{service_pod.name_for_humans} instance")
         end
 
-        service_config = config_container(service_pod)
-
         debug "creating container: #{service_pod.name}"
-        service_container = create_container(service_config)
+        service_container = create_container(service_pod.service_config)
         debug "container created: #{service_pod.name}"
         log_service_pod_event("service:create_instance", "service #{service_pod.name_for_humans} instance created")
         if service_container.load_balanced? && service_container.instance_number == 1
@@ -157,19 +155,6 @@ module Kontena
         container.stop('timeout' => container.stop_grace_period)
         container.wait
         container.delete(v: true)
-      end
-
-      # Docker create configuration for ServicePod
-      # @param [ServicePod] service_pod
-      # @return [Hash] Docker create API JSON object
-      def config_container(service_pod)
-        service_config = service_pod.service_config
-
-        unless service_pod.net == 'host'
-          network_adapter.modify_create_opts(service_config)
-        end
-
-        service_config
       end
 
       # @param [Hash] opts

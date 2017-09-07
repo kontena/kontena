@@ -200,6 +200,10 @@ module Kontena
         type: Kontena::NetworkAdapters::Weave,
         as: :network_adapter
       )
+      @supervisor.supervise(
+        type: Kontena::NetworkAdapters::DnsManager,
+        as: :dns_manager
+      )
     end
 
     def supervise_workers
@@ -227,10 +231,6 @@ module Kontena
       @supervisor.supervise(
         type: Kontena::Workers::StatsWorker,
         as: :stats_worker
-      )
-      @supervisor.supervise(
-        type: Kontena::Workers::WeaveWorker,
-        as: :overlay_worker
       )
       @supervisor.supervise(
         type: Kontena::Workers::ImageCleanupWorker,

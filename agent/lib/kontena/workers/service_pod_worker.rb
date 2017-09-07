@@ -1,3 +1,4 @@
+require_relative '../service_pods/infra_manager'
 require_relative '../service_pods/creator'
 require_relative '../service_pods/starter'
 require_relative '../service_pods/stopper'
@@ -144,6 +145,9 @@ module Kontena::Workers
     def ensure_desired_state
       debug "state of #{service_pod.name}: #{service_pod.desired_state}"
       service_container = get_container(service_pod.service_id, service_pod.instance_number)
+      infra_manager = Kontena::ServicePods::InfraManager.new(service_pod)
+      infra_manager.ensure_infra(service_container) unless service_pod.terminated?
+
       if service_pod.running? && service_container.nil?
         info "creating #{service_pod.name}"
         ensure_running
@@ -159,6 +163,7 @@ module Kontena::Workers
       elsif service_pod.terminated?
         info "terminating #{service_pod.name}"
         ensure_terminated if service_container
+        infra_manager.terminate
       elsif service_pod.desired_state_unknown?
         info "desired state is unknown for #{service_pod.name}, not doing anything"
       elsif state_in_sync?(service_pod, service_container)
