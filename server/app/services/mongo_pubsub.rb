@@ -104,6 +104,14 @@ class MongoPubsub
 
   # @param [String] channel
   # @param [Hash] data
+  def queue_message(channel, data)
+    self.subscriptions.each do |subscription|
+      subscription.queue_message(data.dup) if subscription.channel == channel
+    end
+  end
+
+  # @param [String] channel
+  # @param [Hash] data
   def self.publish(channel, data)
     @supervisor.actors.first.publish(channel, data)
   end
@@ -149,6 +157,7 @@ class MongoPubsub
   private
 
   def tail!
+    actor = self.current_actor
     ensure_collection!
     defer {
       begin
@@ -158,14 +167,8 @@ class MongoPubsub
         self.collection.find(query, {cursor_type: :tailable_await, batch_size: 100}).sort(:$natural => 1).each do |item|
           channel = item['channel']
           data = item['data']
-          
-          subscribers = self.subscriptions.select{|s| s.channel == channel }
-          subscribers.each do |subscription|
-            begin
-              subscription.queue_message(data.dup) if subscription
-            rescue Celluloid::DeadActorError
-            end
-          end
+
+          actor.queue_message(channel, data)
         end
       rescue => exc
         error "error while tailing: #{exc.message}"
