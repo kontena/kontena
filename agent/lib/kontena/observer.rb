@@ -1,14 +1,3 @@
-module Celluloid
-  # XXX: allow Celluloid.exclusive { ... } to be used outside of actor context: it's a no-op
-  def exclusive(&block)
-    if task = Thread.current[:celluloid_task]
-      task.exclusive(&block)
-    else
-      yield
-    end
-  end
-end
-
 module Kontena
   # Observer is observing some Observables, and tracking their observed values.
   #
