@@ -106,6 +106,7 @@ class GridServiceInstanceDeployer
       service_instance.reload
 
       next nil unless service_instance.rev && service_instance.rev >= deploy_rev
+      next if service_instance.state == 'starting'
 
       service_instance
     end

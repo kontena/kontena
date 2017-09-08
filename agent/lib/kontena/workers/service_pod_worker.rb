@@ -25,10 +25,47 @@ module Kontena::Workers
       @node = node
       @service_pod = service_pod
       @prev_state = nil # sync'd to master
-      @container_state_changed = true
       @deploy_rev_changed = false
       @restarts = 0
       subscribe('container:event', :on_container_event)
+
+      @container = nil
+      @container_state_changed = true
+      @container_ready = nil
+      @container_health = nil
+
+      @healthcheck_worker = Kontena::Workers::ContainerHealthCheckWorker.new(self.current_actor)
+    end
+
+    # @return [Celluloid::Proxy::Cell<Kontena::Workers::ContainerHealthCheckWorker>]
+    def healthcheck_worker
+      @healthcheck_worker
+    end
+
+    # Notified from Kontena::Workers::ContainerHealthCheckWorker
+    #
+    # @param container [Docker::Container]
+    # @param ready [Boolean]
+    # @param health [Boolean]
+    def on_container_health(container, ready, health)
+      if @container && @container.id == container.id && @container.started_at == container.started_at
+        @container_ready = ready
+        @container_health = health
+
+        sync_state_to_master(@container)
+
+        if ready && !health.nil? && !health
+          self.restart unless restarting?
+        end
+      end
+    end
+
+    def update_container_health(container)
+      @container_ready = nil
+      @container_health = nil
+
+      # XXX: healthcheck worker does not report new state unless container was started
+      healthcheck_worker.update_container(@service_pod, container)
     end
 
     # @param service_pod [Kontena::Models::ServicePod]
@@ -104,9 +141,18 @@ module Kontena::Workers
       @restart_backoff_timer.cancel if @restart_backoff_timer
     end
 
+    # Container died, re-apply scheduled to re-start it.
+    #
     # @return [Boolean]
     def restarting?
+      # XXX: also if waiting for restart reset
       @restarts > 0
+    end
+
+    # Force container restart, even if running
+    def restart
+      # TODO
+      info "restart..."
     end
 
     def destroy
@@ -119,23 +165,34 @@ module Kontena::Workers
       exclusive {
         begin
           @container = ensure_desired_state
-          # reset restart counter if instance stays up 10s
-          @restart_counter_reset_timer = after(10) {
-            info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter" if restarting?
-            @restarts = 0
-          }
         rescue => error
+          @container = nil
           warn "failed to sync #{service_pod.name} at #{service_pod.deploy_rev}: #{error}"
           warn error
-          sync_state_to_master(@container, error)
+          sync_state_to_master(nil, error)
+          return
         else
           @container_state_changed = false
-          sync_state_to_master(@container)
+        end
 
+        if service_pod.terminated?
           # Only terminate this actor after we have succesfully ensure_terminated the Docker container
           # Otherwise, stick around... the manager will notice we're still there and re-signal to destroy
-          self.terminate if service_pod.terminated?
+          self.terminate
+          return
         end
+
+        if restarting?
+          # reset restart counter if instance stays up 10s
+          @restart_counter_reset_timer = after(10) {
+            info "#{@service_pod.name_for_humans} stayed up 10s, resetting restart backoff counter"
+            @restarts = 0
+          }
+        end
+
+        update_container_health(@container)
+
+        sync_state_to_master(@container)
       }
     end
 
@@ -302,14 +359,18 @@ module Kontena::Workers
     # @param service_container [Docker::Container]
     # @return [String]
     def current_state(service_container)
-      return 'missing' unless service_container
-
-      if service_container.running?
-        'running'
-      elsif restarting?
+      if !service_container
+        'unknown'
+      elsif !service_container.running? && self.restarting?
         'restarting'
-      else
+      elsif !service_container.running?
         'stopped'
+      elsif !@container_ready
+        'starting'
+      elsif !@container_health.nil? && !@container_health
+        'unhealthy'
+      else
+        'running'
       end
     end
 
