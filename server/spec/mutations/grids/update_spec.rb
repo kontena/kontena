@@ -1,12 +1,17 @@
 describe Grids::Update do
-  include AsyncMock
-
   let(:user) { User.create!(email: 'joe@domain.com')}
   let(:grid) {
     grid = Grid.create!(name: 'test-grid')
     grid.users << user
     grid
   }
+  let(:grid_scheduler_job) { instance_double(GridSchedulerJob) }
+  let(:grid_scheduler_job_async) { instance_double(GridSchedulerJob) }
+
+  before do
+    allow(Celluloid::Actor).to receive(:[]).with(:grid_scheduler_job).and_return(grid_scheduler_job)
+    allow(grid_scheduler_job).to receive(:async).and_return(grid_scheduler_job_async)
+  end
 
   describe '#run' do
     before(:each) do
@@ -100,6 +105,34 @@ describe Grids::Update do
       outcome = described_class.new(user: user, grid: grid, logs: logs).run
       expect(outcome.success?).to be_falsey
       expect(grid.reload.grid_logs_opts).to be_nil
+    end
+
+    describe 'default_affinity' do
+      it 'updates the grid default affinity and reschedules services' do
+        expect(grid_scheduler_job_async).to receive(:reschedule_grid).with(grid)
+
+        expect{
+          outcome = described_class.new(user: user, grid: grid, default_affinity: ['label!=test']).run
+          expect(outcome).to be_success
+        }.to change{grid.reload.default_affinity}.to(['label!=test'])
+      end
+    end
+
+    context 'with connected grid nodes' do
+      let!(:node) { grid.create_node!('test-node', node_id: 'AAAA', connected: true) }
+      let(:rpc_client) { instance_double(RpcClient) }
+
+      before do
+        allow(RpcClient).to receive(:new).with(node.node_id, Integer).and_return(rpc_client)
+      end
+
+      it 'notifies connected grid nodes' do
+        expect(rpc_client).to receive(:notify).with('/agent/node_info', hash_including(
+
+        ))
+
+        described_class.new(user: user, grid: grid).run!
+      end
     end
   end
 end
