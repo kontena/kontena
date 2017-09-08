@@ -6,10 +6,10 @@ module Kontena::NetworkAdapters
   class Weave
     include Celluloid
     include Celluloid::Notifications
+    include Kontena::Observer::Helper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
-    include Kontena::Observer
 
     DEFAULT_NETWORK = 'kontena'.freeze
 
@@ -33,8 +33,8 @@ module Kontena::NetworkAdapters
     end
 
     def start
-      observe(Actor[:node_info_worker]) do |node|
-        launch(node)
+      observe(Actor[:node_info_worker].observable) do |node|
+        async.launch(node)
       end
     end
 

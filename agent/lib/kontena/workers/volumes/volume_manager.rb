@@ -6,8 +6,7 @@ module Kontena::Workers::Volumes
     include Celluloid::Notifications
     include Kontena::Logging
     include Kontena::Helpers::RpcHelper
-    include Kontena::Helpers::WaitHelper
-    include Kontena::Observer
+    include Kontena::Observer::Helper
 
     class DriverMismatchError < StandardError
     end
@@ -21,10 +20,7 @@ module Kontena::Workers::Volumes
     end
 
     def start
-      observe(Actor[:node_info_worker]) do |node|
-        @node = node
-      end
-      wait_until!('waiting for node info', interval: 0.5, threshold: 10.0) { self.node }
+      @node = observe(Actor[:node_info_worker].observable, timeout: 300.0)
       populate_volumes_from_docker
       loop do
         populate_volumes_from_master
