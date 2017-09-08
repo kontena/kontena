@@ -4,15 +4,12 @@ module Rpc
   class ContainerHandler
     include Logging
 
-    attr_accessor :logs_buffer_size
     attr_accessor :stats_buffer_size
 
     def initialize(grid)
       @grid = grid
-      @logs = []
       @stats = []
       @cached_containers = {}
-      @logs_buffer_size = 5
       @stats_buffer_size = 5
       @containers_cache_size = 50
       @db_session = ContainerLog.collection.client.with(
@@ -42,31 +39,40 @@ module Rpc
       end
     end
 
-    # @param [Hash] data
-    def log(data)
-      container = cached_container(data['id'])
-      if container
-        if data['time']
-          created_at = Time.parse(data['time'])
-        else
-          created_at = Time.now.utc
-        end
-        @logs << {
-          grid_id: @grid.id,
-          host_node_id: container['host_node_id'],
-          grid_service_id: container['grid_service_id'],
-          instance_number: container['instance_number'],
-          container_id: container['_id'],
-          created_at: created_at,
-          name: container['name'],
-          type: data['type'],
-          data: data['data']
-        }
-        if @logs.size >= @logs_buffer_size
-          flush_logs
-          gc_cache
-        end
+    # @param [Array<Hash>] logs
+    def log_batch(logs)
+      batch = logs.map { |data| self.build_log_item(data) }.compact
+      batch_size = batch.size
+      if batch_size > 0
+        flush_logs(batch)
+        batch.clear
+        gc_cache
       end
+      { count: batch_size }
+    end
+
+    # @param [Hash] data
+    # @return [Hash,NilClass]
+    def build_log_item(data)
+      container = cached_container(data['id'])
+      return nil unless container
+
+      if data['time']
+        created_at = Time.parse(data['time'])
+      else
+        created_at = Time.now.utc
+      end
+      {
+        grid_id: @grid.id,
+        host_node_id: container['host_node_id'],
+        grid_service_id: container['grid_service_id'],
+        instance_number: container['instance_number'],
+        container_id: container['_id'],
+        created_at: created_at,
+        name: container['name'],
+        type: data['type'],
+        data: data['data']
+      }
     end
 
     # @param [Hash] data
@@ -122,9 +128,9 @@ module Rpc
       {}
     end
 
-    def flush_logs
-      @db_session[:container_logs].insert_many(@logs)
-      @logs.clear
+    # @param [Array<Hash>]
+    def flush_logs(logs)
+      @db_session[:container_logs].insert_many(logs)
     end
 
     def flush_stats

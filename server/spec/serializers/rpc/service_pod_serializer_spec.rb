@@ -22,6 +22,7 @@ describe Rpc::ServicePodSerializer do
       stop_grace_period: 20
     )
   end
+
   let(:service_instance) do
     service.grid_service_instances.create!(
       instance_number: 2,
@@ -38,6 +39,14 @@ describe Rpc::ServicePodSerializer do
 
   let! :ext_vol do
     Volume.create(grid: grid, name: 'ext-vol', scope: 'instance', driver: 'local')
+  end
+
+  let! :domain_auth_dns do
+    GridDomainAuthorization.create!(grid: grid, authorization_type: 'dns-01', grid_service: service, domain: 'kontena.io', tls_sni_certificate: 'DNS_AUTH')
+  end
+
+  let! :domain_auth_tls do
+    GridDomainAuthorization.create!(grid: grid, authorization_type: 'tls-sni-01', grid_service: service, domain: 'www.kontena.io', tls_sni_certificate: 'TLS_AUTH')
   end
 
   describe '#to_hash' do
@@ -132,7 +141,7 @@ describe Rpc::ServicePodSerializer do
     end
 
     it 'includes secrets' do
-      expect(subject.to_hash).to include(:secrets => [])
+      expect(subject.to_hash[:secrets].size).to eq(1)
     end
 
     it 'includes default network' do
@@ -141,6 +150,11 @@ describe Rpc::ServicePodSerializer do
 
     it 'stop_grace_period' do
       expect(subject.to_hash).to include(:stop_grace_period => 20)
+    end
+
+    it 'includes domain auth as secret' do
+
+      expect(subject.to_hash[:secrets].find { |s| s[:name] == 'SSL_CERTS'}[:value]).to eq('TLS_AUTH')
     end
 
     describe '[:env]' do

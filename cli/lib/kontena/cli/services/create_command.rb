@@ -16,6 +16,9 @@ module Kontena::Cli::Services
     option ["-v", "--volume"], "VOLUME", "Add a volume or bind mount it from the host", multivalued: true
     option "--volumes-from", "VOLUMES_FROM", "Mount volumes from another container", multivalued: true
     option ["-a", "--affinity"], "AFFINITY", "Set service affinity", multivalued: true
+    option "--cpus", "CPUS", "Number of CPUs" do |cpus|
+      Float(cpus)
+    end
     option ["-c", "--cpu-shares"], "CPU_SHARES", "CPU shares (relative weight)"
     option ["-m", "--memory"], "MEMORY", "Memory limit (format: <number><optional unit>, where unit = b, k, m or g)"
     option ["--memory-swap"], "MEMORY_SWAP", "Total memory usage (memory + swap), set \'-1\' to disable swap (format: <number><optional unit>, where unit = b, k, m or g)"
@@ -69,6 +72,7 @@ module Kontena::Cli::Services
       data[:volumes_from] = volumes_from_list unless volumes_from_list.empty?
       data[:memory] = parse_memory(memory) if memory
       data[:memory_swap] = parse_memory(memory_swap) if memory_swap
+      data[:cpus] = cpus if cpus
       data[:cpu_shares] = cpu_shares if cpu_shares
       data[:affinity] = affinity_list unless affinity_list.empty?
       data[:env] = env_list unless env_list.empty?

@@ -1,0 +1,1 @@
+require 'rbtrace' if ENV['RBTRACE'].to_s == 'true'

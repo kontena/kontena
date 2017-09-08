@@ -7,6 +7,7 @@ module GridCertificates
   class GetCertificate < Mutations::Command
     include Common
     include Logging
+    include WaitHelper
 
     LE_CERT_PREFIX = 'LE_CERTIFICATE'.freeze
 
@@ -24,13 +25,16 @@ module GridCertificates
       self.domains.each do |domain|
         domain_authz = get_authz_for_domain(self.grid, domain)
 
-        if domain_authz
+        unless domain_authz
+          add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
+          return # No point to continue validations
+        end
+
+        if domain_authz.authorization_type == 'dns-01'
           # Check that the expected DNS record is already in place
           unless validate_dns_record(domain, domain_authz.challenge_opts['record_content'])
             add_error(:dns_record, :invalid, "Expected DNS record not present for domain #{domain}")
           end
-        else
-          add_error(:authorization, :not_found, "Domain authorization not found for domain #{domain}")
         end
 
       end
@@ -54,13 +58,19 @@ module GridCertificates
           end
         end
 
-        Timeout::timeout(30) {
-          info 'waiting for DNS validation...'
-          sleep 1 until challenge.verify_status == 'valid'
-          info 'DNS validation complete'
+
+        wait_until!("domain verification for #{domain} is valid", interval: 1, timeout: 30, threshold: 10) {
+          challenge.verify_status != 'pending'
         }
 
-        domain_authz.state = :validated
+        case challenge.verify_status
+        when 'valid'
+          domain_authz.state = :validated
+        when 'invalid'
+          domain_authz.state = :invalid
+          add_error(:challenge, :invalid, challenge.error['detail'])
+        end
+
         domain_authz.save
 
       end
