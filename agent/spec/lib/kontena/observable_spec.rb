@@ -187,46 +187,6 @@ describe Kontena::Observable do
       expect(observer_actor.ordered?).to be_truthy
     end
 
-    it "handles concurrent observers" do
-      observer_count = 20
-      update_count = 10
-
-      # setup
-      observer_actors = observer_count.times.map {
-        TestObserverActor.new
-      }
-
-      # start spamming updates while the observer actors are concurrently observing
-      future = observable_actor.future.spam_updates(1..update_count, delay: 0.005, interval: 0.001)
-
-      observer_actors.each do |actor|
-        actor.async.test_ordering(subject)
-        sleep 0.001
-      end
-
-      # wait for observable actor to notify all observers
-      future.value
-
-      # wait for all observers to observe and update
-      observer_actors.each do |actor|
-        actor.ping
-      end
-
-      # all observers get the final value
-      expect(observer_actors.map{|actor| actor.observed_values.last}).to eq [update_count] * observer_count
-
-      # make sure they get the values in order
-      expect(observer_actors.map{|actor| actor.ordered?}).to eq [true] * observer_count
-
-      # some observers observed before the first update, some after
-      # this is potentially racy, but it's important, or this spec doesn't test what it should!
-      min_first = observer_actors.map{|actor| actor.observed_values.first}.min
-      max_first = observer_actors.map{|actor| actor.observed_values.first}.max
-
-      expect(min_first).to be < max_first
-      expect(max_first).to be > 1
-    end
-
     describe "propagating observed updates" do
       let :chaining_class do
         Class.new do
@@ -270,6 +230,55 @@ describe Kontena::Observable do
 
         expect(observer_actor.observed_values).to eq ["chained: test"]
       end
+    end
+  end
+
+  it "handles concurrent observers", :celluloid => true do
+    observer_count = 20
+    update_count = 10
+
+    begin
+      observable_actor = TestObservableActor.new
+      observable = observable_actor.observable
+
+      # setup
+      observer_actors = observer_count.times.map {
+        TestObserverActor.new
+      }
+
+      # start spamming updates while the observer actors are concurrently observing
+      future = observable_actor.future.spam_updates(1..update_count, delay: 0.005, interval: 0.001)
+
+      observer_actors.each do |actor|
+        actor.async.test_ordering(observable)
+        sleep 0.001
+      end
+
+      # wait for observable actor to notify all observers
+      future.value
+
+      # wait for all observers to observe and update
+      observer_actors.each do |actor|
+        actor.ping
+      end
+
+      # all observers get the final value
+      expect(observer_actors.map{|actor| actor.observed_values.last}).to eq [update_count] * observer_count
+
+      # make sure they get the values in order
+      expect(observer_actors.map{|actor| actor.ordered?}).to eq [true] * observer_count
+
+      # validate that observer race conditions were triggered
+      # some observers observed before the first update, some after
+      # this is not a bug in the observable/observer!
+      # the spec just didn't hit the desired race condition
+      min_first = observer_actors.map{|actor| actor.observed_values.first}.min
+      max_first = observer_actors.map{|actor| actor.observed_values.first}.max
+
+      fail "retry" unless min_first == 1 && max_first > 1
+
+    rescue RuntimeError => exc
+      retry if exc.message == "retry"
     end
   end
 end
