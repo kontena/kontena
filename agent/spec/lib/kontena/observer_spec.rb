@@ -191,6 +191,14 @@ describe Kontena::Observer, :celluloid => true do
         expect(subject.observe(observable, timeout: 1.0)).to eq object
       end
 
+      it 'observes in non-persistent mode' do
+        observable_actor.delay_update(object, delay: 0.1)
+
+        expect(subject.observe(observable)).to eq object
+
+        expect(observable).to_not be_observed
+      end
+
       it 'does not lose wait messages' do
         allow(subject.wrapped_object).to receive(:debug) do |msg|
           sleep 0.2
@@ -251,6 +259,18 @@ describe Kontena::Observer, :celluloid => true do
         expect{observable_actor.crash()}.to raise_error(RuntimeError)
         expect(subject.alive?).to be_truthy
         expect{subject.ping}.to_not raise_error # Celluloid::DeadActorError
+      end
+
+      context 'for an immediate observable' do
+        before do
+          observable_actor.update(object)
+        end
+
+        it 'observes in non-persistent mode' do
+          expect(subject.observe(observable)).to eq object
+
+          expect(observable).to_not be_observed
+        end
       end
     end
 

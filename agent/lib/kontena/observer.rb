@@ -88,7 +88,7 @@ module Kontena
       Celluloid.exclusive {
         # this block should not make any suspending calls, but use exclusive mode to guarantee that regardless
         observables.each do |observable|
-          observer.observe(observable)
+          observer.observe(observable, persistent: persistent)
         end
       }
 
