@@ -241,10 +241,6 @@ module Kontena
         as: :image_cleanup_worker
       )
       @supervisor.supervise(
-        type: Kontena::Workers::HealthCheckWorker,
-        as: :health_check_worker
-      )
-      @supervisor.supervise(
         type: Kontena::Workers::FluentdWorker,
         as: :fluentd_worker
       )
