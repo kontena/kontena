@@ -168,14 +168,6 @@ describe Kontena::Models::ServicePod do
       expect(service_config['Image']).to eq(data['image_name'])
     end
 
-    it 'includes Hostname' do
-      expect(service_config['Hostname']).to eq(service_config['Hostname'])
-    end
-
-    it 'includes Domainname' do
-      expect(service_config['Domainname']).to eq(service_config['Domainname'])
-    end
-
     it 'does not include HostName if host network' do
       data['net'] = 'host'
       expect(service_config.has_key?('HostName')).to be_falsey
@@ -307,11 +299,6 @@ describe Kontena::Models::ServicePod do
       expect(host_config['NetworkMode']).to eq('host')
     end
 
-    it 'sets DnsSearch' do
-      expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'])
-      expect(host_config['DnsSearch']).to include(subject.service_config['Domainname'].split(".", 2)[1])
-    end
-
     it 'does not include CpuShares if not defined' do
       expect(host_config['CpuShares']).to be_nil
     end
@@ -324,6 +311,24 @@ describe Kontena::Models::ServicePod do
     it 'sets PidMode if set' do
       data['pid'] = 'host'
       expect(host_config['PidMode']).to eq('host')
+    end
+  end
+
+  describe '#infra_config' do
+    let(:infra_config) { subject.infra_config }
+
+    it 'includes Hostname' do
+      expect(infra_config['Hostname']).to eq(subject.hostname)
+    end
+
+    it 'includes Domainname' do
+      expect(infra_config['Domainname']).to eq(subject.domainname)
+    end
+
+    it 'sets DnsSearch' do
+      host_config = infra_config['HostConfig']
+      expect(host_config['DnsSearch']).to include(subject.domainname)
+      expect(host_config['DnsSearch']).to include(subject.domainname.split(".", 2)[1])
     end
   end
 

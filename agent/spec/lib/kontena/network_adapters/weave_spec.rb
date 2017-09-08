@@ -201,22 +201,6 @@ describe Kontena::NetworkAdapters::Weave do
 
   describe '#modify_host_config' do
 
-    let(:weavewait) { "weavewait-#{described_class::WEAVE_VERSION}:ro"}
-
-    it 'adds weavewait to empty VolumesFrom' do
-      opts = {}
-      subject.modify_host_config(opts)
-      expect(opts['HostConfig']['VolumesFrom']).to include(weavewait)
-    end
-
-    it 'adds weavewait to non-empty VolumesFrom' do
-      opts = {
-       'VolumesFrom' => ['foobar-data']
-      }
-      subject.modify_host_config(opts)
-      expect(opts['HostConfig']['VolumesFrom']).to include(weavewait)
-    end
-
     it 'adds dns settings' do
       opts = {
         'Domainname' => 'foo.bar.kontena.io'
