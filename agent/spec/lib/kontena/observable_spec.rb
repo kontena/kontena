@@ -55,8 +55,8 @@ describe Kontena::Observable do
   end
 
   context 'when initialized' do
-    it 'is not observable?' do
-      expect(subject).to_not be_observable
+    it 'is not ready?' do
+      expect(subject).to_not be_ready
     end
 
     it 'is not crashed?' do
@@ -75,8 +75,8 @@ describe Kontena::Observable do
       subject.update value
     end
 
-    it 'is observable?' do
-      expect(subject).to be_observable
+    it 'is ready?' do
+      expect(subject).to be_ready
     end
 
     it 'is not crashed?' do
@@ -94,8 +94,8 @@ describe Kontena::Observable do
         subject.reset
       end
 
-      it 'is not observable?' do
-        expect(subject).to_not be_observable
+      it 'is not ready?' do
+        expect(subject).to_not be_ready
       end
 
       it 'is not crashed?' do
@@ -115,8 +115,8 @@ describe Kontena::Observable do
       subject.crash RuntimeError.new
     end
 
-    it 'is observable?' do
-      expect(subject).to be_observable
+    it 'is ready?' do
+      expect(subject).to be_ready
     end
 
     it 'is crashed?' do

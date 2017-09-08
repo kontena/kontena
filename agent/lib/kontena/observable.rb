@@ -73,7 +73,7 @@ module Kontena
       "#{self.class.name}<#{@subject}>"
     end
 
-    # @return [Object, nil] last updated value, or nil if not observable?
+    # @return [Object, nil] last updated value, or nil if not ready?
     def get
       @value
     end
@@ -81,7 +81,7 @@ module Kontena
     # Observable has updated, and has not reset. It might be crashed?
     #
     # @return [Boolean]
-    def observable?
+    def ready?
       !!@value
     end
 
