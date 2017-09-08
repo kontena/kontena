@@ -174,7 +174,7 @@ module Kontena::Workers
 
     # @param service_container [Docker::Container]
     def ensure_infra(service_container)
-      infra_manager.ensure_infra(service_container)
+      infra_manager(service_pod).ensure_infra(service_container)
     end
 
     def ensure_running
