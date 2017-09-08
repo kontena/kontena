@@ -16,7 +16,17 @@ describe Kontena::Workers::ServicePodWorker do
   describe '#ensure_desired_state' do
     before(:each) do
       mock_rpc_client
+      allow(subject.wrapped_object).to receive(:ensure_infra)
       allow(rpc_client).to receive(:request)
+    end
+
+    it 'calls ensure_infra' do
+      allow(subject.wrapped_object).to receive(:get_container).and_return(nil)
+      allow(service_pod).to receive(:running?).and_return(true)
+      allow(subject.wrapped_object).to receive(:ensure_running)
+
+      expect(subject.wrapped_object).to receive(:ensure_infra)
+      subject.ensure_desired_state
     end
 
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
