@@ -165,12 +165,12 @@ benchmark(
     map_futures(1..COUNT) {|id| sleep 0.001; test_wait.future.request(id) }
   },
   'condition' => -> {
-    map_futures(1..COUNT) {|id| test_condition.future.request(id) }
+    map_futures(1..COUNT) {|id| sleep 0.001; test_condition.future.request(id) }
   },
   'observer'  => -> {
-    map_futures(1..COUNT) {|id| test_observer.future.request(id) }
+    map_futures(1..COUNT) {|id| sleep 0.001; test_observer.future.request(id) }
   },
   'future'    => -> {
-    map_futures(1..COUNT) {|id| test_future.future.request(id) }
+    map_futures(1..COUNT) {|id| sleep 0.001; test_future.future.request(id) }
   },
 )
