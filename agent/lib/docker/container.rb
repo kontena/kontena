@@ -76,6 +76,11 @@ module Docker
       false
     end
 
+    # @return [DateTime]
+    def started_at
+      DateTime.parse(cached_json['State']['StartedAt'])
+    end
+
     # @return [Boolean]
     def finished?
       DateTime.parse(self.state['FinishedAt']).year > 1
@@ -212,6 +217,11 @@ module Docker
     # @return [Integer]
     def stop_grace_period
       (self.labels['io.kontena.container.stop_grace_period'] || 10).to_i
+    end
+
+    # @return [Boolean]
+    def health_check?
+      !!self.labels['io.kontena.health_check.uri']
     end
 
     private
