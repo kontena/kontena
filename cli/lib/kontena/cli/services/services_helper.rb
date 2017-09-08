@@ -161,6 +161,14 @@ module Kontena
             end
           end
 
+          unless service['cpus'].to_s.empty?
+            puts "  cpus: #{service['cpus']}"
+          end
+
+          unless service['cpu_shares'].to_s.empty?
+            puts "  cpu_shares: #{service['cpu_shares']}"
+          end
+
           unless service['memory'].to_s.empty?
             puts "  memory: #{int_to_filesize(service['memory'])}"
           end

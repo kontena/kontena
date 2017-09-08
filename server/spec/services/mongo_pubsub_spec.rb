@@ -1,5 +1,5 @@
 
-describe MongoPubsub do
+describe MongoPubsub, :celluloid => true do
 
   describe '.publish' do
     it 'sends message to channel subscribers' do
@@ -65,6 +65,27 @@ describe MongoPubsub do
       expect(mailbox2).to eq(expected_mailbox)
       sub1.terminate
       sub2.terminate
+    end
+
+    it 'handles subscribers that crash' do
+      @crash = false
+      @done = false
+      sub1 = described_class.subscribe('test') do |msg|
+        if msg[:crash]
+          @crash = true
+          fail msg[:crash]
+        elsif msg[:done]
+          @done = true
+        end
+      end
+
+      described_class.publish('test', crash: false)
+      described_class.publish('test', crash: 'test')
+      WaitHelper.wait_until!("crashed", interval: 0.05) { @crash }
+      described_class.publish('test', done: true)
+      WaitHelper.wait_until!("done", interval: 0.05) { @done }
+
+      sub1.terminate
     end
 
     it 'cleanups threads' do

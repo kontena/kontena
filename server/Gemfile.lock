@@ -68,6 +68,8 @@ GEM
     json-serializer (1.0.0)
     jsonpath (0.8.3)
       multi_json
+    kontena-websocket-client (0.1.1)
+      websocket-driver (~> 0.6.5)
     listen (2.8.3)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
@@ -104,6 +106,10 @@ GEM
     rb-fsevent (0.9.4)
     rb-inotify (0.9.5)
       ffi (>= 0.5.0)
+    rbtrace (0.4.8)
+      ffi (>= 1.0.6)
+      msgpack (>= 0.4.3)
+      trollop (>= 1.16.2)
     rerun (0.10.0)
       listen (~> 2.7, >= 2.7.3)
     roda (2.26.0)
@@ -139,6 +145,7 @@ GEM
       tilt (<= 1.5.0)
     timers (4.1.2)
       hitimes
+    trollop (2.1.2)
     tzinfo (1.2.3)
       thread_safe (~> 0.1)
     url_safe_base64 (0.2.2)
@@ -164,6 +171,7 @@ DEPENDENCIES
   json-jwt (= 1.5.2)
   json-serializer
   jsonpath
+  kontena-websocket-client (~> 0.1.1)
   lru_redux (~> 1.1.0)
   mongoid (~> 5.2.1)
   mongoid-enum
@@ -175,6 +183,7 @@ DEPENDENCIES
   rack-attack
   rack-test
   random_token
+  rbtrace
   rerun
   roda (~> 2.26.0)
   rollbar
@@ -186,4 +195,4 @@ DEPENDENCIES
   websocket-driver (~> 0.6.2)
 
 BUNDLED WITH
-   1.14.3
+   1.15.3

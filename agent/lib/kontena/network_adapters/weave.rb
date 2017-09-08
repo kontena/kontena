@@ -9,12 +9,12 @@ module Kontena::NetworkAdapters
   class Weave
     include Celluloid
     include Celluloid::Notifications
+    include Kontena::Observable::Helper
+    include Kontena::Observer::Helper
     include Kontena::Helpers::IfaceHelper
     include Kontena::Helpers::LauncherHelper
     include Kontena::Helpers::WeaveHelper
     include Kontena::Logging
-    include Kontena::Observer
-    include Kontena::Observable
 
     WEAVEWAIT_NAME = "weavewait-#{WEAVE_VERSION}"
     DEFAULT_NETWORK = 'kontena'.freeze
@@ -34,7 +34,7 @@ module Kontena::NetworkAdapters
       self.ensure_weavewait
 
       observe(Actor[:node_info_worker], Actor[:weave_launcher], Actor[:ipam_plugin_launcher]) do |node, weave, ipam|
-        update(node) unless updated? # only once
+        async.update(node) unless updated? # only once
       end
     end
 

@@ -64,6 +64,7 @@ V1::GridsApi.route('grid_secrets') do |r|
   # GET /v1/grids/:grid/secrets
   r.get do
     r.is do
+      @grid_services = @grid.grid_services.where(:secrets.exists => true)
       @grid_secrets = @grid.grid_secrets.includes(:grid)
       render('grid_secrets/index')
     end

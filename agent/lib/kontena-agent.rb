@@ -9,6 +9,7 @@ require 'kontena-websocket-client'
 
 require_relative 'ipaddress_patch'
 
+require_relative 'celluloid/exclusive_patch'
 require_relative 'docker/version'
 require_relative 'docker/container'
 require_relative 'etcd/health'

@@ -2,7 +2,6 @@ require_relative 'common'
 
 module HostNodes
   class Update < Mutations::Command
-
     include Common
     include Logging
 
@@ -45,13 +44,16 @@ module HostNodes
         if instance.grid_service.stateful?
           info "setting desired state to stopped for instance #{instance.grid_service.to_path}-#{instance.instance_number}"
           instance.set(desired_state: 'stopped')
-          notify_node(instance.host_node) if instance.host_node
+          notify_service_instance(instance, 'stop')
         end
       end
     end
 
-    def notify_node(node)
-      RpcClient.new(node.node_id).notify('/service_pods/notify_update', 'stop')
+    # @param instance [GridServiceInstance]
+    def notify_service_instance(instance, action)
+      if instance.host_node
+        instance.host_node.rpc_client.notify('/service_pods/notify_update', action)
+      end
     end
 
     def start_stateful_services(host_node)
@@ -61,7 +63,7 @@ module HostNodes
         if instance.grid_service.stateful? && instance.grid_service.running? && instance.desired_state == 'stopped'
           info "setting desired state to running for instance #{instance.grid_service.to_path}-#{instance.instance_number}"
           instance.set(desired_state: 'running')
-          notify_node(instance.host_node) if instance.host_node
+          notify_service_instance(instance, 'start')
         end
       end
     end

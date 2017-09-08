@@ -1,19 +1,32 @@
-class TestObservable
+class TestObservableActor
   include Celluloid
-  include Kontena::Observable
+  include Kontena::Observable::Helper
+  include Kontena::Logging
 
   def ping
-
+    debug "ping"
   end
 
-  def crash(delay: nil)
+  def crash(msg = nil, delay: nil)
     sleep delay if delay
-    fail
+    if msg
+      fail msg
+    else
+      fail
+    end
+  end
+
+  def update(value)
+    observable.update(value)
+  end
+
+  def reset
+    observable.reset
   end
 
   def delay_update(value, delay: )
     after(delay) do
-      update_observable value
+      observable.update(value)
     end
   end
 
@@ -25,190 +38,247 @@ class TestObservable
     for value in values
       break if deadline && Time.now >= deadline
 
-      update_observable(value)
+      observable.update(value)
 
       sleep interval if interval
     end
   end
 end
 
-class TestObservableStandalone
-  include Kontena::Observable
-end
+describe Kontena::Observable do
+  let(:value) { double(:value) }
 
-describe Kontena::Observable, :celluloid => true do
-  let(:observable_class) { TestObservable }
-  let(:observer_class) { TestObserver }
-
-  subject { observable_class.new }
-  let(:observer) { observer_class.new }
-  let(:object) { double(:test) }
-
-  describe '#update_observable' do
-    it "rejects a nil update", :log_celluloid_actor_crashes => false do
-      expect{subject.update_observable nil}.to raise_error(ArgumentError)
+  describe '#update' do
+    it "rejects a nil update" do
+      expect{subject.update nil}.to raise_error(ArgumentError)
     end
   end
 
   context 'when initialized' do
-    it 'is not observable?' do
-      expect(subject).to_not be_observable
+    it 'is not ready?' do
+      expect(subject).to_not be_ready
     end
 
-    describe '#observable_value' do
+    it 'is not crashed?' do
+      expect(subject).to_not be_crashed
+    end
+
+    describe '#get' do
       it 'returns nil' do
-        expect(subject.observable_value).to be nil
+        expect(subject.get).to be nil
       end
     end
   end
 
   context 'when updated' do
     before do
-      subject.update_observable object
+      subject.update value
     end
 
-    it 'is observable?' do
-      expect(subject).to be_observable
+    it 'is ready?' do
+      expect(subject).to be_ready
     end
 
-    describe '#observable_value' do
+    it 'is not crashed?' do
+      expect(subject).to_not be_crashed
+    end
+
+    describe '#get' do
       it 'returns the value' do
-        expect(subject.observable_value).to eq object
+        expect(subject.get).to eq value
       end
     end
 
     context 'when reset' do
       before do
-        subject.reset_observable
+        subject.reset
       end
 
-      it 'is not observable?' do
-        expect(subject).to_not be_observable
+      it 'is not ready?' do
+        expect(subject).to_not be_ready
       end
 
-      describe '#observable_value' do
+      it 'is not crashed?' do
+        expect(subject).to_not be_crashed
+      end
+
+      describe '#get' do
         it 'returns nil' do
-          expect(subject.observable_value).to be nil
+          expect(subject.get).to be nil
         end
       end
     end
   end
 
-  it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
-    observer.test_observe_async(subject)
+  context 'when crashed' do
+    before do
+      subject.crash RuntimeError.new
+    end
 
-    expect(subject.observers).to_not be_empty
+    it 'is ready?' do
+      expect(subject).to be_ready
+    end
 
-    expect{observer.crash}.to raise_error(RuntimeError)
+    it 'is crashed?' do
+      expect(subject).to be_crashed
+    end
 
-    # make sure the observer is really dead
-    expect{observer.ping}.to raise_error(Celluloid::DeadActorError)
-    expect(observer).to_not be_alive
-    subject.ping
-
-    subject.update_observable(object)
-    expect(subject.observers).to be_empty
+    describe '#update' do
+      it "rejects any update" do
+        expect{subject.update nil}.to raise_error(RuntimeError)
+      end
+    end
   end
 
-  it "delivers updates in the right order" do
-    observer.test_ordering(subject)
+  context 'registered by an Actor', :celluloid => true do
+    let(:registry) { Kontena::Observable.registry }
+    let(:observable_actor) { TestObservableActor.new }
+    subject { observable_actor.observable }
+    let(:observer_actor) { TestObserverActor.new }
 
-    update_count = 150
+    it 'is observable after updating' do
+      observable_actor.update(value)
 
-    subject.spam_updates(1..update_count, interval: false)
+      expect(observer_actor.observe(subject, timeout: 0.0)).to eq value
+    end
 
-    expect(observer.observed_values.last).to eq update_count
-    expect(observer.ordered?).to be_truthy
+    it 'is observable before updating' do
+      observable_actor.delay_update(value, delay: 0.05)
+
+      expect(observer_actor.observe(subject, timeout: 1.0)).to eq value
+    end
+
+    it "propagates crashes to observers and unregisters after crashing" do
+      subject
+
+      expect(registry.registered? subject).to be_truthy
+
+      observable_actor.async.crash('test', delay: 0.1)
+
+      expect{observer_actor.observe(subject)}.to raise_error(Kontena::Observer::Error, 'RuntimeError@Kontena::Observable<TestObservableActor>: test')
+
+      expect(registry.registered? subject).to be_falsey
+    end
+
+    it "stops notifying any crashed observers", :log_celluloid_actor_crashes => false do
+      observer_actor.async.test_observe_async(subject)
+      observer_actor.ping
+
+      expect(subject).to be_observed
+
+      expect{observer_actor.crash}.to raise_error(RuntimeError)
+
+      # make sure the observer is really dead
+      expect{observer_actor.ping}.to raise_error(Celluloid::DeadActorError)
+      expect(observer_actor).to_not be_alive
+
+      subject.update(value)
+      expect(subject).to_not be_observed
+    end
+
+    it "delivers updates in the right order" do
+      observer_actor.async.test_ordering(subject)
+
+      update_count = 150
+
+      observable_actor.spam_updates(1..update_count, interval: false)
+
+      expect(observer_actor.observed_values.last).to eq update_count
+      expect(observer_actor.ordered?).to be_truthy
+    end
+
+    describe "propagating observed updates" do
+      let :chaining_class do
+        Class.new do
+          include Celluloid
+          include Kontena::Observer::Helper
+
+          attr_reader :observable
+
+          def initialize
+            @observable = Kontena::Observable.new
+          end
+
+          def test_observe_chain(observable)
+            observe(observable) do |value|
+              @observable.update "chained: " + value
+            end
+          end
+
+          def ping
+
+          end
+        end
+      end
+
+      let(:chaining_actor) { chaining_class.new }
+      let(:observer_actor) { TestObserverActor.new }
+
+      it "propagates the observed value" do
+        chaining_actor.async.test_observe_chain(subject)
+        observer_actor.async.test_observe_async(chaining_actor.observable)
+
+        observable_actor.update "test"
+
+        chaining_actor.ping # wait for intermediate actor to handle update
+        chaining_actor.ping # wait for intermediate actor to handle update
+        observer_actor.ping # wait for observing actor to handle update
+
+        sleep 0.01
+
+        observer_actor.ping # wait for observing actor to handle update
+
+        expect(observer_actor.observed_values).to eq ["chained: test"]
+      end
+    end
   end
 
-  it "handles concurrent observers" do
+  it "handles concurrent observers", :celluloid => true do
     observer_count = 20
     update_count = 10
 
-    # setup
-    observers = observer_count.times.map {
-      observer_class.new
-    }
+    begin
+      observable_actor = TestObservableActor.new
+      observable = observable_actor.observable
 
-    observers.each do |observer|
-      observer.async.test_ordering(subject)
-    end
-
-    # run updates sync while the observers are starting
-    subject.spam_updates(1..update_count, interval: 0.001)
-
-    # wait for observable to notify all observers
-    subject.ping
-
-    # wait for all observers to observe and update
-    observers.each do |obs| obs.ping end
-    observers.each do |obs| obs.ping end # and maybe a second round for the async update
-
-    # all observers got the final value
-    expect(observers.map{|obs| obs.observed_values.last}).to eq [update_count] * observer_count
-
-    # some observers only observed after the first update
-    # this is potentially racy, but it's important, or this spec doesn't test what it should
-    expect(observers.map{|obs| obs.observed_values.first}.max).to be > 1
-
-    # also expect this...
-    expect(observers.map{|obs| obs.ordered?}).to eq [true] * observer_count
-  end
-
-  context 'for a standalone Observable' do
-    let :actor_class do
-      ActorClass = Class.new do
-        include Celluloid
-      end
-    end
-
-    let(:actor) { actor_class.new }
-    let(:subject) { TestObservableStandalone.new }
-    let(:value) { double() }
-
-    it 'is observable' do
-      subject
-      actor.after(0.05) {
-        subject.update_observable(value)
+      # setup
+      observer_actors = observer_count.times.map {
+        TestObserverActor.new
       }
 
-      expect(observer.observe(subject, timeout: 1.0)).to eq value
-    end
-  end
+      # start spamming updates while the observer actors are concurrently observing
+      future = observable_actor.future.spam_updates(1..update_count, delay: 0.005, interval: 0.001)
 
-  context "For chained observables" do
-    let :chaining_class do
-      Class.new do
-        include Celluloid
-        include Kontena::Observer
-        include Kontena::Observable
-
-        def test_observe_chain(observable)
-          @observe_state = observe(observable) do |value|
-            update_observable "chained: " + value
-          end
-        end
-
-        def ping
-
-        end
+      observer_actors.each do |actor|
+        actor.async.test_ordering(observable)
+        sleep 0.001
       end
-    end
 
-    describe '#observe => #update_observable' do
-      it "propagates the observed value" do
-        chaining = chaining_class.new
-        chaining.test_observe_chain(subject)
-        observer = observer_class.new
-        observer.test_observe_async(chaining)
+      # wait for observable actor to notify all observers
+      future.value
 
-        subject.update_observable "test"
-
-        chaining.ping # wait for intermediate actor to handle update
-
-        expect(observer).to be_observe_ready
-        expect(observer.observed_values).to eq ["chained: test"]
+      # wait for all observers to observe and update
+      observer_actors.each do |actor|
+        actor.ping
       end
+
+      # all observers get the final value
+      expect(observer_actors.map{|actor| actor.observed_values.last}).to eq [update_count] * observer_count
+
+      # make sure they get the values in order
+      expect(observer_actors.map{|actor| actor.ordered?}).to eq [true] * observer_count
+
+      # validate that observer race conditions were triggered
+      # some observers observed before the first update, some after
+      # this is not a bug in the observable/observer!
+      # the spec just didn't hit the desired race condition
+      min_first = observer_actors.map{|actor| actor.observed_values.first}.min
+      max_first = observer_actors.map{|actor| actor.observed_values.first}.max
+
+      fail "retry" unless min_first == 1 && max_first > 1
+
+    rescue RuntimeError => exc
+      retry if exc.message == "retry"
     end
   end
 end

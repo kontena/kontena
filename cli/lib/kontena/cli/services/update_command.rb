@@ -14,6 +14,9 @@ module Kontena::Cli::Services
     option ["-e", "--env"], "ENV", "Set environment variables", multivalued: true
     option ["-l", "--link"], "LINK", "Add link to another service in the form of name:alias", multivalued: true
     option ["-a", "--affinity"], "AFFINITY", "Set service affinity", multivalued: true
+    option "--cpus", "CPUS", "Number of CPUs" do |cpus|
+      Float(cpus)
+    end
     option ["-c", "--cpu-shares"], "CPU_SHARES", "CPU shares (relative weight)"
     option ["-m", "--memory"], "MEMORY", "Memory limit (format: <number><optional unit>, where unit = b, k, m or g)"
     option ["--memory-swap"], "MEMORY_SWAP", "Total memory usage (memory + swap), set \'-1\' to disable swap (format: <number><optional unit>, where unit = b, k, m or g)"
@@ -60,6 +63,7 @@ module Kontena::Cli::Services
       data[:links] = parse_links(link_list) unless link_list.empty?
       data[:memory] = parse_memory(memory) if memory
       data[:memory_swap] = parse_memory(memory_swap) if memory_swap
+      data[:cpus] = cpus if cpus
       data[:cpu_shares] = cpu_shares if cpu_shares
       data[:affinity] = affinity_list unless affinity_list.empty?
       data[:env] = env_list unless env_list.empty?

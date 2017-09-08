@@ -117,6 +117,17 @@ describe GridServices::Create do
       expect(outcome.result.user).to eq('redis')
     end
 
+    it 'saves cpus' do
+      outcome = described_class.new(
+          grid: grid,
+          image: 'redis:2.8',
+          name: 'redis',
+          stateful: true,
+          cpus: 2
+      ).run
+      expect(outcome.result.cpus).to eq(2)
+    end
+
     it 'saves cpu_shares' do
       outcome = described_class.new(
           grid: grid,
@@ -466,7 +477,7 @@ describe GridServices::Create do
       expect(outcome).to_not be_success
       expect(outcome.errors.message).to eq 'env' => [ "Env[0] isn't in the right format" ]
     end
-    
+
     it 'saves stop_grace_period with default if not given' do
       outcome = described_class.new(
           grid: grid,

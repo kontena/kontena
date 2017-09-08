@@ -5,14 +5,16 @@ module Kontena
   class RpcClient
     include Celluloid
     include Kontena::Logging
-    include Kontena::Observer
+    include Kontena::Observer::Helper
     include Kontena::Helpers::WaitHelper
 
-    class RequestObservable
-      include Kontena::Observable
+    class RequestObservable < Kontena::Observable
+      def initialize(method, id)
+        super("#{method}@#{id}")
+      end
 
       def set_response(result, error)
-        update_observable([result, error])
+        update([result, error])
       end
     end
 
@@ -65,7 +67,7 @@ module Kontena
       end
 
       id = request_id
-      observable = @requests[id] = RequestObservable.new
+      observable = @requests[id] = RequestObservable.new(method, id)
 
       websocket_client.send_request(id, method, params)
 

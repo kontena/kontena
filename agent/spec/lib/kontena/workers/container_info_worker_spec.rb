@@ -64,7 +64,7 @@ describe Kontena::Workers::ContainerInfoWorker, celluloid: true do
     it 'logs error on unknown exception' do
       event = double(:event, status: 'start', id: 'foo')
       expect(Docker::Container).to receive(:get).once.and_raise(StandardError)
-      expect(subject.wrapped_object.logger).to receive(:error).twice
+      expect(subject.wrapped_object).to receive(:error).twice
       subject.on_container_event('topic', event)
     end
   end

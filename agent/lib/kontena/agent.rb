@@ -119,16 +119,21 @@ module Kontena
     end
 
     def handle_trace
-      info "Dump thread trace..."
+      info "Dump celluloid actor and thread stacks..."
+
+      Celluloid.dump
 
       Thread.list.each do |thread|
-        warn "Thread #{thread.object_id.to_s(36)} #{thread['label']}"
-        if thread.backtrace
-          warn thread.backtrace.join("\n")
-        else
-          warn "no backtrace available"
+        next if thread[:celluloid_actor_system]
+
+        puts "Thread 0x#{thread.object_id.to_s(16)} <#{thread.name}>"
+        if backtrace = thread.backtrace
+          puts "\t#{backtrace.join("\n\t")}"
         end
+        puts
       end
+
+      info "Dump cellulooid actor and thread stacks: done"
     end
 
     def supervise
@@ -143,6 +148,10 @@ module Kontena
     end
 
     def supervise_state
+      @supervisor.supervise(
+        type: Kontena::Observable::Registry,
+        as: :observable_registry,
+      )
       @supervisor.supervise(
         type: Kontena::Workers::NodeInfoWorker,
         as: :node_info_worker,
