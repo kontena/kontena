@@ -300,6 +300,17 @@ describe Kontena::Observer, :celluloid => true do
 
       expect(Kontena::Observer.observe(observable)).to eq object
     end
+
+    it "yields with observed values" do
+      Thread.new {
+        sleep 0.1
+        observable.update false
+        sleep 0.1
+        observable.update object
+      }
+
+      expect(Kontena::Observer.observe(observable) { |value| break value if value}).to eq object
+    end
   end
 
   context "For two observables" do

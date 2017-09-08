@@ -74,7 +74,7 @@ module Kontena
     #   Yields again whenever any Observable updates.
     #   Does not yield if any Observable resets, until ready again.
     #   Raises if any of the observed Actors crashes.
-    #   Does not return.
+    #   Does not return, unless the block itself breaks/returns.
     #
     #   Suspends the task in between yields.
     #   Yields in exclusive mode.
