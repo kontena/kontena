@@ -16,10 +16,9 @@ def getenv(name, default = nil)
   value
 end
 
-COUNT = getenv('COUNT', 1000) { |v| Integer(v) }
 BENCHMARK = getenv('BENCHMARK')
 
-def benchmark_main(cases, count: COUNT, before_each: nil)
+def benchmark_main(cases, before_each: nil)
   label_width = cases.keys.map{|k| k.length}.max
   stats = {}
 
@@ -27,21 +26,25 @@ def benchmark_main(cases, count: COUNT, before_each: nil)
     cases.each_pair do |label, block|
       next if BENCHMARK and label != BENCHMARK
       before_each.call if before_each
-      bm.report(label) do
-        futures = (1..count).map{|id| sleep 0.001; block.call(id) }
-        total_delay = futures.map{|f| f.value }.sum
 
-        stats[label] = {
-          total_delay: total_delay,
-          average_delay: total_delay / count,
-        }
+      results = nil
+      bm.report(label) do
+        results = block.call
       end
+
+      stats[label] = {
+        count: results.length,
+        total: results.sum,
+        min: results.min,
+        average: results.sum / results.length,
+        max: results.max,
+      }
     end
   end
 
-  puts "%-12s %12s" % ['', 'delay']
+  puts "%-12s %12s %12s %12s %12s" % ['', 'count', 'min', 'avg', 'max']
   stats.each_pair do |label, stat|
-    puts '%-12s %12.6f' % [label, stat[:average_delay]]
+    puts '%-12s %12d %12.6f %12.6f %12.6f' % [label, stat[:count], stat[:min], stat[:average], stat[:max]]
   end
 end
 
@@ -60,4 +63,9 @@ def benchmark(cases, **options)
   else
     benchmark_main(cases, **options)
   end
+end
+
+def map_futures(range)
+  futures = range.map{|x| yield x }
+  futures.map{|f| f.value}
 end

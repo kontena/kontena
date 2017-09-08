@@ -158,9 +158,19 @@ test_condition = TestConditionActor.new(test_client)
 test_observer = TestObserverActor.new(test_client)
 test_future = TestFutureActor.new(test_client)
 
+COUNT = getenv('COUNT', 1000) { |v| Integer(v) }
+
 benchmark(
-  'wait'      => ->(id) { test_wait.future.request(id) },
-  'condition' => ->(id) { test_condition.future.request(id) },
-  'observer'  => ->(id) { test_observer.future.request(id) },
-  'future'    => ->(id) { test_future.future.request(id) },
+  'wait'      => -> {
+    map_futures(1..COUNT) {|id| sleep 0.001; test_wait.future.request(id) }
+  },
+  'condition' => -> {
+    map_futures(1..COUNT) {|id| test_condition.future.request(id) }
+  },
+  'observer'  => -> {
+    map_futures(1..COUNT) {|id| test_observer.future.request(id) }
+  },
+  'future'    => -> {
+    map_futures(1..COUNT) {|id| test_future.future.request(id) }
+  },
 )
