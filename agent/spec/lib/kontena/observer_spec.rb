@@ -9,11 +9,13 @@ class TestObserverActor
     debug "ping"
   end
 
-  def test_observe_async(*observables)
-    observe(*observables) do |*values|
+  def test_observe_async(*observables, **options)
+    observe(*observables, **options) do |*values|
       @initial_values ||= values
       @observed_values = values
     end
+  rescue Timeout::Error => exc
+    abort exc
   end
   def observed?
     !@observed_values.nil?
@@ -151,6 +153,14 @@ describe Kontena::Observer, :celluloid => true do
         observable_actor.update(11) # notice the dead observer
 
         expect(observable).to_not be_observed
+      end
+
+      it "fails with a timeout if the observable stops updating" do
+        observable_actor.async.spam_updates(1..10, delay: 0.01, interval: 0.01)
+
+        expect{subject.test_observe_async(observable, timeout: 0.1)}.to raise_error(Timeout::Error)
+
+        expect(subject.observed_values.last).to eq 10
       end
     end
 

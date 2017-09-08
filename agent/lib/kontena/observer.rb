@@ -57,7 +57,7 @@ module Kontena
     #
     #   Returns once all of the observables are ready, suspending the current thread or celluloid task.
     #   Returns the most recent value of each Observable.
-    #   Raises with Timeout::Error if a timeout is given, and any observable is not yet ready.
+    #   Raises with Timeout::Error if a timeout is given, and not all observables are ready.
     #   Raises with Kontena::Observer::Error if any observable crashes during the wait.
     #
     # Asynchronous mode, with a block:
@@ -79,12 +79,12 @@ module Kontena
     #   Suspends the task in between yields.
     #   Yields in exclusive mode.
     #   Preserves Observable update ordering: each Observable update will be seen in order.
-    #
-    #   TODO: spec async yield timeout
+    #   Raises with Timeout::Error if a timeout is given, and any observable is not yet ready or stops updating.
+    #   Raises with Kontena::Observer::Error if any observable crashes during the observe.
     #
     # @param observables [Array<Observable>]
     # @param subject [String] identify the Observer for logging purposes
-    # @param timeout [Float] (seconds) optional timeout for sync return
+    # @param timeout [Float] (seconds) optional timeout for sync return or async yield
     # @raise [Timeout::Error] if not all observables are ready after timeout expires
     # @raise [Kontena::Observer::Error] if any observable crashes
     # @yield [*values] all Observables are ready (async mode only)
