@@ -6,6 +6,7 @@ module Kontena::Cli::Stacks::YAML
      require_relative 'custom_validators/extends_validator'
      require_relative 'custom_validators/hooks_validator'
      require_relative 'custom_validators/secrets_validator'
+     require_relative 'custom_validators/certificates_validator'
 
      def self.load
        return if @loaded
@@ -13,6 +14,7 @@ module Kontena::Cli::Stacks::YAML
        HashValidator.append_validator(BuildValidator.new)
        HashValidator.append_validator(ExtendsValidator.new)
        HashValidator.append_validator(SecretsValidator.new)
+       HashValidator.append_validator(CertificatesValidator.new)
        HashValidator.append_validator(HooksValidator.new)
        @loaded = true
      end
@@ -59,6 +61,7 @@ module Kontena::Cli::Stacks::YAML
         'volumes' => optional('array'),
         'volumes_from' => optional('array'),
         'secrets' => optional('stacks_valid_secrets'),
+        'certificates' => optional('stacks_valid_certificates'),
         'hooks' => optional('stacks_valid_hooks'),
         'only_if' => optional(-> (value) { value.is_a?(String) || value.is_a?(Hash) || value.is_a?(Array) }),
         'skip_if' => optional(-> (value) { value.is_a?(String) || value.is_a?(Hash) || value.is_a?(Array) }),

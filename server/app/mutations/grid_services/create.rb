@@ -32,6 +32,7 @@ module GridServices
         add_error(:health_check, :invalid, 'Interval has to be bigger than timeout')
       end
       validate_secrets
+      validate_certificates
       validate_volumes
     end
 
@@ -55,6 +56,12 @@ module GridServices
       if self.secrets
         attributes[:secrets] = self.build_grid_service_secrets([])
       end
+
+      attributes.delete(:certificates)
+      if self.certificates
+        attributes[:certificates] = self.build_grid_service_certificates([])
+      end
+
       # Attach to default network
       if self.net == 'bridge' || self.net.nil?
         default_net = self.grid.networks.find_by(name: 'kontena')
