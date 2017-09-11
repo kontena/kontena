@@ -117,10 +117,24 @@ module Kontena
         end
       end
 
+      # Output a message like: "> Reading foofoo .."
+      # @param message [String] the message to display
+      # @param dots [TrueClass,FalseClass] set to false if you don't want to add ".." after the message
       def caret(msg, dots: true)
         puts "#{pastel.green('>')} #{msg}#{" #{pastel.green('..')}" if dots}"
       end
 
+      # Run a spinner with a message for the block if a truthy value or a proc returns true.
+      # @example
+      #   spin_if(proc { prompt.yes?("for real?") }, "Doing as requested") do
+      #     # doing stuff
+      #   end
+      #   spin_if(a == 1, "Value of 'a' is 1, so let's do this") do
+      #     # doing stuff
+      #   end
+      # @param obj_or_proc [Object,Proc] something that responds to .call or is truthy/falsey
+      # @param message [String] the message to display
+      # @return anything the block returns
       def spin_if(obj_or_proc, message, &block)
         if (obj_or_proc.respond_to?(:call) && obj_or_proc.call) || obj_or_proc
           spinner(message, &block)

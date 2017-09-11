@@ -13,22 +13,26 @@ module Kontena::Cli::Stacks
       module Setters; end
     end
 
-    # Workaround for nil-valued variables in Liquid templates:
-    #   https://github.com/Shopify/liquid/issues/749
-    # This is something that we can pass in to `Liquid::Template.render` that gets evaluated as nil.
-    # If we pass in a nil value directly, then Liquid ignores it and considers the variable to be undefined.
     class LiquidNull
+      # Workaround for nil-valued variables in Liquid templates:
+      #   https://github.com/Shopify/liquid/issues/749
+      # This is something that we can pass in to `Liquid::Template.render` that gets evaluated as nil.
+      # If we pass in a nil value directly, then Liquid ignores it and considers the variable to be undefined.
       def to_liquid
         nil
       end
     end
 
     class Reader
+      # The kontena Stack YAML reader
+
       include Kontena::Util
       include Kontena::Cli::Common
 
       attr_reader :file, :loader, :errors, :notifications
 
+      # @param stack_origin [String] a filename, pointer to registry or an URL
+      # @return [Reader]
       def initialize(file)
         if file.kind_of?(StackFileLoader)
           @file = file.source
@@ -42,6 +46,9 @@ module Kontena::Cli::Stacks
         @notifications    = []
       end
 
+      # @param without_defaults [TrueClass,FalseClass] strip the GRID, STACK, etc from response
+      # @param without_vault [TrueClass,FalseClass] strip out any values that are going to or coming from VAULT
+      # @return [Hash] a hash of key value pairs representing the values of stack variables
       def variable_values(without_defaults: false, without_vault: false)
         result = variables.to_h(values_only: true)
         if without_defaults
@@ -53,6 +60,8 @@ module Kontena::Cli::Stacks
         result
       end
 
+      # Values that are set always when parsing stacks
+      # @return [Hash] a hash of key value pairs
       def default_envs
         @default_envs ||= {
           'GRID' => env['GRID'],
@@ -61,6 +70,10 @@ module Kontena::Cli::Stacks
         }
       end
 
+      # Only uses the values from #default_envs to provide a hash from minimally interpolated
+      # YAML file. Useful for accessing some parts of the YAML without asking any questions.
+      #
+      # @return [Hash] minimally interpolated YAMl from the stack file.
       def internals_interpolated_yaml
         @internals_interpolated_yaml ||= ::YAML.safe_load(
           replace_dollar_dollars(
@@ -76,6 +89,9 @@ module Kontena::Cli::Stacks
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
+      # Uses variable interpolation, prompts as needed, liquid interpolation
+      #
+      # @return [Hash] the most commplete stack parsing outcome
       def fully_interpolated_yaml
         return @fully_interpolated_yaml if @fully_interpolated_yaml
         @fully_interpolated_yaml = ::YAML.safe_load(
@@ -94,18 +110,23 @@ module Kontena::Cli::Stacks
         raise ex, "Error while parsing #{file} : #{ex.message}"
       end
 
+      # The YAML file raw content
       def raw_content
         loader.content
       end
 
+      # @return [Hash] with zero interpolation/processing. Will mostly fail
       def raw_yaml
         loader.yaml
       end
 
+      # Creates an opto option definition compatible hash from the #default_envs hash
+      # @return [Hash]
       def default_envs_to_options
         default_envs.each_with_object({}) { |env, obj| obj[env[0]] = { type: :string, value: env[1] } }
       end
 
+      # Accessor to the Opto variable handler
       # @return [Opto::Group]
       def variables
         @variables ||= ::Opto::Group.new(
@@ -114,6 +135,9 @@ module Kontena::Cli::Stacks
         )
       end
 
+      # Accepts a hash of variable_name => variable_value pairs and sets the values as variable default values
+      # Used when previous answers are read from master and passed as default values for upgrade.
+      # @param defaults [Hash] { 'variable_name' => 'variable_value' }
       def set_variable_defaults(defaults)
         defaults.each do |key, val|
           var = variables.option(key.to_s)
@@ -121,6 +145,9 @@ module Kontena::Cli::Stacks
         end
       end
 
+      # Set values from a hash to values of the variables.
+      # Used when variable values are read from a file or command line parameters or dependency variable injection
+      # @param [Hash] a hash of variable_name => variable_value pairs
       def set_variable_values(values)
         values.each do |key, val|
           var = variables.option(key.to_s)
@@ -128,6 +155,15 @@ module Kontena::Cli::Stacks
         end
       end
 
+      # Creates a set of variables using the 'depends' section. The variable name is the name of the dependency
+      # and the variable value is the generated child stack name. For example,.have something like:
+      # depends:
+      #   redis:
+      #     stack: foo/redis
+      # you will get a new variable called "redis" and its value will be "this-stack-name-redis".
+      # This variable can be used to interpolate for example a hostname to some environment variable:
+      # environment:
+      #   - "REDIS_HOST=redis.${REDIS}"
       def create_dependency_variables(dependencies, name)
         return if dependencies.nil?
         dependencies.each do |options|
@@ -136,15 +172,23 @@ module Kontena::Cli::Stacks
         end
       end
 
+      # If this stack is a part of a dependency chain and has a parent, the variable $PARENT_STACK will
+      # interpolate to the name of the parent stack.
       def create_parent_variable(parent_name)
         variables.build_option(name: 'PARENT_STACK', type: :string, value: parent_name)
       end
 
+      # @return [Boolean] did this stack come from a local file?
       def from_file?
         loader.origin == 'file'
       end
 
-      # @param [String] service_name
+      # @param [String] service_name (set when using extends)
+      # @param name [String] override stackname (default is to parse it from the YAML, but if you set it through -n it needs to be overriden)
+      # @param parent_name [String] parent stack name
+      # @param skip_validation [Boolean] skip running validations
+      # @param values [Hash] force-set variable values using variable_name => variable_value key pairs
+      # @param defaults [Hash] set variable defaults from variable_name => variable_value key pairs
       # @return [Hash]
       def execute(service_name = nil, name: loader.stack_name.stack, parent_name: nil, skip_validation: false, values: nil, defaults: nil)
         set_variable_defaults(defaults) if defaults
@@ -176,10 +220,16 @@ module Kontena::Cli::Stacks
         end
       end
 
+      # Returns an array of hashes containing the dependency tree starting from this file
+      # @return [Array<Hash>]]
       def dependencies
         @dependencies ||= loader.dependencies
       end
 
+      # Interpolate any Liquid templating in the YAML content
+      # @param content [String] file content
+      # @param vars [Hash] key-value pairs
+      # @return [String]
       # @raise [Liquid::Error]
       def interpolate_liquid(content, vars)
         Liquid::Template.error_mode = :strict
@@ -191,7 +241,7 @@ module Kontena::Cli::Stacks
         template.render!(vars, strict_variables: true, strict_filters: true)
       end
 
-      # @return [Array] array of validation errors
+      # @return [Array<Hash>] array of validation errors
       def validate
         result = validator.validate(fully_interpolated_yaml)
         store_failures(result)

@@ -7,6 +7,13 @@ module Kontena::Cli::Stacks
     # @param definition [String] such as kontena/foo:1.0.0
     # @param version [String] set version separately
     # @return [StackName]
+    # @example
+    #   name = StackName.new('kontena/foo:0.1.0')
+    #   name.user => 'kontena'
+    #   name.stack => 'foo'
+    #   name.version => '0.1.0'
+    #   name.stack_name => 'kontena/foo'
+    #   name.to_s => 'kontena/foo:0.1.0
     def initialize(definition = nil, version = nil)
       if definition.kind_of?(Hash)
         @user = definition[:user] || definition['user']

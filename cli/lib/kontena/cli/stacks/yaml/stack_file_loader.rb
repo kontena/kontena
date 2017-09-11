@@ -71,7 +71,7 @@ module Kontena::Cli::Stacks
       # contain also nested dependencies from any child stacks.
       #
       # @param recurse [TrueClass,FalseClass] recurse child dependencies?
-      # @return [Array[Hash]] an array of hashes ('name', 'stack', 'variables', and 'depends')
+      # @return [Array<Hash>] an array of hashes ('name', 'stack', 'variables', and 'depends')
       def dependencies(recurse: true)
         return @dependencies if @dependencies
         depends = yaml['depends']

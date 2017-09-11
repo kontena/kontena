@@ -9,22 +9,26 @@ module Kontena::Cli::Stacks
   module Common
     include Kontena::Cli::Services::ServicesHelper
 
-    def loader_class
-      ::Kontena::Cli::Stacks::YAML::StackFileLoader
-    end
-
+    # @return [StackFileLoader] a loader for the stack origin defined through command-line options
     def loader
       @loader ||= loader_class.for(source)
     end
 
+    # @return [YAML::Reader] a YAML reader for the target file
     def reader
       @reader ||= loader.reader
     end
 
+    # Stack name read from -n parameter or the stack file
+    # @return [String]
     def stack_name
       @stack_name ||= (self.respond_to?(:name) && self.name) ? self.name : loader.stack_name.stack
     end
 
+    # An accessor to the YAML Reader outcome. Passes parent name, values from command line and
+    # the stackname to the reader.
+    #
+    # @return [Hash]
     def stack
       @stack ||= reader.execute(
         name: stack_name,
@@ -33,19 +37,27 @@ module Kontena::Cli::Stacks
       )
     end
 
+    # @return [Class] an accessor to StackFileLoader constant, for testing purposes
+    def loader_class
+      ::Kontena::Cli::Stacks::YAML::StackFileLoader
+    end
+
     module StackNameParam
+      # Include to add a STACK_NAME parameter
       def self.included(where)
         where.parameter "STACK_NAME", "Stack name, for example user/stackname or user/stackname:version", attribute_name: :source
       end
     end
 
     module StackFileOrNameParam
+      # Include to add a stack file parameter
       def self.included(where)
         where.parameter "[FILE]", "Kontena stack file, registry stack name (user/stack or user/stack:version) or URL", default: "kontena.yml", attribute_name: :source
       end
     end
 
     module StackNameOption
+      # Include to add a stack name parameter
       def self.included(where)
         where.option ['-n', '--name'], 'NAME', 'Define stack name (by default comes from stack file)'
       end
@@ -53,16 +65,22 @@ module Kontena::Cli::Stacks
 
     module StackValuesToOption
       attr_accessor :values
+      # Include to add --values-to variable value dumping feature
       def self.included(where)
         where.option '--values-to', '[FILE]', 'Output variable values as YAML to file'
       end
 
+      # Writes a YAML file from the values received from YAML::Reader to a file defined through
+      # the --values-to option
       def dump_variables
         File.write(values_to, ::YAML.dump(reader.variable_values, without_defaults: true, without_vault: true))
       end
     end
 
     module StackValuesFromOption
+      # Include to add --values-from option to read variable values from a YAML file
+      # and the -v variable=value option that can be used to pass variable values
+      # directly from command line
       def self.included(where)
         where.prepend InstanceMethods
 
@@ -105,6 +123,10 @@ module Kontena::Cli::Stacks
       end
     end
 
+    # Sets environment variables from parameters
+    # @param stack [String] current stack name
+    # @param grid [String] current grid name
+    # @param platform [String] current platform name, defaults to param grid value
     def set_env_variables(stack, grid, platform = grid)
       ENV['STACK'] = stack
       ENV['GRID'] = grid
@@ -131,6 +153,8 @@ module Kontena::Cli::Stacks
       abort
     end
 
+    # An accessor to stack registry client
+    # @return [Kontena::StacksClient]
     def stacks_client
       @stacks_client ||= Kontena::StacksClient.new(current_account.stacks_url, current_account.token, read_requires_token: current_account.stacks_read_authentication)
     end
