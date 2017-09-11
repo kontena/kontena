@@ -1,8 +1,12 @@
 module Kontena::Cli::Stacks
   class StackName
+    # A class for parsing stack name strings, such as kontena/foo:1.0.0
 
     attr_reader :user, :stack, :version
 
+    # @param definition [String] such as kontena/foo:1.0.0
+    # @param version [String] set version separately
+    # @return [StackName]
     def initialize(definition = nil, version = nil)
       if definition.kind_of?(Hash)
         @user = definition[:user] || definition['user']
@@ -16,14 +20,25 @@ module Kontena::Cli::Stacks
       end
     end
 
+    # Stack name without version
+    # @return [String] example: kontena/foo
     def stack_name
       [user, stack].compact.join('/')
     end
 
+    # Full stack name including version if present
+    # @return [String] example: kontena/foo:0.1.0
     def to_s
       version ? "#{stack_name}:#{version}" : stack_name
     end
     alias to_str to_s
+
+    # True when version is a prerelease
+    # @return [NilClass,TrueClass,FalseClass] nil when no version, true when prerelease, false when not.
+    def pre?
+      return nil if version.nil?
+      Gem::Version.new(version).prerelease?
+    end
 
     private
 
