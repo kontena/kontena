@@ -38,7 +38,7 @@ describe Stacks::Create do
 
         expect(outcome).to be_success
         expect(outcome.result.parent_name).to eq 'stack-parent'
-        expect(outcome.result.initial?).to be_falsey
+        expect(outcome.result.has_parent?).to be_truthy
       }.to change{ Stack.count }.by(1)
     end
 

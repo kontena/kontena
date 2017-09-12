@@ -20,17 +20,17 @@ class Stack
   validates_presence_of :name
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  def initial?
+  def has_parent?
     parent_name.nil?
   end
 
-  def initial
-    return self if initial?
-    parent.initial
+  def top_parent
+    return self unless has_parent?
+    parent.top_parent
   end
 
   def parent
-    return nil if initial?
+    return nil unless has_parent?
     self.class.where(grid_id: grid_id, name: parent_name).first
   end
 
@@ -39,7 +39,8 @@ class Stack
   end
 
   def parent_chain
-    initial? ? [] : ([parent] + parent.parent_chain)
+    return [] unless has_parent?
+    [parent] + parent.parent_chain
   end
 
   # @return [String]
