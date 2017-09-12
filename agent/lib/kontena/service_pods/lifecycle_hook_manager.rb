@@ -70,14 +70,14 @@ module Kontena
         command
       end
 
-      # @param [Hash] service_config
-      # @param [String] cmd
+      # @param service_pod [ServicePod]
+      # @param cmd [String]
       # @return [Hash]
-      def config_container(service_config, cmd)
-        service_config = super(service_config)
+      def config_container(service_pod, cmd)
+        service_pod.entrypoint = ['/bin/sh', '-c']
+        service_config = super(service_pod)
         service_config['HostConfig'].delete('RestartPolicy')
         service_config['Labels']['io.kontena.container.type'] = 'service_hook'
-        service_config['Cmd'] = build_cmd(cmd)
 
         service_config
       end
