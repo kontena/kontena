@@ -3,6 +3,7 @@ describe Kontena::ServicePods::Stopper do
 
   let(:service_pod) { double(:service_pod, service_id: 'service_id', instance_number: 1)}
   let(:subject) { described_class.new(service_pod) }
+  let(:hook_manager) { double(:hook_manager) }
 
   describe '#perform' do
 
@@ -12,6 +13,7 @@ describe Kontena::ServicePods::Stopper do
 
     before(:each) do
       allow(subject).to receive(:get_container).and_return(container)
+      allow(subject).to receive(:hook_manager).and_return(hook_manager)
     end
 
     it 'does nothing if container is not running' do
@@ -21,17 +23,20 @@ describe Kontena::ServicePods::Stopper do
     end
 
     it 'stops container with a configured timeout' do
+      expect(hook_manager).to receive(:on_pre_stop).once
       expect(container).to receive(:stop_grace_period).and_return(20)
       expect(container).to receive(:stop!).with({'timeout' => 20})
       subject.perform
     end
 
     it 'stops container if running' do
+      expect(hook_manager).to receive(:on_pre_stop).once
       expect(container).to receive(:stop!).with({'timeout' => 10})
       subject.perform
     end
 
     it 'fails if container stop fails' do
+      expect(hook_manager).to receive(:on_pre_stop).once
       expect(container).to receive(:stop!).with({'timeout' => 10}).and_raise(Docker::Error::ServerError, "failed")
       expect{subject.perform}.to raise_error(Docker::Error::ServerError)
     end

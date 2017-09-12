@@ -42,6 +42,7 @@ module Kontena
         wait_network_ready?
 
         if service_container
+          hook_manager.on_pre_stop(service_container)
           info "removing previous version of service: #{service_pod.name_for_humans}"
           cleanup_container(service_container)
           log_service_pod_event("service:create_instance", "removed previous version of service #{service_pod.name_for_humans} instance")

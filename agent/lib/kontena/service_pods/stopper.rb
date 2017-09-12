@@ -1,6 +1,7 @@
 require 'docker'
 require_relative 'common'
 require_relative '../logging'
+require_relative 'lifecycle_hook_manager'
 
 module Kontena
   module ServicePods
@@ -8,11 +9,12 @@ module Kontena
       include Kontena::Logging
       include Common
 
-      attr_reader :service_pod
+      attr_reader :service_pod, :hook_manager
 
       # @param [ServicePod] service_pod
       def initialize(service_pod)
         @service_pod = service_pod
+        @hook_manager = Kontena::ServicePods::LifecycleHookManager.new(service_pod)
       end
 
       # @return [Docker::Container]
@@ -20,6 +22,7 @@ module Kontena
         service_container = get_container(service_pod.service_id, service_pod.instance_number)
         if service_container.running?
           info "stopping service: #{service_container.name_for_humans}"
+          hook_manager.on_pre_stop(service_container)
           log_service_pod_event(
             service_pod.service_id, service_pod.instance_number,
             "service:stop_instance", "stopping service instance #{service_container.name_for_humans}"
@@ -29,6 +32,7 @@ module Kontena
             service_pod.service_id, service_pod.instance_number,
             "service:stop_instance", "service instance #{service_container.name_for_humans} stopped succesfully"
           )
+          info "stopped service: #{service_container.name_for_humans}"
         else
           log_service_pod_event(
             service_pod.service_id, service_pod.instance_number,

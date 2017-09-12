@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module Kontena
   module ServicePods
     class LifecycleHookManager
@@ -20,6 +22,7 @@ module Kontena
           begin
             info "running pre_start hook: #{hook['cmd']}"
             service_config = config_container(service_pod.dup, hook['cmd'])
+            service_config['name'] = "#{service_config['name']}-#{SecureRandom.urlsafe_base64(5)}"
             service_container = create_container(service_config)
             service_container.tap(&:start).attach
             if service_container.state['ExitCode'] != 0
@@ -47,6 +50,27 @@ module Kontena
           }
           if exit_code != 0
             raise "Failed to execute post_start hook: #{hook['cmd']} (exit code: #{exit_code}"
+          end
+        end
+        true
+      rescue => exc
+        log_service_pod_event("service:create_instance", exc.message, Logger::ERROR)
+        error exc.message
+        false
+      end
+
+      # @param [Docker::Container] service_container
+      # @return [Boolean]
+      def on_pre_stop(service_container)
+        hooks_for('pre_stop').each do |hook|
+          info "running pre_stop hook: #{hook['cmd']}"
+          command = build_cmd(hook['cmd'])
+          log_hook_output(service_container.id, ["running pre_stop hook: #{hook['cmd']}"], 'stdout')
+          _, _, exit_code = service_container.exec(command) { |stream, chunk|
+            log_hook_output(service_container.id, [chunk], stream)
+          }
+          if exit_code != 0
+            raise "Failed to execute pre_stop hook: #{hook['cmd']} (exit code: #{exit_code}"
           end
         end
         true

@@ -11,7 +11,7 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
       end
 
       value.keys.each do |hook|
-        unless %w(pre_build pre_start post_start).include?(hook)
+        unless %w(pre_build pre_start post_start pre_stop).include?(hook)
           errors[key] = "invalid hook #{hook}"
         end
       end
@@ -26,6 +26,10 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
 
       if value['post_start']
         validate_post_start_hooks(key, value['post_start'], errors)
+      end
+
+      if value['pre_stop']
+        validate_pre_stop_hooks(key, value['pre_stop'], errors)
       end
     end
 
@@ -75,6 +79,23 @@ module Kontena::Cli::Stacks::YAML::Validations::CustomValidators
       validator = HashValidator.validator_for(post_start_validation)
       post_start_hooks.each do |post_start|
         validator.validate('hooks.post_start', post_start, post_start_validation, errors)
+      end
+    end
+
+    def validate_pre_stop_hooks(key, pre_stop_hooks, errors)
+      unless pre_stop_hooks.is_a?(Array)
+        errors[key] = { 'pre_stop' => 'must be an array' }
+        return
+      end
+      pre_stop_validation = {
+        'name' => 'string',
+        'instances' => (-> (value) { value.is_a?(Integer) || value == '*' }),
+        'cmd' => 'string',
+        'oneshot' => HashValidator.optional('boolean')
+      }
+      validator = HashValidator.validator_for(pre_stop_validation)
+      pre_stop_hooks.each do |pre_stop|
+        validator.validate('hooks.pre_stop', pre_stop, pre_stop_validation, errors)
       end
     end
   end

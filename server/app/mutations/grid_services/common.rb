@@ -273,6 +273,16 @@ module GridServices
                   end
                 end
               end
+              array :pre_stop do
+                hash do
+                  required do
+                    string :name
+                    string :cmd
+                    string :instances
+                    boolean :oneshot, default: false
+                  end
+                end
+              end
             end
           end
           hash :health_check do

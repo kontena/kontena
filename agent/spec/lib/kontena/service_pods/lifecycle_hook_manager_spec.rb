@@ -3,7 +3,8 @@ describe Kontena::ServicePods::LifecycleHookManager do
   let(:service_pod) do
     double(:service_pod, hooks: [
       { 'type' => 'pre_start', 'cmd' => 'sleep 1'},
-      { 'type' => 'post_start', 'cmd' => 'sleep 2'}
+      { 'type' => 'post_start', 'cmd' => 'sleep 2'},
+      { 'type' => 'pre_stop', 'cmd' => 'sleep 3'}
     ])
   end
 
@@ -36,6 +37,13 @@ describe Kontena::ServicePods::LifecycleHookManager do
     it 'runs post_start hooks' do
       expect(subject).to receive(:hooks_for).with('post_start').and_return([])
       subject.on_post_start(double(:service_container))
+    end
+  end
+
+  describe '#on_pre_stop' do
+    it 'runs pre_stop hooks' do
+      expect(subject).to receive(:hooks_for).with('pre_stop').and_return([])
+      subject.on_pre_stop(double(:service_container))
     end
   end
 end
