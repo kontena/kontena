@@ -66,7 +66,6 @@ module Kontena
       # @return [Array<String>]
       def build_cmd(cmd)
         command = ['/bin/sh', '-c', cmd]
-        command.unshift('/w/w') if service_pod.can_expose_ports?
 
         command
       end

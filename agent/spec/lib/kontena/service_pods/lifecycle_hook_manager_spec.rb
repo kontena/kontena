@@ -18,16 +18,10 @@ describe Kontena::ServicePods::LifecycleHookManager do
   end
 
   describe '#build_cmd' do
-    it 'returns array with wait if service pod can expose ports' do
-      allow(service_pod).to receive(:can_expose_ports?).and_return(true)
-      cmd = subject.build_cmd("echo 'hello")
-      expect(cmd[0]).to eq('/w/w')
-    end
-
-    it 'returns array without wait if service pod cannot expose ports' do
-      allow(service_pod).to receive(:can_expose_ports?).and_return(false)
-      cmd = subject.build_cmd("echo 'hello")
-      expect(cmd[0]).not_to eq('/w/w')
+    it 'returns array' do
+      cmd = subject.build_cmd("echo 'hello'")
+      expect(cmd[0]).to eq('/bin/sh')
+      expect(cmd[2]).to eq("echo 'hello'")
     end
   end
 
