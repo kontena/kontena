@@ -104,6 +104,12 @@ module GridServices
         )
         embeds_changed ||= attributes[:service_volumes] != self.grid_service.service_volumes.to_a
       end
+      if self.certificates
+        attributes[:certificates] = self.build_grid_service_certificates(self.grid_service.certificates.to_a)
+        embeds_changed ||= attributes[:certificates] != self.grid_service.certificates.to_a
+      end
+
+
       grid_service.attributes = attributes
 
       if grid_service.changed? || embeds_changed

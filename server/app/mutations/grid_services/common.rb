@@ -96,7 +96,7 @@ module GridServices
       service_certificates = []
       self.certificates.each do |certificate|
         service_certificate = existing_certificates.find{ |c|
-          c.subject == secret['subject'] && c.name == secret['name']
+          c.subject == certificate['subject'] && c.name == certificate['name']
         }
         unless service_certificate
           service_certificate = GridServiceCertificate.new(
