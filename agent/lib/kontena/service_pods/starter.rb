@@ -28,10 +28,12 @@ module Kontena
           )
           hook_manager.on_pre_start
           service_container.start!
+          hook_manager.on_post_start(service_container)
           log_service_pod_event(
             service_pod.service_id, service_pod.instance_number,
             "service:start_instance", "service instance #{service_container.name_for_humans} started successfully"
           )
+          info "started service: #{service_container.name_for_humans}"
         end
 
         Celluloid::Notifications.publish('service_pod:start', service_container)

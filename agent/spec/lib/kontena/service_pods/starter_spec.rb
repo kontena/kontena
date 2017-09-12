@@ -24,6 +24,7 @@ describe Kontena::ServicePods::Starter do
 
     it 'starts container if not running' do
       expect(hook_manager).to receive(:on_pre_start).once
+      expect(hook_manager).to receive(:on_post_start).once
       expect(container).to receive(:start!)
       subject.perform
     end
