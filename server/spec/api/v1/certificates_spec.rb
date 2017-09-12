@@ -1,4 +1,4 @@
-describe '/v1/containers' do
+describe '/v1/certificates' do
 
   let(:request_headers) do
     {
