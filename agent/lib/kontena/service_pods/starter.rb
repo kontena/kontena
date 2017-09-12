@@ -26,7 +26,7 @@ module Kontena
             service_pod.service_id, service_pod.instance_number,
             "service:start_instance", "starting service instance #{service_container.name_for_humans}"
           )
-          hook_manager.on_pre_start(service_container)
+          hook_manager.on_pre_start
           service_container.start!
           log_service_pod_event(
             service_pod.service_id, service_pod.instance_number,
