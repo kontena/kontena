@@ -94,9 +94,24 @@ module Kontena::Cli::Stacks
       def self.included(where)
         where.prepend InstanceMethods
 
-        where.option '--values-from', '[FILE]', 'Read variable values from YAML' do |filename|
-          values_from_file.merge!(::YAML.safe_load(File.read(filename)))
-          true
+        where.option '--values-from', '[FILE|STACK_NAME]', 'Read variable values from a YAML file or an installed stack', multivalued: true do |filename|
+          if File.exist?(filename)
+            values_from_file.merge!(::YAML.safe_load(File.read(filename)))
+          else
+            begin
+              response = client.get("stacks/#{current_grid}/#{filename}")
+              variables = response['variables']
+              Kontena.logger.debug { "Received variables from stack #{filename} on Master: #{variables.inspect}" }
+              warn "Stack #{filename} does not have any values for variables" if variables.empty?
+              values_from_installed_stack.merge!(variables)
+            rescue Kontena::Errors::StandardError => ex
+              if ex.status == 404
+                exit_with_error "File or stack not found: #{filename}"
+              end
+              raise ex
+            end
+          end
+          filename
         end
 
         where.option '-v', "VARIABLE=VALUE", "Set stack variable values, example: -v domain=example.com. Can be used multiple times.", multivalued: true, attribute_name: :var_option do |var_pair|
@@ -114,8 +129,12 @@ module Kontena::Cli::Stacks
           @values_from_value_options ||= {}
         end
 
+        def values_from_installed_stack
+          @values_from_installed_stack ||= {}
+        end
+
         def values_from_options
-          @values_from_options ||= values_from_file.merge(values_from_value_options)
+          @values_from_options ||= values_from_file.merge(values_from_installed_stack).merge(values_from_value_options)
         end
 
         # Transforms a hash
