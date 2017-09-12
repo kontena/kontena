@@ -7,6 +7,8 @@ class Certificate
   field :alt_names, type: Array
   field :encrypted_private_key, type: String, encrypted: true # PEM encoded
   field :certificate, type: String # PEM encoded certificate, no need to encrypt
+  field :chain, type: String
+  field :full_chain, type: String
 
   belongs_to :grid
 

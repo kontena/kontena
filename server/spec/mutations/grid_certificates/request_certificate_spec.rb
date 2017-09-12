@@ -29,17 +29,6 @@ describe GridCertificates::RequestCertificate do
       expect(subject.has_errors?).to be_truthy
     end
 
-    it 'rejects invalid cert type' do
-      outcome = described_class.run(grid: grid, secret_name: 'secret', domains: ['example.com'], cert_type: 'foo')
-      expect(outcome).to_not be_success
-      expect(outcome.errors.symbolic).to eq 'cert_type' => :in
-    end
-    it 'rejects invalid multi-line cert type ' do
-      outcome = described_class.run(grid: grid, secret_name: 'secret', domains: ['example.com'], cert_type: "cert\nfoobar")
-      expect(outcome).to_not be_success
-      expect(outcome.errors.symbolic).to eq 'cert_type' => :in
-    end
-
     context 'dns-01' do
 
       it 'fails validation in domain challenge' do
@@ -58,7 +47,7 @@ describe GridCertificates::RequestCertificate do
     end
 
     context 'tls-sni-01' do
-      # As of now there no specific validations for tls-sni verification
+      # As of now there's no specific validations for tls-sni verification
     end
 
   end
@@ -113,7 +102,7 @@ describe GridCertificates::RequestCertificate do
             private_key: double({to_pem: 'private_key'})
           }
         ),
-        chain_to_pem: 'chain_certificate',
+        chain_to_pem: 'chain',
         fullchain_to_pem: 'fullchain',
         to_pem: 'certificate_only',
         x509: double(:not_after => Time.now + 90.days)
@@ -127,7 +116,9 @@ describe GridCertificates::RequestCertificate do
         expect(c.valid_until).not_to be_nil
         expect(c.alt_names).to be_empty
         expect(c.private_key).to eq('private_key')
-        expect(c.certificate).to eq('fullchain')
+        expect(c.certificate).to eq('certificate_only')
+        expect(c.chain).to eq('chain')
+        expect(c.full_chain).to eq('fullchain')
       }.to change {grid.certificates.count}.by (1)
     end
 

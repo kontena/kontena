@@ -15,7 +15,6 @@ module GridCertificates
       array :domains do
         string
       end
-      string :cert_type, in: ['cert', 'fullchain'], default: 'fullchain'
     end
 
     optional do
@@ -93,22 +92,16 @@ module GridCertificates
 
       csr = Acme::Client::CertificateRequest.new(names: self.domains)
       certificate = le_client.new_certificate(csr)
-      cert_priv_key = certificate.request.private_key.to_pem
-      certificate_pem = nil
-      case self.cert_type
-        when 'fullchain'
-          certificate_pem = certificate.fullchain_to_pem
-        when 'cert'
-          certificate_pem = certificate.to_pem
-      end
 
       certificate_model = Certificate.create!(
         grid: self.grid,
         subject: self.domains[0],
         alt_names: self.domains[1..-1],
         valid_until: certificate.x509.not_after,
-        private_key: cert_priv_key,
-        certificate: certificate_pem
+        private_key: certificate.request.private_key.to_pem,
+        certificate: certificate.to_pem,
+        chain: certificate.chain_to_pem,
+        full_chain: certificate.fullchain_to_pem
       )
 
       certificate_model

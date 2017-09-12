@@ -78,7 +78,7 @@ module Rpc
         grid_cert = grid.certificates.find_by(subject: certificate.subject)
         item = {name: certificate.name, type: certificate.type, value: nil}
         if grid_cert
-          item[:value] = [grid_cert.certificate, grid_cert.private_key].join
+          item[:value] = [grid_cert.full_chain, grid_cert.private_key].join
         end
         secrets << item
       end
