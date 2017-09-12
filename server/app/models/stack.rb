@@ -21,7 +21,7 @@ class Stack
   validates_uniqueness_of :name, scope: [:grid_id]
 
   def has_parent?
-    parent_name.nil?
+    !parent_name.nil?
   end
 
   def top_parent
