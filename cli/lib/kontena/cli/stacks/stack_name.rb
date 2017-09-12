@@ -1,3 +1,5 @@
+require 'semantic'
+
 module Kontena::Cli::Stacks
   class StackName
     # A class for parsing stack name strings, such as kontena/foo:1.0.0
@@ -44,7 +46,7 @@ module Kontena::Cli::Stacks
     # @return [NilClass,TrueClass,FalseClass] nil when no version, true when prerelease, false when not.
     def pre?
       return nil if version.nil?
-      Gem::Version.new(version).prerelease?
+      !Semantic::Version.new(version).pre.nil?
     end
 
     private
