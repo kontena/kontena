@@ -80,8 +80,8 @@ describe Kontena::Workers::WeaveWorker do
     it 'does not attach overlay if container is not service container' do
       allow(container).to receive(:service_container?).and_return(false)
       allow(container).to receive(:overlay_cidr).and_return('10.81.1.1/16')
-      allow(subject.wrapped_object).to receive(:register_container_dns)
-      expect(subject.wrapped_object).not_to receive(:attach_overlay).with(container)
+      expect(subject.wrapped_object).not_to receive(:register_container_dns)
+      expect(subject.wrapped_object).to receive(:attach_overlay).with(container)
       subject.start_container(container)
     end
 

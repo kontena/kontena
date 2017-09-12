@@ -84,12 +84,15 @@ module Kontena::Workers
     #
     # @param [Docker::Container] container
     def start_container(container)
-      return unless container.service_container?
-      return unless container.overlay_cidr
+      overlay_cidr = container.overlay_cidr
 
-      wait_weave_running?
-      register_container_dns(container)
-      attach_overlay(container)
+      if overlay_cidr
+        wait_weave_running?
+        register_container_dns(container) if container.service_container?
+        attach_overlay(container)
+      else
+        debug "skip start for container=#{container.name} without overlay_cidr"
+      end
     rescue Docker::Error::NotFoundError
       debug "skip start for missing container=#{container.id}"
 
