@@ -4,18 +4,15 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
   let(:node) { Node.new('id' => 'aa') }
   let(:service_pod) do
     Kontena::Models::ServicePod.new(
-      'id' => 'foo/2', 'instance_number' => 2,
-      'updated_at' => Time.now.to_s, 'deploy_rev' => Time.now.to_s
+      'id' => 'foo/2',
+      'instance_number' => 2,
+      'updated_at' => Time.now.to_s,
+      'deploy_rev' => Time.now.to_s,
     )
   end
   let(:subject) { described_class.new(node, service_pod) }
 
   describe '#ensure_desired_state' do
-    before(:each) do
-      mock_rpc_client
-      allow(rpc_client).to receive(:request)
-    end
-
     it 'calls ensure_running if container does not exist and service_pod desired_state is running' do
       container = double(:container, :running? => true, :restarting? => false, name: 'foo-2')
       expect(subject.wrapped_object).to receive(:get_container).and_return(nil)
@@ -120,7 +117,6 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
 
     before(:each) do
       mock_rpc_client
-      allow(rpc_client).to receive(:request)
     end
 
     it 'sends correct data' do
@@ -128,7 +124,7 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'running', rev: service_pod.deploy_rev)]
       )
-      subject.sync_state_to_master(container)
+      subject.sync_state_to_master(service_pod, container)
     end
 
     it 'sends error' do
@@ -136,7 +132,32 @@ describe Kontena::Workers::ServicePodWorker, :celluloid => true do
         '/node_service_pods/set_state',
         [node.id, hash_including(state: 'missing', rev: service_pod.deploy_rev, error: "Docker::Error::NotFoundError: No such image: redis:nonexist")]
       )
-      subject.sync_state_to_master(nil, Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+      subject.sync_state_to_master(service_pod, nil, Docker::Error::NotFoundError.new("No such image: redis:nonexist"))
+    end
+
+    context 'that has already updated' do
+      before do
+        expect(rpc_client).to receive(:request).with('/node_service_pods/set_state', [node.id, hash_including(rev: service_pod.deploy_rev)])
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'updates again with a diffrent state' do
+        allow(container).to receive(:running?).and_return(false)
+        expect(rpc_client).to receive(:request).with('/node_service_pods/set_state', [node.id, hash_including(rev: service_pod.deploy_rev, state: 'stopped')])
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'does not update again with the same state' do
+        expect(rpc_client).to_not receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
+
+      it 'does not send an update for an older rev' do
+        allow(service_pod).to receive(:deploy_rev).and_return(Time.now.to_s)
+
+        expect(rpc_client).to_not receive(:request)
+        subject.sync_state_to_master(service_pod, container)
+      end
     end
   end
 
