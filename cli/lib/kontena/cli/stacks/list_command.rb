@@ -54,7 +54,7 @@ module Kontena::Cli::Stacks
 
     print_table(stacks) do |row|
         next if quiet?
-        row['name'] = health_icon(stack_health(row)) + " " + (' ' * (2 * (row['depth'] - 1))) + tree_icon(row) + (row['depth'] > 1 ? '━' : '') + row['name']
+        row['name'] = health_icon(stack_health(row)) + " " + tree_icon(row) + row['name']
         row['stack'] = "#{row['stack']}:#{row['version']}"
         row['services_count'] = row['services'].size
         row['ports'] = stack_ports(row).join(',')
@@ -81,12 +81,15 @@ module Kontena::Cli::Stacks
       children = row['children'] || []
       if parent.nil? && children.empty?
         # solo
-        ''
+        char = ''
       elsif parent.nil? && !children.empty?
-        ''
+        char = ''
       elsif !parent.nil?
-        '┗━'
+        char = '┗━'
       end
+      left_pad = ' ' * (2 * (row['depth'] - 1))
+      right_pad = row['depth'] > 1 ? '━' : ''
+      left_pad + char + right_pad
     end
 
     # @param [Hash] stack
