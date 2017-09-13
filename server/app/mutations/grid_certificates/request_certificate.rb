@@ -93,16 +93,29 @@ module GridCertificates
       csr = Acme::Client::CertificateRequest.new(names: self.domains)
       certificate = le_client.new_certificate(csr)
 
-      certificate_model = Certificate.create!(
-        grid: self.grid,
-        subject: self.domains[0],
-        alt_names: self.domains[1..-1],
-        valid_until: certificate.x509.not_after,
-        private_key: certificate.request.private_key.to_pem,
-        certificate: certificate.to_pem,
-        chain: certificate.chain_to_pem,
-        full_chain: certificate.fullchain_to_pem
-      )
+      certificate_model = self.grid.certificates.find_by(subject: self.domains[0])
+
+      if certificate_model
+        certificate_model.alt_names = self.domains[1..-1]
+        certificate_model.valid_until = certificate.x509.not_after
+        certificate_model.private_key = certificate.request.private_key.to_pem
+        certificate_model.certificate = certificate.to_pem
+        certificate_model.chain = certificate.chain_to_pem
+        certificate_model.full_chain = certificate.fullchain_to_pem
+
+        certificate_model.save
+      else
+        certificate_model = Certificate.create!(
+          grid: self.grid,
+          subject: self.domains[0],
+          alt_names: self.domains[1..-1],
+          valid_until: certificate.x509.not_after,
+          private_key: certificate.request.private_key.to_pem,
+          certificate: certificate.to_pem,
+          chain: certificate.chain_to_pem,
+          full_chain: certificate.fullchain_to_pem
+        )
+      end
 
       certificate_model
 
@@ -110,7 +123,6 @@ module GridCertificates
       error exc
       add_error(:acme_client, :error, exc.message)
     end
-
 
     def le_client
       @le_client ||= acme_client(self.grid)

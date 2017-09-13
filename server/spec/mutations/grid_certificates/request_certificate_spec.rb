@@ -122,17 +122,12 @@ describe GridCertificates::RequestCertificate do
       }.to change {grid.certificates.count}.by (1)
     end
 
-    it 'get only cert' do
-      subject = described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com'], cert_type: 'cert')
-
+    it 'updates cert' do
+      subject = described_class.new(grid: grid, secret_name: 'secret', domains: ['example.com'])
+      certificate = Certificate.create!(grid: grid, subject: 'example.com', valid_until: Time.now)
       expect {
-        c = subject.execute
-        expect(c.subject).to eq('example.com')
-        expect(c.valid_until).not_to be_nil
-        expect(c.alt_names).to be_empty
-        expect(c.private_key).to eq('private_key')
-        expect(c.certificate).to eq('certificate_only')
-      }.to change {grid.certificates.count}.by (1)
+        subject.execute
+      }.to not_change{grid.certificates.count}.and change{certificate.reload.updated_at}
     end
   end
 
