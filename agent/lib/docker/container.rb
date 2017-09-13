@@ -76,7 +76,7 @@ module Docker
       false
     end
 
-    # @return DatetTime
+    # @return [DateTime]
     def started_at
       DateTime.parse(cached_json['State']['StartedAt'])
     end
