@@ -9,6 +9,10 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
   mock_current_master
 
+  after do
+    ENV['STACK'] = nil
+  end
+
   describe '#execute' do
 
     let(:stack_expectation) do

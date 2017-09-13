@@ -6,6 +6,10 @@ describe Kontena::Cli::Stacks::BuildCommand do
 
   mock_current_master
 
+  after do
+    ENV['STACK'] = nil
+  end
+
   let(:subject) do
     described_class.new(File.basename($0))
   end

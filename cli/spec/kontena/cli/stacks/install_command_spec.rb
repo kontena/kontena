@@ -8,6 +8,10 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
   mock_current_master
 
+  after do
+    ENV['STACK'] = nil
+  end
+
   describe '#execute' do
     let(:stack_expectation) do
       {
@@ -39,9 +43,12 @@ describe Kontena::Cli::Stacks::InstallCommand do
     end
 
     it 'allows to override stack name' do
-      expect(client).to receive(:post).with(
-        'grids/test-grid/stacks', hash_including(stack_expectation.merge('name' => 'stack-a'))
-      )
+      expect(client).to receive(:post) do |path, data|
+        expect(path).to eq 'grids/test-grid/stacks'
+        expect(data).to match hash_including(stack_expectation.merge('name' => 'stack-a'))
+        expect(data['services'].find { |s| s['name'] == 'wordpress' }['env']).to match array_including("WORDPRESS_DB_PASSWORD=stack-a_secret")
+        expect(data['services'].find { |s| s['name'] == 'mysql' }['env']).to match array_including("MYSQL_ROOT_PASSWORD=stack-a_secret")
+      end.and_return({})
       subject.run(['--no-deploy', '--name', 'stack-a', fixture_path('kontena_v3.yml')])
     end
 
