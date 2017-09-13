@@ -43,7 +43,7 @@ module Kontena::Cli::Stacks
 
       # @return [Hash] a hash parsed from the YAML content
       def yaml
-        @yaml ||= reader.internals_interpolated_yaml
+        @yaml ||= ::YAML.safe_load(content, [], [], true, source)
       end
 
       # @return [String] raw file content
