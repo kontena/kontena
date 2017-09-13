@@ -29,9 +29,12 @@ describe Kontena::Cli::Stacks::InstallCommand do
     expect_to_require_current_master_token
 
     it 'sends stack to master' do
-      expect(client).to receive(:post).with(
-         'grids/test-grid/stacks', hash_including(stack_expectation)
-      )
+      expect(client).to receive(:post) do |path, data|
+        expect(path).to eq 'grids/test-grid/stacks'
+        expect(data).to match hash_including(stack_expectation)
+        expect(data['services'].find { |s| s['name'] == 'wordpress' }['env']).to match array_including("WORDPRESS_DB_PASSWORD=stackname_secret")
+        expect(data['services'].find { |s| s['name'] == 'mysql' }['env']).to match array_including("MYSQL_ROOT_PASSWORD=stackname_secret")
+      end.and_return({})
       subject.run(['--no-deploy', fixture_path('kontena_v3.yml')])
     end
 

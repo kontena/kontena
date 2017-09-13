@@ -59,7 +59,12 @@ module Kontena::Cli::Stacks
 
     def create_stack
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
-        client.post("grids/#{current_grid}/stacks", stack.reject { |k, _| k == 'errors' || k == 'notifications'})
+        stack.delete('errors')
+        stack.delete('notifications')
+        stack['services'].each do |svc|
+          svc['env'] = svc.delete('environment')
+        end
+        client.post("grids/#{current_grid}/stacks", stack)
       end
     end
 
