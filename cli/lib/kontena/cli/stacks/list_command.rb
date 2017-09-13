@@ -24,12 +24,13 @@ module Kontena::Cli::Stacks
     end
 
     def build_depths(stacks)
-      stacks.each do |stack|
+      stacks.sort_by { |s| s['name'] }.each do |stack|
         stack['depth'] += 1
         stacks_by_names(stacks, stack['children'].map { |n| n['name'] }).each do |child_stack|
           child_stack['depth'] += stack['depth']
         end
       end
+      stacks
     end
 
     def get_stacks
@@ -48,9 +49,7 @@ module Kontena::Cli::Stacks
     end
 
     def execute
-    stacks = get_stacks
-    build_depths(stacks)
-    stacks = stacks.sort_by { |s| s['name'] }
+    stacks = build_depths(get_stacks)
 
     print_table(stacks) do |row|
         next if quiet?
