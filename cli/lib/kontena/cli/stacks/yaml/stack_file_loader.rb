@@ -43,7 +43,12 @@ module Kontena::Cli::Stacks
 
       # @return [Hash] a hash parsed from the YAML content
       def yaml
-        ::YAML.safe_load(content)
+        return @yaml unless @yaml.nil?
+        @yaml = ::YAML.safe_load(content)
+        unless @yaml.kind_of?(Hash)
+          raise TypeError, "Hash expected, was #{@yaml.class.name} : #{source}"
+        end
+        @yaml
       end
 
       # @return [String] raw file content
