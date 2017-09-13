@@ -6,7 +6,7 @@ describe Kontena::Cli::Stacks::BuildCommand do
 
   mock_current_master
 
-  after(:each) do
+  before(:each) do
     ENV['STACK'] = nil
   end
 

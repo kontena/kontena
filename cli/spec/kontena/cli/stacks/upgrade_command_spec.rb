@@ -9,7 +9,7 @@ describe Kontena::Cli::Stacks::UpgradeCommand do
 
   mock_current_master
 
-  after(:each) do
+  before(:each) do
     ENV['STACK'] = nil
   end
 

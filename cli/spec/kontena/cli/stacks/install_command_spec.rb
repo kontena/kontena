@@ -8,7 +8,7 @@ describe Kontena::Cli::Stacks::InstallCommand do
 
   mock_current_master
 
-  after(:each) do
+  before(:each) do
     ENV['STACK'] = nil
   end
 
