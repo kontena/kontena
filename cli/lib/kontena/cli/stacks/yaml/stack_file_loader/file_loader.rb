@@ -19,7 +19,8 @@ module Kontena::Cli::Stacks
         end
       end
 
-      def set_context
+      def initialize(*args)
+        super
         @source = self.class.with_context(@source, parent)
       end
 

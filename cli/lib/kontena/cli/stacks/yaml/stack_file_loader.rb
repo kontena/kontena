@@ -39,7 +39,6 @@ module Kontena::Cli::Stacks
       def initialize(source, parent = nil)
         @source = source
         @parent = parent
-        set_context if respond_to?(:set_context)
       end
 
       # @return [Hash] a hash parsed from the YAML content
