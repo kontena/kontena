@@ -42,6 +42,16 @@ module Kontena::Cli::Stacks
       ::Kontena::Cli::Stacks::YAML::StackFileLoader
     end
 
+    module RegistryNameParam
+      def stack_name
+        @stack_name ||= Kontena::Cli::Stacks::StackName.new(source)
+      end
+
+      def self.included(where)
+        where.parameter "STACK_NAME", "Stack name, for example user/stackname or user/stackname:version", attribute_name: :source
+      end
+    end
+
     module StackNameParam
       # Include to add a STACK_NAME parameter
       def self.included(where)
