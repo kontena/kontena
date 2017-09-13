@@ -123,12 +123,13 @@ module Kontena::Cli::Stacks
         #  => { 'bar' => 1 }
         # Used for dependency variable injection
         def dependency_values_from_options(name)
-          new_vals = values_from_options.select do |key, _|
-            key.to_s.start_with?(name.to_s + '.')
-          end.each_with_object({}) do |var, obj|
-            obj[var.first.to_s.sub(name.to_s + '.', '')] = var.last
+          name_with_dot = name.to_s + '.'
+          values_from_options.each_with_object({}) do |kv_pair, obj|
+            key = kv_pair.first.to_s
+            value = kv_pair.last
+            next unless key.start_with?(name_with_dot)
+            obj[key.sub(name_with_dot, '')] = value
           end
-          new_vals
         end
       end
     end
