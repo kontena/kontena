@@ -127,7 +127,7 @@ module Kontena::Cli::Stacks
 
         if data[:remote]
           spinner "Upgrading #{stack_name == stackname ? 'stack' : 'dependency'} #{pastel.cyan(stackname)}" do |spin|
-            update_stack(stackname, stack.reject { |k, _| ['errors', 'notifications', 'parent_name'].include?(k) }) || spin.fail!
+            update_stack(stackname, stack) || spin.fail!
           end
         else
           cmd = ['stack', 'install', '--name', stackname]
@@ -148,6 +148,11 @@ module Kontena::Cli::Stacks
 
     def update_stack(name, data)
       return true if dry_run?
+      data.delete('errors')
+      data.delete('notifications')
+      data['services'].each do |svc|
+        svc['env'] = svc.delete('environment')
+      end
       client.put(stack_url(name), data)
     end
 
