@@ -21,6 +21,27 @@ describe Stacks::Create do
       }.to change{ Stack.count }.by(1)
     end
 
+    it 'creates a new grid stack with parent' do
+      grid
+      expect {
+        outcome = described_class.new(
+          grid: grid,
+          name: 'stack',
+          stack: 'foo/bar',
+          version: '0.1.0',
+          registry: 'file://',
+          source: '...',
+          variables: {foo: 'bar'},
+          services: [{name: 'redis', image: 'redis:2.8', stateful: true }],
+          parent_name: 'stack-parent'
+        ).run
+
+        expect(outcome).to be_success
+        expect(outcome.result.parent_name).to eq 'stack-parent'
+        expect(outcome.result.has_parent?).to be_truthy
+      }.to change{ Stack.count }.by(1)
+    end
+
     it 'creates stack revision' do
       outcome = described_class.new(
         grid: grid,

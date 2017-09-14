@@ -8,5 +8,5 @@ group :development, :test do
   gem "kontena-plugin-hello", path: "./examples/kontena-plugin-hello"
   gem 'pry', require: false
   gem 'pry-byebug', require: false
-  gem 'webmock', require: false
+  gem 'webmock', '~> 3.0', require: false
 end
