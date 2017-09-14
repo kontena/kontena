@@ -27,7 +27,9 @@ module Kontena::Cli::Stacks
       # @return [StackFileLoader]
       def self.for(source, parent = nil)
         loader = loaders.find { |l| l.match?(source, parent) }
-        raise "Can't determine stack file origin for '#{source}'" if loader.nil?
+        if loader.nil?
+          raise RuntimeError, "Not found: no such file #{source} or invalid uri scheme"
+        end
         loader.new(source, parent)
       end
 
