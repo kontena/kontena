@@ -2,6 +2,7 @@ class CertificateRenewJob
   include Celluloid
   include Logging
   include CurrentLeader
+  include WaitHelper
 
   RENEW_INTERVAL = 5 * 60 # Run the renew check every 5 mins
 
@@ -41,10 +42,10 @@ class CertificateRenewJob
   end
 
   def should_renew?(certificate)
-    certificate.valid_until > Time.now + 7.days
+    certificate.valid_until < (Time.now + 7.days)
   end
 
-  # Checks if all domain are authorized with tls-sni, we can't automate anything else for now
+  # Checks if all domains are authorized with tls-sni, we can't automate anything else for now
   def can_renew?(certificate)
     certificate.all_domains.each do |domain|
       domain_auth = certificate.grid.grid_domain_authorizations.find_by(domain: domain)
@@ -56,9 +57,10 @@ class CertificateRenewJob
     true
   end
 
+  # Creates new authorizations for all the domains
   def authorize_domains(certificate)
     certificate.all_domains.each do |domain|
-      info "authorizing domain #{domain}"
+      info "re-authorizing domain #{domain}"
       domain_auth = certificate.grid.grid_domain_authorizations.find_by(domain: domain)
       outcome = GridDomainAuthorizations::Authorize.run(
         grid: certificate.grid,
@@ -66,7 +68,12 @@ class CertificateRenewJob
         authorization_type: 'tls-sni-01',
         linked_service: "#{domain_auth.grid_service.stack.name}/#{domain_auth.grid_service.name}"
       )
-      unless outcome.success
+      if outcome.success?
+        domain_auth = outcome.result
+        wait_until!("deployment of tls-sni secret is finished", timeout: 300, threshold: 20) {
+          domain_auth.reload.status != :deploying
+        }
+      else
         # No point to continue, cert renewal not gonna succeed
         raise "Domain authorization failed: #{outcome.errors.message}"
       end
@@ -75,9 +82,10 @@ class CertificateRenewJob
 
   def request_new_cert(certificate)
     info "requesting certificate for #{certificate.subject}"
-    outcome = GridCertificates::RequestCertificate.run(grid: grid, domains: certificate.all_domains)
+    outcome = GridCertificates::RequestCertificate.run(grid: certificate.grid, domains: certificate.all_domains)
     unless outcome.success?
       raise "Certificate request failed: #{outcome.errors.message}"
     end
+    info "certificate for #{certificate.subject} renewed succesfully"
   end
 end
