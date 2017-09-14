@@ -57,8 +57,8 @@ describe Kontena::Cli::Stacks::RemoveCommand do
             stack_response_with_children
           )
 
-          expect(Kontena).to receive(:run!).with(['stack', 'remove', '--ignore-not-found', '--force', 'foofoo'])
-          expect(Kontena).to receive(:run!).with(['stack', 'remove', '--ignore-not-found', '--force', 'foobar'])
+          expect(Kontena).to receive(:run!).with(['stack', 'remove', '--force', 'foofoo'])
+          expect(Kontena).to receive(:run!).with(['stack', 'remove', '--force', 'foobar'])
 
           expect(subject).to receive(:remove_stack).with('test-stack')
           expect{subject.run(['--force', 'test-stack'])}.not_to exit_with_error
