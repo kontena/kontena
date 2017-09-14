@@ -94,7 +94,6 @@ module GridCertificates
         certificate_model.private_key = certificate.request.private_key.to_pem
         certificate_model.certificate = certificate.to_pem
         certificate_model.chain = certificate.chain_to_pem
-        certificate_model.full_chain = certificate.fullchain_to_pem
 
         certificate_model.save
       else
@@ -105,8 +104,7 @@ module GridCertificates
           valid_until: certificate.x509.not_after,
           private_key: certificate.request.private_key.to_pem,
           certificate: certificate.to_pem,
-          chain: certificate.chain_to_pem,
-          full_chain: certificate.fullchain_to_pem
+          chain: certificate.chain_to_pem
         )
       end
 

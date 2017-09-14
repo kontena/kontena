@@ -118,7 +118,8 @@ describe GridCertificates::RequestCertificate do
         expect(c.private_key).to eq('private_key')
         expect(c.certificate).to eq('certificate_only')
         expect(c.chain).to eq('chain')
-        expect(c.full_chain).to eq('fullchain')
+        expect(c.full_chain).to eq('certificate_onlychain')
+        expect(c.bundle).to eq('certificate_onlychainprivate_key')
       }.to change {grid.certificates.count}.by (1)
     end
 
