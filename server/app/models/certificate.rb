@@ -30,4 +30,8 @@ class Certificate
     self.full_chain + self.private_key
   end
 
+  def all_domains
+    [self.subject] + self.alt_names.to_a
+  end
+
 end
