@@ -51,8 +51,8 @@ module Kontena::Cli::Stacks
 
       validate_dependencies if dependencies?
 
-      hint_on_validation_notifications(stack['notifications'], dependencies? ? loader.source : nil) unless stack['notifications'].empty?
-      abort_on_validation_errors(stack['errors'], dependencies? ? loader.source : nil) unless stack['errors'].empty?
+      hint_on_validation_notifications(reader.notifications, dependencies? ? loader.source : nil)
+      abort_on_validation_errors(reader.errors, dependencies? ? loader.source : nil)
 
       dump_variables if values_to
 

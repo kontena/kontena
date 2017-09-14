@@ -24,12 +24,12 @@ module Kontena::Cli::Stacks
     requires_current_master_token
 
     def execute
-      install_dependencies unless skip_dependencies?
-
       set_env_variables(stack_name, current_grid)
 
-      hint_on_validation_notifications(stack['notifications']) unless stack['notifications'].empty?
-      abort_on_validation_errors(stack['errors']) unless stack['errors'].empty?
+      install_dependencies unless skip_dependencies?
+
+      hint_on_validation_notifications(reader.notifications)
+      abort_on_validation_errors(reader.errors)
 
       dump_variables if values_to
 
@@ -59,11 +59,6 @@ module Kontena::Cli::Stacks
 
     def create_stack
       spinner "Creating stack #{pastel.cyan(stack['name'])} " do
-        stack.delete('errors')
-        stack.delete('notifications')
-        stack['services'].each do |svc|
-          svc['env'] = svc.delete('environment')
-        end
         client.post("grids/#{current_grid}/stacks", stack)
       end
     end

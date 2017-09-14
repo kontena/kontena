@@ -214,8 +214,6 @@ module Kontena::Cli::Stacks
             result['source']        = raw_content
             result['variables']     = variable_values(without_defaults: true, without_vault: true)
             result['parent_name']   = parent_name
-            result['errors']        = errors unless skip_validation
-            result['notifications'] = notifications
           end
         end
       end
@@ -347,9 +345,10 @@ module Kontena::Cli::Stacks
       end
 
       def from_external_file(filename, service_name)
-        outcome = Reader.new(filename).execute(service_name)
-        errors.concat outcome['errors'] unless errors.any? { |item| item.key?(filename) }
-        notifications.concat outcome['notifications'] unless notifications.any? { |item| item.key?(filename) }
+        external_reader = Reader.new(filename)
+        outcome = external_reader.execute(service_name)
+        errors.concat external_reader.errors unless errors.any? { |item| item.key?(filename) }
+        notifications.concat external_reader.notifications unless notifications.any? { |item| item.key?(filename) }
         outcome['services']
       end
 
