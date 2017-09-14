@@ -36,10 +36,13 @@ class HostNode
   field :agent_version, type: String
   field :docker_version, type: String
   field :connected_at, type: Time
+  field :disconnected_at, type: Time
+  field :updated, type: Boolean, default: false # true => node sent /nodes/update after connecting; false => node attributes may be out of date even if connected
   field :availability, type: String, default: Availability::ACTIVE
 
   embeds_many :volume_drivers, class_name: 'HostNodeDriver'
   embeds_many :network_drivers, class_name: 'HostNodeDriver'
+  embeds_one :websocket_connection, class_name: 'HostNodeConnection'
 
   belongs_to :grid
   has_many :grid_service_instances, dependent: :nullify
@@ -109,8 +112,56 @@ class HostNode
   end
 
   # @return [Boolean]
+  def active?
+    self.availability == Availability::ACTIVE
+  end
+
+  # @return [Boolean]
+  def drain?
+    self.availability == Availability::DRAIN
+  end
+
+  # @return [Symbol]
+  def status
+    if self.node_id.nil?
+      return :created # node created with token, but agent has not yet connected
+    elsif !self.connected
+      return :offline # not yet connected by NodePlugger, or disconnected by NodeUnplugger
+    elsif !self.updated
+      return :connecting # connected by NodePlugger, waiting for /nodes/update RPC
+    elsif self.drain?
+      return :drain
+    else
+      return :online # connected by NodePlugger, updated by /nodes/update RPC
+    end
+  end
+
+  # @return [String]
+  def websocket_error
+    if self.connected
+      return nil
+    elsif !self.websocket_connection
+      return "Websocket is not connected"
+    elsif !self.websocket_connection.opened
+      # WebsocketBackend#on_open -> Agent::NodePlugger.reject!
+      return "Websocket connection rejected at #{self.connected_at} with code #{self.websocket_connection.close_code}: #{self.websocket_connection.close_reason}"
+    else
+      # WebsocketBackend#on_close -> Agent::NodeUnplugger.unplug!
+      return "Websocket disconnected at #{self.disconnected_at} with code #{self.websocket_connection.close_code}: #{self.websocket_connection.close_reason}"
+    end
+  end
+
+
+  # @return [Boolean]
   def connected?
     self.connected == true
+  end
+
+  # attributes are up to date
+  #
+  # @return [Boolean]
+  def updated?
+    self.connected && self.updated
   end
 
   # @return [Boolean]

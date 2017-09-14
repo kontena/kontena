@@ -30,6 +30,7 @@ module Rpc
     def update(node_id, data)
       node = get_node(node_id)
       node.attributes_from_docker(data)
+      node.updated = true # connection handshake complete after NodePlugger#plugin!
       node.save!
     end
 
