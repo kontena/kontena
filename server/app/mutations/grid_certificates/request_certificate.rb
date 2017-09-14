@@ -11,14 +11,7 @@ module GridCertificates
 
     required do
       model :grid, class: Grid
-
       array :domains do
-        string
-      end
-    end
-
-    optional do
-      array :linked_services do
         string
       end
     end
@@ -45,7 +38,7 @@ module GridCertificates
       domain_authorization = get_authz_for_domain(self.grid, domain)
       challenge = le_client.challenge_from_hash(domain_authorization.challenge)
       if domain_authorization.state == :created
-        info 'requesting verification for domain #{domain}'
+        info "requesting verification for domain #{domain}"
         success = challenge.request_verification
         if success
           domain_authorization.state = :requested
