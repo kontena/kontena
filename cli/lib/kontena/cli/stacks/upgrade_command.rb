@@ -103,8 +103,8 @@ module Kontena::Cli::Stacks
           puts "#{pastel.red('Warning:')} This can not be undone, data will be lost."
         end
         confirm unless force?
-        removes.reverse_each do |r|
-          Kontena.run!('stack', 'remove', '--force', '--keep-dependent', r)
+        removes.reverse_each do |removed_stack|
+          Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
           merged.delete(r)
         end
       end
