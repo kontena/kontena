@@ -282,8 +282,7 @@ describe GridServices::Update do
           subject: 'kontena.io',
           valid_until: Time.now + 90.days,
           private_key: 'private_key',
-          certificate: 'certificate',
-          full_chain: 'full_chain')
+          certificate: 'certificate')
       end
 
       let :certificate2 do
@@ -291,8 +290,7 @@ describe GridServices::Update do
           subject: 'www.kontena.io',
           valid_until: Time.now + 90.days,
           private_key: 'private_key',
-          certificate: 'certificate',
-          full_chain: 'full_chain')
+          certificate: 'certificate')
       end
 
       it 'does not change existing certs' do

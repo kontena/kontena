@@ -470,8 +470,7 @@ describe GridServices::Create do
           subject: 'kontena.io',
           valid_until: Time.now + 90.days,
           private_key: 'private_key',
-          certificate: 'certificate',
-          full_chain: 'full_chain')
+          certificate: 'certificate')
       end
 
       before do
