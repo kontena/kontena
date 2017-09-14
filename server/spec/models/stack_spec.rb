@@ -45,6 +45,14 @@ describe Stack do
   end
 
   context 'hierarchy' do
+
+    describe 'parent_name' do
+      let(:grid) { Grid.create!(name: 'foogrid') }
+      it 'can not be the same as stack name' do
+        expect{Stack.create!(name: 'foo', parent_name: 'bar', grid: grid)}.to raise_error(Mongoid::Errors::Validations, /Parent name can't be the same/)
+      end
+    end
+
     let(:grid) { Grid.create!(name: 'foogrid') }
     let(:initial) { Stack.create!(grid: grid, parent_name: nil, name: 'topmost') }
     let(:child1) { Stack.create!(grid: initial.grid, parent_name: initial.name, name: 'child-1') }
