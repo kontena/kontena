@@ -317,7 +317,6 @@ module Kontena::Cli::Stacks
           service_config.delete('extends')
         end
         if name
-          exit_with_error("Image is missing for #{name}. Aborting.") unless service_config['image'] # why isn't this a validation?
           ServiceGeneratorV2.new(service_config).generate.merge('name' => name)
         else
           ServiceGeneratorV2.new(service_config).generate
@@ -443,12 +442,11 @@ module Kontena::Cli::Stacks
       end
 
       def store_failures(data)
-        data['errors'] = data[:errors] unless data['errors']
-        data['notifications'] = data[:notifications] unless data['notifications']
-        errors << { file => data['errors'] || data[:errors] } unless data['errors'].empty?
+        data['errors'] ||= data[:errors] || []
+        data['notifications'] ||= data[:notifications] || []
+        errors << { file => data['errors'] } unless data['errors'].empty?
         notifications << { file => data['notifications'] } unless data['notifications'].empty?
       end
-
 
       # @param [Hash] options - service config
       def normalize_env_vars(options)
