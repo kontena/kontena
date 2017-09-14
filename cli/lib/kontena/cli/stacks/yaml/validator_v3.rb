@@ -75,7 +75,6 @@ module Kontena::Cli::Stacks
               end
               option_errors = validate_options(options)
               result[:errors] << { 'services' => { service => option_errors.errors } } unless option_errors.valid?
-              result[:errors] << { 'services' => { service => { 'image' => "image is missing" } } } unless options['image']
               if options['volumes']
                 mount_path_occurences = Hash.new(0)
                 options['volumes'].each do |volume|
