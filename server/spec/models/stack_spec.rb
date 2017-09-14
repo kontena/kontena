@@ -49,7 +49,7 @@ describe Stack do
     describe 'parent_name' do
       let(:grid) { Grid.create!(name: 'foogrid') }
       it 'can not be the same as stack name' do
-        expect{Stack.create!(name: 'foo', parent_name: 'bar', grid: grid)}.to raise_error(Mongoid::Errors::Validations, /Parent name can't be the same/)
+        expect{Stack.create!(name: 'foo', parent_name: 'foo', grid: grid)}.to raise_error(Mongoid::Errors::Validations, /Parent name can't be the same/)
       end
     end
 
