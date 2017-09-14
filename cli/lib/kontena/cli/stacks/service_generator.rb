@@ -27,7 +27,7 @@ module Kontena::Cli::Stacks
       data = {}
       data['instances'] = options['instances']
       data['image'] = parse_image(options['image'])
-      data['environment'] = options['environment']
+      data['env'] = options['environment'] || options['env']
       data['links'] = parse_links(options['links'] || [])
       data['external_links'] = parse_links(options['external_links'] || [])
       data['ports'] = parse_stringified_ports(options['ports'] || [])

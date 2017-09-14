@@ -12,7 +12,7 @@ module Kontena::Cli::Stacks
       # @param [Hash] from
       # @return [Hash]
       def extend_from(from)
-        service_config['environment'] = extend_env_vars(from['environment'], service_config['environment'])
+        service_config['environment'] = extend_env_vars(from['env'], service_config['environment'])
         service_config['secrets']     = extend_secrets( from['secrets'], service_config['secrets'])
         build_args                    = extend_build_args(safe_dig(from, 'build', 'args'), safe_dig(service_config, 'build', 'args'))
         unless build_args.empty?

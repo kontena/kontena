@@ -48,8 +48,8 @@ describe Kontena::Cli::Stacks::YAML::Reader do
     end
 
     it 'returns error' do
-      outcome = subject.execute
-      expect(outcome['errors'].size).to eq(1)
+      subject.execute
+      expect(subject.errors.size).to eq(1)
     end
   end
 
@@ -98,7 +98,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
             hash_including(
               "instances"=>2,
               "image"=>"wordpress:4.1",
-              "environment"=>["WORDPRESS_DB_PASSWORD=test_secret"],
+              "env"=>["WORDPRESS_DB_PASSWORD=test_secret"],
               "links"=>[{"name"=>"mysql", "alias"=>"mysql"}],
               "ports"=>[{"ip"=>"0.0.0.0", "container_port"=>80, "node_port"=>80, "protocol"=>"tcp"}],
               "stateful"=>true,
@@ -108,7 +108,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
             hash_including(
               "instances"=>nil,
               "image"=>"mysql:5.6",
-              "environment"=>["MYSQL_ROOT_PASSWORD=test_secret"],
+              "env"=>["MYSQL_ROOT_PASSWORD=test_secret"],
               "links"=>[],
               "ports"=>[],
               "stateful"=>true,
@@ -152,7 +152,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           expect(app_svc).to match hash_including(
             "image" => "base:latest",
             "instances" => 2,
-            "environment" => [
+            "env" => [
               "TEST1=test1",
               "TEST2=changed"
             ],
@@ -195,7 +195,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       it 'interpolates default variables' do
         expect(subject.execute['services']).to match array_including(
           hash_including(
-            'name' => 'wordpress', 'environment' => array_including(
+            'name' => 'wordpress', 'env' => array_including(
               'STACK=test', 'GRID=test-grid', 'PLATFORM=test-grid'
             )
           )
@@ -231,7 +231,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         allow(ENV).to receive(:[]).with('MYSQL_IMAGE').and_return('foo')
 
         expect(subject.execute['services']).to match array_including(
-          hash_including('name' => 'mysql', 'environment' => array_including('INTERNAL_VAR=$INTERNAL_VAR'))
+          hash_including('name' => 'mysql', 'env' => array_including('INTERNAL_VAR=$INTERNAL_VAR'))
         )
       end
     end
@@ -247,12 +247,12 @@ describe Kontena::Cli::Stacks::YAML::Reader do
         end
 
         it 'converts env hash to array' do
-          expect(subject.execute['services']).to match array_including(hash_including('name' => 'wordpress', 'environment' => ['WORDPRESS_DB_PASSWORD=test_secret']))
+          expect(subject.execute['services']).to match array_including(hash_including('name' => 'wordpress', 'env' => ['WORDPRESS_DB_PASSWORD=test_secret']))
         end
 
         it 'does nothing to env array' do
           expect(subject.execute['services']).to match array_including(
-            hash_including('name' => 'mysql', 'environment' => ['MYSQL_ROOT_PASSWORD=test_secret'])
+            hash_including('name' => 'mysql', 'env' => ['MYSQL_ROOT_PASSWORD=test_secret'])
           )
         end
       end
@@ -292,7 +292,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
           expect(subject.execute['services']).to match array_including(
             hash_including(
               'name' => 'wordpress',
-              'environment' => [
+              'env' => [
                 'WORDPRESS_DB_PASSWORD=test_secret',
                 'APIKEY=12345',
                 'MYSQL_ROOT_PASSWORD=secret',
@@ -472,7 +472,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       result = subject.execute
       expect(result['variables']).to match hash_including('asdf' => nil)
       expect(result['services']).to match array_including(
-        hash_including('name' => 'test', 'environment' => nil)
+        hash_including('name' => 'test', 'env' => nil)
       )
     end
   end
@@ -490,7 +490,7 @@ describe Kontena::Cli::Stacks::YAML::Reader do
       outcome = subject.execute
       expect(outcome['variables']).to match hash_including('asdf' => 'test')
       expect(outcome['services']).to match array_including(
-        hash_including('name' => 'test', 'environment' => ['ASDF=test'])
+        hash_including('name' => 'test', 'env' => ['ASDF=test'])
       )
     end
   end
