@@ -266,6 +266,73 @@ describe GridServices::Update do
       end
     end
 
+    context 'for a service with certificates' do
+      let(:service) {
+        GridService.create(grid: grid, stack: stack, name: 'redis',
+          image_name: 'redis:2.8',
+          certificates: [
+            {subject: certificate.subject, name: 'SSL_CERT'},
+            {subject: certificate2.subject, name: 'SSL_CERT2'}
+          ],
+        )
+      }
+
+      let :certificate do
+        Certificate.create!(grid: grid,
+          subject: 'kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      let :certificate2 do
+        Certificate.create!(grid: grid,
+          subject: 'www.kontena.io',
+          valid_until: Time.now + 90.days,
+          private_key: 'private_key',
+          certificate: 'certificate')
+      end
+
+      it 'does not change existing certs' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'},
+              {subject: certificate2.subject, name: 'SSL_CERT2'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to not_change{service.reload.revision}.and not_change{service.reload.updated_at}
+      end
+
+      it 'changes existing certs' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'},
+              {subject: certificate2.subject, name: 'SSL_CERT2_FOO'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to change{service.reload.revision}.and change{service.reload.updated_at}
+      end
+      it 'removes certificate' do
+        subject = described_class.new(
+            grid_service: service,
+            certificates: [
+              {subject: certificate.subject, name: 'SSL_CERT'}
+            ]
+        )
+        expect {
+          expect(outcome = subject.run).to be_success
+        }.to change{service.reload.revision}.and change{service.reload.updated_at}
+
+        expect(service.reload.certificates.map{|c| c.subject}).to eq ['kontena.io']
+      end
+    end
+
     context 'hooks' do
       context 'for a service with hooks' do
         let(:service) {

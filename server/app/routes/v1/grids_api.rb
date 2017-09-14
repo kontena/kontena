@@ -105,6 +105,11 @@ module V1
           r.route 'grid_domain_authorizations'
         end
 
+        # /v1/grids/:name/certificates
+        r.on 'certificates' do
+          r.route 'grid_certificates'
+        end
+
         r.get do
           r.is do
             render('grids/show')
