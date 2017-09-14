@@ -37,6 +37,7 @@ describe Kontena::Cli::Stacks::BuildCommand do
     end
 
     before(:each) do
+      allow(subject).to receive(:stack_name).and_return('stack-a')
       allow(subject).to receive(:stack).and_return(stack)
       allow(subject).to receive(:system).and_return(true)
     end
