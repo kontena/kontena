@@ -153,12 +153,14 @@ module Kontena::Cli::Stacks
       $stderr.puts(pastel.send(color, messages.to_yaml.gsub(/^---$/, '')))
     end
 
-    def hint_on_validation_notifications(errors, filename = nil)
+    def hint_on_validation_notifications(notifications, filename = nil)
+      return if notifications.nil? || notifications.empty?
       $stderr.puts pastel.yellow("#{"(#{filename}) " if filename}YAML contains the following unsupported options and they were rejected:")
-      display_notifications(errors)
+      display_notifications(notifications)
     end
 
     def abort_on_validation_errors(errors, filename = nil)
+      return if errors.nil? || errors.empty?
       $stderr.puts pastel.red("#{"(#{filename}) " if filename} YAML validation failed! Aborting.")
       display_notifications(errors, :red)
       abort
