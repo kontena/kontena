@@ -11,19 +11,12 @@ module Kontena::Cli::Stacks
     parameter "NAME", "Stack name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
     option "--keep-dependencies", :flag, "Do not remove dependencies"
-    option "--ignore-not-found", :flag, "Ignore stack not found errors", hidden: true
 
     requires_current_master
     requires_current_master_token
 
     def fetch_stack
       client.get("stacks/#{current_grid}/#{name}")
-    rescue Kontena::Errors::StandardError => ex
-      if ex.status == 404 && ignore_not_found?
-        puts "#{pastel.yellow('Warning:')} The stack #{pastel.cyan(name)} does not exist."
-        exit 0
-      end
-      raise ex
     end
 
     def confirm_remove(stack)
@@ -45,10 +38,7 @@ module Kontena::Cli::Stacks
       unless keep_dependencies?
         stack.fetch('children', Hash.new).each do |child_stack|
           caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
-          cmd = ['stack', 'remove', '--ignore-not-found']
-          cmd << '--force' # no need to prompt each separately
-          cmd << child_stack['name']
-          Kontena.run!(cmd)
+          Kontena.run!(['stack', 'remove', '--force', child_stack['name']])
         end
       end
 
