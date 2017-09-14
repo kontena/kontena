@@ -131,7 +131,7 @@ module Kontena::Cli::Stacks
       def variables
         @variables ||= ::Opto::Group.new(
           internals_interpolated_yaml.fetch('variables', {}).merge(default_envs_to_options),
-          defaults: { from: :env, to: :env }
+          defaults: { from: :env }
         )
       end
 
