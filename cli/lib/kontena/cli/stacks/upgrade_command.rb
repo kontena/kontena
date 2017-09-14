@@ -105,7 +105,7 @@ module Kontena::Cli::Stacks
         confirm unless force?
         removes.reverse_each do |removed_stack|
           Kontena.run!('stack', 'remove', '--force', '--keep-dependencies', removed_stack)
-          merged.delete(r)
+          merged.delete(removed_stack)
         end
       end
 
