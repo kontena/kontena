@@ -10,7 +10,7 @@ module Kontena::Cli::Stacks
 
     parameter "NAME", "Stack name"
     option "--force", :flag, "Force remove", default: false, attribute_name: :forced
-    option "--keep-dependent", :flag, "Do not remove dependencies"
+    option "--keep-dependencies", :flag, "Do not remove dependencies"
     option "--ignore-not-found", :flag, "Ignore stack not found errors", hidden: true
 
     requires_current_master
@@ -42,12 +42,14 @@ module Kontena::Cli::Stacks
     def execute
       stack = fetch_stack
       confirm_remove(stack) unless forced?
-      stack.fetch('children', Hash.new).each do |child_stack|
-        caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
-        cmd = ['stack', 'remove', '--ignore-not-found']
-        cmd << '--force' # no need to prompt each separately
-        cmd << child_stack['name']
-        Kontena.run!(cmd)
+      unless keep_dependencies?
+        stack.fetch('children', Hash.new).each do |child_stack|
+          caret"Removing dependency #{pastel.cyan(child_stack['name'])}"
+          cmd = ['stack', 'remove', '--ignore-not-found']
+          cmd << '--force' # no need to prompt each separately
+          cmd << child_stack['name']
+          Kontena.run!(cmd)
+        end
       end
 
       spinner "Removing stack #{pastel.cyan(name)} " do
