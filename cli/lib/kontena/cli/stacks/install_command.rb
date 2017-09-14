@@ -28,6 +28,8 @@ module Kontena::Cli::Stacks
 
       install_dependencies unless skip_dependencies?
 
+      stack # runs validations
+
       hint_on_validation_notifications(reader.notifications)
       abort_on_validation_errors(reader.errors)
 
