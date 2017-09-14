@@ -20,8 +20,10 @@ class Stack
   validates_presence_of :name
   validates_uniqueness_of :name, scope: [:grid_id]
 
-  validate :parent_name do |record|
-    if record.parent_name && record.name && record.parent_name == record.name
+  validate :parent_name_is_not_same_as_name
+
+  def parent_name_is_not_same_as_name
+    if parent_name && name && parent_name == name
       errors.add(:parent_name, "Parent name can't be the same as name")
     end
   end
